@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport"
+			  content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, viewport-fit=cover">
+		<title>星链导航 - 探索无限可能</title>
+		<!-- index.html -->
+		<link rel="stylesheet"
+			  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+		<link rel="stylesheet"
+			  href="assets/css/base.css">
+			  <link rel="stylesheet" href="assets/css/style.css">
+		<link rel="stylesheet"
+			  href="assets/css/layout.css">
+		<link rel="stylesheet"
+			  href="assets/css/safe-area.css">
+		<link rel="stylesheet"
+			  href="assets/css/components/navbar.css">
+		<link rel="stylesheet"
+			  href="assets/css/components/sidebar.css">
+		<link rel="stylesheet"
+			  href="assets/css/components/content.css">
+		<link rel="stylesheet"
+			  href="assets/css/components/footer.css">
+		<link rel="stylesheet"
+			  href="assets/css/components/wallpaper.css">
+		<link rel="icon"
+			  href="favicon.ico"
+			  type="image/x-icon">
+		<style>
+			/* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        #saveQQInfo {
+            background: #6c5ce7;
+            color: white;
+        }
+        
+        #cancelQQInfo {
+            background: #e0e0e0;
+        }
+        
+/* 分割线—————————————————————————— */
+        
+        /* 电子木鱼动画效果 */
+        .fish-effect {
+            position: absolute;
+            animation: floatUp 1s ease-out forwards;
+            font-weight: bold;
+            font-size: 1.2rem;
+            z-index: 10;
+        }
+        
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+        
+/* 分割线—————————————————————————— */
+        
+        /* 搜索引擎选择器模态框 */
+        .engine-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .engine-modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 300px;
+            box-shadow: 0 10 25px rgba(0,0,0,0.2);
+        }
+        
+        .engine-modal-title {
+            margin-bottom: 15px;
+            text-align: center;
+            color: #6c5ce7;
+            font-size: 1.2rem;
+        }
+        
+        .engine-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .engine-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .engine-option:hover {
+            background: #e0e0e0;
+            transform: translateY(-3px);
+        }
+        
+        .engine-option.active {
+            border-color: #6c5ce7;
+            background: #e0e0ff;
+        }
+        
+        .engine-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        
+        .engine-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .engine-name {
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        
+        .close-engine-modal {
+            margin-top: 20px;
+            width: 100%;
+            padding: 10px;
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+/* 分割线—————————————————————————— */
+        
+        /* 查找面板样式 */
+        .find-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 350px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 2100;
+            display: none;
+            overflow: hidden;
+        }
+
+        .find-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            font-weight: 600;
+        }
+
+        .close-find {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-find:hover {
+            background: rgba(255,255,255,0.2);
+            transform: rotate(90deg);
+        }
+
+        .find-body {
+            padding: 20px;
+        }
+
+        #findInput {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        #findInput:focus {
+            border-color: #6c5ce7;
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+            outline: none;
+        }
+
+        .find-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .find-controls button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: #f5f7ff;
+            color: #6c5ce7;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .find-controls button:hover {
+            background: #6c5ce7;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        #findStatus {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+/* 分割线—————————————————————————— */
+
+
+
+
+
+
+
+
+    </style>
+	</head>
+	<body>
+	
+	
+<!-- 导航栏 -->
+<nav class="navbar">
+    <!-- 标题移动到最左边 -->
+    <div class="logo-container">
+        <!-- 添加Logo图标 - 再增大6px -->
+        <img src="assets/images/logo.png" alt="星链导航Logo" class="navbar-logo">
+        <div class="logo-text">
+            <!-- 增大字体间距 -->
+            <h1 class="main-logo">星&nbsp;链&nbsp;导&nbsp;航</h1>
+            <!-- 调整副标题 -->
+            <p class="sub-logo">探&nbsp;索&nbsp;无&nbsp;限&nbsp;可&nbsp;能</p>
+        </div>
+    </div>
+
+    <!-- 右侧图标按钮组 -->
+    <div class="navbar-actions">
+        <button class="nav-icon" id="dropdownFindInPage" title="页内查找">
+            <i class="fas fa-search"></i>
+        </button>
+        <button class="nav-icon" id="announcementBtn" title="公告">
+            <i class="fas fa-bell"></i>
+        </button>
+    </div>
+
+    <!-- 汉堡菜单移动到最右边 -->
+    <div class="hamburger-menu" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+</nav>
+
+		<!-- 侧边栏 -->
+		<aside class="sidebar"
+			   id="sidebar">
+			<!-- 修改头像区域结构 -->
+			<div class="sidebar-top">
+				<div class="user-profile">
+					<img src="https://q1.qlogo.cn/g?b=qq&nk=123456&s=100"
+						 alt="用户头像"
+						 class="qq-avatar"
+						 id="qqAvatar">
+					<div class="user-info">
+						<h3 id="userNickname">游客</h3>
+						<p id="userSignature">点击头像设置信息</p>
+					</div>
+				</div>
+				<div class="daily-quote compact">
+					<p class="quote-text">加载中...</p>
+					<p class="quote-author">— 每日一言</p>
+				</div>
+			</div>
+
+			<div class="sidebar-middle">
+				<div class="category-fold"
+					 data-category="常用导航">
+					<div class="category-header">
+						<i class="fas fa-compass"></i>
+						<h3>常用导航</h3>
+						<span class="fold-icon">+</span>
+					</div>
+					<div class="category-links">
+						<a href="#"
+						   class="sidebar-link">
+							<i class="fas fa-search"></i>
+							<span>搜索</span>
+						</a>
+						<a href="#"
+						   class="sidebar-link">
+							<i class="fas fa-envelope"></i>
+							<span>邮箱</span>
+						</a>
+						<a href="#"
+						   class="sidebar-link">
+							<i class="fas fa-play-circle"></i>
+							<span>视频</span>
+						</a>
+					</div>
+				</div>
+
+				<div class="category-fold"
+					 data-category="实用工具">
+					<div class="category-header">
+						<i class="fas fa-tools"></i>
+						<h3>实用工具</h3>
+						<span class="fold-icon">+</span>
+					</div>
+					<div class="category-links">
+						<a href="#"
+						   class="sidebar-link">
+							<i class="fas fa-file-alt"></i>
+							<span>文档</span>
+						</a>
+						<a href="#"
+						   class="sidebar-link">
+							<i class="fas fa-cloud"></i>
+							<span>云盘</span>
+						</a>
+						<a href="#"
+						   class="sidebar-link">
+							<i class="fas fa-calendar-alt"></i>
+							<span>日历</span>
+						</a>
+						<a href="#"
+						   class="sidebar-link">
+							<i class="fas fa-map-marker-alt"></i>
+							<span>地图</span>
+						</a>
+					</div>
+				</div>
+
+				<!-- 修改后的网盘工具部分 -->
+<div class="category-fold" data-category="网盘工具">
+    <div class="category-header">
+        <i class="fas fa-cloud"></i>
+        <h3>网盘工具</h3>
+        <span class="fold-icon">+</span>
+    </div>
+    <div class="category-links">
+        <a href="https://www.123865.com/s/0Cb4Td-58C0" class="sidebar-link" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>123网盘</span>
+        </a>
+        <a href="https://up.woozooo.com/mydisk.php" class="sidebar-link" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-cloud-download-alt"></i>
+            <span>蓝 奏 云</span>
+        </a>
+        <a href="https://www.alipan.com/s/cn5ENKrtubN" class="sidebar-link" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-save"></i>
+            <span>阿里云盘</span>
+        </a>
+        <a href="https://h5.cloud.189.cn/share.html#/t/JR3aYr6jma2i" class="sidebar-link" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-cloud"></i>
+            <span>天翼云盘</span>
+        </a>
+        <a href="https://pan.xunlei.com/s/VOZZfPj4BaHIpVkxk0oI7UUdA1" class="sidebar-link" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-bolt"></i>
+            <span>迅雷云盘</span>
+        </a>
+        <a href="https://pan.quark.cn/s/48d3fbf48652#/list/share" class="sidebar-link" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-search"></i>
+            <span>夸克网盘</span>
+        </a>
+    </div>
+</div>
+				
+			</div>
+
+<!-- 在侧边栏底部添加Q群按钮 -->
+<div class="sidebar-bottom horizontal">
+    <a href="https://support.qq.com/products/760416" class="feedback-link">留言反馈</a>
+    <a href="https://f.wps.cn/g/TI3Gxbe1/" class="submit-link" target="_blank" rel="noopener noreferrer">网站投稿</a>
+    <a href="#" class="settings-link" id="aboutWebsiteBtn">关于网站</a>
+    <!-- 添加的Q群按钮 -->
+    <a href="#" class="qq-group-link" id="sidebarQQGroupBtn">加入Q群</a>
+</div>
+		</aside>
+
+		<!-- 主内容区 -->
+		<main class="content">
+			<!-- 壁纸区域 -->
+			<section class="wallpaper-section"
+					 id="wallpaperSection">
+				<div class="wallpaper-background"></div>
+				<div class="wallpaper-overlay"></div>
+
+				<div class="wallpaper-controls">
+					<button class="source-btn"
+							data-source="bing"
+							title="必应壁纸">
+						<i class="fas fa-mountain"></i>
+					</button>
+					<button class="source-btn"
+							data-source="scenery"
+							title="风景壁纸">
+						<i class="fas fa-image"></i>
+					</button>
+				</div>
+
+				<div class="wallpaper-title-container">
+					<h2 id="wallpaperTitle">星链导航</h2>
+				</div>
+
+				<div class="loading-indicator">
+					<div class="spinner"></div>
+				</div>
+
+				<div class="error-retry">
+					<button id="retryButton">重试</button>
+				</div>
+			</section>
+
+			<!-- 搜索区域 -->
+			<section class="search-section">
+				<div class="search-input-group">
+					<input type="text"
+						   id="searchInput"
+						   placeholder="输入关键词搜索网站...">
+					<div class="search-engine-select"
+						 id="searchEngineSelector"
+						 title="选择搜索引擎">
+						<div class="engine-icon"
+							 id="currentEngineIcon">
+							<img src="assets/images/search-engines/bd.png"
+								 alt="百度">
+						</div>
+					</div>
+					<select id="searchEngine"
+							style="display: none">
+						<option value="baidu">百度</option>
+						<option value="google">谷歌</option>
+						<option value="bing">必应</option>
+						<option value="duckduckgo">DuckDuckGo</option>
+					</select>
+					<button id="webSearchBtn">
+						<svg xmlns="http://www.w3.org/2000/svg"
+							 viewBox="0 0 24 24"
+							 fill="none"
+							 stroke="currentColor"
+							 stroke-width="2"
+							 stroke-linecap="round"
+							 stroke-linejoin="round">
+							<circle cx="11"
+									cy="11"
+									r="8"></circle>
+							<line x1="21"
+								  y1="21"
+								  x2="16.65"
+								  y2="16.65"></line>
+						</svg>
+					</button>
+				</div>
+			</section>
+
+			<!-- 搜索引擎选择器模态框 -->
+			<div class="engine-modal"
+				 id="engineModal">
+				<div class="engine-modal-content">
+					<h3 class="engine-modal-title">选择搜索引擎</h3>
+					<div class="engine-options">
+						<div class="engine-option"
+							 data-value="baidu">
+							<div class="engine-icon">
+								<img src="assets/images/search-engines/bd.png"
+									 alt="百度">
+							</div>
+							<div class="engine-name">百度</div>
+						</div>
+						<div class="engine-option"
+							 data-value="google">
+							<div class="engine-icon">
+								<img src="assets/images/search-engines/gg.png"
+									 alt="谷歌">
+							</div>
+							<div class="engine-name">谷歌</div>
+						</div>
+						<div class="engine-option"
+							 data-value="bing">
+							<div class="engine-icon">
+								<img src="assets/images/search-engines/by.png"
+									 alt="必应">
+							</div>
+							<div class="engine-name">必应</div>
+						</div>
+						<div class="engine-option"
+							 data-value="duckduckgo">
+							<div class="engine-icon">
+								<img src="assets/images/search-engines/duckduckgo.png"
+									 alt="DuckDuckGo">
+							</div>
+							<div class="engine-name">DuckDuckGo</div>
+						</div>
+					</div>
+					<button class="close-engine-modal"
+							id="closeEngineModal">关闭</button>
+				</div>
+			</div>
+
+
+
+<!-- 问候和电子木鱼区域 -->
+<section class="greeting-section">
+    <div class="greeting-container">
+        <div class="greeting-left">
+            <h2 id="greetingText">下午好，朋友！</h2>
+            <div class="datetime-info">
+                <span id="currentDate">2023年10月15日</span>
+                <span id="currentTime">14:30:45</span>
+                <span id="currentWeek">星期日</span>
+            </div>
+        </div>
+        <div class="greeting-right">
+            <div class="wooden-fish">
+                <div class="fish-icon merit" id="meritFish">
+                    <i class="fa-solid fa-hands-praying"></i>
+                    <div class="counter-dot"></div>
+                </div>
+                <div class="fish-icon luck" id="luckFish">
+                    <i class="fa-solid fa-clover"></i>
+                    <div class="counter-dot"></div>
+                </div>
+                <div class="fish-icon wealth" id="wealthFish">
+                    <i class="fa-solid fa-coins"></i>
+                    <div class="counter-dot"></div>
+                </div>
+                <div class="fish-icon health" id="healthFish">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                    <div class="counter-dot"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 自定义按钮放在卡片外部右侧，改为链接 -->
+    <a href="sq.html" class="custom-btn" id="customButton">
+        <i class="fas fa-cog"></i>
+        <span>自定义新书签</span>
+    </a>
+</section>
+
+
+<!-- 缩小日常标签、分类导航标题字体 -->
+<style>
+         .section-title {
+           font-size: 16px;
+         }
+       </style>
+
+
+<!-- 修改快速链接区按钮布局 -->
+<section class="quick-links-section">
+    <h2 class="section-title">日常标签</h2>
+    <div class="quick-links">
+        <a href="#" class="quick-link" id="quoteLibBtn">
+            <i class="fas fa-quote-left"></i>
+            <div class="quick-link-text">
+                <span class="quick-link-title">语录库</span>
+                <span class="quick-link-subtitle">名人名言</span>
+            </div>
+        </a>
+        <a href="#" class="quick-link" id="news60sBtn">
+            <i class="fas fa-globe-asia"></i>
+            <div class="quick-link-text">
+                <span class="quick-link-title">60秒读懂世界</span>
+                <span class="quick-link-subtitle">每日新闻</span>
+            </div>
+        </a>
+        <a href="#" class="quick-link" id="riddleBtn">
+            <i class="fas fa-puzzle-piece"></i>
+            <div class="quick-link-text">
+                <span class="quick-link-title">猜谜题</span>
+                <span class="quick-link-subtitle">智力挑战</span>
+            </div>
+        </a>
+        <a href="#" class="quick-link" id="chickenSoupBtn">
+            <i class="fas fa-coffee"></i>
+            <div class="quick-link-text">
+                <span class="quick-link-title">毒鸡汤</span>
+                <span class="quick-link-subtitle">心灵砒霜</span>
+            </div>
+        </a>
+    </div>
+</section>
+
+
+
+
+<!-- 分类导航区域 -->
+    <main class="main-content">
+    <h2 class="section-title">分类导航🔥</h2>
+        <div class="category-nav">
+            <!-- 一级分类 -->
+            <div class="primary-tabs">
+                <div class="primary-tab active" data-category="recommend">
+                    <i class="fas fa-star"></i>
+                    <span>推荐</span>
+                </div>
+                <div class="primary-tab" data-category="featured">
+                    <i class="fas fa-fire"></i>
+                    <span>特色导航</span>
+                </div>
+                <div class="primary-tab" data-category="entertainment">
+                    <i class="fas fa-film"></i>
+                    <span>影音阅漫</span>
+                </div>
+             
+<div class="primary-tab" data-category="games">
+    <i class="fas fa-gamepad"></i>
+    <span>游戏娱乐</span>
+</div>
+                <div class="primary-tab" data-category="education">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>学习教育</span>
+                </div>
+                <div class="primary-tab" data-category="apps">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>应用市场</span>
+                </div>
+                <div class="primary-tab" data-category="tools">
+                    <i class="fas fa-tools"></i>
+                    <span>趣味工具</span>
+                </div>
+                <div class="primary-tab" data-category="life">
+                    <i class="fas fa-utensils"></i>
+                    <span>日常生活</span>
+                </div>
+            </div>
+            
+            <!-- 二级分类区域由JavaScript动态生成 -->
+            <div id="secondary-tabs-container"></div>
+            
+            <!-- 内容区域 -->
+            <div class="content-area">
+                <div id="content-grid" class="content-grid">
+                    <!-- 内容将由JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    
+
+
+
+
+
+			<!-- 返回顶部按钮 -->
+			<div class="floating-buttons">
+				<button class="float-btn"
+						id="backToTop">
+					<img src="assets/images/icons/fhdb.png"
+						 alt="返回顶部">
+				</button>
+			</div>
+		</main>
+
+		<!-- 页脚 -->
+		<footer class="footer">
+			<div class="footer-content">
+				<div class="copyright">
+					<p>© 2023 星链导航 - 探索无限可能 | 本网站仅提供网址导航服务，不存储任何资源</p>
+					<p>免责声明：本站所有链接均来源于互联网，仅提供信息参考，不对链接内容负责</p>
+				</div>
+			</div>
+		</footer>
+
+		<!-- QQ信息设置模态框 -->
+		<div class="modal"
+			 id="qqModal">
+			<div class="modal-content">
+				<h3>设置QQ信息</h3>
+				<div class="form-group">
+					<label for="qqNumber">QQ号码：</label>
+					<input type="text"
+						   id="qqNumber"
+						   placeholder="请输入QQ号">
+				</div>
+				<div class="form-group">
+					<label for="nickname">昵称：</label>
+					<input type="text"
+						   id="nickname"
+						   placeholder="自定义昵称">
+				</div>
+				<div class="form-group">
+					<label for="signature">签名：</label>
+					<input type="text"
+						   id="signature"
+						   placeholder="个性签名">
+				</div>
+				<div class="modal-buttons">
+					<button id="saveQQInfo">保存</button>
+					<button id="cancelQQInfo">取消</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- 查找面板 -->
+		<div class="find-panel"
+			 id="findPanel">
+			<div class="find-header">
+				<span>页内查找</span>
+				<button class="close-find"
+						id="closeFindPanel">×</button>
+			</div>
+			<div class="find-body">
+				<input type="text"
+					   id="findInput"
+					   placeholder="输入要查找的内容...">
+				<div class="find-controls">
+					<button id="findPrev"
+							title="上一个">
+						<i class="fas fa-chevron-up"></i>
+					</button>
+					<span id="findStatus">0/0</span>
+					<button id="findNext"
+							title="下一个">
+						<i class="fas fa-chevron-down"></i>
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- 60秒读懂世界模态框 -->
+		<div class="modal"
+			 id="news60sModal">
+			<div class="modal-content news60s-content">
+			
+				<div class="modal-body">
+					<div class="loading-indicator">
+						<div class="spinner"></div>
+					</div>
+					<div class="error-retry">
+						<p>数据加载失败</p>
+						<button id="retryNews60s">重试</button>
+					</div>
+					<div id="news60sContent"></div>
+				</div>
+				<div class="modal-footer">
+					<div class="api-source-selector">
+						<select id="apiSource">
+							<option value="1">酷酷</option>
+							<option value="2">奈斯猫</option>
+							<option value="3">Angwik</option>
+						</select>
+					</div>
+					<button class="close-btn"
+							id="closeNews60sBtn">关闭</button>
+				</div>
+			</div>
+		</div>
+
+
+<div class="modal" id="riddleModal">
+    <div class="modal-content">
+        <div class="modal-body">
+            <div class="loading-indicator">
+                <div class="spinner"></div>
+            </div>
+            <div class="error-retry">
+                <p>数据加载失败</p>
+                <button id="retryRiddle">重试</button>
+            </div>
+            <div id="riddleContent">
+                <p id="riddleQuestion"></p>
+                <p id="riddleAnswer" style="display: none; color: green; margin-top: 10px;"></p>
+            </div>
+        </div>
+        <!-- 修改后的底部按钮区域 -->
+        <div class="modal-footer riddle-footer">
+            <div class="api-source-selector">
+                <select id="riddleApiSource" class="quote-source-selector">
+                    <option value="1">随机谜题</option>
+                    <option value="2">随机谜语</option>
+                    <option value="3">猜谜挑战</option>
+                </select>
+            </div>
+            <div class="riddle-buttons">
+                <button id="showAnswerBtn">查看谜底</button>
+                <button id="nextRiddleBtn">下一题</button>
+                <button class="close-btn" id="closeRiddleBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 语录库模态框 -->
+<div class="modal" id="quoteLibModal">
+    <div class="modal-content quote-lib-content">
+        <div class="modal-body">
+            <div class="loading-indicator">
+                <div class="spinner"></div>
+            </div>
+            <div class="error-retry">
+                <p>数据加载失败</p>
+                <button id="retryQuote">重试</button>
+            </div>
+            <div id="quoteContent">
+                <p id="quoteText">正在加载语录...</p>
+            </div>
+        </div>
+        <div class="modal-footer quote-lib-footer">
+            <div class="quote-lib-controls">
+                <select id="quoteApiSource" class="quote-source-selector">
+                    <option value="1">爱情语录</option>
+                    <option value="2">名人名言</option>
+                    <option value="3">爱情公寓</option>
+                </select>
+                <button id="refreshQuoteBtn" class="quote-refresh-btn" title="换一个">换一个</button>
+                <button class="quote-close-btn" id="closeQuoteBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- 毒鸡汤模态框 -->
+<div class="modal" id="chickenSoupModal">
+    <div class="modal-content">
+        <div class="modal-body">
+            <div class="loading-indicator">
+                <div class="spinner"></div>
+            </div>
+            <div class="error-retry">
+                <p>API请求失败</p>
+                <button id="retryChickenSoup">重试</button>
+            </div>
+            <div id="chickenSoupContent">
+                <p id="chickenSoupText">正在加载毒鸡汤...</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <div class="api-source-selector">
+                <select id="chickenSoupApiSource">
+                    <option value="1">酷酷毒鸡汤</option>
+                    <option value="2">布丁毒鸡汤</option>
+                    <option value="3">灵魂毒鸡汤</option>
+                </select>
+            </div>
+            <div class="chicken-soup-buttons">
+                <button id="refreshChickenSoupBtn">再来一碗</button>
+                <button id="closeChickenSoupBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 公告弹窗 -->
+<div class="modal" id="announcementModal">
+    <div class="modal-content">
+        <!-- 横向滚动通知 - 喇叭在框外左侧 -->
+        <div class="announcement-notice-container">
+            <div class="announcement-icon">
+                <i class="fas fa-volume-up"></i>
+            </div>
+            <div class="announcement-marquee-container">
+                <div class="announcement-marquee">
+                    <div class="marquee-content">
+                        <span>重要通告：请各位留意，最新消息即将发布！</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 公告主体内容 -->
+        <div id="announcementContent" class="announcement-scrollable">
+            <!-- 内容将通过JS动态加载 -->
+        </div>
+        
+        <!-- 底部区域 -->
+        <div class="announcement-footer">
+            <span id="announcementDate"></span>
+        </div>
+        
+        <!-- 确认按钮 -->
+        <div class="modal-footer">
+            <button class="confirm-btn" id="confirmAnnouncement">
+                <span>公告已阅</span>
+                <i class="fas fa-check"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<!-- 关于网站模态框 -->
+<div class="about-modal-overlay" id="aboutModalOverlay">
+    <div class="about-modal">
+        <div class="about-card">
+            <!-- 顶部区域：基本信息（左侧） -->
+            <div class="about-top">
+                <div class="about-basic-info">
+                    <h4 class="about-name">星链导航</h4>
+                    <div class="about-details">
+                        <p><i class="fas fa-user"></i> 开发者：栖木</p>
+                        <p><i class="fas fa-code-branch"></i> 版本：v1.6.8</p>
+                        <p><i class="fas fa-calendar-alt"></i> 更新日期：2025年8月19日</p>
+                    </div>
+                </div>
+                <!-- Logo图标（右侧） -->
+                <div class="about-logo-container">
+                    <img src="assets/images/logo.png" alt="星链导航Logo" class="about-logo-img">
+                </div>
+            </div>
+
+            <!-- 中部：简介和免责声明 -->
+            <div class="about-middle">
+                <div class="about-description">
+                    <div class="icon-container">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <p>星链导航是一个现代化、个性化的网址导航平台，致力于为用户提供高效便捷的上网体验。我们精选优质网络资源，智能分类整理，帮助您快速找到所需内容。</p>
+                </div>
+                <div class="about-disclaimer">
+                    <div class="icon-container">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <p>免责声明：本站仅提供网址导航服务，不存储任何资源，对链接内容不承担任何责任。所有商标和版权属于其各自所有者。</p>
+                </div>
+            </div>
+
+            <!-- 底部：按钮区域 -->
+            <div class="about-bottom">
+                <a href="#" class="about-btn about-qq-btn" title="QQ联系">
+                    <i class="fab fa-qq"></i>
+                </a>
+                <a href="#" class="about-btn about-wechat-btn" title="公众号">
+                    <i class="fab fa-weixin"></i>
+<a href="#" class="about-btn about-sponsor-btn" title="发电支持" id="sponsorBtn">
+    <i class="fas fa-heart"></i>
+</a>
+                <a href="smkj.html" class="about-btn about-space-btn" title="须弥空间">
+                    <i class="fas fa-cube"></i>
+                </a>
+            </div>
+            
+            <!-- 底部关闭按钮 -->
+            <div class="about-modal-close-bottom">
+                <button class="about-close-bottom-btn" id="closeAboutModal">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- 在index.html中更新收款弹窗结构 -->
+<div class="donation-modal" id="donationModal">
+  <div class="donation-modal-content">
+    <div class="donation-header">
+      <h3>感谢你的支持</h3>
+      <span class="donation-close" id="donationClose">&times;</span>
+    </div>
+    
+    <!-- 支付方式标签 - 修改为水平布局 -->
+    <div class="donation-tabs">
+      <div class="donation-tab active" data-tab="wechat">
+        <i class="fab fa-weixin"></i>
+        
+      </div>
+      <div class="donation-tab" data-tab="alipay">
+        <i class="fab fa-alipay"></i>
+        
+      </div>
+      <div class="donation-tab" data-tab="qqpay">
+        <i class="fab fa-qq"></i>
+        
+      </div>
+    </div>
+    
+    <div class="donation-body">
+      <!-- 微信支付 -->
+      <div class="qrcode-container active" id="wechatQr">
+        <img src="assets/images/wx.png" alt="微信收款码" class="donation-qrcode">
+      </div>
+      
+      <!-- 支付宝 -->
+      <div class="qrcode-container" id="alipayQr">
+        <img src="assets/images/zfb.png" alt="支付宝收款码" class="donation-qrcode">
+      </div>
+      
+      <!-- QQ支付 -->
+      <div class="qrcode-container" id="qqpayQr">
+        <img src="assets/images/qq.png" alt="QQ支付收款码" class="donation-qrcode">
+      </div>
+      
+      <div class="donation-message">
+        <p>你的支持是我持续创作和维护的<span class="highlight">动力</span>！</p>
+        <p>每一份支持都将用于服务器费用和功能开发</p>
+        <p>感谢你陪伴<span class="highlight">星链导航</span>一起成长 ❤️</p>
+      </div>
+    </div>
+    
+    <div class="donation-footer">
+      <p class="donation-note">支持金额任意，感谢你的每一份心意</p>
+    </div>
+  </div>
+</div>
+
+
+
+		<!-- JavaScript文件 -->
+		<!-- 先加载组件脚本 -->
+		    <script src="assets/data/data.js"></script>
+    <script src="assets/js/script.js"></script>
+<script src="assets/js/components/navbar.js"></script>
+<script src="assets/js/components/sidebar.js"></script>
+<script src="assets/js/components/content.js"></script>
+<script src="assets/js/components/footer.js"></script>
+<script src="assets/js/components/wallpaper.js"></script>
+
+<!-- 最后加载主入口 -->
+<script src="assets/js/main.js"></script>
+	</body>
+</html>

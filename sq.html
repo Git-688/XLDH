@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义书签</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        :root {
+            --primary: #4361ee;
+            --secondary: #f8f9fa;
+            --text: #2d3436;
+            --text-light: #636e72;
+            --card-bg: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.05);
+            --shadow-hover: rgba(0, 0, 0, 0.1);
+            --border: #e0e0e0;
+            --danger: #e74c3c;
+            --danger-light: #ffeeee;
+        }
+        
+        body {
+            background-color: #fbfbfb;
+            color: var(--text);
+            line-height: 1.6;
+            padding: 0;
+            min-height: 100vh;
+            transition: background 0.5s ease;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        
+        .overlay {
+            background-color: rgba(255, 255, 255, 0.85);
+            min-height: 100vh;
+            width: 100%;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+        }
+        
+        .header-left {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        h1 {
+            font-weight: 700;
+            font-size: 2rem;
+            color: var(--text);
+            margin-bottom: 0.2rem;
+        }
+        
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        
+        .header-right {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .icon-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .icon-btn:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+        
+        /* 分类选项卡 */
+        .category-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .category-tab {
+            padding: 0.6rem 1.2rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border);
+            background: white;
+        }
+        
+        .category-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* 链接卡片 - 高度调整为80px */
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .link-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            height: 80px; /* 高度调整为80px */
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .link-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 12px var(--shadow-hover);
+        }
+        
+        .card-content {
+            padding: 0.8rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .card-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-category {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            color: white;
+            white-space: nowrap;
+            background: var(--primary);
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 0.3rem;
+        }
+        
+        .card-actions button {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            font-size: 0.7rem;
+            justify-content: center;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .edit-btn {
+            background: transparent;
+            color: var(--text-light);
+            border: 1px solid var(--border);
+        }
+        
+        .edit-btn:hover {
+            background: var(--secondary);
+            color: var(--text);
+        }
+        
+        .delete-btn {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger-light);
+        }
+        
+        .delete-btn:hover {
+            background: var(--danger-light);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-light);
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        .empty-state p {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* 悬浮按钮 */
+        .floating-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            box-shadow: 0 3px 10px rgba(67, 97, 238, 0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        
+        .floating-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 14px rgba(67, 97, 238, 0.4);
+        }
+        
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+        
+        .modal-title {
+            font-size: 1.3rem;
+            margin-bottom: 1.2rem;
+            color: var(--text);
+        }
+        
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.85rem;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            background: var(--secondary);
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+        
+        .submit-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .submit-btn:hover {
+            opacity: 0.9;
+        }
+        
+        /* 设置模态框 */
+        .bg-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.8rem;
+            margin: 1.2rem 0;
+        }
+        
+        .custom-bg-input {
+            grid-column: span 1;
+        }
+        
+        /* 确认删除模态框 */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .confirm-content {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+        
+        .confirm-icon {
+            font-size: 3rem;
+            color: var(--danger);
+            margin-bottom: 1rem;
+        }
+        
+        .confirm-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+        
+        .confirm-message {
+            margin-bottom: 1.5rem;
+            color: var(--text-light);
+        }
+        
+        .confirm-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+        
+        .confirm-btn {
+            padding: 0.7rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 100px;
+        }
+        
+        .confirm-cancel {
+            background: var(--secondary);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        
+        .confirm-cancel:hover {
+            background: #e9ecef;
+        }
+        
+        .confirm-delete {
+            background: var(--danger);
+            color: white;
+            border: none;
+        }
+        
+        .confirm-delete:hover {
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 767px) {
+            .container {
+                padding: 1.2rem;
+            }
+            
+            header {
+                margin-bottom: 1.5rem;
+                flex-direction: column;
+                gap: 0.8rem;
+                align-items: flex-start;
+            }
+            
+            .header-right {
+                align-self: flex-end;
+                margin-top: -60px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .category-tabs {
+                gap: 0.4rem;
+            }
+            
+            .category-tab {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+            
+            .links-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 0.8rem;
+            }
+            
+            .link-card {
+                height: 80px;
+            }
+            
+            .card-content {
+                padding: 0.6rem;
+            }
+            
+            .card-title {
+                font-size: 0.85rem;
+            }
+            
+            .confirm-buttons {
+                flex-direction: column;
+            }
+            
+            .confirm-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay">
+        <div class="container">
+            <header>
+                <div class="header-left">
+                    <h1>自定义书签</h1>
+                    <p class="subtitle">数据存储本地</p>
+                </div>
+                <div class="header-right">
+                    <button class="icon-btn" id="settings-btn" title="设置背景">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- 分类选项卡 -->
+            <div class="category-tabs" id="category-tabs">
+                <button class="category-tab active" data-category="all">全部</button>
+                <!-- 自定义分类将通过JavaScript动态添加 -->
+            </div>
+            
+            <!-- 链接容器 -->
+            <div class="links-grid" id="links-grid">
+                <!-- 链接卡片将通过JavaScript动态添加 -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加链接按钮 -->
+    <button class="floating-btn" id="add-link-btn">
+        <i class="fas fa-plus"></i>
+    </button>
+    
+    <!-- 添加链接模态框 -->
+    <div class="modal" id="add-link-modal">
+        <div class="modal-content">
+            <button class="close-modal" id="close-add-modal">&times;</button>
+            <h2 class="modal-title" id="modal-title">添加新链接</h2>
+            <form id="link-form">
+                <div class="input-group">
+                    <label for="title">网站名称</label>
+                    <input type="text" id="title" placeholder="例如：谷歌搜索" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="url">网站地址</label>
+                    <input type="url" id="url" placeholder="https://example.com" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="category">分类名称</label>
+                    <input type="text" id="category" placeholder="输入自定义分类名称" required>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submit-btn">
+                    <i class="fas fa-plus"></i> 添加链接
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 设置模态框 -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <button class="close-modal" id="close-settings-modal">&times;</button>
+            <h2 class="modal-title">设置背景</h2>
+            
+            <div class="bg-options">
+                <div class="input-group custom-bg-input">
+                    <label for="custom-bg">上传本地背景图片 (PNG)</label>
+                    <input type="file" id="custom-bg" accept=".png">
+                    <button type="button" class="submit-btn" id="apply-custom-bg" style="margin-top: 10px;">
+                        <i class="fas fa-upload"></i> 设置背景
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 确认删除模态框 -->
+    <div class="confirm-modal" id="confirm-modal">
+        <div class="confirm-content">
+            <div class="confirm-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h2 class="confirm-title">确认删除</h2>
+            <p class="confirm-message" id="confirm-message">确定要删除这个书签吗？此操作不可撤销。</p>
+            <div class="confirm-buttons">
+                <button class="confirm-btn confirm-cancel" id="confirm-cancel">取消</button>
+                <button class="confirm-btn confirm-delete" id="confirm-delete">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const addLinkBtn = document.getElementById('add-link-btn');
+            const addLinkModal = document.getElementById('add-link-modal');
+            const closeAddModal = document.getElementById('close-add-modal');
+            const settingsBtn = document.getElementById('settings-btn');
+            const settingsModal = document.getElementById('settings-modal');
+            const closeSettingsModal = document.getElementById('close-settings-modal');
+            const linkForm = document.getElementById('link-form');
+            const linksGrid = document.getElementById('links-grid');
+            const categoryTabs = document.getElementById('category-tabs');
+            const applyCustomBg = document.getElementById('apply-custom-bg');
+            const customBgInput = document.getElementById('custom-bg');
+            const modalTitle = document.getElementById('modal-title');
+            const submitBtn = document.getElementById('submit-btn');
+            const confirmModal = document.getElementById('confirm-modal');
+            const confirmMessage = document.getElementById('confirm-message');
+            const confirmCancel = document.getElementById('confirm-cancel');
+            const confirmDelete = document.getElementById('confirm-delete');
+            
+            // 从localStorage加载链接或初始化空数组
+            let links = JSON.parse(localStorage.getItem('bookmarkLinks')) || [];
+            
+            // 当前选中的分类
+            let currentCategory = 'all';
+            
+            // 当前编辑的链接ID
+            let editingId = null;
+            
+            // 当前要删除的链接ID
+            let deletingId = null;
+            
+            // 从localStorage加载背景设置
+            let bgSetting = localStorage.getItem('backgroundSetting') || 'default';
+            applyBackground(bgSetting);
+            
+            // 渲染所有链接和分类
+            renderCategories();
+            renderLinks();
+            
+            // 打开添加链接模态框
+            addLinkBtn.addEventListener('click', function() {
+                editingId = null;
+                modalTitle.textContent = '添加新链接';
+                submitBtn.innerHTML = '<i class="fas fa-plus"></i> 添加链接';
+                linkForm.reset();
+                addLinkModal.style.display = 'flex';
+            });
+            
+            // 关闭添加链接模态框
+            closeAddModal.addEventListener('click', function() {
+                addLinkModal.style.display = 'none';
+            });
+            
+            // 打开设置模态框
+            settingsBtn.addEventListener('click', function() {
+                settingsModal.style.display = 'flex';
+            });
+            
+            // 关闭设置模态框
+            closeSettingsModal.addEventListener('click', function() {
+                settingsModal.style.display = 'none';
+            });
+            
+            // 关闭确认删除模态框
+            confirmCancel.addEventListener('click', function() {
+                confirmModal.style.display = 'none';
+            });
+            
+            // 确认删除
+            confirmDelete.addEventListener('click', function() {
+                if (deletingId) {
+                    deleteLink(deletingId);
+                    confirmModal.style.display = 'none';
+                    deletingId = null;
+                }
+            });
+            
+            // 点击模态框外部关闭
+            window.addEventListener('click', function(e) {
+                if (e.target === addLinkModal) {
+                    addLinkModal.style.display = 'none';
+                }
+                if (e.target === settingsModal) {
+                    settingsModal.style.display = 'none';
+                }
+                if (e.target === confirmModal) {
+                    confirmModal.style.display = 'none';
+                }
+            });
+            
+            // 分类选项卡点击事件
+            categoryTabs.addEventListener('click', function(e) {
+                if (e.target.classList.contains('category-tab')) {
+                    // 移除所有active类
+                    document.querySelectorAll('.category-tab').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    
+                    // 添加active类到当前选项卡
+                    e.target.classList.add('active');
+                    
+                    // 更新当前分类并重新渲染
+                    currentCategory = e.target.getAttribute('data-category');
+                    renderLinks();
+                }
+            });
+            
+            // 表单提交事件
+            linkForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const title = document.getElementById('title').value;
+                const url = document.getElementById('url').value;
+                const category = document.getElementById('category').value;
+                
+                // 添加http://前缀如果用户没有输入
+                let finalUrl = url;
+                if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+                    finalUrl = 'https://' + finalUrl;
+                }
+                
+                if (editingId) {
+                    // 编辑现有链接
+                    const index = links.findIndex(link => link.id === editingId);
+                    if (index !== -1) {
+                        links[index] = {
+                            id: editingId,
+                            title: title,
+                            url: finalUrl,
+                            category: category
+                        };
+                    }
+                } else {
+                    // 创建新链接对象
+                    const newLink = {
+                        id: Date.now(), // 使用时间戳作为唯一ID
+                        title: title,
+                        url: finalUrl,
+                        category: category
+                    };
+                    
+                    // 添加到数组
+                    links.push(newLink);
+                }
+                
+                // 保存并重新渲染
+                saveLinks();
+                renderCategories();
+                renderLinks();
+                
+                // 重置表单并关闭模态框
+                linkForm.reset();
+                addLinkModal.style.display = 'none';
+                editingId = null;
+            });
+            
+            // 应用自定义背景
+            applyCustomBg.addEventListener('click', function() {
+                const file = customBgInput.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        applyBackground(e.target.result);
+                        localStorage.setItem('backgroundSetting', e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // 保存链接到localStorage
+            function saveLinks() {
+                localStorage.setItem('bookmarkLinks', JSON.stringify(links));
+            }
+            
+            // 应用背景
+            function applyBackground(bg) {
+                if (bg === 'default') {
+                    document.body.style.backgroundImage = 'none';
+                    document.body.style.backgroundColor = '#fbfbfb';
+                } else {
+                    document.body.style.backgroundImage = `url(${bg})`;
+                }
+            }
+            
+            // 渲染分类选项卡
+            function renderCategories() {
+                // 保留"全部"选项卡
+                const allTab = document.querySelector('[data-category="all"]');
+                categoryTabs.innerHTML = '';
+                categoryTabs.appendChild(allTab);
+                
+                // 获取所有分类
+                const categories = [...new Set(links.map(link => link.category))];
+                
+                // 创建分类选项卡
+                categories.forEach(category => {
+                    const tab = document.createElement('button');
+                    tab.className = 'category-tab';
+                    tab.setAttribute('data-category', category);
+                    tab.textContent = category;
+                    categoryTabs.appendChild(tab);
+                });
+                
+                // 添加点击事件
+                document.querySelectorAll('.category-tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        // 移除所有active类
+                        document.querySelectorAll('.category-tab').forEach(t => {
+                            t.classList.remove('active');
+                        });
+                        
+                        // 添加active类到当前选项卡
+                        this.classList.add('active');
+                        
+                        // 更新当前分类并重新渲染
+                        currentCategory = this.getAttribute('data-category');
+                        renderLinks();
+                    });
+                });
+            }
+            
+            // 渲染所有链接
+            function renderLinks() {
+                // 清空容器
+                linksGrid.innerHTML = '';
+                
+                // 过滤当前分类的链接
+                let filteredLinks = links;
+                if (currentCategory !== 'all') {
+                    filteredLinks = links.filter(link => link.category === currentCategory);
+                }
+                
+                if (filteredLinks.length === 0) {
+                    let message = '还没有收藏链接，点击右下角按钮添加一些吧！';
+                    
+                    if (currentCategory !== 'all') {
+                        message = '此分类还没有收藏链接';
+                    }
+                    
+                    linksGrid.innerHTML = `
+                        <div class="empty-state">
+                            <i class="far fa-folder-open"></i>
+                            <p>${message}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 创建并添加链接卡片
+                filteredLinks.forEach(link => {
+                    const linkCard = document.createElement('div');
+                    linkCard.className = 'link-card';
+                    
+                    linkCard.innerHTML = `
+                        <div class="card-content">
+                            <div class="card-title">${link.title}</div>
+                            <div class="card-footer">
+                                <span class="card-category">${link.category}</span>
+                                <div class="card-actions">
+                                    <button class="edit-btn" data-id="${link.id}" title="编辑"><i class="fas fa-edit"></i></button>
+                                    <button class="delete-btn" data-id="${link.id}" title="删除"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 添加点击打开链接的功能
+                    linkCard.addEventListener('click', function(e) {
+                        if (!e.target.closest('.card-actions')) {
+                            window.open(link.url, '_blank');
+                        }
+                    });
+                    
+                    linksGrid.appendChild(linkCard);
+                });
+                
+                // 添加删除事件监听器
+                document.querySelectorAll('.delete-btn').forEach(button => {
+                    button.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const id = parseInt(this.getAttribute('data-id'));
+                        showDeleteConfirm(id);
+                    });
+                });
+                
+                // 添加编辑事件监听器
+                document.querySelectorAll('.edit-btn').forEach(button => {
+                    button.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const id = parseInt(this.getAttribute('data-id'));
+                        editLink(id);
+                    });
+                });
+            }
+            
+            // 显示删除确认对话框
+            function showDeleteConfirm(id) {
+                const link = links.find(link => link.id === id);
+                if (!link) return;
+                
+                // 设置确认消息
+                confirmMessage.textContent = `确定要删除「${link.title}」吗？此操作不可撤销。`;
+                
+                // 保存要删除的链接ID
+                deletingId = id;
+                
+                // 显示确认模态框
+                confirmModal.style.display = 'flex';
+            }
+            
+            // 删除链接
+            function deleteLink(id) {
+                links = links.filter(link => link.id !== id);
+                saveLinks();
+                renderCategories();
+                renderLinks();
+            }
+            
+            // 编辑链接
+            function editLink(id) {
+                const link = links.find(link => link.id === id);
+                if (!link) return;
+                
+                // 填充表单
+                document.getElementById('title').value = link.title;
+                document.getElementById('url').value = link.url;
+                document.getElementById('category').value = link.category;
+                
+                // 设置编辑模式
+                editingId = id;
+                modalTitle.textContent = '编辑链接';
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> 保存更改';
+                
+                // 打开模态框
+                addLinkModal.style.display = 'flex';
+                
+                // 滚动到顶部
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    </script>
+</body>
+</html>
