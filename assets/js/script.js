@@ -167,15 +167,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-(function() {
-  var hm = document.createElement("script");
-  hm.src = "https://hm.baidu.com/hm.js?4c02e8e2108ed339852cf66974b5ff27";
-  var s = document.getElementsByTagName("script")[0]; 
-  s.parentNode.insertBefore(hm, s);
-})();
-
-
-
 
 
 
