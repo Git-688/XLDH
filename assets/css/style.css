@@ -1,0 +1,346 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #4a6cf7;
+    --secondary-color: #6c5ce7;
+    --accent-color: #fd79a8;
+    --text-color: #2d3436;
+    --light-text: #f5f6fa;
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    --transition: all 0.3s ease;
+    
+    /* 图标背景颜色变量 */
+    --icon-bg-color: #6c5ce7;
+    --icon-image-bg-color: #f0f0f0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    padding: 20px;
+    max-width: 1280px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.header {
+    text-align: center;
+    margin: 20px 0 30px;
+}
+
+.logo {
+    font-size: 2.2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 8px;
+}
+
+.tagline {
+    color: #64748b;
+    font-size: 1rem;
+}
+
+/* 分类导航容器 */
+.category-nav {
+    background: white;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+/* 一级分类 */
+.primary-tabs {
+    display: flex;
+    background: white;
+    padding: 0 15px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.primary-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.primary-tab {
+    padding: 14px 18px;
+    color: #64748b;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 3px solid transparent;
+    font-size: 0.95rem;
+}
+
+.primary-tab.active {
+    color: var(--primary-color);
+    border-bottom: 3px solid var(--primary-color);
+}
+
+.primary-tab:hover {
+    color: var(--primary-color);
+    background: rgba(74, 108, 247, 0.05);
+}
+
+/* 二级分类 - 高度缩小一半 */
+.secondary-tabs {
+    display: flex;
+    padding: 0 15px;
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+    scrollbar-width: none;
+    height: 40px; /* 缩小高度 */
+}
+
+.secondary-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.secondary-tab {
+    padding: 8px 16px; /* 减小内边距 */
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    color: #64748b;
+    font-weight: 500;
+    position: relative;
+    font-size: 0.85rem; /* 减小字体 */
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.secondary-tab.active {
+    color: var(--primary-color);
+}
+
+.secondary-tab.active::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--primary-color);
+    border-radius: 3px 3px 0 0;
+}
+
+.secondary-tab:hover {
+    color: var(--primary-color);
+}
+
+/* 内容区域 */
+.content-area {
+    padding: 20px;
+    min-height: 300px;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* 缩小卡片最小宽度 */
+    gap: 12px; /* 缩小间隙 */
+}
+
+/* 三级链接卡片 - 缩小一半尺寸 */
+.site-card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 10px; /* 减小内边距 */
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    height: 60px; /* 固定高度，确保一致性 */
+}
+
+.site-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    border-color: var(--secondary-color);
+}
+
+/* 网站卡片图标样式 */
+.site-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--icon-bg-color); /* 使用CSS变量 */
+    color: white;
+    font-size: 1rem;
+    margin-right: 10px;
+    flex-shrink: 0;
+    overflow: hidden; /* 确保图片不会溢出 */
+}
+
+/* 文本图标样式 */
+.site-icon-text {
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+/* 图片图标样式 */
+.site-icon-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 确保图片填充整个图标区域 */
+    background: var(--icon-image-bg-color); /* 使用CSS变量 */
+}
+
+.site-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.site-info h3 {
+    font-size: 0.85rem; /* 缩小标题字体 */
+    margin-bottom: 3px;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.site-info p {
+    font-size: 0.75rem; /* 缩小描述字体 */
+    color: #64748b;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* 无内容提示 */
+.no-content {
+    text-align: center;
+    padding: 40px 20px;
+    color: #94a3b8;
+    font-style: italic;
+    grid-column: 1 / -1;
+}
+
+.no-content i {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    display: block;
+    color: #cbd5e1;
+}
+
+/* 响应式设计 - 移动端三列 */
+@media (max-width: 768px) {
+    .content-grid {
+        grid-template-columns: repeat(3, 1fr); /* 移动端固定三列 */
+        gap: 10px;
+    }
+    
+    .primary-tab {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .primary-tab i {
+        font-size: 0.9rem;
+    }
+    
+    .primary-tab span {
+        display: none; /* 小屏幕隐藏文字 */
+    }
+    
+    .secondary-tabs {
+        height: 36px;
+        padding: 0 10px;
+    }
+    
+    .secondary-tab {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .site-card {
+        padding: 8px;
+        height: 54px;
+    }
+    
+    .site-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
+        margin-right: 8px;
+    }
+    
+    .site-info h3 {
+        font-size: 0.8rem;
+    }
+    
+    .site-info p {
+        display: none; /* 小屏幕隐藏描述 */
+    }
+    
+    .content-area {
+        padding: 15px;
+    }
+}
+
+/* 超小屏幕调整 */
+@media (max-width: 480px) {
+    .content-grid {
+        grid-template-columns: repeat(2, 1fr); /* 超小屏幕两列 */
+    }
+    
+    .primary-tab {
+        padding: 8px 10px;
+    }
+    
+    .site-card {
+        height: 50px;
+    }
+    
+    .site-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+    }
+    
+    .site-info h3 {
+        font-size: 0.75rem;
+    }
+}
+
+/* 动画效果 */
+.fade-in {
+    animation: fadeIn 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+

@@ -1,0 +1,30 @@
+@supports (padding: max(0px)) {
+    body,
+    .sidebar {
+        padding-left: max(15px, env(safe-area-inset-left));
+        padding-right: max(15px, env(safe-area-inset-right));
+    }
+    
+    body {
+        padding-left: max(15px, env(safe-area-inset-left));
+        padding-right: max(15px, env(safe-area-inset-right));
+    }
+    
+    .navbar {
+        height: calc(var(--navbar-height) + env(safe-area-inset-top));
+        padding-top: max(0px, env(safe-area-inset-top));
+    }
+    
+    .content {
+        padding-top: calc(var(--navbar-height) + env(safe-area-inset-top));
+    }
+    
+    .sidebar {
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+        height: calc(100vh - var(--navbar-height) - clamp(60px, 10vw, 70px) - env(safe-area-inset-top));
+    }
+    
+    .floating-buttons {
+        bottom: max(var(--spacing-sm), env(safe-area-inset-bottom));
+    }
+}

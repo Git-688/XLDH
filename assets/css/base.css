@@ -1,0 +1,189 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #6c5ce7;
+    --secondary-color: #a29bfe;
+    --accent-color: #fd79a8;
+    --text-color: #2d3436;
+    --light-text: #f5f6fa;
+    --bg-color: #ffffff;
+    --card-bg: #f8f9fa;
+    --border-color: #dfe6e9;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --transition: all 0.3s ease;
+    
+    --font-size-base: clamp(1rem, 1.5vw, 1.1rem);
+    --font-size-h1: clamp(1.8rem, 3.5vw, 2.5rem);
+    --font-size-h2: clamp(1.5rem, 2.5vw, 2rem);
+    --font-size-h3: clamp(1.2rem, 2vw, 1.5rem);
+    --font-size-small: clamp(0.8rem, 1.2vw, 0.9rem);
+    
+    --spacing-xs: clamp(0.25rem, 0.5vw, 0.375rem);
+    --spacing-sm: clamp(0.5rem, 0.75vw, 0.625rem);
+    --spacing-md: clamp(0.75rem, 1vw, 1rem);
+    --spacing-lg: clamp(1rem, 1.5vw, 1.5rem);
+    
+    --mobile: 480px;
+    --tablet: 768px;
+    --desktop: 1024px;
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 15px;
+    --radius-xl: 50px;
+    
+    --z-index-dropdown: 1001;
+    --z-index-selector: 1002;
+    --navbar-height: clamp(60px, 10vw, 70px);
+}
+
+body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    overflow-x: hidden;
+    padding-top: 20px;
+}
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: var(--bg-color);
+    transition: 
+        background 0.3s ease, 
+        box-shadow 0.3s ease;
+}
+
+.navbar.scrolled {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+a {
+    text-decoration: none;
+    color: var(--primary-color);
+    transition: var(--transition);
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-sm);
+}
+
+.section-title {
+    font-size: var(--font-size-h2);
+    margin-bottom: var(--spacing-sm);
+    position: relative;
+    padding-left: var(--spacing-sm);
+}
+
+.section-title::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 70%;
+    width: 4px;
+    background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+    border-radius: 2px;
+}
+
+button, a, .clickable {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.content {
+    padding-top: var(--navbar-height);
+    padding-bottom: var(--spacing-sm);
+    padding-left: var(--spacing-sm);
+    padding-right: var(--spacing-sm);
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.wallpaper-section {
+    margin-top: 0;
+    margin-bottom: var(--spacing-sm);
+}
+
+.search-section {
+    margin-top: 0;
+    margin-bottom: var(--spacing-sm);
+}
+
+.greeting-section {
+    margin-bottom: var(--spacing-sm);
+}
+
+.quick-links-section {
+    margin-bottom: var(--spacing-sm);
+}
+
+.category-section {
+    margin-bottom: var(--spacing-sm);
+}
+
+@media (max-width: 768px) {
+    .content {
+        padding-top: var(--spacing-sm);
+        padding-bottom: var(--spacing-sm);
+        padding-left: var(--spacing-xs);
+        padding-right: var(--spacing-xs);
+    }
+    
+    .wallpaper-section,
+    .search-section,
+    .greeting-section,
+    .quick-links-section,
+    .category-section {
+        margin-bottom: var(--spacing-sm);
+    }
+}
+
+@media (max-width: 480px) {
+    .content {
+        padding-top: var(--spacing-xs);
+        padding-bottom: var(--spacing-xs);
+    }
+    
+    .wallpaper-section,
+    .search-section,
+    .greeting-section,
+    .quick-links-section,
+    .category-section {
+        margin-bottom: var(--spacing-xs);
+    }
+}
+
+html {
+    scroll-behavior: smooth;
+}
