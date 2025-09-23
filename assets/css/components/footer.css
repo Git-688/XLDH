@@ -1,0 +1,13 @@
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-sm);
+}
+
+.copyright {
+    text-align: center;
+    font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+    opacity: 0.8;
+    line-height: 1.7;
+    padding: var(--spacing-sm) 0;
+}

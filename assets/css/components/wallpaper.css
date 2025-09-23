@@ -1,0 +1,213 @@
+/* wallpaper.css - 完整优化版 */
+.wallpaper-section {
+    position: relative;
+    height: clamp(220px, 35vh, 400px);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: var(--spacing-sm);
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    transition: background-image 0.5s ease-in-out;
+}
+
+.wallpaper-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-color: #6a11cb;
+    background-image: url('../images/404bj.gif');
+    transition: opacity 0.5s ease-in-out;
+    z-index: 1;
+}
+
+.wallpaper-overlay {
+    display: none; /* 完全移除遮罩层 */
+}
+
+.wallpaper-title-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    z-index: 3;
+    padding: 4px 8px;
+    padding-left: 15px;
+    padding-bottom: 10px;
+    width: 100%;
+}
+
+#wallpaperTitle {
+    font-size: clamp(0.9rem, 2.2vw, 1.2rem);
+    font-weight: 600;
+    color: white;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* 加深阴影 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wallpaper-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+    z-index: 4;
+    background: transparent !important;
+    border-radius: 15px;
+    padding: 3px 8px;
+    box-shadow: none;
+    height: 24px;
+    align-items: center;
+    min-width: 80px;
+}
+
+.source-btn {
+    background: transparent !important;
+    border: none;
+    color: #333;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    opacity: 0.8;
+    transition: 
+        all 0.3s ease,
+        width 0.3s ease,
+        height 0.3s ease;
+    border-radius: 50%;
+    position: relative;
+}
+
+.source-btn i {
+    display: inline-block;
+    font-size: 14px;
+    color: #333;
+    transition: all 0.3s ease;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5); /* 添加文字阴影 */
+}
+
+.source-btn:hover i,
+.source-btn.active i {
+    color: white;
+}
+
+.source-btn:hover {
+    opacity: 1;
+    transform: scale(1.2);
+    width: 22px;
+    height: 22px;
+}
+
+.source-btn.active {
+    opacity: 1;
+    color: #FFFFFF;
+    transform: scale(1.2);
+    width: 22px;
+    height: 22px;
+}
+
+@media (max-width: 768px) {
+    .wallpaper-controls {
+        top: 8px;
+        right: 8px;
+        padding: 2px 6px;
+        gap: 6px;
+        height: 20px;
+        border-radius: 12px;
+        min-width: 70px;
+    }
+    
+    .source-btn {
+        width: 16px;
+        height: 16px;
+        font-size: 10px;
+    }
+    
+    .source-btn:hover,
+    .source-btn.active {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+.loading-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    display: none;
+}
+
+/* 主要修改点：优化壁纸加载指示器 */
+.spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.error-retry {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    display: none;
+}
+
+.error-retry button {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    transition: background 0.3s;
+}
+
+.error-retry button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+    .wallpaper-section {
+        height: clamp(180px, 25vh, 300px);
+    }
+    
+    .wallpaper-title-container {
+        padding-left: 10px;
+        padding-bottom: 8px;
+    }
+    
+    #wallpaperTitle {
+        font-size: clamp(0.8rem, 1.8vw, 1.0rem);
+    }
+    
+    .wallpaper-controls {
+        top: 8px;
+        gap: 12px;
+        padding: 5px 10px;
+    }
+    
+    .source-btn {
+        width: 22px;
+        height: 22px;
+        font-size: 14px;
+    }
+}

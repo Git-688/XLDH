@@ -1,0 +1,372 @@
+.sidebar {
+    position: fixed;
+    /* 调整顶部位置 */
+    top: var(--navbar-height);
+    left: -300px;
+    width: clamp(250px, 80vw, 280px);
+    /* 调整高度计算 */
+    height: calc(100vh - var(--navbar-height) - clamp(60px, 10vw, 70px));
+    background: var(--bg-color);
+    box-shadow: var(--shadow);
+    z-index: 999;
+    transition: var(--transition);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar.active {
+    left: 0;
+}
+
+/* 修改侧边栏顶部区域 */
+.sidebar-top {
+    padding: 10px var(--spacing-sm) 15px; /* 增加顶部内边距 */
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* 调整用户信息区域下移 */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    margin-top: 10px; /* 添加顶部外边距 */
+}
+
+.qq-avatar {
+    width: clamp(50px, 10vw, 60px);
+    height: clamp(50px, 10vw, 60px);
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid var(--primary-color);
+}
+
+.user-info h3 {
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    margin-bottom: 5px;
+}
+
+.user-info p {
+    font-size: clamp(0.75rem, 1.5vw, 0.85rem);
+    color: var(--secondary-color);
+}
+
+.daily-quote.compact {
+    background: rgba(107, 92, 231, 0.08);
+    padding: 8px 10px;
+    border-radius: 6px;
+    border-left: 2px solid var(--primary-color);
+    font-size: 0.85em;
+}
+
+.daily-quote.compact .quote-text {
+    font-style: italic;
+    margin-bottom: 3px;
+    font-size: clamp(0.8rem, 1.6vw, 0.9rem);
+}
+
+.daily-quote.compact .quote-author {
+    text-align: right;
+    font-size: clamp(0.7rem, 1.3vw, 0.75rem);
+    color: var(--secondary-color);
+}
+
+.sidebar-middle {
+    padding: var(--spacing-sm);
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* 侧边栏分类折叠动画优化 */
+.category-fold {
+    margin-bottom: 15px;
+    border-radius: 8px;
+    background: var(--card-bg);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    cursor: pointer;
+    background: rgba(107, 92, 231, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.category-header:hover {
+    background: rgba(107, 92, 231, 0.12);
+    transform: translateY(-1px);
+}
+
+.category-header:active {
+    transform: translateY(0);
+}
+
+.category-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 15px;
+    right: 15px;
+    height: 1px;
+    background: linear-gradient(to right, 
+        rgba(107, 92, 231, 0.3) 0%, 
+        rgba(107, 92, 231, 0.1) 50%, 
+        rgba(107, 92, 231, 0.3) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.category-header.active::after {
+    opacity: 1;
+}
+
+.category-header i {
+    width: 20px;
+    text-align: center;
+    color: var(--primary-color);
+    margin-right: 8px;
+    transition: transform 0.3s ease;
+}
+
+.category-header.active i {
+    transform: rotate(15deg);
+}
+
+.category-header h3 {
+    font-size: clamp(0.9rem, 2vw, 1rem);
+    flex: 1;
+    color: var(--primary-color);
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.category-header:hover h3 {
+    color: #5c4fd8;
+}
+
+.fold-icon {
+    font-size: 1rem;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    display: inline-block;
+    color: var(--primary-color);
+    transform-origin: center;
+}
+
+.category-header.active .fold-icon {
+    transform: rotate(135deg);
+    color: #ff6b6b;
+}
+
+.category-links {
+    display: none;
+    flex-direction: column;
+    padding: 0;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: 
+        max-height 0.5s cubic-bezier(0.22, 0.61, 0.36, 1),
+        opacity 0.4s ease 0.1s,
+        padding 0.4s ease;
+}
+
+.category-header.active + .category-links {
+    display: flex;
+    max-height: 1000px; /* 足够容纳内容 */
+    opacity: 1;
+    padding: 5px 0;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px 10px 40px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text-color);
+    font-size: clamp(0.85rem, 1.8vw, 0.95rem);
+    position: relative;
+    transform: translateX(0);
+}
+
+.sidebar-link:hover {
+    background: rgba(107, 92, 231, 0.08);
+    transform: translateX(5px);
+    color: var(--primary-color);
+}
+
+.sidebar-link:active {
+    transform: translateX(3px);
+}
+
+.sidebar-link::before {
+    content: "";
+    position: absolute;
+    left: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.sidebar-link:hover::before {
+    background: var(--accent-color);
+    transform: translateY(-50%) scale(1.2);
+}
+
+.sidebar-link i {
+    width: 20px;
+    text-align: center;
+    color: var(--primary-color);
+    transition: all 0.3s ease;
+}
+
+.sidebar-link:hover i {
+    color: var(--accent-color);
+    transform: scale(1.1);
+}
+
+/* 添加展开时的轻微背景色变化 */
+.category-header.active {
+    background: rgba(107, 92, 231, 0.1);
+    box-shadow: 0 2px 8px rgba(107, 92, 231, 0.1);
+}
+
+/* 为每个链接添加延迟出现的动画 */
+.category-links .sidebar-link {
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.category-header.active + .category-links .sidebar-link {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* 为每个链接添加不同的延迟 */
+.category-links .sidebar-link:nth-child(1) {
+    transition-delay: 0.05s;
+}
+.category-links .sidebar-link:nth-child(2) {
+    transition-delay: 0.1s;
+}
+.category-links .sidebar-link:nth-child(3) {
+    transition-delay: 0.15s;
+}
+.category-links .sidebar-link:nth-child(4) {
+    transition-delay: 0.2s;
+}
+.category-links .sidebar-link:nth-child(5) {
+    transition-delay: 0.25s;
+}
+
+
+
+/* 调整侧边栏底部按钮样式 */
+.sidebar-bottom.horizontal {
+    padding: 10px var(--spacing-sm);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 8px; /* 增加按钮间距 */
+    flex-direction: row;
+    justify-content: space-around;
+    margin-top: 10px; /* 增加与上方内容的间距 */
+}
+
+.sidebar-bottom.horizontal a {
+    flex: 1;
+    text-align: center;
+    padding: 8px 6px; 
+    border-radius: 6px;
+    background: var(--primary-color);
+    color: white;
+    font-size: clamp(0.7rem, 1.3vw, 0.8rem); /* 减小字体大小 */
+    transition: var(--transition);
+    min-width: auto;
+    max-width: 90px;
+    margin: 0 5px; /* 减小左右外边距 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px; /* 固定高度 */
+}
+
+/* 响应式调整 */
+/* 主要修改点：修复移动端按钮布局 */
+@media (max-width: 480px) {
+    .sidebar-bottom.horizontal {
+        gap: 6px;
+        padding: 8px var(--spacing-xs);
+    }
+    
+    .sidebar-bottom.horizontal a {
+        padding: 6px 4px;
+        font-size: 0.65rem;
+        max-width: 80px;
+        height: 28px;
+    }
+}
+
+
+.sidebar-bottom.horizontal a.feedback-link {
+    background: linear-gradient(135deg, #a29bfe, #6c5ce7) !important;
+    color: white !important;
+}
+
+.sidebar-bottom.horizontal a.feedback-link:hover {
+    background: linear-gradient(135deg, #9086f0, #5c4fd8) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(108, 92, 231, 0.3);
+}
+
+.sidebar-bottom.horizontal a.submit-link {
+    background: linear-gradient(135deg, #00b894, #00a885) !important;
+    color: white !important;
+}
+
+.sidebar-bottom.horizontal a.submit-link:hover {
+    background: linear-gradient(135deg, #00a885, #009975) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 184, 148, 0.3);
+}
+
+.sidebar-bottom.horizontal a.settings-link {
+    background: linear-gradient(135deg, #74b9ff, #0984e3) !important;
+    color: white !important;
+}
+
+.sidebar-bottom.horizontal a.settings-link:hover {
+    background: linear-gradient(135deg, #5aa0e8, #0872c4) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(116, 185, 255, 0.3);
+}
+
+.sidebar-bottom.horizontal a.qq-group-link {
+    background: linear-gradient(135deg, #ffeaa7, #fdcb6e) !important;
+    color: #2d3436 !important;
+}
+
+.sidebar-bottom.horizontal a.qq-group-link:hover {
+    background: linear-gradient(135deg, #fdcb6e, #f0b24d) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(253, 203, 110, 0.3);
+}
+
+
+
+.sidebar-bottom.horizontal a:hover {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+}
