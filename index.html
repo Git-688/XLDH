@@ -299,13 +299,9 @@
 /* 分割线—————————————————————————— */
 
 
-<!-- 在 index.html 的 <head> 或 <body> 底部添加 -->
-<script type="module">
-  // 使用动态导入确保在客户端运行
-  import { injectSpeedInsights } from 'https://cdn.vercel.com/insights/script.js';
-  // 在客户端运行一次
-  injectSpeedInsights();
-</script>
+import { injectSpeedInsights } from '@vercel/speed-insights';
+
+injectSpeedInsights();
 
 
 
