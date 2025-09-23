@@ -165,12 +165,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 }
 
-
-
-
-import { injectSpeedInsights } from '@vercel/speed-insights';
-
-injectSpeedInsights();
     
     
     
