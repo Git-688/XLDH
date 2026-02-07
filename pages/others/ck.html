@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>迷你资源仓库</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        body {
+            background: #f8f8f8;
+            color: #333;
+            font-size: 12px;
+            padding: 10px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin: 15px 0;
+        }
+        h1 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        .tab-nav {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 6px 12px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        .tab-btn.active {
+            background: #4285f4;
+            color: #fff;
+            border-color: #4285f4;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .section-title {
+            font-size: 14px;
+            margin: 15px 0 10px;
+            padding-left: 8px;
+            border-left: 3px solid #4285f4;
+        }
+        
+        /* 应用市场样式 */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .app-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid #eee;
+            position: relative;
+        }
+        .app-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            object-fit: cover;
+            margin-bottom: 8px;
+        }
+        .app-download {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background: #4285f4;
+            color: #fff;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .app-download:hover {
+            background: #3367d6;
+        }
+        .app-divider {
+            height: 1px;
+            background: #eee;
+            margin: 8px 0;
+            border-bottom: 1px dashed #ddd;
+        }
+        .app-title {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .app-desc {
+            font-size: 10px;
+            color: #666;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* 资源网站样式 */
+        .websites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .website-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .website-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #4285f4;
+        }
+        .website-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            object-fit: cover;
+            margin-bottom: 6px;
+        }
+        .website-title {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .website-desc {
+            font-size: 10px;
+            color: #666;
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* ==================== 小知识新样式 ==================== */
+        
+        /* 一级分类按钮 */
+        .knowledge-tab-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            white-space: nowrap;
+        }
+        .knowledge-tab-nav::-webkit-scrollbar {
+            display: none;
+        }
+        .knowledge-tab-btn {
+            padding: 10px 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        .knowledge-tab-btn:hover {
+            background: #f5f5f5;
+        }
+        .knowledge-tab-btn.active {
+            background: #4285f4;
+            color: #fff;
+            border-color: #4285f4;
+        }
+        
+        /* 二级分类组 */
+        .category-group {
+            display: none;
+        }
+        .category-group.active {
+            display: block;
+        }
+        
+        /* 二级分类容器 */
+        .category-container {
+            margin-bottom: 15px;
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            overflow: hidden;
+        }
+        
+        /* 二级分类标题 */
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .category-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+        .category-count {
+            background: #4285f4;
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            min-width: 24px;
+            text-align: center;
+        }
+        .category-toggle {
+            color: #666;
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+        .category-header.active .category-toggle {
+            transform: rotate(180deg);
+        }
+        
+        /* 二级分类内容 */
+        .category-content {
+            padding: 15px;
+            display: none;
+        }
+        .category-header.active + .category-content {
+            display: block;
+        }
+        
+        /* 电话簿网格 - 桌面端多列，移动端多列 */
+        .phonebook-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        /* 图标卡片网格 - 桌面端多列，移动端默认布局 */
+        .icons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 12px;
+        }
+        
+        /* 尺寸和时间卡片网格 - 桌面端多列，移动端三列 */
+        .multi-col-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+        }
+        
+        /* 电话簿项目 */
+        .phonebook-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            transition: all 0.2s;
+        }
+        .phonebook-item:hover {
+            background: #eef5ff;
+            border-color: #4285f4;
+            transform: translateY(-2px);
+        }
+        .phonebook-name {
+            font-size: 13px;
+            color: #333;
+            font-weight: 500;
+        }
+        .phonebook-number {
+            font-size: 13px;
+            color: #4285f4;
+            font-weight: 600;
+        }
+        
+        /* 图标卡片 */
+        .icon-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #eee;
+            text-align: center;
+            transition: all 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+            border-color: #4285f4;
+        }
+        .icon-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            object-fit: contain;
+            margin-bottom: 8px;
+            background: #f5f5f5;
+            padding: 6px;
+        }
+        .icon-text {
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        /* 尺寸卡片 */
+        .size-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #eee;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .size-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
+        .size-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #333;
+        }
+        .size-desc {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        /* 时间卡片 */
+        .time-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #eee;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .time-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
+        .time-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .time-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+        .time-animal {
+            font-size: 11px;
+            color: #4285f4;
+            background: #e8f0fe;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+        .time-range {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            background: #f8f8f8;
+            padding: 5px 10px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        .time-desc {
+            font-size: 11px;
+            color: #888;
+            line-height: 1.3;
+            font-style: italic;
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 13px;
+            grid-column: 1 / -1;
+        }
+        
+        /* 响应式调整 - 应用和网站部分 */
+        @media (max-width: 768px) {
+            .apps-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+            .websites-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .apps-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            }
+            .websites-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+        
+        /* ==================== 小知识响应式调整 ==================== */
+        
+        /* 平板端 (768px - 1023px) */
+        @media (max-width: 1023px) {
+            .knowledge-tab-nav {
+                gap: 6px;
+            }
+            .knowledge-tab-btn {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+            
+            /* 电话簿 - 两列 */
+            .phonebook-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            /* 图标卡片 - 四列 */
+            .icons-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            /* 尺寸和时间卡片 - 三列 */
+            .multi-col-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        /* 移动端 (≤ 768px) */
+        @media (max-width: 768px) {
+            .knowledge-tab-nav {
+                gap: 5px;
+                padding-bottom: 8px;
+            }
+            .knowledge-tab-btn {
+                padding: 7px 14px;
+                font-size: 11px;
+            }
+            
+            .category-header {
+                padding: 10px 12px;
+            }
+            .category-title {
+                font-size: 13px;
+            }
+            .category-content {
+                padding: 12px;
+            }
+            
+            /* 电话簿 - 两列（移动端多列） */
+            .phonebook-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .phonebook-item {
+                padding: 8px 10px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            .phonebook-name {
+                font-size: 12px;
+            }
+            .phonebook-number {
+                font-size: 12px;
+            }
+            
+            /* 图标卡片 - 三列 */
+            .icons-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+            .icon-card {
+                padding: 10px;
+            }
+            .icon-img {
+                width: 40px;
+                height: 40px;
+            }
+            .icon-text {
+                font-size: 11px;
+            }
+            
+            /* 尺寸和时间卡片 - 三列（移动端三列） */
+            .multi-col-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+            .size-card, .time-card {
+                padding: 10px;
+            }
+            .size-title, .time-name {
+                font-size: 12px;
+            }
+            .size-desc, .time-range {
+                font-size: 11px;
+            }
+        }
+        
+        /* 小屏移动端 (≤ 480px) */
+        @media (max-width: 480px) {
+            .knowledge-tab-nav {
+                gap: 4px;
+            }
+            .knowledge-tab-btn {
+                padding: 6px 12px;
+                font-size: 10px;
+            }
+            
+            /* 电话簿 - 两列（小屏幕也保持两列） */
+            .phonebook-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
+            }
+            .phonebook-item {
+                padding: 6px 8px;
+            }
+            .phonebook-name, .phonebook-number {
+                font-size: 11px;
+            }
+            
+            /* 图标卡片 - 两列（小屏幕减少列数） */
+            .icons-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            
+            /* 尺寸和时间卡片 - 两列（小屏幕两列） */
+            .multi-col-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            
+            .category-header {
+                padding: 8px 10px;
+            }
+            .category-title {
+                font-size: 12px;
+            }
+            .icon-card, .size-card, .time-card {
+                padding: 8px;
+            }
+        }
+        
+        /* 极窄屏移动端 (≤ 360px) */
+        @media (max-width: 360px) {
+            /* 电话簿 - 单列（极窄屏单列） */
+            .phonebook-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* 图标卡片 - 两列 */
+            .icons-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            /* 尺寸和时间卡片 - 两列 */
+            .multi-col-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>迷你资源仓库</h1>
+            <p style="font-size: 10px; color: #666;">整合应用、网站、知识的本地资源库</p>
+        </header>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="apps">应用市场</button>
+            <button class="tab-btn" data-tab="websites">资源网站</button>
+            <button class="tab-btn" data-tab="knowledge">小知识</button>
+        </div>
+
+        <!-- 应用市场模块 -->
+        <div class="tab-content active" id="apps">
+            <h2 class="section-title">应用市场</h2>
+            <div class="apps-grid" id="apps-container"></div>
+        </div>
+
+        <!-- 资源网站模块 -->
+        <div class="tab-content" id="websites">
+            <h2 class="section-title">资源网站</h2>
+            <div class="websites-grid" id="websites-container"></div>
+        </div>
+
+        <!-- 小知识模块 - 二级分类结构 -->
+        <div class="tab-content" id="knowledge">
+            <!-- 一级分类导航 -->
+            <div class="knowledge-tab-nav">
+                <button class="knowledge-tab-btn active" data-category="cold">冷知识</button>
+                <button class="knowledge-tab-btn" data-category="traffic">交通出行</button>
+                <button class="knowledge-tab-btn" data-category="other">其他</button>
+            </div>
+
+            <!-- 冷知识分类 -->
+            <div class="category-group active" data-category="cold">
+                <!-- 电话簿 -->
+                <div class="category-container">
+                    <div class="category-header active">
+                        <div class="category-title">
+                            <span>电话簿</span>
+                            <span class="category-count" id="phonebook-count">0</span>
+                        </div>
+                        <span class="category-toggle">▼</span>
+                    </div>
+                    <div class="category-content" id="phonebook-content">
+                        <div class="phonebook-grid" id="phonebook-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 交通出行分类 -->
+            <div class="category-group" data-category="traffic">
+                <!-- 汽车标志 -->
+                <div class="category-container">
+                    <div class="category-header active">
+                        <div class="category-title">
+                            <span>汽车标志</span>
+                            <span class="category-count" id="car-logos-count">0</span>
+                        </div>
+                        <span class="category-toggle">▼</span>
+                    </div>
+                    <div class="category-content" id="car-logos-content">
+                        <div class="icons-grid" id="car-logos-container"></div>
+                    </div>
+                </div>
+
+                <!-- 汽车故障灯 -->
+                <div class="category-container">
+                    <div class="category-header active">
+                        <div class="category-title">
+                            <span>汽车故障灯</span>
+                            <span class="category-count" id="car-lights-count">0</span>
+                        </div>
+                        <span class="category-toggle">▼</span>
+                    </div>
+                    <div class="category-content" id="car-lights-content">
+                        <div class="icons-grid" id="car-lights-container"></div>
+                    </div>
+                </div>
+
+                <!-- 交通标志 -->
+                <div class="category-container">
+                    <div class="category-header active">
+                        <div class="category-title">
+                            <span>交通标志</span>
+                            <span class="category-count" id="traffic-signs-count">0</span>
+                        </div>
+                        <span class="category-toggle">▼</span>
+                    </div>
+                    <div class="category-content" id="traffic-signs-content">
+                        <div class="icons-grid" id="traffic-signs-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 其他分类 -->
+            <div class="category-group" data-category="other">
+                <!-- 十二时辰 -->
+                <div class="category-container">
+                    <div class="category-header active">
+                        <div class="category-title">
+                            <span>十二时辰</span>
+                            <span class="category-count" id="time-periods-count">0</span>
+                        </div>
+                        <span class="category-toggle">▼</span>
+                    </div>
+                    <div class="category-content" id="time-periods-content">
+                        <div class="multi-col-grid" id="time-periods-container"></div>
+                    </div>
+                </div>
+
+                <!-- 常见尺寸 -->
+                <div class="category-container">
+                    <div class="category-header active">
+                        <div class="category-title">
+                            <span>常见尺寸</span>
+                            <span class="category-count" id="sizes-count">0</span>
+                        </div>
+                        <span class="category-toggle">▼</span>
+                    </div>
+                    <div class="category-content" id="sizes-content">
+                        <div class="multi-col-grid" id="sizes-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入数据文件 -->
+    <script src="apps.json"></script>
+    <script src="websites.json"></script>
+    <script src="knowledge.json"></script>
+
+    <script>
+        // 检查数据是否加载成功
+        console.log('AppsData:', window.AppsData);
+        console.log('WebsitesData:', window.WebsitesData);
+        console.log('KnowledgeData:', window.KnowledgeData);
+
+        // 标签切换功能（主标签）
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                
+                // 更新按钮状态
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // 更新内容显示
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === tabId) {
+                        content.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // 小知识一级分类切换
+        const knowledgeTabBtns = document.querySelectorAll('.knowledge-tab-btn');
+        const categoryGroups = document.querySelectorAll('.category-group');
+        
+        knowledgeTabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const category = btn.getAttribute('data-category');
+                
+                // 更新按钮状态
+                knowledgeTabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // 更新分类显示
+                categoryGroups.forEach(group => {
+                    group.classList.remove('active');
+                    if (group.getAttribute('data-category') === category) {
+                        group.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // 二级分类展开/收起
+        document.querySelectorAll('.category-header').forEach(header => {
+            header.addEventListener('click', () => {
+                header.classList.toggle('active');
+            });
+        });
+
+        // ==================== 应用市场和资源网站渲染函数 ====================
+
+        // 渲染应用市场
+        function renderApps() {
+            const apps = window.AppsData || [];
+            const container = document.getElementById('apps-container');
+            
+            if (apps.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999; grid-column: 1/-1; padding: 20px;">暂无应用数据</p>';
+                return;
+            }
+            
+            apps.forEach(app => {
+                const appCard = document.createElement('div');
+                appCard.className = 'app-card';
+                appCard.innerHTML = `
+                    <img src="${app.icon}" alt="${app.name}" class="app-icon" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNFM0U0RTUiLz4KPHBhdGggZD0iTTIwIDEyQzIyLjIwOTEgMTIgMjQgMTAuMjA5MSAyNCA4QzI0IDUuNzkwODYgMjIuMjA5MSA0IDIwIDRDMTcuNzkwOSA0IDE2IDUuNzkwODYgMTYgOEMxNiAxMC4yMDkxIDE3Ljc5MDkgMTIgMjAgMTJaIiBmaWxsPSIjOTg5ODk4Ii8+CjxwYXRoIGQ9Ik0yMCAxNUMxNCAxNSA5IDIwIDkgMjZDMjIgMjYgMzIgMjYgMzEgMjZDMzEgMjAgMjYgMTUgMjAgMTVaIiBmaWxsPSIjOTg5ODk4Ii8+Cjwvc3ZnPgo=';">
+                    <div class="app-download" title="下载">↓</div>
+                    <div class="app-divider"></div>
+                    <div class="app-title">${app.name}</div>
+                    <div class="app-desc">${app.desc}</div>
+                `;
+                container.appendChild(appCard);
+                
+                // 下载按钮点击事件
+                appCard.querySelector('.app-download').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (app.downloadUrl && app.downloadUrl !== '#') {
+                        window.open(app.downloadUrl, '_blank');
+                    } else {
+                        alert('暂无下载链接');
+                    }
+                });
+                
+                // 卡片点击事件
+                appCard.addEventListener('click', () => {
+                    if (app.downloadUrl && app.downloadUrl !== '#') {
+                        window.open(app.downloadUrl, '_blank');
+                    }
+                });
+            });
+        }
+
+        // 渲染资源网站
+        function renderWebsites() {
+            const websites = window.WebsitesData || [];
+            const container = document.getElementById('websites-container');
+            
+            if (websites.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999; grid-column: 1/-1; padding: 20px;">暂无网站数据</p>';
+                return;
+            }
+            
+            websites.forEach(website => {
+                const websiteCard = document.createElement('div');
+                websiteCard.className = 'website-card';
+                websiteCard.innerHTML = `
+                    <img src="${website.icon}" alt="${website.name}" class="website-icon" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiNFM0U0RTUiLz4KPHBhdGggZD0iTTE4LjUgMTEuNUwxNCAxNkwxMS41IDEzLjVMMTAgMTVMMTQgMTlMMjIgMTFMMjAuNSA5LjVMMTQuNSAxNS41TDE4LjUgMTEuNVoiIGZpbGw9IiM0Mjg1RjQiLz4KPC9zdmc+';">
+                    <div class="website-title">${website.name}</div>
+                    <div class="website-desc">${website.desc}</div>
+                `;
+                container.appendChild(websiteCard);
+                
+                // 点击跳转
+                websiteCard.addEventListener('click', () => {
+                    if (website.url && website.url !== '#') {
+                        window.open(website.url, '_blank');
+                    } else {
+                        alert('暂无网站链接');
+                    }
+                });
+            });
+        }
+
+        // ==================== 小知识渲染函数 ====================
+
+        // 渲染电话簿
+        function renderPhonebook() {
+            const knowledge = window.KnowledgeData || {};
+            const phonebook = knowledge.phonebook || [];
+            const container = document.getElementById('phonebook-container');
+            const countElement = document.getElementById('phonebook-count');
+            
+            countElement.textContent = phonebook.length;
+            
+            if (phonebook.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无电话簿数据</div>';
+                return;
+            }
+            
+            phonebook.forEach(item => {
+                const phonebookItem = document.createElement('div');
+                phonebookItem.className = 'phonebook-item';
+                phonebookItem.innerHTML = `
+                    <span class="phonebook-name">${item.name}</span>
+                    <span class="phonebook-number">${item.number}</span>
+                `;
+                container.appendChild(phonebookItem);
+                
+                // 点击拨号（模拟）
+                phonebookItem.addEventListener('click', () => {
+                    alert(`拨打 ${item.name}: ${item.number}`);
+                });
+            });
+        }
+
+        // 渲染图标类知识（汽车标志、汽车故障灯、交通标志）
+        function renderIconKnowledge(type, containerId, countId) {
+            const knowledge = window.KnowledgeData || {};
+            const data = knowledge[type] || [];
+            const container = document.getElementById(containerId);
+            const countElement = document.getElementById(countId);
+            
+            countElement.textContent = data.length;
+            
+            if (data.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无数据</div>';
+                return;
+            }
+            
+            data.forEach(item => {
+                const iconCard = document.createElement('div');
+                iconCard.className = 'icon-card';
+                iconCard.innerHTML = `
+                    <img src="${item.icon}" alt="${item.name}" class="icon-img" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjQiIGN5PSIyNCIgcj0iMjQiIGZpbGw9IiNFM0U0RTUiLz4KPHBhdGggZD0iTTI0IDEyQzI2LjIwOTEgMTIgMjggMTAuMjA5MSAyOCA4QzI4IDUuNzkwODYgMjYuMjA5MSA0IDI0IDRDMjEuNzkwOSA0IDIwIDUuNzkwODYgMjAgOEMyMCAxMC4yMDkxIDIxLjc5MDkgMTIgMjQgMTJaIiBmaWxsPSIjOTg5ODk4Ii8+CjxwYXRoIGQ9Ik0yNCAxNUwxOCAyMUwxNSAxOEwxMiAyMUwxOCAyN0wyNiAxOUwyNCAxN1oyNCAxNUwyMCAyMUwyNCAxNVoiIGZpbGw9IiM0Mjg1RjQiLz4KPC9zdmc+';">
+                    <div class="icon-text">${item.name}</div>
+                `;
+                container.appendChild(iconCard);
+                
+                // 点击显示详情
+                iconCard.addEventListener('click', () => {
+                    alert(`${item.name}\n点击查看详情`);
+                });
+            });
+        }
+
+        // 渲染常见尺寸
+        function renderSizes() {
+            const knowledge = window.KnowledgeData || {};
+            const sizes = knowledge.sizes || [];
+            const container = document.getElementById('sizes-container');
+            const countElement = document.getElementById('sizes-count');
+            
+            countElement.textContent = sizes.length;
+            
+            if (sizes.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无尺寸数据</div>';
+                return;
+            }
+            
+            sizes.forEach(size => {
+                const sizeCard = document.createElement('div');
+                sizeCard.className = 'size-card';
+                sizeCard.innerHTML = `
+                    <div class="size-title">${size.name}</div>
+                    <div class="size-desc">${size.desc}</div>
+                `;
+                container.appendChild(sizeCard);
+                
+                // 点击显示详情
+                sizeCard.addEventListener('click', () => {
+                    alert(`${size.name}: ${size.desc}`);
+                });
+            });
+        }
+
+        // 渲染十二时辰
+        function renderTimePeriods() {
+            const knowledge = window.KnowledgeData || {};
+            const timePeriods = knowledge.timePeriods || [];
+            const container = document.getElementById('time-periods-container');
+            const countElement = document.getElementById('time-periods-count');
+            
+            countElement.textContent = timePeriods.length;
+            
+            if (timePeriods.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无时辰数据</div>';
+                return;
+            }
+            
+            timePeriods.forEach(period => {
+                const timeCard = document.createElement('div');
+                timeCard.className = 'time-card';
+                timeCard.innerHTML = `
+                    <div class="time-header">
+                        <span class="time-name">${period.name}</span>
+                        <span class="time-animal">${period.animal}</span>
+                    </div>
+                    <div class="time-range">${period.time}</div>
+                    <div class="time-desc">${period.desc}</div>
+                `;
+                container.appendChild(timeCard);
+                
+                // 点击显示详情
+                timeCard.addEventListener('click', () => {
+                    alert(`${period.name}（${period.animal}）\n时间：${period.time}\n${period.desc}`);
+                });
+            });
+        }
+
+        // 页面加载时渲染所有内容
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM加载完成，开始渲染数据...');
+            
+            // 渲染应用市场和资源网站
+            renderApps();
+            renderWebsites();
+            
+            // 渲染小知识内容
+            renderPhonebook();
+            renderIconKnowledge('carLogos', 'car-logos-container', 'car-logos-count');
+            renderIconKnowledge('carLights', 'car-lights-container', 'car-lights-count');
+            renderIconKnowledge('trafficSigns', 'traffic-signs-container', 'traffic-signs-count');
+            renderSizes();
+            renderTimePeriods();
+            
+            console.log('数据渲染完成！');
+            
+            // 默认展开所有二级分类
+            document.querySelectorAll('.category-header').forEach(header => {
+                header.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

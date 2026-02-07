@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>私密空间 | 链接收藏</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --accent-color: #fd79a8;
+            --text-color: #2d3436;
+            --light-text: #dfe6e9;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --category-color-1: #6c5ce7;
+            --category-color-2: #00b894;
+            --category-color-3: #fd79a8;
+            --category-color-4: #fdcb6e;
+            --category-color-5: #0984e3;
+            --category-color-6: #d63031;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            font-size: 0.875rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 10px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .tagline {
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+        }
+
+        .logout-top-btn {
+            background: transparent;
+            color: var(--secondary-color);
+            border: 2px solid var(--secondary-color);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.875rem;
+        }
+
+        .logout-top-btn:hover {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .auth-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+            transition: var(--transition);
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--text-color);
+            font-size: 0.875rem;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        button:hover {
+            background: #5649d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background: #27ae60;
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+        }
+
+        .btn-secondary:hover {
+            background: #8179d6;
+        }
+        
+        .btn-warning {
+            background: var(--warning-color);
+        }
+        
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 12px;
+            display: none;
+            padding: 8px;
+            background: #ffecec;
+            border-radius: 6px;
+            border-left: 3px solid #e74c3c;
+            font-size: 0.875rem;
+        }
+
+        .default-password-hint {
+            text-align: center;
+            margin-top: 12px;
+            color: var(--secondary-color);
+            font-size: 0.8rem;
+            padding: 6px;
+            background: #f3f4ff;
+            border-radius: 6px;
+        }
+
+        .content {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .content-visible {
+            display: block;
+            opacity: 1;
+            animation: fadeIn 1s ease forwards;
+        }
+
+        .actions-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0 30px;
+            flex-wrap: wrap;
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+            grid-column: span 1;
+        }
+
+        .card-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1rem;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 30px;
+            color: var(--secondary-color);
+            font-size: 0.8rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: var(--shadow);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .modal-header h3 {
+            color: var(--primary-color);
+            font-size: 1.25rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .auth-options {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        .auth-options button {
+            background: transparent;
+            color: var(--secondary-color);
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+
+        .auth-options button:hover {
+            background: transparent;
+            color: var(--primary-color);
+            transform: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px 0;
+            color: var(--secondary-color);
+            grid-column: 1 / -1;
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            color: var(--secondary-color);
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 2000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 300px;
+            display: none;
+        }
+
+        .toast.show {
+            display: flex;
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left: 3px solid var(--success-color);
+        }
+
+        .toast.error {
+            border-left: 3px solid var(--danger-color);
+        }
+
+        .toast i {
+            font-size: 1.25rem;
+        }
+
+        .toast.success i {
+            color: var(--success-color);
+        }
+
+        .toast.error i {
+            color: var(--danger-color);
+        }
+
+        .toast-message {
+            font-size: 0.875rem;
+        }
+
+        .link-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            background: #f8f9ff;
+            transition: var(--transition);
+            border: 1px solid #eef0ff;
+            position: relative;
+        }
+
+        .link-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .link-info a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 3px;
+            font-size: 0.875rem;
+        }
+
+        .link-info a:hover {
+            text-decoration: underline;
+        }
+
+        .link-desc {
+            font-size: 0.8rem;
+            color: #666;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.4;
+        }
+
+        .link-category {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            background: var(--secondary-color);
+            color: white;
+            margin-top: 5px;
+        }
+
+        .link-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .link-actions button {
+            padding: 5px 8px;
+            font-size: 0.7rem;
+            min-width: auto;
+            width: 30px;
+            height: 30px;
+        }
+
+        .link-actions button i {
+            margin: 0;
+        }
+
+        .panel-description {
+            background-color: #f0f2ff;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            color: #4a5568;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .panel-description i {
+            color: var(--primary-color);
+            margin-right: 8px;
+        }
+
+        .category-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .category-btn {
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid #e0e0e0;
+            background: white;
+        }
+
+        .category-btn.active {
+            color: white;
+        }
+
+        .category-btn.all.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .category-btn.other.active {
+            background: var(--category-color-2);
+            border-color: var(--category-color-2);
+        }
+
+        .category-btn.custom.active {
+            background: var(--category-color-5);
+            border-color: var(--category-color-5);
+        }
+
+        .custom-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .custom-category {
+            display: flex;
+            align-items: center;
+            background: #f0f2ff;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+
+        .custom-category span {
+            margin-right: 5px;
+        }
+
+        .remove-category {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .confirm-dialog-content {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .confirm-dialog h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .confirm-dialog p {
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        .confirm-dialog-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .auth-container {
+                padding: 20px 15px;
+            }
+            
+            .links-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .card {
+                grid-column: span 1;
+            }
+            
+            .logo {
+                font-size: 1.5rem;
+            }
+
+            .actions-container {
+                flex-direction: row;
+                justify-content: center;
+            }
+            
+            .actions-container button {
+                flex: 1;
+                min-width: 120px;
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+            
+            .page-header {
+                flex-direction: row;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .logout-top-btn {
+                position: static;
+                align-self: center;
+            }
+            
+            .link-item {
+                flex-direction: row;
+                text-align: left;
+            }
+            
+            .link-actions {
+                margin-top: 0;
+                width: auto;
+                justify-content: flex-end;
+            }
+            
+            .category-selector {
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding-bottom: 5px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .links-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .actions-container button {
+                min-width: 100px;
+                font-size: 0.75rem;
+                padding: 6px 10px;
+            }
+            
+            .link-actions {
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            .link-actions button {
+                width: 28px;
+                height: 28px;
+                padding: 4px 6px;
+            }
+            
+            .confirm-dialog-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面头部 -->
+        <div class="page-header">
+            <div>
+                <div class="logo">私密空间</div>
+                <div class="tagline">安全收藏您的重要链接</div>
+            </div>
+            <button id="logout-top-btn" class="logout-top-btn" style="display: none;">
+                <i class="fas fa-sign-out-alt"></i> 退出
+            </button>
+        </div>
+
+        <main>
+            <div id="auth-container" class="auth-container">
+                <h2>身份验证</h2>
+                <form id="auth-form" class="auth-form">
+                    <div class="input-group">
+                        <label for="password">访问密码</label>
+                        <input type="password" id="password" placeholder="请输入您的密码" required>
+                    </div>
+                    <button type="submit">进入空间</button>
+                    <div id="error-message" class="error-message">密码错误，请重试</div>
+                    <div class="default-password-hint">
+                        <i class="fas fa-info-circle"></i> 初始默认密码: secret123
+                    </div>
+                    
+                    <div class="auth-options">
+                        <button type="button" id="reset-space-btn">重置空间</button>
+                        <button type="button" id="recover-password-btn">找回密码</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="content" class="content">
+                <div class="actions-container">
+                    <button id="add-link-btn"><i class="fas fa-plus"></i> 添加新链接</button>
+                    <button id="change-password-btn" class="btn-secondary"><i class="fas fa-key"></i> 修改密码</button>
+                    <button id="setup-recovery-btn" class="btn-warning"><i class="fas fa-unlock-alt"></i> 找回密码</button>
+                    <button id="manage-categories-btn" class="btn-success"><i class="fas fa-tags"></i> 管理分类</button>
+                </div>
+
+                <!-- 分类选择器 -->
+                <div class="category-selector">
+                    <button class="category-btn all active" data-category="all">全部</button>
+                    <button class="category-btn other" data-category="other">综合</button>
+                    <!-- 自定义分类将动态添加到这里 -->
+                </div>
+
+                <div class="links-grid" id="links-container">
+                    <!-- 链接将动态添加到这里 -->
+                    <div class="empty-state">
+                        <i class="fas fa-bookmark"></i>
+                        <p>暂无收藏链接</p>
+                        <p>点击"添加新链接"按钮开始收藏</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>© 2023 私密空间 | 设计简约，保护隐私</p>
+        </footer>
+    </div>
+
+    <!-- 添加链接模态框 -->
+    <div id="add-link-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加新链接</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <!-- 面板说明 -->
+            <div class="panel-description">
+                <i class="fas fa-info-circle"></i>
+                在此添加您想要收藏的网页链接。提供标题、URL、描述和分类信息以便更好地组织您的链接。
+            </div>
+            <form id="add-link-form">
+                <div class="input-group">
+                    <label for="link-title">链接标题</label>
+                    <input type="text" id="link-title" placeholder="输入链接标题" required>
+                </div>
+                <div class="input-group">
+                    <label for="link-url">链接地址</label>
+                    <input type="url" id="link-url" placeholder="https://example.com" required>
+                </div>
+                <div class="input-group">
+                    <label for="link-desc">链接描述</label>
+                    <textarea id="link-desc" placeholder="请输入链接的描述信息"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="link-category">链接分类</label>
+                    <select id="link-category" required>
+                        <option value="other">综合</option>
+                        <!-- 自定义分类将动态添加到这里 -->
+                    </select>
+                </div>
+                <button type="submit" class="btn-success"><i class="fas fa-save"></i> 保存链接</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 修改密码模态框 -->
+    <div id="change-password-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>修改密码</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="change-password-form">
+                <div class="input-group">
+                    <label for="current-password">当前密码</label>
+                    <input type="password" id="current-password" placeholder="输入当前密码" required>
+                </div>
+                <div class="input-group">
+                    <label for="new-password">新密码</label>
+                    <input type="password" id="new-password" placeholder="输入新密码" required>
+                </div>
+                <div class="input-group">
+                    <label for="confirm-password">确认新密码</label>
+                    <input type="password" id="confirm-password" placeholder="再次输入新密码" required>
+                </div>
+                <button type="submit" class="btn-success"><i class="fas fa-key"></i> 修改密码</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 重置空间模态框 -->
+    <div id="reset-space-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>重置私密空间</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <p>这将清除所有收藏链接并恢复默认密码，此操作不可撤销。</p>
+            <div class="input-group">
+                <label for="reset-confirm-password">输入当前密码确认</label>
+                <input type="password" id="reset-confirm-password" placeholder="输入当前密码确认操作" required>
+            </div>
+            <button id="confirm-reset-btn" class="btn-danger"><i class="fas fa-trash"></i> 确认重置</button>
+        </div>
+    </div>
+
+    <!-- 找回密码模态框 -->
+    <div id="recover-password-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>找回密码</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div id="security-question-container">
+                <p>请回答以下安全问题以找回密码：</p>
+                <div class="input-group">
+                    <label id="security-question">安全问题加载中...</label>
+                    <input type="text" id="security-answer" placeholder="输入安全问题答案" required>
+                </div>
+                <button id="check-security-answer"><i class="fas fa-check"></i> 验证答案</button>
+            </div>
+            
+            <div id="password-recovery-container" style="display: none;">
+                <div class="input-group">
+                    <label for="recovered-password">您的密码</label>
+                    <input type="text" id="recovered-password" readonly>
+                </div>
+                <div class="input-group">
+                    <button id="copy-password" class="btn-success"><i class="fas fa-copy"></i> 复制密码</button>
+                    <button id="close-recovery" style="margin-top: 10px;"><i class="fas fa-times"></i> 关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 找回密码设置模态框 -->
+    <div id="recovery-setup-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>找回密码设置</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="recovery-setup-form">
+                <div class="input-group">
+                    <label for="security-question-input">安全问题</label>
+                    <input type="text" id="security-question-input" placeholder="输入自定义安全问题" required>
+                </div>
+                <div class="input-group">
+                    <label for="security-answer-input">安全答案</label>
+                    <input type="text" id="security-answer-input" placeholder="输入安全问题的答案" required>
+                </div>
+                <div class="input-group">
+                    <label for="current-password-setup">当前密码</label>
+                    <input type="password" id="current-password-setup" placeholder="输入当前密码确认修改" required>
+                </div>
+                <button type="submit" class="btn-success"><i class="fas fa-save"></i> 保存设置</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 管理分类模态框 -->
+    <div id="manage-categories-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>管理分类</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="input-group">
+                <label for="new-category-name">新分类名称</label>
+                <input type="text" id="new-category-name" placeholder="输入新分类名称">
+            </div>
+            <button id="add-category-btn" class="btn-success"><i class="fas fa-plus"></i> 添加分类</button>
+            
+            <div class="input-group">
+                <label>当前分类</label>
+                <div class="custom-categories" id="custom-categories-list">
+                    <!-- 自定义分类将动态添加到这里 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认对话框 -->
+    <div id="confirm-dialog" class="confirm-dialog">
+        <div class="confirm-dialog-content">
+            <h3 id="confirm-dialog-title">确认操作</h3>
+            <p id="confirm-dialog-message">您确定要执行此操作吗？</p>
+            <div class="confirm-dialog-buttons">
+                <button id="confirm-dialog-cancel" class="btn-secondary">取消</button>
+                <button id="confirm-dialog-ok" class="btn-danger">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示消息 -->
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle"></i>
+        <div class="toast-message">操作成功</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化数据
+            const DEFAULT_PASSWORD = 'secret123';
+            const DEFAULT_SECURITY_QUESTION = '您最喜欢的颜色是什么？';
+            const DEFAULT_SECURITY_ANSWER = '蓝色';
+            
+            // 元素引用
+            const authContainer = document.getElementById('auth-container');
+            const authForm = document.getElementById('auth-form');
+            const passwordInput = document.getElementById('password');
+            const errorMessage = document.getElementById('error-message');
+            const content = document.getElementById('content');
+            const logoutTopBtn = document.getElementById('logout-top-btn');
+            const addLinkBtn = document.getElementById('add-link-btn');
+            const changePasswordBtn = document.getElementById('change-password-btn');
+            const setupRecoveryBtn = document.getElementById('setup-recovery-btn');
+            const manageCategoriesBtn = document.getElementById('manage-categories-btn');
+            const resetSpaceBtn = document.getElementById('reset-space-btn');
+            const recoverPasswordBtn = document.getElementById('recover-password-btn');
+            const linksContainer = document.getElementById('links-container');
+            const toast = document.getElementById('toast');
+            
+            // 模态框元素
+            const modals = document.querySelectorAll('.modal');
+            const addLinkModal = document.getElementById('add-link-modal');
+            const changePasswordModal = document.getElementById('change-password-modal');
+            const resetSpaceModal = document.getElementById('reset-space-modal');
+            const recoverPasswordModal = document.getElementById('recover-password-modal');
+            const recoverySetupModal = document.getElementById('recovery-setup-modal');
+            const manageCategoriesModal = document.getElementById('manage-categories-modal');
+            const confirmDialog = document.getElementById('confirm-dialog');
+            const closeModalButtons = document.querySelectorAll('.close-modal');
+            
+            // 表单元素
+            const addLinkForm = document.getElementById('add-link-form');
+            const changePasswordForm = document.getElementById('change-password-form');
+            const recoverySetupForm = document.getElementById('recovery-setup-form');
+            const confirmResetBtn = document.getElementById('confirm-reset-btn');
+            const securityAnswer = document.getElementById('security-answer');
+            const checkSecurityAnswer = document.getElementById('check-security-answer');
+            const recoveredPassword = document.getElementById('recovered-password');
+            const copyPassword = document.getElementById('copy-password');
+            const closeRecovery = document.getElementById('close-recovery');
+            const securityQuestion = document.getElementById('security-question');
+            const addCategoryBtn = document.getElementById('add-category-btn');
+            const newCategoryName = document.getElementById('new-category-name');
+            const customCategoriesList = document.getElementById('custom-categories-list');
+            const linkCategorySelect = document.getElementById('link-category');
+            const confirmDialogTitle = document.getElementById('confirm-dialog-title');
+            const confirmDialogMessage = document.getElementById('confirm-dialog-message');
+            const confirmDialogCancel = document.getElementById('confirm-dialog-cancel');
+            const confirmDialogOk = document.getElementById('confirm-dialog-ok');
+
+            // 当前选择的分类
+            let currentCategory = 'all';
+            let customCategories = [];
+            let currentAction = null;
+            let currentIndex = null;
+
+            // 显示提示消息
+            function showToast(message, type = 'success') {
+                const toastMessage = toast.querySelector('.toast-message');
+                toastMessage.textContent = message;
+                toast.className = `toast ${type}`;
+                toast.classList.add('show');
+                
+                if (type === 'success') {
+                    toast.querySelector('i').className = 'fas fa-check-circle';
+                } else {
+                    toast.querySelector('i').className = 'fas fa-exclamation-circle';
+                }
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+            
+            // 显示确认对话框
+            function showConfirmDialog(title, message, callback) {
+                confirmDialogTitle.textContent = title;
+                confirmDialogMessage.textContent = message;
+                confirmDialog.style.display = 'flex';
+                
+                confirmDialogOk.onclick = function() {
+                    confirmDialog.style.display = 'none';
+                    if (callback) callback(true);
+                };
+                
+                confirmDialogCancel.onclick = function() {
+                    confirmDialog.style.display = 'none';
+                    if (callback) callback(false);
+                };
+            }
+            
+            // 初始化应用
+            function initApp() {
+                // 检查是否设置了密码
+                if (!localStorage.getItem('password')) {
+                    // 设置默认密码和安全问题
+                    localStorage.setItem('password', DEFAULT_PASSWORD);
+                    localStorage.setItem('securityQuestion', DEFAULT_SECURITY_QUESTION);
+                    localStorage.setItem('securityAnswer', DEFAULT_SECURITY_ANSWER);
+                }
+                
+                // 检查是否设置了链接数据
+                if (!localStorage.getItem('links')) {
+                    localStorage.setItem('links', JSON.stringify([]));
+                }
+                
+                // 检查是否设置了自定义分类
+                if (!localStorage.getItem('customCategories')) {
+                    localStorage.setItem('customCategories', JSON.stringify([]));
+                } else {
+                    customCategories = JSON.parse(localStorage.getItem('customCategories'));
+                    updateCustomCategoriesUI();
+                }
+                
+                // 每次刷新都需要重新验证
+                localStorage.removeItem('authenticated');
+            }
+            
+            // 更新自定义分类UI
+            function updateCustomCategoriesUI() {
+                // 更新分类选择器
+                const categorySelector = document.querySelector('.category-selector');
+                // 清除现有的自定义分类按钮（保留前2个默认按钮）
+                const defaultButtons = categorySelector.querySelectorAll('.category-btn:not([data-custom])');
+                categorySelector.innerHTML = '';
+                defaultButtons.forEach(btn => categorySelector.appendChild(btn));
+                
+                // 添加自定义分类按钮
+                customCategories.forEach((category, index) => {
+                    const button = document.createElement('button');
+                    button.className = `category-btn custom`;
+                    button.setAttribute('data-category', `custom${index}`);
+                    button.setAttribute('data-custom', 'true');
+                    button.textContent = category.name;
+                    categorySelector.appendChild(button);
+                });
+                
+                // 更新添加链接表单中的分类选择
+                linkCategorySelect.innerHTML = `
+                    <option value="other">综合</option>
+                `;
+                
+                customCategories.forEach((category, index) => {
+                    const option = document.createElement('option');
+                    option.value = `custom${index}`;
+                    option.textContent = category.name;
+                    linkCategorySelect.appendChild(option);
+                });
+                
+                // 更新管理分类模态框中的分类列表
+                customCategoriesList.innerHTML = '';
+                customCategories.forEach((category, index) => {
+                    const categoryEl = document.createElement('div');
+                    categoryEl.className = 'custom-category';
+                    categoryEl.innerHTML = `
+                        <span>${category.name}</span>
+                        <button class="remove-category" data-index="${index}">&times;</button>
+                    `;
+                    customCategoriesList.appendChild(categoryEl);
+                });
+                
+                // 添加删除分类的事件监听器
+                document.querySelectorAll('.remove-category').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        showConfirmDialog(
+                            '删除分类', 
+                            `确定要删除分类 "${customCategories[index].name}" 吗？此操作会影响使用此分类的链接。`,
+                            function(confirmed) {
+                                if (confirmed) {
+                                    removeCustomCategory(index);
+                                }
+                            }
+                        );
+                    });
+                });
+            }
+            
+            // 添加自定义分类
+            function addCustomCategory(name) {
+                customCategories.push({ name });
+                localStorage.setItem('customCategories', JSON.stringify(customCategories));
+                updateCustomCategoriesUI();
+                showToast('分类添加成功');
+            }
+            
+            // 删除自定义分类
+            function removeCustomCategory(index) {
+                customCategories.splice(index, 1);
+                localStorage.setItem('customCategories', JSON.stringify(customCategories));
+                updateCustomCategoriesUI();
+                showToast('分类已删除');
+            }
+            
+            // 显示内容区域
+            function showContent() {
+                authContainer.style.display = 'none';
+                content.classList.add('content-visible');
+                logoutTopBtn.style.display = 'block';
+                loadLinks();
+            }
+            
+            // 隐藏内容区域
+            function hideContent() {
+                authContainer.style.display = 'block';
+                content.classList.remove('content-visible');
+                logoutTopBtn.style.display = 'none';
+                passwordInput.value = '';
+            }
+            
+            // 加载链接列表
+            function loadLinks() {
+                const links = JSON.parse(localStorage.getItem('links') || '[]');
+                
+                // 过滤链接基于当前选择的分类
+                const filteredLinks = currentCategory === 'all' 
+                    ? links 
+                    : links.filter(link => {
+                        if (currentCategory.startsWith('custom')) {
+                            const index = parseInt(currentCategory.replace('custom', ''));
+                            return link.category === currentCategory && customCategories[index];
+                        }
+                        return link.category === currentCategory;
+                    });
+                
+                if (filteredLinks.length === 0) {
+                    linksContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-bookmark"></i>
+                            <p>暂无收藏链接</p>
+                            <p>点击"添加新链接"按钮开始收藏</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                linksContainer.innerHTML = '';
+                filteredLinks.forEach((link, index) => {
+                    // 找到原始索引
+                    const allLinks = JSON.parse(localStorage.getItem('links') || '[]');
+                    const originalIndex = allLinks.findIndex(l => 
+                        l.title === link.title && l.url === link.url
+                    );
+                    
+                    // 获取分类名称
+                    let categoryName = '综合';
+                    if (link.category && link.category.startsWith('custom')) {
+                        const catIndex = parseInt(link.category.replace('custom', ''));
+                        if (customCategories[catIndex]) {
+                            categoryName = customCategories[catIndex].name;
+                        }
+                    }
+                    
+                    const linkItem = document.createElement('div');
+                    linkItem.className = 'link-item';
+                    
+                    linkItem.innerHTML = `
+                        <div class="link-info">
+                            <a href="${link.url}" target="_blank">${link.title}</a>
+                            <div class="link-desc">${link.desc || '暂无描述'}</div>
+                            <span class="link-category">${categoryName}</span>
+                        </div>
+                        <div class="link-actions">
+                            <button class="btn-secondary edit-link" data-index="${originalIndex}"><i class="fas fa-edit"></i></button>
+                            <button class="btn-danger delete-link" data-index="${originalIndex}"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                    linksContainer.appendChild(linkItem);
+                });
+                
+                // 添加事件监听器
+                document.querySelectorAll('.delete-link').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        showConfirmDialog(
+                            '删除链接', 
+                            '确定要删除这个链接吗？此操作不可撤销。',
+                            function(confirmed) {
+                                if (confirmed) {
+                                    deleteLink(index);
+                                }
+                            }
+                        );
+                    });
+                });
+                
+                document.querySelectorAll('.edit-link').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        editLink(index);
+                    });
+                });
+            }
+            
+            // 添加新链接
+            function addLink(title, url, category, desc) {
+                const links = JSON.parse(localStorage.getItem('links') || '[]');
+                // 检查是否已存在相同链接
+                const exists = links.some(link => link.url === url);
+                if (exists) {
+                    showToast('该链接已存在', 'error');
+                    return false;
+                }
+                
+                links.push({ title, url, category, desc });
+                localStorage.setItem('links', JSON.stringify(links));
+                loadLinks();
+                showToast('链接添加成功');
+                return true;
+            }
+            
+            // 编辑链接
+            function editLink(index) {
+                const links = JSON.parse(localStorage.getItem('links') || '[]');
+                const link = links[index];
+                
+                // 填充表单
+                document.getElementById('link-title').value = link.title;
+                document.getElementById('link-url').value = link.url;
+                document.getElementById('link-category').value = link.category || 'other';
+                document.getElementById('link-desc').value = link.desc || '';
+                
+                // 显示模态框
+                showModal(addLinkModal);
+                
+                // 修改表单提交行为
+                const submitHandler = function(e) {
+                    e.preventDefault();
+                    
+                    const title = document.getElementById('link-title').value;
+                    const url = document.getElementById('link-url').value;
+                    const category = document.getElementById('link-category').value;
+                    const desc = document.getElementById('link-desc').value;
+                    
+                    // 检查是否已存在相同链接（排除当前编辑的链接）
+                    const exists = links.some((link, i) => i !== index && link.url === url);
+                    if (exists) {
+                        showToast('该链接已存在', 'error');
+                        return;
+                    }
+                    
+                    // 更新链接
+                    links[index] = { title, url, category, desc };
+                    localStorage.setItem('links', JSON.stringify(links));
+                    
+                    // 重新加载链接列表并关闭模态框
+                    loadLinks();
+                    hideModal(addLinkModal);
+                    
+                    // 移除当前的事件处理器
+                    addLinkForm.removeEventListener('submit', submitHandler);
+                    
+                    // 重置表单
+                    addLinkForm.reset();
+                    showToast('链接更新成功');
+                };
+                
+                // 移除旧的事件监听器并添加新的
+                addLinkForm.removeEventListener('submit', addLinkForm.submitHandler);
+                addLinkForm.submitHandler = submitHandler;
+                addLinkForm.addEventListener('submit', submitHandler);
+            }
+            
+            // 删除链接
+            function deleteLink(index) {
+                const links = JSON.parse(localStorage.getItem('links') || '[]');
+                links.splice(index, 1);
+                localStorage.setItem('links', JSON.stringify(links));
+                loadLinks();
+                showToast('链接已删除');
+            }
+            
+            // 显示模态框
+            function showModal(modal) {
+                modal.style.display = 'flex';
+            }
+            
+            // 隐藏模态框
+            function hideModal(modal) {
+                modal.style.display = 'none';
+            }
+            
+            // 修改密码
+            function changePassword(currentPassword, newPassword) {
+                const storedPassword = localStorage.getItem('password');
+                
+                if (currentPassword === storedPassword) {
+                    localStorage.setItem('password', newPassword);
+                    showToast('密码修改成功');
+                    return true;
+                } else {
+                    showToast('当前密码不正确', 'error');
+                    return false;
+                }
+            }
+            
+            // 重置空间
+            function resetSpace() {
+                localStorage.removeItem('links');
+                localStorage.setItem('password', DEFAULT_PASSWORD);
+                localStorage.setItem('securityQuestion', DEFAULT_SECURITY_QUESTION);
+                localStorage.setItem('securityAnswer', DEFAULT_SECURITY_ANSWER);
+                localStorage.setItem('customCategories', JSON.stringify([]));
+                customCategories = [];
+                updateCustomCategoriesUI();
+                
+                showToast('空间已重置为初始状态');
+                hideContent();
+            }
+            
+            // 找回密码
+            function recoverPassword(answer) {
+                const storedAnswer = localStorage.getItem('securityAnswer');
+                
+                if (answer.toLowerCase() === storedAnswer.toLowerCase()) {
+                    return localStorage.getItem('password');
+                } else {
+                    return null;
+                }
+            }
+            
+            // 初始化应用
+            initApp();
+            
+            // 事件监听器
+            authForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const password = passwordInput.value;
+                const storedPassword = localStorage.getItem('password');
+                
+                if (password === storedPassword) {
+                    localStorage.setItem('authenticated', 'true');
+                    showContent();
+                } else {
+                    errorMessage.style.display = 'block';
+                    setTimeout(() => {
+                        errorMessage.style.display = 'none';
+                    }, 3000);
+                }
+            });
+            
+            logoutTopBtn.addEventListener('click', function() {
+                localStorage.removeItem('authenticated');
+                hideContent();
+                showToast('已退出登录');
+            });
+            
+            addLinkBtn.addEventListener('click', function() {
+                addLinkForm.reset();
+                
+                // 设置表单提交事件处理
+                const submitHandler = function(e) {
+                    e.preventDefault();
+                    
+                    const title = document.getElementById('link-title').value;
+                    const url = document.getElementById('link-url').value;
+                    const category = document.getElementById('link-category').value;
+                    const desc = document.getElementById('link-desc').value;
+                    
+                    if (addLink(title, url, category, desc)) {
+                        hideModal(addLinkModal);
+                        this.reset();
+                    }
+                };
+                
+                // 移除旧的事件监听器并添加新的
+                addLinkForm.removeEventListener('submit', addLinkForm.submitHandler);
+                addLinkForm.submitHandler = submitHandler;
+                addLinkForm.addEventListener('submit', submitHandler);
+                
+                showModal(addLinkModal);
+            });
+            
+            changePasswordBtn.addEventListener('click', function() {
+                changePasswordForm.reset();
+                showModal(changePasswordModal);
+            });
+            
+            setupRecoveryBtn.addEventListener('click', function() {
+                // 填充当前的安全问题
+                document.getElementById('security-question-input').value = localStorage.getItem('securityQuestion') || '';
+                document.getElementById('security-answer-input').value = '';
+                document.getElementById('current-password-setup').value = '';
+                
+                showModal(recoverySetupModal);
+            });
+            
+            manageCategoriesBtn.addEventListener('click', function() {
+                showModal(manageCategoriesModal);
+            });
+            
+            resetSpaceBtn.addEventListener('click', function() {
+                showModal(resetSpaceModal);
+            });
+            
+            recoverPasswordBtn.addEventListener('click', function() {
+                securityQuestion.textContent = localStorage.getItem('securityQuestion');
+                document.getElementById('security-question-container').style.display = 'block';
+                document.getElementById('password-recovery-container').style.display = 'none';
+                securityAnswer.value = '';
+                showModal(recoverPasswordModal);
+            });
+            
+            // 添加分类按钮事件
+            addCategoryBtn.addEventListener('click', function() {
+                const name = newCategoryName.value.trim();
+                if (name) {
+                    addCustomCategory(name);
+                    newCategoryName.value = '';
+                } else {
+                    showToast('请输入分类名称', 'error');
+                }
+            });
+            
+            // 分类按钮事件
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('category-btn')) {
+                    // 移除所有active类
+                    document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+                    // 添加active类到当前按钮
+                    e.target.classList.add('active');
+                    // 更新当前分类
+                    currentCategory = e.target.getAttribute('data-category');
+                    // 重新加载链接
+                    loadLinks();
+                }
+            });
+            
+            // 关闭模态框按钮
+            closeModalButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    hideModal(modal);
+                });
+            });
+            
+            // 点击模态框外部关闭
+            modals.forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        hideModal(modal);
+                    }
+                });
+            });
+            
+            // 修改密码表单提交
+            changePasswordForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const currentPassword = document.getElementById('current-password').value;
+                const newPassword = document.getElementById('new-password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+                
+                if (newPassword !== confirmPassword) {
+                    showToast('新密码和确认密码不匹配', 'error');
+                    return;
+                }
+                
+                if (changePassword(currentPassword, newPassword)) {
+                    hideModal(changePasswordModal);
+                    this.reset();
+                }
+            });
+            
+            // 找回密码设置表单提交
+            recoverySetupForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const question = document.getElementById('security-question-input').value;
+                const answer = document.getElementById('security-answer-input').value;
+                const currentPassword = document.getElementById('current-password-setup').value;
+                const storedPassword = localStorage.getItem('password');
+                
+                if (currentPassword !== storedPassword) {
+                    showToast('当前密码不正确', 'error');
+                    return;
+                }
+                
+                localStorage.setItem('securityQuestion', question);
+                localStorage.setItem('securityAnswer', answer);
+                
+                showToast('安全问题设置成功');
+                hideModal(recoverySetupModal);
+            });
+            
+            // 确认重置空间
+            confirmResetBtn.addEventListener('click', function() {
+                const password = document.getElementById('reset-confirm-password').value;
+                const storedPassword = localStorage.getItem('password');
+                
+                if (password === storedPassword) {
+                    showConfirmDialog(
+                        '重置空间', 
+                        '确定要重置空间吗？这将清除所有收藏链接并恢复默认密码，此操作不可撤销。',
+                        function(confirmed) {
+                            if (confirmed) {
+                                resetSpace();
+                                hideModal(resetSpaceModal);
+                            }
+                        }
+                    );
+                } else {
+                    showToast('密码不正确', 'error');
+                }
+            });
+            
+            // 检查安全问题答案
+            checkSecurityAnswer.addEventListener('click', function() {
+                const answer = securityAnswer.value;
+                const password = recoverPassword(answer);
+                
+                if (password) {
+                    recoveredPassword.value = password;
+                    document.getElementById('security-question-container').style.display = 'none';
+                    document.getElementById('password-recovery-container').style.display = 'block';
+                } else {
+                    showToast('安全问题答案不正确', 'error');
+                }
+            });
+            
+            // 复制密码
+            copyPassword.addEventListener('click', function() {
+                recoveredPassword.select();
+                document.execCommand('copy');
+                showToast('密码已复制到剪贴板');
+            });
+            
+            // 关闭找回密码
+            closeRecovery.addEventListener('click', function() {
+                hideModal(recoverPasswordModal);
+            });
+        });
+    </script>
+</body>
+</html>

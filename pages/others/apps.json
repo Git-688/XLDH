@@ -1,0 +1,14 @@
+window.AppsData = [
+  {
+    "name": "浏览器",
+    "icon": "https://via.placeholder.com/40",
+    "desc": "快速稳定的网页浏览器",
+    "downloadUrl": "#"
+  },
+  {
+    "name": "办公套件",
+    "icon": "https://via.placeholder.com/40",
+    "desc": "文档编辑、表格处理工具",
+    "downloadUrl": "#"
+  }
+];

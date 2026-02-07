@@ -1,0 +1,38 @@
+window.KnowledgeData = {
+  "phonebook": [
+    { "name": "紧急求助", "number": "110" },
+    { "name": "消防救援", "number": "119" },
+    { "name": "医疗急救", "number": "120" },
+    { "name": "交通事故", "number": "122" }
+  ],
+  "trafficSigns": [
+    { "name": "禁止通行", "icon": "https://via.placeholder.com/40" },
+    { "name": "直行", "icon": "https://via.placeholder.com/40" },
+    { "name": "左转", "icon": "https://via.placeholder.com/40" },
+    { "name": "右转", "icon": "https://via.placeholder.com/40" }
+  ],
+  "carLights": [
+    { "name": "发动机故障", "icon": "https://via.placeholder.com/40" },
+    { "name": "安全带未系", "icon": "https://via.placeholder.com/40" },
+    { "name": "ABS故障", "icon": "https://via.placeholder.com/40" },
+    { "name": "胎压异常", "icon": "https://via.placeholder.com/40" }
+  ],
+  "sizes": [
+    { "name": "A4纸张", "desc": "210mm×297mm" },
+    { "name": "身份证", "desc": "85.6mm×54mm" },
+    { "name": "信用卡", "desc": "85.6mm×54mm" },
+    { "name": "一寸照片", "desc": "25mm×35mm" }
+  ],
+  "carLogos": [
+    { "name": "比亚迪", "icon": "https://via.placeholder.com/40" },
+    { "name": "大众", "icon": "https://via.placeholder.com/40" },
+    { "name": "丰田", "icon": "https://via.placeholder.com/40" },
+    { "name": "宝马", "icon": "https://via.placeholder.com/40" }
+  ],
+  "timePeriods": [
+    { "name": "子时", "animal": "鼠", "time": "23:00-01:00", "desc": "夜半，又名子夜、中夜" },
+    { "name": "丑时", "animal": "牛", "time": "01:00-03:00", "desc": "鸡鸣，又名荒鸡" },
+    { "name": "寅时", "animal": "虎", "time": "03:00-05:00", "desc": "平旦，又称黎明、早晨" },
+    { "name": "卯时", "animal": "兔", "time": "05:00-07:00", "desc": "日出，又名日始、破晓" }
+  ]
+};
