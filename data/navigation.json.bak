@@ -1,0 +1,1716 @@
+/**
+ * 分类导航系统数据 - 更新版
+ * 从 data.js 迁移的数据
+ */
+window.NavigationData = {
+    // 统计信息 - 已更新为精确计算
+    getStats: function() {
+        let totalCategories = 0;
+        let totalSubCategories = 0;
+        let totalWebsites = 0;
+        
+        for (const category in this.categories) {
+            totalCategories++;
+            totalSubCategories += Object.keys(this.categories[category]).length;
+            for (const subCategory in this.categories[category]) {
+                totalWebsites += this.categories[category][subCategory].length;
+            }
+        }
+        
+        return {
+            totalCategories,
+            totalSubCategories,
+            totalWebsites
+        };
+    },
+    
+    // 获取所有一级分类
+    getCategoryList: function() {
+        return Object.keys(this.categories);
+    },
+    
+    // 获取一级分类详情
+    getCategoryInfo: function(category) {
+        return {
+            name: category,
+            subCategories: Object.keys(this.categories[category] || {}),
+            description: this.descriptions?.[category] || '',
+            icon: this.categoryIcons?.[category] || 'fas fa-folder'
+        };
+    },
+    
+    // 获取二级分类数据
+    getLevel2Data: function(level2) {
+        for (const category in this.categories) {
+            for (const subCategory in this.categories[category]) {
+                if (subCategory === level2) {
+                    return this.categories[category][subCategory];
+                }
+            }
+        }
+        return [];
+    },
+    
+    // 获取所有网站数据
+    getAllWebsites: function() {
+        const allWebsites = [];
+        for (const category in this.categories) {
+            for (const subCategory in this.categories[category]) {
+                const websites = this.categories[category][subCategory];
+                websites.forEach(website => {
+                    website.category = category;
+                    website.subCategory = subCategory;
+                    allWebsites.push(website);
+                });
+            }
+        }
+        return allWebsites;
+    },
+    
+    // 搜索网站
+    searchWebsites: function(keyword) {
+        const results = [];
+        const allWebsites = this.getAllWebsites();
+        
+        keyword = keyword.toLowerCase().trim();
+        if (!keyword) return [];
+        
+        for (const website of allWebsites) {
+            if (
+                website.title.toLowerCase().includes(keyword) ||
+                website.description.toLowerCase().includes(keyword) ||
+                (website.category && website.category.toLowerCase().includes(keyword)) ||
+                (website.subCategory && website.subCategory.toLowerCase().includes(keyword))
+            ) {
+                results.push(website);
+            }
+        }
+        
+        return results.slice(0, 50); // 限制结果数量
+    },
+    
+    // 分类描述
+    descriptions: {
+        '推荐': '精选API和实用工具网站',
+        '特色导航': '各种网站导航资源',
+        '影音阅漫游': '影视、音乐、阅读、漫画、游戏资源',
+        '游戏娱乐': '在线游戏和游戏资源',
+        '学习教育': '在线学习和教育资源',
+        '应用市场': '软件应用和工具下载',
+        '趣味工具': '创意工具和生成器',
+        '日常生活': '生活实用工具和查询'
+    },
+    
+    // 分类图标
+    categoryIcons: {
+        '推荐': 'fas fa-star',
+        '特色导航': 'fas fa-fire',
+        '影音阅漫游': 'fas fa-film',
+        '游戏娱乐': 'fas fa-gamepad',
+        '学习教育': 'fas fa-graduation-cap',
+        '应用市场': 'fas fa-mobile-alt',
+        '趣味工具': 'fas fa-tools',
+        '日常生活': 'fas fa-utensils'
+    },
+    
+    // 标题配置
+    titleConfig: {
+        mainTitle: '网站导航大全',
+        subTitle: '精心整理的分类导航，方便快速查找各类网站资源',
+        showCount: true,
+        showSearch: true
+    },
+    
+    // 三级分类数据（从 data.js 转换而来）
+    categories: {
+        // 一级分类：推荐
+        '推荐': {
+            // 二级分类：其他
+            '其他': [
+                {
+                    title: '数据分析平台',
+                    description: '提供全面的数据分析和可视化工具',
+                    url: 'https://example.com/data-analysis',
+                    icon: '📊'
+                },
+                {
+                    title: '文档协作工具',
+                    description: '实时协作编辑文档，提高团队效率',
+                    url: 'https://example.com/collaboration',
+                    icon: '📝'
+                },
+                {
+                    title: '云存储服务',
+                    description: '安全可靠的云存储解决方案',
+                    url: 'https://example.com/cloud-storage',
+                    icon: '🖥️'
+                }
+            ],
+            // 二级分类：API
+            'API': [
+                {
+                    title: '酷酷API',
+                    description: '提升工作效率的实用工具',
+                    url: 'https://api.zxki.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: 'BugPk-Api',
+                    description: '激发创意的设计资源库',
+                    url: 'https://api.bugpk.com/',
+                    icon: 'https://api.bugpk.com/logo.png'
+                },
+                {
+                    title: '稳定API',
+                    description: '稳定可靠的应用接口服务',
+                    url: 'https://api.xingchenfu.xyz/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '云智API',
+                    description: '智能云端应用接口',
+                    url: 'https://api.jkyai.top/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '迟言API',
+                    description: '多功能应用接口集合',
+                    url: 'https://cyapi.top/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '酷乐API',
+                    description: '娱乐应用接口集合',
+                    url: 'https://api.kuleu.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '龙珠API',
+                    description: '强大的应用接口服务',
+                    url: 'https://sdkapi.hhlqilongzhu.cn/',
+                    icon: 'https://www.hhlqilongzhu.cn/assets/resource/favicon.png'
+                },
+                {
+                    title: '笒鬼鬼API',
+                    description: '创意应用接口',
+                    url: 'https://api.cenguigui.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '无铭API',
+                    description: '简洁实用的应用接口',
+                    url: 'https://jkapi.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: 'PearAPI',
+                    description: '清新风格应用接口',
+                    url: 'https://api.pearktrue.cn/dashboard/home',
+                    icon: 'https://api.pearktrue.cn/favicon.ico'
+                },
+                {
+                    title: 'MiloraAPI',
+                    description: '多功能应用接口平台',
+                    url: 'https://api.milorapart.top/',
+                    icon: 'https://api.milorapart.top/favicon.ico'
+                },
+                {
+                    title: 'kylinAPI',
+                    description: '麒麟应用接口服务',
+                    url: 'https://api.qlwc.cn/',
+                    icon: 'https://api.qlwc.cn/favicon.ico'
+                },
+                {
+                    title: '存雨API',
+                    description: '数据存储应用接口',
+                    url: 'https://api.cunyuapi.top/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '山河API',
+                    description: '稳定可靠的应用接口',
+                    url: 'https://api.shanhe.kim/',
+                    icon: 'https://api.shanhe.kim/assets/img/favicons/favicon.png'
+                },
+                {
+                    title: '苏苏API',
+                    description: '简洁易用的应用接口',
+                    url: 'https://api.xn--ei1aa.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '苏慕白API',
+                    description: '清新风格应用接口',
+                    url: 'https://api.sumubai.cn/',
+                    icon: 'https://api.sumubai.cn/assets/img/favicons/favicon.png'
+                },
+                {
+                    title: '彬红茶API',
+                    description: '温暖风格应用接口',
+                    url: 'https://api.redcha.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '小星API',
+                    description: '轻量级应用接口',
+                    url: 'https://api.xiaoxing.site/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '慕名API',
+                    description: '知名应用接口集合',
+                    url: 'https://xiaoapi.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '辛奈API',
+                    description: '高效应用接口服务',
+                    url: 'http://8.137.14.126/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '芒果API',
+                    description: '热带风格应用接口',
+                    url: 'http://mgyy.asia/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '素颜API',
+                    description: '简洁无修饰应用接口',
+                    url: 'https://api.suyanw.cn/',
+                    icon: 'https://api.suyanw.cn/favicon.ico'
+                },
+                {
+                    title: '小执API',
+                    description: '专注的应用接口服务',
+                    url: 'http://api.xzboke.cn/',
+                    icon: 'http://api.xzboke.cn/favicon.ico'
+                },
+                {
+                    title: '小言API',
+                    description: '轻量级应用接口',
+                    url: 'http://api.zxz.ee/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: 'OIAPI',
+                    description: '信息学竞赛应用接口',
+                    url: 'https://oiapi.net/',
+                    icon: 'https://oiapi.net/favicon.ico'
+                },
+                {
+                    title: '云萌阁API',
+                    description: '可爱风格应用接口',
+                    url: 'https://api.yunmge.com/',
+                    icon: 'https://api.yunmge.com/assets/img/ico/favicon.ico'
+                },
+                {
+                    title: '98情缘API',
+                    description: '情感类应用接口',
+                    url: 'https://www.98qy.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '优享云API',
+                    description: '优质云端应用接口',
+                    url: 'https://api.ahfi.cn/',
+                    icon: 'https://api.ahfi.cn/favicon.ico'
+                },
+                {
+                    title: '星空API',
+                    description: '浩瀚星空主题应用接口',
+                    url: 'https://api.71xk.com/',
+                    icon: 'https://cdn.71xk.com/xkstatic/common/images/logo/png_favicon.png'
+                },
+                {
+                    title: '洛樱云API',
+                    description: '樱花主题应用接口',
+                    url: 'https://api.alcex.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: 'WhyAPI',
+                    description: '问答类应用接口',
+                    url: 'https://apis.whyta.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '惜染图库API',
+                    description: '图片资源应用接口',
+                    url: 'https://api.hefollo.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '江江API',
+                    description: '流畅应用接口服务',
+                    url: 'http://x4f5rt.site/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '客源API',
+                    description: '客户资源管理接口',
+                    url: 'https://api.qster.top/API/',
+                    icon: 'https://api.qster.top/favicon.ico'
+                },
+                {
+                    title: '巡回寺API',
+                    description: '巡回服务应用接口',
+                    url: 'https://api.xunhuisi.store/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '枫雨API',
+                    description: '风雨无阻应用接口',
+                    url: 'https://api-v2.yuafeng.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '看戏仔API',
+                    description: '娱乐应用接口',
+                    url: 'https://api.kxzjoker.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '福利云API',
+                    description: '福利资源应用接口',
+                    url: 'https://free.xwteam.cn/',
+                    icon: 'https://free.xwteam.cn/assets/img/FreeAPI.png'
+                },
+                {
+                    title: '栗次元API',
+                    description: '二次元应用接口',
+                    url: 'https://t.alcy.cc/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '筱初API',
+                    description: '清新初体验应用接口',
+                    url: 'https://api.xcboke.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '安生API',
+                    description: '安全稳定应用接口',
+                    url: 'http://api.1668888.xyz/',
+                    icon: 'http://api.1668888.xyz/assets/img/favicons/favicon.png'
+                },
+                {
+                    title: '思娟API',
+                    description: '思维导图应用接口',
+                    url: 'https://api.xiaoluwu.com/',
+                    icon: 'https://api.xiaoluwu.com/Template/index/Neumorphism/assets/images/logo.png'
+                },
+                {
+                    title: '喵喵API',
+                    description: '可爱风格应用接口',
+                    url: 'https://api.niniandmiaomiao.love/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '驼城API',
+                    description: '稳定可靠应用接口',
+                    url: 'https://api.tcslw.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '清和API',
+                    description: '清新和谐应用接口',
+                    url: 'https://api.qhsou.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '小尘API',
+                    description: '轻量级应用接口',
+                    url: 'http://api.xcvts.cn/',
+                    icon: 'http://api.xcvts.cn/favicon.ico'
+                },
+                {
+                    title: '小萝卜API',
+                    description: '可爱风格应用接口',
+                    url: 'https://api.lbbb.cc/',
+                    icon: 'https://api.lbbb.cc/assets/img/favicons/favicon.png'
+                },
+                {
+                    title: 'AuroraAPI',
+                    description: '一个稳定、快速、易用的高质量API服务平台',
+                    url: 'https://api.andeer.top/',
+                    icon: 'assets/images/icons/00.png'
+                }
+            ]
+        },
+        
+        // 一级分类：特色导航
+        '特色导航': {
+            '热门': [
+                {
+                    title: '黑洞导航',
+                    description: '当前最受欢迎的资源',
+                    url: 'https://hddh.link/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '薇飞导航',
+                    description: '精致网站导航集合',
+                    url: 'https://www.fwfly.com/',
+                    icon: 'https://www.fwfly.com/zb_users/theme/suiranx_nav/image/favicon.ico'
+                },
+                {
+                    title: '柒夜导航',
+                    description: '夜间风格网站导航',
+                    url: 'https://nav.qinight.com/',
+                    icon: 'https://nav.qinight.com/static/image/favicon.ico'
+                },
+                {
+                    title: '终极导航',
+                    description: '全面网站导航服务',
+                    url: 'https://www.zjnav.com/',
+                    icon: 'https://www.zjnav.com/wp-content/uploads/2024/01/1705467656-favicon.png'
+                },
+                {
+                    title: '药研导航',
+                    description: '医药研究专业导航',
+                    url: 'https://drugx.cn/',
+                    icon: 'https://drugx.cn/wp-content/uploads/2021/12/Drugx-cn.ico'
+                },
+                {
+                    title: '不死鸟',
+                    description: '长久稳定的网站导航',
+                    url: 'https://dalao.ru/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '不求人导航',
+                    description: '自助式网站导航',
+                    url: 'https://www.bqrdh.com/',
+                    icon: 'https://tools.bqrdh.com/static/images/favicon_fox.png'
+                },
+                {
+                    title: '阿酷导航',
+                    description: '酷炫风格网站导航',
+                    url: 'https://www.a.cool/',
+                    icon: 'https://www.a.cool/favicon.ico'
+                },
+                {
+                    title: '快导航网',
+                    description: '快速访问网站导航',
+                    url: 'https://www.hifast.cn/',
+                    icon: 'https://www.hifast.cn/wp-content/uploads/2022/02/hifast.png'
+                },
+                {
+                    title: '嘀哩嘀哩导航',
+                    description: '二次元风格网站导航',
+                    url: 'https://dlidli.wang/',
+                    icon: 'https://dlidli.wang/wp-content/uploads/2020/09/favicon.png'
+                },
+                {
+                    title: '好资源导航网',
+                    description: '优质资源网站导航',
+                    url: 'https://www.haoziyuan.cc/',
+                    icon: 'https://www.haoziyuan.cc/favicon.ico'
+                },
+                {
+                    title: '迷鹿导航',
+                    description: '探索式网站导航',
+                    url: 'https://www.plnav.com/',
+                    icon: 'https://www.plnav.com/static/images/favicon.png'
+                },
+                {
+                    title: '赛克导航',
+                    description: '安全可靠的网站导航',
+                    url: 'https://sec123.cn/',
+                    icon: 'https://sec123.cn/index/cropped-logo-2.webp'
+                },
+                {
+                    title: 'en导航',
+                    description: '英文资源网站导航',
+                    url: 'https://www.enabcd.cn/',
+                    icon: 'https://www.enabcd.cn/logo.png'
+                },
+                {
+                    title: '一糖导航',
+                    description: '甜蜜风格网站导航',
+                    url: 'https://iitang.com/',
+                    icon: 'https://iitang.com/wp-content/uploads/2024/10/1729737698-%E8%B5%84%E6%BA%90-2.png'
+                },
+                {
+                    title: 'voidke导航',
+                    description: '极简风格网站导航',
+                    url: 'https://tools.voidke.com/',
+                    icon: 'https://tools.voidke.com/wp-content/uploads/2024/07/1720006317-favicon.ico'
+                },
+                {
+                    title: 'XXV网址导航',
+                    description: '罗马数字风格网站导航',
+                    url: 'https://www.xxv.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: 'JAY的资源库',
+                    description: '个人精选资源导航',
+                    url: 'https://www.lovejay.top/',
+                    icon: 'https://www.lovejay.top/wp-content/uploads/2023/08/80.png'
+                },
+                {
+                    title: '开发者导航',
+                    description: '程序员专用网站导航',
+                    url: 'https://codernav.com/',
+                    icon: 'https://codernav.com/favicon.png'
+                },
+                {
+                    title: '深度导航',
+                    description: '深度挖掘网站导航',
+                    url: 'https://www.deepdh.com/',
+                    icon: 'https://www.deepdh.com/wp-content/uploads/bg/favicon.png'
+                },
+                {
+                    title: '官网大全',
+                    description: '官方网站集合导航',
+                    url: 'https://guanwangdaquan.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '无峰网址导航',
+                    description: '无广告网站导航',
+                    url: 'https://www.8kmm.com/',
+                    icon: 'https://www.8kmm.com/img/logo_200.png'
+                },
+                {
+                    title: '酷啦鱼',
+                    description: '酷炫风格网站导航',
+                    url: 'https://www.kulayu.com/',
+                    icon: 'https://www.kulayu.com/wp-content/uploads/2024/06/1718912557-favicon.png'
+                },
+                {
+                    title: '爱达杂货铺',
+                    description: '杂货铺风格网站导航',
+                    url: 'https://adzhp.cc/',
+                    icon: 'https://adzhp.cc/wp-content/uploads/2020/02/A-win.ico'
+                },
+                {
+                    title: '果汁导航',
+                    description: '清新风格网站导航',
+                    url: 'http://www.guozhivip.com/',
+                    icon: 'http://www.guozhivip.com/images/ic.ico'
+                },
+                {
+                    title: '数字素养网',
+                    description: '数字素养教育资源导航',
+                    url: 'https://szsyw.cn/',
+                    icon: 'https://szsyw.cn/wp-content/uploads/2025/04/1745759673-60f17011e80d2.png'
+                },
+                {
+                    title: '一只会飞的旺旺',
+                    description: '趣味风格网站导航',
+                    url: 'https://nav.wangwangit.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: 'Noisedh导航',
+                    description: '噪音风格网站导航',
+                    url: 'http://www.noisedh.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '趣导航',
+                    description: '趣味网站导航集合',
+                    url: 'https://qssily.com/',
+                    icon: 'https://www-qssily-com.oss-cn-shenzhen.aliyuncs.com/img/7nxp.png'
+                },
+                {
+                    title: '喜欢书签',
+                    description: '书签式网站导航',
+                    url: 'https://www.likebookmark.com/#category-229',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '书签地球',
+                    description: '全球书签网站导航',
+                    url: 'https://www.bookmarkearth.cn/',
+                    icon: 'https://www.bookmarkearth.cn/media/img/logo/favicon.ico'
+                },
+                {
+                    title: '聚神铺导航',
+                    description: '专注力网站导航',
+                    url: 'https://www.jspoo.com/',
+                    icon: 'https://www.jspoo.com/wp-content/themes/onenav/screenshot.jpg'
+                }
+            ],
+            '学习': [
+                {
+                    title: '在线课程平台',
+                    description: '提供各类专业课程',
+                    url: 'https://example.com/online-courses',
+                    icon: '🎓'
+                },
+                {
+                    title: '知识分享社区',
+                    description: '专业人士交流平台',
+                    url: 'https://example.com/knowledge-sharing',
+                    icon: '💡'
+                }
+            ]
+        },
+        
+        // 一级分类：影音阅漫游
+        '影音阅漫游': {
+            '在线影视': [
+                {
+                    title: '阳光影视',
+                    description: '高清在线影视平台',
+                    url: 'https://mengdm.vip/',
+                    icon: 'https://mengdm.vip/upload/mxprocms/20250812-1/5d4d42d54bbb39e182fceac09487507c.jpg'
+                },
+                {
+                    title: '八号影视',
+                    description: '优质影视资源平台',
+                    url: 'https://www.bahaotv.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: 'FreeOK',
+                    description: '免费影视观看平台',
+                    url: 'https://www.freeok.mobi/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '火车太堵',
+                    description: '海量高清视频在线观看',
+                    url: 'https://www.hctd1.com/',
+                    icon: 'https://beijing2.xstore.qihu.com/aiwork-feedback-meida/9294720ede773efc7d798754ec1fdd3c-ca09d016-5177-4b4a-b0e2-c711f1c6369e.png'
+                },
+                {
+                    title: '哒哒影漫',
+                    description: '影视动漫综合平台',
+                    url: 'https://www.dddym.com/',
+                    icon: 'https://oss.dddym.com/code/1.0.25/image/favicon.svg'
+                },
+                {
+                    title: '游子影视',
+                    description: '海外影视资源平台',
+                    url: 'https://www.youzisp.tv/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '观影GYING',
+                    description: '专业影视观看平台',
+                    url: 'https://www.gying.net/user/login',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '毒舌电影',
+                    description: '犀利影评影视平台',
+                    url: 'https://www.dushe7.app/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '来看点播',
+                    description: '点播式影视平台',
+                    url: 'https://lkvod.org/',
+                    icon: 'https://lkvod.org/upload/site/20241223-1/eb0f19bab937f4f3da69d1fa2b7c516c.png'
+                },
+                {
+                    title: '哈哩哈哩',
+                    description: '二次元影视平台',
+                    url: 'http://halihali21.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '臭蛋蛋影视',
+                    description: '趣味影视资源平台',
+                    url: 'https://cddys.me/',
+                    icon: 'https://cddys.me/wp-content/uploads/2023/09/icon-1.png'
+                },
+                {
+                    title: '片吧影视',
+                    description: '影视片段分享平台',
+                    url: 'https://www.pbpbs.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '七味',
+                    description: '七种口味影视平台',
+                    url: 'https://www.qwavi.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '剧爷爷',
+                    description: '经典老剧影视平台',
+                    url: 'https://www.juyeye.cc/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: 'LIBVIO',
+                    description: '自由影视观看平台',
+                    url: 'https://www.libvio.cc/',
+                    icon: 'https://www.libvio.cc/statics/img/favicon.ico'
+                },
+                {
+                    title: '555电影',
+                    description: '数字主题影视平台',
+                    url: 'https://55u21.art/',
+                    icon: 'https://vpic.cms.qq.com/nj_vpic/3272248629/1738571699548996690/3635677961821188660'
+                },
+                {
+                    title: 'FreeOK',
+                    description: '免费OK影视平台',
+                    url: 'https://www.freeok.la/',
+                    icon: 'https://www.freeok.la/mxtheme/images/favicon.png'
+                },
+                {
+                    title: 'GAZE',
+                    description: '凝视影视观看平台',
+                    url: 'https://gaze.run/',
+                    icon: 'assets/images/icons/00.png'
+                }
+            ],
+            '二次元': [
+                {
+                    title: '樱花动漫',
+                    description: '日本动漫资源平台',
+                    url: 'https://www.zkk79.com/',
+                    icon: 'https://www.zkk79.com/template/zkk7/statics/img/favicon.ico'
+                },
+                {
+                    title: 'NT动漫',
+                    description: '新番动漫资源平台',
+                    url: 'https://www.ntdm8.com/',
+                    icon: 'https://cdn.yinghuazy.xyz/webjs/ntdm8/image/favicon.ico'
+                },
+                {
+                    title: '樱花动漫',
+                    description: '经典动漫资源平台',
+                    url: 'http://m.iyinghua.com/',
+                    icon: 'http://m.iyinghua.com/js/20180601/ico.png'
+                },
+                {
+                    title: '烂番茄',
+                    description: '动漫评分评论平台',
+                    url: 'https://www.rottentomatoes.com/',
+                    icon: 'https://www.rottentomatoes.com/favicon.ico'
+                }
+            ],
+            '影视资源': [
+                {
+                    title: '电影高清迅雷下载',
+                    description: '高清电影下载平台',
+                    url: 'https://xunlei8.org/',
+                    icon: 'https://xunlei8.org/static/img/favicon.png'
+                },
+                {
+                    title: '飘花资源网',
+                    description: '飘花影视资源平台',
+                    url: 'https://www.piaohua.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '美剧粉',
+                    description: '美剧资源专门平台',
+                    url: 'https://www.mjf2020.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '看片狂人',
+                    description: '狂热影视爱好者平台',
+                    url: 'https://kuangren.us/portal.html',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '梦幻天堂',
+                    description: '梦幻影视资源平台',
+                    url: 'https://www.321n.net/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '人人电源网',
+                    description: '人人影视资源平台',
+                    url: 'https://www.rrdynb.com/index.html',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '人人影视分享站',
+                    description: '人人影视分享平台',
+                    url: 'https://yyets.click/home',
+                    icon: 'https://yyets.click/svg/logo.svg'
+                },
+                {
+                    title: '美剧迷',
+                    description: '美剧爱好者平台',
+                    url: 'https://www.meijumi.net/',
+                    icon: 'https://www.meijumi.net/wp-content/themes/2016091704541775/images/favicon.ico'
+                },
+                {
+                    title: '吴签磁力',
+                    description: '磁力链接资源平台',
+                    url: 'https://wuqiantv.top/',
+                    icon: 'https://prod.b5.howcdn.com/img/wuqian/favicon.png'
+                },
+                {
+                    title: '樱花动漫',
+                    description: '樱花动漫资源平台',
+                    url: 'https://yhdm33.com/',
+                    icon: 'https://yhdm33.com/static/img/favicon.png'
+                },
+                {
+                    title: '黑豆短剧',
+                    description: '短视频剧集平台',
+                    url: 'https://www.hddj.cc/',
+                    icon: 'https://www.hddj.cc/favicon.ico'
+                },
+                {
+                    title: '热门网盘资源',
+                    description: '网盘影视资源集合',
+                    url: 'https://docs.qq.com/sheet/DRnhoRHpoV2lodFlq?tab=km9qhm',
+                    icon: 'assets/images/icons/00.png'
+                }
+            ],
+            '字幕资源': [
+                {
+                    title: '字幕库',
+                    description: '影视字幕资源库',
+                    url: 'https://srtku.com/',
+                    icon: 'https://srtku.com/favicon.png'
+                },
+                {
+                    title: 'SudHD',
+                    description: '高清字幕资源平台',
+                    url: 'https://subhd.tv/',
+                    icon: 'https://img.subhd.tv/files/apple-touch-icon.png'
+                },
+                {
+                    title: '巴哈姆特動畫瘋',
+                    description: '台湾动画字幕平台',
+                    url: 'https://ani.gamer.com.tw/',
+                    icon: 'https://ani.gamer.com.tw/favicon.ico'
+                }
+            ],
+            '在线音乐': [
+                {
+                    title: '微音',
+                    description: '微声音乐平台',
+                    url: 'https://www.yinwe.com/',
+                    icon: 'https://www.yinwe.com/favicon.ico'
+                },
+                {
+                    title: '音乐序章',
+                    description: '序章音乐平台',
+                    url: 'https://www.yinyueke.net/m/',
+                    icon: 'https://cc.cdn.sx.cn/favicon.ico'
+                },
+                {
+                    title: '铜钟音乐官网',
+                    description: '铜钟音乐平台',
+                    url: 'https://tonzhon.com/',
+                    icon: 'https://tonzhon.com/favicon.ico'
+                },
+                {
+                    title: '音乐魔石',
+                    description: '魔法音乐平台',
+                    url: 'https://yym4.com/',
+                    icon: 'https://yym4.com/img/favicon.png'
+                },
+                {
+                    title: '音乐库',
+                    description: '音乐资源库',
+                    url: 'https://www.yinyueku.cn/',
+                    icon: 'https://www.yinyueku.cn/favicon.ico'
+                },
+                {
+                    title: 'mmPlayer',
+                    description: '精美音乐播放器',
+                    url: 'https://netease-music.fe-mm.com/#/music/playlist',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '闪闪音乐网',
+                    description: '闪亮音乐平台',
+                    url: 'http://www.33ve.com/',
+                    icon: 'http://www.33ve.com/favicon.ico'
+                }
+            ],
+            '音乐资源': [
+                {
+                    title: '音乐解析器',
+                    description: '音乐链接解析工具',
+                    url: 'https://musicjx.com/',
+                    icon: 'https://musicjx.com/static/img/apple-touch-icon.png'
+                },
+                {
+                    title: '无损生活',
+                    description: '无损音乐资源平台',
+                    url: 'https://flac.life/',
+                    icon: 'https://flac.life/img/logo.png'
+                },
+                {
+                    title: 'MP3BST',
+                    description: 'MP3音乐资源集合',
+                    url: 'https://docs.qq.com/doc/DTVVqdEVuVWhReU1l',
+                    icon: 'https://example.com/icon.png'
+                },
+                {
+                    title: '歌曲宝',
+                    description: '宝库音乐资源平台',
+                    url: 'https://www.gequbao.com/',
+                    icon: 'https://www.gequbao.com/static/img/logo.png'
+                },
+                {
+                    title: '趣乐兔',
+                    description: '趣味音乐平台',
+                    url: 'https://funletu.com/music/',
+                    icon: 'https://funletu.com/music/favicon.ico'
+                },
+                {
+                    title: '52ape',
+                    description: 'APE无损音乐平台',
+                    url: 'http://www.52ape.com/',
+                    icon: 'https://www.52ape.com/img/4377a791184e1e59f1afa67a77050a69'
+                }
+            ],
+            '阅读资源': [
+                {
+                    title: '鸠摩搜索',
+                    description: '电子书搜索平台',
+                    url: 'https://www.jiumodiary.com/',
+                    icon: 'https://www.jiumodiary.com/images/apple/apple-114.png'
+                },
+                {
+                    title: '找书神器',
+                    description: '书籍搜索工具',
+                    url: 'https://mianfei22.com/v3_uni_0919213?2',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '贼吧网',
+                    description: '网络文学阅读平台',
+                    url: 'https://m.zei8.vip/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '乐文小说网',
+                    description: '快乐文学阅读平台',
+                    url: 'https://www.lewen6.com/',
+                    icon: 'https://www.lewen6.com/yanqing/book.jpg'
+                },
+                {
+                    title: '知轩藏书',
+                    description: '知识轩藏书平台',
+                    url: 'https://zxcs.info/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '搬书匠',
+                    description: '书籍搬运工平台',
+                    url: 'http://www.banshujiang.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '书格',
+                    description: '书籍格子平台',
+                    url: 'https://www.shuge.org/',
+                    icon: 'https://www.shuge.org/wp-content/uploads/2018/06/shugeorg-icon.png'
+                },
+                {
+                    title: '苦瓜书盘',
+                    description: '苦味书籍平台',
+                    url: 'https://www.kgbook.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '资源帝',
+                    description: '资源帝王平台',
+                    url: 'https://shu.ziyuandi.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '香书小说',
+                    description: '香书小说阅读平台',
+                    url: 'http://wap.xbiqugu.la/',
+                    icon: 'http://www.xbiqugu.la/files/article/image/134/134375/134375s.jpg'
+                },
+                {
+                    title: '爱下电子书',
+                    description: '爱下电子书平台',
+                    url: 'https://ixdzs8.com/',
+                    icon: 'https://ixdzs8.com/images/favicon.ico'
+                },
+                {
+                    title: '效率集',
+                    description: '效率工具集合',
+                    url: 'https://www.xiaolvji.com/u/ljyandlwl',
+                    icon: 'https://files.xiaolvji.com/img/favicon.ico'
+                },
+                {
+                    title: '熊猫搜索',
+                    description: '熊猫搜索工具',
+                    url: 'https://xmsoushu.com/#/result',
+                    icon: 'https://xmsoushu.com/favicon.ico'
+                },
+                {
+                    title: '阅读链',
+                    description: '阅读链接平台',
+                    url: 'https://www.yuedu.pro/',
+                    icon: 'https://www.yuedu.pro/wp-content/uploads/2024/11/LOGO-3.0-400-300x300.png'
+                },
+                {
+                    title: '电子书搜索',
+                    description: '电子书搜索工具',
+                    url: 'https://www.giffox.com/',
+                    icon: 'https://www.giffox.com/favicon.png'
+                },
+                {
+                    title: '阅读',
+                    description: '简洁阅读平台',
+                    url: 'https://read.ygxz.in/#/',
+                    icon: 'assets/images/icons/00.png'
+                }
+            ],
+            '漫画资源': [
+                {
+                    title: '漫画屋',
+                    description: '漫画小屋平台',
+                    url: 'https://www.mhua5.com/',
+                    icon: 'https://www.mhua5.com/template/wap/default/img/favicon.ico'
+                },
+                {
+                    title: '包子漫画',
+                    description: '包子漫画平台',
+                    url: 'https://cn.baozimhcn.com/',
+                    icon: 'https://static-tw.baozimhcn.com/static/bzmh/img/apple-icon-57x57.png'
+                },
+                {
+                    title: 'COLAMANGA',
+                    description: '可乐漫画平台',
+                    url: 'https://www.colamanga.com/show?orderBy=update',
+                    icon: 'https://www.colamanga.com/static/logo.png'
+                }
+            ]
+        },
+        
+        // 一级分类：游戏娱乐
+        '游戏娱乐': {
+            '在线游戏': [
+                {
+                    title: '小霸王',
+                    description: '怀旧游戏平台',
+                    url: 'https://www.yikm.net/',
+                    icon: 'https://img.1990i.com/f.png'
+                },
+                {
+                    title: '桌游合集',
+                    description: '在线桌游集合',
+                    url: 'https://game.hullqin.cn/',
+                    icon: 'https://fe-1255520126.file.myqcloud.com/game/logo192-ed8a0a.png'
+                },
+                {
+                    title: '中国省级行政区划',
+                    description: '地理知识游戏',
+                    url: 'https://vultr.youmu.moe/quiz/',
+                    icon: 'https://vultr.youmu.moe/quiz/favicon.ico'
+                },
+                {
+                    title: '人生重开模拟器',
+                    description: '人生模拟游戏',
+                    url: 'https://liferestart.syaro.io/public/index.html',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '神奇海螺试验场',
+                    description: '神奇实验游戏',
+                    url: 'https://lab.magiconch.com/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '柠檬精',
+                    description: '柠檬精游戏平台',
+                    url: 'https://lemonjing.com/',
+                    icon: 'https://lemonjing.com/apple-touch-icon.png'
+                },
+                {
+                    title: '在线节奏',
+                    description: '节奏游戏平台',
+                    url: 'https://bemuse.ninja/',
+                    icon: 'https://bemuse.ninja/res/icon.png'
+                },
+                {
+                    title: '果汁实验室',
+                    description: '果汁实验游戏',
+                    url: 'http://guozhivip.com/lab/',
+                    icon: 'http://guozhivip.com/lab/images/logo.png'
+                },
+                {
+                    title: '俄罗斯方块',
+                    description: '经典俄罗斯方块',
+                    url: 'http://github.tanchangwen.com/react-tetris/?lan=zh-cn',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '在线魔方',
+                    description: '虚拟魔方游戏',
+                    url: 'https://iamthecu.be/',
+                    icon: 'https://iamthecu.be/media/cubeExplorer-favicon-0144x0144.png'
+                },
+                {
+                    title: '老游戏在线玩',
+                    description: '怀旧老游戏平台',
+                    url: 'https://zaixianwan.app/',
+                    icon: 'https://zaixianwan.app/apple-touch-icon.png'
+                },
+                {
+                    title: '核心防御',
+                    description: '核心防御游戏',
+                    url: 'https://lab.hakim.se/core/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: '井字游戏',
+                    description: '经典井字游戏',
+                    url: 'https://playtictactoe.org/',
+                    icon: 'https://playtictactoe.org/assets/images/icon-800.png'
+                },
+                {
+                    title: '画物理线条',
+                    description: '物理线条绘画游戏',
+                    url: 'https://www.xiwnn.com/huaxian',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
+                    title: 'mk48',
+                    description: 'MK48在线游戏',
+                    url: 'https://mk48.io/',
+                    icon: 'https://mk48.io/favicon.png'
+                },
+                {
+                    title: '大脚车',
+                    description: '大脚车赛车游戏',
+                    url: 'https://drive-mad.cc/',
+                    icon: 'https://drive-mad.cc/favicon.ico'
+                },
+                {
+                    title: '信任的进化',
+                    description: '信任进化游戏',
+                    url: 'https://dccxi.com/trust/',
+                    icon: 'https://dccxi.com/trust/favicon.png'
+                },
+                {
+                    title: '3D玩具车',
+                    description: '3D玩具车游戏',
+                    url: 'https://bruno-simon.com/',
+                    icon: 'https://bruno-simon.com/favicon/favicon-32x32.png'
+                },
+                {
+                    title: '六边形消消乐',
+                    description: '六边形消除游戏',
+                    url: 'https://srvcn.xbext.com/h5games/hextris/',
+                    icon: 'https://srvcn.xbext.com/h5games/hextris/favicon.ico'
+                },
+                {
+                    title: '找色差',
+                    description: '颜色差异寻找游戏',
+                    url: 'https://www.zhaosecha.com/',
+                    icon: 'https://www.zhaosecha.com/favicon.ico'
+                }
+            ],
+            '游戏资源': [
+                {
+                    title: '千寻科技',
+                    description: '千寻游戏资源',
+                    url: 'https://link3.cc/ctv6666',
+                    icon: 'https://link3.cc/favicon.ico'
+                },
+                {
+                    title: '小黑辅助网',
+                    description: '游戏辅助工具',
+                    url: 'https://www.xhfby.com/',
+                    icon: 'https://www.xhfby.com/favicon.ico'
+                },
+                {
+                    title: '辅助吧',
+                    description: '游戏辅助社区',
+                    url: 'https://www.fuzhuba.org/',
+                    icon: 'https://www.fuzhuba.org/favicon.ico'
+                },
+                {
+                    title: '皮皮资源网',
+                    description: '皮皮游戏资源',
+                    url: 'https://www.pipizyw.com/',
+                    icon: 'https://www.pipizyw.com/content/uploadfile/tpl_options//logo.png'
+                },
+                {
+                    title: '小黑盒',
+                    description: '游戏资讯平台',
+                    url: 'https://www.xiaoheihe.cn/tools/invite_friend/share?heybox_id=46868204',
+                    icon: 'https://www.xiaoheihe.cn/favicon.ico'
+                }
+            ],
+            '生成器': [
+                {
+                    title: '草料二维码',
+                    description: '二维码生成工具',
+                    url: 'https://cli.im/#',
+                    icon: 'https://gstatic.clewm.net/caoliao-resource/240407/6b2aef_89bd6906.png'
+                },
+                {
+                    title: '密码生成器',
+                    description: '安全密码生成工具',
+                    url: 'https://tool.liumingye.cn/password/',
+                    icon: 'https://tool.liumingye.cn/favicon.ico'
+                }
+            ]
+        },
+        
+        // 一级分类：学习教育
+        '学习教育': {
+            '在线课程': [
+                {
+                    title: '中国大学MOOC',
+                    description: '国家精品在线课程学习平台',
+                    url: 'https://www.icourse163.org/',
+                    icon: 'https://www.icourse163.org/favicon.ico'
+                },
+                {
+                    title: '学堂在线',
+                    description: '清华大学发起的在线教育平台',
+                    url: 'https://www.xuetangx.com/',
+                    icon: 'https://www.xuetangx.com/favicon.ico'
+                },
+                {
+                    title: 'Coursera',
+                    description: '国际知名在线课程平台',
+                    url: 'https://www.coursera.org/',
+                    icon: 'https://www.coursera.org/favicon.ico'
+                },
+                {
+                    title: 'edX',
+                    description: '哈佛和MIT合作的在线学习平台',
+                    url: 'https://www.edx.org/',
+                    icon: 'https://www.edx.org/favicon.ico'
+                },
+                {
+                    title: '网易公开课',
+                    description: '国内外名校公开课',
+                    url: 'https://open.163.com/',
+                    icon: 'https://open.163.com/favicon.ico'
+                }
+            ],
+            '语言学习': [
+                {
+                    title: '多邻国',
+                    description: '免费语言学习应用',
+                    url: 'https://www.duolingo.com/',
+                    icon: 'https://www.duolingo.com/favicon.ico'
+                },
+                {
+                    title: '沪江网校',
+                    description: '多语种在线学习平台',
+                    url: 'https://www.hujiang.com/',
+                    icon: 'https://www.hujiang.com/favicon.ico'
+                },
+                {
+                    title: '扇贝单词',
+                    description: '英语单词记忆工具',
+                    url: 'https://www.shanbay.com/',
+                    icon: 'https://www.shanbay.com/favicon.ico'
+                },
+                {
+                    title: 'BBC Learning English',
+                    description: 'BBC英语学习资源',
+                    url: 'https://www.bbc.co.uk/learningenglish/',
+                    icon: 'https://www.bbc.co.uk/learningenglish/favicon.ico'
+                }
+            ],
+            '考试备考': [
+                {
+                    title: '中公教育',
+                    description: '公务员考试培训',
+                    url: 'https://www.offcn.com/',
+                    icon: 'https://www.offcn.com/favicon.ico'
+                },
+                {
+                    title: '华图教育',
+                    description: '公职考试培训',
+                    url: 'https://www.huatu.com/',
+                    icon: 'https://www.huatu.com/favicon.ico'
+                },
+                {
+                    title: '新东方在线',
+                    description: '各类考试培训',
+                    url: 'https://www.koolearn.com/',
+                    icon: 'https://www.koolearn.com/favicon.ico'
+                },
+                {
+                    title: '考研帮',
+                    description: '考研资讯与辅导',
+                    url: 'https://www.kaoyan.com/',
+                    icon: 'https://www.kaoyan.com/favicon.ico'
+                }
+            ],
+            '学术资源': [
+                {
+                    title: '中国知网',
+                    description: '学术文献数据库',
+                    url: 'https://www.cnki.net/',
+                    icon: 'https://www.cnki.net/favicon.ico'
+                },
+                {
+                    title: '万方数据',
+                    description: '学术资源服务平台',
+                    url: 'https://www.wanfangdata.com.cn/',
+                    icon: 'https://www.wanfangdata.com.cn/favicon.ico'
+                },
+                {
+                    title: '维普资讯',
+                    description: '中文期刊服务平台',
+                    url: 'https://www.cqvip.com/',
+                    icon: 'https://www.cqvip.com/favicon.ico'
+                },
+                {
+                    title: '百度学术',
+                    description: '学术搜索服务平台',
+                    url: 'https://xueshu.baidu.com/',
+                    icon: 'https://xueshu.baidu.com/favicon.ico'
+                }
+            ]
+        },
+        
+        // 一级分类：应用市场
+        '应用市场': {
+            '安卓市场': [
+                {
+                    title: 'Google Play',
+                    description: '谷歌官方应用商店',
+                    url: 'https://play.google.com/store',
+                    icon: 'https://play.google.com/favicon.ico'
+                },
+                {
+                    title: '华为应用市场',
+                    description: '华为官方应用商店',
+                    url: 'https://appgallery.huawei.com/',
+                    icon: 'https://appgallery.huawei.com/favicon.ico'
+                },
+                {
+                    title: '小米应用商店',
+                    description: '小米官方应用商店',
+                    url: 'https://app.mi.com/',
+                    icon: 'https://app.mi.com/favicon.ico'
+                },
+                {
+                    title: '应用宝',
+                    description: '腾讯应用商店',
+                    url: 'https://sj.qq.com/',
+                    icon: 'https://sj.qq.com/favicon.ico'
+                },
+                {
+                    title: '酷安',
+                    description: '安卓应用社区',
+                    url: 'https://www.coolapk.com/',
+                    icon: 'https://www.coolapk.com/favicon.ico'
+                }
+            ],
+            'iOS市场': [
+                {
+                    title: 'App Store',
+                    description: '苹果官方应用商店',
+                    url: 'https://www.apple.com/app-store/',
+                    icon: 'https://www.apple.com/favicon.ico'
+                },
+                {
+                    title: 'TestFlight',
+                    description: '苹果测试应用平台',
+                    url: 'https://developer.apple.com/testflight/',
+                    icon: 'https://developer.apple.com/testflight/favicon.ico'
+                },
+                {
+                    title: 'PP助手',
+                    description: 'iOS应用下载',
+                    url: 'https://www.25pp.com/',
+                    icon: 'https://www.25pp.com/favicon.ico'
+                }
+            ],
+            '电脑软件': [
+                {
+                    title: '腾讯软件中心',
+                    description: '电脑软件下载',
+                    url: 'https://pc.qq.com/',
+                    icon: 'https://pc.qq.com/favicon.ico'
+                },
+                {
+                    title: '360软件管家',
+                    description: '安全软件下载',
+                    url: 'https://soft.360.cn/',
+                    icon: 'https://soft.360.cn/favicon.ico'
+                },
+                {
+                    title: 'SourceForge',
+                    description: '开源软件平台',
+                    url: 'https://sourceforge.net/',
+                    icon: 'https://sourceforge.net/favicon.ico'
+                },
+                {
+                    title: 'GitHub',
+                    description: '代码托管与开源项目',
+                    url: 'https://github.com/',
+                    icon: 'https://github.com/favicon.ico'
+                }
+            ],
+            '应用评测': [
+                {
+                    title: '少数派',
+                    description: '数字应用推荐与评测',
+                    url: 'https://sspai.com/',
+                    icon: 'https://sspai.com/favicon.ico'
+                },
+                {
+                    title: 'AppSo',
+                    description: '应用推荐与技巧',
+                    url: 'https://www.ifanr.com/app',
+                    icon: 'https://www.ifanr.com/favicon.ico'
+                },
+                {
+                    title: 'Product Hunt',
+                    description: '新产品发现平台',
+                    url: 'https://www.producthunt.com/',
+                    icon: 'https://www.producthunt.com/favicon.ico'
+                }
+            ]
+        },
+        
+        // 一级分类：趣味工具
+        '趣味工具': {
+            '在线工具': [
+                {
+                    title: 'Smallpdf',
+                    description: 'PDF在线处理工具',
+                    url: 'https://smallpdf.com/',
+                    icon: 'https://smallpdf.com/favicon.ico'
+                },
+                {
+                    title: 'Canva',
+                    description: '在线设计工具',
+                    url: 'https://www.canva.com/',
+                    icon: 'https://www.canva.com/favicon.ico'
+                },
+                {
+                    title: 'Remove.bg',
+                    description: '在线去除图片背景',
+                    url: 'https://www.remove.bg/',
+                    icon: 'https://www.remove.bg/favicon.ico'
+                },
+                {
+                    title: 'TinyPNG',
+                    description: '图片压缩工具',
+                    url: 'https://tinypng.com/',
+                    icon: 'https://tinypng.com/favicon.ico'
+                }
+            ],
+            '效率工具': [
+                {
+                    title: 'Notion',
+                    description: '一体化工作空间',
+                    url: 'https://www.notion.so/',
+                    icon: 'https://www.notion.so/favicon.ico'
+                },
+                {
+                    title: 'Trello',
+                    description: '项目管理工具',
+                    url: 'https://trello.com/',
+                    icon: 'https://trello.com/favicon.ico'
+                },
+                {
+                    title: 'Evernote',
+                    description: '笔记记录应用',
+                    url: 'https://evernote.com/',
+                    icon: 'https://evernote.com/favicon.ico'
+                },
+                {
+                    title: '滴答清单',
+                    description: '任务管理工具',
+                    url: 'https://dida365.com/',
+                    icon: 'https://dida365.com/favicon.ico'
+                }
+            ],
+            '创意工具': [
+                {
+                    title: 'Figma',
+                    description: '在线设计协作工具',
+                    url: 'https://www.figma.com/',
+                    icon: 'https://www.figma.com/favicon.ico'
+                },
+                {
+                    title: 'CodePen',
+                    description: '前端代码在线演示',
+                    url: 'https://codepen.io/',
+                    icon: 'https://codepen.io/favicon.ico'
+                },
+                {
+                    title: 'JSFiddle',
+                    description: '在线代码测试工具',
+                    url: 'https://jsfiddle.net/',
+                    icon: 'https://jsfiddle.net/favicon.ico'
+                },
+                {
+                    title: 'Awwwards',
+                    description: '网页设计灵感',
+                    url: 'https://www.awwwards.com/',
+                    icon: 'https://www.awwwards.com/favicon.ico'
+                }
+            ],
+            '趣味网站': [
+                {
+                    title: 'This Is Sand',
+                    description: '在线沙画创作',
+                    url: 'https://thisissand.com/',
+                    icon: 'https://thisissand.com/favicon.ico'
+                },
+                {
+                    title: 'Silk',
+                    description: '互动生成艺术',
+                    url: 'http://weavesilk.com/',
+                    icon: 'http://weavesilk.com/favicon.ico'
+                },
+                {
+                    title: 'Patatap',
+                    description: '键盘音乐互动',
+                    url: 'https://patatap.com/',
+                    icon: 'https://patatap.com/favicon.ico'
+                },
+                {
+                    title: 'Little Alchemy',
+                    description: '元素合成游戏',
+                    url: 'https://littlealchemy.com/',
+                    icon: 'https://littlealchemy.com/favicon.ico'
+                }
+            ]
+        },
+        
+        // 一级分类：日常生活
+        '日常生活': {
+            '购物消费': [
+                {
+                    title: '淘宝',
+                    description: '综合性网购平台',
+                    url: 'https://www.taobao.com/',
+                    icon: 'https://www.taobao.com/favicon.ico'
+                },
+                {
+                    title: '京东',
+                    description: '自营电商平台',
+                    url: 'https://www.jd.com/',
+                    icon: 'https://www.jd.com/favicon.ico'
+                },
+                {
+                    title: '拼多多',
+                    description: '社交电商平台',
+                    url: 'https://www.pinduoduo.com/',
+                    icon: 'https://www.pinduoduo.com/favicon.ico'
+                },
+                {
+                    title: '亚马逊',
+                    description: '全球电商平台',
+                    url: 'https://www.amazon.com/',
+                    icon: 'https://www.amazon.com/favicon.ico'
+                },
+                {
+                    title: '什么值得买',
+                    description: '购物推荐平台',
+                    url: 'https://www.smzdm.com/',
+                    icon: 'https://www.smzdm.com/favicon.ico'
+                }
+            ],
+            '外卖美食': [
+                {
+                    title: '美团外卖',
+                    description: '外卖配送平台',
+                    url: 'https://www.meituan.com/',
+                    icon: 'https://www.meituan.com/favicon.ico'
+                },
+                {
+                    title: '饿了么',
+                    description: '在线外卖平台',
+                    url: 'https://www.ele.me/',
+                    icon: 'https://www.ele.me/favicon.ico'
+                },
+                {
+                    title: '下厨房',
+                    description: '美食菜谱分享',
+                    url: 'https://www.xiachufang.com/',
+                    icon: 'https://www.xiachufang.com/favicon.ico'
+                },
+                {
+                    title: '豆果美食',
+                    description: '食谱与美食社区',
+                    url: 'https://www.douguo.com/',
+                    icon: 'https://www.douguo.com/favicon.ico'
+                }
+            ],
+            '旅行出行': [
+                {
+                    title: '携程旅行',
+                    description: '在线旅行服务',
+                    url: 'https://www.ctrip.com/',
+                    icon: 'https://www.ctrip.com/favicon.ico'
+                },
+                {
+                    title: '飞猪',
+                    description: '阿里旗下旅行平台',
+                    url: 'https://www.fliggy.com/',
+                    icon: 'https://www.fliggy.com/favicon.ico'
+                },
+                {
+                    title: '马蜂窝',
+                    description: '旅游攻略社区',
+                    url: 'https://www.mafengwo.cn/',
+                    icon: 'https://www.mafengwo.cn/favicon.ico'
+                },
+                {
+                    title: '百度地图',
+                    description: '地图导航服务',
+                    url: 'https://map.baidu.com/',
+                    icon: 'https://map.baidu.com/favicon.ico'
+                },
+                {
+                    title: '高德地图',
+                    description: '导航与地理位置服务',
+                    url: 'https://www.amap.com/',
+                    icon: 'https://www.amap.com/favicon.ico'
+                }
+            ],
+            '健康生活': [
+                {
+                    title: 'Keep',
+                    description: '运动健身应用',
+                    url: 'https://www.gotokeep.com/',
+                    icon: 'https://www.gotokeep.com/favicon.ico'
+                },
+                {
+                    title: '薄荷健康',
+                    description: '健康管理平台',
+                    url: 'https://www.boohee.com/',
+                    icon: 'https://www.boohee.com/favicon.ico'
+                },
+                {
+                    title: '丁香医生',
+                    description: '医疗健康服务平台',
+                    url: 'https://dxy.com/',
+                    icon: 'https://dxy.com/favicon.ico'
+                },
+                {
+                    title: '春雨医生',
+                    description: '在线医疗咨询',
+                    url: 'https://www.chunyuyisheng.com/',
+                    icon: 'https://www.chunyuyisheng.com/favicon.ico'
+                }
+            ]
+        }
+    }
+};
+
+// 兼容旧版本
+if (typeof window !== 'undefined') {
+    window.navigationData = NavigationData;
+}
+
+// 预计算统计数据
+const stats = NavigationData.getStats();
+console.log('导航数据加载完成，共包含：');
+console.log('- 一级分类:', stats.totalCategories, '个');
+console.log('- 二级分类:', stats.totalSubCategories, '个');
+console.log('- 总网站数:', stats.totalWebsites, '个');
