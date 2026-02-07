@@ -1,0 +1,2246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>答案之书 - 简约现代版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f2f5 0%, #e6e9f0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 18px;
+            border: 1px solid #e1e5eb;
+            border-radius: 50px;
+            background: #f8f9fa;
+            font-size: 14px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+            background: #fff;
+            border-color: #6c63ff;
+        }
+
+        .api-selector {
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .api-btn {
+            padding: 8px 14px;
+            border: 1px solid #6c63ff;
+            border-radius: 50px;
+            background: transparent;
+            color: #6c63ff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .api-btn.active {
+            background: linear-gradient(135deg, #6c63ff 0%, #4a43c7 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        button {
+            margin: 12px auto 0;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #6c63ff 0%, #4a43c7 100%);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+            transition: all 0.3s ease;
+            display: block;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(108, 99, 255, 0.4);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            background: #b0b0b0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .answer-section {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6c63ff 0%, #4a43c7 100%);
+            color: white;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 15px rgba(108, 99, 255, 0.2);
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.4s ease;
+            flex-direction: column;
+        }
+
+        .answer-section.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .answer-text {
+            font-size: 16px;
+            line-height: 1.5;
+            font-weight: 500;
+            width: 100%;
+        }
+
+        .answer-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            display: none;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .loading {
+            display: none;
+            margin: 12px auto;
+            width: 35px;
+            height: 35px;
+            border: 3px solid rgba(108, 99, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #6c63ff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #ff6b6b;
+            margin-top: 10px;
+            display: none;
+            font-size: 13px;
+        }
+
+        .api-info {
+            font-size: 12px;
+            color: #888;
+            margin-top: 8px;
+            position: relative;
+        }
+
+        /* 抽签样式 */
+        .draw-animation {
+            font-size: 18px;
+            margin-bottom: 15px;
+            animation: shake 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(-4px); }
+            100% { transform: translateX(4px); }
+        }
+
+        .lottery-result {
+            text-align: center;
+            width: 100%;
+        }
+
+        .lottery-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .lottery-content {
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .lottery-interpretation {
+            font-size: 13px;
+            line-height: 1.4;
+            color: #e0e0e0;
+        }
+
+        /* 灵签专用样式 */
+        .lottery-container {
+            display: none;
+            text-align: center;
+        }
+
+        .lottery-container.show {
+            display: block;
+        }
+
+        .lottery-button {
+            margin-top: 15px;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #ff7eb3 0%, #ff758c 100%);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 126, 179, 0.3);
+            transition: all 0.3s ease;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .lottery-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 126, 179, 0.4);
+        }
+
+        .lottery-button:active {
+            transform: translateY(1px);
+        }
+
+        .lottery-instruction {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* 每日一卦样式 */
+        .gua-container {
+            display: none;
+            text-align: center;
+        }
+
+        .gua-container.show {
+            display: block;
+        }
+
+        .gua-button {
+            margin-top: 15px;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+            transition: all 0.3s ease;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .gua-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .gua-button:active {
+            transform: translateY(1px);
+        }
+
+        .gua-instruction {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* 卦象结果样式 */
+        .gua-result {
+            text-align: center;
+            width: 100%;
+        }
+
+        .gua-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ffeb3b;
+        }
+
+        .gua-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .gua-content {
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .gua-interpretation {
+            font-size: 13px;
+            line-height: 1.4;
+            color: #e0e0e0;
+            text-align: left;
+            margin-top: 12px;
+        }
+
+        .gua-section {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .gua-section:last-child {
+            border-bottom: none;
+        }
+
+        /* 今日运势专用样式 */
+        .fortune-container {
+            display: none;
+            text-align: center;
+        }
+
+        .fortune-container.show {
+            display: block;
+        }
+
+        .fortune-button {
+            margin-top: 15px;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #ffb347 0%, #ffcc33 100%);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 179, 71, 0.3);
+            transition: all 0.3s ease;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .fortune-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 179, 71, 0.4);
+        }
+
+        .fortune-button:active {
+            transform: translateY(1px);
+        }
+
+        .fortune-instruction {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* 运势结果样式 */
+        .fortune-result {
+            text-align: center;
+            width: 100%;
+        }
+
+        .fortune-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ffeb3b;
+        }
+
+        .fortune-content {
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .fortune-details {
+            font-size: 13px;
+            line-height: 1.4;
+            color: #e0e0e0;
+            text-align: left;
+            margin-top: 12px;
+        }
+
+        /* 星座配对专用样式 */
+        .constellation-container {
+            display: none;
+            text-align: center;
+        }
+
+        .constellation-container.show {
+            display: block;
+        }
+
+        .constellation-inputs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .constellation-inputs input {
+            flex: 1;
+        }
+
+        .constellation-button {
+            margin-top: 15px;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+            transition: all 0.3s ease;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .constellation-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(156, 39, 176, 0.4);
+        }
+
+        .constellation-button:active {
+            transform: translateY(1px);
+        }
+
+        .constellation-instruction {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* 星座配对结果样式 */
+        .constellation-result {
+            text-align: center;
+            width: 100%;
+        }
+
+        .constellation-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ffeb3b;
+        }
+
+        .constellation-grade {
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+            color: #e0e0e0;
+        }
+
+        .constellation-content {
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        /* 每日运势专用样式 */
+        .daily-fortune-container {
+            display: none;
+            text-align: center;
+        }
+
+        .daily-fortune-container.show {
+            display: block;
+        }
+
+        .daily-fortune-button {
+            margin-top: 15px;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 198, 255, 0.3);
+            transition: all 0.3s ease;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .daily-fortune-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 198, 255, 0.4);
+        }
+
+        .daily-fortune-button:active {
+            transform: translateY(1px);
+        }
+
+        .daily-fortune-instruction {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* 每日运势结果样式 */
+        .daily-fortune-result {
+            text-align: center;
+            width: 100%;
+        }
+
+        .daily-fortune-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ffeb3b;
+        }
+
+        .daily-fortune-sign {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .daily-fortune-description {
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .daily-fortune-details {
+            font-size: 14px;
+            line-height: 1.4;
+            color: #e0e0e0;
+            text-align: left;
+            margin-top: 12px;
+        }
+
+        .daily-fortune-item {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .daily-fortune-label {
+            font-weight: bold;
+            color: #ffeb3b;
+        }
+
+        /* 星座运势专用样式 */
+        .constellation-fortune-container {
+            display: none;
+            text-align: center;
+        }
+
+        .constellation-fortune-container.show {
+            display: block;
+        }
+
+        .constellation-fortune-inputs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .constellation-fortune-inputs input, .constellation-fortune-inputs select {
+            flex: 1;
+        }
+
+        .constellation-fortune-button {
+            margin-top: 15px;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+            transition: all 0.3s ease;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .constellation-fortune-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .constellation-fortune-button:active {
+            transform: translateY(1px);
+        }
+
+        .constellation-fortune-instruction {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* 星座运势结果样式 */
+        .constellation-fortune-result {
+            text-align: left;
+            width: 100%;
+        }
+
+        .constellation-fortune-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .constellation-fortune-name {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #ffeb3b;
+        }
+
+        .constellation-fortune-en {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #e0e0e0;
+        }
+
+        .constellation-fortune-date {
+            font-size: 14px;
+            color: #e0e0e0;
+        }
+
+        .constellation-fortune-section {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .constellation-fortune-section:last-child {
+            border-bottom: none;
+        }
+
+        .constellation-fortune-section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #ffeb3b;
+        }
+
+        .constellation-fortune-item {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .constellation-fortune-label {
+            font-weight: bold;
+            color: #ffeb3b;
+        }
+
+        .constellation-fortune-trait {
+            display: inline-block;
+            margin-right: 8px;
+            margin-bottom: 5px;
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .constellation-fortune-match {
+            margin-bottom: 5px;
+        }
+
+        .limit-message {
+            font-size: 13px;
+            color: #ff6b6b;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        /* 新增样式：显示上次结果 */
+        .last-result-info {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* 生肖运势专用样式 */
+        .zodiac-fortune-container {
+            display: none;
+            text-align: center;
+        }
+
+        .zodiac-fortune-container.show {
+            display: block;
+        }
+
+        .zodiac-fortune-inputs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .zodiac-fortune-inputs input {
+            flex: 1;
+        }
+
+        .zodiac-fortune-button {
+            margin-top: 15px;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #00c853 0%, #64dd17 100%);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3);
+            transition: all 0.3s ease;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .zodiac-fortune-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 200, 83, 0.4);
+        }
+
+        .zodiac-fortune-button:active {
+            transform: translateY(1px);
+        }
+
+        .zodiac-fortune-instruction {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* 生肖运势结果样式 */
+        .zodiac-fortune-result {
+            text-align: left;
+            width: 100%;
+        }
+
+        .zodiac-fortune-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .zodiac-fortune-name {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #ffeb3b;
+        }
+
+        .zodiac-fortune-years {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #e0e0e0;
+        }
+
+        .zodiac-fortune-date {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .zodiac-fortune-section {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .zodiac-fortune-section:last-child {
+            border-bottom: none;
+        }
+
+        .zodiac-fortune-section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #ffeb3b;
+        }
+
+        .zodiac-fortune-item {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .zodiac-fortune-label {
+            font-weight: bold;
+            color: #ffeb3b;
+        }
+
+        .zodiac-fortune-score {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                max-width: 95%;
+            }
+            
+            .answer-text {
+                font-size: 15px;
+            }
+            
+            button {
+                padding: 10px 25px;
+            }
+            
+            .api-btn {
+                padding: 7px 12px;
+                font-size: 12px;
+            }
+            
+            .answer-image {
+                max-height: 350px;
+            }
+
+            .draw-animation {
+                font-size: 16px;
+            }
+
+            .lottery-title {
+                font-size: 15px;
+            }
+
+            .lottery-content {
+                font-size: 14px;
+            }
+
+            .gua-name {
+                font-size: 18px;
+            }
+
+            .gua-title {
+                font-size: 15px;
+            }
+
+            .gua-content {
+                font-size: 14px;
+            }
+
+            .fortune-title {
+                font-size: 16px;
+            }
+
+            .constellation-title {
+                font-size: 16px;
+            }
+
+            .constellation-grade {
+                font-size: 14px;
+            }
+
+            .constellation-content {
+                font-size: 13px;
+            }
+
+            .constellation-inputs {
+                flex-direction: column;
+            }
+
+            .daily-fortune-title {
+                font-size: 18px;
+            }
+
+            .daily-fortune-sign {
+                font-size: 16px;
+            }
+
+            .daily-fortune-description {
+                font-size: 14px;
+            }
+
+            .daily-fortune-details {
+                font-size: 13px;
+            }
+
+            .constellation-fortune-inputs {
+                flex-direction: column;
+            }
+
+            .constellation-fortune-name {
+                font-size: 20px;
+            }
+
+            .constellation-fortune-en {
+                font-size: 15px;
+            }
+
+            .constellation-fortune-section-title {
+                font-size: 15px;
+            }
+
+            .zodiac-fortune-inputs {
+                flex-direction: column;
+            }
+
+            .zodiac-fortune-name {
+                font-size: 20px;
+            }
+
+            .zodiac-fortune-years {
+                font-size: 13px;
+            }
+
+            .zodiac-fortune-section-title {
+                font-size: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 18px;
+            }
+            
+            .answer-section {
+                padding: 12px;
+            }
+            
+            .answer-image {
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="input-section">
+            <input type="text" id="question" placeholder="输入你的问题..." autocomplete="off">
+            
+            <div class="api-selector">
+                <div class="api-btn active" data-api="answer">答案之书</div>
+                <div class="api-btn" data-api="chouq">灵签占卜</div>
+                <div class="api-btn" data-api="cp">CP求签</div>
+                <div class="api-btn" data-api="mryg">每日一卦</div>
+                <div class="api-btn" data-api="fortune">今日运势</div>
+                <div class="api-btn" data-api="constellation">星座配对</div>
+                <div class="api-btn" data-api="dailyFortune">每日运势</div>
+                <div class="api-btn" data-api="constellationFortune">星座运势</div>
+                <div class="api-btn" data-api="zodiacFortune">生肖运势</div>
+            </div>
+            
+            <button id="ask-btn">获取答案</button>
+            <div class="loading" id="loading"></div>
+            <div class="error" id="error"></div>
+            <div class="api-info" id="api-info">当前使用: 答案之书 API</div>
+        </div>
+        
+        <!-- 灵签占卜专用区域 -->
+        <div class="lottery-container" id="lottery-container">
+            <p class="lottery-instruction">点击下方按钮抽取一支灵签</p>
+            <button class="lottery-button" id="lottery-btn">求签</button>
+            <div class="limit-message" id="lottery-limit"></div>
+        </div>
+        
+        <!-- 每日一卦专用区域 -->
+        <div class="gua-container" id="gua-container">
+            <p class="gua-instruction">点击下方按钮获取今日卦象</p>
+            <button class="gua-button" id="gua-btn">获取卦象</button>
+            <div class="limit-message" id="gua-limit"></div>
+        </div>
+        
+        <!-- 今日运势专用区域 -->
+        <div class="fortune-container" id="fortune-container">
+            <p class="fortune-instruction">点击下方按钮获取今日运势</p>
+            <button class="fortune-button" id="fortune-btn">查看运势</button>
+            <div class="limit-message" id="fortune-limit"></div>
+        </div>
+        
+        <!-- 星座配对专用区域 -->
+        <div class="constellation-container" id="constellation-container">
+            <p class="constellation-instruction">输入两个星座进行配对分析</p>
+            <div class="constellation-inputs">
+                <input type="text" id="constellation-me" placeholder="你的星座 (如: 金牛)" autocomplete="off">
+                <input type="text" id="constellation-he" placeholder="对方星座 (如: 白羊, 可选)" autocomplete="off">
+            </div>
+            <button class="constellation-button" id="constellation-btn">配对分析</button>
+            <div class="limit-message" id="constellation-limit"></div>
+        </div>
+        
+        <!-- 每日运势专用区域 -->
+        <div class="daily-fortune-container" id="daily-fortune-container">
+            <p class="daily-fortune-instruction">点击下方按钮抽取今日运势签</p>
+            <button class="daily-fortune-button" id="daily-fortune-btn">抽签</button>
+            <div class="limit-message" id="daily-fortune-limit"></div>
+        </div>
+        
+        <!-- 星座运势专用区域 -->
+        <div class="constellation-fortune-container" id="constellation-fortune-container">
+            <p class="constellation-fortune-instruction">输入星座名称，选择运势周期</p>
+            <div class="constellation-fortune-inputs">
+                <input type="text" id="constellation-fortune-name" placeholder="输入星座 (如: 金牛座)" autocomplete="off">
+                <select id="constellation-fortune-time">
+                    <option value="today">今日运势</option>
+                    <option value="week">本周运势</option>
+                    <option value="month">本月运势</option>
+                    <option value="year">今年运势</option>
+                </select>
+            </div>
+            <button class="constellation-fortune-button" id="constellation-fortune-btn">查看运势</button>
+            <div class="limit-message" id="constellation-fortune-limit"></div>
+        </div>
+        
+        <!-- 生肖运势专用区域 -->
+        <div class="zodiac-fortune-container" id="zodiac-fortune-container">
+            <p class="zodiac-fortune-instruction">输入生肖名称查询运势（如：鼠、牛、虎、兔、龙、蛇、马、羊、猴、鸡、狗、猪）</p>
+            <div class="zodiac-fortune-inputs">
+                <input type="text" id="zodiac-fortune-name" placeholder="输入生肖 (如: 兔)" autocomplete="off">
+            </div>
+            <button class="zodiac-fortune-button" id="zodiac-fortune-btn">查看运势</button>
+            <div class="limit-message" id="zodiac-fortune-limit"></div>
+        </div>
+        
+        <div class="answer-section" id="answer-section">
+            <div class="answer-text" id="answer-text"></div>
+            <img class="answer-image" id="answer-image" alt="CP配对结果">
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const questionInput = document.getElementById('question');
+            const askBtn = document.getElementById('ask-btn');
+            const lotteryContainer = document.getElementById('lottery-container');
+            const lotteryBtn = document.getElementById('lottery-btn');
+            const lotteryLimit = document.getElementById('lottery-limit');
+            const guaContainer = document.getElementById('gua-container');
+            const guaBtn = document.getElementById('gua-btn');
+            const guaLimit = document.getElementById('gua-limit');
+            const fortuneContainer = document.getElementById('fortune-container');
+            const fortuneBtn = document.getElementById('fortune-btn');
+            const fortuneLimit = document.getElementById('fortune-limit');
+            const constellationContainer = document.getElementById('constellation-container');
+            const constellationMe = document.getElementById('constellation-me');
+            const constellationHe = document.getElementById('constellation-he');
+            const constellationBtn = document.getElementById('constellation-btn');
+            const constellationLimit = document.getElementById('constellation-limit');
+            const dailyFortuneContainer = document.getElementById('daily-fortune-container');
+            const dailyFortuneBtn = document.getElementById('daily-fortune-btn');
+            const dailyFortuneLimit = document.getElementById('daily-fortune-limit');
+            const constellationFortuneContainer = document.getElementById('constellation-fortune-container');
+            const constellationFortuneName = document.getElementById('constellation-fortune-name');
+            const constellationFortuneTime = document.getElementById('constellation-fortune-time');
+            const constellationFortuneBtn = document.getElementById('constellation-fortune-btn');
+            const constellationFortuneLimit = document.getElementById('constellation-fortune-limit');
+            const zodiacFortuneContainer = document.getElementById('zodiac-fortune-container');
+            const zodiacFortuneName = document.getElementById('zodiac-fortune-name');
+            const zodiacFortuneBtn = document.getElementById('zodiac-fortune-btn');
+            const zodiacFortuneLimit = document.getElementById('zodiac-fortune-limit');
+            const answerSection = document.getElementById('answer-section');
+            const answerText = document.getElementById('answer-text');
+            const answerImage = document.getElementById('answer-image');
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const apiInfo = document.getElementById('api-info');
+            const apiBtns = document.querySelectorAll('.api-btn');
+            
+            let currentApi = 'answer'; // 默认API
+            
+            // 检查每日限制
+            function checkDailyLimit(type) {
+                const today = new Date().toDateString();
+                const lastDate = localStorage.getItem(`${type}_last_date`);
+                const lastResult = localStorage.getItem(`${type}_last_result`);
+                
+                if (lastDate === today && lastResult) {
+                    return JSON.parse(lastResult);
+                }
+                return null;
+            }
+            
+            // 设置每日限制
+            function setDailyLimit(type, result) {
+                const today = new Date().toDateString();
+                localStorage.setItem(`${type}_last_date`, today);
+                localStorage.setItem(`${type}_last_result`, JSON.stringify(result));
+            }
+            
+            // 更新限制消息
+            function updateLimitMessages() {
+                // 检查灵签限制
+                const lotteryResult = checkDailyLimit('lottery');
+                if (lotteryResult) {
+                    lotteryLimit.textContent = '今日已求签，请明日再来';
+                    lotteryBtn.disabled = true;
+                } else {
+                    lotteryLimit.textContent = '';
+                    lotteryBtn.disabled = false;
+                }
+                
+                // 检查每日一卦限制
+                const guaResult = checkDailyLimit('gua');
+                if (guaResult) {
+                    guaLimit.textContent = '今日已获取卦象，请明日再来';
+                    guaBtn.disabled = true;
+                } else {
+                    guaLimit.textContent = '';
+                    guaBtn.disabled = false;
+                }
+                
+                // 检查今日运势限制
+                const fortuneResult = checkDailyLimit('fortune');
+                if (fortuneResult) {
+                    fortuneLimit.textContent = '今日已查看运势，请明日再来';
+                    fortuneBtn.disabled = true;
+                } else {
+                    fortuneLimit.textContent = '';
+                    fortuneBtn.disabled = false;
+                }
+                
+                // 检查每日运势限制
+                const dailyFortuneResult = checkDailyLimit('dailyFortune');
+                if (dailyFortuneResult) {
+                    dailyFortuneLimit.textContent = '今日已抽签，请明日再来';
+                    dailyFortuneBtn.disabled = true;
+                } else {
+                    dailyFortuneLimit.textContent = '';
+                    dailyFortuneBtn.disabled = false;
+                }
+                
+                // 星座配对没有每日限制，但显示提示
+                constellationLimit.textContent = '可随时进行配对分析';
+                
+                // 星座运势没有每日限制，但显示提示
+                constellationFortuneLimit.textContent = '可随时查询运势';
+                
+                // 生肖运势没有每日限制，但显示提示
+                zodiacFortuneLimit.textContent = '可随时查询生肖运势';
+            }
+            
+            // 显示上次结果（如果存在）
+            function showLastResultIfExists() {
+                if (currentApi === 'chouq') {
+                    const lotteryResult = checkDailyLimit('lottery');
+                    if (lotteryResult) {
+                        displayLotteryResult(lotteryResult);
+                        answerSection.classList.add('show');
+                    }
+                } else if (currentApi === 'mryg') {
+                    const guaResult = checkDailyLimit('gua');
+                    if (guaResult) {
+                        displayGuaResult(guaResult);
+                        answerSection.classList.add('show');
+                    }
+                } else if (currentApi === 'fortune') {
+                    const fortuneResult = checkDailyLimit('fortune');
+                    if (fortuneResult) {
+                        displayFortuneResult(fortuneResult);
+                        answerSection.classList.add('show');
+                    }
+                } else if (currentApi === 'dailyFortune') {
+                    const dailyFortuneResult = checkDailyLimit('dailyFortune');
+                    if (dailyFortuneResult) {
+                        displayDailyFortuneResult(dailyFortuneResult);
+                        answerSection.classList.add('show');
+                    }
+                }
+            }
+            
+            // API选择按钮事件
+            apiBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    apiBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentApi = this.dataset.api;
+                    
+                    // 更新API信息
+                    if (currentApi === 'answer') {
+                        apiInfo.textContent = '当前使用: 答案之书 API';
+                        questionInput.placeholder = "输入你的问题...";
+                        questionInput.style.display = 'block';
+                        askBtn.style.display = 'block';
+                        lotteryContainer.classList.remove('show');
+                        guaContainer.classList.remove('show');
+                        fortuneContainer.classList.remove('show');
+                        constellationContainer.classList.remove('show');
+                        dailyFortuneContainer.classList.remove('show');
+                        constellationFortuneContainer.classList.remove('show');
+                        zodiacFortuneContainer.classList.remove('show');
+                    } else if (currentApi === 'chouq') {
+                        apiInfo.textContent = '当前使用: 灵签占卜 API';
+                        questionInput.style.display = 'none';
+                        askBtn.style.display = 'none';
+                        lotteryContainer.classList.add('show');
+                        guaContainer.classList.remove('show');
+                        fortuneContainer.classList.remove('show');
+                        constellationContainer.classList.remove('show');
+                        dailyFortuneContainer.classList.remove('show');
+                        constellationFortuneContainer.classList.remove('show');
+                        zodiacFortuneContainer.classList.remove('show');
+                    } else if (currentApi === 'cp') {
+                        apiInfo.textContent = '当前使用: CP求签 API';
+                        questionInput.placeholder = "输入名字...";
+                        questionInput.style.display = 'block';
+                        askBtn.style.display = 'block';
+                        lotteryContainer.classList.remove('show');
+                        guaContainer.classList.remove('show');
+                        fortuneContainer.classList.remove('show');
+                        constellationContainer.classList.remove('show');
+                        dailyFortuneContainer.classList.remove('show');
+                        constellationFortuneContainer.classList.remove('show');
+                        zodiacFortuneContainer.classList.remove('show');
+                    } else if (currentApi === 'mryg') {
+                        apiInfo.textContent = '当前使用: 每日一卦 API';
+                        questionInput.style.display = 'none';
+                        askBtn.style.display = 'none';
+                        lotteryContainer.classList.remove('show');
+                        guaContainer.classList.add('show');
+                        fortuneContainer.classList.remove('show');
+                        constellationContainer.classList.remove('show');
+                        dailyFortuneContainer.classList.remove('show');
+                        constellationFortuneContainer.classList.remove('show');
+                        zodiacFortuneContainer.classList.remove('show');
+                    } else if (currentApi === 'fortune') {
+                        apiInfo.textContent = '当前使用: 今日运势 API';
+                        questionInput.style.display = 'none';
+                        askBtn.style.display = 'none';
+                        lotteryContainer.classList.remove('show');
+                        guaContainer.classList.remove('show');
+                        fortuneContainer.classList.add('show');
+                        constellationContainer.classList.remove('show');
+                        dailyFortuneContainer.classList.remove('show');
+                        constellationFortuneContainer.classList.remove('show');
+                        zodiacFortuneContainer.classList.remove('show');
+                    } else if (currentApi === 'constellation') {
+                        apiInfo.textContent = '当前使用: 星座配对 API';
+                        questionInput.style.display = 'none';
+                        askBtn.style.display = 'none';
+                        lotteryContainer.classList.remove('show');
+                        guaContainer.classList.remove('show');
+                        fortuneContainer.classList.remove('show');
+                        constellationContainer.classList.add('show');
+                        dailyFortuneContainer.classList.remove('show');
+                        constellationFortuneContainer.classList.remove('show');
+                        zodiacFortuneContainer.classList.remove('show');
+                    } else if (currentApi === 'dailyFortune') {
+                        apiInfo.textContent = '当前使用: 每日运势 API';
+                        questionInput.style.display = 'none';
+                        askBtn.style.display = 'none';
+                        lotteryContainer.classList.remove('show');
+                        guaContainer.classList.remove('show');
+                        fortuneContainer.classList.remove('show');
+                        constellationContainer.classList.remove('show');
+                        dailyFortuneContainer.classList.add('show');
+                        constellationFortuneContainer.classList.remove('show');
+                        zodiacFortuneContainer.classList.remove('show');
+                    } else if (currentApi === 'constellationFortune') {
+                        apiInfo.textContent = '当前使用: 星座运势 API';
+                        questionInput.style.display = 'none';
+                        askBtn.style.display = 'none';
+                        lotteryContainer.classList.remove('show');
+                        guaContainer.classList.remove('show');
+                        fortuneContainer.classList.remove('show');
+                        constellationContainer.classList.remove('show');
+                        dailyFortuneContainer.classList.remove('show');
+                        constellationFortuneContainer.classList.add('show');
+                        zodiacFortuneContainer.classList.remove('show');
+                    } else if (currentApi === 'zodiacFortune') {
+                        apiInfo.textContent = '当前使用: 生肖运势 API';
+                        questionInput.style.display = 'none';
+                        askBtn.style.display = 'none';
+                        lotteryContainer.classList.remove('show');
+                        guaContainer.classList.remove('show');
+                        fortuneContainer.classList.remove('show');
+                        constellationContainer.classList.remove('show');
+                        dailyFortuneContainer.classList.remove('show');
+                        constellationFortuneContainer.classList.remove('show');
+                        zodiacFortuneContainer.classList.add('show');
+                    }
+                    
+                    // 更新限制消息
+                    updateLimitMessages();
+                    
+                    // 重置显示状态
+                    resetAnswerDisplay();
+                    
+                    // 显示上次结果（如果存在）
+                    showLastResultIfExists();
+                });
+            });
+            
+            // 点击按钮获取答案
+            askBtn.addEventListener('click', getAnswer);
+            
+            // 灵签抽签按钮
+            lotteryBtn.addEventListener('click', drawLottery);
+            
+            // 每日一卦按钮
+            guaBtn.addEventListener('click', getGua);
+            
+            // 今日运势按钮
+            fortuneBtn.addEventListener('click', getFortune);
+            
+            // 星座配对按钮
+            constellationBtn.addEventListener('click', getConstellation);
+            
+            // 每日运势按钮
+            dailyFortuneBtn.addEventListener('click', getDailyFortune);
+            
+            // 星座运势按钮
+            constellationFortuneBtn.addEventListener('click', getConstellationFortune);
+            
+            // 生肖运势按钮
+            zodiacFortuneBtn.addEventListener('click', getZodiacFortune);
+            
+            // 按回车键获取答案
+            questionInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    getAnswer();
+                }
+            });
+            
+            // 星座配对输入框回车键支持
+            constellationMe.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    getConstellation();
+                }
+            });
+            
+            constellationHe.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    getConstellation();
+                }
+            });
+            
+            // 星座运势输入框回车键支持
+            constellationFortuneName.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    getConstellationFortune();
+                }
+            });
+            
+            // 生肖运势输入框回车键支持
+            zodiacFortuneName.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    getZodiacFortune();
+                }
+            });
+            
+            function resetAnswerDisplay() {
+                answerText.style.display = 'block';
+                answerImage.style.display = 'none';
+                answerText.textContent = '';
+                answerSection.classList.remove('show');
+            }
+            
+            function getAnswer() {
+                const question = questionInput.value.trim();
+                
+                if (!question) {
+                    showError('请输入内容');
+                    return;
+                }
+                
+                // 显示加载动画，隐藏错误信息
+                loading.style.display = 'block';
+                error.style.display = 'none';
+                answerSection.classList.remove('show');
+                
+                // 重置显示状态
+                resetAnswerDisplay();
+                
+                if (currentApi === 'answer') {
+                    // 调用答案之书API
+                    fetch(`https://api.qhsou.com/api/answer.php?question=${encodeURIComponent(question)}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('网络响应异常');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            loading.style.display = 'none';
+                            
+                            if (data.success === "true") {
+                                answerText.textContent = data.chinese || '答案正在路上...';
+                                answerSection.classList.add('show');
+                            } else {
+                                showError('获取答案失败，请稍后再试');
+                            }
+                        })
+                        .catch(err => {
+                            loading.style.display = 'none';
+                            showError('网络连接失败，请检查网络后重试');
+                            console.error('API请求失败:', err);
+                        });
+                } else {
+                    // 调用CP配对API - 返回图片
+                    // 修复空格问题：将空格替换为下划线
+                    const processedName = question.replace(/\s+/g, '_');
+                    const apiUrl = `https://api.niniandmiaomiao.love/api/xb/api/CPqq.php?name=${encodeURIComponent(processedName)}`;
+                    
+                    // 创建一个新的Image对象
+                    const img = new Image();
+                    
+                    // 图片加载成功
+                    img.onload = function() {
+                        loading.style.display = 'none';
+                        answerText.style.display = 'none';
+                        answerImage.src = apiUrl;
+                        answerImage.style.display = 'block';
+                        answerSection.classList.add('show');
+                    };
+                    
+                    // 图片加载失败
+                    img.onerror = function() {
+                        loading.style.display = 'none';
+                        showError('获取CP配对图片失败，请稍后再试');
+                    };
+                    
+                    // 开始加载图片
+                    img.src = apiUrl;
+                    
+                    // 设置一个超时时间
+                    setTimeout(function() {
+                        if (loading.style.display !== 'none') {
+                            loading.style.display = 'none';
+                            showError('请求超时，请稍后重试');
+                        }
+                    }, 10000); // 10秒超时
+                }
+            }
+            
+            function drawLottery() {
+                // 检查每日限制
+                const cachedResult = checkDailyLimit('lottery');
+                if (cachedResult) {
+                    displayLotteryResult(cachedResult);
+                    return;
+                }
+                
+                // 显示加载动画，隐藏错误信息
+                loading.style.display = 'block';
+                error.style.display = 'none';
+                answerSection.classList.remove('show');
+                
+                // 重置显示状态
+                resetAnswerDisplay();
+                
+                // 抽签模式 - 显示抽签动画
+                answerText.innerHTML = '<div class="draw-animation">摇签中...</div>';
+                answerSection.classList.add('show');
+                
+                // 模拟抽签过程
+                setTimeout(() => {
+                    // 调用灵签占卜API
+                    fetch(`https://api.niniandmiaomiao.love/api/xb/api/chouq.php`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('网络响应异常');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            loading.style.display = 'none';
+                            
+                            if (data.code === 1) {
+                                // 设置每日限制
+                                setDailyLimit('lottery', data);
+                                
+                                // 显示结果
+                                displayLotteryResult(data);
+                                
+                                // 更新限制消息
+                                updateLimitMessages();
+                            } else {
+                                showError('获取签文失败，请稍后再试');
+                            }
+                        })
+                        .catch(err => {
+                            loading.style.display = 'none';
+                            showError('网络连接失败，请检查网络后重试');
+                            console.error('API请求失败:', err);
+                        });
+                }, 1500); // 1.5秒后显示结果，模拟抽签过程
+            }
+            
+            function displayLotteryResult(data) {
+                // 格式化显示签文结果
+                const resultHTML = `
+                    <div class="lottery-result">
+                        <div class="lottery-title">${data.data.draw || ''}</div>
+                        <div class="lottery-content">${data.data.annotate || ''}</div>
+                        <div class="lottery-interpretation">${data.data.explain || ''}</div>
+                        <div class="last-result-info">今日已求签，结果已保存</div>
+                    </div>
+                `;
+                answerText.innerHTML = resultHTML;
+            }
+            
+            function getGua() {
+                // 检查每日限制
+                const cachedResult = checkDailyLimit('gua');
+                if (cachedResult) {
+                    displayGuaResult(cachedResult);
+                    return;
+                }
+                
+                // 显示加载动画，隐藏错误信息
+                loading.style.display = 'block';
+                error.style.display = 'none';
+                answerSection.classList.remove('show');
+                
+                // 重置显示状态
+                resetAnswerDisplay();
+                
+                // 显示加载动画
+                answerText.innerHTML = '<div class="draw-animation">卜卦中...</div>';
+                answerSection.classList.add('show');
+                
+                // 调用每日一卦API
+                fetch(`https://api.niniandmiaomiao.love/api/xb/api/mryg.php`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络响应异常');
+                        }
+                        return response.text();
+                    })
+                    .then(text => {
+                        loading.style.display = 'none';
+                        
+                        // 解析返回的文本数据
+                        let guaData = parseGuaData(text);
+                        
+                        // 设置每日限制
+                        setDailyLimit('gua', guaData);
+                        
+                        // 显示结果
+                        displayGuaResult(guaData);
+                        
+                        // 更新限制消息
+                        updateLimitMessages();
+                    })
+                    .catch(err => {
+                        loading.style.display = 'none';
+                        showError('网络连接失败，请检查网络后重试');
+                        console.error('API请求失败:', err);
+                    });
+            }
+            
+            function displayGuaResult(guaData) {
+                // 格式化显示卦象结果
+                const resultHTML = `
+                    <div class="gua-result">
+                        <div class="gua-name">${guaData.name || ''}</div>
+                        <div class="gua-section">
+                            <div class="gua-title">${guaData.title || ''}</div>
+                            <div class="gua-content">${guaData.content || ''}</div>
+                        </div>
+                        <div class="gua-interpretation">
+                            ${guaData.interpretation || ''}
+                        </div>
+                        <div class="last-result-info">今日已获取卦象，结果已保存</div>
+                    </div>
+                `;
+                answerText.innerHTML = resultHTML;
+            }
+            
+            function parseGuaData(text) {
+                // 解析API返回的文本数据
+                let result = {
+                    name: '',
+                    title: '',
+                    content: '',
+                    interpretation: ''
+                };
+                
+                try {
+                    // 使用正则表达式解析文本
+                    const nameMatch = text.match(/【(.*?)】/);
+                    if (nameMatch) {
+                        result.name = nameMatch[1];
+                    }
+                    
+                    // 分割文本行
+                    const lines = text.split('\n').filter(line => line.trim() !== '');
+                    
+                    // 提取标题和内容
+                    if (lines.length > 1) {
+                        result.title = lines[1];
+                    }
+                    
+                    if (lines.length > 2) {
+                        result.content = lines[2];
+                    }
+                    
+                    // 提取解释部分 - 从第三行开始
+                    const interpretationLines = lines.slice(3);
+                    result.interpretation = interpretationLines.join('<br>');
+                    
+                    // 移除图片链接部分
+                    result.interpretation = result.interpretation.replace(/±img=.*?±/g, '');
+                    
+                } catch (e) {
+                    console.error('解析卦象数据失败:', e);
+                    // 如果解析失败，直接显示原始文本
+                    result.interpretation = text.replace(/±img=.*?±/g, '');
+                }
+                
+                return result;
+            }
+            
+            function getFortune() {
+                // 检查每日限制
+                const cachedResult = checkDailyLimit('fortune');
+                if (cachedResult) {
+                    displayFortuneResult(cachedResult);
+                    return;
+                }
+                
+                // 显示加载动画，隐藏错误信息
+                loading.style.display = 'block';
+                error.style.display = 'none';
+                answerSection.classList.remove('show');
+                
+                // 重置显示状态
+                resetAnswerDisplay();
+                
+                // 显示加载动画
+                answerText.innerHTML = '<div class="draw-animation">查询运势中...</div>';
+                answerSection.classList.add('show');
+                
+                // 调用今日运势API
+                fetch(`https://api.qster.top/API/v1/todayfortunes/?qskey=qstertop&type=json`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络响应异常');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loading.style.display = 'none';
+                        
+                        if (data.code === 200) {
+                            // 设置每日限制
+                            setDailyLimit('fortune', data);
+                            
+                            // 显示结果
+                            displayFortuneResult(data);
+                            
+                            // 更新限制消息
+                            updateLimitMessages();
+                        } else {
+                            showError('获取运势失败，请稍后再试');
+                        }
+                    })
+                    .catch(err => {
+                        loading.style.display = 'none';
+                        showError('网络连接失败，请检查网络后重试');
+                        console.error('API请求失败:', err);
+                    });
+            }
+            
+            function displayFortuneResult(data) {
+                // 格式化显示运势结果
+                const resultHTML = `
+                    <div class="fortune-result">
+                        <div class="fortune-title">今日运势</div>
+                        <div class="fortune-content">${data.messages || ''}</div>
+                        <div class="last-result-info">今日已查看运势，结果已保存</div>
+                    </div>
+                `;
+                answerText.innerHTML = resultHTML;
+            }
+            
+            function getConstellation() {
+                const me = constellationMe.value.trim();
+                
+                if (!me) {
+                    showError('请输入你的星座');
+                    return;
+                }
+                
+                // 显示加载动画，隐藏错误信息
+                loading.style.display = 'block';
+                error.style.display = 'none';
+                answerSection.classList.remove('show');
+                
+                // 重置显示状态
+                resetAnswerDisplay();
+                
+                // 显示加载动画
+                answerText.innerHTML = '<div class="draw-animation">分析配对中...</div>';
+                answerSection.classList.add('show');
+                
+                // 构建请求URL
+                const he = constellationHe.value.trim();
+                let apiUrl = `https://whyta.cn/api/tx/xingzuo?key=738b541a5f7a&me=${encodeURIComponent(me)}`;
+                
+                if (he) {
+                    apiUrl += `&he=${encodeURIComponent(he)}`;
+                }
+                
+                // 调用星座配对API
+                fetch(apiUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络响应异常');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loading.style.display = 'none';
+                        
+                        if (data.code === 200) {
+                            // 显示结果
+                            displayConstellationResult(data);
+                        } else {
+                            showError('获取配对结果失败，请稍后再试');
+                        }
+                    })
+                    .catch(err => {
+                        loading.style.display = 'none';
+                        showError('网络连接失败，请检查网络后重试');
+                        console.error('API请求失败:', err);
+                    });
+            }
+            
+            function displayConstellationResult(data) {
+                // 格式化显示星座配对结果
+                const result = data.result;
+                const resultHTML = `
+                    <div class="constellation-result">
+                        <div class="constellation-title">${result.title || ''}</div>
+                        <div class="constellation-grade">${result.grade || ''}</div>
+                        <div class="constellation-content">${result.content || ''}</div>
+                    </div>
+                `;
+                answerText.innerHTML = resultHTML;
+            }
+            
+            function getDailyFortune() {
+                // 检查每日限制
+                const cachedResult = checkDailyLimit('dailyFortune');
+                if (cachedResult) {
+                    displayDailyFortuneResult(cachedResult);
+                    return;
+                }
+                
+                // 显示加载动画，隐藏错误信息
+                loading.style.display = 'block';
+                error.style.display = 'none';
+                answerSection.classList.remove('show');
+                
+                // 重置显示状态
+                resetAnswerDisplay();
+                
+                // 显示加载动画
+                answerText.innerHTML = '<div class="draw-animation">抽签中...</div>';
+                answerSection.classList.add('show');
+                
+                // 调用每日运势API
+                const apiUrl = `https://whyta.cn/api/fortune?key=738b541a5f7a`;
+                
+                fetch(apiUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loading.style.display = 'none';
+                        
+                        // 修改这里：即使success为false，只要data存在就使用它
+                        if (data && data.data) {
+                            // 设置每日限制
+                            setDailyLimit('dailyFortune', data);
+                            
+                            // 显示结果
+                            displayDailyFortuneResult(data);
+                            
+                            // 更新限制消息
+                            updateLimitMessages();
+                        } else {
+                            showError('获取运势失败，请稍后再试');
+                        }
+                    })
+                    .catch(err => {
+                        loading.style.display = 'none';
+                        console.error('每日运势请求失败:', err);
+                        showError('网络连接失败，请检查网络后重试');
+                    });
+            }
+            
+            function displayDailyFortuneResult(data) {
+                // 格式化显示每日运势结果
+                const fortuneData = data.data;
+                let resultHTML = '';
+                
+                if (data.success) {
+                    resultHTML = `
+                        <div class="daily-fortune-result">
+                            <div class="daily-fortune-title">今日运势签</div>
+                            <div class="daily-fortune-sign">${fortuneData.sign || ''}</div>
+                            <div class="daily-fortune-description">${fortuneData.description || ''}</div>
+                            <div class="daily-fortune-details">
+                                <div class="daily-fortune-item">
+                                    <span class="daily-fortune-label">幸运颜色：</span>${fortuneData.luckyColor || ''}
+                                </div>
+                                <div class="daily-fortune-item">
+                                    <span class="daily-fortune-label">幸运数字：</span>${fortuneData.luckyNumber || ''}
+                                </div>
+                            </div>
+                            <div class="last-result-info">今日已抽签，结果已保存</div>
+                        </div>
+                    `;
+                } else {
+                    // 处理已经抽过签的情况
+                    resultHTML = `
+                        <div class="daily-fortune-result">
+                            <div class="daily-fortune-title">今日运势签</div>
+                            <div class="daily-fortune-sign">${fortuneData.sign || ''}</div>
+                            <div class="daily-fortune-description">${fortuneData.description || ''}</div>
+                            <div class="daily-fortune-details">
+                                <div class="daily-fortune-item">
+                                    <span class="daily-fortune-label">幸运颜色：</span>${fortuneData.luckyColor || ''}
+                                </div>
+                                <div class="daily-fortune-item">
+                                    <span class="daily-fortune-label">幸运数字：</span>${fortuneData.luckyNumber || ''}
+                                </div>
+                            </div>
+                            <div class="last-result-info">${data.message || '今日已抽签，请明日再来'}</div>
+                        </div>
+                    `;
+                }
+                answerText.innerHTML = resultHTML;
+            }
+            
+            function getConstellationFortune() {
+                const name = constellationFortuneName.value.trim();
+                const time = constellationFortuneTime.value;
+                
+                if (!name) {
+                    showError('请输入星座名称');
+                    return;
+                }
+                
+                // 显示加载动画，隐藏错误信息
+                loading.style.display = 'block';
+                error.style.display = 'none';
+                answerSection.classList.remove('show');
+                
+                // 重置显示状态
+                resetAnswerDisplay();
+                
+                // 显示加载动画
+                answerText.innerHTML = '<div class="draw-animation">查询运势中...</div>';
+                answerSection.classList.add('show');
+                
+                // 构建请求URL
+                const apiUrl = `https://api.jkyai.top/API/xzyspd.php?msg=${encodeURIComponent(name)}&time=${time}&type=json`;
+                
+                // 调用星座运势API
+                fetch(apiUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络响应异常');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loading.style.display = 'none';
+                        
+                        if (data.status === "success") {
+                            // 显示结果
+                            displayConstellationFortuneResult(data, time);
+                        } else {
+                            showError('获取星座运势失败，请检查星座名称是否正确');
+                        }
+                    })
+                    .catch(err => {
+                        loading.style.display = 'none';
+                        showError('网络连接失败，请检查网络后重试');
+                        console.error('星座运势API请求失败:', err);
+                    });
+            }
+            
+            function displayConstellationFortuneResult(data, timePeriod) {
+                // 格式化显示星座运势结果
+                let timeText = '';
+                switch(timePeriod) {
+                    case 'today':
+                        timeText = '今日';
+                        break;
+                    case 'week':
+                        timeText = '本周';
+                        break;
+                    case 'month':
+                        timeText = '本月';
+                        break;
+                    case 'year':
+                        timeText = '今年';
+                        break;
+                    default:
+                        timeText = '今日';
+                }
+                
+                // 格式化个性特征
+                let personalityTraitsHTML = '';
+                if (data.personality_traits && Array.isArray(data.personality_traits)) {
+                    personalityTraitsHTML = data.personality_traits.map(trait => 
+                        `<span class="constellation-fortune-trait">${trait}</span>`
+                    ).join('');
+                }
+                
+                // 格式化配对信息
+                let goodMatchesHTML = '';
+                if (data.good_matches && Array.isArray(data.good_matches)) {
+                    goodMatchesHTML = data.good_matches.map(match => 
+                        `<div class="constellation-fortune-match">${match}</div>`
+                    ).join('');
+                }
+                
+                let fairMatchesHTML = '';
+                if (data.fair_matches && Array.isArray(data.fair_matches)) {
+                    fairMatchesHTML = data.fair_matches.map(match => 
+                        `<div class="constellation-fortune-match">${match}</div>`
+                    ).join('');
+                }
+                
+                let poorMatchesHTML = '';
+                if (data.poor_matches && Array.isArray(data.poor_matches)) {
+                    poorMatchesHTML = data.poor_matches.map(match => 
+                        `<div class="constellation-fortune-match">${match}</div>`
+                    ).join('');
+                }
+                
+                // 格式化幸运颜色
+                let luckyColorsHTML = '';
+                if (data.lucky_colors && Array.isArray(data.lucky_colors)) {
+                    luckyColorsHTML = data.lucky_colors.map(color => 
+                        `<span class="constellation-fortune-trait">${color}</span>`
+                    ).join('');
+                }
+                
+                // 格式化幸运数字
+                let luckyNumbersHTML = '';
+                if (data.lucky_numbers && Array.isArray(data.lucky_numbers)) {
+                    luckyNumbersHTML = data.lucky_numbers.map(number => 
+                        `<span class="constellation-fortune-trait">${number}</span>`
+                    ).join('');
+                }
+                
+                const resultHTML = `
+                    <div class="constellation-fortune-result">
+                        <div class="constellation-fortune-header">
+                            <div class="constellation-fortune-name">${data.constellation_name || ''}</div>
+                            <div class="constellation-fortune-en">${data.constellation_en || ''}</div>
+                            <div class="constellation-fortune-date">${timeText}运势 · ${data.date_range || ''}</div>
+                        </div>
+                        
+                        <div class="constellation-fortune-section">
+                            <div class="constellation-fortune-section-title">基本信息</div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">元素属性：</span>${data.element || ''}
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">守护行星：</span>${data.ruling_planet || ''}
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">个性特征：</span>${personalityTraitsHTML}
+                            </div>
+                        </div>
+                        
+                        <div class="constellation-fortune-section">
+                            <div class="constellation-fortune-section-title">性格分析</div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">优点：</span>${data.strengths || ''}
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">缺点：</span>${data.weaknesses || ''}
+                            </div>
+                        </div>
+                        
+                        <div class="constellation-fortune-section">
+                            <div class="constellation-fortune-section-title">星座配对</div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">最佳配对：</span>${data.best_match || ''} (${data.best_match_en || ''})
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">较好配对：</span>${goodMatchesHTML}
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">一般配对：</span>${fairMatchesHTML}
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">较差配对：</span>${poorMatchesHTML}
+                            </div>
+                        </div>
+                        
+                        <div class="constellation-fortune-section">
+                            <div class="constellation-fortune-section-title">运势详情</div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">综合运势：</span>${data.general_fortune || ''}
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">爱情运势：</span>${data.love_fortune || ''}
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">事业运势：</span>${data.work_fortune || ''}
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">财富运势：</span>${data.wealth_fortune || ''}
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">健康运势：</span>${data.health_fortune || ''}
+                            </div>
+                        </div>
+                        
+                        <div class="constellation-fortune-section">
+                            <div class="constellation-fortune-section-title">幸运信息</div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">幸运颜色：</span>${luckyColorsHTML}
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">幸运数字：</span>${luckyNumbersHTML}
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">幸运方向：</span>${data.lucky_direction || ''}
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">幸运时间：</span>${data.lucky_time || ''}
+                            </div>
+                        </div>
+                        
+                        <div class="constellation-fortune-section">
+                            <div class="constellation-fortune-section-title">建议</div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">爱情建议：</span>${data.love_advice || ''}
+                            </div>
+                            <div class="constellation-fortune-item">
+                                <span class="constellation-fortune-label">欲望分析：</span>${data.desire_analysis || ''}
+                            </div>
+                        </div>
+                        
+                        <div class="last-result-info">数据生成于：${data.generated_at || ''}</div>
+                    </div>
+                `;
+                answerText.innerHTML = resultHTML;
+            }
+            
+            function getZodiacFortune() {
+                const zodiacName = zodiacFortuneName.value.trim();
+                
+                if (!zodiacName) {
+                    showError('请输入生肖名称');
+                    return;
+                }
+                
+                // 验证生肖名称是否有效
+                const validZodiacs = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+                if (!validZodiacs.includes(zodiacName)) {
+                    showError('请输入有效的生肖名称（如：鼠、牛、虎、兔、龙、蛇、马、羊、猴、鸡、狗、猪）');
+                    return;
+                }
+                
+                // 显示加载动画，隐藏错误信息
+                loading.style.display = 'block';
+                error.style.display = 'none';
+                answerSection.classList.remove('show');
+                
+                // 重置显示状态
+                resetAnswerDisplay();
+                
+                // 显示加载动画
+                answerText.innerHTML = '<div class="draw-animation">查询运势中...</div>';
+                answerSection.classList.add('show');
+                
+                // 调用生肖运势API
+                const apiUrl = `https://api.qlwc.cn/api/zodiac?zodiac=${encodeURIComponent(zodiacName)}`;
+                
+                fetch(apiUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loading.style.display = 'none';
+                        
+                        if (data.code === 200) {
+                            // 显示结果
+                            displayZodiacFortuneResult(data);
+                        } else {
+                            showError('获取生肖运势失败，请检查生肖名称是否正确');
+                        }
+                    })
+                    .catch(err => {
+                        loading.style.display = 'none';
+                        console.error('生肖运势请求失败:', err);
+                        showError('网络连接失败，请检查网络后重试');
+                    });
+            }
+            
+            function displayZodiacFortuneResult(data) {
+                const fortuneData = data.data;
+                const fortune = fortuneData.fortune;
+                
+                // 格式化显示生肖运势结果
+                const resultHTML = `
+                    <div class="zodiac-fortune-result">
+                        <div class="zodiac-fortune-header">
+                            <div class="zodiac-fortune-name">${fortuneData.zodiac || ''}年生肖</div>
+                            <div class="zodiac-fortune-years">出生年份：${fortuneData.years || ''}</div>
+                            <div class="zodiac-fortune-date">${fortuneData.date || ''}</div>
+                        </div>
+                        
+                        <div class="zodiac-fortune-section">
+                            <div class="zodiac-fortune-section-title">综合运势</div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">综合分数：</span>
+                                ${fortune['综合分数'] || ''}
+                                <span class="zodiac-fortune-score">${fortune['综合运势'] || ''}</span>
+                            </div>
+                            <div class="zodiac-fortune-item">
+                                ${fortune['综合运势详情'] || ''}
+                            </div>
+                        </div>
+                        
+                        <div class="zodiac-fortune-section">
+                            <div class="zodiac-fortune-section-title">各项运势</div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">事业学业：</span>${fortune['事业学业'] || ''}
+                            </div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">爱情运势：</span>${fortune['爱情运势'] || ''}
+                            </div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">财富运势：</span>${fortune['财富运势'] || ''}
+                            </div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">健康指数：</span>${fortune['健康指数'] || ''}
+                            </div>
+                        </div>
+                        
+                        <div class="zodiac-fortune-section">
+                            <div class="zodiac-fortune-section-title">运势详情</div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">事业运势：</span>${fortune['事业运势详情'] || ''}
+                            </div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">爱情运势：</span>${fortune['爱情运势详情'] || ''}
+                            </div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">财运运势：</span>${fortune['财运运势详情'] || ''}
+                            </div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">健康运势：</span>${fortune['健康运势详情'] || ''}
+                            </div>
+                        </div>
+                        
+                        <div class="zodiac-fortune-section">
+                            <div class="zodiac-fortune-section-title">幸运信息</div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">贵人生肖：</span>${fortune['贵人生肖'] || ''}
+                            </div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">幸运颜色：</span>${fortune['幸运颜色'] || ''}
+                            </div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">幸运数字：</span>${fortune['幸运数字'] || ''}
+                            </div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">桃花方位：</span>${fortune['桃花方位'] || ''}
+                            </div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">喜神方位：</span>${fortune['喜神方位'] || ''}
+                            </div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">财神方位：</span>${fortune['财神方位'] || ''}
+                            </div>
+                        </div>
+                        
+                        <div class="zodiac-fortune-section">
+                            <div class="zodiac-fortune-section-title">今日宜忌</div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">宜：</span>${fortune['宜'] || ''}
+                            </div>
+                            <div class="zodiac-fortune-item">
+                                <span class="zodiac-fortune-label">忌：</span>${fortune['忌'] || ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                answerText.innerHTML = resultHTML;
+            }
+            
+            function showError(message) {
+                error.textContent = message;
+                error.style.display = 'block';
+            }
+            
+            // 初始化时更新限制消息
+            updateLimitMessages();
+            
+            // 初始化时显示上次结果（如果存在）
+            showLastResultIfExists();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API分析工具 - 简约现代版</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --secondary: #3f37c9;
+            --dark: #1d3557;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --gray-light: #e9ecef;
+            --border-radius: 8px;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            --transition: all 0.2s ease;
+        }
+        
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fb;
+            color: #333;
+            line-height: 1.5;
+            padding: 15px;
+            font-size: 14px;
+        }
+        
+        .app-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 1.2rem 1.5rem;
+        }
+        
+        .app-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        
+        .app-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .api-selector-container {
+            padding: 1rem 1.5rem;
+            background: white;
+            border-bottom: 1px solid var(--gray-light);
+        }
+        
+        .api-select {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            font-weight: 600;
+            background: white;
+            appearance: none;
+            cursor: pointer;
+        }
+        
+        .api-select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+        
+        .api-content {
+            padding: 1.5rem;
+        }
+        
+        .api-section {
+            display: none;
+        }
+        
+        .api-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .api-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .api-icon {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-right: 0.7rem;
+        }
+        
+        .api-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .api-description {
+            background: rgba(67, 97, 238, 0.03);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            display: block;
+            font-size: 0.9rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 6px;
+            border: 1px solid var(--gray-light);
+            padding: 0.6rem 0.8rem;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+        
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.6rem 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        
+        .btn:hover {
+            background: var(--secondary);
+        }
+        
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-left: 3px solid var(--primary);
+            display: none;
+        }
+        
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 0.7rem;
+            font-size: 0.9rem;
+        }
+        
+        .comparison-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .comparison-item {
+            background: white;
+            border-radius: 6px;
+            padding: 0.8rem;
+            font-size: 0.85rem;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            color: var(--gray);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--gray-light);
+        }
+        
+        .example-text {
+            font-size: 0.75rem;
+            color: var(--gray);
+            margin-top: 0.3rem;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .word-count {
+            font-size: 0.75rem;
+            color: var(--gray);
+            text-align: right;
+            margin-top: 0.2rem;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                font-size: 13px;
+            }
+            
+            .app-container {
+                border-radius: 6px;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .api-content {
+                padding: 1rem;
+            }
+            
+            .comparison-box {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1 class="app-title">API分析工具</h1>
+            <p class="app-subtitle">集成多种实用API，提供便捷的在线分析功能</p>
+        </div>
+
+        <!-- API选择器 -->
+        <div class="api-selector-container">
+            <select class="api-select" id="apiSelector">
+                <option value="image">图片描述分析</option>
+                <option value="girlfriend">女友中译中</option>
+                <option value="sensitive">敏感词过滤</option>
+                <option value="summary">文本内容概括</option>
+                <option value="solver">万能解题助手</option>
+            </select>
+        </div>
+
+        <!-- API内容区域 -->
+        <div class="api-content">
+            <!-- 图片分析 -->
+            <div class="api-section active" id="image-section">
+                <div class="api-header">
+                    <i class="fas fa-image api-icon"></i>
+                    <h2 class="api-title">图片描述分析</h2>
+                </div>
+                
+                <div class="api-description">
+                    <p><strong>功能：</strong>上传图片或输入链接，AI识别内容并生成描述。</p>
+                    <p><strong>API：</strong> https://api.jkyai.top/API/tpnrms.php</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">图片链接或Base64编码</label>
+                    <input type="text" class="form-control" id="imageUrl" placeholder="请输入图片链接或Base64编码">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">返回格式</label>
+                    <select class="form-select" id="responseType">
+                        <option value="text">文本格式</option>
+                        <option value="json">JSON格式</option>
+                    </select>
+                </div>
+                
+                <button class="btn" id="analyzeImage">
+                    <i class="fas fa-search"></i> 分析图片
+                </button>
+                
+                <div id="imageResult" class="result-box">
+                    <div class="result-title">分析结果</div>
+                    <div id="imageResultContent"></div>
+                </div>
+            </div>
+            
+            <!-- 女友中译中 -->
+            <div class="api-section" id="girlfriend-section">
+                <div class="api-header">
+                    <i class="fas fa-heart api-icon"></i>
+                    <h2 class="api-title">女友中译中</h2>
+                </div>
+                
+                <div class="api-description">
+                    <p><strong>功能：</strong>输入女友原话，AI分析潜在含义并提供回复建议。</p>
+                    <p><strong>API：</strong> https://api.jkyai.top/API/nyzyz.php</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">女友原话</label>
+                    <textarea class="form-control" id="girlfriendMessage" rows="2" placeholder="请输入女友的聊天内容"></textarea>
+                </div>
+                
+                <button class="btn" id="analyzeMessage">
+                    <i class="fas fa-comments"></i> 分析潜台词
+                </button>
+                
+                <div id="messageResult" class="result-box">
+                    <div class="result-title">分析结果</div>
+                    <div id="messageResultContent"></div>
+                </div>
+            </div>
+            
+            <!-- 敏感词过滤 -->
+            <div class="api-section" id="sensitive-section">
+                <div class="api-header">
+                    <i class="fas fa-shield-alt api-icon"></i>
+                    <h2 class="api-title">敏感词过滤</h2>
+                </div>
+                
+                <div class="api-description">
+                    <p><strong>功能：</strong>输入文本，自动检测并过滤敏感词。</p>
+                    <p><strong>API：</strong> https://api.jkyai.top/API/mgwbgl.php</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">待过滤文本</label>
+                    <textarea class="form-control" id="sensitiveText" rows="3" placeholder="请输入需要过滤的文本内容"></textarea>
+                </div>
+                
+                <button class="btn" id="filterText">
+                    <i class="fas fa-filter"></i> 过滤敏感词
+                </button>
+                
+                <div id="sensitiveResult" class="result-box">
+                    <div class="result-title">过滤结果</div>
+                    
+                    <div class="comparison-box">
+                        <div class="comparison-item">
+                            <div class="comparison-title">原始文本</div>
+                            <div id="originalText" class="text-muted"></div>
+                        </div>
+                        <div class="comparison-item">
+                            <div class="comparison-title">过滤后文本</div>
+                            <div id="filteredText"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 文本内容概括 -->
+            <div class="api-section" id="summary-section">
+                <div class="api-header">
+                    <i class="fas fa-file-alt api-icon"></i>
+                    <h2 class="api-title">文本内容概括</h2>
+                </div>
+                
+                <div class="api-description">
+                    <p><strong>功能：</strong>输入文本，AI生成简洁概括。</p>
+                    <p><strong>API：</strong> https://api.jkyai.top/API/wbnrgk.php</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">文本内容</label>
+                    <textarea class="form-control" id="summaryText" rows="3" placeholder="请输入需要概括的文本内容"></textarea>
+                    <div class="word-count">字数: <span id="currentWordCount">0</span></div>
+                </div>
+                
+                <button class="btn" id="summarizeText">
+                    <i class="fas fa-compress-alt"></i> 生成概括
+                </button>
+                
+                <div id="summaryResult" class="result-box">
+                    <div class="result-title">概括结果</div>
+                    
+                    <div class="comparison-box">
+                        <div class="comparison-item">
+                            <div class="comparison-title">原始文本</div>
+                            <div id="originalSummaryText" class="text-muted"></div>
+                        </div>
+                        <div class="comparison-item">
+                            <div class="comparison-title">概括后文本</div>
+                            <div id="summarizedText"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 万能解题助手 -->
+            <div class="api-section" id="solver-section">
+                <div class="api-header">
+                    <i class="fas fa-calculator api-icon"></i>
+                    <h2 class="api-title">万能解题助手</h2>
+                </div>
+                
+                <div class="api-description">
+                    <p><strong>功能：</strong>输入数学或物理题目，AI提供解题过程。</p>
+                    <p><strong>API：</strong> https://api.jkyai.top/API/wnjtzs.php</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">题目内容</label>
+                    <textarea class="form-control" id="problemQuestion" rows="2" placeholder="请输入数学或物理题目"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">返回格式</label>
+                    <select class="form-select" id="responseFormat">
+                        <option value="json">JSON格式</option>
+                        <option value="text">文本格式</option>
+                    </select>
+                </div>
+                
+                <button class="btn" id="solveProblem">
+                    <i class="fas fa-lightbulb"></i> 解题
+                </button>
+                
+                <div id="solverResult" class="result-box">
+                    <div class="result-title">解题结果</div>
+                    <div id="solverResultContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="footer">
+            <p>© 2023 API分析工具</p>
+        </div>
+    </div>
+
+    <script>
+        // API切换功能
+        document.getElementById('apiSelector').addEventListener('change', function() {
+            const selectedApi = this.value;
+            
+            // 隐藏所有API部分
+            document.querySelectorAll('.api-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // 显示选中的API部分
+            document.getElementById(`${selectedApi}-section`).classList.add('active');
+        });
+        
+        // 图片分析功能
+        document.getElementById('analyzeImage').addEventListener('click', function() {
+            const imageUrl = document.getElementById('imageUrl').value;
+            const responseType = document.getElementById('responseType').value;
+            
+            if (!imageUrl) {
+                alert('请输入图片链接或Base64编码');
+                return;
+            }
+            
+            // 显示加载中
+            const resultBox = document.getElementById('imageResult');
+            const resultContent = document.getElementById('imageResultContent');
+            const button = this;
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = '<span class="loading"></span> 分析中...';
+            button.disabled = true;
+            
+            resultContent.innerHTML = '';
+            resultBox.style.display = 'block';
+            
+            // 构建API请求URL
+            const apiUrl = `https://api.jkyai.top/API/tpnrms.php?url=${encodeURIComponent(imageUrl)}&type=${responseType}`;
+            
+            // 发送请求
+            fetch(apiUrl)
+                .then(response => {
+                    if (responseType === 'json') {
+                        return response.json();
+                    } else {
+                        return response.text();
+                    }
+                })
+                .then(data => {
+                    if (responseType === 'json') {
+                        resultContent.innerHTML = `
+                            <p><strong>描述:</strong> ${data.description || 'N/A'}</p>
+                        `;
+                    } else {
+                        resultContent.innerHTML = `<p>${data}</p>`;
+                    }
+                    
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                })
+                .catch(error => {
+                    resultContent.innerHTML = `<p class="text-danger">分析失败: ${error.message}</p>`;
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                });
+        });
+        
+        // 女友中译中功能
+        document.getElementById('analyzeMessage').addEventListener('click', function() {
+            const message = document.getElementById('girlfriendMessage').value;
+            
+            if (!message) {
+                alert('请输入女友原话');
+                return;
+            }
+            
+            // 显示加载中
+            const resultBox = document.getElementById('messageResult');
+            const resultContent = document.getElementById('messageResultContent');
+            const button = this;
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = '<span class="loading"></span> 分析中...';
+            button.disabled = true;
+            
+            resultContent.innerHTML = '';
+            resultBox.style.display = 'block';
+            
+            // 构建API请求URL
+            const apiUrl = `https://api.jkyai.top/API/nyzyz.php?msg=${encodeURIComponent(message)}`;
+            
+            // 发送请求
+            fetch(apiUrl)
+                .then(response => response.text())
+                .then(data => {
+                    resultContent.innerHTML = `
+                        <p><strong>原话：</strong> "${message}"</p>
+                        <p><strong>潜台词：</strong> ${data}</p>
+                    `;
+                    
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                })
+                .catch(error => {
+                    resultContent.innerHTML = `<p class="text-danger">分析失败: ${error.message}</p>`;
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                });
+        });
+        
+        // 敏感词过滤功能
+        document.getElementById('filterText').addEventListener('click', function() {
+            const text = document.getElementById('sensitiveText').value;
+            
+            if (!text) {
+                alert('请输入需要过滤的文本内容');
+                return;
+            }
+            
+            // 显示加载中
+            const resultBox = document.getElementById('sensitiveResult');
+            const originalText = document.getElementById('originalText');
+            const filteredText = document.getElementById('filteredText');
+            const button = this;
+            const originalButtonText = button.innerHTML;
+            
+            button.innerHTML = '<span class="loading"></span> 过滤中...';
+            button.disabled = true;
+            
+            originalText.innerHTML = text;
+            filteredText.innerHTML = '<span class="loading"></span> 过滤中...';
+            resultBox.style.display = 'block';
+            
+            // 构建API请求URL
+            const apiUrl = `https://api.jkyai.top/API/mgwbgl.php?msg=${encodeURIComponent(text)}`;
+            
+            // 发送请求
+            fetch(apiUrl)
+                .then(response => response.text())
+                .then(data => {
+                    filteredText.innerHTML = data;
+                    
+                    button.innerHTML = originalButtonText;
+                    button.disabled = false;
+                })
+                .catch(error => {
+                    filteredText.innerHTML = `<p class="text-danger">过滤失败: ${error.message}</p>`;
+                    button.innerHTML = originalButtonText;
+                    button.disabled = false;
+                });
+        });
+        
+        // 文本内容概括功能
+        document.getElementById('summarizeText').addEventListener('click', function() {
+            const text = document.getElementById('summaryText').value;
+            
+            if (!text) {
+                alert('请输入需要概括的文本内容');
+                return;
+            }
+            
+            // 显示加载中
+            const resultBox = document.getElementById('summaryResult');
+            const originalText = document.getElementById('originalSummaryText');
+            const summarizedText = document.getElementById('summarizedText');
+            const button = this;
+            const originalButtonText = button.innerHTML;
+            
+            button.innerHTML = '<span class="loading"></span> 概括中...';
+            button.disabled = true;
+            
+            originalText.innerHTML = text;
+            summarizedText.innerHTML = '<span class="loading"></span> 概括中...';
+            resultBox.style.display = 'block';
+            
+            // 构建API请求URL
+            const apiUrl = `https://api.jkyai.top/API/wbnrgk.php?input=${encodeURIComponent(text)}`;
+            
+            // 发送请求
+            fetch(apiUrl)
+                .then(response => response.text())
+                .then(data => {
+                    summarizedText.innerHTML = data;
+                    
+                    button.innerHTML = originalButtonText;
+                    button.disabled = false;
+                })
+                .catch(error => {
+                    summarizedText.innerHTML = `<p class="text-danger">概括失败: ${error.message}</p>`;
+                    button.innerHTML = originalButtonText;
+                    button.disabled = false;
+                });
+        });
+        
+        // 万能解题助手功能
+        document.getElementById('solveProblem').addEventListener('click', function() {
+            const question = document.getElementById('problemQuestion').value;
+            const responseFormat = document.getElementById('responseFormat').value;
+            
+            if (!question) {
+                alert('请输入题目内容');
+                return;
+            }
+            
+            // 显示加载中
+            const resultBox = document.getElementById('solverResult');
+            const resultContent = document.getElementById('solverResultContent');
+            const button = this;
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = '<span class="loading"></span> 解题中...';
+            button.disabled = true;
+            
+            resultContent.innerHTML = '';
+            resultBox.style.display = 'block';
+            
+            // 构建API请求URL
+            const apiUrl = `https://api.jkyai.top/API/wnjtzs.php?question=${encodeURIComponent(question)}&type=${responseFormat}`;
+            
+            // 发送请求
+            fetch(apiUrl)
+                .then(response => {
+                    if (responseFormat === 'json') {
+                        return response.json();
+                    } else {
+                        return response.text();
+                    }
+                })
+                .then(data => {
+                    if (responseFormat === 'json') {
+                        if (data.status === 'success') {
+                            resultContent.innerHTML = `
+                                <p><strong>题目：</strong> ${data.question}</p>
+                                <p><strong>答案：</strong> ${data.answer}</p>
+                            `;
+                        } else {
+                            resultContent.innerHTML = `<p class="text-danger">解题失败: ${data.message || '未知错误'}</p>`;
+                        }
+                    } else {
+                        resultContent.innerHTML = `<p>${data}</p>`;
+                    }
+                    
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                })
+                .catch(error => {
+                    resultContent.innerHTML = `<p class="text-danger">请求失败: ${error.message}</p>`;
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                });
+        });
+        
+        // 实时计算输入文本的字数
+        document.getElementById('summaryText').addEventListener('input', function() {
+            const text = this.value;
+            const wordCount = text.length;
+            document.getElementById('currentWordCount').textContent = wordCount;
+        });
+    </script>
+</body>
+</html>

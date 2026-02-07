@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日段子</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: #f8f9fa;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 400;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            font-weight: 300;
+        }
+        
+        .api-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .api-btn {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .api-btn i {
+            margin-right: 6px;
+            color: #3498db;
+        }
+        
+        .api-btn.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .api-btn.active i {
+            color: white;
+        }
+        
+        .api-btn:hover:not(.active) {
+            border-color: #3498db;
+            color: #3498db;
+        }
+        
+        .joke-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            margin-bottom: 25px;
+            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid #f0f0f0;
+        }
+        
+        .joke-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .joke-content {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #2c3e50;
+            text-align: center;
+            position: relative;
+            padding: 0 10px;
+            white-space: pre-line;
+        }
+        
+        .joke-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #3498db;
+            text-align: center;
+        }
+        
+        .quote-icon {
+            font-size: 1.2rem;
+            color: #e0e0e0;
+            position: absolute;
+        }
+        
+        .quote-left {
+            top: -5px;
+            left: 0;
+        }
+        
+        .quote-right {
+            bottom: -10px;
+            right: 0;
+        }
+        
+        .separator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .separator-line {
+            height: 1px;
+            background: #ececec;
+            flex-grow: 1;
+        }
+        
+        .separator-dot {
+            width: 5px;
+            height: 5px;
+            background: #bdc3c7;
+            border-radius: 50%;
+            margin: 0 10px;
+        }
+        
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 10px rgba(52, 152, 219, 0.15);
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(52, 152, 219, 0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn i {
+            margin-right: 6px;
+            font-size: 0.85rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 25px;
+            color: #7f8c8d;
+        }
+        
+        .spinner {
+            border: 2px solid rgba(52, 152, 219, 0.2);
+            border-radius: 50%;
+            border-top: 2px solid #3498db;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            text-align: center;
+            padding: 15px;
+            color: #e74c3c;
+            background: #ffeaea;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .api-info {
+            text-align: center;
+            margin-top: 12px;
+            color: #7f8c8d;
+            font-size: 0.8rem;
+        }
+        
+        .footer {
+            text-align: center;
+            color: #95a5a6;
+            margin-top: 30px;
+            font-size: 0.75rem;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.6rem;
+            }
+            
+            .joke-card {
+                padding: 25px 20px;
+            }
+            
+            .joke-content {
+                font-size: 0.95rem;
+            }
+            
+            .api-selector {
+                gap: 8px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.4rem;
+            }
+            
+            .header p {
+                font-size: 0.85rem;
+            }
+            
+            .joke-card {
+                padding: 20px 15px;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.85rem;
+            }
+            
+            .api-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+            
+            .api-selector {
+                gap: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>每日段子</h1>
+            <p>轻松一刻，乐享生活</p>
+        </div>
+        
+        <div class="api-selector">
+            <button class="api-btn active" id="api1-btn">
+                <i class="fas fa-laugh-beam"></i> 段子一
+            </button>
+            <button class="api-btn" id="api2-btn">
+                <i class="fas fa-bolt"></i> 雷人笑话
+            </button>
+            <button class="api-btn" id="api3-btn">
+                <i class="fas fa-book"></i> 段子二
+            </button>
+            <button class="api-btn" id="api4-btn">
+                <i class="fas fa-grin"></i> 笑话
+            </button>
+            <button class="api-btn" id="api5-btn">
+                <i class="fas fa-comment-dots"></i> 段子三
+            </button>
+        </div>
+        
+        <div class="joke-card">
+            <div class="joke-content" id="joke-text">
+                <i class="fas fa-quote-left quote-icon quote-left"></i>
+                正在加载段子，请稍候...
+                <i class="fas fa-quote-right quote-icon quote-right"></i>
+            </div>
+            <div class="api-info" id="api-info">API来源: api.lbbb.cc</div>
+        </div>
+        
+        <div class="actions">
+            <button class="btn" id="refresh-btn">
+                <i class="fas fa-sync-alt"></i> 换一个段子
+            </button>
+        </div>
+        
+        <div class="footer">
+            <p>API提供: api.lbbb.cc & res.abeim.cn & whyta.cn & api.suyanw.cn & api.andeer.top</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const jokeText = document.getElementById('joke-text');
+            const refreshBtn = document.getElementById('refresh-btn');
+            const api1Btn = document.getElementById('api1-btn');
+            const api2Btn = document.getElementById('api2-btn');
+            const api3Btn = document.getElementById('api3-btn');
+            const api4Btn = document.getElementById('api4-btn');
+            const api5Btn = document.getElementById('api5-btn');
+            const apiInfo = document.getElementById('api-info');
+            
+            let currentAPI = 'api1'; // 默认使用第一个API
+            
+            // API配置
+            const apiConfig = {
+                api1: {
+                    url: 'https://api.lbbb.cc/api/duanzi',
+                    name: 'api.lbbb.cc',
+                    type: 'text'
+                },
+                api2: {
+                    url: 'https://whyta.cn/api/tx/joke?key=738b541a5f7a&num=1',
+                    name: '雷人笑话',
+                    type: 'json'
+                },
+                api3: {
+                    url: 'https://api.suyanw.cn/api/duanzi.php',
+                    name: 'suyanw.cn',
+                    type: 'text'
+                },
+                api4: {
+                    url: 'https://api.andeer.top/API/joke.php',
+                    name: '笑话 (api.andeer.top)',
+                    type: 'json'
+                },
+                api5: {
+                    url: 'https://api.andeer.top/API/duanzi.php',
+                    name: '段子三 (api.andeer.top)',
+                    type: 'json'
+                }
+            };
+            
+            // 移除首部和尾部的特定字符串
+            function removeHeadersAndFooters(content) {
+                // 首先移除所有空白字符
+                content = content.trim();
+                
+                // 移除首部：段子 ━━━━━━━━━
+                // 使用更精确的匹配，包括可能的前后空格
+                content = content.replace(/^\s*段子\s*[━─-]+\s*/, '');
+                
+                // 移除尾部：━━━━━━━━━
+                content = content.replace(/\s*[━─-]+\s*$/, '');
+                
+                // 再次移除所有空白字符
+                content = content.trim();
+                
+                return content;
+            }
+            
+            // API切换函数
+            function switchAPI(api) {
+                currentAPI = api;
+                
+                // 更新按钮状态
+                api1Btn.classList.toggle('active', api === 'api1');
+                api2Btn.classList.toggle('active', api === 'api2');
+                api3Btn.classList.toggle('active', api === 'api3');
+                api4Btn.classList.toggle('active', api === 'api4');
+                api5Btn.classList.toggle('active', api === 'api5');
+                
+                // 更新API信息
+                apiInfo.textContent = `API来源: ${apiConfig[api].name}`;
+                
+                // 获取新段子
+                fetchJoke();
+            }
+            
+            // API调用函数
+            async function fetchJoke() {
+                try {
+                    // 显示加载状态
+                    jokeText.innerHTML = '<div class="loading"><div class="spinner"></div>正在获取段子...</div>';
+                    
+                    // 调用当前选中的API
+                    const response = await fetch(apiConfig[currentAPI].url, {
+                        method: 'GET',
+                        mode: 'cors'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('网络响应不正常');
+                    }
+                    
+                    let content = '';
+                    
+                    if (apiConfig[currentAPI].type === 'text') {
+                        // 处理文本API
+                        let data = await response.text();
+                        
+                        // 调试：在控制台显示原始数据
+                        console.log("原始数据:", data);
+                        
+                        // 处理数据：移除首部和尾部的特定字符串
+                        content = removeHeadersAndFooters(data);
+                    } else {
+                        // 处理JSON API
+                        let data = await response.json();
+                        
+                        // 调试：在控制台显示原始数据
+                        console.log("原始数据:", data);
+                        
+                        // 根据不同的API结构提取内容
+                        if (currentAPI === 'api2') {
+                            // 雷人笑话API
+                            if (data.code === 200 && data.result && data.result.list && data.result.list.length > 0) {
+                                const joke = data.result.list[0];
+                                content = `<div class="joke-title">${joke.title}</div>${joke.content}`;
+                            } else {
+                                throw new Error('雷人笑话API返回数据格式异常');
+                            }
+                        } else if (currentAPI === 'api4' || currentAPI === 'api5') {
+                            // 笑话API和段子三API（两者格式相同）
+                            if (data.code === 200 || data.success === true) {
+                                content = data.data || "未获取到段子内容";
+                            } else {
+                                throw new Error('API返回数据格式异常');
+                            }
+                        }
+                    }
+                    
+                    // 调试：在控制台显示处理后的数据
+                    console.log("处理后的数据:", content);
+                    
+                    // 显示段子内容
+                    jokeText.innerHTML = `
+                        <i class="fas fa-quote-left quote-icon quote-left"></i>
+                        ${content}
+                        <i class="fas fa-quote-right quote-icon quote-right"></i>
+                    `;
+                    
+                } catch (error) {
+                    console.error('获取段子失败:', error);
+                    jokeText.innerHTML = `
+                        <div class="error">
+                            <i class="fas fa-exclamation-circle"></i><br>
+                            获取段子失败，请稍后再试<br>
+                            <small>错误: ${error.message}</small>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 初始加载一个段子
+            fetchJoke();
+            
+            // 添加事件监听器
+            refreshBtn.addEventListener('click', fetchJoke);
+            api1Btn.addEventListener('click', () => switchAPI('api1'));
+            api2Btn.addEventListener('click', () => switchAPI('api2'));
+            api3Btn.addEventListener('click', () => switchAPI('api3'));
+            api4Btn.addEventListener('click', () => switchAPI('api4'));
+            api5Btn.addEventListener('click', () => switchAPI('api5'));
+        });
+    </script>
+</body>
+</html>

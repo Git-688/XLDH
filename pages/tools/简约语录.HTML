@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简约语录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .quote-card {
+            background: white;
+            border-radius: 16px;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2.5rem;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quote-card::before {
+            content: """;
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            font-size: 120px;
+            color: rgba(255, 107, 107, 0.1);
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+
+        .quote-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+        }
+
+        .quote-text {
+            font-size: 1.5rem;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            color: #333;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            font-weight: 400;
+        }
+
+        .quote-author {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #ff6b6b;
+            font-weight: 500;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .quote-author::before {
+            content: "— ";
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        /* 改进的API选择器样式 */
+        .api-selector-container {
+            position: relative;
+            min-width: 220px;
+        }
+
+        .api-selector {
+            width: 100%;
+            padding: 14px 50px 14px 20px;
+            border: 1px solid #e1e8ed;
+            border-radius: 12px;
+            background: white;
+            font-size: 1rem;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 20px center;
+            background-size: 16px;
+            font-weight: 500;
+        }
+
+        .api-selector:hover {
+            border-color: #ff6b6b;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .api-selector:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2), 0 6px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 添加选择器标签 */
+        .api-selector-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .btn {
+            padding: 14px 30px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error-message {
+            background: rgba(255, 107, 107, 0.1);
+            color: #e74c3c;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #e74c3c;
+            display: none;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            padding: 1.5rem 0;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .quote-card {
+                padding: 2.5rem 1.8rem;
+            }
+            
+            .quote-text {
+                font-size: 1.3rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .api-selector-container, .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+            
+            .quote-card {
+                padding: 2rem 1.5rem;
+            }
+            
+            .quote-text {
+                fontSize: 1.2rem;
+            }
+        }
+        
+        .zuan-level-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .zuan-level {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: #4a5568;
+        }
+        
+        .zuan-level.active {
+            background: #ff6b6b;
+            color: white;
+            border-color: #ff6b6b;
+        }
+        
+        .zuan-level:hover:not(.active) {
+            border-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+        
+        .zuan-info {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        /* 笑话特殊样式 */
+        .joke-title {
+            font-weight: 600;
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 2px solid #ff6b6b;
+            display: block;
+        }
+        
+        .joke-content {
+            font-size: 1.4rem;
+            line-height: 1.7;
+            color: #34495e;
+            font-style: italic;
+        }
+        
+        /* 神回复源选择器样式 */
+        .godreply-source-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .godreply-source {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: #4a5568;
+        }
+        
+        .godreply-source.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .godreply-source:hover:not(.active) {
+            border-color: #3498db;
+            color: #3498db;
+        }
+        
+        .godreply-info {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        /* 祖安语录类型选择器样式 */
+        .zuan-an-type-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .zuan-an-type {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: #4a5568;
+        }
+        
+        .zuan-an-type.active {
+            background: #9c27b0;
+            color: white;
+            border-color: #9c27b0;
+        }
+        
+        .zuan-an-type:hover:not(.active) {
+            border-color: #9c27b0;
+            color: #9c27b0;
+        }
+        
+        .zuan-an-info {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-message" id="errorMessage">
+            <span id="errorText">获取语录失败，请稍后再试。</span>
+        </div>
+        
+        <main>
+            <div class="quote-card" id="quoteCard">
+                <div class="quote-text" id="quoteText">点击下方按钮，获取一句语录</div>
+                <div class="quote-author" id="quoteAuthor">语录库</div>
+            </div>
+            
+            <div class="controls">
+                <div class="api-selector-container">
+                    <label class="api-selector-label" for="apiSelector">选择语录类型</label>
+                    <select class="api-selector" id="apiSelector">
+                        <option value="http://api.lbbb.cc/api/aqgyyl">爱情公寓语录</option>
+                        <option value="http://api.lbbb.cc/api/Comforting">安慰语录</option>
+                        <option value="http://api.lbbb.cc/api/fabingyulu">发病语录</option>
+                        <option value="http://api.lbbb.cc/api/gaoxiao">搞笑语录</option>
+                        <option value="http://api.lbbb.cc/api/jdyl">经典语录</option>
+                        <option value="http://mgyy.asia/api/nxyl.php">暖心语录</option>
+                        <option value="https://api.xcvts.cn/api/yiyan/yulu?msg=社会语录&type=json">社会语录</option>
+                        <option value="https://api.xcvts.cn/api/yiyan/yulu?msg=伤感语录&type=json">伤感语录</option>
+                        <option value="https://api.xcvts.cn/api/yiyan/yulu?msg=爱情语录&type=json">爱情语录</option>
+                        <option value="https://api.xcvts.cn/api/yiyan/yulu?msg=网易语录&type=json">网易语录</option>
+                        <option value="zuan">怼人语录</option>
+                        <option value="https://api.niniandmiaomiao.love/api/xb/api/skl.php">顺口溜</option>
+                        <option value="https://api.niniandmiaomiao.love/api/xb/api/rkl.php">绕口令</option>
+                        <option value="shf">神回复</option>
+                        <option value="https://api.niniandmiaomiao.love/api/xb/api/zaxy.php">早安语录</option>
+                        <option value="https://api.niniandmiaomiao.love/api/xb/api/waxy.php">晚安语录</option>
+                        <option value="https://api.xcboke.cn/api/jhyl?c=1002&encode=text">精神语录</option>
+                        <option value="https://api.qhsou.com/api/yy.php?encode=json&code=6">情感语录</option>
+                        <option value="https://whyta.cn/api/tx/zhanan?key=738b541a5f7a">渣男语录</option>
+                        <option value="https://whyta.cn/api/tx/dgryl?key=738b541a5f7a">打工人语录</option>
+                        <!-- 新增的API选项 -->
+                        <option value="https://api.suol.cc/v1/zs_yulu.php?type=动漫">动漫语录</option>
+                        <option value="https://api.suol.cc/v1/zs_yulu.php?type=恋爱">恋爱语录</option>
+                        <option value="https://api.suol.cc/v1/zs_yulu.php?type=鼓励">鼓励语录</option>
+                        <option value="https://api.suol.cc/v1/zs_yulu.php?type=孤独">孤独语录</option>
+                        <option value="https://api.ahfi.cn/api/zsyjdyl?type=json">祖师爷语录</option>
+                        <!-- 新增网络语录 -->
+                        <option value="https://api.jkyai.top/API/wlsjyl.php">网络语录</option>
+                        <!-- 新增祖安语录 -->
+                        <option value="zuan_an">祖安语录</option>
+                    </select>
+                </div>
+                <button class="btn" id="getQuote">
+                    <span class="loading hidden" id="loadingSpinner"></span>
+                    <span id="btnText">获取语录</span>
+                </button>
+            </div>
+            
+            <!-- 怼人语录等级选择器 -->
+            <div id="zuanSelector" class="zuan-info" style="display: none;">
+                <p>选择怼人等级：</p>
+                <div class="zuan-level-selector">
+                    <div class="zuan-level active" data-level="common">普通等级</div>
+                    <div class="zuan-level" data-level="qiu">礼貌用语</div>
+                    <div class="zuan-level" data-level="yang">骂娘等级</div>
+                </div>
+            </div>
+            
+            <!-- 神回复源选择器 -->
+            <div id="godreplySelector" class="godreply-info" style="display: none;">
+                <p>选择神回复源：</p>
+                <div class="godreply-source-selector">
+                    <div class="godreply-source active" data-source="source1">源1</div>
+                    <div class="godreply-source" data-source="source2">源2</div>
+                </div>
+            </div>
+            
+            <!-- 祖安语录类型选择器 -->
+            <div id="zuanAnSelector" class="zuan-an-info" style="display: none;">
+                <p>选择祖安语录类型：</p>
+                <div class="zuan-an-type-selector">
+                    <div class="zuan-an-type active" data-type="od">殴打</div>
+                    <div class="zuan-an-type" data-type="gd">滚刀</div>
+                    <div class="zuan-an-type" data-type="cf">嘲讽</div>
+                    <div class="zuan-an-type" data-type="ktff">口吐芬芳</div>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>© 2023 简约语录</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const apiSelector = document.getElementById('apiSelector');
+            const getQuoteBtn = document.getElementById('getQuote');
+            const quoteText = document.getElementById('quoteText');
+            const quoteAuthor = document.getElementById('quoteAuthor');
+            const quoteCard = document.getElementById('quoteCard');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const btnText = document.getElementById('btnText');
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            const zuanSelector = document.getElementById('zuanSelector');
+            const zuanLevels = document.querySelectorAll('.zuan-level');
+            const godreplySelector = document.getElementById('godreplySelector');
+            const godreplySources = document.querySelectorAll('.godreply-source');
+            const zuanAnSelector = document.getElementById('zuanAnSelector');
+            const zuanAnTypes = document.querySelectorAll('.zuan-an-type');
+            
+            let currentApi = apiSelector.value;
+            let currentZuanLevel = 'common';
+            let currentGodreplySource = 'source1';
+            let currentZuanAnType = 'od';
+            
+            // API选择处理
+            apiSelector.addEventListener('change', function() {
+                currentApi = this.value;
+                
+                // 显示或隐藏怼人语录等级选择器
+                if (currentApi === 'zuan') {
+                    zuanSelector.style.display = 'block';
+                } else {
+                    zuanSelector.style.display = 'none';
+                }
+                
+                // 显示或隐藏神回复源选择器
+                if (currentApi === 'shf') {
+                    godreplySelector.style.display = 'block';
+                } else {
+                    godreplySelector.style.display = 'none';
+                }
+                
+                // 显示或隐藏祖安语录类型选择器
+                if (currentApi === 'zuan_an') {
+                    zuanAnSelector.style.display = 'block';
+                } else {
+                    zuanAnSelector.style.display = 'none';
+                }
+                
+                // 清空结果
+                quoteText.textContent = '点击按钮获取语录';
+                quoteAuthor.textContent = '语录库';
+                quoteCard.className = 'quote-card';
+                hideMessages();
+            });
+            
+            // 怼人语录等级选择处理
+            zuanLevels.forEach(level => {
+                level.addEventListener('click', function() {
+                    // 移除所有active类
+                    zuanLevels.forEach(l => l.classList.remove('active'));
+                    // 添加active类到当前选项
+                    this.classList.add('active');
+                    // 更新当前等级
+                    currentZuanLevel = this.getAttribute('data-level');
+                });
+            });
+            
+            // 神回复源选择处理
+            godreplySources.forEach(source => {
+                source.addEventListener('click', function() {
+                    // 移除所有active类
+                    godreplySources.forEach(s => s.classList.remove('active'));
+                    // 添加active类到当前选项
+                    this.classList.add('active');
+                    // 更新当前源
+                    currentGodreplySource = this.getAttribute('data-source');
+                });
+            });
+            
+            // 祖安语录类型选择处理
+            zuanAnTypes.forEach(type => {
+                type.addEventListener('click', function() {
+                    // 移除所有active类
+                    zuanAnTypes.forEach(t => t.classList.remove('active'));
+                    // 添加active类到当前选项
+                    this.classList.add('active');
+                    // 更新当前类型
+                    currentZuanAnType = this.getAttribute('data-type');
+                });
+            });
+            
+            // 隐藏消息函数
+            function hideMessages() {
+                errorMessage.style.display = 'none';
+            }
+            
+            // 显示错误消息
+            function showError(message) {
+                errorText.textContent = message;
+                errorMessage.style.display = 'block';
+            }
+            
+            // 根据API URL获取作者名称
+            function getAuthorByApiUrl(apiUrl) {
+                if (apiUrl.includes('Comforting')) {
+                    return '安慰语录';
+                } else if (apiUrl.includes('aqgyyl')) {
+                    return '爱情公寓';
+                } else if (apiUrl.includes('fabingyulu')) {
+                    return '发病语录';
+                } else if (apiUrl.includes('gaoxiao')) {
+                    return '搞笑语录';
+                } else if (apiUrl.includes('jdyl')) {
+                    return '经典语录';
+                } else if (apiUrl.includes('nxyl.php')) {
+                    return '暖心语录';
+                } else if (apiUrl.includes('社会语录')) {
+                    return '社会语录';
+                } else if (apiUrl.includes('伤感语录')) {
+                    return '伤感语录';
+                } else if (apiUrl.includes('爱情语录')) {
+                    return '爱情语录';
+                } else if (apiUrl.includes('网易语录')) {
+                    return '网易语录';
+                } else if (apiUrl.includes('skl.php')) {
+                    return '顺口溜';
+                } else if (apiUrl.includes('rkl.php')) {
+                    return '绕口令';
+                } else if (apiUrl.includes('shf')) {
+                    return '神回复';
+                } else if (apiUrl.includes('zaxy.php')) {
+                    return '早安语录';
+                } else if (apiUrl.includes('waxy.php')) {
+                    return '晚安语录';
+                } else if (apiUrl.includes('jhyl')) {
+                    return '精神语录';
+                } else if (apiUrl.includes('yy.php')) {
+                    return '情感语录';
+                } else if (apiUrl.includes('zhanan')) {
+                    return '渣男语录';
+                } else if (apiUrl.includes('dgryl')) {
+                    return '打工人语录';
+                } else if (apiUrl.includes('zuan')) {
+                    // 根据等级设置怼人语录作者
+                    if (currentZuanLevel === 'common') {
+                        return '怼人语录-普通等级';
+                    } else if (currentZuanLevel === 'qiu') {
+                        return '怼人语录-礼貌用语';
+                    } else if (currentZuanLevel === 'yang') {
+                        return '怼人语录-骂娘等级';
+                    }
+                } else if (apiUrl.includes('type=动漫')) {
+                    return '动漫语录';
+                } else if (apiUrl.includes('type=恋爱')) {
+                    return '恋爱语录';
+                } else if (apiUrl.includes('type=鼓励')) {
+                    return '鼓励语录';
+                } else if (apiUrl.includes('type=孤独')) {
+                    return '孤独语录';
+                } else if (apiUrl.includes('zsyjdyl')) {
+                    return '祖师爷语录';
+                } else if (apiUrl.includes('wlsjyl.php')) {
+                    return '网络语录';
+                } else if (apiUrl.includes('zuan_an')) {
+                    // 根据类型设置祖安语录作者
+                    if (currentZuanAnType === 'od') {
+                        return '祖安语录-殴打';
+                    } else if (currentZuanAnType === 'gd') {
+                        return '祖安语录-滚刀';
+                    } else if (currentZuanAnType === 'cf') {
+                        return '祖安语录-嘲讽';
+                    } else if (currentZuanAnType === 'ktff') {
+                        return '祖安语录-口吐芬芳';
+                    }
+                }
+                return '语录';
+            }
+            
+            // 解析文本格式的语录
+            function parseQuoteText(text, apiUrl) {
+                // 获取作者名称
+                const author = getAuthorByApiUrl(apiUrl);
+                
+                // 对于经典语录API，处理特殊格式
+                if (apiUrl.includes('jdyl')) {
+                    // 经典语录格式："经典语录 ━━━━━━━━━ 内容 ━━━━━━━━━"
+                    const parts = text.split('━━━━━━━━━');
+                    if (parts.length >= 3) {
+                        return {
+                            content: parts[1].trim(),
+                            author: author
+                        };
+                    }
+                }
+                
+                // 尝试用"——"分割内容
+                const parts = text.split('——');
+                
+                if (parts.length === 2) {
+                    return {
+                        content: parts[0].trim(),
+                        author: parts[1].trim()
+                    };
+                } else {
+                    // 如果没有找到作者，将整个文本作为内容
+                    return {
+                        content: text.trim(),
+                        author: author
+                    };
+                }
+            }
+            
+            // 获取语录函数
+            async function fetchQuote() {
+                let selectedApi = currentApi;
+                
+                // 如果是怼人语录，构建对应的API URL
+                if (selectedApi === 'zuan') {
+                    selectedApi = `https://api.qhsou.com/api/zuan.php?catalog=${currentZuanLevel}`;
+                }
+                
+                // 如果是神回复，根据选择的源构建API URL
+                if (selectedApi === 'shf') {
+                    if (currentGodreplySource === 'source1') {
+                        selectedApi = 'https://api.niniandmiaomiao.love/api/xb/api/shf.php';
+                    } else {
+                        selectedApi = 'https://whyta.cn/api/tx/godreply?key=738b541a5f7a';
+                    }
+                }
+                
+                // 如果是祖安语录，根据选择的类型构建API URL
+                if (selectedApi === 'zuan_an') {
+                    selectedApi = `https://api.milorapart.top/apis/${currentZuanAnType}`;
+                }
+                
+                // 显示加载状态
+                loadingSpinner.classList.remove('hidden');
+                btnText.textContent = '获取中...';
+                getQuoteBtn.disabled = true;
+                hideMessages();
+                
+                try {
+                    const response = await fetch(selectedApi, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json, text/plain, */*'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`网络响应异常: ${response.status}`);
+                    }
+                    
+                    // 根据Content-Type判断响应类型
+                    const contentType = response.headers.get('content-type');
+                    
+                    let data;
+                    if (contentType && contentType.includes('application/json')) {
+                        data = await response.json();
+                        
+                        // 处理渣男语录和打工人语录API
+                        if (selectedApi.includes('zhanan') || selectedApi.includes('dgryl')) {
+                            if (data.code === 200) {
+                                updateQuote(data.result.content, getAuthorByApiUrl(selectedApi));
+                            } else {
+                                throw new Error(data.msg || 'API返回错误');
+                            }
+                        }
+                        // 处理神回复源2
+                        else if (selectedApi.includes('godreply')) {
+                            if (data.code === 200) {
+                                if (data.result && data.result.list && data.result.list.length > 0) {
+                                    const item = data.result.list[0];
+                                    const jokeContent = `<span class="joke-title">${item.title}</span><span class="joke-content">${item.content}</span>`;
+                                    updateQuoteHTML(jokeContent, getAuthorByApiUrl(selectedApi));
+                                } else {
+                                    throw new Error('神回复列表为空');
+                                }
+                            } else {
+                                throw new Error(data.msg || 'API返回错误');
+                            }
+                        }
+                        else if (selectedApi.includes('zsyjdyl')) {
+                            // 祖师爷语录API
+                            if (data.code === 200) {
+                                updateQuote(data.data.copywriting, data.data.author);
+                            } else {
+                                throw new Error(data.msg || 'API返回错误');
+                            }
+                        }
+                        // 处理新的API响应结构
+                        else if (selectedApi.includes('api.xcvts.cn')) {
+                            // 新的API返回格式
+                            if (data.code === 200) {
+                                updateQuote(data.line, data.msg || '语录');
+                            } else {
+                                throw new Error(data.msg || 'API返回错误');
+                            }
+                        } else if (selectedApi.includes('api.niniandmiaomiao.love')) {
+                            // 处理新添加的API
+                            if (data.code === 1) {
+                                const author = getAuthorByApiUrl(selectedApi);
+                                if (selectedApi.includes('shf.php')) {
+                                    // 笑话API返回的数据结构不同，使用HTML格式显示
+                                    const jokeContent = `<span class="joke-title">${data.data.title}</span><span class="joke-content">${data.data.content}</span>`;
+                                    updateQuoteHTML(jokeContent, author);
+                                } else {
+                                    // 对于绕口令API，移除内容中的\n换行符
+                                    let content = data.data;
+                                    if (selectedApi.includes('rkl.php')) {
+                                        content = content.replace(/\\n/g, '');
+                                    }
+                                    updateQuote(content, author);
+                                }
+                            } else {
+                                throw new Error(data.message || 'API返回错误');
+                            }
+                        } else if (selectedApi.includes('yy.php')) {
+                            // 情感语录API - 只显示content部分
+                            if (data.code === 200) {
+                                updateQuote(data.content, '情感语录');
+                            } else {
+                                throw new Error(data.message || 'API返回错误');
+                            }
+                        } else if (selectedApi.includes('zs_yulu.php')) {
+                            // 处理新增的四个API（动漫、恋爱、鼓励、孤独）
+                            if (data.code === 200) {
+                                updateQuote(data.text, data.author || getAuthorByApiUrl(selectedApi));
+                            } else {
+                                throw new Error('API返回错误');
+                            }
+                        } else if (selectedApi.includes('zuan.php')) {
+                            // 怼人语录API返回纯文本，不需要JSON处理
+                            // 这里不会执行，因为怼人语录返回的是纯文本
+                        } else if (selectedApi.includes('wlsjyl.php')) {
+                            // 网络语录API返回纯文本，不需要JSON处理
+                            // 这里不会执行，因为网络语录返回的是纯文本
+                        } else if (selectedApi.includes('milorapart.top')) {
+                            // 祖安语录API返回纯文本，不需要JSON处理
+                            // 这里不会执行，因为祖安语录返回的是纯文本
+                        } else {
+                            // 根据API响应结构调整数据提取
+                            const content = data.content || data.text || data.quote || data.message || data.data || '未找到语录内容';
+                            const author = data.author || data.from || data.source || '未知';
+                            
+                            updateQuote(content, author);
+                        }
+                    } else {
+                        // 处理文本响应
+                        const text = await response.text();
+                        
+                        // 如果是情感语录API但返回的是文本，尝试解析JSON
+                        if (selectedApi.includes('yy.php')) {
+                            try {
+                                data = JSON.parse(text);
+                                if (data.code === 200) {
+                                    updateQuote(data.content, '情感语录');
+                                } else {
+                                    throw new Error(data.message || 'API返回错误');
+                                }
+                            } catch (e) {
+                                // 如果解析失败，按普通文本处理
+                                const parsedQuote = parseQuoteText(text, selectedApi);
+                                updateQuote(parsedQuote.content, parsedQuote.author);
+                            }
+                        } else {
+                            const parsedQuote = parseQuoteText(text, selectedApi);
+                            updateQuote(parsedQuote.content, parsedQuote.author);
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error('获取语录失败:', error);
+                    showError(`获取语录失败: ${error.message}`);
+                } finally {
+                    // 隐藏加载状态
+                    loadingSpinner.classList.add('hidden');
+                    btnText.textContent = '获取语录';
+                    getQuoteBtn.disabled = false;
+                }
+            }
+            
+            // 更新语录显示（普通文本）
+            function updateQuote(content, author) {
+                // 平滑过渡更新内容
+                quoteCard.style.opacity = '0';
+                quoteCard.style.transform = 'translateY(10px)';
+                
+                setTimeout(() => {
+                    quoteText.textContent = content;
+                    quoteAuthor.textContent = author;
+                    
+                    quoteCard.style.opacity = '1';
+                    quoteCard.style.transform = 'translateY(0)';
+                }, 300);
+            }
+            
+            // 更新语录显示（HTML格式，用于笑话）
+            function updateQuoteHTML(content, author) {
+                // 平滑过渡更新内容
+                quoteCard.style.opacity = '0';
+                quoteCard.style.transform = 'translateY(10px)';
+                
+                setTimeout(() => {
+                    quoteText.innerHTML = content;
+                    quoteAuthor.textContent = author;
+                    
+                    quoteCard.style.opacity = '1';
+                    quoteCard.style.transform = 'translateY(0)';
+                }, 300);
+            }
+            
+            // 事件监听
+            getQuoteBtn.addEventListener('click', fetchQuote);
+        });
+    </script>
+</body>
+</html>

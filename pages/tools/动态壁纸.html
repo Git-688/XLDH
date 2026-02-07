@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极简动态壁纸库</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+            --shadow-hover: 0 6px 10px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+            font-size: 13px;
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0 20px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+            gap: 14px;
+        }
+
+        .search-box {
+            display: flex;
+            max-width: 500px;
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .search-box:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 500px;
+            flex-wrap: nowrap;
+        }
+
+        input, select, button {
+            padding: 10px 12px;
+            border: none;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        input {
+            flex: 1;
+            background: transparent;
+            color: var(--text);
+        }
+
+        input::placeholder {
+            color: var(--text-light);
+        }
+
+        select {
+            background: var(--card-bg);
+            color: var(--text);
+            cursor: pointer;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            flex: 1;
+            min-width: 0;
+            box-shadow: var(--shadow);
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .primary-btn {
+            background: var(--primary);
+        }
+
+        .secondary-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .secondary-btn:hover {
+            background: #f1f5f9;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 14px 16px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .results-info {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .pagination {
+            display: flex;
+            gap: 5px;
+        }
+
+        .pagination button {
+            padding: 6px 10px;
+            min-width: 32px;
+            font-size: 0.8rem;
+        }
+
+        .pagination button.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .wallpapers-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .wallpaper-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .wallpaper-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .wallpaper-image {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+
+        .wallpaper-card:hover .wallpaper-image {
+            transform: scale(1.03);
+        }
+
+        .wallpaper-info {
+            padding: 14px;
+        }
+
+        .wallpaper-title {
+            font-size: 1rem;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 600;
+        }
+
+        .wallpaper-desc {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 2.4em;
+        }
+
+        .wallpaper-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-light);
+            margin-bottom: 14px;
+        }
+
+        .wallpaper-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .wallpaper-actions button {
+            flex: 1;
+            padding: 6px;
+            font-size: 0.75rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 0.85rem;
+            grid-column: 1 / -1;
+            color: var(--text-light);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 35px;
+            height: 35px;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 14px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            text-align: center;
+            padding: 30px;
+            background: #fef2f2;
+            border-radius: 10px;
+            margin: 14px 0;
+            grid-column: 1 / -1;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 14px;
+            grid-column: 1 / -1;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 14px;
+            opacity: 0.5;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            font-size: 0.75rem;
+            color: var(--text-light);
+            border-top: 1px solid var(--border);
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            margin: 30px auto;
+            padding: 20px;
+            border-radius: 14px;
+            max-width: 700px;
+            width: 90%;
+            box-shadow: var(--shadow-hover);
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .close-modal:hover {
+            background: #f1f5f9;
+        }
+
+        .modal-image {
+            width: 100%;
+            max-height: 350px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 14px;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .modal-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .modal-desc {
+            margin-bottom: 18px;
+            line-height: 1.5;
+            font-size: 0.85rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .wallpapers-container {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .wallpapers-container {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .pagination {
+                justify-content: center;
+            }
+
+            .modal-content {
+                padding: 16px;
+                width: 95%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+                font-size: 12px;
+            }
+            
+            .wallpapers-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            .controls-row {
+                flex-wrap: nowrap;
+                gap: 8px;
+            }
+            
+            .controls-row select, 
+            .controls-row button {
+                font-size: 0.8rem;
+                padding: 8px 10px;
+            }
+            
+            .search-box {
+                border-radius: 8px;
+            }
+            
+            .random-text {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>极简动态壁纸库</h1>
+            <p class="subtitle">探索精美动态壁纸，为您的设备增添活力</p>
+        </header>
+
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="搜索壁纸...">
+                <button id="search-btn" class="primary-btn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            
+            <div class="controls-row">
+                <select id="device-type">
+                    <option value="android">安卓</option>
+                    <option value="pc">PC</option>
+                </select>
+                
+                <select id="api-source">
+                    <option value="cenguigui">笒鬼鬼API</option>
+                    <option value="360mov">360壁纸-视频</option>
+                </select>
+                
+                <button id="random-btn" class="secondary-btn">
+                    <i class="fas fa-random"></i> <span class="random-text">随机</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="results-info" id="results-info">输入关键词搜索壁纸</div>
+            <div class="pagination" id="pagination">
+                <!-- 分页按钮将通过JS动态生成 -->
+            </div>
+        </div>
+
+        <div class="wallpapers-container" id="wallpapers-container">
+            <!-- 壁纸卡片将通过JS动态生成 -->
+        </div>
+
+        <footer>
+            <p>极简动态壁纸库 | 现代版</p>
+        </footer>
+    </div>
+
+    <!-- 壁纸详情模态框 -->
+    <div class="modal" id="wallpaper-modal">
+        <div class="modal-content">
+            <button class="close-modal" id="close-modal">&times;</button>
+            <img id="modal-image" class="modal-image" src="" alt="">
+            <h2 id="modal-title" class="modal-title">壁纸标题</h2>
+            <div class="modal-meta">
+                <span id="modal-author">作者：未知</span>
+                <span id="modal-format">格式：MP4</span>
+                <span id="modal-date">日期：2023-01-01</span>
+            </div>
+            <p id="modal-desc" class="modal-desc">壁纸描述信息</p>
+            <div class="modal-actions">
+                <button class="primary-btn" id="download-btn">
+                    <i class="fas fa-download"></i> 下载
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM元素
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const randomBtn = document.getElementById('random-btn');
+        const deviceTypeSelect = document.getElementById('device-type');
+        const apiSourceSelect = document.getElementById('api-source');
+        const wallpapersContainer = document.getElementById('wallpapers-container');
+        const paginationContainer = document.getElementById('pagination');
+        const resultsInfo = document.getElementById('results-info');
+        const wallpaperModal = document.getElementById('wallpaper-modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const modalImage = document.getElementById('modal-image');
+        const modalTitle = document.getElementById('modal-title');
+        const modalAuthor = document.getElementById('modal-author');
+        const modalFormat = document.getElementById('modal-format');
+        const modalDate = document.getElementById('modal-date');
+        const modalDesc = document.getElementById('modal-desc');
+        const downloadBtn = document.getElementById('download-btn');
+
+        // 状态变量
+        let currentPage = 1;
+        let currentSearchTerm = '';
+        let currentDeviceType = 'android';
+        let currentApiSource = 'cenguigui';
+        let totalPages = 1;
+        let allWallpapers = [];
+        let currentWallpaper = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 默认搜索关键词
+            searchInput.value = '风景';
+            currentSearchTerm = '风景';
+            
+            // 获取壁纸数据
+            fetchWallpapers();
+            
+            // 事件监听
+            searchBtn.addEventListener('click', handleSearch);
+            randomBtn.addEventListener('click', handleRandom);
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSearch();
+            });
+            deviceTypeSelect.addEventListener('change', () => {
+                currentDeviceType = deviceTypeSelect.value;
+                currentPage = 1;
+                fetchWallpapers();
+            });
+            apiSourceSelect.addEventListener('change', () => {
+                currentApiSource = apiSourceSelect.value;
+                currentPage = 1;
+                fetchWallpapers();
+            });
+            closeModalBtn.addEventListener('click', closeModal);
+            downloadBtn.addEventListener('click', downloadWallpaper);
+            
+            // 点击模态框外部关闭
+            wallpaperModal.addEventListener('click', (e) => {
+                if (e.target === wallpaperModal) closeModal();
+            });
+        });
+
+        // 处理搜索
+        function handleSearch() {
+            const searchTerm = searchInput.value.trim();
+            if (searchTerm) {
+                currentSearchTerm = searchTerm;
+                currentPage = 1;
+                fetchWallpapers();
+            }
+        }
+
+        // 处理随机搜索
+        function handleRandom() {
+            const randomKeywords = ['风景', '动物', '动漫', '游戏', '星空', '海洋', '城市', '抽象', '科技', '艺术'];
+            const randomIndex = Math.floor(Math.random() * randomKeywords.length);
+            searchInput.value = randomKeywords[randomIndex];
+            handleSearch();
+        }
+
+        // 获取壁纸数据
+        async function fetchWallpapers() {
+            try {
+                // 显示加载状态
+                wallpapersContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>正在加载壁纸...</p>
+                    </div>
+                `;
+                
+                // 根据API源构建URL
+                let apiUrl;
+                switch(currentApiSource) {
+                    case 'cenguigui':
+                        apiUrl = `https://api.cenguigui.cn/api/wallpaper/api.php?msg=${encodeURIComponent(currentSearchTerm)}&type=${currentDeviceType}&page=${currentPage}&limit=100`;
+                        break;
+                    case '360mov':
+                        // 360壁纸API
+                        apiUrl = `https://api.cenguigui.cn/api/360mov/?pn=${currentPage}&rn=100`;
+                        break;
+                    default:
+                        apiUrl = `https://api.cenguigui.cn/api/wallpaper/api.php?msg=${encodeURIComponent(currentSearchTerm)}&type=${currentDeviceType}&page=${currentPage}&limit=100`;
+                }
+                
+                // 发送请求
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                // 处理响应数据
+                if (currentApiSource === '360mov') {
+                    // 处理360壁纸API返回的数据
+                    if (data.code === 0 && data.data && data.data.videos && data.data.videos.length > 0) {
+                        allWallpapers = data.data.videos.map(video => ({
+                            id: video.id,
+                            name: video.img_title,
+                            decs: video.label_list ? video.label_list.map(label => label.name).join(', ') : '暂无描述',
+                            author: '未知',
+                            cname: video.label_list && video.label_list.length > 0 ? video.label_list[0].name : '未分类',
+                            web_img_url: video.img,
+                            phone_img_url: video.img,
+                            video_url: video.info_video_url || video.preview_video_url || video.thumbnail_video_url,
+                            format: 'MP4',
+                            time: new Date().toISOString().split('T')[0]
+                        }));
+                        displayWallpapers(allWallpapers);
+                        updatePagination();
+                        resultsInfo.textContent = `找到 ${allWallpapers.length} 个壁纸 - 360壁纸推荐`;
+                    } else {
+                        wallpapersContainer.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-search"></i>
+                                <h3>未找到相关壁纸</h3>
+                                <p>请尝试其他关键词</p>
+                            </div>
+                        `;
+                        resultsInfo.textContent = '未找到相关壁纸';
+                        paginationContainer.innerHTML = '';
+                    }
+                } else {
+                    // 处理笒鬼鬼API返回的数据
+                    if (data.code === 200 && data.data && data.data.length > 0) {
+                        allWallpapers = data.data;
+                        displayWallpapers(allWallpapers);
+                        updatePagination();
+                        resultsInfo.textContent = `找到 ${allWallpapers.length} 个壁纸 - 关键词: ${currentSearchTerm}`;
+                    } else {
+                        wallpapersContainer.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-search"></i>
+                                <h3>未找到相关壁纸</h3>
+                                <p>请尝试其他关键词</p>
+                            </div>
+                        `;
+                        resultsInfo.textContent = '未找到相关壁纸';
+                        paginationContainer.innerHTML = '';
+                    }
+                }
+            } catch (error) {
+                console.error('获取壁纸数据时出错:', error);
+                wallpapersContainer.innerHTML = `
+                    <div class="error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>获取数据失败</h3>
+                        <p>请检查网络连接或稍后重试</p>
+                    </div>
+                `;
+                resultsInfo.textContent = '数据获取失败';
+                paginationContainer.innerHTML = '';
+            }
+        }
+
+        // 显示壁纸
+        function displayWallpapers(wallpapers) {
+            wallpapersContainer.innerHTML = '';
+            
+            if (wallpapers.length === 0) {
+                wallpapersContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-filter"></i>
+                        <h3>没有匹配的壁纸</h3>
+                        <p>尝试调整筛选条件</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            wallpapers.forEach(wallpaper => {
+                const card = document.createElement('div');
+                card.className = 'wallpaper-card';
+                
+                // 根据设备类型选择图片URL
+                const imageUrl = currentDeviceType === 'pc' ? 
+                    (wallpaper.web_img_url || wallpaper.phone_img_url) : 
+                    (wallpaper.phone_img_url || wallpaper.web_img_url);
+                
+                card.innerHTML = `
+                    <img src="${imageUrl}" alt="${wallpaper.name}" class="wallpaper-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjFmNWY5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzY0NzQ4YiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4='">
+                    <div class="wallpaper-info">
+                        <h3 class="wallpaper-title">${wallpaper.name}</h3>
+                        <p class="wallpaper-desc">${wallpaper.decs || '暂无描述'}</p>
+                        <div class="wallpaper-meta">
+                            <span>作者: ${wallpaper.author}</span>
+                            <span>${wallpaper.cname || '未分类'}</span>
+                        </div>
+                        <div class="wallpaper-actions">
+                            <button class="secondary-btn view-detail-btn" data-id="${wallpaper.id}">
+                                <i class="fas fa-eye"></i> 详情
+                            </button>
+                            <button class="primary-btn download-btn" data-id="${wallpaper.id}">
+                                <i class="fas fa-download"></i> 下载
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                wallpapersContainer.appendChild(card);
+            });
+            
+            // 添加详情按钮事件
+            document.querySelectorAll('.view-detail-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    showWallpaperDetail(id);
+                });
+            });
+            
+            // 添加下载按钮事件
+            document.querySelectorAll('.download-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    downloadWallpaperById(id);
+                });
+            });
+        }
+
+        // 显示壁纸详情
+        function showWallpaperDetail(id) {
+            currentWallpaper = allWallpapers.find(w => w.id == id);
+            if (!currentWallpaper) return;
+            
+            const imageUrl = currentDeviceType === 'pc' ? 
+                (currentWallpaper.web_img_url || currentWallpaper.phone_img_url) : 
+                (currentWallpaper.phone_img_url || currentWallpaper.web_img_url);
+            
+            modalImage.src = imageUrl;
+            modalTitle.textContent = currentWallpaper.name;
+            modalAuthor.textContent = `作者：${currentWallpaper.author}`;
+            modalFormat.textContent = `格式：${currentWallpaper.format || 'MP4'}`;
+            modalDate.textContent = `日期：${currentWallpaper.time || '未知'}`;
+            modalDesc.textContent = currentWallpaper.decs || '暂无描述';
+            
+            wallpaperModal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            wallpaperModal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // 下载壁纸
+        function downloadWallpaper() {
+            if (!currentWallpaper) return;
+            
+            const downloadUrl = currentWallpaper.video_url || currentWallpaper.mov_url;
+            if (downloadUrl) {
+                window.open(downloadUrl, '_blank');
+            } else {
+                alert('无法获取下载链接');
+            }
+        }
+
+        // 通过ID下载壁纸
+        function downloadWallpaperById(id) {
+            const wallpaper = allWallpapers.find(w => w.id == id);
+            if (!wallpaper) return;
+            
+            const downloadUrl = wallpaper.video_url || wallpaper.mov_url;
+            if (downloadUrl) {
+                window.open(downloadUrl, '_blank');
+            } else {
+                alert('无法获取下载链接');
+            }
+        }
+
+        // 更新分页
+        function updatePagination(resultsCount = allWallpapers.length) {
+            paginationContainer.innerHTML = '';
+            
+            if (resultsCount === 0) return;
+            
+            // 计算总页数 (假设每页30个结果)
+            totalPages = Math.ceil(resultsCount / 30);
+            
+            // 添加上一页按钮
+            const prevButton = document.createElement('button');
+            prevButton.className = 'secondary-btn';
+            prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    fetchWallpapers();
+                }
+            });
+            paginationContainer.appendChild(prevButton);
+            
+            // 添加页码按钮
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, startPage + 4);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.className = i === currentPage ? 'primary-btn active' : 'secondary-btn';
+                pageButton.textContent = i;
+                pageButton.addEventListener('click', () => {
+                    currentPage = i;
+                    fetchWallpapers();
+                });
+                paginationContainer.appendChild(pageButton);
+            }
+            
+            // 添加下一页按钮
+            const nextButton = document.createElement('button');
+            nextButton.className = 'secondary-btn';
+            nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    fetchWallpapers();
+                }
+            });
+            paginationContainer.appendChild(nextButton);
+        }
+    </script>
+</body>
+</html>

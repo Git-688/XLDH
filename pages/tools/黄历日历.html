@@ -1,0 +1,2195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黄历日历与姓名配对</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6b8cbc;
+            --accent-color: #ff7e5f;
+            --light-bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #5d7690;
+            --border-color: #e1e8ed;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            --radius: 8px;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #4ade80;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-primary);
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px 20px;
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .tabs-container {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1px;
+        }
+        
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            font-size: 15px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .tab.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .date-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 25px 0;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .date-selector input, .date-selector button {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 13px;
+            background-color: var(--card-bg);
+            transition: all 0.2s ease;
+        }
+        
+        .date-selector input {
+            width: 140px;
+        }
+        
+        .date-selector input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+        
+        .date-selector button {
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .date-selector button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .calendar-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .card-title {
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-title::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 16px;
+            background-color: var(--accent-color);
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+        
+        .basic-info {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        
+        .basic-info-item {
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            background-color: var(--light-bg);
+            border-radius: var(--radius);
+            border-left: 3px solid var(--secondary-color);
+        }
+        
+        .basic-info-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        
+        .basic-info-value {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .yi-ji-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .yi-item, .ji-item {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .yi-item {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .ji-item {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .hour-info {
+            overflow-x: auto;
+        }
+        
+        .hour-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+            font-size: 13px;
+        }
+        
+        .hour-table th, .hour-table td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .hour-table th {
+            background-color: var(--light-bg);
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .hour-good {
+            color: #2e7d32;
+        }
+        
+        .hour-bad {
+            color: #c62828;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            grid-column: 1 / -1;
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .info-label {
+            width: 100px;
+            flex-shrink: 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        .info-value {
+            flex: 1;
+            font-size: 13px;
+        }
+        
+        /* 农历查询样式 */
+        .lunar-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .lunar-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        
+        .lunar-info-item {
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            background-color: var(--light-bg);
+            border-radius: var(--radius);
+            border-left: 3px solid var(--secondary-color);
+        }
+        
+        .lunar-info-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        
+        .lunar-info-value {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .almanac-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        
+        .almanac-item {
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            background-color: var(--light-bg);
+            border-radius: var(--radius);
+            border-left: 3px solid var(--accent-color);
+        }
+        
+        /* 姓名配对样式 */
+        .name-form, .age-form, .horoscope-form, .zodiac-form, .lifespan-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-label {
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+        }
+        
+        .form-input, .form-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 13px;
+            transition: border-color 0.2s;
+        }
+        
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+        
+        .submit-btn {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            align-self: end;
+        }
+        
+        .submit-btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .name-result, .age-result, .holiday-result, .horoscope-result, .zodiac-result, .lifespan-result {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .wuge-card {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+        
+        .wuge-item {
+            padding: 12px;
+            background-color: var(--light-bg);
+            border-radius: var(--radius);
+        }
+        
+        .wuge-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        
+        .wuge-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .result-section {
+            margin-bottom: 15px;
+        }
+        
+        .result-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .result-content {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-good {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .badge-bad {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        /* 年龄计算样式 */
+        .age-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .age-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 15px;
+            background-color: var(--light-bg);
+            border-radius: var(--radius);
+        }
+        
+        .age-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+        
+        .age-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .highlight {
+            background-color: rgba(255, 126, 95, 0.1);
+            border-left: 3px solid var(--accent-color);
+        }
+        
+        /* 寿命计算样式 */
+        .lifespan-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .lifespan-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 15px;
+            background-color: var(--light-bg);
+            border-radius: var(--radius);
+        }
+        
+        .lifespan-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+        
+        .lifespan-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background-color: var(--accent-color);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        /* 节假日倒计时样式 */
+        .holiday-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+        
+        .filter-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .holiday-card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .holiday-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            padding: 20px;
+            position: relative;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .holiday-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-right: 15px;
+        }
+        
+        .days-count {
+            background: var(--primary-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        
+        .today .days-count {
+            background: var(--danger);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+        
+        .soon .days-count {
+            background: var(--warning);
+        }
+        
+        .card-body {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .date-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .date-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .icon {
+            color: var(--primary-color);
+            width: 20px;
+            text-align: center;
+        }
+        
+        .date-text {
+            color: var(--text-secondary);
+        }
+        
+        .today-badge {
+            display: inline-block;
+            background-color: var(--danger);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .current-date {
+            margin-top: 15px;
+            font-weight: 600;
+            color: var(--primary-color);
+            background: rgba(255, 255, 255, 0.7);
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 50px;
+        }
+        
+        /* 星座运势和生肖运势样式 */
+        .luck-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .luck-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 15px;
+            background-color: var(--light-bg);
+            border-radius: var(--radius);
+        }
+        
+        .luck-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        
+        .luck-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .luck-score {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin: 8px 0;
+        }
+        
+        .luck-percentage {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin: 8px 0;
+        }
+        
+        .zodiac-direction {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .direction-item {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            background-color: var(--light-bg);
+            border-radius: var(--radius);
+            text-align: center;
+        }
+        
+        /* 黄历和农历查询区域样式 */
+        .almanac-lunar-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .calendar-content, .name-result, .age-result, .holiday-result, .horoscope-result, .zodiac-result, .lifespan-result, .lunar-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .basic-info, .lunar-info {
+                grid-column: 1;
+                grid-template-columns: 1fr;
+            }
+            
+            .almanac-lunar-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            .tabs-container {
+                overflow-x: auto;
+            }
+            
+            .tabs {
+                width: max-content;
+            }
+            
+            .wuge-card {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .age-info {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .lifespan-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .holiday-controls {
+                flex-direction: column;
+            }
+            
+            .luck-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .date-selector, .name-form, .age-form, .horoscope-form, .zodiac-form, .lifespan-form {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .date-selector input, .date-selector button {
+                width: 100%;
+            }
+            
+            .wuge-card, .age-info, .luck-grid, .lifespan-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>黄历日历与运势查询</h1>
+            <p class="subtitle">查询每日宜忌，了解姓名运势，计算年龄信息，追踪节假日倒计时，查看星座生肖运势</p>
+        </header>
+        
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab active" data-tab="almanac">黄历查询</button>
+                <button class="tab" data-tab="name">姓名配对</button>
+                <button class="tab" data-tab="age">年龄计算</button>
+                <button class="tab" data-tab="lifespan">寿命计算</button>
+                <button class="tab" data-tab="horoscope">星座运势</button>
+                <button class="tab" data-tab="zodiac">生肖运势</button>
+                <button class="tab" data-tab="holiday">节日倒计时</button>
+            </div>
+        </div>
+        
+        <!-- 黄历查询内容 -->
+        <div id="almanac" class="tab-content active">
+            <div class="date-selector">
+                <input type="date" id="dateInput">
+                <button id="todayBtn">今日</button>
+                <button id="prevDayBtn">前一天</button>
+                <button id="nextDayBtn">后一天</button>
+            </div>
+            
+            <div class="almanac-lunar-container">
+                <!-- 左侧：黄历查询 -->
+                <div>
+                    <h2 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">黄历查询</h2>
+                    <div id="calendarContent" class="calendar-content">
+                        <div class="loading">加载中...</div>
+                    </div>
+                </div>
+                
+                <!-- 右侧：农历查询 -->
+                <div>
+                    <h2 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">农历查询</h2>
+                    <div id="lunarContent" class="lunar-content">
+                        <div class="loading">加载中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 姓名配对内容 -->
+        <div id="name" class="tab-content">
+            <form id="nameForm" class="name-form">
+                <div class="form-group">
+                    <label class="form-label">姓氏</label>
+                    <input type="text" class="form-input" id="surname" placeholder="请输入姓氏" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">姓氏笔画</label>
+                    <input type="number" class="form-input" id="surnameStrokes" placeholder="请输入姓氏笔画" required min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">名字</label>
+                    <input type="text" class="form-input" id="givenName" placeholder="请输入名字" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">名字笔画</label>
+                    <input type="number" class="form-input" id="givenNameStrokes" placeholder="请输入名字笔画" required min="1">
+                </div>
+                <button type="submit" class="submit-btn">查询姓名运势</button>
+            </form>
+            
+            <div id="nameResult" class="name-result">
+                <!-- 默认提示已移除 -->
+            </div>
+        </div>
+        
+        <!-- 年龄计算内容 -->
+        <div id="age" class="tab-content">
+            <form id="ageForm" class="age-form">
+                <div class="form-group">
+                    <label class="form-label">出生日期</label>
+                    <input type="date" class="form-input" id="birthDate" required>
+                </div>
+                <button type="submit" class="submit-btn">计算年龄信息</button>
+            </form>
+            
+            <div id="ageResult" class="age-result">
+                <!-- 默认提示已移除 -->
+            </div>
+        </div>
+        
+        <!-- 寿命计算内容 -->
+        <div id="lifespan" class="tab-content">
+            <form id="lifespanForm" class="lifespan-form">
+                <div class="form-group">
+                    <label class="form-label">出生日期</label>
+                    <input type="date" class="form-input" id="lifespanBirthDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">预期寿命(年)</label>
+                    <input type="number" class="form-input" id="expectedLifespan" value="80" min="1" max="120">
+                </div>
+                <button type="submit" class="submit-btn">计算寿命信息</button>
+            </form>
+            
+            <div id="lifespanResult" class="lifespan-result">
+                <!-- 默认提示已移除 -->
+            </div>
+        </div>
+        
+        <!-- 星座运势内容 -->
+        <div id="horoscope" class="tab-content">
+            <form id="horoscopeForm" class="horoscope-form">
+                <div class="form-group">
+                    <label class="form-label">选择星座</label>
+                    <select class="form-select" id="horoscopeSelect" required>
+                        <option value="">请选择星座</option>
+                        <option value="白羊座">白羊座</option>
+                        <option value="金牛座">金牛座</option>
+                        <option value="双子座">双子座</option>
+                        <option value="巨蟹座">巨蟹座</option>
+                        <option value="狮子座">狮子座</option>
+                        <option value="处女座">处女座</option>
+                        <option value="天秤座">天秤座</option>
+                        <option value="天蝎座">天蝎座</option>
+                        <option value="射手座">射手座</option>
+                        <option value="摩羯座">摩羯座</option>
+                        <option value="水瓶座">水瓶座</option>
+                        <option value="双鱼座">双鱼座</option>
+                    </select>
+                </div>
+                <button type="submit" class="submit-btn">查询星座运势</button>
+            </form>
+            
+            <div id="horoscopeResult" class="horoscope-result">
+                <!-- 默认提示已移除 -->
+            </div>
+        </div>
+        
+        <!-- 生肖运势内容 -->
+        <div id="zodiac" class="tab-content">
+            <form id="zodiacForm" class="zodiac-form">
+                <div class="form-group">
+                    <label class="form-label">选择生肖</label>
+                    <select class="form-select" id="zodiacSelect" required>
+                        <option value="">请选择生肖</option>
+                        <option value="鼠">鼠</option>
+                        <option value="牛">牛</option>
+                        <option value="虎">虎</option>
+                        <option value="兔">兔</option>
+                        <option value="龙">龙</option>
+                        <option value="蛇">蛇</option>
+                        <option value="马">马</option>
+                        <option value="羊">羊</option>
+                        <option value="猴">猴</option>
+                        <option value="鸡">鸡</option>
+                        <option value="狗">狗</option>
+                        <option value="猪">猪</option>
+                    </select>
+                </div>
+                <button type="submit" class="submit-btn">查询生肖运势</button>
+            </form>
+            
+            <div id="zodiacResult" class="zodiac-result">
+                <!-- 默认提示已移除 -->
+            </div>
+        </div>
+        
+        <!-- 节假日倒计时内容 -->
+        <div id="holiday" class="tab-content">
+            <div class="date-selector">
+                <div class="current-date" id="currentDate"></div>
+            </div>
+            
+            <div class="holiday-controls">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="搜索节日名称...">
+                </div>
+                <div class="filter-options">
+                    <select id="daysFilter">
+                        <option value="all">全部节日</option>
+                        <option value="today">今天</option>
+                        <option value="week">一周内</option>
+                        <option value="month">一月内</option>
+                    </select>
+                    <button id="refreshBtn" class="submit-btn">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>刷新</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="holidayContainer" class="holiday-result">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // 黄历相关元素
+        const dateInput = document.getElementById('dateInput');
+        const todayBtn = document.getElementById('todayBtn');
+        const prevDayBtn = document.getElementById('prevDayBtn');
+        const nextDayBtn = document.getElementById('nextDayBtn');
+        const calendarContent = document.getElementById('calendarContent');
+        
+        // 农历相关元素
+        const lunarContent = document.getElementById('lunarContent');
+        
+        // 姓名配对相关元素
+        const nameForm = document.getElementById('nameForm');
+        const nameResult = document.getElementById('nameResult');
+        
+        // 年龄计算相关元素
+        const ageForm = document.getElementById('ageForm');
+        const ageResult = document.getElementById('ageResult');
+        
+        // 寿命计算相关元素
+        const lifespanForm = document.getElementById('lifespanForm');
+        const lifespanResult = document.getElementById('lifespanResult');
+        
+        // 星座运势相关元素
+        const horoscopeForm = document.getElementById('horoscopeForm');
+        const horoscopeResult = document.getElementById('horoscopeResult');
+        
+        // 生肖运势相关元素
+        const zodiacForm = document.getElementById('zodiacForm');
+        const zodiacResult = document.getElementById('zodiacResult');
+        
+        // 节假日倒计时相关元素
+        const currentDateEl = document.getElementById('currentDate');
+        const searchInput = document.getElementById('searchInput');
+        const daysFilter = document.getElementById('daysFilter');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const holidayContainer = document.getElementById('holidayContainer');
+        
+        // 当前选中的日期
+        let currentDate = new Date();
+        
+        // 节假日数据
+        let holidaysData = [];
+        
+        // 选项卡切换
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                // 更新活动选项卡
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // 更新活动内容
+                tabContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+                
+                // 如果是节假日选项卡，刷新数据
+                if (tabId === 'holiday') {
+                    fetchHolidays();
+                }
+            });
+        });
+        
+        // 初始化日期选择器
+        function initDateSelector() {
+            // 设置日期输入框的值为今天
+            dateInput.value = formatDate(currentDate);
+            
+            // 添加事件监听器
+            dateInput.addEventListener('change', handleDateChange);
+            todayBtn.addEventListener('click', showToday);
+            prevDayBtn.addEventListener('click', showPrevDay);
+            nextDayBtn.addEventListener('click', showNextDay);
+        }
+        
+        // 格式化日期为YYYY-MM-DD
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // 处理日期变化
+        function handleDateChange() {
+            currentDate = new Date(dateInput.value);
+            fetchAlmanacData();
+            fetchLunarData();
+        }
+        
+        // 显示今天
+        function showToday() {
+            currentDate = new Date();
+            dateInput.value = formatDate(currentDate);
+            fetchAlmanacData();
+            fetchLunarData();
+        }
+        
+        // 显示前一天
+        function showPrevDay() {
+            currentDate.setDate(currentDate.getDate() - 1);
+            dateInput.value = formatDate(currentDate);
+            fetchAlmanacData();
+            fetchLunarData();
+        }
+        
+        // 显示后一天
+        function showNextDay() {
+            currentDate.setDate(currentDate.getDate() + 1);
+            dateInput.value = formatDate(currentDate);
+            fetchAlmanacData();
+            fetchLunarData();
+        }
+        
+        // 获取黄历数据
+        async function fetchAlmanacData() {
+            calendarContent.innerHTML = '<div class="loading">加载中...</div>';
+            
+            try {
+                // 构建API URL
+                const dateStr = formatDate(currentDate).replace(/-/g, '');
+                const apiUrl = `https://api.qhsou.com/api/lhl.php?date=${dateStr}`;
+                
+                // 发送请求
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                // 渲染数据
+                renderAlmanacData(data);
+            } catch (error) {
+                console.error('获取黄历数据失败:', error);
+                calendarContent.innerHTML = '<div class="loading">获取数据失败，请稍后重试</div>';
+            }
+        }
+        
+        // 获取农历数据
+        async function fetchLunarData() {
+            lunarContent.innerHTML = '<div class="loading">加载中...</div>';
+            
+            try {
+                // 构建API URL
+                const dateStr = formatDate(currentDate);
+                const apiUrl = `https://api.suol.cc/v1/nongli.php?date=${dateStr}`;
+                
+                // 发送请求
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                // 渲染数据
+                renderLunarData(data);
+            } catch (error) {
+                console.error('获取农历数据失败:', error);
+                lunarContent.innerHTML = '<div class="loading">获取数据失败，请稍后重试</div>';
+            }
+        }
+        
+        // 渲染黄历数据
+        function renderAlmanacData(data) {
+            let html = '';
+            
+            // 基本信息卡片
+            html += `
+                <div class="card basic-info">
+                    <div class="basic-info-item">
+                        <div class="basic-info-label">公历</div>
+                        <div class="basic-info-value">${data.公历 || '--'}</div>
+                    </div>
+                    <div class="basic-info-item">
+                        <div class="basic-info-label">农历</div>
+                        <div class="basic-info-value">${data.农历 || '--'}</div>
+                    </div>
+                    <div class="basic-info-item">
+                        <div class="basic-info-label">佛历</div>
+                        <div class="basic-info-value">${data.佛历 || '--'}</div>
+                    </div>
+                    <div class="basic-info-item">
+                        <div class="basic-info-label">道历</div>
+                        <div class="basic-info-value">${data.道历 || '--'}</div>
+                    </div>
+                    <div class="basic-info-item">
+                        <div class="basic-info-label">年</div>
+                        <div class="basic-info-value">${data.年 || '--'}</div>
+                    </div>
+                    <div class="basic-info-item">
+                        <div class="basic-info-label">月</div>
+                        <div class="basic-info-value">${data.月 || '--'}</div>
+                    </div>
+                    <div class="basic-info-item">
+                        <div class="basic-info-label">日</div>
+                        <div class="basic-info-value">${data.日 || '--'}</div>
+                    </div>
+                </div>
+            `;
+            
+            // 宜忌卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">每日宜忌</h2>
+                    <div>
+                        <h3 style="font-size: 14px; margin-bottom: 8px; color: var(--text-primary);">宜</h3>
+                        <div class="yi-ji-list">
+                            ${data.每日宜忌?.宜?.map(item => `<span class="yi-item">${item}</span>`).join('') || '<span style="color: var(--text-secondary); font-size: 13px;">无</span>'}
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <h3 style="font-size: 14px; margin-bottom: 8px; color: var(--text-primary);">忌</h3>
+                        <div class="yi-ji-list">
+                            ${data.每日宜忌?.忌?.map(item => `<span class="ji-item">${item}</span>`).join('') || '<span style="color: var(--text-secondary); font-size: 13px;">无</span>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 吉神凶煞卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">吉神凶煞</h2>
+                    <div>
+                        <h3 style="font-size: 14px; margin-bottom: 8px; color: var(--text-primary);">吉神宜趋</h3>
+                        <div class="yi-ji-list">
+                            ${data.吉神宜趋?.map(item => `<span class="yi-item">${item}</span>`).join('') || '<span style="color: var(--text-secondary); font-size: 13px;">无</span>'}
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <h3 style="font-size: 14px; margin-bottom: 8px; color: var(--text-primary);">凶煞宜忌</h3>
+                        <div class="yi-ji-list">
+                            ${data.凶煞宜忌?.map(item => `<span class="ji-item">${item}</span>`).join('') || '<span style="color: var(--text-secondary); font-size: 13px;">无</span>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 其他信息卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">其他信息</h2>
+                    <div>
+                        <div class="info-row">
+                            <div class="info-label">彭祖百忌</div>
+                            <div class="info-value">${data.彭祖百忌 || '--'}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">相冲</div>
+                            <div class="info-value">${data.相冲 || '--'}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">岁煞</div>
+                            <div class="info-value">${data.岁煞 || '--'}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">星宿</div>
+                            <div class="info-value">${data.星宿 || '--'}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">值星</div>
+                            <div class="info-value">${data.值星 || '--'}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">十二天神</div>
+                            <div class="info-value">${data.十二天神 || '--'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 时辰信息卡片
+            if (data.时辰信息 && data.时辰信息.length > 0) {
+                html += `
+                    <div class="card hour-info">
+                        <h2 class="card-title">时辰吉凶</h2>
+                        <table class="hour-table">
+                            <thead>
+                                <tr>
+                                    <th>时辰</th>
+                                    <th>时刻</th>
+                                    <th>吉凶</th>
+                                    <th>宜</th>
+                                    <th>忌</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.时辰信息.map(hour => `
+                                    <tr>
+                                        <td>${hour.时辰 || '--'}</td>
+                                        <td>${hour.时刻 || '--'}</td>
+                                        <td class="${hour.吉凶 === '吉' ? 'hour-good' : 'hour-bad'}">${hour.吉凶 || '--'}</td>
+                                        <td>${hour.宜?.join('、') || '无'}</td>
+                                        <td>${hour.忌?.join('、') || '无'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            calendarContent.innerHTML = html;
+        }
+        
+        // 渲染农历数据
+        function renderLunarData(data) {
+            if (data.code !== 200) {
+                lunarContent.innerHTML = '<div class="loading">获取数据失败，请稍后重试</div>';
+                return;
+            }
+            
+            let html = '';
+            
+            // 基本信息卡片
+            html += `
+                <div class="card lunar-info">
+                    <div class="lunar-info-item">
+                        <div class="lunar-info-label">公历日期</div>
+                        <div class="lunar-info-value">${data.solar_year}年${data.solar_month}月${data.solar_day}日</div>
+                    </div>
+                    <div class="lunar-info-item">
+                        <div class="lunar-info-label">星期</div>
+                        <div class="lunar-info-value">${data.week_day}</div>
+                    </div>
+                    <div class="lunar-info-item">
+                        <div class="lunar-info-label">农历日期</div>
+                        <div class="lunar-info-value">${data.lunar_year}${data.lunar_month}${data.lunar_day}</div>
+                    </div>
+                    <div class="lunar-info-item">
+                        <div class="lunar-info-label">农历时辰</div>
+                        <div class="lunar-info-value">${data.lunar_time || '--'}</div>
+                    </div>
+                    <div class="lunar-info-item">
+                        <div class="lunar-info-label">星座</div>
+                        <div class="lunar-info-value">${data.constellation || '--'}</div>
+                    </div>
+                    <div class="lunar-info-item">
+                        <div class="lunar-info-label">节气</div>
+                        <div class="lunar-info-value">${data.jie_qi && data.jie_qi !== 'null' ? data.jie_qi : '--'}</div>
+                    </div>
+                </div>
+            `;
+            
+            // 干支纪年卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">干支纪年</h2>
+                    <div class="lunar-info">
+                        <div class="lunar-info-item">
+                            <div class="lunar-info-label">年干支</div>
+                            <div class="lunar-info-value">${data.gan_zhi?.year || '--'}</div>
+                        </div>
+                        <div class="lunar-info-item">
+                            <div class="lunar-info-label">月干支</div>
+                            <div class="lunar-info-value">${data.gan_zhi?.month || '--'}</div>
+                        </div>
+                        <div class="lunar-info-item">
+                            <div class="lunar-info-label">日干支</div>
+                            <div class="lunar-info-value">${data.gan_zhi?.day || '--'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 生肖信息卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">生肖信息</h2>
+                    <div class="lunar-info">
+                        <div class="lunar-info-item">
+                            <div class="lunar-info-label">年</div>
+                            <div class="lunar-info-value">${data.lunar?.year || '--'}</div>
+                        </div>
+                        <div class="lunar-info-item">
+                            <div class="lunar-info-label">月</div>
+                            <div class="lunar-info-value">${data.lunar?.month || '--'}</div>
+                        </div>
+                        <div class="lunar-info-item">
+                            <div class="lunar-info-label">日</div>
+                            <div class="lunar-info-value">${data.lunar?.day || '--'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 节日信息卡片
+            if (data.holiday && data.holiday.name) {
+                html += `
+                    <div class="card">
+                        <h2 class="card-title">节日信息</h2>
+                        <div class="lunar-info">
+                            <div class="lunar-info-item">
+                                <div class="lunar-info-label">节日名称</div>
+                                <div class="lunar-info-value">${data.holiday.name}</div>
+                            </div>
+                            <div class="lunar-info-item">
+                                <div class="lunar-info-label">是否工作日</div>
+                                <div class="lunar-info-value">${data.holiday.is_workday ? '否' : '是'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 黄历信息卡片
+            if (data.almanac) {
+                html += `
+                    <div class="card">
+                        <h2 class="card-title">黄历信息</h2>
+                        <div class="almanac-info">
+                            <div class="almanac-item">
+                                <div class="lunar-info-label">五行</div>
+                                <div class="lunar-info-value">${data.almanac.五行 || '--'}</div>
+                            </div>
+                            <div class="almanac-item">
+                                <div class="lunar-info-label">四象</div>
+                                <div class="lunar-info-value">${data.almanac.四象 || '--'}</div>
+                            </div>
+                            <div class="almanac-item">
+                                <div class="lunar-info-label">星宿</div>
+                                <div class="lunar-info-value">${data.almanac.星宿 || '--'}</div>
+                            </div>
+                            <div class="almanac-item">
+                                <div class="lunar-info-label">彭祖百忌</div>
+                                <div class="lunar-info-value">${data.almanac.彭祖百忌 || '--'}</div>
+                            </div>
+                            <div class="almanac-item">
+                                <div class="lunar-info-label">喜神方位</div>
+                                <div class="lunar-info-value">${data.almanac.喜神方位 || '--'}</div>
+                            </div>
+                            <div class="almanac-item">
+                                <div class="lunar-info-label">财神方位</div>
+                                <div class="lunar-info-value">${data.almanac.财神方位 || '--'}</div>
+                            </div>
+                            <div class="almanac-item">
+                                <div class="lunar-info-label">避讳</div>
+                                <div class="lunar-info-value">${data.almanac.避讳 || '--'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            lunarContent.innerHTML = html;
+        }
+        
+        // 处理姓名配对表单提交
+        nameForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const surname = document.getElementById('surname').value;
+            const surnameStrokes = document.getElementById('surnameStrokes').value;
+            const givenName = document.getElementById('givenName').value;
+            const givenNameStrokes = document.getElementById('givenNameStrokes').value;
+            
+            nameResult.innerHTML = '<div class="loading">查询中...</div>';
+            
+            try {
+                // 构建API URL
+                const apiUrl = `https://api.qhsou.com/api/xmpc.php?xing=${encodeURIComponent(surname)}&ming=${encodeURIComponent(givenName)}&bihua_xing1=${surnameStrokes}&bihua_ming1=${givenNameStrokes}`;
+                
+                // 发送请求
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                // 渲染结果
+                renderNameResult(data);
+            } catch (error) {
+                console.error('获取姓名配对数据失败:', error);
+                nameResult.innerHTML = '<div class="loading">获取数据失败，请稍后重试</div>';
+            }
+        });
+        
+        // 渲染姓名配对结果
+        function renderNameResult(data) {
+            if (data.status !== 1) {
+                nameResult.innerHTML = '<div class="loading">查询失败，请检查输入信息</div>';
+                return;
+            }
+            
+            const result = data.data;
+            let html = '';
+            
+            // 五格卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">姓名五格</h2>
+                    <div class="wuge-card">
+                        <div class="wuge-item">
+                            <div class="wuge-label">天格</div>
+                            <div class="wuge-value">${result.wuge.天格}</div>
+                        </div>
+                        <div class="wuge-item">
+                            <div class="wuge-label">人格</div>
+                            <div class="wuge-value">${result.wuge.人格}</div>
+                        </div>
+                        <div class="wuge-item">
+                            <div class="wuge-label">地格</div>
+                            <div class="wuge-value">${result.wuge.地格}</div>
+                        </div>
+                        <div class="wuge-item">
+                            <div class="wuge-label">总格</div>
+                            <div class="wuge-value">${result.wuge.总格}</div>
+                        </div>
+                        <div class="wuge-item">
+                            <div class="wuge-label">外格</div>
+                            <div class="wuge-value">${result.wuge.外格}</div>
+                        </div>
+                        <div class="wuge-item">
+                            <div class="wuge-label">三才配置</div>
+                            <div class="wuge-value">${result.三才配置}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 吉凶评价卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">姓名吉凶</h2>
+                    <div class="result-section">
+                        <div class="result-title">总体评价 <span class="badge ${result.吉凶 === '凶' ? 'badge-bad' : 'badge-good'}">${result.吉凶}</span></div>
+                        <div class="result-content">${result.核心评价}</div>
+                    </div>
+                    <div class="result-section">
+                        <div class="result-title">性格分析</div>
+                        <div class="result-content">${result.性格}</div>
+                    </div>
+                    <div class="result-section">
+                        <div class="result-title">基础运</div>
+                        <div class="result-content">${result.基础运}</div>
+                    </div>
+                    <div class="result-section">
+                        <div class="result-title">成功运</div>
+                        <div class="result-content">${result.成功运}</div>
+                    </div>
+                    <div class="result-section">
+                        <div class="result-title">人际关系</div>
+                        <div class="result-content">${result.人际关系}</div>
+                    </div>
+                </div>
+            `;
+            
+            // 详细解析卡片
+            if (result.详细解析 && result.详细解析.length > 0) {
+                html += `
+                    <div class="card">
+                        <h2 class="card-title">详细解析</h2>
+                        <div class="result-content">${result.详细解析[0].replace(/<br \/>/g, '<br>')}</div>
+                    </div>
+                `;
+            }
+            
+            // 提示信息
+            html += `
+                <div class="card">
+                    <h2 class="card-title">温馨提示</h2>
+                    <div class="result-content">${result.提示 || '以上分析仅供参考，姓名对人生的影响是多方面的，不宜单独以吉凶判断，需结合各项详情综合评定。'}</div>
+                </div>
+            `;
+            
+            nameResult.innerHTML = html;
+        }
+        
+        // 处理年龄计算表单提交
+        ageForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const birthDate = document.getElementById('birthDate').value;
+            
+            if (!birthDate) {
+                ageResult.innerHTML = '<div class="loading">请输入出生日期</div>';
+                return;
+            }
+            
+            ageResult.innerHTML = '<div class="loading">计算中...</div>';
+            
+            try {
+                // 构建API URL
+                const dateStr = birthDate.replace(/-/g, '');
+                const apiUrl = `https://api.qhsou.com/api/age.php?date=${dateStr}`;
+                
+                // 发送请求
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                // 渲染结果
+                renderAgeResult(data);
+            } catch (error) {
+                console.error('获取年龄数据失败:', error);
+                ageResult.innerHTML = '<div class="loading">获取数据失败，请稍后重试</div>';
+            }
+        });
+        
+        // 渲染年龄计算结果
+        function renderAgeResult(data) {
+            let html = '';
+            
+            // 年龄信息卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">年龄信息</h2>
+                    <div class="age-info">
+                        <div class="age-item highlight">
+                            <div class="age-label">周岁</div>
+                            <div class="age-value">${data.周岁}</div>
+                            <div class="age-label">岁</div>
+                        </div>
+                        <div class="age-item highlight">
+                            <div class="age-label">虚岁</div>
+                            <div class="age-value">${data.虚岁}</div>
+                            <div class="age-label">岁</div>
+                        </div>
+                        <div class="age-item">
+                            <div class="age-label">已生活天数</div>
+                            <div class="age-value">${data.已生活天数}</div>
+                            <div class="age-label">天</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 基本信息卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">基本信息</h2>
+                    <div class="basic-info">
+                        <div class="basic-info-item">
+                            <div class="basic-info-label">公历日期</div>
+                            <div class="basic-info-value">${data.公历日期 || '--'}</div>
+                        </div>
+                        <div class="basic-info-item">
+                            <div class="basic-info-label">农历年份</div>
+                            <div class="basic-info-value">${data.农历年份 || '--'}</div>
+                        </div>
+                        <div class="basic-info-item">
+                            <div class="basic-info-label">农历月份</div>
+                            <div class="basic-info-value">${data.农历月份 || '--'}</div>
+                        </div>
+                        <div class="basic-info-item">
+                            <div class="basic-info-label">农历日期</div>
+                            <div class="basic-info-value">${data.农历日期 || '--'}</div>
+                        </div>
+                        <div class="basic-info-item">
+                            <div class="basic-info-label">干支纪年</div>
+                            <div class="basic-info-value">${data.干支纪年 || '--'}</div>
+                        </div>
+                        <div class="basic-info-item">
+                            <div class="basic-info-label">生肖</div>
+                            <div class="basic-info-value">${data.生肖 || '--'}</div>
+                        </div>
+                        <div class="basic-info-item">
+                            <div class="basic-info-label">星座</div>
+                            <div class="basic-info-value">${data.星座 || '--'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            ageResult.innerHTML = html;
+        }
+        
+        // 处理寿命计算表单提交
+        lifespanForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const birthDate = document.getElementById('lifespanBirthDate').value;
+            const expectedLifespan = document.getElementById('expectedLifespan').value;
+            
+            if (!birthDate) {
+                lifespanResult.innerHTML = '<div class="loading">请输入出生日期</div>';
+                return;
+            }
+            
+            lifespanResult.innerHTML = '<div class="loading">计算中...</div>';
+            
+            try {
+                // 构建API URL
+                const dateStr = birthDate.replace(/-/g, '');
+                const apiUrl = `https://api.qhsou.com/api/lifespan.php?出生日期=${dateStr}&预期寿命=${expectedLifespan}`;
+                
+                // 发送请求
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                // 渲染结果
+                renderLifespanResult(data);
+            } catch (error) {
+                console.error('获取寿命数据失败:', error);
+                lifespanResult.innerHTML = '<div class="loading">获取数据失败，请稍后重试</div>';
+            }
+        });
+        
+        // 渲染寿命计算结果
+        function renderLifespanResult(data) {
+            let html = '';
+            
+            // 进度条卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">生命进度</h2>
+                    <div class="result-section">
+                        <div class="result-title">已度过 <span style="color: var(--accent-color);">${data.已度过百分比}%</span> | 剩余 <span style="color: var(--primary-color);">${data.剩余百分比}%</span></div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: ${data.已度过百分比}%">${data.已度过百分比}%</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 时间统计卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">时间统计</h2>
+                    <div class="lifespan-grid">
+                        <div class="lifespan-item">
+                            <div class="lifespan-label">已存活天数</div>
+                            <div class="lifespan-value">${data.已存活天数}</div>
+                            <div class="lifespan-label">天</div>
+                        </div>
+                        <div class="lifespan-item">
+                            <div class="lifespan-label">已存活周数</div>
+                            <div class="lifespan-value">${data.已存活周数}</div>
+                            <div class="lifespan-label">周</div>
+                        </div>
+                        <div class="lifespan-item">
+                            <div class="lifespan-label">已存活月数</div>
+                            <div class="lifespan-value">${data.已存活月数}</div>
+                            <div class="lifespan-label">月</div>
+                        </div>
+                        <div class="lifespan-item">
+                            <div class="lifespan-label">已存活小时</div>
+                            <div class="lifespan-value">${data.已存活小时数}</div>
+                            <div class="lifespan-label">小时</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 剩余统计卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">剩余统计</h2>
+                    <div class="lifespan-grid">
+                        <div class="lifespan-item">
+                            <div class="lifespan-label">剩余饭次数</div>
+                            <div class="lifespan-value">${data.剩余饭次数}</div>
+                            <div class="lifespan-label">次</div>
+                        </div>
+                        <div class="lifespan-item">
+                            <div class="lifespan-label">剩余周末数</div>
+                            <div class="lifespan-value">${data.剩余周末数}</div>
+                            <div class="lifespan-label">个</div>
+                        </div>
+                        <div class="lifespan-item">
+                            <div class="lifespan-label">剩余夜晚数</div>
+                            <div class="lifespan-value">${data.剩余夜晚数}</div>
+                            <div class="lifespan-label">个</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 提示信息
+            html += `
+                <div class="card">
+                    <h2 class="card-title">温馨提示</h2>
+                    <div class="result-content">${data["数据仅供参考"] || '以上数据仅供参考，请珍惜时间，享受生活。'}</div>
+                </div>
+            `;
+            
+            lifespanResult.innerHTML = html;
+        }
+        
+        // 处理星座运势表单提交
+        horoscopeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const horoscope = document.getElementById('horoscopeSelect').value;
+            
+            if (!horoscope) {
+                horoscopeResult.innerHTML = '<div class="loading">请选择星座</div>';
+                return;
+            }
+            
+            horoscopeResult.innerHTML = '<div class="loading">查询中...</div>';
+            
+            try {
+                // 构建API URL
+                const apiUrl = `https://api.qhsou.com/api/xingzuo.php?msg=${encodeURIComponent(horoscope)}`;
+                
+                // 发送请求
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                // 渲染结果
+                renderHoroscopeResult(data);
+            } catch (error) {
+                console.error('获取星座运势数据失败:', error);
+                horoscopeResult.innerHTML = '<div class="loading">获取数据失败，请稍后重试</div>';
+            }
+        });
+        
+        // 渲染星座运势结果
+        function renderHoroscopeResult(data) {
+            let html = '';
+            
+            // 基本信息卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">${data.星座}今日运势</h2>
+                    <div class="luck-grid">
+                        <div class="luck-item">
+                            <div class="luck-label">贵人方位</div>
+                            <div class="luck-value">${data.贵人方位}</div>
+                        </div>
+                        <div class="luck-item">
+                            <div class="luck-label">贵人星座</div>
+                            <div class="luck-value">${data.贵人星座}</div>
+                        </div>
+                        <div class="luck-item">
+                            <div class="luck-label">幸运数字</div>
+                            <div class="luck-value">${data.幸运数字}</div>
+                        </div>
+                        <div class="luck-item">
+                            <div class="luck-label">幸运颜色</div>
+                            <div class="luck-value">${data.幸运颜色}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 详细运势卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">详细运势</h2>
+                    <div class="result-section">
+                        <div class="result-title">整体运势</div>
+                        <div class="result-content">${data.整体运势}</div>
+                    </div>
+                    <div class="result-section">
+                        <div class="result-title">爱情运势</div>
+                        <div class="result-content">${data.爱情运势}</div>
+                    </div>
+                    <div class="result-section">
+                        <div class="result-title">财富运势</div>
+                        <div class="result-content">${data.财富运势}</div>
+                    </div>
+                    <div class="result-section">
+                        <div class="result-title">事业运势</div>
+                        <div class="result-content">${data.事业运势}</div>
+                    </div>
+                    <div class="result-section">
+                        <div class="result-title">今日提示</div>
+                        <div class="result-content">${data.提示}</div>
+                    </div>
+                </div>
+            `;
+            
+            horoscopeResult.innerHTML = html;
+        }
+        
+        // 处理生肖运势表单提交
+        zodiacForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const zodiac = document.getElementById('zodiacSelect').value;
+            
+            if (!zodiac) {
+                zodiacResult.innerHTML = '<div class="loading">请选择生肖</div>';
+                return;
+            }
+            
+            zodiacResult.innerHTML = '<div class="loading">查询中...</div>';
+            
+            try {
+                // 构建API URL
+                const apiUrl = `https://api.qhsou.com/api/sxys.php?msg=${encodeURIComponent(zodiac)}`;
+                
+                // 发送请求
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                // 渲染结果
+                renderZodiacResult(data);
+            } catch (error) {
+                console.error('获取生肖运势数据失败:', error);
+                zodiacResult.innerHTML = '<div class="loading">获取数据失败，请稍后重试</div>';
+            }
+        });
+        
+        // 渲染生肖运势结果
+        function renderZodiacResult(data) {
+            if (data.状态 !== "成功") {
+                zodiacResult.innerHTML = '<div class="loading">查询失败，请稍后重试</div>';
+                return;
+            }
+            
+            const result = data.数据;
+            let html = '';
+            
+            // 综合运势卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">${result.属相}今日运势</h2>
+                    <div class="result-section">
+                        <div class="result-title">综合运势</div>
+                        <div class="luck-score">${result.综合运势.评分}分</div>
+                        <div class="result-content">${result.综合运势.简要描述}</div>
+                        <div class="result-content" style="margin-top: 10px;">${result.综合运势.详细描述}</div>
+                    </div>
+                </div>
+            `;
+            
+            // 各项运势卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">详细运势</h2>
+                    <div class="luck-grid">
+                        <div class="luck-item">
+                            <div class="luck-label">事业运势</div>
+                            <div class="luck-percentage">${result.事业运势.百分比}</div>
+                            <div class="result-content" style="font-size: 12px; margin-top: 5px;">${result.事业运势.详细描述}</div>
+                        </div>
+                        <div class="luck-item">
+                            <div class="luck-label">爱情运势</div>
+                            <div class="luck-percentage">${result.爱情运势.百分比}</div>
+                            <div class="result-content" style="font-size: 12px; margin-top: 5px;">${result.爱情运势.详细描述}</div>
+                        </div>
+                        <div class="luck-item">
+                            <div class="luck-label">健康运势</div>
+                            <div class="luck-percentage">${result.健康运势.百分比}</div>
+                            <div class="result-content" style="font-size: 12px; margin-top: 5px;">${result.健康运势.详细描述}</div>
+                        </div>
+                        <div class="luck-item">
+                            <div class="luck-label">财运运势</div>
+                            <div class="luck-percentage">${result.财运运势.百分比}</div>
+                            <div class="result-content" style="font-size: 12px; margin-top: 5px;">${result.财运运势.详细描述}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 其他信息卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">其他信息</h2>
+                    <div class="zodiac-direction">
+                        <div class="direction-item">
+                            <div class="luck-label">贵人生肖</div>
+                            <div class="luck-value">${result.其他信息.贵人生肖}</div>
+                        </div>
+                        <div class="direction-item">
+                            <div class="luck-label">幸运颜色</div>
+                            <div class="luck-value">${result.其他信息.幸运颜色}</div>
+                        </div>
+                        <div class="direction-item">
+                            <div class="luck-label">幸运数字</div>
+                            <div class="luck-value">${result.其他信息.幸运数字}</div>
+                        </div>
+                        <div class="direction-item">
+                            <div class="luck-label">桃花方位</div>
+                            <div class="luck-value">${result.其他信息.桃花方位}</div>
+                        </div>
+                        <div class="direction-item">
+                            <div class="luck-label">喜神方位</div>
+                            <div class="luck-value">${result.其他信息.喜神方位}</div>
+                        </div>
+                        <div class="direction-item">
+                            <div class="luck-label">财神方位</div>
+                            <div class="luck-value">${result.其他信息.财神方位}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 宜忌卡片
+            html += `
+                <div class="card">
+                    <h2 class="card-title">今日宜忌</h2>
+                    <div class="yi-ji-list">
+                        <span class="yi-item">宜：${result.宜忌.宜}</span>
+                        <span class="ji-item">忌：${result.宜忌.忌}</span>
+                    </div>
+                </div>
+            `;
+            
+            zodiacResult.innerHTML = html;
+        }
+        
+        // 节假日倒计时功能
+        
+        // 更新当前日期显示
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                weekday: 'long' 
+            };
+            currentDateEl.textContent = now.toLocaleDateString('zh-CN', options);
+        }
+        
+        // 获取节假日数据
+        async function fetchHolidays() {
+            try {
+                holidayContainer.innerHTML = `
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <div>正在加载节假日数据...</div>
+                    </div>
+                `;
+                
+                // 调用API获取数据
+                const response = await fetch('https://api.qhsou.com/api/dsr.php');
+                if (!response.ok) {
+                    throw new Error('网络响应不正常');
+                }
+                
+                const data = await response.json();
+                
+                if (data && data.节日信息) {
+                    holidaysData = data.节日信息;
+                    renderHolidays(holidaysData);
+                } else {
+                    throw new Error('数据格式不正确');
+                }
+            } catch (error) {
+                console.error('获取节假日数据失败:', error);
+                holidayContainer.innerHTML = `
+                    <div class="loading">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>获取节假日数据失败，请稍后重试</div>
+                    </div>
+                `;
+            }
+        }
+        
+        // 渲染节假日卡片
+        function renderHolidays(holidays) {
+            if (!holidays || holidays.length === 0) {
+                holidayContainer.innerHTML = `
+                    <div class="loading">
+                        <i class="far fa-calendar-times"></i>
+                        <div>没有找到符合条件的节日</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            holidayContainer.innerHTML = '';
+            
+            holidays.forEach((holiday, index) => {
+                // 确定卡片样式类
+                let cardClass = '';
+                if (holiday.days_until === 0) {
+                    cardClass = 'today';
+                } else if (holiday.days_until <= 7) {
+                    cardClass = 'soon';
+                }
+                
+                // 创建卡片元素
+                const card = document.createElement('div');
+                card.className = `holiday-card ${cardClass}`;
+                card.style.animationDelay = `${index * 0.05}s`;
+                
+                card.innerHTML = `
+                    <div class="card-header">
+                        <h3 class="holiday-name">${holiday.name}</h3>
+                        <div class="days-count">
+                            ${holiday.days_until === 0 ? '今天' : `${holiday.days_until}天`}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="date-info">
+                            <div class="date-item">
+                                <span class="icon"><i class="far fa-calendar"></i></span>
+                                <span class="date-text">${holiday.gregorian}</span>
+                            </div>
+                            <div class="date-item">
+                                <span class="icon"><i class="far fa-moon"></i></span>
+                                <span class="date-text">${holiday.lunar}</span>
+                            </div>
+                            <div class="date-item">
+                                <span class="icon"><i class="far fa-clock"></i></span>
+                                <span class="date-text">${holiday.weekday}</span>
+                                ${holiday.days_until === 0 ? '<span class="today-badge">今天</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                holidayContainer.appendChild(card);
+            });
+        }
+        
+        // 过滤和搜索节假日
+        function filterHolidays() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filterValue = daysFilter.value;
+            
+            let filteredHolidays = holidaysData;
+            
+            // 应用搜索过滤
+            if (searchTerm) {
+                filteredHolidays = filteredHolidays.filter(holiday => 
+                    holiday.name.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // 应用时间过滤
+            if (filterValue !== 'all') {
+                filteredHolidays = filteredHolidays.filter(holiday => {
+                    if (filterValue === 'today') {
+                        return holiday.days_until === 0;
+                    } else if (filterValue === 'week') {
+                        return holiday.days_until <= 7;
+                    } else if (filterValue === 'month') {
+                        return holiday.days_until <= 30;
+                    }
+                    return true;
+                });
+            }
+            
+            renderHolidays(filteredHolidays);
+        }
+        
+        // 初始化应用
+        function initApp() {
+            initDateSelector();
+            fetchAlmanacData();
+            fetchLunarData();
+            
+            // 设置年龄计算表单的默认值为25年前
+            const defaultBirthDate = new Date();
+            defaultBirthDate.setFullYear(defaultBirthDate.getFullYear() - 25);
+            document.getElementById('birthDate').value = formatDate(defaultBirthDate);
+            
+            // 设置寿命计算表单的默认值为25年前
+            document.getElementById('lifespanBirthDate').value = formatDate(defaultBirthDate);
+            
+            // 节假日倒计时初始化
+            updateCurrentDate();
+            
+            // 节假日倒计时事件监听
+            searchInput.addEventListener('input', filterHolidays);
+            daysFilter.addEventListener('change', filterHolidays);
+            refreshBtn.addEventListener('click', fetchHolidays);
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
