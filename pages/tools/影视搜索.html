@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影视搜索</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #eef2ff;
+            --secondary: #64748b;
+            --accent: #f43f5e;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #334155;
+            --text-light: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 6px 15px rgba(0, 0, 0, 0.12);
+            --transition: all 0.2s ease;
+            --radius: 10px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: #f5f7fa;
+            color: var(--text);
+            line-height: 1.5;
+            font-size: 14px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 12px;
+            flex: 1;
+            width: 100%;
+        }
+        
+        header {
+            padding: 16px 0;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .logo i {
+            font-size: 22px;
+            color: var(--primary);
+        }
+        
+        .logo h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        .tagline {
+            color: var(--text-light);
+            font-size: 12px;
+            margin-bottom: 16px;
+        }
+        
+        main {
+            padding: 16px 0;
+            width: 100%;
+        }
+        
+        .tabs-container {
+            margin-bottom: 16px;
+            position: relative;
+            width: 100%;
+        }
+        
+        .tabs-scroll {
+            display: flex;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            background: white;
+            border-radius: var(--radius);
+            padding: 4px;
+            box-shadow: var(--shadow);
+            width: 100%;
+        }
+        
+        .tabs-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .tab {
+            background: transparent;
+            border: none;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            margin-right: 4px;
+            color: var(--text-light);
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .vertical-list {
+            max-height: calc(100vh - 180px);
+            overflow-y: auto;
+            width: 100%;
+        }
+        
+        .vertical-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .vertical-list::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 10px;
+        }
+        
+        .vertical-list::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        
+        .douban-item {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .douban-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .douban-poster {
+            width: 70px;
+            height: 95px;
+            object-fit: cover;
+        }
+        
+        .douban-info {
+            padding: 12px;
+            flex: 1;
+        }
+        
+        .douban-rank {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-bottom: 6px;
+            font-size: 11px;
+        }
+        
+        .douban-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .douban-rating {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            color: #f59e0b;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .douban-quote {
+            color: var(--text-light);
+            font-style: italic;
+            font-size: 11px;
+            margin-top: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .boxoffice-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: var(--radius);
+            padding: 12px;
+            transition: var(--transition);
+            cursor: pointer;
+            margin-bottom: 10px;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .boxoffice-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .boxoffice-rank {
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 700;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .boxoffice-info {
+            flex: 1;
+        }
+        
+        .boxoffice-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 3px;
+        }
+        
+        .boxoffice-meta {
+            display: flex;
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        
+        .boxoffice-year {
+            margin-right: 10px;
+        }
+        
+        .boxoffice-value {
+            font-weight: 700;
+            color: var(--accent);
+            margin-left: auto;
+        }
+        
+        .anime-item {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+            margin-bottom: 12px;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .anime-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .anime-header {
+            display: flex;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .anime-poster {
+            width: 70px;
+            height: 95px;
+            object-fit: cover;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        
+        .anime-title-section {
+            flex: 1;
+            margin-left: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        
+        .anime-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+        
+        .anime-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+        
+        .meta-item {
+            background: var(--primary-light);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-weight: 500;
+        }
+        
+        .anime-details {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .anime-description {
+            color: var(--text);
+            line-height: 1.4;
+            font-size: 12px;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .director-list, .actor-list {
+            color: var(--text);
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+        
+        .play-section {
+            padding: 12px;
+        }
+        
+        .episodes-container {
+            margin-bottom: 10px;
+        }
+        
+        .episodes-title {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--dark);
+        }
+        
+        .episodes-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        
+        .episode-btn {
+            background: var(--light);
+            border: 1px solid var(--border);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 11px;
+        }
+        
+        .episode-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+        }
+        
+        .play-btn:hover {
+            background: #e11d48;
+            transform: translateY(-1px);
+        }
+        
+        .fullscreen-player {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .fullscreen-player.active {
+            display: flex;
+        }
+        
+        .player-header {
+            height: 50px;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            color: white;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .player-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .player-control-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        
+        .player-control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        #fullscreen-video {
+            flex: 1;
+            width: 100%;
+            object-fit: contain;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 30px 16px;
+            color: var(--text-light);
+        }
+        
+        .no-results i {
+            font-size: 36px;
+            margin-bottom: 12px;
+            color: #cbd5e1;
+        }
+        
+        .no-results h3 {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+        
+        .no-results p {
+            font-size: 12px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px 16px;
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(67, 97, 238, 0.2);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .search-box {
+            display: flex;
+            width: 100%;
+            margin-bottom: 16px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-right: none;
+            font-size: 14px;
+            transition: var(--transition);
+            background: white;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .search-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .search-btn:hover {
+            background: #3a56d4;
+        }
+        
+        .search-hint {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            padding: 0 4px;
+        }
+        
+        .footer-note {
+            text-align: center;
+            padding: 12px 0;
+            margin-top: 16px;
+            color: var(--text-light);
+            font-size: 11px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .movie-card {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 12px;
+            transition: var(--transition);
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .movie-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .movie-header {
+            display: flex;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .movie-poster {
+            width: 70px;
+            height: 95px;
+            object-fit: cover;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        
+        .movie-title-section {
+            flex: 1;
+            margin-left: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        
+        .movie-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+        
+        .movie-subtitle {
+            color: var(--text-light);
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .movie-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .movie-details {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .movie-description {
+            color: var(--text);
+            line-height: 1.4;
+            font-size: 12px;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .play-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        
+        .short-drama-item {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .short-drama-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .short-drama-icon {
+            width: 70px;
+            height: 95px;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .short-drama-info {
+            padding: 12px;
+            flex: 1;
+        }
+        
+        .short-drama-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .short-drama-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        
+        .short-drama-episodes {
+            background: var(--accent);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .short-drama-time {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        
+        .short-drama-link {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        .new-short-drama-item {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .new-short-drama-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .new-short-drama-icon {
+            width: 70px;
+            height: 95px;
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .new-short-drama-info {
+            padding: 12px;
+            flex: 1;
+        }
+        
+        .new-short-drama-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .new-short-drama-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        
+        .new-short-drama-time {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        
+        .new-short-drama-link {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #8b5cf6;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 30px 16px;
+            color: var(--text-light);
+        }
+        
+        .no-results i {
+            font-size: 36px;
+            margin-bottom: 12px;
+            color: #cbd5e1;
+        }
+        
+        .no-results h3 {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+        
+        .no-results p {
+            font-size: 12px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px 16px;
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(67, 97, 238, 0.2);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .search-box {
+            display: flex;
+            width: 100%;
+            margin-bottom: 16px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-right: none;
+            font-size: 14px;
+            transition: var(--transition);
+            background: white;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .search-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .search-btn:hover {
+            background: #3a56d4;
+        }
+        
+        .search-hint {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            padding: 0 4px;
+        }
+        
+        .footer-note {
+            text-align: center;
+            padding: 12px 0;
+            margin-top: 16px;
+            color: var(--text-light);
+            font-size: 11px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .movie-card {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 12px;
+            transition: var(--transition);
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .movie-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .movie-header {
+            display: flex;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .movie-poster {
+            width: 70px;
+            height: 95px;
+            object-fit: cover;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        
+        .movie-title-section {
+            flex: 1;
+            margin-left: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        
+        .movie-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+        
+        .movie-subtitle {
+            color: var(--text-light);
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .movie-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .movie-details {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .movie-description {
+            color: var(--text);
+            line-height: 1.4;
+            font-size: 12px;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .play-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        
+        .short-drama-item {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .short-drama-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .short-drama-icon {
+            width: 70px;
+            height: 95px;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .short-drama-info {
+            padding: 12px;
+            flex: 1;
+        }
+        
+        .short-drama-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .short-drama-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        
+        .short-drama-episodes {
+            background: var(--accent);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .short-drama-time {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        
+        .short-drama-link {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        .new-short-drama-item {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .new-short-drama-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .new-short-drama-icon {
+            width: 70px;
+            height: 95px;
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .new-short-drama-info {
+            padding: 12px;
+            flex: 1;
+        }
+        
+        .new-short-drama-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .new-short-drama-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        
+        .new-short-drama-time {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        
+        .new-short-drama-link {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #8b5cf6;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 30px 16px;
+            color: var(--text-light);
+        }
+        
+        .no-results i {
+            font-size: 36px;
+            margin-bottom: 12px;
+            color: #cbd5e1;
+        }
+        
+        .no-results h3 {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+        
+        .no-results p {
+            font-size: 12px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px 16px;
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(67, 97, 238, 0.2);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .debug-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: var(--radius);
+            padding: 10px;
+            margin-bottom: 12px;
+            font-size: 11px;
+            color: #856404;
+            display: none;
+        }
+        
+        .debug-info.show {
+            display: block;
+        }
+        
+        /* 新增：影视搜索2结果列表样式 */
+        .movie2-item {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .movie2-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .movie2-icon {
+            width: 70px;
+            height: 95px;
+            background: linear-gradient(135deg, #4361ee, #3a56d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .movie2-info {
+            padding: 12px;
+            flex: 1;
+        }
+        
+        .movie2-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .movie2-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        
+        .movie2-id {
+            background: var(--primary);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .movie2-link {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        @media (max-width: 767px) {
+            .container {
+                padding: 0 10px;
+            }
+            
+            header {
+                padding: 12px 0;
+                margin-bottom: 12px;
+            }
+            
+            .logo h1 {
+                font-size: 16px;
+            }
+            
+            .tagline {
+                font-size: 11px;
+            }
+            
+            .tab {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            
+            .search-input {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            
+            .search-btn {
+                padding: 0 14px;
+                font-size: 13px;
+            }
+            
+            .douban-poster, .movie-poster, .anime-poster, .short-drama-icon, .new-short-drama-icon, .movie2-icon {
+                width: 60px;
+                height: 80px;
+            }
+            
+            .douban-info, .movie-header, .movie-details, .play-section, .anime-header, .anime-details, .short-drama-info, .new-short-drama-info, .movie2-info {
+                padding: 10px;
+            }
+            
+            .movie-title, .anime-title, .short-drama-name, .new-short-drama-name, .movie2-name {
+                font-size: 14px;
+            }
+            
+            .meta-item {
+                font-size: 10px;
+                padding: 2px 6px;
+            }
+            
+            .movie-description, .director-list, .actor-list, .anime-description {
+                font-size: 11px;
+            }
+            
+            .episode-btn, .play-btn {
+                font-size: 10px;
+                padding: 4px 8px;
+            }
+            
+            .vertical-list {
+                max-height: calc(100vh - 160px);
+            }
+            
+            .player-header {
+                height: 40px;
+                padding: 0 12px;
+                font-size: 14px;
+            }
+            
+            .player-control-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 14px;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 1000px;
+            }
+            
+            .douban-item, .anime-item, .short-drama-item, .new-short-drama-item, .movie2-item {
+                flex-direction: row;
+            }
+            
+            .douban-poster, .movie-poster, .anime-poster, .short-drama-icon, .new-short-drama-icon, .movie2-icon {
+                width: 90px;
+                height: 120px;
+            }
+            
+            .tabs-scroll {
+                justify-content: center;
+            }
+            
+            .tab {
+                flex: none;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-film"></i>
+            <h1>影视搜索</h1>
+        </div>
+        <p class="tagline">发现精彩影视内容，尽在掌握</p>
+    </header>
+
+    <main class="container">
+        <!-- 选项卡 -->
+        <div class="tabs-container">
+            <div class="tabs-scroll">
+                <div class="tab active" data-tab="douban">豆瓣TOP榜</div>
+                <div class="tab" data-tab="boxoffice">全球票房榜</div>
+                <div class="tab" data-tab="anime-search">番剧搜索</div>
+                <div class="tab" data-tab="movie-search">影视搜索</div>
+                <div class="tab" data-tab="movie-search2">影视搜索2</div>
+                <div class="tab" data-tab="short-drama">短剧搜索</div>
+                <div class="tab" data-tab="new-short-drama">短剧资源</div>
+            </div>
+        </div>
+        
+        <!-- 豆瓣排行榜 -->
+        <div id="douban" class="tab-content active">
+            <div id="douban-container" class="vertical-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在加载豆瓣排行榜...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 票房排行榜 -->
+        <div id="boxoffice" class="tab-content">
+            <div id="boxoffice-container" class="vertical-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在加载票房排行榜...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 番剧搜索 -->
+        <div id="anime-search" class="tab-content">
+            <div class="search-box">
+                <input type="text" class="search-input" id="anime-search-input" placeholder="搜索番剧名称...">
+                <button class="search-btn" id="anime-search-btn">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+            <div id="anime-search-results" class="vertical-list">
+                <div class="no-results">
+                    <i class="fas fa-tv"></i>
+                    <h3>番剧搜索</h3>
+                    <p>输入番剧名称并点击搜索按钮</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 影视搜索 -->
+        <div id="movie-search" class="tab-content">
+            <div class="search-box">
+                <input type="text" class="search-input" id="movie-search-input" placeholder="搜索电影、电视剧、动漫...">
+                <button class="search-btn" id="movie-search-btn">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+            <div id="movie-search-results" class="vertical-list">
+                <div class="no-results">
+                    <i class="fas fa-film"></i>
+                    <h3>搜索影视内容</h3>
+                    <p>输入关键词并点击搜索按钮</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 影视搜索2 - 修改版 -->
+        <div id="movie-search2" class="tab-content">
+            <div class="search-hint">请输入影片名称，系统将自动搜索匹配的影片和ID</div>
+            <div class="search-box">
+                <input type="text" class="search-input" id="movie-search2-input" placeholder="输入影片名称...">
+                <button class="search-btn" id="movie-search2-btn">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+            <div id="movie-search2-list" class="vertical-list" style="display: none;">
+                <div class="no-results">
+                    <i class="fas fa-video"></i>
+                    <h3>影片列表</h3>
+                    <p>搜索后将显示匹配的影片列表</p>
+                </div>
+            </div>
+            <div id="movie-search2-results" class="vertical-list" style="display: none;">
+                <div class="no-results">
+                    <i class="fas fa-video"></i>
+                    <h3>影视详情</h3>
+                    <p>点击影片列表中的卡片查看详情</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 短剧搜索 -->
+        <div id="short-drama" class="tab-content">
+            <div class="search-box">
+                <input type="text" class="search-input" id="short-drama-input" placeholder="搜索短剧名称...">
+                <button class="search-btn" id="short-drama-btn">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+            <div id="short-drama-results" class="vertical-list">
+                <div class="no-results">
+                    <i class="fas fa-video"></i>
+                    <h3>短剧搜索</h3>
+                    <p>输入短剧名称并点击搜索按钮</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 新短剧资源 -->
+        <div id="new-short-drama" class="tab-content">
+            <div class="search-box">
+                <input type="text" class="search-input" id="new-short-drama-input" placeholder="搜索短剧名称...">
+                <button class="search-btn" id="new-short-drama-btn">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+            <div id="new-short-drama-results" class="vertical-list">
+                <div class="no-results">
+                    <i class="fas fa-video"></i>
+                    <h3>短剧资源</h3>
+                    <p>输入短剧名称并点击搜索按钮</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 全屏视频播放器 -->
+        <div class="fullscreen-player" id="fullscreen-player">
+            <div class="player-header">
+                <span class="player-title">视频播放器</span>
+                <div class="player-controls">
+                    <button class="player-control-btn" id="player-close-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <video id="fullscreen-video" controls>
+                您的浏览器不支持视频播放
+            </video>
+        </div>
+        
+        <!-- 底部提示文字 -->
+        <div class="footer-note">
+            当前搜索工具支持多种影视内容搜索和播放
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取所有需要的DOM元素
+            const animeSearchInput = document.getElementById('anime-search-input');
+            const animeSearchBtn = document.getElementById('anime-search-btn');
+            const movieSearchInput = document.getElementById('movie-search-input');
+            const movieSearchBtn = document.getElementById('movie-search-btn');
+            const movieSearch2Input = document.getElementById('movie-search2-input');
+            const movieSearch2Btn = document.getElementById('movie-search2-btn');
+            const shortDramaInput = document.getElementById('short-drama-input');
+            const shortDramaBtn = document.getElementById('short-drama-btn');
+            const newShortDramaInput = document.getElementById('new-short-drama-input');
+            const newShortDramaBtn = document.getElementById('new-short-drama-btn');
+            
+            const doubanContainer = document.getElementById('douban-container');
+            const boxofficeContainer = document.getElementById('boxoffice-container');
+            const animeSearchResults = document.getElementById('anime-search-results');
+            const movieSearchResults = document.getElementById('movie-search-results');
+            const movieSearch2List = document.getElementById('movie-search2-list');
+            const movieSearch2Results = document.getElementById('movie-search2-results');
+            const shortDramaResults = document.getElementById('short-drama-results');
+            const newShortDramaResults = document.getElementById('new-short-drama-results');
+            
+            const fullscreenPlayer = document.getElementById('fullscreen-player');
+            const fullscreenVideo = document.getElementById('fullscreen-video');
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            // 播放器控制按钮
+            const playerCloseBtn = document.getElementById('player-close-btn');
+            
+            // 播放器控制功能
+            playerCloseBtn.addEventListener('click', function() {
+                fullscreenPlayer.classList.remove('active');
+                fullscreenVideo.pause();
+                fullscreenVideo.src = '';
+                
+                // 清理iframe
+                const iframe = document.getElementById('bilibili-iframe');
+                if (iframe) {
+                    iframe.style.display = 'none';
+                    iframe.src = '';
+                }
+                fullscreenVideo.style.display = 'block';
+            });
+            
+            // 点击播放器外部关闭播放器
+            fullscreenPlayer.addEventListener('click', function(e) {
+                if (e.target === fullscreenPlayer) {
+                    fullscreenPlayer.classList.remove('active');
+                    fullscreenVideo.pause();
+                    fullscreenVideo.src = '';
+                    
+                    // 清理iframe
+                    const iframe = document.getElementById('bilibili-iframe');
+                    if (iframe) {
+                        iframe.style.display = 'none';
+                        iframe.src = '';
+                    }
+                    fullscreenVideo.style.display = 'block';
+                }
+            });
+            
+            // 选项卡切换功能
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // 移除所有激活状态
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // 添加当前激活状态
+                    tab.classList.add('active');
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // 加载对应数据
+                    if (tabId === 'douban' && !doubanData) {
+                        loadDoubanList();
+                    } else if (tabId === 'boxoffice' && !boxofficeData) {
+                        loadBoxofficeList();
+                    }
+                });
+            });
+            
+            // 数据缓存
+            let doubanData = null;
+            let boxofficeData = null;
+            let movieSearchData = null;
+            let shortDramaData = null;
+            let movieSearch2ListData = null; // 新增：影视搜索2列表数据
+            
+            // 加载豆瓣排行榜
+            function loadDoubanList() {
+                fetch('https://api.qhsou.com/api/douban.php')
+                    .then(response => response.json())
+                    .then(data => {
+                        doubanData = data;
+                        displayDoubanList(data);
+                    })
+                    .catch(error => {
+                        console.error('加载豆瓣排行榜出错:', error);
+                        doubanContainer.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>加载失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 加载票房排行榜
+            function loadBoxofficeList() {
+                fetch('https://api.qhsou.com/api/qqys.php')
+                    .then(response => response.json())
+                    .then(data => {
+                        boxofficeData = data;
+                        displayBoxofficeList(data);
+                    })
+                    .catch(error => {
+                        console.error('加载票房排行榜出错:', error);
+                        boxofficeContainer.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>加载失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 初始化加载豆瓣数据
+            loadDoubanList();
+            
+            // 搜索功能绑定
+            animeSearchBtn.addEventListener('click', performAnimeSearch);
+            animeSearchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') performAnimeSearch();
+            });
+            
+            movieSearchBtn.addEventListener('click', performMovieSearch);
+            movieSearchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') performMovieSearch();
+            });
+            
+            movieSearch2Btn.addEventListener('click', performMovieSearch2);
+            movieSearch2Input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') performMovieSearch2();
+            });
+            
+            shortDramaBtn.addEventListener('click', performShortDramaSearch);
+            shortDramaInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') performShortDramaSearch();
+            });
+            
+            newShortDramaBtn.addEventListener('click', performNewShortDramaSearch);
+            newShortDramaInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') performNewShortDramaSearch();
+            });
+            
+            // 显示豆瓣排行榜
+            function displayDoubanList(data) {
+                if (data && data.length > 0) {
+                    let html = '';
+                    
+                    data.forEach(movie => {
+                        const mainName = movie.name.split('/')[0].trim();
+                        
+                        html += `
+                            <div class="douban-item" data-name="${mainName}">
+                                <img src="${movie.poster}" alt="${mainName}" class="douban-poster">
+                                <div class="douban-info">
+                                    <div class="douban-rank">TOP ${movie.rank}</div>
+                                    <h3 class="douban-name">${mainName}</h3>
+                                    <div class="douban-rating">
+                                        <i class="fas fa-star"></i> ${movie.rating}
+                                    </div>
+                                    <p class="douban-quote">${movie.quote}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    doubanContainer.innerHTML = html;
+                    
+                    // 添加点击事件
+                    document.querySelectorAll('.douban-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            const movieName = this.getAttribute('data-name');
+                            movieSearchInput.value = movieName;
+                            performMovieSearch();
+                            
+                            // 切换标签
+                            tabs.forEach(t => t.classList.remove('active'));
+                            tabContents.forEach(c => c.classList.remove('active'));
+                            document.querySelector('[data-tab="movie-search"]').classList.add('active');
+                            document.getElementById('movie-search').classList.add('active');
+                        });
+                    });
+                } else {
+                    doubanContainer.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>加载失败</h3>
+                            <p>请检查网络连接或稍后重试</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 显示票房排行榜
+            function displayBoxofficeList(data) {
+                if (data && data.movies && data.movies.length > 0) {
+                    let html = '';
+                    
+                    data.movies.forEach(movie => {
+                        html += `
+                            <div class="boxoffice-item" data-name="${movie.movieName}">
+                                <div class="boxoffice-rank">${movie.rank}</div>
+                                <div class="boxoffice-info">
+                                    <div class="boxoffice-name">${movie.movieName}</div>
+                                    <div class="boxoffice-meta">
+                                        <span class="boxoffice-year">${movie.releaseTime}</span>
+                                        <span class="boxoffice-value">${movie.box} 亿</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    boxofficeContainer.innerHTML = html;
+                    
+                    // 添加点击事件
+                    document.querySelectorAll('.boxoffice-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            const movieName = this.getAttribute('data-name');
+                            movieSearchInput.value = movieName;
+                            performMovieSearch();
+                            
+                            // 切换标签
+                            tabs.forEach(t => t.classList.remove('active'));
+                            tabContents.forEach(c => c.classList.remove('active'));
+                            document.querySelector('[data-tab="movie-search"]').classList.add('active');
+                            document.getElementById('movie-search').classList.add('active');
+                        });
+                    });
+                } else {
+                    boxofficeContainer.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>加载失败</h3>
+                            <p>请检查网络连接或稍后重试</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 番剧搜索
+            function performAnimeSearch() {
+                const query = animeSearchInput.value.trim();
+                if (!query) return;
+                
+                animeSearchResults.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在搜索番剧 "${query}"...</p>
+                    </div>
+                `;
+                
+                const apiUrl = `https://api.xiaoy.asia/api/v1/?name=anime_series_search&search=${encodeURIComponent(query)}`;
+                
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        displayAnimeSearchResults(data);
+                    })
+                    .catch(error => {
+                        console.error('番剧搜索出错:', error);
+                        animeSearchResults.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>搜索失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 影视搜索
+            function performMovieSearch() {
+                const query = movieSearchInput.value.trim();
+                if (!query) return;
+                
+                movieSearchResults.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在搜索 "${query}"...</p>
+                    </div>
+                `;
+                
+                fetch(`https://api.qhsou.com/api/movie.php?wd=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        movieSearchData = data;
+                        displayMovieSearchResults(data);
+                    })
+                    .catch(error => {
+                        console.error('搜索出错:', error);
+                        movieSearchResults.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>搜索失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 影视搜索2 - 新API功能（修改版）
+            function performMovieSearch2() {
+                const query = movieSearch2Input.value.trim();
+                if (!query) return;
+                
+                // 第一步：搜索影片列表
+                movieSearch2List.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在搜索影片 "${query}"...</p>
+                    </div>
+                `;
+                movieSearch2List.style.display = 'block';
+                movieSearch2Results.style.display = 'none';
+                
+                const searchUrl = `https://api.milorapart.top/apis/searchvedio/?name=${encodeURIComponent(query)}`;
+                
+                fetch(searchUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.code === 200 && data.data && data.data.length > 0) {
+                            movieSearch2ListData = data;
+                            displayMovieSearch2List(data);
+                        } else {
+                            movieSearch2List.innerHTML = `
+                                <div class="no-results">
+                                    <i class="fas fa-search"></i>
+                                    <h3>未找到相关影片</h3>
+                                    <p>请尝试使用其他关键词搜索</p>
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('影视搜索2列表出错:', error);
+                        movieSearch2List.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>搜索失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 短剧搜索
+            function performShortDramaSearch() {
+                const query = shortDramaInput.value.trim();
+                if (!query) return;
+                
+                shortDramaResults.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在搜索短剧 "${query}"...</p>
+                    </div>
+                `;
+                
+                const apiUrl = `https://api.ahfi.cn/api/short?text=${encodeURIComponent(query)}`;
+                
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        shortDramaData = data;
+                        displayShortDramaResults(data);
+                    })
+                    .catch(error => {
+                        console.error('短剧搜索出错:', error);
+                        shortDramaResults.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>搜索失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 新短剧资源搜索
+            function performNewShortDramaSearch() {
+                const query = newShortDramaInput.value.trim();
+                if (!query) return;
+                
+                newShortDramaResults.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在搜索短剧 "${query}"...</p>
+                    </div>
+                `;
+                
+                const apiUrl = `https://api.jkyai.top/API/djzyss.php?search=${encodeURIComponent(query)}&type=json`;
+                
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        displayNewShortDramaResults(data);
+                    })
+                    .catch(error => {
+                        console.error('短剧资源搜索出错:', error);
+                        newShortDramaResults.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>搜索失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 显示影视搜索结果
+            function displayMovieSearchResults(data) {
+                if (data.code === 1 && data.list && data.list.length > 0) {
+                    const movies = data.list;
+                    let html = '';
+                    
+                    movies.forEach(movie => {
+                        const playUrls = movie.vod_play_url.split('$$$');
+                        const playOptions = playUrls.map(url => {
+                            const parts = url.split('$');
+                            return {
+                                quality: parts[0],
+                                url: parts[1]
+                            };
+                        });
+                        
+                        let playButtons = '';
+                        playOptions.forEach(option => {
+                            if (option.url) {
+                                playButtons += `
+                                    <button class="play-btn" data-url="${option.url}">
+                                        <i class="fas fa-play"></i> ${option.quality}
+                                    </button>
+                                `;
+                            }
+                        });
+                        
+                        let episodesHtml = '';
+                        const isSeries = movie.vod_class && (movie.vod_class.includes('电视剧') || movie.vod_class.includes('动漫'));
+                        
+                        if (isSeries && playOptions.length > 0) {
+                            episodesHtml = `
+                                <div class="episodes-container">
+                                    <div class="episodes-title">选集：</div>
+                                    <div class="episodes-list">
+                                        ${playOptions.map((option, index) => `
+                                            <button class="episode-btn" data-url="${option.url}">
+                                                第${index + 1}集
+                                            </button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        html += `
+                            <div class="movie-card">
+                                <div class="movie-header">
+                                    <img src="${movie.vod_pic}" alt="${movie.vod_name}" class="movie-poster">
+                                    <div class="movie-title-section">
+                                        <h2 class="movie-title">${movie.vod_name}</h2>
+                                        <p class="movie-subtitle">${movie.vod_sub}</p>
+                                        <div class="movie-meta">
+                                            <span class="meta-item"><i class="fas fa-calendar-alt"></i> ${movie.vod_year}</span>
+                                            <span class="meta-item"><i class="fas fa-map-marker-alt"></i> ${movie.vod_area}</span>
+                                            <span class="meta-item"><i class="fas fa-tags"></i> ${movie.type_name}</span>
+                                            <span class="meta-item"><i class="fas fa-film"></i> ${movie.vod_class}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="movie-details">
+                                    <p class="movie-description">${movie.vod_blurb}</p>
+                                    <p class="director-list"><strong>导演：</strong>${movie.vod_director}</p>
+                                    <p class="actor-list"><strong>主演：</strong>${movie.vod_actor}</p>
+                                </div>
+                                <div class="play-section">
+                                    ${episodesHtml}
+                                    <div class="play-options">
+                                        ${playButtons}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    movieSearchResults.innerHTML = html;
+                    
+                    // 添加播放事件
+                    document.querySelectorAll('.play-btn, .episode-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const videoUrl = this.getAttribute('data-url');
+                            playVideo(videoUrl);
+                        });
+                    });
+                } else {
+                    movieSearchResults.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>未找到相关影片</h3>
+                            <p>请尝试使用其他关键词搜索</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 显示影视搜索2列表结果（新增）
+            function displayMovieSearch2List(data) {
+                if (data.code === 200 && data.data && data.data.length > 0) {
+                    let html = '';
+                    
+                    data.data.forEach(movie => {
+                        html += `
+                            <div class="movie2-item" data-name="${movie.name}" data-id="${movie.id}">
+                                <div class="movie2-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <div class="movie2-info">
+                                    <h3 class="movie2-name">${movie.name}</h3>
+                                    <div class="movie2-meta">
+                                        <span class="movie2-id">ID: ${movie.id}</span>
+                                    </div>
+                                    <div class="movie2-link">
+                                        <i class="fas fa-info-circle"></i> 点击查看详细信息和播放链接
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    movieSearch2List.innerHTML = html;
+                    
+                    // 添加点击事件
+                    document.querySelectorAll('.movie2-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            const movieName = this.getAttribute('data-name');
+                            const movieId = this.getAttribute('data-id');
+                            loadMovieSearch2Detail(movieName, movieId);
+                        });
+                    });
+                } else {
+                    movieSearch2List.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>未找到相关影片</h3>
+                            <p>请尝试使用其他关键词搜索</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 加载影视搜索2详情（新增）
+            function loadMovieSearch2Detail(name, id) {
+                movieSearch2Results.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在加载 "${name}" 的详细信息...</p>
+                    </div>
+                `;
+                movieSearch2Results.style.display = 'block';
+                
+                const detailUrl = `https://api.milorapart.top/apis/searchvedio/?name=${encodeURIComponent(name)}&id=${encodeURIComponent(id)}`;
+                
+                fetch(detailUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        displayMovieSearch2Detail(data, name, id);
+                    })
+                    .catch(error => {
+                        console.error('影视搜索2详情出错:', error);
+                        movieSearch2Results.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>加载失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 显示影视搜索2详情结果（新增）
+            function displayMovieSearch2Detail(data, name, id) {
+                if (data && data.code === 200 && data.data && data.data.length > 0) {
+                    let html = '';
+                    
+                    // 显示影片基本信息
+                    html += `
+                        <div class="movie-card">
+                            <div class="movie-header">
+                                <img src="${data.pic}" alt="${data.name}" class="movie-poster">
+                                <div class="movie-title-section">
+                                    <h2 class="movie-title">${data.name}</h2>
+                                    <p class="movie-subtitle">共 ${data.count} 集</p>
+                                    <div class="movie-meta">
+                                        <span class="meta-item"><i class="fas fa-info-circle"></i> 来源: ${data.api_source || '未知'}</span>
+                                        <span class="meta-item"><i class="fas fa-tag"></i> ID: ${id}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="movie-details">
+                                <p class="movie-description">${data.introduction || '暂无简介'}</p>
+                            </div>
+                            <div class="play-section">
+                                <div class="episodes-container">
+                                    <div class="episodes-title">选集播放：</div>
+                                    <div class="episodes-list">
+                                        ${data.data.map(episode => `
+                                            <button class="episode-btn" data-m3u8="${episode.m3u8url}">
+                                                ${episode.num}
+                                            </button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div style="margin-top: 10px; font-size: 11px; color: var(--text-light);">
+                                    <i class="fas fa-info-circle"></i> 点击集数可直接播放
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    movieSearch2Results.innerHTML = html;
+                    
+                    // 添加播放事件
+                    document.querySelectorAll('.episode-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const m3u8Url = this.getAttribute('data-m3u8');
+                            playVideo(m3u8Url);
+                        });
+                    });
+                } else {
+                    movieSearch2Results.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>未找到相关影片</h3>
+                            <p>请检查名称和ID是否正确</p>
+                            <p style="margin-top: 10px; font-size: 10px;">错误信息: ${data?.msg || '未知错误'}</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 显示番剧搜索结果
+            function displayAnimeSearchResults(data) {
+                if (data && data.code === 200 && data.data && data.data.length > 0) {
+                    const animeList = data.data;
+                    let html = '';
+                    
+                    animeList.forEach(anime => {
+                        let episodesHtml = '';
+                        if (anime.episodes && anime.episodes.length > 0) {
+                            episodesHtml = `
+                                <div class="episodes-container">
+                                    <div class="episodes-title">选集：</div>
+                                    <div class="episodes-list">
+                                        ${anime.episodes.map(episode => `
+                                            <button class="episode-btn" data-url="${episode.url}">
+                                                ${episode.episode}
+                                            </button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        html += `
+                            <div class="anime-item">
+                                <div class="anime-header">
+                                    <img src="${anime.cover_image}" alt="${anime.title}" class="anime-poster">
+                                    <div class="anime-title-section">
+                                        <h2 class="anime-title">${anime.title}</h2>
+                                        <div class="anime-meta">
+                                            <span class="meta-item"><i class="fas fa-calendar-alt"></i> ${anime.year}</span>
+                                            <span class="meta-item"><i class="fas fa-map-marker-alt"></i> ${anime.region}</span>
+                                            <span class="meta-item"><i class="fas fa-tags"></i> ${anime.category}</span>
+                                            <span class="meta-item"><i class="fas fa-film"></i> ${anime.status}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="anime-details">
+                                    <p class="anime-description">${anime.summary}</p>
+                                    <p class="director-list"><strong>导演：</strong>${anime.directors.join(', ')}</p>
+                                    <p class="actor-list"><strong>主演：</strong>${anime.actors.slice(0, 5).join(', ')}${anime.actors.length > 5 ? '...' : ''}</p>
+                                </div>
+                                <div class="play-section">
+                                    ${episodesHtml}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    animeSearchResults.innerHTML = html;
+                    
+                    // 添加点击事件
+                    document.querySelectorAll('.episode-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const videoUrl = this.getAttribute('data-url');
+                            window.open(videoUrl, '_blank');
+                        });
+                    });
+                } else {
+                    animeSearchResults.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>未找到相关番剧</h3>
+                            <p>请尝试使用其他关键词搜索</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 显示短剧搜索结果
+            function displayShortDramaResults(data) {
+                if (data && data.code === 0 && data.data && data.data.length > 0) {
+                    const shortDramas = data.data;
+                    let html = '';
+                    
+                    shortDramas.forEach(drama => {
+                        html += `
+                            <div class="short-drama-item" data-link="${drama.viewlink}">
+                                <div class="short-drama-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <div class="short-drama-info">
+                                    <h3 class="short-drama-name">${drama.name}</h3>
+                                    <div class="short-drama-meta">
+                                        <span class="short-drama-episodes">${drama.episodes}集</span>
+                                        <span class="short-drama-time"><i class="fas fa-clock"></i> ${drama.addtime}</span>
+                                    </div>
+                                    <div class="short-drama-link">
+                                        <i class="fas fa-external-link-alt"></i> 点击查看网盘链接
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    shortDramaResults.innerHTML = html;
+                    
+                    // 添加点击事件
+                    document.querySelectorAll('.short-drama-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            const link = this.getAttribute('data-link');
+                            window.open(link, '_blank');
+                        });
+                    });
+                } else {
+                    shortDramaResults.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>未找到相关短剧</h3>
+                            <p>请尝试使用其他关键词搜索</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 显示新短剧资源搜索结果
+            function displayNewShortDramaResults(data) {
+                if (data && data.code === 200 && data.data && data.data.length > 0) {
+                    const dramas = data.data;
+                    let html = '';
+                    
+                    dramas.forEach(drama => {
+                        let viewlink = drama.viewlink;
+                        if (viewlink.includes('\t')) {
+                            viewlink = viewlink.split('\t').pop();
+                        }
+                        
+                        html += `
+                            <div class="new-short-drama-item" data-link="${viewlink}">
+                                <div class="new-short-drama-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <div class="new-short-drama-info">
+                                    <h3 class="new-short-drama-name">${drama.name}</h3>
+                                    <div class="new-short-drama-meta">
+                                        <span class="new-short-drama-time"><i class="fas fa-clock"></i> ${drama.addtime}</span>
+                                    </div>
+                                    <div class="new-short-drama-link">
+                                        <i class="fas fa-external-link-alt"></i> 点击查看网盘链接
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    newShortDramaResults.innerHTML = html;
+                    
+                    // 添加点击事件
+                    document.querySelectorAll('.new-short-drama-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            const link = this.getAttribute('data-link');
+                            window.open(link, '_blank');
+                        });
+                    });
+                } else {
+                    newShortDramaResults.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>未找到相关短剧</h3>
+                            <p>请尝试使用其他关键词搜索</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 播放视频函数
+            function playVideo(url) {
+                if (!url) {
+                    alert('视频链接无效，无法播放');
+                    return;
+                }
+                
+                // 隐藏iframe
+                const iframe = document.getElementById('bilibili-iframe');
+                if (iframe) {
+                    iframe.style.display = 'none';
+                }
+                
+                // 显示video元素
+                fullscreenVideo.style.display = 'block';
+                
+                // 显示全屏播放器
+                fullscreenPlayer.classList.add('active');
+                
+                // 设置视频源
+                fullscreenVideo.src = url;
+                
+                // 尝试播放
+                fullscreenVideo.play().catch(error => {
+                    console.error('播放失败:', error);
+                    alert('视频播放失败，请尝试其他播放源');
+                });
+                
+                // 更新播放器标题
+                document.querySelector('.player-title').textContent = '视频播放器';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>助眠声控</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            font-size: 14px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.7);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        h1 {
+            font-size: 20px;
+            font-weight: 300;
+            color: #4a6fa5;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .audio-player {
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .cover-container {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 15px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .audio-info {
+            margin-bottom: 15px;
+        }
+        
+        .audio-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .audio-author {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .player-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .progress-container {
+            flex: 1;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .progress {
+            height: 100%;
+            background: #4a6fa5;
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+        
+        .time {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .settings-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            flex-wrap: nowrap;
+            gap: 8px;
+        }
+        
+        .api-selector {
+            display: flex;
+            align-items: center;
+        }
+        
+        .api-select {
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            background: white;
+            min-width: 120px;
+        }
+        
+        .play-btn {
+            background: #4CAF50;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            color: white;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .play-btn:hover {
+            background: #388E3C;
+            transform: scale(1.05);
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+        }
+        
+        .volume-btn {
+            background: none;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            color: #4a6fa5;
+            padding: 3px;
+        }
+        
+        .volume-slider {
+            width: 60px;
+            margin-left: 5px;
+            display: none;
+        }
+        
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 35px;
+            height: 18px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 18px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(17px);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 10px;
+            font-size: 10px;
+            color: #888;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 8px;
+            font-size: 11px;
+            color: #666;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                margin-top: 10px;
+            }
+            
+            .cover-container {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .audio-title {
+                font-size: 13px;
+            }
+            
+            .audio-author {
+                font-size: 10px;
+            }
+            
+            .settings-container {
+                flex-wrap: wrap;
+                justify-content: space-around;
+                gap: 10px;
+            }
+            
+            .api-select {
+                min-width: 110px;
+                font-size: 11px;
+            }
+            
+            .play-btn {
+                width: 25px;
+                height: 25px;
+                font-size: 9px;
+            }
+            
+            .switch {
+                width: 32px;
+                height: 16px;
+            }
+            
+            .slider:before {
+                height: 12px;
+                width: 12px;
+            }
+            
+            input:checked + .slider:before {
+                transform: translateX(16px);
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .settings-container {
+                gap: 5px;
+            }
+            
+            .api-select {
+                min-width: 100px;
+                padding: 5px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>助眠声控</h1>
+            <p class="subtitle">精选助眠音频，伴您入眠</p>
+        </header>
+        
+        <div class="audio-player">
+            <div class="cover-container">
+                <img id="cover" class="cover" src="http://imagev2.xmcdn.com/storages/cfc9-audiofreehighqps/AE/51/CMCoOSYESMeuAAOk8wCdVAPY.jpeg!op_type=3&columns=640&rows=640" alt="封面">
+            </div>
+            
+            <div class="audio-info">
+                <h2 class="audio-title" id="title">【归愁】钢琴曲</h2>
+                <p class="audio-author" id="author">若似晴天绍钧</p>
+            </div>
+            
+            <div class="player-controls">
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar">
+                        <div class="progress" id="progress"></div>
+                    </div>
+                    <div class="time">
+                        <span id="current-time">00:00</span>
+                        <span id="duration">00:00</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="loading" id="loading">加载中...</div>
+        </div>
+        
+        <div class="settings-container">
+            <select class="api-select" id="api-select">
+                <option value="piano">钢琴助眠</option>
+                <option value="story">讲个故事</option>
+                <option value="rain">雨声助眠</option>
+                <option value="nature">大自然助眠</option>
+                <option value="brainwave">脑波助眠</option>
+            </select>
+            
+            <button class="play-btn" id="play">▶</button>
+            
+            <div class="volume-control">
+                <button class="volume-btn" id="volume-btn">🔊</button>
+                <input type="range" min="0" max="100" value="50" class="volume-slider" id="volume">
+            </div>
+            
+            <div class="auto-refresh">
+                <label class="switch">
+                    <input type="checkbox" id="auto-refresh" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2023 助眠声控 | 使用喜马拉雅音频资源</p>
+        </footer>
+    </div>
+
+    <script>
+        // API地址配置
+        const apiUrls = {
+            piano: "https://api.cenguigui.cn/api/music/ximalaya_gangqin.php",
+            story: "https://api.cenguigui.cn/api/music/ximalaya_gushi.php",
+            rain: "https://api.cenguigui.cn/api/music/ximalaya_rain.php",
+            nature: "https://api.cenguigui.cn/api/music/ximalaya_daziran.php",
+            brainwave: "https://api.cenguigui.cn/api/music/ximalaya_naobo.php"
+        };
+
+        // 获取DOM元素
+        const audio = new Audio();
+        const playBtn = document.getElementById('play');
+        const progressBar = document.getElementById('progress-bar');
+        const progress = document.getElementById('progress');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationEl = document.getElementById('duration');
+        const coverEl = document.getElementById('cover');
+        const titleEl = document.getElementById('title');
+        const authorEl = document.getElementById('author');
+        const volumeSlider = document.getElementById('volume');
+        const volumeBtn = document.getElementById('volume-btn');
+        const apiSelect = document.getElementById('api-select');
+        const autoRefresh = document.getElementById('auto-refresh');
+        const loadingEl = document.getElementById('loading');
+
+        // 当前播放的音频类型
+        let currentCategory = 'piano';
+        let isPlaying = false;
+
+        // 显示加载状态
+        function showLoading() {
+            loadingEl.style.display = 'block';
+        }
+
+        // 隐藏加载状态
+        function hideLoading() {
+            loadingEl.style.display = 'none';
+        }
+
+        // 从API获取音频数据
+        async function fetchAudioData(category) {
+            showLoading();
+            try {
+                const response = await fetch(apiUrls[category]);
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    return {
+                        title: data.title,
+                        author: data.nickname,
+                        cover: data.cover,
+                        url: data.url
+                    };
+                } else {
+                    throw new Error(data.msg || '获取音频数据失败');
+                }
+            } catch (error) {
+                console.error('获取音频数据失败:', error);
+                // 返回默认数据作为备选
+                return getDefaultAudioData(category);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 默认音频数据（当API失败时使用）
+        function getDefaultAudioData(category) {
+            const defaultData = {
+                piano: {
+                    title: "【归愁】钢琴曲",
+                    author: "若似晴天绍钧",
+                    cover: "http://imagev2.xmcdn.com/storages/cfc9-audiofreehighqps/AE/51/CMCoOSYESMeuAAOk8wCdVAPY.jpeg!op_type=3&columns=640&rows=640",
+                    url: "http://aod.cos.tx.xmcdn.com/storages/9dd1-audiofreehighqps/9D/9F/CKwRIW4ESMfTABBNOwCdVBTF.mp3"
+                },
+                story: {
+                    title: "路途遥远，我们一起走吧。",
+                    author: "小默127127",
+                    cover: "http://imagev2.xmcdn.com/group11/M03/34/BB/wKgDa1WT7J_BUlx5AADGuNXUrNM708.jpg!op_type=3&columns=640&rows=640",
+                    url: "http://aod.cos.tx.xmcdn.com/storages/b5a4-audiofreehighqps/71/EF/CKwRIUEFEPAuAKRXMQDhrlhl.mp3"
+                },
+                rain: {
+                    title: "【助眠雨声】嘀嗒嘀嗒下雨声，舒缓的节奏，让人听起来十分的舒服1",
+                    author: "Doo声声",
+                    cover: "http://imagev2.xmcdn.com/storages/b07d-audiofreehighqps/C2/16/GKwRIUEFcrwHAAeobQD6kkL4.jpeg!op_type=3&columns=640&rows=640",
+                    url: "http://aod.cos.tx.xmcdn.com/storages/54de-audiofreehighqps/9B/F2/GKwRIaII9AaYADURegJmEUOc.mp3"
+                },
+                nature: {
+                    title: "繁星满天 | 犹如我想靠近你的无数个瞬间",
+                    author: "音乐人王可鑫",
+                    cover: "http://imagev2.xmcdn.com/group73/M09/39/64/wKgO0V58XqHhiDKEAAhRdE686is598.jpg!op_type=3&columns=640&rows=640",
+                    url: "http://audiofreepay.ali.xmcdn.com/download/1.0.0/storages/38c9-audiopay/38/13/GKwRIRwHCCJbAAguTwGn65qo_preview_204188.m4a?buy_key=aed65595bbd6d943057c57973f8b5b93&sign=9587966b06f9b9da87acc37941593c01&timestamp=1763184354790000&token=1085&duration=1800"
+                },
+                brainwave: {
+                    title: "Delta3D脑波音乐|轻松睡眠 安静宁神",
+                    author: "耳界_Earmersion",
+                    cover: "http://imagev2.xmcdn.com/group69/M0B/9E/60/wKgMeV2xPPHRS3GYAAFf65bjph0436.jpg!op_type=3&columns=640&rows=640",
+                    url: "http://audiofreepay.ali.xmcdn.com/download/1.0.0/storages/8f7e-audiopay/E3/40/GKwRIMAJQwvDABxaOAKGacjQ_preview_361391.m4a?buy_key=aed65595bbd6d943057c57973f8b5b93&sign=5a54f8c7a3b30011254d60baa99c9373&timestamp=1763184434556000&token=7362&duration=1800"
+                }
+            };
+            
+            return defaultData[category] || defaultData.piano;
+        }
+
+        // 初始化音频
+        async function initAudio(category, shouldPlay = false) {
+            const data = await fetchAudioData(category);
+            
+            audio.src = data.url;
+            coverEl.src = data.cover;
+            titleEl.textContent = data.title;
+            authorEl.textContent = data.author;
+            
+            // 重置进度条
+            progress.style.width = '0%';
+            currentTimeEl.textContent = '00:00';
+            durationEl.textContent = '00:00';
+            
+            // 如果应该播放，则播放音频
+            if (shouldPlay) {
+                setTimeout(() => {
+                    audio.play();
+                    playBtn.innerHTML = '❚❚';
+                    isPlaying = true;
+                }, 100);
+            }
+        }
+
+        // 播放/暂停音频
+        function togglePlay() {
+            if (audio.paused) {
+                audio.play();
+                playBtn.innerHTML = '❚❚';
+                isPlaying = true;
+            } else {
+                audio.pause();
+                playBtn.innerHTML = '▶';
+                isPlaying = false;
+            }
+        }
+
+        // 更新进度条
+        function updateProgress(e) {
+            const { duration, currentTime } = e.srcElement;
+            const progressPercent = (currentTime / duration) * 100;
+            progress.style.width = `${progressPercent}%`;
+            
+            // 更新时间显示
+            currentTimeEl.textContent = formatTime(currentTime);
+            
+            if (!isNaN(duration)) {
+                durationEl.textContent = formatTime(duration);
+            }
+        }
+
+        // 设置进度
+        function setProgress(e) {
+            const width = this.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audio.duration;
+            
+            if (!isNaN(duration)) {
+                audio.currentTime = (clickX / width) * duration;
+            }
+        }
+
+        // 格式化时间
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // 切换音频类型
+        async function switchCategory() {
+            const category = apiSelect.value;
+            if (category && category !== currentCategory) {
+                currentCategory = category;
+                await initAudio(category, isPlaying);
+            }
+        }
+
+        // 设置音量
+        function setVolume() {
+            audio.volume = volumeSlider.value / 100;
+            
+            // 更新音量按钮图标
+            if (audio.volume === 0) {
+                volumeBtn.textContent = '🔇';
+            } else if (audio.volume < 0.5) {
+                volumeBtn.textContent = '🎧';
+            } else {
+                volumeBtn.textContent = '🎧';
+            }
+        }
+
+        // 切换音量滑块显示/隐藏
+        function toggleVolumeSlider() {
+            volumeSlider.style.display = volumeSlider.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // 音频播放结束处理
+        function handleAudioEnd() {
+            playBtn.innerHTML = '▶';
+            progress.style.width = '0%';
+            currentTimeEl.textContent = '00:00';
+            isPlaying = false;
+            
+            // 如果启用了自动刷新，则重新加载音频
+            if (autoRefresh.checked) {
+                initAudio(currentCategory, true);
+            }
+        }
+
+        // 事件监听
+        playBtn.addEventListener('click', togglePlay);
+        audio.addEventListener('timeupdate', updateProgress);
+        audio.addEventListener('ended', handleAudioEnd);
+        progressBar.addEventListener('click', setProgress);
+        apiSelect.addEventListener('change', switchCategory);
+        volumeSlider.addEventListener('input', setVolume);
+        volumeBtn.addEventListener('click', toggleVolumeSlider);
+
+        // 初始化音量
+        setVolume();
+
+        // 初始化
+        initAudio(currentCategory);
+    </script>
+</body>
+</html>

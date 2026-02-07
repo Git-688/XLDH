@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>趣味挑战 - 脑筋急转弯与谜语</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+body {
+    background-color: #f5f5f5;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    color: #333;
+    font-size: 12px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+    max-width: 400px;
+    width: 100%;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    animation: fadeIn 0.3s ease-out;
+    border: 1px solid #e0e0e0;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+header {
+    background-color: #f8f9fa;
+    color: #333;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eaeaea;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left {
+    flex: 1;
+}
+
+h1 {
+    font-size: 16px;
+    margin-bottom: 2px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+.subtitle {
+    font-size: 11px;
+    color: #666;
+    font-weight: 400;
+}
+
+.header-right {
+    margin-left: 12px;
+}
+
+.mode-select {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #d0d0d0;
+    background-color: #ffffff;
+    font-size: 12px;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+    min-width: 120px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M8 11l4-4H4l4 4z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 10px;
+    padding-right: 24px;
+}
+
+.mode-select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.mode-select:hover {
+    border-color: #2563eb;
+}
+
+.content {
+    padding: 16px;
+}
+
+.content-section {
+    display: none;
+}
+
+.content-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.api-selector {
+    margin: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.api-selector label {
+    font-size: 11px;
+    color: #555;
+    font-weight: 500;
+}
+
+.api-select {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+    font-size: 12px;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M8 11l4-4H4l4 4z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 10px;
+    padding-right: 28px;
+}
+
+.api-select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.api-select:hover {
+    border-color: #2563eb;
+}
+
+.question-container {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 16px;
+    border-left: 3px solid #2563eb;
+}
+
+.question-label {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 8px;
+    display: block;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.question {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #333;
+    font-weight: 500;
+    text-align: center;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 0;
+}
+
+.answer-container {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.answer-label {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 8px;
+    display: block;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.answer {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2563eb;
+    background-color: #f0f7ff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    display: inline-block;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    min-width: 140px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e0e0e0;
+}
+
+.answer.hidden {
+    background-color: #f5f5f5;
+    color: transparent;
+    text-shadow: 0 0 4px rgba(37, 99, 235, 0.2);
+    user-select: none;
+    border: 1px solid #e0e0e0;
+}
+
+.answer.hidden::after {
+    content: "点击显示答案";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.answer.revealed {
+    animation: reveal 0.3s ease;
+    background-color: #e8f4ff;
+    color: #2563eb;
+    border-color: #2563eb;
+}
+
+@keyframes reveal {
+    0% { transform: scale(0.98); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.options {
+    margin: 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.option {
+    padding: 10px 14px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    color: #333;
+}
+
+.option:hover {
+    border-color: #2563eb;
+    background-color: #f8fafc;
+}
+
+.option-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background-color: #2563eb;
+    color: white;
+    border-radius: 50%;
+    margin-right: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.option-text {
+    flex: 1;
+    line-height: 1.4;
+    font-size: 12px;
+}
+
+.analytic {
+    margin-top: 12px;
+    padding: 10px;
+    background: #f0fff4;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #333;
+    border-left: 3px solid #10b981;
+    line-height: 1.5;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+button {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    outline: none;
+    min-width: 80px;
+}
+
+button:hover {
+    background-color: #1d4ed8;
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button:disabled {
+    background: #e5e7eb;
+    cursor: not-allowed;
+    color: #9ca3af;
+}
+
+.error {
+    text-align: center;
+    padding: 10px;
+    color: #dc2626;
+    background-color: #fef2f2;
+    border-radius: 6px;
+    margin: 12px 0;
+    border-left: 3px solid #dc2626;
+    font-size: 11px;
+    line-height: 1.4;
+    display: none;
+}
+
+.image-container {
+    text-align: center;
+    margin: 16px 0;
+}
+
+.idiom-image {
+    max-width: 100%;
+    max-height: 180px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eee;
+}
+
+.refresh-btn::before {
+    content: "↻";
+    font-size: 12px;
+    font-weight: bold;
+}
+
+@media (max-width: 480px) {
+    .container {
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
+    
+    header {
+        padding: 10px 12px;
+    }
+    
+    h1 {
+        font-size: 15px;
+    }
+    
+    .content {
+        padding: 12px;
+    }
+    
+    .question {
+        font-size: 12px;
+    }
+    
+    .answer {
+        padding: 8px 16px;
+        min-width: 120px;
+        font-size: 12px;
+    }
+    
+    button {
+        padding: 7px 12px;
+        font-size: 11px;
+        min-width: 70px;
+    }
+    
+    .mode-select {
+        min-width: 110px;
+        font-size: 11px;
+        padding: 5px 8px;
+    }
+    
+    .option {
+        padding: 8px 12px;
+    }
+    
+    .api-select {
+        padding: 7px 10px;
+        font-size: 11px;
+    }
+}
+
+/* 移除focus时的默认轮廓 */
+*:focus {
+    outline: none;
+}
+
+/* 自定义滚动条样式 */
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1>趣味挑战</h1>
+                <div class="subtitle">脑筋急转弯与谜语</div>
+            </div>
+            <div class="header-right">
+                <select class="mode-select" id="mode-selector">
+                    <option value="brain-teaser">脑筋急转弯</option>
+                    <option value="riddle">随机谜语</option>
+                    <option value="poetry">诗词问答</option>
+                    <option value="guess-idiom">看图猜成语</option>
+                </select>
+            </div>
+        </header>
+        
+        <div class="content">
+            <!-- 脑筋急转弯部分 -->
+            <div class="content-section active" id="brain-teaser">
+                <div class="api-selector">
+                    <label for="brain-teaser-api">选择API源：</label>
+                    <select class="api-select" id="brain-teaser-api">
+                        <option value="api1">源一</option>
+                        <option value="api2">源二</option>
+                        <option value="api3">源三</option>
+                        <option value="api4">源四</option>
+                        <option value="api5">源五</option>
+                    </select>
+                </div>
+                
+                <div class="question-container">
+                    <span class="question-label">问题：</span>
+                    <div class="question" id="brain-teaser-question">点击下方按钮获取脑筋急转弯</div>
+                </div>
+                
+                <div class="answer-container">
+                    <span class="answer-label">答案：</span>
+                    <div class="answer hidden" id="brain-teaser-answer"></div>
+                </div>
+                
+                <div class="error" id="brain-teaser-error"></div>
+                
+                <div class="controls">
+                    <button id="show-brain-teaser-answer">显示答案</button>
+                    <button id="next-brain-teaser" class="refresh-btn">刷新</button>
+                </div>
+            </div>
+            
+            <!-- 随机谜语部分 -->
+            <div class="content-section" id="riddle">
+                <div class="api-selector">
+                    <label for="riddle-api">选择API源：</label>
+                    <select class="api-select" id="riddle-api">
+                        <option value="api1">源一</option>
+                        <option value="api2">源二</option>
+                        <option value="api3">源三</option>
+                    </select>
+                </div>
+                
+                <div class="question-container">
+                    <span class="question-label">谜面：</span>
+                    <div class="question" id="riddle-question">正在获取谜语...</div>
+                </div>
+                
+                <div class="answer-container">
+                    <span class="answer-label">谜底：</span>
+                    <div class="answer hidden" id="riddle-answer"></div>
+                </div>
+                
+                <div class="error" id="riddle-error"></div>
+                
+                <div class="controls">
+                    <button id="show-riddle-answer">显示答案</button>
+                    <button id="new-riddle" class="refresh-btn">刷新</button>
+                </div>
+            </div>
+            
+            <!-- 诗词问答部分 -->
+            <div class="content-section" id="poetry">
+                <div class="question-container">
+                    <span class="question-label">诗词问题：</span>
+                    <div class="question" id="poetry-question">正在获取诗词问题...</div>
+                </div>
+                
+                <div class="options" id="poetry-options"></div>
+                
+                <div class="answer-container">
+                    <span class="answer-label">正确答案：</span>
+                    <div class="answer hidden" id="poetry-answer"></div>
+                </div>
+                
+                <div class="analytic" id="poetry-analytic"></div>
+                
+                <div class="error" id="poetry-error"></div>
+                
+                <div class="controls">
+                    <button id="show-poetry-answer">显示答案</button>
+                    <button id="new-poetry" class="refresh-btn">刷新</button>
+                </div>
+            </div>
+            
+            <!-- 看图猜成语部分 -->
+            <div class="content-section" id="guess-idiom">
+                <div class="api-selector">
+                    <label for="guess-idiom-api">选择API源：</label>
+                    <select class="api-select" id="guess-idiom-api">
+                        <option value="api1">源一</option>
+                        <option value="api2">源二</option>
+                    </select>
+                </div>
+                
+                <div class="question-container">
+                    <span class="question-label">看图猜成语：</span>
+                    <div class="question" id="guess-idiom-question">观察图片，猜出对应的成语</div>
+                </div>
+                
+                <div class="image-container">
+                    <img class="idiom-image" id="guess-idiom-image" src="" alt="成语图片">
+                </div>
+                
+                <div class="answer-container">
+                    <span class="answer-label">成语：</span>
+                    <div class="answer hidden" id="guess-idiom-answer"></div>
+                </div>
+                
+                <div class="error" id="guess-idiom-error"></div>
+                
+                <div class="controls">
+                    <button id="show-guess-idiom-answer">显示答案</button>
+                    <button id="new-guess-idiom" class="refresh-btn">刷新</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 功能切换选择器
+            const modeSelector = document.getElementById('mode-selector');
+            const contentSections = document.querySelectorAll('.content-section');
+            
+            // 功能切换
+            modeSelector.addEventListener('change', () => {
+                const target = modeSelector.value;
+                
+                // 显示对应的内容区域
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                    if (section.id === target) {
+                        section.classList.add('active');
+                    }
+                });
+            });
+            
+            // 脑筋急转弯功能
+            const brainTeaserQuestion = document.getElementById('brain-teaser-question');
+            const brainTeaserAnswer = document.getElementById('brain-teaser-answer');
+            const showBrainTeaserAnswerBtn = document.getElementById('show-brain-teaser-answer');
+            const nextBrainTeaserBtn = document.getElementById('next-brain-teaser');
+            const brainTeaserError = document.getElementById('brain-teaser-error');
+            const brainTeaserApiSelect = document.getElementById('brain-teaser-api');
+            
+            let currentBrainTeaserQuestion = '';
+            let currentBrainTeaserAnswer = '';
+            
+            // 获取脑筋急转弯
+            function fetchBrainTeaser() {
+                brainTeaserError.style.display = 'none';
+                brainTeaserAnswer.classList.add('hidden');
+                brainTeaserQuestion.textContent = '正在思考有趣的问题...';
+                
+                const apiSource = brainTeaserApiSelect.value;
+                let apiUrl = '';
+                
+                switch(apiSource) {
+                    case 'api1': // 原来的第二个API
+                        apiUrl = 'https://api.71xk.com/api/brain-teasers';
+                        break;
+                    case 'api2': // 原来的第三个API
+                        apiUrl = 'https://api.icofun.cn/api/naowan.php';
+                        break;
+                    case 'api3': // 原来的第四个API
+                        apiUrl = 'https://api.suyanw.cn/api/naowan.php';
+                        break;
+                    case 'api4': // 新增：来自IQ必备的API
+                        apiUrl = 'https://whyta.cn/api/tx/naowan?key=738b541a5f7a&num=1';
+                        break;
+                    case 'api5': // 新增：新要求的API
+                        apiUrl = 'https://api.qqsuu.cn/api/dm-naowan?num=1';
+                        break;
+                }
+                
+                fetch(apiUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络请求失败');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // 根据不同的API源解析数据
+                        if (apiSource === 'api4') {
+                            // 处理IQ必备API的格式
+                            if (data.code === 200) {
+                                currentBrainTeaserQuestion = data.result.list[0].quest;
+                                currentBrainTeaserAnswer = data.result.list[0].result;
+                                
+                                brainTeaserQuestion.textContent = currentBrainTeaserQuestion;
+                                brainTeaserAnswer.textContent = currentBrainTeaserAnswer;
+                            } else {
+                                throw new Error('获取数据失败');
+                            }
+                        } else if (apiSource === 'api5') {
+                            // 处理新API的格式
+                            if (data.code === 200) {
+                                currentBrainTeaserQuestion = data.data.list[0].quest;
+                                currentBrainTeaserAnswer = data.data.list[0].result;
+                                
+                                brainTeaserQuestion.textContent = currentBrainTeaserQuestion;
+                                brainTeaserAnswer.textContent = currentBrainTeaserAnswer;
+                            } else {
+                                throw new Error('获取数据失败');
+                            }
+                        } else {
+                            // 原有API的处理逻辑
+                            if (data.code === 1) {
+                                currentBrainTeaserQuestion = data.data.quest;
+                                currentBrainTeaserAnswer = data.data.result;
+                                
+                                brainTeaserQuestion.textContent = currentBrainTeaserQuestion;
+                                brainTeaserAnswer.textContent = currentBrainTeaserAnswer;
+                            } else {
+                                throw new Error('获取数据失败');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        brainTeaserError.textContent = '获取脑筋急转弯失败，请稍后重试或切换API源！';
+                        brainTeaserError.style.display = 'block';
+                        brainTeaserQuestion.textContent = '获取脑筋急转弯失败，请点击"刷新"重试';
+                    });
+            }
+            
+            // 显示/隐藏脑筋急转弯答案
+            showBrainTeaserAnswerBtn.addEventListener('click', function() {
+                if (brainTeaserAnswer.classList.contains('hidden')) {
+                    brainTeaserAnswer.classList.remove('hidden');
+                    brainTeaserAnswer.classList.add('revealed');
+                    setTimeout(() => {
+                        brainTeaserAnswer.classList.remove('revealed');
+                    }, 300);
+                } else {
+                    brainTeaserAnswer.classList.add('hidden');
+                }
+            });
+            
+            // 刷新脑筋急转弯
+            nextBrainTeaserBtn.addEventListener('click', fetchBrainTeaser);
+            
+            // API源切换时重新获取问题
+            brainTeaserApiSelect.addEventListener('change', fetchBrainTeaser);
+            
+            // 初始加载脑筋急转弯
+            fetchBrainTeaser();
+            
+            // 随机谜语功能
+            const riddleQuestion = document.getElementById('riddle-question');
+            const riddleAnswer = document.getElementById('riddle-answer');
+            const showRiddleAnswerBtn = document.getElementById('show-riddle-answer');
+            const newRiddleBtn = document.getElementById('new-riddle');
+            const riddleError = document.getElementById('riddle-error');
+            const riddleApiSelect = document.getElementById('riddle-api');
+            
+            // 显示谜语答案
+            function revealRiddleAnswer() {
+                riddleAnswer.classList.remove('hidden');
+                riddleAnswer.classList.add('revealed');
+                setTimeout(() => {
+                    riddleAnswer.classList.remove('revealed');
+                }, 300);
+            }
+            
+            showRiddleAnswerBtn.addEventListener('click', revealRiddleAnswer);
+            riddleAnswer.addEventListener('click', revealRiddleAnswer);
+            
+            // 获取新谜语
+            async function fetchRiddle() {
+                riddleQuestion.textContent = '正在获取新谜语...';
+                riddleAnswer.classList.add('hidden');
+                riddleAnswer.textContent = '';
+                riddleError.style.display = 'none';
+                
+                const apiSource = riddleApiSelect.value;
+                let apiUrl = '';
+                
+                switch(apiSource) {
+                    case 'api1':
+                        apiUrl = 'http://mgyy.asia/api/my.php';
+                        break;
+                    case 'api2':
+                        apiUrl = 'https://api.andeer.top/API/txt_guess_riddles.php';
+                        break;
+                    case 'api3': // 新增：猜灯谜API
+                        apiUrl = 'https://api.qqsuu.cn/api/dm-caizimi';
+                        break;
+                }
+                
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        throw new Error(`网络请求失败 (${response.status})`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // 根据API源解析不同的数据格式
+                    let question = '';
+                    let answer = '';
+                    
+                    if (apiSource === 'api2') {
+                        // API源2: 使用中文字段名
+                        if (data.success && data.code === 200) {
+                            question = data.data.谜题 || '未找到谜题';
+                            answer = data.data.谜底 || '未找到谜底';
+                        } else {
+                            throw new Error(`API返回错误: ${data.msg || '未知错误'}`);
+                        }
+                    } else if (apiSource === 'api3') {
+                        // 猜灯谜API
+                        if (data.code === 200) {
+                            question = data.data.riddle || '未找到谜题';
+                            answer = data.data.answer || '未找到谜底';
+                        } else {
+                            throw new Error(`API返回错误: ${data.msg || '未知错误'}`);
+                        }
+                    } else {
+                        // API源1: 使用英文字段名
+                        if (data.code === 200) {
+                            question = data.data.question || '未找到谜题';
+                            answer = data.data.answer || '未找到谜底';
+                        } else {
+                            throw new Error(`API返回错误: ${data.message || '未知错误'}`);
+                        }
+                    }
+                    
+                    // 显示谜题和谜底
+                    riddleQuestion.textContent = question;
+                    riddleAnswer.textContent = answer;
+                    
+                } catch (error) {
+                    console.error('获取谜语失败:', error);
+                    riddleQuestion.textContent = '获取谜语失败，请稍后重试或切换API源';
+                    riddleAnswer.textContent = '错误';
+                    riddleError.textContent = `获取谜语时出错: ${error.message}`;
+                    riddleError.style.display = 'block';
+                    
+                    // 提供备用谜语
+                    if (error.message.includes('网络')) {
+                        riddleQuestion.textContent = '网络连接失败，请检查网络后重试';
+                    }
+                }
+            }
+            
+            newRiddleBtn.addEventListener('click', fetchRiddle);
+            
+            // API源切换时重新获取谜语
+            riddleApiSelect.addEventListener('change', fetchRiddle);
+            
+            // 初始加载谜语
+            fetchRiddle();
+            
+            // 诗词问答功能
+            const poetryQuestion = document.getElementById('poetry-question');
+            const poetryOptions = document.getElementById('poetry-options');
+            const poetryAnswer = document.getElementById('poetry-answer');
+            const poetryAnalytic = document.getElementById('poetry-analytic');
+            const showPoetryAnswerBtn = document.getElementById('show-poetry-answer');
+            const newPoetryBtn = document.getElementById('new-poetry');
+            const poetryError = document.getElementById('poetry-error');
+            
+            // 获取诗词问答
+            async function fetchPoetry() {
+                poetryQuestion.textContent = '正在获取诗词问题...';
+                poetryOptions.innerHTML = '';
+                poetryAnswer.classList.add('hidden');
+                poetryAnalytic.textContent = '';
+                poetryError.style.display = 'none';
+                
+                try {
+                    const response = await fetch('https://whyta.cn/api/tx/scwd?key=738b541a5f7a');
+                    if (!response.ok) {
+                        throw new Error('网络响应不正常');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if(data.code === 200) {
+                        poetryQuestion.textContent = data.result.question;
+                        
+                        // 显示选项 - 使用新的选项样式
+                        const optionsHtml = `
+                            <div class="option">
+                                <span class="option-number">A</span>
+                                <span class="option-text">${data.result.answer_a}</span>
+                            </div>
+                            <div class="option">
+                                <span class="option-number">B</span>
+                                <span class="option-text">${data.result.answer_b}</span>
+                            </div>
+                            <div class="option">
+                                <span class="option-number">C</span>
+                                <span class="option-text">${data.result.answer_c}</span>
+                            </div>
+                        `;
+                        poetryOptions.innerHTML = optionsHtml;
+                        
+                        // 设置答案
+                        poetryAnswer.textContent = data.result.answer;
+                        
+                        // 设置解析
+                        poetryAnalytic.textContent = data.result.analytic;
+                    } else {
+                        throw new Error('API返回错误: ' + data.msg);
+                    }
+                } catch (error) {
+                    console.error('获取诗词问答失败:', error);
+                    poetryQuestion.textContent = '获取诗词问答失败，请稍后重试';
+                    poetryError.textContent = `获取诗词问答时出错: ${error.message}`;
+                    poetryError.style.display = 'block';
+                }
+            }
+            
+            // 显示诗词答案
+            showPoetryAnswerBtn.addEventListener('click', function() {
+                if (poetryAnswer.classList.contains('hidden')) {
+                    poetryAnswer.classList.remove('hidden');
+                    poetryAnswer.classList.add('revealed');
+                    setTimeout(() => {
+                        poetryAnswer.classList.remove('revealed');
+                    }, 300);
+                } else {
+                    poetryAnswer.classList.add('hidden');
+                }
+            });
+            
+            newPoetryBtn.addEventListener('click', fetchPoetry);
+            
+            // 初始加载诗词问答
+            fetchPoetry();
+            
+            // 看图猜成语功能
+            const guessIdiomQuestion = document.getElementById('guess-idiom-question');
+            const guessIdiomImage = document.getElementById('guess-idiom-image');
+            const guessIdiomAnswer = document.getElementById('guess-idiom-answer');
+            const showGuessIdiomAnswerBtn = document.getElementById('show-guess-idiom-answer');
+            const newGuessIdiomBtn = document.getElementById('new-guess-idiom');
+            const guessIdiomError = document.getElementById('guess-idiom-error');
+            const guessIdiomApiSelect = document.getElementById('guess-idiom-api');
+            
+            // 获取看图猜成语
+            async function fetchGuessIdiom() {
+                guessIdiomQuestion.textContent = '正在获取成语图片...';
+                guessIdiomImage.src = '';
+                guessIdiomAnswer.classList.add('hidden');
+                guessIdiomAnswer.textContent = '';
+                guessIdiomError.style.display = 'none';
+                
+                const apiSource = guessIdiomApiSelect.value;
+                let apiUrl = '';
+                
+                switch(apiSource) {
+                    case 'api1':
+                        apiUrl = 'https://api.71xk.com/api/ktccy';
+                        break;
+                    case 'api2':
+                        apiUrl = 'http://api.苏苏.cn/API/ktccy.php';
+                        break;
+                }
+                
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        throw new Error('网络响应不正常');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if((apiSource === 'api1' && data.status === 200) || (apiSource === 'api2' && data.code === 200)) {
+                        // 根据API源解析不同的返回格式
+                        if (apiSource === 'api1') {
+                            guessIdiomImage.src = data.data.image;
+                            guessIdiomAnswer.textContent = data.data.answer;
+                        } else if (apiSource === 'api2') {
+                            guessIdiomImage.src = data.data.image_url;
+                            guessIdiomAnswer.textContent = data.data.answer;
+                        }
+                        guessIdiomQuestion.textContent = '观察图片，猜出对应的成语';
+                    } else {
+                        throw new Error('API返回错误');
+                    }
+                } catch (error) {
+                    console.error('获取看图猜成语失败:', error);
+                    guessIdiomQuestion.textContent = '获取看图猜成语失败，请稍后重试或切换API源';
+                    guessIdiomError.textContent = `获取看图猜成语时出错: ${error.message}`;
+                    guessIdiomError.style.display = 'block';
+                }
+            }
+            
+            // 显示看图猜成语答案
+            showGuessIdiomAnswerBtn.addEventListener('click', function() {
+                if (guessIdiomAnswer.classList.contains('hidden')) {
+                    guessIdiomAnswer.classList.remove('hidden');
+                    guessIdiomAnswer.classList.add('revealed');
+                    setTimeout(() => {
+                        guessIdiomAnswer.classList.remove('revealed');
+                    }, 300);
+                } else {
+                    guessIdiomAnswer.classList.add('hidden');
+                }
+            });
+            
+            newGuessIdiomBtn.addEventListener('click', fetchGuessIdiom);
+            
+            // API源切换时重新获取题目
+            guessIdiomApiSelect.addEventListener('change', fetchGuessIdiom);
+            
+            // 初始加载看图猜成语
+            fetchGuessIdiom();
+        });
+    </script>
+</body>
+</html>

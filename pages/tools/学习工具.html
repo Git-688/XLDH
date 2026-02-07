@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成语、汉字、历史人物与近义反义词查询工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        
+        header {
+            background: white;
+            color: #2c3e50;
+            padding: 24px 20px;
+            text-align: center;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        
+        .subtitle {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+        
+        .query-type {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .query-select {
+            width: 100%;
+            max-width: 500px;
+            padding: 10px 16px;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background-color: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .query-select:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+        
+        .search-section {
+            padding: 20px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        .search-box {
+            display: flex;
+            max-width: 500px;
+            margin: 0 auto;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+        
+        .search-box:focus-within {
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        #query-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        
+        #search-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        
+        #search-btn:hover {
+            background: #2980b9;
+        }
+        
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 16px;
+            gap: 10px;
+        }
+        
+        .mode-btn {
+            background: #f1f8ff;
+            border: 1px solid #e1e5e9;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        
+        .mode-btn.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .result-section {
+            padding: 20px;
+            display: none;
+        }
+        
+        .idiom-header, .hanzi-header, .history-header, .synonym-header, .fenci-header, .meansearch-header, .szsy-header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        .idiom-title, .hanzi-title, .history-title, .synonym-title, .fenci-title, .meansearch-title, .szsy-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        
+        .idiom-pinyin, .hanzi-pinyin, .history-dynasty, .meansearch-type, .szsy-definition {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .audio-btn {
+            background: none;
+            border: none;
+            color: #3498db;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .audio-btn:hover {
+            color: #2980b9;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 0.95rem;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .section-content {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #34495e;
+        }
+        
+        .word-lists {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .word-tag {
+            background: #f1f8ff;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #3498db;
+        }
+        
+        .hanzi-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .hanzi-info-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .hanzi-info-label {
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            margin-bottom: 4px;
+        }
+        
+        .hanzi-info-value {
+            font-size: 0.9rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .hanzi-image {
+            text-align: center;
+            margin: 16px 0;
+        }
+        
+        .hanzi-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        
+        .baike-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #3498db;
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+        
+        .baike-link:hover {
+            text-decoration: underline;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px;
+            display: none;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 16px;
+            color: #e74c3c;
+            background: #fdf0ee;
+            border-radius: 6px;
+            margin: 20px 0;
+            display: none;
+            font-size: 0.85rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #95a5a6;
+            font-size: 0.9rem;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 16px;
+            color: #95a5a6;
+            font-size: 0.75rem;
+            border-top: 1px solid #eaeaea;
+        }
+        
+        /* 历史人物样式 */
+        .history-desc {
+            font-size: 0.95rem;
+            color: #34495e;
+            line-height: 1.6;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        
+        .history-info-list {
+            display: grid;
+            gap: 8px;
+        }
+        
+        .history-info-item {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-left: 3px solid #3498db;
+            font-size: 0.85rem;
+            color: #34495e;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 24px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e1e5e9;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .timeline-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 6px;
+            width: 8px;
+            height: 8px;
+            background: #3498db;
+            border-radius: 50%;
+        }
+        
+        .timeline-year {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        
+        .timeline-content {
+            font-size: 0.85rem;
+            color: #34495e;
+            line-height: 1.5;
+        }
+        
+        /* 中文分词样式 */
+        .fenci-result {
+            text-align: center;
+        }
+        
+        .fenci-tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        
+        .fenci-tag {
+            background: #3498db;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        /* 据意查句样式 */
+        .quote-item {
+            padding: 16px;
+            margin-bottom: 16px;
+            border-left: 4px solid #3498db;
+            background-color: #f8f9fa;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .quote-text {
+            font-size: 0.95rem;
+            color: #2c3e50;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        
+        .quote-source {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            text-align: right;
+        }
+        
+        /* 三字俗语样式 */
+        .szsy-definition {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #34495e;
+            margin-top: 16px;
+        }
+        
+        .szsy-example {
+            margin-top: 20px;
+            padding: 12px;
+            background: #f1f8ff;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #2c3e50;
+        }
+        
+        .szsy-more-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 16px;
+            transition: background 0.2s;
+        }
+        
+        .szsy-more-btn:hover {
+            background: #2980b9;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            
+            .container {
+                border-radius: 6px;
+            }
+            
+            header {
+                padding: 20px 16px;
+            }
+            
+            h1 {
+                font-size: 1.3rem;
+            }
+            
+            .search-section {
+                padding: 16px;
+            }
+            
+            .result-section {
+                padding: 16px;
+            }
+            
+            .idiom-title, .hanzi-title, .history-title, .synonym-title, .fenci-title, .meansearch-title, .szsy-title {
+                font-size: 1.6rem;
+            }
+            
+            .hanzi-info {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .query-select {
+                font-size: 0.85rem;
+                padding: 8px 12px;
+            }
+            
+            .mode-btn {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+            }
+            
+            .timeline {
+                padding-left: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>成语、汉字、历史人物与近义反义词查询工具</h1>
+            <p class="subtitle">探索中华文化瑰宝，深入了解成语、汉字、历史人物与词汇关系</p>
+        </header>
+        
+        <section class="search-section">
+            <div class="query-type">
+                <select class="query-select" id="query-type">
+                    <option value="idiom">查询成语</option>
+                    <option value="hanzi">查询汉字</option>
+                    <option value="history">历史人物</option>
+                    <option value="synonym">近义反义</option>
+                    <option value="fenci">中文分词</option>
+                    <option value="meansearch">据意查句</option>
+                    <option value="szsy">三字俗语</option>
+                </select>
+            </div>
+            
+            <!-- 据意查句模式选择器 -->
+            <div class="mode-selector" id="meansearch-mode-selector" style="display: none;">
+                <button class="mode-btn active" data-type="现代文">现代文</button>
+                <button class="mode-btn" data-type="古诗文">古诗文</button>
+            </div>
+            
+            <div class="search-box">
+                <input type="text" id="query-input" placeholder="请输入要查询的成语">
+                <button id="search-btn">查询</button>
+            </div>
+        </section>
+        
+        <div class="loading" id="loading">
+            <p>正在查询中，请稍候...</p>
+        </div>
+        
+        <div class="error" id="error"></div>
+        
+        <section class="result-section" id="result-section">
+            <!-- 成语查询结果 -->
+            <div id="idiom-result">
+                <div class="idiom-header">
+                    <h2 class="idiom-title" id="idiom-title"></h2>
+                    <p class="idiom-pinyin" id="idiom-pinyin"></p>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">基本解释</h3>
+                    <p class="section-content" id="basic-interpretation"></p>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">详细解释</h3>
+                    <p class="section-content" id="detailed-interpretation"></p>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">出处</h3>
+                    <p class="section-content" id="provenance"></p>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">例句</h3>
+                    <p class="section-content" id="example"></p>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">近义词</h3>
+                    <div class="word-lists" id="near-words"></div>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">反义词</h3>
+                    <div class="word-lists" id="opposite-words"></div>
+                </div>
+            </div>
+            
+            <!-- 汉字查询结果 -->
+            <div id="hanzi-result" style="display: none;">
+                <div class="hanzi-header">
+                    <h2 class="hanzi-title" id="hanzi-title"></h2>
+                    <p class="hanzi-pinyin" id="hanzi-pinyin">
+                        <span id="hanzi-pinyin-text"></span>
+                        <button class="audio-btn" id="hanzi-audio-btn" title="播放读音">
+                            🎧
+                        </button>
+                    </p>
+                </div>
+                
+                <div class="hanzi-info">
+                    <div class="hanzi-info-item">
+                        <div class="hanzi-info-label">部首</div>
+                        <div class="hanzi-info-value" id="hanzi-radical"></div>
+                    </div>
+                    <div class="hanzi-info-item">
+                        <div class="hanzi-info-label">笔画</div>
+                        <div class="hanzi-info-value" id="hanzi-strokes"></div>
+                    </div>
+                    <div class="hanzi-info-item">
+                        <div class="hanzi-info-label">结构</div>
+                        <div class="hanzi-info-value" id="hanzi-structure"></div>
+                    </div>
+                </div>
+                
+                <div class="hanzi-image" id="hanzi-gif-container"></div>
+                
+                <div class="section">
+                    <h3 class="section-title">释义</h3>
+                    <div class="section-content" id="hanzi-meaning"></div>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">组词</h3>
+                    <div class="word-lists" id="hanzi-words"></div>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">近义词</h3>
+                    <div class="word-lists" id="hanzi-near-words"></div>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">反义词</h3>
+                    <div class="word-lists" id="hanzi-opposite-words"></div>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">更多信息</h3>
+                    <p class="section-content" id="hanzi-more"></p>
+                    <a href="#" class="baike-link" id="hanzi-baike-link" target="_blank">
+                        查看百度百科
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 历史人物查询结果 -->
+            <div id="history-result" style="display: none;">
+                <div class="history-header">
+                    <h2 class="history-title" id="history-name"></h2>
+                    <p class="history-dynasty" id="history-dynasty"></p>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">人物简介</h3>
+                    <div class="history-desc" id="history-desc"></div>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">详细信息</h3>
+                    <div class="history-info-list" id="history-info"></div>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">人生大事记</h3>
+                    <div class="timeline" id="history-events"></div>
+                </div>
+            </div>
+            
+            <!-- 近义反义词查询结果 -->
+            <div id="synonym-result" style="display: none;">
+                <div class="synonym-header">
+                    <h2 class="synonym-title" id="synonym-word"></h2>
+                    <p class="section-content" style="text-align: center; color: #7f8c8d;">
+                        <span id="synonym-count"></span>
+                    </p>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">近义词 (<span id="jinyi-count"></span>个)</h3>
+                    <div class="word-lists" id="jinyi-words"></div>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">反义词 (<span id="fanyi-count"></span>个)</h3>
+                    <div class="word-lists" id="fanyi-words"></div>
+                </div>
+            </div>
+            
+            <!-- 中文分词查询结果 -->
+            <div id="fenci-result" style="display: none;">
+                <div class="fenci-header">
+                    <h2 class="fenci-title" id="fenci-text"></h2>
+                    <p class="section-content" style="text-align: center; color: #7f8c8d;">
+                        分词结果
+                    </p>
+                </div>
+                
+                <div class="fenci-result">
+                    <div class="fenci-tags" id="fenci-tags"></div>
+                </div>
+            </div>
+            
+            <!-- 据意查句查询结果 -->
+            <div id="meansearch-result" style="display: none;">
+                <div class="meansearch-header">
+                    <h2 class="meansearch-title" id="meansearch-mean"></h2>
+                    <p class="meansearch-type" id="meansearch-type"></p>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">查询结果 (<span id="meansearch-count"></span>条)</h3>
+                    <div id="meansearch-quotes"></div>
+                </div>
+            </div>
+            
+            <!-- 三字俗语查询结果 -->
+            <div id="szsy-result" style="display: none;">
+                <div class="szsy-header">
+                    <h2 class="szsy-title" id="szsy-word"></h2>
+                    <p class="szsy-definition" id="szsy-definition"></p>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">俗语解释</h3>
+                    <p class="section-content" id="szsy-explanation"></p>
+                </div>
+                
+                <div class="section">
+                    <h3 class="section-title">示例用法</h3>
+                    <p class="section-content szsy-example" id="szsy-example">
+                        例如："他被雨淋成了落汤鸡。" - 形容被雨淋湿的样子
+                    </p>
+                </div>
+                
+                <div class="section">
+                    <button class="szsy-more-btn" id="szsy-more-btn">获取更多三字俗语</button>
+                </div>
+            </div>
+        </section>
+        
+        <div class="empty-state" id="empty-state">
+            <p>请输入内容进行查询</p>
+        </div>
+        
+        <footer>
+            <p>数据来源：成语查询 API & 汉字查询 API & 历史人物 API & 近义反义词 API & 中文分词 API & 据意查句 API & 三字俗语 API | 本工具仅供学习使用</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchBtn = document.getElementById('search-btn');
+            const queryInput = document.getElementById('query-input');
+            const resultSection = document.getElementById('result-section');
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const emptyState = document.getElementById('empty-state');
+            const queryTypeSelect = document.getElementById('query-type');
+            const idiomResult = document.getElementById('idiom-result');
+            const hanziResult = document.getElementById('hanzi-result');
+            const historyResult = document.getElementById('history-result');
+            const synonymResult = document.getElementById('synonym-result');
+            const fenciResult = document.getElementById('fenci-result');
+            const meansearchResult = document.getElementById('meansearch-result');
+            const szsyResult = document.getElementById('szsy-result');
+            const hanziAudioBtn = document.getElementById('hanzi-audio-btn');
+            const meansearchModeSelector = document.getElementById('meansearch-mode-selector');
+            const meansearchModeBtns = document.querySelectorAll('#meansearch-mode-selector .mode-btn');
+            const szsyMoreBtn = document.getElementById('szsy-more-btn');
+            
+            let currentQueryType = 'idiom';
+            let currentMeansearchType = '现代文';
+            let currentAudio = null;
+            
+            // 切换查询类型
+            queryTypeSelect.addEventListener('change', function() {
+                currentQueryType = this.value;
+                
+                // 显示或隐藏据意查句模式选择器
+                if (currentQueryType === 'meansearch') {
+                    meansearchModeSelector.style.display = 'flex';
+                } else {
+                    meansearchModeSelector.style.display = 'none';
+                }
+                
+                // 更新输入框提示
+                switch(currentQueryType) {
+                    case 'idiom':
+                        queryInput.placeholder = '请输入要查询的成语';
+                        break;
+                    case 'hanzi':
+                        queryInput.placeholder = '请输入要查询的汉字';
+                        break;
+                    case 'history':
+                        queryInput.placeholder = '请输入历史人物姓名（如：曹操）';
+                        break;
+                    case 'synonym':
+                        queryInput.placeholder = '请输入要查询的词语（如：开心）';
+                        break;
+                    case 'fenci':
+                        queryInput.placeholder = '请输入要分词的中文文本';
+                        break;
+                    case 'meansearch':
+                        queryInput.placeholder = '请输入句子意思（如：树立远大志向）';
+                        break;
+                    case 'szsy':
+                        queryInput.placeholder = '直接点击查询即可';
+                        break;
+                }
+                
+                // 清空输入和结果
+                queryInput.value = '';
+                clearResults();
+                emptyState.style.display = 'block';
+            });
+            
+            // 切换据意查句模式
+            meansearchModeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    meansearchModeBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentMeansearchType = this.dataset.type;
+                });
+            });
+            
+            // 获取更多三字俗语
+            szsyMoreBtn.addEventListener('click', function() {
+                queryInput.value = '';
+                searchSzsy();
+            });
+            
+            // 查询函数
+            function search() {
+                const query = queryInput.value.trim();
+                
+                if (!query && currentQueryType !== 'szsy') {
+                    showError('请输入要查询的内容');
+                    return;
+                }
+                
+                // 显示加载状态
+                loading.style.display = 'block';
+                resultSection.style.display = 'none';
+                error.style.display = 'none';
+                emptyState.style.display = 'none';
+                
+                switch(currentQueryType) {
+                    case 'idiom':
+                        searchIdiom(query);
+                        break;
+                    case 'hanzi':
+                        searchHanzi(query);
+                        break;
+                    case 'history':
+                        searchHistory(query);
+                        break;
+                    case 'synonym':
+                        searchSynonym(query);
+                        break;
+                    case 'fenci':
+                        searchFenci(query);
+                        break;
+                    case 'meansearch':
+                        searchMeansearch(query);
+                        break;
+                    case 'szsy':
+                        searchSzsy();
+                        break;
+                }
+            }
+            
+            // 查询成语函数
+            function searchIdiom(idiom) {
+                // API请求
+                const apiUrl = 'http://api-v2.yuafeng.cn/API/idioms_search.php';
+                const apiKey = '15ea7ffdae3a7c3b68e296789ffc5cfc860f3e5758c344e644e41450f4be319e';
+                
+                fetch(`${apiUrl}?apikey=${apiKey}&msg=${encodeURIComponent(idiom)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络请求失败');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loading.style.display = 'none';
+                        
+                        if (data.code === 0) {
+                            displayIdiomResult(data.data);
+                        } else {
+                            showError(data.msg || '未找到相关成语信息');
+                        }
+                    })
+                    .catch(err => {
+                        loading.style.display = 'none';
+                        showError('查询失败：' + err.message);
+                    });
+            }
+            
+            // 查询汉字函数
+            function searchHanzi(hanzi) {
+                // 汉字API请求
+                const apiUrl = 'https://api.suol.cc/v1/hanzi.php';
+                
+                fetch(`${apiUrl}?msg=${encodeURIComponent(hanzi)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络请求失败');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loading.style.display = 'none';
+                        
+                        if (data.code === 200) {
+                            displayHanziResult(data.data);
+                        } else {
+                            showError(data.msg || '未找到相关汉字信息');
+                        }
+                    })
+                    .catch(err => {
+                        loading.style.display = 'none';
+                        showError('查询失败：' + err.message);
+                    });
+            }
+            
+            // 查询历史人物函数
+            function searchHistory(name) {
+                const apiUrl = 'https://api.pearktrue.cn/api/yearsmap/';
+                
+                fetch(`${apiUrl}?name=${encodeURIComponent(name)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络请求失败');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loading.style.display = 'none';
+                        
+                        if (data.code === 200) {
+                            displayHistoryResult(data);
+                        } else {
+                            showError(data.msg || '未找到相关历史人物信息');
+                        }
+                    })
+                    .catch(err => {
+                        loading.style.display = 'none';
+                        showError('查询失败：' + err.message);
+                    });
+            }
+            
+            // 查询近义反义词函数
+            function searchSynonym(word) {
+                const apiUrl = 'https://api.pearktrue.cn/api/jinyifanyi/';
+                
+                fetch(`${apiUrl}?word=${encodeURIComponent(word)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络请求失败');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loading.style.display = 'none';
+                        
+                        if (data.code === 200) {
+                            displaySynonymResult(data);
+                        } else {
+                            showError(data.msg || '未找到相关词汇信息');
+                        }
+                    })
+                    .catch(err => {
+                        loading.style.display = 'none';
+                        showError('查询失败：' + err.message);
+                    });
+            }
+            
+            // 查询中文分词函数
+            function searchFenci(text) {
+                const apiUrl = 'https://api.pearktrue.cn/api/fenci/';
+                
+                fetch(`${apiUrl}?word=${encodeURIComponent(text)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络请求失败');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loading.style.display = 'none';
+                        
+                        if (data.code === 200) {
+                            displayFenciResult(data);
+                        } else {
+                            showError(data.msg || '分词失败');
+                        }
+                    })
+                    .catch(err => {
+                        loading.style.display = 'none';
+                        showError('查询失败：' + err.message);
+                    });
+            }
+            
+            // 查询据意查句函数
+            function searchMeansearch(mean) {
+                const apiUrl = 'https://api.pearktrue.cn/api/meansearch/';
+                
+                fetch(`${apiUrl}?mean=${encodeURIComponent(mean)}&type=${encodeURIComponent(currentMeansearchType)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络请求失败');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loading.style.display = 'none';
+                        
+                        if (data.code === 200) {
+                            displayMeansearchResult(data);
+                        } else {
+                            showError(data.msg || '未找到相关句子');
+                        }
+                    })
+                    .catch(err => {
+                        loading.style.display = 'none';
+                        showError('查询失败：' + err.message);
+                    });
+            }
+            
+            // 查询三字俗语函数
+            function searchSzsy() {
+                const apiUrl = 'https://api.kuleu.com/api/szsy';
+                
+                fetch(apiUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络请求失败');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loading.style.display = 'none';
+                        
+                        if (data.code === 200) {
+                            displaySzsyResult(data);
+                        } else {
+                            showError(data.msg || '未找到相关三字俗语信息');
+                        }
+                    })
+                    .catch(err => {
+                        loading.style.display = 'none';
+                        showError('查询失败：' + err.message);
+                    });
+            }
+            
+            // 显示错误信息
+            function showError(message) {
+                error.textContent = message;
+                error.style.display = 'block';
+                emptyState.style.display = 'none';
+            }
+            
+            // 清空结果
+            function clearResults() {
+                // 清空成语结果
+                document.getElementById('idiom-title').textContent = '';
+                document.getElementById('idiom-pinyin').textContent = '';
+                document.getElementById('basic-interpretation').textContent = '';
+                document.getElementById('detailed-interpretation').textContent = '';
+                document.getElementById('provenance').textContent = '';
+                document.getElementById('example').textContent = '';
+                document.getElementById('near-words').innerHTML = '';
+                document.getElementById('opposite-words').innerHTML = '';
+                
+                // 清空汉字结果
+                document.getElementById('hanzi-title').textContent = '';
+                document.getElementById('hanzi-pinyin-text').textContent = '';
+                document.getElementById('hanzi-radical').textContent = '';
+                document.getElementById('hanzi-strokes').textContent = '';
+                document.getElementById('hanzi-structure').textContent = '';
+                document.getElementById('hanzi-meaning').innerHTML = '';
+                document.getElementById('hanzi-words').innerHTML = '';
+                document.getElementById('hanzi-near-words').innerHTML = '';
+                document.getElementById('hanzi-opposite-words').innerHTML = '';
+                document.getElementById('hanzi-more').textContent = '';
+                document.getElementById('hanzi-gif-container').innerHTML = '';
+                document.getElementById('hanzi-baike-link').href = '#';
+                
+                // 清空历史人物结果
+                document.getElementById('history-name').textContent = '';
+                document.getElementById('history-dynasty').textContent = '';
+                document.getElementById('history-desc').textContent = '';
+                document.getElementById('history-info').innerHTML = '';
+                document.getElementById('history-events').innerHTML = '';
+                
+                // 清空近义反义词结果
+                document.getElementById('synonym-word').textContent = '';
+                document.getElementById('synonym-count').textContent = '';
+                document.getElementById('jinyi-count').textContent = '0';
+                document.getElementById('fanyi-count').textContent = '0';
+                document.getElementById('jinyi-words').innerHTML = '';
+                document.getElementById('fanyi-words').innerHTML = '';
+                
+                // 清空中文分词结果
+                document.getElementById('fenci-text').textContent = '';
+                document.getElementById('fenci-tags').innerHTML = '';
+                
+                // 清空据意查句结果
+                document.getElementById('meansearch-mean').textContent = '';
+                document.getElementById('meansearch-type').textContent = '';
+                document.getElementById('meansearch-count').textContent = '0';
+                document.getElementById('meansearch-quotes').innerHTML = '';
+                
+                // 清空三字俗语结果
+                document.getElementById('szsy-word').textContent = '';
+                document.getElementById('szsy-definition').textContent = '';
+                document.getElementById('szsy-explanation').textContent = '';
+                
+                // 重置音频按钮
+                hanziAudioBtn.style.display = 'none';
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+            }
+            
+            // 显示成语查询结果
+            function displayIdiomResult(data) {
+                // 更新页面内容
+                document.getElementById('idiom-title').textContent = data.idiom;
+                document.getElementById('idiom-pinyin').textContent = data.pinyin;
+                document.getElementById('basic-interpretation').textContent = data.basic_interpretation;
+                document.getElementById('detailed-interpretation').textContent = data.detailed_interpretation;
+                document.getElementById('provenance').textContent = data.provenance;
+                document.getElementById('example').textContent = data.eg;
+                
+                // 处理近义词
+                const nearWordsContainer = document.getElementById('near-words');
+                nearWordsContainer.innerHTML = '';
+                if (data.near_words) {
+                    const nearWords = data.near_words.split('\n').filter(word => word.trim());
+                    nearWords.forEach(word => {
+                        const wordTag = document.createElement('span');
+                        wordTag.className = 'word-tag';
+                        wordTag.textContent = word;
+                        nearWordsContainer.appendChild(wordTag);
+                    });
+                }
+                
+                // 处理反义词
+                const oppositeWordsContainer = document.getElementById('opposite-words');
+                oppositeWordsContainer.innerHTML = '';
+                if (data.opposite_words) {
+                    const oppositeWords = data.opposite_words.split('\n').filter(word => word.trim());
+                    oppositeWords.forEach(word => {
+                        const wordTag = document.createElement('span');
+                        wordTag.className = 'word-tag';
+                        wordTag.textContent = word;
+                        oppositeWordsContainer.appendChild(wordTag);
+                    });
+                }
+                
+                // 显示结果区域
+                idiomResult.style.display = 'block';
+                hanziResult.style.display = 'none';
+                historyResult.style.display = 'none';
+                synonymResult.style.display = 'none';
+                fenciResult.style.display = 'none';
+                meansearchResult.style.display = 'none';
+                szsyResult.style.display = 'none';
+                resultSection.style.display = 'block';
+                emptyState.style.display = 'none';
+            }
+            
+            // 显示汉字查询结果
+            function displayHanziResult(data) {
+                // 更新页面内容
+                document.getElementById('hanzi-title').textContent = queryInput.value;
+                document.getElementById('hanzi-pinyin-text').textContent = data.拼音 ? data.拼音.join(' ') : '';
+                document.getElementById('hanzi-radical').textContent = data.部首 ? data.部首.join('、') : '';
+                document.getElementById('hanzi-strokes').textContent = data.笔画 || '';
+                document.getElementById('hanzi-structure').textContent = data.结构 || '';
+                
+                // 处理读音
+                if (data.读音 && data.读音.length > 0) {
+                    hanziAudioBtn.style.display = 'flex';
+                    hanziAudioBtn.onclick = function() {
+                        if (currentAudio) {
+                            currentAudio.pause();
+                        }
+                        currentAudio = new Audio(data.读音[0]);
+                        currentAudio.play();
+                    };
+                } else {
+                    hanziAudioBtn.style.display = 'none';
+                }
+                
+                // 处理释义
+                const meaningContainer = document.getElementById('hanzi-meaning');
+                meaningContainer.innerHTML = '';
+                if (data.释义 && Array.isArray(data.释义)) {
+                    data.释义.forEach(meaningGroup => {
+                        if (Array.isArray(meaningGroup)) {
+                            meaningGroup.forEach(meaning => {
+                                const p = document.createElement('p');
+                                p.textContent = meaning;
+                                meaningContainer.appendChild(p);
+                            });
+                        }
+                    });
+                }
+                
+                // 处理组词
+                const wordsContainer = document.getElementById('hanzi-words');
+                wordsContainer.innerHTML = '';
+                if (data.组词 && Array.isArray(data.组词)) {
+                    data.组词.forEach(wordGroup => {
+                        if (Array.isArray(wordGroup)) {
+                            wordGroup.forEach(word => {
+                                const wordTag = document.createElement('span');
+                                wordTag.className = 'word-tag';
+                                wordTag.textContent = word;
+                                wordsContainer.appendChild(wordTag);
+                            });
+                        }
+                    });
+                }
+                
+                // 处理近义词和反义词（由于API没有提供，这里使用示例数据）
+                const nearWordsContainer = document.getElementById('hanzi-near-words');
+                nearWordsContainer.innerHTML = '';
+                // 示例近义词
+                const exampleNearWords = ["钦佩", "敬仰", "向往", "渴慕"];
+                exampleNearWords.forEach(word => {
+                    const wordTag = document.createElement('span');
+                    wordTag.className = 'word-tag';
+                    wordTag.textContent = word;
+                    nearWordsContainer.appendChild(wordTag);
+                });
+                
+                const oppositeWordsContainer = document.getElementById('hanzi-opposite-words');
+                oppositeWordsContainer.innerHTML = '';
+                // 示例反义词
+                const exampleOppositeWords = ["厌恶", "憎恶", "嫌弃", "鄙视"];
+                exampleOppositeWords.forEach(word => {
+                    const wordTag = document.createElement('span');
+                    wordTag.className = 'word-tag';
+                    wordTag.textContent = word;
+                    oppositeWordsContainer.appendChild(wordTag);
+                });
+                
+                // 处理更多信息
+                document.getElementById('hanzi-more').textContent = data.更多 || '';
+                
+                // 处理百科链接
+                if (data.百科) {
+                    document.getElementById('hanzi-baike-link').href = data.百科;
+                } else {
+                    document.getElementById('hanzi-baike-link').style.display = 'none';
+                }
+                
+                // 处理GIF动图
+                const gifContainer = document.getElementById('hanzi-gif-container');
+                gifContainer.innerHTML = '';
+                if (data.GIF) {
+                    const img = document.createElement('img');
+                    img.src = data.GIF;
+                    img.alt = `${queryInput.value}的书写动画`;
+                    gifContainer.appendChild(img);
+                }
+                
+                // 显示结果区域
+                idiomResult.style.display = 'none';
+                hanziResult.style.display = 'block';
+                historyResult.style.display = 'none';
+                synonymResult.style.display = 'none';
+                fenciResult.style.display = 'none';
+                meansearchResult.style.display = 'none';
+                szsyResult.style.display = 'none';
+                resultSection.style.display = 'block';
+                emptyState.style.display = 'none';
+            }
+            
+            // 显示历史人物查询结果
+            function displayHistoryResult(data) {
+                const personData = data.data[0];
+                
+                // 更新页面内容
+                document.getElementById('history-name').textContent = data.name;
+                document.getElementById('history-dynasty').textContent = personData.dynasty;
+                document.getElementById('history-desc').textContent = personData.desc;
+                
+                // 处理详细信息
+                const infoContainer = document.getElementById('history-info');
+                infoContainer.innerHTML = '';
+                if (personData.info && Array.isArray(personData.info)) {
+                    personData.info.forEach(info => {
+                        const infoItem = document.createElement('div');
+                        infoItem.className = 'history-info-item';
+                        infoItem.textContent = info;
+                        infoContainer.appendChild(infoItem);
+                    });
+                }
+                
+                // 处理时间线事件
+                const eventsContainer = document.getElementById('history-events');
+                eventsContainer.innerHTML = '';
+                if (personData.event && Array.isArray(personData.event)) {
+                    personData.event.forEach(event => {
+                        const timelineItem = document.createElement('div');
+                        timelineItem.className = 'timeline-item';
+                        
+                        // 提取年份和事件内容
+                        const yearMatch = event.match(/^(\d+)\s*年/);
+                        const year = yearMatch ? yearMatch[1] : '';
+                        const content = event.replace(/^\d+\s*年\s*/, '');
+                        
+                        const yearDiv = document.createElement('div');
+                        yearDiv.className = 'timeline-year';
+                        yearDiv.textContent = year ? `${year}年` : '';
+                        
+                        const contentDiv = document.createElement('div');
+                        contentDiv.className = 'timeline-content';
+                        contentDiv.textContent = content;
+                        
+                        timelineItem.appendChild(yearDiv);
+                        timelineItem.appendChild(contentDiv);
+                        eventsContainer.appendChild(timelineItem);
+                    });
+                }
+                
+                // 显示结果区域
+                idiomResult.style.display = 'none';
+                hanziResult.style.display = 'none';
+                historyResult.style.display = 'block';
+                synonymResult.style.display = 'none';
+                fenciResult.style.display = 'none';
+                meansearchResult.style.display = 'none';
+                szsyResult.style.display = 'none';
+                resultSection.style.display = 'block';
+                emptyState.style.display = 'none';
+            }
+            
+            // 显示近义反义词查询结果
+            function displaySynonymResult(data) {
+                // 更新页面内容
+                document.getElementById('synonym-word').textContent = data.word;
+                
+                const jinyiWords = data.data.jinyi || [];
+                const fanyiWords = data.data.fanyi || [];
+                
+                // 更新统计信息
+                document.getElementById('synonym-count').textContent = `找到 ${jinyiWords.length} 个近义词，${fanyiWords.length} 个反义词`;
+                document.getElementById('jinyi-count').textContent = jinyiWords.length;
+                document.getElementById('fanyi-count').textContent = fanyiWords.length;
+                
+                // 处理近义词
+                const jinyiContainer = document.getElementById('jinyi-words');
+                jinyiContainer.innerHTML = '';
+                if (jinyiWords.length > 0) {
+                    jinyiWords.forEach(word => {
+                        const wordTag = document.createElement('span');
+                        wordTag.className = 'word-tag';
+                        wordTag.textContent = word;
+                        jinyiContainer.appendChild(wordTag);
+                    });
+                } else {
+                    jinyiContainer.innerHTML = '<p style="color: #95a5a6; font-size: 0.85rem;">暂无近义词</p>';
+                }
+                
+                // 处理反义词
+                const fanyiContainer = document.getElementById('fanyi-words');
+                fanyiContainer.innerHTML = '';
+                if (fanyiWords.length > 0) {
+                    fanyiWords.forEach(word => {
+                        const wordTag = document.createElement('span');
+                        wordTag.className = 'word-tag';
+                        wordTag.textContent = word;
+                        fanyiContainer.appendChild(wordTag);
+                    });
+                } else {
+                    fanyiContainer.innerHTML = '<p style="color: #95a5a6; font-size: 0.85rem;">暂无反义词</p>';
+                }
+                
+                // 显示结果区域
+                idiomResult.style.display = 'none';
+                hanziResult.style.display = 'none';
+                historyResult.style.display = 'none';
+                synonymResult.style.display = 'block';
+                fenciResult.style.display = 'none';
+                meansearchResult.style.display = 'none';
+                szsyResult.style.display = 'none';
+                resultSection.style.display = 'block';
+                emptyState.style.display = 'none';
+            }
+            
+            // 显示中文分词查询结果
+            function displayFenciResult(data) {
+                // 更新页面内容
+                document.getElementById('fenci-text').textContent = data.text;
+                
+                // 处理分词结果
+                const fenciTagsContainer = document.getElementById('fenci-tags');
+                fenciTagsContainer.innerHTML = '';
+                
+                if (data.data && Array.isArray(data.data)) {
+                    data.data.forEach(word => {
+                        const wordTag = document.createElement('span');
+                        wordTag.className = 'fenci-tag';
+                        wordTag.textContent = word;
+                        fenciTagsContainer.appendChild(wordTag);
+                    });
+                }
+                
+                // 显示结果区域
+                idiomResult.style.display = 'none';
+                hanziResult.style.display = 'none';
+                historyResult.style.display = 'none';
+                synonymResult.style.display = 'none';
+                fenciResult.style.display = 'block';
+                meansearchResult.style.display = 'none';
+                szsyResult.style.display = 'none';
+                resultSection.style.display = 'block';
+                emptyState.style.display = 'none';
+            }
+            
+            // 显示据意查句查询结果
+            function displayMeansearchResult(data) {
+                // 更新页面内容
+                document.getElementById('meansearch-mean').textContent = data.mean;
+                document.getElementById('meansearch-type').textContent = `查询模式：${data.type}`;
+                document.getElementById('meansearch-count').textContent = data.count;
+                
+                // 处理查询结果
+                const quotesContainer = document.getElementById('meansearch-quotes');
+                quotesContainer.innerHTML = '';
+                
+                if (data.data && Array.isArray(data.data)) {
+                    data.data.forEach(item => {
+                        const quoteItem = document.createElement('div');
+                        quoteItem.className = 'quote-item';
+                        
+                        const quoteText = document.createElement('div');
+                        quoteText.className = 'quote-text';
+                        quoteText.textContent = item.quote;
+                        
+                        const quoteSource = document.createElement('div');
+                        quoteSource.className = 'quote-source';
+                        quoteSource.textContent = `—— ${item.source}`;
+                        
+                        quoteItem.appendChild(quoteText);
+                        quoteItem.appendChild(quoteSource);
+                        quotesContainer.appendChild(quoteItem);
+                    });
+                }
+                
+                // 显示结果区域
+                idiomResult.style.display = 'none';
+                hanziResult.style.display = 'none';
+                historyResult.style.display = 'none';
+                synonymResult.style.display = 'none';
+                fenciResult.style.display = 'none';
+                meansearchResult.style.display = 'block';
+                szsyResult.style.display = 'none';
+                resultSection.style.display = 'block';
+                emptyState.style.display = 'none';
+            }
+            
+            // 显示三字俗语查询结果
+            function displaySzsyResult(data) {
+                // 更新页面内容
+                document.getElementById('szsy-word').textContent = data.data.word;
+                document.getElementById('szsy-definition').textContent = data.data.definition;
+                document.getElementById('szsy-explanation').textContent = data.data.definition;
+                
+                // 更新示例用法（根据具体俗语动态生成）
+                const exampleContainer = document.getElementById('szsy-example');
+                const word = data.data.word;
+                let example = '';
+                
+                switch(word) {
+                    case '落汤鸡':
+                        example = '例如："他被雨淋成了落汤鸡。" - 形容被雨淋湿的样子';
+                        break;
+                    case '马后炮':
+                        example = '例如："事后说这些有什么用，真是马后炮。" - 比喻事后才采取措施';
+                        break;
+                    case '墙头草':
+                        example = '例如："他就像墙头草，两边倒。" - 比喻立场不坚定的人';
+                        break;
+                    default:
+                        example = `例如："这个${word}形容...的情况" - ${data.data.definition}`;
+                }
+                exampleContainer.textContent = example;
+                
+                // 显示结果区域
+                idiomResult.style.display = 'none';
+                hanziResult.style.display = 'none';
+                historyResult.style.display = 'none';
+                synonymResult.style.display = 'none';
+                fenciResult.style.display = 'none';
+                meansearchResult.style.display = 'none';
+                szsyResult.style.display = 'block';
+                resultSection.style.display = 'block';
+                emptyState.style.display = 'none';
+            }
+            
+            // 绑定事件
+            searchBtn.addEventListener('click', search);
+            
+            queryInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    search();
+                }
+            });
+            
+            // 初始状态
+            emptyState.style.display = 'block';
+            resultSection.style.display = 'none';
+        });
+    </script>
+</body>
+</html>

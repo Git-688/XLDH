@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width,initial-scale=1" name="viewport"/>
+    <title>表情搜索</title>
+    <style>
+        /* 样式部分与之前一致，省略重复代码 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary: #07c160;
+            --bg: #f5f7fa;
+            --card: #ffffff;
+            --text: #333333;
+            --text-secondary: #999999;
+            --border: #e0e0e0;
+            --shadow: rgba(0, 0, 0, 0.05);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1a1a1a;
+                --card: #2c2c2c;
+                --text: #ffffff;
+                --text-secondary: #aaaaaa;
+                --border: #444444;
+                --shadow: rgba(0, 0, 0, 0.3);
+            }
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 14px;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        header {
+            background: var(--card);
+            box-shadow: 0 1px 3px var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .search-box {
+            display: flex;
+            gap: 8px;
+            padding: 10px 0;
+            align-items: center;
+        }
+        input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--bg);
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        button {
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        select {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--bg);
+            color: var(--text);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .emoji-card {
+            background: var(--card);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px var(--shadow);
+            cursor: pointer;
+            transition: transform 0.2s;
+            aspect-ratio: 1;
+        }
+        .emoji-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        .emoji-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .symbol-card {
+            aspect-ratio: auto;
+            padding: 15px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100px;
+        }
+        .symbol-char {
+            font-size: 36px;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+        .symbol-name {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.2;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            grid-column: 1 / -1;
+        }
+        .error {
+            text-align: center;
+            padding: 20px;
+            color: #ff3b30;
+            grid-column: 1 / -1;
+        }
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            grid-column: 1 / -1;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .load-more {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 20px;
+        }
+        .load-more button {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .load-more button:hover {
+            background: var(--card);
+        }
+        .load-more button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        @media (max-width: 600px) {
+            body {
+                font-size: 12px;
+            }
+            input, button, select {
+                font-size: 12px;
+            }
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: 6px;
+            }
+            .symbol-char {
+                font-size: 28px;
+            }
+        }
+        .hidden {
+            display: none;
+        }
+        /* 新增：搜索结果高亮样式（可选，提升辨识度） */
+        .symbol-card.highlight {
+            border: 2px solid var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="search-box">
+                <select id="apiSelect">
+                    <option value="jkyai">JKYAI API</option>
+                    <option value="symbols">符号大全</option>
+                    <option value="emoji">emoji表情</option>
+                </select>
+                <input id="searchInput" placeholder="搜索表情..." type="text"/>
+                <button id="searchBtn">搜索</button>
+            </div>
+        </div>
+    </header>
+    <main class="container">
+        <div class="grid" id="emojiGrid">
+            <div class="empty">输入关键词搜索表情</div>
+        </div>
+        <div class="load-more hidden" id="loadMore">
+            <button id="loadMoreBtn">加载更多</button>
+        </div>
+        <div class="toast" id="toast"></div>
+    </main>
+    <script>
+        // API配置
+        const API_CONFIG = {
+            jkyai: {
+                url: 'https://api.jkyai.top/API/wxbqss.php',
+                params: (keyword, page) => `?count=100&msg=${encodeURIComponent(keyword)}`,
+                extractData: (data) => Array.isArray(data.data) ? data.data : [data.data],
+                supportPagination: false,
+                isSymbolApi: false
+            },
+            symbols: {
+                url: 'https://api.andeer.top/API/symbols.php',
+                params: (keyword, page) => '',
+                // 核心修改1：符号大全新增关键词筛选逻辑
+                extractData: (data, keyword) => {
+                    const allSymbols = data.code === 200 && Array.isArray(data.data) ? data.data : [];
+                    // 关键词为空则返回全部，否则筛选“名称/解释”包含关键词的符号（不区分大小写）
+                    return keyword 
+                        ? allSymbols.filter(item => 
+                            (item.name && item.name.toLowerCase().includes(keyword.toLowerCase())) || 
+                            (item.explanation && item.explanation.toLowerCase().includes(keyword.toLowerCase()))
+                          ) 
+                        : allSymbols;
+                },
+                supportPagination: false,
+                isSymbolApi: true
+            },
+            emoji: {
+                url: 'https://api.andeer.top/API/emoji_search.php',
+                params: (keyword, page) => `?msg=${encodeURIComponent(keyword)}`,
+                extractData: (data) => {
+                    if (data.success === true && data.code === 200 && data.data) {
+                        return Array.isArray(data.data) ? 
+                            data.data.map(item => ({ symbol: item.emoji, name: 'emoji' })) : 
+                            [{ symbol: data.data.emoji, name: 'emoji' }];
+                    }
+                    return [];
+                },
+                supportPagination: false,
+                isSymbolApi: true
+            }
+        };
+        const grid = document.getElementById('emojiGrid');
+        const input = document.getElementById('searchInput');
+        const button = document.getElementById('searchBtn');
+        const toast = document.getElementById('toast');
+        const apiSelect = document.getElementById('apiSelect');
+        const loadMore = document.getElementById('loadMore');
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        let isLoading = false;
+        let currentKeyword = '';
+        let currentPage = 1;
+        let currentApi = 'jkyai';
+
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        async function searchEmojis(keyword, page = 1, append = false) {
+            if (isLoading) return;
+            
+            isLoading = true;
+            currentKeyword = keyword;
+            currentPage = page;
+            
+            if (!append) {
+                grid.innerHTML = '<div class="loading">搜索中...</div>';
+                loadMore.classList.add('hidden');
+            } else {
+                loadMoreBtn.textContent = '加载中...';
+                loadMoreBtn.disabled = true;
+            }
+            try {
+                const config = API_CONFIG[currentApi];
+                const url = `${config.url}${config.params(keyword, page)}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error('网络请求失败');
+                }
+                const data = await response.json();
+                
+                // 成功状态判断
+                let isSuccess = false;
+                if (currentApi === 'emoji') {
+                    isSuccess = data.success === true && data.code === 200;
+                } else if (currentApi === 'symbols') {
+                    isSuccess = data.code === 200;
+                } else {
+                    isSuccess = data.code == 200 || data.code == '200';
+                }
+                
+                if (!isSuccess) {
+                    throw new Error(data.msg || '搜索失败，请重试');
+                }
+
+                // 核心修改2：符号大全传入关键词进行筛选
+                const items = currentApi === 'symbols' 
+                    ? config.extractData(data, keyword) 
+                    : config.extractData(data);
+                
+                if (items.length === 0) {
+                    if (append) {
+                        showToast('没有更多表情了');
+                        loadMore.classList.add('hidden');
+                    } else {
+                        grid.innerHTML = '<div class="empty">未找到相关表情</div>';
+                    }
+                    return;
+                }
+
+                // 渲染符号/表情卡片
+                let html = '';
+                if (config.isSymbolApi) {
+                    html = items.map((item, index) => `
+                        <!-- 核心修改3：给第一个搜索结果加highlight类（便于定位后识别） -->
+                        <div class="emoji-card symbol-card ${index === 0 ? 'highlight' : ''}" 
+                             onclick="copyText('${item.symbol}')" 
+                             title="${item.explanation || item.name || '点击复制'}">
+                            <div class="symbol-char">${item.symbol}</div>
+                            <div class="symbol-name">${item.name || '符号'}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    html = items.map(url => `
+                        <div class="emoji-card" onclick="copyText('${url}')" title="点击复制链接">
+                            <img src="${url}" loading="lazy" alt="表情"/>
+                        </div>
+                    `).join('');
+                }
+
+                if (append) {
+                    grid.insertAdjacentHTML('beforeend', html);
+                    loadMoreBtn.textContent = '加载更多';
+                    loadMoreBtn.disabled = false;
+                } else {
+                    grid.innerHTML = html;
+                }
+
+                // 核心修改4：符号大全搜索后，定位到第一个结果（滚动到视图中）
+                if (currentApi === 'symbols' && keyword) {
+                    const firstResult = grid.querySelector('.emoji-card:first-child');
+                    if (firstResult) {
+                        // 平滑滚动到第一个结果，顶部留20px间距（避免被header遮挡）
+                        firstResult.scrollIntoView({ behavior: 'smooth', block: 'nearest', top: 20 });
+                    }
+                }
+
+                // 控制加载更多按钮显示
+                if (config.supportPagination && !append && items.length >= 15) {
+                    loadMore.classList.remove('hidden');
+                }
+            } catch (error) {
+                if (append) {
+                    showToast('加载失败');
+                    loadMoreBtn.textContent = '加载更多';
+                    loadMoreBtn.disabled = false;
+                } else {
+                    grid.innerHTML = `<div class="error">搜索失败: ${error.message}</div>`;
+                }
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        async function copyText(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('已复制到剪贴板');
+            } catch (err) {
+                showToast('复制失败');
+            }
+        }
+
+        // 核心修改5：更新符号大全的搜索逻辑（支持关键词搜索）
+        function handleSearch() {
+            const keyword = input.value.trim();
+            if (currentApi === 'symbols') {
+                // 符号大全：关键词搜索（不再强制获取全部）
+                searchEmojis(keyword, 1, false);
+                input.placeholder = '搜索符号名称/解释（如"alpha"、"积分"）';
+            } else {
+                keyword ? searchEmojis(keyword, 1, false) : grid.innerHTML = '<div class="empty">输入关键词搜索表情</div>';
+                input.placeholder = '搜索表情...';
+            }
+        }
+
+        // 事件监听
+        button.addEventListener('click', handleSearch);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+        apiSelect.addEventListener('change', (e) => {
+            currentApi = e.target.value;
+            // 切换到符号大全时更新提示
+            if (currentApi === 'symbols') {
+                input.placeholder = '搜索符号名称/解释（如"alpha"、"积分"）';
+                // 初始加载全部符号
+                searchEmojis('', 1, false);
+            } else if (currentApi === 'emoji') {
+                input.placeholder = '搜索emoji（如"雨伞"、"笑脸"）';
+            } else {
+                input.placeholder = '搜索表情...';
+            }
+        });
+        loadMoreBtn.addEventListener('click', () => {
+            searchEmojis(currentKeyword, currentPage + 1, true);
+        });
+
+        // 初始加载
+        currentApi = 'jkyai';
+        searchEmojis('你好', 1, false);
+    </script>
+</body></html>

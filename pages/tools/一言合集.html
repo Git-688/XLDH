@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一言文案集 | 简约版</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+        
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #7f8c8d;
+            flex: 1;
+        }
+        
+        .tab-button.active {
+            background: white;
+            color: #3498db;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .content-area {
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        /* 应用容器通用样式 */
+        .app-container {
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        
+        .app-container:hover {
+            transform: translateY(-3px);
+        }
+        
+        .app-header {
+            padding: 20px 25px 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .app-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .selector-wrapper {
+            position: relative;
+            min-width: 130px;
+        }
+        
+        .app-select {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+            background: white;
+            color: #2c3e50;
+            font-size: 0.8rem;
+            cursor: pointer;
+            appearance: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .app-select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+        }
+        
+        .selector-wrapper::after {
+            content: "\f078";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+            font-size: 0.7rem;
+            pointer-events: none;
+        }
+        
+        .app-content {
+            padding: 40px 30px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        /* 统一内容显示样式 */
+        .content-display {
+            margin-bottom: 30px;
+            padding: 25px 20px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            color: #4a5568;
+            line-height: 1.6;
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        
+        .content-display.show {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .content-display.loading::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #3498db, #6c63ff);
+            transform: scaleX(0);
+            transform-origin: left;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { transform: scaleX(0); transform-origin: left; }
+            50% { transform: scaleX(1); transform-origin: left; }
+            51% { transform: scaleX(1); transform-origin: right; }
+            100% { transform: scaleX(0); transform-origin: right; }
+        }
+        
+        .content-text {
+            font-style: italic;
+            font-size: 1.3rem;
+            line-height: 1.5;
+            position: relative;
+            padding: 0 15px;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .content-text::before, .content-text::after {
+            content: '"';
+            font-size: 2rem;
+            color: #3498db;
+            opacity: 0.3;
+            position: absolute;
+        }
+        
+        .content-text::before {
+            top: -10px;
+            left: 0;
+        }
+        
+        .content-text::after {
+            bottom: -20px;
+            right: 0;
+        }
+        
+        .content-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            width: 100%;
+        }
+        
+        .content-author {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            font-style: italic;
+            opacity: 0;
+        }
+        
+        .content-author.show {
+            opacity: 1;
+            transition: opacity 0.5s ease 0.2s;
+        }
+        
+        .content-author::before {
+            content: "— ";
+        }
+        
+        .content-translation {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            font-style: normal;
+            opacity: 0;
+        }
+        
+        .content-translation.show {
+            opacity: 1;
+            transition: opacity 0.5s ease 0.4s;
+        }
+        
+        .content-note {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            font-style: italic;
+            opacity: 0;
+        }
+        
+        .content-note.show {
+            opacity: 1;
+            transition: opacity 0.5s ease 0.4s;
+        }
+        
+        .content-date {
+            font-size: 0.8rem;
+            color: #95a5a6;
+            margin-top: 5px;
+            opacity: 0;
+        }
+        
+        .content-date.show {
+            opacity: 1;
+            transition: opacity 0.5s ease 0.6s;
+        }
+        
+        .app-actions {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .app-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 8px rgba(52, 152, 219, 0.2);
+        }
+        
+        .app-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(52, 152, 219, 0.3);
+        }
+        
+        .app-btn:active {
+            transform: translateY(0);
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            color: #f44336;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        /* 隐藏类 */
+        .hidden {
+            display: none;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .app-content {
+                padding: 30px 20px;
+            }
+            
+            .content-text {
+                font-size: 1.1rem;
+                padding: 0 20px;
+            }
+            
+            .app-header {
+                padding: 15px 20px 10px;
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .selector-wrapper {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+            
+            .app-content {
+                padding: 25px 15px;
+            }
+            
+            .content-text {
+                font-size: 1rem;
+                padding: 0 15px;
+            }
+            
+            .content-text::before, .content-text::after {
+                font-size: 1.5rem;
+            }
+            
+            .selector-wrapper {
+                width: 100%;
+            }
+            
+            .app-btn {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
+        }
+        
+        /* 应用显示控制 */
+        #random-quote-app {
+            display: block;
+        }
+        
+        #famous-quote-app, #copywriting-app, #soup-app, #rainbow-app {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>一言文案集</h1>
+        <p>每日一句，启迪心灵</p>
+    </div>
+    
+    <div class="tab-container">
+        <button class="tab-button active" data-tab="random-quote-app">随机一言</button>
+        <button class="tab-button" data-tab="famous-quote-app">名人名言</button>
+        <button class="tab-button" data-tab="copywriting-app">文案馆</button>
+        <button class="tab-button" data-tab="soup-app">毒鸡汤</button>
+        <button class="tab-button" data-tab="rainbow-app">彩虹屁</button>
+    </div>
+    
+    <div class="content-area">
+        <!-- 随机一言模块 -->
+        <div id="random-quote-app">
+            <div class="app-container">
+                <div class="app-header">
+                    <div class="app-title">随机一言</div>
+                    <div class="selector-wrapper">
+                        <select class="app-select" id="randomQuoteApiSelect">
+                            <option value="simple">源一</option>
+                            <option value="detailed">源二</option>
+                            <option value="xiaoy">源三</option>
+                            <option value="tcslw1">源四</option>
+                            <option value="whyta">源五</option>
+                            <option value="whyta2">源六</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="app-content">
+                    <div class="content-display" id="randomQuoteDisplay">
+                        <div class="content-text">正在加载...</div>
+                    </div>
+                    
+                    <div class="app-actions">
+                        <button class="app-btn" id="randomQuoteRefreshBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            <span class="btn-text">刷新</span>
+                        </button>
+                    </div>
+                    
+                    <div id="randomQuoteErrorMessage" class="error-message"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 名人名言模块 -->
+        <div id="famous-quote-app">
+            <div class="app-container">
+                <div class="app-header">
+                    <div class="app-title">名人名言</div>
+                    <div class="selector-wrapper">
+                        <select class="app-select" id="famousQuoteTypeSelector">
+                            <option value="quote">名人名言</option>
+                            <option value="life">人生话语</option>
+                            <option value="joke">趣味笑话</option>
+                            <option value="human">人间凑数</option>
+                            <option value="qq">QQ签名</option>
+                            <option value="lzmy">励志古言</option>
+                            <option value="saylove">土味情话</option>
+                            <option value="one">每日一句</option>
+                            <option value="everyday">每日英语</option>
+                            <option value="zaoan">早安心语</option>
+                            <option value="wanan">晚安心语</option>
+                            <option value="duilian">经典对联</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="app-content">
+                    <div class="content-display" id="famousQuoteDisplay">
+                        <div class="content-text">正在加载...</div>
+                    </div>
+                    
+                    <div class="app-actions">
+                        <button class="app-btn" id="famousQuoteRefreshBtn">
+                            <i class="fas fa-sync-alt"></i> 刷新
+                        </button>
+                    </div>
+                    
+                    <div id="famousQuoteErrorMessage" class="error-message"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 文案馆模块 -->
+        <div id="copywriting-app">
+            <div class="app-container">
+                <div class="app-header">
+                    <div class="app-title">文案馆</div>
+                    <div class="selector-wrapper">
+                        <select class="app-select" id="copywritingApiSelector">
+                            <option value="pengyouquan">朋友圈文案</option>
+                            <option value="pengyouquan2">朋友圈文案2</option>
+                            <option value="wenrou">温柔文案</option>
+                            <option value="kfc">KFC文案</option>
+                            <option value="hsjz">失恋分手句子</option>
+                            <option value="dialogue">经典台词</option>
+                            <option value="highQuality">高质量文案</option>
+                            <option value="novel">小说文案</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="app-content">
+                    <div class="content-display" id="copywritingDisplay">
+                        <div class="content-text">正在加载...</div>
+                    </div>
+                    
+                    <div class="app-actions">
+                        <button class="app-btn" id="copywritingRefreshBtn">
+                            <i class="fas fa-sync-alt"></i> 刷新
+                        </button>
+                    </div>
+                    
+                    <div id="copywritingErrorMessage" class="error-message"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 毒鸡汤模块 -->
+        <div id="soup-app">
+            <div class="app-container">
+                <div class="app-header">
+                    <div class="app-title">毒鸡汤</div>
+                    <div class="selector-wrapper">
+                        <select class="app-select" id="soupApiSelector">
+                            <option value="poison">毒鸡汤</option>
+                            <option value="soul">心灵鸡汤</option>
+                            <option value="lucky">鸡汤大乐透</option>
+                            <option value="soul2">心灵鸡汤2</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="app-content">
+                    <div class="content-display" id="soupDisplay">
+                        <div class="content-text">正在加载...</div>
+                    </div>
+                    
+                    <div class="app-actions">
+                        <button class="app-btn" id="soupRefreshBtn">
+                            <i class="fas fa-sync-alt"></i> 刷新
+                        </button>
+                    </div>
+                    
+                    <div id="soupErrorMessage" class="error-message"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 彩虹屁模块（包含保安日记和舔狗日记） -->
+        <div id="rainbow-app">
+            <div class="app-container">
+                <div class="app-header">
+                    <div class="app-title">彩虹屁</div>
+                    <div class="selector-wrapper">
+                        <select class="app-select" id="rainbowApiSelector">
+                            <option value="rainbow">彩虹屁</option>
+                            <option value="rainbow2">彩虹屁2</option>
+                            <option value="security">保安日记</option>
+                            <option value="dog">舔狗日记</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="app-content">
+                    <div class="content-display" id="rainbowDisplay">
+                        <div class="content-text">正在加载...</div>
+                    </div>
+                    
+                    <div class="app-actions">
+                        <button class="app-btn" id="rainbowRefreshBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            <span class="btn-text">刷新</span>
+                        </button>
+                    </div>
+                    
+                    <div id="rainbowErrorMessage" class="error-message"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 选项卡切换功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('#random-quote-app, #famous-quote-app, #copywriting-app, #soup-app, #rainbow-app');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // 移除所有活动状态
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.style.display = 'none');
+                    
+                    // 添加活动状态到当前按钮
+                    button.classList.add('active');
+                    
+                    // 显示对应的内容
+                    const tabId = button.getAttribute('data-tab');
+                    document.getElementById(tabId).style.display = 'block';
+                    
+                    // 自动获取内容
+                    if (tabId === 'random-quote-app') {
+                        fetchQuote();
+                    } else if (tabId === 'famous-quote-app') {
+                        fetchContent();
+                    } else if (tabId === 'copywriting-app') {
+                        fetchCopywriting();
+                    } else if (tabId === 'soup-app') {
+                        fetchSoup();
+                    } else if (tabId === 'rainbow-app') {
+                        fetchRainbow();
+                    }
+                });
+            });
+        });
+        
+        // 随机一言功能
+        (function() {
+            // DOM元素
+            const display = document.getElementById('randomQuoteDisplay');
+            const refreshBtn = document.getElementById('randomQuoteRefreshBtn');
+            const apiSelect = document.getElementById('randomQuoteApiSelect');
+            const errorMessage = document.getElementById('randomQuoteErrorMessage');
+            const btnText = document.querySelector('.btn-text');
+            
+            // API配置
+            const apiConfig = {
+                simple: {
+                    url: 'https://api.xcvts.cn/api/yiyan?type=json',
+                    parseData: (data) => {
+                        if (data && data.line) {
+                            return {
+                                content: data.line,
+                                author: ''
+                            };
+                        } else {
+                            throw new Error('简洁版API返回数据格式异常');
+                        }
+                    }
+                },
+                detailed: {
+                    url: 'https://api.xcvts.cn/api/yiyan?type=json',
+                    parseData: (data) => {
+                        if (data && data.line) {
+                            return {
+                                content: data.line,
+                                author: ''
+                            };
+                        } else {
+                            throw new Error('详细版API返回数据格式异常');
+                        }
+                    }
+                },
+                xiaoy: {
+                    url: 'https://api.xiaoy.asia/api/v1/?name=saying',
+                    parseData: (data) => {
+                        if (data && typeof data === 'string' && data.trim() !== '') {
+                            return {
+                                content: data.trim(),
+                                author: ''
+                            };
+                        } else {
+                            throw new Error('小游API返回数据格式异常');
+                        }
+                    }
+                },
+                tcslw1: {
+                    url: 'https://api.tcslw.cn/api/yiyan',
+                    parseData: (data) => {
+                        if (data && typeof data === 'string' && data.trim() !== '') {
+                            return {
+                                content: data.trim(),
+                                author: ''
+                            };
+                        } else if (data && data.data) {
+                            return {
+                                content: data.data,
+                                author: ''
+                            };
+                        } else {
+                            throw new Error('觅知API1返回数据格式异常');
+                        }
+                    }
+                },
+                whyta: {
+                    url: 'https://whyta.cn/api/yiyan?key=738b541a5f7a',
+                    parseData: (data) => {
+                        if (data && data.hitokoto) {
+                            return {
+                                content: data.hitokoto,
+                                author: data.from || ''
+                            };
+                        } else {
+                            throw new Error('Whyta API返回数据格式异常');
+                        }
+                    }
+                },
+                // 新增源六配置
+                whyta2: {
+                    url: 'https://whyta.cn/api/yiyan',
+                    parseData: (data) => {
+                        if (data && data.hitokoto) {
+                            return {
+                                content: data.hitokoto,
+                                author: data.from || ''
+                            };
+                        } else {
+                            throw new Error('源六API返回数据格式异常');
+                        }
+                    }
+                }
+            };
+            
+            // 当前API
+            let currentApi = 'simple';
+            
+            // 切换API
+            apiSelect.addEventListener('change', () => {
+                currentApi = apiSelect.value;
+                fetchQuote();
+            });
+            
+            // 获取一言
+            async function fetchQuote() {
+                try {
+                    // 清除之前的错误信息
+                    errorMessage.textContent = '';
+                    
+                    // 显示加载状态
+                    display.classList.remove('show');
+                    display.classList.add('loading');
+                    display.innerHTML = '<div class="content-text">正在加载...</div>';
+                    refreshBtn.disabled = true;
+                    btnText.textContent = '加载中';
+                    
+                    // 添加加载动画
+                    const icon = refreshBtn.querySelector('i');
+                    icon.className = 'loading';
+                    
+                    // 发送API请求
+                    const api = apiConfig[currentApi];
+                    
+                    // 添加时间戳避免缓存
+                    const url = api.url + (api.url.includes('?') ? '&' : '?') + 't=' + Date.now();
+                    
+                    // 动态设置请求头
+                    let headers = {};
+                    if (currentApi === 'simple' || currentApi === 'detailed' || currentApi === 'whyta' || currentApi === 'whyta2') {
+                        headers['Accept'] = 'application/json';
+                    }
+                    
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: headers
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`网络请求失败: ${response.status}`);
+                    }
+                    
+                    // 根据API类型解析数据
+                    let data;
+                    if (currentApi === 'xiaoy' || currentApi === 'tcslw1') {
+                        data = await response.text();
+                    } else {
+                        data = await response.json();
+                    }
+                    
+                    // 解析数据
+                    const quoteData = api.parseData(data);
+                    
+                    // 更新显示
+                    display.innerHTML = `
+                        <div class="content-text">${quoteData.content}</div>
+                        ${quoteData.author ? `<div class="content-info"><div class="content-author">${quoteData.author}</div></div>` : ''}
+                    `;
+                    
+                    // 显示内容（带有淡入动画）
+                    setTimeout(() => {
+                        display.classList.remove('loading');
+                        display.classList.add('show');
+                        
+                        // 如果有作者，延迟显示作者
+                        if (quoteData.author) {
+                            const authorEl = display.querySelector('.content-author');
+                            if (authorEl) {
+                                setTimeout(() => {
+                                    authorEl.classList.add('show');
+                                }, 200);
+                            }
+                        }
+                    }, 50);
+                    
+                } catch (error) {
+                    // 错误处理
+                    console.error('获取一言失败:', error);
+                    display.innerHTML = '<div class="content-text">获取一言失败，请稍后重试</div>';
+                    setTimeout(() => {
+                        display.classList.remove('loading');
+                        display.classList.add('show');
+                    }, 50);
+                    errorMessage.textContent = '错误: ' + error.message;
+                } finally {
+                    // 恢复按钮状态
+                    refreshBtn.disabled = false;
+                    btnText.textContent = '刷新';
+                    const icon = refreshBtn.querySelector('i');
+                    icon.className = 'fas fa-sync-alt';
+                }
+            }
+            
+            // 初始加载一言
+            fetchQuote();
+            
+            // 按钮点击事件
+            refreshBtn.addEventListener('click', fetchQuote);
+        })();
+        
+        // 名人名言功能
+        (function() {
+            const display = document.getElementById('famousQuoteDisplay');
+            const typeSelector = document.getElementById('famousQuoteTypeSelector');
+            const refreshBtn = document.getElementById('famousQuoteRefreshBtn');
+            const errorMessage = document.getElementById('famousQuoteErrorMessage');
+            
+            let currentType = 'quote';
+            
+            // 切换内容类型
+            function switchType(type) {
+                currentType = type;
+                fetchContent();
+            }
+            
+            // 获取内容函数
+            function fetchContent() {
+                // 清除之前的错误信息
+                errorMessage.textContent = '';
+                
+                display.classList.remove('show');
+                display.classList.add('loading');
+                display.innerHTML = '<div class="content-text">正在加载...</div>';
+                refreshBtn.disabled = true;
+                
+                let apiUrl;
+                let isJson = false;
+                
+                switch(currentType) {
+                    case 'quote':
+                        apiUrl = 'https://api.lbbb.cc/api/mingrenmingyan';
+                        break;
+                    case 'life':
+                        apiUrl = 'https://api.lbbb.cc/api/rshy';
+                        break;
+                    case 'joke':
+                        apiUrl = 'https://api.xcvts.cn/api/yiyan/yulu?msg=趣味笑话&type=json';
+                        isJson = true;
+                        break;
+                    case 'human':
+                        apiUrl = 'https://api.xcvts.cn/api/yiyan/yulu?msg=我在人间凑数的日子&type=json';
+                        isJson = true;
+                        break;
+                    case 'qq':
+                        apiUrl = 'https://api.xcvts.cn/api/yiyan/yulu?msg=QQ签名&type=json';
+                        isJson = true;
+                        break;
+                    case 'lzmy': // 新增励志古言API
+                        apiUrl = 'https://whyta.cn/api/tx/lzmy?key=738b541a5f7a';
+                        isJson = true;
+                        break;
+                    case 'saylove': // 新增土味情话API
+                        apiUrl = 'https://whyta.cn/api/tx/saylove?key=738b541a5f7a';
+                        isJson = true;
+                        break;
+                    case 'one': // 新增每日一句API
+                        apiUrl = 'https://whyta.cn/api/tx/one?key=738b541a5f7a';
+                        isJson = true;
+                        break;
+                    case 'everyday': // 新增每日英语API
+                        apiUrl = 'https://whyta.cn/api/tx/everyday?key=738b541a5f7a';
+                        isJson = true;
+                        break;
+                    case 'zaoan': // 新增早安心语API
+                        apiUrl = 'https://whyta.cn/api/tx/zaoan?key=738b541a5f7a';
+                        isJson = true;
+                        break;
+                    case 'wanan': // 新增晚安心语API
+                        apiUrl = 'https://whyta.cn/api/tx/wanan?key=738b541a5f7a';
+                        isJson = true;
+                        break;
+                    case 'duilian': // 新增经典对联API
+                        apiUrl = 'https://whyta.cn/api/tx/duilian?key=738b541a5f7a';
+                        isJson = true;
+                        break;
+                }
+                
+                // 使用fetch API获取数据
+                fetch(apiUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络响应不正常');
+                        }
+                        return isJson ? response.json() : response.text();
+                    })
+                    .then(data => {
+                        // 处理返回的数据
+                        let content = '';
+                        let author = '';
+                        let translation = '';
+                        let note = '';
+                        let date = '';
+                        
+                        if (currentType === 'quote') {
+                            const parts = data.split('——');
+                            if (parts.length === 2) {
+                                content = parts[0].trim();
+                                author = parts[1].trim();
+                            } else {
+                                content = data;
+                                author = "未知";
+                            }
+                        } else if (currentType === 'life') {
+                            // 处理人生话语，移除"人生话语"和分隔线
+                            content = data.replace(/人生话语\s*━━━━━━━━━\s*/, '').replace(/\s*━━━━━━━━━\s*$/, '');
+                        } else if (currentType === 'joke') {
+                            content = data.line;
+                        } else if (currentType === 'human') {
+                            content = data.line;
+                        } else if (currentType === 'qq') {
+                            content = data.line;
+                        } else if (currentType === 'lzmy') {
+                            // 处理励志古言API返回的数据
+                            if (data.code === 200 && data.result) {
+                                content = data.result.saying;
+                                author = data.result.source;
+                                translation = data.result.transl;
+                            } else {
+                                throw new Error('励志古言API返回数据格式异常');
+                            }
+                        } else if (currentType === 'saylove') {
+                            // 处理土味情话API返回的数据
+                            if (data.code === 200 && data.result) {
+                                content = data.result.content;
+                            } else {
+                                throw new Error('土味情话API返回数据格式异常');
+                            }
+                        } else if (currentType === 'one') {
+                            // 处理每日一句API返回的数据
+                            if (data.code === 200 && data.result) {
+                                content = data.result.word;
+                                author = data.result.wordfrom;
+                                date = data.result.date;
+                            } else {
+                                throw new Error('每日一句API返回数据格式异常');
+                            }
+                        } else if (currentType === 'everyday') {
+                            // 处理每日英语API返回的数据
+                            if (data.code === 200 && data.result) {
+                                content = data.result.content;
+                                note = data.result.note;
+                                author = data.result.source;
+                                date = data.result.date;
+                            } else {
+                                throw new Error('每日英语API返回数据格式异常');
+                            }
+                        } else if (currentType === 'zaoan') {
+                            // 处理早安心语API返回的数据
+                            if (data.code === 200 && data.result) {
+                                content = data.result.content;
+                                author = "早安心语";
+                            } else {
+                                throw new Error('早安心语API返回数据格式异常');
+                            }
+                        } else if (currentType === 'wanan') {
+                            // 处理晚安心语API返回的数据
+                            if (data.code === 200 && data.result) {
+                                content = data.result.content;
+                                author = "晚安心语";
+                            } else {
+                                throw new Error('晚安心语API返回数据格式异常');
+                            }
+                        } else if (currentType === 'duilian') {
+                            // 处理经典对联API返回的数据
+                            if (data.code === 200 && data.result) {
+                                content = data.result.content;
+                                author = "经典对联";
+                            } else {
+                                throw new Error('经典对联API返回数据格式异常');
+                            }
+                        }
+                        
+                        // 更新显示
+                        let displayHTML = `<div class="content-text">${content}</div>`;
+                        displayHTML += `<div class="content-info">`;
+                        
+                        if (author) {
+                            displayHTML += `<div class="content-author">${author}</div>`;
+                        }
+                        
+                        if (translation) {
+                            displayHTML += `<div class="content-translation">${translation}</div>`;
+                        }
+                        
+                        if (note) {
+                            displayHTML += `<div class="content-note">${note}</div>`;
+                        }
+                        
+                        if (date) {
+                            displayHTML += `<div class="content-date">${date}</div>`;
+                        }
+                        
+                        displayHTML += `</div>`;
+                        
+                        display.innerHTML = displayHTML;
+                        
+                        // 显示内容（带有淡入动画）
+                        setTimeout(() => {
+                            display.classList.remove('loading');
+                            display.classList.add('show');
+                            
+                            // 延迟显示信息元素
+                            const authorEl = display.querySelector('.content-author');
+                            const translationEl = display.querySelector('.content-translation');
+                            const noteEl = display.querySelector('.content-note');
+                            const dateEl = display.querySelector('.content-date');
+                            
+                            if (authorEl) {
+                                setTimeout(() => {
+                                    authorEl.classList.add('show');
+                                }, 200);
+                            }
+                            
+                            if (translationEl) {
+                                setTimeout(() => {
+                                    translationEl.classList.add('show');
+                                }, 400);
+                            }
+                            
+                            if (noteEl) {
+                                setTimeout(() => {
+                                    noteEl.classList.add('show');
+                                }, 400);
+                            }
+                            
+                            if (dateEl) {
+                                setTimeout(() => {
+                                    dateEl.classList.add('show');
+                                }, 600);
+                            }
+                        }, 50);
+                    })
+                    .catch(error => {
+                        console.error('获取内容失败:', error);
+                        display.innerHTML = '<div class="content-text">获取内容失败，请稍后再试</div>';
+                        setTimeout(() => {
+                            display.classList.remove('loading');
+                            display.classList.add('show');
+                        }, 50);
+                        errorMessage.textContent = '错误: ' + error.message;
+                    })
+                    .finally(() => {
+                        refreshBtn.disabled = false;
+                    });
+            }
+            
+            // 事件监听
+            typeSelector.addEventListener('change', function() {
+                switchType(this.value);
+            });
+            
+            refreshBtn.addEventListener('click', fetchContent);
+            
+            // 页面加载时获取一条内容
+            fetchContent();
+        })();
+        
+        // 文案馆功能
+        (function() {
+            const display = document.getElementById('copywritingDisplay');
+            const apiSelector = document.getElementById('copywritingApiSelector');
+            const refreshBtn = document.getElementById('copywritingRefreshBtn');
+            const errorMessage = document.getElementById('copywritingErrorMessage');
+            
+            // API配置
+            const copywritingApis = {
+                pengyouquan: { url: 'https://api.lbbb.cc/api/pengyouquan', name: '朋友圈文案', type: 'text' },
+                pengyouquan2: {
+                    url: 'https://whyta.cn/api/tx/pyqwenan?key=738b541a5f7a',
+                    name: '朋友圈文案2',
+                    type: 'json',
+                    parser: d => d.result.content
+                },
+                wenrou: { url: 'https://api.lbbb.cc/api/wenrou', name: '温柔文案', type: 'text' },
+                kfc: { url: 'https://api.qhsou.com/api/kfc.php', name: 'KFC文案', type: 'json', contentField: 'content' },
+                hsjz: {
+                    url: 'https://whyta.cn/api/tx/hsjz?key=738b541a5f7a',
+                    name: '失恋分手句子',
+                    type: 'json',
+                    parser: d => d.result.content
+                },
+                dialogue: {
+                    url: 'https://whyta.cn/api/tx/dialogue?key=738b541a5f7a',
+                    name: '经典台词',
+                    type: 'json',
+                    parser: d => ({ content: d.result.dialogue, author: d.result.source || '未知来源', translation: d.result.english || '' })
+                },
+                highQuality: { url: 'https://api.jkyai.top/API/gzlwak.php', name: '高质量文案', type: 'text' },
+                // 新增小说文案
+                novel: { url: 'https://api.jkyai.top/API/xszcwa.php', name: '小说文案', type: 'text' }
+            };
+            
+            let currentApi = 'pengyouquan'; // 默认API
+            
+            // API选择处理
+            apiSelector.addEventListener('change', function() {
+                // 更新当前API
+                currentApi = this.value;
+                fetchCopywriting();
+            });
+            
+            // 获取文案
+            function fetchCopywriting() {
+                // 清除之前的错误信息
+                errorMessage.textContent = '';
+                
+                display.classList.remove('show');
+                display.classList.add('loading');
+                display.innerHTML = '<div class="content-text">正在加载...</div>';
+                refreshBtn.disabled = true;
+                
+                // 获取当前API配置
+                const api = copywritingApis[currentApi];
+                
+                // 调用API
+                fetch(api.url)
+                  .then(response => {
+                      if (!response.ok) {
+                          throw new Error('网络响应不正常');
+                      }
+                      // 根据API类型决定如何处理响应
+                      if (api.type === 'json') {
+                          return response.json();
+                      } else {
+                          return response.text();
+                      }
+                  })
+                  .then(data => {
+                      // 根据API类型处理返回的数据
+                      let content = '';
+                      let author = '';
+                      let translation = '';
+                      let typeName = api.name;
+                      
+                      if (api.parser) {
+                          const parsed = api.parser(data);
+                          if (typeof parsed === 'string') {
+                              content = parsed;
+                          } else {
+                              ({ content, author, translation } = parsed);
+                          }
+                      } else if (api.type === 'json') {
+                          content = data[api.contentField];
+                      } else {
+                          // 纯文本处理
+                          if (currentApi === 'wenrou') {
+                              // 对温柔文案API返回的数据进行处理，移除分隔线
+                              content = data.replace(/━━━━━━━━━/g, '').replace('温柔文案', '').trim();
+                          } else if (currentApi === 'novel') {
+                              // 小说文案直接显示
+                              content = data;
+                          } else {
+                              content = data;
+                          }
+                      }
+                      
+                      // 更新显示
+                      let displayHTML = `<div class="content-text">${content}</div>`;
+                      displayHTML += `<div class="content-info">`;
+                      
+                      if (author) {
+                          displayHTML += `<div class="content-author">${author}</div>`;
+                      }
+                      
+                      if (translation) {
+                          displayHTML += `<div class="content-translation">${translation}</div>`;
+                      }
+                      
+                      if (!author && typeName) {
+                          displayHTML += `<div class="content-author">${typeName}</div>`;
+                      }
+                      
+                      displayHTML += `</div>`;
+                      
+                      display.innerHTML = displayHTML;
+                      
+                      // 显示内容（带有淡入动画）
+                      setTimeout(() => {
+                          display.classList.remove('loading');
+                          display.classList.add('show');
+                          
+                          // 延迟显示信息元素
+                          const authorEl = display.querySelector('.content-author');
+                          const translationEl = display.querySelector('.content-translation');
+                          
+                          if (authorEl) {
+                              setTimeout(() => {
+                                  authorEl.classList.add('show');
+                              }, 200);
+                          }
+                          
+                          if (translationEl) {
+                              setTimeout(() => {
+                                  translationEl.classList.add('show');
+                              }, 400);
+                          }
+                      }, 50);
+                  })
+                  .catch(error => {
+                      console.error('获取文案出错:', error);
+                      display.innerHTML = '<div class="content-text">获取失败，请重试</div>';
+                      setTimeout(() => {
+                          display.classList.remove('loading');
+                          display.classList.add('show');
+                      }, 50);
+                      errorMessage.textContent = '错误: ' + error.message;
+                  })
+                  .finally(() => {
+                      refreshBtn.disabled = false;
+                  });
+            }
+            
+            // 初始加载文案
+            fetchCopywriting();
+            
+            // 按钮点击事件
+            refreshBtn.addEventListener('click', fetchCopywriting);
+        })();
+        
+        // 毒鸡汤功能
+        (function() {
+            const display = document.getElementById('soupDisplay');
+            const apiSelector = document.getElementById('soupApiSelector');
+            const refreshBtn = document.getElementById('soupRefreshBtn');
+            const errorMessage = document.getElementById('soupErrorMessage');
+            
+            // API配置
+            const apis = {
+                poison: {
+                    url: 'https://api.lbbb.cc/api/dujitang',
+                    name: '毒鸡汤',
+                    type: 'text'
+                },
+                soul: {
+                    url: 'https://free.xwteam.cn/api/soup/soul',
+                    name: '心灵鸡汤',
+                    type: 'json',
+                    contentField: 'data',
+                    parser: function(data) {
+                        // 从data对象中提取第一条内容
+                        const keys = Object.keys(data);
+                        if (keys.length > 0) {
+                            return data[keys[0]];
+                        }
+                        return '暂无内容';
+                    }
+                },
+                lucky: {
+                    url: 'https://free.xwteam.cn/api/soup/lucky',
+                    name: '鸡汤大乐透',
+                    type: 'json',
+                    contentField: 'data',
+                    parser: function(data) {
+                        // 从data对象中提取第一条内容
+                        const keys = Object.keys(data);
+                        if (keys.length > 0) {
+                            return data[keys[0]];
+                        }
+                        return '暂无内容';
+                    }
+                },
+                soul2: { // 修复后的心灵鸡汤2 API
+                    url: 'https://whyta.cn/api/tx/dujitang?key=738b541a5f7a',
+                    name: '心灵鸡汤2',
+                    type: 'json',
+                    contentField: 'result',
+                    parser: function(data) {
+                        // 直接访问result.content字段
+                        if (data && data.content) {
+                            return data.content;
+                        } else {
+                            throw new Error('心灵鸡汤2 API返回数据格式异常');
+                        }
+                    }
+                }
+            };
+            
+            let currentApi = 'poison';
+            
+            // 切换API类型
+            apiSelector.addEventListener('change', function() {
+                currentApi = this.value;
+                fetchSoup();
+            });
+            
+            // 获取内容函数
+            function fetchSoup() {
+                // 清除之前的错误信息
+                errorMessage.textContent = '';
+                
+                display.classList.remove('show');
+                display.classList.add('loading');
+                display.innerHTML = '<div class="content-text">正在加载...</div>';
+                refreshBtn.disabled = true;
+                
+                const api = apis[currentApi];
+                
+                // 设置请求选项
+                const options = {
+                    method: 'GET'
+                };
+                
+                // 对于xwteam API添加请求头
+                if (currentApi === 'soul' || currentApi === 'lucky') {
+                    options.headers = {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset:utf-8'
+                    };
+                }
+                
+                // 使用fetch API获取内容
+                fetch(api.url, options)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络响应不正常');
+                        }
+                        return api.type === 'json' ? response.json() : response.text();
+                    })
+                    .then(data => {
+                        // 更新内容
+                        let content;
+                        if (api.type === 'json') {
+                            if (api.parser) {
+                                // 传递data[api.contentField]给parser函数
+                                content = api.parser(data[api.contentField]);
+                            } else {
+                                content = data[api.contentField];
+                            }
+                        } else {
+                            content = data;
+                        }
+                        
+                        // 更新显示
+                        display.innerHTML = `
+                            <div class="content-text">${content}</div>
+                            <div class="content-info">
+                                <div class="content-author">${api.name}</div>
+                            </div>
+                        `;
+                        
+                        // 显示内容（带有淡入动画）
+                        setTimeout(() => {
+                            display.classList.remove('loading');
+                            display.classList.add('show');
+                            
+                            // 延迟显示类型名称
+                            const authorEl = display.querySelector('.content-author');
+                            if (authorEl) {
+                                setTimeout(() => {
+                                    authorEl.classList.add('show');
+                                }, 200);
+                            }
+                        }, 50);
+                        
+                        // 恢复按钮状态
+                        refreshBtn.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('获取内容失败:', error);
+                        display.innerHTML = '<div class="content-text">内容获取失败，请稍后再试！</div>';
+                        
+                        // 显示内容（带有淡入动画）
+                        setTimeout(() => {
+                            display.classList.remove('loading');
+                            display.classList.add('show');
+                        }, 50);
+                        
+                        // 恢复按钮状态
+                        refreshBtn.disabled = false;
+                        errorMessage.textContent = '错误: ' + error.message;
+                    });
+            }
+            
+            // 初始加载内容
+            fetchSoup();
+            
+            // 点击按钮获取新内容
+            refreshBtn.addEventListener('click', fetchSoup);
+        })();
+        
+        // 彩虹屁功能（包含保安日记和舔狗日记）
+        (function() {
+            const display = document.getElementById('rainbowDisplay');
+            const apiSelector = document.getElementById('rainbowApiSelector');
+            const refreshBtn = document.getElementById('rainbowRefreshBtn');
+            const errorMessage = document.getElementById('rainbowErrorMessage');
+            
+            let currentApi = 'rainbow'; // 默认API
+            
+            // API选择处理
+            apiSelector.addEventListener('change', function() {
+                // 更新当前API
+                currentApi = this.value;
+                fetchRainbow();
+            });
+            
+            // 获取内容
+            function fetchRainbow() {
+                // 清除之前的错误信息
+                errorMessage.textContent = '';
+                
+                display.classList.remove('show');
+                display.classList.add('loading');
+                display.innerHTML = '<div class="content-text">正在加载...</div>';
+                refreshBtn.disabled = true;
+                
+                // 根据当前选择的API构建URL
+                let apiUrl;
+                let responseType = 'text';
+                let typeName = '';
+                
+                if (currentApi === 'rainbow') {
+                    apiUrl = 'https://whyta.cn/api/tx/caihongpi?key=738b541a5f7a';
+                    responseType = 'json';
+                    typeName = '彩虹屁';
+                } else if (currentApi === 'rainbow2') {
+                    apiUrl = 'https://api.pearktrue.cn/api/caihongpi/';
+                    responseType = 'text';
+                    typeName = '彩虹屁2';
+                } else if (currentApi === 'security') {
+                    apiUrl = 'https://api.lbbb.cc/api/baoan';
+                    typeName = '保安日记';
+                } else if (currentApi === 'dog') {
+                    apiUrl = 'https://api.lbbb.cc/api/dog';
+                    typeName = '舔狗日记';
+                }
+                
+                // 调用API
+                fetch(apiUrl)
+                  .then(response => {
+                      if (!response.ok) {
+                          throw new Error('网络响应不正常');
+                      }
+                      // 根据API类型决定如何处理响应
+                      if (responseType === 'json') {
+                          return response.json();
+                      } else {
+                          return response.text();
+                      }
+                  })
+                  .then(data => {
+                      // 根据API类型处理返回的数据
+                      let content = '';
+                      
+                      if (currentApi === 'rainbow') {
+                          // 彩虹屁 API返回JSON格式，提取result.content字段
+                          if (data.code === 200 && data.result && data.result.content) {
+                              content = data.result.content;
+                          } else {
+                              throw new Error('彩虹屁 API返回数据格式异常');
+                          }
+                      } else if (currentApi === 'rainbow2') {
+                          // 彩虹屁2 API返回纯文本
+                          content = data;
+                      } else {
+                          // 保安日记和舔狗日记返回的是纯文本
+                          content = data;
+                      }
+                      
+                      // 更新显示
+                      display.innerHTML = `
+                          <div class="content-text">${content}</div>
+                          <div class="content-info">
+                              <div class="content-author">${typeName}</div>
+                          </div>
+                      `;
+                      
+                      // 显示内容（带有淡入动画）
+                      setTimeout(() => {
+                          display.classList.remove('loading');
+                          display.classList.add('show');
+                          
+                          // 延迟显示类型名称
+                          const authorEl = display.querySelector('.content-author');
+                          if (authorEl) {
+                              setTimeout(() => {
+                                  authorEl.classList.add('show');
+                              }, 200);
+                          }
+                      }, 50);
+                  })
+                  .catch(error => {
+                      console.error('获取内容出错:', error);
+                      display.innerHTML = '<div class="content-text">获取失败，请重试</div>';
+                      setTimeout(() => {
+                          display.classList.remove('loading');
+                          display.classList.add('show');
+                      }, 50);
+                      errorMessage.textContent = '错误: ' + error.message;
+                  })
+                  .finally(() => {
+                      refreshBtn.disabled = false;
+                  });
+            }
+            
+            // 初始加载内容
+            fetchRainbow();
+            
+            // 按钮点击事件
+            refreshBtn.addEventListener('click', fetchRainbow);
+        })();
+    </script>
+</body>
+</html>

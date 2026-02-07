@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>王者荣耀语音库</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #326FFF;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --dark-text: #2c3e50;
+            --light-text: #7f8c8d;
+            --border-color: #e1e5e9;
+            --card-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            --hover-shadow: 0 4px 12px rgba(50, 111, 255, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        body {
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 16px;
+            color: var(--dark-text);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 头部 */
+        .header {
+            background: white;
+            border-radius: 10px;
+            padding: 18px 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--primary-color);
+        }
+
+        .header p {
+            font-size: 12px;
+            color: var(--light-text);
+        }
+
+        /* 合并卡片 */
+        .main-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        /* 顶部信息栏 */
+        .top-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .hero-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hero-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .skin-count {
+            font-size: 13px;
+            color: var(--light-text);
+            background: var(--light-bg);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        /* 搜索框 - 右侧显示 */
+        .search-box {
+            position: relative;
+            width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 36px 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            transition: all 0.2s;
+            background: var(--light-bg);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            background: white;
+        }
+
+        .search-box button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--light-text);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* 皮肤选择区域 - 合并到卡片中 */
+        .skin-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 12px;
+        }
+
+        .skin-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 12px 6px;
+            border-radius: 8px;
+            background: var(--light-bg);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            min-height: 90px;
+        }
+
+        .skin-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        /* 激活状态 - 仅使用蓝色 #326FFF */
+        .skin-item.active {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 1px var(--secondary-color);
+        }
+
+        /* 皮肤图标和名称居中 - 移除激活指示 */
+        .skin-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 6px;
+            background-size: cover;
+            background-position: center;
+            margin-bottom: 8px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 移除图标激活指示 */
+        .skin-item.active .skin-icon {
+            border-color: white;
+            /* 不再添加特殊边框 */
+        }
+
+        .skin-name {
+            font-size: 10px;
+            line-height: 1.3;
+            color: var(--dark-text);
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        /* 移除名称激活指示 */
+        .skin-item.active .skin-name {
+            color: var(--dark-text); /* 保持原色，不使用特殊颜色 */
+        }
+
+        /* 台词区域 */
+        .voice-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .voice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .voice-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .line-count {
+            font-size: 12px;
+            color: var(--light-text);
+            background: var(--light-bg);
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+
+        .voice-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        /* 自定义滚动条 */
+        .voice-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .voice-list::-webkit-scrollbar-track {
+            background: var(--light-bg);
+            border-radius: 3px;
+        }
+
+        .voice-list::-webkit-scrollbar-thumb {
+            background: var(--secondary-color);
+            border-radius: 3px;
+        }
+
+        .voice-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--light-bg);
+            border-radius: 6px;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .voice-item:hover {
+            border-color: var(--border-color);
+        }
+
+        .voice-text {
+            flex: 1;
+            font-size: 13px;
+            line-height: 1.5;
+            padding-right: 12px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .play-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .play-btn:hover {
+            background: #1a5ae8;
+            transform: scale(1.05);
+        }
+
+        .play-btn.playing {
+            background: var(--accent-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+
+        /* 状态提示 */
+        .status {
+            padding: 30px 20px;
+            text-align: center;
+            color: var(--light-text);
+            font-size: 13px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .status.loading {
+            color: var(--secondary-color);
+        }
+
+        .status.error {
+            color: var(--accent-color);
+        }
+
+        .status.error button {
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            
+            .header,
+            .main-card,
+            .voice-container {
+                padding: 16px;
+            }
+            
+            /* 顶部信息栏调整为垂直布局 */
+            .top-info {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            
+            .hero-info {
+                justify-content: space-between;
+                width: 100%;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+            
+            /* 移动端皮肤网格 - 显示更多列 */
+            .skin-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 8px;
+            }
+            
+            .skin-item {
+                padding: 10px 4px;
+                min-height: 80px;
+            }
+            
+            .skin-icon {
+                width: 40px;
+                height: 40px;
+                margin-bottom: 6px;
+            }
+            
+            .skin-name {
+                font-size: 9px;
+            }
+            
+            .voice-list {
+                max-height: 350px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .skin-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 6px;
+            }
+            
+            .skin-item {
+                min-height: 75px;
+            }
+            
+            .skin-icon {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .skin-name {
+                font-size: 8px;
+            }
+            
+            .hero-name {
+                font-size: 16px;
+            }
+            
+            .voice-text {
+                font-size: 12px;
+            }
+            
+            .voice-item {
+                padding: 8px 10px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .skin-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .skin-item {
+                min-height: 70px;
+            }
+            
+            .skin-icon {
+                width: 32px;
+                height: 32px;
+            }
+        }
+        
+        /* 超大屏幕优化 */
+        @media (min-width: 1200px) {
+            .skin-grid {
+                grid-template-columns: repeat(10, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>王者荣耀语音库</h1>
+            <p>搜索英雄名称，查看皮肤和语音</p>
+        </div>
+
+        <!-- 合并卡片 -->
+        <div class="main-card">
+            <div class="top-info">
+                <div class="hero-info">
+                    <span class="hero-name" id="heroName">影</span>
+                    <span class="skin-count" id="skinCount">共 0 个皮肤</span>
+                </div>
+                
+                <!-- 搜索框 - 右侧显示 -->
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="输入英雄名称搜索..." value="影">
+                    <button id="searchBtn">🔍</button>
+                </div>
+            </div>
+            
+            <!-- 皮肤选择网格 -->
+            <div class="skin-grid" id="skinGrid"></div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div id="mainContent">
+            <div class="status loading" id="loadingStatus">
+                正在加载英雄数据...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 元素引用
+            const searchInput = document.getElementById('searchInput');
+            const searchBtn = document.getElementById('searchBtn');
+            const heroNameEl = document.getElementById('heroName');
+            const skinCountEl = document.getElementById('skinCount');
+            const skinGrid = document.getElementById('skinGrid');
+            const mainContent = document.getElementById('mainContent');
+            const loadingStatus = document.getElementById('loadingStatus');
+            
+            // 全局变量
+            let heroData = [];
+            let currentHero = '影';
+            let currentSkinIndex = 0;
+            let currentAudio = null;
+            
+            // API配置
+            const baseUrl = 'https://api.andeer.top/API/hero_detail.php';
+            
+            // 初始化 - 加载默认英雄
+            loadHeroData(currentHero);
+            
+            // 加载英雄数据
+            async function loadHeroData(heroName) {
+                try {
+                    showLoading();
+                    currentHero = heroName;
+                    heroNameEl.textContent = heroName;
+                    
+                    const response = await fetch(`${baseUrl}?name=${encodeURIComponent(heroName)}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.data && data.data.length > 0) {
+                        heroData = data.data;
+                        hideLoading();
+                        skinCountEl.textContent = `共 ${heroData.length} 个皮肤`;
+                        renderSkinGrid();
+                        renderVoiceContainer();
+                    } else {
+                        throw new Error('该英雄暂无数据或名称不正确');
+                    }
+                } catch (error) {
+                    console.error('加载英雄数据失败:', error);
+                    showError(error.message);
+                }
+            }
+            
+            // 显示加载状态
+            function showLoading() {
+                mainContent.innerHTML = `
+                    <div class="status loading">
+                        正在加载"${currentHero}"的数据...
+                    </div>
+                `;
+                skinCountEl.textContent = '加载中...';
+                skinGrid.innerHTML = '';
+            }
+            
+            // 隐藏加载状态
+            function hideLoading() {
+                // 状态会在renderVoiceContainer中覆盖
+            }
+            
+            // 显示错误状态
+            function showError(message) {
+                mainContent.innerHTML = `
+                    <div class="status error">
+                        ${message}<br>
+                        <button id="retryBtn">重新加载</button>
+                    </div>
+                `;
+                
+                skinCountEl.textContent = '加载失败';
+                skinGrid.innerHTML = '';
+                
+                // 添加重试按钮事件
+                const retryBtn = document.getElementById('retryBtn');
+                if (retryBtn) {
+                    retryBtn.addEventListener('click', () => {
+                        loadHeroData(currentHero);
+                    });
+                }
+            }
+            
+            // 渲染皮肤网格
+            function renderSkinGrid() {
+                if (!heroData || heroData.length === 0) {
+                    skinGrid.innerHTML = '<div class="skin-item">暂无皮肤数据</div>';
+                    return;
+                }
+                
+                skinGrid.innerHTML = '';
+                
+                heroData.forEach((skin, index) => {
+                    const skinItem = document.createElement('div');
+                    skinItem.className = `skin-item ${index === currentSkinIndex ? 'active' : ''}`;
+                    
+                    // 获取皮肤图标URL
+                    let iconUrl = skin['皮肤头像（小）'] || '';
+                    if (iconUrl && !iconUrl.startsWith('http')) {
+                        iconUrl = 'https:' + iconUrl;
+                    }
+                    
+                    skinItem.innerHTML = `
+                        <div class="skin-icon" style="background-image: url('${iconUrl}')"></div>
+                        <div class="skin-name">${skin.皮肤名称}</div>
+                    `;
+                    
+                    skinItem.addEventListener('click', () => {
+                        // 移除所有皮肤项的活动类
+                        document.querySelectorAll('.skin-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        
+                        // 为当前皮肤项添加活动类
+                        skinItem.classList.add('active');
+                        
+                        // 停止当前播放的音频
+                        stopCurrentAudio();
+                        
+                        // 更新当前选中的皮肤索引
+                        currentSkinIndex = index;
+                        
+                        // 重新渲染台词区域
+                        renderVoiceContainer();
+                    });
+                    
+                    skinGrid.appendChild(skinItem);
+                });
+            }
+            
+            // 渲染台词区域
+            function renderVoiceContainer() {
+                if (!heroData || !heroData[currentSkinIndex]) {
+                    mainContent.innerHTML = `
+                        <div class="status error">
+                            皮肤数据加载失败
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const skin = heroData[currentSkinIndex];
+                
+                mainContent.innerHTML = `
+                    <div class="voice-container">
+                        <div class="voice-header">
+                            <span class="voice-title">皮肤台词</span>
+                            <span class="line-count">${skin.台词.length} 句台词</span>
+                        </div>
+                        <div class="voice-list" id="voiceList"></div>
+                    </div>
+                `;
+                
+                // 渲染台词列表
+                renderVoiceLines(skin.台词);
+            }
+            
+            // 渲染台词列表
+            function renderVoiceLines(lines) {
+                const voiceList = document.getElementById('voiceList');
+                if (!voiceList) return;
+                
+                voiceList.innerHTML = '';
+                
+                if (!lines || lines.length === 0) {
+                    voiceList.innerHTML = '<div class="voice-item"><span class="voice-text">该皮肤暂无台词数据</span></div>';
+                    return;
+                }
+                
+                lines.forEach((line, index) => {
+                    const voiceItem = document.createElement('div');
+                    voiceItem.className = 'voice-item';
+                    
+                    voiceItem.innerHTML = `
+                        <span class="voice-text">${line.文本}</span>
+                        <button class="play-btn" data-index="${index}">
+                            ▶
+                        </button>
+                    `;
+                    
+                    // 添加点击播放事件
+                    const playBtn = voiceItem.querySelector('.play-btn');
+                    playBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        playLine(line, index, playBtn);
+                    });
+                    
+                    voiceList.appendChild(voiceItem);
+                });
+            }
+            
+            // 播放台词
+            function playLine(line, index, button) {
+                // 停止当前播放的音频
+                stopCurrentAudio();
+                
+                // 移除所有按钮的播放状态
+                document.querySelectorAll('.play-btn').forEach(btn => {
+                    btn.classList.remove('playing');
+                    btn.innerHTML = '▶';
+                });
+                
+                // 设置当前按钮为播放状态
+                button.classList.add('playing');
+                button.innerHTML = '❚❚';
+                
+                // 构建音频URL
+                let audioUrl = line.音频;
+                if (audioUrl && !audioUrl.startsWith('http')) {
+                    audioUrl = 'https:' + audioUrl;
+                }
+                
+                // 创建新的音频对象并播放
+                currentAudio = new Audio(audioUrl);
+                
+                currentAudio.play().catch(error => {
+                    console.error('播放音频失败:', error);
+                    button.classList.remove('playing');
+                    button.innerHTML = '▶';
+                    alert('音频播放失败，可能是网络问题或音频文件不可访问');
+                });
+                
+                // 监听音频结束
+                currentAudio.onended = () => {
+                    button.classList.remove('playing');
+                    button.innerHTML = '▶';
+                    currentAudio = null;
+                };
+                
+                // 监听音频错误
+                currentAudio.onerror = () => {
+                    button.classList.remove('playing');
+                    button.innerHTML = '▶';
+                    alert('音频播放失败，可能是网络问题或音频文件不可访问');
+                    currentAudio = null;
+                };
+            }
+            
+            // 停止当前播放的音频
+            function stopCurrentAudio() {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                    
+                    // 移除所有按钮的播放状态
+                    document.querySelectorAll('.play-btn').forEach(btn => {
+                        btn.classList.remove('playing');
+                        btn.innerHTML = '▶';
+                    });
+                }
+            }
+            
+            // 搜索功能
+            function performSearch() {
+                const heroName = searchInput.value.trim();
+                if (heroName) {
+                    // 停止当前播放的音频
+                    stopCurrentAudio();
+                    
+                    // 加载新英雄数据
+                    loadHeroData(heroName);
+                }
+            }
+            
+            // 事件监听
+            searchBtn.addEventListener('click', performSearch);
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

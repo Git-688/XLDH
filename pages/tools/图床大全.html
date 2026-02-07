@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网易严选图床</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 自定义配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ff3c28', // 网易严选红色主调
+                        secondary: '#f5f5f5', // 浅灰色背景
+                        neutral: '#ffffff', // 白色卡片
+                        text: '#333333', // 主文本色
+                        lightText: '#666666', // 次要文本色
+                    },
+                    fontFamily: {
+                        sans: ['PingFang SC', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    },
+                },
+                darkMode: 'class', // 禁用深色模式
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .upload-area {
+                border: 2px dashed #e0e0e0;
+                transition: all 0.3s ease;
+            }
+            .upload-area:hover {
+                border-color: #ff3c28;
+                background-color: #fff8f7;
+            }
+            .btn-primary {
+                @apply bg-primary text-white py-2 px-4 rounded-md transition-all duration-300 hover:bg-primary/90 active:scale-95;
+            }
+            .card {
+                @apply bg-neutral rounded-lg shadow-sm p-4 transition-all duration-300 hover:shadow-md;
+            }
+        }
+    </style>
+</head>
+<body class="bg-secondary min-h-screen font-sans text-text">
+    <!-- 顶部导航 -->
+    <header class="bg-neutral shadow-sm sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-cloud-upload text-primary text-xl"></i>
+                <h1 class="text-xl font-bold">网易严选图床</h1>
+            </div>
+            <button id="helpBtn" class="text-lightText hover:text-primary transition-colors">
+                <i class="fa fa-question-circle"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-6 max-w-2xl">
+        <!-- 上传区域 -->
+        <section class="card mb-6">
+            <div class="text-center mb-4">
+                <h2 class="text-lg font-semibold mb-1">上传图片</h2>
+                <p class="text-lightText text-sm">支持JPG、PNG、GIF格式，单张不超过10MB</p>
+            </div>
+            
+            <!-- 上传区域 -->
+            <label for="fileInput" class="upload-area block w-full h-40 rounded-lg flex flex-col items-center justify-center cursor-pointer mb-4">
+                <i class="fa fa-cloud-upload text-4xl text-lightText mb-2"></i>
+                <p class="text-lightText">点击或拖拽文件到此处上传</p>
+                <input type="file" id="fileInput" class="hidden" accept="image/*">
+            </label>
+            
+            <!-- 上传按钮 -->
+            <div class="flex justify-center">
+                <button id="uploadBtn" class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i class="fa fa-upload mr-1"></i> 开始上传
+                </button>
+            </div>
+        </section>
+
+        <!-- 预览和结果区域 -->
+        <section id="resultSection" class="card mb-6 hidden">
+            <h2 class="text-lg font-semibold mb-3">上传结果</h2>
+            
+            <!-- 图片预览 -->
+            <div class="mb-4 flex justify-center">
+                <img id="previewImage" class="max-w-full max-h-60 rounded-md object-contain border border-gray-100" alt="预览图">
+            </div>
+            
+            <!-- URL 显示 -->
+            <div class="relative mb-3">
+                <input type="text" id="imageUrl" class="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm" readonly>
+                <button id="copyBtn" class="absolute right-2 top-1/2 -translate-y-1/2 text-primary hover:text-primary/80 transition-colors">
+                    <i class="fa fa-copy"></i>
+                </button>
+            </div>
+            
+            <!-- URL 类型选择 -->
+            <div class="flex space-x-2 mb-3">
+                <button class="url-type-btn bg-primary text-white px-3 py-1 rounded text-sm" data-type="original">原图URL</button>
+                <button class="url-type-btn bg-gray-100 text-lightText px-3 py-1 rounded text-sm" data-type="markdown">Markdown</button>
+                <button class="url-type-btn bg-gray-100 text-lightText px-3 py-1 rounded text-sm" data-type="html">HTML</button>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="flex justify-center space-x-3">
+                <button id="downloadBtn" class="btn-primary bg-gray-100 text-text hover:bg-gray-200">
+                    <i class="fa fa-download mr-1"></i> 下载图片
+                </button>
+                <button id="newUploadBtn" class="btn-primary">
+                    <i class="fa fa-plus mr-1"></i> 上传新图片
+                </button>
+            </div>
+        </section>
+
+        <!-- 上传历史 -->
+        <section class="card">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-semibold">上传历史</h2>
+                <button id="clearHistoryBtn" class="text-lightText text-sm hover:text-primary transition-colors">
+                    <i class="fa fa-trash-o mr-1"></i> 清空
+                </button>
+            </div>
+            
+            <div id="historyList" class="space-y-3 max-h-60 overflow-y-auto">
+                <div class="text-center text-lightText py-6" id="emptyHistory">
+                    <i class="fa fa-history text-2xl mb-2"></i>
+                    <p>暂无上传历史</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部版权信息 -->
+    <footer class="bg-neutral py-4 mt-6">
+        <div class="container mx-auto px-4 text-center text-lightText text-sm">
+            <p>© 2025 网易严选图床 | 纯前端图床工具</p>
+            <p class="mt-1">接口由 <a href="https://api.xinyew.cn" class="text-primary hover:underline" target="_blank">新野API</a> 提供</p>
+        </div>
+    </footer>
+
+    <!-- 帮助弹窗 -->
+    <div id="helpModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-neutral rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-semibold">使用帮助</h3>
+                <button id="closeModalBtn" class="text-lightText hover:text-text">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div>
+                    <h4 class="font-medium mb-1">上传说明</h4>
+                    <p class="text-lightText text-sm">支持JPG、PNG、GIF等图片格式，单张图片大小不超过10MB</p>
+                </div>
+                <div>
+                    <h4 class="font-medium mb-1">使用方法</h4>
+                    <ol class="text-lightText text-sm list-decimal pl-5 space-y-1">
+                        <li>点击上传区域或拖拽图片到上传区域</li>
+                        <li>选择要上传的图片文件</li>
+                        <li>点击"开始上传"按钮</li>
+                        <li>上传成功后可复制图片链接或下载图片</li>
+                    </ol>
+                </div>
+                <div>
+                    <h4 class="font-medium mb-1">链接类型</h4>
+                    <ul class="text-lightText text-sm list-disc pl-5 space-y-1">
+                        <li>原图URL：直接访问图片的链接</li>
+                        <li>Markdown：适用于Markdown编辑器的图片链接</li>
+                        <li>HTML：适用于网页的图片标签</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-medium mb-1">注意事项</h4>
+                    <p class="text-lightText text-sm">图片仅用于临时存储，请勿上传敏感、违法内容，服务器保留删除权利</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知提示 -->
+    <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-text text-white px-4 py-2 rounded-md shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <span id="toastText">操作成功</span>
+    </div>
+
+    <script>
+        // 全局变量
+        let selectedFile = null;
+        let uploadHistory = JSON.parse(localStorage.getItem('uploadHistory')) || [];
+        
+        // DOM 元素
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const resultSection = document.getElementById('resultSection');
+        const previewImage = document.getElementById('previewImage');
+        const imageUrl = document.getElementById('imageUrl');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const newUploadBtn = document.getElementById('newUploadBtn');
+        const historyList = document.getElementById('historyList');
+        const emptyHistory = document.getElementById('emptyHistory');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const helpBtn = document.getElementById('helpBtn');
+        const helpModal = document.getElementById('helpModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const toast = document.getElementById('toast');
+        const toastText = document.getElementById('toastText');
+        const urlTypeBtns = document.querySelectorAll('.url-type-btn');
+        
+        // 初始化
+        init();
+        
+        function init() {
+            // 监听文件选择
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // 监听拖拽事件
+            const uploadArea = document.querySelector('.upload-area');
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            
+            // 监听上传按钮
+            uploadBtn.addEventListener('click', handleUpload);
+            
+            // 监听复制按钮
+            copyBtn.addEventListener('click', handleCopy);
+            
+            // 监听下载按钮
+            downloadBtn.addEventListener('click', handleDownload);
+            
+            // 监听上传新图片按钮
+            newUploadBtn.addEventListener('click', handleNewUpload);
+            
+            // 监听清空历史按钮
+            clearHistoryBtn.addEventListener('click', handleClearHistory);
+            
+            // 监听帮助按钮
+            helpBtn.addEventListener('click', () => helpModal.classList.remove('hidden'));
+            closeModalBtn.addEventListener('click', () => helpModal.classList.add('hidden'));
+            helpModal.addEventListener('click', (e) => {
+                if (e.target === helpModal) helpModal.classList.add('hidden');
+            });
+            
+            // 监听URL类型选择
+            urlTypeBtns.forEach(btn => {
+                btn.addEventListener('click', handleUrlTypeChange);
+            });
+            
+            // 渲染上传历史
+            renderHistory();
+        }
+        
+        // 处理文件选择
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                validateFile(file);
+            }
+        }
+        
+        // 处理拖拽事件
+        function handleDragOver(e) {
+            e.preventDefault();
+            const uploadArea = document.querySelector('.upload-area');
+            uploadArea.classList.add('border-primary');
+            uploadArea.classList.add('bg-primary/5');
+        }
+        
+        function handleDragLeave(e) {
+            e.preventDefault();
+            const uploadArea = document.querySelector('.upload-area');
+            uploadArea.classList.remove('border-primary');
+            uploadArea.classList.remove('bg-primary/5');
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            handleDragLeave(e);
+            
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                validateFile(file);
+                fileInput.files = e.dataTransfer.files;
+            }
+        }
+        
+        // 验证文件
+        function validateFile(file) {
+            // 验证文件类型
+            if (!file.type.startsWith('image/')) {
+                showToast('请选择图片文件', 'error');
+                return;
+            }
+            
+            // 验证文件大小（10MB）
+            const maxSize = 10 * 1024 * 1024;
+            if (file.size > maxSize) {
+                showToast('图片大小不能超过10MB', 'error');
+                return;
+            }
+            
+            // 验证通过
+            selectedFile = file;
+            uploadBtn.disabled = false;
+            
+            // 显示预览
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                resultSection.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // 处理上传
+        async function handleUpload() {
+            if (!selectedFile) {
+                showToast('请先选择图片', 'error');
+                return;
+            }
+            
+            // 显示加载状态
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i> 上传中...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                
+                // 发送请求
+                const response = await fetch('https://api.xinyew.cn/api/yanxuantc', {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'cors'
+                });
+                
+                const result = await response.json();
+                
+                // 处理响应
+                if (result.errno === 0 && result.data && result.data.url) {
+                    const imgUrl = result.data.url;
+                    const imgName = result.data.imgFile || selectedFile.name;
+                    
+                    // 显示结果
+                    imageUrl.value = imgUrl;
+                    previewImage.src = imgUrl;
+                    resultSection.classList.remove('hidden');
+                    
+                    // 保存到历史记录
+                    const historyItem = {
+                        id: Date.now(),
+                        url: imgUrl,
+                        name: imgName,
+                        time: new Date().toLocaleString(),
+                        fileType: selectedFile.type
+                    };
+                    uploadHistory.unshift(historyItem);
+                    localStorage.setItem('uploadHistory', JSON.stringify(uploadHistory));
+                    renderHistory();
+                    
+                    showToast('上传成功');
+                } else {
+                    throw new Error(result.error || '上传失败');
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+                console.error('上传失败:', error);
+            } finally {
+                // 恢复按钮状态
+                uploadBtn.innerHTML = '<i class="fa fa-upload mr-1"></i> 开始上传';
+            }
+        }
+        
+        // 处理复制
+        function handleCopy() {
+            imageUrl.select();
+            document.execCommand('copy');
+            showToast('复制成功');
+        }
+        
+        // 处理下载
+        function handleDownload() {
+            const url = imageUrl.value;
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = selectedFile ? selectedFile.name : 'image.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('开始下载');
+        }
+        
+        // 处理上传新图片
+        function handleNewUpload() {
+            selectedFile = null;
+            fileInput.value = '';
+            uploadBtn.disabled = true;
+            resultSection.classList.add('hidden');
+        }
+        
+        // 处理URL类型切换
+        function handleUrlTypeChange(e) {
+            const btn = e.target;
+            const type = btn.dataset.type;
+            const url = imageUrl.value;
+            
+            // 更新按钮样式
+            urlTypeBtns.forEach(b => {
+                b.classList.remove('bg-primary', 'text-white');
+                b.classList.add('bg-gray-100', 'text-lightText');
+            });
+            btn.classList.remove('bg-gray-100', 'text-lightText');
+            btn.classList.add('bg-primary', 'text-white');
+            
+            // 更新URL值
+            switch(type) {
+                case 'original':
+                    imageUrl.value = url;
+                    break;
+                case 'markdown':
+                    imageUrl.value = `![图片](${url})`;
+                    break;
+                case 'html':
+                    imageUrl.value = `<img src="${url}" alt="图片" />`;
+                    break;
+            }
+        }
+        
+        // 渲染上传历史
+        function renderHistory() {
+            if (uploadHistory.length === 0) {
+                emptyHistory.classList.remove('hidden');
+                return;
+            }
+            
+            emptyHistory.classList.add('hidden');
+            historyList.innerHTML = '';
+            
+            uploadHistory.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'flex items-center p-2 border border-gray-100 rounded-md hover:bg-gray-50 transition-colors';
+                historyItem.innerHTML = `
+                    <img src="${item.url}" alt="${item.name}" class="w-12 h-12 object-cover rounded mr-3">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium truncate">${item.name}</p>
+                        <p class="text-xs text-lightText truncate">${item.time}</p>
+                    </div>
+                    <div class="flex space-x-1">
+                        <button class="copy-history-btn text-primary hover:text-primary/80 p-1" data-url="${item.url}">
+                            <i class="fa fa-copy"></i>
+                        </button>
+                        <button class="delete-history-btn text-lightText hover:text-red-500 p-1" data-id="${item.id}">
+                            <i class="fa fa-trash-o"></i>
+                        </button>
+                    </div>
+                `;
+                
+                // 复制历史链接
+                const copyBtn = historyItem.querySelector('.copy-history-btn');
+                copyBtn.addEventListener('click', (e) => {
+                    const url = e.currentTarget.dataset.url;
+                    navigator.clipboard.writeText(url).then(() => {
+                        showToast('复制成功');
+                    }).catch(() => {
+                        // 降级处理
+                        const tempInput = document.createElement('input');
+                        tempInput.value = url;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempInput);
+                        showToast('复制成功');
+                    });
+                });
+                
+                // 删除历史记录
+                const deleteBtn = historyItem.querySelector('.delete-history-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.dataset.id);
+                    uploadHistory = uploadHistory.filter(item => item.id !== id);
+                    localStorage.setItem('uploadHistory', JSON.stringify(uploadHistory));
+                    renderHistory();
+                    showToast('已删除');
+                });
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        // 清空历史记录
+        function handleClearHistory() {
+            if (confirm('确定要清空所有上传历史吗？')) {
+                uploadHistory = [];
+                localStorage.setItem('uploadHistory', JSON.stringify(uploadHistory));
+                renderHistory();
+                showToast('历史记录已清空');
+            }
+        }
+        
+        // 显示提示
+        function showToast(message, type = 'success') {
+            toastText.textContent = message;
+            
+            if (type === 'error') {
+                toast.classList.remove('bg-text');
+                toast.classList.add('bg-red-500');
+            } else {
+                toast.classList.remove('bg-red-500');
+                toast.classList.add('bg-text');
+            }
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2000);
+        }
+        
+        // 适配手机键盘
+        window.addEventListener('resize', () => {
+            if (window.innerHeight < 500) {
+                document.body.style.marginBottom = '60px';
+            } else {
+                document.body.style.marginBottom = '0';
+            }
+        });
+    </script>
+</body>
+</html>

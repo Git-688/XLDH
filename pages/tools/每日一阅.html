@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日一阅</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+        
+        .api-selector-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .api-selector-container label {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .api-selector {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background-color: white;
+            font-size: 0.9rem;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        
+        .api-selector:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .article-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .article-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+        
+        .article-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        
+        .article-author {
+            color: #3498db;
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            font-style: italic;
+            padding-left: 10px;
+            border-left: 3px solid #3498db;
+        }
+        
+        .article-content {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #444;
+            text-align: justify;
+            white-space: pre-line;
+            margin-bottom: 20px;
+        }
+        
+        .article-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .refresh-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .refresh-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            padding: 20px 0;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+            
+            .article-card {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .article-title {
+                font-size: 1.5rem;
+            }
+            
+            .article-content {
+                font-size: 1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .article-footer {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .refresh-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .api-selector-container {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>每日一阅</h1>
+            <p class="subtitle">每日精选文章，滋养心灵</p>
+            <div class="api-selector-container">
+                <label for="api-selector">选择文章源：</label>
+                <select id="api-selector" class="api-selector">
+                    <option value="api1">每日一文</option>
+                    <option value="api2">云烟文章</option>
+                </select>
+            </div>
+        </header>
+        
+        <main id="article-container">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>正在加载今日文章...</p>
+            </div>
+        </main>
+        
+        <footer>
+            <p>每日一阅 &copy; 2025 - 静心阅读，品味生活</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const articleContainer = document.getElementById('article-container');
+            const apiSelector = document.getElementById('api-selector');
+            
+            // API配置
+            const apiConfig = {
+                api1: {
+                    name: '每日一文',
+                    url: 'https://api.qhsou.com/api/one.php',
+                    parser: function(data) {
+                        if (data.status === 'success') {
+                            return {
+                                title: data.title,
+                                author: data.author,
+                                content: data.content,
+                                fetch_time: data.fetch_time
+                            };
+                        } else {
+                            throw new Error('API返回数据异常');
+                        }
+                    }
+                },
+                api2: {
+                    name: '云烟文章',
+                    url: 'https://yunyan.icu/yunText2/api/Article.php',
+                    parser: function(data) {
+                        // 处理云烟API返回的数据
+                        let content = data.content;
+                        if (data.msg) {
+                            content = `【引言】${data.msg}\n\n${content}`;
+                        }
+                        
+                        return {
+                            title: data.title,
+                            author: data.author || '未知作者',
+                            content: content,
+                            fetch_time: data.fetch_time || '未知时间'
+                        };
+                    }
+                }
+            };
+            
+            // 获取当前选中的API
+            function getCurrentApi() {
+                return apiConfig[apiSelector.value];
+            }
+            
+            // 获取文章数据
+            function fetchArticle() {
+                const currentApi = getCurrentApi();
+                
+                // 显示加载状态
+                articleContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>正在从【${currentApi.name}】加载文章...</p>
+                    </div>
+                `;
+                
+                fetch(currentApi.url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络请求失败');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const article = currentApi.parser(data);
+                        displayArticle(article, currentApi.name);
+                    })
+                    .catch(error => {
+                        console.error('获取文章失败:', error);
+                        articleContainer.innerHTML = `
+                            <div class="error-message">
+                                <p>从【${currentApi.name}】获取文章失败，请稍后重试</p>
+                                <p style="font-size: 0.8rem; margin-top: 10px;">错误信息: ${error.message}</p>
+                                <button class="refresh-btn" onclick="fetchArticle()" style="margin-top: 15px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                        <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                                    </svg>
+                                    重新加载
+                                </button>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 显示文章
+            function displayArticle(article, apiName) {
+                articleContainer.innerHTML = `
+                    <div class="article-card">
+                        <h2 class="article-title">${article.title}</h2>
+                        <div class="article-author">作者：${article.author}</div>
+                        <div class="article-content">${article.content}</div>
+                        <div class="article-footer">
+                            <div>
+                                <div>更新时间：${article.fetch_time}</div>
+                                <div style="font-size: 0.8rem; margin-top: 5px;">来源：${apiName}</div>
+                            </div>
+                            <button class="refresh-btn" onclick="fetchArticle()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                                </svg>
+                                刷新文章
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 初始化加载文章
+            fetchArticle();
+            
+            // 监听API切换
+            apiSelector.addEventListener('change', fetchArticle);
+            
+            // 将函数添加到全局作用域，以便在HTML中调用
+            window.fetchArticle = fetchArticle;
+        });
+    </script>
+</body>
+</html>

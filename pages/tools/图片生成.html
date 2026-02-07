@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多功能图片生成工具</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --primary-dark: #2980b9;
+            --secondary: #2ecc71;
+            --secondary-dark: #27ae60;
+            --error: #e74c3c;
+            --light-gray: #f8f9fa;
+            --gray: #6c757d;
+            --dark: #2c3e50;
+            --border-radius: 12px;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: var(--transition);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 28px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        h1:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-radius: 3px;
+        }
+        
+        /* 通用自定义下拉选择器样式 - 所有select统一 */
+        .custom-select {
+            margin-bottom: 25px;
+            position: relative;
+            width: 100%;
+        }
+        
+        .select-trigger {
+            width: 100%;
+            padding: 16px 20px;
+            background-color: white;
+            border: 1px solid #e1e5e9;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--dark);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+        
+        .select-trigger:hover {
+            border-color: var(--primary);
+            background-color: var(--light-gray);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.03);
+        }
+        
+        .select-trigger.active {
+            border-color: var(--primary);
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .arrow-icon {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.3s ease;
+            fill: var(--primary);
+        }
+        
+        .select-trigger.active .arrow-icon {
+            transform: rotate(180deg);
+        }
+        
+        /* 自定义下拉菜单 - 通用 */
+        .select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border: 1px solid #e1e5e9;
+            border-top: none;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 100;
+        }
+        
+        .select-dropdown.active {
+            max-height: 300px;
+            opacity: 1;
+            visibility: visible;
+            overflow-y: auto;
+        }
+        
+        /* 自定义选项 - 通用 */
+        .dropdown-options {
+            list-style: none;
+        }
+        
+        .dropdown-option {
+            padding: 14px 20px;
+            font-size: 15px;
+            color: var(--dark);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+        }
+        
+        .dropdown-option:before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: transparent;
+            margin-right: 12px;
+            transition: var(--transition);
+        }
+        
+        .dropdown-option:hover {
+            background-color: rgba(52, 152, 219, 0.08);
+            color: var(--primary);
+            padding-left: 22px;
+        }
+        
+        .dropdown-option.selected {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--primary-dark);
+            font-weight: 500;
+        }
+        
+        .dropdown-option.selected:before {
+            background-color: var(--primary);
+        }
+        
+        /* 表单组样式 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 15px;
+        }
+        
+        /* 自定义输入框 - 完全抛弃原生样式 */
+        .custom-input, .custom-textarea {
+            width: 100%;
+            padding: 16px 20px;
+            background-color: white;
+            border: 1px solid #e1e5e9;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            color: var(--dark);
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+            outline: none;
+        }
+        
+        .custom-input:focus, .custom-textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15), 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .custom-input:hover, .custom-textarea:hover {
+            border-color: var(--primary);
+            background-color: var(--light-gray);
+        }
+        
+        .custom-textarea {
+            min-height: 120px;
+            resize: vertical;
+            line-height: 1.8;
+        }
+        
+        .custom-input::placeholder, .custom-textarea::placeholder {
+            color: var(--gray);
+            opacity: 0.8;
+        }
+        
+        /* 自定义按钮 - 强化样式 */
+        .custom-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+            text-align: center;
+            text-decoration: none;
+        }
+        
+        .custom-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(52, 152, 219, 0.3);
+            background: linear-gradient(to right, var(--primary-dark), #217dbb);
+        }
+        
+        .custom-btn:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.2);
+        }
+        
+        .custom-btn.secondary {
+            background: linear-gradient(to right, var(--secondary), var(--secondary-dark));
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.2);
+        }
+        
+        .custom-btn.secondary:hover {
+            background: linear-gradient(to right, var(--secondary-dark), #219653);
+            box-shadow: 0 8px 16px rgba(46, 204, 113, 0.3);
+        }
+        
+        /* API内容区域 */
+        .api-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .api-content.active {
+            display: block;
+        }
+        
+        /* 预览区域 */
+        .preview-container {
+            text-align: center;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            background-color: var(--light-gray);
+            border: 1px dashed #dde1e6;
+            transition: var(--transition);
+        }
+        
+        .preview-title {
+            margin-bottom: 15px;
+            color: var(--dark);
+            font-weight: 500;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            display: none;
+            margin: 0 auto;
+        }
+        
+        /* 加载状态 */
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            color: var(--primary);
+            font-size: 16px;
+        }
+        
+        .loading:after {
+            content: '...';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            40% { color: var(--primary); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            60% { text-shadow: .25em 0 0 var(--primary), .5em 0 0 rgba(0,0,0,0); }
+            80%, 100% { text-shadow: .25em 0 0 var(--primary), .5em 0 0 var(--primary); }
+        }
+        
+        /* 错误提示 */
+        .error {
+            color: var(--error);
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+            padding: 16px;
+            background-color: rgba(231, 76, 60, 0.08);
+            border-radius: var(--border-radius);
+            font-size: 15px;
+        }
+        
+        /* 输入行布局 */
+        .input-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .input-row .form-group {
+            flex: 1;
+        }
+        
+        /* 提示文本 */
+        .form-hint {
+            color: var(--gray);
+            margin-top: 6px;
+            display: block;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px 15px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .input-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .select-trigger {
+                padding: 14px 16px;
+                font-size: 15px;
+            }
+            
+            .dropdown-option {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+            
+            .custom-input, .custom-textarea {
+                padding: 14px 16px;
+                font-size: 15px;
+            }
+            
+            .custom-btn {
+                padding: 14px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>多功能图片生成工具</h1>
+        
+        <!-- 主功能选择器 -->
+        <div class="custom-select" id="mainSelect">
+            <div class="select-trigger" data-target="mainDropdown">
+                <span class="selected-text">二维码生成</span>
+                <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                </svg>
+            </div>
+            <div class="select-dropdown" id="mainDropdown">
+                <ul class="dropdown-options">
+                    <li class="dropdown-option selected" data-value="qrcode">二维码生成</li>
+                    <li class="dropdown-option" data-value="shouxiezi">手写字生成</li>
+                    <li class="dropdown-option" data-value="skm">收款码整合</li>
+                    <li class="dropdown-option" data-value="qqmp">QQ名片制作</li>
+                    <li class="dropdown-option" data-value="zqjl">中秋节快乐</li>
+                    <li class="dropdown-option" data-value="sxbj">双喜背景图</li>
+                    <li class="dropdown-option" data-value="jupai">美女举牌</li>
+                    <li class="dropdown-option" data-value="jiangzhuang">奖状生成</li>
+                    <li class="dropdown-option" data-value="nishouldcall">你应该致电</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 隐藏存储选中值的输入框 -->
+        <input type="hidden" id="activeApi" value="qrcode">
+        
+        <!-- 双喜背景图API -->
+        <div class="api-content" id="sxbj-content">
+            <div class="form-group">
+                <label for="name1">第一个名字（必填）</label>
+                <input type="text" id="name1" class="custom-input" placeholder="请输入第一个名字">
+            </div>
+            
+            <div class="form-group">
+                <label for="name2">第二个名字（可选）</label>
+                <input type="text" id="name2" class="custom-input" placeholder="请输入第二个名字（可选）">
+            </div>
+            
+            <!-- 自定义模板选择器 -->
+            <div class="form-group">
+                <label>选择模板</label>
+                <div class="custom-select" id="sxbjTemplateSelect">
+                    <div class="select-trigger" data-target="sxbjTemplateDropdown">
+                        <span class="selected-text">随机模板</span>
+                        <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                            <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </div>
+                    <div class="select-dropdown" id="sxbjTemplateDropdown">
+                        <ul class="dropdown-options">
+                            <li class="dropdown-option selected" data-value="">随机模板</li>
+                            <li class="dropdown-option" data-value="1">模板 1</li>
+                            <li class="dropdown-option" data-value="2">模板 2</li>
+                            <li class="dropdown-option" data-value="3">模板 3</li>
+                            <li class="dropdown-option" data-value="4">模板 4</li>
+                        </ul>
+                    </div>
+                </div>
+                <input type="hidden" id="sxbjTemplateValue" value="">
+            </div>
+            
+            <button class="custom-btn" id="generateSxbjBtn">生成图片</button>
+        </div>
+        
+        <!-- 美女举牌API -->
+        <div class="api-content" id="jupai-content">
+            <!-- 类型选择器 -->
+            <div class="form-group">
+                <label>类型选择</label>
+                <div class="custom-select" id="jupaiTypeSelect">
+                    <div class="select-trigger" data-target="jupaiTypeDropdown">
+                        <span class="selected-text">文字模式</span>
+                        <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                            <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </div>
+                    <div class="select-dropdown" id="jupaiTypeDropdown">
+                        <ul class="dropdown-options">
+                            <li class="dropdown-option selected" data-value="">文字模式</li>
+                            <li class="dropdown-option" data-value="img">图片模式</li>
+                        </ul>
+                    </div>
+                </div>
+                <input type="hidden" id="jupaiTypeValue" value="">
+            </div>
+            
+            <div class="form-group" id="imageUrlGroup" style="display: none;">
+                <label for="imageUrl">图片链接（图片模式时填写）</label>
+                <input type="text" id="imageUrl" class="custom-input" placeholder="请输入图片链接">
+            </div>
+            
+            <!-- 模板选择器（动态生成） -->
+            <div class="form-group">
+                <label>选择模板 (1-31)</label>
+                <div class="custom-select" id="jupaiTemplateSelect">
+                    <div class="select-trigger" data-target="jupaiTemplateDropdown">
+                        <span class="selected-text">随机模板</span>
+                        <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                            <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </div>
+                    <div class="select-dropdown" id="jupaiTemplateDropdown">
+                        <ul class="dropdown-options" id="jupaiTemplateOptions">
+                            <li class="dropdown-option selected" data-value="">随机模板</li>
+                            <!-- 动态生成1-31模板选项 -->
+                        </ul>
+                    </div>
+                </div>
+                <input type="hidden" id="jupaiTemplateValue" value="">
+            </div>
+            
+            <div class="input-row">
+                <div class="form-group">
+                    <label for="wb1">第一行内容</label>
+                    <input type="text" id="wb1" class="custom-input" placeholder="第一行文字">
+                </div>
+                <div class="form-group">
+                    <label for="wb2">第二行内容</label>
+                    <input type="text" id="wb2" class="custom-input" placeholder="第二行文字">
+                </div>
+            </div>
+            
+            <div class="input-row">
+                <div class="form-group">
+                    <label for="wb3">第三行内容</label>
+                    <input type="text" id="wb3" class="custom-input" placeholder="第三行文字">
+                </div>
+                <div class="form-group">
+                    <label for="wb4">第四行内容</label>
+                    <input type="text" id="wb4" class="custom-input" placeholder="第四行文字">
+                </div>
+            </div>
+            
+            <button class="custom-btn" id="generateJupaiBtn">生成举牌图片</button>
+        </div>
+        
+        <!-- 收款码API -->
+        <div class="api-content" id="skm-content">
+            <div class="form-group">
+                <label for="qq">QQ收款码链接</label>
+                <input type="text" id="qq" class="custom-input" placeholder="请输入QQ收款码图片链接">
+            </div>
+            
+            <div class="form-group">
+                <label for="wx">微信收款码链接</label>
+                <input type="text" id="wx" class="custom-input" placeholder="请输入微信收款码图片链接">
+            </div>
+            
+            <div class="form-group">
+                <label for="zfb">支付宝收款码链接</label>
+                <input type="text" id="zfb" class="custom-input" placeholder="请输入支付宝收款码图片链接">
+            </div>
+            
+            <button class="custom-btn" id="generateSkmBtn">生成收款码图片</button>
+        </div>
+        
+        <!-- QQ名片API -->
+        <div class="api-content" id="qqmp-content">
+            <div class="form-group">
+                <label for="qqNumber">QQ号码（必填）</label>
+                <input type="text" id="qqNumber" class="custom-input" placeholder="请输入QQ号码">
+            </div>
+            
+            <div class="form-group">
+                <label for="qid">QID（必填）</label>
+                <input type="text" id="qid" class="custom-input" placeholder="请输入QID">
+            </div>
+            
+            <div class="form-group">
+                <label for="nickname">昵称（必填）</label>
+                <input type="text" id="nickname" class="custom-input" placeholder="请输入昵称">
+            </div>
+            
+            <!-- 模板选择器（动态生成） -->
+            <div class="form-group">
+                <label>选择模板 (1-13)</label>
+                <div class="custom-select" id="qqmpTemplateSelect">
+                    <div class="select-trigger" data-target="qqmpTemplateDropdown">
+                        <span class="selected-text">随机模板</span>
+                        <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                            <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </div>
+                    <div class="select-dropdown" id="qqmpTemplateDropdown">
+                        <ul class="dropdown-options" id="qqmpTemplateOptions">
+                            <li class="dropdown-option selected" data-value="">随机模板</li>
+                            <!-- 动态生成1-13模板选项 -->
+                        </ul>
+                    </div>
+                </div>
+                <input type="hidden" id="qqmpTemplateValue" value="">
+            </div>
+            
+            <button class="custom-btn" id="generateQQmpBtn">生成QQ名片</button>
+        </div>
+        
+        <!-- 奖状API -->
+        <div class="api-content" id="jiangzhuang-content">
+            <div class="form-group">
+                <label for="jiangzhuangName">获奖人姓名（必填）</label>
+                <input type="text" id="jiangzhuangName" class="custom-input" placeholder="请输入获奖人姓名">
+            </div>
+            
+            <div class="form-group">
+                <label for="jiangzhuangNr">获奖奖项（必填）</label>
+                <input type="text" id="jiangzhuangNr" class="custom-input" placeholder="请输入获奖奖项，如：最佳API奖">
+            </div>
+            
+            <div class="form-group">
+                <label for="jiangzhuangRq">获奖日期（必填）</label>
+                <input type="text" id="jiangzhuangRq" class="custom-input" placeholder="请输入获奖日期，如：2023年12月31日">
+            </div>
+            
+            <button class="custom-btn" id="generateJiangzhuangBtn">生成奖状图片</button>
+        </div>
+        
+        <!-- 二维码API -->
+        <div class="api-content active" id="qrcode-content">
+            <div class="form-group">
+                <label for="qrcodeText">二维码内容（必填）</label>
+                <input type="text" id="qrcodeText" class="custom-input" placeholder="请输入二维码内容，如：https://example.com">
+            </div>
+            
+            <!-- 二维码大小选择器 -->
+            <div class="form-group">
+                <label>二维码大小（必填）</label>
+                <div class="custom-select" id="qrcodeSizeSelect">
+                    <div class="select-trigger" data-target="qrcodeSizeDropdown">
+                        <span class="selected-text">150x150</span>
+                        <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                            <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                        </svg>
+                    </div>
+                    <div class="select-dropdown" id="qrcodeSizeDropdown">
+                        <ul class="dropdown-options">
+                            <li class="dropdown-option" data-value="100">100x100</li>
+                            <li class="dropdown-option selected" data-value="150">150x150</li>
+                            <li class="dropdown-option" data-value="200">200x200</li>
+                            <li class="dropdown-option" data-value="250">250x250</li>
+                            <li class="dropdown-option" data-value="300">300x300</li>
+                            <li class="dropdown-option" data-value="400">400x400</li>
+                        </ul>
+                    </div>
+                </div>
+                <input type="hidden" id="qrcodeSizeValue" value="150">
+            </div>
+            
+            <button class="custom-btn" id="generateQrcodeBtn">生成二维码</button>
+        </div>
+        
+        <!-- 中秋节快乐API -->
+        <div class="api-content" id="zqjl-content">
+            <div class="form-group">
+                <label for="zqjlText">祝福文字（必填，不超过两个字）</label>
+                <input type="text" id="zqjlText" class="custom-input" placeholder="请输入祝福文字，如：快乐" maxlength="2">
+                <span class="form-hint">注意：只能输入两个汉字，如：快乐、幸福、安康等</span>
+            </div>
+            
+            <button class="custom-btn" id="generateZqjlBtn">生成中秋节祝福图片</button>
+        </div>
+        
+        <!-- 手写字生成API -->
+        <div class="api-content" id="shouxiezi-content">
+            <div class="form-group">
+                <label for="shouxieziText">需要生成的内容（必填）</label>
+                <textarea id="shouxieziText" class="custom-textarea" placeholder="请输入需要生成的内容，如：欢迎使用手写字生成API"></textarea>
+                <span class="form-hint">注意：生成的手写字图片格式为JPG</span>
+            </div>
+            
+            <button class="custom-btn" id="generateShouxieziBtn">生成手写字图片</button>
+        </div>
+        
+        <!-- 你应该致电API -->
+        <div class="api-content" id="nishouldcall-content">
+            <div class="form-group">
+                <label for="callQq">QQ号码（必填）</label>
+                <input type="text" id="callQq" class="custom-input" placeholder="请输入需要致电的QQ号码">
+            </div>
+            
+            <button class="custom-btn" id="generateCallBtn">生成致电提示图片</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            正在生成图片，请稍候
+        </div>
+        
+        <div class="error" id="error">
+            生成图片时出现错误，请重试
+        </div>
+        
+        <div class="preview-container">
+            <h3 class="preview-title">图片预览</h3>
+            <img id="previewImage" class="preview-image" alt="生成的图片">
+            <a id="downloadBtn" class="custom-btn secondary" style="display: none; margin: 20px auto 0; width: 200px;" download="generated-image.png">下载图片</a>
+        </div>
+    </div>
+
+    <script>
+        // 通用自定义下拉选择器逻辑
+        function initCustomSelect(selectContainerId) {
+            const selectContainer = document.getElementById(selectContainerId);
+            const trigger = selectContainer.querySelector('.select-trigger');
+            const dropdown = document.getElementById(trigger.getAttribute('data-target'));
+            const selectedText = trigger.querySelector('.selected-text');
+            const valueInput = selectContainer.querySelector('input[type="hidden"]');
+            const options = dropdown.querySelectorAll('.dropdown-option');
+            
+            // 切换下拉菜单显示/隐藏
+            trigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // 关闭其他所有下拉菜单
+                document.querySelectorAll('.select-dropdown.active').forEach(el => {
+                    if (el.id !== dropdown.id) {
+                        el.classList.remove('active');
+                        el.previousElementSibling.classList.remove('active');
+                    }
+                });
+                
+                // 切换当前菜单
+                this.classList.toggle('active');
+                dropdown.classList.toggle('active');
+            });
+            
+            // 点击选项切换选中状态
+            options.forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    
+                    // 移除所有选中状态
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    
+                    // 添加当前选中状态
+                    this.classList.add('selected');
+                    
+                    // 更新选中文本和隐藏输入框值
+                    const value = this.getAttribute('data-value');
+                    const text = this.textContent;
+                    selectedText.textContent = text;
+                    valueInput.value = value;
+                    
+                    // 关闭下拉菜单
+                    trigger.classList.remove('active');
+                    dropdown.classList.remove('active');
+                });
+            });
+            
+            // 点击页面其他地方关闭下拉菜单
+            document.addEventListener('click', function() {
+                trigger.classList.remove('active');
+                dropdown.classList.remove('active');
+            });
+            
+            // 阻止下拉菜单内部点击冒泡
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            
+            // 键盘导航支持
+            document.addEventListener('keydown', function(e) {
+                const isDropdownOpen = dropdown.classList.contains('active');
+                
+                if (e.key === 'ArrowDown' && document.activeElement === trigger) {
+                    e.preventDefault();
+                    trigger.classList.add('active');
+                    dropdown.classList.add('active');
+                    options[0].focus();
+                } else if (isDropdownOpen) {
+                    const activeOption = dropdown.querySelector('.dropdown-option.selected');
+                    const activeIndex = Array.from(options).indexOf(activeOption);
+                    
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const nextIndex = (activeIndex + 1) % options.length;
+                        options[nextIndex].click();
+                        options[nextIndex].focus();
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const prevIndex = (activeIndex - 1 + options.length) % options.length;
+                        options[prevIndex].click();
+                        options[prevIndex].focus();
+                    } else if (e.key === 'Enter' || e.key === 'Escape') {
+                        e.preventDefault();
+                        trigger.classList.remove('active');
+                        dropdown.classList.remove('active');
+                        if (e.key === 'Enter') trigger.focus();
+                    }
+                }
+            });
+        }
+        
+        // 初始化所有自定义选择器
+        function initAllSelects() {
+            // 主功能选择器
+            initCustomSelect('mainSelect');
+            
+            // 其他选择器
+            initCustomSelect('sxbjTemplateSelect');
+            initCustomSelect('jupaiTypeSelect');
+            initCustomSelect('jupaiTemplateSelect');
+            initCustomSelect('qqmpTemplateSelect');
+            initCustomSelect('qrcodeSizeSelect');
+        }
+        
+        // 动态生成模板选项
+        function generateTemplateOptions() {
+            // 生成美女举牌模板选项 (1-31)
+            const jupaiTemplateOptions = document.getElementById('jupaiTemplateOptions');
+            for (let i = 1; i <= 31; i++) {
+                const option = document.createElement('li');
+                option.className = 'dropdown-option';
+                option.setAttribute('data-value', i);
+                option.textContent = `模板 ${i}`;
+                jupaiTemplateOptions.appendChild(option);
+            }
+            
+            // 生成QQ名片模板选项 (1-13)
+            const qqmpTemplateOptions = document.getElementById('qqmpTemplateOptions');
+            for (let i = 1; i <= 13; i++) {
+                const option = document.createElement('li');
+                option.className = 'dropdown-option';
+                option.setAttribute('data-value', i);
+                option.textContent = `模板 ${i}`;
+                qqmpTemplateOptions.appendChild(option);
+            }
+        }
+        
+        // 切换API内容
+        function switchApiContent(apiValue) {
+            const apiContents = document.querySelectorAll('.api-content');
+            apiContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === `${apiValue}-content`) {
+                    content.classList.add('active');
+                }
+            });
+            resetPreview();
+        }
+        
+        // 重置预览区域
+        function resetPreview() {
+            const previewImage = document.getElementById('previewImage');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            
+            previewImage.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            loadingElement.style.display = 'none';
+            errorElement.style.display = 'none';
+        }
+        
+        // 主功能选择器切换逻辑
+        document.getElementById('mainSelect').addEventListener('click', function(e) {
+            const target = e.target.closest('.dropdown-option');
+            if (target) {
+                const apiValue = target.getAttribute('data-value');
+                document.getElementById('activeApi').value = apiValue;
+                switchApiContent(apiValue);
+            }
+        });
+        
+        // 美女举牌类型选择切换
+        document.getElementById('jupaiTypeValue').addEventListener('change', function() {
+            const imageUrlGroup = document.getElementById('imageUrlGroup');
+            if (this.value === 'img') {
+                imageUrlGroup.style.display = 'block';
+            } else {
+                imageUrlGroup.style.display = 'none';
+            }
+        });
+        
+        // 所有生成函数保持不变，仅修改获取值的方式
+        // 生成双喜背景图片
+        function generateSxbjImage() {
+            const name1 = document.getElementById('name1').value.trim();
+            const name2 = document.getElementById('name2').value.trim();
+            const template = document.getElementById('sxbjTemplateValue').value;
+            
+            if (!name1) {
+                alert('请输入第一个名字');
+                document.getElementById('name1').focus();
+                return;
+            }
+            
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const previewImage = document.getElementById('previewImage');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            loadingElement.style.display = 'block';
+            errorElement.style.display = 'none';
+            previewImage.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            
+            let apiUrl = `https://api.zxz.ee/api/sxbj/?name1=${encodeURIComponent(name1)}`;
+            
+            if (name2) apiUrl += `&name2=${encodeURIComponent(name2)}`;
+            if (template) apiUrl += `&type=${template}`;
+            apiUrl += `&t=${Date.now()}`;
+            
+            previewImage.onload = function() {
+                loadingElement.style.display = 'none';
+                previewImage.style.display = 'block';
+                downloadBtn.style.display = 'block';
+                downloadBtn.href = apiUrl;
+                downloadBtn.download = 'sxbj-image.png';
+            };
+            
+            previewImage.onerror = function() {
+                loadingElement.style.display = 'none';
+                errorElement.style.display = 'block';
+            };
+            
+            previewImage.src = apiUrl;
+        }
+        
+        // 生成美女举牌图片
+        function generateJupaiImage() {
+            const jupaiType = document.getElementById('jupaiTypeValue').value;
+            const imageUrl = document.getElementById('imageUrl').value.trim();
+            const templateId = document.getElementById('jupaiTemplateValue').value;
+            const wb1 = document.getElementById('wb1').value.trim();
+            const wb2 = document.getElementById('wb2').value.trim();
+            const wb3 = document.getElementById('wb3').value.trim();
+            const wb4 = document.getElementById('wb4').value.trim();
+            
+            if (jupaiType === 'img' && !imageUrl) {
+                alert('图片模式下请输入图片链接');
+                document.getElementById('imageUrl').focus();
+                return;
+            }
+            
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const previewImage = document.getElementById('previewImage');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            loadingElement.style.display = 'block';
+            errorElement.style.display = 'none';
+            previewImage.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            
+            let apiUrl = `https://api.zxz.ee/api/jupai/?`;
+            const params = [];
+            
+            if (jupaiType) params.push(`type=${encodeURIComponent(jupaiType)}`);
+            if (jupaiType === 'img' && imageUrl) params.push(`url=${encodeURIComponent(imageUrl)}`);
+            if (templateId) params.push(`id=${encodeURIComponent(templateId)}`);
+            if (wb1) params.push(`wb1=${encodeURIComponent(wb1)}`);
+            if (wb2) params.push(`wb2=${encodeURIComponent(wb2)}`);
+            if (wb3) params.push(`wb3=${encodeURIComponent(wb3)}`);
+            if (wb4) params.push(`wb4=${encodeURIComponent(wb4)}`);
+            params.push(`t=${Date.now()}`);
+            
+            apiUrl += params.join('&');
+            
+            previewImage.onload = function() {
+                loadingElement.style.display = 'none';
+                previewImage.style.display = 'block';
+                downloadBtn.style.display = 'block';
+                downloadBtn.href = apiUrl;
+                downloadBtn.download = 'jupai-image.png';
+            };
+            
+            previewImage.onerror = function() {
+                loadingElement.style.display = 'none';
+                errorElement.style.display = 'block';
+            };
+            
+            previewImage.src = apiUrl;
+        }
+        
+        // 生成收款码图片
+        function generateSkmImage() {
+            const qq = document.getElementById('qq').value.trim();
+            const wx = document.getElementById('wx').value.trim();
+            const zfb = document.getElementById('zfb').value.trim();
+            
+            if (!qq && !wx && !zfb) {
+                alert('请至少填写一个收款码链接');
+                document.getElementById('qq').focus();
+                return;
+            }
+            
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const previewImage = document.getElementById('previewImage');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            loadingElement.style.display = 'block';
+            errorElement.style.display = 'none';
+            previewImage.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            
+            let apiUrl = `https://api.zxz.ee/api/skm/?`;
+            const params = [];
+            
+            if (qq) params.push(`qq=${encodeURIComponent(qq)}`);
+            if (wx) params.push(`wx=${encodeURIComponent(wx)}`);
+            if (zfb) params.push(`zfb=${encodeURIComponent(zfb)}`);
+            params.push(`t=${Date.now()}`);
+            
+            apiUrl += params.join('&');
+            
+            previewImage.onload = function() {
+                loadingElement.style.display = 'none';
+                previewImage.style.display = 'block';
+                downloadBtn.style.display = 'block';
+                downloadBtn.href = apiUrl;
+                downloadBtn.download = 'skm-image.png';
+            };
+            
+            previewImage.onerror = function() {
+                loadingElement.style.display = 'none';
+                errorElement.style.display = 'block';
+            };
+            
+            previewImage.src = apiUrl;
+        }
+        
+        // 生成QQ名片图片
+        function generateQQmpImage() {
+            const qqNumber = document.getElementById('qqNumber').value.trim();
+            const qid = document.getElementById('qid').value.trim();
+            const nickname = document.getElementById('nickname').value.trim();
+            const template = document.getElementById('qqmpTemplateValue').value;
+            
+            if (!qqNumber) {
+                alert('请输入QQ号码');
+                document.getElementById('qqNumber').focus();
+                return;
+            }
+            if (!qid) {
+                alert('请输入QID');
+                document.getElementById('qid').focus();
+                return;
+            }
+            if (!nickname) {
+                alert('请输入昵称');
+                document.getElementById('nickname').focus();
+                return;
+            }
+            
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const previewImage = document.getElementById('previewImage');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            loadingElement.style.display = 'block';
+            errorElement.style.display = 'none';
+            previewImage.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            
+            let apiUrl = `https://api.zxz.ee/api/qqgxmp/?qq=${encodeURIComponent(qqNumber)}&qid=${encodeURIComponent(qid)}&name=${encodeURIComponent(nickname)}`;
+            
+            if (template) apiUrl += `&type=${template}`;
+            apiUrl += `&t=${Date.now()}`;
+            
+            previewImage.onload = function() {
+                loadingElement.style.display = 'none';
+                previewImage.style.display = 'block';
+                downloadBtn.style.display = 'block';
+                downloadBtn.href = apiUrl;
+                downloadBtn.download = 'qqmp-image.png';
+            };
+            
+            previewImage.onerror = function() {
+                loadingElement.style.display = 'none';
+                errorElement.style.display = 'block';
+            };
+            
+            previewImage.src = apiUrl;
+        }
+        
+        // 生成奖状图片
+        function generateJiangzhuangImage() {
+            const name = document.getElementById('jiangzhuangName').value.trim();
+            const nr = document.getElementById('jiangzhuangNr').value.trim();
+            const rq = document.getElementById('jiangzhuangRq').value.trim();
+            
+            if (!name) {
+                alert('请输入获奖人姓名');
+                document.getElementById('jiangzhuangName').focus();
+                return;
+            }
+            if (!nr) {
+                alert('请输入获奖奖项');
+                document.getElementById('jiangzhuangNr').focus();
+                return;
+            }
+            if (!rq) {
+                alert('请输入获奖日期');
+                document.getElementById('jiangzhuangRq').focus();
+                return;
+            }
+            
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const previewImage = document.getElementById('previewImage');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            loadingElement.style.display = 'block';
+            errorElement.style.display = 'none';
+            previewImage.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            
+            let apiUrl = `http://api.xzboke.cn/api/jiangzhuang.php?name=${encodeURIComponent(name)}&nr=${encodeURIComponent(nr)}&rq=${encodeURIComponent(rq)}`;
+            apiUrl += `&t=${Date.now()}`;
+            
+            previewImage.onload = function() {
+                loadingElement.style.display = 'none';
+                previewImage.style.display = 'block';
+                downloadBtn.style.display = 'block';
+                downloadBtn.href = apiUrl;
+                downloadBtn.download = 'jiangzhuang-image.png';
+            };
+            
+            previewImage.onerror = function() {
+                loadingElement.style.display = 'none';
+                errorElement.style.display = 'block';
+            };
+            
+            previewImage.src = apiUrl;
+        }
+        
+        // 生成二维码图片
+        function generateQrcodeImage() {
+            const text = document.getElementById('qrcodeText').value.trim();
+            const size = document.getElementById('qrcodeSizeValue').value;
+            
+            if (!text) {
+                alert('请输入二维码内容');
+                document.getElementById('qrcodeText').focus();
+                return;
+            }
+            
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const previewImage = document.getElementById('previewImage');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            loadingElement.style.display = 'block';
+            errorElement.style.display = 'none';
+            previewImage.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            
+            let apiUrl = `http://api.xzboke.cn/api/qrcode.php?msg=${encodeURIComponent(text)}&size=${size}&text=${text}`;
+            apiUrl += `&t=${Date.now()}`;
+            
+            previewImage.onload = function() {
+                loadingElement.style.display = 'none';
+                previewImage.style.display = 'block';
+                downloadBtn.style.display = 'block';
+                downloadBtn.href = apiUrl;
+                downloadBtn.download = 'qrcode-image.png';
+            };
+            
+            previewImage.onerror = function() {
+                loadingElement.style.display = 'none';
+                errorElement.style.display = 'block';
+            };
+            
+            previewImage.src = apiUrl;
+        }
+        
+        // 生成中秋节快乐图片
+        function generateZqjlImage() {
+            const bt = document.getElementById('zqjlText').value.trim();
+            
+            if (!bt) {
+                alert('请输入祝福文字');
+                document.getElementById('zqjlText').focus();
+                return;
+            }
+            if (bt.length > 2) {
+                alert('祝福文字不能超过两个字');
+                document.getElementById('zqjlText').focus();
+                return;
+            }
+            
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const previewImage = document.getElementById('previewImage');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            loadingElement.style.display = 'block';
+            errorElement.style.display = 'none';
+            previewImage.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            
+            let apiUrl = `http://api.xiaoxing.site/api/sx_zq.php?bt=${encodeURIComponent(bt)}`;
+            apiUrl += `&t=${Date.now()}`;
+            
+            previewImage.onload = function() {
+                loadingElement.style.display = 'none';
+                previewImage.style.display = 'block';
+                downloadBtn.style.display = 'block';
+                downloadBtn.href = apiUrl;
+                downloadBtn.download = 'zqjl-image.png';
+            };
+            
+            previewImage.onerror = function() {
+                loadingElement.style.display = 'none';
+                errorElement.style.display = 'block';
+            };
+            
+            previewImage.src = apiUrl;
+        }
+        
+        // 生成手写字图片
+        function generateShouxieziImage() {
+            const text = document.getElementById('shouxieziText').value.trim();
+            
+            if (!text) {
+                alert('请输入需要生成的内容');
+                document.getElementById('shouxieziText').focus();
+                return;
+            }
+            
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const previewImage = document.getElementById('previewImage');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            loadingElement.style.display = 'block';
+            errorElement.style.display = 'none';
+            previewImage.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            
+            let apiUrl = `https://api.1xz.icu/api/shouxiezishengcheng?text=${encodeURIComponent(text)}`;
+            apiUrl += `&t=${Date.now()}`;
+            
+            previewImage.onload = function() {
+                loadingElement.style.display = 'none';
+                previewImage.style.display = 'block';
+                downloadBtn.style.display = 'block';
+                downloadBtn.href = apiUrl;
+                downloadBtn.download = 'shouxiezi-image.jpg';
+            };
+            
+            previewImage.onerror = function() {
+                loadingElement.style.display = 'none';
+                errorElement.style.display = 'block';
+            };
+            
+            previewImage.src = apiUrl;
+        }
+        
+        // 生成你应该致电图片
+        function generateCallImage() {
+            const qq = document.getElementById('callQq').value.trim();
+            
+            if (!qq) {
+                alert('请输入QQ号码');
+                document.getElementById('callQq').focus();
+                return;
+            }
+            
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const previewImage = document.getElementById('previewImage');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            loadingElement.style.display = 'block';
+            errorElement.style.display = 'none';
+            previewImage.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            
+            let apiUrl = `https://api.andeer.top/API/img_you_should_call.php?qq=${encodeURIComponent(qq)}`;
+            apiUrl += `&t=${Date.now()}`;
+            
+            previewImage.onload = function() {
+                loadingElement.style.display = 'none';
+                previewImage.style.display = 'block';
+                downloadBtn.style.display = 'block';
+                downloadBtn.href = apiUrl;
+                downloadBtn.download = 'nishouldcall-image.png';
+            };
+            
+            previewImage.onerror = function() {
+                loadingElement.style.display = 'none';
+                errorElement.style.display = 'block';
+            };
+            
+            previewImage.src = apiUrl;
+        }
+        
+        // 绑定生成按钮事件
+        document.getElementById('generateSxbjBtn').addEventListener('click', generateSxbjImage);
+        document.getElementById('generateJupaiBtn').addEventListener('click', generateJupaiImage);
+        document.getElementById('generateSkmBtn').addEventListener('click', generateSkmImage);
+        document.getElementById('generateQQmpBtn').addEventListener('click', generateQQmpImage);
+        document.getElementById('generateJiangzhuangBtn').addEventListener('click', generateJiangzhuangImage);
+        document.getElementById('generateQrcodeBtn').addEventListener('click', generateQrcodeImage);
+        document.getElementById('generateZqjlBtn').addEventListener('click', generateZqjlImage);
+        document.getElementById('generateShouxieziBtn').addEventListener('click', generateShouxieziImage);
+        document.getElementById('generateCallBtn').addEventListener('click', generateCallImage);
+        
+        // 回车键触发当前API生成
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !document.querySelector('.select-dropdown.active')) {
+                const activeApi = document.getElementById('activeApi').value;
+                
+                if (activeApi === 'sxbj') generateSxbjImage();
+                else if (activeApi === 'jupai') generateJupaiImage();
+                else if (activeApi === 'skm') generateSkmImage();
+                else if (activeApi === 'qqmp') generateQQmpImage();
+                else if (activeApi === 'jiangzhuang') generateJiangzhuangImage();
+                else if (activeApi === 'qrcode') generateQrcodeImage();
+                else if (activeApi === 'zqjl') generateZqjlImage();
+                else if (activeApi === 'shouxiezi') generateShouxieziImage();
+                else if (activeApi === 'nishouldcall') generateCallImage();
+            }
+        });
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            generateTemplateOptions();
+            initAllSelects();
+        });
+    </script>
+</body>
+</html>
