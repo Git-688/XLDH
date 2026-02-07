@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影视下载中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入外部数据文件，名称已改为 ysxz.js -->
+    <script src="ysxz.js"></script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-xs-compact {
+                font-size: 0.75rem; /* 12px */
+                line-height: 1.3;
+            }
+            .text-sm-compact {
+                font-size: 0.8125rem; /* 13px */
+                line-height: 1.4;
+            }
+            .text-title {
+                font-size: 1rem; /* 16px */
+                line-height: 1.5;
+            }
+            .btn-sm-square {
+                @apply px-2 py-1 text-xs-compact rounded-md bg-blue-600 text-white hover:bg-blue-500 transition-colors;
+            }
+            .card-compact {
+                @apply bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden;
+            }
+            .tag-resolution {
+                @apply absolute top-1 right-1 bg-black/60 text-white text-xs-compact px-1.5 py-0.5 rounded-md;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+    <!-- 页面容器 -->
+    <div class="container mx-auto px-2 max-w-4xl">
+        <!-- 头部 - 固定不滚动 -->
+        <header class="sticky top-0 z-10 bg-gray-50 pt-4 pb-3 mb-3 border-b border-gray-200">
+            <!-- 标题+副标题 -->
+            <div class="text-center mb-3">
+                <h1 class="text-title font-bold mb-1">影视下载中心</h1>
+                <p class="text-xs-compact text-gray-500">海量高清资源，一键快速下载</p>
+            </div>
+            
+            <!-- 搜索框 -->
+            <div class="relative">
+                <input 
+                    type="text" 
+                    id="searchInput"
+                    placeholder="搜索影视名称/类型..."
+                    class="w-full px-3 py-1.5 text-xs-compact border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400"
+                >
+            </div>
+        </header>
+
+        <!-- 影视列表 -->
+        <main class="pb-4">
+            <div id="movieList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                <!-- 影视卡片将通过JS动态生成 -->
+            </div>
+
+            <!-- 空状态提示 -->
+            <div id="emptyState" class="hidden text-center py-8 text-xs-compact text-gray-500">
+                <i class="fa fa-film text-2xl mb-2 block"></i>
+                未找到相关影视资源
+            </div>
+        </main>
+
+        <!-- 底部信息 -->
+        <footer class="mt-6 text-center text-xs-compact text-gray-400">
+            <p>本页面仅为展示，所有资源均来自网络</p>
+            <p class="mt-1">© 2025 影视下载中心</p>
+        </footer>
+    </div>
+
+    <script>
+        // 模块化功能 - 影视列表渲染
+        const renderMovieList = (movies) => {
+            const movieList = document.getElementById('movieList');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (movies.length === 0) {
+                movieList.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            movieList.innerHTML = movies.map(movie => `
+                <div class="card-compact">
+                    <div class="relative pb-[56.25%]">
+                        <img src="${movie.img}" alt="${movie.title}" class="absolute inset-0 w-full h-full object-cover">
+                        <span class="tag-resolution">${movie.resolution}</span>
+                    </div>
+                    <div class="p-2">
+                        <h3 class="text-sm-compact font-medium truncate mb-1">${movie.title}</h3>
+                        <p class="text-xs-compact text-gray-500 line-clamp-2 mb-2 h-6">
+                            ${movie.type} | ${movie.duration} | ${movie.year}
+                        </p>
+                        <a href="${movie.downloadUrl}" class="btn-sm-square w-full block text-center">
+                            <i class="fa fa-download"></i>
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        // 模块化功能 - 搜索功能
+        const initSearch = () => {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', (e) => {
+                const keyword = e.target.value.trim().toLowerCase();
+                const filteredMovies = movieData.filter(movie => 
+                    movie.title.toLowerCase().includes(keyword) || 
+                    movie.type.toLowerCase().includes(keyword) ||
+                    movie.year.includes(keyword)
+                );
+                renderMovieList(filteredMovies);
+            });
+        };
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', () => {
+            // 这里直接使用外部文件中的 movieData 变量
+            renderMovieList(movieData);
+            initSearch();
+        });
+    </script>
+</body>
+</html>
