@@ -1,0 +1,1291 @@
+/* 
+ * 优化分类导航样式
+ * 文件位置：./css/modules/navigation.css
+ */
+
+/* 导航主容器 - 使用更紧凑的边距 */
+.navigation-section {
+    padding: 0 0 calc(var(--section-margin-xs) * 0.5) 0;
+    width: 100%;
+}
+
+/* 容器使用与常用标签一致的边距 */
+.navigation-section .container {
+    padding: 0 var(--container-padding-xs);
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 响应式调整边距 */
+@media (min-width: 576px) {
+    .navigation-section .container {
+        padding: 0 var(--container-padding-sm);
+    }
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-sm) * 0.5) 0;
+    }
+}
+
+@media (min-width: 768px) {
+    .navigation-section .container {
+        padding: 0 var(--container-padding-md);
+    }
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-sm) * 0.5) 0;
+    }
+}
+
+@media (min-width: 992px) {
+    .navigation-section .container {
+        padding: 0 var(--container-padding-lg);
+    }
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-md) * 0.5) 0;
+    }
+}
+
+@media (min-width: 1200px) {
+    .navigation-section .container {
+        padding: 0 var(--container-padding-xl);
+    }
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-md) * 0.5) 0;
+    }
+}
+
+/* ====================== 头部 - 修复布局，统计信息保持在右侧 ====================== */
+
+.navigation-header {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-left: 8px;
+}
+
+.navigation-header::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 12px;
+    background: var(--primary-color);
+    border-radius: 2px;
+}
+
+/* 标题部分 - 使用flex布局 */
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+}
+
+/* 左侧标题 */
+.nav-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* 修改导航标题大小 - 移除图标 */
+.navigation-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+/* 右侧统计信息部分 - 保持在右侧 */
+.navigation-stats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    white-space: nowrap;
+}
+
+.stat-item {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.stat-number {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+/* 分类数量 - 浅橙色 */
+.stat-item:nth-child(1) .stat-number {
+    color: #ffb74d !important;
+    font-weight: 900;
+}
+
+/* 网址数量 - 浅绿色 */
+.stat-item:nth-child(3) .stat-number {
+    color: #81c784 !important;
+    font-weight: 900;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    opacity: 0.8;
+}
+
+.stat-divider {
+    color: var(--border-color);
+    opacity: 0.5;
+    font-size: 12px;
+}
+
+/* 仓库按钮样式 - 修改版 */
+.repo-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    background: white;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    margin-left: 4px;
+    height: 22px;
+    line-height: 18px;
+}
+
+.repo-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.repo-btn:hover i {
+    color: var(--primary-color);
+}
+
+.repo-btn i {
+    font-size: 9px;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+}
+
+.repo-btn span {
+    font-size: 10px;
+    font-weight: 500;
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+    .repo-btn {
+        background: #333;
+        color: #ddd;
+        border-color: #555;
+    }
+    
+    .repo-btn:hover {
+        background: #3a3a3a;
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+    
+    .repo-btn i {
+        color: #ddd;
+    }
+    
+    .repo-btn:hover i {
+        color: var(--primary-color);
+    }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .repo-btn {
+        padding: 2px 5px;
+        font-size: 9px;
+        gap: 3px;
+        height: 20px;
+        line-height: 16px;
+    }
+    
+    .repo-btn i {
+        font-size: 8px;
+    }
+    
+    .repo-btn span {
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 480px) {
+    .repo-btn {
+        padding: 2px 4px;
+        width: auto;
+        height: 18px;
+        line-height: 14px;
+    }
+    
+    .repo-btn span {
+        display: inline; /* 在极窄屏幕也显示文字 */
+    }
+}
+
+/* ====================== 合并的导航主体 - 自适应高度 ====================== */
+
+.navigation-body {
+    display: flex;
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    min-height: 200px; /* 最小高度确保有内容 */
+}
+
+/* ====================== 左侧：一级分类 - 移除背景色和纵向滚动 ====================== */
+
+.navigation-left {
+    width: 140px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border-color);
+    background: white;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* 隐藏纵向滚动 */
+}
+
+.level1-nav {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+}
+
+.level1-btn {
+    width: 100%;
+    padding: 12px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 44px;
+}
+
+.level1-btn:hover {
+    background: rgba(67, 97, 238, 0.06);
+}
+
+/* 一级分类激活状态 - 移除背景色，只改文字颜色 */
+.level1-btn.active {
+    background: transparent; /* 移除背景色 */
+    color: #5dade2; /* 只改文字颜色 */
+    font-weight: 700;
+    box-shadow: none; /* 移除阴影 */
+}
+
+.level1-btn.active:hover {
+    background: transparent; /* 悬停时也保持透明 */
+}
+
+.level1-btn-icon {
+    display: none;
+}
+
+.level1-btn-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* ====================== 中间：二级分类 - 移除背景色和纵向滚动，激活指示改为文字颜色 ====================== */
+
+.navigation-middle {
+    width: 160px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border-color);
+    background: white;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* 隐藏纵向滚动 */
+}
+
+.level2-nav {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+}
+
+.level2-btn {
+    width: 100%;
+    padding: 12px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 44px;
+}
+
+.level2-btn:hover {
+    background: rgba(67, 97, 238, 0.06);
+}
+
+/* 二级分类激活状态 - 移除背景色，只改文字颜色 */
+.level2-btn.active {
+    background: transparent; /* 移除背景色 */
+    color: #ff7043; /* 改为醒目的文字颜色，橙色系 */
+    font-weight: 700; /* 加粗作为激活指示 */
+    box-shadow: none; /* 移除阴影 */
+}
+
+.level2-btn.active:hover {
+    background: transparent; /* 悬停时也保持透明 */
+}
+
+.level2-btn-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* 二级分类数量标签 */
+.level2-btn-count {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 8px;
+    min-width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+    margin-left: 4px;
+}
+
+.level2-btn.active .level2-btn-count {
+    background: #ff7043; /* 与激活文字颜色一致 */
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(255, 112, 67, 0.3);
+}
+
+/* ====================== 右侧：三级分类内容 - 自适应高度 ====================== */
+
+.navigation-right {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-card);
+    padding: 0;
+    position: relative;
+}
+
+.level3-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    padding: 12px;
+    animation: fadeIn 0.2s ease;
+    box-sizing: border-box;
+    /* 使用自动行高，让卡片高度自适应 */
+    grid-auto-rows: minmax(115px, auto); /* 减少最小行高 */
+}
+
+/* 网站卡片 - 自适应高度 */
+.site-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 10px 8px; /* 减少底部内边距 */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    /* 移除固定高度，改为最小高度 */
+    min-height: 115px; /* 减少最小高度 */
+    text-align: center;
+    box-sizing: border-box;
+    /* 确保卡片在网格中正常显示 */
+    height: auto;
+}
+
+/* 激活指示改为边框 - 第三级分类导航中的卡片悬停边框 */
+.site-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-color);
+    box-shadow: 0 6px 16px rgba(67, 97, 238, 0.12);
+    background: linear-gradient(135deg, rgba(67, 97, 238, 0.02), rgba(67, 97, 238, 0.05));
+}
+
+/* 卡片上半部分 - 固定高度 */
+.card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    height: 38px; /* 固定高度 */
+}
+
+/* 图标容器 - 填满卡片，添加边框和小阴影 */
+.icon-container {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: transparent; /* 改为透明背景 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 添加小阴影 */
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.1); /* 添加边框 */
+    padding: 0; /* 移除内边距 */
+}
+
+/* 确保图标图片填满容器 */
+.icon-container img,
+.icon-container i,
+.icon-container span {
+    width: 100%; /* 改为100%填满 */
+    height: 100%; /* 改为100%填满 */
+    object-fit: cover; /* 改为cover以填满容器 */
+}
+
+/* 特别处理图片图标 */
+.icon-container img {
+    border-radius: 6px; /* 添加圆角 */
+}
+
+/* 处理Font Awesome图标大小 */
+.icon-container i {
+    font-size: 20px; /* 调整图标大小 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+}
+
+/* 处理emoji图标大小 */
+.icon-container span {
+    font-size: 20px; /* 调整emoji大小 */
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.site-card:hover .icon-container {
+    background: transparent; /* 悬停时也保持透明 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* 悬停时阴影加深 */
+    border-color: var(--primary-color); /* 悬停时边框变色 */
+}
+
+/* 浏览容器 - 固定大小 */
+.views-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 100%;
+}
+
+.views-icon {
+    color: var(--primary-color);
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.view-count {
+    font-size: 16px;
+    font-weight: 700;
+    color: #4361ee;
+    line-height: 1;
+}
+
+/* 虚线分隔线 */
+.divider-line {
+    height: 1px;
+    background: repeating-linear-gradient(
+        to right,
+        transparent,
+        transparent 2px,
+        #666 2px,
+        #666 4px
+    );
+    margin: 0 0 6px 0; /* 减少下边距 */
+    opacity: 0.4;
+    width: 100%;
+}
+
+/* 卡片下半部分 - 自适应高度，减少上下空白 */
+.card-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 3px; /* 减少间距 */
+    text-align: center;
+    flex: 1;
+    justify-content: flex-start;
+    min-height: 40px; /* 减少最小高度 */
+    overflow: hidden;
+    padding-top: 1px; /* 减少顶部内边距 */
+}
+
+/* 网站标题 - 增大字体 */
+.site-title {
+    font-size: 14px; /* 增大字体 */
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.25; /* 减少行高 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    min-height: 17px; /* 减少最小高度 */
+}
+
+/* 网站描述 - 增大字体，留两行空间，减少上下空白 */
+.site-description {
+    font-size: 12px; /* 增大字体 */
+    color: var(--text-secondary);
+    line-height: 1.25; /* 减少行高 */
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* 确保显示两行 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.9;
+    width: 100%;
+    min-height: 30px; /* 减少高度 */
+    max-height: 30px; /* 限制最大高度为两行 */
+    padding-top: 0; /* 移除顶部内边距 */
+}
+
+/* 空状态 */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+}
+
+.empty-icon {
+    font-size: 24px;
+    color: var(--border-color);
+    margin-bottom: 8px;
+    opacity: 0.5;
+}
+
+.empty-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
+}
+
+.empty-subtitle {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin: 0;
+    opacity: 0.7;
+}
+
+/* 动画 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 浏览次数增加动画 */
+@keyframes pulseView {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.view-count.increasing {
+    animation: pulseView 0.3s ease;
+}
+
+/* ====================== 响应式设计 ====================== */
+
+@media (max-width: 1023px) {
+    .level1-btn.active::after,
+    .level2-btn.active::after {
+        display: none; /* 移除激活指示线 */
+    }
+}
+
+/* 桌面端 (≥ 1024px) */
+@media (min-width: 1024px) {
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-md) * 0.5) 0;
+    }
+    
+    .navigation-section .container {
+        max-width: 1600px;
+    }
+    
+    .navigation-body {
+        height: auto; /* 改为auto，让内容决定高度 */
+    }
+    
+    .navigation-left {
+        width: 140px;
+    }
+    
+    .navigation-middle {
+        width: 160px;
+    }
+    
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+        padding: 12px;
+        grid-auto-rows: minmax(115px, auto); /* 减少最小行高 */
+    }
+    
+    .site-card {
+        min-height: 115px; /* 减少最小高度 */
+        height: auto;
+    }
+    
+    .site-title {
+        font-size: 14px; /* 保持桌面端字体大小 */
+    }
+    
+    .site-description {
+        font-size: 12px; /* 保持桌面端字体大小 */
+        min-height: 30px;
+        max-height: 30px;
+    }
+}
+
+/* 平板端 (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-sm) * 0.5) 0;
+    }
+    
+    .navigation-body {
+        height: auto; /* 改为auto，让内容决定高度 */
+        flex-direction: column;
+    }
+    
+    .navigation-left {
+        width: 100%;
+        height: 46px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        overflow-x: hidden;
+    }
+    
+    .level1-nav {
+        flex-direction: row;
+        height: 100%;
+        padding: 0;
+    }
+    
+    .level1-btn {
+        padding: 0 10px;
+        border-bottom: none;
+        border-right: 1px solid var(--border-color);
+        min-width: 100px;
+        height: 100%;
+        flex: 1;
+        font-size: 12px;
+        min-height: 46px;
+    }
+    
+    .navigation-middle {
+        width: 100%;
+        height: 46px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        overflow-x: hidden;
+    }
+    
+    .level2-nav {
+        flex-direction: row;
+        height: 100%;
+        padding: 0;
+    }
+    
+    .level2-btn {
+        padding: 0 10px;
+        border-bottom: none;
+        border-right: 1px solid var(--border-color);
+        min-width: 100px;
+        height: 100%;
+        flex: 1;
+        font-size: 12px;
+        min-height: 46px;
+    }
+    
+    .level2-btn-count {
+        font-size: 10px;
+        padding: 1px 4px;
+        min-width: 16px;
+        margin-left: 3px;
+    }
+    
+    .navigation-right {
+        flex: 1;
+        min-height: auto; /* 移除固定最小高度 */
+    }
+    
+    /* 修复平板端显示不全问题：自适应行高 */
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+        padding: 10px;
+        grid-auto-rows: minmax(105px, auto); /* 自适应行高 */
+    }
+    
+    .site-card {
+        padding: 10px 8px 6px; /* 减少底部内边距 */
+        min-height: 105px; /* 减少最小高度 */
+        height: auto;
+    }
+    
+    .card-top {
+        height: 34px;
+        margin-bottom: 8px;
+    }
+    
+    .icon-container {
+        width: 34px;
+        height: 34px;
+    }
+    
+    .icon-container img,
+    .icon-container i,
+    .icon-container span {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .icon-container i {
+        font-size: 18px;
+    }
+    
+    .icon-container span {
+        font-size: 18px;
+    }
+    
+    .views-icon {
+        font-size: 11px;
+    }
+    
+    .view-count {
+        font-size: 14px;
+    }
+    
+    .divider-line {
+        margin: 0 0 5px 0; /* 减少下边距 */
+    }
+    
+    .site-title {
+        font-size: 13px;
+        -webkit-line-clamp: 2;
+        min-height: 16px; /* 减少最小高度 */
+        line-height: 1.25; /* 减少行高 */
+    }
+    
+    .site-description {
+        font-size: 11px;
+        -webkit-line-clamp: 2;
+        min-height: 27px; /* 减少高度 */
+        max-height: 27px;
+        line-height: 1.25; /* 减少行高 */
+    }
+}
+
+/* 移动端 (≤ 768px) */
+@media (max-width: 768px) {
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-xs) * 0.5) 0;
+    }
+    
+    .header-content {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .nav-header-left {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .navigation-title {
+        font-size: 15px;
+    }
+    
+    .navigation-stats {
+        flex: 1;
+        justify-content: flex-end;
+        min-width: 0;
+        overflow: hidden;
+    }
+    
+    .stat-item {
+        font-size: 11px;
+        flex-shrink: 1;
+    }
+    
+    .stat-number {
+        font-size: 13px;
+    }
+    
+    .stat-label {
+        font-size: 11px;
+    }
+    
+    .navigation-body {
+        height: auto; /* 改为auto，让内容决定高度 */
+        flex-direction: column;
+    }
+    
+    .navigation-left {
+        width: 100%;
+        height: 40px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        overflow-x: hidden;
+    }
+    
+    .level1-nav {
+        flex-direction: row;
+        height: 100%;
+        padding: 0;
+    }
+    
+    .level1-btn {
+        padding: 0 8px;
+        min-width: 90px;
+        height: 100%;
+        flex: 1;
+        font-size: 11px;
+        min-height: 40px;
+    }
+    
+    .navigation-middle {
+        width: 100%;
+        height: 40px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        overflow-x: hidden;
+    }
+    
+    .level2-nav {
+        flex-direction: row;
+        height: 100%;
+        padding: 0;
+    }
+    
+    .level2-btn {
+        padding: 0 8px;
+        min-width: 90px;
+        height: 100%;
+        flex: 1;
+        font-size: 11px;
+        min-height: 40px;
+    }
+    
+    .level2-btn-count {
+        font-size: 9px;
+        padding: 0 3px;
+        min-width: 14px;
+    }
+    
+    .navigation-right {
+        flex: 1;
+        min-height: auto; /* 移除固定最小高度 */
+    }
+    
+    /* 修复移动端显示不全问题：自适应行高 */
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 6px;
+        padding: 8px;
+        grid-auto-rows: minmax(100px, auto); /* 自适应行高 */
+    }
+    
+    .site-card {
+        padding: 8px 6px 4px; /* 减少底部内边距 */
+        min-height: 100px; /* 减少最小高度 */
+        height: auto;
+        border-radius: 6px;
+    }
+    
+    .card-top {
+        height: 30px;
+        margin-bottom: 6px;
+    }
+    
+    .icon-container {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .icon-container img,
+    .icon-container i,
+    .icon-container span {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .icon-container i {
+        font-size: 16px;
+    }
+    
+    .icon-container span {
+        font-size: 16px;
+    }
+    
+    .views-icon {
+        font-size: 10px;
+    }
+    
+    .view-count {
+        font-size: 13px;
+    }
+    
+    .divider-line {
+        margin: 0 0 4px 0; /* 减少下边距 */
+    }
+    
+    .card-bottom {
+        gap: 2px; /* 减少间距 */
+    }
+    
+    .site-title {
+        font-size: 12px;
+        -webkit-line-clamp: 2;
+        min-height: 15px; /* 减少最小高度 */
+        line-height: 1.25; /* 减少行高 */
+    }
+    
+    .site-description {
+        font-size: 10px;
+        -webkit-line-clamp: 2;
+        min-height: 25px; /* 减少高度 */
+        max-height: 25px;
+        line-height: 1.25; /* 减少行高 */
+    }
+}
+
+/* 极窄屏移动端 (≤ 480px) */
+@media (max-width: 480px) {
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-xs) * 0.4) 0;
+    }
+    
+    .navigation-title {
+        font-size: 14px;
+    }
+    
+    .stat-item {
+        font-size: 10px;
+    }
+    
+    .stat-number {
+        font-size: 12px;
+    }
+    
+    .stat-label {
+        font-size: 10px;
+    }
+    
+    .navigation-stats {
+        gap: 4px;
+    }
+    
+    .navigation-left {
+        height: 36px;
+    }
+    
+    .level1-btn {
+        padding: 0 6px;
+        min-width: 80px;
+        font-size: 10px;
+        min-height: 36px;
+    }
+    
+    .navigation-middle {
+        height: 36px;
+    }
+    
+    .level2-btn {
+        padding: 0 6px;
+        min-width: 80px;
+        font-size: 10px;
+        min-height: 36px;
+    }
+    
+    .level2-btn-count {
+        font-size: 8px;
+        padding: 0 2px;
+        min-width: 12px;
+    }
+    
+    .navigation-right {
+        min-height: auto; /* 移除固定最小高度 */
+    }
+    
+    /* 修复极窄屏显示不全问题：自适应行高 */
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+        gap: 4px;
+        padding: 6px;
+        grid-auto-rows: minmax(90px, auto); /* 自适应行高 */
+    }
+    
+    .site-card {
+        padding: 6px 4px 3px; /* 减少底部内边距 */
+        min-height: 90px; /* 减少最小高度 */
+        height: auto;
+    }
+    
+    .card-top {
+        height: 28px;
+        margin-bottom: 4px;
+    }
+    
+    .icon-container {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .icon-container img,
+    .icon-container i,
+    .icon-container span {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .icon-container i {
+        font-size: 14px;
+    }
+    
+    .icon-container span {
+        font-size: 14px;
+    }
+    
+    .views-icon {
+        font-size: 9px;
+    }
+    
+    .view-count {
+        font-size: 12px;
+    }
+    
+    .divider-line {
+        margin: 0 0 3px 0; /* 减少下边距 */
+    }
+    
+    .site-title {
+        font-size: 11px;
+        -webkit-line-clamp: 2;
+        min-height: 14px; /* 减少最小高度 */
+        line-height: 1.25; /* 减少行高 */
+    }
+    
+    .site-description {
+        font-size: 9px;
+        -webkit-line-clamp: 2;
+        min-height: 22px; /* 减少高度 */
+        max-height: 22px;
+        line-height: 1.25; /* 减少行高 */
+    }
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+    .navigation-body {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+    
+    .navigation-left,
+    .navigation-middle {
+        background: #262626;
+        border-color: #404040;
+    }
+    
+    .level1-btn,
+    .level2-btn {
+        border-color: #404040;
+    }
+    
+    .level1-btn:hover,
+    .level2-btn:hover {
+        background: rgba(67, 97, 238, 0.1);
+    }
+    
+    .level1-btn.active {
+        background: transparent;
+        color: #7bc8ff; /* 暗色模式下的激活文字颜色 */
+    }
+    
+    .level2-btn.active {
+        background: transparent;
+        color: #ff8a65; /* 暗色模式下的橙色激活文字颜色 */
+    }
+    
+    .level2-btn.active .level2-btn-count {
+        background: #ff8a65;
+        color: #1a1a1a;
+    }
+    
+    .site-card {
+        background: #333;
+        border-color: #404040;
+    }
+    
+    .site-card:hover {
+        background: #363636;
+        border-color: #7bc8ff;
+    }
+    
+    /* 暗色模式下的图标容器 */
+    .icon-container {
+        background: transparent;
+        color: #7bc8ff;
+        border-color: #555;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .icon-container i {
+        color: #7bc8ff;
+    }
+    
+    .divider-line {
+        background: repeating-linear-gradient(
+            to right,
+            transparent,
+            transparent 2px,
+            #888 2px,
+            #888 4px
+        );
+    }
+    
+    .navigation-header::before {
+        background: var(--accent-color);
+    }
+    
+    /* 暗色模式下的统计颜色 */
+    .stat-item:nth-child(1) .stat-number {
+        color: #ffcc80 !important;
+    }
+    
+    .stat-item:nth-child(3) .stat-number {
+        color: #a5d6a7 !important;
+    }
+    
+    .view-count {
+        color: #7bc8ff !important;
+    }
+    
+    .views-icon {
+        color: #7bc8ff;
+    }
+}
+
+/* 修复导航与页脚的间距过远问题 */
+.navigation-section {
+    padding-bottom: 0.5rem;
+}
+
+@media (min-width: 576px) {
+    .navigation-section {
+        padding-bottom: 0.5rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .navigation-section {
+        padding-bottom: 0.5rem;
+    }
+}
+
+@media (min-width: 992px) {
+    .navigation-section {
+        padding-bottom: 0.5rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .navigation-section {
+        padding-bottom: 0.75rem;
+    }
+}
