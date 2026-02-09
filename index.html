@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星链导航 - 您的个人导航中心</title>
+    <meta name="description" content="星链导航是一个现代化的个人导航网站，提供便捷的上网导航体验和各种实用工具">
+    <meta name="keywords" content="导航,工具,书签,资源,星链导航">
+    <meta name="author" content="星链导航">
+    
+    <!-- 主题颜色 -->
+    <meta name="theme-color" content="#4361ee">
+    <meta name="msapplication-TileColor" content="#4361ee">
+    
+    <!-- 图标 -->
+    <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon-16x16.png">
+    
+    <!-- 主样式 -->
+    <link rel="stylesheet" href="./css/style.css">
+    
+    <!-- 模块样式 -->
+    <link rel="stylesheet" href="./css/modules/navbar.css">
+    <link rel="stylesheet" href="./css/modules/sidebar.css">
+    <link rel="stylesheet" href="./css/modules/announcement.css">
+    <link rel="stylesheet" href="./css/modules/search.css">
+    <link rel="stylesheet" href="./css/modules/weather.css">
+    <link rel="stylesheet" href="./css/modules/about.css">
+    <link rel="stylesheet" href="./css/modules/navigation.css">
+    <link rel="stylesheet" href="./css/modules/wallpaper.css">
+    <link rel="stylesheet" href="./css/modules/greeting.css">
+    <link rel="stylesheet" href="./css/modules/footer.css">
+    <link rel="stylesheet" href="./css/modules/compact-tags.css">
+    <!-- 移除了 activity.css -->
+    
+    <!-- 响应式样式 -->
+    <link rel="stylesheet" href="./css/responsive.css">
+    
+    <!-- 音乐播放器样式 -->
+    <link rel="stylesheet" href="./css/xfyy1/music-player.css">
+    
+    <!-- Font Awesome 图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="./js/main.js" as="script">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
+</head>
+<body>
+
+<!-- 导航栏 -->
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <div class="nav-brand">
+            <div class="logo">
+                <!-- 使用图片logo -->
+                <img src="./assets/logo.png" alt="星链导航Logo" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-rocket\'></i>';">
+                <!-- 或者使用Font Awesome图标（示例使用火箭图标） -->
+                <!-- <i class="fas fa-rocket"></i> -->
+            </div>
+            <div class="brand-text-container">
+                <span class="brand-text">星链导航</span>
+                <span class="brand-subtitle">启跃星门，航图绘星河</span>
+            </div>
+        </div>
+        
+        <div class="nav-actions">
+            <button class="nav-btn search-btn" id="searchBtn" aria-label="搜索">
+                <i class="fas fa-search"></i>
+            </button>
+            <button class="nav-btn music-btn" id="musicBtn" aria-label="音乐播放器">
+                <i class="fas fa-music"></i>
+            </button>
+            <button class="nav-btn announcement-btn" id="announcementBtn" aria-label="公告">
+                <i class="fas fa-bullhorn"></i>
+            </button>
+            <button class="nav-btn menu-btn" id="menuBtn" aria-label="菜单">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- 侧滑栏 -->
+<aside class="sidebar" id="sidebar">
+    <!-- 壁纸背景区域 - 使用背景图片 -->
+    <div class="sidebar-wallpaper" id="sidebarWallpaper">
+        <div class="sidebar-wallpaper-overlay"></div>
+        
+        <!-- 壁纸上的用户信息 -->
+        <div class="sidebar-wallpaper-user-info">
+            <div class="sidebar-wallpaper-avatar">
+                <img id="sidebarWallpaperAvatar" src="" alt="用户头像" 
+                     onerror="this.style.display='block'; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo='">
+            </div>
+            <div class="sidebar-wallpaper-user-text">
+                <div class="sidebar-wallpaper-nickname" id="sidebarWallpaperNickname">访客用户</div>
+                <div class="sidebar-wallpaper-signature" id="sidebarWallpaperSignature">探索无限可能</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 侧滑栏内容 -->
+    <div class="sidebar-content">
+        <!-- 每日一言卡片 -->
+        <div class="daily-quote-card">
+            <div class="quote-icon">
+                <i class="fas fa-quote-left"></i>
+            </div>
+            <p id="dailyQuote">加载中...</p>
+        </div>
+
+        <!-- 分类导航区域 -->
+        <div class="categories-container">
+            <div class="sidebar-categories">
+                <!-- 分类内容将通过JS动态生成 -->
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <button class="footer-btn" onclick="window.open('https://example.com/feedback', '_blank')" aria-label="留言反馈">
+                <i class="fas fa-comment"></i>
+            </button>
+            <button class="footer-btn" onclick="window.open('https://example.com/submit', '_blank')" aria-label="网站投稿">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+            <button class="footer-btn" id="aboutBtn" aria-label="关于网站">
+                <i class="fas fa-info-circle"></i>
+            </button>
+            <button class="footer-btn" onclick="window.open('https://qm.qq.com/example', '_blank')" aria-label="加入QQ群">
+                <i class="fab fa-qq"></i>
+            </button>
+        </div>
+    </div>
+</aside>
+
+<!-- 主内容区域 -->
+<main class="main-content">
+    
+    <!-- 壁纸背景 - 卡片样式 -->
+    <section class="wallpaper-section">
+        <div class="container">
+            <div class="wallpaper-container">
+                <img id="wallpaper" src="" alt="壁纸" onerror="this.style.display='none'">
+                <div class="wallpaper-overlay"></div>
+                <!-- 壁纸信息显示区域 -->
+                <div class="wallpaper-info" id="wallpaperInfo">
+                    <div class="wallpaper-title" id="wallpaperTitle"></div>
+                    <div class="wallpaper-copyright" id="wallpaperCopyright"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 问候语和书签区域 -->
+    <section class="greeting-section">
+        <div class="greeting-container">
+            <!-- 左侧大卡片 -->
+            <div class="greeting-main-card">
+                <!-- 顶部：问候语和日期时间 -->
+                <div class="greeting-header">
+                    <div class="greeting-left">
+                        <div class="greeting-text">
+                            <h1 id="greeting">下午好!</h1>
+                        </div>
+                        <div class="countdown-holiday" id="countdownHoliday">
+                            <span id="holidayName">下一个节日</span>
+                            <span id="holidayCountdown">还有0天</span>
+                        </div>
+                    </div>
+                    <div class="datetime" id="datetime">
+                        <div id="currentTime">14:30:45</div>
+                        <div id="currentDate">2024年1月15日 星期一</div>
+                    </div>
+                </div>
+                
+                <!-- 木鱼按钮 - 添加计数显示 -->
+                <div class="fish-section">
+                    <button class="fish-btn" data-type="merit" aria-label="功德">
+                        <i class="fas fa-hands-praying"></i>
+                        <span class="fish-count" id="meritCount">0</span>
+                    </button>
+                    <button class="fish-btn" data-type="luck" aria-label="幸运">
+                        <i class="fas fa-clover"></i>
+                        <span class="fish-count" id="luckCount">0</span>
+                    </button>
+                    <button class="fish-btn" data-type="wealth" aria-label="财富">
+                        <i class="fas fa-coins"></i>
+                        <span class="fish-count" id="wealthCount">0</span>
+                    </button>
+                    <button class="fish-btn" data-type="health" aria-label="健康">
+                        <i class="fas fa-heart"></i>
+                        <span class="fish-count" id="healthCount">0</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 右侧书签按钮 -->
+            <a href="./pages/others/sq.html" class="bookmark-btn" aria-label="我的书签" target="_blank">
+                <i class="fas fa-bookmark"></i>
+                <span>我的书签</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- 简约标签区域 -->
+    <section class="minimal-tags-section">
+        <div class="container">
+            <div class="tags-header">
+                <h2 class="tags-title">常用标签</h2>
+                <span class="tags-subtitle-right">使用不了就是API失效了待换❗️</span>
+            </div>
+            <div class="tags-grid" id="tagsGrid">
+                <!-- 标签将通过JS动态生成 -->
+                <div class="tags-loading" id="tagsLoading">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 分类导航 - 优化版 -->
+    <section class="navigation-section">
+        <div class="container">
+            <!-- 头部 - 统一增加左右外边距 -->
+            <div class="navigation-header">
+                <div class="header-content">
+                    <div class="nav-header-left">
+                        <h2 class="navigation-title">分类导航</h2>
+                    </div>
+                    <div class="navigation-stats">
+                        <span class="stat-item">
+                            <span class="stat-number" id="categoryCount">0</span>
+                            <span class="stat-label">分类</span>
+                        </span>
+                        <span class="stat-divider">•</span>
+                        <span class="stat-item">
+                            <span class="stat-number" id="siteCount">0+</span>
+                            <span class="stat-label">网址</span>
+                        </span>
+                        <a href="./pages/others/ck.html" class="repo-btn" title="查看仓库" target="_blank">
+                            <i class="fas fa-archive"></i>
+                            <span>仓库</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 合并的导航主体 - 统一增加左右外边距 -->
+            <div class="navigation-body">
+                <!-- 左侧：一级分类 -->
+                <div class="navigation-left">
+                    <div class="level1-nav" id="level1Nav">
+                        <!-- 一级分类按钮将通过JS动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 中间：二级分类 -->
+                <div class="navigation-middle">
+                    <div class="level2-nav" id="level2Nav">
+                        <!-- 二级分类标签将通过JS动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 右侧：三级分类内容 - 添加滚动功能 -->
+                <div class="navigation-right">
+                    <div class="level3-content" id="level3Content">
+                        <!-- 网站卡片将通过JS动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-compact-container">
+            <!-- 顶部：声明卡片 -->
+            <div class="footer-disclaimer-card">
+                <div class="disclaimer-header">
+                    <span class="disclaimer-title">免责声明：</span>
+                    <span class="disclaimer-version">v1.0 · 生效于 2025.12.08</span>
+                </div>
+                <div class="disclaimer-text">
+                    本站资源均搜集于公开网络，<strong>仅供个人学习与研究</strong>，不保证可用性及安全，使用者需自行承担风险。若涉及版权问题，请通过
+                    <span class="email-text">1595126534@qq.com</span>
+                    联系处理。严禁用于商业或非法目的。
+                </div>
+            </div>
+
+            <!-- 底部：数据卡片组 -->
+            <div class="footer-stats-cards">
+                <!-- 运行时间卡片 (红色主题) -->
+                <div class="stat-card">
+                    <div class="stat-card-inner">
+                        <div class="stat-icon running-icon">
+                            <i class="fas fa-heartbeat heartbeat-enhanced"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-name">运行时间</div>
+                            <div class="stat-number" id="uptime">0天 0时 0分 0秒</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 访问次数卡片 (绿色主题) -->
+                <div class="stat-card">
+                    <div class="stat-card-inner">
+                        <div class="stat-icon visits-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-name">访问次数</div>
+                            <div class="stat-number" id="visitCount">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 返回顶部和天气按钮 -->
+<div class="floating-buttons">
+    <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+    <!-- 修改活动按钮为链接到羊毛福利页面 -->
+    <a href="./pages/tools/羊毛福利.html" class="floating-btn activity-btn" id="activityBtn" aria-label="羊毛福利">
+        <i class="fas fa-gift"></i>
+    </a>
+    <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报">
+        <i class="fas fa-cloud-sun"></i>
+    </button>
+</div>
+
+    <!-- Toast容器 -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+<!-- 移除了活动模态框 -->
+
+<!-- 音乐播放器主体 -->
+<div class="music-player" id="musicPlayer">
+    <!-- 上部：封面和基本信息 -->
+    <div class="player-top">
+        <div class="cover-section">
+            <div class="album-cover">
+                <img id="cover-img" src="" alt="专辑封面">
+                <div class="cover-placeholder">
+                    <svg viewBox="0 0 64 64">
+                        <circle cx="32" cy="32" r="32" fill="#f0f0f0"/>
+                        <circle cx="32" cy="32" r="16" fill="#ddd"/>
+                        <circle cx="32" cy="32" r="8" fill="#4a90e2"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="song-basic-info">
+                <div class="song-title-container">
+                    <div class="song-title" id="song-title">加载中...</div>
+                </div>
+                <div class="song-artist-container">
+                    <div class="song-artist" id="song-artist">请稍候</div>
+                </div>
+            </div>
+        </div>
+        <div class="control-panel">
+            <div class="playback-controls">
+                <button class="control-btn" id="prev-btn" title="上一首">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                    </svg>
+                </button>
+                <button class="control-btn play-btn" id="play-btn" title="播放">
+                    <svg class="play-icon" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <svg class="pause-icon" viewBox="0 0 24 24" style="display: none;">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    </svg>
+                </button>
+                <button class="control-btn" id="next-btn" title="下一首">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="play-mode-controls">
+                <button class="control-btn mode-btn" id="mode-btn" title="播放模式">
+                    <svg class="mode-icon" viewBox="0 0 24 24">
+                        <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
+                    </svg>
+                </button>
+                <div class="volume-control">
+                    <button class="control-btn" id="volume-btn" title="音量">
+                        <svg class="volume-icon" viewBox="0 0 24 24">
+                            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                        </svg>
+                    </button>
+                    <div class="volume-slider" id="volume-slider-container" style="display: none;">
+                        <input type="range" id="volume-slider" min="0" max="100" value="50">
+                    </div>
+                </div>
+                <button class="control-btn" id="search-toggle-btn" title="搜索">
+                    <svg class="search-icon" viewBox="0 0 24 24">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    <svg class="back-icon" viewBox="0 0 24 24" style="display: none;">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <button class="control-btn" id="download-btn" title="下载当前歌曲">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 进度条 -->
+    <div class="progress-section">
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar">
+                <div class="progress-bg"></div>
+                <div class="progress" id="progress"></div>
+                <div class="progress-handle" id="progress-handle"></div>
+            </div>
+            <div class="time-display">
+                <span id="current-time" class="time-text">00:00</span>
+                    <span id="duration" class="time-text">00:00</span>
+            </div>
+        </div>
+        <div class="progress-actions">
+            <!-- 播放速度选择器 -->
+            <div class="speed-control">
+                <div class="speed-selector">
+                    <select id="speed-select">
+                        <option value="0.5">0.5x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="2">2x</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 中部：歌词显示 -->
+    <div class="lyrics-section">
+        <div class="lyrics-container" id="lyrics-container">
+            <div class="lyrics-line"></div>
+            <div class="lyrics-line active"></div>
+            <div class="lyrics-line"></div>
+        </div>
+    </div>
+    
+    <!-- 底部：扩展功能区 -->
+    <div class="bottom-section">
+        <div class="bottom-tabs">
+            <button class="tab-btn active" data-tab="netease">网易云音乐</button>
+            <button class="tab-btn" data-tab="qq">QQ音乐</button>
+            <button class="tab-btn" data-tab="kg">酷狗音乐</button>
+            <button class="tab-btn" data-tab="kuwo">酷我音乐</button>
+            <button class="tab-btn" data-tab="migu">抖音热歌榜</button>
+            <button class="tab-btn" data-tab="local">本地音乐</button>
+        </div>
+        
+        <!-- 网易云音乐内容 -->
+        <div class="tab-content active" id="netease-content">
+            <div class="playlist-header">
+                <div class="playlist-selector">
+                    <select id="netease-playlist-select">
+                        <option value="3778678">热歌榜</option>
+                        <option value="3779629">新歌榜</option>
+                        <option value="2884035">原创榜</option>
+                        <option value="19723756">飙升榜</option>
+                    </select>
+                </div>
+            </div>
+            <div class="content-container">
+                <div class="playlist-container" id="netease-playlist-container">
+                    <div class="loading">加载中...</div>
+                </div>
+                <div class="search-container" id="netease-search-container" style="display: none;">
+                    <div class="search-header">
+                        <div class="search-input-group">
+                            <input type="text" id="netease-search-input" placeholder="搜索歌曲、歌手...">
+                        </div>
+                    </div>
+                    <div class="search-results" id="netease-search-results">
+                        <div class="loading">输入关键词搜索</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- QQ音乐 -->
+        <div class="tab-content" id="qq-content">
+            <div class="playlist-header">
+                <div class="playlist-selector">
+                    <select id="qq-playlist-select">
+                        <option value="7512357727">热歌榜</option>
+                        <option value="7712337727">新歌榜</option>
+                        <option value="7612347727">原创榜</option>
+                    </select>
+                </div>
+            </div>
+            <div class="content-container">
+                <div class="playlist-container" id="qq-playlist-container">
+                    <div class="loading">加载中...</div>
+                </div>
+                <div class="search-container" id="qq-search-container" style="display: none;">
+                    <div class="search-header">
+                        <div class="search-input-group">
+                            <input type="text" id="qq-search-input" placeholder="搜索歌曲、歌手...">
+                        </div>
+                    </div>
+                    <div class="search-results" id="qq-search-results">
+                        <div class="loading">输入关键词搜索</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 酷狗音乐 -->
+        <div class="tab-content" id="kg-content">
+            <div class="playlist-header">
+                <div class="playlist-selector">
+                    <select id="kg-playlist-select">
+                        <option value="547134976">热歌榜</option>
+                        <option value="547134977">新歌榜</option>
+                        <option value="547134978">原创榜</option>
+                    </select>
+                </div>
+            </div>
+            <div class="content-container">
+                <div class="playlist-container" id="kg-playlist-container">
+                    <div class="loading">加载中...</div>
+                </div>
+                <div class="search-container" id="kg-search-container" style="display: none;">
+                    <div class="search-header">
+                        <div class="search-input-group">
+                            <input type="text" id="kg-search-input" placeholder="搜索歌曲、歌手...">
+                        </div>
+                    </div>
+                    <div class="search-results" id="kg-search-results">
+                        <div class="loading">输入关键词搜索</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 酷我音乐 -->
+        <div class="tab-content" id="kuwo-content">
+            <div class="playlist-header">
+                <div class="playlist-selector">
+                    <select id="kuwo-playlist-select">
+                        <option value="123456">热歌榜</option>
+                        <option value="234567">新歌榜</option>
+                    </select>
+                </div>
+            </div>
+            <div class="content-container">
+                <div class="playlist-container" id="kuwo-playlist-container">
+                    <div class="loading">加载中...</div>
+                </div>
+                <div class="search-container" id="kuwo-search-container" style="display: none;">
+                    <div class="search-header">
+                        <div class="search-input-group">
+                            <input type="text" id="kuwo-search-input" placeholder="搜索歌曲、歌手...">
+                        </div>
+                    </div>
+                    <div class="search-results" id="kuwo-search-results">
+                        <div class="loading">输入关键词搜索</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 抖音热歌榜 -->
+        <div class="tab-content" id="migu-content">
+            <div class="content-container">
+                <div class="playlist-container" id="migu-playlist-container">
+                    <div class="loading">加载抖音热歌榜中...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 本地音乐 -->
+        <div class="tab-content" id="local-content">
+            <div class="content-container">
+                <div class="playlist-container" id="local-playlist-container">
+                    <div class="loading">加载本地歌曲中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <audio id="audio-element" preload="metadata"></audio>
+    
+    <!-- 通知 -->
+    <div class="notification" id="notification" style="display: none;"></div>
+
+    <!-- 搜索模态框 - 无关闭按钮版本 -->
+    <div class="search-modal" id="searchModal" style="display: none;">
+        <div class="modal-content">
+            <div class="search-header">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" id="searchInput" 
+                       placeholder="输入搜索内容..." onkeydown="handleSearch(event)"
+                       oninput="showSuggestions(this.value)">
+                <div class="suggestions" id="suggestions"></div>
+            </div>
+
+            <!-- 可水平滚动的引擎选择器 -->
+            <div class="engine-selector" id="engineSelector">
+                <!-- 引擎按钮将通过JS动态生成 -->
+            </div>
+
+            <div class="toolbar">
+                <button class="toolbar-btn" onclick="togglePanel('history')">
+                    <i class="fas fa-history"></i> 历史
+                </button>
+                <button class="toolbar-btn" onclick="togglePanel('settings')">
+                    <i class="fas fa-cog"></i> 设置
+                </button>
+            </div>
+
+            <div class="history-panel" id="historyPanel"></div>
+            <div class="settings-panel" id="settingsPanel">
+                <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">添加自定义搜索引擎</div>
+                <div class="custom-engine-form">
+                    <input type="text" id="customName" placeholder="引擎名称（如：知乎）">
+                    <input type="text" id="customUrl" placeholder="搜索URL（如：https://www.zhihu.com/search?q=%s）">
+                    <input type="text" id="customIcon" placeholder="图标：FontAwesome类名或图片URL">
+                    <button onclick="addCustomEngine()">添加引擎</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 名称提示工具 -->
+    <div class="engine-tooltip" id="engineTooltip"></div>
+</main>
+
+<!-- 脚本引入 -->
+<!-- 基础工具 -->
+<script src="./js/utils/dom.js"></script>
+<script src="./js/utils/time.js"></script>
+<script src="./js/storage.js"></script>
+<script src="./js/api.js"></script>
+<script src="./data/navigation.json"></script>
+
+<!-- 基础组件 -->
+<script src="./js/components/navbar.js"></script>
+<script src="./js/components/sidebar.js"></script>
+
+<!-- 模块 -->
+<script src="./js/modules/announcement.js"></script>
+<script src="./js/modules/search.js"></script>
+<script src="./js/modules/weather.js"></script>
+<script src="./js/modules/about.js"></script>
+<script src="./js/modules/navigation.js"></script>
+<script src="./js/modules/wallpaper.js"></script>
+<script src="./js/modules/greeting.js"></script>
+<script src="./js/modules/footer.js"></script>
+<script src="./js/modules/compact-tags.js"></script>
+<!-- 移除了 activity.js -->
+
+<!-- 主应用程序 -->
+<script src="./js/main.js"></script>
+
+<!-- 音乐播放器 -->
+<script src="./js/xfyy/utils.js"></script>
+<script src="./js/xfyy/cache-manager.js"></script>
+<script src="./js/xfyy/lyric-parser.js"></script>
+<script src="./data/local-music-data.js"></script>
+<script src="./js/xfyy/plugin-manager.js"></script>
+<script src="./js/xfyy/music-player.js"></script>
+<script src="./js/xfyy/music-main.js"></script>
+</body>
+</html>
