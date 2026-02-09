@@ -1,0 +1,326 @@
+/* 基础重置与盒模型设置 */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0;
+}
+
+.container-fluid {
+    width: 100%;
+    padding: 0;
+}
+
+/* 响应式断点系统 - 使用统一变量 */
+@media (min-width: 0px) { 
+    .container { 
+        max-width: 100%; 
+        padding-left: var(--container-padding-xs);
+        padding-right: var(--container-padding-xs);
+    }
+    
+    .main-content .container {
+        padding-left: var(--container-padding-xs);
+        padding-right: var(--container-padding-xs);
+    }
+}
+
+@media (min-width: 576px) { 
+    .container { 
+        max-width: 540px; 
+        padding-left: var(--container-padding-sm);
+        padding-right: var(--container-padding-sm);
+    }
+    
+    .main-content .container {
+        padding-left: var(--container-padding-sm);
+        padding-right: var(--container-padding-sm);
+    }
+}
+
+@media (min-width: 768px) { 
+    .container { 
+        max-width: 720px; 
+        padding-left: var(--container-padding-md);
+        padding-right: var(--container-padding-md);
+    }
+    
+    .main-content .container {
+        padding-left: var(--container-padding-md);
+        padding-right: var(--container-padding-md);
+    }
+}
+
+@media (min-width: 992px) { 
+    .container { 
+        max-width: 960px; 
+        padding-left: var(--container-padding-lg);
+        padding-right: var(--container-padding-lg);
+    }
+    
+    .main-content .container {
+        padding-left: var(--container-padding-lg);
+        padding-right: var(--container-padding-lg);
+    }
+}
+
+@media (min-width: 1200px) { 
+    .container { 
+        max-width: 1140px; 
+        padding-left: var(--container-padding-xl);
+        padding-right: var(--container-padding-xl);
+    }
+    
+    .main-content .container {
+        padding-left: var(--container-padding-xl);
+        padding-right: var(--container-padding-xl);
+        max-width: 1200px;
+    }
+}
+
+@media (min-width: 1920px) { 
+    .container { 
+        max-width: 1600px; 
+    }
+    
+    .main-content .container {
+        max-width: 1400px;
+    }
+}
+
+/* 主内容区域响应式 */
+@media (max-width: 1023px) { 
+    .main-content { 
+        margin-top: 60px; 
+    }
+}
+
+/* 确保所有模块内容不会溢出容器 */
+.nav-container,
+.greeting-container,
+.minimal-tags-section .container,
+.wallpaper-section .container,
+.navigation-section .container,
+.footer-compact-container {
+    overflow: hidden;
+}
+
+/* 修复横向滚动问题 */
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+/* 侧滑栏完全独立滚动控制 */
+.sidebar.active { pointer-events: auto; transform: translateX(0); visibility: visible; }
+
+/* 主页完全独立，不受侧滑栏影响 */
+.sidebar.active ~ .main-content {
+    pointer-events: auto;
+    overflow: auto;
+    position: static;
+    width: 100%;
+    height: auto;
+}
+
+/* 侧滑栏内容区域独立滚动 */
+.sidebar-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+.categories-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 12px 12px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+.sidebar.active .categories-container,
+.sidebar.active .sidebar-content {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+    .sidebar.active { touch-action: pan-y; }
+    
+    .sidebar.active .categories-container {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+    }
+    
+    body.sidebar-open {
+        overflow: auto;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        touch-action: pan-y;
+    }
+    
+    .sidebar.active ~ .main-content { touch-action: pan-y; }
+}
+
+/* 分类导航项样式 */
+.category-group { margin-bottom: 8px; }
+
+.category-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.category-group-header:hover { background: rgba(67, 97, 238, 0.05); }
+
+.category-group-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.category-group-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4361ee;
+}
+
+.category-toggle {
+    background: none;
+    border: none;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #6c757d;
+    transition: all 0.2s ease;
+}
+
+.category-toggle:hover {
+    background: rgba(67, 97, 238, 0.1);
+    color: #4361ee;
+}
+
+.category-items { overflow: hidden; transition: max-height 0.3s ease; }
+
+.category-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 8px 10px 32px;
+    width: 100%;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    color: #495057;
+}
+
+.category-item:hover {
+    background: rgba(67, 97, 238, 0.08);
+    color: #4361ee;
+}
+
+.category-icon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+}
+
+.category-label { flex: 1; text-align: left; font-size: 13px; }
+
+.category-badge {
+    background: #e74c3c;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* ====== 浮动按钮响应式优化 ====== */
+
+/* 平板端适配 */
+@media (max-width: 768px) {
+    .floating-buttons {
+        bottom: 16px;
+        right: 16px;
+        gap: 10px;
+    }
+    
+    .floating-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+    }
+}
+
+/* 移动端适配 */
+@media (max-width: 480px) {
+    .floating-buttons {
+        bottom: 12px;
+        right: 12px;
+        gap: 8px;
+    }
+    
+    .floating-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+}
+
+/* 超小屏幕适配 */
+@media (max-width: 360px) {
+    .floating-buttons {
+        bottom: 10px;
+        right: 10px;
+        gap: 6px;
+    }
+    
+    .floating-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+}
+
+/* 横屏模式优化 */
+@media (max-height: 500px) and (orientation: landscape) {
+    .floating-buttons {
+        bottom: 8px;
+        right: 8px;
+        gap: 6px;
+    }
+    
+    .floating-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+}
