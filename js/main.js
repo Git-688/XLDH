@@ -322,6 +322,12 @@ class App {
                 e.preventDefault();
                 this.showSearch();
             }
+            
+            // F5 或 Ctrl+R 刷新页面数据
+            if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key === 'r')) {
+                e.preventDefault();
+                this.refreshPageWithAnimation();
+            }
         });
         
         // 网络状态监控
@@ -629,6 +635,29 @@ class App {
 
         this.modules.wallpaper.refreshWallpaper();
         this.showToast('正在刷新壁纸...', 'info');
+    }
+
+    /**
+     * 优化页面刷新功能
+     */
+    refreshPageWithAnimation() {
+        this.showToast('正在刷新页面数据...', 'info');
+        
+        // 添加刷新动画效果
+        document.body.style.opacity = '0.8';
+        document.body.style.transition = 'opacity 0.3s ease';
+        
+        // 延迟刷新，让用户看到动画
+        setTimeout(() => {
+            // 调用现有刷新方法
+            this.refreshAllModules();
+            
+            // 恢复透明度
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+                this.showToast('页面刷新完成', 'success');
+            }, 500);
+        }, 300);
     }
 
     /**
