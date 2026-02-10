@@ -258,6 +258,15 @@ body {
     color: #ff3333;
 }
 
+/* 刷新按钮 - 绿色图标，白色背景 */
+.refresh-btn {
+    color: #10b981;
+}
+
+.refresh-btn:hover {
+    color: #059669;
+}
+
 /* 活动按钮 - 橙色图标，白色背景 */
 .activity-btn {
     color: #ff6b35;
@@ -296,6 +305,14 @@ body {
     
     .back-to-top:hover {
         color: #ff5252;
+    }
+    
+    .refresh-btn {
+        color: #34d399;
+    }
+    
+    .refresh-btn:hover {
+        color: #10b981;
     }
     
     .weather-btn {
