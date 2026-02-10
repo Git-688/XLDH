@@ -162,6 +162,29 @@ class Navbar {
                 });
             }
 
+            // 刷新按钮
+            const refreshBtn = document.getElementById('refreshBtn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.closeSearchModal();
+                    
+                    // 显示刷新提示
+                    this.showToast('正在刷新页面数据...', 'info');
+                    
+                    // 延迟执行刷新，让用户看到提示
+                    setTimeout(() => {
+                        // 调用全局的刷新方法
+                        if (window.app && window.app.refreshAllModules) {
+                            window.app.refreshAllModules();
+                        } else {
+                            // 如果全局app不可用，直接刷新页面
+                            window.location.reload();
+                        }
+                    }, 500);
+                });
+            }
+
             // 文档点击事件
             document.addEventListener('click', this.handleDocumentClick.bind(this));
 
