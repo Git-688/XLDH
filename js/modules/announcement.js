@@ -214,10 +214,13 @@ class AnnouncementModule {
     hide() {
         if (!this.isVisible || !this.modalElement) return;
 
+        // 立即移除按钮的active类，避免视觉延迟
+        this.updateButtonState(false);
+
         // 移除active类触发CSS反向动画
         this.modalElement.classList.remove('active');
 
-        // 等待动画完成后更新状态
+        // 等待动画完成后更新内部状态和清理
         setTimeout(() => {
             this.isVisible = false;
             if (this.resizeHandler) {
@@ -225,7 +228,6 @@ class AnnouncementModule {
                 this.resizeHandler = null;
             }
             if (window.app) window.app.unregisterModal(this);
-            this.updateButtonState(false);
         }, 400); // 与CSS过渡时间保持一致
     }
 
