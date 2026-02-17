@@ -341,3 +341,14 @@
         gap: 5px; /* 超大屏幕增加间距 */
     }
 }
+
+/* ====== 新增：公告按钮激活状态专用样式 ====== */
+#announcementBtn.active {
+    background: #3764F4 !important;  /* 背景色改为 #3764F4 (原#FF3764F4不透明部分) */
+    color: #ffffff !important;       /* 图标整体颜色改为白色 */
+    transition: none;                /* 取消所有过渡效果，激活/取消激活立即变化，无延迟 */
+}
+
+#announcementBtn.active i {
+    color: #ffffff !important;       /* 确保图标本身也是白色 */
+}
