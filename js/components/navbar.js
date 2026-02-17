@@ -1,6 +1,7 @@
 /**
  * 导航栏组件 - 完全修复版
  * 负责导航栏的交互功能，包括搜索、音乐播放器控制、公告和侧边栏切换
+ * 新增：统一关闭所有模态框的方法，确保公告在点击其他按钮时关闭
  * @class Navbar
  */
 class Navbar {
@@ -77,19 +78,21 @@ class Navbar {
 
     /**
      * 绑定事件监听器 - 完全修复版
+     * 修改：所有按钮点击前先关闭其他模态框（公告等）
      */
     bindEvents() {
         try {
             // 搜索按钮 - 完全修复
             const searchBtn = document.getElementById('searchBtn');
             if (searchBtn) {
-                // 移除现有事件监听器，避免重复绑定
                 searchBtn.replaceWith(searchBtn.cloneNode(true));
                 const newSearchBtn = document.getElementById('searchBtn');
                 
                 newSearchBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    // 关闭除搜索外的所有模态框（包括公告）
+                    this.closeAllModalsExcept(['search']);
                     this.handleSearchButtonClick();
                 });
             }
@@ -98,8 +101,10 @@ class Navbar {
             const musicBtn = document.getElementById('musicBtn');
             if (musicBtn) {
                 musicBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    this.closeSearchModal();
+                    // 关闭除音乐外的所有模态框
+                    this.closeAllModalsExcept(['music']);
                     this.toggleMusicPlayer();
                 });
             }
@@ -107,14 +112,14 @@ class Navbar {
             // 公告按钮 - 完全修复
             const announcementBtn = document.getElementById('announcementBtn');
             if (announcementBtn) {
-                // 移除现有事件监听器，避免重复绑定
                 announcementBtn.replaceWith(announcementBtn.cloneNode(true));
                 const newAnnouncementBtn = document.getElementById('announcementBtn');
                 
                 newAnnouncementBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    this.closeSearchModal();
+                    // 关闭除公告外的所有模态框
+                    this.closeAllModalsExcept(['announcement']);
                     
                     if (window.announcementModule) {
                         window.announcementModule.toggleModal();
@@ -125,19 +130,18 @@ class Navbar {
             // 菜单按钮 - 完全修复
             const menuBtn = document.getElementById('menuBtn');
             if (menuBtn) {
-                // 移除现有事件监听器，避免重复绑定
                 menuBtn.replaceWith(menuBtn.cloneNode(true));
                 const newMenuBtn = document.getElementById('menuBtn');
                 
                 newMenuBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    this.closeSearchModal();
+                    // 关闭除侧边栏外的所有模态框
+                    this.closeAllModalsExcept(['sidebar']);
                     
                     if (window.sidebar && typeof window.sidebar.toggle === 'function') {
                         window.sidebar.toggle();
                     } else {
-                        // 如果侧边栏未初始化，尝试初始化
                         if (typeof CompactSidebar !== 'undefined') {
                             window.sidebar = new CompactSidebar();
                             window.sidebar.init().then(() => {
@@ -154,8 +158,11 @@ class Navbar {
             const weatherBtn = document.getElementById('weatherBtn');
             if (weatherBtn) {
                 weatherBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    this.closeSearchModal();
+                    // 关闭除天气外的所有模态框
+                    this.closeAllModalsExcept(['weather']);
+                    
                     if (window.app && window.app.modules.weather) {
                         window.app.modules.weather.showModal();
                     }
@@ -166,19 +173,18 @@ class Navbar {
             const refreshBtn = document.getElementById('refreshBtn');
             if (refreshBtn) {
                 refreshBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
-                    this.closeSearchModal();
+                    // 关闭所有模态框（不保留任何）
+                    this.closeAllModalsExcept([]);
                     
                     // 显示刷新提示
                     this.showToast('正在刷新页面数据...', 'info');
                     
-                    // 延迟执行刷新，让用户看到提示
                     setTimeout(() => {
-                        // 调用全局的刷新方法
                         if (window.app && window.app.refreshAllModules) {
                             window.app.refreshAllModules();
                         } else {
-                            // 如果全局app不可用，直接刷新页面
                             window.location.reload();
                         }
                     }, 500);
@@ -191,7 +197,7 @@ class Navbar {
             // 键盘事件
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
-                    this.closeAllModals();
+                    this.closeAllModalsExcept([]); // ESC 关闭所有
                 }
             });
 
@@ -214,31 +220,72 @@ class Navbar {
     }
 
     /**
-     * 处理搜索按钮点击
+     * 统一关闭所有模态框，但保留指定的模块
+     * @param {Array<string>} keepModules - 要保留的模块名称数组，如 ['music', 'search']
+     */
+    closeAllModalsExcept(keepModules = []) {
+        try {
+            // 关闭音乐播放器（除非保留）
+            if (!keepModules.includes('music')) {
+                this.hideMusicPlayer();
+            }
+
+            // 关闭搜索模态框（除非保留）
+            if (!keepModules.includes('search') && window.searchModule) {
+                if (window.searchModule.isModalOpen && window.searchModule.isModalOpen()) {
+                    window.searchModule.hide();
+                }
+            }
+
+            // 关闭侧边栏（除非保留）
+            if (!keepModules.includes('sidebar') && window.sidebar) {
+                if (window.sidebar.isVisible && window.sidebar.isVisible()) {
+                    window.sidebar.hide();
+                }
+            }
+
+            // 关闭公告模态框（除非保留）
+            if (!keepModules.includes('announcement') && window.announcementModule) {
+                if (window.announcementModule.isVisible) {
+                    window.announcementModule.hide();
+                }
+            }
+
+            // 关闭天气模态框（除非保留）
+            if (!keepModules.includes('weather') && window.app && window.app.modules && window.app.modules.weather) {
+                if (window.app.modules.weather.hide) {
+                    window.app.modules.weather.hide();
+                }
+            }
+
+            // 关闭关于模态框（除非保留）
+            if (!keepModules.includes('about') && window.aboutModule) {
+                if (window.aboutModule.hide) {
+                    window.aboutModule.hide();
+                }
+            }
+        } catch (error) {
+            console.error('关闭模态框失败:', error);
+        }
+    }
+
+    /**
+     * 处理搜索按钮点击（兼容旧方法，可保留或删除）
      */
     handleSearchButtonClick() {
         try {
-            // 关闭其他模态框
-            this.closeAllModalsExceptSearch();
-            
-            // 确保搜索模块可用
             if (window.searchModule && typeof window.searchModule.showModal === 'function') {
-                if (window.searchModule.isModalOpen()) {
+                if (window.searchModule.isModalOpen && window.searchModule.isModalOpen()) {
                     window.searchModule.hide();
                 } else {
                     window.searchModule.showModal();
                 }
             } else if (typeof SearchModule !== 'undefined') {
-                // 如果 SearchModule 类存在但未实例化
-                console.log('搜索模块未实例化，正在初始化...');
                 window.searchModule = new SearchModule();
                 window.searchModule.showModal();
             } else {
-                // 搜索模块完全不可用
                 console.error('搜索模块未加载');
                 this.showToast('搜索功能暂时不可用，请刷新页面', 'error');
-                
-                // 尝试重新加载搜索模块
                 setTimeout(() => {
                     this.loadSearchModule();
                 }, 100);
@@ -270,80 +317,6 @@ class Navbar {
     }
 
     /**
-     * 切换搜索模态框
-     */
-    toggleSearchModal() {
-        try {
-            if (window.searchModule) {
-                if (window.searchModule.isModalOpen()) {
-                    window.searchModule.hide();
-                } else {
-                    window.searchModule.showModal();
-                }
-            }
-        } catch (error) {
-            console.error('切换搜索模态框失败:', error);
-        }
-    }
-
-    /**
-     * 关闭搜索模态框
-     */
-    closeSearchModal() {
-        try {
-            if (window.searchModule && window.searchModule.isModalOpen()) {
-                window.searchModule.hide();
-            }
-        } catch (error) {
-            console.error('关闭搜索模态框失败:', error);
-        }
-    }
-
-    /**
-     * 关闭除搜索外的所有模态框
-     */
-    closeAllModalsExceptSearch() {
-        try {
-            // 隐藏音乐播放器
-            const musicPlayer = document.getElementById('musicPlayer');
-            const musicBtn = document.getElementById('musicBtn');
-            
-            if (musicPlayer && musicPlayer.classList.contains('show')) {
-                musicPlayer.classList.add('animating', 'hiding');
-                musicBtn.classList.remove('active');
-                musicPlayer.classList.remove('show');
-                
-                setTimeout(() => {
-                    musicPlayer.style.display = 'none';
-                    musicPlayer.classList.remove('animating', 'hiding');
-                }, 600);
-            }
-            
-            // 关闭侧边栏
-            if (window.sidebar && window.sidebar.isVisible()) {
-                window.sidebar.hide();
-            }
-            
-            // 关闭公告模态框
-            if (window.announcementModule && window.announcementModule.isModalOpen()) {
-                window.announcementModule.hide();
-            }
-            
-            // 关闭天气模态框
-            if (window.app && window.app.modules.weather && window.app.modules.weather.isModalOpen) {
-                window.app.modules.weather.hide();
-            }
-            
-            // 关闭关于模态框
-            if (window.aboutModule && window.aboutModule.isVisible) {
-                window.aboutModule.hide();
-            }
-        } catch (error) {
-            console.error('关闭其他模态框失败:', error);
-        }
-    }
-
-    /**
      * 切换音乐播放器
      */
     toggleMusicPlayer() {
@@ -366,7 +339,7 @@ class Navbar {
     }
 
     /**
-     * 显示音乐播放器 - 减慢速度
+     * 显示音乐播放器
      */
     showMusicPlayer() {
         try {
@@ -374,16 +347,6 @@ class Navbar {
             const musicBtn = document.getElementById('musicBtn');
             
             if (!musicPlayer || !musicBtn) return;
-            
-            // 关闭侧边栏和搜索模态框
-            if (window.sidebar && window.sidebar.isVisible()) {
-                window.sidebar.hide();
-            }
-            
-            // 关闭搜索模态框
-            if (window.searchModule && window.searchModule.isModalOpen()) {
-                window.searchModule.hide();
-            }
             
             musicPlayer.classList.add('animating');
             musicBtn.classList.add('loading');
@@ -398,7 +361,7 @@ class Navbar {
                 
                 setTimeout(() => {
                     musicPlayer.classList.remove('animating');
-                }, 600); // 调整为600ms
+                }, 600);
             }, 10);
         } catch (error) {
             console.error('显示音乐播放器失败:', error);
@@ -406,7 +369,7 @@ class Navbar {
     }
 
     /**
-     * 隐藏音乐播放器 - 减慢速度
+     * 隐藏音乐播放器
      */
     hideMusicPlayer() {
         try {
@@ -423,7 +386,7 @@ class Navbar {
             setTimeout(() => {
                 musicPlayer.style.display = 'none';
                 musicPlayer.classList.remove('animating', 'hiding');
-            }, 600); // 调整为600ms
+            }, 600);
         } catch (error) {
             console.error('隐藏音乐播放器失败:', error);
         }
@@ -449,27 +412,23 @@ class Navbar {
     }
 
     /**
-     * 处理滚动事件 - 只修改返回顶部按钮
+     * 处理滚动事件
      */
     handleScroll() {
         try {
             const navbar = document.getElementById('navbar');
             const backToTop = document.getElementById('backToTop');
             
-            // 导航栏滚动效果（保持不变）
             if (navbar && window.scrollY > 100) {
                 navbar.classList.add('scrolled');
             } else if (navbar) {
                 navbar.classList.remove('scrolled');
             }
             
-            // 只控制返回顶部按钮的显示/隐藏
             if (backToTop) {
                 if (window.scrollY > 300) {
-                    // 滚动超过300px时显示按钮
                     backToTop.classList.add('visible');
                 } else {
-                    // 滚动到顶部附近时隐藏按钮
                     backToTop.classList.remove('visible');
                 }
             }
@@ -479,30 +438,10 @@ class Navbar {
     }
 
     /**
-     * 关闭所有模态框
+     * 关闭所有模态框（兼容旧方法）
      */
     closeAllModals() {
-        try {
-            this.hideMusicPlayer();
-            this.closeSearchModal();
-            
-            if (window.announcementModule) {
-                window.announcementModule.hide();
-            }
-            
-            // 关闭天气模态框
-            if (window.app && window.app.modules.weather && window.app.modules.weather.hide) {
-                window.app.modules.weather.hide();
-            }
-            
-            // 关闭关于模态框
-            if (window.aboutModule && window.aboutModule.hide) {
-                window.aboutModule.hide();
-            }
-            
-        } catch (error) {
-            console.error('关闭所有模态框失败:', error);
-        }
+        this.closeAllModalsExcept([]);
     }
 
     /**
@@ -558,7 +497,6 @@ class Navbar {
                     existingBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
                 }
                 
-                // 添加未读状态样式
                 announcementBtn.classList.add('has-unread');
             } else if (existingBadge) {
                 existingBadge.classList.remove('show');
@@ -568,7 +506,6 @@ class Navbar {
                     }
                 }, 300);
                 
-                // 移除未读状态样式
                 announcementBtn.classList.remove('has-unread');
             }
         } catch (error) {
