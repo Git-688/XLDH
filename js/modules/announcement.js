@@ -1,5 +1,6 @@
 /**
- * 简约公告模块 - 保留顶部标题栏，底部只显示更新日期
+ * 简约公告模块 - 清爽现代版（遮罩透明，动画由CSS控制）
+ * 遮罩从导航栏下方开始，导航栏始终可见且可点击
  * @class AnnouncementModule
  */
 class AnnouncementModule {
@@ -8,137 +9,102 @@ class AnnouncementModule {
         this.modalElement = null;
         this.isVisible = false;
         this.isInitialized = false;
-        this.clickOutsideHandler = null;
-        this.escapeHandler = null;
+        this.currentAnnouncement = null;
+        this.resizeHandler = null;
         this.init();
     }
 
-    /**
-     * 初始化公告模块
-     */
     init() {
         if (this.isInitialized) return;
-        
         this.loadAnnouncements();
         this.createModal();
         this.setupGlobalEvents();
         this.isInitialized = true;
-        
-        // 确保全局实例可用
         window.announcementModule = this;
     }
 
-    /**
-     * 加载公告数据
-     */
     loadAnnouncements() {
-        const storedAnnouncements = Storage.get('announcements');
-        
-        if (storedAnnouncements && storedAnnouncements.length > 0) {
-            // 检查是否是旧的欢迎消息或系统公告格式，如果是则替换
-            if (storedAnnouncements[0].id === 'single_announcement' || 
-                storedAnnouncements[0].title === '欢迎使用星链导航' ||
-                storedAnnouncements[0].title === '星链导航公告' ||
-                storedAnnouncements[0].source === '系统公告') {
+        const stored = Storage.get('announcements');
+        if (stored && stored.length > 0) {
+            if (stored[0].id === 'single_announcement' || stored[0].title === '欢迎使用星链导航') {
                 this.announcements = this.getDefaultAnnouncements();
                 Storage.set('announcements', this.announcements);
             } else {
-                this.announcements = storedAnnouncements;
+                this.announcements = stored;
             }
         } else {
             this.announcements = this.getDefaultAnnouncements();
             Storage.set('announcements', this.announcements);
         }
+        this.currentAnnouncement = this.announcements[0] || {};
     }
 
-    /**
-     * 获取默认公告数据
-     */
     getDefaultAnnouncements() {
         return [
             {
-                id: 'current_announcement',
-                title: '星链导航公告',
-                focus: '星链导航已正式发布，带来全新体验和更多实用功能，优化了性能和使用体验。',
+                id: 'simple_announcement',
+                title: '公告',
+                focus: '星链导航界面优化，公告模块现已更新为简约风格，遮罩透明，动画由CSS控制。',
                 updates: [
-                    '全新界面设计 - 更加现代化和美观的视觉体验',
-                    '音乐播放器 - 支持多平台音乐搜索和播放',
-                    '个性化设置 - 可自定义主题和布局',
-                    '更多实用工具 - 新增多个日常使用的小工具',
-                    '性能优化 - 更快的加载速度和响应时间'
+                    '遮罩从导航栏下方开始，导航栏始终可见',
+                    '点击外部或ESC自动标记已读',
+                    '纯白卡片，柔和阴影，清晰排版',
+                    '全新的中心缩放弹性动画'
                 ],
-                time: new Date().toLocaleDateString('zh-CN'),
+                time: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }),
                 read: false
             }
         ];
     }
 
-    /**
-     * 创建简约模态框 - 保留顶部标题栏，底部只显示更新日期
-     */
     createModal() {
         if (this.modalElement) {
-            this.removeEventListeners();
             this.modalElement.remove();
             this.modalElement = null;
         }
 
         this.modalElement = document.createElement('div');
-        this.modalElement.className = 'announcement-modal-v2';
+        this.modalElement.className = 'announcement-modal-simple';
         this.modalElement.id = 'announcementModal';
 
-        const currentAnnouncement = this.getCurrentAnnouncement();
-        
+        const ann = this.currentAnnouncement || {};
+        const title = this.escapeHtml(ann.title || '公告');
+        const focus = this.escapeHtml(ann.focus || '暂无重要提醒');
+        const updates = ann.updates && Array.isArray(ann.updates) ? ann.updates : [];
+        const time = this.escapeHtml(ann.time || new Date().toLocaleDateString());
+
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
-                <!-- 顶部标题栏 - 保留 -->
                 <div class="announcement-header">
                     <div class="announcement-title">
-                        <i class="fas fa-bullhorn"></i>
-                        ${this.escapeHtml(currentAnnouncement.title || '星链导航公告')}
+                        <i class="fas fa-bullhorn" style="color: #4361ee; font-size: 1.2rem;"></i>
+                        <span>${title}</span>
                     </div>
-                    <button class="announcement-close" id="announcementClose">
+                    <button class="announcement-close" id="announcementClose" aria-label="关闭">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-
                 <div class="announcement-body">
-                    <!-- 重点内容 -->
-                    <div class="announcement-focus">
-                        <div class="focus-title">
-                            <i class="fas fa-star"></i>
-                            重要提醒
+                    <div class="focus-section">
+                        <div class="section-label">
+                            <i class="fas fa-star" style="color: #f59e0b; font-size: 0.9rem;"></i>
+                            <span>重要提醒</span>
                         </div>
-                        <div class="focus-content">
-                            ${this.escapeHtml(currentAnnouncement.focus || '暂无重要提醒内容')}
-                        </div>
+                        <div class="focus-content">${focus}</div>
                     </div>
-
-                    <!-- 更新内容 -->
-                    <div class="update-section">
-                        <div class="update-title">
-                            <i class="fas fa-sync-alt"></i>
-                            更新内容
+                    <div class="updates-section">
+                        <div class="section-label">
+                            <i class="fas fa-sync-alt" style="color: #10b981; font-size: 0.9rem;"></i>
+                            <span>更新内容</span>
                         </div>
-                        <ul class="update-list">
-                            ${currentAnnouncement.updates ? 
-                                currentAnnouncement.updates.map(update => 
-                                    `<li class="update-item">${this.escapeHtml(update)}</li>`
-                                ).join('') : 
-                                '<li class="update-item">暂无更新内容</li>'
-                            }
+                        <ul class="updates-list">
+                            ${updates.map(item => `<li>${this.escapeHtml(item)}</li>`).join('')}
                         </ul>
                     </div>
                 </div>
-
-                <!-- 底部只显示更新日期 -->
                 <div class="announcement-footer">
-                    <div class="announcement-meta">
-                        <div class="meta-item">
-                            <i class="fas fa-calendar"></i>
-                            更新日期：${this.escapeHtml(currentAnnouncement.time)}
-                        </div>
-                    </div>
+                    <span class="announcement-date"><i class="far fa-calendar-alt"></i> ${time}</span>
+                    <button class="announcement-ack-btn" id="announcementAckBtn">知道了</button>
                 </div>
             </div>
         `;
@@ -147,308 +113,176 @@ class AnnouncementModule {
         this.bindModalEvents();
     }
 
-    /**
-     * HTML转义函数，防止XSS
-     */
-    escapeHtml(unsafe) {
-        if (typeof unsafe !== 'string') return unsafe;
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    /**
-     * 绑定模态框事件
-     */
     bindModalEvents() {
         if (!this.modalElement) return;
 
         const closeBtn = this.modalElement.querySelector('#announcementClose');
-        const currentAnnouncement = this.getCurrentAnnouncement();
+        const ackBtn = this.modalElement.querySelector('#announcementAckBtn');
 
-        if (closeBtn) {
-            closeBtn.onclick = () => this.hide();
-        }
+        const closeHandler = () => {
+            this.markCurrentAsRead();
+            this.hide();
+        };
 
-        // 点击模态框外部关闭
+        if (closeBtn) closeBtn.addEventListener('click', closeHandler);
+        if (ackBtn) ackBtn.addEventListener('click', closeHandler);
+
         this.modalElement.addEventListener('click', (e) => {
             if (e.target === this.modalElement) {
+                this.markCurrentAsRead();
                 this.hide();
             }
         });
-
-        // 自动标记为已读
-        this.markAsRead(currentAnnouncement);
     }
 
-    /**
-     * 设置全局事件
-     */
     setupGlobalEvents() {
-        this.removeGlobalEventListeners();
-    }
-
-    /**
-     * 移除事件监听器
-     */
-    removeEventListeners() {
-        this.removeGlobalEventListeners();
-        
-        if (this.clickOutsideHandler) {
-            document.removeEventListener('click', this.clickOutsideHandler);
-            this.clickOutsideHandler = null;
-        }
-        
-        if (this.escapeHandler) {
-            document.removeEventListener('keydown', this.escapeHandler);
-            this.escapeHandler = null;
-        }
-    }
-
-    /**
-     * 移除全局事件监听器
-     */
-    removeGlobalEventListeners() {
-        // 事件现在由navbar统一管理
-    }
-
-    /**
-     * 切换公告显示/隐藏
-     */
-    toggleModal() {
-        if (this.isVisible) {
-            this.hide();
-        } else {
-            this.showModal();
-        }
-    }
-
-    /**
-     * 显示公告模态框 - 添加平滑显示效果
-     */
-    showModal() {
-        if (!this.modalElement) {
-            this.createModal();
-        }
-
-        if (this.isVisible) return;
-
-        // 关闭侧边栏和其他模态框
-        this.closeOtherModals();
-
-        this.modalElement.classList.add('active');
-        this.isVisible = true;
-
-        // 添加平滑显示效果
-        const container = this.modalElement.querySelector('.announcement-modal-container');
-        if (container) {
-            // 初始状态
-            container.style.opacity = '0';
-            container.style.transform = 'scale(0.95) translateY(10px)';
-            
-            // 延迟执行动画，确保DOM已更新
-            setTimeout(() => {
-                container.style.transition = 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                container.style.opacity = '1';
-                container.style.transform = 'scale(1) translateY(0)';
-            }, 50);
-        }
-
-        // 添加事件监听器
-        this.addExternalEventListeners();
-
-        if (window.app) {
-            window.app.registerModal(this);
-        }
-
-        this.updateButtonState(true);
-    }
-
-    /**
-     * 添加外部事件监听器
-     */
-    addExternalEventListeners() {
         this.escapeHandler = (e) => {
             if (e.key === 'Escape' && this.isVisible) {
+                this.markCurrentAsRead();
                 this.hide();
             }
         };
-
-        document.addEventListener('keydown', this.escapeHandler, true);
+        document.addEventListener('keydown', this.escapeHandler);
     }
 
-    /**
-     * 关闭其他模态框
-     */
-    closeOtherModals() {
-        // 关闭侧边栏
-        if (window.sidebar && window.sidebar.isVisible()) {
-            window.sidebar.hide();
-        }
-        
-        if (window.searchModule && window.searchModule.isModalOpen()) {
-            window.searchModule.hide();
-        }
-        
-        const musicPlayer = document.getElementById('musicPlayer');
-        if (musicPlayer && musicPlayer.classList.contains('show')) {
-            if (window.app && window.app.components && window.app.components.navbar) {
-                window.app.components.navbar.hideMusicPlayer();
-            }
-        }
-    }
-
-    /**
-     * 更新按钮状态
-     */
-    updateButtonState(isActive) {
-        const announcementBtn = document.getElementById('announcementBtn');
-        if (announcementBtn) {
-            if (isActive) {
-                announcementBtn.classList.add('active');
-            } else {
-                announcementBtn.classList.remove('active');
-            }
-        }
-    }
-
-    /**
-     * 获取当前公告
-     */
-    getCurrentAnnouncement() {
-        return this.announcements[0] || {};
-    }
-
-    /**
-     * 标记公告为已读 - 自动执行
-     */
-    markAsRead(announcement) {
-        if (announcement && !announcement.read) {
-            announcement.read = true;
+    markCurrentAsRead() {
+        if (!this.currentAnnouncement || this.currentAnnouncement.read) return;
+        this.currentAnnouncement.read = true;
+        const index = this.announcements.findIndex(a => a.id === this.currentAnnouncement.id);
+        if (index !== -1) {
+            this.announcements[index].read = true;
             Storage.set('announcements', this.announcements);
-            this.updateNavbarBadge();
         }
+        this.updateNavbarBadge();
     }
 
-    /**
-     * 更新导航栏的通知徽章
-     */
     updateNavbarBadge() {
-        if (window.app && window.app.components && window.app.components.navbar) {
+        if (window.app?.components?.navbar) {
             window.app.components.navbar.updateNotificationBadge();
         }
     }
 
-    /**
-     * 显示提示消息
-     */
-    showToast(message, type = 'info') {
-        if (window.app && window.app.showToast) {
-            window.app.showToast(message, type);
-        }
+    getUnreadCount() {
+        return this.announcements.filter(a => !a.read).length;
     }
 
-    /**
-     * 隐藏公告模态框 - 添加平滑隐藏效果
-     */
-    hide() {
-        if (!this.isVisible || !this.modalElement) {
+    adjustMaskPosition() {
+        const navbar = document.querySelector('.navbar');
+        if (!navbar) {
+            this.modalElement.style.top = '0';
+            this.modalElement.style.height = '100%';
             return;
         }
 
-        // 添加平滑隐藏效果
-        const container = this.modalElement.querySelector('.announcement-modal-container');
-        if (container) {
-            container.style.transition = 'all 0.25s cubic-bezier(0.55, 0.085, 0.68, 0.53)';
-            container.style.opacity = '0';
-            container.style.transform = 'scale(0.95) translateY(10px)';
+        const navbarHeight = navbar.offsetHeight;
+        if (navbarHeight > 0) {
+            this.modalElement.style.top = navbarHeight + 'px';
+            this.modalElement.style.height = `calc(100vh - ${navbarHeight}px)`;
+        } else {
+            this.modalElement.style.top = '0';
+            this.modalElement.style.height = '100%';
+        }
+    }
+
+    onResize = () => {
+        if (this.isVisible) {
+            this.adjustMaskPosition();
+        }
+    };
+
+    showModal() {
+        if (!this.modalElement) this.createModal();
+        if (this.isVisible) return;
+
+        this.closeOtherModals();
+
+        this.adjustMaskPosition();
+
+        // 完全由CSS控制动画，只需添加active类
+        this.modalElement.classList.add('active');
+        this.isVisible = true;
+
+        if (!this.resizeHandler) {
+            this.resizeHandler = this.onResize.bind(this);
+            window.addEventListener('resize', this.resizeHandler);
         }
 
-        this.removeEventListeners();
+        if (window.app) window.app.registerModal(this);
+        this.updateButtonState(true);
+    }
 
+    hide() {
+        if (!this.isVisible || !this.modalElement) return;
+
+        // 移除active类触发CSS反向动画
+        this.modalElement.classList.remove('active');
+
+        // 等待动画完成后更新状态
         setTimeout(() => {
-            this.modalElement.classList.remove('active');
             this.isVisible = false;
-            
-            // 重置样式
-            if (container) {
-                container.style.transition = '';
-                container.style.opacity = '';
-                container.style.transform = '';
+            if (this.resizeHandler) {
+                window.removeEventListener('resize', this.resizeHandler);
+                this.resizeHandler = null;
             }
-            
+            if (window.app) window.app.unregisterModal(this);
             this.updateButtonState(false);
-            
-            if (window.app) {
-                window.app.unregisterModal(this);
-            }
-        }, 250);
+        }, 400); // 与CSS过渡时间保持一致
     }
 
-    /**
-     * 获取未读公告数量
-     */
-    getUnreadCount() {
-        return this.announcements.filter(ann => !ann.read).length;
+    toggleModal() {
+        this.isVisible ? this.hide() : this.showModal();
     }
 
-    /**
-     * 标记所有公告为已读
-     */
-    markAllAsRead() {
-        this.announcements.forEach(ann => ann.read = true);
-        Storage.set('announcements', this.announcements);
-        this.updateNavbarBadge();
-    }
-
-    /**
-     * 获取公告列表
-     */
-    getAnnouncements() {
-        return this.announcements;
-    }
-
-    /**
-     * 更新公告内容
-     */
-    updateAnnouncement(newContent) {
-        if (this.announcements.length > 0) {
-            Object.assign(this.announcements[0], newContent);
-            Storage.set('announcements', this.announcements);
-            
-            this.createModal();
+    closeOtherModals() {
+        if (window.sidebar?.isVisible?.()) window.sidebar.hide();
+        if (window.searchModule?.isModalOpen?.()) window.searchModule.hide();
+        const musicPlayer = document.getElementById('musicPlayer');
+        if (musicPlayer?.classList.contains('show') && window.app?.components?.navbar) {
+            window.app.components.navbar.hideMusicPlayer();
         }
+        if (window.aboutModule?.isVisible) window.aboutModule.hide();
+        if (window.app?.modules?.weather?.hide) window.app.modules.weather.hide();
     }
 
-    /**
-     * 强制重置公告数据
-     */
+    updateButtonState(active) {
+        const btn = document.getElementById('announcementBtn');
+        if (btn) btn.classList.toggle('active', active);
+    }
+
+    escapeHtml(text) {
+        if (typeof text !== 'string') return text;
+        return text.replace(/[&<>"']/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            if (m === '"') return '&quot;';
+            if (m === "'") return '&#039;';
+            return m;
+        });
+    }
+
     resetAnnouncements() {
         this.announcements = this.getDefaultAnnouncements();
+        this.currentAnnouncement = this.announcements[0];
         Storage.set('announcements', this.announcements);
         this.createModal();
     }
 
-    /**
-     * 销毁模块
-     */
+    getAnnouncements() {
+        return this.announcements;
+    }
+
     destroy() {
         this.hide();
-        this.removeEventListeners();
-        this.removeGlobalEventListeners();
-        
-        if (this.modalElement && this.modalElement.parentNode) {
+        if (this.escapeHandler) {
+            document.removeEventListener('keydown', this.escapeHandler);
+        }
+        if (this.modalElement?.parentNode) {
             this.modalElement.parentNode.removeChild(this.modalElement);
         }
-        
         this.modalElement = null;
-        this.isVisible = false;
         this.isInitialized = false;
     }
 }
 
-// 初始化公告模块
 window.announcementModule = new AnnouncementModule();
