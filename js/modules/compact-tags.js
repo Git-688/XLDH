@@ -1,7 +1,7 @@
 // compact-tags.js - 纯图标标签模块（简化版）
 class CompactTagsModule {
     constructor() {
-        // 添加了铃声搜索和游戏语音，总共21个按钮
+        // 添加了铃声搜索、游戏语音和视频去印，总共22个按钮
         this.tags = [
             { name: '影视搜索', icon: 'fas fa-film', link: 'pages/tools/影视搜索.html', colorClass: 'tag-color-1' },
             { name: '短剧搜索', icon: 'fas fa-play-circle', link: 'pages/tools/短剧搜索.html', colorClass: 'tag-color-2' },
@@ -22,9 +22,11 @@ class CompactTagsModule {
             { name: '分析工具', icon: 'fas fa-chart-bar', link: 'pages/tools/分析工具.html', colorClass: 'tag-color-17' },
             { name: '助眠声控', icon: 'fas fa-moon', link: 'pages/tools/助眠声控.html', colorClass: 'tag-color-18' },
             { name: '每日段子', icon: 'fas fa-laugh', link: 'pages/tools/每日段子.html', colorClass: 'tag-color-19' },
-            // 新增的两个标签
             { name: '铃声搜索', icon: 'fas fa-music', link: 'pages/tools/铃声搜索.html', colorClass: 'tag-color-20' },
-            { name: '游戏语音', icon: 'fas fa-headset', link: 'pages/tools/游戏语音.html', colorClass: 'tag-color-1' }
+            // 游戏语音使用 tag-color-21（浅蓝色）
+            { name: '游戏语音', icon: 'fas fa-headset', link: 'pages/tools/游戏语音.html', colorClass: 'tag-color-21' },
+            // 视频去印使用 tag-color-22（浅橙色）
+            { name: '视频去印', icon: 'fas fa-eraser', link: 'pages/tools/视频去印.html', colorClass: 'tag-color-22' }
         ];
         
         this.init();
