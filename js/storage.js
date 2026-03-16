@@ -4,6 +4,8 @@
 class Storage {
     static PREFIX = 'starlink_';
     
+    // ==================== 基础存储方法 ====================
+    
     static get(key, defaultValue = null) {
         try {
             const prefixedKey = this.PREFIX + key;
@@ -71,7 +73,7 @@ class Storage {
         return keys;
     }
 
-    // ==================== 新增：网站统计功能 ====================
+    // ==================== 网站统计功能 ====================
     
     /**
      * 获取网站浏览次数
@@ -190,7 +192,7 @@ class Storage {
         }
     }
 
-    // ==================== 新增：运行时间管理 ====================
+    // ==================== 运行时间管理 ====================
     
     /**
      * 获取累计运行时间
@@ -275,5 +277,29 @@ class Storage {
             console.error('更新运行时间失败:', error);
             return false;
         }
+    }
+
+    // ==================== 链接有效性缓存 ====================
+    
+    /**
+     * 获取链接有效性缓存
+     * @param {string} url - 原始URL
+     * @returns {object|null} 缓存对象 { valid, timestamp } 或 null
+     */
+    static getLinkValidity(url) {
+        const normalizedUrl = this.normalizeUrl(url);
+        const cacheKey = `link_validity_${normalizedUrl}`;
+        return this.get(cacheKey, null);
+    }
+
+    /**
+     * 设置链接有效性缓存
+     * @param {string} url - 原始URL
+     * @param {boolean} valid - 是否有效
+     */
+    static setLinkValidity(url, valid) {
+        const normalizedUrl = this.normalizeUrl(url);
+        const cacheKey = `link_validity_${normalizedUrl}`;
+        return this.set(cacheKey, { valid, timestamp: Date.now() });
     }
 }
