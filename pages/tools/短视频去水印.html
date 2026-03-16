@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>短视频去水印工具</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            success: '#10B981',
+            danger: '#EF4444',
+            warning: '#F59E0B',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .btn-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+      .input-focus {
+        @apply focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
+  <div class="max-w-4xl mx-auto px-4 py-12 md:py-16">
+    <header class="text-center mb-10">
+      <h1 class="text-[clamp(1.8rem,5vw,2.8rem)] font-bold mb-3">短视频去水印工具</h1>
+      <p class="text-gray-500 text-lg">支持抖音、快手、皮皮虾、今日头条、微博、小红书平台，一键解析无水印高清视频</p>
+    </header>
+
+    <main class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8">
+      <!-- 六平台选择，优化响应式换行适配 -->
+      <div class="flex flex-wrap justify-center gap-6 md:gap-8 mb-6">
+        <label class="flex items-center gap-2 cursor-pointer group">
+          <input type="radio" name="platform" value="douyin" checked class="w-4 h-4 text-primary focus:ring-primary">
+          <span class="text-gray-700 font-medium group-hover:text-primary btn-transition">抖音</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer group">
+          <input type="radio" name="platform" value="kuaishou" class="w-4 h-4 text-primary focus:ring-primary">
+          <span class="text-gray-700 font-medium group-hover:text-primary btn-transition">快手</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer group">
+          <input type="radio" name="platform" value="pipixia" class="w-4 h-4 text-primary focus:ring-primary">
+          <span class="text-gray-700 font-medium group-hover:text-primary btn-transition">皮皮虾</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer group">
+          <input type="radio" name="platform" value="toutiao" class="w-4 h-4 text-primary focus:ring-primary">
+          <span class="text-gray-700 font-medium group-hover:text-primary btn-transition">今日头条</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer group">
+          <input type="radio" name="platform" value="weibo" class="w-4 h-4 text-primary focus:ring-primary">
+          <span class="text-gray-700 font-medium group-hover:text-primary btn-transition">微博</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer group">
+          <input type="radio" name="platform" value="xhsjx" class="w-4 h-4 text-primary focus:ring-primary">
+          <span class="text-gray-700 font-medium group-hover:text-primary btn-transition">小红书</span>
+        </label>
+      </div>
+
+      <!-- 跨域代理开关 -->
+      <div class="flex items-center justify-end mb-4">
+        <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+          <input type="checkbox" id="useProxy" class="w-4 h-4 text-primary focus:ring-primary">
+          <span>开启CORS代理（解决跨域报错）</span>
+        </label>
+      </div>
+
+      <!-- 输入框与解析按钮 -->
+      <div class="flex flex-col md:flex-row gap-3 mb-6">
+        <input 
+          type="text" 
+          id="videoUrl" 
+          placeholder="请粘贴抖音/快手/皮皮虾/今日头条/微博/小红书视频分享链接..." 
+          class="flex-1 px-4 py-3 rounded-lg border border-gray-300 input-focus btn-transition text-base"
+        >
+        <button 
+          id="parseBtn" 
+          class="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 active:bg-primary/80 btn-transition flex items-center justify-center gap-2 min-w-[120px]"
+        >
+          <i class="fas fa-magnifying-glass"></i>
+          <span>立即解析</span>
+        </button>
+      </div>
+
+      <!-- 加载状态 -->
+      <div id="loading" class="hidden flex flex-col items-center justify-center py-12">
+        <div class="w-12 h-12 border-4 border-gray-200 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p class="text-gray-500">正在解析视频，请稍候...</p>
+      </div>
+
+      <!-- 错误提示 -->
+      <div id="errorTip" class="hidden bg-danger/10 border border-danger/20 rounded-lg p-4 mb-4">
+        <div class="flex items-start gap-3">
+          <i class="fas fa-exclamation-circle text-danger mt-0.5"></i>
+          <div>
+            <p class="text-danger font-medium">解析失败</p>
+            <p id="errorText" class="text-gray-700 text-sm mt-1"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 提示信息 -->
+      <div id="warnTip" class="hidden bg-warning/10 border border-warning/20 rounded-lg p-4 mb-4">
+        <div class="flex items-start gap-3">
+          <i class="fas fa-info-circle text-warning mt-0.5"></i>
+          <div>
+            <p class="text-warning font-medium">提示</p>
+            <p id="warnText" class="text-gray-700 text-sm mt-1"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 解析结果 -->
+      <div id="resultArea" class="hidden">
+        <div class="rounded-xl border border-gray-200 overflow-hidden mb-2">
+          <div class="aspect-video max-h-[450px] bg-gray-100">
+            <video id="videoPlayer" controls class="w-full h-full object-contain"></video>
+          </div>
+          <div class="p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p class="text-gray-700 font-medium">✅ 解析成功！已获取无水印视频</p>
+            <a 
+              id="downloadBtn" 
+              href="" 
+              download 
+              class="px-6 py-2.5 bg-success text-white font-medium rounded-lg hover:bg-success/90 active:bg-success/80 btn-transition flex items-center gap-2 w-full md:w-auto justify-center"
+            >
+              <i class="fas fa-download"></i>
+              <span>下载视频</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="text-center text-gray-400 text-sm">
+      <p>本工具仅用于个人学习交流，请勿用于商业用途与侵权行为</p>
+    </footer>
+  </div>
+
+  <script>
+    // 接口配置 - 新增小红书配置
+    const API_CONFIG = {
+      douyin: {
+        url: 'https://api.bugpk.com/api/douyin',
+        method: 'POST'
+      },
+      kuaishou: {
+        url: 'https://api.bugpk.com/api/kuaishou',
+        method: 'GET'
+      },
+      pipixia: {
+        url: 'https://api.bugpk.com/api/pipixia',
+        method: 'GET'
+      },
+      toutiao: {
+        url: 'https://api.bugpk.com/api/toutiao',
+        method: 'POST'
+      },
+      weibo: {
+        url: 'https://api.bugpk.com/api/weibo',
+        method: 'GET'
+      },
+      xhsjx: {
+        url: 'https://api.bugpk.com/api/xhsjx',
+        method: 'GET'
+      }
+    };
+    // 公共CORS代理
+    const CORS_PROXY = 'https://corsproxy.io/?';
+
+    // DOM元素获取
+    const videoUrlInput = document.getElementById('videoUrl');
+    const parseBtn = document.getElementById('parseBtn');
+    const loading = document.getElementById('loading');
+    const errorTip = document.getElementById('errorTip');
+    const errorText = document.getElementById('errorText');
+    const warnTip = document.getElementById('warnTip');
+    const warnText = document.getElementById('warnText');
+    const resultArea = document.getElementById('resultArea');
+    const videoPlayer = document.getElementById('videoPlayer');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const platformRadios = document.querySelectorAll('input[name="platform"]');
+    const useProxyCheckbox = document.getElementById('useProxy');
+
+    // 重置所有状态
+    function resetState() {
+      loading.classList.add('hidden');
+      errorTip.classList.add('hidden');
+      warnTip.classList.add('hidden');
+      resultArea.classList.add('hidden');
+      errorText.textContent = '';
+      warnText.textContent = '';
+      videoPlayer.src = '';
+      downloadBtn.href = '';
+    }
+
+    // 获取选中的平台
+    function getSelectedPlatform() {
+      const selected = Array.from(platformRadios).find(radio => radio.checked);
+      return selected ? selected.value : 'douyin';
+    }
+
+    // 显示错误提示
+    function showError(message) {
+      errorText.textContent = message;
+      errorTip.classList.remove('hidden');
+    }
+
+    // 显示提示信息
+    function showWarn(message) {
+      warnText.textContent = message;
+      warnTip.classList.remove('hidden');
+    }
+
+    // 请求超时处理
+    function fetchWithTimeout(url, options, timeout = 15000) {
+      return Promise.race([
+        fetch(url, options),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('请求超时，请检查网络后重试')), timeout)
+        )
+      ]);
+    }
+
+    // 核心解析函数
+    async function parseVideo() {
+      resetState();
+      const inputUrl = videoUrlInput.value.trim();
+      const platform = getSelectedPlatform();
+      const config = API_CONFIG[platform];
+      const useProxy = useProxyCheckbox.checked;
+
+      // 链接校验
+      if (!inputUrl) {
+        showError('请输入有效的视频分享链接');
+        return;
+      }
+
+      // 加载状态开启
+      loading.classList.remove('hidden');
+      parseBtn.disabled = true;
+      parseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>解析中...</span>';
+
+      try {
+        let requestUrl = config.url;
+        let requestOptions = {
+          method: config.method,
+          headers: {}
+        };
+
+        // 按请求方式处理参数
+        if (config.method === 'GET') {
+          // GET请求拼接url参数，兼容快手、皮皮虾、微博、小红书接口
+          requestUrl = `${requestUrl}?url=${encodeURIComponent(inputUrl)}`;
+        } else {
+          // POST用form-urlencoded格式，避免CORS预检，兼容抖音、今日头条接口
+          requestOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+          requestOptions.body = `url=${encodeURIComponent(inputUrl)}`;
+        }
+
+        // 开启CORS代理
+        if (useProxy) {
+          requestUrl = CORS_PROXY + encodeURIComponent(requestUrl);
+          showWarn('已开启CORS代理，解析速度可能略有延迟');
+        }
+
+        // 发送请求
+        const response = await fetchWithTimeout(requestUrl, requestOptions);
+
+        // 处理HTTP错误
+        if (!response.ok) {
+          if (response.status === 0 || response.status === 403) {
+            throw new Error('跨域请求被拦截，请勾选「开启CORS代理」后重试');
+          }
+          throw new Error(`接口请求失败，状态码：${response.status}`);
+        }
+
+        const result = await response.json();
+
+        // 统一错误处理，兼容所有平台返回格式
+        if (result.error || (result.code && result.code !== 200)) {
+          throw new Error(result.error || result.msg || '解析失败，请检查链接与平台是否匹配');
+        }
+
+        // 兼容全平台常见的视频地址返回字段
+        const videoUrl = result.data?.url || result.url || result.video_url || result.data?.video_url;
+        if (!videoUrl) {
+          throw new Error('接口未返回有效视频地址，请检查链接与平台是否匹配');
+        }
+
+        // 渲染解析结果
+        loading.classList.add('hidden');
+        resultArea.classList.remove('hidden');
+        videoPlayer.src = videoUrl;
+        downloadBtn.href = videoUrl;
+        downloadBtn.download = `无水印视频_${new Date().getTime()}.mp4`;
+
+      } catch (error) {
+        console.error('解析错误:', error);
+        loading.classList.add('hidden');
+        
+        // 精准错误提示
+        if (error.message.includes('Failed to fetch') || error.message.includes('跨域')) {
+          showError('跨域请求被拦截，请勾选「开启CORS代理」，或确认用本地服务器打开页面');
+        } else {
+          showError(error.message || '网络异常，请稍后重试');
+        }
+      } finally {
+        // 恢复按钮状态
+        parseBtn.disabled = false;
+        parseBtn.innerHTML = '<i class="fas fa-magnifying-glass"></i><span>立即解析</span>';
+      }
+    }
+
+    // 事件绑定
+    parseBtn.addEventListener('click', parseVideo);
+    // 回车触发解析
+    videoUrlInput.addEventListener('keydown', (e) => e.key === 'Enter' && parseVideo());
+    // 粘贴自动去除首尾空格
+    videoUrlInput.addEventListener('paste', () => setTimeout(() => videoUrlInput.value = videoUrlInput.value.trim(), 100));
+  </script>
+</body>
+</html>
