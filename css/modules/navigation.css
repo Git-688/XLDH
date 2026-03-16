@@ -129,15 +129,15 @@
     color: var(--text-primary);
 }
 
-/* 分类数量 - 浅橙色 */
+/* 网址数量 - 浅绿色 */
 .stat-item:nth-child(1) .stat-number {
-    color: #ffb74d !important;
+    color: #81c784 !important;
     font-weight: 900;
 }
 
-/* 网址数量 - 浅绿色 */
+/* 无效链接数量 - 浅红色 */
 .stat-item:nth-child(3) .stat-number {
-    color: #81c784 !important;
+    color: #e57373 !important;
     font-weight: 900;
 }
 
@@ -245,7 +245,7 @@
     }
     
     .repo-btn span {
-        display: inline; /* 在极窄屏幕也显示文字 */
+        display: inline;
     }
 }
 
@@ -259,10 +259,10 @@
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-    min-height: 200px; /* 最小高度确保有内容 */
+    min-height: 200px;
 }
 
-/* ====================== 左侧：一级分类 - 移除背景色和纵向滚动 ====================== */
+/* ====================== 左侧：一级分类 ====================== */
 
 .navigation-left {
     width: 140px;
@@ -271,7 +271,7 @@
     background: white;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* 隐藏纵向滚动 */
+    overflow: hidden;
 }
 
 .level1-nav {
@@ -306,20 +306,15 @@
     background: rgba(67, 97, 238, 0.06);
 }
 
-/* 一级分类激活状态 - 移除背景色，只改文字颜色 */
 .level1-btn.active {
-    background: transparent; /* 移除背景色 */
-    color: #5dade2; /* 只改文字颜色 */
+    background: transparent;
+    color: #5dade2;
     font-weight: 700;
-    box-shadow: none; /* 移除阴影 */
+    box-shadow: none;
 }
 
 .level1-btn.active:hover {
-    background: transparent; /* 悬停时也保持透明 */
-}
-
-.level1-btn-icon {
-    display: none;
+    background: transparent;
 }
 
 .level1-btn-text {
@@ -330,7 +325,7 @@
     text-align: center;
 }
 
-/* ====================== 中间：二级分类 - 移除背景色和纵向滚动，激活指示改为文字颜色 ====================== */
+/* ====================== 中间：二级分类 ====================== */
 
 .navigation-middle {
     width: 160px;
@@ -339,7 +334,7 @@
     background: white;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* 隐藏纵向滚动 */
+    overflow: hidden;
 }
 
 .level2-nav {
@@ -374,16 +369,15 @@
     background: rgba(67, 97, 238, 0.06);
 }
 
-/* 二级分类激活状态 - 移除背景色，只改文字颜色 */
 .level2-btn.active {
-    background: transparent; /* 移除背景色 */
-    color: #ff7043; /* 改为醒目的文字颜色，橙色系 */
-    font-weight: 700; /* 加粗作为激活指示 */
-    box-shadow: none; /* 移除阴影 */
+    background: transparent;
+    color: #ff7043;
+    font-weight: 700;
+    box-shadow: none;
 }
 
 .level2-btn.active:hover {
-    background: transparent; /* 悬停时也保持透明 */
+    background: transparent;
 }
 
 .level2-btn-text {
@@ -394,7 +388,6 @@
     text-align: center;
 }
 
-/* 二级分类数量标签 */
 .level2-btn-count {
     background: rgba(0, 0, 0, 0.05);
     color: var(--text-secondary);
@@ -409,13 +402,13 @@
 }
 
 .level2-btn.active .level2-btn-count {
-    background: #ff7043; /* 与激活文字颜色一致 */
+    background: #ff7043;
     color: white;
     font-weight: 700;
     box-shadow: 0 2px 4px rgba(255, 112, 67, 0.3);
 }
 
-/* ====================== 右侧：三级分类内容 - 自适应高度 ====================== */
+/* ====================== 右侧：三级分类内容 ====================== */
 
 .navigation-right {
     flex: 1;
@@ -432,8 +425,7 @@
     padding: 12px;
     animation: fadeIn 0.2s ease;
     box-sizing: border-box;
-    /* 使用自动行高，让卡片高度自适应 */
-    grid-auto-rows: minmax(115px, auto); /* 减少最小行高 */
+    grid-auto-rows: minmax(115px, auto);
 }
 
 /* 网站卡片 - 自适应高度 */
@@ -441,7 +433,7 @@
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 12px 10px 8px; /* 减少底部内边距 */
+    padding: 12px 10px 8px;
     cursor: pointer;
     transition: all 0.2s ease;
     text-decoration: none;
@@ -450,15 +442,13 @@
     flex-direction: column;
     position: relative;
     overflow: hidden;
-    /* 移除固定高度，改为最小高度 */
-    min-height: 115px; /* 减少最小高度 */
+    min-height: 115px;
     text-align: center;
     box-sizing: border-box;
-    /* 确保卡片在网格中正常显示 */
     height: auto;
 }
 
-/* 激活指示改为边框 - 第三级分类导航中的卡片悬停边框 */
+/* 悬停效果 */
 .site-card:hover {
     transform: translateY(-2px);
     border-color: var(--primary-color);
@@ -466,21 +456,21 @@
     background: linear-gradient(135deg, rgba(67, 97, 238, 0.02), rgba(67, 97, 238, 0.05));
 }
 
-/* 卡片上半部分 - 固定高度 */
+/* 卡片上半部分 */
 .card-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
-    height: 38px; /* 固定高度 */
+    height: 38px;
 }
 
-/* 图标容器 - 填满卡片，添加边框和小阴影 */
+/* 图标容器 */
 .icon-container {
     width: 38px;
     height: 38px;
     border-radius: 8px;
-    background: transparent; /* 改为透明背景 */
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -488,38 +478,34 @@
     font-size: 16px;
     flex-shrink: 0;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 添加小阴影 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    border: 1px solid rgba(0, 0, 0, 0.1); /* 添加边框 */
-    padding: 0; /* 移除内边距 */
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 0;
 }
 
-/* 确保图标图片填满容器 */
 .icon-container img,
 .icon-container i,
 .icon-container span {
-    width: 100%; /* 改为100%填满 */
-    height: 100%; /* 改为100%填满 */
-    object-fit: cover; /* 改为cover以填满容器 */
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-/* 特别处理图片图标 */
 .icon-container img {
-    border-radius: 6px; /* 添加圆角 */
+    border-radius: 6px;
 }
 
-/* 处理Font Awesome图标大小 */
 .icon-container i {
-    font-size: 20px; /* 调整图标大小 */
+    font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--primary-color);
 }
 
-/* 处理emoji图标大小 */
 .icon-container span {
-    font-size: 20px; /* 调整emoji大小 */
+    font-size: 20px;
     line-height: 1;
     display: flex;
     align-items: center;
@@ -527,12 +513,12 @@
 }
 
 .site-card:hover .icon-container {
-    background: transparent; /* 悬停时也保持透明 */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* 悬停时阴影加深 */
-    border-color: var(--primary-color); /* 悬停时边框变色 */
+    background: transparent;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-color);
 }
 
-/* 浏览容器 - 固定大小 */
+/* 浏览容器 */
 .views-container {
     display: flex;
     flex-direction: column;
@@ -565,56 +551,54 @@
         #666 2px,
         #666 4px
     );
-    margin: 0 0 6px 0; /* 减少下边距 */
+    margin: 0 0 6px 0;
     opacity: 0.4;
     width: 100%;
 }
 
-/* 卡片下半部分 - 自适应高度，减少上下空白 */
+/* 卡片下半部分 */
 .card-bottom {
     display: flex;
     flex-direction: column;
-    gap: 3px; /* 减少间距 */
+    gap: 3px;
     text-align: center;
     flex: 1;
     justify-content: flex-start;
-    min-height: 40px; /* 减少最小高度 */
+    min-height: 40px;
     overflow: hidden;
-    padding-top: 1px; /* 减少顶部内边距 */
+    padding-top: 1px;
 }
 
-/* 网站标题 - 增大字体 */
 .site-title {
-    font-size: 14px; /* 增大字体 */
+    font-size: 14px;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
-    line-height: 1.25; /* 减少行高 */
+    line-height: 1.25;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
     width: 100%;
-    min-height: 17px; /* 减少最小高度 */
+    min-height: 17px;
 }
 
-/* 网站描述 - 增大字体，留两行空间，减少上下空白 */
 .site-description {
-    font-size: 12px; /* 增大字体 */
+    font-size: 12px;
     color: var(--text-secondary);
-    line-height: 1.25; /* 减少行高 */
+    line-height: 1.25;
     margin: 0;
     display: -webkit-box;
-    -webkit-line-clamp: 2; /* 确保显示两行 */
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
     opacity: 0.9;
     width: 100%;
-    min-height: 30px; /* 减少高度 */
-    max-height: 30px; /* 限制最大高度为两行 */
-    padding-top: 0; /* 移除顶部内边距 */
+    min-height: 30px;
+    max-height: 30px;
+    padding-top: 0;
 }
 
 /* 空状态 */
@@ -673,12 +657,45 @@
     animation: pulseView 0.3s ease;
 }
 
+/* ====================== 无效链接卡片样式 ====================== */
+.site-card.invalid {
+    opacity: 0.6;
+    filter: grayscale(0.7);
+    position: relative;
+    /* pointer-events: none; 已移除，允许点击 */
+}
+
+.site-card.invalid::after {
+    content: "无效";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 0, 0, 0.8);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 12px;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    white-space: nowrap;
+    pointer-events: none; /* 标签本身不阻挡点击 */
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+    .site-card.invalid::after {
+        background: rgba(255, 80, 80, 0.9);
+    }
+}
+
 /* ====================== 响应式设计 ====================== */
 
 @media (max-width: 1023px) {
     .level1-btn.active::after,
     .level2-btn.active::after {
-        display: none; /* 移除激活指示线 */
+        display: none;
     }
 }
 
@@ -693,7 +710,7 @@
     }
     
     .navigation-body {
-        height: auto; /* 改为auto，让内容决定高度 */
+        height: auto;
     }
     
     .navigation-left {
@@ -708,20 +725,20 @@
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         gap: 10px;
         padding: 12px;
-        grid-auto-rows: minmax(115px, auto); /* 减少最小行高 */
+        grid-auto-rows: minmax(115px, auto);
     }
     
     .site-card {
-        min-height: 115px; /* 减少最小高度 */
+        min-height: 115px;
         height: auto;
     }
     
     .site-title {
-        font-size: 14px; /* 保持桌面端字体大小 */
+        font-size: 14px;
     }
     
     .site-description {
-        font-size: 12px; /* 保持桌面端字体大小 */
+        font-size: 12px;
         min-height: 30px;
         max-height: 30px;
     }
@@ -734,7 +751,7 @@
     }
     
     .navigation-body {
-        height: auto; /* 改为auto，让内容决定高度 */
+        height: auto;
         flex-direction: column;
     }
     
@@ -797,20 +814,19 @@
     
     .navigation-right {
         flex: 1;
-        min-height: auto; /* 移除固定最小高度 */
+        min-height: auto;
     }
     
-    /* 修复平板端显示不全问题：自适应行高 */
     .level3-content {
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
         gap: 8px;
         padding: 10px;
-        grid-auto-rows: minmax(105px, auto); /* 自适应行高 */
+        grid-auto-rows: minmax(105px, auto);
     }
     
     .site-card {
-        padding: 10px 8px 6px; /* 减少底部内边距 */
-        min-height: 105px; /* 减少最小高度 */
+        padding: 10px 8px 6px;
+        min-height: 105px;
         height: auto;
     }
     
@@ -849,22 +865,22 @@
     }
     
     .divider-line {
-        margin: 0 0 5px 0; /* 减少下边距 */
+        margin: 0 0 5px 0;
     }
     
     .site-title {
         font-size: 13px;
         -webkit-line-clamp: 2;
-        min-height: 16px; /* 减少最小高度 */
-        line-height: 1.25; /* 减少行高 */
+        min-height: 16px;
+        line-height: 1.25;
     }
     
     .site-description {
         font-size: 11px;
         -webkit-line-clamp: 2;
-        min-height: 27px; /* 减少高度 */
+        min-height: 27px;
         max-height: 27px;
-        line-height: 1.25; /* 减少行高 */
+        line-height: 1.25;
     }
 }
 
@@ -909,7 +925,7 @@
     }
     
     .navigation-body {
-        height: auto; /* 改为auto，让内容决定高度 */
+        height: auto;
         flex-direction: column;
     }
     
@@ -967,20 +983,19 @@
     
     .navigation-right {
         flex: 1;
-        min-height: auto; /* 移除固定最小高度 */
+        min-height: auto;
     }
     
-    /* 修复移动端显示不全问题：自适应行高 */
     .level3-content {
         grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
         gap: 6px;
         padding: 8px;
-        grid-auto-rows: minmax(100px, auto); /* 自适应行高 */
+        grid-auto-rows: minmax(100px, auto);
     }
     
     .site-card {
-        padding: 8px 6px 4px; /* 减少底部内边距 */
-        min-height: 100px; /* 减少最小高度 */
+        padding: 8px 6px 4px;
+        min-height: 100px;
         height: auto;
         border-radius: 6px;
     }
@@ -1020,26 +1035,26 @@
     }
     
     .divider-line {
-        margin: 0 0 4px 0; /* 减少下边距 */
+        margin: 0 0 4px 0;
     }
     
     .card-bottom {
-        gap: 2px; /* 减少间距 */
+        gap: 2px;
     }
     
     .site-title {
         font-size: 12px;
         -webkit-line-clamp: 2;
-        min-height: 15px; /* 减少最小高度 */
-        line-height: 1.25; /* 减少行高 */
+        min-height: 15px;
+        line-height: 1.25;
     }
     
     .site-description {
         font-size: 10px;
         -webkit-line-clamp: 2;
-        min-height: 25px; /* 减少高度 */
+        min-height: 25px;
         max-height: 25px;
-        line-height: 1.25; /* 减少行高 */
+        line-height: 1.25;
     }
 }
 
@@ -1098,20 +1113,19 @@
     }
     
     .navigation-right {
-        min-height: auto; /* 移除固定最小高度 */
+        min-height: auto;
     }
     
-    /* 修复极窄屏显示不全问题：自适应行高 */
     .level3-content {
         grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
         gap: 4px;
         padding: 6px;
-        grid-auto-rows: minmax(90px, auto); /* 自适应行高 */
+        grid-auto-rows: minmax(90px, auto);
     }
     
     .site-card {
-        padding: 6px 4px 3px; /* 减少底部内边距 */
-        min-height: 90px; /* 减少最小高度 */
+        padding: 6px 4px 3px;
+        min-height: 90px;
         height: auto;
     }
     
@@ -1150,22 +1164,22 @@
     }
     
     .divider-line {
-        margin: 0 0 3px 0; /* 减少下边距 */
+        margin: 0 0 3px 0;
     }
     
     .site-title {
         font-size: 11px;
         -webkit-line-clamp: 2;
-        min-height: 14px; /* 减少最小高度 */
-        line-height: 1.25; /* 减少行高 */
+        min-height: 14px;
+        line-height: 1.25;
     }
     
     .site-description {
         font-size: 9px;
         -webkit-line-clamp: 2;
-        min-height: 22px; /* 减少高度 */
+        min-height: 22px;
         max-height: 22px;
-        line-height: 1.25; /* 减少行高 */
+        line-height: 1.25;
     }
 }
 
@@ -1194,12 +1208,12 @@
     
     .level1-btn.active {
         background: transparent;
-        color: #7bc8ff; /* 暗色模式下的激活文字颜色 */
+        color: #7bc8ff;
     }
     
     .level2-btn.active {
         background: transparent;
-        color: #ff8a65; /* 暗色模式下的橙色激活文字颜色 */
+        color: #ff8a65;
     }
     
     .level2-btn.active .level2-btn-count {
@@ -1217,7 +1231,6 @@
         border-color: #7bc8ff;
     }
     
-    /* 暗色模式下的图标容器 */
     .icon-container {
         background: transparent;
         color: #7bc8ff;
@@ -1243,13 +1256,12 @@
         background: var(--accent-color);
     }
     
-    /* 暗色模式下的统计颜色 */
     .stat-item:nth-child(1) .stat-number {
-        color: #ffcc80 !important;
+        color: #a5d6a7 !important;
     }
     
     .stat-item:nth-child(3) .stat-number {
-        color: #a5d6a7 !important;
+        color: #ef9a9a !important;
     }
     
     .view-count {
@@ -1261,7 +1273,7 @@
     }
 }
 
-/* 修复导航与页脚的间距过远问题 */
+/* 修复导航与页脚的间距 */
 .navigation-section {
     padding-bottom: 0.5rem;
 }
