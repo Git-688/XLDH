@@ -26,7 +26,7 @@ class CompactTagsModule {
             // 游戏语音使用 tag-color-21（浅蓝色）
             { name: '游戏语音', icon: 'fas fa-headset', link: 'pages/tools/游戏语音.html', colorClass: 'tag-color-21' },
             // 视频去印使用 tag-color-22（浅橙色）
-            { name: '视频去印', icon: 'fas fa-eraser', link: 'pages/tools/视频去印.html', colorClass: 'tag-color-22' }
+            { name: '视频去印', icon: 'fas fa-eraser', link: 'pages/tools/短视频去水印.html', colorClass: 'tag-color-22' }
         ];
         
         this.init();
