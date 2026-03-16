@@ -23,39 +23,73 @@ class AnnouncementModule {
         window.announcementModule = this;
     }
 
+    /**
+     * 加载公告：如果存储中的公告与当前默认公告内容不同，则自动更新存储
+     */
     loadAnnouncements() {
         const stored = Storage.get('announcements');
-        if (stored && stored.length > 0) {
-            if (stored[0].id === 'single_announcement' || stored[0].title === '欢迎使用星链导航') {
-                this.announcements = this.getDefaultAnnouncements();
-                Storage.set('announcements', this.announcements);
-            } else {
-                this.announcements = stored;
-            }
-        } else {
+        const defaultAnn = this.getDefaultAnnouncements()[0]; // 只取第一条作为默认
+
+        // 如果没有存储，直接使用默认并保存
+        if (!stored || stored.length === 0) {
             this.announcements = this.getDefaultAnnouncements();
             Storage.set('announcements', this.announcements);
+        } else {
+            // 比较存储的第一条与默认公告的内容（忽略 time 和 read 字段）
+            const storedFirst = stored[0];
+            const needUpdate = this.isAnnouncementDifferent(storedFirst, defaultAnn);
+
+            if (needUpdate) {
+                // 内容不同，用新默认公告替换，重置已读状态，更新时间
+                const newAnnouncements = this.getDefaultAnnouncements();
+                Storage.set('announcements', newAnnouncements);
+                this.announcements = newAnnouncements;
+            } else {
+                // 内容相同，保留存储数据（包括已读状态和原时间）
+                this.announcements = stored;
+            }
         }
         this.currentAnnouncement = this.announcements[0] || {};
     }
 
+    /**
+     * 判断存储的公告与默认公告是否不同（只比较核心内容）
+     */
+    isAnnouncementDifferent(stored, defaultAnn) {
+        // 比较 id、title、focus、updates 是否完全一致
+        if (stored.id !== defaultAnn.id) return true;
+        if (stored.title !== defaultAnn.title) return true;
+        if (stored.focus !== defaultAnn.focus) return true;
+        // 比较 updates 数组（转换为 JSON 字符串比较）
+        if (JSON.stringify(stored.updates) !== JSON.stringify(defaultAnn.updates)) return true;
+        // 其他字段（time, read）忽略
+        return false;
+    }
+
+    // ==================== 修改此处即可更改默认公告内容 ====================
     getDefaultAnnouncements() {
         return [
             {
-                id: 'simple_announcement',
-                title: '公告',
-                focus: '星链导航界面优化，公告模块现已更新为简约风格，遮罩透明，动画由CSS控制。',
+                id: 'static_announcement',                     // 固定 ID，用于识别版本
+                title: '系统公告',
+                focus: '欢迎使用星链导航！本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台。',
                 updates: [
-                    '遮罩从导航栏下方开始，导航栏始终可见',
-                    '点击外部或ESC自动标记已读',
-                    '纯白卡片，柔和阴影，清晰排版',
-                    '全新的中心缩放弹性动画'
+                    '全新界面设计-更加现代化和美观的视觉体验',
+                    '音乐播放器-支持多平台音乐搜索和播放',
+                    '个性化设置-可自定义书签',
+                    '更多实用工具-新增多个日常使用的小工具',
+                    '性能优化-更快的加载速度和响应时间',
                 ],
-                time: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }),
+                time: new Date().toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                }),
                 read: false
             }
         ];
     }
+    // ====================================================================
 
     createModal() {
         if (this.modalElement) {
@@ -195,10 +229,7 @@ class AnnouncementModule {
         if (this.isVisible) return;
 
         this.closeOtherModals();
-
         this.adjustMaskPosition();
-
-        // 完全由CSS控制动画，只需添加active类
         this.modalElement.classList.add('active');
         this.isVisible = true;
 
@@ -214,13 +245,9 @@ class AnnouncementModule {
     hide() {
         if (!this.isVisible || !this.modalElement) return;
 
-        // 立即移除按钮的active类，避免视觉延迟
         this.updateButtonState(false);
-
-        // 移除active类触发CSS反向动画
         this.modalElement.classList.remove('active');
 
-        // 等待动画完成后更新内部状态和清理
         setTimeout(() => {
             this.isVisible = false;
             if (this.resizeHandler) {
@@ -228,7 +255,7 @@ class AnnouncementModule {
                 this.resizeHandler = null;
             }
             if (window.app) window.app.unregisterModal(this);
-        }, 400); // 与CSS过渡时间保持一致
+        }, 400);
     }
 
     toggleModal() {
@@ -272,6 +299,21 @@ class AnnouncementModule {
 
     getAnnouncements() {
         return this.announcements;
+    }
+
+    /**
+     * 手动更新公告内容（外部调用）
+     * @param {Array} newAnnouncements - 新的公告数组
+     */
+    updateAnnouncements(newAnnouncements) {
+        if (!Array.isArray(newAnnouncements) || newAnnouncements.length === 0) return;
+        Storage.set('announcements', newAnnouncements);
+        this.loadAnnouncements();
+        this.createModal();
+        if (this.isVisible) {
+            this.showModal();
+        }
+        if (window.navbar) window.navbar.updateNotificationBadge();
     }
 
     destroy() {
