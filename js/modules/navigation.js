@@ -9,7 +9,6 @@ class OptimizedNavigation {
         this.selectedLevel2 = null;
         this.isInitialized = false;
         
-        // 统计数据（保留网站总数，增加无效链接数）
         this.stats = {
             totalCategories: 0,
             totalWebsites: 0,
@@ -17,14 +16,12 @@ class OptimizedNavigation {
         };
         
         this.isNavigationClick = false;
-        this.siteStatsCache = new Map();
         
-        // 链接检测相关
         this.validationQueue = [];
         this.isValidating = false;
         this.maxConcurrent = 5;
         this.currentValidations = 0;
-        this.validationCacheTTL = 24 * 60 * 60 * 1000; // 24小时
+        this.validationCacheTTL = 24 * 60 * 60 * 1000;
     }
 
     async init() {
@@ -42,7 +39,7 @@ class OptimizedNavigation {
             }
             
             this.isInitialized = true;
-            this.startLinkValidation(); // 启动链接检测
+            this.startLinkValidation();
             
         } catch (error) {
             console.error('优化分类导航初始化失败:', error);
@@ -71,7 +68,6 @@ class OptimizedNavigation {
             this.stats.totalCategories = stats.totalCategories;
             this.stats.totalWebsites = stats.totalWebsites;
         } else {
-            // 备用固定值
             this.stats.totalCategories = 8;
             this.stats.totalWebsites = 163;
         }
@@ -190,12 +186,11 @@ class OptimizedNavigation {
                 </div>
                 <div class="divider-line"></div>
                 <div class="card-bottom">
-                    <div class="site-title">${this.escapeHtml(site.title)}</div>
-                    <div class="site-description">${this.escapeHtml(site.description || '暂无描述')}</div>
+                    <div class="site-title">${Utils.escapeHtml(site.title)}</div>
+                    <div class="site-description">${Utils.escapeHtml(site.description || '暂无描述')}</div>
                 </div>
             `;
             
-            // 点击事件：不再阻止无效卡片的点击（已移除判断）
             card.addEventListener('click', (e) => {
                 this.isNavigationClick = true;
                 e.stopPropagation();
@@ -205,7 +200,6 @@ class OptimizedNavigation {
                     window.musicPlayer.isHandlingNavigationClick = true;
                 }
                 
-                // 增加浏览次数统计（即使无效也统计，但用户可点击）
                 this.incrementSiteViews(site.url, card);
                 
                 setTimeout(() => {
@@ -222,7 +216,6 @@ class OptimizedNavigation {
             
             container.appendChild(card);
             
-            // 应用缓存的有效性样式
             this.applyValidityStyleToCard(card, site.url);
         });
         
@@ -252,7 +245,6 @@ class OptimizedNavigation {
         if (!url) return;
         const newViews = Storage.incrementSiteViews(url);
         const formattedViews = Storage.formatViews(newViews);
-        this.siteStatsCache.set(url, newViews);
         
         if (cardElement) {
             const viewCountElement = cardElement.querySelector('.view-count');
@@ -265,7 +257,6 @@ class OptimizedNavigation {
                 setTimeout(() => viewCountElement.classList.remove('increasing'), 300);
             }
         }
-        this.dispatchStatsUpdateEvent(url, newViews);
         return newViews;
     }
 
@@ -279,13 +270,6 @@ class OptimizedNavigation {
         if (totalViewsElement) {
             totalViewsElement.textContent = Storage.formatViews(statsSummary.totalViews);
         }
-    }
-
-    dispatchStatsUpdateEvent(url, newViews) {
-        const event = new CustomEvent('siteViewsUpdated', {
-            detail: { url, views: newViews, formattedViews: Storage.formatViews(newViews) }
-        });
-        document.dispatchEvent(event);
     }
 
     selectLevel1(level1) {
@@ -408,13 +392,6 @@ class OptimizedNavigation {
         }
     }
 
-    escapeHtml(text) {
-        if (typeof text !== 'string') return text;
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     refresh() {
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
@@ -495,7 +472,6 @@ class OptimizedNavigation {
         if (!valid) {
             this.stats.invalidCount++;
         } else {
-            // 重新计算无效总数，以防之前被标记为无效的链接现在变为有效
             this.recalculateInvalidCount();
         }
         
