@@ -25,24 +25,34 @@ class PluginManager {
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
-                const response = await fetch(`https://api.i-meto.com/meting/api?server=netease&type=playlist&id=${playlistId}`);
-                const data = await response.json();
-                const formatted = data.map(song => this.formatSong(song, 'netease'));
-                
-                this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
-                return formatted;
+                try {
+                    const response = await fetch(`https://api.i-meto.com/meting/api?server=netease&type=playlist&id=${playlistId}`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    const formatted = data.map(song => this.formatSong(song, 'netease'));
+                    this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
+                    return formatted;
+                } catch (error) {
+                    console.error('网易云歌单请求失败:', error);
+                    return [];
+                }
             },
             search: async (keyword) => {
                 const cacheKey = `netease_search_${keyword}`;
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
-                const response = await fetch(`https://api.i-meto.com/meting/api?server=netease&type=search&id=${encodeURIComponent(keyword)}`);
-                const data = await response.json();
-                const formatted = data.map(song => this.formatSong(song, 'netease'));
-                
-                this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
-                return formatted;
+                try {
+                    const response = await fetch(`https://api.i-meto.com/meting/api?server=netease&type=search&id=${encodeURIComponent(keyword)}`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    const formatted = data.map(song => this.formatSong(song, 'netease'));
+                    this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
+                    return formatted;
+                } catch (error) {
+                    console.error('网易云搜索请求失败:', error);
+                    return [];
+                }
             }
         });
 
@@ -56,24 +66,34 @@ class PluginManager {
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
-                const response = await fetch(`https://api.i-meto.com/meting/api?server=tencent&type=playlist&id=${playlistId}`);
-                const data = await response.json();
-                const formatted = data.map(song => this.formatSong(song, 'qq'));
-                
-                this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
-                return formatted;
+                try {
+                    const response = await fetch(`https://api.i-meto.com/meting/api?server=tencent&type=playlist&id=${playlistId}`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    const formatted = data.map(song => this.formatSong(song, 'qq'));
+                    this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
+                    return formatted;
+                } catch (error) {
+                    console.error('QQ音乐歌单请求失败:', error);
+                    return [];
+                }
             },
             search: async (keyword) => {
                 const cacheKey = `qq_search_${keyword}`;
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
-                const response = await fetch(`https://api.i-meto.com/meting/api?server=tencent&type=search&id=${encodeURIComponent(keyword)}`);
-                const data = await response.json();
-                const formatted = data.map(song => this.formatSong(song, 'qq'));
-                
-                this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
-                return formatted;
+                try {
+                    const response = await fetch(`https://api.i-meto.com/meting/api?server=tencent&type=search&id=${encodeURIComponent(keyword)}`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    const formatted = data.map(song => this.formatSong(song, 'qq'));
+                    this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
+                    return formatted;
+                } catch (error) {
+                    console.error('QQ音乐搜索请求失败:', error);
+                    return [];
+                }
             }
         });
 
@@ -83,9 +103,15 @@ class PluginManager {
             version: '1.0.0',
             description: '基于抖音热歌榜API',
             getPlaylist: async (playlistId) => {
-                const response = await fetch('https://api.injahow.cn/meting/?type=playlist&id=2809513713');
-                const data = await response.json();
-                return this.formatDouyinResponse(data);
+                try {
+                    const response = await fetch('https://api.injahow.cn/meting/?type=playlist&id=2809513713');
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    return this.formatDouyinResponse(data);
+                } catch (error) {
+                    console.error('抖音热歌榜请求失败:', error);
+                    return [];
+                }
             },
             search: async (keyword) => {
                 return [];
@@ -127,15 +153,16 @@ class PluginManager {
      */
     formatDouyinResponse(data) {
         if (!data) return [];
-        
-        if (data.code === 200 && data.data && Array.isArray(data.data)) {
-            return data.data.map(song => this.formatDouyinSong(song)).filter(song => song.src);
+        try {
+            if (data.code === 200 && data.data && Array.isArray(data.data)) {
+                return data.data.map(song => this.formatDouyinSong(song)).filter(song => song.src);
+            }
+            if (Array.isArray(data)) {
+                return data.map(song => this.formatDouyinSong(song)).filter(song => song.src);
+            }
+        } catch (error) {
+            console.error('解析抖音响应失败:', error);
         }
-        
-        if (Array.isArray(data)) {
-            return data.map(song => this.formatDouyinSong(song)).filter(song => song.src);
-        }
-        
         return [];
     }
 
@@ -206,7 +233,6 @@ class PluginManager {
         if (!plugin || !plugin.getPlaylist) {
             throw new Error(`插件 ${apiId} 不支持获取歌单`);
         }
-        
         return await plugin.getPlaylist(playlistId);
     }
 
@@ -218,7 +244,6 @@ class PluginManager {
         if (!plugin || !plugin.search) {
             throw new Error(`插件 ${apiId} 不支持搜索`);
         }
-        
         return await plugin.search(keyword);
     }
 
@@ -227,19 +252,16 @@ class PluginManager {
      */
     async preloadSong(song) {
         const promises = [];
-        
         if (song.src) {
             promises.push(this.cacheManager.preloadResource(song.src, 'audio'));
         }
-        
         if (song.cover) {
             promises.push(this.cacheManager.preloadResource(song.cover, 'image'));
         }
-        
         try {
             await Promise.all(promises);
             return true;
-        } catch (error) {
+        } catch {
             return false;
         }
     }
