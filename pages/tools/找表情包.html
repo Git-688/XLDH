@@ -254,6 +254,7 @@
                     <option value="xyd">小云朵表情包</option>
                     <option value="longt">龙图表情包</option>
                     <option value="bing">必应表情包</option>
+                    <option value="wechat">微信表情包</option><!-- 新增：微信表情包下拉选项 -->
                     <option value="qq">QQ表情包</option>
                     <option value="qq2">QQ表情包2</option>
                     <option value="sogou">搜狗表情包</option>
@@ -336,6 +337,16 @@
                 // 修正：从返回的data.data数组中提取高清图片url
                 extractData: (data) => Array.isArray(data.data) ? data.data.map(item => item.url) : [],
                 supportPagination: false, // 接口未提供分页参数，暂关闭加载更多
+                isSymbolApi: false
+            },
+            // 新增：微信表情包接口配置
+            wechat: {
+                url: 'https://yunzhiapi.cn/API/wxbqss.php',
+                // 拼接固定token、count=40、搜索关键词msg
+                params: (keyword, page) => `?token=XIZhAXKnSQcH&count=40&msg=${encodeURIComponent(keyword)}`,
+                // 提取返回的data数组直接作为图片链接
+                extractData: (data) => Array.isArray(data.data) ? data.data : [],
+                supportPagination: false, // 接口无分页参数，关闭加载更多
                 isSymbolApi: false
             },
             qq: {
@@ -423,6 +434,7 @@
             if (currentApi === 'xyd') loadingText = '正在捕捉小云朵...';
             if (currentApi === 'longt') loadingText = '正在加载龙图表情...';
             if (currentApi === 'bing') loadingText = '正在搜索必应表情...';
+            if (currentApi === 'wechat') loadingText = '正在搜索微信表情...';// 新增：微信加载文案
             if (currentApi === 'juhe') loadingText = `正在加载${type === '动漫表情' ? '动漫表情' : type}...`;
             
             if (!append) {
@@ -454,24 +466,24 @@
                     const newImgUrl = requestUrl.includes('?') ? `${requestUrl}&cache=${cacheKey}` : `${requestUrl}?cache=${cacheKey}`;
                     items = config.extractData(newImgUrl);
                 } 
-                // QQ/QQ2/搜狗/斗图/必应：JSON格式接口解析逻辑
+                // QQ/QQ2/搜狗/斗图/必应/微信：JSON格式接口解析逻辑
                 else {
                     const response = await fetch(requestUrl);
                     if (!response.ok) throw new Error('网络请求失败');
                     const data = await response.json();
-                    // 修正：必应接口成功判断为 code === 200（按返回示例适配）
+                    // 修正：必应/微信接口成功判断为 code === 200
                     const isSuccess = currentApi === 'dou' 
                         ? data.code === 1 
                         : currentApi === 'qq2' 
                             ? data.Code === 0 
-                            : currentApi === 'bing' 
-                                ? data.code === 200 // 必应专属：code=200为成功
+                            : (currentApi === 'bing' || currentApi === 'wechat')
+                                ? data.code === 200 // 新增：微信加入code=200成功判断
                                 : data.code === 1;
                     if (!isSuccess) throw new Error(data.msg || data.text || '加载失败，请重试');
-                    // 修正：必应直接传入完整data，extractData内部提取data.data
+                    // 提取图片链接
                     items = config.extractData(data);
-                    // 为斗图/必应图片地址添加缓存戳，防止浏览器缓存
-                    if (currentApi === 'dou' || currentApi === 'bing') {
+                    // 为斗图/必应/微信图片地址添加缓存戳，防止浏览器缓存
+                    if (currentApi === 'dou' || currentApi === 'bing' || currentApi === 'wechat') { // 新增：微信添加缓存戳
                         const cacheKey = getCacheKey();
                         items = items.map(url => url.includes('?') ? `${url}&cache=${cacheKey}` : `${url}?cache=${cacheKey}`);
                     }
@@ -491,13 +503,14 @@
                             currentApi === 'dou' ? '斗图表情' : 
                             currentApi === 'xyd' ? '小云朵表情' : 
                             currentApi === 'longt' ? '龙图表情' : 
-                            currentApi === 'bing' ? '必应表情' : // 必应专属alt语义
+                            currentApi === 'bing' ? '必应表情' : 
+                            currentApi === 'wechat' ? '微信表情' : // 新增：微信alt语义
                             (currentApi === 'juhe' ? (type === '动漫表情' ? '动漫表情' : type) : '表情')
                         }"/>
                     </div>
                 `).join('');
                 append ? grid.insertAdjacentHTML('beforeend', html) : grid.innerHTML = html;
-                // 显示加载更多按钮，文案匹配当前分类（必应暂关闭）
+                // 显示加载更多按钮，文案匹配当前分类（必应/微信暂关闭）
                 if (config.supportPagination) {
                     let moreText = '加载更多';
                     if (currentApi === 'shuitao') moreText = '加载更多水豚';
@@ -520,13 +533,15 @@
                     currentApi === 'dou' ? '加载斗图表情失败' : 
                     currentApi === 'xyd' ? '加载小云朵表情失败' : 
                     currentApi === 'longt' ? '加载龙图表情失败' : 
-                    currentApi === 'bing' ? '加载必应表情失败' : error.message // 必应专属失败提示
+                    currentApi === 'bing' ? '加载必应表情失败' : 
+                    currentApi === 'wechat' ? '加载微信表情失败' : // 新增：微信失败吐司
+                    error.message
                 );
             } finally {
                 isLoading = false; // 加载完成，解锁点击
             }
         }
-        // 搜索方法：聚合/水豚/飞鼠/柴郡/斗图/小云朵/龙图分类禁用，必应支持搜索
+        // 搜索方法：聚合/水豚/飞鼠/柴郡/斗图/小云朵/龙图分类禁用，必应/微信支持搜索
         function handleSearch() {
             if (currentApi === 'shuitao' || currentApi === 'feishu' || currentApi === 'chaiq' || currentApi === 'dou' || currentApi === 'xyd' || currentApi === 'longt' || currentApi === 'juhe') return;
             loadEmojis(input.value.trim(), 1, false);
@@ -570,14 +585,15 @@
                 grid.innerHTML = '<div class="empty">点击上方分类按钮，加载对应聚合表情</div>';
                 loadMore.classList.add('hidden');
             } else {
-                // 搜索型分类：必应/QQ/QQ2/搜狗，启用搜索框
+                // 搜索型分类：必应/微信/QQ/QQ2/搜狗，启用搜索框
                 juheBtnGroup.classList.add('hidden');
                 input.classList.remove('hidden');
                 searchBtn.classList.remove('hidden');
                 input.disabled = false;
                 searchBtn.disabled = false;
-                // 必应专属占位符，其他保持原有
+                // 必应/微信专属占位符，其他保持原有
                 input.placeholder = api === 'bing' ? '必应表情搜索（如萌宠、搞笑、斗图）' : 
+                                     api === 'wechat' ? '微信表情搜索（如哈哈、可爱、搞怪）' : // 新增：微信搜索占位符
                                      api === 'qq' ? 'QQ表情搜索（如萌宠、斗图）' : 
                                      api === 'qq2' ? 'QQ表情包2搜索（如萌宠、斗图）' : 
                                      '搜狗表情搜索（如表情包、搞笑）';
@@ -589,7 +605,7 @@
         apiSelect.addEventListener('change', (e) => switchApi(e.target.value));
         searchBtn.addEventListener('click', handleSearch);
         input.addEventListener('keypress', (e) => {
-            // 回车搜索：自动加载/聚合分类禁用，必应/QQ/搜狗支持
+            // 回车搜索：自动加载/聚合分类禁用，必应/微信/QQ/搜狗支持
             if (e.key === 'Enter' && currentApi !== 'shuitao' && currentApi !== 'feishu' && currentApi !== 'chaiq' && currentApi !== 'dou' && currentApi !== 'xyd' && currentApi !== 'longt' && currentApi !== 'juhe') handleSearch();
         });
         // 加载更多：继续加载当前分类的表情，静态图/GIF加载逻辑一致
