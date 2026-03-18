@@ -1,7 +1,6 @@
 // compact-tags.js - 纯图标标签模块（简化版）
 class CompactTagsModule {
     constructor() {
-        // 添加了铃声搜索、游戏语音和视频去印，总共22个按钮
         this.tags = [
             { name: '影视搜索', icon: 'fas fa-film', link: 'pages/tools/影视搜索.html', colorClass: 'tag-color-1' },
             { name: '短剧搜索', icon: 'fas fa-play-circle', link: 'pages/tools/短剧搜索.html', colorClass: 'tag-color-2' },
@@ -60,7 +59,6 @@ class CompactTagsModule {
         const grid = document.getElementById('tagsGrid');
         if (!grid) return;
 
-        // 点击标签
         grid.addEventListener('click', (e) => {
             const tag = e.target.closest('.minimal-tag');
             if (tag) {
@@ -68,7 +66,6 @@ class CompactTagsModule {
             }
         });
 
-        // 键盘导航
         grid.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 const tag = e.target.closest('.minimal-tag');
@@ -81,23 +78,14 @@ class CompactTagsModule {
     }
 
     handleTagClick(tag) {
-        // 移除所有活跃状态
         document.querySelectorAll('.minimal-tag.active').forEach(t => {
             t.classList.remove('active');
         });
-        
-        // 添加当前活跃状态
         tag.classList.add('active');
-        
-        // 添加点击反馈
         tag.style.transform = 'scale(0.9)';
         setTimeout(() => {
             tag.style.transform = '';
         }, 100);
-    }
-
-    refresh() {
-        this.renderTags();
     }
 }
 
