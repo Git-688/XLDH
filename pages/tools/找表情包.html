@@ -252,8 +252,8 @@
                     <option value="chaiq">柴郡表情包</option>
                     <option value="dou">斗图表情包</option>
                     <option value="xyd">小云朵表情包</option>
-                    <!-- 新增：龙图表情包下拉选项 -->
                     <option value="longt">龙图表情包</option>
+                    <option value="bing">必应表情包</option>
                     <option value="qq">QQ表情包</option>
                     <option value="qq2">QQ表情包2</option>
                     <option value="sogou">搜狗表情包</option>
@@ -320,7 +320,6 @@
                 isSymbolApi: false,
                 supportStatic: true // 标记：支持静态图(JPG/PNG)+动态GIF
             },
-            // 新增：龙图接口配置，直接返回图片，兼容静态图+GIF，与小云朵逻辑一致
             longt: {
                 url: 'https://api.lolimi.cn/API/longt/l',
                 params: () => '',
@@ -328,6 +327,16 @@
                 supportPagination: true,
                 isSymbolApi: false,
                 supportStatic: true // 标记：支持静态图(JPG/PNG)+动态GIF
+            },
+            // 修正：必应表情包接口配置（按最新返回格式适配）
+            bing: {
+                url: 'https://yunzhiapi.cn/API/bybqss.php',
+                // 内置固定token，默认limit=auto，拼接搜索关键词msg
+                params: (keyword, page) => `?token=XIZhAXKnSQcH&msg=${encodeURIComponent(keyword)}&limit=auto`,
+                // 修正：从返回的data.data数组中提取高清图片url
+                extractData: (data) => Array.isArray(data.data) ? data.data.map(item => item.url) : [],
+                supportPagination: false, // 接口未提供分页参数，暂关闭加载更多
+                isSymbolApi: false
             },
             qq: {
                 url: 'https://oiapi.net/api/EmoticonPack',
@@ -412,8 +421,8 @@
             if (currentApi === 'chaiq') loadingText = '正在捕捉柴郡...';
             if (currentApi === 'dou') loadingText = '正在加载斗图表情...';
             if (currentApi === 'xyd') loadingText = '正在捕捉小云朵...';
-            // 新增：龙图专属加载文案
             if (currentApi === 'longt') loadingText = '正在加载龙图表情...';
+            if (currentApi === 'bing') loadingText = '正在搜索必应表情...';
             if (currentApi === 'juhe') loadingText = `正在加载${type === '动漫表情' ? '动漫表情' : type}...`;
             
             if (!append) {
@@ -431,7 +440,6 @@
                     : `${config.url}${config.params(type, page)}`;
                 let items = [];
                 // 水豚/飞鼠/柴郡/小云朵/龙图/聚合表情：直接返回图片资源，无需JSON解析
-                // img标签天然适配GIF/静态图，缓存戳对所有格式生效
                 if (currentApi === 'shuitao' || currentApi === 'feishu' || currentApi === 'chaiq' || currentApi === 'xyd' || currentApi === 'longt' || currentApi === 'juhe') {
                     const response = await fetch(requestUrl);
                     if (!response.ok) throw new Error(
@@ -446,19 +454,24 @@
                     const newImgUrl = requestUrl.includes('?') ? `${requestUrl}&cache=${cacheKey}` : `${requestUrl}?cache=${cacheKey}`;
                     items = config.extractData(newImgUrl);
                 } 
-                // QQ/QQ2/搜狗/斗图：JSON格式接口解析逻辑
+                // QQ/QQ2/搜狗/斗图/必应：JSON格式接口解析逻辑
                 else {
                     const response = await fetch(requestUrl);
                     if (!response.ok) throw new Error('网络请求失败');
                     const data = await response.json();
-                    // 斗图判断code===1，其他分类保持原有判断逻辑
+                    // 修正：必应接口成功判断为 code === 200（按返回示例适配）
                     const isSuccess = currentApi === 'dou' 
                         ? data.code === 1 
-                        : (currentApi === 'qq2' ? data.Code === 0 : data.code === 1);
-                    if (!isSuccess) throw new Error(data.text || data.msg || '加载失败，请重试');
+                        : currentApi === 'qq2' 
+                            ? data.Code === 0 
+                            : currentApi === 'bing' 
+                                ? data.code === 200 // 必应专属：code=200为成功
+                                : data.code === 1;
+                    if (!isSuccess) throw new Error(data.msg || data.text || '加载失败，请重试');
+                    // 修正：必应直接传入完整data，extractData内部提取data.data
                     items = config.extractData(data);
-                    // 为斗图图片地址添加缓存戳，防止浏览器缓存
-                    if (currentApi === 'dou') {
+                    // 为斗图/必应图片地址添加缓存戳，防止浏览器缓存
+                    if (currentApi === 'dou' || currentApi === 'bing') {
                         const cacheKey = getCacheKey();
                         items = items.map(url => url.includes('?') ? `${url}&cache=${cacheKey}` : `${url}?cache=${cacheKey}`);
                     }
@@ -477,13 +490,14 @@
                         <img src="${url}" loading="lazy" alt="${
                             currentApi === 'dou' ? '斗图表情' : 
                             currentApi === 'xyd' ? '小云朵表情' : 
-                            currentApi === 'longt' ? '龙图表情' : // 新增：龙图专属alt语义
+                            currentApi === 'longt' ? '龙图表情' : 
+                            currentApi === 'bing' ? '必应表情' : // 必应专属alt语义
                             (currentApi === 'juhe' ? (type === '动漫表情' ? '动漫表情' : type) : '表情')
                         }"/>
                     </div>
                 `).join('');
                 append ? grid.insertAdjacentHTML('beforeend', html) : grid.innerHTML = html;
-                // 显示加载更多按钮，文案匹配当前分类
+                // 显示加载更多按钮，文案匹配当前分类（必应暂关闭）
                 if (config.supportPagination) {
                     let moreText = '加载更多';
                     if (currentApi === 'shuitao') moreText = '加载更多水豚';
@@ -491,7 +505,6 @@
                     if (currentApi === 'chaiq') moreText = '加载更多柴郡';
                     if (currentApi === 'dou') moreText = '加载更多斗图';
                     if (currentApi === 'xyd') moreText = '加载更多小云朵';
-                    // 新增：龙图专属加载更多文案
                     if (currentApi === 'longt') moreText = '加载更多龙图';
                     if (currentApi === 'juhe') moreText = `加载更多${type === '动漫表情' ? '动漫表情' : type}`;
                     loadMoreBtn.textContent = moreText;
@@ -506,13 +519,14 @@
                     currentApi === 'chaiq' ? '加载柴郡表情失败' : 
                     currentApi === 'dou' ? '加载斗图表情失败' : 
                     currentApi === 'xyd' ? '加载小云朵表情失败' : 
-                    currentApi === 'longt' ? '加载龙图表情失败' : error.message // 新增：龙图专属失败提示
+                    currentApi === 'longt' ? '加载龙图表情失败' : 
+                    currentApi === 'bing' ? '加载必应表情失败' : error.message // 必应专属失败提示
                 );
             } finally {
                 isLoading = false; // 加载完成，解锁点击
             }
         }
-        // 搜索方法：聚合/水豚/飞鼠/柴郡/斗图/小云朵/龙图分类直接禁用，无任何触发
+        // 搜索方法：聚合/水豚/飞鼠/柴郡/斗图/小云朵/龙图分类禁用，必应支持搜索
         function handleSearch() {
             if (currentApi === 'shuitao' || currentApi === 'feishu' || currentApi === 'chaiq' || currentApi === 'dou' || currentApi === 'xyd' || currentApi === 'longt' || currentApi === 'juhe') return;
             loadEmojis(input.value.trim(), 1, false);
@@ -533,9 +547,8 @@
             currentPage = 1;
             currentJuheType = '';
             setJuheBtnActive(''); // 重置聚合按钮激活状态
-            // 新增：龙图加入自动加载分类组，禁用搜索
+            // 自动加载分类：水豚/飞鼠/柴郡/斗图/小云朵/龙图
             if (api === 'shuitao' || api === 'feishu' || api === 'chaiq' || api === 'dou' || api === 'xyd' || api === 'longt') {
-                // 自动加载分类：显示搜索框(禁用)+隐藏聚合按钮组，自动加载
                 juheBtnGroup.classList.add('hidden');
                 input.classList.remove('hidden');
                 searchBtn.classList.remove('hidden');
@@ -547,7 +560,7 @@
                                      api === 'chaiq' ? '柴郡表情包无需搜索，自动加载~' : 
                                      api === 'dou' ? '斗图表情包无需搜索，自动加载~' : 
                                      api === 'xyd' ? '小云朵表情包无需搜索，自动加载~' : 
-                                     '龙图表情包无需搜索，自动加载~'; // 新增：龙图专属占位符
+                                     '龙图表情包无需搜索，自动加载~';
                 loadEmojis('', 1, false);
             } else if (api === 'juhe') {
                 // 聚合分类：隐藏搜索框/按钮，显示聚合按钮组（替换原搜索位置）
@@ -557,13 +570,15 @@
                 grid.innerHTML = '<div class="empty">点击上方分类按钮，加载对应聚合表情</div>';
                 loadMore.classList.add('hidden');
             } else {
-                // 其他分类：显示搜索框/按钮+隐藏聚合按钮组，启用搜索
+                // 搜索型分类：必应/QQ/QQ2/搜狗，启用搜索框
                 juheBtnGroup.classList.add('hidden');
                 input.classList.remove('hidden');
                 searchBtn.classList.remove('hidden');
                 input.disabled = false;
                 searchBtn.disabled = false;
-                input.placeholder = api === 'qq' ? 'QQ表情搜索（如萌宠、斗图）' : 
+                // 必应专属占位符，其他保持原有
+                input.placeholder = api === 'bing' ? '必应表情搜索（如萌宠、搞笑、斗图）' : 
+                                     api === 'qq' ? 'QQ表情搜索（如萌宠、斗图）' : 
                                      api === 'qq2' ? 'QQ表情包2搜索（如萌宠、斗图）' : 
                                      '搜狗表情搜索（如表情包、搞笑）';
                 grid.innerHTML = '<div class="empty">输入关键词搜索表情</div>';
@@ -574,7 +589,7 @@
         apiSelect.addEventListener('change', (e) => switchApi(e.target.value));
         searchBtn.addEventListener('click', handleSearch);
         input.addEventListener('keypress', (e) => {
-            // 回车搜索过滤：新增龙图，禁用回车搜索
+            // 回车搜索：自动加载/聚合分类禁用，必应/QQ/搜狗支持
             if (e.key === 'Enter' && currentApi !== 'shuitao' && currentApi !== 'feishu' && currentApi !== 'chaiq' && currentApi !== 'dou' && currentApi !== 'xyd' && currentApi !== 'longt' && currentApi !== 'juhe') handleSearch();
         });
         // 加载更多：继续加载当前分类的表情，静态图/GIF加载逻辑一致
