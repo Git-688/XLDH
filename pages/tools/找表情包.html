@@ -4,7 +4,6 @@
     <meta content="width=device-width,initial-scale=1" name="viewport"/>
     <title>表情搜索</title>
     <style>
-        /* 样式部分与之前一致，省略重复代码 */
         * {
             margin: 0;
             padding: 0;
@@ -18,6 +17,8 @@
             --text-secondary: #999999;
             --border: #e0e0e0;
             --shadow: rgba(0, 0, 0, 0.05);
+            --btn-default: var(--bg);
+            --btn-active-text: #ffffff;
         }
         @media (prefers-color-scheme: dark) {
             :root {
@@ -27,6 +28,7 @@
                 --text-secondary: #aaaaaa;
                 --border: #444444;
                 --shadow: rgba(0, 0, 0, 0.3);
+                --btn-default: #2c2c2c;
             }
         }
         body {
@@ -47,12 +49,40 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            padding: 10px 0;
         }
+        /* 核心布局：搜索/按钮组容器，flex自适应，适配聚合分类按钮替换 */
         .search-box {
             display: flex;
             gap: 8px;
-            padding: 10px 0;
             align-items: center;
+            flex-wrap: wrap;
+        }
+        /* 聚合分类按钮组：替换原搜索位置，与下拉框同排，样式适配 */
+        .juhe-btn-group {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+        .juhe-btn {
+            padding: 8px 12px;
+            background: var(--btn-default);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .juhe-btn.active {
+            background: var(--primary);
+            color: var(--btn-active-text);
+            border-color: var(--primary);
+        }
+        .juhe-btn:hover:not(.active) {
+            border-color: var(--primary);
         }
         input {
             flex: 1;
@@ -68,7 +98,12 @@
             outline: none;
             border-color: var(--primary);
         }
-        button {
+        input:disabled {
+            background: var(--border);
+            cursor: not-allowed;
+            color: var(--text-secondary);
+        }
+        .search-btn {
             padding: 8px 16px;
             background: var(--primary);
             color: white;
@@ -79,11 +114,18 @@
             transition: opacity 0.2s;
             white-space: nowrap;
         }
-        button:hover {
+        .search-btn:hover {
             opacity: 0.9;
         }
-        button:active {
+        .search-btn:active {
             transform: scale(0.98);
+        }
+        .search-btn:disabled {
+            background: var(--border);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+            opacity: 1;
         }
         select {
             padding: 8px 12px;
@@ -94,6 +136,7 @@
             color: var(--text);
             cursor: pointer;
             transition: border-color 0.2s;
+            white-space: nowrap;
         }
         select:focus {
             outline: none;
@@ -123,26 +166,7 @@
             height: 100%;
             object-fit: cover;
             display: block;
-        }
-        .symbol-card {
-            aspect-ratio: auto;
-            padding: 15px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100px;
-        }
-        .symbol-char {
-            font-size: 36px;
-            line-height: 1;
-            margin-bottom: 5px;
-        }
-        .symbol-name {
-            font-size: 12px;
-            color: var(--text-secondary);
-            line-height: 1.2;
+            /* 天然适配GIF/静态图(JPG/PNG)，无变形 */
         }
         .loading {
             text-align: center;
@@ -188,6 +212,9 @@
             background: var(--bg);
             color: var(--text);
             border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
         }
         .load-more button:hover {
             background: var(--card);
@@ -200,120 +227,197 @@
             body {
                 font-size: 12px;
             }
-            input, button, select {
+            input, .search-btn, select, .juhe-btn {
                 font-size: 12px;
+                padding: 6px 8px;
             }
             .grid {
                 grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
                 gap: 6px;
             }
-            .symbol-char {
-                font-size: 28px;
-            }
         }
         .hidden {
-            display: none;
-        }
-        /* 新增：搜索结果高亮样式（可选，提升辨识度） */
-        .symbol-card.highlight {
-            border: 2px solid var(--primary);
+            display: none !important;
         }
     </style>
 </head>
 <body>
     <header>
         <div class="container">
-            <div class="search-box">
+            <!-- 核心容器：下拉分类 + 原搜索区/聚合按钮组 -->
+            <div class="search-box" id="searchBox">
                 <select id="apiSelect">
-                    <option value="jkyai">JKYAI API</option>
-                    <option value="symbols">符号大全</option>
-                    <option value="emoji">emoji表情</option>
+                    <option value="shuitao">水豚噜噜</option>
+                    <option value="feishu">飞鼠表情包</option>
+                    <option value="chaiq">柴郡表情包</option>
+                    <option value="dou">斗图表情包</option>
+                    <option value="xyd">小云朵表情包</option>
+                    <!-- 新增：龙图表情包下拉选项 -->
+                    <option value="longt">龙图表情包</option>
+                    <option value="qq">QQ表情包</option>
+                    <option value="qq2">QQ表情包2</option>
+                    <option value="sogou">搜狗表情包</option>
+                    <option value="juhe">聚合表情包</option>
                 </select>
-                <input id="searchInput" placeholder="搜索表情..." type="text"/>
-                <button id="searchBtn">搜索</button>
+                <!-- 原搜索功能：输入框+搜索按钮 -->
+                <input id="searchInput" placeholder="水豚噜噜无需搜索，自动加载~" type="text"/>
+                <button class="search-btn" id="searchBtn">搜索</button>
+                <!-- 聚合分类按钮组：替换原搜索位置，初始隐藏，按钮文字修改为动漫表情 -->
+                <div class="juhe-btn-group hidden" id="juheBtnGroup">
+                    <button class="juhe-btn" data-type="一二布布">一二布布</button>
+                    <button class="juhe-btn" data-type="丸子妹">丸子妹</button>
+                    <button class="juhe-btn" data-type="小八嘎">小八嘎</button>
+                    <button class="juhe-btn" data-type="动漫表情">动漫表情</button>
+                </div>
             </div>
         </div>
     </header>
     <main class="container">
         <div class="grid" id="emojiGrid">
-            <div class="empty">输入关键词搜索表情</div>
+            <div class="empty">切换分类，水豚噜噜将自动加载</div>
         </div>
         <div class="load-more hidden" id="loadMore">
-            <button id="loadMoreBtn">加载更多</button>
+            <button id="loadMoreBtn">加载更多水豚</button>
         </div>
         <div class="toast" id="toast"></div>
     </main>
     <script>
-        // API配置
+        // API配置：聚合表情严格对接指定type接口，无搜索逻辑
         const API_CONFIG = {
-            jkyai: {
-                url: 'https://api.jkyai.top/API/wxbqss.php',
-                params: (keyword, page) => `?count=100&msg=${encodeURIComponent(keyword)}`,
-                extractData: (data) => Array.isArray(data.data) ? data.data : [data.data],
-                supportPagination: false,
+            shuitao: {
+                url: 'https://api.lolimi.cn/API/stdd/api',
+                params: () => '',
+                extractData: (resUrl) => [resUrl],
+                supportPagination: true,
                 isSymbolApi: false
             },
-            symbols: {
-                url: 'https://api.andeer.top/API/symbols.php',
-                params: (keyword, page) => '',
-                // 核心修改1：符号大全新增关键词筛选逻辑
-                extractData: (data, keyword) => {
-                    const allSymbols = data.code === 200 && Array.isArray(data.data) ? data.data : [];
-                    // 关键词为空则返回全部，否则筛选“名称/解释”包含关键词的符号（不区分大小写）
-                    return keyword 
-                        ? allSymbols.filter(item => 
-                            (item.name && item.name.toLowerCase().includes(keyword.toLowerCase())) || 
-                            (item.explanation && item.explanation.toLowerCase().includes(keyword.toLowerCase()))
-                          ) 
-                        : allSymbols;
-                },
-                supportPagination: false,
-                isSymbolApi: true
+            feishu: {
+                url: 'https://api.lolimi.cn/API/bqb/fs',
+                params: () => '',
+                extractData: (resUrl) => [resUrl],
+                supportPagination: true,
+                isSymbolApi: false
             },
-            emoji: {
-                url: 'https://api.andeer.top/API/emoji_search.php',
-                params: (keyword, page) => `?msg=${encodeURIComponent(keyword)}`,
-                extractData: (data) => {
-                    if (data.success === true && data.code === 200 && data.data) {
-                        return Array.isArray(data.data) ? 
-                            data.data.map(item => ({ symbol: item.emoji, name: 'emoji' })) : 
-                            [{ symbol: data.data.emoji, name: 'emoji' }];
-                    }
-                    return [];
-                },
-                supportPagination: false,
-                isSymbolApi: true
+            chaiq: {
+                url: 'https://api.lolimi.cn/API/chaiq/c',
+                params: () => '',
+                extractData: (resUrl) => [resUrl],
+                supportPagination: true,
+                isSymbolApi: false
+            },
+            dou: {
+                url: 'https://api.lolimi.cn/API/dou/api',
+                params: () => '?type=json',
+                extractData: (data) => [data.data.image],
+                supportPagination: true,
+                isSymbolApi: false
+            },
+            xyd: {
+                url: 'https://api.lolimi.cn/API/bqb/xyd',
+                params: () => '',
+                extractData: (resUrl) => [resUrl],
+                supportPagination: true,
+                isSymbolApi: false,
+                supportStatic: true // 标记：支持静态图(JPG/PNG)+动态GIF
+            },
+            // 新增：龙图接口配置，直接返回图片，兼容静态图+GIF，与小云朵逻辑一致
+            longt: {
+                url: 'https://api.lolimi.cn/API/longt/l',
+                params: () => '',
+                extractData: (resUrl) => [resUrl],
+                supportPagination: true,
+                isSymbolApi: false,
+                supportStatic: true // 标记：支持静态图(JPG/PNG)+动态GIF
+            },
+            qq: {
+                url: 'https://oiapi.net/api/EmoticonPack',
+                params: (keyword, page) => `?keyword=${encodeURIComponent(keyword)}&page=${page}&limit=40`,
+                extractData: (data) => Array.isArray(data.data) ? data.data.map(item => item.url) : [],
+                supportPagination: true,
+                isSymbolApi: false
+            },
+            qq2: {
+                url: 'https://api.lolimi.cn/API/bqb/qqbqb',
+                params: (keyword, page) => `?msg=${encodeURIComponent(keyword)}&page=${page}`,
+                extractData: (data) => Array.isArray(data.data) ? data.data.map(item => item.sticker_url) : [],
+                supportPagination: true,
+                isSymbolApi: false
+            },
+            sogou: {
+                url: 'https://oiapi.net/api/Emotion',
+                params: (keyword, page) => `?msg=${encodeURIComponent(keyword)}&0=${encodeURIComponent(keyword)}&page=${page}&limit=40`,
+                extractData: (data) => Array.isArray(data.data) ? data.data.map(item => item.pic) : [],
+                supportPagination: true,
+                isSymbolApi: false
+            },
+            juhe: {
+                url: 'https://api.lolimi.cn/API/bqb/api',
+                params: (type) => `?type=${encodeURIComponent(type)}`,
+                extractData: (resUrl) => [resUrl],
+                supportPagination: true,
+                isSymbolApi: false
             }
         };
+        // DOM元素获取
         const grid = document.getElementById('emojiGrid');
         const input = document.getElementById('searchInput');
-        const button = document.getElementById('searchBtn');
+        const searchBtn = document.getElementById('searchBtn');
         const toast = document.getElementById('toast');
         const apiSelect = document.getElementById('apiSelect');
         const loadMore = document.getElementById('loadMore');
         const loadMoreBtn = document.getElementById('loadMoreBtn');
+        const juheBtnGroup = document.getElementById('juheBtnGroup');
+        const juheBtns = document.querySelectorAll('.juhe-btn');
+        // 全局状态
         let isLoading = false;
         let currentKeyword = '';
         let currentPage = 1;
-        let currentApi = 'jkyai';
-
+        let currentApi = 'shuitao';
+        let currentJuheType = ''; // 保存当前聚合选中分类
+        // 吐司提示：2秒自动消失
         function showToast(message) {
             toast.textContent = message;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2000);
+            setTimeout(() => toast.classList.remove('show'), 2000);
         }
-
-        async function searchEmojis(keyword, page = 1, append = false) {
-            if (isLoading) return;
-            
+        // 复制链接：聚合表情专属提示，静态图/GIF链接复制逻辑一致
+        async function copyText(text) {
+            try {
+                const pureUrl = text.split('?')[0];
+                await navigator.clipboard.writeText(pureUrl);
+                showToast(currentApi === 'juhe' ? '已复制聚合表情直链' : '已复制表情链接');
+            } catch (err) {
+                showToast('复制失败');
+            }
+        }
+        // 生成随机时间戳：击穿浏览器缓存，对静态图/GIF均生效
+        function getCacheKey() {
+            return new Date().getTime() + Math.floor(Math.random() * 1000);
+        }
+        // 聚合按钮激活状态：点击后高亮，取消其他按钮激活
+        function setJuheBtnActive(type) {
+            juheBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.type === type));
+        }
+        // 核心加载方法：点击按钮立即触发，无额外校验
+        async function loadEmojis(type = '', page = 1, append = false) {
+            if (isLoading) return; // 防止重复点击加载
             isLoading = true;
-            currentKeyword = keyword;
+            currentKeyword = type;
             currentPage = page;
+            currentJuheType = type;
+            // 个性化加载文案
+            let loadingText = '搜索中...';
+            if (currentApi === 'shuitao') loadingText = '正在捕捉水豚噜噜...';
+            if (currentApi === 'feishu') loadingText = '正在捕捉飞鼠...';
+            if (currentApi === 'chaiq') loadingText = '正在捕捉柴郡...';
+            if (currentApi === 'dou') loadingText = '正在加载斗图表情...';
+            if (currentApi === 'xyd') loadingText = '正在捕捉小云朵...';
+            // 新增：龙图专属加载文案
+            if (currentApi === 'longt') loadingText = '正在加载龙图表情...';
+            if (currentApi === 'juhe') loadingText = `正在加载${type === '动漫表情' ? '动漫表情' : type}...`;
             
             if (!append) {
-                grid.innerHTML = '<div class="loading">搜索中...</div>';
+                grid.innerHTML = `<div class="loading">${loadingText}</div>`;
                 loadMore.classList.add('hidden');
             } else {
                 loadMoreBtn.textContent = '加载中...';
@@ -321,145 +425,163 @@
             }
             try {
                 const config = API_CONFIG[currentApi];
-                const url = `${config.url}${config.params(keyword, page)}`;
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error('网络请求失败');
-                }
-                const data = await response.json();
-                
-                // 成功状态判断
-                let isSuccess = false;
-                if (currentApi === 'emoji') {
-                    isSuccess = data.success === true && data.code === 200;
-                } else if (currentApi === 'symbols') {
-                    isSuccess = data.code === 200;
-                } else {
-                    isSuccess = data.code == 200 || data.code == '200';
-                }
-                
-                if (!isSuccess) {
-                    throw new Error(data.msg || '搜索失败，请重试');
-                }
-
-                // 核心修改2：符号大全传入关键词进行筛选
-                const items = currentApi === 'symbols' 
-                    ? config.extractData(data, keyword) 
-                    : config.extractData(data);
-                
-                if (items.length === 0) {
-                    if (append) {
-                        showToast('没有更多表情了');
-                        loadMore.classList.add('hidden');
-                    } else {
-                        grid.innerHTML = '<div class="empty">未找到相关表情</div>';
+                // 拼接请求地址：聚合表情仅传对应type，精准对接接口
+                const requestUrl = currentApi === 'juhe' 
+                    ? `${config.url}${config.params(type)}` 
+                    : `${config.url}${config.params(type, page)}`;
+                let items = [];
+                // 水豚/飞鼠/柴郡/小云朵/龙图/聚合表情：直接返回图片资源，无需JSON解析
+                // img标签天然适配GIF/静态图，缓存戳对所有格式生效
+                if (currentApi === 'shuitao' || currentApi === 'feishu' || currentApi === 'chaiq' || currentApi === 'xyd' || currentApi === 'longt' || currentApi === 'juhe') {
+                    const response = await fetch(requestUrl);
+                    if (!response.ok) throw new Error(
+                        currentApi === 'shuitao' ? '捕捉水豚失败' : 
+                        currentApi === 'feishu' ? '捕捉飞鼠失败' : 
+                        currentApi === 'chaiq' ? '捕捉柴郡失败' : 
+                        currentApi === 'xyd' ? '捕捉小云朵失败' : 
+                        currentApi === 'longt' ? '加载龙图失败' : '获取聚合表情失败'
+                    );
+                    // 智能拼接缓存参数，避免地址格式错误，对GIF/静态图均生效
+                    const cacheKey = getCacheKey();
+                    const newImgUrl = requestUrl.includes('?') ? `${requestUrl}&cache=${cacheKey}` : `${requestUrl}?cache=${cacheKey}`;
+                    items = config.extractData(newImgUrl);
+                } 
+                // QQ/QQ2/搜狗/斗图：JSON格式接口解析逻辑
+                else {
+                    const response = await fetch(requestUrl);
+                    if (!response.ok) throw new Error('网络请求失败');
+                    const data = await response.json();
+                    // 斗图判断code===1，其他分类保持原有判断逻辑
+                    const isSuccess = currentApi === 'dou' 
+                        ? data.code === 1 
+                        : (currentApi === 'qq2' ? data.Code === 0 : data.code === 1);
+                    if (!isSuccess) throw new Error(data.text || data.msg || '加载失败，请重试');
+                    items = config.extractData(data);
+                    // 为斗图图片地址添加缓存戳，防止浏览器缓存
+                    if (currentApi === 'dou') {
+                        const cacheKey = getCacheKey();
+                        items = items.map(url => url.includes('?') ? `${url}&cache=${cacheKey}` : `${url}?cache=${cacheKey}`);
                     }
+                }
+                // 无数据处理
+                if (items.length === 0) {
+                    const emptyText = currentApi === 'juhe' 
+                        ? `暂无${type === '动漫表情' ? '动漫表情' : type}相关聚合表情` 
+                        : '未找到相关表情';
+                    grid.innerHTML = `<div class="empty">${emptyText}</div>`;
                     return;
                 }
-
-                // 渲染符号/表情卡片
-                let html = '';
-                if (config.isSymbolApi) {
-                    html = items.map((item, index) => `
-                        <!-- 核心修改3：给第一个搜索结果加highlight类（便于定位后识别） -->
-                        <div class="emoji-card symbol-card ${index === 0 ? 'highlight' : ''}" 
-                             onclick="copyText('${item.symbol}')" 
-                             title="${item.explanation || item.name || '点击复制'}">
-                            <div class="symbol-char">${item.symbol}</div>
-                            <div class="symbol-name">${item.name || '符号'}</div>
-                        </div>
-                    `).join('');
-                } else {
-                    html = items.map(url => `
-                        <div class="emoji-card" onclick="copyText('${url}')" title="点击复制链接">
-                            <img src="${url}" loading="lazy" alt="表情"/>
-                        </div>
-                    `).join('');
-                }
-
-                if (append) {
-                    grid.insertAdjacentHTML('beforeend', html);
-                    loadMoreBtn.textContent = '加载更多';
+                // 渲染表情卡片：img标签天然适配所有图片格式，点击复制链接逻辑一致
+                const html = items.map(url => `
+                    <div class="emoji-card" onclick="copyText('${url}')" title="点击复制链接">
+                        <img src="${url}" loading="lazy" alt="${
+                            currentApi === 'dou' ? '斗图表情' : 
+                            currentApi === 'xyd' ? '小云朵表情' : 
+                            currentApi === 'longt' ? '龙图表情' : // 新增：龙图专属alt语义
+                            (currentApi === 'juhe' ? (type === '动漫表情' ? '动漫表情' : type) : '表情')
+                        }"/>
+                    </div>
+                `).join('');
+                append ? grid.insertAdjacentHTML('beforeend', html) : grid.innerHTML = html;
+                // 显示加载更多按钮，文案匹配当前分类
+                if (config.supportPagination) {
+                    let moreText = '加载更多';
+                    if (currentApi === 'shuitao') moreText = '加载更多水豚';
+                    if (currentApi === 'feishu') moreText = '加载更多飞鼠';
+                    if (currentApi === 'chaiq') moreText = '加载更多柴郡';
+                    if (currentApi === 'dou') moreText = '加载更多斗图';
+                    if (currentApi === 'xyd') moreText = '加载更多小云朵';
+                    // 新增：龙图专属加载更多文案
+                    if (currentApi === 'longt') moreText = '加载更多龙图';
+                    if (currentApi === 'juhe') moreText = `加载更多${type === '动漫表情' ? '动漫表情' : type}`;
+                    loadMoreBtn.textContent = moreText;
                     loadMoreBtn.disabled = false;
-                } else {
-                    grid.innerHTML = html;
-                }
-
-                // 核心修改4：符号大全搜索后，定位到第一个结果（滚动到视图中）
-                if (currentApi === 'symbols' && keyword) {
-                    const firstResult = grid.querySelector('.emoji-card:first-child');
-                    if (firstResult) {
-                        // 平滑滚动到第一个结果，顶部留20px间距（避免被header遮挡）
-                        firstResult.scrollIntoView({ behavior: 'smooth', block: 'nearest', top: 20 });
-                    }
-                }
-
-                // 控制加载更多按钮显示
-                if (config.supportPagination && !append && items.length >= 15) {
                     loadMore.classList.remove('hidden');
                 }
             } catch (error) {
-                if (append) {
-                    showToast('加载失败');
-                    loadMoreBtn.textContent = '加载更多';
-                    loadMoreBtn.disabled = false;
-                } else {
-                    grid.innerHTML = `<div class="error">搜索失败: ${error.message}</div>`;
-                }
+                grid.innerHTML = `<div class="error">${error.message}</div>`;
+                showToast(
+                    currentApi === 'juhe' ? '加载聚合表情失败' : 
+                    currentApi === 'feishu' ? '加载飞鼠表情失败' : 
+                    currentApi === 'chaiq' ? '加载柴郡表情失败' : 
+                    currentApi === 'dou' ? '加载斗图表情失败' : 
+                    currentApi === 'xyd' ? '加载小云朵表情失败' : 
+                    currentApi === 'longt' ? '加载龙图表情失败' : error.message // 新增：龙图专属失败提示
+                );
             } finally {
-                isLoading = false;
+                isLoading = false; // 加载完成，解锁点击
             }
         }
-
-        async function copyText(text) {
-            try {
-                await navigator.clipboard.writeText(text);
-                showToast('已复制到剪贴板');
-            } catch (err) {
-                showToast('复制失败');
-            }
-        }
-
-        // 核心修改5：更新符号大全的搜索逻辑（支持关键词搜索）
+        // 搜索方法：聚合/水豚/飞鼠/柴郡/斗图/小云朵/龙图分类直接禁用，无任何触发
         function handleSearch() {
-            const keyword = input.value.trim();
-            if (currentApi === 'symbols') {
-                // 符号大全：关键词搜索（不再强制获取全部）
-                searchEmojis(keyword, 1, false);
-                input.placeholder = '搜索符号名称/解释（如"alpha"、"积分"）';
+            if (currentApi === 'shuitao' || currentApi === 'feishu' || currentApi === 'chaiq' || currentApi === 'dou' || currentApi === 'xyd' || currentApi === 'longt' || currentApi === 'juhe') return;
+            loadEmojis(input.value.trim(), 1, false);
+        }
+        // 聚合按钮核心点击事件：点击即加载，一步到位
+        function bindJuheBtnEvent() {
+            juheBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const type = btn.dataset.type;
+                    setJuheBtnActive(type); // 立即高亮按钮
+                    loadEmojis(type, 1, false); // 立即加载对应表情，重置页码
+                });
+            });
+        }
+        // 切换分类核心逻辑：聚合分类-隐藏搜索框/按钮，显示聚合按钮组（替换原位置）
+        function switchApi(api) {
+            currentApi = api;
+            currentPage = 1;
+            currentJuheType = '';
+            setJuheBtnActive(''); // 重置聚合按钮激活状态
+            // 新增：龙图加入自动加载分类组，禁用搜索
+            if (api === 'shuitao' || api === 'feishu' || api === 'chaiq' || api === 'dou' || api === 'xyd' || api === 'longt') {
+                // 自动加载分类：显示搜索框(禁用)+隐藏聚合按钮组，自动加载
+                juheBtnGroup.classList.add('hidden');
+                input.classList.remove('hidden');
+                searchBtn.classList.remove('hidden');
+                input.disabled = true;
+                searchBtn.disabled = true;
+                // 区分各分类占位符提示
+                input.placeholder = api === 'shuitao' ? '水豚噜噜无需搜索，自动加载~' : 
+                                     api === 'feishu' ? '飞鼠表情包无需搜索，自动加载~' : 
+                                     api === 'chaiq' ? '柴郡表情包无需搜索，自动加载~' : 
+                                     api === 'dou' ? '斗图表情包无需搜索，自动加载~' : 
+                                     api === 'xyd' ? '小云朵表情包无需搜索，自动加载~' : 
+                                     '龙图表情包无需搜索，自动加载~'; // 新增：龙图专属占位符
+                loadEmojis('', 1, false);
+            } else if (api === 'juhe') {
+                // 聚合分类：隐藏搜索框/按钮，显示聚合按钮组（替换原搜索位置）
+                juheBtnGroup.classList.remove('hidden');
+                input.classList.add('hidden');
+                searchBtn.classList.add('hidden');
+                grid.innerHTML = '<div class="empty">点击上方分类按钮，加载对应聚合表情</div>';
+                loadMore.classList.add('hidden');
             } else {
-                keyword ? searchEmojis(keyword, 1, false) : grid.innerHTML = '<div class="empty">输入关键词搜索表情</div>';
-                input.placeholder = '搜索表情...';
+                // 其他分类：显示搜索框/按钮+隐藏聚合按钮组，启用搜索
+                juheBtnGroup.classList.add('hidden');
+                input.classList.remove('hidden');
+                searchBtn.classList.remove('hidden');
+                input.disabled = false;
+                searchBtn.disabled = false;
+                input.placeholder = api === 'qq' ? 'QQ表情搜索（如萌宠、斗图）' : 
+                                     api === 'qq2' ? 'QQ表情包2搜索（如萌宠、斗图）' : 
+                                     '搜狗表情搜索（如表情包、搞笑）';
+                grid.innerHTML = '<div class="empty">输入关键词搜索表情</div>';
+                loadMore.classList.add('hidden');
             }
         }
-
-        // 事件监听
-        button.addEventListener('click', handleSearch);
+        // 事件监听绑定
+        apiSelect.addEventListener('change', (e) => switchApi(e.target.value));
+        searchBtn.addEventListener('click', handleSearch);
         input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleSearch();
-            }
+            // 回车搜索过滤：新增龙图，禁用回车搜索
+            if (e.key === 'Enter' && currentApi !== 'shuitao' && currentApi !== 'feishu' && currentApi !== 'chaiq' && currentApi !== 'dou' && currentApi !== 'xyd' && currentApi !== 'longt' && currentApi !== 'juhe') handleSearch();
         });
-        apiSelect.addEventListener('change', (e) => {
-            currentApi = e.target.value;
-            // 切换到符号大全时更新提示
-            if (currentApi === 'symbols') {
-                input.placeholder = '搜索符号名称/解释（如"alpha"、"积分"）';
-                // 初始加载全部符号
-                searchEmojis('', 1, false);
-            } else if (currentApi === 'emoji') {
-                input.placeholder = '搜索emoji（如"雨伞"、"笑脸"）';
-            } else {
-                input.placeholder = '搜索表情...';
-            }
-        });
+        // 加载更多：继续加载当前分类的表情，静态图/GIF加载逻辑一致
         loadMoreBtn.addEventListener('click', () => {
-            searchEmojis(currentKeyword, currentPage + 1, true);
+            loadEmojis(currentJuheType || currentKeyword, currentPage + 1, true);
         });
-
-        // 初始加载
-        currentApi = 'jkyai';
-        searchEmojis('你好', 1, false);
+        bindJuheBtnEvent(); // 绑定聚合按钮点击加载事件
+        window.onload = () => switchApi('shuitao'); // 页面初始化加载水豚
     </script>
 </body></html>
