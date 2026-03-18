@@ -11,7 +11,7 @@ class AboutModule {
         this.updateDate = '2025-12-08';
         this.developer = '神木Ai';
         this.wallpaperUrl = './assets/images/wallpaper-about.jpg';
-        this.logoUrl = './assets/logo.png'; // 新增logo图片路径
+        this.logoUrl = './assets/logo.png';
         this.supporters = [
             '凪💭', 'Aurora叙', '하늘별', '屿风眠', '月见·凛', '星落6秒', '雾栖鹤', 'Luna禾',
             '云隙光', '달빛', '晚舟载梦行', '橘色风', '诗藏雾里', '风渡Aurora', '安☆', '星野の信',
@@ -81,30 +81,29 @@ class AboutModule {
             <div class="about-modal-content">
                 <!-- 顶部区域 - 带壁纸背景 -->
                 <div class="about-header">
-                    <div class="about-header-bg" style="background-image: url('${this.wallpaperUrl}')"></div>
+                    <div class="about-header-bg" style="background-image: url('${Utils.escapeHtml(this.wallpaperUrl)}')"></div>
                     <div class="about-header-overlay"></div>
                     <div class="about-header-content">
                         <div class="about-header-left">
                             <div class="about-info-grid">
                                 <div class="about-info-item">
                                     <span class="info-label">开发者：</span>
-                                    <span class="info-value">${this.developer}</span>
+                                    <span class="info-value">${Utils.escapeHtml(this.developer)}</span>
                                 </div>
                                 <div class="about-info-item">
                                     <span class="info-label">网站版本：</span>
-                                    <span class="info-value">${this.version}</span>
+                                    <span class="info-value">${Utils.escapeHtml(this.version)}</span>
                                 </div>
                                 <div class="about-info-item">
                                     <span class="info-label">更新日期：</span>
-                                    <span class="info-value">${this.updateDate}</span>
+                                    <span class="info-value">${Utils.escapeHtml(this.updateDate)}</span>
                                 </div>
                             </div>
                         </div>
                         <div class="about-header-right">
                             <div class="about-brand">
                                 <div class="about-logo">
-                                    <!-- 使用本地图片，图片加载失败会显示白色背景 -->
-                                    <img src="${this.logoUrl}" alt="星链导航Logo" class="about-logo-img">
+                                    <img src="${Utils.escapeHtml(this.logoUrl)}" alt="星链导航Logo" class="about-logo-img">
                                 </div>
                                 <div class="about-title-group">
                                     <div class="about-title">星链导航</div>
@@ -124,7 +123,7 @@ class AboutModule {
                             </div>
                             <div class="card-content">
                                 <h3>简介</h3>
-                                <p>星链导航是一个无广告、无追踪、无用户注册的纯前端静态资源导航站，网站仅收录互联网公开可访问的网站链接与资源入口，我们会定期清理死链、违规链接，保持导航纯净，为用户提供便捷的上网导航体验。</p>
+                                <p>星链导航是一个现代化的个人导航网站，致力于收集整理网络上的优质资源和个人开发的小工具，为用户提供便捷的上网导航体验。</p>
                             </div>
                         </div>
                         <div class="about-card">
@@ -132,9 +131,8 @@ class AboutModule {
                                 <i class="fas fa-exclamation-triangle"></i>
                             </div>
                             <div class="card-content">
-                                <h3>免责声明 2025-12-08至今</h3>
-                                <p>本站所有资源均来自互联网收集整理，仅供个人学习、研究、交流使用，不得用于商业、侵权、违法用途。如有侵犯您的权益，请联系我们删除。1.本站仅提供链接导航服务，不控制、不修改、不
-担保第三方网站内容的真实性、合法性与安全性。2.用户点击外链跳转至第三方网站，产生的一切风险与责任由用户自行承担。3.本站不存储、不传播任何侵权、违法内容，如无意中收录违规链接，请联系删除。4.本站所有内容仅限合法用途，使用即表示您已阅读并同意本声明。</p>
+                                <h3>免责声明</h3>
+                                <p>本站所有资源均来自互联网收集整理，仅供个人学习交流使用，不得用于商业用途。如有侵犯您的权益，请联系我们删除。</p>
                             </div>
                         </div>
                     </div>
@@ -191,7 +189,6 @@ class AboutModule {
      * 预加载图片
      */
     preloadImages() {
-        // 预加载壁纸
         const wallpaperImg = new Image();
         wallpaperImg.onload = () => {};
         wallpaperImg.onerror = () => {
@@ -203,11 +200,9 @@ class AboutModule {
         };
         wallpaperImg.src = this.wallpaperUrl;
         
-        // 预加载logo
         const logoImg = new Image();
         logoImg.onload = () => {};
         logoImg.onerror = () => {
-            // 图片加载失败时会显示白色背景的空白
             console.warn('Logo图片加载失败:', this.logoUrl);
         };
         logoImg.src = this.logoUrl;
@@ -316,7 +311,6 @@ class AboutModule {
                         <button class="donate-method-btn" data-type="alipay" title="支付宝">
                             <i class="fab fa-alipay"></i>
                         </button>
-                        <!-- 新增问号按钮 -->
                         <button class="donate-method-btn help-btn" data-type="help" title="使用帮助">
                             <i class="fas fa-question"></i>
                         </button>
@@ -326,7 +320,7 @@ class AboutModule {
                     <div class="donate-qrcode-container">
                         <div class="donate-qrcode active" data-type="qq">
                             <div class="qrcode-image-container">
-                                <img src="${this.qrCodes.qq}" alt="QQ收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
+                                <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
                                 <div class="qrcode-placeholder">
                                     <i class="fab fa-qq"></i>
                                     <span>QQ收款码</span>
@@ -336,7 +330,7 @@ class AboutModule {
                         </div>
                         <div class="donate-qrcode" data-type="wechat">
                             <div class="qrcode-image-container">
-                                <img src="${this.qrCodes.wechat}" alt="微信收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
+                                <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
                                 <div class="qrcode-placeholder">
                                     <i class="fab fa-weixin"></i>
                                     <span>微信收款码</span>
@@ -346,7 +340,7 @@ class AboutModule {
                         </div>
                         <div class="donate-qrcode" data-type="alipay">
                             <div class="qrcode-image-container">
-                                <img src="${this.qrCodes.alipay}" alt="支付宝收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
+                                <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
                                 <div class="qrcode-placeholder">
                                     <i class="fab fa-alipay"></i>
                                     <span>支付宝收款码</span>
@@ -375,7 +369,7 @@ class AboutModule {
                     <h4 class="supporters-title">支持者名单</h4>
                     <div class="supporters-card">
                         <div class="supporters-list">
-                            ${this.supporters.map(name => `<span class="supporter-name">${name}</span>`).join('')}
+                            ${this.supporters.map(name => `<span class="supporter-name">${Utils.escapeHtml(name)}</span>`).join('')}
                         </div>
                     </div>
                 </div>
@@ -477,7 +471,6 @@ class AboutModule {
 
         if (this.isShowing) return;
 
-        // 关闭侧边栏
         if (window.sidebar && window.sidebar.isVisible()) {
             window.sidebar.hide();
         }
