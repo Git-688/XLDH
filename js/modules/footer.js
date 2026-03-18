@@ -26,7 +26,6 @@ class FooterModule {
         try {
             let visitCount = 0;
             
-            // 兼容性处理
             if (typeof Storage !== 'undefined' && Storage.get) {
                 visitCount = Storage.get('visitCount') || 0;
             } else {
@@ -36,7 +35,6 @@ class FooterModule {
             
             visitCount++;
             
-            // 保存更新后的数据
             if (typeof Storage !== 'undefined' && Storage.set) {
                 Storage.set('visitCount', visitCount);
             } else {
@@ -73,32 +71,6 @@ class FooterModule {
             }
         } catch {
             return 0;
-        }
-    }
-
-    // 重置统计
-    resetStats() {
-        if (confirm('确定要重置统计信息吗？')) {
-            const newStartTime = Date.now();
-            
-            try {
-                if (typeof Storage !== 'undefined' && Storage.set) {
-                    Storage.set('visitCount', 0);
-                    Storage.set('startTime', newStartTime);
-                } else {
-                    localStorage.setItem('starlink_visitCount', '0');
-                    localStorage.setItem('starlink_startTime', newStartTime.toString());
-                }
-                
-                this.startTime = newStartTime;
-                this.updateVisitCount();
-                
-                if (window.app && window.app.showToast) {
-                    window.app.showToast('统计信息已重置', 'success');
-                }
-            } catch (error) {
-                console.error('重置统计信息失败:', error);
-            }
         }
     }
 }
