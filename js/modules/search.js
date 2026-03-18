@@ -626,12 +626,10 @@ class SearchModule {
     }
 
     /**
-     * 显示提示消息
+     * 显示提示消息 - 修改为直接调用 window.toast.show
      */
     showToast(message, type = 'info') {
-        if (window.app && window.app.showToast) {
-            window.app.showToast(message, type);
-        }
+        window.toast.show(message, type);
     }
 
     /**
