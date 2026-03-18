@@ -1093,36 +1093,7 @@
     animation: rotate 20s linear infinite;
 }
 
-/* 通知样式 */
-.notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #2ecc71;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 10001;
-    transform: translateX(150%);
-    transition: transform 0.3s ease;
-}
-
-.notification.show {
-    transform: translateX(0);
-}
-
-.notification.error {
-    background: #e74c3c;
-}
-
-.notification.info {
-    background: #3764F4;
-}
-
-.notification.warning {
-    background: #f39c12;
-}
+/* 已删除旧的 .notification 样式 */
 
 /* 错误消息样式 */
 .error-message {
