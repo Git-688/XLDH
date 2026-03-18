@@ -144,16 +144,16 @@ window.NavigationData = {
                     icon: 'https://api.bugpk.com/logo.png'
                 },
                 {
-                    title: '稳定API',
-                    description: '稳定可靠的应用接口服务',
-                    url: 'https://api.xingchenfu.xyz/',
-                    icon: 'assets/images/icons/00.png'
+                    title: 'nuoxians API',
+                    description: 'nuoxians API是免费为用户提供网络数据接口调用的服务平台',
+                    url: 'https://api.nxvav.cn/',
+                    icon: 'https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640'
                 },
                 {
-                    title: '云智API',
-                    description: '智能云端应用接口',
-                    url: 'https://api.jkyai.top/',
-                    icon: 'assets/images/icons/00.png'
+                    title: '星雨API',
+                    description: '为开发者提供稳定、高效、安全的API接口服务',
+                    url: 'https://xingyu.1b21.cn/',
+                    icon: 'https://xingyu.1b21.cn/touxiang.jpg'
                 },
                 {
                     title: '迟言API',
@@ -198,10 +198,10 @@ window.NavigationData = {
                     icon: 'https://api.milorapart.top/favicon.ico'
                 },
                 {
-                    title: 'kylinAPI',
-                    description: '麒麟应用接口服务',
-                    url: 'https://api.qlwc.cn/',
-                    icon: 'https://api.qlwc.cn/favicon.ico'
+                    title: '🔥FAPI',
+                    description: '提供丰富的免费API接口服务，完善的开发文档，助力开发者快速构建应用',
+                    url: 'https://api.lolimi.cn/',
+                    icon: 'https://api.lolimi.cn/favicon.ico'
                 },
                 {
                     title: '存雨API',
@@ -228,10 +228,10 @@ window.NavigationData = {
                     icon: 'https://api.sumubai.cn/assets/img/favicons/favicon.png'
                 },
                 {
-                    title: '彬红茶API',
-                    description: '温暖风格应用接口',
-                    url: 'https://api.redcha.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    title: '🔥云智API',
+                    description: '为开发者打造的优质接口服务平台',
+                    url: 'https://yunzhiapi.cn/',
+                    icon: 'https://yunzhiapi.cn/favicon.ico?v=1773817535'
                 },
                 {
                     title: '小星API',
@@ -246,10 +246,10 @@ window.NavigationData = {
                     icon: 'assets/images/icons/00.png'
                 },
                 {
-                    title: '辛奈API',
-                    description: '高效应用接口服务',
-                    url: 'http://8.137.14.126/',
-                    icon: 'assets/images/icons/00.png'
+                    title: '愿想API',
+                    description: '免费API, 不稳定API，可能🐔的API',
+                    url: 'https://xiaodi.jujukai.cn/',
+                    icon: 'https://xiaodi.jujukai.cn/%E5%9B%BE%E6%A0%87.png'
                 },
                 {
                     title: '芒果API',
@@ -277,7 +277,7 @@ window.NavigationData = {
                 },
                 {
                     title: 'OIAPI',
-                    description: '信息学竞赛应用接口',
+                    description: '简约、高效、现代化的API接口管理和文档服务平台，让API管理变得更加简单',
                     url: 'https://oiapi.net/',
                     icon: 'https://oiapi.net/favicon.ico'
                 },
@@ -312,7 +312,7 @@ window.NavigationData = {
                     icon: 'assets/images/icons/00.png'
                 },
                 {
-                    title: 'WhyAPI',
+                    title: '✅️WhyAPI',
                     description: '问答类应用接口',
                     url: 'https://apis.whyta.cn/',
                     icon: 'assets/images/icons/00.png'
@@ -324,9 +324,9 @@ window.NavigationData = {
                     icon: 'assets/images/icons/00.png'
                 },
                 {
-                    title: '江江API',
-                    description: '流畅应用接口服务',
-                    url: 'http://x4f5rt.site/',
+                    title: '天一API',
+                    description: '稳定、快速、免费的 API 接口服务',
+                    url: 'https://api.icofun.cn/',
                     icon: 'assets/images/icons/00.png'
                 },
                 {
@@ -348,10 +348,10 @@ window.NavigationData = {
                     icon: 'assets/images/icons/00.png'
                 },
                 {
-                    title: '看戏仔API',
-                    description: '娱乐应用接口',
-                    url: 'https://api.kxzjoker.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    title: 'API大全',
+                    description: '收录API接口',
+                    url: 'http://qwq.tangdouz.com/',
+                    icon: 'http://qwq.tangdouz.com/tang.png'
                 },
                 {
                     title: '福利云API',
@@ -384,10 +384,10 @@ window.NavigationData = {
                     icon: 'https://api.xiaoluwu.com/Template/index/Neumorphism/assets/images/logo.png'
                 },
                 {
-                    title: '喵喵API',
-                    description: '可爱风格应用接口',
-                    url: 'https://api.niniandmiaomiao.love/',
-                    icon: 'assets/images/icons/00.png'
+                    title: '万站API',
+                    description: '稳定、快速、免费的 API 接口服务',
+                    url: 'https://wzapi.com/',
+                    icon: 'https://wzapi.com/favicon.ico'
                 },
                 {
                     title: '驼城API',
@@ -510,7 +510,7 @@ window.NavigationData = {
                     icon: 'https://www.enabcd.cn/logo.png'
                 },
                 {
-                    title: '一糖导航',
+                    title: '一导航',
                     description: '甜蜜风格网站导航',
                     url: 'https://iitang.com/',
                     icon: 'https://iitang.com/wp-content/uploads/2024/10/1729737698-%E8%B5%84%E6%BA%90-2.png'
