@@ -5,40 +5,32 @@
  */
 class WeatherModule {
     constructor() {
-        this.currentCity = '北京'; // 默认城市
+        this.currentCity = '北京';
         this.weatherData = null;
         this.modalElement = null;
         this.isShowing = false;
         this.refreshInterval = null;
-        this.autoRefreshTime = 10 * 60 * 1000; // 10分钟自动刷新
-        this.isLocationRequested = false; // 防止重复请求位置
+        this.autoRefreshTime = 10 * 60 * 1000;
+        this.isLocationRequested = false;
         this.initialized = false;
         this.isLoading = false;
-        this.useAutoLocation = false; // 是否使用自动定位
+        this.useAutoLocation = false;
+        this.escHandler = null;
+        this.showModalBound = this.showModal.bind(this);
     }
 
-    /**
-     * 初始化天气模块
-     */
     async init() {
         if (this.initialized) return;
         
         console.log('天气模块开始初始化...');
         this.bindGlobalEvents();
         this.startAutoRefresh();
-        
-        // 尝试自动获取位置
         await this.tryAutoLocation();
-        
         this.initialized = true;
         console.log('天气模块初始化完成');
     }
 
-    /**
-     * 尝试自动获取位置
-     */
     async tryAutoLocation() {
-        // 检查是否已有保存的位置
         const savedCity = this.getSavedCity();
         if (savedCity) {
             console.log('使用保存的城市:', savedCity);
@@ -46,7 +38,6 @@ class WeatherModule {
             return;
         }
         
-        // 检查浏览器是否支持地理定位
         if (!navigator.geolocation) {
             console.log('浏览器不支持地理定位功能');
             if (window.app && window.app.showToast) {
@@ -55,7 +46,6 @@ class WeatherModule {
             return;
         }
         
-        // 尝试获取位置
         try {
             this.useAutoLocation = true;
             await this.getCurrentPosition();
@@ -65,9 +55,6 @@ class WeatherModule {
         }
     }
 
-    /**
-     * 获取当前位置
-     */
     getCurrentPosition() {
         return new Promise((resolve, reject) => {
             if (this.isLocationRequested) {
@@ -79,7 +66,6 @@ class WeatherModule {
             
             console.log('正在获取地理位置...');
             
-            // 设置超时时间（5秒）
             const timeoutId = setTimeout(() => {
                 this.isLocationRequested = false;
                 reject(new Error('获取位置超时'));
@@ -127,20 +113,16 @@ class WeatherModule {
                     reject(new Error(errorMessage));
                 },
                 {
-                    enableHighAccuracy: true, // 高精度模式
-                    timeout: 5000, // 5秒超时
-                    maximumAge: 300000 // 位置缓存5分钟
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 300000
                 }
             );
         });
     }
 
-    /**
-     * 逆地理编码 - 使用新的API将经纬度转换为城市名
-     */
     async reverseGeocode(latitude, longitude) {
         return new Promise((resolve, reject) => {
-            // 使用新的经纬度API
             const url = `https://api.pearktrue.cn/api/map/?lat=${latitude}&lng=${longitude}`;
             
             console.log('正在逆地理编码...', url);
@@ -159,7 +141,6 @@ class WeatherModule {
                         const address = data.data.address || '';
                         
                         if (address) {
-                            // 从地址字符串中提取城市名
                             const city = this.extractCityFromAddress(address);
                             if (city) {
                                 resolve(city);
@@ -181,15 +162,11 @@ class WeatherModule {
         });
     }
 
-    /**
-     * 从地址字符串中提取城市名
-     */
     extractCityFromAddress(address) {
         if (!address) return null;
         
         console.log('提取城市名，原始地址:', address);
         
-        // 尝试匹配市级行政区划
         const cityRegex = /([\u4e00-\u9fa5]+市)/;
         const match = address.match(cityRegex);
         
@@ -199,7 +176,6 @@ class WeatherModule {
             return city;
         }
         
-        // 如果没找到市，尝试匹配县级行政区划
         const countyRegex = /([\u4e00-\u9fa5]+县)/;
         const countyMatch = address.match(countyRegex);
         
@@ -209,32 +185,22 @@ class WeatherModule {
             return county;
         }
         
-        // 如果都没找到，返回整个地址
         console.log('未匹配到标准行政区划，返回完整地址');
         return address;
     }
 
-    /**
-     * 绑定全局事件
-     */
     bindGlobalEvents() {
         console.log('绑定天气按钮事件...');
         
         const weatherBtn = document.getElementById('weatherBtn');
         if (weatherBtn) {
             console.log('找到天气按钮');
-            weatherBtn.addEventListener('click', () => {
-                console.log('天气按钮被点击');
-                this.showModal();
-            });
+            weatherBtn.addEventListener('click', this.showModalBound);
         } else {
             console.warn('未找到天气按钮，按钮ID: weatherBtn');
         }
     }
 
-    /**
-     * 保存城市到本地存储
-     */
     saveCity(city) {
         try {
             localStorage.setItem('weather_city', city);
@@ -245,9 +211,6 @@ class WeatherModule {
         }
     }
 
-    /**
-     * 从本地存储获取城市
-     */
     getSavedCity() {
         try {
             const city = localStorage.getItem('weather_city');
@@ -260,9 +223,6 @@ class WeatherModule {
         }
     }
 
-    /**
-     * 加载天气数据
-     */
     async loadWeatherData() {
         try {
             this.weatherData = await this.fetchWeatherData(this.currentCity);
@@ -274,14 +234,10 @@ class WeatherModule {
         }
     }
 
-    /**
-     * 获取天气数据 - 使用新的API
-     */
     async fetchWeatherData(city) {
         return new Promise((resolve, reject) => {
             console.log('正在请求天气数据，城市:', city);
             
-            // 构建API URL
             const url = `https://www.cunyuapi.top/weather?city=${encodeURIComponent(city)}`;
             console.log('天气API URL:', url);
             
@@ -294,7 +250,6 @@ class WeatherModule {
                 })
                 .then(data => {
                     console.log('天气API响应数据:', data);
-                    // 解析数据
                     const parsedData = this.parseWeatherData(data);
                     resolve(parsedData);
                 })
@@ -305,9 +260,6 @@ class WeatherModule {
         });
     }
 
-    /**
-     * 解析天气数据 - 适配新API结构
-     */
     parseWeatherData(data) {
         if (!data || !data.city_info || !data.forecasts || !data.forecasts[0]) {
             throw new Error('天气数据格式错误');
@@ -316,7 +268,6 @@ class WeatherModule {
         const cityInfo = data.city_info;
         const today = data.forecasts[0];
         
-        // 获取天气图标
         const getWeatherIcon = (condition) => {
             if (!condition) return 'fas fa-cloud-sun';
             
@@ -348,7 +299,6 @@ class WeatherModule {
             return 'fas fa-cloud-sun';
         };
 
-        // 格式化更新时间
         const formatUpdateTime = (timeStr) => {
             if (!timeStr) return '刚刚';
             try {
@@ -363,7 +313,6 @@ class WeatherModule {
             }
         };
 
-        // 根据天气条件生成生活提示
         const getWeatherTips = (weather) => {
             const tips = [];
             
@@ -383,7 +332,6 @@ class WeatherModule {
                 tips.push('天气适宜，注意适当增减衣物');
             }
             
-            // 根据温度生成提示
             const dayTemp = parseInt(today.temperature.day) || 0;
             const nightTemp = parseInt(today.temperature.night) || 0;
             
@@ -400,7 +348,6 @@ class WeatherModule {
             return tips.length > 0 ? tips.join('；') : '天气信息更新，请注意查看详情';
         };
 
-        // 生成未来几天的预报
         const generateForecasts = (forecasts) => {
             const result = [];
             const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -445,10 +392,7 @@ class WeatherModule {
         };
     }
 
-    /**
-     * 显示天气模态框
-     */
-    async showModal() {
+    showModal() {
         console.log('显示天气模态框');
         
         if (this.isLoading) {
@@ -477,27 +421,30 @@ class WeatherModule {
         this.isLoading = true;
         
         try {
-            await this.loadWeatherData();
-            this.updateModalContent();
-            
-            if (window.app && window.app.showToast) {
-                window.app.showToast('天气数据加载成功', 'success');
-            }
+            this.loadWeatherData().then(() => {
+                this.updateModalContent();
+                if (window.app && window.app.showToast) {
+                    window.app.showToast('天气数据加载成功', 'success');
+                }
+            }).catch(error => {
+                console.error('加载天气数据失败:', error);
+                this.updateModalContent();
+                if (window.app && window.app.showToast) {
+                    window.app.showToast('天气数据加载失败，请稍后重试', 'error');
+                }
+            }).finally(() => {
+                this.isLoading = false;
+            });
         } catch (error) {
             console.error('加载天气数据失败:', error);
             this.updateModalContent();
-            
             if (window.app && window.app.showToast) {
                 window.app.showToast('天气数据加载失败，请稍后重试', 'error');
             }
-        } finally {
             this.isLoading = false;
         }
     }
 
-    /**
-     * 创建天气模态框 - 添加定位按钮
-     */
     createModal() {
         console.log('创建天气模态框');
         
@@ -623,8 +570,8 @@ class WeatherModule {
                     overflow-y: auto; 
                     overflow-x: hidden; 
                     flex: 1;
-                    scrollbar-width: none; /* Firefox */
-                    -ms-overflow-style: none; /* IE and Edge */
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
                 ">
                     <div class="loading-state" style="padding:40px 20px; text-align:center;">
                         <div class="loading-spinner" style="
@@ -645,17 +592,12 @@ class WeatherModule {
 
         document.body.appendChild(this.modalElement);
         
-        // 添加隐藏滚动条样式
         this.addScrollbarStyles();
         
         this.bindEvents();
     }
 
-    /**
-     * 添加隐藏滚动条样式
-     */
     addScrollbarStyles() {
-        // 检查是否已添加过样式
         if (document.getElementById('weather-scrollbar-style')) {
             return;
         }
@@ -663,7 +605,6 @@ class WeatherModule {
         const style = document.createElement('style');
         style.id = 'weather-scrollbar-style';
         style.textContent = `
-            /* 隐藏天气模态框滚动条 */
             .weather-body::-webkit-scrollbar {
                 display: none;
                 width: 0;
@@ -687,11 +628,10 @@ class WeatherModule {
             }
             
             .weather-body {
-                -ms-overflow-style: none !important; /* IE and Edge */
-                scrollbar-width: none !important; /* Firefox */
+                -ms-overflow-style: none !important;
+                scrollbar-width: none !important;
             }
             
-            /* 城市提示框的滚动条也隐藏 */
             .city-prompt-content::-webkit-scrollbar {
                 display: none;
             }
@@ -701,7 +641,6 @@ class WeatherModule {
                 scrollbar-width: none;
             }
             
-            /* 确保内容可以正常滚动 */
             .weather-body {
                 -webkit-overflow-scrolling: touch;
             }
@@ -709,9 +648,6 @@ class WeatherModule {
         document.head.appendChild(style);
     }
 
-    /**
-     * 渲染天气模态框内容
-     */
     renderModalContent() {
         if (!this.weatherData) {
             return `
@@ -759,8 +695,8 @@ class WeatherModule {
             <div class="weather-current" style="padding:16px 16px 12px; border-bottom:1px solid #eee; text-align:center;">
                 <div class="weather-city" style="font-size:12px; color:#666; margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap;">
                     <i class="fas fa-location-dot" style="font-size:11px;"></i>
-                    ${this.escapeHtml(weatherData.city)}
-                    <span class="weather-update-time" style="font-size:11px; color:#999; margin-left:4px;">${weatherData.updateTime}更新</span>
+                    ${Utils.escapeHtml(weatherData.city)}
+                    <span class="weather-update-time" style="font-size:11px; color:#999; margin-left:4px;">${Utils.escapeHtml(weatherData.updateTime)}更新</span>
                 </div>
                 <div class="weather-main" style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:12px;">
                     <div class="weather-icon" style="font-size:36px; color:#4361ee;">
@@ -790,7 +726,7 @@ class WeatherModule {
                 ${weatherData.tips ? `
                 <div class="weather-tips" style="margin-top:12px; padding:8px 12px; background:#f8f9fa; border-radius:6px; font-size:12px; color:#666; border-left:3px solid #4361ee;">
                     <i class="fas fa-lightbulb" style="font-size:11px; margin-right:6px; color:#4361ee;"></i>
-                    ${this.escapeHtml(weatherData.tips)}
+                    ${Utils.escapeHtml(weatherData.tips)}
                 </div>
                 ` : ''}
             </div>
@@ -801,7 +737,7 @@ class WeatherModule {
                         <i class="fas fa-wind"></i>
                     </div>
                     <div class="detail-label" style="font-size:11px; color:#999; margin-bottom:4px;">风向风力</div>
-                    <div class="detail-value" style="font-size:14px; color:#333; font-weight:500;">${weatherData.wind}</div>
+                    <div class="detail-value" style="font-size:14px; color:#333; font-weight:500;">${Utils.escapeHtml(weatherData.wind)}</div>
                 </div>
                 <div class="weather-detail" style="text-align:center; padding:12px; background:#f8f9fa; border-radius:8px;">
                     <div class="detail-icon" style="font-size:16px; color:#4361ee; margin-bottom:8px;">
@@ -812,7 +748,6 @@ class WeatherModule {
                 </div>
             </div>
             
-            <!-- 未来几天天气预报 -->
             <div class="weather-forecast" style="padding:0 16px 16px;">
                 <div class="forecast-title" style="font-size:12px; color:#666; margin:12px 0 8px; display:flex; align-items:center; gap:6px;">
                     <i class="fas fa-calendar-alt" style="font-size:11px; color:#4361ee;"></i>
@@ -845,9 +780,6 @@ class WeatherModule {
         `;
     }
 
-    /**
-     * 绑定事件
-     */
     bindEvents() {
         if (!this.modalElement) return;
 
@@ -859,7 +791,6 @@ class WeatherModule {
             });
         }
 
-        // 切换城市按钮事件
         const changeCityBtn = this.modalElement.querySelector('#changeCityBtn');
         if (changeCityBtn) {
             changeCityBtn.addEventListener('click', (e) => {
@@ -868,7 +799,6 @@ class WeatherModule {
             });
         }
 
-        // 定位按钮事件
         const locationBtn = this.modalElement.querySelector('#weatherLocationBtn');
         if (locationBtn) {
             locationBtn.addEventListener('click', async (e) => {
@@ -892,9 +822,6 @@ class WeatherModule {
         this.escHandler = escHandler;
     }
 
-    /**
-     * 显示城市输入提示框（优化版）
-     */
     showCityPrompt() {
         const modal = document.createElement('div');
         modal.className = 'city-prompt-modal';
@@ -935,7 +862,7 @@ class WeatherModule {
                 <div style="margin-bottom: 16px;">
                     <label style="display: block; margin-bottom: 6px; font-size: 12px; color: #666;">请输入城市名称</label>
                     <input type="text" id="cityInput" 
-                           value="${this.currentCity}"
+                           value="${Utils.escapeHtml(this.currentCity)}"
                            placeholder="例如：北京、上海、广州..."
                            style="
                                 width: 100%;
@@ -955,7 +882,7 @@ class WeatherModule {
                     <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                         ${['北京市', '上海市', '广州市', '深圳市', '杭州市', '南京市', '成都市', '武汉市'].map(city => `
                             <button type="button" class="quick-city-btn" 
-                                    data-city="${city}"
+                                    data-city="${Utils.escapeHtml(city)}"
                                     style="
                                         padding: 6px 10px;
                                         background: #f8f9fa;
@@ -966,7 +893,7 @@ class WeatherModule {
                                         cursor: pointer;
                                         transition: all 0.2s ease;
                                     ">
-                                ${city}
+                                ${Utils.escapeHtml(city)}
                             </button>
                         `).join('')}
                     </div>
@@ -1006,7 +933,6 @@ class WeatherModule {
 
         document.body.appendChild(modal);
 
-        // 显示动画
         requestAnimationFrame(() => {
             modal.style.opacity = '1';
             const content = modal.querySelector('.city-prompt-content');
@@ -1016,20 +942,17 @@ class WeatherModule {
             }
         });
 
-        // 绑定事件
         const cancelBtn = modal.querySelector('#cancelCityBtn');
         const confirmBtn = modal.querySelector('#confirmCityBtn');
         const cityInput = modal.querySelector('#cityInput');
         const quickCityBtns = modal.querySelectorAll('.quick-city-btn');
 
-        // 快速选择城市
         quickCityBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 cityInput.value = btn.dataset.city;
             });
         });
 
-        // 确认切换
         confirmBtn.addEventListener('click', async () => {
             const newCity = cityInput.value.trim();
             if (!newCity) {
@@ -1040,17 +963,13 @@ class WeatherModule {
             this.useAutoLocation = false;
             this.setCity(newCity);
             
-            // 显示加载状态
             confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 切换中...';
             confirmBtn.disabled = true;
             
             try {
                 await this.loadWeatherData();
                 this.updateModalContent();
-                
-                // 关闭提示框
                 this.hideCityPrompt(modal);
-                
                 if (window.app && window.app.showToast) {
                     window.app.showToast(`已切换到: ${newCity}`, 'success');
                 }
@@ -1058,14 +977,12 @@ class WeatherModule {
                 console.error('切换城市失败:', error);
                 confirmBtn.innerHTML = '确认切换';
                 confirmBtn.disabled = false;
-                
                 if (window.app && window.app.showToast) {
                     window.app.showToast(`切换城市失败: ${error.message || '请检查城市名称是否正确'}`, 'error');
                 }
             }
         });
 
-        // 取消
         const hidePrompt = () => {
             modal.style.opacity = '0';
             const content = modal.querySelector('.city-prompt-content');
@@ -1082,7 +999,6 @@ class WeatherModule {
 
         cancelBtn.addEventListener('click', hidePrompt);
         
-        // 按ESC键关闭
         const escHandler = (e) => {
             if (e.key === 'Escape') {
                 hidePrompt();
@@ -1091,7 +1007,6 @@ class WeatherModule {
         };
         document.addEventListener('keydown', escHandler);
 
-        // 点击背景关闭
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 hidePrompt();
@@ -1099,14 +1014,10 @@ class WeatherModule {
             }
         });
 
-        // 聚焦输入框
         cityInput.focus();
         cityInput.select();
     }
 
-    /**
-     * 隐藏城市提示框
-     */
     hideCityPrompt(modal) {
         if (!modal) return;
         
@@ -1123,9 +1034,6 @@ class WeatherModule {
         }, 300);
     }
 
-    /**
-     * 处理定位刷新
-     */
     async handleLocationRefresh() {
         try {
             if (window.app && window.app.showToast) {
@@ -1159,9 +1067,6 @@ class WeatherModule {
         }
     }
 
-    /**
-     * 启动自动刷新
-     */
     startAutoRefresh() {
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
@@ -1181,9 +1086,6 @@ class WeatherModule {
         }, this.autoRefreshTime);
     }
 
-    /**
-     * 更新模态框内容
-     */
     updateModalContent() {
         if (!this.modalElement) return;
         
@@ -1191,7 +1093,6 @@ class WeatherModule {
         if (body) {
             body.innerHTML = this.renderModalContent();
             
-            // 重新加载按钮
             const retryBtn = body.querySelector('#weatherRetryBtn');
             if (retryBtn) {
                 retryBtn.addEventListener('click', async (e) => {
@@ -1210,7 +1111,6 @@ class WeatherModule {
                 });
             }
             
-            // 手动定位按钮
             const manualLocationBtn = body.querySelector('#weatherManualLocationBtn');
             if (manualLocationBtn) {
                 manualLocationBtn.addEventListener('click', async (e) => {
@@ -1229,9 +1129,6 @@ class WeatherModule {
         }
     }
 
-    /**
-     * 关闭其他模态框
-     */
     closeOtherModals() {
         if (window.sidebar && window.sidebar.isVisible) {
             window.sidebar.hide();
@@ -1246,19 +1143,6 @@ class WeatherModule {
         }
     }
 
-    /**
-     * HTML转义函数
-     */
-    escapeHtml(text) {
-        if (typeof text !== 'string') return text;
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    /**
-     * 隐藏天气模态框
-     */
     hide() {
         if (!this.isShowing || !this.modalElement) return;
 
@@ -1284,9 +1168,6 @@ class WeatherModule {
         }, 200);
     }
 
-    /**
-     * 手动刷新天气数据
-     */
     async refreshWeather() {
         try {
             await this.loadWeatherData();
@@ -1297,40 +1178,26 @@ class WeatherModule {
         }
     }
 
-    /**
-     * 设置当前城市
-     */
     setCity(city) {
         this.currentCity = city;
         this.saveCity(city);
         this.weatherData = null;
     }
 
-    /**
-     * 获取当前天气数据
-     */
     getWeatherData() {
         return this.weatherData;
     }
 
-    /**
-     * 获取当前位置城市
-     */
     getCurrentCity() {
         return this.currentCity;
     }
 
-    /**
-     * 销毁模块
-     */
     destroy() {
         this.hide();
-        
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
             this.refreshInterval = null;
         }
-        
         if (this.modalElement && this.modalElement.parentNode) {
             this.modalElement.parentNode.removeChild(this.modalElement);
         }
@@ -1338,19 +1205,17 @@ class WeatherModule {
         
         const weatherBtn = document.getElementById('weatherBtn');
         if (weatherBtn) {
-            weatherBtn.removeEventListener('click', () => this.showModal());
+            weatherBtn.removeEventListener('click', this.showModalBound);
         }
         
         this.initialized = false;
     }
 }
 
-// 确保模块可以被全局访问
 if (typeof window !== 'undefined') {
     window.WeatherModule = WeatherModule;
 }
 
-// 添加CSS动画
 if (!document.querySelector('#weather-animation-style')) {
     const style = document.createElement('style');
     style.id = 'weather-animation-style';
