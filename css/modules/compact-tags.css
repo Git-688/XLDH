@@ -1,6 +1,7 @@
 /* 超紧凑多列标签样式 */
 .minimal-tags-section {
     padding: 0 0 var(--section-margin-xs);
+    margin-bottom: var(--section-margin-xs);  /* 添加底部外边距 */
     width: 100%;
 }
 
@@ -19,6 +20,7 @@
     }
     .minimal-tags-section {
         padding: 0 0 var(--section-margin-sm);
+        margin-bottom: var(--section-margin-sm);  /* 同步调整底部外边距 */
     }
 }
 
@@ -28,6 +30,7 @@
     }
     .minimal-tags-section {
         padding: 0 0 var(--section-margin-sm);
+        margin-bottom: var(--section-margin-sm);
     }
 }
 
@@ -37,6 +40,7 @@
     }
     .minimal-tags-section {
         padding: 0 0 var(--section-margin-md);
+        margin-bottom: var(--section-margin-md);
     }
 }
 
@@ -46,6 +50,7 @@
     }
     .minimal-tags-section {
         padding: 0 0 var(--section-margin-md);
+        margin-bottom: var(--section-margin-md);
     }
 }
 
@@ -223,10 +228,11 @@
 .tag-color-18 { --tag-color: #E59866; --tag-color-rgb: 229, 152, 102; }
 .tag-color-19 { --tag-color: #73C6B6; --tag-color-rgb: 115, 198, 182; }
 .tag-color-20 { --tag-color: #D2B4DE; --tag-color-rgb: 210, 180, 222; }
-/* 游戏语音 - 浅蓝色 */
 .tag-color-21 { --tag-color: #A0C4FF; --tag-color-rgb: 160, 196, 255; }
-/* 视频去印 - 浅橙色 */
 .tag-color-22 { --tag-color: #FBC4AB; --tag-color-rgb: 251, 196, 171; }
+.tag-color-23 { --tag-color: #C39BD3; --tag-color-rgb: 195, 155, 211; }
+
+
 
 /* 响应式设计 - 桌面端 */
 @media (min-width: 1600px) {
@@ -407,9 +413,9 @@
 .minimal-tag:nth-child(18) { animation-delay: 0.18s; }
 .minimal-tag:nth-child(19) { animation-delay: 0.19s; }
 .minimal-tag:nth-child(20) { animation-delay: 0.20s; }
-.minimal-tag:nth-child(21) { animation-delay: 0.21s; } /* 游戏语音 */
-.minimal-tag:nth-child(22) { animation-delay: 0.22s; } /* 视频去印 */
-
+.minimal-tag:nth-child(21) { animation-delay: 0.21s; } 
+.minimal-tag:nth-child(22) { animation-delay: 0.22s; } 
+.minimal-tag:nth-child(23) { animation-delay: 0.23s; }
 /* 暗色模式优化 */
 @media (prefers-color-scheme: dark) {
     .minimal-tag { background: rgba(40, 40, 40, 0.8); border-color: #444; }
