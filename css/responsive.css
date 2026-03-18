@@ -5,117 +5,8 @@
     padding: 0;
 }
 
-.container {
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 0;
-}
-
-.container-fluid {
-    width: 100%;
-    padding: 0;
-}
-
-/* 响应式断点系统 - 使用统一变量 */
-@media (min-width: 0px) { 
-    .container { 
-        max-width: 100%; 
-        padding-left: var(--container-padding-xs);
-        padding-right: var(--container-padding-xs);
-    }
-    
-    .main-content .container {
-        padding-left: var(--container-padding-xs);
-        padding-right: var(--container-padding-xs);
-    }
-}
-
-@media (min-width: 576px) { 
-    .container { 
-        max-width: 540px; 
-        padding-left: var(--container-padding-sm);
-        padding-right: var(--container-padding-sm);
-    }
-    
-    .main-content .container {
-        padding-left: var(--container-padding-sm);
-        padding-right: var(--container-padding-sm);
-    }
-}
-
-@media (min-width: 768px) { 
-    .container { 
-        max-width: 720px; 
-        padding-left: var(--container-padding-md);
-        padding-right: var(--container-padding-md);
-    }
-    
-    .main-content .container {
-        padding-left: var(--container-padding-md);
-        padding-right: var(--container-padding-md);
-    }
-}
-
-@media (min-width: 992px) { 
-    .container { 
-        max-width: 960px; 
-        padding-left: var(--container-padding-lg);
-        padding-right: var(--container-padding-lg);
-    }
-    
-    .main-content .container {
-        padding-left: var(--container-padding-lg);
-        padding-right: var(--container-padding-lg);
-    }
-}
-
-@media (min-width: 1200px) { 
-    .container { 
-        max-width: 1140px; 
-        padding-left: var(--container-padding-xl);
-        padding-right: var(--container-padding-xl);
-    }
-    
-    .main-content .container {
-        padding-left: var(--container-padding-xl);
-        padding-right: var(--container-padding-xl);
-        max-width: 1200px;
-    }
-}
-
-@media (min-width: 1920px) { 
-    .container { 
-        max-width: 1600px; 
-    }
-    
-    .main-content .container {
-        max-width: 1400px;
-    }
-}
-
-/* 主内容区域响应式 */
-@media (max-width: 1023px) { 
-    .main-content { 
-        margin-top: 60px; 
-    }
-}
-
-/* 确保所有模块内容不会溢出容器 */
-.nav-container,
-.greeting-container,
-.minimal-tags-section .container,
-.wallpaper-section .container,
-.navigation-section .container,
-.footer-compact-container {
-    overflow: hidden;
-}
-
-/* 修复横向滚动问题 */
-html, body {
-    overflow-x: hidden;
-    max-width: 100%;
-}
+/* 移除所有 .container 的重复定义，因为已由 style.css 统一管理 */
+/* 仅保留侧滑栏独立滚动控制及浮动按钮响应式优化 */
 
 /* 侧滑栏完全独立滚动控制 */
 .sidebar.active { pointer-events: auto; transform: translateX(0); visibility: visible; }
@@ -276,7 +167,7 @@ html, body {
     .floating-buttons {
         bottom: 16px;
         right: 16px;
-        gap: 8px; /* 减少间隙以适应更多按钮 */
+        gap: 8px;
     }
     
     .floating-btn {
@@ -291,7 +182,7 @@ html, body {
     .floating-buttons {
         bottom: 12px;
         right: 12px;
-        gap: 6px; /* 进一步减少间隙 */
+        gap: 6px;
     }
     
     .floating-btn {
@@ -306,7 +197,7 @@ html, body {
     .floating-buttons {
         bottom: 10px;
         right: 10px;
-        gap: 5px; /* 最小间隙 */
+        gap: 5px;
     }
     
     .floating-btn {
