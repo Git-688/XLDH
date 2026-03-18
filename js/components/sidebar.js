@@ -6,232 +6,76 @@ class CompactSidebar {
         if (!document.getElementById('sidebar')) {
             return;
         }
-
+        
         if (window.sidebar && window.sidebar instanceof CompactSidebar) {
             return window.sidebar;
         }
-
-        this.categories = [{
+        
+        this.categories = [
+            {
                 name: '常用工具',
                 icon: 'fas fa-tools',
                 expanded: true,
-                items: [{
-                        icon: 'fas fa-mobile-alt',
-                        label: '手机软件',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/手机软件.html'
-                    },
-                    {
-                        icon: 'fas fa-desktop',
-                        label: '电脑软件',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/电脑软件.html'
-                    },
-                    {
-                        icon: 'fas fa-film',
-                        label: '电影大全',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/影视推荐.html'
-                    },
-                    {
-                        icon: 'fas fa-images',
-                        label: '共享图片',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/共享图片链接.html'
-                    }
+                items: [
+                    { icon: 'fas fa-mobile-alt', label: '手机软件', badge: null, action: 'link', link: './pages/chl/手机软件.html' },
+                    { icon: 'fas fa-desktop', label: '电脑软件', badge: null, action: 'link', link: './pages/chl/电脑软件.html' },
+                    { icon: 'fas fa-film', label: '电影大全', badge: null, action: 'link', link: './pages/chl/影视推荐.html' },
+                    { icon: 'fas fa-images', label: '共享图片', badge: null, action: 'link', link: './pages/chl/共享图片链接.html' }
                 ]
             },
             {
                 name: '网盘工具',
                 icon: 'fas fa-cloud',
                 expanded: false,
-                items: [{
-                        icon: 'fas fa-cloud-upload-alt',
-                        label: '夸克网盘',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/夸克网盘.html'
-                    },
-                    {
-                        icon: 'fas fa-hdd',
-                        label: '123云盘',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/123云盘.html'
-                    },
-                    {
-                        icon: 'fas fa-cloud',
-                        label: '天翼云盘',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/天翼云盘.html'
-                    },
-                    {
-                        icon: 'fas fa-box',
-                        label: '115生活',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/115生活.html'
-                    },
-                    {
-                        icon: 'fas fa-database',
-                        label: '阿里云盘',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/阿里云盘.html'
-                    },
-                    {
-                        icon: 'fas fa-sim-card',
-                        label: '移动网盘',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/移动网盘.html'
-                    },
-                    {
-                        icon: 'fab fa-baidu',
-                        label: '百度网盘',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/百度网盘.html'
-                    },
-                    {
-                        icon: 'fas fa-server',
-                        label: '城通网盘',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/城通网盘.html'
-                    },
-                    {
-                        icon: 'fas fa-file-archive',
-                        label: '蓝奏云',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/蓝奏云链接.html'
-                    }
+                items: [
+                    { icon: 'fas fa-cloud-upload-alt', label: '夸克网盘', badge: null, action: 'link', link: './pages/chl/夸克网盘.html' },
+                    { icon: 'fas fa-hdd', label: '123云盘', badge: null, action: 'link', link: './pages/chl/123云盘.html' },
+                    { icon: 'fas fa-cloud', label: '天翼云盘', badge: null, action: 'link', link: './pages/chl/天翼云盘.html' },
+                    { icon: 'fas fa-box', label: '115生活', badge: null, action: 'link', link: './pages/chl/115生活.html' },
+                    { icon: 'fas fa-database', label: '阿里云盘', badge: null, action: 'link', link: './pages/chl/阿里云盘.html' },
+                    { icon: 'fas fa-sim-card', label: '移动网盘', badge: null, action: 'link', link: './pages/chl/移动网盘.html' },
+                    { icon: 'fab fa-baidu', label: '百度网盘', badge: null, action: 'link', link: './pages/chl/百度网盘.html' },
+                    { icon: 'fas fa-server', label: '城通网盘', badge: null, action: 'link', link: './pages/chl/城通网盘.html' },
+                    { icon: 'fas fa-file-archive', label: '蓝奏云', badge: null, action: 'link', link: './pages/chl/蓝奏云链接.html' }
                 ]
             },
             {
                 name: '学习资源',
                 icon: 'fas fa-graduation-cap',
                 expanded: false,
-                items: [{
-                        icon: 'fas fa-child',
-                        label: '小学阶段',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/小学阶段.html'
-                    },
-                    {
-                        icon: 'fas fa-school',
-                        label: '初中阶段',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/初中阶段.html'
-                    },
-                    {
-                        icon: 'fas fa-university',
-                        label: '高中阶段',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/高中阶段.html'
-                    },
-                    {
-                        icon: 'fas fa-user-graduate',
-                        label: '大学生活',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/大学生活.html'
-                    },
-                    {
-                        icon: 'fas fa-briefcase',
-                        label: '社会实践',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/社会实践.html'
-                    }
+                items: [
+                    { icon: 'fas fa-child', label: '小学阶段', badge: null, action: 'link', link: './pages/chl/小学阶段.html' },
+                    { icon: 'fas fa-school', label: '初中阶段', badge: null, action: 'link', link: './pages/chl/初中阶段.html' },
+                    { icon: 'fas fa-university', label: '高中阶段', badge: null, action: 'link', link: './pages/chl/高中阶段.html' },
+                    { icon: 'fas fa-user-graduate', label: '大学生活', badge: null, action: 'link', link: './pages/chl/大学生活.html' },
+                    { icon: 'fas fa-briefcase', label: '社会实践', badge: null, action: 'link', link: './pages/chl/社会实践.html' }
                 ]
             },
             {
                 name: '自制小工具',
                 icon: 'fas fa-cogs',
                 expanded: false,
-                items: [{
-                        icon: 'fas fa-scroll',
-                        label: '手持弹幕',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/手持弹幕.html'
-                    },
-                    {
-                        icon: 'fas fa-gift',
-                        label: '抽奖转盘',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/抽奖转盘.html'
-                    },
-                    {
-                        icon: 'fas fa-clipboard-list',
-                        label: '记分牌',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/记分牌.html'
-                    },
-                    {
-                        icon: 'fas fa-clock',
-                        label: '时间屏幕',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/时间屏幕.html'
-                    }
+                items: [
+                    { icon: 'fas fa-scroll', label: '手持弹幕', badge: null, action: 'link', link: './pages/chl/手持弹幕.html' },
+                    { icon: 'fas fa-gift', label: '抽奖转盘', badge: null, action: 'link', link: './pages/chl/抽奖转盘.html' },
+                    { icon: 'fas fa-clipboard-list', label: '记分牌', badge: null, action: 'link', link: './pages/chl/记分牌.html' },
+                    { icon: 'fas fa-clock', label: '时间屏幕', badge: null, action: 'link', link: './pages/chl/时间屏幕.html' }
                 ]
             },
             {
                 name: '其他',
                 icon: 'fas fa-ellipsis-h',
                 expanded: false,
-                items: [{
-                        icon: 'fas fa-solid fa-chart-pie fa-baidu-stat',
-                        label: '百度统计',
-                        badge: null,
-                        action: 'link',
-                        link: 'https://tongji.baidu.com/main/homepage/10000302679/homepage/index'
-                    },
-                    {
-                        icon: 'fas fa-user-circle',
-                        label: '头像',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/头像链接.html'
-                    },
-                    {
-                        icon: 'fas fa-image',
-                        label: '壁纸',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/壁纸链接.html'
-                    },
-                    {
-                        icon: 'fas fa-star',
-                        label: '星空',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/星空.html'
-                    },
-                    {
-                        icon: 'fas fa-gamepad',
-                        label: '游戏',
-                        badge: null,
-                        action: 'link',
-                        link: './pages/chl/游戏.html'
-                    }
+                items: [
+                    { icon: 'fas fa-solid fa-chart-pie fa-baidu-stat', label: '百度统计', badge: null, action: 'link', link: 'https://tongji.baidu.com/main/homepage/10000302679/homepage/index' },
+                    { icon: 'fas fa-user-circle', label: '头像', badge: null, action: 'link', link: './pages/chl/头像链接.html' },
+                    { icon: 'fas fa-image', label: '壁纸', badge: null, action: 'link', link: './pages/chl/壁纸链接.html' },
+                    { icon: 'fas fa-star', label: '星空', badge: null, action: 'link', link: './pages/chl/星空.html' },
+                    { icon: 'fas fa-gamepad', label: '游戏', badge: null, action: 'link', link: './pages/chl/游戏.html' }
                 ]
             }
         ];
-
+        
         this.isInitialized = false;
         this.currentVideo = null;
     }
@@ -256,12 +100,12 @@ class CompactSidebar {
             await this.loadWallpaperUserInfo();
             this.adjustSidebarHeight();
             this.createProfileModal();
-
+            
             this.isInitialized = true;
-
+            
             window.sidebar = this;
             window.CompactSidebar = CompactSidebar;
-
+            
         } catch (error) {
             console.error('侧滑栏初始化失败:', error);
             window.toast.show('侧滑栏初始化失败', 'error');
@@ -369,7 +213,7 @@ class CompactSidebar {
             }
 
             const qqNumber = qqNumberInput.value.trim();
-
+            
             qqAvatarStatus.textContent = '';
             qqAvatarStatus.className = 'qq-avatar-status';
 
@@ -388,16 +232,16 @@ class CompactSidebar {
             qqAvatarStatus.className = 'qq-avatar-status loading';
 
             const avatarUrl = await this.getQQAvatar(qqNumber);
-
+            
             if (avatarUrl) {
                 qqAvatarPreview.src = avatarUrl;
                 qqAvatarStatus.textContent = '头像获取成功';
                 qqAvatarStatus.className = 'qq-avatar-status success';
-
+                
                 const userConfig = Storage.get('userConfig') || {};
                 userConfig.avatar = avatarUrl;
                 Storage.set('userConfig', userConfig);
-
+                
                 const sidebarAvatar = document.getElementById('sidebarWallpaperAvatar');
                 if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
             } else {
@@ -447,7 +291,7 @@ class CompactSidebar {
             const userConfig = Storage.get('userConfig') || {};
             userConfig.nickname = nickname || userConfig.nickname || '访客用户';
             userConfig.signature = signature || userConfig.signature || '探索无限可能';
-
+            
             if (qqAvatar && !qqAvatar.includes('data:image/svg+xml')) {
                 userConfig.avatar = qqAvatar;
             }
@@ -459,7 +303,7 @@ class CompactSidebar {
             if (profileModal) profileModal.classList.remove('active');
 
             window.toast.show('个人信息保存成功', 'success');
-
+            
         } catch (error) {
             console.error('保存个人资料设置失败:', error);
             window.toast.show('保存失败，请重试', 'error');
@@ -507,7 +351,7 @@ class CompactSidebar {
             };
 
             updateHeight();
-
+            
             window.addEventListener('resize', updateHeight);
         } catch (error) {
             console.error('调整侧边栏高度失败:', error);
@@ -608,9 +452,9 @@ class CompactSidebar {
                 try {
                     const sidebar = document.getElementById('sidebar');
                     const menuBtn = document.getElementById('menuBtn');
-
-                    if (sidebar && sidebar.classList.contains('active') &&
-                        !sidebar.contains(e.target) &&
+                    
+                    if (sidebar && sidebar.classList.contains('active') && 
+                        !sidebar.contains(e.target) && 
                         !menuBtn?.contains(e.target)) {
                         this.hide();
                     }
@@ -636,11 +480,11 @@ class CompactSidebar {
         try {
             const categoryName = categoryGroup.dataset.category;
             const category = this.categories.find(cat => cat.name === categoryName);
-
+            
             if (category) {
                 category.expanded = !category.expanded;
                 categoryGroup.classList.toggle('expanded', category.expanded);
-
+                
                 const itemsContainer = categoryGroup.querySelector('.category-items');
                 if (itemsContainer) {
                     if (category.expanded) {
@@ -649,7 +493,7 @@ class CompactSidebar {
                         itemsContainer.style.maxHeight = '0';
                     }
                 }
-
+                
                 this.saveExpandedState();
             }
         } catch (error) {
@@ -661,14 +505,14 @@ class CompactSidebar {
         try {
             const action = categoryItem.dataset.action;
             const link = categoryItem.dataset.link;
-
+            
             if (link) {
                 window.open(link, '_blank');
                 this.hide();
                 return;
             }
-
-            switch (action) {
+            
+            switch(action) {
                 case 'search':
                     if (window.searchModule) {
                         window.searchModule.showModal();
@@ -688,7 +532,7 @@ class CompactSidebar {
                     this.openCalculator();
                     break;
             }
-
+            
             this.hide();
         } catch (error) {
             console.error('处理分类项点击失败:', error);
@@ -701,7 +545,7 @@ class CompactSidebar {
             if (!icon) return;
 
             const iconClass = icon.className;
-
+            
             if (iconClass.includes('fa-comment')) {
                 window.open('https://support.qq.com/products/760416', '_blank');
             } else if (iconClass.includes('fa-paper-plane')) {
@@ -713,7 +557,7 @@ class CompactSidebar {
             } else if (iconClass.includes('fa-qq')) {
                 window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
             }
-
+            
             this.hide();
         } catch (error) {
             console.error('处理底部按钮点击失败:', error);
@@ -729,26 +573,26 @@ class CompactSidebar {
             const sidebar = document.getElementById('sidebar');
             if (sidebar) {
                 this.closeAllModals();
-
+                
                 sidebar.classList.add('active');
                 this.loadSidebarWallpaper();
-
+                
                 const sidebarContent = sidebar.querySelector('.sidebar-content');
                 const categoriesContainer = sidebar.querySelector('.categories-container');
-
+                
                 if (sidebarContent) {
                     sidebarContent.style.overflowY = 'auto';
                     sidebarContent.style.overflowX = 'hidden';
                     sidebarContent.style.height = 'calc(100% - 60px)';
                 }
-
+                
                 if (categoriesContainer) {
                     categoriesContainer.style.overflowY = 'auto';
                     categoriesContainer.style.overflowX = 'hidden';
                 }
-
+                
                 document.body.classList.add('sidebar-open');
-
+                
                 setTimeout(() => {
                     this.adjustSidebarHeight();
                 }, 100);
@@ -763,24 +607,24 @@ class CompactSidebar {
             const sidebar = document.getElementById('sidebar');
             if (sidebar) {
                 sidebar.classList.remove('active');
-
+                
                 const sidebarContent = sidebar.querySelector('.sidebar-content');
                 const categoriesContainer = sidebar.querySelector('.categories-container');
-
+                
                 if (sidebarContent) {
                     sidebarContent.style.overflowY = '';
                     sidebarContent.style.overflowX = '';
                     sidebarContent.style.height = '';
                 }
-
+                
                 if (categoriesContainer) {
                     categoriesContainer.style.overflowY = '';
                     categoriesContainer.style.overflowX = '';
                 }
-
+                
                 document.body.classList.remove('sidebar-open');
             }
-
+            
             if (this.currentVideo) {
                 this.currentVideo.pause();
             }
@@ -814,19 +658,19 @@ class CompactSidebar {
             if (window.searchModule && window.searchModule.isModalOpen()) {
                 window.searchModule.hide();
             }
-
+            
             if (window.app && window.app.components && window.app.components.navbar) {
                 window.app.components.navbar.hideMusicPlayer();
             }
-
+            
             if (window.announcementModule) {
                 window.announcementModule.hide();
             }
-
+            
             if (window.app && window.app.modules && window.app.modules.weather) {
                 window.app.modules.weather.hide();
             }
-
+            
             if (window.aboutModule) {
                 window.aboutModule.hide();
             }
@@ -838,15 +682,15 @@ class CompactSidebar {
     async loadWallpaperUserInfo() {
         try {
             const userConfig = Storage.get('userConfig') || {};
-
+            
             const wallpaperAvatar = document.getElementById('sidebarWallpaperAvatar');
             const wallpaperNickname = document.getElementById('sidebarWallpaperNickname');
             const wallpaperSignature = document.getElementById('sidebarWallpaperSignature');
-
+            
             if (wallpaperNickname) {
                 wallpaperNickname.textContent = userConfig.nickname || '访客用户';
             }
-
+            
             if (wallpaperAvatar) {
                 if (userConfig.avatar) {
                     wallpaperAvatar.src = userConfig.avatar;
@@ -855,13 +699,13 @@ class CompactSidebar {
                     await this.loadRandomAvatar();
                 }
             }
-
+            
             if (wallpaperSignature) {
                 wallpaperSignature.textContent = userConfig.signature || '探索无限可能';
             }
-
+            
             await this.loadSidebarWallpaper();
-
+            
         } catch (error) {
             console.error('加载壁纸用户信息失败:', error);
         }
@@ -872,7 +716,7 @@ class CompactSidebar {
             const dayOfWeek = new Date().getDay();
             const mediaInfo = this.getLocalWallpaper(dayOfWeek);
             const sidebarWallpaper = document.getElementById('sidebarWallpaper');
-
+            
             if (sidebarWallpaper && mediaInfo) {
                 if (mediaInfo.type === 'video') {
                     await this.setVideoWallpaper(mediaInfo.url);
@@ -890,55 +734,31 @@ class CompactSidebar {
 
     getLocalWallpaper(dayOfWeek) {
         const videoWallpapers = {
-            0: {
-                type: 'video',
-                url: './assets/wallpapers/sunday.mp4'
-            },
-            1: {
-                type: 'video',
-                url: './assets/wallpapers/monday.mp4'
-            },
-            2: {
-                type: 'video',
-                url: './assets/wallpapers/tuesday.mp4'
-            },
-            3: {
-                type: 'video',
-                url: './assets/wallpapers/wednesday.mp4'
-            },
-            4: {
-                type: 'video',
-                url: './assets/wallpapers/thursday.mp4'
-            },
-            5: {
-                type: 'video',
-                url: './assets/wallpapers/friday.mp4'
-            },
-            6: {
-                type: 'video',
-                url: './assets/wallpapers/saturday.mp4'
-            }
+            0: { type: 'video', url: './assets/wallpapers/sunday.mp4' },
+            1: { type: 'video', url: './assets/wallpapers/monday.mp4' },
+            2: { type: 'video', url: './assets/wallpapers/tuesday.mp4' },
+            3: { type: 'video', url: './assets/wallpapers/wednesday.mp4' },
+            4: { type: 'video', url: './assets/wallpapers/thursday.mp4' },
+            5: { type: 'video', url: './assets/wallpapers/friday.mp4' },
+            6: { type: 'video', url: './assets/wallpapers/saturday.mp4' }
         };
-
-        return videoWallpapers[dayOfWeek] || {
-            type: 'video',
-            url: './assets/wallpapers/monday.mp4'
-        };
+        
+        return videoWallpapers[dayOfWeek] || { type: 'video', url: './assets/wallpapers/monday.mp4' };
     }
 
     async setVideoWallpaper(videoUrl) {
         const sidebarWallpaper = document.getElementById('sidebarWallpaper');
         if (!sidebarWallpaper) return;
-
+        
         sidebarWallpaper.style.backgroundImage = 'none';
         sidebarWallpaper.style.background = 'transparent';
-
+        
         const existingVideo = sidebarWallpaper.querySelector('video');
         if (existingVideo) {
             existingVideo.remove();
             this.currentVideo = null;
         }
-
+        
         try {
             const video = document.createElement('video');
             video.src = videoUrl;
@@ -947,7 +767,7 @@ class CompactSidebar {
             video.loop = true;
             video.playsInline = true;
             video.preload = "auto";
-
+            
             video.style.cssText = `
                 position: absolute;
                 top: 0;
@@ -957,32 +777,39 @@ class CompactSidebar {
                 object-fit: cover;
                 z-index: 0;
             `;
-
+            
             video.setAttribute('autoplay', 'true');
             video.setAttribute('muted', 'true');
             video.setAttribute('loop', 'true');
             video.setAttribute('playsinline', 'true');
             video.setAttribute('preload', 'auto');
-
+            
+            // 视频加载错误时回退
+            video.onerror = () => {
+                console.warn('视频加载失败，使用备用背景');
+                this.setFallbackBackground();
+            };
+            
             sidebarWallpaper.appendChild(video);
             this.currentVideo = video;
-
+            
             const overlay = sidebarWallpaper.querySelector('.sidebar-wallpaper-overlay');
             if (overlay) {
                 overlay.style.zIndex = '1';
             }
-
+            
             const userInfo = sidebarWallpaper.querySelector('.sidebar-wallpaper-user-info');
             if (userInfo) {
                 userInfo.style.zIndex = '2';
             }
-
+            
             try {
                 await video.play();
             } catch (error) {
-                // 静默失败
+                console.warn('视频自动播放失败，使用备用背景');
+                this.setFallbackBackground();
             }
-
+            
         } catch (error) {
             console.error('设置视频壁纸失败:', error);
             this.setFallbackBackground();
@@ -997,7 +824,7 @@ class CompactSidebar {
                 existingVideo.remove();
                 this.currentVideo = null;
             }
-
+            
             sidebarWallpaper.style.backgroundImage = 'none';
             sidebarWallpaper.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
         }
@@ -1050,13 +877,13 @@ class CompactSidebar {
     async loadUserData() {
         try {
             const userConfig = Storage.get('userConfig') || {};
-
+            
             if (!userConfig.nickname) {
                 userConfig.nickname = '访客用户';
                 userConfig.signature = '探索无限可能';
                 Storage.set('userConfig', userConfig);
             }
-
+            
         } catch (error) {
             console.error('加载用户数据失败:', error);
         }
@@ -1072,7 +899,7 @@ class CompactSidebar {
             const quote = await this.getDailyQuote();
             let cleanedQuote = quote.replace(/^["'「」"”‘’]|["'「」""”‘’]$/g, '').trim();
             if (!cleanedQuote) cleanedQuote = '每一天都是新的开始，充满无限可能。';
-
+            
             quoteElement.textContent = cleanedQuote;
         } catch (error) {
             console.error('加载每日一言失败:', error);
@@ -1101,7 +928,7 @@ class CompactSidebar {
                 this.currentVideo.pause();
                 this.currentVideo = null;
             }
-
+            
             this.isInitialized = false;
         } catch (error) {
             console.error('销毁侧边栏失败:', error);
@@ -1111,21 +938,21 @@ class CompactSidebar {
 
 if (!window.sidebarInitialized) {
     window.sidebarInitialized = true;
-
+    
     const initSidebar = async () => {
         if (document.readyState === 'loading') {
             await new Promise(resolve => {
                 document.addEventListener('DOMContentLoaded', resolve);
             });
         }
-
+        
         if (!window.sidebar) {
             window.CompactSidebar = CompactSidebar;
             window.sidebar = new CompactSidebar();
             await window.sidebar.init();
         }
     };
-
+    
     initSidebar().catch(error => {
         console.error('侧边栏初始化失败:', error);
     });
