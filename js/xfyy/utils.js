@@ -43,6 +43,16 @@ class Utils {
     static isMobile() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
+
+    /**
+     * 转义 HTML 防止 XSS
+     */
+    static escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML;
+    }
 }
 
 window.Utils = Utils;
