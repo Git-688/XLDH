@@ -76,7 +76,6 @@ class MusicPlayer {
             lyricsSection: document.querySelector('.lyrics-section'),
             
             player: document.querySelector('.music-player')
-            // notification 已移除
         };
 
         this.initializeApiElements();
@@ -1096,6 +1095,10 @@ class MusicPlayer {
         if (this.cacheManager) {
             this.cacheManager.cleanup();
         }
+        
+        // 重置首次通知标记
+        this.hasNotifiedLocal = false;
+        this.hasNotifiedMigu = false;
         
         if (window.musicPlayer === this) {
             window.musicPlayer = null;
