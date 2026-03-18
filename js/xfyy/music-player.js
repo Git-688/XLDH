@@ -17,7 +17,7 @@ class MusicPlayer {
         this.initializePlayer();
         
         this.isHandlingNavigationClick = false;
-        this.hasInitialized = false; // 新增：标记是否完成初始化
+        this.hasInitialized = false;
     }
 
     initializeProperties() {
@@ -75,9 +75,8 @@ class MusicPlayer {
             lyricsContainer: document.getElementById('lyrics-container'),
             lyricsSection: document.querySelector('.lyrics-section'),
             
-            player: document.querySelector('.music-player'),
-            
-            notification: document.getElementById('notification')
+            player: document.querySelector('.music-player')
+            // notification 已移除
         };
 
         this.initializeApiElements();
@@ -969,7 +968,6 @@ class MusicPlayer {
         this.audio.addEventListener('error', (e) => {
             console.error('音频加载错误:', e);
             
-            // 如果播放器尚未初始化完成，忽略该错误（避免初始化过程中误报）
             if (!this.hasInitialized) {
                 console.log('初始化未完成，忽略音频错误');
                 return;
@@ -1056,9 +1054,6 @@ class MusicPlayer {
         }
     }
 
-    /**
-     * 初始化播放器
-     */
     initializePlayer() {
         // 强制重置音频元素，防止浏览器恢复旧状态
         this.audio.src = '';
@@ -1073,11 +1068,8 @@ class MusicPlayer {
         
         setInterval(() => this.cacheManager.cleanup(), 30 * 60 * 1000);
         
-        // 标记初始化完成
         this.hasInitialized = true;
     }
-
-    // 移除原 showNotification 方法，全部改用 window.toast.show
 
     getApiName(apiId) {
         const apiNames = {
