@@ -11,7 +11,7 @@ class App {
         this.isInitialized = false;
         this.uptimeTimer = null;
         this.lastUptimeUpdate = 0;
-
+        
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 this.init();
@@ -55,7 +55,7 @@ class App {
     initModules() {
         try {
             const initPromises = [];
-
+            
             if (typeof SearchModule !== 'undefined') {
                 try {
                     if (!window.searchModule || !(window.searchModule instanceof SearchModule)) {
@@ -71,22 +71,24 @@ class App {
                     console.error('搜索模块初始化失败:', error);
                 }
             }
-
+            
             if (typeof WallpaperModule !== 'undefined') {
                 this.modules.wallpaper = new WallpaperModule();
                 initPromises.push(this.modules.wallpaper.init?.());
             }
-
+            
             if (typeof GreetingModule !== 'undefined') {
                 this.modules.greeting = new GreetingModule();
                 initPromises.push(this.modules.greeting.init?.());
             }
-
+            
             if (typeof OptimizedNavigation !== 'undefined') {
                 this.modules.navigation = new OptimizedNavigation();
+                // 设置全局实例，供 getOptimizedNavigation 使用
+                window.optimizedNavigation = this.modules.navigation;
                 initPromises.push(this.modules.navigation.init?.());
             }
-
+            
             if (typeof FooterModule !== 'undefined') {
                 this.modules.footer = new FooterModule();
                 if (this.modules.footer.startUptimeTimer) {
@@ -100,12 +102,12 @@ class App {
                 }
                 initPromises.push(this.modules.footer.init?.());
             }
-
+            
             if (typeof WeatherModule !== 'undefined') {
                 this.modules.weather = new WeatherModule();
                 initPromises.push(this.modules.weather.init?.());
             }
-
+            
             if (typeof AnnouncementModule !== 'undefined') {
                 if (!window.announcementModule) {
                     this.modules.announcement = new AnnouncementModule();
@@ -114,7 +116,7 @@ class App {
                     this.modules.announcement = window.announcementModule;
                 }
             }
-
+            
             if (typeof AboutModule !== 'undefined') {
                 if (!window.aboutModule) {
                     this.modules.about = new AboutModule();
@@ -123,7 +125,7 @@ class App {
                     this.modules.about = window.aboutModule;
                 }
             }
-
+            
             Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {
                 console.log('所有模块初始化完成');
             });
@@ -151,15 +153,15 @@ class App {
             'Loading failed',
             'Failed to fetch'
         ];
-
+        
         const handleError = (event) => {
             const error = event.error || event.reason;
             const errorMessage = error?.message || event.message || '未知错误';
-
-            const shouldIgnore = ignoredErrors.some(ignored =>
+            
+            const shouldIgnore = ignoredErrors.some(ignored => 
                 errorMessage.includes(ignored)
             );
-
+            
             if (!shouldIgnore) {
                 console.error('应用错误:', errorMessage);
                 if (!document.hidden) {
@@ -167,7 +169,7 @@ class App {
                 }
             }
         };
-
+        
         window.addEventListener('error', handleError);
         window.addEventListener('unhandledrejection', handleError);
     }
@@ -185,7 +187,7 @@ class App {
         if (!Storage.get('first_visit_time')) {
             Storage.set('first_visit_time', new Date().toISOString());
         }
-
+        
         this.initAccumulatedUptime();
         this.updateVisitStats();
     }
@@ -194,7 +196,7 @@ class App {
         try {
             let accumulatedTime = Storage.get('accumulated_uptime') || 0;
             let lastUpdateTime = Storage.get('last_uptime_update');
-
+            
             if (!lastUpdateTime) {
                 lastUpdateTime = Date.now();
                 Storage.set('last_uptime_update', lastUpdateTime);
@@ -206,7 +208,7 @@ class App {
                 Storage.set('accumulated_uptime', accumulatedTime);
                 Storage.set('last_uptime_update', now);
             }
-
+            
             this.accumulatedUptime = accumulatedTime;
             this.lastUptimeUpdate = lastUpdateTime;
         } catch (error) {
@@ -241,15 +243,15 @@ class App {
                 this.refreshPageWithAnimation();
             }
         });
-
+        
         window.addEventListener('online', () => {
             this.showToast('网络已连接', 'success');
         });
-
+        
         window.addEventListener('offline', () => {
             this.showToast('网络已断开，部分功能可能受限', 'warning');
         });
-
+        
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
                 this.refreshOnVisibility();
@@ -292,15 +294,11 @@ class App {
     closeAllModals() {
         this.activeModals.forEach((modal) => {
             if (modal && typeof modal.hide === 'function') {
-                try {
-                    modal.hide();
-                } catch (error) {
-                    console.error('关闭模态框失败:', error);
-                }
+                try { modal.hide(); } catch (error) { console.error('关闭模态框失败:', error); }
             }
         });
         this.activeModals = [];
-
+        
         if (this.components.sidebar && this.components.sidebar.isVisible && this.components.sidebar.isVisible()) {
             this.components.sidebar.hide();
         }
@@ -338,25 +336,21 @@ class App {
             const hours = Math.floor((accumulatedTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((accumulatedTime % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((accumulatedTime % (1000 * 60)) / 1000);
-
+            
             return {
                 days,
                 hours,
                 minutes,
                 seconds,
                 totalMs: accumulatedTime,
-                formatted: days > 0 ? `${days}天 ${hours}时 ${minutes}分 ${seconds}秒` : hours > 0 ? `${hours}时 ${minutes}分 ${seconds}秒` : minutes > 0 ? `${minutes}分 ${seconds}秒` : `${seconds}秒`
+                formatted: days > 0 ? `${days}天 ${hours}时 ${minutes}分 ${seconds}秒` : 
+                           hours > 0 ? `${hours}时 ${minutes}分 ${seconds}秒` : 
+                           minutes > 0 ? `${minutes}分 ${seconds}秒` : 
+                           `${seconds}秒`
             };
         } catch (error) {
             console.error('获取累计运行时间失败:', error);
-            return {
-                days: 0,
-                hours: 0,
-                minutes: 0,
-                seconds: 0,
-                totalMs: 0,
-                formatted: '0天 0时 0分 0秒'
-            };
+            return { days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0, formatted: '0天 0时 0分 0秒' };
         }
     }
 
@@ -426,13 +420,13 @@ class App {
                 this.showToast('恭喜！这是您的第100次访问！', 'success');
             }
         }, 1500);
-
+        
         this.startOptimizedTimers();
-
+        
         window.addEventListener('beforeunload', () => {
             this.saveUptimeState();
         });
-
+        
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.saveUptimeState();
@@ -450,18 +444,18 @@ class App {
 
     updateAllStats() {
         const now = Date.now();
-
+        
         if (!this.lastAutoSave || (now - this.lastAutoSave >= 5000)) {
             this.saveUptimeState();
             this.lastAutoSave = now;
         }
-
+        
         const uptime = this.getAccumulatedUptime();
         const uptimeElement = document.getElementById('uptime');
         if (uptimeElement) {
             uptimeElement.textContent = `${uptime.days}天 ${uptime.hours}时 ${uptime.minutes}分 ${uptime.seconds}秒`;
         }
-
+        
         if (now - this.lastVisitUpdate >= 5000 || !this.lastVisitUpdate) {
             const visitStats = this.getVisitStats();
             const visitCountElement = document.getElementById('visitCount');
@@ -549,23 +543,23 @@ class App {
 
     refreshAllModules() {
         this.showToast('开始刷新所有模块', 'info');
-
+        
         if (this.modules.wallpaper && this.modules.wallpaper.refreshWallpaper) {
             this.modules.wallpaper.refreshWallpaper().catch(err => {
                 console.error('壁纸刷新失败:', err);
             });
         }
-
+        
         if (this.modules.weather && this.modules.weather.loadWeatherData) {
             this.modules.weather.loadWeatherData().catch(err => {
                 console.error('天气刷新失败:', err);
             });
         }
-
+        
         if (this.modules.announcement && this.modules.announcement.loadAnnouncements) {
             this.modules.announcement.loadAnnouncements();
         }
-
+        
         if (this.components.sidebar) {
             if (this.components.sidebar.loadWallpaperUserInfo) {
                 this.components.sidebar.loadWallpaperUserInfo();
@@ -574,7 +568,7 @@ class App {
                 this.components.sidebar.loadDailyQuote();
             }
         }
-
+        
         setTimeout(() => {
             this.showToast('所有模块已刷新', 'success');
         }, 1500);
@@ -582,9 +576,9 @@ class App {
 
     resetApp() {
         if (!confirm('确定要重置应用状态吗？这将清除所有临时数据，但不会删除您的个人配置。')) return;
-
+        
         this.closeAllModals();
-
+        
         const keysToRemove = [
             'sidebar_categories_state',
             'last_wallpaper_update',
@@ -594,15 +588,15 @@ class App {
             'musicPlayer_playState',
             'musicPlayer_lyricsMode'
         ];
-
+        
         keysToRemove.forEach(key => {
             Storage.remove(key);
         });
-
+        
         setTimeout(() => {
             this.refreshAllModules();
         }, 500);
-
+        
         this.showToast('应用状态已重置', 'success');
     }
 
@@ -612,20 +606,12 @@ class App {
         if (this.uptimeTimer) clearInterval(this.uptimeTimer);
         Object.entries(this.components).forEach(([name, component]) => {
             if (component && typeof component.destroy === 'function') {
-                try {
-                    component.destroy();
-                } catch (error) {
-                    console.error(`销毁组件 ${name} 失败:`, error);
-                }
+                try { component.destroy(); } catch (error) { console.error(`销毁组件 ${name} 失败:`, error); }
             }
         });
         Object.entries(this.modules).forEach(([name, module]) => {
             if (module && typeof module.destroy === 'function') {
-                try {
-                    module.destroy();
-                } catch (error) {
-                    console.error(`销毁模块 ${name} 失败:`, error);
-                }
+                try { module.destroy(); } catch (error) { console.error(`销毁模块 ${name} 失败:`, error); }
             }
         });
         this.components = {};
