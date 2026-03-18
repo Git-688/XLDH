@@ -55,99 +55,11 @@
     .sidebar.active ~ .main-content { touch-action: pan-y; }
 }
 
+/* 侧滑栏滚动条样式（已在 sidebar.css 中定义，此处可保留或删除，无影响） */
 .categories-container::-webkit-scrollbar { width: 6px; }
 .categories-container::-webkit-scrollbar-track { background: #f8f9fa; border-radius: 3px; }
 .categories-container::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 3px; transition: background 0.2s ease; }
 .categories-container::-webkit-scrollbar-thumb:hover { background: #adb5bd; }
-
-.category-group { margin-bottom: 8px; }
-
-.category-group-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 8px;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: background-color 0.2s ease;
-}
-
-.category-group-header:hover { background: rgba(67, 97, 238, 0.05); }
-
-.category-group-name {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-    color: #2c3e50;
-}
-
-.category-group-icon {
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #4361ee;
-}
-
-.category-toggle {
-    background: none;
-    border: none;
-    padding: 4px;
-    border-radius: 4px;
-    cursor: pointer;
-    color: #6c757d;
-    transition: all 0.2s ease;
-}
-
-.category-toggle:hover {
-    background: rgba(67, 97, 238, 0.1);
-    color: #4361ee;
-}
-
-.category-items { overflow: hidden; transition: max-height 0.3s ease; }
-
-.category-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 8px 10px 32px;
-    width: 100%;
-    border: none;
-    background: none;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    color: #495057;
-}
-
-.category-item:hover {
-    background: rgba(67, 97, 238, 0.08);
-    color: #4361ee;
-}
-
-.category-icon {
-    width: 16px;
-    height: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: inherit;
-}
-
-.category-label { flex: 1; text-align: left; font-size: 13px; }
-
-.category-badge {
-    background: #e74c3c;
-    color: white;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-size: 10px;
-    font-weight: 500;
-    min-width: 18px;
-    text-align: center;
-}
 
 /* ====== 浮动按钮响应式优化 ====== */
 @media (max-width: 768px) {
