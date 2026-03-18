@@ -1,17 +1,9 @@
-/* 基础重置与盒模型设置 */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-/* 移除所有 .container 的重复定义，因为已由 style.css 统一管理 */
 /* 仅保留侧滑栏独立滚动控制及浮动按钮响应式优化 */
+/* 全局重置和容器样式已由 style.css 统一管理，此处不再重复 */
 
 /* 侧滑栏完全独立滚动控制 */
 .sidebar.active { pointer-events: auto; transform: translateX(0); visibility: visible; }
 
-/* 主页完全独立，不受侧滑栏影响 */
 .sidebar.active ~ .main-content {
     pointer-events: auto;
     overflow: auto;
@@ -20,7 +12,6 @@
     height: auto;
 }
 
-/* 侧滑栏内容区域独立滚动 */
 .sidebar-content {
     flex: 1;
     display: flex;
@@ -64,13 +55,11 @@
     .sidebar.active ~ .main-content { touch-action: pan-y; }
 }
 
-/* 侧滑栏滚动条样式 */
 .categories-container::-webkit-scrollbar { width: 6px; }
 .categories-container::-webkit-scrollbar-track { background: #f8f9fa; border-radius: 3px; }
 .categories-container::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 3px; transition: background 0.2s ease; }
 .categories-container::-webkit-scrollbar-thumb:hover { background: #adb5bd; }
 
-/* 分类导航项样式 */
 .category-group { margin-bottom: 8px; }
 
 .category-group-header {
@@ -161,8 +150,6 @@
 }
 
 /* ====== 浮动按钮响应式优化 ====== */
-
-/* 平板端适配 */
 @media (max-width: 768px) {
     .floating-buttons {
         bottom: 16px;
@@ -177,7 +164,6 @@
     }
 }
 
-/* 移动端适配 */
 @media (max-width: 480px) {
     .floating-buttons {
         bottom: 12px;
@@ -192,7 +178,6 @@
     }
 }
 
-/* 超小屏幕适配 */
 @media (max-width: 360px) {
     .floating-buttons {
         bottom: 10px;
@@ -207,7 +192,6 @@
     }
 }
 
-/* 横屏模式优化 */
 @media (max-height: 500px) and (orientation: landscape) {
     .floating-buttons {
         bottom: 8px;
