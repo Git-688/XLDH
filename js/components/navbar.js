@@ -5,89 +5,6 @@
  */
 class Navbar {
     constructor() {
-        this.searchEngines = [{
-                name: '百度',
-                value: 'baidu',
-                url: 'https://www.baidu.com/s?wd='
-            },
-            {
-                name: 'Bing',
-                value: 'bing',
-                url: 'https://cn.bing.com/search?q='
-            },
-            {
-                name: '知乎',
-                value: 'zhihu',
-                url: 'https://www.zhihu.com/search?type=content&q='
-            },
-            {
-                name: '哔哩哔哩',
-                value: 'bilibili',
-                url: 'https://search.bilibili.com/all?keyword='
-            },
-            {
-                name: '微博',
-                value: 'weibo',
-                url: 'https://s.weibo.com/weibo?q='
-            },
-            {
-                name: '淘宝',
-                value: 'taobao',
-                url: 'https://s.taobao.com/search?q='
-            },
-            {
-                name: '京东',
-                value: 'jd',
-                url: 'https://search.jd.com/Search?keyword='
-            },
-            {
-                name: '抖音',
-                value: 'douyin',
-                url: 'https://www.douyin.com/search/'
-            },
-            {
-                name: '今日头条',
-                value: 'toutiao',
-                url: 'https://so.toutiao.com/search?keyword='
-            },
-            {
-                name: '搜狗搜索',
-                value: 'sogou',
-                url: 'https://www.sogou.com/web?query='
-            },
-            {
-                name: 'Google',
-                value: 'google',
-                url: 'https://www.google.com/search?q='
-            },
-            {
-                name: 'GitHub',
-                value: 'github',
-                url: 'https://github.com/search?q='
-            },
-            {
-                name: 'Wikipedia',
-                value: 'wikipedia',
-                url: 'https://en.wikipedia.org/wiki/Special:Search?search='
-            },
-            {
-                name: 'Stack Overflow',
-                value: 'stackoverflow',
-                url: 'https://stackoverflow.com/search?q='
-            },
-            {
-                name: 'YouTube',
-                value: 'youtube',
-                url: 'https://www.youtube.com/results?search_query='
-            },
-            {
-                name: 'DuckDuckGo',
-                value: 'duckduckgo',
-                url: 'https://duckduckgo.com/?q='
-            }
-        ];
-
-        this.currentEngine = this.searchEngines[0];
         this.announcements = [];
         this.searchModuleReady = false;
         this.init();
@@ -98,11 +15,11 @@ class Navbar {
             this.bindEvents();
             this.loadAnnouncements();
             this.updateNotificationBadge();
-
+            
             setTimeout(() => {
                 this.handleScroll();
             }, 100);
-
+            
             setTimeout(() => {
                 this.checkSearchModule();
             }, 1000);
@@ -229,10 +146,7 @@ class Navbar {
             const backToTop = document.getElementById('backToTop');
             if (backToTop) {
                 backToTop.addEventListener('click', () => {
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
             }
 
@@ -376,9 +290,9 @@ class Navbar {
         try {
             const musicPlayer = document.getElementById('musicPlayer');
             const musicBtn = document.getElementById('musicBtn');
-            if (musicPlayer &&
-                musicPlayer.classList.contains('show') &&
-                !musicPlayer.contains(e.target) &&
+            if (musicPlayer && 
+                musicPlayer.classList.contains('show') && 
+                !musicPlayer.contains(e.target) && 
                 !musicBtn.contains(e.target)) {
                 this.hideMusicPlayer();
             }
@@ -414,22 +328,24 @@ class Navbar {
 
     loadAnnouncements() {
         try {
-            this.announcements = Storage.get('announcements') || [{
-                id: 'single_announcement',
-                title: '星链导航公告',
-                subtitle: '重要通知',
-                focus: '本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台',
-                updates: [
-                    '全1新界面设计 - 更加现代化和美观的视觉体验',
-                    '音乐播放器 - 支持多平台音乐搜索和播放',
-                    '个性化设置 - 可自定义主题和布局',
-                    '更多实用工具 - 新增多个日常使用的小工具',
-                    '性能优化 - 更快的加载速度和响应时间'
-                ],
-                time: new Date().toLocaleString('zh-CN'),
-                source: '系统公告',
-                read: false
-            }];
+            this.announcements = Storage.get('announcements') || [
+                {
+                    id: 'single_announcement',
+                    title: '星链导航公告',
+                    subtitle: '重要通知',
+                    focus: '本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台',
+                    updates: [
+                        '全1新界面设计 - 更加现代化和美观的视觉体验',
+                        '音乐播放器 - 支持多平台音乐搜索和播放',
+                        '个性化设置 - 可自定义主题和布局',
+                        '更多实用工具 - 新增多个日常使用的小工具',
+                        '性能优化 - 更快的加载速度和响应时间'
+                    ],
+                    time: new Date().toLocaleString('zh-CN'),
+                    source: '系统公告',
+                    read: false
+                }
+            ];
         } catch (error) {
             console.error('加载公告数据失败:', error);
         }
