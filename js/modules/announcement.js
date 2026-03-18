@@ -11,6 +11,7 @@ class AnnouncementModule {
         this.isInitialized = false;
         this.currentAnnouncement = null;
         this.resizeHandler = null;
+        this.escapeHandler = null;
         this.init();
     }
 
@@ -28,24 +29,20 @@ class AnnouncementModule {
      */
     loadAnnouncements() {
         const stored = Storage.get('announcements');
-        const defaultAnn = this.getDefaultAnnouncements()[0]; // 只取第一条作为默认
+        const defaultAnn = this.getDefaultAnnouncements()[0];
 
-        // 如果没有存储，直接使用默认并保存
         if (!stored || stored.length === 0) {
             this.announcements = this.getDefaultAnnouncements();
             Storage.set('announcements', this.announcements);
         } else {
-            // 比较存储的第一条与默认公告的内容（忽略 time 和 read 字段）
             const storedFirst = stored[0];
             const needUpdate = this.isAnnouncementDifferent(storedFirst, defaultAnn);
 
             if (needUpdate) {
-                // 内容不同，用新默认公告替换，重置已读状态，更新时间
                 const newAnnouncements = this.getDefaultAnnouncements();
                 Storage.set('announcements', newAnnouncements);
                 this.announcements = newAnnouncements;
             } else {
-                // 内容相同，保留存储数据（包括已读状态和原时间）
                 this.announcements = stored;
             }
         }
@@ -56,23 +53,19 @@ class AnnouncementModule {
      * 判断存储的公告与默认公告是否不同（只比较核心内容）
      */
     isAnnouncementDifferent(stored, defaultAnn) {
-        // 比较 id、title、focus、updates 是否完全一致
         if (stored.id !== defaultAnn.id) return true;
         if (stored.title !== defaultAnn.title) return true;
         if (stored.focus !== defaultAnn.focus) return true;
-        // 比较 updates 数组（转换为 JSON 字符串比较）
         if (JSON.stringify(stored.updates) !== JSON.stringify(defaultAnn.updates)) return true;
-        // 其他字段（time, read）忽略
         return false;
     }
 
-    // ==================== 修改此处即可更改默认公告内容 ====================
     getDefaultAnnouncements() {
         return [
             {
-                id: 'static_announcement',                     // 固定 ID，用于识别版本
+                id: 'static_announcement',
                 title: '系统公告',
-                focus: '🎉欢迎使用！本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台。',
+                focus: '欢迎使用星链导航！本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台。',
                 updates: [
                     '全新界面设计-更加现代化和美观的视觉体验',
                     '音乐播放器-支持多平台音乐搜索和播放',
@@ -89,7 +82,6 @@ class AnnouncementModule {
             }
         ];
     }
-    // ====================================================================
 
     createModal() {
         if (this.modalElement) {
@@ -102,10 +94,10 @@ class AnnouncementModule {
         this.modalElement.id = 'announcementModal';
 
         const ann = this.currentAnnouncement || {};
-        const title = this.escapeHtml(ann.title || '公告');
-        const focus = this.escapeHtml(ann.focus || '暂无重要提醒');
+        const title = Utils.escapeHtml(ann.title || '公告');
+        const focus = Utils.escapeHtml(ann.focus || '暂无重要提醒');
         const updates = ann.updates && Array.isArray(ann.updates) ? ann.updates : [];
-        const time = this.escapeHtml(ann.time || new Date().toLocaleDateString());
+        const time = Utils.escapeHtml(ann.time || new Date().toLocaleDateString());
 
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
@@ -132,7 +124,7 @@ class AnnouncementModule {
                             <span>更新内容</span>
                         </div>
                         <ul class="updates-list">
-                            ${updates.map(item => `<li>${this.escapeHtml(item)}</li>`).join('')}
+                            ${updates.map(item => `<li>${Utils.escapeHtml(item)}</li>`).join('')}
                         </ul>
                     </div>
                 </div>
@@ -276,18 +268,6 @@ class AnnouncementModule {
     updateButtonState(active) {
         const btn = document.getElementById('announcementBtn');
         if (btn) btn.classList.toggle('active', active);
-    }
-
-    escapeHtml(text) {
-        if (typeof text !== 'string') return text;
-        return text.replace(/[&<>"']/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            if (m === '"') return '&quot;';
-            if (m === "'") return '&#039;';
-            return m;
-        });
     }
 
     resetAnnouncements() {
