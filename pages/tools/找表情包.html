@@ -332,8 +332,9 @@
                         <div class="custom-select__option" data-value="qq">QQ表情包</div>
                         <div class="custom-select__option" data-value="qq2">QQ表情包2</div>
                         <div class="custom-select__option" data-value="sogou">搜狗表情包</div>
-                        <!-- 新增：冷颜表情包下拉选项 -->
                         <div class="custom-select__option" data-value="lengy">冷颜表情包</div>
+                        <!-- 新增：Doro表情包下拉选项 -->
+                        <div class="custom-select__option" data-value="doro">Doro表情包</div>
                         <div class="custom-select__option" data-value="juhe">聚合表情包</div>
                     </div>
                 </div>
@@ -360,7 +361,7 @@
         <div class="toast" id="toast"></div>
     </main>
     <script>
-        // API配置：保留所有原有配置 + 新增冷颜表情包(lengy)
+        // API配置：保留所有原有配置 + 新增冷颜表情包(lengy) + 新增Doro表情包(doro)
         const API_CONFIG = {
             shuitao: {
                 url: 'https://api.lolimi.cn/API/stdd/api',
@@ -441,11 +442,21 @@
                 supportPagination: true,
                 isSymbolApi: false
             },
-            // 新增：冷颜表情包API配置
+            // 冷颜表情包API配置
             lengy: {
                 url: 'https://lengy.top/API/bqb_search.php',
                 params: (keyword, page) => `?msg=${encodeURIComponent(keyword)}&page=${page}&num=40`,
                 extractData: (data) => Array.isArray(data.data) ? data.data.map(item => item.sticker_url) : [],
+                supportPagination: true,
+                isSymbolApi: false
+            },
+            // 新增：Doro表情包API配置（适配所有必填参数）
+            doro: {
+                url: 'https://missqiu.icu/API/Doro.php',
+                // 拼接page/size/search/apikey所有必填参数，size默认10条/页
+                params: (keyword, page) => `?page=${page}&size=10&search=${encodeURIComponent(keyword)}&apikey=5c7f37a79ce1eef4eb1b79dc5d7a752ab139ac681ce02447389e6fc6a2eb5a52`,
+                // 提取返回结果中items里的图片url
+                extractData: (data) => Array.isArray(data.items) ? data.items.map(item => item.url) : [],
                 supportPagination: true,
                 isSymbolApi: false
             },
@@ -502,7 +513,7 @@
         function setJuheBtnActive(type) {
             juheBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.type === type));
         }
-        // 核心加载方法：保留原有所有逻辑 + 适配冷颜表情包
+        // 核心加载方法：保留原有所有逻辑 + 适配冷颜+Doro表情包
         async function loadEmojis(type = '', page = 1, append = false) {
             if (isLoading) return;
             isLoading = true;
@@ -518,7 +529,8 @@
             if (currentApi === 'longt') loadingText = '正在加载龙图表情...';
             if (currentApi === 'bing') loadingText = '正在搜索必应表情...';
             if (currentApi === 'wechat') loadingText = '正在搜索微信表情...';
-            if (currentApi === 'lengy') loadingText = '正在搜索冷颜表情...'; // 新增冷颜加载提示
+            if (currentApi === 'lengy') loadingText = '正在搜索冷颜表情...';
+            if (currentApi === 'doro') loadingText = '正在搜索Doro表情...'; // 新增Doro加载提示
             if (currentApi === 'juhe') loadingText = `正在加载${type === '动漫表情' ? '动漫表情' : type}...`;
             
             if (!append) {
@@ -550,20 +562,22 @@
                     const response = await fetch(requestUrl);
                     if (!response.ok) throw new Error('网络请求失败');
                     const data = await response.json();
-                    // 新增冷颜表情包成功判断（code=0）
+                    // 新增Doro表情包成功判断（返回200即有数据，判断items是否存在）
                     const isSuccess = currentApi === 'dou' 
                         ? data.code === 1 
                         : currentApi === 'qq2' 
                             ? data.Code === 0 
                             : currentApi === 'lengy'
                                 ? data.code === 0
-                                : (currentApi === 'bing' || currentApi === 'wechat')
-                                    ? data.code === 200 
-                                    : data.code === 1;
+                                : currentApi === 'doro'
+                                    ? Array.isArray(data.items)
+                                    : (currentApi === 'bing' || currentApi === 'wechat')
+                                        ? data.code === 200 
+                                        : data.code === 1;
                     if (!isSuccess) throw new Error(data.msg || data.text || '加载失败，请重试');
                     items = config.extractData(data);
-                    // 冷颜表情包添加缓存击穿
-                    if (currentApi === 'dou' || currentApi === 'bing' || currentApi === 'wechat' || currentApi === 'lengy') {
+                    // Doro表情包添加缓存击穿
+                    if (currentApi === 'dou' || currentApi === 'bing' || currentApi === 'wechat' || currentApi === 'lengy' || currentApi === 'doro') {
                         const cacheKey = getCacheKey();
                         items = items.map(url => url.includes('?') ? `${url}&cache=${cacheKey}` : `${url}?cache=${cacheKey}`);
                     }
@@ -583,7 +597,8 @@
                             currentApi === 'longt' ? '龙图表情' : 
                             currentApi === 'bing' ? '必应表情' : 
                             currentApi === 'wechat' ? '微信表情' : 
-                            currentApi === 'lengy' ? '冷颜表情' : // 新增冷颜alt属性
+                            currentApi === 'lengy' ? '冷颜表情' : 
+                            currentApi === 'doro' ? 'Doro表情' : // 新增Doro表情alt属性
                             (currentApi === 'juhe' ? (type === '动漫表情' ? '动漫表情' : type) : '表情')
                         }"/>
                     </div>
@@ -597,7 +612,8 @@
                     if (currentApi === 'dou') moreText = '加载更多斗图';
                     if (currentApi === 'xyd') moreText = '加载更多小云朵';
                     if (currentApi === 'longt') moreText = '加载更多龙图';
-                    if (currentApi === 'lengy') moreText = '加载更多冷颜表情'; // 新增冷颜加载更多文本
+                    if (currentApi === 'lengy') moreText = '加载更多冷颜表情';
+                    if (currentApi === 'doro') moreText = '加载更多Doro表情'; // 新增Doro加载更多文本
                     if (currentApi === 'juhe') moreText = `加载更多${type === '动漫表情' ? '动漫表情' : type}`;
                     loadMoreBtn.textContent = moreText;
                     loadMoreBtn.disabled = false;
@@ -614,7 +630,8 @@
                     currentApi === 'longt' ? '加载龙图表情失败' : 
                     currentApi === 'bing' ? '加载必应表情失败' : 
                     currentApi === 'wechat' ? '加载微信表情失败' : 
-                    currentApi === 'lengy' ? '加载冷颜表情失败' : // 新增冷颜错误提示
+                    currentApi === 'lengy' ? '加载冷颜表情失败' : 
+                    currentApi === 'doro' ? '加载Doro表情失败' : // 新增Doro错误提示
                     error.message
                 );
             } finally {
@@ -636,7 +653,7 @@
                 });
             });
         }
-        // 切换分类核心逻辑：保留原有所有功能 + 适配冷颜表情包
+        // 切换分类核心逻辑：保留原有所有功能 + 适配冷颜+Doro表情包
         function switchApi(api) {
             currentApi = api;
             currentPage = 1;
@@ -667,18 +684,19 @@
                 searchBtn.classList.remove('hidden');
                 input.disabled = false;
                 searchBtn.disabled = false;
-                // 新增冷颜表情包输入框占位符
+                // 新增Doro表情包输入框占位符
                 input.placeholder = api === 'bing' ? '必应表情搜索（如萌宠、搞笑、斗图）' : 
                                      api === 'wechat' ? '微信表情搜索（如哈哈、可爱、搞怪）' : 
                                      api === 'qq' ? 'QQ表情搜索（如萌宠、斗图）' : 
                                      api === 'qq2' ? 'QQ表情包2搜索（如萌宠、斗图）' : 
                                      api === 'sogou' ? '搜狗表情搜索（如表情包、搞笑）' : 
-                                     '冷颜表情搜索（如搞笑、萌宠、可爱）';
+                                     api === 'lengy' ? '冷颜表情搜索（如搞笑、萌宠、可爱）' : 
+                                     'Doro表情搜索（如泪水、摆烂、随便吧）';
                 grid.innerHTML = '<div class="empty">输入关键词搜索表情</div>';
                 loadMore.classList.add('hidden');
             }
         }
-        // 新增：自定义下拉核心交互逻辑
+        // 自定义下拉核心交互逻辑
         // 展开/收起下拉
         selectTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -722,4 +740,3 @@
         window.onload = () => switchApi('shuitao');
     </script>
 </body></html>
-
