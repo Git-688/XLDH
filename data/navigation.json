@@ -414,6 +414,12 @@ window.NavigationData = {
                     icon: 'https://api.lbbb.cc/assets/img/favicons/favicon.png'
                 },
                 {
+                    title: '小小API',
+                    description: '发现和使用各种优质的API接口服务',
+                    url: 'https://xxapi.cn/',
+                    icon: 'assets/images/icons/00.png'
+                },
+                {
                     title: 'AuroraAPI',
                     description: '一个稳定、快速、易用的高质量API服务平台',
                     url: 'https://api.andeer.top/',
