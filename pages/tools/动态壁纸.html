@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>公开图床 | 一键上传</title>
-    <!-- 引入CDN资源 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-100-M/font-awesome/4.7.0/css/font-awesome.min.css">
-    <!-- Tailwind配置 -->
     <script>
         tailwind.config = {
             theme: {
@@ -42,6 +40,47 @@
         <div id="error-box" class="hidden mb-5 bg-danger/10 border border-danger/20 rounded-lg p-3 text-sm text-danger">
             <i class="fa fa-exclamation-circle mr-2"></i>
             <span id="error-text"></span>
+        </div>
+
+        <!-- 跨域解决指引弹窗 -->
+        <div id="cors-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl max-w-lg w-full p-5" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-slate-800 flex items-center">
+                        <i class="fa fa-exclamation-triangle text-warning mr-2"></i> 跨域拦截解决指引
+                    </h3>
+                    <button onclick="document.getElementById('cors-modal').classList.add('hidden')" class="text-slate-500 hover:text-danger">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                <div class="space-y-4 text-sm text-slate-700">
+                    <p>当前页面被浏览器跨域安全机制拦截，这是正常现象，<b>不是代码或接口的问题</b>，推荐用以下最简单的方案解决：</p>
+                    <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
+                        <p class="font-medium text-primary mb-2">✅ 方案1：一键启动本地服务器（10秒搞定）</p>
+                        <ol class="list-decimal pl-4 space-y-1">
+                            <li>把HTML文件放到单独的文件夹，在文件夹地址栏输入<code class="bg-white px-1 rounded">cmd</code>回车</li>
+                            <li>在弹出的黑框里，输入下面的命令回车</li>
+                        </ol>
+                        <div class="mt-2 relative">
+                            <input type="text" id="cmd-text" readonly class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white font-mono text-xs" value="python -m http.server 8080">
+                            <button onclick="copyCmd()" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-primary hover:text-primary/80">
+                                <i class="fa fa-copy"></i> 复制
+                            </button>
+                        </div>
+                        <ol class="list-decimal pl-4 space-y-1 mt-2" start="3">
+                            <li>打开浏览器，地址栏输入<code class="bg-white px-1 rounded">http://localhost:8080</code>即可正常使用</li>
+                        </ol>
+                    </div>
+                    <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
+                        <p class="font-medium text-primary mb-2">✅ 方案2：永久在线托管</p>
+                        <p>把HTML文件改名为<code class="bg-white px-1 rounded">index.html</code>，上传到Vercel/GitHub Pages，生成在线链接打开即可，永久解决跨域问题。</p>
+                    </div>
+                    <p class="text-xs text-slate-500">⚠️ 不推荐长期使用CORS插件，会关闭浏览器所有网站的安全限制，有安全风险</p>
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <button onclick="document.getElementById('cors-modal').classList.add('hidden')" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">我知道了</button>
+                </div>
+            </div>
         </div>
 
         <!-- 接口配置区（默认已填好公开密钥，可直接使用） -->
@@ -191,6 +230,7 @@
         const devKeyInput = document.getElementById('dev-key');
         const errorBox = document.getElementById('error-box');
         const errorText = document.getElementById('error-text');
+        const corsModal = document.getElementById('cors-modal');
         const toggleConfigBtn = document.getElementById('toggle-config');
         const configContent = document.getElementById('config-content');
         const fileInput = document.getElementById('file-input');
@@ -216,6 +256,19 @@
         const toastIcon = document.getElementById('toast-icon');
         const toastText = document.getElementById('toast-text');
 
+        // 复制命令函数
+        window.copyCmd = async () => {
+            const cmdInput = document.getElementById('cmd-text');
+            try {
+                await navigator.clipboard.writeText(cmdInput.value);
+                showToast('命令复制成功', 'success');
+            } catch (err) {
+                cmdInput.select();
+                document.execCommand('copy');
+                showToast('命令复制成功', 'success');
+            }
+        };
+
         // 工具函数：Toast提示
         const showToast = (message, type = 'info') => {
             const typeConfig = {
@@ -234,10 +287,13 @@
         };
 
         // 工具函数：显示/隐藏错误
-        const showError = (message) => {
+        const showError = (message, isCors = false) => {
             errorText.textContent = message;
             errorBox.classList.remove('hidden');
             console.error('图床错误：', message);
+            if (isCors) {
+                corsModal.classList.remove('hidden');
+            }
         };
         const hideError = () => {
             errorBox.classList.add('hidden');
@@ -255,21 +311,15 @@
 
         // 工具函数：安全文件名处理（解决name不能为空报错）
         const getSafeFileName = (file) => {
-            // 提取文件名（不含后缀）
             const fullName = file.name;
             const lastDotIndex = fullName.lastIndexOf('.');
             let name = lastDotIndex === -1 ? fullName : fullName.substring(0, lastDotIndex);
-            
-            // 处理空文件名、纯空格文件名
             if (!name || name.trim() === '') {
                 name = `image_${Date.now()}`;
             }
-            
-            // 限制长度不超过200字
             if (name.length > 200) {
                 name = name.substring(0, 190) + `_${Date.now().toString().slice(-6)}`;
             }
-            
             return name.trim();
         };
 
@@ -289,7 +339,6 @@
                 return;
             }
             historyEmpty.classList.add('hidden');
-            // 最新的在最前面
             historyList.innerHTML = history.reverse().map((item, index) => `
                 <div class="border border-slate-200 rounded-lg p-2 bg-slate-50 flex flex-col">
                     <img src="${item.resurl}" alt="${item.name}" class="w-full h-36 object-cover rounded mb-2 cursor-pointer hover:opacity-90 transition" onclick="openModal('${item.resurl}')">
@@ -345,7 +394,6 @@
                 await navigator.clipboard.writeText(url);
                 showToast('链接复制成功', 'success');
             } catch (err) {
-                // 降级兼容方案
                 const input = document.createElement('input');
                 input.value = url;
                 document.body.appendChild(input);
@@ -359,12 +407,10 @@
         // 文件选择处理
         const handleFileSelect = (file) => {
             hideError();
-            // 校验文件类型
             if (!file.type.startsWith('image/')) {
                 showToast('请选择有效的图片文件', 'error');
                 return;
             }
-            // 校验文件大小（预留base64膨胀空间）
             const maxOriginSize = 750 * 1024;
             if (file.size > maxOriginSize) {
                 showToast('文件过大，请选择750KB以内的图片', 'warning');
@@ -372,25 +418,20 @@
             }
 
             selectedFile = file;
-            // 读取文件生成预览和base64
             const reader = new FileReader();
             reader.onload = (e) => {
                 const result = e.target.result;
                 previewImg.src = result;
-                base64Data = result.split(',')[1]; // 去除base64前缀，只保留编码数据
+                base64Data = result.split(',')[1];
                 
-                // 校验base64大小
                 if (base64Data.length > MAX_BASE64_SIZE) {
                     showToast('图片编码后超过1M限制，请压缩后再试', 'error');
                     resetFile();
                     return;
                 }
 
-                // 填充文件信息
                 fileNameEl.textContent = file.name;
                 fileSizeEl.textContent = `大小：${formatFileSize(file.size)}`;
-                
-                // 显示预览，启用上传按钮
                 previewArea.classList.remove('hidden');
                 uploadBtn.disabled = false;
             };
@@ -411,6 +452,10 @@
         // 页面初始化
         window.addEventListener('DOMContentLoaded', () => {
             loadHistory();
+            // 检测是否是本地file协议打开，给出提示
+            if (window.location.protocol === 'file:') {
+                showToast('本地打开可能会被跨域拦截，建议用本地服务器打开', 'warning');
+            }
         });
 
         // 配置收起/展开
@@ -450,7 +495,6 @@
         // 核心上传逻辑
         uploadBtn.addEventListener('click', async () => {
             hideError();
-            // 基础参数校验
             const devId = devIdInput.value.trim();
             const devKey = devKeyInput.value.trim();
             if (!devId || !devKey) {
@@ -463,11 +507,8 @@
                 return;
             }
 
-            // 处理文件名和后缀（解决name不能为空问题）
             const safeName = getSafeFileName(selectedFile);
             const fileExt = getFileExt(selectedFile);
-
-            // 构建请求参数
             const params = new URLSearchParams({
                 id: devId,
                 key: devKey,
@@ -475,11 +516,8 @@
                 name: safeName,
                 res: base64Data
             });
-
-            // 构建完整请求URL
             const requestUrl = `${API_URL}?${params.toString()}`;
 
-            // 按钮加载状态
             uploadBtn.disabled = true;
             uploadBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i> 上传中...';
 
@@ -487,7 +525,6 @@
                 console.log('发起上传请求，文件名：', safeName, '后缀：', fileExt);
                 const response = await fetch(requestUrl, { method: 'GET' });
 
-                // 处理HTTP级错误
                 if (!response.ok) {
                     throw new Error(`请求失败：${response.status} ${response.statusText}`);
                 }
@@ -495,11 +532,9 @@
                 const result = await response.json();
                 console.log('接口返回结果：', result);
 
-                // 处理接口业务逻辑
                 if (result.code === 200 && result.resurl) {
                     showToast('图片上传成功，已自动复制直链', 'success');
                     
-                    // 填充结果数据
                     const resUrl = result.resurl;
                     resultImg.src = resUrl;
                     directLinkInput.value = resUrl;
@@ -507,21 +542,16 @@
                     htmlLinkInput.value = `<img src="${resUrl}" alt="${safeName}">`;
                     resultArea.classList.remove('hidden');
                     
-                    // 自动复制直链
                     await copyLink(resUrl);
-                    
-                    // 添加到历史记录
                     addHistory({
                         name: selectedFile.name,
                         resurl: resUrl,
                         size: formatFileSize(selectedFile.size)
                     });
                     
-                    // 重置上传区域
                     resetFile();
                     
                 } else {
-                    // 显示接口返回的具体错误
                     const errorMsg = result.msg || '上传失败，接口返回未知错误';
                     showError(`接口报错：${errorMsg}`);
                     showToast(errorMsg, 'error');
@@ -529,16 +559,16 @@
             } catch (err) {
                 console.error('上传请求异常：', err);
                 let errorMsg = '网络请求失败，请检查网络连接';
-                // 识别常见错误
+                let isCorsError = false;
                 if (err.message.includes('Failed to fetch') || err.message.includes('CORS')) {
-                    errorMsg = '请求被浏览器跨域拦截，可安装CORS插件解决，或使用本地服务器打开页面';
+                    errorMsg = '请求被浏览器跨域拦截，点击查看解决指引';
+                    isCorsError = true;
                 } else {
                     errorMsg = `请求失败：${err.message}`;
                 }
-                showError(errorMsg);
+                showError(errorMsg, isCorsError);
                 showToast('上传失败', 'error');
             } finally {
-                // 恢复按钮状态
                 uploadBtn.disabled = false;
                 uploadBtn.innerHTML = '<i class="fa fa-cloud-upload mr-2"></i> 立即上传';
             }
