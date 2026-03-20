@@ -334,8 +334,9 @@
                         <div class="custom-select__option" data-value="sogou">搜狗表情包</div>
                         <div class="custom-select__option" data-value="lengy">冷颜表情包</div>
                         <div class="custom-select__option" data-value="doro">Doro表情包</div>
-                        <!-- 新增：秋秋表情包下拉选项 -->
                         <div class="custom-select__option" data-value="mqss">秋秋表情包</div>
+                        <!-- 新增：百度表情包下拉选项 -->
+                        <div class="custom-select__option" data-value="baidu">百度表情包</div>
                         <div class="custom-select__option" data-value="juhe">聚合表情包</div>
                     </div>
                 </div>
@@ -362,7 +363,7 @@
         <div class="toast" id="toast"></div>
     </main>
     <script>
-        // API配置：保留所有原有配置 + 新增秋秋表情包(mqss)
+        // API配置：保留所有原有配置 + 新增百度表情包(baidu)
         const API_CONFIG = {
             shuitao: {
                 url: 'https://api.lolimi.cn/API/stdd/api',
@@ -457,11 +458,20 @@
                 supportPagination: true,
                 isSymbolApi: false
             },
-            // 新增：秋秋表情包API配置（适配msg/page/num/apikey所有必填参数）
             mqss: {
                 url: 'https://missqiu.icu/API/biaoqingsousuo.php',
                 params: (keyword, page) => `?msg=${encodeURIComponent(keyword)}&page=${page}&num=40&apikey=5c7f37a79ce1eef4eb1b79dc5d7a752ab139ac681ce02447389e6fc6a2eb5a52`,
                 extractData: (data) => Array.isArray(data.data) ? data.data.map(item => item.sticker_url) : [],
+                supportPagination: true,
+                isSymbolApi: false
+            },
+            // 新增：百度表情包API配置（适配所有必填参数）
+            baidu: {
+                url: 'https://cn.apihz.cn/api/img/apihzbqbbaidu.php',
+                // 固定id/key，默认每页20条，拼接页码和搜索关键词
+                params: (keyword, page) => `?id=88888888&key=88888888&limit=20&page=${page}&words=${encodeURIComponent(keyword)}`,
+                // 从返回结果的res数组中提取图片链接
+                extractData: (data) => Array.isArray(data.res) ? data.res : [],
                 supportPagination: true,
                 isSymbolApi: false
             },
@@ -473,7 +483,7 @@
                 isSymbolApi: false
             }
         };
-        // DOM元素获取：替换原apiSelect为自定义下拉元素
+        // DOM元素获取
         const grid = document.getElementById('emojiGrid');
         const input = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
@@ -488,7 +498,7 @@
         const selectOptions = document.getElementById('selectOptions');
         const selectOptionItems = document.querySelectorAll('.custom-select__option');
         const selectText = document.querySelector('.select-text');
-        // 全局状态：保留原有所有状态
+        // 全局状态
         let isLoading = false;
         let currentKeyword = '';
         let currentPage = 1;
@@ -518,7 +528,7 @@
         function setJuheBtnActive(type) {
             juheBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.type === type));
         }
-        // 核心加载方法：保留原有所有逻辑 + 适配秋秋表情包
+        // 核心加载方法：适配百度表情包
         async function loadEmojis(type = '', page = 1, append = false) {
             if (isLoading) return;
             isLoading = true;
@@ -536,7 +546,8 @@
             if (currentApi === 'wechat') loadingText = '正在搜索微信表情...';
             if (currentApi === 'lengy') loadingText = '正在搜索冷颜表情...';
             if (currentApi === 'doro') loadingText = '正在搜索Doro表情...';
-            if (currentApi === 'mqss') loadingText = '正在搜索秋秋表情...'; // 新增秋秋加载提示
+            if (currentApi === 'mqss') loadingText = '正在搜索秋秋表情...';
+            if (currentApi === 'baidu') loadingText = '正在搜索百度表情...'; // 新增百度加载提示
             if (currentApi === 'juhe') loadingText = `正在加载${type === '动漫表情' ? '动漫表情' : type}...`;
             
             if (!append) {
@@ -568,7 +579,7 @@
                     const response = await fetch(requestUrl);
                     if (!response.ok) throw new Error('网络请求失败');
                     const data = await response.json();
-                    // 新增秋秋表情包成功判断（code=0为成功）
+                    // 新增百度表情包成功判断（code=200为成功）
                     const isSuccess = currentApi === 'dou' 
                         ? data.code === 1 
                         : currentApi === 'qq2' 
@@ -577,13 +588,15 @@
                                 ? data.code === 0
                                 : currentApi === 'doro'
                                     ? Array.isArray(data.items)
-                                    : (currentApi === 'bing' || currentApi === 'wechat')
-                                        ? data.code === 200 
-                                        : data.code === 1;
+                                    : currentApi === 'baidu'
+                                        ? data.code === 200
+                                        : (currentApi === 'bing' || currentApi === 'wechat')
+                                            ? data.code === 200 
+                                            : data.code === 1;
                     if (!isSuccess) throw new Error(data.msg || data.text || '加载失败，请重试');
                     items = config.extractData(data);
-                    // 秋秋表情包添加缓存击穿
-                    if (currentApi === 'dou' || currentApi === 'bing' || currentApi === 'wechat' || currentApi === 'lengy' || currentApi === 'doro' || currentApi === 'mqss') {
+                    // 百度表情包添加缓存击穿
+                    if (currentApi === 'dou' || currentApi === 'bing' || currentApi === 'wechat' || currentApi === 'lengy' || currentApi === 'doro' || currentApi === 'mqss' || currentApi === 'baidu') {
                         const cacheKey = getCacheKey();
                         items = items.map(url => url.includes('?') ? `${url}&cache=${cacheKey}` : `${url}?cache=${cacheKey}`);
                     }
@@ -605,7 +618,8 @@
                             currentApi === 'wechat' ? '微信表情' : 
                             currentApi === 'lengy' ? '冷颜表情' : 
                             currentApi === 'doro' ? 'Doro表情' : 
-                            currentApi === 'mqss' ? '秋秋表情' : // 新增秋秋表情alt属性
+                            currentApi === 'mqss' ? '秋秋表情' : 
+                            currentApi === 'baidu' ? '百度表情' : // 新增百度表情alt属性
                             (currentApi === 'juhe' ? (type === '动漫表情' ? '动漫表情' : type) : '表情')
                         }"/>
                     </div>
@@ -621,7 +635,8 @@
                     if (currentApi === 'longt') moreText = '加载更多龙图';
                     if (currentApi === 'lengy') moreText = '加载更多冷颜表情';
                     if (currentApi === 'doro') moreText = '加载更多Doro表情';
-                    if (currentApi === 'mqss') moreText = '加载更多秋秋表情'; // 新增秋秋加载更多文本
+                    if (currentApi === 'mqss') moreText = '加载更多秋秋表情';
+                    if (currentApi === 'baidu') moreText = '加载更多百度表情'; // 新增百度加载更多文本
                     if (currentApi === 'juhe') moreText = `加载更多${type === '动漫表情' ? '动漫表情' : type}`;
                     loadMoreBtn.textContent = moreText;
                     loadMoreBtn.disabled = false;
@@ -640,19 +655,20 @@
                     currentApi === 'wechat' ? '加载微信表情失败' : 
                     currentApi === 'lengy' ? '加载冷颜表情失败' : 
                     currentApi === 'doro' ? '加载Doro表情失败' : 
-                    currentApi === 'mqss' ? '加载秋秋表情失败' : // 新增秋秋错误提示
+                    currentApi === 'mqss' ? '加载秋秋表情失败' : 
+                    currentApi === 'baidu' ? '加载百度表情失败' : // 新增百度错误提示
                     error.message
                 );
             } finally {
                 isLoading = false;
             }
         }
-        // 搜索方法：保留原有逻辑
+        // 搜索方法
         function handleSearch() {
             if (currentApi === 'shuitao' || currentApi === 'feishu' || currentApi === 'chaiq' || currentApi === 'dou' || currentApi === 'xyd' || currentApi === 'longt' || currentApi === 'juhe') return;
             loadEmojis(input.value.trim(), 1, false);
         }
-        // 聚合按钮点击事件：保留原有逻辑
+        // 聚合按钮点击事件
         function bindJuheBtnEvent() {
             juheBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -662,7 +678,7 @@
                 });
             });
         }
-        // 切换分类核心逻辑：保留原有所有功能 + 适配秋秋表情包
+        // 切换分类核心逻辑：适配百度表情包
         function switchApi(api) {
             currentApi = api;
             currentPage = 1;
@@ -693,7 +709,7 @@
                 searchBtn.classList.remove('hidden');
                 input.disabled = false;
                 searchBtn.disabled = false;
-                // 新增秋秋表情包输入框占位符
+                // 新增百度表情包输入框占位符
                 input.placeholder = api === 'bing' ? '必应表情搜索（如萌宠、搞笑、斗图）' : 
                                      api === 'wechat' ? '微信表情搜索（如哈哈、可爱、搞怪）' : 
                                      api === 'qq' ? 'QQ表情搜索（如萌宠、斗图）' : 
@@ -701,13 +717,13 @@
                                      api === 'sogou' ? '搜狗表情搜索（如表情包、搞笑）' : 
                                      api === 'lengy' ? '冷颜表情搜索（如搞笑、萌宠、可爱）' : 
                                      api === 'doro' ? 'Doro表情搜索（如泪水、摆烂、随便吧）' : 
-                                     '秋秋表情搜索（如可莉、萌宠、搞笑）';
+                                     api === 'mqss' ? '秋秋表情搜索（如可莉、萌宠、搞笑）' : 
+                                     '百度表情搜索（如开心、伤心、搞笑、萌宠）';
                 grid.innerHTML = '<div class="empty">输入关键词搜索表情</div>';
                 loadMore.classList.add('hidden');
             }
         }
         // 自定义下拉核心交互逻辑
-        // 展开/收起下拉
         selectTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
             selectTrigger.classList.toggle('open');
@@ -718,15 +734,11 @@
             item.addEventListener('click', (e) => {
                 const apiValue = item.dataset.value;
                 const apiText = item.textContent;
-                // 更新选中样式
                 selectOptionItems.forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
-                // 更新触发按钮文本
                 selectText.textContent = apiText;
-                // 收起下拉
                 selectTrigger.classList.remove('open');
                 selectOptions.classList.remove('show');
-                // 执行分类切换
                 switchApi(apiValue);
             });
         });
@@ -737,7 +749,7 @@
         });
         // 阻止下拉内部点击冒泡
         customSelect.addEventListener('click', (e) => e.stopPropagation());
-        // 原有事件监听：保留所有逻辑
+        // 原有事件监听
         searchBtn.addEventListener('click', handleSearch);
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && currentApi !== 'shuitao' && currentApi !== 'feishu' && currentApi !== 'chaiq' && currentApi !== 'dou' && currentApi !== 'xyd' && currentApi !== 'longt' && currentApi !== 'juhe') handleSearch();
