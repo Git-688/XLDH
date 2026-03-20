@@ -11,6 +11,7 @@ class App {
         this.isInitialized = false;
         this.uptimeTimer = null;
         this.lastUptimeUpdate = 0;
+        this.diaryModalHideRef = null;
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -21,6 +22,98 @@ class App {
         }
     }
 
+    // ========== 日记功能相关常量和方法 ==========
+    DIARY_IDS = [1,2,3,4,5,6,7,8,9,10];  // 可修改范围
+
+    async loadDiaryBatch() {
+        const listEl = document.getElementById('diaryList');
+        if (!listEl) return;
+        
+        listEl.innerHTML = '<div class="loading">加载日记中...</div>';
+        
+        try {
+            const promises = this.DIARY_IDS.map(id =>
+                fetch(`https://cn.apihz.cn/api/cunchu/textzd.php?id=10014221&key=4a7768de1cf2e0f41fc0a4005240c837&numid=${id}`)
+                    .then(res => res.json())
+                    .then(data => ({ id, ...data }))
+                    .catch(err => ({ id, code: 500, msg: err.message }))
+            );
+            
+            const results = await Promise.all(promises);
+            
+            // 过滤：只保留 code===200 且标题和内容均非空
+            const validItems = results.filter(item => {
+                if (item.code !== 200) return false;
+                const title = item.title || '';
+                const words = item.words || '';
+                return title.trim() !== '' && words.trim() !== '';
+            });
+            
+            if (validItems.length === 0) {
+                listEl.innerHTML = '<div class="empty">暂无日记记录</div>';
+                return;
+            }
+            
+            const html = validItems.map(item => {
+                const title = item.title.trim();
+                const time = item.time || '--';
+                const words = item.words.trim();
+                
+                return `
+                    <div class="diary-item">
+                        <div class="diary-item-header">
+                            <span class="diary-item-id">#${item.id}</span>
+                            <span class="diary-item-time">${time}</span>
+                        </div>
+                        <div class="diary-item-title">${this.escapeHtml(title)}</div>
+                        <div class="diary-item-content">${this.escapeHtml(words)}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            listEl.innerHTML = html;
+            
+        } catch (error) {
+            listEl.innerHTML = `<div class="error">加载失败：${error.message}</div>`;
+        }
+    }
+
+    showDiaryModal() {
+        const modal = document.getElementById('diaryModal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        
+        if (!this.diaryModalHideRef) {
+            this.diaryModalHideRef = { hide: this.hideDiaryModal.bind(this) };
+        }
+        this.registerModal(this.diaryModalHideRef);
+        
+        // 每次打开重新加载
+        this.loadDiaryBatch();
+    }
+
+    hideDiaryModal() {
+        const modal = document.getElementById('diaryModal');
+        if (modal) modal.style.display = 'none';
+        if (this.diaryModalHideRef) {
+            this.unregisterModal(this.diaryModalHideRef);
+        }
+    }
+
+    initDiaryModalEvents() {
+        const modal = document.getElementById('diaryModal');
+        const closeBtn = document.getElementById('diaryCloseBtn');
+        
+        if (!modal || !closeBtn) return;
+        
+        closeBtn.addEventListener('click', () => this.hideDiaryModal());
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) this.hideDiaryModal();
+        });
+    }
+    // =========================================
+
     init() {
         if (this.isInitialized) return;
         this.setupErrorHandling();
@@ -29,6 +122,7 @@ class App {
         this.initModules();
         this.initDependentComponents();
         this.setupGlobalEvents();
+        this.initDiaryModalEvents();  // 新增
         this.isInitialized = true;
         this.start();
     }
@@ -84,7 +178,6 @@ class App {
             
             if (typeof OptimizedNavigation !== 'undefined') {
                 this.modules.navigation = new OptimizedNavigation();
-                // 设置全局实例，供 getOptimizedNavigation 使用
                 window.optimizedNavigation = this.modules.navigation;
                 initPromises.push(this.modules.navigation.init?.());
             }
