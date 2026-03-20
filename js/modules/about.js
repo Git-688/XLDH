@@ -158,6 +158,11 @@ class AboutModule {
                                 <i class="fas fa-user-secret"></i>
                                 <span class="tooltip-text">私密空间</span>
                             </button>
+                            <!-- 新增日记本按钮 -->
+                            <button class="about-social-btn diary-btn tooltip" id="aboutDiaryBtn">
+                                <i class="fas fa-book"></i>
+                                <span class="tooltip-text">神木日记</span>
+                            </button>
                         </div>
                         <button class="about-close-btn" id="aboutCloseBtn">
                              关闭
@@ -248,6 +253,17 @@ class AboutModule {
                 this.hide();
                 setTimeout(() => {
                     window.location.href = './pages/others/smkj.html';
+                }, 300);
+            });
+        }
+
+        // 新增日记本按钮事件
+        const diaryBtn = document.getElementById('aboutDiaryBtn');
+        if (diaryBtn) {
+            diaryBtn.addEventListener('click', () => {
+                this.hide();
+                setTimeout(() => {
+                    window.open('https://www.apihz.cn/user/', '_blank');
                 }, 300);
             });
         }
