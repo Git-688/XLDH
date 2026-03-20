@@ -279,6 +279,10 @@
 .space-btn { background: #FFD166; }
 .space-btn:hover { background: #FFC952; }
 
+/* 日记本按钮 - 浅紫色 */
+.diary-btn { background: #A58BFF; }
+.diary-btn:hover { background: #9575E5; }
+
 .about-social-btn .tooltip-text {
     visibility: hidden;
     width: 70px;
