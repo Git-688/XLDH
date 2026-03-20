@@ -135,7 +135,7 @@ window.NavigationData = {
                     title: '酷酷API',
                     description: '提升工作效率的实用工具',
                     url: 'https://api.zxki.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: 'BugPk-Api',
@@ -159,31 +159,37 @@ window.NavigationData = {
                     title: '迟言API',
                     description: '多功能应用接口集合',
                     url: 'https://cyapi.top/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '酷乐API',
                     description: '娱乐应用接口集合',
                     url: 'https://api.kuleu.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
-                    title: '龙珠API',
+                    title: '月下独酌API',
                     description: '强大的应用接口服务',
-                    url: 'https://sdkapi.hhlqilongzhu.cn/',
-                    icon: 'https://www.hhlqilongzhu.cn/assets/resource/favicon.png'
+                    url: 'https://jcy.lvlong.xyz/api/',
+                    icon: 'https://jcy.lvlong.xyz/favicon.ico'
+                },
+                {
+                    title: '🔥接口盒子',
+                    description: '欢迎使用，联盟平台-接口盒子',
+                    url: 'https://www.apihz.cn/',
+                    icon: 'https://www.apihz.cn/img/logo.png'
                 },
                 {
                     title: '笒鬼鬼API',
                     description: '创意应用接口',
                     url: 'https://api.cenguigui.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '无铭API',
                     description: '简洁实用的应用接口',
                     url: 'https://jkapi.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: 'PearAPI',
@@ -207,7 +213,7 @@ window.NavigationData = {
                     title: '存雨API',
                     description: '数据存储应用接口',
                     url: 'https://api.cunyuapi.top/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '山河API',
@@ -219,7 +225,7 @@ window.NavigationData = {
                     title: '苏苏API',
                     description: '简洁易用的应用接口',
                     url: 'https://api.xn--ei1aa.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '苏慕白API',
@@ -237,25 +243,31 @@ window.NavigationData = {
                     title: '小星API',
                     description: '轻量级应用接口',
                     url: 'https://api.xiaoxing.site/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '慕名API',
                     description: '知名应用接口集合',
                     url: 'https://xiaoapi.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
-                    title: '愿想API',
-                    description: '免费API, 不稳定API，可能🐔的API',
-                    url: 'https://xiaodi.jujukai.cn/',
-                    icon: 'https://xiaodi.jujukai.cn/%E5%9B%BE%E6%A0%87.png'
+                    title: '🔥落心秋API',
+                    description: '一个稳定、快速、易用的高质量API服务平台',
+                    url: 'https://missqiu.icu/',
+                    icon: 'https://q.qlogo.cn/headimg_dl?dst_uin=3182094967&spec=640'
+                },
+                {
+                    title: '浅夏API',
+                    description: '我们提供丰富多样的API接口，接口仅提供学习，请勿用于商用。',
+                    url: 'https://115exuq280928.vicp.fun/',
+                    icon: 'http://p.qlogo.cn/homework/0/hw_h_6hbdvnt5ldogco86891ea1a206c9/0/qxapi'
                 },
                 {
                     title: '芒果API',
                     description: '热带风格应用接口',
                     url: 'http://mgyy.asia/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '素颜API',
@@ -273,7 +285,7 @@ window.NavigationData = {
                     title: '小言API',
                     description: '轻量级应用接口',
                     url: 'http://api.zxz.ee/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: 'OIAPI',
@@ -291,7 +303,7 @@ window.NavigationData = {
                     title: '98情缘API',
                     description: '情感类应用接口',
                     url: 'https://www.98qy.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '优享云API',
@@ -309,25 +321,25 @@ window.NavigationData = {
                     title: '洛樱云API',
                     description: '樱花主题应用接口',
                     url: 'https://api.alcex.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
-                    title: '✅️WhyAPI',
+                    title: '🔥WhyAPI',
                     description: '问答类应用接口',
                     url: 'https://apis.whyta.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '惜染图库API',
                     description: '图片资源应用接口',
                     url: 'https://api.hefollo.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '天一API',
                     description: '稳定、快速、免费的 API 接口服务',
                     url: 'https://api.icofun.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '客源API',
@@ -339,13 +351,13 @@ window.NavigationData = {
                     title: '巡回寺API',
                     description: '巡回服务应用接口',
                     url: 'https://api.xunhuisi.store/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '枫雨API',
                     description: '风雨无阻应用接口',
                     url: 'https://api-v2.yuafeng.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: 'API大全',
@@ -363,13 +375,13 @@ window.NavigationData = {
                     title: '栗次元API',
                     description: '二次元应用接口',
                     url: 'https://t.alcy.cc/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '筱初API',
                     description: '清新初体验应用接口',
                     url: 'https://api.xcboke.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '安生API',
@@ -393,13 +405,13 @@ window.NavigationData = {
                     title: '驼城API',
                     description: '稳定可靠应用接口',
                     url: 'https://api.tcslw.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '清和API',
                     description: '清新和谐应用接口',
                     url: 'https://api.qhsou.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '小尘API',
@@ -417,13 +429,19 @@ window.NavigationData = {
                     title: '小小API',
                     description: '发现和使用各种优质的API接口服务',
                     url: 'https://xxapi.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
+                },
+                {
+                    title: '🔥冷雨API',
+                    description: '为您提供免费、稳定且高效的API接口服务',
+                    url: 'https://lengy.top/',
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: 'AuroraAPI',
                     description: '一个稳定、快速、易用的高质量API服务平台',
                     url: 'https://api.andeer.top/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 }
             ]
         },
@@ -435,7 +453,7 @@ window.NavigationData = {
                     title: '黑洞导航',
                     description: '当前最受欢迎的资源',
                     url: 'https://hddh.link/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '薇飞导航',
@@ -465,7 +483,7 @@ window.NavigationData = {
                     title: '不死鸟',
                     description: '长久稳定的网站导航',
                     url: 'https://dalao.ru/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '不求人导航',
@@ -531,7 +549,7 @@ window.NavigationData = {
                     title: 'XXV网址导航',
                     description: '罗马数字风格网站导航',
                     url: 'https://www.xxv.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: 'JAY的资源库',
@@ -555,7 +573,7 @@ window.NavigationData = {
                     title: '官网大全',
                     description: '官方网站集合导航',
                     url: 'https://guanwangdaquan.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '无峰网址导航',
@@ -591,13 +609,13 @@ window.NavigationData = {
                     title: '一只会飞的旺旺',
                     description: '趣味风格网站导航',
                     url: 'https://nav.wangwangit.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: 'Noisedh导航',
                     description: '噪音风格网站导航',
                     url: 'http://www.noisedh.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '趣导航',
@@ -609,7 +627,7 @@ window.NavigationData = {
                     title: '喜欢书签',
                     description: '书签式网站导航',
                     url: 'https://www.likebookmark.com/#category-229',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '书签地球',
@@ -653,13 +671,13 @@ window.NavigationData = {
                     title: '八号影视',
                     description: '优质影视资源平台',
                     url: 'https://www.bahaotv.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: 'FreeOK',
                     description: '免费影视观看平台',
                     url: 'https://www.freeok.mobi/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '火车太堵',
@@ -677,19 +695,19 @@ window.NavigationData = {
                     title: '游子影视',
                     description: '海外影视资源平台',
                     url: 'https://www.youzisp.tv/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '观影GYING',
                     description: '专业影视观看平台',
                     url: 'https://www.gying.net/user/login',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '毒舌电影',
                     description: '犀利影评影视平台',
                     url: 'https://www.dushe7.app/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '来看点播',
@@ -701,7 +719,7 @@ window.NavigationData = {
                     title: '哈哩哈哩',
                     description: '二次元影视平台',
                     url: 'http://halihali21.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '臭蛋蛋影视',
@@ -713,19 +731,19 @@ window.NavigationData = {
                     title: '片吧影视',
                     description: '影视片段分享平台',
                     url: 'https://www.pbpbs.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '七味',
                     description: '七种口味影视平台',
                     url: 'https://www.qwavi.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '剧爷爷',
                     description: '经典老剧影视平台',
                     url: 'https://www.juyeye.cc/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: 'LIBVIO',
@@ -749,7 +767,7 @@ window.NavigationData = {
                     title: 'GAZE',
                     description: '凝视影视观看平台',
                     url: 'https://gaze.run/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 }
             ],
             '二次元': [
@@ -789,31 +807,31 @@ window.NavigationData = {
                     title: '飘花资源网',
                     description: '飘花影视资源平台',
                     url: 'https://www.piaohua.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '美剧粉',
                     description: '美剧资源专门平台',
                     url: 'https://www.mjf2020.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '看片狂人',
                     description: '狂热影视爱好者平台',
                     url: 'https://kuangren.us/portal.html',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '梦幻天堂',
                     description: '梦幻影视资源平台',
                     url: 'https://www.321n.net/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '人人电源网',
                     description: '人人影视资源平台',
                     url: 'https://www.rrdynb.com/index.html',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '人人影视分享站',
@@ -849,7 +867,7 @@ window.NavigationData = {
                     title: '热门网盘资源',
                     description: '网盘影视资源集合',
                     url: 'https://docs.qq.com/sheet/DRnhoRHpoV2lodFlq?tab=km9qhm',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 }
             ],
             '字幕资源': [
@@ -907,7 +925,7 @@ window.NavigationData = {
                     title: 'mmPlayer',
                     description: '精美音乐播放器',
                     url: 'https://netease-music.fe-mm.com/#/music/playlist',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '闪闪音乐网',
@@ -965,13 +983,13 @@ window.NavigationData = {
                     title: '找书神器',
                     description: '书籍搜索工具',
                     url: 'https://mianfei22.com/v3_uni_0919213?2',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '贼吧网',
                     description: '网络文学阅读平台',
                     url: 'https://m.zei8.vip/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '乐文小说网',
@@ -983,13 +1001,13 @@ window.NavigationData = {
                     title: '知轩藏书',
                     description: '知识轩藏书平台',
                     url: 'https://zxcs.info/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '搬书匠',
                     description: '书籍搬运工平台',
                     url: 'http://www.banshujiang.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '书格',
@@ -1001,13 +1019,13 @@ window.NavigationData = {
                     title: '苦瓜书盘',
                     description: '苦味书籍平台',
                     url: 'https://www.kgbook.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '资源帝',
                     description: '资源帝王平台',
                     url: 'https://shu.ziyuandi.cn/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '香书小说',
@@ -1049,7 +1067,7 @@ window.NavigationData = {
                     title: '阅读',
                     description: '简洁阅读平台',
                     url: 'https://read.ygxz.in/#/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 }
             ],
             '漫画资源': [
@@ -1099,13 +1117,13 @@ window.NavigationData = {
                     title: '人生重开模拟器',
                     description: '人生模拟游戏',
                     url: 'https://liferestart.syaro.io/public/index.html',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '神奇海螺试验场',
                     description: '神奇实验游戏',
                     url: 'https://lab.magiconch.com/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '柠檬精',
@@ -1129,7 +1147,7 @@ window.NavigationData = {
                     title: '俄罗斯方块',
                     description: '经典俄罗斯方块',
                     url: 'http://github.tanchangwen.com/react-tetris/?lan=zh-cn',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '在线魔方',
@@ -1147,7 +1165,7 @@ window.NavigationData = {
                     title: '核心防御',
                     description: '核心防御游戏',
                     url: 'https://lab.hakim.se/core/',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: '井字游戏',
@@ -1159,7 +1177,7 @@ window.NavigationData = {
                     title: '画物理线条',
                     description: '物理线条绘画游戏',
                     url: 'https://www.xiwnn.com/huaxian',
-                    icon: 'assets/images/icons/00.png'
+                    icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
                     title: 'mk48',
