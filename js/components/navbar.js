@@ -116,22 +116,22 @@ class Navbar {
                 });
             }
 
+            // ========== 修改：刷新按钮 → 日记功能 ==========
             const refreshBtn = document.getElementById('refreshBtn');
             if (refreshBtn) {
-                refreshBtn.addEventListener('click', (e) => {
+                refreshBtn.replaceWith(refreshBtn.cloneNode(true));  // 清除旧监听
+                const newRefreshBtn = document.getElementById('refreshBtn');
+                newRefreshBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    this.closeAllModalsExcept([]);
-                    window.toast.show('正在刷新页面数据...', 'info');
-                    setTimeout(() => {
-                        if (window.app && window.app.refreshAllModules) {
-                            window.app.refreshAllModules();
-                        } else {
-                            window.location.reload();
-                        }
-                    }, 500);
+                    if (window.app) {
+                        window.app.showDiaryModal();   // 打开日记模态框
+                    } else {
+                        console.error('App 未初始化');
+                    }
                 });
             }
+            // =============================================
 
             document.addEventListener('click', this.handleDocumentClick.bind(this));
 
