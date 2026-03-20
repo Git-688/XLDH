@@ -35,7 +35,8 @@ class OptimizedNavigation {
             
             const firstCategory = this.getFirstCategory();
             if (firstCategory) {
-                this.selectLevel1(firstCategory);
+                // 初始化时传入 false，禁止自动滚动
+                this.selectLevel1(firstCategory, false);
             }
             
             this.isInitialized = true;
@@ -272,7 +273,8 @@ class OptimizedNavigation {
         }
     }
 
-    selectLevel1(level1) {
+    // 修改 selectLevel1，增加 isUserClick 参数
+    selectLevel1(level1, isUserClick = false) {
         if (this.selectedLevel1 === level1) return;
         this.isNavigationClick = true;
         document.querySelectorAll('.level1-btn').forEach(btn => {
@@ -280,7 +282,8 @@ class OptimizedNavigation {
         });
         this.selectedLevel1 = level1;
         
-        if (window.innerWidth <= 1023) {
+        // 只有用户点击且为窄窗口时才执行滚动
+        if (window.innerWidth <= 1023 && isUserClick) {
             const activeBtn = document.querySelector('.level1-btn.active');
             if (activeBtn) {
                 activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -290,7 +293,8 @@ class OptimizedNavigation {
         this.renderLevel2(level1);
         const firstLevel2 = this.getFirstSubCategory(level1);
         if (firstLevel2) {
-            this.selectLevel2(firstLevel2);
+            // 将 isUserClick 传递给 selectLevel2
+            this.selectLevel2(firstLevel2, isUserClick);
         } else {
             this.renderEmptyState();
         }
@@ -298,7 +302,8 @@ class OptimizedNavigation {
         setTimeout(() => { this.isNavigationClick = false; }, 100);
     }
 
-    selectLevel2(level2) {
+    // 修改 selectLevel2，增加 isUserClick 参数
+    selectLevel2(level2, isUserClick = false) {
         if (this.selectedLevel2 === level2) return;
         this.isNavigationClick = true;
         document.querySelectorAll('.level2-btn').forEach(btn => {
@@ -306,7 +311,8 @@ class OptimizedNavigation {
         });
         this.selectedLevel2 = level2;
         
-        if (window.innerWidth <= 1023) {
+        // 只有用户点击且为窄窗口时才执行滚动
+        if (window.innerWidth <= 1023 && isUserClick) {
             const activeBtn = document.querySelector('.level2-btn.active');
             if (activeBtn) {
                 activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -335,7 +341,8 @@ class OptimizedNavigation {
                 this.isNavigationClick = true;
                 if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
                 const level1 = level1Btn.dataset.level1;
-                this.selectLevel1(level1);
+                // 用户点击传入 true
+                this.selectLevel1(level1, true);
                 setTimeout(() => {
                     this.isNavigationClick = false;
                     if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
@@ -347,7 +354,8 @@ class OptimizedNavigation {
                 this.isNavigationClick = true;
                 if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
                 const level2 = level2Btn.dataset.level2;
-                this.selectLevel2(level2);
+                // 用户点击传入 true
+                this.selectLevel2(level2, true);
                 setTimeout(() => {
                     this.isNavigationClick = false;
                     if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
