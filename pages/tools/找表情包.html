@@ -469,7 +469,7 @@
             baidu: {
                 url: 'https://cn.apihz.cn/api/img/apihzbqbbaidu.php',
                 // 固定id/key，默认每页20条，拼接页码和搜索关键词
-                params: (keyword, page) => `?id=88888888&key=88888888&limit=20&page=${page}&words=${encodeURIComponent(keyword)}`,
+                params: (keyword, page) => `?id=10014221&key=4a7768de1cf2e0f41fc0a4005240c837&limit=20&page=${page}&words=${encodeURIComponent(keyword)}`,
                 // 从返回结果的res数组中提取图片链接
                 extractData: (data) => Array.isArray(data.res) ? data.res : [],
                 supportPagination: true,
