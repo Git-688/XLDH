@@ -302,8 +302,8 @@
     <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部">
         <i class="fas fa-chevron-up"></i>
     </button>
-    <button class="floating-btn refresh-btn" id="refreshBtn" aria-label="刷新页面">
-        <i class="fas fa-redo"></i>
+    <button class="floating-btn refresh-btn" id="refreshBtn" aria-label="日记本">
+        <i class="fas fa-book"></i>   <!-- 原为 fa-redo，现改为书本图标 -->
     </button>
     <a href="./pages/tools/羊毛福利.html" class="floating-btn activity-btn" id="activityBtn" aria-label="羊毛福利">
         <i class="fas fa-gift"></i>
@@ -563,6 +563,23 @@
 
     <!-- 名称提示工具 -->
     <div class="engine-tooltip" id="engineTooltip"></div>
+
+    <!-- ========== 日记模态框（列表版） ========== -->
+    <div class="diary-modal" id="diaryModal" style="display: none;">
+        <div class="modal-content">
+            <div class="diary-header">
+                <h3><i class="fas fa-book-open"></i> 神木日记本</h3>
+                <button class="diary-close" id="diaryCloseBtn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="diary-body">
+                <div class="diary-list" id="diaryList">
+                    <div class="loading">加载日记中...</div>
+                </div>
+                <!-- 已移除底部刷新按钮 -->
+            </div>
+        </div>
+    </div>
+    <!-- ========== 日记模态框结束 ========== -->
     
 </main>
 
