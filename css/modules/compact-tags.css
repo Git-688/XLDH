@@ -1,11 +1,10 @@
-/* 超紧凑多列标签样式 */
+/* compact-tags.css - 彩虹浅色版 */
 .minimal-tags-section {
     padding: 0 0 var(--section-margin-xs);
-    margin-bottom: var(--section-margin-xs);  /* 添加底部外边距 */
+    margin-bottom: var(--section-margin-xs);
     width: 100%;
 }
 
-/* 标签容器使用统一边距 */
 .minimal-tags-section .container {
     padding: 0 var(--container-padding-xs);
     width: 100%;
@@ -13,48 +12,26 @@
     margin: 0 auto;
 }
 
-/* 响应式调整边距 */
 @media (min-width: 576px) {
-    .minimal-tags-section .container {
-        padding: 0 var(--container-padding-sm);
-    }
-    .minimal-tags-section {
-        padding: 0 0 var(--section-margin-sm);
-        margin-bottom: var(--section-margin-sm);  /* 同步调整底部外边距 */
-    }
+    .minimal-tags-section .container { padding: 0 var(--container-padding-sm); }
+    .minimal-tags-section { padding: 0 0 var(--section-margin-sm); margin-bottom: var(--section-margin-sm); }
 }
 
 @media (min-width: 768px) {
-    .minimal-tags-section .container {
-        padding: 0 var(--container-padding-md);
-    }
-    .minimal-tags-section {
-        padding: 0 0 var(--section-margin-sm);
-        margin-bottom: var(--section-margin-sm);
-    }
+    .minimal-tags-section .container { padding: 0 var(--container-padding-md); }
+    .minimal-tags-section { padding: 0 0 var(--section-margin-sm); margin-bottom: var(--section-margin-sm); }
 }
 
 @media (min-width: 992px) {
-    .minimal-tags-section .container {
-        padding: 0 var(--container-padding-lg);
-    }
-    .minimal-tags-section {
-        padding: 0 0 var(--section-margin-md);
-        margin-bottom: var(--section-margin-md);
-    }
+    .minimal-tags-section .container { padding: 0 var(--container-padding-lg); }
+    .minimal-tags-section { padding: 0 0 var(--section-margin-md); margin-bottom: var(--section-margin-md); }
 }
 
 @media (min-width: 1200px) {
-    .minimal-tags-section .container {
-        padding: 0 var(--container-padding-xl);
-    }
-    .minimal-tags-section {
-        padding: 0 0 var(--section-margin-md);
-        margin-bottom: var(--section-margin-md);
-    }
+    .minimal-tags-section .container { padding: 0 var(--container-padding-xl); }
+    .minimal-tags-section { padding: 0 0 var(--section-margin-md); margin-bottom: var(--section-margin-md); }
 }
 
-/* 标签头部区域 - 水平布局 */
 .tags-header {
     margin-bottom: 12px;
     display: flex;
@@ -64,7 +41,6 @@
     padding-left: 8px;
 }
 
-/* 标题装饰线 */
 .tags-header::before {
     content: '';
     position: absolute;
@@ -77,7 +53,6 @@
     border-radius: 2px;
 }
 
-/* 主标题 - 保持靠左 */
 .tags-title {
     font-size: 15px;
     font-weight: 600;
@@ -88,7 +63,6 @@
     gap: 8px;
 }
 
-/* 右侧副标题 - 新添加 */
 .tags-subtitle-right {
     font-size: 11px;
     color: var(--text-secondary);
@@ -108,7 +82,7 @@
     grid-template-columns: repeat(6, 1fr);
 }
 
-/* 标签按钮基础样式 - 圆角改为与分类导航一致（6px） */
+/* 按钮基础样式 - 无填充色，仅边框和浅阴影 */
 .minimal-tag {
     display: flex;
     align-items: center;
@@ -117,7 +91,7 @@
     padding: 12px 16px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: 6px; /* 改为6px，与分类导航的.site-card一致 */
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
     text-decoration: none;
@@ -139,7 +113,7 @@
 
 .minimal-tag .tag-label { display: block; color: inherit; }
 
-/* 标签左侧颜色竖条 */
+/* 左侧颜色竖条 - 彩虹浅色 */
 .minimal-tag::before {
     content: '';
     position: absolute;
@@ -149,7 +123,7 @@
     width: 4px;
     height: 20px;
     background: var(--tag-color);
-    border-radius: 0 2px 2px 0; /* 保持原有圆角 */
+    border-radius: 0 2px 2px 0;
     transition: all 0.2s ease;
     z-index: 1;
 }
@@ -164,20 +138,23 @@
     height: 28px;
 }
 
+/* hover效果 - 仅边框变色和轻微上浮，无背景填充 */
 .minimal-tag:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: var(--tag-color);
-    background: rgba(var(--tag-color-rgb), 0.05);
+    background: var(--bg-card);
 }
 
+/* 激活状态 - 仅边框加粗变色，无背景填充 */
 .minimal-tag.active {
-    border-color: var(--tag-color);
-    background: rgba(var(--tag-color-rgb), 0.08);
+    border: 2px solid var(--tag-color);
+    background: var(--bg-card);
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    padding: 11px 15px;
 }
 
-/* 图标样式 */
+/* 图标样式 - 默认继承彩虹色，激活时不变色 */
 .tag-icon {
     color: var(--tag-color);
     font-size: 16px;
@@ -190,10 +167,10 @@
     transition: all 0.2s ease;
 }
 
-.minimal-tag:hover .tag-icon { transform: scale(1.1); }
-.minimal-tag.active .tag-icon { transform: scale(1.1); }
+.minimal-tag:hover .tag-icon { transform: scale(1.1); color: var(--tag-color); }
+.minimal-tag.active .tag-icon { transform: scale(1.1); color: var(--tag-color); }
 
-/* 文字样式 */
+/* 文字样式 - 不随状态改变颜色 */
 .tag-label {
     font-size: 13px;
     font-weight: 500;
@@ -201,22 +178,25 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: color 0.2s ease;
+    transition: none;
 }
 
-.minimal-tag:hover .tag-label { color: var(--tag-color); }
-.minimal-tag.active .tag-label { color: var(--tag-color); font-weight: 600; }
+.minimal-tag:hover .tag-label,
+.minimal-tag.active .tag-label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
 
-/* ========== 彩虹七色（浅色版） ========== */
-.tag-color-1 { --tag-color: #FFB3BA; --tag-color-rgb: 255, 179, 186; } /* 浅红 */
-.tag-color-2 { --tag-color: #FFDFB3; --tag-color-rgb: 255, 223, 179; } /* 浅橙 */
-.tag-color-3 { --tag-color: #FFFFB3; --tag-color-rgb: 255, 255, 179; } /* 浅黄 */
-.tag-color-4 { --tag-color: #B3FFB3; --tag-color-rgb: 179, 255, 179; } /* 浅绿 */
-.tag-color-5 { --tag-color: #B3FFFF; --tag-color-rgb: 179, 255, 255; } /* 浅青 */
-.tag-color-6 { --tag-color: #B3D9FF; --tag-color-rgb: 179, 217, 255; } /* 浅蓝 */
-.tag-color-7 { --tag-color: #E0B3FF; --tag-color-rgb: 224, 179, 255; } /* 浅紫 */
+/* 彩虹七色 - 浅色柔和版 */
+.tag-color-1 { --tag-color: #FFB3B3; --tag-color-rgb: 255, 179, 179; }
+.tag-color-2 { --tag-color: #FFD6A5; --tag-color-rgb: 255, 214, 165; }
+.tag-color-3 { --tag-color: #FDFFB6; --tag-color-rgb: 253, 255, 182; }
+.tag-color-4 { --tag-color: #CAFFBF; --tag-color-rgb: 202, 255, 191; }
+.tag-color-5 { --tag-color: #9BF6FF; --tag-color-rgb: 155, 246, 255; }
+.tag-color-6 { --tag-color: #A0C4FF; --tag-color-rgb: 160, 196, 255; }
+.tag-color-7 { --tag-color: #E2C2FF; --tag-color-rgb: 226, 194, 255; }
 
-/* 响应式设计 - 桌面端 */
+/* 响应式设计 */
 @media (min-width: 1600px) {
     .minimal-tags-section .container { max-width: 1600px; }
     .tags-grid { grid-template-columns: repeat(10, 1fr); gap: 12px; }
@@ -226,6 +206,7 @@
     .minimal-tag { padding: 14px 18px; min-height: 52px; gap: 10px; border-radius: 6px; }
     .tag-icon { font-size: 18px; width: 26px; height: 26px; }
     .minimal-tag::before { width: 5px; height: 24px; }
+    .minimal-tag.active { padding: 13px 17px; }
 }
 
 @media (min-width: 1200px) and (max-width: 1599px) {
@@ -234,6 +215,7 @@
     .tags-subtitle-right { font-size: 12px; }
     .tag-label { font-size: 13px; }
     .minimal-tag { padding: 12px 16px; min-height: 48px; border-radius: 6px; }
+    .minimal-tag.active { padding: 11px 15px; }
 }
 
 @media (min-width: 992px) and (max-width: 1199px) {
@@ -242,103 +224,68 @@
     .tags-subtitle-right { font-size: 11px; }
     .tag-label { font-size: 13px; }
     .minimal-tag { padding: 11px 15px; min-height: 46px; border-radius: 6px; }
+    .minimal-tag.active { padding: 10px 14px; }
 }
 
-/* 响应式设计 - 平板端 */
 @media (min-width: 768px) and (max-width: 991px) {
     .minimal-tags-section { padding: 0 0 var(--section-margin-xs); }
     .tags-grid { grid-template-columns: repeat(6, 1fr); gap: 10px; }
     .tags-title { font-size: 15px; }
-    .tags-subtitle-right { 
-        font-size: 10px;
-        max-width: 180px;
-        white-space: normal;
-        text-align: right;
-        line-height: 1.2;
-    }
+    .tags-subtitle-right { font-size: 10px; max-width: 180px; white-space: normal; text-align: right; line-height: 1.2; }
     .tag-label { font-size: 12px; }
     .minimal-tag { padding: 10px 14px; min-height: 44px; gap: 8px; border-radius: 6px; }
+    .minimal-tag.active { padding: 9px 13px; }
     .minimal-tag::before { height: 18px; width: 4px; }
     .tag-icon { font-size: 15px; width: 22px; height: 22px; }
 }
 
 @media (min-width: 576px) and (max-width: 767px) {
     .minimal-tags-section { padding: 0 0 var(--section-margin-xs); }
-    /* 大手机改为3列（之前是4列） */
     .tags-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .tags-title { font-size: 14px; }
-    .tags-subtitle-right { 
-        font-size: 9px;
-        max-width: 150px;
-        white-space: normal;
-        text-align: right;
-        line-height: 1.2;
-    }
+    .tags-subtitle-right { font-size: 9px; max-width: 150px; white-space: normal; text-align: right; line-height: 1.2; }
     .tag-label { font-size: 12px; }
     .minimal-tag { padding: 9px 13px; min-height: 42px; gap: 7px; border-radius: 6px; }
+    .minimal-tag.active { padding: 8px 12px; }
     .minimal-tag::before { height: 16px; width: 4px; }
     .tag-icon { font-size: 14px; width: 20px; height: 20px; }
 }
 
-/* 响应式设计 - 移动端 */
 @media (max-width: 575px) {
     .minimal-tags-section { padding: 0 0 var(--section-margin-xs); }
-    /* 常规移动端改为3列 */
     .tags-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .tags-title { font-size: 14px; }
-    .tags-subtitle-right { 
-        font-size: 9px;
-        max-width: 120px;
-        white-space: normal;
-        text-align: right;
-        line-height: 1.2;
-        margin-left: 8px;
-    }
+    .tags-subtitle-right { font-size: 9px; max-width: 120px; white-space: normal; text-align: right; line-height: 1.2; margin-left: 8px; }
     .tag-label { font-size: 12px; }
     .minimal-tag { padding: 9px 12px; min-height: 40px; gap: 7px; border-radius: 6px; }
+    .minimal-tag.active { padding: 8px 11px; }
     .minimal-tag::before { height: 16px; width: 3px; }
     .tag-icon { font-size: 14px; width: 20px; height: 20px; }
 }
 
 @media (max-width: 374px) {
-    /* 小屏幕移动端保持3列 */
     .tags-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .tag-label { font-size: 11px; }
     .tags-title { font-size: 13px; }
-    .tags-subtitle-right { 
-        font-size: 8px;
-        max-width: 100px;
-        line-height: 1.1;
-    }
+    .tags-subtitle-right { font-size: 8px; max-width: 100px; line-height: 1.1; }
     .minimal-tag { padding: 8px 11px; min-height: 38px; gap: 6px; border-radius: 6px; }
+    .minimal-tag.active { padding: 7px 10px; }
     .minimal-tag::before { height: 14px; width: 3px; }
     .tag-icon { font-size: 13px; width: 18px; height: 18px; }
 }
 
 @media (max-width: 319px) {
-    /* 超小屏幕移动端改为2列 */
     .tags-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .tags-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-    }
+    .tags-header { flex-direction: column; align-items: flex-start; gap: 4px; }
     .tag-label { font-size: 11px; }
     .tags-title { font-size: 13px; }
-    .tags-subtitle-right { 
-        font-size: 8px;
-        max-width: 100%;
-        text-align: left;
-        padding-left: 4px;
-        margin-left: 0;
-        line-height: 1.2;
-    }
+    .tags-subtitle-right { font-size: 8px; max-width: 100%; text-align: left; padding-left: 4px; margin-left: 0; line-height: 1.2; }
     .minimal-tag { padding: 8px 10px; min-height: 36px; border-radius: 6px; }
+    .minimal-tag.active { padding: 7px 9px; }
     .minimal-tag::before { height: 14px; width: 3px; }
     .tag-icon { font-size: 13px; width: 18px; height: 18px; }
 }
 
-/* 超大屏幕适配 */
 @media (min-width: 1920px) {
     .minimal-tags-section .container { max-width: 1800px; }
     .tags-grid { grid-template-columns: repeat(12, 1fr); gap: 12px; }
@@ -346,19 +293,17 @@
     .tags-title { font-size: 18px; }
     .tags-subtitle-right { font-size: 14px; }
     .minimal-tag { padding: 14px 18px; min-height: 52px; gap: 10px; border-radius: 6px; }
+    .minimal-tag.active { padding: 13px 17px; }
     .minimal-tag::before { width: 5px; height: 24px; }
     .tag-icon { font-size: 18px; width: 26px; height: 26px; }
 }
 
-/* 横屏模式优化 */
 @media (max-height: 500px) and (orientation: landscape) {
     .minimal-tags-section { padding: 0 0; }
     .tags-grid { grid-template-columns: repeat(8, 1fr); gap: 6px; }
-    .tags-subtitle-right { 
-        font-size: 9px;
-        margin-bottom: 4px;
-    }
+    .tags-subtitle-right { font-size: 9px; margin-bottom: 4px; }
     .minimal-tag { min-height: 36px; padding: 7px 10px; border-radius: 6px; }
+    .minimal-tag.active { padding: 6px 9px; }
     .tag-label { font-size: 11px; }
     .tag-icon { font-size: 13px; width: 18px; height: 18px; }
 }
@@ -374,7 +319,6 @@
     opacity: 0;
 }
 
-/* 交错动画延迟 - 支持最多22个标签（保持不变） */
 .minimal-tag:nth-child(1) { animation-delay: 0.01s; }
 .minimal-tag:nth-child(2) { animation-delay: 0.02s; }
 .minimal-tag:nth-child(3) { animation-delay: 0.03s; }
@@ -395,27 +339,37 @@
 .minimal-tag:nth-child(18) { animation-delay: 0.18s; }
 .minimal-tag:nth-child(19) { animation-delay: 0.19s; }
 .minimal-tag:nth-child(20) { animation-delay: 0.20s; }
-.minimal-tag:nth-child(21) { animation-delay: 0.21s; } 
-.minimal-tag:nth-child(22) { animation-delay: 0.22s; } 
+.minimal-tag:nth-child(21) { animation-delay: 0.21s; }
+.minimal-tag:nth-child(22) { animation-delay: 0.22s; }
 .minimal-tag:nth-child(23) { animation-delay: 0.23s; }
+.minimal-tag:nth-child(24) { animation-delay: 0.24s; }
+.minimal-tag:nth-child(25) { animation-delay: 0.25s; }
+.minimal-tag:nth-child(26) { animation-delay: 0.26s; }
+.minimal-tag:nth-child(27) { animation-delay: 0.27s; }
+.minimal-tag:nth-child(28) { animation-delay: 0.28s; }
+.minimal-tag:nth-child(29) { animation-delay: 0.29s; }
+.minimal-tag:nth-child(30) { animation-delay: 0.30s; }
+.minimal-tag:nth-child(31) { animation-delay: 0.31s; }
+.minimal-tag:nth-child(32) { animation-delay: 0.32s; }
+.minimal-tag:nth-child(33) { animation-delay: 0.33s; }
+.minimal-tag:nth-child(34) { animation-delay: 0.34s; }
+.minimal-tag:nth-child(35) { animation-delay: 0.35s; }
+.minimal-tag:nth-child(36) { animation-delay: 0.36s; }
+.minimal-tag:nth-child(37) { animation-delay: 0.37s; }
 
-/* 暗色模式优化 */
 @media (prefers-color-scheme: dark) {
     .minimal-tag { background: rgba(40, 40, 40, 0.8); border-color: #444; }
-    .minimal-tag:hover { background: rgba(50, 50, 50, 0.9); }
-    .minimal-tag.active { background: rgba(var(--tag-color-rgb), 0.1); }
-    .minimal-tag::before { opacity: 0.9; }
+    .minimal-tag:hover { background: rgba(40, 40, 40, 0.9); }
+    .minimal-tag.active { background: rgba(40, 40, 40, 0.9); }
     .tags-header::before { opacity: 0.9; }
     .tags-subtitle-right { color: #aaa; }
 }
 
-/* 焦点状态 - 辅助功能支持 */
 .minimal-tag:focus {
     outline: 2px solid var(--primary-color);
     outline-offset: 1px;
 }
 
-/* 减少动画选项支持 */
 @media (prefers-reduced-motion: reduce) {
     .minimal-tag { animation: none; opacity: 1; transition: none; }
     .minimal-tag:hover { transform: none; }
@@ -423,7 +377,6 @@
     .minimal-tag.active .tag-icon { transform: none; }
 }
 
-/* 标签加载状态样式 */
 .tags-loading {
     grid-column: 1 / -1;
     display: flex;
@@ -445,9 +398,6 @@
     to { transform: rotate(360deg); }
 }
 
-/* 移动端水平滚动支持（可选） */
 @media (max-width: 767px) {
-    .tags-grid {
-        overflow-x: visible;
-    }
+    .tags-grid { overflow-x: visible; }
 }
