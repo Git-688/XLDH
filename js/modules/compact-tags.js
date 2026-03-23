@@ -26,7 +26,7 @@ class CompactTagsModule {
             { name: '女生日历', icon: 'fas fa-female', link: 'pages/tools/女生日历.html' },
             { name: '女友潜台词', icon: 'fas fa-comment-dots', link: 'pages/tools/女友潜词.html' },
             { name: '趣味挑战', icon: 'fas fa-gamepad', link: 'pages/tools/趣味挑战.html' },
-            { name: '生活技巧', icon: 'fas fa-lightbulb', link: 'pages/tools/生活技I巧.html' },
+            { name: '生活技巧', icon: 'fas fa-lightbulb', link: 'pages/tools/生活技巧.html' },
             { name: '图片工具', icon: 'fas fa-image', link: 'pages/tools/图片工具.html' },
             { name: '网站解析', icon: 'fas fa-globe', link: 'pages/tools/网站解析.html' },
             { name: '文本工具', icon: 'fas fa-file-alt', link: 'pages/tools/文本工具.html' },
