@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网页链接解析工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1677ff',
+                        success: '#52c41a',
+                        danger: '#ff4d4f',
+                        warning: '#faad14',
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .link-card {
+                @apply bg-white rounded-lg p-3 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200;
+            }
+            .btn-primary {
+                @apply bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 active:bg-primary/80 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed;
+            }
+            .input-style {
+                @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all;
+            }
+            .tab-btn {
+                @apply px-3 py-1 rounded transition-all whitespace-nowrap;
+            }
+            .tab-btn-active {
+                @apply bg-primary text-white;
+            }
+            .tab-btn-inactive {
+                @apply bg-gray-200 hover:bg-gray-300;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <!-- 头部 -->
+        <div class="text-center mb-8">
+            <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800 mb-2">
+                <i class="fa fa-link text-primary mr-2"></i>网页链接解析工具
+            </h1>
+            <p class="text-gray-500">自动提取网页内所有资源链接，自动补全完整URL，一键复制</p>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">目标网址</label>
+                    <!-- 已修改：value清空，默认空白 -->
+                    <input 
+                        type="text" 
+                        id="urlInput" 
+                        class="input-style" 
+                        placeholder="请输入网址，例如：www.apihz.cn"
+                        value=""
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">访问节点</label>
+                    <select id="typeSelect" class="input-style">
+                        <option value="1">国内节点</option>
+                        <option value="2">香港节点</option>
+                        <option value="3">美国节点</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4 flex justify-center">
+                <button id="parseBtn" class="btn-primary flex items-center gap-2">
+                    <i class="fa fa-search"></i>
+                    <span>开始解析</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 标签切换与结果区域 -->
+        <div id="resultWrap" class="hidden mb-6">
+            <div class="bg-white rounded-xl shadow-sm p-4">
+                <!-- 标签栏 -->
+                <div class="flex gap-2 mb-4 flex-nowrap overflow-x-auto pb-2" id="tabWrap">
+                    <button data-tab="img" class="tab-btn tab-btn-active">图片 <span id="img-count" class="text-xs opacity-80">(0)</span></button>
+                    <button data-tab="css" class="tab-btn tab-btn-inactive">CSS <span id="css-count" class="text-xs opacity-80">(0)</span></button>
+                    <button data-tab="js" class="tab-btn tab-btn-inactive">JS <span id="js-count" class="text-xs opacity-80">(0)</span></button>
+                    <button data-tab="html" class="tab-btn tab-btn-inactive">HTML <span id="html-count" class="text-xs opacity-80">(0)</span></button>
+                    <button data-tab="php" class="tab-btn tab-btn-inactive">PHP <span id="php-count" class="text-xs opacity-80">(0)</span></button>
+                    <button data-tab="video" class="tab-btn tab-btn-inactive">视频 <span id="video-count" class="text-xs opacity-80">(0)</span></button>
+                    <button data-tab="music" class="tab-btn tab-btn-inactive">音乐 <span id="music-count" class="text-xs opacity-80">(0)</span></button>
+                    <button data-tab="package" class="tab-btn tab-btn-inactive">压缩包 <span id="package-count" class="text-xs opacity-80">(0)</span></button>
+                    <button data-tab="document" class="tab-btn tab-btn-inactive">文档 <span id="document-count" class="text-xs opacity-80">(0)</span></button>
+                    <button data-tab="other" class="tab-btn tab-btn-inactive">其他 <span id="other-count" class="text-xs opacity-80">(0)</span></button>
+                </div>
+
+                <!-- 内容区域 -->
+                <div id="contentBox" class="space-y-2 max-h-[60vh] overflow-y-auto p-2 border border-gray-100 rounded-lg bg-gray-50">
+                    <!-- 结果渲染区域 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 基础配置
+        const API_CONFIG = {
+            id: '10014221',
+            key: '4a7768de1cf2e0f41fc0a4005240c837',
+            api: 'https://cn.apihz.cn/api/wangzhan/getres.php'
+        }
+
+        // DOM元素
+        const urlInput = document.getElementById('urlInput')
+        const typeSelect = document.getElementById('typeSelect')
+        const parseBtn = document.getElementById('parseBtn')
+        const resultWrap = document.getElementById('resultWrap')
+        const tabWrap = document.getElementById('tabWrap')
+        const contentBox = document.getElementById('contentBox')
+        let currentData = null
+        let currentTab = 'img'
+
+        // ========== 核心修复1：相对路径转完整绝对URL ==========
+        function getAbsoluteUrl(baseUrl, relativePath) {
+            try {
+                // 自动补全协议，处理用户输入的无协议域名
+                if (!/^https?:\/\//i.test(baseUrl)) {
+                    baseUrl = 'https://' + baseUrl;
+                }
+                // 原生URL API自动处理所有相对路径（./ ../ / 无前缀），零错误
+                const base = new URL(baseUrl);
+                const absoluteUrl = new URL(relativePath, base);
+                return absoluteUrl.href;
+            } catch (e) {
+                // 解析失败返回原内容，不报错
+                return relativePath;
+            }
+        }
+
+        // ========== 核心修复2：兼容全环境的复制功能 ==========
+        async function copyText(text) {
+            try {
+                // 优先使用现代Clipboard API（HTTPS环境）
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                } else {
+                    // 降级方案：兼容本地file协议、旧浏览器
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    // 隐藏元素，不影响布局
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    textArea.style.opacity = '0';
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    const isSuccess = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    return isSuccess;
+                }
+            } catch (e) {
+                console.error('复制失败：', e);
+                return false;
+            }
+        }
+
+        // ========== 核心优化3：全局Toast提示组件 ==========
+        function showToast(message, type = 'success') {
+            // 移除已存在的toast，避免重叠
+            const oldToast = document.getElementById('global-toast');
+            if (oldToast) oldToast.remove();
+
+            // 不同类型的样式与图标映射
+            const toastConfig = {
+                success: { bg: 'bg-success', icon: 'fa-check-circle' },
+                error: { bg: 'bg-danger', icon: 'fa-times-circle' },
+                warning: { bg: 'bg-warning', icon: 'fa-exclamation-circle' },
+                info: { bg: 'bg-primary', icon: 'fa-info-circle' }
+            };
+            const config = toastConfig[type] || toastConfig.info;
+
+            // 创建toast元素
+            const toast = document.createElement('div');
+            toast.id = 'global-toast';
+            toast.className = `fixed top-8 left-1/2 -translate-x-1/2 ${config.bg} text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-[9999] animate-fade-in`;
+            toast.innerHTML = `<i class="fa ${config.icon}"></i><span>${message}</span>`;
+
+            // 注入动画样式（仅一次）
+            if (!document.getElementById('toast-animation-style')) {
+                const style = document.createElement('style');
+                style.id = 'toast-animation-style';
+                style.textContent = `
+                    @keyframes fadeIn {
+                        from { opacity: 0; transform: translate(-50%, -20px); }
+                        to { opacity: 1; transform: translate(-50%, 0); }
+                    }
+                    @keyframes fadeOut {
+                        from { opacity: 1; transform: translate(-50%, 0); }
+                        to { opacity: 0; transform: translate(-50%, -20px); }
+                    }
+                    .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+                    .animate-fade-out { animation: fadeOut 0.3s ease forwards; }
+                `;
+                document.head.appendChild(style);
+            }
+
+            document.body.appendChild(toast);
+
+            // 3秒后自动消失
+            setTimeout(() => {
+                toast.classList.add('animate-fade-out');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ========== 接口请求与数据处理 ==========
+        async function fetchParse() {
+            const inputUrl = urlInput.value.trim();
+            if (!inputUrl) {
+                showToast('请输入需要解析的网址', 'warning');
+                return;
+            }
+
+            // 按钮加载状态
+            parseBtn.disabled = true;
+            parseBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 解析中...';
+
+            try {
+                // 处理URL特殊字符，符合接口要求
+                const formatInputUrl = inputUrl.replace(/&/g, '(@)');
+                const params = new URLSearchParams({
+                    id: API_CONFIG.id,
+                    key: API_CONFIG.key,
+                    type: typeSelect.value,
+                    url: formatInputUrl
+                });
+
+                // 发起请求
+                const res = await fetch(`${API_CONFIG.api}?${params}`);
+                const data = await res.json();
+
+                if (data.code !== 200) {
+                    showToast(data.msg || '解析失败，请检查网址是否正确', 'error');
+                    return;
+                }
+
+                // 预处理数据：所有链接转完整URL，同时保留原内容
+                const processedData = {};
+                for (const [key, list] of Object.entries(data)) {
+                    if (Array.isArray(list)) {
+                        processedData[key] = list.map(item => ({
+                            original: item,
+                            fullUrl: getAbsoluteUrl(inputUrl, item)
+                        }));
+                        // 更新标签数量显示
+                        const countEl = document.getElementById(`${key}-count`);
+                        if (countEl) countEl.textContent = `(${list.length})`;
+                    } else {
+                        processedData[key] = list;
+                    }
+                }
+
+                // 保存数据，渲染页面
+                currentData = processedData;
+                resultWrap.classList.remove('hidden');
+                switchTab('img');
+                showToast('解析成功！共提取到' + Object.keys(data).filter(k => Array.isArray(data[k])).reduce((sum, k) => sum + data[k].length, 0) + '条链接', 'success');
+
+            } catch (err) {
+                console.error('请求异常：', err);
+                showToast('网络请求异常，请检查网络后重试', 'error');
+            } finally {
+                // 恢复按钮状态
+                parseBtn.disabled = false;
+                parseBtn.innerHTML = '<i class="fa fa-search"></i> 开始解析';
+            }
+        }
+
+        // ========== 标签切换与内容渲染 ==========
+        function switchTab(tabKey) {
+            currentTab = tabKey;
+            // 切换标签样式
+            document.querySelectorAll('#tabWrap .tab-btn').forEach(btn => {
+                const key = btn.dataset.tab;
+                btn.className = key === tabKey ? 'tab-btn tab-btn-active' : 'tab-btn tab-btn-inactive';
+            });
+
+            // 渲染对应内容
+            const list = currentData[tabKey] || [];
+            if (!list.length) {
+                contentBox.innerHTML = '<div class="text-center text-gray-400 py-12">暂无该分类的链接数据</div>';
+                return;
+            }
+
+            // 渲染列表，显示完整URL，添加复制按钮
+            contentBox.innerHTML = list.map((item, index) => `
+                <div class="link-card flex items-center justify-between group" title="${item.fullUrl}">
+                    <div class="truncate flex-1 text-sm text-gray-700 mr-3">
+                        ${index + 1}. ${item.fullUrl}
+                    </div>
+                    <button 
+                        class="copy-btn text-primary text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity"
+                        data-url="${item.fullUrl}"
+                    >
+                        <i class="fa fa-copy mr-1"></i>复制
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // ========== 事件绑定 ==========
+        // 复制按钮点击事件（委托模式，兼容动态生成元素）
+        document.addEventListener('click', async (e) => {
+            const copyBtn = e.target.closest('.copy-btn');
+            if (copyBtn) {
+                const url = copyBtn.dataset.url;
+                const isSuccess = await copyText(url);
+                if (isSuccess) {
+                    // 临时修改按钮状态
+                    const oldHtml = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fa fa-check mr-1"></i>已复制';
+                    setTimeout(() => copyBtn.innerHTML = oldHtml, 1500);
+                    showToast('链接复制成功！', 'success');
+                } else {
+                    showToast('复制失败，请手动复制', 'error');
+                }
+            }
+        });
+
+        // 标签切换事件
+        tabWrap.addEventListener('click', (e) => {
+            const tabKey = e.target.closest('.tab-btn')?.dataset.tab;
+            if (tabKey && currentData) switchTab(tabKey);
+        });
+
+        // 解析按钮点击事件
+        parseBtn.addEventListener('click', fetchParse);
+
+        // 回车触发解析
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') fetchParse();
+        });
+    </script>
+</body>
+</html>

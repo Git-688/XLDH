@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>十三合一全能图片工具箱</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: '#165DFF', success: '#00B42A', danger: '#F53F3F', warning: '#FF7D00' } } }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .card-shadow { box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+      .input-focus { @apply focus:border-primary focus:ring-1 focus:ring-primary outline-none; }
+      .tab-active { @apply bg-primary text-white; }
+      .tab-inactive { @apply bg-gray-100 text-gray-600 hover:bg-gray-200; }
+      /* 隐藏滚动条 */
+      .scrollbar-hide::-webkit-scrollbar { display: none; }
+      .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      /* 上传/叠加功能专属样式 - 全局复用 */
+      .oly-btn { @apply px-3 py-1 rounded text-sm; }
+      .oly-btn-active { @apply bg-primary text-white; }
+      .oly-btn-inactive { @apply bg-gray-100 text-gray-600 hover:bg-gray-200; }
+      .oly-upload { @apply relative border-2 border-dashed border-gray-300 rounded-lg p-4 h-40 flex items-center justify-center cursor-pointer hover:border-primary; }
+      .drag-over { @apply border-primary bg-primary/5; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+<!-- 全局唯一提示框 - 所有功能共用（无冲突） -->
+<div id="globalToast" class="fixed top-5 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-lg bg-black/80 text-white text-sm z-50 opacity-0 transition-all duration-300 backdrop-blur-sm"></div>
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <!-- 标题区 - 升级为十三合一，新增3个功能描述 -->
+  <div class="bg-white rounded-2xl p-6 card-shadow mb-6 text-center">
+    <h1 class="text-[clamp(1.4rem,3vw,2rem)] font-bold text-gray-900 mb-2">十三合一全能图片工具箱</h1>
+    <p class="text-gray-500">去水印 · 转线稿 · AI绘画 · 图片重绘 · 抠图 · 扩图 · 变清晰 · 图片叠加 · 新AI生成 · AI推理 · AI识图 · AI图片鉴定 · AI菜品识别</p>
+  </div>
+  <!-- 标签栏 - 新增3个功能标签，data-mode对应11/12/13 -->
+  <div class="bg-white rounded-2xl p-3 card-shadow mb-6">
+    <div class="scrollbar-hide overflow-x-auto">
+      <div class="flex flex-nowrap gap-2 rounded-lg">
+        <button class="tab-item tab-active px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap" data-mode="1">去水印</button>
+        <button class="tab-item tab-inactive px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap" data-mode="2">转线稿</button>
+        <button class="tab-item tab-inactive px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap" data-mode="3">AI绘画</button>
+        <button class="tab-item tab-inactive px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap" data-mode="4">图片重绘</button>
+        <button class="tab-item tab-inactive px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap" data-mode="5">图片抠图</button>
+        <button class="tab-item tab-inactive px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap" data-mode="6">图片扩图</button>
+        <button class="tab-item tab-inactive px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap" data-mode="7">变清晰</button>
+        <button class="tab-item tab-inactive px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap" data-mode="8">图片叠加</button>
+        <button class="tab-item tab-inactive px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap" data-mode="9">新AI生成</button>
+        <button class="tab-item tab-inactive px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap" data-mode="10">AI推理</button>
+        <button class="tab-item tab-inactive px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap" data-mode="11">AI识图</button>
+        <button class="tab-item tab-inactive px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap" data-mode="12">AI图片鉴定</button>
+        <button class="tab-item tab-inactive px-5 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap" data-mode="13">AI菜品识别</button>
+      </div>
+    </div>
+  </div>
+  <!-- 操作面板容器 - 新增3个独立功能面板 -->
+  <div class="bg-white rounded-2xl p-6 card-shadow mb-6">
+    <!-- 面板1：去水印【独立】 -->
+    <div class="func-panel" data-panel="1">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">图片链接</label>
+          <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="watermark-url" placeholder="请输入图片地址">
+        </div>
+      </div>
+    </div>
+    <!-- 面板2：转线稿【独立】 -->
+    <div class="func-panel hidden" data-panel="2">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">图片链接</label>
+          <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="line-url" placeholder="请输入图片地址">
+        </div>
+      </div>
+    </div>
+    <!-- 面板3：AI绘画【独立】 -->
+    <div class="func-panel hidden" data-panel="3">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">绘画描述</label>
+          <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="draw-text" placeholder="例如：二次元猫娘、海边日落">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">绘画风格</label>
+            <select class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="draw-style">
+              <option>二次元</option><option>卡通</option><option>古风</option><option>人像摄影</option>
+              <option>电影写真</option><option>插画</option><option>宫崎骏</option><option>赛博朋克</option>
+              <option>复古胶片</option><option>莫奈画作</option><option>梵高风格</option><option>风景</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">图片比例</label>
+            <select class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="draw-ratio">
+              <option>1:1</option><option>4:3</option><option>16:9</option><option>3:4</option><option>9:16</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 面板4：图片重绘【独立】 -->
+    <div class="func-panel hidden" data-panel="4">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">图片链接</label>
+          <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="redraw-url" placeholder="请输入需要重绘的图片地址">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">重绘等级（1-6）</label>
+          <select class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="redraw-level">
+            <option value="1">1级</option><option value="2">2级</option><option value="3" selected>3级</option>
+            <option value="4">4级</option><option value="5">5级</option><option value="6">6级</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <!-- 面板5：图片抠图【独立】 -->
+    <div class="func-panel hidden" data-panel="5">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">图片链接</label>
+          <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="cutout-url" placeholder="请输入需要抠图的图片地址">
+        </div>
+      </div>
+    </div>
+    <!-- 面板6：图片扩图【独立】 -->
+    <div class="func-panel hidden" data-panel="6">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">图片链接</label>
+          <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="expand-url" placeholder="请输入需要扩图的图片地址">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">扩图比例</label>
+          <select class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="expand-ratio">
+            <option value="1:1" selected>1:1</option><option value="4:3">4:3</option><option value="3:4">3:4</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <!-- 面板7：变清晰【独立】 -->
+    <div class="func-panel hidden" data-panel="7">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">图片链接</label>
+          <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="sharpen-url" placeholder="请输入需要优化的图片地址">
+        </div>
+      </div>
+    </div>
+    <!-- 面板8：图片叠加【完全独立】专属DOM/变量/事件 -->
+    <div class="func-panel hidden" data-panel="8">
+      <div class="space-y-6">
+        <!-- 表图 - 专属ID -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">表图</label>
+          <div class="flex gap-2 mb-2">
+            <button type="button" class="oly-btn oly-btn-active" data-oly-type="table" data-oly-mode="local">本地上传</button>
+            <button type="button" class="oly-btn oly-btn-inactive" data-oly-type="table" data-oly-mode="url">网络URL</button>
+          </div>
+          <div data-oly-box="table-local">
+            <label class="oly-upload">
+              <input type="file" accept="image/*" class="hidden" data-oly-upload="table" />
+              <img class="max-h-full max-w-full object-contain hidden" data-oly-preview="table" />
+              <span class="text-gray-500 text-sm" data-oly-tip="table">点击上传表图</span>
+            </label>
+          </div>
+          <div class="hidden" data-oly-box="table-url">
+            <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-oly-input="table" placeholder="输入表图网络URL">
+          </div>
+        </div>
+        <!-- 里图 - 专属ID -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">里图</label>
+          <div class="flex gap-2 mb-2">
+            <button type="button" class="oly-btn oly-btn-active" data-oly-type="rito" data-oly-mode="local">本地上传</button>
+            <button type="button" class="oly-btn oly-btn-inactive" data-oly-type="rito" data-oly-mode="url">网络URL</button>
+          </div>
+          <div data-oly-box="rito-local">
+            <label class="oly-upload">
+              <input type="file" accept="image/*" class="hidden" data-oly-upload="rito" />
+              <img class="max-h-full max-w-full object-contain hidden" data-oly-preview="rito" />
+              <span class="text-gray-500 text-sm" data-oly-tip="rito">点击上传里图</span>
+            </label>
+          </div>
+          <div class="hidden" data-oly-box="rito-url">
+            <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-oly-input="rito" placeholder="输入里图网络URL">
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 面板9：新AI生成【完全独立】与原有AI绘画无任何关联 -->
+    <div class="func-panel hidden" data-panel="9">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">生成描述词 *</label>
+          <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="aigen-prompt" placeholder="例如：一只可爱的橘猫，二次元风格，高清8K">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">参考图链接（可选）</label>
+          <input type="url" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="aigen-url" placeholder="https://xxx.jpg/png">
+        </div>
+      </div>
+    </div>
+    <!-- 面板10：AI推理【独立】 -->
+    <div class="func-panel hidden" data-panel="10">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">推理指令文本 *</label>
+          <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="aiinfer-text" placeholder="例如：图片里的人物在做什么？">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">图片/视频链接 *</label>
+          <input type="url" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="aiinfer-url" placeholder="请输入图片/视频直链URL">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">资源类型</label>
+          <select class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-id="aiinfer-type">
+            <option value="image">图片 image</option>
+            <option value="video">视频 video</option>
+          </select>
+        </div>
+        <!-- 视频推理温馨提示 -->
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+          <div class="font-medium mb-1">视频推理提示</div>
+          <div>仅支持 .mp4、.webm、.ogg 直链，时长≤30秒、体积几十MB以内，过长过大致接口易超时报错。</div>
+        </div>
+      </div>
+    </div>
+    <!-- 面板11：AI识图【独立】新增 -->
+    <div class="func-panel hidden" data-panel="11">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">待识别图片</label>
+          <div class="flex gap-2 mb-2">
+            <button type="button" class="oly-btn oly-btn-active" data-recog-type="recog" data-recog-mode="local">本地上传</button>
+            <button type="button" class="oly-btn oly-btn-inactive" data-recog-type="recog" data-recog-mode="url">网络URL</button>
+          </div>
+          <div data-recog-box="recog-local">
+            <label class="oly-upload" id="recogUploadArea">
+              <input type="file" accept="image/*" class="hidden" data-recog-upload="recog" />
+              <img class="max-h-full max-w-full object-contain hidden" data-recog-preview="recog" />
+              <span class="text-gray-500 text-sm" data-recog-tip="recog">点击选择图片 或 拖拽图片到此处</span>
+            </label>
+          </div>
+          <div class="hidden" data-recog-box="recog-url">
+            <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-recog-input="recog" placeholder="输入图片网络URL">
+          </div>
+        </div>
+        <p class="text-xs text-gray-500">支持 JPG、PNG、WebP 等常见图片格式，一键识别图片内容</p>
+      </div>
+    </div>
+    <!-- 面板12：AI图片鉴定【独立】新增 -->
+    <div class="func-panel hidden" data-panel="12">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">待鉴定图片</label>
+          <div class="flex gap-2 mb-2">
+            <button type="button" class="oly-btn oly-btn-active" data-aigc-type="aigc" data-aigc-mode="local">本地上传</button>
+            <button type="button" class="oly-btn oly-btn-inactive" data-aigc-type="aigc" data-aigc-mode="url">网络URL</button>
+          </div>
+          <div data-aigc-box="aigc-local">
+            <label class="oly-upload" id="aigcUploadArea">
+              <input type="file" accept="image/*" class="hidden" data-aigc-upload="aigc" />
+              <img class="max-h-full max-w-full object-contain hidden" data-aigc-preview="aigc" />
+              <span class="text-gray-500 text-sm" data-aigc-tip="aigc">点击选择图片 或 拖拽图片到此处</span>
+            </label>
+          </div>
+          <div class="hidden" data-aigc-box="aigc-url">
+            <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-aigc-input="aigc" placeholder="输入图片网络URL">
+          </div>
+        </div>
+        <p class="text-xs text-gray-500">支持 JPG、PNG、WebP 等常见图片格式，鉴定图片是否为AI生成内容</p>
+      </div>
+    </div>
+    <!-- 面板13：AI菜品识别【独立】新增 -->
+    <div class="func-panel hidden" data-panel="13">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">待识别菜品图片</label>
+          <div class="flex gap-2 mb-2">
+            <button type="button" class="oly-btn oly-btn-active" data-dish-type="dish" data-dish-mode="local">本地上传</button>
+            <button type="button" class="oly-btn oly-btn-inactive" data-dish-type="dish" data-dish-mode="url">网络URL</button>
+          </div>
+          <div data-dish-box="dish-local">
+            <label class="oly-upload" id="dishUploadArea">
+              <input type="file" accept="image/*" class="hidden" data-dish-upload="dish" />
+              <img class="max-h-full max-w-full object-contain hidden" data-dish-preview="dish" />
+              <span class="text-gray-500 text-sm" data-dish-tip="dish">点击选择图片 或 拖拽图片到此处</span>
+            </label>
+          </div>
+          <div class="hidden" data-dish-box="dish-url">
+            <input type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg input-focus" data-dish-input="dish" placeholder="输入菜品图片网络URL">
+          </div>
+        </div>
+        <p class="text-xs text-gray-500">支持 JPG、PNG、WebP 等常见图片格式，一键识别菜品名称</p>
+      </div>
+    </div>
+    <!-- 全局提交按钮 - 仅触发当前模式逻辑，不绑定任何功能专属数据 -->
+    <button id="globalSubmit" class="w-full mt-4 bg-primary hover:bg-primary/90 text-white font-medium py-2.5 rounded-lg transition-all flex items-center justify-center gap-2">
+      <i class="fa fa-magic"></i>
+      <span>开始</span>
+    </button>
+  </div>
+  <!-- 全局加载框 - 所有功能共用（无冲突） -->
+  <div id="globalLoading" class="hidden text-center py-6 text-gray-500">
+    <i class="fa fa-spinner fa-spin mr-2"></i>处理中，请稍候...
+  </div>
+  <!-- 全局结果区 - 新增3个功能专属结果展示区 -->
+  <div id="globalResult" class="bg-white rounded-2xl p-6 card-shadow hidden">
+    <h3 class="font-semibold text-gray-800 mb-3">处理结果</h3>
+    <!-- AI绘画专属结果说明 -->
+    <div id="drawOnlyInfo" class="mb-4 p-3 bg-blue-50 rounded-lg text-sm space-y-1.5 hidden">
+      <p class="font-medium text-primary" id="drawOnlyMsg"></p>
+      <p class="text-gray-600 leading-relaxed" id="drawOnlyDesc"></p>
+    </div>
+    <!-- AI推理专属结果说明 -->
+    <div id="aiinferOnlyInfo" class="mb-4 p-3 bg-blue-50 rounded-lg text-base space-y-4 hidden">
+      <div>
+        <p class="font-medium text-primary mb-1">推理结论</p>
+        <p class="text-gray-800 leading-relaxed" id="aiinfer-content"></p>
+      </div>
+      <div>
+        <p class="font-medium text-primary mb-1">思考过程</p>
+        <p class="text-gray-700 bg-gray-50 p-3 rounded-lg whitespace-pre-line text-sm" id="aiinfer-reasoning"></p>
+      </div>
+    </div>
+    <!-- AI识图专属结果说明 新增 -->
+    <div id="recogOnlyInfo" class="mb-4 p-3 bg-blue-50 rounded-lg text-base space-y-2 hidden">
+      <p class="font-medium text-primary mb-1">识别结果</p>
+      <p class="text-gray-800 leading-relaxed select-all" id="recog-content"></p>
+    </div>
+    <!-- AI图片鉴定专属结果说明 新增 -->
+    <div id="aigcOnlyInfo" class="mb-4 p-3 bg-blue-50 rounded-lg text-base space-y-4 hidden">
+      <div>
+        <p class="font-medium text-primary mb-1">鉴定结论</p>
+        <p class="text-gray-800 leading-relaxed" id="aigc-content"></p>
+      </div>
+      <div class="border border-slate-100 rounded-lg p-4 bg-white shadow-sm">
+        <div class="flex justify-between items-center mb-2">
+          <span class="font-medium text-gray-700">AI生成检测</span>
+          <span id="aigc-tag" class="px-3 py-1 rounded text-sm font-medium bg-gray-100 text-gray-600">未检测</span>
+        </div>
+        <div class="w-full bg-gray-100 rounded-full h-3 mb-3 overflow-hidden">
+          <div id="aigc-progress" class="h-full rounded-full bg-primary transition-all duration-500" style="width: 0%"></div>
+        </div>
+        <div class="flex justify-between text-sm text-gray-500">
+          <span>AI生成概率</span>
+          <span id="aigc-score" class="font-semibold">0%</span>
+        </div>
+      </div>
+    </div>
+    <!-- AI菜品识别专属结果说明 新增 -->
+    <div id="dishOnlyInfo" class="mb-4 p-3 bg-blue-50 rounded-lg text-center space-y-2 hidden">
+      <p class="font-medium text-primary mb-1">识别结果</p>
+      <p class="text-sm text-gray-500 mb-2">识别菜品为</p>
+      <h3 id="dish-content" class="text-[clamp(1.5rem,5vw,2.5rem)] font-bold text-primary mb-4 select-all">--</h3>
+      <p class="text-xs text-gray-400">AI菜品识别结果仅供参考</p>
+    </div>
+    <div id="resultContent" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+  </div>
+</div>
+<!-- 全局图片放大弹窗 - 所有功能共用（无冲突） -->
+<div id="imgModal" class="fixed inset-0 bg-black/95 z-50 hidden items-center justify-center p-4">
+  <img id="modalImg" class="max-h-[90vh] max-w-[90vw] rounded-lg">
+</div>
+<script>
+  // 1. 全局常量定义 - 新增3个功能模式与API映射
+  const FUNC_MODE = {
+    WATERMARK: 1, LINE: 2, DRAW: 3, REDRAW: 4, CUTOUT: 5,
+    EXPAND: 6, SHARPEN: 7, OVERLAY: 8, AIGEN: 9, AIIFER:10,
+    AI_RECOGNIZE: 11, AIGC_CHECK: 12, DISH_RECOG: 13 // 新增3个功能模式
+  };
+  const API_KEY = '5c7f37a79ce1eef4eb1b79dc5d7a752ab139ac681ce02447389e6fc6a2eb5a52';
+  const API_MAP = {
+    [FUNC_MODE.WATERMARK]: 'https://missqiu.icu/API/baiduqsy.php',
+    [FUNC_MODE.LINE]: 'https://missqiu.icu/API/baidutqxg.php',
+    [FUNC_MODE.DRAW]: 'https://missqiu.icu/API/baidudraw.php',
+    [FUNC_MODE.REDRAW]: 'https://missqiu.icu/API/baiduch.php',
+    [FUNC_MODE.CUTOUT]: 'https://missqiu.icu/API/baidukoutu.php',
+    [FUNC_MODE.EXPAND]: 'https://missqiu.icu/API/baidukt.php',
+    [FUNC_MODE.SHARPEN]: 'https://missqiu.icu/API/baiduimage.php',
+    [FUNC_MODE.OVERLAY]: 'https://api.pearktrue.cn/api/phantom_tank',
+    [FUNC_MODE.AIGEN]: 'https://missqiu.icu/API/NanoBanana.php',
+    [FUNC_MODE.AIIFER]: 'https://missqiu.icu/API/aitl.php',
+    [FUNC_MODE.AI_RECOGNIZE]: 'https://api.pearktrue.cn/api/airecognizeimg/', // 新增AI识图API
+    [FUNC_MODE.AIGC_CHECK]: 'https://api.pearktrue.cn/api/image_identification_chart', // 新增AI图片鉴定API
+    [FUNC_MODE.DISH_RECOG]: 'https://api.pearktrue.cn/api/aidish/' // 新增AI菜品识别API
+  };
+  // 全局唯一当前模式 - 无其他变量关联
+  let currentFuncMode = FUNC_MODE.WATERMARK;
+  // 2. 全局工具方法 - 所有功能共用，无业务关联
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
+  // 全局提示 - 唯一入口
+  function showToast(msg, duration = 2200) {
+    const toast = $('#globalToast');
+    toast.textContent = msg;
+    toast.classList.add('opacity-100', 'top-6');
+    setTimeout(() => toast.classList.remove('opacity-100', 'top-6'), duration);
+  }
+  // 安全解析JSON - 全局通用
+  function safeParse(str) {
+    try { return JSON.parse(str) } catch (e) { return { raw: str?.trim() || '' } }
+  }
+  // 风险样式映射 - 用于AI图片鉴定
+  const riskStyleMap = {
+    safe: { tag: '正常', tagClass: 'bg-success/10 text-success', progressClass: 'bg-success', content: '该图片为AI生成的概率较低，判定为正常内容' },
+    warning: { tag: '疑似', tagClass: 'bg-warning/10 text-warning', progressClass: 'bg-warning', content: '该图片有一定概率为AI生成内容，请注意甄别' },
+    danger: { tag: 'AI生成', tagClass: 'bg-danger/10 text-danger', progressClass: 'bg-danger', content: '该图片有极高概率为AI生成内容' },
+    default: { tag: '未检测', tagClass: 'bg-gray-100 text-gray-600', progressClass: 'bg-primary', content: '暂无鉴定结果' }
+  };
+  // 3. 图片叠加功能 - 完全封装为独立模块，与其他功能无任何变量/函数交叉
+  const OverlayModule = (() => {
+    // 模块内私有变量 - 外部无法访问，彻底隔离
+    let modeMap = { table: 'local', rito: 'local' };
+    // 模块内私有方法
+    function switchMode(type, mode) {
+      modeMap[type] = mode;
+      // 切换按钮样式
+      $$(`[data-oly-type="${type}"]`).forEach(btn => {
+        btn.classList.toggle('oly-btn-active', btn.dataset.olyMode === mode);
+        btn.classList.toggle('oly-btn-inactive', btn.dataset.olyMode !== mode);
+      });
+      // 切换显示盒子
+      $$(`[data-oly-box^="${type}-"]`).forEach(box => {
+        box.classList.toggle('hidden', !box.dataset.olyBox.endsWith(mode));
+      });
+    }
+    // 本地预览 - 模块内私有
+    function initPreview() {
+      $$('[data-oly-upload]').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const type = e.target.dataset.olyUpload;
+          const file = e.target.files[0];
+          if (!file) return;
+          $(`[data-oly-preview="${type}"]`).src = URL.createObjectURL(file);
+          $(`[data-oly-preview="${type}"]`).classList.remove('hidden');
+          $(`[data-oly-tip="${type}"]`).classList.add('hidden');
+        });
+      });
+    }
+    // 获取模块内数据 - 对外唯一暴露的方法
+    function getSubmitData() {
+      const data = { formData: new FormData(), error: '' };
+      // 处理表图
+      if (modeMap.table === 'local') {
+        const file = $('[data-oly-upload="table"]').files[0];
+        if (!file) data.error = '请选择表图';
+        else data.formData.append('table_chart_image', file);
+      } else {
+        const url = $('[data-oly-input="table"]').value.trim();
+        if (!url) data.error = '请输入表图URL';
+        else data.formData.append('table_chart_image', url);
+      }
+      // 处理里图（有错误则跳过）
+      if (!data.error) {
+        if (modeMap.rito === 'local') {
+          const file = $('[data-oly-upload="rito"]').files[0];
+          if (!file) data.error = '请选择里图';
+          else data.formData.append('rito_image', file);
+        } else {
+          const url = $('[data-oly-input="rito"]').value.trim();
+          if (!url) data.error = '请输入里图URL';
+          else data.formData.append('rito_image', url);
+        }
+      }
+      return data;
+    }
+    // 模块初始化 - 仅执行一次
+    function init() {
+      // 绑定切换事件
+      $$('[data-oly-type]').forEach(btn => {
+        btn.addEventListener('click', () => switchMode(btn.dataset.olyType, btn.dataset.olyMode));
+      });
+      // 初始化预览
+      initPreview();
+    }
+    // 对外暴露唯一接口
+    return { init, getSubmitData };
+  })();
+  // 4. AI识图功能模块 - 独立封装，无变量冲突
+  const RecogModule = (() => {
+    let modeMap = { recog: 'local' };
+    let currentSource = { type: '', data: null };
+    // 切换本地上传/URL模式
+    function switchMode(type, mode) {
+      modeMap[type] = mode;
+      $$(`[data-recog-type="${type}"]`).forEach(btn => {
+        btn.classList.toggle('oly-btn-active', btn.dataset.recogMode === mode);
+        btn.classList.toggle('oly-btn-inactive', btn.dataset.recogMode !== mode);
+      });
+      $$(`[data-recog-box^="${type}-"]`).forEach(box => {
+        box.classList.toggle('hidden', !box.dataset.recogBox.endsWith(mode));
+      });
+      resetState();
+    }
+    // 渲染预览
+    function renderPreview(src) {
+      $(`[data-recog-preview="recog"]`).src = src;
+      $(`[data-recog-preview="recog"]`).classList.remove('hidden');
+      $(`[data-recog-tip="recog"]`).classList.add('hidden');
+    }
+    // 处理文件选择
+    function handleFileSelect(file) {
+      if (!file.type.startsWith('image/')) {
+        showToast('请选择有效的图片文件', 'error');
+        return;
+      }
+      currentSource = { type: 'file', data: file };
+      renderPreview(URL.createObjectURL(file));
+      showToast('图片加载成功', 'success');
+    }
+    // 处理URL加载
+    function handleUrlLoad(url) {
+      if (!url.startsWith('http')) {
+        showToast('请输入有效的http/https图片链接', 'error');
+        return;
+      }
+      currentSource = { type: 'url', data: url };
+      renderPreview(url);
+      showToast('图片链接加载成功', 'success');
+    }
+    // 重置状态
+    function resetState() {
+      currentSource = { type: '', data: null };
+      $(`[data-recog-preview="recog"]`).src = '';
+      $(`[data-recog-preview="recog"]`).classList.add('hidden');
+      $(`[data-recog-tip="recog"]`).classList.remove('hidden');
+      $(`[data-recog-input="recog"]`).value = '';
+      $(`[data-recog-upload="recog"]`).value = '';
+    }
+    // 获取提交数据
+    function getSubmitData() {
+      const data = { formData: new FormData(), error: '' };
+      if (modeMap.recog === 'local') {
+        if (!currentSource.data) data.error = '请选择待识别的图片';
+        else data.formData.append('file', currentSource.data);
+      } else {
+        const url = $(`[data-recog-input="recog"]`).value.trim();
+        if (!url) data.error = '请输入图片URL';
+        else data.formData.append('file', url);
+      }
+      return data;
+    }
+    // 初始化
+    function init() {
+      // 模式切换
+      $$('[data-recog-type]').forEach(btn => {
+        btn.addEventListener('click', () => switchMode(btn.dataset.recogType, btn.dataset.recogMode));
+      });
+      // 文件选择
+      $('[data-recog-upload="recog"]').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) handleFileSelect(file);
+      });
+      // URL加载
+      $('[data-recog-input="recog"]').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleUrlLoad(e.target.value.trim());
+      });
+      // 拖拽上传
+      $('#recogUploadArea').addEventListener('dragover', (e) => {
+        e.preventDefault();
+        $('#recogUploadArea').classList.add('drag-over');
+      });
+      $('#recogUploadArea').addEventListener('dragleave', () => {
+        $('#recogUploadArea').classList.remove('drag-over');
+      });
+      $('#recogUploadArea').addEventListener('drop', (e) => {
+        e.preventDefault();
+        $('#recogUploadArea').classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileSelect(file);
+      });
+    }
+    return { init, getSubmitData, resetState };
+  })();
+  // 5. AI图片鉴定功能模块 - 独立封装，无变量冲突
+  const AigcCheckModule = (() => {
+    let modeMap = { aigc: 'local' };
+    let currentSource = { type: '', data: null };
+    // 切换本地上传/URL模式
+    function switchMode(type, mode) {
+      modeMap[type] = mode;
+      $$(`[data-aigc-type="${type}"]`).forEach(btn => {
+        btn.classList.toggle('oly-btn-active', btn.dataset.aigcMode === mode);
+        btn.classList.toggle('oly-btn-inactive', btn.dataset.aigcMode !== mode);
+      });
+      $$(`[data-aigc-box^="${type}-"]`).forEach(box => {
+        box.classList.toggle('hidden', !box.dataset.aigcBox.endsWith(mode));
+      });
+      resetState();
+    }
+    // 渲染预览
+    function renderPreview(src) {
+      $(`[data-aigc-preview="aigc"]`).src = src;
+      $(`[data-aigc-preview="aigc"]`).classList.remove('hidden');
+      $(`[data-aigc-tip="aigc"]`).classList.add('hidden');
+    }
+    // 处理文件选择
+    function handleFileSelect(file) {
+      if (!file.type.startsWith('image/')) {
+        showToast('请选择有效的图片文件', 'error');
+        return;
+      }
+      currentSource = { type: 'file', data: file };
+      renderPreview(URL.createObjectURL(file));
+      showToast('图片加载成功', 'success');
+    }
+    // 处理URL加载
+    function handleUrlLoad(url) {
+      if (!url.startsWith('http')) {
+        showToast('请输入有效的http/https图片链接', 'error');
+        return;
+      }
+      currentSource = { type: 'url', data: url };
+      renderPreview(url);
+      showToast('图片链接加载成功', 'success');
+    }
+    // 重置状态
+    function resetState() {
+      currentSource = { type: '', data: null };
+      $(`[data-aigc-preview="aigc"]`).src = '';
+      $(`[data-aigc-preview="aigc"]`).classList.add('hidden');
+      $(`[data-aigc-tip="aigc"]`).classList.remove('hidden');
+      $(`[data-aigc-input="aigc"]`).value = '';
+      $(`[data-aigc-upload="aigc"]`).value = '';
+    }
+    // 获取提交数据
+    function getSubmitData() {
+      const data = { formData: new FormData(), error: '' };
+      if (modeMap.aigc === 'local') {
+        if (!currentSource.data) data.error = '请选择待鉴定的图片';
+        else data.formData.append('image', currentSource.data);
+      } else {
+        const url = $(`[data-aigc-input="aigc"]`).value.trim();
+        if (!url) data.error = '请输入图片URL';
+        else data.formData.append('image', url);
+      }
+      return data;
+    }
+    // 初始化
+    function init() {
+      // 模式切换
+      $$('[data-aigc-type]').forEach(btn => {
+        btn.addEventListener('click', () => switchMode(btn.dataset.aigcType, btn.dataset.aigcMode));
+      });
+      // 文件选择
+      $('[data-aigc-upload="aigc"]').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) handleFileSelect(file);
+      });
+      // URL加载
+      $('[data-aigc-input="aigc"]').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleUrlLoad(e.target.value.trim());
+      });
+      // 拖拽上传
+      $('#aigcUploadArea').addEventListener('dragover', (e) => {
+        e.preventDefault();
+        $('#aigcUploadArea').classList.add('drag-over');
+      });
+      $('#aigcUploadArea').addEventListener('dragleave', () => {
+        $('#aigcUploadArea').classList.remove('drag-over');
+      });
+      $('#aigcUploadArea').addEventListener('drop', (e) => {
+        e.preventDefault();
+        $('#aigcUploadArea').classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileSelect(file);
+      });
+    }
+    return { init, getSubmitData, resetState };
+  })();
+  // 6. AI菜品识别功能模块 - 独立封装，无变量冲突
+  const DishRecogModule = (() => {
+    let modeMap = { dish: 'local' };
+    let currentSource = { type: '', data: null };
+    // 切换本地上传/URL模式
+    function switchMode(type, mode) {
+      modeMap[type] = mode;
+      $$(`[data-dish-type="${type}"]`).forEach(btn => {
+        btn.classList.toggle('oly-btn-active', btn.dataset.dishMode === mode);
+        btn.classList.toggle('oly-btn-inactive', btn.dataset.dishMode !== mode);
+      });
+      $$(`[data-dish-box^="${type}-"]`).forEach(box => {
+        box.classList.toggle('hidden', !box.dataset.dishBox.endsWith(mode));
+      });
+      resetState();
+    }
+    // 渲染预览
+    function renderPreview(src) {
+      $(`[data-dish-preview="dish"]`).src = src;
+      $(`[data-dish-preview="dish"]`).classList.remove('hidden');
+      $(`[data-dish-tip="dish"]`).classList.add('hidden');
+    }
+    // 处理文件选择
+    function handleFileSelect(file) {
+      if (!file.type.startsWith('image/')) {
+        showToast('请选择有效的图片文件', 'error');
+        return;
+      }
+      currentSource = { type: 'file', data: file };
+      renderPreview(URL.createObjectURL(file));
+      showToast('图片加载成功', 'success');
+    }
+    // 处理URL加载
+    function handleUrlLoad(url) {
+      if (!url.startsWith('http')) {
+        showToast('请输入有效的http/https图片链接', 'error');
+        return;
+      }
+      currentSource = { type: 'url', data: url };
+      renderPreview(url);
+      showToast('图片链接加载成功', 'success');
+    }
+    // 重置状态
+    function resetState() {
+      currentSource = { type: '', data: null };
+      $(`[data-dish-preview="dish"]`).src = '';
+      $(`[data-dish-preview="dish"]`).classList.add('hidden');
+      $(`[data-dish-tip="dish"]`).classList.remove('hidden');
+      $(`[data-dish-input="dish"]`).value = '';
+      $(`[data-dish-upload="dish"]`).value = '';
+    }
+    // 获取提交数据
+    function getSubmitData() {
+      const data = { formData: new FormData(), error: '' };
+      if (modeMap.dish === 'local') {
+        if (!currentSource.data) data.error = '请选择待识别的菜品图片';
+        else data.formData.append('file', currentSource.data);
+      } else {
+        const url = $(`[data-dish-input="dish"]`).value.trim();
+        if (!url) data.error = '请输入图片URL';
+        else data.formData.append('file', url);
+      }
+      return data;
+    }
+    // 初始化
+    function init() {
+      // 模式切换
+      $$('[data-dish-type]').forEach(btn => {
+        btn.addEventListener('click', () => switchMode(btn.dataset.dishType, btn.dataset.dishMode));
+      });
+      // 文件选择
+      $('[data-dish-upload="dish"]').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) handleFileSelect(file);
+      });
+      // URL加载
+      $('[data-dish-input="dish"]').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleUrlLoad(e.target.value.trim());
+      });
+      // 拖拽上传
+      $('#dishUploadArea').addEventListener('dragover', (e) => {
+        e.preventDefault();
+        $('#dishUploadArea').classList.add('drag-over');
+      });
+      $('#dishUploadArea').addEventListener('dragleave', () => {
+        $('#dishUploadArea').classList.remove('drag-over');
+      });
+      $('#dishUploadArea').addEventListener('drop', (e) => {
+        e.preventDefault();
+        $('#dishUploadArea').classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileSelect(file);
+      });
+    }
+    return { init, getSubmitData, resetState };
+  })();
+  // 7. 功能切换核心逻辑 - 纯DOM切换，无业务逻辑，切换时重置所有状态
+  function initFuncSwitch() {
+    // 标签点击切换
+    $$('.tab-item').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // 切换标签样式
+        $$('.tab-item').forEach(t => {
+          t.classList.toggle('tab-active', t === tab);
+          t.classList.toggle('tab-inactive', t !== tab);
+        });
+        // 切换功能面板
+        const mode = Number(tab.dataset.mode);
+        currentFuncMode = mode;
+        $$('.func-panel').forEach(panel => {
+          panel.classList.toggle('hidden', Number(panel.dataset.panel) !== mode);
+        });
+        // 切换时强制重置状态 - 彻底避免数据残留
+        resetGlobalState();
+        // 切换标签时重置三个模块的上传状态
+        RecogModule.resetState();
+        AigcCheckModule.resetState();
+        DishRecogModule.resetState();
+      });
+    });
+  }
+  // 8. 全局状态重置 - 仅重置结果区、加载状态，不清除上传的图片
+  function resetGlobalState() {
+    $('#globalResult').classList.add('hidden');
+    // 重置所有专属结果区
+    $('#drawOnlyInfo').classList.add('hidden');
+    $('#aiinferOnlyInfo').classList.add('hidden');
+    $('#recogOnlyInfo').classList.add('hidden');
+    $('#aigcOnlyInfo').classList.add('hidden');
+    $('#dishOnlyInfo').classList.add('hidden');
+    $('#resultContent').innerHTML = '';
+    $('#globalLoading').classList.add('hidden');
+    // 重置提交按钮
+    $('#globalSubmit').disabled = false;
+    $('#globalSubmit').innerHTML = '<i class="fa fa-magic"></i> 开始';
+    // 关闭图片弹窗
+    $('#imgModal').classList.add('hidden');
+    $('#imgModal').classList.remove('flex');
+  }
+  // 9. 各功能提交数据获取 - 新增3个功能的参数处理
+  function getCurrentSubmitData() {
+    const result = { url: '', data: null, method: 'GET', error: '' };
+    switch (currentFuncMode) {
+      case FUNC_MODE.WATERMARK:
+        result.url = $(`[data-id="watermark-url"]`).value.trim();
+        result.error = !result.url ? '请输入图片链接' : '';
+        break;
+      case FUNC_MODE.LINE:
+        result.url = $(`[data-id="line-url"]`).value.trim();
+        result.error = !result.url ? '请输入图片链接' : '';
+        break;
+      case FUNC_MODE.DRAW:
+        const text = $(`[data-id="draw-text"]`).value.trim();
+        const style = $(`[data-id="draw-style"]`).value;
+        const ratio = $(`[data-id="draw-ratio"]`).value;
+        if (!text) {
+          result.error = '请输入绘画描述';
+        } else {
+          result.url = `${API_MAP[currentFuncMode]}?text=${encodeURIComponent(text)}&style=${encodeURIComponent(style)}&ratio=${encodeURIComponent(ratio)}&apikey=${API_KEY}`;
+        }
+        break;
+      case FUNC_MODE.REDRAW:
+        const rUrl = $(`[data-id="redraw-url"]`).value.trim();
+        const rLevel = $(`[data-id="redraw-level"]`).value;
+        if (!rUrl) {
+          result.error = '请输入重绘图片链接';
+        } else {
+          result.url = `${API_MAP[currentFuncMode]}?url=${encodeURIComponent(rUrl)}&gs=${rLevel}&type=json&apikey=${API_KEY}`;
+        }
+        break;
+      case FUNC_MODE.CUTOUT:
+        result.url = $(`[data-id="cutout-url"]`).value.trim();
+        if (result.url) {
+          result.url = `${API_MAP[currentFuncMode]}?url=${encodeURIComponent(result.url)}&type=json&apikey=${API_KEY}`;
+        } else {
+          result.error = '请输入抠图图片链接';
+        }
+        break;
+      case FUNC_MODE.EXPAND:
+        const eUrl = $(`[data-id="expand-url"]`).value.trim();
+        const eRatio = $(`[data-id="expand-ratio"]`).value;
+        if (!eUrl) {
+          result.error = '请输入扩图图片链接';
+        } else {
+          result.url = `${API_MAP[currentFuncMode]}?url=${encodeURIComponent(eUrl)}&gs=${encodeURIComponent(eRatio)}&type=json&apikey=${API_KEY}`;
+        }
+        break;
+      case FUNC_MODE.SHARPEN:
+        result.url = $(`[data-id="sharpen-url"]`).value.trim();
+        if (result.url) {
+          result.url = `${API_MAP[currentFuncMode]}?url=${encodeURIComponent(result.url)}&type=json&apikey=${API_KEY}`;
+        } else {
+          result.error = '请输入图片链接';
+        }
+        break;
+      case FUNC_MODE.OVERLAY:
+        const olyData = OverlayModule.getSubmitData();
+        result.error = olyData.error;
+        result.data = olyData.formData;
+        result.url = API_MAP[currentFuncMode];
+        result.method = 'POST';
+        break;
+      case FUNC_MODE.AIGEN:
+        const prompt = $(`[data-id="aigen-prompt"]`).value.trim();
+        const aUrl = $(`[data-id="aigen-url"]`).value.trim();
+        if (!prompt) {
+          result.error = '请输入生成描述词';
+        } else {
+          const params = new URLSearchParams({ prompt, apikey: API_KEY });
+          if (aUrl) params.append('url', aUrl);
+          result.url = `${API_MAP[currentFuncMode]}?${params.toString()}`;
+        }
+        break;
+      case FUNC_MODE.AIIFER:
+        const inferText = $(`[data-id="aiinfer-text"]`).value.trim();
+        const inferUrl = $(`[data-id="aiinfer-url"]`).value.trim();
+        const inferType = $(`[data-id="aiinfer-type"]`).value;
+        if (!inferText) {
+          result.error = '请输入推理指令文本';
+        } else if (!inferUrl) {
+          result.error = '请输入图片/视频链接';
+        } else {
+          const params = new URLSearchParams({ text: inferText, url: inferUrl, type: inferType, apikey: API_KEY });
+          result.url = `${API_MAP[currentFuncMode]}?${params.toString()}`;
+        }
+        break;
+      // 新增：AI识图提交数据
+      case FUNC_MODE.AI_RECOGNIZE:
+        const recogData = RecogModule.getSubmitData();
+        result.error = recogData.error;
+        result.data = recogData.formData;
+        result.url = API_MAP[currentFuncMode];
+        result.method = 'POST';
+        break;
+      // 新增：AI图片鉴定提交数据
+      case FUNC_MODE.AIGC_CHECK:
+        const aigcData = AigcCheckModule.getSubmitData();
+        result.error = aigcData.error;
+        result.data = aigcData.formData;
+        result.url = API_MAP[currentFuncMode];
+        result.method = 'POST';
+        break;
+      // 新增：AI菜品识别提交数据
+      case FUNC_MODE.DISH_RECOG:
+        const dishData = DishRecogModule.getSubmitData();
+        result.error = dishData.error;
+        result.data = dishData.formData;
+        result.url = API_MAP[currentFuncMode];
+        result.method = 'POST';
+        break;
+    }
+    return result;
+  }
+  // 10. 各功能结果处理 - 新增3个功能的结果解析
+  function handleResultData(data) {
+    let imgList = [];
+    switch (currentFuncMode) {
+      case FUNC_MODE.DRAW:
+        // AI绘画专属结果处理
+        if (data.msg) $('#drawOnlyMsg').textContent = data.msg;
+        if (data.text) $('#drawOnlyDesc').textContent = data.text;
+        $('#drawOnlyInfo').classList.remove('hidden');
+        // 兼容多字段返回，过滤无效URL
+        let rawImgList = [];
+        if (data.image_url) rawImgList = Array.isArray(data.image_url) ? data.image_url : [data.image_url];
+        else if (data.images) rawImgList = Array.isArray(data.images) ? data.images : [data.images];
+        else if (data.img) rawImgList = Array.isArray(data.img) ? data.img : [data.img];
+        // 过滤有效的http开头的URL
+        imgList = rawImgList.filter(src => src && typeof src === 'string' && src.startsWith('http'));
+        break;
+      case FUNC_MODE.OVERLAY:
+        // 图片叠加专属结果处理
+        if (data.code === 200 && data.image_url) imgList = [data.image_url];
+        else throw new Error(data.msg || '图片叠加失败');
+        break;
+      case FUNC_MODE.AIGEN:
+        // 新AI生成专属结果处理
+        if (data.status === 0 && data.result?.file_url) imgList = [data.result.file_url];
+        else throw new Error(data.message || '新AI生成失败');
+        break;
+      case FUNC_MODE.AIIFER:
+        // AI推理专属结果处理
+        if (data?.choices?.[0]?.message) {
+          const msg = data.choices[0].message;
+          $('#aiinfer-content').textContent = msg.content || '无推理结论';
+          $('#aiinfer-reasoning').textContent = msg.reasoning_content || '无思考过程';
+          $('#aiinferOnlyInfo').classList.remove('hidden');
+        } else {
+          throw new Error('返回数据格式异常，未获取到推理结果');
+        }
+        imgList = [];
+        break;
+      // 新增：AI识图结果处理
+      case FUNC_MODE.AI_RECOGNIZE:
+        if (data.code === 200 && data.result) {
+          $('#recog-content').textContent = data.result;
+          $('#recogOnlyInfo').classList.remove('hidden');
+        } else {
+          throw new Error(data.msg || '图片识别失败');
+        }
+        imgList = [];
+        break;
+      // 新增：AI图片鉴定结果处理
+      case FUNC_MODE.AIGC_CHECK:
+        if (data.code === 200) {
+          const { flagged, category_scores } = data.data;
+          const score = category_scores.aigc;
+          const percent = (score * 100).toFixed(2);
+          // 计算风险等级
+          let riskLevel;
+          if (flagged) riskLevel = 'danger';
+          else if (score >= 0.7) riskLevel = 'warning';
+          else if (score < 0.3) riskLevel = 'safe';
+          else riskLevel = 'default';
+          const style = riskStyleMap[riskLevel];
+          // 渲染结果
+          $('#aigc-content').textContent = style.content;
+          $('#aigc-tag').className = `px-3 py-1 rounded text-sm font-medium ${style.tagClass}`;
+          $('#aigc-tag').textContent = style.tag;
+          $('#aigc-progress').className = `h-full rounded-full ${style.progressClass} transition-all duration-500`;
+          $('#aigc-progress').style.width = `${percent}%`;
+          $('#aigc-score').textContent = `${percent}%`;
+          $('#aigcOnlyInfo').classList.remove('hidden');
+        } else {
+          throw new Error(data.msg || '图片鉴定失败');
+        }
+        imgList = [];
+        break;
+      // 新增：AI菜品识别结果处理
+      case FUNC_MODE.DISH_RECOG:
+        if (data.code === 200 && data.data?.dish_name) {
+          $('#dish-content').textContent = data.data.dish_name;
+          $('#dishOnlyInfo').classList.remove('hidden');
+        } else {
+          throw new Error(data.msg || '菜品识别失败');
+        }
+        imgList = [];
+        break;
+      default:
+        // 原有基础功能通用处理
+        const url = data.url || data.img || data.raw || '';
+        imgList = url.startsWith('http') ? [url] : [];
+        break;
+    }
+    return imgList;
+  }
+  // 11. 渲染结果图片 - 全局通用，无功能专属逻辑
+  function renderResultImgs(imgList) {
+    const container = $('#resultContent');
+    container.innerHTML = '';
+    if (imgList.length === 0 && ![FUNC_MODE.AIIFER, FUNC_MODE.AI_RECOGNIZE, FUNC_MODE.AIGC_CHECK, FUNC_MODE.DISH_RECOG].includes(currentFuncMode)) {
+      showToast('未获取到有效图片');
+      return;
+    }
+    // 渲染图片并绑定弹窗事件
+    imgList.forEach(src => {
+      if (!src.startsWith('http')) return;
+      const img = document.createElement('img');
+      img.src = src;
+      img.className = 'w-full h-auto rounded-lg border border-gray-200 cursor-pointer hover:scale-[1.02] transition-transform';
+      img.addEventListener('click', () => {
+        $('#modalImg').src = src;
+        $('#imgModal').classList.remove('hidden');
+        $('#imgModal').classList.add('flex');
+      });
+      container.appendChild(img);
+    });
+    // 显示结果区
+    $('#globalResult').classList.remove('hidden');
+    showToast('处理成功 ✅');
+  }
+  // 12. 全局提交逻辑 - 统一入口，按模式分发，无功能耦合
+  function initSubmit() {
+    $('#globalSubmit').addEventListener('click', async () => {
+      // 1. 获取当前功能提交数据
+      const submitData = getCurrentSubmitData();
+      if (submitData.error) {
+        showToast(submitData.error);
+        return;
+      }
+      // 2. 加载状态
+      resetGlobalState();
+      $('#globalLoading').classList.remove('hidden');
+      $('#globalSubmit').disabled = true;
+      $('#globalSubmit').innerHTML = '<i class="fa fa-spinner fa-spin"></i> 处理中...';
+      try {
+        // 3. 发送请求 - 按模式使用GET/POST
+        const requestOptions = {
+          method: submitData.method,
+          body: submitData.data || null
+        };
+        const res = await fetch(submitData.url || API_MAP[currentFuncMode], requestOptions);
+        const text = await res.text();
+        const data = safeParse(text);
+        // 4. 处理结果 - 按模式分离
+        const imgList = handleResultData(data);
+        // 5. 渲染结果
+        renderResultImgs(imgList);
+      } catch (e) {
+        showToast(`请求失败：${e.message}`);
+      } finally {
+        // 6. 恢复状态
+        $('#globalLoading').classList.add('hidden');
+        $('#globalSubmit').disabled = false;
+        $('#globalSubmit').innerHTML = '<i class="fa fa-magic"></i> 开始';
+      }
+    });
+  }
+  // 13. 图片弹窗关闭 - 全局通用
+  function initModal() {
+    $('#imgModal').addEventListener('click', () => {
+      $('#imgModal').classList.add('hidden');
+      $('#imgModal').classList.remove('flex');
+    });
+  }
+  // 入口函数 - 按模块初始化，互不影响
+  function initAll() {
+    initFuncSwitch();    // 功能切换
+    OverlayModule.init();// 图片叠加模块
+    RecogModule.init();  // AI识图模块
+    AigcCheckModule.init(); // AI图片鉴定模块
+    DishRecogModule.init(); // AI菜品识别模块
+    initSubmit();        // 提交逻辑
+    initModal();         // 图片弹窗
+    resetGlobalState();  // 初始状态重置
+  }
+  // 页面加载完成后初始化
+  window.addEventListener('DOMContentLoaded', initAll);
+</script>
+</body>
+</html>
