@@ -188,13 +188,13 @@
 }
 
 /* 彩虹七色 - 浅色柔和版 */
-.tag-color-1 { --tag-color: #FFB3B3; --tag-color-rgb: 255, 179, 179; }
-.tag-color-2 { --tag-color: #FFD6A5; --tag-color-rgb: 255, 214, 165; }
-.tag-color-3 { --tag-color: #FDFFB6; --tag-color-rgb: 253, 255, 182; }
-.tag-color-4 { --tag-color: #CAFFBF; --tag-color-rgb: 202, 255, 191; }
-.tag-color-5 { --tag-color: #9BF6FF; --tag-color-rgb: 155, 246, 255; }
-.tag-color-6 { --tag-color: #A0C4FF; --tag-color-rgb: 160, 196, 255; }
-.tag-color-7 { --tag-color: #E2C2FF; --tag-color-rgb: 226, 194, 255; }
+.tag-color-1 { --tag-color: #FF3D3D; --tag-color-rgb: 255, 179, 179; }
+.tag-color-2 { --tag-color: #FFA334; --tag-color-rgb: 255, 214, 165; }
+.tag-color-3 { --tag-color: #F9FF2C; --tag-color-rgb: 253, 255, 182; }
+.tag-color-4 { --tag-color: #59FF36; --tag-color-rgb: 202, 255, 191; }
+.tag-color-5 { --tag-color: #32ECFF; --tag-color-rgb: 155, 246, 255; }
+.tag-color-6 { --tag-color: #3A84FC; --tag-color-rgb: 160, 196, 255; }
+.tag-color-7 { --tag-color: #9F34FF; --tag-color-rgb: 226, 194, 255; }
 
 /* 响应式设计 */
 @media (min-width: 1600px) {
