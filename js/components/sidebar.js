@@ -57,7 +57,7 @@ class CompactSidebar {
                 expanded: false,
                 items: [
                     { icon: 'fas fa-scroll', label: '手持弹幕', badge: null, action: 'link', link: './pages/chl/手持弹幕.html' },
-                    { icon: 'fas fa-gift', label: '抽奖转盘', badge: null, action: 'link', link: './pages/chl/抽奖转盘.html' },
+                    { icon: 'fas fa-gift', label: '幸运大转盘', badge: null, action: 'link', link: './pages/chl/幸运大转盘.html' },
                     { icon: 'fas fa-clipboard-list', label: '记分牌', badge: null, action: 'link', link: './pages/chl/记分牌.html' },
                     { icon: 'fas fa-clock', label: '时间屏幕', badge: null, action: 'link', link: './pages/chl/时间屏幕.html' }
                 ]
