@@ -1,585 +1,545 @@
-<!DOCTYPE html> <!-- 必须放在第一行，否则怪异模式 -->
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>4K壁纸 | 灵动API选择器</title>
-  <!-- 所有CDN资源、Tailwind配置、样式 全部放在head里，正确闭合 -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Tailwind配置：修正语法，补全所有闭合括号 -->
-  <script>
-  tailwind.config = {
-    darkMode: 'class',
-    theme: {
-      extend: {
-        colors: {
-          primary: '#3b82f6',
-          neutral: {
-            50: '#f8fafc',
-            100: '#f1f5f9',
-            200: '#e2e8f0',
-            300: '#cbd5e1',
-            400: '#94a3b8',
-            500: '#64748b',
-            600: '#475569',
-            700: '#334155',
-            800: '#1e293b',
-            900: '#0f172a',
-            950: '#020617'
-          }
-        },
-        fontSize: {
-          'xs': '0.7rem',
-          'sm': '0.8rem',
-          'base': '0.875rem',
-          'lg': '1rem',
-          'xl': '1.125rem'
-        },
-        borderRadius: {
-          'card': '10px',
-          'btn': '8px',
-          'input': '8px',
-          'modal': '12px'
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>4K壁纸 | 灵动API选择器</title>
+    <!-- 引入核心资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind配置 -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        neutral: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        }
+                    },
+                    fontSize: {
+                        'xs': '0.7rem',
+                        'sm': '0.8rem',
+                        'base': '0.875rem',
+                        'lg': '1rem',
+                        'xl': '1.125rem',
+                    },
+                    borderRadius: {
+                        'card': '10px',
+                        'btn': '8px',
+                        'input': '8px',
+                        'modal': '12px',
+                    }
+                }
+            }
         }
-      }
-    }
-  }
-  </script>
-
-  <!-- 自定义样式&工具类：必须放在type="text/tailwindcss"的style标签里！！！ -->
-  <style type="text/tailwindcss">
-  @layer utilities {
-    .card-hover {
-      @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
-    }
-    .btn-icon {
-      @apply flex items-center justify-center rounded-btn transition-all duration-200 hover:bg-neutral-200 dark:hover:bg-neutral-800 active:scale-95;
-    }
-    .slide-up {
-      animation: slideUp 0.3s ease forwards;
-    }
-    .fade-in {
-      animation: fadeIn 0.3s ease forwards;
-    }
-    .fade-out {
-      animation: fadeOut 0.3s ease forwards;
-    }
-    .arrow-rotate {
-      transform: rotate(180deg);
-      transition: transform 0.2s ease;
-    }
-    .dropdown-slide-in {
-      animation: dropdownSlideIn 0.2s ease forwards;
-    }
-    .dropdown-slide-out {
-      animation: dropdownSlideOut 0.2s ease forwards;
-    }
-  }
-
-  /* 动画定义 */
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  @keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-  }
-  @keyframes dropdownSlideIn {
-    from { opacity: 0; transform: translateY(-5px); max-height: 0; }
-    to { opacity: 1; transform: translateY(0); max-height: 300px; }
-  }
-  @keyframes dropdownSlideOut {
-    from { opacity: 1; transform: translateY(0); max-height: 300px; }
-    to { opacity: 0; transform: translateY(-5px); max-height: 0; }
-  }
-  </style>
+    </script>
+    <!-- 自定义工具类与增强动画 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
+            }
+            .btn-icon {
+                @apply flex items-center justify-center rounded-btn transition-all duration-200 hover:bg-neutral-200 dark:hover:bg-neutral-800 active:scale-95;
+            }
+            .fade-in {
+                animation: fadeIn 0.3s ease forwards;
+            }
+            .fade-out {
+                animation: fadeOut 0.3s ease forwards;
+            }
+            .slide-up {
+                animation: slideUp 0.3s ease forwards;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            /* 优化后的下拉动画：平滑展开 + 弹性曲线 */
+            .dropdown-slide-in {
+                animation: dropdownSlideIn 0.28s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+                transform-origin: top center;
+            }
+            .dropdown-slide-out {
+                animation: dropdownSlideOut 0.22s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+                transform-origin: top center;
+            }
+            /* 箭头旋转动画增强 */
+            .arrow-rotate {
+                transform: rotate(180deg);
+            }
+            /* 选项活跃时的精致微交互 */
+            .dropdown-option {
+                transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            }
+            .dropdown-option:active {
+                transform: scale(0.97);
+            }
+        }
+        /* 全局字体与基础样式 */
+        html {
+            font-size: 14px;
+            scroll-behavior: smooth;
+        }
+        body {
+            @apply font-sans bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 transition-colors duration-300;
+        }
+        /* 动画定义 - 增强弹性与细节 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        /* 下拉核心动画：从上方轻微滑入 + 纵向舒展 */
+        @keyframes dropdownSlideIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-8px) scaleY(0.94);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scaleY(1);
+            }
+        }
+        @keyframes dropdownSlideOut {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scaleY(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-6px) scaleY(0.94);
+            }
+        }
+        /* 图片懒加载过渡 */
+        img {
+            @apply transition-all duration-300;
+        }
+        /* 全局滚动条优雅 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            @apply bg-transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            @apply bg-neutral-300 dark:bg-neutral-700 rounded-full;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            @apply bg-neutral-400 dark:bg-neutral-600;
+        }
+        /* API 下拉箭头专属平滑过渡 */
+        #dropdownArrow {
+            transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        /* 触发按钮增强反馈 */
+        #dropdownTrigger {
+            transition: all 0.2s ease;
+        }
+        #dropdownTrigger:active {
+            transform: scale(0.97);
+        }
+        /* 下拉面板阴影质感提升 */
+        #dropdownPanel {
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.02);
+        }
+        .dark #dropdownPanel {
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.3);
+        }
+        /* 选项高亮与悬停更细腻 */
+        .dropdown-item-active {
+            @apply bg-primary/10 text-primary dark:bg-primary/20;
+            position: relative;
+        }
+        .dropdown-item-active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 2px;
+            bottom: 2px;
+            width: 2px;
+            background-color: #3b82f6;
+            border-radius: 2px;
+        }
+        li[data-value] {
+            transition: all 0.18s ease;
+        }
+    </style>
 </head>
-
-<!-- 所有页面内容必须放在body标签内！！！ -->
-<body class="bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-white min-h-screen">
-  <!-- Toast容器 -->
-  <div id="toastContainer" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-full max-w-sm px-4 pointer-events-none"></div>
-
-  <!-- 顶部导航栏 -->
-  <header class="sticky top-0 z-50 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800">
-    <div class="container mx-auto px-4 py-3 max-w-7xl">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <!-- 标题、API下拉、主题切换 -->
-        <div class="flex items-center gap-2.5">
-          <h1 class="text-xl font-semibold text-primary">
-            <i class="fa-solid fa-image mr-1.5"></i>4K壁纸
-          </h1>
-          <!-- API下拉选择器 -->
-          <div id="apiDropdown" class="relative z-60 w-[150px]">
-            <button id="dropdownTrigger" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-btn text-sm bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-200/70 dark:hover:bg-neutral-800/70 transition-all duration-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-              <span id="dropdownSelectedText" class="truncate">月下独酌API</span>
-              <i id="dropdownArrow" class="fa-solid fa-chevron-down text-xs ml-1 transition-transform duration-200"></i>
-            </button>
-            <!-- 下拉面板 -->
-            <div id="dropdownPanel" class="absolute top-full left-0 mt-1.5 w-full rounded-btn bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-lg py-1 overflow-hidden hidden z-70">
-              <ul id="dropdownOptions" class="max-h-[210px] overflow-y-auto">
-                <li class="dropdown-item-active dropdown-option px-2.5 py-1.5 text-sm cursor-pointer transition-colors duration-200 hover:bg-neutral-100 dark:hover:bg-neutral-800" data-value="yuexia">月下独酌API</li>
-                <li class="dropdown-option px-2.5 py-1.5 text-sm cursor-pointer transition-colors duration-200 hover:bg-neutral-100 dark:hover:bg-neutral-800" data-value="qianxia">浅夏API</li>
-              </ul>
+<body>
+    <!-- Toast容器 -->
+    <div id="toastContainer" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-full max-w-sm px-4 pointer-events-none"></div>
+    <!-- 顶部导航栏 -->
+    <header class="sticky top-0 z-50 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800">
+        <div class="container mx-auto px-4 py-3 max-w-7xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <!-- 标题、自定义API下拉、主题切换 -->
+                <div class="flex items-center gap-2.5">
+                    <h1 class="text-xl font-semibold text-primary">
+                        <i class="fa-solid fa-image mr-1.5"></i>4K壁纸
+                    </h1>
+                    <!-- 自定义API下拉选择器【动画全面优化】 -->
+                    <div id="apiDropdown" class="relative z-60 w-[150px]">
+                        <button id="dropdownTrigger" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-btn text-sm bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-200/70 dark:hover:bg-neutral-800/70 transition-all duration-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                            <span id="dropdownSelectedText" class="truncate">月下独酌API</span>
+                            <i id="dropdownArrow" class="fa-solid fa-chevron-down text-xs ml-1"></i>
+                        </button>
+                        <!-- 下拉面板 - 动画由动态类控制 -->
+                        <div id="dropdownPanel" class="absolute top-full left-0 mt-1.5 w-full rounded-btn bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-lg py-1 overflow-hidden hidden z-70">
+                            <ul id="dropdownOptions" class="max-h-[210px] scrollbar-hide">
+                                <li class="dropdown-item-active dropdown-option px-2.5 py-1.5 text-sm cursor-pointer transition-colors duration-200 hover:bg-neutral-100 dark:hover:bg-neutral-800" data-value="yuexia">月下独酌API</li>
+                                <li class="dropdown-option px-2.5 py-1.5 text-sm cursor-pointer transition-colors duration-200 hover:bg-neutral-100 dark:hover:bg-neutral-800" data-value="qianxia">浅夏API</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- 主题切换按钮 -->
+                    <button id="themeToggle" class="btn-icon w-8 h-8">
+                        <i id="themeIcon" class="fa-solid fa-moon text-neutral-600 dark:text-neutral-300"></i>
+                    </button>
+                </div>
+                
+                <!-- 搜索栏 -->
+                <div class="w-full sm:w-auto">
+                    <form id="searchForm" class="w-full flex gap-2">
+                        <input 
+                            type="text" 
+                            id="keywordInput" 
+                            placeholder="搜索壁纸..." 
+                            class="flex-1 w-full px-3 py-2 rounded-input bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm"
+                        >
+                        <button type="submit" class="bg-primary text-white px-3 py-2 rounded-btn transition-all hover:bg-primary/90 active:scale-95 flex-shrink-0">
+                            <i class="fa-solid fa-search"></i>
+                        </button>
+                    </form>
+                </div>
             </div>
-          </div>
-          <!-- 主题切换按钮 -->
-          <button id="themeToggle" class="btn-icon w-8 h-8">
-            <i id="themeIcon" class="fa-solid fa-moon text-neutral-600 dark:text-neutral-300"></i>
-          </button>
         </div>
-        <!-- 搜索栏 -->
-        <div class="w-full sm:w-auto">
-          <form id="searchForm" class="w-full flex gap-2">
-            <input
-              type="text"
-              id="keywordInput"
-              placeholder="搜索壁纸..."
-              class="flex-1 w-full px-3 py-2 rounded-input bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm"
-            >
-            <button type="submit" class="bg-primary text-white px-3 py-2 rounded-btn transition-all hover:bg-primary/90 active:scale-95 flex-shrink-0">
-              <i class="fa-solid fa-search"></i>
-            </button>
-          </form>
+    </header>
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-4 max-w-7xl min-h-[calc(100vh-140px)]">
+        <!-- 骨架屏加载 -->
+        <div id="skeletonLoading" class="hidden">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                <!-- 骨架项重复12组简化显示，保持干净 -->
+                <div><div class="aspect-[16/9] bg-neutral-200 dark:bg-neutral-800 rounded-card animate-pulse"></div><div class="mt-2 space-y-1.5"><div class="h-3 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-3/4"></div><div class="h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-1/2"></div></div></div>
+                <div><div class="aspect-[16/9] bg-neutral-200 dark:bg-neutral-800 rounded-card animate-pulse"></div><div class="mt-2 space-y-1.5"><div class="h-3 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-3/4"></div><div class="h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-1/2"></div></div></div>
+                <div><div class="aspect-[16/9] bg-neutral-200 dark:bg-neutral-800 rounded-card animate-pulse"></div><div class="mt-2 space-y-1.5"><div class="h-3 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-3/4"></div><div class="h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-1/2"></div></div></div>
+                <div><div class="aspect-[16/9] bg-neutral-200 dark:bg-neutral-800 rounded-card animate-pulse"></div><div class="mt-2 space-y-1.5"><div class="h-3 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-3/4"></div><div class="h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-1/2"></div></div></div>
+                <div><div class="aspect-[16/9] bg-neutral-200 dark:bg-neutral-800 rounded-card animate-pulse"></div><div class="mt-2 space-y-1.5"><div class="h-3 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-3/4"></div><div class="h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-1/2"></div></div></div>
+                <div><div class="aspect-[16/9] bg-neutral-200 dark:bg-neutral-800 rounded-card animate-pulse"></div><div class="mt-2 space-y-1.5"><div class="h-3 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-3/4"></div><div class="h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-1/2"></div></div></div>
+            </div>
         </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- 主内容区 -->
-  <main class="container mx-auto px-4 py-4 max-w-7xl min-h-[calc(100vh-140px)]">
-    <!-- 骨架屏加载 -->
-    <div id="skeletonLoading" class="hidden">
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-        <!-- 骨架项12组 -->
-        <div><div class="aspect-[16/9] bg-neutral-200 dark:bg-neutral-800 rounded-card animate-pulse"></div><div class="mt-2 space-y-1.5"><div class="h-3 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-3/4"></div><div class="h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-1/2"></div></div></div>
-        <div><div class="aspect-[16/9] bg-neutral-200 dark:bg-neutral-800 rounded-card animate-pulse"></div><div class="mt-2 space-y-1.5"><div class="h-3 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-3/4"></div><div class="h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-1/2"></div></div></div>
-        <div><div class="aspect-[16/9] bg-neutral-200 dark:bg-neutral-800 rounded-card animate-pulse"></div><div class="mt-2 space-y-1.5"><div class="h-3 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-3/4"></div><div class="h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-1/2"></div></div></div>
-        <div><div class="aspect-[16/9] bg-neutral-200 dark:bg-neutral-800 rounded-card animate-pulse"></div><div class="mt-2 space-y-1.5"><div class="h-3 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-3/4"></div><div class="h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-1/2"></div></div></div>
-        <div><div class="aspect-[16/9] bg-neutral-200 dark:bg-neutral-800 rounded-card animate-pulse"></div><div class="mt-2 space-y-1.5"><div class="h-3 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-3/4"></div><div class="h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-1/2"></div></div></div>
-        <div><div class="aspect-[16/9] bg-neutral-200 dark:bg-neutral-800 rounded-card animate-pulse"></div><div class="mt-2 space-y-1.5"><div class="h-3 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-3/4"></div><div class="h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse w-1/2"></div></div></div>
-      </div>
-    </div>
-    <!-- 空状态 -->
-    <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20">
-      <p id="emptyText" class="text-neutral-500 text-sm">暂无相关壁纸，换个关键词试试吧</p>
-      <button id="backHomeBtn" class="mt-4 text-primary text-sm hover:underline">返回首页</button>
-    </div>
-    <!-- 壁纸网格 -->
-    <div id="wallpaperGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 content-auto slide-up"></div>
-    <!-- 分页控件 -->
-    <div id="pagination" class="hidden mt-6 flex justify-center items-center gap-3 flex-wrap">
-      <button id="prevPage" class="px-3 py-1.5 rounded-btn border border-neutral-200 dark:border-neutral-800 text-sm transition-all hover:bg-neutral-100 dark:hover:bg-neutral-900 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"><i class="fa-solid fa-chevron-left mr-1 text-xs"></i>上一页</button>
-      <span id="pageInfo" class="text-neutral-500 text-sm px-2">第 1 页 / 共 10 页</span>
-      <button id="nextPage" class="px-3 py-1.5 rounded-btn border border-neutral-200 dark:border-neutral-800 text-sm transition-all hover:bg-neutral-100 dark:hover:bg-neutral-900 active:scale-95 disabled:opacity-50 disabled:pointer-events-none">下一页<i class="fa-solid fa-chevron-right ml-1 text-xs"></i></button>
-    </div>
-  </main>
-
-  <!-- 详情弹窗 -->
-  <div id="detailModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden fade-in">
-    <div class="bg-white dark:bg-neutral-900 rounded-modal w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col slide-up">
-      <div class="flex justify-between items-center px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
-        <h2 id="modalTitle" class="text-base font-medium truncate">壁纸详情</h2>
-        <button id="closeModal" class="btn-icon w-7 h-7"><i class="fa-solid fa-xmark text-neutral-600 dark:text-neutral-400"></i></button>
-      </div>
-      <div class="flex-1 overflow-auto p-4 flex flex-col lg:flex-row gap-4">
-        <div class="flex-1 flex items-center justify-center"><img id="modalImage" src="" alt="" class="max-w-full max-h-[55vh] lg:max-h-[70vh] rounded-lg object-contain"></div>
-        <div class="lg:w-64 flex flex-col gap-3">
-          <div><h3 class="text-xs text-neutral-500 mb-1">标题</h3><p id="detailTitle" class="text-sm font-medium"></p></div>
-          <div class="grid grid-cols-2 gap-3">
-            <div><h3 class="text-xs text-neutral-500 mb-1">分辨率</h3><p id="detailResolution" class="text-sm font-medium"></p></div>
-            <div><h3 class="text-xs text-neutral-500 mb-1">ID</h3><p id="detailId" class="text-sm font-medium"></p></div>
-          </div>
-          <div class="mt-auto pt-3"><a id="downloadBtn" href="" target="_blank" download class="w-full bg-primary text-white py-2 rounded-btn text-sm flex items-center justify-center transition-all hover:bg-primary/90 active:scale-95"><i class="fa-solid fa-download mr-2"></i>下载原图</a></div>
+        <!-- 空状态 -->
+        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20">
+            <i class="fa-solid fa-image text-5xl text-neutral-300 dark:text-neutral-700 mb-4"></i>
+            <p id="emptyText" class="text-neutral-500 text-sm">暂无相关壁纸，换个关键词试试吧</p>
+            <button id="backHomeBtn" class="mt-4 text-primary text-sm hover:underline">返回首页</button>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 页脚 -->
-  <footer class="py-4 border-t border-neutral-200 dark:border-neutral-800">
-    <div class="container mx-auto px-4 max-w-7xl text-center text-neutral-400 text-xs">
-      <p>© 2024 4K壁纸 | 仅供个人学习使用</p>
-    </div>
-  </footer>
-
-  <!-- 所有JS代码必须放在body末尾，用script标签包裹，补全完整逻辑 -->
-  <script>
-  // 全局DOM元素映射，提前定义避免未定义报错
-  const elements = {
-    toastContainer: document.getElementById('toastContainer'),
-    dropdownTrigger: document.getElementById('dropdownTrigger'),
-    dropdownPanel: document.getElementById('dropdownPanel'),
-    dropdownOptions: document.getElementById('dropdownOptions'),
-    dropdownSelectedText: document.getElementById('dropdownSelectedText'),
-    dropdownArrow: document.getElementById('dropdownArrow'),
-    themeToggle: document.getElementById('themeToggle'),
-    themeIcon: document.getElementById('themeIcon'),
-    searchForm: document.getElementById('searchForm'),
-    keywordInput: document.getElementById('keywordInput'),
-    skeletonLoading: document.getElementById('skeletonLoading'),
-    emptyState: document.getElementById('emptyState'),
-    emptyText: document.getElementById('emptyText'),
-    backHomeBtn: document.getElementById('backHomeBtn'),
-    wallpaperGrid: document.getElementById('wallpaperGrid'),
-    pagination: document.getElementById('pagination'),
-    prevPage: document.getElementById('prevPage'),
-    nextPage: document.getElementById('nextPage'),
-    pageInfo: document.getElementById('pageInfo'),
-    detailModal: document.getElementById('detailModal'),
-    modalTitle: document.getElementById('modalTitle'),
-    modalImage: document.getElementById('modalImage'),
-    detailTitle: document.getElementById('detailTitle'),
-    detailResolution: document.getElementById('detailResolution'),
-    detailId: document.getElementById('detailId'),
-    downloadBtn: document.getElementById('downloadBtn'),
-    closeModal: document.getElementById('closeModal')
-  };
-
-  // 全局状态变量
-  let currentAPI = 'yuexia';
-  let currentPage = 1;
-  let currentKeyword = '';
-  let totalPages = 10;
-  let isSearchMode = false;
-  let dropdownOpen = false;
-  let isAnimating = false;
-  let closeTimeout = null;
-  const hasSearch = { yuexia: true, qianxia: false };
-
-  // API配置
-  const apiConfig = {
-    yuexia: {
-      baseUrl: 'https://api.yuexia.com/wallpaper', // 替换为你的真实API地址
-      search: '/search',
-      recommend: '/recommend'
-    },
-    qianxia: {
-      baseUrl: 'https://api.qianxia.com/wallpaper', // 替换为你的真实API地址
-      list: '/list'
-    }
-  };
-
-  // ========== Toast模块 ==========
-  const Toast = {
-    show(message, type = 'info', duration = 3000) {
-      const typeConfig = {
-        success: { bg: 'bg-green-500', icon: 'fa-check-circle' },
-        error: { bg: 'bg-red-500', icon: 'fa-exclamation-circle' },
-        warning: { bg: 'bg-yellow-500', icon: 'fa-exclamation-triangle' },
-        info: { bg: 'bg-primary', icon: 'fa-info-circle' },
-        loading: { bg: 'bg-neutral-800', icon: 'fa-spinner fa-spin' }
-      };
-      const config = typeConfig[type];
-      const toast = document.createElement('div');
-      toast.className = `${config.bg} text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow-lg pointer-events-auto fade-in`;
-      toast.innerHTML = `<i class="fa-solid ${config.icon}"></i><span class="text-sm">${message}</span>`;
-      elements.toastContainer.appendChild(toast);
-      if (duration > 0) setTimeout(() => {
-        toast.classList.replace('fade-in', 'fade-out');
-        setTimeout(() => toast.remove(), 300);
-      }, duration);
-      return { close: () => { toast.classList.replace('fade-in', 'fade-out'); setTimeout(() => toast.remove(), 300); } };
-    },
-    success(msg, dur) { return this.show(msg, 'success', dur); },
-    error(msg, dur) { return this.show(msg, 'error', dur); },
-    warning(msg, dur) { return this.show(msg, 'warning', dur); },
-    info(msg, dur) { return this.show(msg, 'info', dur); },
-    loading(msg) { return this.show(msg, 'loading', 0); }
-  };
-
-  // ========== 主题切换模块 ==========
-  const Theme = {
-    init() {
-      const saved = localStorage.getItem('theme') || 'auto';
-      this.applyTheme(saved);
-      elements.themeToggle.addEventListener('click', () => this.toggleTheme());
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-        if (localStorage.getItem('theme') === 'auto') this.applyTheme('auto');
-      });
-    },
-    applyTheme(theme) {
-      const isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      document.documentElement.classList.toggle('dark', isDark);
-      elements.themeIcon.className = `fa-solid ${isDark ? 'fa-sun' : 'fa-moon'} text-neutral-600 dark:text-neutral-300`;
-      localStorage.setItem('theme', theme);
-    },
-    toggleTheme() {
-      const cur = localStorage.getItem('theme') || 'auto';
-      let newTheme = cur === 'light' ? 'dark' : (cur === 'dark' ? 'light' : (document.documentElement.classList.contains('dark') ? 'light' : 'dark'));
-      this.applyTheme(newTheme);
-    }
-  };
-
-  // ========== 下拉菜单模块 ==========
-  const Dropdown = {
-    init() {
-      this.bindEvents();
-      this.syncActiveOption();
-    },
-    syncActiveOption() {
-      const options = elements.dropdownOptions.querySelectorAll('li');
-      options.forEach(opt => {
-        const val = opt.dataset.value;
-        val === currentAPI ? opt.classList.add('dropdown-item-active') : opt.classList.remove('dropdown-item-active');
-      });
-      const activeText = [...options].find(opt => opt.dataset.value === currentAPI)?.textContent || '月下独酌API';
-      elements.dropdownSelectedText.textContent = activeText;
-    },
-    clearCloseTimeout() {
-      if (closeTimeout) { clearTimeout(closeTimeout); closeTimeout = null; }
-    },
-    open() {
-      if (isAnimating || dropdownOpen) return;
-      this.clearCloseTimeout();
-      dropdownOpen = true;
-      isAnimating = true;
-      elements.dropdownPanel.classList.remove('hidden', 'dropdown-slide-out');
-      elements.dropdownPanel.classList.add('dropdown-slide-in');
-      elements.dropdownArrow.classList.add('arrow-rotate');
-      setTimeout(() => { isAnimating = false; }, 200);
-    },
-    close() {
-      if (isAnimating || !dropdownOpen) return;
-      this.clearCloseTimeout();
-      dropdownOpen = false;
-      isAnimating = true;
-      elements.dropdownPanel.classList.remove('dropdown-slide-in');
-      elements.dropdownPanel.classList.add('dropdown-slide-out');
-      elements.dropdownArrow.classList.remove('arrow-rotate');
-      setTimeout(() => {
-        elements.dropdownPanel.classList.add('hidden');
-        isAnimating = false;
-      }, 200);
-    },
-    select(optionEl) {
-      const newValue = optionEl.dataset.value;
-      if (newValue === currentAPI) { this.close(); return; }
-      currentAPI = newValue;
-      const text = optionEl.textContent;
-      elements.dropdownSelectedText.textContent = text;
-      this.syncActiveOption();
-      Toast.success(`已切换至【${text}】`);
-      // 重置状态并重新加载
-      currentPage = 1;
-      currentKeyword = '';
-      elements.keywordInput.value = '';
-      fetchHomeWallpapers();
-      this.close();
-    },
-    bindEvents() {
-      elements.dropdownTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdownOpen ? this.close() : this.open();
-      });
-      elements.dropdownOptions.querySelectorAll('li').forEach(opt => {
-        opt.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.select(opt);
-        });
-      });
-      document.addEventListener('click', () => this.close());
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') this.close();
-      });
-    }
-  };
-
-  // ========== 业务核心函数 ==========
-  function showLoading() {
-    elements.skeletonLoading.classList.remove('hidden');
-    elements.wallpaperGrid.classList.add('hidden');
-    elements.emptyState.classList.add('hidden');
-    elements.pagination.classList.add('hidden');
-  }
-
-  function hideLoading() {
-    elements.skeletonLoading.classList.add('hidden');
-  }
-
-  function showEmpty(text = '暂无相关壁纸，换个关键词试试吧') {
-    elements.emptyText.textContent = text;
-    elements.emptyState.classList.remove('hidden');
-    elements.wallpaperGrid.classList.add('hidden');
-    elements.pagination.classList.add('hidden');
-  }
-
-  function renderWallpapers(wallpapers) {
-    elements.wallpaperGrid.innerHTML = '';
-    if (!wallpapers || wallpapers.length === 0) {
-      showEmpty();
-      return;
-    }
-    wallpapers.forEach(wallpaper => {
-      const { id, title, resolution, thumbnail, url, image_url } = wallpaper;
-      const card = document.createElement('div');
-      card.className = 'bg-white dark:bg-neutral-900 rounded-card overflow-hidden border border-neutral-200 dark:border-neutral-800 card-hover cursor-pointer';
-      card.innerHTML = `
-        <div class="aspect-[16/9] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-          <img src="${thumbnail || image_url}" alt="${title}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" onerror="this.src='https://picsum.photos/384/216?random=${id}'">
+        <!-- 壁纸网格 -->
+        <div id="wallpaperGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 content-auto slide-up"></div>
+        <!-- 分页控件 -->
+        <div id="pagination" class="hidden mt-6 flex justify-center items-center gap-3 flex-wrap">
+            <button id="prevPage" class="px-3 py-1.5 rounded-btn border border-neutral-200 dark:border-neutral-800 text-sm transition-all hover:bg-neutral-100 dark:hover:bg-neutral-900 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"><i class="fa-solid fa-chevron-left mr-1 text-xs"></i>上一页</button>
+            <span id="pageInfo" class="text-neutral-500 text-sm px-2">第 1 页 / 共 10 页</span>
+            <button id="nextPage" class="px-3 py-1.5 rounded-btn border border-neutral-200 dark:border-neutral-800 text-sm transition-all hover:bg-neutral-100 dark:hover:bg-neutral-900 active:scale-95 disabled:opacity-50 disabled:pointer-events-none">下一页<i class="fa-solid fa-chevron-right ml-1 text-xs"></i></button>
         </div>
-        <div class="p-2">
-          <h3 class="font-normal text-xs line-clamp-2 mb-1.5" title="${title}">${title}</h3>
-          <div class="flex justify-between items-center text-[0.65rem] text-neutral-500">
-            <span>${resolution || '4K'}</span>
-            <span>ID: ${id}</span>
-          </div>
+    </main>
+    <!-- 详情弹窗 -->
+    <div id="detailModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden fade-in">
+        <div class="bg-white dark:bg-neutral-900 rounded-modal w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col slide-up">
+            <div class="flex justify-between items-center px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
+                <h2 id="modalTitle" class="text-base font-medium truncate">壁纸详情</h2>
+                <button id="closeModal" class="btn-icon w-7 h-7"><i class="fa-solid fa-xmark text-neutral-600 dark:text-neutral-400"></i></button>
+            </div>
+            <div class="flex-1 overflow-auto p-4 flex flex-col lg:flex-row gap-4">
+                <div class="flex-1 flex items-center justify-center"><img id="modalImage" src="" alt="" class="max-w-full max-h-[55vh] lg:max-h-[70vh] rounded-lg object-contain"></div>
+                <div class="lg:w-64 flex flex-col gap-3">
+                    <div><h3 class="text-xs text-neutral-500 mb-1">标题</h3><p id="detailTitle" class="text-sm font-medium"></p></div>
+                    <div class="grid grid-cols-2 gap-3"><div><h3 class="text-xs text-neutral-500 mb-1">分辨率</h3><p id="detailResolution" class="text-sm font-medium"></p></div><div><h3 class="text-xs text-neutral-500 mb-1">ID</h3><p id="detailId" class="text-sm font-medium"></p></div></div>
+                    <div class="mt-auto pt-3"><a id="downloadBtn" href="" target="_blank" download class="w-full bg-primary text-white py-2 rounded-btn text-sm flex items-center justify-center transition-all hover:bg-primary/90 active:scale-95"><i class="fa-solid fa-download mr-2"></i>下载原图</a></div>
+                </div>
+            </div>
         </div>
-      `;
-      card.addEventListener('click', () => showDetailModal(wallpaper));
-      elements.wallpaperGrid.appendChild(card);
-    });
-    elements.wallpaperGrid.classList.remove('hidden');
-    renderPagination();
-  }
-
-  function renderPagination() {
-    elements.pagination.classList.remove('hidden');
-    elements.pageInfo.textContent = `第 ${currentPage} 页 / 共 ${totalPages} 页`;
-    elements.prevPage.disabled = currentPage <= 1;
-    elements.nextPage.disabled = currentPage >= totalPages;
-  }
-
-  async function fetchHomeWallpapers() {
-    showLoading();
-    try {
-      // 适配不同API的请求逻辑，替换为你的真实接口请求
-      let res, result;
-      if (currentAPI === 'yuexia') {
-        res = await fetch(`${apiConfig.yuexia.baseUrl}${apiConfig.yuexia.recommend}`);
-        result = await res.json();
-        if (result.code === 200 && result.data) {
-          renderWallpapers(result.data.recommended || result.data);
-        } else {
-          showEmpty('获取壁纸失败，请稍后重试');
+    </div>
+    <footer class="py-4 border-t border-neutral-200 dark:border-neutral-800"><div class="container mx-auto px-4 max-w-7xl text-center text-neutral-400 text-xs"><p>© 2024 4K壁纸 | 仅供个人学习使用，请勿商用</p></div></footer>
+    <script>
+        // API配置映射 - 移除luoluoapi，添加浅夏API
+        const API_CONFIG = {
+            yuexia: { base: 'https://jcy.lvlong.xyz/api/api/4k.php', hasSearch: true },
+            qianxia: { 
+                base: 'https://115exuq280928.vicp.fun/API/360bz.php', 
+                hasSearch: false, 
+                types: ['美女', '爱情', '风景', '清新', '动漫', '明星', '萌宠', '游戏', '汽车', '时尚', '日历', '影视', '军事', '体育', '萌娃', '格言'] 
+            }
+        };
+        
+        // 全局状态
+        let currentAPI = 'yuexia';
+        let currentPage = 1;
+        let currentKeyword = '';
+        let totalPages = 1;
+        let isSearchMode = false;
+        let dropdownOpen = false;
+        let closeTimeout = null;
+        let isAnimating = false;
+        
+        // DOM 元素
+        const elements = {
+            apiDropdown: document.getElementById('apiDropdown'),
+            dropdownTrigger: document.getElementById('dropdownTrigger'),
+            dropdownPanel: document.getElementById('dropdownPanel'),
+            dropdownArrow: document.getElementById('dropdownArrow'),
+            dropdownSelectedText: document.getElementById('dropdownSelectedText'),
+            dropdownOptions: document.getElementById('dropdownOptions'),
+            searchForm: document.getElementById('searchForm'),
+            keywordInput: document.getElementById('keywordInput'),
+            wallpaperGrid: document.getElementById('wallpaperGrid'),
+            skeletonLoading: document.getElementById('skeletonLoading'),
+            emptyState: document.getElementById('emptyState'),
+            emptyText: document.getElementById('emptyText'),
+            backHomeBtn: document.getElementById('backHomeBtn'),
+            pagination: document.getElementById('pagination'),
+            prevPageBtn: document.getElementById('prevPage'),
+            nextPageBtn: document.getElementById('nextPage'),
+            pageInfo: document.getElementById('pageInfo'),
+            detailModal: document.getElementById('detailModal'),
+            closeModal: document.getElementById('closeModal'),
+            modalImage: document.getElementById('modalImage'),
+            modalTitle: document.getElementById('modalTitle'),
+            detailTitle: document.getElementById('detailTitle'),
+            detailResolution: document.getElementById('detailResolution'),
+            detailId: document.getElementById('detailId'),
+            downloadBtn: document.getElementById('downloadBtn'),
+            themeToggle: document.getElementById('themeToggle'),
+            themeIcon: document.getElementById('themeIcon'),
+            toastContainer: document.getElementById('toastContainer')
+        };
+        // Toast 核心 (保留原风味)
+        const Toast = {
+            show(message, type = 'info', duration = 3000) {
+                const typeConfig = { success: { icon: 'fa-check-circle', bg: 'bg-green-500' }, error: { icon: 'fa-times-circle', bg: 'bg-red-500' }, warning: { icon: 'fa-exclamation-triangle', bg: 'bg-amber-500' }, info: { icon: 'fa-info-circle', bg: 'bg-neutral-800 dark:bg-neutral-700' }, loading: { icon: 'fa-spinner fa-spin', bg: 'bg-primary' } };
+                const config = typeConfig[type] || typeConfig.info;
+                const toast = document.createElement('div');
+                toast.className = `${config.bg} text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow-lg pointer-events-auto fade-in`;
+                toast.innerHTML = `<i class="fa-solid ${config.icon}"></i><span class="text-sm">${message}</span>`;
+                elements.toastContainer.appendChild(toast);
+                if (duration > 0) setTimeout(() => { toast.classList.replace('fade-in', 'fade-out'); setTimeout(() => toast.remove(), 300); }, duration);
+                return { close: () => { toast.classList.replace('fade-in', 'fade-out'); setTimeout(() => toast.remove(), 300); } };
+            },
+            success(msg, dur) { return this.show(msg, 'success', dur); },
+            error(msg, dur) { return this.show(msg, 'error', dur); },
+            warning(msg, dur) { return this.show(msg, 'warning', dur); },
+            info(msg, dur) { return this.show(msg, 'info', dur); },
+            loading(msg) { return this.show(msg, 'loading', 0); }
+        };
+        // 主题切换
+        const Theme = {
+            init() { const saved = localStorage.getItem('theme') || 'auto'; this.applyTheme(saved); elements.themeToggle.addEventListener('click', () => this.toggleTheme()); window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (localStorage.getItem('theme') === 'auto') this.applyTheme('auto'); }); },
+            applyTheme(theme) {
+                const isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.classList.toggle('dark', isDark);
+                elements.themeIcon.className = `fa-solid ${isDark ? 'fa-sun' : 'fa-moon'} text-neutral-600 dark:text-neutral-300`;
+                localStorage.setItem('theme', theme);
+            },
+            toggleTheme() { const cur = localStorage.getItem('theme') || 'auto'; let newTheme = cur === 'light' ? 'dark' : (cur === 'dark' ? 'light' : (document.documentElement.classList.contains('dark') ? 'light' : 'dark')); this.applyTheme(newTheme); }
+        };
+        // ========== 优化版下拉菜单 (动画丝滑+防冲突+高亮同步) ==========
+        const Dropdown = {
+            init() { this.bindEvents(); this.syncActiveOption(); },
+            syncActiveOption() {
+                const options = elements.dropdownOptions.querySelectorAll('li');
+                options.forEach(opt => {
+                    const val = opt.dataset.value;
+                    if (val === currentAPI) opt.classList.add('dropdown-item-active');
+                    else opt.classList.remove('dropdown-item-active');
+                });
+                const activeText = [...options].find(opt => opt.dataset.value === currentAPI)?.textContent || '月下独酌API';
+                elements.dropdownSelectedText.textContent = activeText;
+            },
+            clearCloseTimeout() { if (closeTimeout) { clearTimeout(closeTimeout); closeTimeout = null; } },
+            open() {
+                if (isAnimating) return;
+                this.clearCloseTimeout();
+                if (dropdownOpen) return;
+                dropdownOpen = true;
+                isAnimating = true;
+                elements.dropdownPanel.classList.remove('hidden', 'dropdown-slide-out');
+                elements.dropdownPanel.classList.add('dropdown-slide-in');
+                elements.dropdownArrow.classList.add('arrow-rotate');
+                this.syncActiveOption(); // 每次开启同步高亮
+                const onAnimEnd = () => { isAnimating = false; elements.dropdownPanel.removeEventListener('animationend', onAnimEnd); };
+                elements.dropdownPanel.addEventListener('animationend', onAnimEnd, { once: true });
+            },
+            close() {
+                if (isAnimating && dropdownOpen === false) return;
+                if (!dropdownOpen && elements.dropdownPanel.classList.contains('hidden')) return;
+                this.clearCloseTimeout();
+                isAnimating = true;
+                elements.dropdownPanel.classList.remove('dropdown-slide-in');
+                elements.dropdownPanel.classList.add('dropdown-slide-out');
+                elements.dropdownArrow.classList.remove('arrow-rotate');
+                const onAnimEnd = () => {
+                    elements.dropdownPanel.classList.add('hidden');
+                    dropdownOpen = false;
+                    isAnimating = false;
+                    elements.dropdownPanel.removeEventListener('animationend', onAnimEnd);
+                };
+                elements.dropdownPanel.addEventListener('animationend', onAnimEnd, { once: true });
+            },
+            select(optionEl) {
+                const newValue = optionEl.dataset.value;
+                if (newValue === currentAPI) { this.close(); return; }
+                currentAPI = newValue;
+                const text = optionEl.textContent;
+                elements.dropdownSelectedText.textContent = text;
+                this.syncActiveOption();
+                this.close();
+                Toast.success(`已切换至【${text}】`);
+                // 重置搜索框状态并重新加载
+                isSearchMode = false;
+                currentPage = 1;
+                currentKeyword = '';
+                elements.keywordInput.value = '';
+                fetchHomeWallpapers();
+            },
+            bindEvents() {
+                elements.dropdownTrigger.addEventListener('click', (e) => { e.stopPropagation(); dropdownOpen ? this.close() : this.open(); });
+                elements.dropdownOptions.addEventListener('click', (e) => { e.stopPropagation(); if (e.target.tagName === 'LI') this.select(e.target); });
+                document.addEventListener('click', () => { if (dropdownOpen) this.close(); });
+                elements.dropdownPanel.addEventListener('click', (e) => e.stopPropagation());
+                document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && dropdownOpen) this.close(); });
+            }
+        };
+        // 业务函数
+        function showLoading() { elements.skeletonLoading.classList.remove('hidden'); elements.wallpaperGrid.classList.add('hidden'); elements.emptyState.classList.add('hidden'); elements.pagination.classList.add('hidden'); }
+        function hideLoading() { elements.skeletonLoading.classList.add('hidden'); }
+        function showEmpty(text = '暂无相关壁纸，换个关键词试试吧') { elements.emptyText.textContent = text; elements.emptyState.classList.remove('hidden'); elements.wallpaperGrid.classList.add('hidden'); elements.pagination.classList.add('hidden'); }
+        async function fetchHomeWallpapers() {
+            showLoading();
+            isSearchMode = false;
+            currentPage = 1;
+            currentKeyword = '';
+            elements.keywordInput.value = '';
+            const hasSearch = API_CONFIG[currentAPI].hasSearch;
+            elements.keywordInput.disabled = !hasSearch;
+            elements.keywordInput.placeholder = hasSearch ? '搜索壁纸...' : `当前API仅支持类型筛选（${API_CONFIG[currentAPI].types?.join('/')}）`;
+            try {
+                if (currentAPI === 'yuexia') {
+                    const response = await fetch(API_CONFIG[currentAPI].base);
+                    const result = await response.json();
+                    if (result.code === 200 && result.data.recommended) renderWallpapers(result.data.recommended);
+                    else showEmpty('获取推荐壁纸失败，请刷新重试');
+                } else if (currentAPI === 'qianxia') {
+                    const types = API_CONFIG[currentAPI].types;
+                    const wallpaperList = [];
+                    for (let i = 0; i < types.length; i++) {
+                        const type = types[i];
+                        const apiUrl = new URL(API_CONFIG[currentAPI].base);
+                        apiUrl.searchParams.set('msg', type); // 浅夏API核心参数msg
+                        try {
+                            const res = await fetch(apiUrl);
+                            const imgUrl = await res.text();
+                            wallpaperList.push({
+                                id: `${type}-${Date.now()}-${i}`,
+                                title: `${type}壁纸`,
+                                resolution: '3840x2160',
+                                thumbnail: imgUrl,
+                                url: imgUrl,
+                                image_url: imgUrl
+                            });
+                        } catch(e) { console.warn(`${type}分类加载失败`, e); }
+                    }
+                    if (wallpaperList.length) { renderWallpapers(wallpaperList); Toast.success(`已加载浅夏API全部分类壁纸`); } 
+                    else showEmpty('浅夏API获取壁纸失败');
+                }
+            } catch (error) { console.error(error); showEmpty(`网络请求失败`); Toast.error('网络请求失败'); } 
+            finally { hideLoading(); }
         }
-      } else if (currentAPI === 'qianxia') {
-        res = await fetch(`${apiConfig.qianxia.baseUrl}${apiConfig.qianxia.list}`);
-        result = await res.json();
-        if (result.code === 200 && result.data) {
-          renderWallpapers(result.data.list || result.data);
-        } else {
-          showEmpty('获取壁纸失败，请稍后重试');
+        async function searchWallpapers(keyword, page = 1) {
+            if (!API_CONFIG[currentAPI].hasSearch) { Toast.warning('当前API不支持搜索，已为您展示默认壁纸'); fetchHomeWallpapers(); return; }
+            if (!keyword.trim()) { fetchHomeWallpapers(); return; }
+            showLoading();
+            isSearchMode = true;
+            currentKeyword = keyword;
+            currentPage = page;
+            try {
+                const url = new URL(API_CONFIG[currentAPI].base);
+                url.searchParams.set('action', 'search');
+                url.searchParams.set('keyword', keyword);
+                url.searchParams.set('page', page);
+                const response = await fetch(url);
+                const result = await response.json();
+                if (result.code === 200 && result.data.results) {
+                    const { results, total } = result.data;
+                    totalPages = Math.ceil(total / 30);
+                    if (results.length) { renderWallpapers(results); renderPagination(); Toast.success(`找到 ${total} 个结果`); } 
+                    else showEmpty();
+                } else { showEmpty('搜索失败，换个关键词试试'); Toast.error('搜索失败'); }
+            } catch (error) { showEmpty('网络错误'); Toast.error('网络请求失败'); } 
+            finally { hideLoading(); }
         }
-      }
-      // 适配搜索框状态
-      elements.keywordInput.disabled = !hasSearch[currentAPI];
-      elements.keywordInput.placeholder = hasSearch[currentAPI] ? '搜索壁纸...' : '当前API不支持搜索';
-    } catch (err) {
-      console.error(err);
-      showEmpty('网络错误，请检查API地址是否正确');
-      Toast.error('获取壁纸失败');
-    } finally {
-      hideLoading();
-    }
-  }
-
-  async function searchWallpapers(keyword, page = 1) {
-    if (!hasSearch[currentAPI]) {
-      Toast.warning('当前API不支持搜索');
-      return;
-    }
-    showLoading();
-    currentKeyword = keyword;
-    currentPage = page;
-    isSearchMode = true;
-    try {
-      const res = await fetch(`${apiConfig.yuexia.baseUrl}${apiConfig.yuexia.search}?keyword=${keyword}&page=${page}`);
-      const result = await res.json();
-      if (result.code === 200 && result.data) {
-        totalPages = result.data.totalPages || 10;
-        renderWallpapers(result.data.list || result.data);
-      } else {
-        showEmpty();
-      }
-    } catch (err) {
-      console.error(err);
-      showEmpty('搜索失败，请检查网络');
-      Toast.error('搜索失败');
-    } finally {
-      hideLoading();
-    }
-  }
-
-  function showDetailModal(detail) {
-    const { id, title, resolution, image_url, url } = detail;
-    const imgUrl = image_url || url;
-    elements.modalTitle.textContent = title || '壁纸详情';
-    elements.modalImage.src = imgUrl;
-    elements.detailTitle.textContent = title || '无标题';
-    elements.detailResolution.textContent = resolution || '3840x2160';
-    elements.detailId.textContent = id;
-    elements.downloadBtn.href = imgUrl;
-    elements.detailModal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function hideDetailModal() {
-    elements.detailModal.classList.add('hidden');
-    document.body.style.overflow = '';
-  }
-
-  function goPrevPage() {
-    if (currentPage > 1) {
-      isSearchMode ? searchWallpapers(currentKeyword, currentPage - 1) : fetchHomeWallpapers();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }
-
-  function goNextPage() {
-    if (currentPage < totalPages) {
-      isSearchMode ? searchWallpapers(currentKeyword, currentPage + 1) : fetchHomeWallpapers();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }
-
-  // ========== 事件绑定 ==========
-  function bindBusinessEvents() {
-    // 搜索表单
-    elements.searchForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const keyword = elements.keywordInput.value.trim();
-      if (!keyword) {
-        Toast.warning('请输入搜索关键词');
-        return;
-      }
-      searchWallpapers(keyword, 1);
-    });
-    // 分页
-    elements.prevPage.addEventListener('click', goPrevPage);
-    elements.nextPage.addEventListener('click', goNextPage);
-    // 弹窗关闭
-    elements.closeModal.addEventListener('click', hideDetailModal);
-    elements.detailModal.addEventListener('click', (e) => {
-      if (e.target === elements.detailModal) hideDetailModal();
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') hideDetailModal();
-    });
-    // 返回首页
-    elements.backHomeBtn.addEventListener('click', () => {
-      currentPage = 1;
-      currentKeyword = '';
-      isSearchMode = false;
-      elements.keywordInput.value = '';
-      fetchHomeWallpapers();
-    });
-  }
-
-  // ========== 页面初始化 ==========
-  document.addEventListener('DOMContentLoaded', () => {
-    Theme.init();
-    Dropdown.init();
-    bindBusinessEvents();
-    fetchHomeWallpapers();
-  });
-  </script>
+        function renderWallpapers(wallpapers) {
+            elements.wallpaperGrid.innerHTML = '';
+            elements.wallpaperGrid.classList.remove('hidden');
+            wallpapers.forEach(wallpaper => {
+                const { id, title, resolution, thumbnail } = wallpaper;
+                const card = document.createElement('div');
+                card.className = 'bg-white dark:bg-neutral-900 rounded-card overflow-hidden border border-neutral-200 dark:border-neutral-800 card-hover cursor-pointer';
+                card.innerHTML = `<div class="aspect-[16/9] overflow-hidden bg-neutral-100 dark:bg-neutral-800"><img src="${thumbnail}" alt="${title}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" onerror="this.src='https://picsum.photos/384/216?random=${id}'"></div><div class="p-2"><h3 class="font-normal text-xs line-clamp-2 mb-1.5" title="${title}">${title}</h3><div class="flex justify-between items-center text-[0.65rem] text-neutral-500"><span>${resolution}</span><span>ID: ${id}</span></div></div>`;
+                card.addEventListener('click', () => fetchWallpaperDetail(wallpaper));
+                elements.wallpaperGrid.appendChild(card);
+            });
+        }
+        function renderPagination() { elements.pagination.classList.remove('hidden'); elements.pageInfo.textContent = `第 ${currentPage} 页 / 共 ${totalPages} 页`; elements.prevPageBtn.disabled = currentPage <= 1; elements.nextPageBtn.disabled = currentPage >= totalPages; }
+        function goPrevPage() { if (currentPage > 1) { searchWallpapers(currentKeyword, currentPage - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); } }
+        function goNextPage() { if (currentPage < totalPages) { searchWallpapers(currentKeyword, currentPage + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); } }
+        async function fetchWallpaperDetail(wallpaper) {
+            const loadingToast = Toast.loading('获取详情中...');
+            if (currentAPI === 'yuexia') {
+                try { const apiUrl = new URL(API_CONFIG[currentAPI].base); apiUrl.searchParams.set('action', 'detail'); apiUrl.searchParams.set('id', wallpaper.id); apiUrl.searchParams.set('url', wallpaper.url); const res = await fetch(apiUrl); const result = await res.json(); if (result.code === 200 && result.data) showDetailModal(result.data); else Toast.error('获取详情失败'); } 
+                catch(e) { Toast.error('网络错误'); } finally { loadingToast.close(); }
+            } else { loadingToast.close(); showDetailModal(wallpaper); }
+        }
+        function showDetailModal(detail) { const { id, title, resolution, image_url } = detail; elements.modalTitle.textContent = title; elements.modalImage.src = image_url; elements.detailTitle.textContent = title; elements.detailResolution.textContent = resolution; elements.detailId.textContent = id; elements.downloadBtn.href = image_url; elements.detailModal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+        function hideDetailModal() { elements.detailModal.classList.add('hidden'); document.body.style.overflow = ''; }
+        function bindBusinessEvents() {
+            elements.searchForm.addEventListener('submit', (e) => { e.preventDefault(); searchWallpapers(elements.keywordInput.value.trim(), 1); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+            elements.backHomeBtn.addEventListener('click', fetchHomeWallpapers);
+            elements.prevPageBtn.addEventListener('click', goPrevPage);
+            elements.nextPageBtn.addEventListener('click', goNextPage);
+            elements.closeModal.addEventListener('click', hideDetailModal);
+            elements.detailModal.addEventListener('click', (e) => e.target === elements.detailModal && hideDetailModal());
+            document.addEventListener('keydown', (e) => e.key === 'Escape' && hideDetailModal());
+            elements.downloadBtn.addEventListener('click', () => Toast.success('开始下载原图'));
+        }
+        document.addEventListener('DOMContentLoaded', () => { Theme.init(); Dropdown.init(); bindBusinessEvents(); fetchHomeWallpapers(); });
+    </script>
 </body>
 </html>
