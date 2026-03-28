@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极简文字卡片展示</title>
+    <style>
+        /* 全局重置与基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        body {
+            background-color: #f8f9fa;
+            padding: 16px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2d3748;
+            text-align: center;
+        }
+
+        /* 卡片网格布局（响应式） */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        /* 卡片样式（圆角方形+极简风格） */
+        .text-card {
+            background-color: #fff;
+            border: 1px solid #eaecef;
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .text-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #2d3748;
+        }
+        .card-content {
+            font-size: 14px;
+            color: #4a5568;
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .card-meta {
+            font-size: 12px;
+            color: #718096;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* 按钮样式（圆角方形+小尺寸） */
+        .card-btn {
+            background-color: #4299e1;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .card-btn:hover {
+            background-color: #3182ce;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .card-grid {
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                gap: 12px;
+            }
+            .text-card {
+                padding: 16px;
+            }
+            .card-title {
+                font-size: 15px;
+            }
+            .card-content {
+                font-size: 13px;
+            }
+        }
+        @media (max-width: 480px) {
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="section-title">文字内容卡片集</h2>
+        <div class="card-grid" id="cardContainer">
+            <!-- 卡片内容将通过JS动态渲染 -->
+        </div>
+    </div>
+
+    <script>
+        // 模块化数据（可迁移到外部JSON文件）
+        const cardData = [
+            {
+                id: 1,
+                title: "极简主义设计",
+                content: "极简主义强调去繁就简，通过简洁的布局、有限的色彩和必要的元素，打造清晰直观的视觉体验，让内容成为焦点。",
+                date: "2025-12-01",
+                category: "设计"
+            },
+            {
+                id: 2,
+                title: "响应式开发技巧",
+                content: "响应式设计核心是适配不同设备屏幕，通过弹性布局、媒体查询和流动式内容，确保在手机、平板和桌面端都有良好体验。",
+                date: "2025-12-05",
+                category: "技术"
+            },
+            {
+                id: 3,
+                title: "文字排版艺术",
+                content: "优秀的文字排版能提升内容可读性，合理的字间距、行高和字体选择，配合层次分明的标题结构，让阅读更舒适。",
+                date: "2025-12-10",
+                category: "排版"
+            },
+            {
+                id: 4,
+                title: "移动端交互设计",
+                content: "移动端交互需注重简洁高效，按钮尺寸适中、操作路径简短、反馈及时，让用户在小屏幕上也能轻松完成操作。",
+                date: "2025-12-15",
+                category: "交互"
+            },
+            {
+                id: 5,
+                title: "色彩搭配原则",
+                content: "极简风格常用中性色为基调，搭配少量强调色，避免色彩过多造成视觉混乱，保持整体风格的统一性和高级感。",
+                date: "2025-12-20",
+                category: "色彩"
+            },
+            {
+                id: 6,
+                title: "模块化开发理念",
+                content: "模块化将代码拆分为独立功能单元，降低耦合度，便于维护和扩展，同时提高代码复用率，提升开发效率。",
+                date: "2025-12-22",
+                category: "开发"
+            }
+        ];
+
+        // 渲染卡片函数（模块化逻辑）
+        function renderCards(data) {
+            const container = document.getElementById("cardContainer");
+            container.innerHTML = "";
+            
+            data.forEach(card => {
+                const cardElement = document.createElement("div");
+                cardElement.className = "text-card";
+                cardElement.innerHTML = `
+                    <h3 class="card-title">${card.title}</h3>
+                    <p class="card-content">${card.content}</p>
+                    <div class="card-meta">
+                        <span>${card.date}</span>
+                        <span>${card.category}</span>
+                    </div>
+                    <button class="card-btn" onclick="showDetail(${card.id})">查看详情</button>
+                `;
+                container.appendChild(cardElement);
+            });
+        }
+
+        // 详情查看函数
+        function showDetail(id) {
+            const card = cardData.find(item => item.id === id);
+            alert(`【${card.title}】\n\n${card.content}\n\n分类：${card.category}\n日期：${card.date}`);
+        }
+
+        // 初始化渲染
+        document.addEventListener("DOMContentLoaded", () => {
+            renderCards(cardData);
+        });
+    </script>
+</body>
+</html>
