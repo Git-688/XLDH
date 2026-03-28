@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>趣味挑战</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        neutral: {
+                            50: '#F5F7FA',
+                            100: '#E5E6EB',
+                            200: '#C9CDD4',
+                            300: '#86909C',
+                            400: '#4E5969',
+                            500: '#1D2129',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .dropdown-animate {
+                transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+            }
+            .fade-in { animation: fadeIn 0.3s forwards; }
+            .slide-up { animation: slideUp 0.3s forwards; }
+            @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+            @keyframes slideUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        }
+    </style>
+</head>
+<body class="bg-neutral-50 min-h-screen flex flex-col items-center py-6 px-4">
+<header class="text-center mb-4 w-full max-w-xl">
+    <h1 class="text-xl font-semibold text-neutral-600 mb-1">趣味挑战</h1>
+    <p class="text-xs text-neutral-400">多模式趣味答题合集</p>
+</header>
+<!-- 模式切换 -->
+<div class="w-full max-w-xl bg-white rounded-lg border border-neutral-100 p-1 mb-4 grid grid-cols-4">
+    <div class="mode-tab text-center py-2 rounded-md text-xs cursor-pointer active bg-primary text-white" data-mode="riddle">猜灯谜</div>
+    <div class="mode-tab text-center py-2 rounded-md text-xs cursor-pointer text-neutral-500" data-mode="njjzw">脑筋急转弯</div>
+    <div class="mode-tab text-center py-2 rounded-md text-xs cursor-pointer text-neutral-500" data-mode="dati">知识答题</div>
+    <div class="mode-tab text-center py-2 rounded-md text-xs cursor-pointer text-neutral-500" data-mode="ktccy">看图猜成语</div>
+</div>
+<!-- 通用筛选栏：仅猜灯谜/脑筋急转弯使用，与看图猜成语完全隔离 -->
+<div id="filterBar" class="w-full max-w-xl bg-white rounded-lg border border-neutral-100 p-3 mb-4 flex flex-wrap gap-3 justify-between items-center">
+    <div class="relative dropdown-container" data-type="filter">
+        <div class="dropdown-header flex items-center gap-3 px-3 py-2 border border-neutral-100 rounded-md cursor-pointer hover:border-primary">
+            <span class="text-xs text-neutral-500 selected-text">元宵灯谜</span>
+            <i class="fa-solid fa-chevron-down text-[10px] text-neutral-300 dropdown-arrow"></i>
+        </div>
+        <div class="dropdown-menu absolute top-full left-0 right-0 mt-1 bg-white rounded-md shadow-md border border-neutral-100 overflow-hidden max-h-0 opacity-0 dropdown-animate z-10">
+            <div class="dropdown-item px-3 py-2 text-xs hover:bg-neutral-50 cursor-pointer" data-value="lantern">元宵灯谜</div>
+            <div class="dropdown-item px-3 py-2 text-xs hover:bg-neutral-50 cursor-pointer" data-value="midautumn">中秋灯谜</div>
+        </div>
+    </div>
+    <div class="relative dropdown-container" data-type="difficulty">
+        <div class="dropdown-header flex items-center gap-3 px-3 py-2 border border-neutral-100 rounded-md cursor-pointer hover:border-primary">
+            <span class="text-xs text-neutral-500 selected-text">简单</span>
+            <i class="fa-solid fa-chevron-down text-[10px] text-neutral-300 dropdown-arrow"></i>
+        </div>
+        <div class="dropdown-menu absolute top-full left-0 right-0 mt-1 bg-white rounded-md shadow-md border border-neutral-100 overflow-hidden max-h-0 opacity-0 dropdown-animate z-10">
+            <div class="dropdown-item px-3 py-2 text-xs hover:bg-neutral-50 cursor-pointer" data-value="easy">简单</div>
+            <div class="dropdown-item px-3 py-2 text-xs hover:bg-neutral-50 cursor-pointer" data-value="medium">中等</div>
+            <div class="dropdown-item px-3 py-2 text-xs hover:bg-neutral-50 cursor-pointer" data-value="hard">困难</div>
+        </div>
+    </div>
+    <!-- 脑筋急转弯专属API源：与看图猜成语API完全隔离 -->
+    <div class="relative dropdown-container" data-type="njjzwApiSource" style="display: none;">
+        <div class="dropdown-header flex items-center gap-3 px-3 py-2 border border-neutral-100 rounded-md cursor-pointer hover:border-primary">
+            <span class="text-xs text-neutral-500 selected-text">慕名API</span>
+            <i class="fa-solid fa-chevron-down text-[10px] text-neutral-300 dropdown-arrow"></i>
+        </div>
+        <div class="dropdown-menu absolute top-full left-0 right-0 mt-1 bg-white rounded-md shadow-md border border-neutral-100 overflow-hidden max-h-0 opacity-0 dropdown-animate z-10">
+            <div class="dropdown-item px-3 py-2 text-xs hover:bg-neutral-50 cursor-pointer" data-value="muming">慕名API</div>
+            <div class="dropdown-item px-3 py-2 text-xs hover:bg-neutral-50 cursor-pointer" data-value="xingkong">星空API</div>
+            <div class="dropdown-item px-3 py-2 text-xs hover:bg-neutral-50 cursor-pointer" data-value="tianyi">天一API</div>
+            <div class="dropdown-item px-3 py-2 text-xs hover:bg-neutral-50 cursor-pointer" data-value="suyan">素颜API</div>
+            <div class="dropdown-item px-3 py-2 text-xs hover:bg-neutral-50 cursor-pointer" data-value="dami">大米API</div>
+        </div>
+    </div>
+    <button id="refreshBtn" class="bg-primary text-white px-3 py-2 rounded-md text-xs flex items-center gap-1">
+        <i class="fa-solid fa-refresh text-[10px]"></i> 换一题
+    </button>
+</div>
+<!-- 题目卡片 -->
+<div id="questionCard" class="w-full max-w-xl bg-white rounded-lg border border-neutral-100 p-5 mb-4 fade-in">
+    <div id="questionTagBar" class="flex flex-wrap gap-2 mb-4">
+        <span id="questionType" class="bg-neutral-50 text-neutral-400 px-2 py-1 rounded-full text-[10px]">灯谜</span>
+        <span id="questionTag" class="bg-neutral-50 text-neutral-400 px-2 py-1 rounded-full text-[10px]">元宵</span>
+        <span id="questionDifficulty" class="bg-neutral-50 text-neutral-400 px-2 py-1 rounded-full text-[10px]">简单</span>
+    </div>
+    <h2 id="questionTitle" class="text-base font-medium text-neutral-500 mb-5 text-center min-h-[40px] flex items-center justify-center">加载中...</h2>
+    <div id="picContainer" class="mb-5 text-center hidden">
+        <img id="questionPic" class="max-w-full max-h-[300px] mx-auto rounded-md" alt="成语图片">
+    </div>
+    <div id="answerInputContainer" class="mb-4">
+        <input type="text" id="answerInput" placeholder="请输入答案" class="w-full border border-neutral-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-primary" disabled>
+    </div>
+    <div id="optionContainer" class="mb-4 flex flex-col gap-2 hidden"></div>
+    <div id="actionBtnBar" class="flex flex-wrap gap-2 justify-center">
+        <button id="submitBtn" class="bg-primary text-white px-4 py-2 rounded-md text-xs flex items-center gap-1 disabled:opacity-50" disabled>
+            <i class="fa-solid fa-check text-[10px]"></i> 提交答案
+        </button>
+        <button id="tipBtn" class="bg-yellow-500 text-white px-4 py-2 rounded-md text-xs flex items-center gap-1 disabled:opacity-50 hidden" disabled>
+            <i class="fa-solid fa-lightbulb text-[10px]"></i> 提示
+        </button>
+        <button id="analysisBtn" class="bg-neutral-400 text-white px-4 py-2 rounded-md text-xs flex items-center gap-1 disabled:opacity-50 hidden" disabled>
+            <i class="fa-solid fa-book text-[10px]"></i> 查看解析
+        </button>
+        <!-- 看图猜成语专属API选择器：与所有其他模式完全隔离 -->
+        <div class="relative dropdown-container" data-type="ktccyApiSource" style="display: none;">
+            <div class="dropdown-header flex items-center gap-2 px-3 py-2 border border-neutral-100 rounded-md cursor-pointer hover:border-primary">
+                <span class="text-xs text-neutral-500 selected-text">慕名API</span>
+                <i class="fa-solid fa-chevron-down text-[10px] text-neutral-300 dropdown-arrow"></i>
+            </div>
+            <div class="dropdown-menu absolute top-full left-0 right-0 mt-1 bg-white rounded-md shadow-md border border-neutral-100 overflow-hidden max-h-0 opacity-0 dropdown-animate z-10">
+                <div class="dropdown-item px-3 py-2 text-xs hover:bg-neutral-50 cursor-pointer" data-value="muming">慕名API</div>
+                <div class="dropdown-item px-3 py-2 text-xs hover:bg-neutral-50 cursor-pointer" data-value="susu">苏苏API</div>
+            </div>
+        </div>
+        <!-- 看图猜成语专属换题按钮：与通用换题按钮隔离 -->
+        <button id="ktccyRefreshBtn" class="bg-primary text-white px-4 py-2 rounded-md text-xs flex items-center gap-1 hidden">
+            <i class="fa-solid fa-refresh text-[10px]"></i> 换一题
+        </button>
+    </div>
+</div>
+<!-- 答案结果框（独立） -->
+<div id="resultCard" class="w-full max-w-xl rounded-lg p-4 mb-4 hidden slide-up border">
+    <div id="resultContent" class="text-sm font-medium"></div>
+</div>
+<!-- 解析框（独立，不和答案共用） -->
+<div id="analysisCard" class="w-full max-w-xl rounded-lg p-4 mb-4 hidden slide-up border border-primary/20 bg-primary/5 text-primary">
+    <div id="analysisContent" class="text-sm font-medium"></div>
+</div>
+<!-- 知识答题专属换题按钮：与其他换题按钮隔离 -->
+<button id="datiRefreshBtn" class="bg-primary text-white px-6 py-3 rounded-md text-sm w-full max-w-xl hidden mb-4">
+    <i class="fa-solid fa-refresh mr-2"></i> 换一题
+</button>
+<!-- 统计栏：仅脑筋急转弯模式使用，与看图猜成语完全隔离 -->
+<div id="statBar" class="w-full max-w-xl bg-white rounded-lg border border-neutral-100 p-3 grid grid-cols-3 gap-2 text-center">
+    <div><p class="text-neutral-400 text-[10px]">总答题</p><p id="totalAnswer" class="text-sm font-medium text-neutral-500">0</p></div>
+    <div><p class="text-neutral-400 text-[10px]">答对</p><p id="totalCorrect" class="text-sm font-medium text-primary">0</p></div>
+    <div><p class="text-neutral-400 text-[10px]">正确率</p><p id="correctRate" class="text-sm font-medium text-neutral-500">0%</p></div>
+</div>
+<footer class="mt-6 text-center text-neutral-400 text-[10px]">
+    <p>API提供：慕名API/星空API/天一API/素颜API/大米API/苏苏API</p>
+</footer>
+<script>
+    const M_TOKEN = '961D28A9C59C411C49C75FA3E9FAF24C';
+    const UID = '1828222534';
+    // 1. API配置全隔离：各模式API地址独立配置，无交叉依赖
+    const apiSourceConfig = {
+        // 通用API（猜灯谜/脑筋急转弯）
+        muming: {
+            name: '慕名API',
+            riddle: 'https://api.suol.cc/v1/game_cdm.php',
+            njjzw: 'https://api.suol.cc/v1/game_njjzw.php',
+            ktccy: 'https://api.suol.cc/v1/game_ktccy.php',
+            hasVerify: true,
+            hasStat: true
+        },
+        xingkong: { name: '星空API', njjzw: 'https://api.71xk.com/api/brain-teasers', hasVerify: false, hasStat: false },
+        tianyi: { name: '天一API', njjzw: 'https://api.icofun.cn/api/naowan.php', hasVerify: false, hasStat: false },
+        suyan: { name: '素颜API', njjzw: 'https://api.suyanw.cn/api/naowan.php', hasVerify: false, hasStat: false },
+        dami: { name: '大米API', njjzw: 'https://api.qqsuu.cn/api/dm-naowan', hasVerify: false, hasStat: false },
+        // 看图猜成语专属API：苏苏API
+        susu: { name: '苏苏API', ktccy: 'http://api.苏苏.cn/API/ktccy.php', hasVerify: false, hasStat: false }
+    };
+    // 2. 模式配置全隔离：各模式属性独立，样式/功能开关互不影响
+    const modeConfig = {
+        riddle: {
+            title: '猜灯谜',
+            filterOptions: [{value:'lantern',text:'元宵灯谜'},{value:'midautumn',text:'中秋灯谜'}],
+            filterParam: 'festival',
+            typeLabel: '灯谜',
+            showFilter: true, showDifficulty: true, showInput: true, showPic: false,
+            showTipBtn: false, showAnalysis: true, showActionBtns: true, showStat: false,
+            action: {random:'random',verify:'verify',analysis:'analysis',stat:'stat'}
+        },
+        njjzw: {
+            title: '脑筋急转弯',
+            filterOptions: [{value:'fun',text:'趣味'},{value:'intel',text:'智力'},{value:'child',text:'少儿'}],
+            filterParam: 'category',
+            typeLabel: '脑筋急转弯',
+            showFilter: true, showDifficulty: true, showInput: true, showPic: false,
+            showTipBtn: false, showAnalysis: false, showActionBtns: true, showStat: true,
+            action: {random:'random',verify:'check',stat:'score'}
+        },
+        dati: {
+            title: '知识答题',
+            api: 'https://api.suol.cc/v1/game_dati.php',
+            typeLabel: '知识答题',
+            showFilter: false, showDifficulty: false, showInput: false, showPic: false,
+            showTipBtn: false, showAnalysis: false, showActionBtns: false, showStat: false,
+            action: {start:'开始游戏',answer:'我答'}
+        },
+        ktccy: {
+            title: '看图猜成语',
+            typeLabel: '看图猜成语',
+            showFilter: false, showDifficulty: false, showInput: true, showPic: true,
+            showTipBtn: true, showAnalysis: false, showActionBtns: true, showStat: false,
+            action: {start:'开始游戏',answer:'我猜',tip:'提示'}
+        }
+    };
+    // 3. 配置存储全隔离：各模式专属配置独立键名，永不覆盖
+    let currentMode = 'riddle';
+    let currentQuestion = null;
+    let isAnswered = false;
+    const dropdownConfig = {
+        // 猜灯谜/脑筋急转弯通用配置
+        filter: 'lantern',
+        difficulty: 'easy',
+        // 脑筋急转弯专属API配置
+        njjzwApiSource: 'muming',
+        // 看图猜成语专属API配置（与其他完全隔离）
+        ktccyApiSource: 'muming'
+    };
+    // 4. 元素获取独立：避免跨模式元素操作
+    const modeTabs = document.querySelectorAll('.mode-tab');
+    const dropdownContainers = document.querySelectorAll('.dropdown-container');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const datiRefreshBtn = document.getElementById('datiRefreshBtn');
+    const ktccyRefreshBtn = document.getElementById('ktccyRefreshBtn');
+    const filterBar = document.getElementById('filterBar');
+    const questionTagBar = document.getElementById('questionTagBar');
+    const questionType = document.getElementById('questionType');
+    const questionTag = document.getElementById('questionTag');
+    const questionDifficulty = document.getElementById('questionDifficulty');
+    const questionTitle = document.getElementById('questionTitle');
+    const picContainer = document.getElementById('picContainer');
+    const questionPic = document.getElementById('questionPic');
+    const answerInput = document.getElementById('answerInput');
+    const optionContainer = document.getElementById('optionContainer');
+    const submitBtn = document.getElementById('submitBtn');
+    const tipBtn = document.getElementById('tipBtn');
+    const analysisBtn = document.getElementById('analysisBtn');
+    const resultCard = document.getElementById('resultCard');
+    const resultContent = document.getElementById('resultContent');
+    const analysisCard = document.getElementById('analysisCard');
+    const analysisContent = document.getElementById('analysisContent');
+    const statBar = document.getElementById('statBar');
+    const totalAnswerEl = document.getElementById('totalAnswer');
+    const totalCorrectEl = document.getElementById('totalCorrect');
+    const correctRateEl = document.getElementById('correctRate');
+    // 5. 模式切换逻辑全隔离：各模式控件独立显示/隐藏，切换即重置
+    modeTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const mode = tab.dataset.mode;
+            if (mode === currentMode) return;
+            // 重置所有模式样式
+            modeTabs.forEach(t => {t.classList.remove('active','bg-primary','text-white');t.classList.add('text-neutral-500');});
+            tab.classList.add('active','bg-primary','text-white');
+            currentMode = mode;
+            const c = modeConfig[currentMode];
+            // 各模式专属控件独立控制：完全隔离，互不影响
+            const njjzwApiSourceContainer = document.querySelector('.dropdown-container[data-type="njjzwApiSource"]');
+            const ktccyApiSourceContainer = document.querySelector('.dropdown-container[data-type="ktccyApiSource"]');
+            // 脑筋急转弯API仅自身显示
+            njjzwApiSourceContainer.style.display = mode === 'njjzw' ? 'block' : 'none';
+            // 看图猜成语API仅自身显示
+            ktccyApiSourceContainer.style.display = mode === 'ktccy' ? 'block' : 'none';
+            // 通用筛选栏仅猜灯谜/脑筋急转弯显示
+            filterBar.style.display = c.showFilter ? 'flex' : 'none';
+            document.querySelector('.dropdown-container[data-type="difficulty"]').style.display = c.showDifficulty ? 'block' : 'none';
+            questionTagBar.style.display = c.showFilter ? 'flex' : 'none';
+            document.getElementById('answerInputContainer').style.display = c.showInput ? 'block' : 'none';
+            optionContainer.style.display = c.showInput ? 'none' : 'flex';
+            picContainer.style.display = c.showPic ? 'block' : 'none';
+            tipBtn.style.display = c.showTipBtn ? 'flex' : 'none';
+            analysisBtn.style.display = c.showAnalysis ? 'flex' : 'none';
+            document.getElementById('actionBtnBar').style.display = c.showActionBtns ? 'flex' : 'none';
+            // 统计栏仅脑筋急转弯显示，与其他模式完全隔离
+            statBar.style.display = c.showStat ? 'grid' : 'none';
+            // 各模式换题按钮独立显示
+            datiRefreshBtn.style.display = currentMode === 'dati' ? 'block' : 'none';
+            ktccyRefreshBtn.style.display = currentMode === 'ktccy' ? 'flex' : 'none';
+            // 筛选选项独立初始化：仅当前模式生效
+            if (c.showFilter) {
+                const menu = document.querySelector('.dropdown-container[data-type="filter"] .dropdown-menu');
+                menu.innerHTML = '';
+                c.filterOptions.forEach(o => {
+                    const div = document.createElement('div');
+                    div.className = 'dropdown-item px-3 py-2 text-xs hover:bg-neutral-50 cursor-pointer';
+                    div.dataset.value = o.value;
+                    div.textContent = o.text;
+                    menu.appendChild(div);
+                });
+                dropdownConfig.filter = c.filterOptions[0].value;
+                document.querySelector('.dropdown-container[data-type="filter"] .selected-text').textContent = c.filterOptions[0].text;
+            }
+            // 切换模式即彻底重置状态：无任何残留
+            resetPageState();
+            // 各模式独立加载题目：无交叉调用
+            getQuestion();
+            // 统计仅脑筋急转弯独立加载：与其他模式隔离
+            if (c.showStat) getNjjzwStat();
+        });
+    });
+    // 6. 下拉框事件全隔离：不同type仅更新自身配置，互不影响
+    dropdownContainers.forEach(container => {
+        const header = container.querySelector('.dropdown-header');
+        const menu = container.querySelector('.dropdown-menu');
+        const arrow = container.querySelector('.dropdown-arrow');
+        header.addEventListener('click', e => {
+            e.stopPropagation();
+            const open = menu.style.maxHeight;
+            // 关闭所有下拉框：全局统一，不影响配置
+            document.querySelectorAll('.dropdown-menu').forEach(m => {m.style.maxHeight='';m.style.opacity=0;m.style.transform='translateY(-4px)';});
+            document.querySelectorAll('.dropdown-arrow').forEach(a=>a.style.transform='rotate(0)');
+            if(!open){
+                menu.style.maxHeight='200px';
+                menu.style.opacity=1;
+                menu.style.transform='translateY(0)';
+                arrow.style.transform='rotate(180deg)';
+            }
+        });
+        container.addEventListener('click', e => {
+            const item = e.target.closest('.dropdown-item');
+            if(!item)return;
+            const type = container.dataset.type;
+            // 仅更新当前type的配置：隔离性保障，永不修改其他模式配置
+            dropdownConfig[type] = item.dataset.value;
+            container.querySelector('.selected-text').textContent = item.textContent;
+            // 关闭下拉框
+            menu.style.maxHeight='';menu.style.opacity=0;menu.style.transform='translateY(-4px)';
+            arrow.style.transform='rotate(0)';
+            // 各模式API切换独立处理：完全隔离
+            if (type === 'njjzwApiSource') {
+                resetPageState();
+                getQuestion();
+                getNjjzwStat();
+            }
+            if (type === 'ktccyApiSource') {
+                resetPageState();
+                getQuestion();
+            }
+            // 通用筛选切换独立处理
+            if (type === 'filter' || type === 'difficulty') {
+                resetPageState();
+                getQuestion();
+            }
+        });
+    });
+    // 全局点击关闭下拉框：不影响任何模式配置
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.dropdown-menu').forEach(m=>{m.style.maxHeight='';m.style.opacity=0;m.style.transform='translateY(-4px)';});
+        document.querySelectorAll('.dropdown-arrow').forEach(a=>a.style.transform='rotate(0)');
+    });
+    // 7. 换题功能全隔离：各模式换题按钮仅触发自身逻辑
+    refreshBtn.onclick = () => {resetPageState();getQuestion();}; // 通用换题（猜灯谜/脑筋急转弯）
+    datiRefreshBtn.onclick = () => {resetPageState();getQuestion();}; // 知识答题专属
+    ktccyRefreshBtn.onclick = () => {resetPageState();getQuestion();}; // 看图猜成语专属
+    // 8. 提示功能仅看图猜成语生效：与其他模式完全隔离
+    tipBtn.onclick = async ()=>{
+        if(!currentQuestion||currentMode!='ktccy')return;
+        const ktccyApi = dropdownConfig.ktccyApiSource;
+        // 苏苏API无提示功能：独立处理，不影响慕名API
+        if(ktccyApi === 'susu'){
+            resultContent.textContent = `💡 提示：该API暂不提供提示功能`;
+            resultCard.className = 'w-full max-w-xl rounded-lg p-4 mb-4 slide-up border border-neutral-200 bg-neutral-50 text-neutral-500';
+            resultCard.classList.remove('hidden');
+            return;
+        }
+        // 慕名API提示：仅自身生效
+        try{
+            const p = new URLSearchParams({msg:modeConfig.ktccy.action.tip,id:UID,m_token:M_TOKEN});
+            const d = await (await fetch(apiSourceConfig.muming.ktccy+'?'+p)).json();
+            if(d.code==200){
+                resultContent.textContent = `💡 提示：${d.data.msg||d.data.tip||'暂无提示'}`;
+                resultCard.className = 'w-full max-w-xl rounded-lg p-4 mb-4 slide-up border border-neutral-200 bg-neutral-50 text-neutral-500';
+                resultCard.classList.remove('hidden');
+            }
+        }catch(e){showResult('网络错误','error');}
+    };
+    // 9. 解析功能仅猜灯谜生效：与其他模式完全隔离
+    analysisBtn.onclick = async ()=>{
+        if(currentMode!='riddle'||!currentQuestion)return;
+        try{
+            const c = modeConfig.riddle;
+            const p = new URLSearchParams({action:c.action.analysis,uid:UID,m_token:M_TOKEN,rid:currentQuestion.id});
+            const d = await (await fetch(apiSourceConfig.muming.riddle+'?'+p)).json();
+            if(d.code==200){
+                const a = d.data.analysis||d.data.answer||'暂无解析';
+                const al = d.data.allusion ? `\n典故：${d.data.allusion}` : '';
+                analysisContent.textContent = `📖 解析：${a}${al}`;
+                analysisCard.classList.remove('hidden');
+            }
+        }catch(e){
+            analysisContent.textContent = '解析获取失败';
+            analysisCard.classList.remove('hidden');
+        }
+    };
+    // 页面初始化：仅加载当前模式（猜灯谜）内容
+    window.onload = ()=>{
+        resetPageState();
+        getQuestion();
+        submitBtn.onclick=submitAnswer;
+    };
+    // 10. 题目获取总入口：各模式分支完全独立，无交叉
+    async function getQuestion(){
+        if(currentMode=='dati') await startDati(); // 知识答题
+        else if(currentMode=='ktccy') await startKtccy(); // 看图猜成语
+        else if(currentMode=='njjzw') await getNjjzwQuestion(); // 脑筋急转弯
+        else if(currentMode=='riddle') await getRiddleQuestion(); // 猜灯谜
+    }
+    // 猜灯谜专属题目获取：独立函数，无外部依赖
+    async function getRiddleQuestion(){
+        resetPageState();
+        questionTitle.textContent='加载中...';
+        const c=modeConfig.riddle;
+        const apiUrl = apiSourceConfig.muming.riddle;
+        const p=new URLSearchParams({
+            action:c.action.random,
+            uid:UID,
+            m_token:M_TOKEN,
+            difficulty:dropdownConfig.difficulty,
+            [c.filterParam]:dropdownConfig.filter
+        });
+        try{
+            const d=await(await fetch(apiUrl+'?'+p)).json();
+            if(d.code==200){
+                currentQuestion=d.data;
+                questionType.textContent=c.typeLabel;
+                questionTag.textContent=document.querySelector('.dropdown-container[data-type="filter"] .selected-text').textContent;
+                questionDifficulty.textContent=document.querySelector('.dropdown-container[data-type="difficulty"] .selected-text').textContent;
+                questionTitle.textContent=currentQuestion.title;
+                answerInput.disabled=false;
+                submitBtn.disabled=false;
+                answerInput.focus();
+            }else{questionTitle.textContent='获取失败';}
+        }catch(e){questionTitle.textContent='获取失败';}
+    }
+    // 脑筋急转弯专属题目获取：独立函数，与其他模式隔离
+    async function getNjjzwQuestion(){
+        resetPageState();
+        questionTitle.textContent='加载中...';
+        const c=modeConfig.njjzw;
+        const apiSource = dropdownConfig.njjzwApiSource;
+        const apiUrl = apiSourceConfig[apiSource].njjzw;
+        // 非慕名API独立处理
+        if (apiSource !== 'muming') {
+            try {
+                const d = await (await fetch(apiUrl)).json();
+                let quest, result;
+                if (apiSource === 'dami') {
+                    if (d.code === 200 && d.data?.list && d.data.list.length > 0) {
+                        const randomIdx = Math.floor(Math.random() * d.data.list.length);
+                        const randomQ = d.data.list[randomIdx];
+                        quest = randomQ.quest?.trim() || '';
+                        result = randomQ.result?.trim() || '';
+                    } else {questionTitle.textContent='获取失败';return;}
+                } else {
+                    if (d.code === 1 && d.data?.quest && d.data?.result) {
+                        quest = d.data.quest?.trim() || '';
+                        result = d.data.result?.trim() || '';
+                    } else {questionTitle.textContent='获取失败';return;}
+                }
+                currentQuestion = {title: quest, answer: result, id: `${apiSource}_${Date.now()}`};
+                questionType.textContent=c.typeLabel;
+                questionTag.textContent=document.querySelector('.dropdown-container[data-type="filter"] .selected-text').textContent;
+                questionDifficulty.textContent=document.querySelector('.dropdown-container[data-type="difficulty"] .selected-text').textContent;
+                questionTitle.textContent=currentQuestion.title;
+                answerInput.disabled=false;
+                submitBtn.disabled=false;
+                answerInput.focus();
+            } catch (e) {questionTitle.textContent='获取失败';}
+            return;
+        }
+        // 慕名API独立处理
+        const p=new URLSearchParams({
+            action:c.action.random,
+            uid:UID,
+            m_token:M_TOKEN,
+            difficulty:dropdownConfig.difficulty,
+            [c.filterParam]:dropdownConfig.filter
+        });
+        try{
+            const d=await(await fetch(apiUrl+'?'+p)).json();
+            if(d.code==200){
+                currentQuestion=d.data;
+                questionType.textContent=c.typeLabel;
+                questionTag.textContent=document.querySelector('.dropdown-container[data-type="filter"] .selected-text').textContent;
+                questionDifficulty.textContent=document.querySelector('.dropdown-container[data-type="difficulty"] .selected-text').textContent;
+                questionTitle.textContent=currentQuestion.title;
+                answerInput.disabled=false;
+                submitBtn.disabled=false;
+                answerInput.focus();
+            }else{questionTitle.textContent='获取失败';}
+        }catch(e){questionTitle.textContent='获取失败';}
+    }
+    // 知识答题专属题目获取：独立函数，无外部依赖
+    async function startDati(){
+        resetPageState();
+        questionTitle.textContent='加载中...';
+        const c=modeConfig.dati;
+        const p=new URLSearchParams({msg:c.action.start,id:UID,m_token:M_TOKEN});
+        try{
+            const d=await(await fetch(c.api+'?'+p)).json();
+            if(d.code==200){
+                currentQuestion=d.data;
+                const t=currentQuestion.msg.split('\n')[1]||currentQuestion.msg;
+                const opts=currentQuestion.option.split('\n').filter(i=>i.trim());
+                questionTitle.textContent=t;
+                optionContainer.innerHTML='';
+                opts.forEach(o=>{
+                    const num=o.split('、')[0];
+                    const b=document.createElement('button');
+                    b.className='w-full text-left border border-neutral-100 hover:border-primary rounded-md px-4 py-3 text-sm disabled:opacity-50';
+                    b.dataset.option=num;
+                    b.textContent=o;
+                    b.onclick=()=>submitDati(num);
+                    optionContainer.appendChild(b);
+                });
+            }else{questionTitle.textContent='获取失败';}
+        }catch(e){questionTitle.textContent='获取失败';}
+    }
+    // 看图猜成语专属题目获取：独立函数，与其他模式完全隔离
+    async function startKtccy(){
+        resetPageState();
+        questionTitle.textContent='加载中...';
+        const c=modeConfig.ktccy;
+        const ktccyApi = dropdownConfig.ktccyApiSource;
+        const apiUrl = apiSourceConfig[ktccyApi].ktccy;
+        // 慕名API独立处理
+        if(ktccyApi === 'muming'){
+            try{
+                const p=new URLSearchParams({msg:c.action.start,id:UID,m_token:M_TOKEN});
+                const d=await(await fetch(apiUrl+'?'+p)).json();
+                if(d.code==200){
+                    currentQuestion=d.data;
+                    questionTitle.textContent=d.data.msg;
+                    questionPic.src=d.data.pic;
+                    questionPic.onload=()=>questionPic.style.display='block';
+                    answerInput.disabled=false;
+                    submitBtn.disabled=false;
+                    tipBtn.disabled=false;
+                    answerInput.focus();
+                }else{questionTitle.textContent='获取失败';}
+            }catch(e){questionTitle.textContent='获取失败';}
+            return;
+        }
+        // 苏苏API独立处理：不影响任何其他功能
+        if(ktccyApi === 'susu'){
+            try{
+                const d=await(await fetch(apiUrl)).json();
+                if(d.code===200 && d.data?.image_url && d.data?.answer){
+                    currentQuestion = {
+                        id: d.data.id || `susu_${Date.now()}`,
+                        pic: d.data.image_url,
+                        answer: d.data.answer.trim(),
+                        msg: '看图猜成语'
+                    };
+                    questionTitle.textContent=currentQuestion.msg;
+                    questionPic.src=currentQuestion.pic;
+                    questionPic.onload=()=>questionPic.style.display='block';
+                    answerInput.disabled=false;
+                    submitBtn.disabled=false;
+                    tipBtn.disabled=false;
+                    answerInput.focus();
+                }else{questionTitle.textContent='获取失败，API返回异常';}
+            }catch(e){questionTitle.textContent='获取失败，请检查网络';}
+            return;
+        }
+    }
+    // 知识答题专属提交：独立函数
+    async function submitDati(num){
+        if(isAnswered||currentMode!='dati')return;
+        isAnswered=true;
+        const c=modeConfig.dati;
+        const p=new URLSearchParams({msg:`${c.action.answer}${num}`,id:UID,m_token:M_TOKEN});
+        await(await fetch(c.api+'?'+p)).json();
+        document.querySelectorAll('#optionContainer button').forEach(b=>{
+            b.disabled=true;
+            if(b.dataset.option==currentQuestion.answer)b.classList.add('bg-green-50','border-green-200','text-green-600');
+            else if(b.dataset.option==num)b.classList.add('bg-red-50','border-red-200','text-red-500');
+        });
+        showResult(num==currentQuestion.answer?'🎉 答对了！':'❌ 答错了，正确答案：'+currentQuestion.answer, num==currentQuestion.answer?'success':'error');
+    }
+    // 通用提交功能：各模式分支完全隔离，验证逻辑互不影响
+    async function submitAnswer(){
+        if(!currentQuestion||isAnswered)return;
+        const v=answerInput.value.trim();
+        if(!v){showResult('请输入答案','warning');return;}
+        // 看图猜成语专属提交：独立分支
+        if (currentMode === 'ktccy') {
+            const ktccyApi = dropdownConfig.ktccyApiSource;
+            // 苏苏API本地验证：独立处理
+            if (ktccyApi === 'susu') {
+                isAnswered=true;
+                submitBtn.disabled=true;
+                tipBtn.disabled=true;
+                answerInput.disabled=true;
+                const isCorrect = v === currentQuestion.answer.trim();
+                showResult(isCorrect?'🎉 答对了！':'❌ 答错了，正确答案：'+currentQuestion.answer, isCorrect?'success':'error');
+                return;
+            }
+            // 慕名API远程验证：独立处理
+            const c=modeConfig.ktccy;
+            const p=new URLSearchParams({msg:`${c.action.answer}${v}`,id:UID,m_token:M_TOKEN});
+            try{
+                const d=await(await fetch(apiSourceConfig.muming.ktccy+'?'+p)).json();
+                if(d.code==200){
+                    isAnswered=true;
+                    submitBtn.disabled=true;
+                    tipBtn.disabled=true;
+                    answerInput.disabled=true;
+                    const ok=d.data.msg.includes('答对了');
+                    const ans=currentQuestion.answer;
+                    showResult(ok?'🎉 答对了！':'❌ 答错了，正确答案：'+ans, ok?'success':'error');
+                }else{showResult('提交失败','error');}
+            }catch(e){showResult('网络错误','error');}
+            return;
+        }
+        // 脑筋急转弯专属提交：独立分支
+        if (currentMode === 'njjzw') {
+            const apiSource = dropdownConfig.njjzwApiSource;
+            // 非慕名API本地验证：独立处理
+            if (apiSource !== 'muming') {
+                isAnswered=true;
+                submitBtn.disabled=true;
+                answerInput.disabled=true;
+                const isCorrect = v === currentQuestion.answer.trim();
+                showResult(isCorrect?'🎉 答对了！':'❌ 答错了，正确答案：'+currentQuestion.answer, isCorrect?'success':'error');
+                return;
+            }
+            // 慕名API远程验证：独立处理
+            const c=modeConfig.njjzw;
+            const p=new URLSearchParams({
+                action:c.action.verify,
+                uid:UID,
+                m_token:M_TOKEN,
+                rid:currentQuestion.id,
+                answer:v
+            });
+            try{
+                const d=await(await fetch(apiSourceConfig.muming.njjzw+'?'+p)).json();
+                if(d.code==200){
+                    isAnswered=true;
+                    submitBtn.disabled=true;
+                    answerInput.disabled=true;
+                    const ok=d.data.is_correct;
+                    const ans=d.data.correct_answer;
+                    showResult(ok?'🎉 答对了！':'❌ 答错了，正确答案：'+ans, ok?'success':'error');
+                    getNjjzwStat();
+                }else{showResult('提交失败','error');}
+            }catch(e){showResult('网络错误','error');}
+            return;
+        }
+        // 猜灯谜专属提交：独立分支
+        if (currentMode === 'riddle') {
+            const c=modeConfig.riddle;
+            const p=new URLSearchParams({
+                action:c.action.verify,
+                uid:UID,
+                m_token:M_TOKEN,
+                rid:currentQuestion.id,
+                answer:v
+            });
+            try{
+                const d=await(await fetch(apiSourceConfig.muming.riddle+'?'+p)).json();
+                if(d.code==200){
+                    isAnswered=true;
+                    submitBtn.disabled=true;
+                    answerInput.disabled=true;
+                    analysisBtn.disabled=false;
+                    const ok=d.data.is_correct;
+                    const ans=d.data.correct_answer;
+                    showResult(ok?'🎉 答对了！':'❌ 答错了，正确答案：'+ans, ok?'success':'error');
+                }else{showResult('提交失败','error');}
+            }catch(e){showResult('网络错误','error');}
+            return;
+        }
+    }
+    // 结果显示：通用函数，无模式依赖
+    function showResult(text,type){
+        resultContent.textContent=text;
+        const map={
+            success:'border-primary/20 bg-primary/5 text-primary',
+            error:'border-red-200 bg-red-50 text-red-500',
+            warning:'border-yellow-200 bg-yellow-50 text-yellow-600',
+            info:'border-neutral-200 bg-neutral-50 text-neutral-500'
+        };
+        resultCard.className='w-full max-w-xl rounded-lg p-4 mb-4 slide-up border '+map[type];
+        resultCard.classList.remove('hidden');
+    }
+    // 状态重置：全局统一，彻底清空所有状态，保障模式隔离
+    function resetPageState(){
+        isAnswered=false;
+        answerInput.value='';
+        answerInput.disabled=true;
+        submitBtn.disabled=true;
+        tipBtn.disabled=true;
+        analysisBtn.disabled=true;
+        resultCard.classList.add('hidden');
+        analysisCard.classList.add('hidden');
+        optionContainer.innerHTML='';
+        questionPic.src='';
+        questionPic.style.display='none';
+        questionTitle.textContent='加载中...';
+    }
+    // 脑筋急转弯专属统计：独立函数，与其他模式完全隔离
+    async function getNjjzwStat(){
+        if(currentMode!='njjzw')return;
+        const apiSource = dropdownConfig.njjzwApiSource;
+        if (apiSource !== 'muming') {
+            totalAnswerEl.textContent = 0;
+            totalCorrectEl.textContent = 0;
+            correctRateEl.textContent = '0%';
+            return;
+        }
+        const c=modeConfig.njjzw;
+        const apiUrl = apiSourceConfig.muming.njjzw;
+        const p=new URLSearchParams({action:c.action.stat,uid:UID,m_token:M_TOKEN});
+        try{
+            const d=await(await fetch(apiUrl+'?'+p)).json();
+            if(d.code==200){
+                totalAnswerEl.textContent=d.data.total_answer||0;
+                totalCorrectEl.textContent=d.data.total_correct||0;
+                correctRateEl.textContent=d.data.correct_rate||'0%';
+            }
+        }catch(e){
+            totalAnswerEl.textContent = 0;
+            totalCorrectEl.textContent = 0;
+            correctRateEl.textContent = '0%';
+        }
+    }
+</script>
+</body>
+</html>

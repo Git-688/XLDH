@@ -1,0 +1,2126 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>吉日良辰</title>
+<!-- 外部资源 -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+<!-- Tailwind配置：开启深色模式、扩展配置 -->
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['PingFang SC', 'Helvetica Neue', 'Arial', 'sans-serif'],
+      },
+      colors: {
+        primary: '#3a66f4',
+        good: '#2E7D32',
+        bad: '#C62828',
+      }
+    },
+  }
+}
+</script>
+<!-- 自定义样式 -->
+<style type="text/tailwindcss">
+@layer utilities {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    box-sizing: border-box;
+  }
+  /* 时辰总览卡片基础样式 */
+  .shi-card {
+    @apply flex flex-col rounded-xl shadow-sm cursor-pointer min-h-[120px] lg:min-h-[110px] border-2 border-white dark:border-gray-800 overflow-hidden 
+    transition-all duration-200 ease-in-out relative;
+  }
+  .shi-card:hover {
+    @apply shadow-md -translate-y-1;
+  }
+  .shi-card:active {
+    @apply shadow-sm translate-y-0;
+  }
+  .shi-card-top {
+    @apply flex-1 flex items-center justify-center p-2 text-white;
+  }
+  .shi-card-bottom {
+    @apply flex-1 flex flex-col items-center justify-center p-1 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-[10px] md:text-xs gap-0.5 px-1;
+  }
+  /* 实时高亮样式 */
+  .shi-active-border {
+    @apply border-2 shadow-md;
+  }
+  /* 手动选中样式 */
+  .selected-shi-card {
+    @apply ring-2 ring-gray-800 dark:ring-white ring-offset-1 dark:ring-offset-gray-900;
+  }
+  /* 刻制格子 */
+  .ke-item {
+    @apply flex items-center flex-col justify-center bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 text-center p-2 min-h-[70px] min-w-[60px] md:min-w-[80px] transition-all duration-200;
+  }
+  .ke-item:hover {
+    @apply -translate-y-0.5 shadow-sm;
+  }
+  .ke-active {
+    @apply border-2 text-white font-bold;
+  }
+  .tab {
+    @apply flex-1 text-center py-3 cursor-pointer text-sm transition-colors duration-200 leading-relaxed shrink-0 min-w-[100px];
+  }
+  .tab-active {
+    @apply text-gray-800 dark:text-white border-b-2 border-gray-800 dark:border-white font-medium;
+  }
+  .tab-inactive {
+    @apply text-gray-400 dark:text-gray-500 border-b-2 border-transparent hover:text-gray-600 dark:hover:text-gray-300;
+  }
+  .ke-row {
+    @apply grid grid-cols-4 gap-1.5 mb-1.5 w-full;
+  }
+  .curr-shi-highlight {
+    @apply py-1 px-2 rounded-lg bg-gray-100 dark:bg-gray-800 inline-block;
+  }
+  .ke-note {
+    @apply text-[9px] md:text-xs text-gray-400 mt-1;
+  }
+  /* 养生建议样式 */
+  .health-tip {
+    @apply text-[9px] md:text-[10px] lg:text-xs text-gray-500 dark:text-gray-400 text-center leading-tight;
+  }
+  /* 详情模块样式 */
+  .detail-block {
+    @apply bg-white dark:bg-gray-800 rounded-lg p-3 md:p-4 mb-3 md:mb-4 shadow-sm transition-all duration-200;
+  }
+  .detail-block:hover {
+    @apply shadow-md;
+  }
+  .detail-title {
+    @apply text-xs md:text-sm font-bold text-gray-800 dark:text-white mb-1.5 flex items-center gap-1;
+  }
+  .detail-content {
+    @apply text-xs md:text-sm text-gray-600 dark:text-gray-300 leading-relaxed;
+  }
+  /* 主题切换按钮 */
+  .theme-btn {
+    @apply w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm transition-all hover:shadow-md;
+  }
+  .theme-btn:hover {
+    @apply scale-105;
+  }
+  /* 城市标签滚动容器隐藏滚动条 */
+  .city-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .city-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  /* 自定义Toast样式 */
+  .toast {
+    @apply fixed left-1/2 -translate-x-1/2 bottom-8 z-[100] flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-sm text-white transition-all duration-300 ease-in-out opacity-0 translate-y-4 pointer-events-none max-w-[90%];
+  }
+  .toast-show {
+    @apply opacity-100 translate-y-0 pointer-events-auto;
+  }
+  .toast-info {
+    @apply bg-blue-500 dark:bg-blue-600;
+  }
+  .toast-success {
+    @apply bg-green-500 dark:bg-green-600;
+  }
+  .toast-error {
+    @apply bg-red-500 dark:bg-red-600;
+  }
+  .toast-warning {
+    @apply bg-yellow-500 dark:bg-yellow-600;
+  }
+  /* 黄历专用样式 */
+  .yiji-item {
+    @apply px-3 py-1 rounded text-xs md:text-sm transition-all duration-200;
+  }
+  .yiji-item:hover {
+    @apply scale-105;
+  }
+  .yi-item {
+    @apply bg-good/10 text-good border border-good/20;
+  }
+  .ji-item {
+    @apply bg-bad/10 text-bad border border-bad/20;
+  }
+  .shichen-card {
+    @apply border border-gray-200 dark:border-gray-700 rounded-lg p-3 md:p-4 transition-all hover:-translate-y-1 hover:shadow-md;
+  }
+  .luck-good {
+    @apply bg-good/10 text-good border border-good/20 px-2 py-0.5 rounded text-xs font-medium;
+  }
+  .luck-bad {
+    @apply bg-bad/10 text-bad border border-bad/20 px-2 py-0.5 rounded text-xs font-medium;
+  }
+  /* 时间统计卡片内进度条 */
+  .progress-bar-bg {
+    @apply w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden;
+  }
+  .progress-bar-fill {
+    @apply bg-primary h-full rounded-full transition-all duration-500 ease-out;
+  }
+  /* 节日倒计时动画 */
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+  }
+  /* 节日/历史事件卡片样式 */
+  .holiday-card {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-md opacity-0 translate-y-5;
+    animation: fadeInUp 0.5s ease forwards;
+  }
+  .holiday-card.today .days-count {
+    @apply bg-red-500 animate-pulse;
+  }
+  .holiday-card.soon .days-count {
+    @apply bg-yellow-500;
+  }
+  .days-count {
+    @apply bg-primary text-white px-3 py-1 rounded-full font-bold text-sm whitespace-nowrap;
+  }
+}
+</style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen py-4 md:py-6 lg:py-8">
+<!-- 核心容器：全端响应式宽度与内边距 -->
+<div class="max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto px-3 md:px-4 lg:px-6">
+  <!-- 页面顶部栏：标题居中+副标题，主题按钮居右 -->
+  <div class="flex justify-between items-center mb-4 md:mb-6">
+    <!-- 左侧占位，保证标题居中平衡 -->
+    <div class="w-8 md:w-10"></div>
+    <!-- 中间标题+副标题 -->
+    <div class="text-center">
+      <h1 class="text-lg md:text-xl lg:text-2xl font-bold text-primary">吉日良辰</h1>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">十二时辰 · 万年黄历 · 时光印记</p>
+    </div>
+    <!-- 右侧主题切换按钮 -->
+    <button id="theme-toggle" class="theme-btn">
+      <i class="fa fa-moon-o dark:hidden text-gray-600 text-base md:text-lg"></i>
+      <i class="fa fa-sun-o hidden dark:block text-yellow-300 text-base md:text-lg"></i>
+    </button>
+  </div>
+  <!-- 全局功能标签切换栏：新增历史上的今天标签 -->
+  <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6 md:mb-8 overflow-x-auto city-scroll">
+    <div id="tab-shi" class="tab tab-active">
+      <i class="fa fa-clock-o mr-1"></i> 十二时辰
+    </div>
+    <div id="tab-calendar" class="tab tab-inactive">
+      <i class="fa fa-calendar mr-1"></i> 万年黄历
+    </div>
+    <div id="tab-stats" class="tab tab-inactive">
+      <i class="fa fa-bar-chart mr-1"></i> 时间统计
+    </div>
+    <div id="tab-holiday" class="tab tab-inactive">
+      <i class="fa fa-calendar-check-o mr-1"></i> 节日倒计时
+    </div>
+    <div id="tab-history" class="tab tab-inactive">
+      <i class="fa fa-history mr-1"></i> 历史上的今天
+    </div>
+  </div>
+  <!-- 十二时辰面板（默认显示） -->
+  <div id="shi-panel" class="block">
+    <!-- 顶部完整信息区：新增真太阳时、经络字段 -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-5 lg:p-6 mb-6 md:mb-8 shadow-sm">
+      <p class="text-gray-500 dark:text-gray-400 text-xs md:text-sm text-center mb-2">当前北京时间</p>
+      <div id="now-time" class="text-xl md:text-2xl lg:text-3xl font-semibold text-center mb-2">--:--:--</div>
+      <!-- 新增真太阳时显示 -->
+      <div class="mb-3 md:mb-4">
+        <p class="text-gray-500 dark:text-gray-400 text-xs md:text-sm text-center mb-1">当地真太阳时 <span id="location-tip" class="text-[10px] md:text-xs">(北京时间基准 120.00°E, 30.00°N)</span></p>
+        <div id="solar-time" class="text-lg md:text-xl lg:text-2xl font-semibold text-center mb-1">--:--:--</div>
+        <div id="solar-shi-tip" class="text-xs md:text-sm text-center text-gray-500 dark:text-gray-400">对应时辰：--时</div>
+        <div class="flex justify-center mt-2">
+          <button id="set-location" class="text-xs md:text-sm text-primary dark:text-blue-400 flex items-center gap-1">
+            <i class="fa fa-cog"></i> 设置经纬度
+          </button>
+        </div>
+      </div>
+      <!-- 公历+农历日期 -->
+      <div id="date-info" class="text-sm md:text-base text-gray-600 dark:text-gray-300 text-center mb-3 md:mb-4">2026年3月18日 农历正月三十</div>
+      <!-- 节气信息 -->
+      <div id="jieqi-info" class="text-xs md:text-sm text-gray-500 dark:text-gray-400 text-center mb-3 md:mb-4 bg-gray-50 dark:bg-gray-700 py-1 rounded-lg">立春 寅时阳气盛</div>
+      <div class="border-t border-gray-100 dark:border-gray-700 pt-3 mb-3">
+        <p class="text-gray-500 dark:text-gray-400 text-xs md:text-sm mb-1 md:mb-2">对应时辰信息</p>
+        <!-- 响应式字段网格：移动端2列、平板3列、桌面4列 -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-1.5 text-sm">
+          <div class="flex items-center"><span class="text-gray-400 dark:text-gray-500 text-xs md:text-sm w-16 md:w-20">时辰：</span><span id="curr-shi" class="font-bold">--时</span></div>
+          <div class="flex items-center"><span class="text-gray-400 dark:text-gray-500 text-xs md:text-sm w-16 md:w-20">经络：</span><span id="curr-jingluo" class="font-medium">--</span></div>
+          <div class="flex items-center"><span class="text-gray-400 dark:text-gray-500 text-xs md:text-sm w-16 md:w-20">生肖序号：</span><span id="curr-shengxiao-order" class="font-medium">--</span></div>
+          <div class="flex items-center"><span class="text-gray-400 dark:text-gray-500 text-xs md:text-sm w-16 md:w-20">刻制：</span><span id="curr-ke" class="font-medium">--初/正--刻</span></div>
+          <div class="flex items-center"><span class="text-gray-400 dark:text-gray-500 text-xs md:text-sm w-16 md:w-20">时段：</span><span id="curr-time-range" class="font-medium">--:-- --:--</span></div>
+          <div class="flex items-center"><span class="text-gray-400 dark:text-gray-500 text-xs md:text-sm w-16 md:w-20">四刻分类：</span><span id="curr-sike" class="font-medium">--四刻 第--刻</span></div>
+          <div class="flex items-center"><span class="text-gray-400 dark:text-gray-500 text-xs md:text-sm w-16 md:w-20">别称：</span><span id="curr-alias" class="font-medium">----</span></div>
+          <div class="flex items-center"><span class="text-gray-400 dark:text-gray-500 text-xs md:text-sm w-16 md:w-20">五行：</span><span id="curr-wuxing" class="font-medium">--</span></div>
+          <div class="flex items-center"><span class="text-gray-400 dark:text-gray-500 text-xs md:text-sm w-16 md:w-20">生肖：</span><span id="curr-animal" class="font-medium">--</span></div>
+          <div class="flex items-center"><span class="text-gray-400 dark:text-gray-500 text-xs md:text-sm w-16 md:w-20">跨日：</span><span id="curr-cross-day" class="font-medium">----</span></div>
+        </div>
+      </div>
+      <div>
+        <p class="text-gray-500 dark:text-gray-400 text-xs md:text-sm mb-1">说明：</p>
+        <p id="curr-desc" class="text-xs md:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">------</p>
+      </div>
+    </div>
+    <!-- 十二时辰总览 -->
+    <div class="mb-6 md:mb-8">
+      <div class="flex items-center gap-2 mb-3">
+        <i class="fa fa-clock-o text-gray-500 dark:text-gray-400 text-xs md:text-sm"></i>
+        <h2 class="text-sm md:text-base font-bold">十二时辰总览</h2>
+      </div>
+      <!-- 响应式网格：移动端3列、小平板4列、桌面6列 -->
+      <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2" id="shi-grid"></div>
+    </div>
+    <!-- 时辰详解 -->
+    <div class="mb-6 md:mb-8">
+      <div class="flex items-center gap-2 mb-3">
+        <i class="fa fa-info-circle text-gray-500 dark:text-gray-400 text-xs md:text-sm"></i>
+        <h2 class="text-sm md:text-base font-bold" id="detail-title">--时详解</h2>
+      </div>
+      <!-- 基础信息：响应式网格，移动端1列、平板2列、桌面3列 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-4 md:mb-5">
+        <span class="px-2 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs md:text-sm w-full">生肖序号：<span id="detail-shengxiao-order" class="font-medium">--</span></span>
+        <span class="px-2 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs md:text-sm w-full">时间：<span id="detail-time" class="font-medium">--:-- --:--</span></span>
+        <span class="px-2 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs md:text-sm w-full">别称 ：<span id="detail-alias" class="font-medium">----</span></span>
+        <span class="px-2 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs md:text-sm w-full">五行 ：<span id="detail-wuxing" class="font-medium">--</span></span>
+        <span class="px-2 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs md:text-sm w-full">生肖 ：<span id="detail-animal" class="font-medium">--</span></span>
+        <span class="px-2 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs md:text-sm w-full">对应经络 ：<span id="detail-jingluo" class="font-medium">--</span></span>
+      </div>
+      <p class="text-gray-600 dark:text-gray-300 text-xs md:text-sm mb-5 leading-relaxed" id="detail-desc">------</p>
+      <!-- 详情模块：大屏下可做双列布局，提升空间利用率 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+        <!-- 1. 经络养生详解 -->
+        <div class="detail-block">
+          <p class="detail-title"><i class="fa fa-heartbeat text-xs md:text-sm"></i> 子午流注·经络养生</p>
+          <p class="detail-content" id="detail-jingluo-desc">------</p>
+        </div>
+        <!-- 2. 食疗建议 -->
+        <div class="detail-block">
+          <p class="detail-title"><i class="fa fa-cutlery text-xs md:text-sm"></i> 时辰食疗宜忌</p>
+          <p class="detail-content" id="detail-shiliao">------</p>
+        </div>
+        <!-- 3. 时辰禁忌 -->
+        <div class="detail-block">
+          <p class="detail-title"><i class="fa fa-exclamation-triangle text-xs md:text-sm"></i> 时辰禁忌提醒</p>
+          <p class="detail-content" id="detail-jinji">------</p>
+        </div>
+        <!-- 4. 干支与命理 -->
+        <div class="detail-block">
+          <p class="detail-title"><i class="fa fa-book text-xs md:text-sm"></i> 干支与命理关联</p>
+          <p class="detail-content" id="detail-ganzhi">------</p>
+        </div>
+        <!-- 5. 十二消息卦 -->
+        <div class="detail-block">
+          <p class="detail-title"><i class="fa fa-yin-yang text-xs md:text-sm"></i> 十二消息卦对应</p>
+          <p class="detail-content" id="detail-guaxiang">------</p>
+        </div>
+        <!-- 6. 黄历吉凶 -->
+        <div class="detail-block">
+          <p class="detail-title"><i class="fa fa-calendar-check-o text-xs md:text-sm"></i> 时辰黄历吉凶</p>
+          <p class="detail-content" id="detail-huangli">------</p>
+        </div>
+        <!-- 7. 节气与时辰联动 -->
+        <div class="detail-block">
+          <p class="detail-title"><i class="fa fa-leaf text-xs md:text-sm"></i> 节气与时辰联动</p>
+          <p class="detail-content" id="jieqi-shi-link">------</p>
+        </div>
+        <!-- 8. 更点制度 -->
+        <div class="detail-block" id="gengdian-block">
+          <p class="detail-title"><i class="fa fa-moon-o text-xs md:text-sm"></i> 夜间更点制度</p>
+          <p class="detail-content" id="detail-gengdian">------</p>
+        </div>
+        <!-- 9. 作息效率规划 -->
+        <div class="detail-block lg:col-span-2">
+          <p class="detail-title"><i class="fa fa-calendar text-xs md:text-sm"></i> 作息与效率规划</p>
+          <p class="detail-content" id="detail-guihua">------</p>
+        </div>
+      </div>
+      <!-- 刻制区域 -->
+      <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 md:p-5 mt-4">
+        <div class="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+          <div id="tab-chu" class="tab tab-inactive">初正刻制<br><span class="text-xs text-gray-500 dark:text-gray-400">古法标准</span></div>
+          <div id="tab-ba" class="tab tab-active">八刻制<br><span class="text-xs text-gray-500 dark:text-gray-400">1-8数字刻</span></div>
+        </div>
+        <div id="bake-wrap">
+          <div id="bake-chu-title" class="text-gray-800 dark:text-white text-xs md:text-sm text-center mb-1">--初（上四刻：1-4刻）</div>
+          <div class="ke-row" id="bake-chu-list"></div>
+          <div id="bake-zheng-title" class="text-gray-800 dark:text-white text-xs md:text-sm text-center mb-1 mt-3">--正（下四刻：5-8刻）</div>
+          <div class="ke-row" id="bake-zheng-list"></div>
+        </div>
+        <div id="chuzheng-wrap" class="hidden">
+          <div id="cz-chu-title" class="text-gray-800 dark:text-white text-xs md:text-sm text-center mb-1">--初：--:-- --:--<span class="ke-note" id="chu-note"></span></div>
+          <div class="ke-row" id="cz-chu-list"></div>
+          <div id="cz-zheng-title" class="text-gray-800 dark:text-white text-xs md:text-sm text-center mb-1 mt-3">--正：--:-- --:--<span class="ke-note" id="zheng-note"></span></div>
+          <div class="ke-row" id="cz-zheng-list"></div>
+        </div>
+        <p class="text-xs md:text-sm text-gray-400 text-center mt-4" id="ke-desc">高亮格子=当前实时刻制</p>
+      </div>
+    </div>
+    <!-- 时辰与五行 -->
+    <div class="mb-8 md:mb-10">
+      <div class="flex items-center gap-2 mb-3">
+        <i class="fa fa-star text-gray-500 dark:text-gray-400 text-xs md:text-sm"></i>
+        <h2 class="text-sm md:text-base font-bold">时辰与五行 <span class="font-normal text-gray-500 dark:text-gray-400 text-xs md:text-sm">水生木、木生火、火生土、土生金、金生水</span></h2>
+      </div>
+      <!-- 响应式五行网格：移动端2列、平板及以上5列，完美适配五行数量 -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+        <div class="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-xl shadow-sm text-center transition-all hover:shadow-md hover:-translate-y-1">
+          <p class="text-xl md:text-2xl font-bold mb-1" style="color: #3670c5;">水</p>
+          <p class="text-xs md:text-sm mb-2 dark:text-gray-300">子时、亥时</p>
+          <p class="text-[10px] md:text-xs text-gray-600 dark:text-gray-400">水性寒冷，代表智慧和流动。</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-xl shadow-sm text-center transition-all hover:shadow-md hover:-translate-y-1">
+          <p class="text-xl md:text-2xl font-bold mb-1" style="color: #36ac4c;">木</p>
+          <p class="text-xs md:text-sm mb-2 dark:text-gray-300">寅时、卯时</p>
+          <p class="text-[10px] md:text-xs text-gray-600 dark:text-gray-400">木性生长，代表生机和活力。</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-xl shadow-sm text-center transition-all hover:shadow-md hover:-translate-y-1">
+          <p class="text-xl md:text-2xl font-bold mb-1" style="color: #d85216;">火</p>
+          <p class="text-xs md:text-sm mb-2 dark:text-gray-300">巳时、午时</p>
+          <p class="text-[10px] md:text-xs text-gray-600 dark:text-gray-400">火性炎热，代表热情和光明。</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-xl shadow-sm text-center transition-all hover:shadow-md hover:-translate-y-1">
+          <p class="text-xl md:text-2xl font-bold mb-1" style="color: #674c49;">土</p>
+          <p class="text-xs md:text-sm mb-2 dark:text-gray-300">丑辰未戌</p>
+          <p class="text-[10px] md:text-xs text-gray-600 dark:text-gray-400">土性厚重，代表稳定和包容。</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-xl shadow-sm text-center transition-all hover:shadow-md hover:-translate-y-1 col-span-2 md:col-span-1">
+          <p class="text-xl md:text-2xl font-bold mb-1" style="color: #f2de13;">金</p>
+          <p class="text-xs md:text-sm mb-2 dark:text-gray-300">申时、酉时</p>
+          <p class="text-[10px] md:text-xs text-gray-600 dark:text-gray-400">金性收敛，代表决断和坚韧。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 万年黄历面板（默认隐藏） -->
+  <div id="calendar-panel" class="hidden">
+    <!-- 日期选择区 -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-5 mb-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+        <input type="date" id="calendar-date-input" class="w-full sm:w-auto px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700 text-sm">
+        <button id="calendar-query-btn" class="w-full sm:w-auto px-6 py-2 bg-primary text-white rounded-lg text-sm transition-all hover:bg-primary/90">
+          <i class="fa fa-search mr-1"></i> 查询黄历
+        </button>
+      </div>
+    </div>
+    <!-- 加载/错误提示 -->
+    <div id="calendar-loading" class="text-center py-10 text-gray-500 dark:text-gray-400 text-sm hidden">正在加载黄历数据...</div>
+    <div id="calendar-error" class="text-center py-10 text-bad text-sm hidden"></div>
+    <!-- 黄历内容区 -->
+    <div id="calendar-content" class="hidden">
+      <!-- 日期概览卡片 -->
+      <div class="detail-block">
+        <p class="detail-title"><i class="fa fa-calendar"></i> 日期概览</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="text-center">
+            <div id="calendar-solar-date" class="text-3xl md:text-4xl font-bold text-primary mb-2"></div>
+            <div id="calendar-lunar-date" class="text-sm md:text-base text-gray-600 dark:text-gray-300"></div>
+          </div>
+          <div class="flex flex-col justify-center gap-1">
+            <div id="calendar-ganzhi-info" class="text-sm md:text-base text-gray-700 dark:text-gray-300"></div>
+            <div id="calendar-bazi" class="text-sm md:text-base font-serif text-gray-600 dark:text-gray-400"></div>
+            <div id="calendar-nayin" class="text-xs md:text-sm text-gray-500 dark:text-gray-400"></div>
+          </div>
+        </div>
+      </div>
+      <!-- 今日宜忌卡片 -->
+      <div class="detail-block">
+        <p class="detail-title"><i class="fa fa-check-circle"></i> 今日宜忌</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 class="text-good text-base font-bold mb-3 flex items-center"><i class="fa fa-plus-circle mr-2"></i> 宜</h3>
+            <div id="calendar-yi-content" class="flex flex-wrap gap-2"></div>
+          </div>
+          <div>
+            <h3 class="text-bad text-base font-bold mb-3 flex items-center"><i class="fa fa-minus-circle mr-2"></i> 忌</h3>
+            <div id="calendar-ji-content" class="flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+      </div>
+      <!-- 吉神方位卡片 -->
+      <div class="detail-block">
+        <p class="detail-title"><i class="fa fa-map-marker"></i> 今日吉神方位</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" id="calendar-position-grid"></div>
+      </div>
+      <!-- 十二时辰黄历详解 -->
+      <div class="detail-block">
+        <p class="detail-title"><i class="fa fa-clock-o"></i> 十二时辰黄历详解</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="calendar-shichen-grid"></div>
+      </div>
+    </div>
+  </div>
+  <!-- 时间统计面板 -->
+  <div id="stats-panel" class="hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-5 md:p-6 mb-6 shadow-sm">
+      <h2 class="text-base md:text-lg font-bold text-primary flex items-center gap-2 mb-4">
+        <i class="fa fa-hourglass-half"></i> 光阴刻度
+      </h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mb-5">时间公正流逝，提醒我们珍惜当下每一刻。</p>
+      <!-- 统计卡片网格，字体整体调小 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- 今日统计 -->
+        <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fa fa-sun-o text-yellow-500 text-sm"></i>
+            <h3 class="font-bold text-gray-800 dark:text-gray-200 text-xs">今日进度</h3>
+          </div>
+          <div class="text-xl font-bold text-primary mb-1" id="stats-today-desc">--小时 / --小时</div>
+          <div class="progress-bar-bg mb-1">
+            <div class="progress-bar-fill" id="stats-today-bar" style="width: 0%"></div>
+          </div>
+          <p class="text-xs text-gray-600 dark:text-gray-400" id="stats-today-msg">加载中...</p>
+        </div>
+        <!-- 本周统计 -->
+        <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fa fa-calendar-week-o text-blue-500 text-sm"></i>
+            <h3 class="font-bold text-gray-800 dark:text-gray-200 text-xs">本周进度</h3>
+          </div>
+          <div class="text-xl font-bold text-primary mb-1" id="stats-week-desc">--天 / --天</div>
+          <div class="progress-bar-bg mb-1">
+            <div class="progress-bar-fill" id="stats-week-bar" style="width: 0%"></div>
+          </div>
+          <p class="text-xs text-gray-600 dark:text-gray-400" id="stats-week-msg">加载中...</p>
+        </div>
+        <!-- 本月统计 -->
+        <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fa fa-calendar text-green-500 text-sm"></i>
+            <h3 class="font-bold text-gray-800 dark:text-gray-200 text-xs">本月进度</h3>
+          </div>
+          <div class="text-xl font-bold text-primary mb-1" id="stats-month-desc">--天 / --天</div>
+          <div class="progress-bar-bg mb-1">
+            <div class="progress-bar-fill" id="stats-month-bar" style="width: 0%"></div>
+          </div>
+          <p class="text-xs text-gray-600 dark:text-gray-400" id="stats-month-msg">加载中...</p>
+        </div>
+        <!-- 今年统计 -->
+        <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fa fa-globe text-purple-500 text-sm"></i>
+            <h3 class="font-bold text-gray-800 dark:text-gray-200 text-xs">今年进度</h3>
+          </div>
+          <div class="text-xl font-bold text-primary mb-1" id="stats-year-desc">--天 / --天</div>
+          <div class="progress-bar-bg mb-1">
+            <div class="progress-bar-fill" id="stats-year-bar" style="width: 0%"></div>
+          </div>
+          <p class="text-xs text-gray-600 dark:text-gray-400" id="stats-year-msg">加载中...</p>
+        </div>
+      </div>
+      <p class="text-center text-[10px] text-gray-400 mt-5">数据来源于专业时间统计接口，真实记录时光流逝。</p>
+    </div>
+  </div>
+  <!-- 节日倒计时面板 -->
+  <div id="holiday-panel" class="hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-5 mb-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row gap-3 justify-between items-center">
+        <div id="holiday-current-date" class="text-sm md:text-base font-medium text-gray-700 dark:text-gray-300"></div>
+        <div class="flex flex-wrap gap-3 items-center">
+          <div class="relative">
+            <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="text" id="holiday-search-input" class="w-full sm:w-64 pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700 text-sm" placeholder="搜索节日名称...">
+          </div>
+          <!-- 自定义下拉选择器 替换原生select -->
+          <div class="relative" id="custom-holiday-filter">
+            <!-- 下拉触发按钮 -->
+            <button id="filter-trigger" class="flex items-center justify-between gap-2 px-3 py-2 w-full min-w-[120px] border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700 text-sm transition-all duration-200 hover:border-primary dark:hover:border-primary">
+              <span id="filter-selected-text">全部节日</span>
+              <i class="fa fa-chevron-down text-xs transition-transform duration-300" id="filter-arrow"></i>
+            </button>
+            <!-- 下拉选项列表 -->
+            <div id="filter-dropdown" class="absolute top-full left-0 right-0 mt-1 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-10 max-h-0 opacity-0 transition-all duration-300 ease-in-out">
+              <div class="py-1">
+                <div class="filter-option px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200" data-value="all">全部节日</div>
+                <div class="filter-option px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200" data-value="today">今天</div>
+                <div class="filter-option px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200" data-value="week">一周内</div>
+                <div class="filter-option px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200" data-value="month">一月内</div>
+              </div>
+            </div>
+          </div>
+          <button id="holiday-refresh-btn" class="px-4 py-2 bg-primary text-white rounded-lg text-sm flex items-center gap-1 hover:bg-primary/90 transition-all">
+            <i class="fa fa-refresh"></i>
+            <span>刷新</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- 节日卡片容器 -->
+    <div id="holiday-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <div class="col-span-full text-center py-10 text-gray-500 dark:text-gray-400 text-sm">
+        <i class="fa fa-spinner fa-spin mr-2"></i>正在加载节日数据...
+      </div>
+    </div>
+  </div>
+  <!-- 历史上的今天面板 -->
+  <div id="history-panel" class="hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-5 mb-6 shadow-sm">
+      <!-- 移除刷新按钮，添加副标题 -->
+      <div class="text-center">
+        <div id="history-current-date" class="text-sm md:text-base font-medium text-gray-700 dark:text-gray-300"></div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">回望过往 · 铭记历史瞬间</p>
+      </div>
+    </div>
+    <!-- 加载/错误提示 -->
+    <div id="history-loading" class="text-center py-10 text-gray-500 dark:text-gray-400 text-sm hidden">
+      <i class="fa fa-spinner fa-spin mr-2"></i>正在加载历史事件数据...
+    </div>
+    <div id="history-error" class="text-center py-10 text-bad text-sm hidden"></div>
+    <!-- 事件列表容器 -->
+    <div id="history-container" class="grid grid-cols-1 gap-3 mb-6"></div>
+  </div>
+</div>
+<!-- 经纬度设置弹窗：响应式尺寸 -->
+<div id="location-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white dark:bg-gray-800 rounded-xl p-5 w-[90%] max-w-sm md:max-w-md">
+    <!-- 标题+自动定位按钮 -->
+    <div class="flex justify-between items-center mb-3">
+      <h3 class="text-sm md:text-base font-bold">设置当地经纬度</h3>
+      <button id="auto-location" class="text-xs md:text-sm text-primary dark:text-blue-400 flex items-center gap-1">
+        <i class="fa fa-map-marker"></i> 自动定位
+      </button>
+    </div>
+    <p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-3">用于计算精准真太阳时，东经/北纬为正数，也可直接选择下方常用城市</p>
+    
+    <!-- 经纬度双输入框 -->
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div>
+        <label class="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 mb-1 block">经度 (°E)</label>
+        <input type="number" step="0.01" id="longitude-input" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700" placeholder="请输入经度">
+      </div>
+      <div>
+        <label class="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 mb-1 block">纬度 (°N)</label>
+        <input type="number" step="0.01" id="latitude-input" class="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700" placeholder="请输入纬度">
+      </div>
+    </div>
+    <!-- 常用城市快速选择 可横向滚动 -->
+    <div class="mb-4">
+      <p class="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 mb-2">常用城市快速选择</p>
+      <div class="city-scroll flex gap-2 overflow-x-auto pb-1 whitespace-nowrap">
+        <!-- 城市标签由JS动态生成 -->
+      </div>
+    </div>
+    <!-- 操作按钮 -->
+    <div class="flex gap-3">
+      <button id="cancel-location" class="flex-1 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm transition-all hover:bg-gray-100 dark:hover:bg-gray-700">取消</button>
+      <button id="confirm-location" class="flex-1 py-2 rounded-lg bg-primary text-white text-sm transition-all hover:bg-primary/90">确认保存</button>
+    </div>
+  </div>
+</div>
+<!-- 自定义Toast提示组件 -->
+<div id="toast" class="toast">
+  <i id="toast-icon" class="fa fa-info-circle"></i>
+  <span id="toast-text"></span>
+</div>
+<script>
+// 全局状态
+let mode = 'ba'; // ba=八刻制 | chu=初正刻制
+let selectedShi = null; // 手动选中的时辰，和实时时辰完全独立
+let toastTimer = null; // Toast定时器，防止多例叠加
+let activeTab = 'shi'; // 当前激活的标签：shi=十二时辰 | calendar=万年历 | stats=时间统计 | holiday=节日倒计时 | history=历史上的今天
+// 新增：用户地理位置信息（含城市名、经度、纬度），本地存储持久化
+let userLocation = JSON.parse(localStorage.getItem('userLocation')) || {
+  cityName: "北京时间基准",
+  longitude: 120,
+  latitude: 30
+};
+// 黄历API配置
+const CALENDAR_API = {
+  baseUrl: 'https://cn.apihz.cn/api/time/getzddayhs.php',
+  id: '10014221',
+  key: '4a7768de1cf2e0f41fc0a4005240c837',
+  type: 0 // 0=按阳历查询，1=按阴历查询
+};
+// 时间统计API配置
+const TIME_STATS_API = {
+  baseUrl: 'https://cn.apihz.cn/api/time/timemsg.php',
+  id: '10014221',
+  key: '4a7768de1cf2e0f41fc0a4005240c837'
+};
+// 节日倒计时相关
+let holidaysData = [];
+// 自定义下拉相关状态
+let filterDropdownOpen = false;
+let selectedFilterValue = 'all';
+// 刻名映射
+const keNameMapChu = ['初刻', '一刻', '二刻', '三刻'];
+const keNameMapBa = ['1', '2', '3', '4', '5', '6', '7', '8'];
+// 五行色值
+const wuxingColorMap = {水: '#3670c5',木: '#36ac4c',火: '#d85216',土: '#674c49',金: '#f2de13'};
+// 数字转中文第几名
+const numToRank = (num) => {
+  const chineseNum = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+  return `第${chineseNum[num-1]}名`;
+};
+// 新增：常用城市经纬度数据库
+const commonCities = [
+  {cityName: "北京", longitude: 116.40, latitude: 39.90},
+  {cityName: "上海", longitude: 121.47, latitude: 31.23},
+  {cityName: "广州", longitude: 113.27, latitude: 23.13},
+  {cityName: "深圳", longitude: 114.06, latitude: 22.54},
+  {cityName: "成都", longitude: 104.07, latitude: 30.67},
+  {cityName: "杭州", longitude: 120.16, latitude: 30.27},
+  {cityName: "重庆", longitude: 106.55, latitude: 29.56},
+  {cityName: "武汉", longitude: 114.31, latitude: 30.59},
+  {cityName: "西安", longitude: 108.93, latitude: 34.27},
+  {cityName: "南京", longitude: 118.78, latitude: 32.04},
+  {cityName: "乌鲁木齐", longitude: 87.68, latitude: 43.77},
+  {cityName: "拉萨", longitude: 91.11, latitude: 29.97},
+  {cityName: "哈尔滨", longitude: 126.63, latitude: 45.75},
+  {cityName: "海口", longitude: 110.33, latitude: 20.03},
+  {cityName: "香港", longitude: 114.17, latitude: 22.28},
+  {cityName: "台北", longitude: 121.52, latitude: 25.03},
+  {cityName: "昆明", longitude: 102.71, latitude: 25.04},
+  {cityName: "长沙", longitude: 112.94, latitude: 28.23},
+];
+// ===================== 自定义Toast核心函数 =====================
+const showToast = (text, type = 'info', duration = 3000) => {
+  const toastEl = document.getElementById('toast');
+  const toastIcon = document.getElementById('toast-icon');
+  const toastText = document.getElementById('toast-text');
+  
+  // 清除上一个Toast的定时器，避免叠加
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+    toastTimer = null;
+  }
+  // 配置对应类型的图标
+  const iconMap = {
+    info: 'fa-info-circle',
+    success: 'fa-check-circle',
+    error: 'fa-exclamation-circle',
+    warning: 'fa-exclamation-triangle'
+  };
+  toastIcon.className = `fa ${iconMap[type] || iconMap.info}`;
+  // 设置提示文本
+  toastText.textContent = text;
+  // 重置并设置类型样式
+  toastEl.className = `toast toast-${type}`;
+  // 触发显示动画（微延迟保证过渡生效）
+  setTimeout(() => {
+    toastEl.classList.add('toast-show');
+  }, 10);
+  // 点击Toast可提前关闭
+  toastEl.onclick = () => {
+    if (toastTimer) clearTimeout(toastTimer);
+    toastEl.classList.remove('toast-show');
+    toastTimer = null;
+  };
+  // 自动关闭定时器
+  toastTimer = setTimeout(() => {
+    toastEl.classList.remove('toast-show');
+    toastTimer = null;
+  }, duration);
+};
+// ===================== 标签页切换核心函数 =====================
+const switchTab = (tabName) => {
+  activeTab = tabName;
+  // 更新标签样式
+  const tabShi = document.getElementById('tab-shi');
+  const tabCalendar = document.getElementById('tab-calendar');
+  const tabStats = document.getElementById('tab-stats');
+  const tabHoliday = document.getElementById('tab-holiday');
+  const tabHistory = document.getElementById('tab-history');
+  const panelShi = document.getElementById('shi-panel');
+  const panelCalendar = document.getElementById('calendar-panel');
+  const panelStats = document.getElementById('stats-panel');
+  const panelHoliday = document.getElementById('holiday-panel');
+  const panelHistory = document.getElementById('history-panel');
+  
+  if (tabName === 'shi') {
+    tabShi.className = 'tab tab-active';
+    tabCalendar.className = 'tab tab-inactive';
+    tabStats.className = 'tab tab-inactive';
+    tabHoliday.className = 'tab tab-inactive';
+    tabHistory.className = 'tab tab-inactive';
+    panelShi.classList.remove('hidden');
+    panelCalendar.classList.add('hidden');
+    panelStats.classList.add('hidden');
+    panelHoliday.classList.add('hidden');
+    panelHistory.classList.add('hidden');
+  } else if (tabName === 'calendar') {
+    tabShi.className = 'tab tab-inactive';
+    tabCalendar.className = 'tab tab-active';
+    tabStats.className = 'tab tab-inactive';
+    tabHoliday.className = 'tab tab-inactive';
+    tabHistory.className = 'tab tab-inactive';
+    panelShi.classList.add('hidden');
+    panelCalendar.classList.remove('hidden');
+    panelStats.classList.add('hidden');
+    panelHoliday.classList.add('hidden');
+    panelHistory.classList.add('hidden');
+    // 切换到黄历页时自动初始化日期并查询当日数据
+    initCalendarDate();
+    fetchCalendarData(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate());
+  } else if (tabName === 'stats') {
+    tabShi.className = 'tab tab-inactive';
+    tabCalendar.className = 'tab tab-inactive';
+    tabStats.className = 'tab tab-active';
+    tabHoliday.className = 'tab tab-inactive';
+    tabHistory.className = 'tab tab-inactive';
+    panelShi.classList.add('hidden');
+    panelCalendar.classList.add('hidden');
+    panelStats.classList.remove('hidden');
+    panelHoliday.classList.add('hidden');
+    panelHistory.classList.add('hidden');
+    // 切换到统计页时立即加载数据
+    fetchTimeStatistics();
+  } else if (tabName === 'holiday') {
+    tabShi.className = 'tab tab-inactive';
+    tabCalendar.className = 'tab tab-inactive';
+    tabStats.className = 'tab tab-inactive';
+    tabHoliday.className = 'tab tab-active';
+    tabHistory.className = 'tab tab-inactive';
+    panelShi.classList.add('hidden');
+    panelCalendar.classList.add('hidden');
+    panelStats.classList.add('hidden');
+    panelHoliday.classList.remove('hidden');
+    panelHistory.classList.add('hidden');
+    // 切换到节日页时加载数据
+    updateHolidayCurrentDate();
+    fetchHolidays();
+  } else if (tabName === 'history') {
+    tabShi.className = 'tab tab-inactive';
+    tabCalendar.className = 'tab tab-inactive';
+    tabStats.className = 'tab tab-inactive';
+    tabHoliday.className = 'tab tab-inactive';
+    tabHistory.className = 'tab tab-active';
+    panelShi.classList.add('hidden');
+    panelCalendar.classList.add('hidden');
+    panelStats.classList.add('hidden');
+    panelHoliday.classList.add('hidden');
+    panelHistory.classList.remove('hidden');
+    // 切换到历史页时加载数据
+    updateHistoryCurrentDate();
+    fetchHistoryEvents();
+  }
+};
+// 绑定标签点击事件
+document.getElementById('tab-shi').onclick = () => switchTab('shi');
+document.getElementById('tab-calendar').onclick = () => switchTab('calendar');
+document.getElementById('tab-stats').onclick = () => switchTab('stats');
+document.getElementById('tab-holiday').onclick = () => switchTab('holiday');
+document.getElementById('tab-history').onclick = () => switchTab('history');
+// ===================== 自定义下拉选择器逻辑 =====================
+const initCustomFilter = () => {
+  const filterTrigger = document.getElementById('filter-trigger');
+  const filterDropdown = document.getElementById('filter-dropdown');
+  const filterArrow = document.getElementById('filter-arrow');
+  const filterSelectedText = document.getElementById('filter-selected-text');
+  const filterOptions = document.querySelectorAll('.filter-option');
+
+  // 初始化默认选中样式
+  filterOptions.forEach(opt => {
+    if (opt.dataset.value === selectedFilterValue) {
+      opt.classList.add('bg-primary/10', 'text-primary', 'font-medium');
+    }
+  });
+
+  // 下拉展开/收起
+  filterTrigger.onclick = (e) => {
+    e.stopPropagation();
+    filterDropdownOpen = !filterDropdownOpen;
+    if (filterDropdownOpen) {
+      filterDropdown.style.maxHeight = '200px';
+      filterDropdown.style.opacity = '1';
+      filterArrow.style.transform = 'rotate(180deg)';
+    } else {
+      filterDropdown.style.maxHeight = '0';
+      filterDropdown.style.opacity = '0';
+      filterArrow.style.transform = 'rotate(0deg)';
+    }
+  };
+
+  // 选项点击
+  filterOptions.forEach(option => {
+    option.onclick = (e) => {
+      e.stopPropagation();
+      const value = option.dataset.value;
+      const text = option.textContent;
+      selectedFilterValue = value;
+      filterSelectedText.textContent = text;
+      
+      // 更新选中高亮
+      filterOptions.forEach(opt => opt.classList.remove('bg-primary/10', 'text-primary', 'font-medium'));
+      option.classList.add('bg-primary/10', 'text-primary', 'font-medium');
+      
+      // 关闭下拉
+      filterDropdownOpen = false;
+      filterDropdown.style.maxHeight = '0';
+      filterDropdown.style.opacity = '0';
+      filterArrow.style.transform = 'rotate(0deg)';
+      
+      // 触发过滤
+      filterHolidays();
+    };
+  });
+
+  // 点击外部关闭下拉
+  document.addEventListener('click', () => {
+    if (filterDropdownOpen) {
+      filterDropdownOpen = false;
+      filterDropdown.style.maxHeight = '0';
+      filterDropdown.style.opacity = '0';
+      filterArrow.style.transform = 'rotate(0deg)';
+    }
+  });
+};
+// ===================== 历史上的今天核心函数 =====================
+// 更新历史页当前日期显示
+const updateHistoryCurrentDate = () => {
+  const now = new Date();
+  const options = { 
+    year: 'numeric',
+    month: 'long', 
+    day: 'numeric', 
+    weekday: 'long' 
+  };
+  document.getElementById('history-current-date').textContent = now.toLocaleDateString('zh-CN', options);
+};
+// 获取历史上的今天数据
+async function fetchHistoryEvents() {
+  try {
+    // 显示加载状态
+    DOM.historyLoading.classList.remove('hidden');
+    DOM.historyError.classList.add('hidden');
+    DOM.historyContainer.innerHTML = '';
+    
+    const response = await fetch('https://api.suol.cc/v1/lssdjt.php');
+    if (!response.ok) throw new Error('网络响应不正常');
+    
+    const result = await response.json();
+    if (result.code === 200 && result.data) {
+      renderHistoryEvents(result.data);
+    } else {
+      throw new Error(result.msg || '数据格式不正确');
+    }
+  } catch (error) {
+    console.error('获取历史事件数据失败:', error);
+    DOM.historyLoading.classList.add('hidden');
+    DOM.historyError.classList.remove('hidden');
+    DOM.historyError.textContent = `获取数据失败：${error.message}`;
+    showToast(`获取历史事件数据失败：${error.message}`, 'error');
+  }
+}
+// 渲染历史事件列表
+function renderHistoryEvents(events) {
+  const historyContainer = DOM.historyContainer;
+  if (!events || events.length === 0) {
+    historyContainer.innerHTML = `
+      <div class="col-span-full text-center py-10 text-gray-500 dark:text-gray-400 text-sm">
+        <i class="fa fa-calendar-times mr-2"></i>暂无历史事件数据
+      </div>
+    `;
+    DOM.historyLoading.classList.add('hidden');
+    return;
+  }
+  
+  historyContainer.innerHTML = '';
+  
+  events.forEach((event, index) => {
+    // 拆分年份和事件内容
+    const [yearPart, ...eventParts] = event.split(' ');
+    const eventContent = eventParts.join(' ');
+    
+    const eventCard = document.createElement('div');
+    eventCard.className = 'holiday-card';
+    eventCard.style.animationDelay = `${index * 0.05}s`;
+    
+    eventCard.innerHTML = `
+      <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-start">
+        <h3 class="text-base font-bold text-primary">${yearPart}</h3>
+      </div>
+      <div class="p-4">
+        <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">${eventContent}</p>
+      </div>
+    `;
+    
+    historyContainer.appendChild(eventCard);
+  });
+  
+  // 隐藏加载状态
+  DOM.historyLoading.classList.add('hidden');
+}
+// ===================== 节日倒计时核心函数 =====================
+// 更新节日页当前日期显示
+const updateHolidayCurrentDate = () => {
+  const now = new Date();
+  const options = { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric', 
+    weekday: 'long' 
+  };
+  document.getElementById('holiday-current-date').textContent = now.toLocaleDateString('zh-CN', options);
+};
+// 获取节假日数据
+async function fetchHolidays() {
+  try {
+    document.getElementById('holiday-container').innerHTML = `
+      <div class="col-span-full text-center py-10 text-gray-500 dark:text-gray-400 text-sm">
+        <i class="fa fa-spinner fa-spin mr-2"></i>正在加载节日数据...
+      </div>
+    `;
+    
+    const response = await fetch('https://api.qhsou.com/api/dsr.php');
+    if (!response.ok) throw new Error('网络响应不正常');
+    
+    const data = await response.json();
+    if (data && data.节日信息) {
+      holidaysData = data.节日信息;
+      renderHolidays(holidaysData);
+    } else {
+      throw new Error('数据格式不正确');
+    }
+  } catch (error) {
+    console.error('获取节假日数据失败:', error);
+    document.getElementById('holiday-container').innerHTML = `
+      <div class="col-span-full text-center py-10 text-gray-500 dark:text-gray-400 text-sm">
+        <i class="fa fa-exclamation-triangle mr-2"></i>获取节假日数据失败，请稍后重试
+      </div>
+    `;
+    showToast(`获取节日数据失败：${error.message}`, 'error');
+  }
+}
+// 渲染节日卡片
+function renderHolidays(holidays) {
+  const holidayContainer = document.getElementById('holiday-container');
+  if (!holidays || holidays.length === 0) {
+    holidayContainer.innerHTML = `
+      <div class="col-span-full text-center py-10 text-gray-500 dark:text-gray-400 text-sm">
+        <i class="fa fa-calendar-times mr-2"></i>没有找到符合条件的节日
+      </div>
+    `;
+    return;
+  }
+  
+  holidayContainer.innerHTML = '';
+  
+  holidays.forEach((holiday, index) => {
+    let cardClass = '';
+    if (holiday.days_until === 0) {
+      cardClass = 'today';
+    } else if (holiday.days_until <= 7) {
+      cardClass = 'soon';
+    }
+    
+    const card = document.createElement('div');
+    card.className = `holiday-card ${cardClass}`;
+    card.style.animationDelay = `${index * 0.05}s`;
+    
+    card.innerHTML = `
+      <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-start">
+        <h3 class="text-base font-bold text-gray-800 dark:text-white">${holiday.name}</h3>
+        <div class="days-count">
+          ${holiday.days_until === 0 ? '今天' : `${holiday.days_until}天`}
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+            <i class="fa fa-calendar text-primary w-5 text-center"></i>
+            <span>${holiday.gregorian}</span>
+          </div>
+          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+            <i class="fa fa-moon-o text-primary w-5 text-center"></i>
+            <span>${holiday.lunar}</span>
+          </div>
+          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+            <i class="fa fa-clock-o text-primary w-5 text-center"></i>
+            <span>${holiday.weekday}</span>
+            ${holiday.days_until === 0 ? '<span class="inline-block bg-red-500 text-white px-2 py-0.5 rounded text-xs font-medium ml-2">今天</span>' : ''}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    holidayContainer.appendChild(card);
+  });
+}
+// 过滤节日
+function filterHolidays() {
+  const searchTerm = document.getElementById('holiday-search-input').value.toLowerCase();
+  const filterValue = selectedFilterValue;
+  
+  let filteredHolidays = holidaysData;
+  
+  // 搜索过滤
+  if (searchTerm) {
+    filteredHolidays = filteredHolidays.filter(holiday => 
+      holiday.name.toLowerCase().includes(searchTerm)
+    );
+  }
+  
+  // 时间过滤
+  if (filterValue !== 'all') {
+    filteredHolidays = filteredHolidays.filter(holiday => {
+      if (filterValue === 'today') {
+        return holiday.days_until === 0;
+      } else if (filterValue === 'week') {
+        return holiday.days_until <= 7;
+      } else if (filterValue === 'month') {
+        return holiday.days_until <= 30;
+      }
+      return true;
+    });
+  }
+  
+  renderHolidays(filteredHolidays);
+}
+// 节日倒计时事件绑定
+document.getElementById('holiday-search-input').addEventListener('input', filterHolidays);
+document.getElementById('holiday-refresh-btn').addEventListener('click', fetchHolidays);
+// ===================== 时间统计功能 =====================
+async function fetchTimeStatistics() {
+  try {
+    const params = new URLSearchParams({
+      id: TIME_STATS_API.id,
+      key: TIME_STATS_API.key
+    });
+    const response = await fetch(`${TIME_STATS_API.baseUrl}?${params.toString()}`);
+    if (!response.ok) throw new Error(`请求失败，状态码：${response.status}`);
+    const result = await response.json();
+    if (result.code === 200) {
+      renderTimeStats(result);
+    } else {
+      throw new Error(result.msg || '接口返回错误');
+    }
+  } catch (error) {
+    console.error('时间统计接口异常：', error);
+    showToast(`获取时间统计失败：${error.message}`, 'error');
+    // 显示降级提示占位
+    document.getElementById('stats-today-msg').innerText = '数据加载失败，请稍后重试';
+  }
+}
+function renderTimeStats(data) {
+  // 今日统计：d1已过小时，d2剩余小时
+  const todayPass = parseFloat(data.d1);
+  const todayRemain = parseFloat(data.d2);
+  const todayTotal = todayPass + todayRemain;
+  const todayPercent = (todayPass / todayTotal) * 100;
+  document.getElementById('stats-today-desc').innerHTML = `${todayPass.toFixed(1)}小时 / ${todayTotal.toFixed(1)}小时`;
+  document.getElementById('stats-today-bar').style.width = `${todayPercent}%`;
+  document.getElementById('stats-today-msg').innerHTML = data.dmsg || `今日：已过去 ${todayPass.toFixed(1)} 小时，剩余 ${todayRemain.toFixed(1)} 小时`;
+  // 本周统计：w1已过天数，w2剩余天数
+  const weekPass = parseFloat(data.w1);
+  const weekRemain = parseFloat(data.w2);
+  const weekTotal = weekPass + weekRemain;
+  const weekPercent = (weekPass / weekTotal) * 100;
+  document.getElementById('stats-week-desc').innerHTML = `${weekPass}天 / ${weekTotal}天`;
+  document.getElementById('stats-week-bar').style.width = `${weekPercent}%`;
+  document.getElementById('stats-week-msg').innerHTML = data.wmsg || `本周：已过去 ${weekPass} 天，剩余 ${weekRemain} 天`;
+  // 本月统计：m1已过天数，m2剩余天数
+  const monthPass = parseFloat(data.m1);
+  const monthRemain = parseFloat(data.m2);
+  const monthTotal = monthPass + monthRemain;
+  const monthPercent = (monthPass / monthTotal) * 100;
+  document.getElementById('stats-month-desc').innerHTML = `${monthPass}天 / ${monthTotal}天`;
+  document.getElementById('stats-month-bar').style.width = `${monthPercent}%`;
+  document.getElementById('stats-month-msg').innerHTML = data.mmsg || `本月：已过去 ${monthPass} 天，剩余 ${monthRemain} 天`;
+  // 今年统计：y1已过天数，y2剩余天数
+  const yearPass = parseFloat(data.y1);
+  const yearRemain = parseFloat(data.y2);
+  const yearTotal = yearPass + yearRemain;
+  const yearPercent = (yearPass / yearTotal) * 100;
+  document.getElementById('stats-year-desc').innerHTML = `${yearPass}天 / ${yearTotal}天`;
+  document.getElementById('stats-year-bar').style.width = `${yearPercent}%`;
+  document.getElementById('stats-year-msg').innerHTML = data.ymsg || `今年：已过去 ${yearPass} 天，剩余 ${yearRemain} 天`;
+}
+// ===================== 十二时辰核心基础数据 =====================
+const shiList = [
+  {
+    name:"子时",time:"23:00-01:00",alias:"夜半",wuxing:"水",animal:"鼠",shengxiaoOrder:1,
+    jingluo: "足少阳胆经",
+    health:"子时养胆，宜熟睡养精，忌熬夜耗气。",
+    desc:"一日的开始，横跨两天。子初（23:00-00:00）属前一天，子正（00:00-01:00）属后一天，此时阴气最盛，阳气初生，对应生肖鼠（序号1），五行属水，代表智慧与流动。",
+    jingluoDesc: "胆经当令，此时胆气开始生发，熬夜易引发偏头痛、口苦、失眠、晨起乏力，宜熟睡养精蓄锐，助胆气疏泄。",
+    shiliao: "宜：睡前可饮少量温蜂蜜水、酸枣仁水，助安神定志；忌：夜宵、饮酒、生冷油腻食物，易加重胆腑负担。简易食疗方：温炒酸枣仁煮水，睡前少量饮用。",
+    jinji: "严禁熬夜、饮酒、剧烈运动、情绪大起大落，此时熟睡是最好的养生，耗散初生阳气会影响全天精神。",
+    gengdian: "三更天，又称“夜半”，是一夜之中阴气最盛、阳气初萌的时刻，为深度睡眠的黄金时段。",
+    guaxiang: "对应「地雷复卦」，一阳初生，象征阳气始生、万物复苏，宜静养藏阳，忌耗散初生的微弱阳气。",
+    guihua: "作息规划：23点前必须入睡，保证深度睡眠；效率规划：此时不适合任何工作、学习、娱乐，宜完全放松休息；睡眠规划：睡眠核心黄金期，此时入睡能快速进入深睡状态，高效修复身体机能。"
+  },
+  {
+    name:"丑时",time:"01:00-03:00",alias:"鸡鸣",wuxing:"土",animal:"牛",shengxiaoOrder:2,
+    jingluo: "足厥阴肝经",
+    health:"丑时养肝，宜深睡藏血，忌过度劳累。",
+    desc:"丑时为牛反刍之时，此时人们处于熟睡状态，是人体休养的重要时段。对应生肖牛（序号2），五行属土，土性厚重，代表稳定与包容，寓意沉静内敛、厚积薄发。",
+    jingluoDesc: "肝经当令，此时肝藏血、排毒代谢最旺盛，熬夜、不睡会导致肝血亏虚，易出现面色暗沉、易怒、眼干、肝火旺盛，需保持深度睡眠。",
+    shiliao: "宜：睡前清淡饮食，可少量饮用温水；忌：夜宵、辛辣食物、饮酒，会加重肝脏代谢负担。简易食疗方：日常可饮枸杞菊花茶，此时段不宜进食，以睡眠养肝为主。",
+    jinji: "忌熬夜不睡、饮酒、生气动怒、强光刺激，此时必须保持深睡，让肝脏完成代谢排毒。",
+    gengdian: "四更天，又称“鸡鸣”，此时阴气仍重，阳气渐升，需保持熟睡，养肝肾之气。",
+    guaxiang: "对应「地泽临卦」，二阳生，阳气渐长，宜继续静养藏阳，助肝气升发。",
+    guihua: "作息规划：保持深度睡眠，切勿熬夜到此时段；效率规划：无任何工作学习规划，睡眠是唯一核心；睡眠规划：是肝脏修复的黄金时段，深睡有助于肝血再生、毒素排出。"
+  },
+  {
+    name:"寅时",time:"03:00-05:00",alias:"平旦",wuxing:"木",animal:"虎",shengxiaoOrder:3,
+    jingluo: "手太阴肺经",
+    health:"寅时养肺，宜自然苏醒，忌猛然起身。",
+    desc:"寅时是黎明之前，夜与日交替的时段，此时天色由黑转亮，老虎在此时最为凶猛活跃。对应生肖虎（序号3），五行属木，木性生长，代表生机与活力，象征新的开始与奋进。",
+    jingluoDesc: "肺经当令，此时肺朝百脉，主全身气血分配，是人体气血重新分配的关键时段，宜深度睡眠，忌醒后耗气。",
+    shiliao: "宜：醒后可饮一杯温白开水，温润肺气；忌：生冷饮品、空腹吃寒凉食物。简易食疗方：晨起温蜂蜜水，助润肺通便。",
+    jinji: "忌猛然起身、剧烈运动、憋气用力、情绪烦躁，此时气血初升，宜平稳苏醒，忌耗散肺气。",
+    gengdian: "五更天，又称“平旦”，是夜与日的交替时刻，天即将破晓，为起床的适宜时段。",
+    guaxiang: "对应「地天泰卦」，三阳开泰，阳气渐盛，阴阳平衡，宜顺应阳气升发，平稳苏醒。",
+    guihua: "作息规划：可自然苏醒，缓慢起身，忌赖床不起；效率规划：此时适合静坐、冥想、深呼吸，养肺气，不适合高强度工作；睡眠规划：若醒后不宜再睡回笼觉，以免打乱气血分配。"
+  },
+  {
+    name:"卯时",time:"05:00-07:00",alias:"日出",wuxing:"木",animal:"兔",shengxiaoOrder:4,
+    jingluo: "手阳明大肠经",
+    health:"卯时养大肠，宜晨起排便，喝温水润肠。",
+    desc:"卯时太阳初升，朝气蓬勃，古人称此时为“点卯”之时，是官府考勤、百姓劳作的开始。对应生肖兔（序号4），五行属木，寓意生机盎然、温顺灵动，代表成长与希望。",
+    jingluoDesc: "大肠经当令，此时大肠蠕动最旺盛，主传导糟粕、排出宿便，是排便的黄金时段，宜晨起补水、促进肠道蠕动。",
+    shiliao: "宜：晨起空腹喝温白开水，助润肠通便，可吃温和的早餐铺垫；忌：生冷食物、辛辣刺激、空腹饮酒。简易食疗方：晨起温水，搭配少量坚果或温粥，助肠道蠕动。",
+    jinji: "忌憋便、空腹剧烈运动、生冷饮食、久坐不起，此时应顺应肠道节律，及时排便。",
+    gengdian: "日间时辰，无夜间更点对应，为日出晨起之时。",
+    guaxiang: "对应「雷天大壮卦」，四阳生，阳气旺盛，宜顺应阳气升发，活动身体，开启一天作息。",
+    guihua: "作息规划：晨起排便，喝温水，洗漱整理，准备早餐；效率规划：适合简单规划当日日程，轻度活动身体，不适合高强度用脑；睡眠规划：此时段不宜再睡，否则易导致全天精神昏沉。"
+  },
+  {
+    name:"辰时",time:"07:00-09:00",alias:"食时",wuxing:"土",animal:"龙",shengxiaoOrder:5,
+    jingluo: "足阳明胃经",
+    health:"辰时养胃，宜吃温热早餐，忌空腹出门。",
+    desc:"辰时是古人吃早饭的时间，民间传说此时龙会现身布雨，滋养万物。对应生肖龙（序号5），五行属土，土性包容，代表权威与祥瑞，象征滋养与孕育。",
+    jingluoDesc: "胃经当令，此时脾胃运化能力最强，是吃早餐的黄金时段，胃受纳水谷，为全天提供气血能量，宜吃温热早餐，滋养脾胃。",
+    shiliao: "宜：吃温热、易消化的早餐，如粥、馒头、鸡蛋，健脾养胃；忌：不吃早餐、生冷早餐、油腻过饱饮食。简易食疗方：小米山药粥，健脾养胃，适合早餐食用。",
+    jinji: "忌不吃早餐、空腹喝冷饮、暴饮暴食、情绪焦虑，此时脾胃当令，早餐是养护核心。",
+    gengdian: "日间时辰，无夜间更点对应，为早餐食时。",
+    guaxiang: "对应「泽天夬卦」，五阳生，阳气已盛，宜补充水谷能量，助阳气升发。",
+    guihua: "作息规划：按时吃早餐，细嚼慢咽，饭后轻度活动；效率规划：早餐后大脑供血充足，适合开启核心工作、专注学习；睡眠规划：无睡眠相关规划，重点在早餐养胃。"
+  },
+  {
+    name:"巳时",time:"09:00-11:00",alias:"隅中",wuxing:"火",animal:"蛇",shengxiaoOrder:6,
+    jingluo: "足太阴脾经",
+    health:"巳时养脾，宜适度活动，忌久坐积食。",
+    desc:"巳时临近中午，太阳逐渐升高，气温上升，蛇类此时出洞活动。对应生肖蛇（序号6），五行属火，火性炎热，代表热情与活力，寓意专注与蛰伏后的爆发。",
+    jingluoDesc: "脾经当令，脾主运化，此时段脾胃运化水谷的能力最强，是消化吸收、升清降浊的黄金时段，宜适度活动，助脾运化。",
+    shiliao: "宜：适量喝温水，可吃少量温和水果，助运化；忌：暴饮暴食、久坐不动、生冷甜腻食物，易导致脾虚积食。简易食疗方：茯苓泡水，健脾祛湿，适合此时段饮用。",
+    jinji: "忌久坐不动、思虑过度、吃过多零食、喝冰饮，思虑伤脾，久坐影响运化。",
+    gengdian: "日间时辰，无夜间更点对应，为脾运化黄金时段。",
+    guaxiang: "对应「乾为天卦」，六阳鼎盛，阳气充盛，宜专注做事，适度活动，助气血运行。",
+    guihua: "作息规划：工作间隙起身活动，拉伸身体，多喝水；效率规划：是一天中大脑最清醒、专注力最强的时段，适合处理高难度工作、深度思考、重要决策；睡眠规划：无睡眠规划，忌久坐犯困打瞌睡。"
+  },
+  {
+    name:"午时",time:"11:00-13:00",alias:"日中",wuxing:"火",animal:"马",shengxiaoOrder:7,
+    jingluo: "手少阴心经",
+    health:"午时养心，宜小憩15分钟，忌过度劳累。",
+    desc:"午时为正午时分，太阳位于天空最高点，阳气最为旺盛。对应生肖马（序号7），五行属火，象征热情、光明与奔腾不息，此时人体阳气最盛，适合短暂休憩养神。",
+    jingluoDesc: "心经当令，此时阳气盛极而衰，一阴初生，心主神明、主血脉，宜小憩养心，平秘阴阳，避免阳气过盛耗伤心气。",
+    shiliao: "宜：午餐吃七分饱，清淡易消化，饭后可饮少量温茶；忌：过饱饮食、辛辣燥热食物、空腹饮酒。简易食疗方：莲子百合粥，养心安神，适合午餐搭配。",
+    jinji: "忌剧烈运动、熬夜后硬撑、情绪暴怒、长时间工作不休息，此时最忌耗伤心气。",
+    gengdian: "日间时辰，无夜间更点对应，为正午阴阳交替之时。",
+    guaxiang: "对应「天风姤卦」，一阴初生，阳气盛极转衰，宜静养休息，平衡阴阳，忌耗散心气。",
+    guihua: "作息规划：按时吃午餐，饭后小憩15-30分钟，不宜超过1小时；效率规划：上午工作收尾，午休后适合轻度工作、沟通协调，不适合高强度用脑；睡眠规划：小憩即可，不宜久睡，否则易导致下午昏沉，反而耗伤心气。"
+  },
+  {
+    name:"未时",time:"13:00-15:00",alias:"日昳",wuxing:"土",animal:"羊",shengxiaoOrder:8,
+    jingluo: "手太阳小肠经",
+    health:"未时养小肠，宜清淡饮食，忌暴饮暴食。",
+    desc:"未时太阳开始偏西，气温略有下降，古人认为此时羊类进食最旺盛，身体肥壮。对应生肖羊（序号8），五行属土，代表稳定与温和，寓意从容不迫、厚积薄发。",
+    jingluoDesc: "小肠经当令，小肠主分清泌浊，吸收水谷中的营养精华，输送到全身，此时段是午餐营养吸收的黄金时段，宜适度休息，助肠道吸收。",
+    shiliao: "宜：适量喝温水，促进代谢，可吃少量温和水果；忌：吃过多零食、生冷油腻、甜腻食物，加重肠道负担。简易食疗方：大麦茶，健脾消食，助肠道运化。",
+    jinji: "忌暴饮暴食、久坐不动、思虑过度、喝冰饮，影响小肠分清泌浊。",
+    gengdian: "日间时辰，无夜间更点对应，为营养吸收黄金时段。",
+    guaxiang: "对应「天山遁卦」，二阴生，阴气渐长，阳气渐收，宜从容做事，忌急躁耗气。",
+    guihua: "作息规划：饭后适当活动，避免久坐，多喝水；效率规划：适合处理沟通、协作、整理类工作，专注力略低于上午，不适合深度攻坚；睡眠规划：不宜再睡，以免打乱夜间睡眠节律。"
+  },
+  {
+    name:"申时",time:"15:00-17:00",alias:"哺时",wuxing:"金",animal:"猴",shengxiaoOrder:9,
+    jingluo: "足太阳膀胱经",
+    health:"申时养膀胱，宜补充水分，忌憋尿久坐。",
+    desc:"申时是古人吃下午饭的时段，此时猴子活跃好动、嬉戏觅食，精力充沛。对应生肖猴（序号9），五行属金，金性收敛，代表决断与灵活，象征智慧与应变能力。",
+    jingluoDesc: "膀胱经当令，膀胱主藏津液、司气化，是人体循行最长的经络，此时段气血运行于膀胱经，是排毒、补水的黄金时段，宜多喝水，促进代谢。",
+    shiliao: "宜：多喝温水，补充水分，可吃少量坚果、温和水果；忌：憋尿、喝浓茶咖啡、生冷饮品。简易食疗方：温水、淡竹叶水，清热利尿，助膀胱代谢。",
+    jinji: "忌长时间憋尿、久坐不动、过度用脑、喝大量浓茶咖啡，易损伤膀胱气化功能。",
+    gengdian: "日间时辰，无夜间更点对应，为补水排毒黄金时段。",
+    guaxiang: "对应「天地否卦」，三阴生，阴阳不交，宜适度活动，促进气血循环，避免久坐气滞。",
+    guihua: "作息规划：定时喝水，定时起身活动，避免憋尿；效率规划：此时段记忆力、判断力较好，适合学习、复盘、规划、会议沟通；睡眠规划：无睡眠规划，忌犯困打瞌睡，影响夜间睡眠。"
+  },
+  {
+    name:"酉时",time:"17:00-19:00",alias:"日入",wuxing:"金",animal:"鸡",shengxiaoOrder:10,
+    jingluo: "足少阴肾经",
+    health:"酉时养肾，宜适度静养，忌剧烈运动。",
+    desc:"酉时太阳落山，天色渐暗，鸡类纷纷归巢休憩。对应生肖鸡（序号10），五行属金，代表坚韧与守时，寓意收敛与总结，是一天劳作后的休整时段。",
+    jingluoDesc: "肾经当令，此时段肾经气血最旺，是贮藏脏腑精华、养肾的黄金时段，宜适度静养，保存精气，忌过度耗散。",
+    shiliao: "宜：清淡晚餐，吃黑色食物养肾，如黑豆、黑芝麻；忌：过饱饮食、辛辣燥热、大量饮酒、生冷食物。简易食疗方：黑豆粥、黑芝麻糊，温和养肾。",
+    jinji: "忌剧烈运动、过度劳累、熬夜、情绪大起大落，此时宜收敛精气，忌耗散肾气。",
+    gengdian: "日间时辰，无夜间更点对应，为日落养肾之时。",
+    guaxiang: "对应「风地观卦」，四阴生，阴气渐盛，阳气收敛，宜静养休息，顺应收藏之气。",
+    guihua: "作息规划：准备并吃晚餐，七分饱即可，饭后轻度散步；效率规划：适合当日工作收尾、整理总结，不适合高强度工作；睡眠规划：无睡眠规划，宜放松身心，为夜间睡眠做准备。"
+  },
+  {
+    name:"戌时",time:"19:00-21:00",alias:"黄昏",wuxing:"土",animal:"狗",shengxiaoOrder:11,
+    jingluo: "手厥阴心包经",
+    health:"戌时养心包，宜放松心情，忌情绪激动。",
+    desc:"戌时为黄昏时分，是一更天，夜色降临，狗类开始守夜护院，警惕性最高。对应生肖狗（序号11），五行属土，代表忠诚与稳定，寓意守护与安宁。",
+    jingluoDesc: "心包经当令，心包主保护心脏、代心受邪，此时段宜放松心情，舒缓压力，清除心脏外邪，为睡眠做准备。",
+    shiliao: "宜：饭后少量温水，可饮温和花茶助放松；忌：夜宵、暴饮暴食、饮酒、辛辣刺激食物。简易食疗方：玫瑰花茶，疏肝理气，舒缓心情。",
+    jinji: "忌情绪激动、暴怒、过度用脑、剧烈运动、熬夜刷手机，此时宜放松身心，不宜再高强度工作。",
+    gengdian: "一更天，又称“黄昏”，夜色降临，天地昏沉，是放松身心、准备休息的时段。",
+    guaxiang: "对应「山地剥卦」，五阴生，阳气将尽，阴气鼎盛，宜收敛心神，静养放松，忌耗散阳气。",
+    guihua: "作息规划：饭后散步、放松身心，洗漱准备，减少电子设备使用；效率规划：适合休闲、阅读、轻度学习，不适合高强度工作、争吵、情绪波动；睡眠规划：提前放松身心，营造睡眠氛围，为夜间入睡做准备。"
+  },
+  {
+    name:"亥时",time:"21:00-23:00",alias:"人定",wuxing:"水",animal:"猪",shengxiaoOrder:12,
+    jingluo: "手少阳三焦经",
+    health:"亥时养三焦，宜准备入睡，忌刷手机熬夜。",
+    desc:"亥时为二更天，夜色已深，人们应当安歇睡眠，养精蓄锐。对应生肖猪（序号12），五行属水，水性流动，代表智慧与休憩，此时人体进入深度睡眠最佳时段，利于身体修复。",
+    jingluoDesc: "三焦经当令，三焦主通行元气、运化水液，总司五脏六腑，此时段宜安歇，让三焦得到休养，调和全身气血，为睡眠和身体修复做准备。",
+    shiliao: "宜：少量温温水，忌：夜宵、饮酒、生冷食物、大量饮水，以免增加脏腑负担、影响睡眠。简易食疗方：温牛奶，助安神入睡。",
+    jinji: "忌熬夜、刷手机、剧烈运动、情绪兴奋、吃夜宵，此时宜准备入睡，让脏腑进入休养状态。",
+    gengdian: "二更天，又称“人定”，夜色已深，人当安静歇息，停止活动，为入睡做准备。",
+    guaxiang: "对应「坤为地卦」，六阴鼎盛，阳气闭藏，宜安睡静养，顺应收藏之气，为次日阳气升发积蓄能量。",
+    guihua: "作息规划：放下电子设备，泡脚放松，22:30前准备入睡；效率规划：停止所有工作学习，只适合放松静养；睡眠规划：入睡准备黄金期，此时段入睡，能很好地衔接子时的深度睡眠，养护全身脏腑。"
+  }
+];
+// 二十四节气数据
+const jieqiList = [
+  {name:"立春", date: [2,4], tip: "寅时阳气盛，宜升阳疏肝，忌寒凉"}, 
+  {name:"雨水", date: [2,19], tip: "卯时润万物，宜健脾祛湿，忌生冷"},
+  {name:"惊蛰", date: [3,6], tip: "辰时醒蛰虫，宜疏肝养阳，忌久坐"}, 
+  {name:"春分", date: [3,21], tip: "卯时昼夜平，宜平衡阴阳，忌过补过泄"},
+  {name:"清明", date: [4,5], tip: "寅时清阳升，宜疏肝理气，忌情绪郁结"}, 
+  {name:"谷雨", date: [4,20], tip: "辰时雨生谷，宜健脾养胃，忌湿寒"},
+  {name:"立夏", date: [5,6], tip: "巳时火气盛，宜养心清热，忌燥热"}, 
+  {name:"小满", date: [5,21], tip: "巳时物渐盈，宜清热祛湿，忌油腻"},
+  {name:"芒种", date: [6,6], tip: "午时阳气极，宜养心午休，忌暴晒耗气"}, 
+  {name:"夏至", date: [6,22], tip: "午时昼最长，宜养阴午休，忌大汗耗阳"},
+  {name:"小暑", date: [7,7], tip: "未时暑气始，宜清热生津，忌贪凉"}, 
+  {name:"大暑", date: [7,23], tip: "未时暑最盛，宜避暑养心，忌暴晒"},
+  {name:"立秋", date: [8,8], tip: "申时金气生，宜润肺敛阳，忌悲秋"}, 
+  {name:"处暑", date: [8,23], tip: "酉时暑气消，宜滋阴润燥，忌辛辣"},
+  {name:"白露", date: [9,8], tip: "酉时露凝白，宜养肺防寒，忌露体受凉"}, 
+  {name:"秋分", date: [9,23], tip: "申时昼夜平，宜平衡阴阳，忌过燥过寒"},
+  {name:"寒露", date: [10,8], tip: "戌时露凝寒，宜防寒暖身，忌寒凉"}, 
+  {name:"霜降", date: [10,24], tip: "戌时霜始降，宜健脾补肾，忌生冷"},
+  {name:"立冬", date: [11,8], tip: "亥时水气生，宜养藏补肾，忌耗阳"}, 
+  {name:"小雪", date: [11,22], tip: "亥时雪始下，宜温肾散寒，忌熬夜"},
+  {name:"大雪", date: [12,7], tip: "子时阴最盛，宜早睡晚起，忌耗散阳气"}, 
+  {name:"冬至", date: [12,22], tip: "子时昼最短，宜静养藏阳，忌熬夜耗精"},
+  {name:"小寒", date: [1,6], tip: "丑时寒始盛，宜温肾养肝，忌受寒"}, 
+  {name:"大寒", date: [1,20], tip: "丑时寒最极，宜固肾藏精，忌耗散"}
+];
+// 干支相关基础数据
+const tianGan = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const diZhi = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const shengxiaoMap = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
+// 五鼠遁：日干推时干 甲己还加甲，乙庚丙作初，丙辛从戊起，丁壬庚子居，戊癸何方发，壬子是真途
+const wuShuDun = {
+  '甲': ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸','甲','乙'],
+  '己': ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸','甲','乙'],
+  '乙': ['丙','丁','戊','己','庚','辛','壬','癸','甲','乙','丙','丁'],
+  '庚': ['丙','丁','戊','己','庚','辛','壬','癸','甲','乙','丙','丁'],
+  '丙': ['戊','己','庚','辛','壬','癸','甲','乙','丙','丁','戊','己'],
+  '辛': ['戊','己','庚','辛','壬','癸','甲','乙','丙','丁','戊','己'],
+  '丁': ['庚','辛','壬','癸','甲','乙','丙','丁','戊','己','庚','辛'],
+  '壬': ['庚','辛','壬','癸','甲','乙','丙','丁','戊','己','庚','辛'],
+  '戊': ['壬','癸','甲','乙','丙','丁','戊','己','庚','辛','壬','癸'],
+  '癸': ['壬','癸','甲','乙','丙','丁','戊','己','庚','辛','壬','癸'],
+};
+// 时辰地支对应索引
+const shiDizhiIndex = {
+  '子时':0, '丑时':1, '寅时':2, '卯时':3, '辰时':4, '巳时':5,
+  '午时':6, '未时':7, '申时':8, '酉时':9, '戌时':10, '亥时':11
+};
+// 时辰冲煞：地支六冲
+const chongShaMap = {
+  '子': '马', '丑': '羊', '寅': '猴', '卯': '鸡', '辰': '狗', '巳': '猪',
+  '午': '鼠', '未': '牛', '申': '虎', '酉': '兔', '戌': '龙', '亥': '蛇'
+};
+// 时辰基础宜忌（简化版，传统黄历通用）
+const shiYiJiMap = {
+  '子时': {yi: '祭祀、祈福、安睡、纳财', ji: '嫁娶、动土、开市、饮酒熬夜'},
+  '丑时': {yi: '安睡、修造、纳财', ji: '祭祀、出行、嫁娶、熬夜'},
+  '寅时': {yi: '祈福、祭祀、出行、苏醒', ji: '安葬、动土、剧烈运动'},
+  '卯时': {yi: '出行、求医、排便、开市', ji: '安葬、闭户、生冷饮食'},
+  '辰时': {yi: '进食、祈福、出行、工作', ji: '空腹、争吵、动土'},
+  '巳时': {yi: '赴任、考试、学习、求财', ji: '懒惰、暴饮暴食、久坐'},
+  '午时': {yi: '午休、祭祀、祈福、交易', ji: '剧烈运动、暴怒、熬夜硬撑'},
+  '未时': {yi: '交易、修造、纳财、休闲', ji: '暴饮暴食、争吵、动土'},
+  '申时': {yi: '学习、规划、出行、求财', ji: '憋尿、久坐、懒惰'},
+  '酉时': {yi: '归家、进食、静养、收纳', ji: '剧烈运动、饮酒、熬夜'},
+  '戌时': {yi: '放松、休息、祈福、团聚', ji: '争吵、动土、剧烈运动、加班'},
+  '亥时': {yi: '安歇、准备入睡、静养', ji: '熬夜、出行、嫁娶、动土'}
+};
+// 缓存DOM节点
+const DOM = {
+  // 原有节点
+  nowTime: document.getElementById('now-time'), dateInfo: document.getElementById('date-info'), jieqiInfo: document.getElementById('jieqi-info'),
+  currShi: document.getElementById('curr-shi'), currShengxiaoOrder: document.getElementById('curr-shengxiao-order'),
+  currKe: document.getElementById('curr-ke'), currTimeRange: document.getElementById('curr-time-range'),
+  currSike: document.getElementById('curr-sike'), currAlias: document.getElementById('curr-alias'),
+  currWuxing: document.getElementById('curr-wuxing'), currAnimal: document.getElementById('curr-animal'),
+  currCrossDay: document.getElementById('curr-cross-day'), currDesc: document.getElementById('curr-desc'),
+  shiGrid: document.getElementById('shi-grid'), tabChu: document.getElementById('tab-chu'), tabBa: document.getElementById('tab-ba'),
+  chuzhengWrap: document.getElementById('chuzheng-wrap'), bakeWrap: document.getElementById('bake-wrap'), keDesc: document.getElementById('ke-desc'),
+  bakeChuTitle: document.getElementById('bake-chu-title'), bakeZhengTitle: document.getElementById('bake-zheng-title'),
+  bakeChuList: document.getElementById('bake-chu-list'), bakeZhengList: document.getElementById('bake-zheng-list'),
+  czChuTitle: document.getElementById('cz-chu-title'), czZhengTitle: document.getElementById('cz-zheng-title'),
+  czChuList: document.getElementById('cz-chu-list'), czZhengList: document.getElementById('cz-zheng-list'),
+  chuNote: document.getElementById('chu-note'), zhengNote: document.getElementById('zheng-note'),
+  detailTitle: document.getElementById('detail-title'), detailShengxiaoOrder: document.getElementById('detail-shengxiao-order'),
+  detailTime: document.getElementById('detail-time'), detailAlias: document.getElementById('detail-alias'),
+  detailWuxing: document.getElementById('detail-wuxing'), detailAnimal: document.getElementById('detail-animal'),
+  detailDesc: document.getElementById('detail-desc'),
+  currJingluo: document.getElementById('curr-jingluo'),
+  solarTime: document.getElementById('solar-time'), solarShiTip: document.getElementById('solar-shi-tip'), 
+  detailJingluo: document.getElementById('detail-jingluo'), detailJingluoDesc: document.getElementById('detail-jingluo-desc'),
+  detailShiliao: document.getElementById('detail-shiliao'), detailJinji: document.getElementById('detail-jinji'),
+  detailGanzhi: document.getElementById('detail-ganzhi'), detailGuaxiang: document.getElementById('detail-guaxiang'),
+  detailHuangli: document.getElementById('detail-huangli'), gengdianBlock: document.getElementById('gengdian-block'),
+  detailGengdian: document.getElementById('detail-gengdian'), detailGuihua: document.getElementById('detail-guihua'),
+  jieqiShiLink: document.getElementById('jieqi-shi-link'),
+  themeToggle: document.getElementById('theme-toggle'),
+  locationTip: document.getElementById('location-tip'),
+  setLocation: document.getElementById('set-location'),
+  locationModal: document.getElementById('location-modal'),
+  autoLocation: document.getElementById('auto-location'),
+  longitudeInput: document.getElementById('longitude-input'),
+  latitudeInput: document.getElementById('latitude-input'),
+  cancelLocation: document.getElementById('cancel-location'),
+  confirmLocation: document.getElementById('confirm-location'),
+  // 黄历相关DOM
+  calendarDateInput: document.getElementById('calendar-date-input'),
+  calendarQueryBtn: document.getElementById('calendar-query-btn'),
+  calendarLoading: document.getElementById('calendar-loading'),
+  calendarError: document.getElementById('calendar-error'),
+  calendarContent: document.getElementById('calendar-content'),
+  calendarSolarDate: document.getElementById('calendar-solar-date'),
+  calendarLunarDate: document.getElementById('calendar-lunar-date'),
+  calendarGanzhiInfo: document.getElementById('calendar-ganzhi-info'),
+  calendarBazi: document.getElementById('calendar-bazi'),
+  calendarNayin: document.getElementById('calendar-nayin'),
+  calendarYiContent: document.getElementById('calendar-yi-content'),
+  calendarJiContent: document.getElementById('calendar-ji-content'),
+  calendarPositionGrid: document.getElementById('calendar-position-grid'),
+  calendarShichenGrid: document.getElementById('calendar-shichen-grid'),
+  // 节日倒计时相关DOM
+  tabHoliday: document.getElementById('tab-holiday'),
+  panelHoliday: document.getElementById('holiday-panel'),
+  holidayCurrentDate: document.getElementById('holiday-current-date'),
+  holidaySearchInput: document.getElementById('holiday-search-input'),
+  holidayFilter: document.getElementById('holiday-filter'),
+  holidayRefreshBtn: document.getElementById('holiday-refresh-btn'),
+  holidayContainer: document.getElementById('holiday-container'),
+  // 历史上的今天相关DOM
+  tabHistory: document.getElementById('tab-history'),
+  panelHistory: document.getElementById('history-panel'),
+  historyCurrentDate: document.getElementById('history-current-date'),
+  historyRefreshBtn: document.getElementById('history-refresh-btn'),
+  historyLoading: document.getElementById('history-loading'),
+  historyError: document.getElementById('history-error'),
+  historyContainer: document.getElementById('history-container'),
+};
+// ===================== 十二时辰工具函数 =====================
+// 更新顶部地理位置显示
+const updateLocationTip = () => {
+  const { cityName, longitude, latitude } = userLocation;
+  DOM.locationTip.textContent = `(${cityName} ${longitude.toFixed(2)}°E, ${latitude.toFixed(2)}°N)`;
+};
+// 1. 公历转干支
+const getGanzhiFromDate = (date) => {
+  const getDayGanzhi = (y, m, d) => {
+    if (m < 3) { y--; m += 12; }
+    const c = Math.floor(y / 100);
+    const yMod = y % 100;
+    let g = (yMod * 5 + Math.floor(yMod / 4) + Math.floor(c / 4) + 9 * c + d + 2 * (m < 3 ? 0 : 1)) % 10;
+    let z = (yMod * 5 + Math.floor(yMod / 4) + Math.floor(c / 4) + 9 * c + d + 2 * (m < 3 ? 0 : 1) + 6) % 12;
+    return { gan: tianGan[(g-1+10)%10], zhi: diZhi[(z-1+12)%12] };
+  };
+  const year = date.getFullYear();
+  const yearGanIndex = (year - 4) % 10;
+  const yearZhiIndex = (year - 4) % 12;
+  const yearGanzhi = tianGan[yearGanIndex] + diZhi[yearZhiIndex];
+  const month = date.getMonth() + 1;
+  const monthZhiIndex = (month + 1) % 12;
+  const monthGan = tianGan[((yearGanIndex % 5) * 2 + monthZhiIndex) % 10];
+  const monthGanzhi = monthGan + diZhi[monthZhiIndex];
+  const dayGanzhi = getDayGanzhi(year, month, date.getDate());
+  const dayGan = dayGanzhi.gan;
+  const dayZhi = dayGanzhi.zhi;
+  const dayGanzhiStr = dayGan + dayZhi;
+  return { yearGanzhi, monthGanzhi, dayGanzhiStr, dayGan, dayZhi };
+};
+// 2. 计算时辰干支
+const getShiGanzhi = (dayGan, shiName) => {
+  const dizhiIdx = shiDizhiIndex[shiName];
+  const ganList = wuShuDun[dayGan];
+  const shiGan = ganList[dizhiIdx];
+  const shiZhi = diZhi[dizhiIdx];
+  return shiGan + shiZhi;
+};
+// 3. 真太阳时计算（核心用经度，纬度仅保留不影响计算）
+const getTrueSolarTime = (date, longitude) => {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+  // 1. 计算平太阳时：北京时间 + (经度-120)*4分钟
+  const pingTaiyangOffset = (longitude - 120) * 4; // 分钟
+  // 2. 计算真太阳时差（基于一年中的第几天）
+  const dayOfYear = Math.floor((date - new Date(year, 0, 1)) / (1000 * 60 * 60 * 24)) + 1;
+  const b = 2 * Math.PI * (dayOfYear - 1) / 365;
+  const shiCha = 0.0028 + 7.3529 * Math.cos(b + 1.4983) + 9.9359 * Math.cos(2 * b + 1.9000) + 0.3387 * Math.cos(3 * b + 1.8361);
+  // 总时差（分钟）
+  const totalOffset = pingTaiyangOffset + shiCha;
+  // 真太阳时
+  const trueTime = new Date(date.getTime() + totalOffset * 60 * 1000);
+  return {
+    trueTime,
+    offset: totalOffset.toFixed(2),
+    formatTime: `${trueTime.getHours().toString().padStart(2,0)}:${trueTime.getMinutes().toString().padStart(2,0)}:${trueTime.getSeconds().toString().padStart(2,0)}`
+  };
+};
+// 4. 根据时间获取对应时辰
+const getShiByTime = (time) => {
+  const h = time.getHours();
+  const hourMap = [23,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22];
+  const shiHourMap = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11];
+  return shiList[shiHourMap[hourMap.indexOf(h)]];
+};
+// 工具函数：格式化时间/日期
+const formatSysTime = (date) => `${date.getHours().toString().padStart(2,0)}:${date.getMinutes().toString().padStart(2,0)}:${date.getSeconds().toString().padStart(2,0)}`;
+const formatHour = (h) => (h % 24).toString().padStart(2,0);
+const formatMinute = (m) => m.toString().padStart(2,0);
+// 农历日期转换函数
+const solarToLunar = (date) => {
+  const lunarMonthStart = [
+    [2026, 2, 17, '正'],
+    [2026, 3, 19, '二'],
+    [2026, 4, 18, '三'],
+    [2026, 5, 17, '四'],
+    [2026, 6, 16, '五'],
+    [2026, 7, 16, '六'],
+    [2026, 8, 15, '七'],
+    [2026, 9, 14, '八'],
+    [2026, 10, 14, '九'],
+    [2026, 11, 12, '十'],
+    [2026, 12, 12, '冬'],
+    [2027, 1, 10, '腊'],
+  ];
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const currentDate = new Date(year, month - 1, day);
+  let targetMonth = null;
+  for (let i = 0; i < lunarMonthStart.length; i++) {
+    const start = new Date(lunarMonthStart[i][0], lunarMonthStart[i][1] - 1, lunarMonthStart[i][2]);
+    const nextStart = i < lunarMonthStart.length - 1 
+      ? new Date(lunarMonthStart[i+1][0], lunarMonthStart[i+1][1] - 1, lunarMonthStart[i+1][2])
+      : new Date(2027, 2, 6);
+    if (currentDate >= start && currentDate < nextStart) {
+      targetMonth = {
+        name: lunarMonthStart[i][3],
+        startDate: start
+      };
+      break;
+    }
+  }
+  const dayDiff = Math.floor((currentDate - targetMonth.startDate) / (1000 * 60 * 60 * 24)) + 1;
+  const lunarDay1 = ['初', '十', '廿', '三'];
+  const lunarDay2 = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+  let lunarDay = '';
+  if (dayDiff === 10) {
+    lunarDay = '初十';
+  } else if (dayDiff === 20) {
+    lunarDay = '二十';
+  } else if (dayDiff === 30) {
+    lunarDay = '三十';
+  } else {
+    const d1 = Math.floor((dayDiff - 1) / 10);
+    const d2 = (dayDiff - 1) % 10;
+    lunarDay = `${lunarDay1[d1]}${lunarDay2[d2]}`;
+  }
+  return { 
+    lunarYear: year, 
+    lunarMonth: targetMonth.name, 
+    lunarDay 
+  };
+};
+// 判断当前二十四节气
+const getCurrJieqi = (date) => {
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
+  let jieqi = jieqiList.find(j => j.date[0] === m && j.date[1] <= d);
+  if (!jieqi) jieqi = jieqiList.filter(j => j.date[0] === m-1).pop();
+  if (m === 1 && !jieqi) jieqi = jieqiList.slice(-2).pop();
+  return jieqi || {name:"无节气", tip:"时辰阴阳平和"};
+};
+// 获取当前实时时辰
+const getCurrShi = () => {
+  const h = new Date().getHours();
+  const hourMap = [23,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22];
+  const shiHourMap = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11];
+  return shiList[shiHourMap[hourMap.indexOf(h)]];
+};
+// 计算当前刻制信息
+const getCurrKeInfo = (shi) => {
+  const now = new Date(), nowH = now.getHours(), nowM = now.getMinutes();
+  const shiH = +shi.time.split(':')[0], shiH1 = shiH + 1, shiH2 = shiH + 2;
+  const isChu = nowH >= shiH && nowH < shiH1, keType = isChu ? '初' : '正';
+  const chuMinList = [0,14,29,43,58], zhengMinList = [0,14,29,43,58];
+  let currKeIdxChu = isChu ? (nowM<14?0:nowM<29?1:nowM<43?2:3) : (nowM<14?0:nowM<29?1:nowM<43?2:3);
+  const keNameChu = keNameMapChu[currKeIdxChu];
+  const keTimeRangeChu = isChu ? `${formatHour(shiH)}:${formatMinute(chuMinList[currKeIdxChu])}-${formatHour(shiH)}:${formatMinute(chuMinList[currKeIdxChu+1])}` : `${formatHour(shiH1)}:${formatMinute(zhengMinList[currKeIdxChu])}-${formatHour(shiH1)}:${formatMinute(zhengMinList[currKeIdxChu+1])}`;
+  const keStepBa = 15, totalMin = (nowH - shiH +24) %2, minInShi = totalMin*60 + nowM;
+  const currKeIdxBa = Math.floor(minInShi/keStepBa), keNameBa = keNameMapBa[currKeIdxBa];
+  const keStartMinBa = currKeIdxBa*keStepBa, keEndMinBa = (currKeIdxBa+1)*keStepBa;
+  const keTimeRangeBa = `${formatHour(shiH + Math.floor(keStartMinBa/60))}:${formatMinute(keStartMinBa%60)}-${formatHour(shiH + Math.floor(keEndMinBa/60))}:${formatMinute(keEndMinBa%60)}`;
+  const sikeType = currKeIdxBa <4 ? '上' : '下';
+  const sikeNum = currKeIdxBa +1;
+  let crossDay = '无'; if (shi.name === '子时') crossDay = isChu ? '属前一天' : '属后一天';
+  return {chu: {type:keType, name:keNameChu, range:keTimeRangeChu, idx:currKeIdxChu}, ba: {name:keNameBa, range:keTimeRangeBa, idx:currKeIdxBa}, sike: {type:sikeType, num:sikeNum}, crossDay};
+};
+// 切换刻制模式
+const setMode = (m) => {
+  mode = m;
+  DOM.tabChu.className = `tab ${m==='chu'?'tab-active':'tab-inactive'}`;
+  DOM.tabBa.className = `tab ${m==='ba'?'tab-active':'tab-inactive'}`;
+  DOM.chuzhengWrap.classList.toggle('hidden', m!=='chu');
+  DOM.bakeWrap.classList.toggle('hidden', m!=='ba');
+  update();
+};
+DOM.tabChu.onclick = ()=>setMode('chu');
+DOM.tabBa.onclick = ()=>setMode('ba');
+// ===================== 十二时辰核心渲染逻辑 =====================
+// 初始化渲染十二时辰卡片
+const initShiGrid = () => {
+  DOM.shiGrid.innerHTML = '';
+  shiList.forEach(s=>{
+    const wuxingColor = wuxingColorMap[s.wuxing];
+    const c = document.createElement('div');
+    c.dataset.shiName = s.name;
+    c.className = 'shi-card';
+    const topDiv = document.createElement('div');
+    topDiv.className = 'shi-card-top';
+    topDiv.style.backgroundColor = wuxingColor;
+    topDiv.innerHTML = `<div class="font-bold text-base md:text-lg">${s.name}</div>`;
+    const bottomDiv = document.createElement('div');
+    bottomDiv.className = 'shi-card-bottom';
+    bottomDiv.innerHTML = `<div>${s.alias}·${s.wuxing}·${s.animal}</div><div class="health-tip">${s.health}</div>`;
+    c.appendChild(topDiv); 
+    c.appendChild(bottomDiv);
+    c.onclick = ()=>{
+      selectedShi = s;
+      updateDetail(s);
+      updateSelectedShiStyle();
+    };
+    DOM.shiGrid.appendChild(c);
+  });
+};
+// 更新实时高亮
+const updateCurrShiHighlight = () => {
+  const currShi = getCurrShi();
+  const allCards = DOM.shiGrid.querySelectorAll('.shi-card');
+  allCards.forEach(card=>{
+    card.classList.remove('shi-active-border');
+    card.style.borderColor = '';
+  });
+  const currCard = DOM.shiGrid.querySelector(`[data-shi-name="${currShi.name}"]`);
+  if (currCard) {
+    currCard.classList.add('shi-active-border');
+    currCard.style.borderColor = wuxingColorMap[currShi.wuxing];
+  }
+};
+// 更新点击选中样式
+const updateSelectedShiStyle = () => {
+  const allCards = DOM.shiGrid.querySelectorAll('.shi-card');
+  allCards.forEach(card=>{
+    card.classList.remove('selected-shi-card');
+  });
+  if (selectedShi) {
+    const selectedCard = DOM.shiGrid.querySelector(`[data-shi-name="${selectedShi.name}"]`);
+    if (selectedCard) {
+      selectedCard.classList.add('selected-shi-card');
+    }
+  }
+};
+// 绘制八刻制
+const drawBa = (shi, keInfo) => {
+  const h = +shi.time.split(':')[0], h1 = formatHour(h+1), h2 = formatHour(h+2);
+  const keList = [{k:0,name:'1',t:`${formatHour(h)}:00-${formatHour(h)}:15`},{k:1,name:'2',t:`${formatHour(h)}:15-${formatHour(h)}:30`},{k:2,name:'3',t:`${formatHour(h)}:30-${formatHour(h)}:45`},{k:3,name:'4',t:`${formatHour(h)}:45-${h1}:00`},{k:4,name:'5',t:`${h1}:00-${h1}:15`},{k:5,name:'6',t:`${h1}:15-${h1}:30`},{k:6,name:'7',t:`${h1}:30-${h1}:45`},{k:7,name:'8',t:`${h1}:45-${h2}:00`}];
+  const chuKe = keList.slice(0,4), zhengKe = keList.slice(4);
+  DOM.bakeChuTitle.textContent = `${shi.name}初（上四刻：1-4刻）`;
+  DOM.bakeZhengTitle.textContent = `${shi.name}正（下四刻：5-8刻）`;
+  DOM.bakeChuList.innerHTML = ''; DOM.bakeZhengList.innerHTML = '';
+  chuKe.forEach(it=>{
+    const d = document.createElement('div');
+    const isActive = it.k === keInfo.ba.idx;
+    d.className = `ke-item flex text-xs md:text-sm ${isActive?'ke-active':''}`;
+    if (isActive) d.style.backgroundColor = wuxingColorMap[shi.wuxing];
+    const note = shi.name === '子时' && it.k ===3 ? '<div class="ke-note">属前一天</div>' : '';
+    d.innerHTML = `<div class="text-lg md:text-xl font-bold mb-1">${it.name}</div><div class="text-[10px] md:text-xs">${it.t}</div>${note}`;
+    DOM.bakeChuList.appendChild(d);
+  });
+  zhengKe.forEach(it=>{
+    const d = document.createElement('div');
+    const isActive = it.k === keInfo.ba.idx;
+    d.className = `ke-item flex text-xs md:text-sm ${isActive?'ke-active':''}`;
+    if (isActive) d.style.backgroundColor = wuxingColorMap[shi.wuxing];
+    const note = shi.name === '子时' ? '<div class="ke-note">属后一天</div>' : '';
+    d.innerHTML = `<div class="text-lg md:text-xl font-bold mb-1">${it.name}</div><div class="text-[10px] md:text-xs">${it.t}</div>${note}`;
+    DOM.bakeZhengList.appendChild(d);
+  });
+};
+// 绘制初正刻制
+const drawChuZheng = (shi, keInfo) => {
+  const h = +shi.time.split(':')[0], h1 = formatHour(h+1), h2 = formatHour(h+2);
+  const chuKe = [{k:0,name:'初刻',t:`${formatHour(h)}:00-${formatHour(h)}:14`},{k:1,name:'一刻',t:`${formatHour(h)}:14-${formatHour(h)}:29`},{k:2,name:'二刻',t:`${formatHour(h)}:29-${formatHour(h)}:43`},{k:3,name:'三刻',t:`${formatHour(h)}:43-${formatHour(h)}:58`}];
+  const zhengKe = [{k:0,name:'初刻',t:`${h1}:00-${h1}:14`},{k:1,name:'一刻',t:`${h1}:14-${h1}:29`},{k:2,name:'二刻',t:`${h1}:29-${h1}:43`},{k:3,name:'三刻',t:`${h1}:43-${h1}:58`}];
+  DOM.chuNote.textContent = shi.name === '子时' ? '属前一天' : '';
+  DOM.zhengNote.textContent = shi.name === '子时' ? '属后一天' : '';
+  DOM.czChuTitle.textContent = `${shi.name}初：${formatHour(h)}:00-${h1}:00`;
+  DOM.czZhengTitle.textContent = `${shi.name}正：${h1}:00-${h2}:00`;
+  DOM.czChuList.innerHTML = ''; DOM.czZhengList.innerHTML = '';
+  chuKe.forEach(it=>{
+    const d = document.createElement('div');
+    const isActive = it.k === keInfo.chu.idx && keInfo.chu.type === '初';
+    d.className = `ke-item flex text-xs md:text-sm ${isActive?'ke-active':''}`;
+    if (isActive) d.style.backgroundColor = wuxingColorMap[shi.wuxing];
+    d.innerHTML = `<div class="text-lg md:text-xl font-bold mb-1">${it.name}</div><div class="text-[10px] md:text-xs">${it.t}</div>`;
+    DOM.czChuList.appendChild(d);
+  });
+  zhengKe.forEach(it=>{
+    const d = document.createElement('div');
+    const isActive = it.k === keInfo.chu.idx && keInfo.chu.type === '正';
+    d.className = `ke-item flex text-xs md:text-sm ${isActive?'ke-active':''}`;
+    if (isActive) d.style.backgroundColor = wuxingColorMap[shi.wuxing];
+    d.innerHTML = `<div class="text-lg md:text-xl font-bold mb-1">${it.name}</div><div class="text-[10px] md:text-xs">${it.t}</div>`;
+    DOM.czZhengList.appendChild(d);
+  });
+};
+// 更新时辰详解
+const updateDetail = (shi) => {
+  const now = new Date();
+  const ganzhiInfo = getGanzhiFromDate(now);
+  const shiGanzhi = getShiGanzhi(ganzhiInfo.dayGan, shi.name);
+  const currJieqi = getCurrJieqi(now);
+  const dizhi = diZhi[shiDizhiIndex[shi.name]];
+  const chongSha = chongShaMap[dizhi];
+  const yiJi = shiYiJiMap[shi.name];
+  // 基础信息
+  DOM.detailTitle.textContent = `${shi.name}详解`;
+  DOM.detailShengxiaoOrder.textContent = numToRank(shi.shengxiaoOrder);
+  DOM.detailTime.textContent = shi.time; 
+  DOM.detailAlias.textContent = shi.alias;
+  DOM.detailWuxing.textContent = shi.wuxing; 
+  DOM.detailWuxing.style.color = wuxingColorMap[shi.wuxing];
+  DOM.detailAnimal.textContent = shi.animal; 
+  DOM.detailDesc.textContent = shi.desc;
+  DOM.detailJingluo.textContent = shi.jingluo;
+  // 各模块内容更新
+  DOM.detailJingluoDesc.textContent = shi.jingluoDesc;
+  DOM.detailShiliao.textContent = shi.shiliao;
+  DOM.detailJinji.textContent = shi.jinji;
+  DOM.detailGanzhi.innerHTML = `
+    当日日柱：${ganzhiInfo.dayGanzhiStr}<br>
+    本时辰干支：${shiGanzhi}<br>
+    时辰五行：${shi.wuxing}<br>
+    生肖冲煞：冲${chongSha}（生肖${chongSha}此时段行事需谨慎）
+  `;
+  DOM.detailGuaxiang.textContent = shi.guaxiang;
+  DOM.detailHuangli.innerHTML = `
+    宜：${yiJi.yi}<br>
+    忌：${yiJi.ji}<br>
+    冲煞：冲${chongSha}
+  `;
+  // 节气联动内容
+  DOM.jieqiShiLink.textContent = `当前节气为${currJieqi.name}，${shi.name}${currJieqi.tip}，请顺应节气与时辰节律养生行事。`;
+  // 更点制度显示控制
+  if (['戌时','亥时','子时','丑时','寅时'].includes(shi.name)) {
+    DOM.gengdianBlock.classList.remove('hidden');
+    DOM.detailGengdian.textContent = shi.gengdian;
+  } else {
+    DOM.gengdianBlock.classList.add('hidden');
+  }
+  DOM.detailGuihua.textContent = shi.guihua;
+};
+// 更新顶部信息
+const updateTopInfo = (shi, keInfo) => {
+  DOM.currShi.style.color = wuxingColorMap[shi.wuxing];
+  DOM.currWuxing.style.color = wuxingColorMap[shi.wuxing];
+  DOM.currShi.textContent = shi.name; 
+  DOM.currShengxiaoOrder.textContent = numToRank(shi.shengxiaoOrder);
+  DOM.currKe.textContent = `${keInfo.chu.type}${keInfo.chu.name}`;
+  DOM.currTimeRange.textContent = mode === 'ba' ? keInfo.ba.range : keInfo.chu.range;
+  DOM.currSike.textContent = `${keInfo.sike.type}四刻 第${keInfo.sike.num}刻`;
+  DOM.currAlias.textContent = shi.alias; 
+  DOM.currWuxing.textContent = shi.wuxing;
+  DOM.currAnimal.textContent = shi.animal; 
+  DOM.currCrossDay.textContent = keInfo.crossDay;
+  DOM.currDesc.textContent = shi.desc;
+  DOM.currJingluo.textContent = shi.jingluo;
+};
+// ===================== 主题切换逻辑 =====================
+const initTheme = () => {
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  document.documentElement.className = savedTheme;
+};
+DOM.themeToggle.onclick = () => {
+  const isDark = document.documentElement.classList.contains('dark');
+  const newTheme = isDark ? 'light' : 'dark';
+  document.documentElement.className = newTheme;
+  localStorage.setItem('theme', newTheme);
+};
+// ===================== 经纬度设置弹窗逻辑 =====================
+const initLocationModal = () => {
+  // 初始化顶部位置显示
+  updateLocationTip();
+  // 城市标签容器
+  const cityContainer = DOM.locationModal.querySelector('.city-scroll');
+  // 生成常用城市标签
+  const renderCityTags = () => {
+    cityContainer.innerHTML = '';
+    commonCities.forEach(city => {
+      const tag = document.createElement('button');
+      tag.className = 'shrink-0 px-3 py-1 rounded-full text-xs md:text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900 transition-all';
+      tag.textContent = city.cityName;
+      tag.dataset.cityName = city.cityName;
+      tag.dataset.longitude = city.longitude;
+      tag.dataset.latitude = city.latitude;
+      // 点击城市标签填充输入框
+      tag.onclick = () => {
+        DOM.longitudeInput.value = city.longitude;
+        DOM.latitudeInput.value = city.latitude;
+        // 高亮选中的标签
+        cityContainer.querySelectorAll('button').forEach(t => {
+          t.classList.remove('bg-primary', 'text-white');
+          t.classList.remove('bg-blue-100', 'dark:bg-blue-900');
+        });
+        tag.classList.add('bg-primary', 'text-white');
+      };
+      cityContainer.appendChild(tag);
+    });
+  };
+  renderCityTags();
+  // 打开弹窗
+  DOM.setLocation.onclick = () => {
+    DOM.locationModal.classList.remove('hidden');
+    // 填充当前保存的经纬度
+    DOM.longitudeInput.value = userLocation.longitude;
+    DOM.latitudeInput.value = userLocation.latitude;
+    // 匹配高亮当前选中的城市
+    const cityTags = cityContainer.querySelectorAll('button');
+    cityTags.forEach(tag => {
+      if (tag.dataset.cityName === userLocation.cityName 
+          && parseFloat(tag.dataset.longitude).toFixed(2) === userLocation.longitude.toFixed(2)
+          && parseFloat(tag.dataset.latitude).toFixed(2) === userLocation.latitude.toFixed(2)) {
+        tag.classList.add('bg-primary', 'text-white');
+      } else {
+        tag.classList.remove('bg-primary', 'text-white');
+      }
+    });
+  };
+  // 取消按钮
+  DOM.cancelLocation.onclick = () => {
+    DOM.locationModal.classList.add('hidden');
+  };
+  // 点击弹窗外部关闭
+  DOM.locationModal.onclick = (e) => {
+    if (e.target === DOM.locationModal) {
+      DOM.locationModal.classList.add('hidden');
+    }
+  };
+  // 自动定位按钮
+  DOM.autoLocation.onclick = () => {
+    if (!navigator.geolocation) {
+      showToast("您的浏览器不支持地理定位功能，请手动输入经纬度", "warning");
+      return;
+    }
+    // 加载状态
+    DOM.autoLocation.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 定位中';
+    DOM.autoLocation.disabled = true;
+    // 调用定位API
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        // 定位成功
+        const { longitude, latitude } = position.coords;
+        DOM.longitudeInput.value = longitude.toFixed(2);
+        DOM.latitudeInput.value = latitude.toFixed(2);
+        // 恢复按钮状态
+        DOM.autoLocation.innerHTML = '<i class="fa fa-map-marker"></i> 自动定位';
+        DOM.autoLocation.disabled = false;
+        // 取消城市标签选中
+        cityContainer.querySelectorAll('button').forEach(t => {
+          t.classList.remove('bg-primary', 'text-white');
+        });
+        showToast("定位成功，已自动填充经纬度", "success");
+      },
+      (error) => {
+        // 定位失败
+        DOM.autoLocation.innerHTML = '<i class="fa fa-map-marker"></i> 自动定位';
+        DOM.autoLocation.disabled = false;
+        let errMsg = "定位失败，请手动输入经纬度";
+        if (error.code === 1) {
+          errMsg = "您拒绝了定位权限，请在浏览器设置中开启定位权限，或手动输入经纬度";
+        } else if (error.code === 2) {
+          errMsg = "无法获取您的位置信息，请手动输入经纬度";
+        } else if (error.code === 3) {
+          errMsg = "定位超时，请重试或手动输入经纬度";
+        }
+        showToast(errMsg, "error");
+      },
+      {
+        enableHighAccuracy: true, // 高精度定位
+        timeout: 10000, // 10秒超时
+        maximumAge: 0 // 不使用缓存位置
+      }
+    );
+  };
+  // 确认保存按钮
+  DOM.confirmLocation.onclick = () => {
+    const longitude = parseFloat(DOM.longitudeInput.value);
+    const latitude = parseFloat(DOM.latitudeInput.value);
+    // 输入校验
+    if (isNaN(longitude) || longitude < -180 || longitude > 180) {
+      showToast('请输入有效的经度（范围-180°~180°）', "error");
+      return;
+    }
+    if (isNaN(latitude) || latitude < -90 || latitude > 90) {
+      showToast('请输入有效的纬度（范围-90°~90°）', "error");
+      return;
+    }
+    // 获取城市名：优先用选中的城市标签，手动修改则为自定义
+    const selectedTag = cityContainer.querySelector('.bg-primary');
+    let cityName = '自定义';
+    if (selectedTag) {
+      const tagLon = parseFloat(selectedTag.dataset.longitude).toFixed(2);
+      const tagLat = parseFloat(selectedTag.dataset.latitude).toFixed(2);
+      if (tagLon === longitude.toFixed(2) && tagLat === latitude.toFixed(2)) {
+        cityName = selectedTag.dataset.cityName;
+      }
+    }
+    // 保存到全局变量和本地存储
+    userLocation = { cityName, longitude, latitude };
+    localStorage.setItem('userLocation', JSON.stringify(userLocation));
+    // 更新顶部显示
+    updateLocationTip();
+    // 关闭弹窗
+    DOM.locationModal.classList.add('hidden');
+    // 立即更新真太阳时
+    update();
+    showToast("经纬度保存成功，真太阳时已更新", "success");
+  };
+};
+// ===================== 万年历核心函数 =====================
+// 初始化黄历日期选择器
+const initCalendarDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  DOM.calendarDateInput.value = `${year}-${month}-${day}`;
+};
+// 解析宜/忌字符串为数组
+const parseYiji = (str) => {
+  if (!str || str === '[]' || str === '[无]' || str === '[诸事不宜]') return [];
+  return str.replace(/[\[\]]/g, '').split(',').map(item => item.trim());
+};
+// 渲染黄历日期概览
+const renderCalendarOverview = (data) => {
+  const firstItem = data[0];
+  DOM.calendarSolarDate.textContent = `${firstItem.YLYEAR}年${firstItem.YLMONTH}月${firstItem.YLDAY}日`;
+  DOM.calendarLunarDate.textContent = `${firstItem.YIYYYYMMDD} 农历${firstItem.YIYEAR_GANZHI}年`;
+  DOM.calendarGanzhiInfo.textContent = `日干支：${firstItem.YIDAY_GANZHI} 月干支：${firstItem.YIMONTH_GANZHI} 年干支：${firstItem.YIYEAR_GANZHI}`;
+  DOM.calendarBazi.textContent = `八字：${firstItem.ALLBAZI}`;
+  DOM.calendarNayin.textContent = `纳音：年${firstItem.YEARNAYIN} 月${firstItem.MONTHNAYIN} 日${firstItem.DAYNAYIN}`;
+};
+// 渲染黄历宜忌
+const renderCalendarYiji = (data) => {
+  const firstItem = data[0];
+  const yiList = parseYiji(firstItem.YI);
+  const jiList = parseYiji(firstItem.JI);
+  DOM.calendarYiContent.innerHTML = '';
+  DOM.calendarJiContent.innerHTML = '';
+  
+  yiList.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'yiji-item yi-item';
+    div.textContent = item;
+    DOM.calendarYiContent.appendChild(div);
+  });
+  jiList.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'yiji-item ji-item';
+    div.textContent = item;
+    DOM.calendarJiContent.appendChild(div);
+  });
+  if (yiList.length === 0) DOM.calendarYiContent.innerHTML = '<span class="text-gray-400 text-sm">无</span>';
+  if (jiList.length === 0) DOM.calendarJiContent.innerHTML = '<span class="text-gray-400 text-sm">无</span>';
+};
+// 渲染吉神方位
+const renderCalendarPosition = (data) => {
+  const firstItem = data[0];
+  DOM.calendarPositionGrid.innerHTML = '';
+  const positionList = [
+    { name: '财神方位', value: firstItem.POSITIONCAIDESC },
+    { name: '福神方位', value: firstItem.POSITIONDESC },
+    { name: '喜神方位', value: firstItem.POSITIONXIDESC },
+    { name: '阳贵神', value: firstItem.POSITIONYANGGUIDESC },
+    { name: '阴贵神', value: firstItem.POSITIONYINGUIDESC }
+  ];
+  positionList.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'text-center';
+    div.innerHTML = `
+      <h4 class="text-primary text-sm font-bold mb-1">${item.name}</h4>
+      <p class="text-base font-medium text-gray-800 dark:text-gray-200">${item.value}</p>
+    `;
+    DOM.calendarPositionGrid.appendChild(div);
+  });
+};
+// 渲染十二时辰黄历
+const renderCalendarShichen = (data) => {
+  DOM.calendarShichenGrid.innerHTML = '';
+  data.forEach(item => {
+    const shichenCard = document.createElement('div');
+    shichenCard.className = 'shichen-card bg-white dark:bg-gray-800';
+    const luckClass = item.TIANSHENLUCK === '吉' ? 'luck-good' : 'luck-bad';
+    const luckText = `${item.TIANSHENTYPE}·${item.TIANSHEN}`;
+    const yiList = parseYiji(item.YI);
+    const jiList = parseYiji(item.JI);
+    let yiHtml = yiList.map(yi => `<div class="yiji-item yi-item">${yi}</div>`).join('');
+    let jiHtml = jiList.map(ji => `<div class="yiji-item ji-item">${ji}</div>`).join('');
+    if (yiList.length === 0) yiHtml = '<span class="text-gray-400 text-xs">无</span>';
+    if (jiList.length === 0) jiHtml = '<span class="text-gray-400 text-xs">无</span>';
+    shichenCard.innerHTML = `
+      <div class="flex justify-between items-center mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+        <span class="font-medium">${item.SHICHENG} ${item.GANZHI}时(${item.SHENGXIAO})</span>
+        <span class="${luckClass}">${luckText}</span>
+      </div>
+      <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
+        <span>九星：${item.NINESTAR}</span>
+        <span>八门：${item.NINESTARBAMENINQIMEN || '无'}</span>
+      </div>
+      <div class="text-xs text-bad mb-3">冲${item.CHONGDESC} 煞${item.SHA}</div>
+      <div class="mb-2">
+        <h5 class="text-xs font-medium mb-1 text-good">宜</h5>
+        <div class="flex flex-wrap gap-1">${yiHtml}</div>
+      </div>
+      <div>
+        <h5 class="text-xs font-medium mb-1 text-bad">忌</h5>
+        <div class="flex flex-wrap gap-1">${jiHtml}</div>
+      </div>
+    `;
+    DOM.calendarShichenGrid.appendChild(shichenCard);
+  });
+};
+// 统一渲染黄历数据
+const renderCalendarData = (data) => {
+  if (!data || data.length === 0) {
+    showCalendarError('暂无该日期的黄历数据');
+    return;
+  }
+  renderCalendarOverview(data);
+  renderCalendarYiji(data);
+  renderCalendarPosition(data);
+  renderCalendarShichen(data);
+  // 隐藏加载/错误，显示内容
+  DOM.calendarLoading.classList.add('hidden');
+  DOM.calendarError.classList.add('hidden');
+  DOM.calendarContent.classList.remove('hidden');
+};
+// 显示黄历加载状态
+const showCalendarLoading = () => {
+  DOM.calendarLoading.classList.remove('hidden');
+  DOM.calendarError.classList.add('hidden');
+  DOM.calendarContent.classList.add('hidden');
+};
+// 显示黄历错误提示
+const showCalendarError = (msg) => {
+  DOM.calendarLoading.classList.add('hidden');
+  DOM.calendarError.classList.remove('hidden');
+  DOM.calendarError.textContent = msg;
+  DOM.calendarContent.classList.add('hidden');
+  showToast(msg, 'error');
+};
+// 请求黄历API数据
+async function fetchCalendarData(nian, yue, ri) {
+  showCalendarLoading();
+  try {
+    const params = new URLSearchParams({
+      id: CALENDAR_API.id,
+      key: CALENDAR_API.key,
+      nian: nian,
+      yue: yue,
+      ri: ri,
+      type: CALENDAR_API.type
+    });
+    const response = await fetch(`${CALENDAR_API.baseUrl}?${params.toString()}`);
+    if (!response.ok) throw new Error(`请求失败，状态码：${response.status}`);
+    const result = await response.json();
+    if (result.code && result.code === 400) throw new Error(result.msg || '接口返回错误');
+    renderCalendarData(result);
+  } catch (error) {
+    console.error('黄历接口请求异常：', error);
+    showCalendarError(`获取数据失败：${error.message}。若为跨域问题，请使用本地服务器打开或部署到Web服务器。`);
+  }
+}
+// 绑定黄历查询按钮事件
+DOM.calendarQueryBtn.addEventListener('click', () => {
+  const dateStr = DOM.calendarDateInput.value;
+  if (!dateStr) {
+    showToast('请先选择要查询的日期', 'warning');
+    return;
+  }
+  const date = new Date(dateStr);
+  fetchCalendarData(date.getFullYear(), date.getMonth() + 1, date.getDate());
+});
+// ===================== 全局更新 =====================
+const update = () => {
+  const now = new Date();
+  // 更新公历+农历日期
+  const solarDate = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+  const lunar = solarToLunar(now);
+  const lunarDate = `农历${lunar.lunarMonth}月${lunar.lunarDay}`;
+  DOM.dateInfo.textContent = `${solarDate} ${lunarDate}`;
+  // 更新二十四节气
+  const currJieqi = getCurrJieqi(now);
+  DOM.jieqiInfo.textContent = `${currJieqi.name} ${currJieqi.tip}`;
+  // 更新北京时间
+  DOM.nowTime.textContent = formatSysTime(now);
+  // 更新真太阳时（使用用户设置的经度）
+  const solarTimeInfo = getTrueSolarTime(now, userLocation.longitude);
+  DOM.solarTime.textContent = solarTimeInfo.formatTime;
+  const solarShi = getShiByTime(solarTimeInfo.trueTime);
+  DOM.solarShiTip.textContent = `对应时辰：${solarShi.name}`;
+  // 获取当前实时时辰和刻制
+  const currShi = getCurrShi();
+  const currKeInfo = getCurrKeInfo(currShi);
+  // 更新顶部信息
+  updateTopInfo(currShi, currKeInfo);
+  // 更新高亮和选中样式
+  updateCurrShiHighlight();
+  updateSelectedShiStyle();
+  // 更新详情区和刻制区
+  const detailShi = selectedShi || currShi;
+  updateDetail(detailShi);
+  mode === 'ba' ? drawBa(detailShi, currKeInfo) : drawChuZheng(detailShi, currKeInfo);
+};
+// 初始化
+initTheme();
+initShiGrid();
+initLocationModal();
+initCalendarDate();
+initCustomFilter(); // 初始化自定义下拉
+update();
+setInterval(update, 500);
+</script>
+</body>
+</html>
