@@ -215,7 +215,7 @@
                         <div id="dropdownPanel" class="absolute top-full left-0 mt-1.5 w-full rounded-btn bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-lg py-1 overflow-hidden hidden z-70">
                             <ul id="dropdownOptions" class="max-h-[210px] scrollbar-hide">
                                 <li class="dropdown-item-active dropdown-option px-2.5 py-1.5 text-sm cursor-pointer transition-colors duration-200 hover:bg-neutral-100 dark:hover:bg-neutral-800" data-value="yuexia">月下独酌API</li>
-                                <li class="dropdown-option px-2.5 py-1.5 text-sm cursor-pointer transition-colors duration-200 hover:bg-neutral-100 dark:hover:bg-neutral-800" data-value="luoluo">luoluoapi</li>
+                                <li class="dropdown-option px-2.5 py-1.5 text-sm cursor-pointer transition-colors duration-200 hover:bg-neutral-100 dark:hover:bg-neutral-800" data-value="qianxia">浅夏API</li>
                             </ul>
                         </div>
                     </div>
@@ -290,10 +290,14 @@
     </div>
     <footer class="py-4 border-t border-neutral-200 dark:border-neutral-800"><div class="container mx-auto px-4 max-w-7xl text-center text-neutral-400 text-xs"><p>© 2024 4K壁纸 | 仅供个人学习使用，请勿商用</p></div></footer>
     <script>
-        // API配置映射
+        // API配置映射 - 移除luoluoapi，添加浅夏API
         const API_CONFIG = {
             yuexia: { base: 'https://jcy.lvlong.xyz/api/api/4k.php', hasSearch: true },
-            luoluo: { base: 'http://api.18years.fun/Interface/Wallpaper', hasSearch: false, types: ['4Kscenery', 'AnimeWallpaper', 'HayaoMiyazaki'] }
+            qianxia: { 
+                base: 'https://115exuq280928.vicp.fun/API/360bz.php', 
+                hasSearch: false, 
+                types: ['美女', '爱情', '风景', '清新', '动漫', '明星', '萌宠', '游戏', '汽车', '时尚', '日历', '影视', '军事', '体育', '萌娃', '格言'] 
+            }
         };
         
         // 全局状态
@@ -337,7 +341,6 @@
             themeIcon: document.getElementById('themeIcon'),
             toastContainer: document.getElementById('toastContainer')
         };
-
         // Toast 核心 (保留原风味)
         const Toast = {
             show(message, type = 'info', duration = 3000) {
@@ -356,7 +359,6 @@
             info(msg, dur) { return this.show(msg, 'info', dur); },
             loading(msg) { return this.show(msg, 'loading', 0); }
         };
-
         // 主题切换
         const Theme = {
             init() { const saved = localStorage.getItem('theme') || 'auto'; this.applyTheme(saved); elements.themeToggle.addEventListener('click', () => this.toggleTheme()); window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (localStorage.getItem('theme') === 'auto') this.applyTheme('auto'); }); },
@@ -368,7 +370,6 @@
             },
             toggleTheme() { const cur = localStorage.getItem('theme') || 'auto'; let newTheme = cur === 'light' ? 'dark' : (cur === 'dark' ? 'light' : (document.documentElement.classList.contains('dark') ? 'light' : 'dark')); this.applyTheme(newTheme); }
         };
-
         // ========== 优化版下拉菜单 (动画丝滑+防冲突+高亮同步) ==========
         const Dropdown = {
             init() { this.bindEvents(); this.syncActiveOption(); },
@@ -436,12 +437,10 @@
                 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && dropdownOpen) this.close(); });
             }
         };
-
         // 业务函数
         function showLoading() { elements.skeletonLoading.classList.remove('hidden'); elements.wallpaperGrid.classList.add('hidden'); elements.emptyState.classList.add('hidden'); elements.pagination.classList.add('hidden'); }
         function hideLoading() { elements.skeletonLoading.classList.add('hidden'); }
         function showEmpty(text = '暂无相关壁纸，换个关键词试试吧') { elements.emptyText.textContent = text; elements.emptyState.classList.remove('hidden'); elements.wallpaperGrid.classList.add('hidden'); elements.pagination.classList.add('hidden'); }
-
         async function fetchHomeWallpapers() {
             showLoading();
             isSearchMode = false;
@@ -457,34 +456,32 @@
                     const result = await response.json();
                     if (result.code === 200 && result.data.recommended) renderWallpapers(result.data.recommended);
                     else showEmpty('获取推荐壁纸失败，请刷新重试');
-                } else if (currentAPI === 'luoluo') {
+                } else if (currentAPI === 'qianxia') {
                     const types = API_CONFIG[currentAPI].types;
                     const wallpaperList = [];
                     for (let i = 0; i < types.length; i++) {
                         const type = types[i];
                         const apiUrl = new URL(API_CONFIG[currentAPI].base);
-                        apiUrl.searchParams.set('type', type);
-                        apiUrl.searchParams.set('format', 'text');
+                        apiUrl.searchParams.set('msg', type); // 浅夏API核心参数msg
                         try {
                             const res = await fetch(apiUrl);
                             const imgUrl = await res.text();
                             wallpaperList.push({
                                 id: `${type}-${Date.now()}-${i}`,
-                                title: type === '4Kscenery' ? '4K风景壁纸' : type === 'AnimeWallpaper' ? '动漫壁纸' : '宫崎骏壁纸',
+                                title: `${type}壁纸`,
                                 resolution: '3840x2160',
                                 thumbnail: imgUrl,
                                 url: imgUrl,
                                 image_url: imgUrl
                             });
-                        } catch(e) { console.warn(`${type}加载失败`, e); }
+                        } catch(e) { console.warn(`${type}分类加载失败`, e); }
                     }
-                    if (wallpaperList.length) { renderWallpapers(wallpaperList); Toast.success(`已加载luoluoapi三类壁纸`); } 
-                    else showEmpty('luoluoapi获取壁纸失败');
+                    if (wallpaperList.length) { renderWallpapers(wallpaperList); Toast.success(`已加载浅夏API全部分类壁纸`); } 
+                    else showEmpty('浅夏API获取壁纸失败');
                 }
             } catch (error) { console.error(error); showEmpty(`网络请求失败`); Toast.error('网络请求失败'); } 
             finally { hideLoading(); }
         }
-
         async function searchWallpapers(keyword, page = 1) {
             if (!API_CONFIG[currentAPI].hasSearch) { Toast.warning('当前API不支持搜索，已为您展示默认壁纸'); fetchHomeWallpapers(); return; }
             if (!keyword.trim()) { fetchHomeWallpapers(); return; }
@@ -508,7 +505,6 @@
             } catch (error) { showEmpty('网络错误'); Toast.error('网络请求失败'); } 
             finally { hideLoading(); }
         }
-
         function renderWallpapers(wallpapers) {
             elements.wallpaperGrid.innerHTML = '';
             elements.wallpaperGrid.classList.remove('hidden');
@@ -521,11 +517,9 @@
                 elements.wallpaperGrid.appendChild(card);
             });
         }
-
         function renderPagination() { elements.pagination.classList.remove('hidden'); elements.pageInfo.textContent = `第 ${currentPage} 页 / 共 ${totalPages} 页`; elements.prevPageBtn.disabled = currentPage <= 1; elements.nextPageBtn.disabled = currentPage >= totalPages; }
         function goPrevPage() { if (currentPage > 1) { searchWallpapers(currentKeyword, currentPage - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); } }
         function goNextPage() { if (currentPage < totalPages) { searchWallpapers(currentKeyword, currentPage + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); } }
-
         async function fetchWallpaperDetail(wallpaper) {
             const loadingToast = Toast.loading('获取详情中...');
             if (currentAPI === 'yuexia') {
@@ -533,10 +527,8 @@
                 catch(e) { Toast.error('网络错误'); } finally { loadingToast.close(); }
             } else { loadingToast.close(); showDetailModal(wallpaper); }
         }
-
         function showDetailModal(detail) { const { id, title, resolution, image_url } = detail; elements.modalTitle.textContent = title; elements.modalImage.src = image_url; elements.detailTitle.textContent = title; elements.detailResolution.textContent = resolution; elements.detailId.textContent = id; elements.downloadBtn.href = image_url; elements.detailModal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
         function hideDetailModal() { elements.detailModal.classList.add('hidden'); document.body.style.overflow = ''; }
-
         function bindBusinessEvents() {
             elements.searchForm.addEventListener('submit', (e) => { e.preventDefault(); searchWallpapers(elements.keywordInput.value.trim(), 1); window.scrollTo({ top: 0, behavior: 'smooth' }); });
             elements.backHomeBtn.addEventListener('click', fetchHomeWallpapers);
@@ -547,7 +539,6 @@
             document.addEventListener('keydown', (e) => e.key === 'Escape' && hideDetailModal());
             elements.downloadBtn.addEventListener('click', () => Toast.success('开始下载原图'));
         }
-
         document.addEventListener('DOMContentLoaded', () => { Theme.init(); Dropdown.init(); bindBusinessEvents(); fetchHomeWallpapers(); });
     </script>
 </body>
