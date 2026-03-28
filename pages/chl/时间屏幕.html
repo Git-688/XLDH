@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>极简时间屏幕 | 修复完整版</title>
+    <style>
+        /* 全局主题变量 */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #6e8efb, #a777e3);
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --text-disabled: rgba(255, 255, 255, 0.5);
+            --shadow-color: rgba(0, 0, 0, 0.2);
+            --accent-color: #a777e3;
+            --progress-bg: rgba(255, 255, 255, 0.2);
+            --card-blur: 12px;
+            --global-blur: 0px;
+            --time-font-weight: 600;
+            --touch-size: 48px;
+            --border-radius-sm: 8px;
+            --border-radius-md: 12px;
+            --border-radius-lg: 16px;
+            --slider-bg: rgba(255, 255, 255, 0.2);
+            --switch-bg: rgba(255, 255, 255, 0.2);
+            --select-bg: rgba(255, 255, 255, 0.1);
+            --select-border: rgba(255, 255, 255, 0.2);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+        html {
+            font-size: 14px;
+            -webkit-text-size-adjust: 100%;
+            transform: translate3d(0,0,0);
+        }
+        body {
+            width: 100vw;
+            height: 100vh;
+            @supports (width: 100dvw) and (height: 100dvh) {
+                width: 100dvw;
+                height: 100dvh;
+            }
+            background: var(--bg-gradient);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+            transition: background 0.5s ease;
+            -webkit-font-smoothing: antialiased;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            backdrop-filter: blur(var(--global-blur));
+            -webkit-backdrop-filter: blur(var(--global-blur));
+            pointer-events: none;
+            z-index: 0;
+        }
+        .main-card {
+            text-align: center;
+            background: var(--card-bg);
+            padding: clamp(16px, 4vw, 40px) clamp(20px, 5vw, 60px);
+            border-radius: var(--border-radius-lg);
+            backdrop-filter: blur(var(--card-blur));
+            -webkit-backdrop-filter: blur(var(--card-blur));
+            box-shadow: 0 8px 32px var(--shadow-color);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+            width: clamp(92%, 85vw, 700px);
+            max-width: 700px;
+            overflow: visible;
+        }
+        .tab-container {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius-md);
+            padding: 4px;
+            margin-bottom: 24px;
+            gap: 4px;
+            backdrop-filter: blur(var(--card-blur));
+        }
+        .tab-item {
+            padding: 8px 18px;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            font-size: clamp(12px, 1.3vw, 14px);
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            touch-action: manipulation;
+        }
+        .tab-item.active {
+            background: var(--accent-color);
+            color: var(--text-color);
+        }
+        .tab-item:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+            width: 100%;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .time-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: flex-end;
+            gap: clamp(2px, 0.8vw, 6px);
+            width: 100%;
+            justify-content: center;
+        }
+        .time {
+            font-size: clamp(5vw, 10vw, 12vw);
+            font-weight: var(--time-font-weight);
+            letter-spacing: 0.05em;
+            line-height: 1.1;
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .ampm {
+            font-size: clamp(1.5vw, 2.5vw, 3vw);
+            font-weight: 500;
+            opacity: 0.8;
+            margin-bottom: clamp(0.8vw, 1.2vw, 1.5vw);
+            display: none;
+            flex-shrink: 0;
+        }
+        .date {
+            font-size: clamp(12px, 1.5vw, 14px);
+            margin-top: 16px;
+            color: var(--text-secondary);
+            letter-spacing: 0.1em;
+            transition: opacity 0.2s ease;
+        }
+        .lunar {
+            font-size: clamp(11px, 1.2vw, 13px);
+            margin-top: 8px;
+            color: var(--text-secondary);
+            opacity: 0.8;
+            letter-spacing: 0.08em;
+            transition: opacity 0.2s ease;
+        }
+        .festival {
+            color: var(--accent-color);
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .progress-container {
+            width: 100%;
+            height: 3px;
+            background: var(--progress-bg);
+            border-radius: 2px;
+            margin-top: 24px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: var(--accent-color);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        .progress-text {
+            font-size: clamp(10px, 1vw, 12px);
+            margin-top: 6px;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+        .stopwatch-display {
+            font-size: clamp(2rem, 10vw, 4.5rem);
+            font-weight: var(--time-font-weight);
+            letter-spacing: 0.05em;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            font-variant-numeric: tabular-nums;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .stopwatch-btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 24px;
+            border-radius: var(--border-radius-sm);
+            border: none;
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-color);
+            font-size: clamp(12px, 1.3vw, 14px);
+            font-weight: 500;
+            cursor: pointer;
+            backdrop-filter: blur(var(--card-blur));
+            transition: all 0.2s ease;
+            min-width: 76px;
+            min-height: var(--touch-size);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 50;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+        .btn.primary {
+            background: var(--accent-color);
+        }
+        .btn.primary:hover {
+            filter: brightness(1.1);
+        }
+        .btn.danger {
+            background: rgba(239, 68, 68, 0.8);
+        }
+        .btn.danger:hover {
+            background: rgba(239, 68, 68, 1);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .lap-list {
+            max-height: calc(3 * 33px);
+            overflow-y: auto;
+            margin-top: 16px;
+            text-align: left;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+        .lap-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: clamp(11px, 1.2vw, 13px);
+            color: var(--text-secondary);
+            min-height: 33px;
+            align-items: center;
+        }
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .lap-list {
+                max-height: calc(6 * 33px);
+            }
+        }
+        @media (min-width: 1025px) {
+            .lap-list {
+                max-height: calc(9 * 33px);
+            }
+        }
+        @media (max-width: 1024px) and (orientation: landscape) {
+            .lap-list {
+                max-height: calc(2 * 33px);
+            }
+        }
+        .countdown-setting {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(8px, 2vw, 12px);
+            margin-bottom: 24px;
+            flex-wrap: nowrap;
+            width: 100%;
+            flex-shrink: 0;
+            max-width: 100%;
+            overflow: visible;
+        }
+        .time-input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            min-width: 56px;
+            width: clamp(56px, 18vw, 70px);
+        }
+        .time-input {
+            width: 100%;
+            height: clamp(44px, 8dvh, 52px);
+            background: var(--select-bg);
+            border: 1px solid var(--select-border);
+            border-radius: var(--border-radius-sm);
+            color: var(--text-color);
+            font-size: max(16px, clamp(16px, 3vw, 22px));
+            font-weight: 600;
+            text-align: center;
+            outline: none;
+            transition: all 0.2s ease;
+            -webkit-user-select: text !important;
+            user-select: text !important;
+            touch-action: manipulation;
+            position: relative;
+            z-index: 100;
+            cursor: text;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .time-input:focus {
+            border-color: var(--accent-color);
+            filter: brightness(1.1);
+            box-shadow: 0 0 0 2px var(--accent-color);
+        }
+        .time-input::-webkit-outer-spin-button,
+        .time-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .time-input[type=number] {
+            -moz-appearance: textfield;
+        }
+        .time-label {
+            font-size: clamp(10px, 1vw, 12px);
+            color: var(--text-secondary);
+        }
+        .time-split {
+            font-size: clamp(16px, 3vw, 22px);
+            font-weight: 600;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        .countdown-display {
+            font-size: clamp(2rem, 10vw, 4.5rem);
+            font-weight: var(--time-font-weight);
+            letter-spacing: 0.05em;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            font-variant-numeric: tabular-nums;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .countdown-btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .settings-btn {
+            position: fixed;
+            top: clamp(12px, 2vw, 20px);
+            right: clamp(12px, 2vw, 20px);
+            height: var(--touch-size);
+            padding: 0 18px;
+            border-radius: var(--border-radius-md);
+            background: var(--card-bg);
+            backdrop-filter: blur(var(--card-blur));
+            -webkit-backdrop-filter: blur(var(--card-blur));
+            border: none;
+            color: var(--text-color);
+            font-size: clamp(13px, 1.4vw, 15px);
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px var(--shadow-color);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .settings-btn:hover {
+            background: var(--accent-color);
+            transform: translateY(-1px);
+        }
+        .settings-panel {
+            position: fixed;
+            top: clamp(65px, 8dvh, 75px);
+            right: clamp(12px, 2vw, 20px);
+            width: clamp(90%, 300px, 320px);
+            background: var(--card-bg);
+            backdrop-filter: blur(calc(var(--card-blur) + 4px));
+            -webkit-backdrop-filter: blur(calc(var(--card-blur) + 4px));
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 8px 32px var(--shadow-color);
+            padding: clamp(14px, 2vw, 18px);
+            z-index: 9998;
+            transform: translateX(120vw);
+            opacity: 0;
+            visibility: hidden;
+            display: none;
+            transition: all 0.3s ease;
+            max-height: clamp(60dvh, 75dvh, 85vh);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .settings-panel.active {
+            transform: translateX(0);
+            opacity: 1;
+            visibility: visible;
+            display: block;
+        }
+        .settings-title {
+            font-size: clamp(15px, 1.6vw, 16px);
+            font-weight: 600;
+            margin-bottom: clamp(10px, 1.2vw, 14px);
+            padding-bottom: clamp(8px, 1vw, 10px);
+            border-bottom: 1px solid var(--select-border);
+        }
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: clamp(10px, 1.2vw, 14px);
+            min-height: 36px;
+        }
+        .setting-label {
+            font-size: clamp(13px, 1.4vw, 14px);
+            color: var(--text-secondary);
+        }
+        .switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            touch-action: manipulation;
+            flex-shrink: 0;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--switch-bg);
+            border-radius: 24px;
+            transition: 0.3s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        input:checked + .slider {
+            background-color: var(--accent-color);
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        .custom-select {
+            position: relative;
+            width: clamp(120px, 150px, 160px);
+            z-index: 9999;
+            flex-shrink: 0;
+        }
+        .select-trigger {
+            width: 100%;
+            padding: 6px 10px;
+            background: var(--select-bg);
+            border: 1px solid var(--select-border);
+            border-radius: var(--border-radius-sm);
+            color: var(--text-color);
+            font-size: clamp(12px, 1.3vw, 13px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            min-height: 36px;
+        }
+        .select-trigger:hover {
+            border-color: var(--accent-color);
+            filter: brightness(1.1);
+        }
+        .select-trigger::after {
+            content: "▼";
+            font-size: 10px;
+            transition: transform 0.2s ease;
+            color: var(--text-secondary);
+        }
+        .select-trigger.open::after {
+            transform: rotate(180deg);
+        }
+        .select-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 100%;
+            background: var(--card-bg);
+            backdrop-filter: blur(calc(var(--card-blur) + 4px));
+            -webkit-backdrop-filter: blur(calc(var(--card-blur) + 4px));
+            border-radius: var(--border-radius-sm);
+            box-shadow: 0 4px 16px var(--shadow-color);
+            overflow: hidden;
+            transform: translateY(-4px);
+            opacity: 0;
+            visibility: hidden;
+            display: none;
+            transition: all 0.2s ease;
+            max-height: 160px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            z-index: 9999;
+        }
+        .select-dropdown.open {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+            display: block;
+        }
+        .select-option {
+            padding: 8px 10px;
+            font-size: clamp(12px, 1.3vw, 13px);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+        }
+        .select-option:hover, .select-option.selected {
+            background: var(--accent-color);
+            color: var(--text-color);
+        }
+        .slider-control {
+            width: clamp(120px, 140px, 150px);
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--slider-bg);
+            border-radius: 2px;
+            outline: none;
+            flex-shrink: 0;
+        }
+        .slider-control::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .slider-control::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            border: none;
+        }
+        .slider-control::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+            margin-bottom: clamp(10px, 1.2vw, 14px);
+        }
+        .theme-item {
+            height: 36px;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+        }
+        .theme-item.active {
+            border-color: var(--text-color);
+            transform: scale(1.05);
+        }
+        @keyframes breathe {
+            0%, 100% { box-shadow: 0 8px 32px var(--shadow-color); }
+            50% { box-shadow: 0 8px 40px var(--accent-color), 0 0 20px rgba(255, 255, 255, 0.3); }
+        }
+        .breathe-effect .main-card {
+            animation: breathe 4s infinite ease-in-out;
+        }
+        .low-power * {
+            animation: none !important;
+            transition: none !important;
+        }
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            padding: 10px 20px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: var(--border-radius-md);
+            color: var(--text-color);
+            font-size: 14px;
+            box-shadow: 0 4px 16px var(--shadow-color);
+            z-index: 99999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            max-width: 80%;
+            text-align: center;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+        *::-webkit-scrollbar {
+            display: none;
+        }
+        * {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) {
+                --bg-gradient: linear-gradient(135deg, #141e30, #243b55);
+                --card-bg: rgba(255, 255, 255, 0.08);
+                --text-secondary: rgba(255, 255, 255, 0.7);
+                --shadow-color: rgba(0, 0, 0, 0.3);
+                --accent-color: #3a7bd5;
+                --progress-bg: rgba(255, 255, 255, 0.15);
+                --slider-bg: rgba(255, 255, 255, 0.2);
+                --switch-bg: rgba(255, 255, 255, 0.2);
+                --select-bg: rgba(255, 255, 255, 0.1);
+                --select-border: rgba(255, 255, 255, 0.2);
+            }
+        }
+        :fullscreen,
+        :-webkit-full-screen,
+        :-moz-full-screen,
+        :-ms-fullscreen {
+            background: var(--bg-gradient) !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        :fullscreen .main-card,
+        :-webkit-full-screen .main-card,
+        :-moz-full-screen .main-card,
+        :-ms-fullscreen .main-card {
+            width: min(95%, 85%);
+            max-width: 900px;
+            padding: clamp(12px, 3vw, 30px) clamp(16px, 4vw, 50px);
+        }
+        @media (orientation: landscape) and (max-width: 1024px) {
+            .main-card {
+                width: min(95%, 85%);
+                padding: 12px 20px;
+            }
+            .tab-container {
+                margin-bottom: 16px;
+            }
+            .stopwatch-display, .countdown-display {
+                margin-bottom: 12px;
+            }
+            .countdown-setting {
+                margin-bottom: 16px;
+            }
+            .time-input {
+                height: 44px;
+            }
+            .settings-panel {
+                max-height: 70dvh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="settings-btn" id="settingsBtn" aria-label="打开设置">设置</button>
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-title">基础显示</div>
+        <div class="setting-item">
+            <span class="setting-label">12小时制</span>
+            <label class="switch">
+                <input type="checkbox" id="12hourSwitch">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <span class="setting-label">显示秒数</span>
+            <label class="switch">
+                <input type="checkbox" id="secondSwitch" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <span class="setting-label">显示农历/节日</span>
+            <label class="switch">
+                <input type="checkbox" id="lunarSwitch" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <span class="setting-label">日期格式</span>
+            <div class="custom-select" id="dateFormatSelect">
+                <div class="select-trigger" data-value="ymd">年-月-日</div>
+                <div class="select-dropdown">
+                    <div class="select-option" data-value="ymd">年-月-日</div>
+                    <div class="select-option" data-value="mdy">月/日/年</div>
+                    <div class="select-option" data-value="dmy">日/月/年</div>
+                </div>
+            </div>
+        </div>
+        <div class="settings-title">视觉定制</div>
+        <div class="setting-item">
+            <span class="setting-label">卡片模糊度</span>
+            <input type="range" min="0" max="30" value="12" class="slider-control" id="cardBlurSlider">
+        </div>
+        <div class="setting-item">
+            <span class="setting-label">全局模糊度</span>
+            <input type="range" min="0" max="20" value="0" class="slider-control" id="globalBlurSlider">
+        </div>
+        <div class="setting-item">
+            <span class="setting-label">时间字体粗细</span>
+            <input type="range" min="400" max="900" step="100" value="600" class="slider-control" id="fontWeightSlider">
+        </div>
+        <div class="setting-item">
+            <span class="setting-label">呼吸光效</span>
+            <label class="switch">
+                <input type="checkbox" id="breatheSwitch">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="settings-title">功能开关</div>
+        <div class="setting-item">
+            <span class="setting-label">自动全屏</span>
+            <label class="switch">
+                <input type="checkbox" id="autoFullscreenSwitch" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <span class="setting-label">屏幕常亮</span>
+            <label class="switch">
+                <input type="checkbox" id="wakeLockSwitch">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <span class="setting-label">整点报时</span>
+            <label class="switch">
+                <input type="checkbox" id="clockAlertSwitch">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <span class="setting-label">低功耗模式</span>
+            <label class="switch">
+                <input type="checkbox" id="lowPowerSwitch">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <span class="setting-label">进度条类型</span>
+            <div class="custom-select" id="progressTypeSelect">
+                <div class="select-trigger" data-value="year">本年度</div>
+                <div class="select-dropdown">
+                    <div class="select-option" data-value="year">本年度</div>
+                    <div class="select-option" data-value="day">今日</div>
+                    <div class="select-option" data-value="week">本周</div>
+                </div>
+            </div>
+        </div>
+        <div class="settings-title">主题选择</div>
+        <div class="theme-grid">
+            <div class="theme-item active" data-theme="default" style="background: linear-gradient(135deg, #6e8efb, #a777e3);"></div>
+            <div class="theme-item" data-theme="dark" style="background: linear-gradient(135deg, #141e30, #243b55);"></div>
+            <div class="theme-item" data-theme="light" style="background: linear-gradient(135deg, #f5f7fa, #c3cfe2);"></div>
+            <div class="theme-item" data-theme="oled" style="background: #000000;"></div>
+            <div class="theme-item" data-theme="sunset" style="background: linear-gradient(135deg, #ff7e5f, #feb47b);"></div>
+            <div class="theme-item" data-theme="forest" style="background: linear-gradient(135deg, #134e5e, #71b280);"></div>
+            <div class="theme-item" data-theme="star" style="background: linear-gradient(135deg, #0f172a, #334155);"></div>
+            <div class="theme-item" data-theme="ocean" style="background: linear-gradient(135deg, #06b6d4, #3b82f6);"></div>
+            <div class="theme-item" data-theme="aurora" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);"></div>
+        </div>
+    </div>
+    <div class="main-card">
+        <div class="tab-container">
+            <div class="tab-item active" data-tab="clock">时钟</div>
+            <div class="tab-item" data-tab="stopwatch">秒表</div>
+            <div class="tab-item" data-tab="countdown">倒计时</div>
+        </div>
+        <div class="tab-content active" id="clockPanel">
+            <div class="time-wrapper">
+                <div class="time" id="time">00:00:00</div>
+                <div class="ampm" id="ampm">AM</div>
+            </div>
+            <div class="date" id="date">2026-01-01 星期一<span class="festival" id="festival"></span></div>
+            <div class="lunar" id="lunar">丙午年 正月初一</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="progress-text" id="progressText">本年度已过 0%</div>
+        </div>
+        <div class="tab-content" id="stopwatchPanel">
+            <div class="stopwatch-display" id="stopwatchDisplay">00:00:00.00</div>
+            <div class="stopwatch-btn-group">
+                <button class="btn" id="lapBtn" disabled>计次</button>
+                <button class="btn primary" id="stopwatchStartBtn">开始</button>
+                <button class="btn danger" id="stopwatchResetBtn" disabled>复位</button>
+            </div>
+            <div class="lap-list" id="lapList"></div>
+        </div>
+        <div class="tab-content" id="countdownPanel">
+            <div class="countdown-setting" id="countdownSetting">
+                <div class="time-input-group">
+                    <input type="number" class="time-input" id="countdownHour" min="0" max="23" value="0" oninput="this.value = Math.max(0, Math.min(23, this.value || 0))">
+                    <span class="time-label">时</span>
+                </div>
+                <span class="time-split">:</span>
+                <div class="time-input-group">
+                    <input type="number" class="time-input" id="countdownMinute" min="0" max="59" value="0" oninput="this.value = Math.max(0, Math.min(59, this.value || 0))">
+                    <span class="time-label">分</span>
+                </div>
+                <span class="time-split">:</span>
+                <div class="time-input-group">
+                    <input type="number" class="time-input" id="countdownSecond" min="0" max="59" value="0" oninput="this.value = Math.max(0, Math.min(59, this.value || 0))">
+                    <span class="time-label">秒</span>
+                </div>
+            </div>
+            <div class="countdown-display" id="countdownDisplay" style="display: none;">00:00:00</div>
+            <div class="countdown-btn-group">
+                <button class="btn primary" id="countdownStartBtn">开始</button>
+                <button class="btn danger" id="countdownResetBtn">复位</button>
+            </div>
+        </div>
+    </div>
+    <div id="toast" class="toast"></div>
+    <script>
+        const settings = {
+            is12Hour: false,
+            showSecond: true,
+            showLunar: true,
+            wakeLock: false,
+            breatheEffect: false,
+            theme: 'default',
+            dateFormat: 'ymd',
+            cardBlur: 12,
+            globalBlur: 0,
+            fontWeight: 600,
+            clockAlert: false,
+            lowPower: false,
+            progressType: 'year',
+            autoFullscreen: true
+        };
+        const themeConfig = {
+            default: {
+                '--bg-gradient': 'linear-gradient(135deg, #6e8efb, #a777e3)',
+                '--card-bg': 'rgba(255, 255, 255, 0.1)',
+                '--text-color': '#ffffff',
+                '--text-secondary': 'rgba(255, 255, 255, 0.8)',
+                '--shadow-color': 'rgba(0, 0, 0, 0.2)',
+                '--accent-color': '#a777e3',
+                '--progress-bg': 'rgba(255, 255, 255, 0.2)',
+                '--slider-bg': 'rgba(255, 255, 255, 0.2)',
+                '--switch-bg': 'rgba(255, 255, 255, 0.2)',
+                '--select-bg': 'rgba(255, 255, 255, 0.1)',
+                '--select-border': 'rgba(255, 255, 255, 0.2)'
+            },
+            dark: {
+                '--bg-gradient': 'linear-gradient(135deg, #141e30, #243b55)',
+                '--card-bg': 'rgba(255, 255, 255, 0.08)',
+                '--text-color': '#ffffff',
+                '--text-secondary': 'rgba(255, 255, 255, 0.7)',
+                '--shadow-color': 'rgba(0, 0, 0, 0.3)',
+                '--accent-color': '#3a7bd5',
+                '--progress-bg': 'rgba(255, 255, 255, 0.15)',
+                '--slider-bg': 'rgba(255, 255, 255, 0.2)',
+                '--switch-bg': 'rgba(255, 255, 255, 0.2)',
+                '--select-bg': 'rgba(255, 255, 255, 0.1)',
+                '--select-border': 'rgba(255, 255, 255, 0.2)'
+            },
+            light: {
+                '--bg-gradient': 'linear-gradient(135deg, #f5f7fa, #c3cfe2)',
+                '--card-bg': 'rgba(255, 255, 255, 0.7)',
+                '--text-color': '#2c3e50',
+                '--text-secondary': '#34495e',
+                '--shadow-color': 'rgba(0, 0, 0, 0.1)',
+                '--accent-color': '#6e8efb',
+                '--progress-bg': 'rgba(0, 0, 0, 0.1)',
+                '--slider-bg': 'rgba(0, 0, 0, 0.2)',
+                '--switch-bg': 'rgba(0, 0, 0, 0.15)',
+                '--select-bg': 'rgba(0, 0, 0, 0.05)',
+                '--select-border': 'rgba(0, 0, 0, 0.15)'
+            },
+            oled: {
+                '--bg-gradient': '#000000',
+                '--card-bg': 'rgba(30, 30, 30, 0.6)',
+                '--text-color': '#ffffff',
+                '--text-secondary': 'rgba(255, 255, 255, 0.8)',
+                '--shadow-color': 'rgba(0, 0, 0, 0.5)',
+                '--accent-color': '#00ff88',
+                '--progress-bg': 'rgba(255, 255, 255, 0.2)',
+                '--slider-bg': 'rgba(255, 255, 255, 0.2)',
+                '--switch-bg': 'rgba(255, 255, 255, 0.2)',
+                '--select-bg': 'rgba(255, 255, 255, 0.1)',
+                '--select-border': 'rgba(255, 255, 255, 0.2)'
+            },
+            sunset: {
+                '--bg-gradient': 'linear-gradient(135deg, #ff7e5f, #feb47b)',
+                '--card-bg': 'rgba(255, 255, 255, 0.1)',
+                '--text-color': '#ffffff',
+                '--text-secondary': 'rgba(255, 255, 255, 0.85)',
+                '--shadow-color': 'rgba(0, 0, 0, 0.2)',
+                '--accent-color': '#ff7e5f',
+                '--progress-bg': 'rgba(255, 255, 255, 0.2)',
+                '--slider-bg': 'rgba(255, 255, 255, 0.2)',
+                '--switch-bg': 'rgba(255, 255, 255, 0.2)',
+                '--select-bg': 'rgba(255, 255, 255, 0.1)',
+                '--select-border': 'rgba(255, 255, 255, 0.2)'
+            },
+            forest: {
+                '--bg-gradient': 'linear-gradient(135deg, #134e5e, #71b280)',
+                '--card-bg': 'rgba(255, 255, 255, 0.1)',
+                '--text-color': '#ffffff',
+                '--text-secondary': 'rgba(255, 255, 255, 0.8)',
+                '--shadow-color': 'rgba(0, 0, 0, 0.2)',
+                '--accent-color': '#71b280',
+                '--progress-bg': 'rgba(255, 255, 255, 0.2)',
+                '--slider-bg': 'rgba(255, 255, 255, 0.2)',
+                '--switch-bg': 'rgba(255, 255, 255, 0.2)',
+                '--select-bg': 'rgba(255, 255, 255, 0.1)',
+                '--select-border': 'rgba(255, 255, 255, 0.2)'
+            },
+            star: {
+                '--bg-gradient': 'linear-gradient(135deg, #0f172a, #334155)',
+                '--card-bg': 'rgba(255, 255, 255, 0.05)',
+                '--text-color': '#e2e8f0',
+                '--text-secondary': 'rgba(226, 232, 240, 0.7)',
+                '--shadow-color': 'rgba(0, 0, 0, 0.4)',
+                '--accent-color': '#818cf8',
+                '--progress-bg': 'rgba(226, 232, 240, 0.15)',
+                '--slider-bg': 'rgba(255, 255, 255, 0.2)',
+                '--switch-bg': 'rgba(255, 255, 255, 0.2)',
+                '--select-bg': 'rgba(255, 255, 255, 0.1)',
+                '--select-border': 'rgba(255, 255, 255, 0.2)'
+            },
+            ocean: {
+                '--bg-gradient': 'linear-gradient(135deg, #06b6d4, #3b82f6)',
+                '--card-bg': 'rgba(255, 255, 255, 0.1)',
+                '--text-color': '#ffffff',
+                '--text-secondary': 'rgba(255, 255, 255, 0.85)',
+                '--shadow-color': 'rgba(0, 0, 0, 0.2)',
+                '--accent-color': '#06b6d4',
+                '--progress-bg': 'rgba(255, 255, 255, 0.2)',
+                '--slider-bg': 'rgba(255, 255, 255, 0.2)',
+                '--switch-bg': 'rgba(255, 255, 255, 0.2)',
+                '--select-bg': 'rgba(255, 255, 255, 0.1)',
+                '--select-border': 'rgba(255, 255, 255, 0.2)'
+            },
+            aurora: {
+                '--bg-gradient': 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                '--card-bg': 'rgba(255, 255, 255, 0.1)',
+                '--text-color': '#ffffff',
+                '--text-secondary': 'rgba(255, 255, 255, 0.85)',
+                '--shadow-color': 'rgba(0, 0, 0, 0.2)',
+                '--accent-color': '#8b5cf6',
+                '--progress-bg': 'rgba(255, 255, 255, 0.2)',
+                '--slider-bg': 'rgba(255, 255, 255, 0.2)',
+                '--switch-bg': 'rgba(255, 255, 255, 0.2)',
+                '--select-bg': 'rgba(255, 255, 255, 0.1)',
+                '--select-border': 'rgba(255, 255, 255, 0.2)'
+            }
+        };
+        const festivalData = {
+            solar: {
+                '01-01': '元旦', '02-14': '情人节', '03-08': '妇女节', '03-12': '植树节',
+                '04-01': '愚人节', '05-01': '劳动节', '05-04': '青年节', '06-01': '儿童节',
+                '07-01': '建党节', '08-01': '建军节', '09-10': '教师节', '10-01': '国庆节', '12-25': '圣诞节'
+            },
+            lunar: {
+                '01-01': '春节', '01-15': '元宵节', '05-05': '端午节', '08-15': '中秋节',
+                '09-09': '重阳节'
+            }
+        };
+
+        let lastAlertTime = null;
+        let audioContext = null;
+        let wakeLock = null;
+        let fullscreenHandler = null;
+
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+                || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+                || navigator.userAgent.includes('iPad');
+        }
+
+        const lunarInfo = [
+            0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2,
+            0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977,
+            0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970,
+            0x06566, 0x0d4a0, 0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950,
+            0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2, 0x0a950, 0x0b557,
+            0x06ca0, 0x0b550, 0x15355, 0x04da0, 0x0a5d0, 0x14573, 0x052d0, 0x0a9a8, 0x0e950, 0x06aa0,
+            0x0aea6, 0x0ab50, 0x04b60, 0x0aae4, 0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0,
+            0x096d0, 0x04dd5, 0x04ad0, 0x0a4d0, 0x0d4d4, 0x0d250, 0x0d558, 0x0b540, 0x0b5a0, 0x195a6,
+            0x095b0, 0x049b0, 0x0a974, 0x0a4b0, 0x0b27a, 0x06a50, 0x06d40, 0x0af46, 0x0ab60, 0x09570,
+            0x04af5, 0x04970, 0x064b0, 0x074a3, 0x0ea50, 0x06b58, 0x055c0, 0x0ab60, 0x096d5, 0x092e0,
+            0x0c960, 0x0d954, 0x0d4a0, 0x0da50, 0x07552, 0x056a0, 0x0abb7, 0x025d0, 0x092d0, 0x0cab5,
+            0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, 0x15176, 0x052b0, 0x0a930,
+            0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, 0x0d260, 0x0ea65, 0x0d530,
+            0x05aa0, 0x076a3, 0x096d0, 0x04bd7, 0x04ad0, 0x0a4d0, 0x1d0b6, 0x0d250, 0x0d520, 0x0dd45,
+            0x0b5a0, 0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0, 0x0aa50, 0x1b255, 0x06d20, 0x0ada0,
+            0x14b63, 0x04b60, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2,
+            0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977,
+            0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970,
+            0x06566, 0x0d4a0, 0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950,
+            0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2, 0x0a950, 0x0b557
+        ];
+        const solarMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        const Gan = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+        const Zhi = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+        const Animals = ["鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"];
+        const lunarMonth = ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "冬", "腊"];
+        const lunarDay = ["初", "十", "廿", "卅"];
+        const solarTerm = ["小寒", "大寒", "立春", "雨水", "惊蛰", "春分", "清明", "谷雨", "立夏", "小满", "芒种", "夏至", "小暑", "大暑", "立秋", "处暑", "白露", "秋分", "寒露", "霜降", "立冬", "小雪", "大雪", "冬至"];
+        const sTermInfo = [0, 21208, 42467, 63836, 85337, 107014, 128867, 150921, 173149, 195551, 218072, 240693, 263343, 285989, 308563, 331033, 353350, 375494, 397447, 419210, 440795, 462224, 483532, 504758];
+        
+        function solarToLunar(y, m, d) {
+            let i, leap = 0, temp = 0;
+            if ((y < 1900) || (y > 2100)) {
+                console.warn('农历转换仅支持1900-2100年');
+                return { month: 0, day: 0, year: y, ganzhi: '', animal: '', monthStr: '', dayStr: '', term: '', isLeap: false };
+            }
+            if (y == 1900 && m == 1 && d < 31) {
+                return { month: 11, day: d, year: 1899, ganzhi: '己亥', animal: '猪', monthStr: '冬月', dayStr: getLunarDayStr(d), term: '', isLeap: false };
+            }
+            if (y % 4 == 0) solarMonth[1] = 29;
+            let offset = (Date.UTC(y, m - 1, d) - Date.UTC(1900, 0, 31)) / 86400000;
+            for (i = 1900; i < 2101 && offset > 0; i++) { temp = lYearDays(i); offset -= temp; }
+            if (offset < 0) { offset += temp; i--; }
+            let lunarYear = i;
+            leap = leapMonth(i);
+            let isLeap = false;
+            for (i = 1; i < 13 && offset > 0; i++) {
+                if (leap > 0 && i == (leap + 1) && isLeap == false) { --i; isLeap = true; temp = leapDays(lunarYear); }
+                else { temp = monthDays(lunarYear, i); }
+                if (isLeap == true && i == (leap + 1)) isLeap = false;
+                offset -= temp;
+            }
+            if (offset == 0 && leap > 0 && i == leap + 1) { if (isLeap) { isLeap = false; } else { isLeap = true; --i; } }
+            if (offset < 0) { offset += temp; --i; }
+            let lunarM = i, lunarD = offset + 1;
+            let ganzhiYear = Gan[(lunarYear - 4) % 10] + Zhi[(lunarYear - 4) % 12];
+            let animal = Animals[(lunarYear - 4) % 12];
+            let monthStr = (isLeap ? "闰" : "") + lunarMonth[lunarM - 1] + "月";
+            let dayStr = getLunarDayStr(lunarD);
+            let term = getSolarTerm(y, m, d);
+            return { year: lunarYear, month: lunarM, day: lunarD, isLeap, ganzhi: ganzhiYear, animal, monthStr, dayStr, term };
+        }
+        function lYearDays(y) { let i, sum = 348; for (i = 0x8000; i > 0x8; i >>= 1) sum += (lunarInfo[y - 1900] & i) ? 1 : 0; return (sum + leapDays(y)); }
+        function leapMonth(y) { return (lunarInfo[y - 1900] & 0xf); }
+        function leapDays(y) { return (leapMonth(y)) ? ((lunarInfo[y - 1900] & 0x10000) ? 30 : 29) : 0; }
+        function monthDays(y, m) { return ((lunarInfo[y - 1900] & (0x10000 >> m)) ? 30 : 29); }
+        function getLunarDayStr(d) { let n = d % 10 == 0 ? 9 : d % 10 - 1; if (d <= 10) return lunarDay[0] + (d == 10 ? "十" : n + 1); else if (d < 20) return lunarDay[1] + (n + 1); else if (d == 20) return "二十"; else if (d < 30) return lunarDay[2] + (n + 1); else return lunarDay[3] + (d == 30 ? "十" : ""); }
+        function getSolarTerm(y, m, d) { 
+            let baseDate = new Date(1900, 0, 6, 2, 5, 0); 
+            for (let i = 0; i < 24; i++) { 
+                let temp = new Date(baseDate.getTime() + sTermInfo[i] * 60000); 
+                let tempY = temp.getUTCFullYear(), tempM = temp.getUTCMonth() + 1, tempD = temp.getUTCDate(); 
+                if (tempY == y && tempM == m && tempD == d) return solarTerm[i]; 
+            } 
+            return ""; 
+        }
+
+        function showToast(message, duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            clearTimeout(toast.timer);
+            toast.timer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+        function vibrate(duration = 50) {
+            if ('vibrate' in navigator && isMobile()) {
+                navigator.vibrate(duration);
+            }
+        }
+
+        // 修复后的音频播放核心函数
+        function playBeep(frequency = 880, duration = 500) {
+            if (!audioContext) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.error('当前浏览器不支持Web Audio API', e);
+                    return;
+                }
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().catch(err => console.error('音频上下文激活失败:', err));
+            }
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.value = frequency;
+                gainNode.gain.value = 0.3;
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration / 1000);
+                oscillator.stop(audioContext.currentTime + duration / 1000);
+            } catch (e) {
+                console.error('音频播放失败:', e);
+            }
+        }
+
+        function updateVisualParams() {
+            document.documentElement.style.setProperty('--card-blur', `${settings.cardBlur}px`);
+            document.documentElement.style.setProperty('--global-blur', `${settings.globalBlur}px`);
+            document.documentElement.style.setProperty('--time-font-weight', settings.fontWeight);
+        }
+        function getFestival(solarY, solarM, solarD, lunarM, lunarD, lunarYear) {
+            const solarKey = `${String(solarM).padStart(2, '0')}-${String(solarD).padStart(2, '0')}`;
+            const lunarKey = `${String(lunarM).padStart(2, '0')}-${String(lunarD).padStart(2, '0')}`;
+            let festival = festivalData.solar[solarKey] || festivalData.lunar[lunarKey] || '';
+            if (lunarM === 12) {
+                const lastDayOfLunarMonth = monthDays(lunarYear, 12);
+                if (lunarD === lastDayOfLunarMonth) {
+                    festival = '除夕';
+                }
+            }
+            return festival;
+        }
+        function formatDate(y, m, d, week) {
+            const mStr = String(m).padStart(2, '0');
+            const dStr = String(d).padStart(2, '0');
+            switch (settings.dateFormat) {
+                case 'mdy': return `${mStr}/${dStr}/${y} ${week}`;
+                case 'dmy': return `${dStr}/${mStr}/${y} ${week}`;
+                default: return `${y}-${mStr}-${dStr} ${week}`;
+            }
+        }
+
+        function toggleFullScreen() {
+            const doc = document.documentElement;
+            if (!document.fullscreenElement) {
+                (doc.requestFullscreen || doc.webkitRequestFullScreen || doc.mozRequestFullScreen || doc.msRequestFullscreen).call(doc)
+                .then(() => {
+                    showToast('已进入全屏模式');
+                    if (isMobile()) {
+                        showToast('建议横屏使用，获得更佳体验', 4000);
+                    }
+                })
+                .catch(err => {
+                    console.error('全屏开启失败:', err);
+                    showToast('全屏开启失败，请检查浏览器权限');
+                });
+            } else {
+                (document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen).call(document)
+                .then(() => showToast('已退出全屏模式'));
+            }
+        }
+        function initAutoFullscreen() {
+            if (!settings.autoFullscreen) return;
+            let lastClickTime = 0;
+            if (fullscreenHandler) {
+                document.removeEventListener('click', fullscreenHandler);
+            }
+            fullscreenHandler = (e) => {
+                const target = e.target;
+                const isInteractiveElement = 
+                    target.tagName === 'INPUT' || 
+                    target.tagName === 'BUTTON' || 
+                    target.tagName === 'SELECT' || 
+                    target.tagName === 'TEXTAREA' || 
+                    target.tagName === 'A' || 
+                    target.closest('button, input, select, textarea, a, .custom-select, .switch, .tab-item, .theme-item, .select-option');
+                if (isInteractiveElement) {
+                    return;
+                }
+                const currentTime = Date.now();
+                if (isMobile()) {
+                    if (currentTime - lastClickTime < 300) {
+                        if (!document.fullscreenElement) {
+                            toggleFullScreen();
+                        }
+                    }
+                    lastClickTime = currentTime;
+                } 
+                else {
+                    if (!document.fullscreenElement) {
+                        toggleFullScreen();
+                        document.removeEventListener('click', fullscreenHandler);
+                    }
+                }
+            };
+            document.addEventListener('click', fullscreenHandler);
+            document.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement && settings.autoFullscreen) {
+                    document.getElementById('autoFullscreenSwitch').checked = false;
+                    settings.autoFullscreen = false;
+                    saveSettings();
+                }
+            });
+        }
+        async function toggleWakeLock(enable) {
+            if (!('wakeLock' in navigator)) {
+                showToast('当前浏览器不支持屏幕常亮功能');
+                document.getElementById('wakeLockSwitch').checked = false;
+                settings.wakeLock = false;
+                saveSettings();
+                return;
+            }
+            if (enable) {
+                try { 
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    showToast('屏幕常亮已开启');
+                } catch (err) {
+                    console.error('屏幕常亮开启失败:', err);
+                    showToast('屏幕常亮开启失败，请检查浏览器权限');
+                    document.getElementById('wakeLockSwitch').checked = false;
+                    settings.wakeLock = false;
+                    saveSettings();
+                }
+            } else {
+                if (wakeLock !== null) { 
+                    await wakeLock.release(); 
+                    wakeLock = null;
+                    showToast('屏幕常亮已关闭');
+                }
+            }
+        }
+
+        function initCustomSelect() {
+            const selectElements = document.querySelectorAll('.custom-select');
+            selectElements.forEach(select => {
+                const trigger = select.querySelector('.select-trigger');
+                const dropdown = select.querySelector('.select-dropdown');
+                const options = select.querySelectorAll('.select-option');
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.select-trigger.open').forEach(item => {
+                        if (item !== trigger) {
+                            item.classList.remove('open');
+                            item.nextElementSibling.classList.remove('open');
+                        }
+                    });
+                    trigger.classList.toggle('open');
+                    dropdown.classList.toggle('open');
+                    vibrate();
+                });
+                options.forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const value = option.dataset.value;
+                        const text = option.textContent;
+                        trigger.dataset.value = value;
+                        trigger.textContent = text;
+                        options.forEach(opt => opt.classList.remove('selected'));
+                        option.classList.add('selected');
+                        trigger.classList.remove('open');
+                        dropdown.classList.remove('open');
+                        select.dispatchEvent(new CustomEvent('change', { detail: { value, text } }));
+                        vibrate();
+                    });
+                });
+            });
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.select-trigger.open').forEach(trigger => {
+                    trigger.classList.remove('open');
+                    trigger.nextElementSibling.classList.remove('open');
+                });
+            });
+        }
+
+        const stopwatch = {
+            startTime: 0,
+            elapsedTime: 0,
+            timer: null,
+            lapTimes: [],
+            isRunning: false
+        };
+        function formatStopwatchTime(ms) {
+            const hours = String(Math.floor(ms / 3600000)).padStart(2, '0');
+            const minutes = String(Math.floor((ms % 3600000) / 60000)).padStart(2, '0');
+            const seconds = String(Math.floor((ms % 60000) / 1000)).padStart(2, '0');
+            const centiseconds = String(Math.floor((ms % 1000) / 10)).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}.${centiseconds}`;
+        }
+        function updateStopwatch() {
+            const currentTime = Date.now();
+            stopwatch.elapsedTime = currentTime - stopwatch.startTime;
+            document.getElementById('stopwatchDisplay').textContent = formatStopwatchTime(stopwatch.elapsedTime);
+            stopwatch.timer = requestAnimationFrame(updateStopwatch);
+        }
+        function toggleStopwatch() {
+            const startBtn = document.getElementById('stopwatchStartBtn');
+            const lapBtn = document.getElementById('lapBtn');
+            const resetBtn = document.getElementById('stopwatchResetBtn');
+            if (!stopwatch.isRunning) {
+                stopwatch.startTime = Date.now() - stopwatch.elapsedTime;
+                updateStopwatch();
+                stopwatch.isRunning = true;
+                startBtn.textContent = '暂停';
+                startBtn.classList.remove('primary');
+                startBtn.classList.add('danger');
+                lapBtn.disabled = false;
+                resetBtn.disabled = false;
+                showToast('秒表已开始');
+            } else {
+                cancelAnimationFrame(stopwatch.timer);
+                stopwatch.isRunning = false;
+                startBtn.textContent = '继续';
+                startBtn.classList.remove('danger');
+                startBtn.classList.add('primary');
+                lapBtn.disabled = true;
+                showToast('秒表已暂停');
+            }
+            vibrate();
+        }
+        function addStopwatchLap() {
+            if (!stopwatch.isRunning) return;
+            stopwatch.lapTimes.unshift(stopwatch.elapsedTime);
+            const lapList = document.getElementById('lapList');
+            const lapItem = document.createElement('div');
+            lapItem.className = 'lap-item';
+            lapItem.innerHTML = `<span>计次 ${stopwatch.lapTimes.length}</span><span>${formatStopwatchTime(stopwatch.elapsedTime)}</span>`;
+            lapList.prepend(lapItem);
+            lapList.scrollTop = 0;
+            vibrate(100);
+        }
+        function resetStopwatch() {
+            cancelAnimationFrame(stopwatch.timer);
+            stopwatch.startTime = 0;
+            stopwatch.elapsedTime = 0;
+            stopwatch.lapTimes = [];
+            stopwatch.isRunning = false;
+            document.getElementById('stopwatchDisplay').textContent = '00:00:00.00';
+            document.getElementById('lapList').innerHTML = '';
+            const startBtn = document.getElementById('stopwatchStartBtn');
+            startBtn.textContent = '开始';
+            startBtn.classList.remove('danger');
+            startBtn.classList.add('primary');
+            document.getElementById('lapBtn').disabled = true;
+            document.getElementById('stopwatchResetBtn').disabled = true;
+            showToast('秒表已复位');
+            vibrate();
+        }
+
+        const countdown = {
+            totalSeconds: 0,
+            remainingSeconds: 0,
+            timer: null,
+            isRunning: false
+        };
+        function formatCountdownTime(seconds) {
+            const hours = String(Math.floor(seconds / 3600)).padStart(2, '0');
+            const minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+            const secs = String(seconds % 60).padStart(2, '0');
+            return `${hours}:${minutes}:${secs}`;
+        }
+
+        // 修复后的倒计时更新函数（含音频触发）
+        function updateCountdown() {
+            if (countdown.remainingSeconds <= 0) {
+                clearInterval(countdown.timer);
+                countdown.isRunning = false;
+                document.getElementById('countdownDisplay').textContent = '00:00:00';
+                document.getElementById('countdownStartBtn').textContent = '开始';
+                document.getElementById('countdownSetting').style.display = 'flex';
+                document.getElementById('countdownDisplay').style.display = 'none';
+                // 倒计时结束触发提示音+震动
+                playBeep(1000, 1000);
+                vibrate([200, 100, 200, 100, 200]);
+                showToast('倒计时结束！', 5000);
+                document.querySelectorAll('.time-input').forEach(input => {
+                    input.disabled = false;
+                });
+                return;
+            }
+            document.getElementById('countdownDisplay').textContent = formatCountdownTime(countdown.remainingSeconds);
+            countdown.remainingSeconds--;
+        }
+
+        function toggleCountdown() {
+            const startBtn = document.getElementById('countdownStartBtn');
+            const hourInput = document.getElementById('countdownHour');
+            const minuteInput = document.getElementById('countdownMinute');
+            const secondInput = document.getElementById('countdownSecond');
+            const settingPanel = document.getElementById('countdownSetting');
+            const displayPanel = document.getElementById('countdownDisplay');
+            const inputs = [hourInput, minuteInput, secondInput];
+            if (!countdown.isRunning) {
+                if (countdown.remainingSeconds === 0) {
+                    const hours = Math.max(0, parseInt(hourInput.value) || 0);
+                    const minutes = Math.max(0, parseInt(minuteInput.value) || 0);
+                    const seconds = Math.max(0, parseInt(secondInput.value) || 0);
+                    countdown.totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                    if (countdown.totalSeconds <= 0) {
+                        showToast('请设置有效的倒计时时间');
+                        vibrate();
+                        return;
+                    }
+                    countdown.remainingSeconds = countdown.totalSeconds;
+                    settingPanel.style.display = 'none';
+                    displayPanel.style.display = 'block';
+                    displayPanel.textContent = formatCountdownTime(countdown.remainingSeconds);
+                }
+                countdown.timer = setInterval(updateCountdown, 1000);
+                countdown.isRunning = true;
+                startBtn.textContent = '暂停';
+                startBtn.classList.remove('primary');
+                startBtn.classList.add('danger');
+                inputs.forEach(input => input.disabled = true);
+                showToast('倒计时已开始');
+            } else {
+                clearInterval(countdown.timer);
+                countdown.isRunning = false;
+                startBtn.textContent = '继续';
+                startBtn.classList.remove('danger');
+                startBtn.classList.add('primary');
+                showToast('倒计时已暂停');
+            }
+            vibrate();
+        }
+        function resetCountdown() {
+            clearInterval(countdown.timer);
+            countdown.totalSeconds = 0;
+            countdown.remainingSeconds = 0;
+            countdown.isRunning = false;
+            const inputs = document.querySelectorAll('.time-input');
+            inputs.forEach(input => {
+                input.value = 0;
+                input.disabled = false;
+            });
+            document.getElementById('countdownSetting').style.display = 'flex';
+            document.getElementById('countdownDisplay').style.display = 'none';
+            document.getElementById('countdownStartBtn').textContent = '开始';
+            document.getElementById('countdownStartBtn').classList.remove('danger');
+            document.getElementById('countdownStartBtn').classList.add('primary');
+            showToast('倒计时已复位');
+            vibrate();
+        }
+
+        function applyTheme(themeName) {
+            const theme = themeConfig[themeName];
+            if (!theme) return;
+            Object.keys(theme).forEach(key => { document.documentElement.style.setProperty(key, theme[key]); });
+            document.querySelectorAll('.theme-item').forEach(item => { item.classList.toggle('active', item.dataset.theme === themeName); });
+            document.documentElement.setAttribute('data-theme', themeName);
+            settings.theme = themeName;
+            saveSettings();
+        }
+        function updateProgress() {
+            const now = new Date();
+            let total, passed, progress, text;
+            switch (settings.progressType) {
+                case 'day':
+                    total = 24 * 60 * 60 * 1000;
+                    passed = now.getHours() * 60 * 60 * 1000 + now.getMinutes() * 60 * 1000 + now.getSeconds() * 1000;
+                    progress = (passed / total) * 100;
+                    text = `今日已过 ${progress.toFixed(2)}%`;
+                    break;
+                case 'week':
+                    total = 7 * 24 * 60 * 60 * 1000;
+                    const dayOfWeek = now.getDay() || 7;
+                    passed = (dayOfWeek - 1) * 24 * 60 * 60 * 1000 + now.getHours() * 60 * 60 * 1000 + now.getMinutes() * 60 * 1000 + now.getSeconds() * 1000;
+                    progress = (passed / total) * 100;
+                    text = `本周已过 ${progress.toFixed(2)}%`;
+                    break;
+                default:
+                    const yearStart = new Date(now.getFullYear(), 0, 1);
+                    const yearEnd = new Date(now.getFullYear() + 1, 0, 1);
+                    total = yearEnd - yearStart;
+                    passed = now - yearStart;
+                    progress = (passed / total) * 100;
+                    text = `本年度已过 ${progress.toFixed(2)}%`;
+            }
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = text;
+        }
+
+        // 修复后的整点报时函数（解决漏检问题）
+        function clockAlert() {
+            if (!settings.clockAlert) return;
+            const now = new Date();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const currentHourKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}`;
+            
+            // 放宽触发窗口，整点0-2秒内均可触发，避免定时器延迟漏检
+            if (minutes === 0 && seconds <= 2 && currentHourKey !== lastAlertTime) {
+                lastAlertTime = currentHourKey;
+                playBeep(880, 500);
+                vibrate(200);
+                showToast(`现在是${now.getHours()}点整`, 4000);
+            }
+        }
+
+        function updateTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            let ampm = 'AM';
+            if (settings.is12Hour) {
+                ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours === 0 ? 12 : hours;
+            }
+            hours = String(hours).padStart(2, '0');
+            document.getElementById('ampm').textContent = ampm;
+            document.getElementById('time').textContent = settings.showSecond ? `${hours}:${minutes}:${seconds}` : `${hours}:${minutes}`;
+            const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
+            const week = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'][now.getDay()];
+            document.getElementById('date').innerHTML = formatDate(y, m, d, week) + `<span class="festival" id="festival"></span>`;
+            const festivalElement = document.getElementById('festival');
+            festivalElement.textContent = '';
+            if (settings.showLunar) {
+                const lunar = solarToLunar(y, m, d);
+                if (lunar && Object.keys(lunar).length > 0) {
+                    const festival = getFestival(y, m, d, lunar.month, lunar.day, lunar.year);
+                    festivalElement.textContent = festival ? ` ${festival}` : '';
+                    let lunarStr = `${lunar.ganzhi}${lunar.animal}年 ${lunar.monthStr}${lunar.dayStr}`;
+                    if (lunar.term) lunarStr += ` | ${lunar.term}`;
+                    document.getElementById('lunar').textContent = lunarStr;
+                }
+            }
+            clockAlert();
+            updateProgress();
+        }
+        function initTabSwitch() {
+            const tabItems = document.querySelectorAll('.tab-item');
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabItems.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const targetTab = tab.dataset.tab;
+                    tabItems.forEach(item => item.classList.remove('active'));
+                    tab.classList.add('active');
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    document.getElementById(`${targetTab}Panel`).classList.add('active');
+                    vibrate();
+                });
+            });
+        }
+        function saveSettings() {
+            try {
+                localStorage.setItem('timeScreenSettings', JSON.stringify(settings));
+            } catch (e) {
+                console.warn('本地存储不可用，设置无法保存:', e);
+            }
+        }
+        function loadSettings() {
+            try {
+                const saved = localStorage.getItem('timeScreenSettings');
+                if (saved) {
+                    Object.assign(settings, JSON.parse(saved));
+                    document.getElementById('12hourSwitch').checked = settings.is12Hour;
+                    document.getElementById('secondSwitch').checked = settings.showSecond;
+                    document.getElementById('lunarSwitch').checked = settings.showLunar;
+                    document.getElementById('wakeLockSwitch').checked = settings.wakeLock;
+                    document.getElementById('breatheSwitch').checked = settings.breatheEffect;
+                    document.getElementById('clockAlertSwitch').checked = settings.clockAlert;
+                    document.getElementById('lowPowerSwitch').checked = settings.lowPower;
+                    document.getElementById('autoFullscreenSwitch').checked = settings.autoFullscreen;
+                    const dateFormatSelect = document.getElementById('dateFormatSelect');
+                    const progressTypeSelect = document.getElementById('progressTypeSelect');
+                    const dateOption = dateFormatSelect.querySelector(`.select-option[data-value="${settings.dateFormat}"]`);
+                    if (dateOption) dateOption.click();
+                    const progressOption = progressTypeSelect.querySelector(`.select-option[data-value="${settings.progressType}"]`);
+                    if (progressOption) progressOption.click();
+                    document.getElementById('cardBlurSlider').value = settings.cardBlur;
+                    document.getElementById('globalBlurSlider').value = settings.globalBlur;
+                    document.getElementById('fontWeightSlider').value = settings.fontWeight;
+                    applyTheme(settings.theme);
+                    toggleWakeLock(settings.wakeLock);
+                    document.body.classList.toggle('breathe-effect', settings.breatheEffect);
+                    document.body.classList.toggle('low-power', settings.lowPower);
+                    document.getElementById('ampm').style.display = settings.is12Hour ? 'block' : 'none';
+                    document.getElementById('lunar').style.display = settings.showLunar ? 'block' : 'none';
+                    updateVisualParams();
+                    initAutoFullscreen();
+                } else {
+                    initAutoFullscreen();
+                }
+            } catch (e) {
+                console.warn('本地存储读取失败，使用默认设置:', e);
+                initAutoFullscreen();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initCustomSelect();
+            initTabSwitch();
+
+            // 优化音频上下文初始化，用户交互后自动激活
+            const initAudio = () => {
+                if (!audioContext) {
+                    try {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        console.error('音频初始化失败:', e);
+                    }
+                }
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+            };
+            document.addEventListener('click', initAudio, { once: false });
+            document.addEventListener('touchstart', initAudio, { once: false });
+
+            loadSettings();
+            updateTime();
+            // 优化定时器间隔，确保整点检测稳定
+            setInterval(updateTime, settings.lowPower ? 500 : 100);
+            
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsPanel = document.getElementById('settingsPanel');
+            settingsPanel.addEventListener('click', (e) => e.stopPropagation());
+            
+            settingsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                settingsPanel.classList.toggle('active');
+                vibrate();
+            });
+            document.addEventListener('click', (e) => {
+                if (!settingsPanel.contains(e.target) && e.target !== settingsBtn) {
+                    settingsPanel.classList.remove('active');
+                }
+            });
+
+            document.getElementById('12hourSwitch').addEventListener('change', (e) => {
+                settings.is12Hour = e.target.checked;
+                document.getElementById('ampm').style.display = e.target.checked ? 'block' : 'none';
+                saveSettings();
+            });
+            document.getElementById('secondSwitch').addEventListener('change', (e) => {
+                settings.showSecond = e.target.checked;
+                saveSettings();
+            });
+            document.getElementById('lunarSwitch').addEventListener('change', (e) => {
+                settings.showLunar = e.target.checked;
+                document.getElementById('lunar').style.display = e.target.checked ? 'block' : 'none';
+                saveSettings();
+            });
+            document.getElementById('wakeLockSwitch').addEventListener('change', (e) => {
+                settings.wakeLock = e.target.checked;
+                toggleWakeLock(e.target.checked);
+                saveSettings();
+            });
+            document.getElementById('breatheSwitch').addEventListener('change', (e) => {
+                settings.breatheEffect = e.target.checked;
+                document.body.classList.toggle('breathe-effect', e.target.checked);
+                saveSettings();
+            });
+            document.getElementById('clockAlertSwitch').addEventListener('change', (e) => {
+                settings.clockAlert = e.target.checked;
+                saveSettings();
+                showToast(e.target.checked ? '整点报时已开启' : '整点报时已关闭');
+            });
+            document.getElementById('lowPowerSwitch').addEventListener('change', (e) => {
+                settings.lowPower = e.target.checked;
+                document.body.classList.toggle('low-power', e.target.checked);
+                saveSettings();
+                showToast(e.target.checked ? '低功耗模式已开启' : '低功耗模式已关闭');
+            });
+            document.getElementById('autoFullscreenSwitch').addEventListener('change', (e) => {
+                settings.autoFullscreen = e.target.checked;
+                saveSettings();
+                if (e.target.checked) {
+                    initAutoFullscreen();
+                    showToast(isMobile() ? '自动全屏已开启，双击屏幕即可进入全屏' : '自动全屏已开启，点击页面即可进入全屏');
+                } else {
+                    showToast('自动全屏已关闭');
+                }
+            });
+
+            document.getElementById('dateFormatSelect').addEventListener('change', (e) => {
+                settings.dateFormat = e.detail.value;
+                saveSettings();
+            });
+            document.getElementById('progressTypeSelect').addEventListener('change', (e) => {
+                settings.progressType = e.detail.value;
+                updateProgress();
+                saveSettings();
+            });
+
+            document.getElementById('cardBlurSlider').addEventListener('input', (e) => {
+                settings.cardBlur = e.target.value;
+                updateVisualParams();
+                saveSettings();
+            });
+            document.getElementById('globalBlurSlider').addEventListener('input', (e) => {
+                settings.globalBlur = e.target.value;
+                updateVisualParams();
+                saveSettings();
+            });
+            document.getElementById('fontWeightSlider').addEventListener('input', (e) => {
+                settings.fontWeight = e.target.value;
+                updateVisualParams();
+                saveSettings();
+            });
+
+            document.querySelectorAll('.theme-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    applyTheme(item.dataset.theme);
+                    vibrate();
+                });
+            });
+
+            document.getElementById('stopwatchStartBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleStopwatch();
+            });
+            document.getElementById('lapBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                addStopwatchLap();
+            });
+            document.getElementById('stopwatchResetBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                resetStopwatch();
+            });
+
+            document.getElementById('countdownStartBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleCountdown();
+            });
+            document.getElementById('countdownResetBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                resetCountdown();
+            });
+
+            document.querySelectorAll('.time-input').forEach(input => {
+                input.addEventListener('click', (e) => e.stopPropagation());
+                input.addEventListener('touchstart', (e) => e.stopPropagation());
+            });
+
+            // 页面可见性变化时立即同步时间，避免后台降频导致漏检
+            document.addEventListener('visibilitychange', async () => {
+                if (document.visibilityState === 'visible') {
+                    updateTime();
+                    if (settings.wakeLock && wakeLock === null) {
+                        try { 
+                            wakeLock = await navigator.wakeLock.request('screen'); 
+                        }
+                        catch (err) { 
+                            console.error('屏幕常亮重新申请失败:', err);
+                            document.getElementById('wakeLockSwitch').checked = false;
+                            settings.wakeLock = false;
+                            saveSettings();
+                        }
+                    }
+                    if (stopwatch.isRunning) updateStopwatch();
+                    if (countdown.isRunning) {
+                        clearInterval(countdown.timer);
+                        countdown.timer = setInterval(updateCountdown, 1000);
+                    }
+                } else {
+                    if (stopwatch.isRunning) cancelAnimationFrame(stopwatch.timer);
+                    if (countdown.isRunning) clearInterval(countdown.timer);
+                    if (wakeLock !== null) {
+                        try {
+                            await wakeLock.release();
+                            wakeLock = null;
+                        } catch (e) {
+                            console.error('屏幕常亮释放失败:', e);
+                        }
+                    }
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                updateTime();
+                document.getElementById('settingsPanel').classList.remove('active');
+            });
+            document.addEventListener('fullscreenchange', () => {
+                updateTime();
+                document.getElementById('settingsPanel').classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>
