@@ -282,17 +282,41 @@
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <div class="stat-card-inner">
-                        <div class="stat-icon visits-icon">
-                            <i class="fas fa-eye"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-name">访问次数</div>
-                            <div class="stat-number" id="visitCount">0</div>
-                        </div>
-                    </div>
-                </div>
+                <div class="footer-stats-cards">
+    <div class="stat-card">
+        <div class="stat-card-inner">
+            <div class="stat-icon online-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-name">在线</div>
+                <div class="stat-number" id="onlineCount">0</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-inner">
+            <div class="stat-icon today-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-name">今日</div>
+                <div class="stat-number" id="todayCount">0</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-inner">
+            <div class="stat-icon total-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-name">统计</div>
+                <div class="stat-number" id="totalCount">0</div>
+            </div>
+        </div>
+    </div>
+</div>
             </div>
         </div>
     </footer>
@@ -604,13 +628,14 @@
 <script src="./js/modules/wallpaper.js"></script>
 <script src="./js/modules/greeting.js"></script>
 <script src="./js/modules/footer.js"></script>
+<script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
 <!-- 移除了 activity.js -->
 
 <!-- 主应用程序 -->
 <script src="./js/toast.js"></script>
 <script src="./js/main.js"></script>
-<script src="./js/modules/stats.js"></script>
+
 <!-- 音乐播放器 -->
 <script src="./js/xfyy/utils.js"></script>
 <script src="./js/xfyy/cache-manager.js"></script>
