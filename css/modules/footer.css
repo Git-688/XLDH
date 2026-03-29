@@ -291,3 +291,13 @@
     height: 40px;
     font-size: 14px;
 }
+
+.online-icon i {
+    color: #ff9f4a;
+}
+.today-icon i {
+    color: #4cd964;
+}
+.total-icon i {
+    color: #4361ee;
+}
