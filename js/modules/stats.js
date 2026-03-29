@@ -6,7 +6,7 @@ class StatsModule {
   /**
    * 构造函数
    * @param {Object} options 配置项
-   * @param {string} options.workerBase Worker 完整接口地址，必填！示例：https://your-stats.xxx.workers.dev/api
+   * @param {string} options.workerBase Worker 完整接口地址，必填！示例：https://little-lab-1de9.workers.dev/api
    */
   constructor(options = {}) {
     // 核心配置：必须替换为你的 Worker 完整地址！！！
