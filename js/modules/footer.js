@@ -1,58 +1,89 @@
+/**
+ * 统计模块：使用 Cloudflare Worker 记录访问量、在线人数
+ * 替换原有的 localStorage 统计
+ */
 class StatsModule {
   constructor() {
-    this.apiBase = '/api';
+    this.apiBase = '/api';           // 与 Worker 路由匹配
     this.heartbeatInterval = null;
     this.init();
   }
 
   async init() {
+    // 页面加载时立即记录访问
     await this.recordVisit();
+    // 启动心跳（每30秒更新在线状态）
     this.startHeartbeat();
-    window.addEventListener('beforeunload', () => this.destroy());
   }
 
+  /**
+   * 记录访问（每次页面加载 + 心跳）
+   * 调用 /api/visit 接口，返回最新统计数据
+   */
   async recordVisit() {
     try {
       const response = await fetch(`${this.apiBase}/visit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) throw new Error('API 请求失败');
       const data = await response.json();
-      console.log('统计返回数据:', data); // 控制台可看返回的PV/UV/在线数据，排查问题
       this.updateDisplay(data);
     } catch (error) {
       console.error('统计上报失败:', error);
-      this.showErrorState();
+      // 降级：使用本地存储统计（保持基本功能）
+      this.fallbackLocalStats();
     }
   }
 
+  /**
+   * 心跳保活：每30秒调用一次 recordVisit，更新在线状态
+   */
   startHeartbeat() {
     if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
     this.heartbeatInterval = setInterval(() => {
+      // 静默记录，不阻塞页面
       this.recordVisit().catch(err => console.warn('心跳失败:', err));
-    }, 30000); // 30秒一次心跳
+    }, 30000);
   }
 
+  /**
+   * 更新页面上的统计数字
+   * @param {Object} stats - { pv, uv, online }
+   */
   updateDisplay(stats) {
-    // 严格对应你HTML里的ID，和CSS选择器完全匹配
+    // 在线人数
     const onlineEl = document.getElementById('onlineCount');
-    if (onlineEl) onlineEl.textContent = stats.online ?? '0';
+    if (onlineEl) onlineEl.textContent = stats.online || 0;
 
+    // 今日访客（UV）
     const todayEl = document.getElementById('todayCount');
-    if (todayEl) todayEl.textContent = stats.uv ?? '0';
+    if (todayEl) todayEl.textContent = stats.uv || 0;
 
+    // 总访问量（PV）
     const totalEl = document.getElementById('totalCount');
-    if (totalEl) totalEl.textContent = stats.pv ?? '0';
+    if (totalEl) totalEl.textContent = stats.pv || 0;
   }
 
-  showErrorState() {
-    ['onlineCount', 'todayCount', 'totalCount'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = '--';
-    });
+  /**
+   * 降级方案：使用 localStorage 模拟统计（保持原有逻辑）
+   */
+  fallbackLocalStats() {
+    let visitCount = localStorage.getItem('starlink_visitCount');
+    visitCount = visitCount ? parseInt(visitCount) + 1 : 1;
+    localStorage.setItem('starlink_visitCount', visitCount);
+    const totalEl = document.getElementById('totalCount');
+    if (totalEl) totalEl.textContent = visitCount;
+    // 在线和今日访客降级时显示默认值（可选）
+    const onlineEl = document.getElementById('onlineCount');
+    if (onlineEl) onlineEl.textContent = '--';
+    const todayEl = document.getElementById('todayCount');
+    if (todayEl) todayEl.textContent = '--';
   }
 
+  /**
+   * 停止心跳（页面关闭时可选）
+   */
   destroy() {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
