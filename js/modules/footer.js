@@ -1,90 +1,70 @@
-// 页脚模块
-class FooterModule {
-    constructor() {
-        this.startTime = null;
-        this.initialized = false;
-        this.init();
-    }
+class StatsModule {
+  constructor() {
+    this.apiBase = '/api';
+    this.heartbeatInterval = null;
+    this.init();
+  }
 
-    async init() {
-        if (this.initialized) return;
-        
-        console.log('页脚模块初始化...');
-        
-        try {
-            await this.updateVisitCount();
-            this.initialized = true;
-            console.log('页脚模块初始化完成 - 只处理访问次数');
-        } catch (error) {
-            console.error('页脚模块初始化失败:', error);
-            this.setupDefaultStats();
-        }
-    }
+  async init() {
+    await this.recordVisit();
+    this.startHeartbeat();
+    window.addEventListener('beforeunload', () => this.destroy());
+  }
 
-    // 只更新访问次数，不处理运行时间
-    async updateVisitCount() {
-        try {
-            let visitCount = 0;
-            
-            if (typeof Storage !== 'undefined' && Storage.get) {
-                visitCount = Storage.get('visitCount') || 0;
-            } else {
-                const storedVisit = localStorage.getItem('starlink_visitCount');
-                visitCount = storedVisit ? parseInt(storedVisit) : 0;
-            }
-            
-            visitCount++;
-            
-            if (typeof Storage !== 'undefined' && Storage.set) {
-                Storage.set('visitCount', visitCount);
-            } else {
-                localStorage.setItem('starlink_visitCount', visitCount.toString());
-            }
-            
-            const visitCountElement = document.getElementById('visitCount');
-            if (visitCountElement) {
-                visitCountElement.textContent = visitCount;
-            }
-            
-        } catch (error) {
-            console.error('更新访问次数失败:', error);
-            this.setupDefaultStats();
-        }
+  async recordVisit() {
+    try {
+      const response = await fetch(`${this.apiBase}/visit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      console.log('统计返回数据:', data); // 控制台可查看返回的数值
+      this.updateDisplay(data);
+    } catch (error) {
+      console.error('统计上报失败:', error);
+      this.showErrorState();
     }
+  }
 
-    setupDefaultStats() {
-        console.log('使用默认统计数据');
-        const visitCountElement = document.getElementById('visitCount');
-        if (visitCountElement) {
-            visitCountElement.textContent = '1';
-        }
-    }
+  startHeartbeat() {
+    if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+    this.heartbeatInterval = setInterval(() => {
+      this.recordVisit().catch(err => console.warn('心跳失败:', err));
+    }, 30000);
+  }
 
-    // 获取访问次数
-    getVisitCount() {
-        try {
-            if (typeof Storage !== 'undefined' && Storage.get) {
-                return Storage.get('visitCount') || 0;
-            } else {
-                const stored = localStorage.getItem('starlink_visitCount');
-                return stored ? parseInt(stored) : 0;
-            }
-        } catch {
-            return 0;
-        }
-    }
-}
+  updateDisplay(stats) {
+    const onlineEl = document.getElementById('onlineCount');
+    if (onlineEl) onlineEl.textContent = stats.online ?? '0';
 
-// 初始化模块
-if (typeof document !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', () => {
-        if (!window.footerModule) {
-            window.footerModule = new FooterModule();
-        }
+    const todayEl = document.getElementById('todayCount');
+    if (todayEl) todayEl.textContent = stats.uv ?? '0';
+
+    const totalEl = document.getElementById('totalCount');
+    if (totalEl) totalEl.textContent = stats.pv ?? '0';
+  }
+
+  showErrorState() {
+    ['onlineCount', 'todayCount', 'totalCount'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '--';
     });
+  }
+
+  destroy() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+  }
 }
 
-// 导出到全局
-if (typeof window !== 'undefined') {
-    window.FooterModule = FooterModule;
+// 自动初始化
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    window.statsModule = new StatsModule();
+  });
+} else {
+  window.statsModule = new StatsModule();
 }
