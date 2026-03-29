@@ -19,7 +19,7 @@ class StatsModule {
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      console.log('统计返回数据:', data); // 控制台可查看返回的数值
+      console.log('统计返回数据:', data); // 控制台可看返回的PV/UV/在线数据，排查问题
       this.updateDisplay(data);
     } catch (error) {
       console.error('统计上报失败:', error);
@@ -31,10 +31,11 @@ class StatsModule {
     if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
     this.heartbeatInterval = setInterval(() => {
       this.recordVisit().catch(err => console.warn('心跳失败:', err));
-    }, 30000);
+    }, 30000); // 30秒一次心跳
   }
 
   updateDisplay(stats) {
+    // 严格对应你HTML里的ID，和CSS选择器完全匹配
     const onlineEl = document.getElementById('onlineCount');
     if (onlineEl) onlineEl.textContent = stats.online ?? '0';
 
