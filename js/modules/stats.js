@@ -31,7 +31,7 @@ class StatsModule {
       this.updateDisplay(data);
     } catch (error) {
       console.error('统计上报失败:', error);
-      // 降级：使用本地存储统计（保持原有功能）
+      // 降级：使用本地存储统计（保持基本功能）
       this.fallbackLocalStats();
     }
   }
@@ -52,16 +52,17 @@ class StatsModule {
    * @param {Object} stats - { pv, uv, online }
    */
   updateDisplay(stats) {
-    const visitCountEl = document.getElementById('visitCount');
-    if (visitCountEl) visitCountEl.textContent = stats.pv || 0;
+    // 在线人数
+    const onlineEl = document.getElementById('onlineCount');
+    if (onlineEl) onlineEl.textContent = stats.online || 0;
 
-    // 如果有在线人数显示元素，则更新（可选）
-    const onlineCountEl = document.getElementById('onlineCount');
-    if (onlineCountEl) onlineCountEl.textContent = stats.online || 0;
+    // 今日访客（UV）
+    const todayEl = document.getElementById('todayCount');
+    if (todayEl) todayEl.textContent = stats.uv || 0;
 
-    // 如需显示今日 UV，可添加对应元素
-    const uvCountEl = document.getElementById('uvCount');
-    if (uvCountEl) uvCountEl.textContent = stats.uv || 0;
+    // 总访问量（PV）
+    const totalEl = document.getElementById('totalCount');
+    if (totalEl) totalEl.textContent = stats.pv || 0;
   }
 
   /**
@@ -71,8 +72,13 @@ class StatsModule {
     let visitCount = localStorage.getItem('starlink_visitCount');
     visitCount = visitCount ? parseInt(visitCount) + 1 : 1;
     localStorage.setItem('starlink_visitCount', visitCount);
-    const visitCountEl = document.getElementById('visitCount');
-    if (visitCountEl) visitCountEl.textContent = visitCount;
+    const totalEl = document.getElementById('totalCount');
+    if (totalEl) totalEl.textContent = visitCount;
+    // 在线和今日访客降级时显示默认值（可选）
+    const onlineEl = document.getElementById('onlineCount');
+    if (onlineEl) onlineEl.textContent = '--';
+    const todayEl = document.getElementById('todayCount');
+    if (todayEl) todayEl.textContent = '--';
   }
 
   /**
