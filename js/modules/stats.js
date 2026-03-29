@@ -10,7 +10,7 @@ class StatsModule {
    */
   constructor(options = {}) {
     // 核心配置：必须替换为你的 Worker 完整地址！！！
-    this.workerBase = options.workerBase || 'https://your-worker-domain.workers.dev/api';
+    this.workerBase = options.workerBase || 'https://stats-worker.little-lab-1de9.workers.dev/api';
     this.heartbeatInterval = null;
     // 用户唯一标识（UV统计用）
     this.userUUID = this.getOrCreateUUID();
