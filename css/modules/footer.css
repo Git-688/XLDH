@@ -135,13 +135,17 @@
     font-size: 14px;
 }
 
-/* 访问次数图标样式 - 绿色主题，使用变量 */
-.visits-icon {
-    border: 1.5px solid var(--success-color, #10b981);
+/* 新增：在线图标样式 */
+.online-icon i {
+    color: #ff9f4a;
 }
-.visits-icon i {
-    color: var(--success-color, #10b981);
-    font-size: 14px;
+/* 新增：今日访客图标样式 */
+.today-icon i {
+    color: #4cd964;
+}
+/* 新增：总访问量图标样式 */
+.total-icon i {
+    color: #4361ee;
 }
 
 /* 增强心跳动画 - 调整动画大小 */
@@ -196,11 +200,22 @@
     text-overflow: ellipsis;
 }
 
+/* 为三个统计数字设置不同颜色 */
+#onlineCount {
+    color: #ff9f4a;
+}
+#todayCount {
+    color: #4cd964;
+}
+#totalCount {
+    color: #4361ee;
+}
+
 /* ====== 响应式断点优化 ====== */
-/* 移动端 (≤767px)：强制两卡片并排 */
+/* 移动端 (≤767px)：强制三卡片并排 */
 @media (max-width: 767px) {
     .footer-stats-cards {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 8px;
     }
     .stat-number {
@@ -221,7 +236,7 @@
 /* 平板端 (768px-1024px) */
 @media (min-width: 768px) and (max-width: 1024px) {
     .footer-stats-cards {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 12px;
     }
 }
@@ -290,14 +305,4 @@
     width: 40px;
     height: 40px;
     font-size: 14px;
-}
-
-.online-icon i {
-    color: #ff9f4a;
-}
-.today-icon i {
-    color: #4cd964;
-}
-.total-icon i {
-    color: #4361ee;
 }
