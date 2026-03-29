@@ -135,15 +135,15 @@
     font-size: 14px;
 }
 
-/* 新增：在线图标样式 */
+/* 在线图标样式 */
 .online-icon i {
     color: #ff9f4a;
 }
-/* 新增：今日访客图标样式 */
+/* 今日访客图标样式 */
 .today-icon i {
     color: #4cd964;
 }
-/* 新增：总访问量图标样式 */
+/* 总访问量图标样式 */
 .total-icon i {
     color: #4361ee;
 }
@@ -200,7 +200,7 @@
     text-overflow: ellipsis;
 }
 
-/* 为三个统计数字设置不同颜色 */
+/* 三个统计数字独立颜色 */
 #onlineCount {
     color: #ff9f4a;
 }
