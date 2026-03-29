@@ -1,38 +1,38 @@
-/* ====== 超紧凑响应式页脚样式 (修复版) ====== */
+/* ====== 超紧凑响应式页脚样式 (最终版) ====== */
 .footer-compact-container {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: calc(var(--section-margin-xs, 16px) * 0.6) var(--container-padding-xs, 12px);
+    padding: calc(var(--section-margin-xs) * 0.6) var(--container-padding-xs);
     box-sizing: border-box;
 }
 
 /* 响应式调整边距 */
 @media (min-width: 576px) {
     .footer-compact-container {
-        padding: calc(var(--section-margin-sm, 20px) * 0.6) var(--container-padding-sm, 16px);
+        padding: calc(var(--section-margin-sm) * 0.6) var(--container-padding-sm);
     }
 }
 
 @media (min-width: 768px) {
     .footer-compact-container {
-        padding: calc(var(--section-margin-md, 24px) * 0.6) var(--container-padding-md, 20px);
+        padding: calc(var(--section-margin-md) * 0.6) var(--container-padding-md);
     }
 }
 
 @media (min-width: 992px) {
     .footer-compact-container {
-        padding: calc(var(--section-margin-lg, 32px) * 0.6) var(--container-padding-lg, 24px);
+        padding: calc(var(--section-margin-lg) * 0.6) var(--container-padding-lg);
     }
 }
 
 @media (min-width: 1200px) {
     .footer-compact-container {
-        padding: calc(var(--section-margin-lg, 32px) * 0.6) var(--container-padding-xl, 32px);
+        padding: calc(var(--section-margin-lg) * 0.6) var(--container-padding-xl);
     }
 }
 
-/* 1. 顶部声明卡片 */
+/* 1. 顶部声明卡片 - 缩小 */
 .footer-disclaimer-card {
     background: var(--bg-card, #ffffff);
     border: 1px solid var(--border-color, #e9ecef);
@@ -87,7 +87,7 @@
     font-style: italic;
 }
 
-/* 2. 底部数据卡片组 */
+/* 2. 底部数据卡片组 - 缩小 */
 .footer-stats-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -114,7 +114,7 @@
     gap: 10px;
 }
 
-/* 圆形图标 */
+/* 圆形图标 - 缩小 */
 .stat-icon {
     width: 32px;
     height: 32px;
@@ -126,7 +126,7 @@
     background-color: transparent;
 }
 
-/* 运行时间图标样式 */
+/* 运行时间图标样式 - 红色主题，使用变量 */
 .running-icon {
     border: 1.5px solid var(--error-color, #ff4757);
 }
@@ -135,20 +135,20 @@
     font-size: 14px;
 }
 
-/* 在线图标样式 */
+/* 新增：在线图标样式 */
 .online-icon i {
     color: #ff9f4a;
 }
-/* 今日访客图标样式 */
+/* 新增：今日访客图标样式 */
 .today-icon i {
     color: #4cd964;
 }
-/* 总访问量图标样式 */
+/* 新增：总访问量图标样式 */
 .total-icon i {
     color: #4361ee;
 }
 
-/* 增强心跳动画 */
+/* 增强心跳动画 - 调整动画大小 */
 .heartbeat-enhanced {
     animation: heartbeat-enhanced 1.2s ease-in-out infinite;
     transform-origin: center;
@@ -200,16 +200,15 @@
     text-overflow: ellipsis;
 }
 
-/* ========== 修复：统计数字颜色100%生效 ========== */
-/* 提升选择器优先级，确保不会被覆盖 */
-.stat-content #onlineCount {
-    color: #ff9f4a !important;
+/* 为三个统计数字设置不同颜色 */
+#onlineCount {
+    color: #ff9f4a;
 }
-.stat-content #todayCount {
-    color: #4cd964 !important;
+#todayCount {
+    color: #4cd964;
 }
-.stat-content #totalCount {
-    color: #4361ee !important;
+#totalCount {
+    color: #4361ee;
 }
 
 /* ====== 响应式断点优化 ====== */
@@ -232,9 +231,6 @@
     .disclaimer-text {
         font-size: 10px;
     }
-    .footer-compact-container {
-        padding-top: calc(var(--section-margin-xs, 16px) * 0.5);
-    }
 }
 
 /* 平板端 (768px-1024px) */
@@ -251,7 +247,6 @@
         display: flex;
         gap: 20px;
         align-items: flex-start;
-        padding-top: calc(var(--section-margin-lg, 32px) * 0.6);
     }
     .footer-disclaimer-card {
         flex: 2;
@@ -288,6 +283,20 @@
     }
     .stat-name {
         font-size: 9px;
+    }
+}
+
+/* 修复页脚与导航间距过远问题 */
+@media (max-width: 767px) {
+    .footer-compact-container {
+        padding-top: calc(var(--section-margin-xs) * 0.5);
+    }
+}
+
+/* 额外：确保在桌面端布局时也有合适间距 */
+@media (min-width: 1025px) {
+    .footer-compact-container {
+        padding-top: calc(var(--section-margin-lg) * 0.6);
     }
 }
 
