@@ -330,73 +330,63 @@
                         </div>
                     </div>
                     <div class="footer-stats-cards">
-                        <div class="stat-card">
-                            <div class="stat-card-inner">
-                                <div class="stat-icon running-icon">
-                                    <i class="fas fa-heartbeat heartbeat-enhanced">
-                                    </i>
-                                </div>
-                                <div class="stat-content">
-                                    <div class="stat-name">
-                                        运行时间
-                                    </div>
-                                    <div class="stat-number" id="uptime">
-                                        0天 0时 0分 0秒
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                            <div class="stat-card">
-                                <div class="stat-card-inner">
-                                    <div class="stat-icon online-icon">
-                                        <i class="fas fa-users">
-                                        </i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <div class="stat-name">
-                                            在线
-                                        </div>
-                                        <div class="stat-number" id="onlineCount">
-                                            0
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-card-inner">
-                                    <div class="stat-icon today-icon">
-                                        <i class="fas fa-user-plus">
-                                        </i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <div class="stat-name">
-                                            今日
-                                        </div>
-                                        <div class="stat-number" id="todayCount">
-                                            0
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-card-inner">
-                                    <div class="stat-icon total-icon">
-                                        <i class="fas fa-chart-line">
-                                        </i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <div class="stat-name">
-                                            统计
-                                        </div>
-                                        <div class="stat-number" id="totalCount">
-                                            0
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        
-                    </div>
+                    <div class="footer-stats-cards">
+    <div class="stat-card">运行时间</div>
+    <div class="footer-stats-cards">   <!-- 多余的嵌套！ -->
+        <div class="stat-card">在线</div>
+        <div class="stat-card">今日</div>
+        <div class="stat-card">统计</div>
+    </div>
+</div>
+    <!-- 运行时间卡片 -->
+    <div class="stat-card">
+        <div class="stat-card-inner">
+            <div class="stat-icon running-icon">
+                <i class="fas fa-heartbeat heartbeat-enhanced"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-name">运行时间</div>
+                <div class="stat-number" id="uptime">0天 0时 0分 0秒</div>
+            </div>
+        </div>
+    </div>
+    <!-- 在线人数卡片 -->
+    <div class="stat-card">
+        <div class="stat-card-inner">
+            <div class="stat-icon online-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-name">在线</div>
+                <div class="stat-number" id="onlineCount">0</div>
+            </div>
+        </div>
+    </div>
+    <!-- 今日访客卡片 -->
+    <div class="stat-card">
+        <div class="stat-card-inner">
+            <div class="stat-icon today-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-name">今日</div>
+                <div class="stat-number" id="todayCount">0</div>
+            </div>
+        </div>
+    </div>
+    <!-- 总访问量卡片 -->
+    <div class="stat-card">
+        <div class="stat-card-inner">
+            <div class="stat-icon total-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-name">统计</div>
+                <div class="stat-number" id="totalCount">0</div>
+            </div>
+        </div>
+    </div>
+</div>
                 </div>
             </footer>
             <!-- 返回顶部和天气按钮 -->
