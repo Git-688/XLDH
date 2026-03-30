@@ -8,38 +8,36 @@ async function post(endpoint) {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (e) {
-    console.error('请求失败', e);
+    // 静默失败，不影响页面
   }
 }
 
 async function loadStats() {
   try {
-    const r = await fetch(`${WORKER_URL}/stats`);
-    const d = await r.json();
-
-    // 原生JS获取元素，不再依赖jQuery
+    const response = await fetch(`${WORKER_URL}/stats`);
+    const data = await response.json();
+    
+    // 使用原生 DOM 方法更新页面
     const onlineEl = document.getElementById('onlineCount');
     const todayEl = document.getElementById('todayCount');
     const totalEl = document.getElementById('totalCount');
-
-    if (onlineEl) onlineEl.innerText = d.online;
-    if (todayEl) todayEl.innerText = d.today_uv;
-    if (totalEl) totalEl.innerText = d.total_pv;
-  } catch (e) {}
+    
+    if (onlineEl) onlineEl.textContent = data.online;
+    if (todayEl) todayEl.textContent = data.today_uv;
+    if (totalEl) totalEl.textContent = data.total_pv;
+  } catch (e) {
+    console.error('加载统计失败:', e);
+  }
 }
 
 function init() {
-  post('/visit');     // 记录访问
-  post('/heartbeat'); // 立即发心跳 → 在线人数马上变成1
-  loadStats();        // 立即加载数字
-
-  // 30秒心跳
-  setInterval(() => post('/heartbeat'), 30000);
-  // 1分钟刷新显示
-  setInterval(loadStats, 60000);
+  post('/visit');          // 记录访问
+  loadStats();             // 加载数据
+  setInterval(() => post('/heartbeat'), 30000);  // 30秒心跳
+  setInterval(loadStats, 120000);                // 2分钟刷新
 }
 
-// 页面加载后执行
+// 页面加载完成后执行
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
