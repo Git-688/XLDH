@@ -261,12 +261,12 @@ window.NavigationData = {
                     title: '浅夏API',
                     description: '我们提供丰富多样的API接口，接口仅提供学习，请勿用于商用。',
                     url: 'https://115exuq280928.vicp.fun/',
-                    icon: 'http://p.qlogo.cn/homework/0/hw_h_6hbdvnt5ldogco86891ea1a206c9/0/qxapi'
+                    icon: 'https://p.qlogo.cn/homework/0/hw_h_6hbdvnt5ldogco86891ea1a206c9/0/qxapi'
                 },
                 {
                     title: '芒果API',
                     description: '热带风格应用接口',
-                    url: 'http://mgyy.asia/',
+                    url: 'https://mgyy.asia/',
                     icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
@@ -278,13 +278,13 @@ window.NavigationData = {
                 {
                     title: '小执API',
                     description: '专注的应用接口服务',
-                    url: 'http://api.xzboke.cn/',
-                    icon: 'http://api.xzboke.cn/favicon.ico'
+                    url: 'https://api.xzboke.cn/',
+                    icon: 'https://api.xzboke.cn/favicon.ico'
                 },
                 {
                     title: '小言API',
                     description: '轻量级应用接口',
-                    url: 'http://api.zxz.ee/',
+                    url: 'https://api.zxz.ee/',
                     icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
@@ -362,8 +362,8 @@ window.NavigationData = {
                 {
                     title: 'API大全',
                     description: '收录API接口',
-                    url: 'http://qwq.tangdouz.com/',
-                    icon: 'http://qwq.tangdouz.com/tang.png'
+                    url: 'https://qwq.tangdouz.com/',
+                    icon: 'https://qwq.tangdouz.com/tang.png'
                 },
                 {
                     title: '福利云API',
@@ -386,8 +386,8 @@ window.NavigationData = {
                 {
                     title: '安生API',
                     description: '安全稳定应用接口',
-                    url: 'http://api.1668888.xyz/',
-                    icon: 'http://api.1668888.xyz/assets/img/favicons/favicon.png'
+                    url: 'https://api.1668888.xyz/',
+                    icon: 'https://api.1668888.xyz/assets/img/favicons/favicon.png'
                 },
                 {
                     title: '思娟API',
@@ -416,8 +416,8 @@ window.NavigationData = {
                 {
                     title: '小尘API',
                     description: '轻量级应用接口',
-                    url: 'http://api.xcvts.cn/',
-                    icon: 'http://api.xcvts.cn/favicon.ico'
+                    url: 'https://api.xcvts.cn/',
+                    icon: 'https://api.xcvts.cn/favicon.ico'
                 },
                 {
                     title: '小萝卜API',
@@ -596,8 +596,8 @@ window.NavigationData = {
                 {
                     title: '果汁导航',
                     description: '清新风格网站导航',
-                    url: 'http://www.guozhivip.com/',
-                    icon: 'http://www.guozhivip.com/images/ic.ico'
+                    url: 'https://www.guozhivip.com/',
+                    icon: 'https://www.guozhivip.com/images/ic.ico'
                 },
                 {
                     title: '数字素养网',
@@ -614,7 +614,7 @@ window.NavigationData = {
                 {
                     title: 'Noisedh导航',
                     description: '噪音风格网站导航',
-                    url: 'http://www.noisedh.cn/',
+                    url: 'https://www.noisedh.cn/',
                     icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
@@ -718,7 +718,7 @@ window.NavigationData = {
                 {
                     title: '哈哩哈哩',
                     description: '二次元影视平台',
-                    url: 'http://halihali21.com/',
+                    url: 'https://halihali21.com/',
                     icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
@@ -786,8 +786,8 @@ window.NavigationData = {
                 {
                     title: '樱花动漫',
                     description: '经典动漫资源平台',
-                    url: 'http://m.iyinghua.com/',
-                    icon: 'http://m.iyinghua.com/js/20180601/ico.png'
+                    url: 'https://m.iyinghua.com/',
+                    icon: 'https://m.iyinghua.com/js/20180601/ico.png'
                 },
                 {
                     title: '烂番茄',
@@ -930,8 +930,8 @@ window.NavigationData = {
                 {
                     title: '闪闪音乐网',
                     description: '闪亮音乐平台',
-                    url: 'http://www.33ve.com/',
-                    icon: 'http://www.33ve.com/favicon.ico'
+                    url: 'https://www.33ve.com/',
+                    icon: 'https://www.33ve.com/favicon.ico'
                 }
             ],
             '音乐资源': [
@@ -968,7 +968,7 @@ window.NavigationData = {
                 {
                     title: '52ape',
                     description: 'APE无损音乐平台',
-                    url: 'http://www.52ape.com/',
+                    url: 'https://www.52ape.com/',
                     icon: 'https://www.52ape.com/img/4377a791184e1e59f1afa67a77050a69'
                 }
             ],
@@ -1006,7 +1006,7 @@ window.NavigationData = {
                 {
                     title: '搬书匠',
                     description: '书籍搬运工平台',
-                    url: 'http://www.banshujiang.cn/',
+                    url: 'https://www.banshujiang.cn/',
                     icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
@@ -1030,8 +1030,8 @@ window.NavigationData = {
                 {
                     title: '香书小说',
                     description: '香书小说阅读平台',
-                    url: 'http://wap.xbiqugu.la/',
-                    icon: 'http://www.xbiqugu.la/files/article/image/134/134375/134375s.jpg'
+                    url: 'https://wap.xbiqugu.la/',
+                    icon: 'https://www.xbiqugu.la/files/article/image/134/134375/134375s.jpg'
                 },
                 {
                     title: '爱下电子书',
@@ -1140,13 +1140,13 @@ window.NavigationData = {
                 {
                     title: '果汁实验室',
                     description: '果汁实验游戏',
-                    url: 'http://guozhivip.com/lab/',
-                    icon: 'http://guozhivip.com/lab/images/logo.png'
+                    url: 'https://guozhivip.com/lab/',
+                    icon: 'https://guozhivip.com/lab/images/logo.png'
                 },
                 {
                     title: '俄罗斯方块',
                     description: '经典俄罗斯方块',
-                    url: 'http://github.tanchangwen.com/react-tetris/?lan=zh-cn',
+                    url: 'https://github.tanchangwen.com/react-tetris/?lan=zh-cn',
                     icon: 'https://pan.erguanmingmin.com/file/10014221/00.png'
                 },
                 {
@@ -1570,8 +1570,8 @@ window.NavigationData = {
                 {
                     title: 'Silk',
                     description: '互动生成艺术',
-                    url: 'http://weavesilk.com/',
-                    icon: 'http://weavesilk.com/favicon.ico'
+                    url: 'https://weavesilk.com/',
+                    icon: 'https://weavesilk.com/favicon.ico'
                 },
                 {
                     title: 'Patatap',
