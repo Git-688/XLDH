@@ -1,7 +1,7 @@
 // stats.js - 与 Cloudflare Worker 统计系统对接
 
 // Worker 的地址（替换为你的 Worker 域名）
-const WORKER_URL = 'https://stats-worker.你的用户名.workers.dev'; // 例如 'https://stats-worker.abc.workers.dev'
+const WORKER_URL = 'https://stats-worker.little-lab-1de9.workers.dev'; // 例如 'https://stats-worker.abc.workers.dev'
 
 /**
  * 发送 POST 请求到 Worker
