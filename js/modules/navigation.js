@@ -1,5 +1,6 @@
 /**
- * 优化分类导航系统（已添加点击统计上报）
+ * 优化分类导航系统（从 Worker 动态获取数据，支持 D1）
+ * 文件位置：./js/modules/navigation.js
  */
 class OptimizedNavigation {
     constructor() {
@@ -46,27 +47,49 @@ class OptimizedNavigation {
         }
     }
 
+    /**
+     * 加载导航数据（优先从 Worker 获取，失败则使用本地 JSON）
+     */
     async loadNavigationData() {
+        // 尝试从 Worker 接口获取
         try {
-            if (typeof NavigationData !== 'undefined') {
-                this.navigationData = NavigationData;
-            } else {
-                const response = await fetch('./data/navigation.json');
-                if (!response.ok) throw new Error('导航数据加载失败');
-                this.navigationData = await response.json();
-            }
+            const response = await fetch('https://api.xldh688.eu.cc/navigation');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.navigationData = await response.json();
+            console.log('✅ 导航数据从 Cloudflare Worker 加载成功');
+            return;
         } catch (error) {
-            console.error('加载导航数据失败:', error);
-            throw error;
+            console.warn('从 Worker 加载导航数据失败，尝试本地备份:', error);
+        }
+
+        // 降级：加载本地 navigation.json
+        try {
+            const fallbackResponse = await fetch('./data/navigation.json');
+            if (!fallbackResponse.ok) throw new Error('本地导航数据加载失败');
+            // 注意：本地 navigation.json 应为纯 JSON 对象（无 window.NavigationData 包裹）
+            this.navigationData = await fallbackResponse.json();
+            console.log('✅ 导航数据从本地文件加载成功');
+        } catch (fallbackError) {
+            console.error('加载导航数据完全失败:', fallbackError);
+            throw fallbackError;
         }
     }
 
+    /**
+     * 计算统计信息（兼容 D1 返回的数据结构）
+     */
     calculateStats() {
-        if (this.navigationData && this.navigationData.getStats) {
-            const stats = this.navigationData.getStats();
-            this.stats.totalCategories = stats.totalCategories;
-            this.stats.totalWebsites = stats.totalWebsites;
+        if (this.navigationData && this.navigationData.categories) {
+            let totalWebsites = 0;
+            for (const category in this.navigationData.categories) {
+                for (const subCategory in this.navigationData.categories[category]) {
+                    totalWebsites += this.navigationData.categories[category][subCategory].length;
+                }
+            }
+            this.stats.totalCategories = Object.keys(this.navigationData.categories).length;
+            this.stats.totalWebsites = totalWebsites;
         } else {
+            // 默认值（本地 fallback 可能为空时使用）
             this.stats.totalCategories = 8;
             this.stats.totalWebsites = 163;
         }
@@ -190,7 +213,7 @@ class OptimizedNavigation {
                 </div>
             `;
             
-            // ========== 点击事件（添加上报） ==========
+            // 点击事件（包含点击统计上报）
             card.addEventListener('click', (e) => {
                 this.isNavigationClick = true;
                 e.stopPropagation();
@@ -200,7 +223,7 @@ class OptimizedNavigation {
                     window.musicPlayer.isHandlingNavigationClick = true;
                 }
                 
-                // 新增：上报点击统计（异步，不阻塞跳转）
+                // 上报点击统计（异步，不阻塞跳转）
                 const clickUrl = site.url;
                 const clickTitle = site.title;
                 fetch('https://api.xldh688.eu.cc/click', {
@@ -408,7 +431,7 @@ class OptimizedNavigation {
         this.init();
     }
 
-    // 链接有效性检测
+    // 链接有效性检测（保持原有逻辑）
     startLinkValidation() {
         const allWebsites = this.getAllWebsites();
         const urls = [...new Set(allWebsites.map(site => site.url))];
