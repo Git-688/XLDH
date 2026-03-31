@@ -1,6 +1,5 @@
 /**
- * 优化分类导航系统
- * 文件位置：./js/modules/navigation.js
+ * 优化分类导航系统（已添加点击统计上报）
  */
 class OptimizedNavigation {
     constructor() {
@@ -35,7 +34,6 @@ class OptimizedNavigation {
             
             const firstCategory = this.getFirstCategory();
             if (firstCategory) {
-                // 初始化时传入 false，禁止自动滚动
                 this.selectLevel1(firstCategory, false);
             }
             
@@ -192,6 +190,7 @@ class OptimizedNavigation {
                 </div>
             `;
             
+            // ========== 点击事件（添加上报） ==========
             card.addEventListener('click', (e) => {
                 this.isNavigationClick = true;
                 e.stopPropagation();
@@ -201,6 +200,16 @@ class OptimizedNavigation {
                     window.musicPlayer.isHandlingNavigationClick = true;
                 }
                 
+                // 新增：上报点击统计（异步，不阻塞跳转）
+                const clickUrl = site.url;
+                const clickTitle = site.title;
+                fetch('https://api.xldh688.eu.cc/click', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: clickUrl, title: clickTitle })
+                }).catch(err => console.warn('点击上报失败:', err));
+                
+                // 原有的浏览量统计
                 this.incrementSiteViews(site.url, card);
                 
                 setTimeout(() => {
@@ -273,7 +282,6 @@ class OptimizedNavigation {
         }
     }
 
-    // 修改 selectLevel1，增加 isUserClick 参数
     selectLevel1(level1, isUserClick = false) {
         if (this.selectedLevel1 === level1) return;
         this.isNavigationClick = true;
@@ -282,7 +290,6 @@ class OptimizedNavigation {
         });
         this.selectedLevel1 = level1;
         
-        // 只有用户点击且为窄窗口时才执行滚动
         if (window.innerWidth <= 1023 && isUserClick) {
             const activeBtn = document.querySelector('.level1-btn.active');
             if (activeBtn) {
@@ -293,7 +300,6 @@ class OptimizedNavigation {
         this.renderLevel2(level1);
         const firstLevel2 = this.getFirstSubCategory(level1);
         if (firstLevel2) {
-            // 将 isUserClick 传递给 selectLevel2
             this.selectLevel2(firstLevel2, isUserClick);
         } else {
             this.renderEmptyState();
@@ -302,7 +308,6 @@ class OptimizedNavigation {
         setTimeout(() => { this.isNavigationClick = false; }, 100);
     }
 
-    // 修改 selectLevel2，增加 isUserClick 参数
     selectLevel2(level2, isUserClick = false) {
         if (this.selectedLevel2 === level2) return;
         this.isNavigationClick = true;
@@ -311,7 +316,6 @@ class OptimizedNavigation {
         });
         this.selectedLevel2 = level2;
         
-        // 只有用户点击且为窄窗口时才执行滚动
         if (window.innerWidth <= 1023 && isUserClick) {
             const activeBtn = document.querySelector('.level2-btn.active');
             if (activeBtn) {
@@ -341,7 +345,6 @@ class OptimizedNavigation {
                 this.isNavigationClick = true;
                 if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
                 const level1 = level1Btn.dataset.level1;
-                // 用户点击传入 true
                 this.selectLevel1(level1, true);
                 setTimeout(() => {
                     this.isNavigationClick = false;
@@ -354,7 +357,6 @@ class OptimizedNavigation {
                 this.isNavigationClick = true;
                 if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
                 const level2 = level2Btn.dataset.level2;
-                // 用户点击传入 true
                 this.selectLevel2(level2, true);
                 setTimeout(() => {
                     this.isNavigationClick = false;
@@ -406,38 +408,28 @@ class OptimizedNavigation {
         this.init();
     }
 
-    // ==================== 链接有效性检测 ====================
-
+    // 链接有效性检测
     startLinkValidation() {
         const allWebsites = this.getAllWebsites();
         const urls = [...new Set(allWebsites.map(site => site.url))];
-        
         this.stats.invalidCount = 0;
-        
         urls.forEach(url => {
             const cached = Storage.getLinkValidity(url);
             const now = Date.now();
             if (cached && cached.timestamp && (now - cached.timestamp < this.validationCacheTTL)) {
-                if (!cached.valid) {
-                    this.stats.invalidCount++;
-                }
+                if (!cached.valid) this.stats.invalidCount++;
                 this.updateCardValidityStyle(url, cached.valid);
             } else {
                 this.validationQueue.push(url);
             }
         });
-        
         this.updateStatsDisplay();
-        
-        if (this.validationQueue.length > 0) {
-            this.processValidationQueue();
-        }
+        if (this.validationQueue.length > 0) this.processValidationQueue();
     }
 
     async processValidationQueue() {
         if (this.isValidating) return;
         this.isValidating = true;
-        
         while (this.validationQueue.length > 0) {
             if (this.currentValidations < this.maxConcurrent) {
                 const url = this.validationQueue.shift();
@@ -452,10 +444,7 @@ class OptimizedNavigation {
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
         }
-        
-        if (this.currentValidations === 0) {
-            this.isValidating = false;
-        }
+        if (this.currentValidations === 0) this.isValidating = false;
     }
 
     async validateLink(url) {
@@ -463,29 +452,18 @@ class OptimizedNavigation {
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000);
-            
-            await fetch(url, {
-                method: 'HEAD',
-                mode: 'no-cors',
-                signal: controller.signal
-            });
+            await fetch(url, { method: 'HEAD', mode: 'no-cors', signal: controller.signal });
             clearTimeout(timeoutId);
             valid = true;
-        } catch (error) {
-            valid = false;
-        }
-        
+        } catch { valid = false; }
         Storage.setLinkValidity(url, valid);
-        
         if (!valid) {
             this.stats.invalidCount++;
         } else {
             this.recalculateInvalidCount();
         }
-        
         this.updateStatsDisplay();
         this.updateCardValidityStyle(url, valid);
-        
         return valid;
     }
 
@@ -493,14 +471,10 @@ class OptimizedNavigation {
         let count = 0;
         const allWebsites = this.getAllWebsites();
         const urls = [...new Set(allWebsites.map(site => site.url))];
-        
         urls.forEach(url => {
             const cached = Storage.getLinkValidity(url);
-            if (cached && cached.valid === false) {
-                count++;
-            }
+            if (cached && cached.valid === false) count++;
         });
-        
         this.stats.invalidCount = count;
     }
 
@@ -508,11 +482,8 @@ class OptimizedNavigation {
         const normalizedUrl = Storage.normalizeUrl(url);
         const cards = document.querySelectorAll(`.site-card[data-url-normalized="${normalizedUrl}"]`);
         cards.forEach(card => {
-            if (valid) {
-                card.classList.remove('invalid');
-            } else {
-                card.classList.add('invalid');
-            }
+            if (valid) card.classList.remove('invalid');
+            else card.classList.add('invalid');
         });
     }
 
