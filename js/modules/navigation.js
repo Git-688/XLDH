@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统（从 Worker 动态获取数据，支持 D1）
+ * 优化分类导航系统（完全基于后端 Worker + D1）
  * 文件位置：./js/modules/navigation.js
  */
 class OptimizedNavigation {
@@ -48,30 +48,22 @@ class OptimizedNavigation {
     }
 
     /**
-     * 加载导航数据（优先从 Worker 获取，失败则使用本地 JSON）
+     * 从 Cloudflare Worker 加载导航数据（仅此一种来源）
      */
     async loadNavigationData() {
-        // 尝试从 Worker 接口获取
+        const apiUrl = 'https://api.xldh688.eu.cc/navigation'; // 请确保与你的 Worker 路由一致
+        
         try {
-            const response = await fetch('https://api.xldh688.eu.cc/navigation');
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
             this.navigationData = await response.json();
             console.log('✅ 导航数据从 Cloudflare Worker 加载成功');
-            return;
         } catch (error) {
-            console.warn('从 Worker 加载导航数据失败，尝试本地备份:', error);
-        }
-
-        // 降级：加载本地 navigation.json
-        try {
-            const fallbackResponse = await fetch('./data/navigation.json');
-            if (!fallbackResponse.ok) throw new Error('本地导航数据加载失败');
-            // 注意：本地 navigation.json 应为纯 JSON 对象（无 window.NavigationData 包裹）
-            this.navigationData = await fallbackResponse.json();
-            console.log('✅ 导航数据从本地文件加载成功');
-        } catch (fallbackError) {
-            console.error('加载导航数据完全失败:', fallbackError);
-            throw fallbackError;
+            console.error('❌ 从 Worker 加载导航数据失败:', error);
+            // 不再尝试本地 fallback，直接抛出错误，让页面显示错误状态
+            throw new Error('无法加载导航数据，请检查网络或稍后重试');
         }
     }
 
@@ -89,9 +81,9 @@ class OptimizedNavigation {
             this.stats.totalCategories = Object.keys(this.navigationData.categories).length;
             this.stats.totalWebsites = totalWebsites;
         } else {
-            // 默认值（本地 fallback 可能为空时使用）
-            this.stats.totalCategories = 8;
-            this.stats.totalWebsites = 163;
+            // 如果没有数据，设置默认值（但这种情况不应发生，因为 loadNavigationData 已确保有数据）
+            this.stats.totalCategories = 0;
+            this.stats.totalWebsites = 0;
         }
         this.updateStatsDisplay();
     }
@@ -418,8 +410,8 @@ class OptimizedNavigation {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                    <h3 class="empty-title">数据加载失败</h3>
-                    <p class="empty-subtitle">请刷新页面或稍后重试</p>
+                    <h3 class="empty-title">导航数据加载失败</h3>
+                    <p class="empty-subtitle">请检查网络或稍后重试</p>
                 </div>
             `;
         }
@@ -431,7 +423,7 @@ class OptimizedNavigation {
         this.init();
     }
 
-    // 链接有效性检测（保持原有逻辑）
+    // 链接有效性检测（保持不变）
     startLinkValidation() {
         const allWebsites = this.getAllWebsites();
         const urls = [...new Set(allWebsites.map(site => site.url))];
