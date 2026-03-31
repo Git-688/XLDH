@@ -87,11 +87,44 @@
     font-style: italic;
 }
 
-/* 2. 底部数据卡片组 - 缩小 */
+/* 2. 底部数据卡片组 - 默认网格布局 */
 .footer-stats-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 10px;
+}
+
+/* 桌面端（≥1025px）：一行四列 */
+@media (min-width: 1025px) {
+    .footer-stats-cards {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    /* 保持容器为 flex 布局，但统计卡片不再被强制一列 */
+    .footer-compact-container {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+    }
+    .footer-stats-cards {
+        flex: none;
+        width: auto;
+        min-width: 0; /* 防止溢出 */
+    }
+}
+
+/* 平板端（768px - 1024px）：也使用四列，保持视觉一致 */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .footer-stats-cards {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* 移动端（≤767px）：两行两列（时间、在线 / 今日、统计） */
+@media (max-width: 767px) {
+    .footer-stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+        grid-auto-rows: auto;
+    }
+    /* 卡片顺序默认为 HTML 顺序：运行时间 → 在线 → 今日 → 统计，符合要求 */
 }
 
 .stat-card {
@@ -212,12 +245,8 @@
 }
 
 /* ====== 响应式断点优化 ====== */
-/* 移动端 (≤767px)：强制三卡片并排 */
+/* 移动端 (≤767px) 已经在上方处理为两列，此处仅保留间距微调 */
 @media (max-width: 767px) {
-    .footer-stats-cards {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-    }
     .stat-number {
         font-size: 13px;
     }
@@ -230,32 +259,6 @@
     }
     .disclaimer-text {
         font-size: 10px;
-    }
-}
-
-/* 平板端 (768px-1024px) */
-@media (min-width: 768px) and (max-width: 1024px) {
-    .footer-stats-cards {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-    }
-}
-
-/* 桌面端 (≥1025px) */
-@media (min-width: 1025px) {
-    .footer-compact-container {
-        display: flex;
-        gap: 20px;
-        align-items: flex-start;
-    }
-    .footer-disclaimer-card {
-        flex: 2;
-        margin-bottom: 0;
-    }
-    .footer-stats-cards {
-        flex: 1;
-        grid-template-columns: 1fr;
-        min-width: 180px;
     }
 }
 
@@ -300,7 +303,7 @@
     }
 }
 
-/* 减小浮动按钮的大小 */
+/* 减小浮动按钮的大小（原样式保留） */
 .floating-btn {
     width: 40px;
     height: 40px;
