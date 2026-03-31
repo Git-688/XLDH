@@ -1,5 +1,5 @@
 /**
- * 本地存储工具类 - 简化版本
+ * 本地存储工具类 - 移除旧运行时间逻辑
  */
 class Storage {
     static PREFIX = 'starlink_';
@@ -148,58 +148,6 @@ class Storage {
             return `${(views / 1000).toFixed(1).replace('.0', '')}K`;
         } else {
             return views.toString();
-        }
-    }
-
-    // ==================== 运行时间管理 ====================
-    
-    static getAccumulatedUptime() {
-        return this.get('accumulated_uptime', 0);
-    }
-
-    static setAccumulatedUptime(uptime) {
-        return this.set('accumulated_uptime', uptime);
-    }
-
-    static getLastUptimeUpdate() {
-        return this.get('last_uptime_update', Date.now());
-    }
-
-    static setLastUptimeUpdate(timestamp) {
-        return this.set('last_uptime_update', timestamp);
-    }
-
-    static getFormattedUptime() {
-        const uptime = this.getAccumulatedUptime();
-        const days = Math.floor(uptime / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((uptime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((uptime % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((uptime % (1000 * 60)) / 1000);
-        if (days > 0) return `${days}天 ${hours}时 ${minutes}分 ${seconds}秒`;
-        if (hours > 0) return `${hours}时 ${minutes}分 ${seconds}秒`;
-        if (minutes > 0) return `${minutes}分 ${seconds}秒`;
-        return `${seconds}秒`;
-    }
-
-    static resetUptimeStats() {
-        this.setAccumulatedUptime(0);
-        this.setLastUptimeUpdate(Date.now());
-        return true;
-    }
-
-    static updateUptimeOnExit() {
-        try {
-            const lastUpdate = this.getLastUptimeUpdate();
-            const now = Date.now();
-            const timeDiff = now - lastUpdate;
-            if (timeDiff > 0) {
-                const currentUptime = this.getAccumulatedUptime();
-                this.setAccumulatedUptime(currentUptime + timeDiff);
-                this.setLastUptimeUpdate(now);
-            }
-            return true;
-        } catch {
-            return false;
         }
     }
 
