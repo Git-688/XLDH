@@ -1,6 +1,5 @@
 /**
- * 星链导航主应用程序
- * 负责初始化和管理所有组件和模块
+ * 星链导航主应用程序（彻底移除旧运行时间逻辑）
  * @class App
  */
 class App {
@@ -9,8 +8,7 @@ class App {
         this.modules = {};
         this.activeModals = [];
         this.isInitialized = false;
-        this.uptimeTimer = null;
-        this.lastUptimeUpdate = 0;
+        this.lastWeatherUpdate = null;
         this.diaryModalHideRef = null;
         
         if (document.readyState === 'loading') {
@@ -23,7 +21,7 @@ class App {
     }
 
     // ========== 日记功能相关常量和方法 ==========
-    DIARY_IDS = [1,2,3,4,5,6,7,8,9,10];  // 可修改范围
+    DIARY_IDS = [1,2,3,4,5,6,7,8,9,10];
 
     async loadDiaryBatch() {
         const listEl = document.getElementById('diaryList');
@@ -41,7 +39,6 @@ class App {
             
             const results = await Promise.all(promises);
             
-            // 过滤：只保留 code===200 且标题和内容均非空
             const validItems = results.filter(item => {
                 if (item.code !== 200) return false;
                 const title = item.title || '';
@@ -88,7 +85,6 @@ class App {
         }
         this.registerModal(this.diaryModalHideRef);
         
-        // 每次打开重新加载
         this.loadDiaryBatch();
     }
 
@@ -122,9 +118,9 @@ class App {
         this.initModules();
         this.initDependentComponents();
         this.setupGlobalEvents();
-        this.initDiaryModalEvents();  // 新增
+        this.initDiaryModalEvents();
         this.isInitialized = true;
-        this.start();
+        // 不再启动任何运行时间定时器
     }
 
     initCoreComponents() {
@@ -184,15 +180,6 @@ class App {
             
             if (typeof FooterModule !== 'undefined') {
                 this.modules.footer = new FooterModule();
-                if (this.modules.footer.startUptimeTimer) {
-                    const originalStartUptimeTimer = this.modules.footer.startUptimeTimer;
-                    this.modules.footer.startUptimeTimer = () => {
-                        console.log('运行时间定时器已由main.js接管，禁止footer.js启动');
-                        if (this.modules.footer.updateUptime) {
-                            this.modules.footer.updateUptime();
-                        }
-                    };
-                }
                 initPromises.push(this.modules.footer.init?.());
             }
             
@@ -280,35 +267,7 @@ class App {
         if (!Storage.get('first_visit_time')) {
             Storage.set('first_visit_time', new Date().toISOString());
         }
-        
-        this.initAccumulatedUptime();
         this.updateVisitStats();
-    }
-
-    initAccumulatedUptime() {
-        try {
-            let accumulatedTime = Storage.get('accumulated_uptime') || 0;
-            let lastUpdateTime = Storage.get('last_uptime_update');
-            
-            if (!lastUpdateTime) {
-                lastUpdateTime = Date.now();
-                Storage.set('last_uptime_update', lastUpdateTime);
-                Storage.set('accumulated_uptime', 0);
-            } else {
-                const now = Date.now();
-                const timeDiff = now - lastUpdateTime;
-                accumulatedTime += timeDiff;
-                Storage.set('accumulated_uptime', accumulatedTime);
-                Storage.set('last_uptime_update', now);
-            }
-            
-            this.accumulatedUptime = accumulatedTime;
-            this.lastUptimeUpdate = lastUpdateTime;
-        } catch (error) {
-            console.error('初始化累计运行时间失败:', error);
-            this.accumulatedUptime = 0;
-            this.lastUptimeUpdate = Date.now();
-        }
     }
 
     updateVisitStats() {
@@ -403,11 +362,6 @@ class App {
         }
     }
 
-    /**
-     * 显示 Toast 提示
-     * @param {string} message 
-     * @param {string} type info/success/warning/error
-     */
     showToast(message, type = 'info') {
         window.toast.show(message, type);
     }
@@ -416,51 +370,6 @@ class App {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
-    }
-
-    getAccumulatedUptime() {
-        try {
-            let accumulatedTime = this.accumulatedUptime || 0;
-            const now = Date.now();
-            if (this.lastUptimeUpdate) {
-                accumulatedTime += (now - this.lastUptimeUpdate);
-            }
-            const days = Math.floor(accumulatedTime / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((accumulatedTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((accumulatedTime % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((accumulatedTime % (1000 * 60)) / 1000);
-            
-            return {
-                days,
-                hours,
-                minutes,
-                seconds,
-                totalMs: accumulatedTime,
-                formatted: days > 0 ? `${days}天 ${hours}时 ${minutes}分 ${seconds}秒` : 
-                           hours > 0 ? `${hours}时 ${minutes}分 ${seconds}秒` : 
-                           minutes > 0 ? `${minutes}分 ${seconds}秒` : 
-                           `${seconds}秒`
-            };
-        } catch (error) {
-            console.error('获取累计运行时间失败:', error);
-            return { days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0, formatted: '0天 0时 0分 0秒' };
-        }
-    }
-
-    saveUptimeState() {
-        try {
-            const now = Date.now();
-            let accumulatedTime = this.accumulatedUptime || 0;
-            if (this.lastUptimeUpdate) {
-                accumulatedTime += (now - this.lastUptimeUpdate);
-            }
-            Storage.set('accumulated_uptime', accumulatedTime);
-            Storage.set('last_uptime_update', now);
-            this.accumulatedUptime = accumulatedTime;
-            this.lastUptimeUpdate = now;
-        } catch (error) {
-            console.error('保存运行时间状态失败:', error);
-        }
     }
 
     getVisitStats() {
@@ -500,79 +409,6 @@ class App {
                 this.showToast('页面刷新完成', 'success');
             }, 500);
         }, 300);
-    }
-
-    start() {
-        setTimeout(() => {
-            const visitStats = this.getVisitStats();
-            if (visitStats.count === 1) {
-                this.showToast('欢迎首次访问星链导航！', 'success');
-            } else if (visitStats.count === 10) {
-                this.showToast('感谢您的第10次访问！', 'success');
-            } else if (visitStats.count === 100) {
-                this.showToast('恭喜！这是您的第100次访问！', 'success');
-            }
-        }, 1500);
-        
-        this.startOptimizedTimers();
-        
-        window.addEventListener('beforeunload', () => {
-            this.saveUptimeState();
-        });
-        
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                this.saveUptimeState();
-            }
-        });
-    }
-
-    startOptimizedTimers() {
-        if (this.uptimeTimer) clearInterval(this.uptimeTimer);
-        this.updateAllStats();
-        this.uptimeTimer = setInterval(() => {
-            this.updateAllStats();
-        }, 1000);
-    }
-
-    updateAllStats() {
-        const now = Date.now();
-        
-        if (!this.lastAutoSave || (now - this.lastAutoSave >= 5000)) {
-            this.saveUptimeState();
-            this.lastAutoSave = now;
-        }
-        
-        const uptime = this.getAccumulatedUptime();
-        const uptimeElement = document.getElementById('uptime');
-        if (uptimeElement) {
-            uptimeElement.textContent = `${uptime.days}天 ${uptime.hours}时 ${uptime.minutes}分 ${uptime.seconds}秒`;
-        }
-        
-        if (now - this.lastVisitUpdate >= 5000 || !this.lastVisitUpdate) {
-            const visitStats = this.getVisitStats();
-            const visitCountElement = document.getElementById('visitCount');
-            if (visitCountElement) {
-                visitCountElement.textContent = visitStats.count;
-            }
-            this.lastVisitUpdate = now;
-        }
-    }
-
-    resetUptimeStats() {
-        if (confirm('确定要重置运行时间统计吗？这将清除累计运行时间，重新开始计时。')) {
-            try {
-                Storage.set('accumulated_uptime', 0);
-                Storage.set('last_uptime_update', Date.now());
-                this.accumulatedUptime = 0;
-                this.lastUptimeUpdate = Date.now();
-                this.updateAllStats();
-                this.showToast('运行时间统计已重置', 'success');
-            } catch (error) {
-                console.error('重置运行时间统计失败:', error);
-                this.showToast('重置失败，请重试', 'error');
-            }
-        }
     }
 
     toggleSidebar() {
@@ -694,9 +530,7 @@ class App {
     }
 
     destroy() {
-        this.saveUptimeState();
         this.closeAllModals();
-        if (this.uptimeTimer) clearInterval(this.uptimeTimer);
         Object.entries(this.components).forEach(([name, component]) => {
             if (component && typeof component.destroy === 'function') {
                 try { component.destroy(); } catch (error) { console.error(`销毁组件 ${name} 失败:`, error); }
@@ -711,10 +545,6 @@ class App {
         this.modules = {};
         this.activeModals = [];
         this.isInitialized = false;
-        window.removeEventListener('online', () => {});
-        window.removeEventListener('offline', () => {});
-        document.removeEventListener('visibilitychange', () => {});
-        window.removeEventListener('beforeunload', () => {});
     }
 }
 
@@ -732,10 +562,4 @@ if (document.readyState === 'loading') {
 
 window.getApp = function() {
     return window.app;
-};
-
-window.resetUptime = function() {
-    if (window.app && window.app.resetUptimeStats) {
-        window.app.resetUptimeStats();
-    }
 };
