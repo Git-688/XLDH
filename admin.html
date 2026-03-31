@@ -48,6 +48,8 @@
         button.danger:hover{background:#e55656}
         button.secondary{background:#909399;color:#fff}
         button.secondary:hover{background:#7a7e84}
+        button.text{background:transparent;color:#666;padding:3px 6px}
+        button.text:hover{color:#409eff}
 
         /* 树形结构 极简无杂乱 */
         .tree-item{margin-bottom:8px}
@@ -56,11 +58,15 @@
             padding:6px 10px;border-radius:6px;background:#fafbfc;
             gap:8px
         }
-        .item-info{flex:1;font-weight:500;word-break:break-all}
+        .item-info{flex:1;font-weight:500;word-break:break-all;display:flex;align-items:center;gap:6px}
         .item-info span{font-size:11px;color:#999}
         .item-actions{display:flex;gap:4px}
         .item-actions button{padding:3px 6px;font-size:11px}
-        .category-item,.subcategory-item{border-left:1px solid #e6e8eb;margin-left:10px;padding-left:10px;margin-top:4px}
+        .category-item,.subcategory-item{
+            border-left:1px solid #e6e8eb;margin-left:10px;padding-left:10px;margin-top:4px;
+            overflow:hidden;transition:all 0.2s ease;
+        }
+        .folded{max-height:0;padding:0;margin:0;border:none}
 
         /* 自定义模态框 整洁无乱 */
         .modal{
@@ -123,7 +129,11 @@
         <div class="card">
             <div class="header">
                 <h2>📁 一级分类</h2>
-                <button class="primary" id="addCategoryBtn">+ 新增分类</button>
+                <div style="display:flex;gap:6px">
+                    <button class="text" id="expandAll">全部展开</button>
+                    <button class="text" id="foldAll">全部收起</button>
+                    <button class="primary" id="addCategoryBtn">+ 新增分类</button>
+                </div>
             </div>
             <div id="categoriesList"></div>
         </div>
@@ -150,7 +160,14 @@
     function openModal(title, formHtml, callback){
         modalTitle.textContent = title;
         modalForm.innerHTML = formHtml;
-        modalAction = callback;
+        modalAction = async () => {
+            try {
+                await callback();
+            } catch (e) {
+                showToast('操作失败：'+e.message, true);
+                console.error(e);
+            }
+        };
         modal.classList.add('show');
     }
     function closeModal(){
@@ -186,6 +203,18 @@
         showToast('已退出');
     }
 
+    // 展开/收起控制
+    function toggleCat(catId){
+        const el = document.querySelector(`.tree-item[data-cat="${catId}"] .category-item`);
+        el.classList.toggle('folded');
+    }
+    function expandAll(){
+        document.querySelectorAll('.category-item').forEach(el => el.classList.remove('folded'));
+    }
+    function foldAll(){
+        document.querySelectorAll('.category-item').forEach(el => el.classList.add('folded'));
+    }
+
     // 数据渲染
     let categories=[],subcategories=[],sites=[];
     async function loadAllData(){
@@ -209,6 +238,7 @@
             <div class="tree-item" data-cat="${c.id}">
                 <div class="item-header">
                     <div class="item-info">
+                        <button class="text" onclick="toggleCat(${c.id})">▼</button>
                         ${esc(c.name)} ${c.icon?`<span>(${esc(c.icon)})</span>`:''}
                         ${c.description?`<br><span>${esc(c.description)}</span>`:''}
                     </div>
@@ -381,7 +411,9 @@
     document.getElementById('loginBtn').onclick=login;
     document.getElementById('logoutBtn').onclick=logout;
     document.getElementById('addCategoryBtn').onclick=openAddCat;
-    document.getElementById('modalSubmit').onclick=()=>modalAction&&modalAction();
+    document.getElementById('expandAll').onclick=expandAll;
+    document.getElementById('foldAll').onclick=foldAll;
+    document.getElementById('modalSubmit').onclick=()=>{if(modalAction) modalAction()};
     if(token){document.getElementById('tokenInput').value=token;login()}
 </script>
 </body>
