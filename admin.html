@@ -6,62 +6,114 @@
     <title>星链导航后台管理</title>
     <style>
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
+        }
+        /* 全局基础：小字体、现代无衬线、平滑滚动、隐藏滚动条 */
+        html {
+            scroll-behavior: smooth;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #f5f7fb;
-            margin: 0;
-            padding: 16px;
-            color: #1e293b;
+            background: #f8f9fc;
+            padding: 12px;
+            color: #374151;
+            font-size: 13px;
+            line-height: 1.4;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        * {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
         .container {
-            max-width: 800px;
+            max-width: 780px;
             margin: 0 auto;
         }
+        /* 卡片：极简圆角、轻阴影、过渡 */
         .card {
-            background: white;
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s ease;
+        }
+        .card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             flex-wrap: wrap;
             gap: 8px;
         }
         h1 {
-            font-size: 1.5rem;
-            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
         }
+        h2 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        /* Token栏 */
         .token-area {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
         }
-        input, select, textarea {
-            padding: 8px 12px;
-            border: 1px solid #cbd5e1;
+        /* 输入框：极简无原生样式 */
+        input, textarea {
+            padding: 7px 10px;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             width: 100%;
+            background: #f9fafb;
+            transition: all 0.2s ease;
+            outline: none;
         }
+        input:focus, textarea:focus {
+            border-color: #3b82f6;
+            background: #fff;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+        /* 按钮：全自定义、无原生样式 */
         button {
             background: #3b82f6;
-            color: white;
+            color: #fff;
             border: none;
-            padding: 8px 16px;
+            padding: 7px 12px;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         button:hover {
             background: #2563eb;
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button.secondary {
+            background: #6b7280;
+        }
+        button.secondary:hover {
+            background: #4b5563;
         }
         button.danger {
             background: #ef4444;
@@ -69,96 +121,140 @@
         button.danger:hover {
             background: #dc2626;
         }
-        button.secondary {
-            background: #64748b;
-        }
+        /* 树形结构层级 */
         .category-item, .subcategory-item, .site-item {
-            border-left: 2px solid #e2e8f0;
-            margin-left: 16px;
-            padding-left: 16px;
-            margin-top: 8px;
+            border-left: 2px solid #f3f4f6;
+            margin-left: 12px;
+            padding-left: 12px;
+            margin-top: 6px;
         }
+        /* 项目条：极简、无厚重背景、平滑 */
         .item-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: #f8fafc;
-            padding: 8px 12px;
-            border-radius: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
             margin-bottom: 4px;
             flex-wrap: wrap;
             gap: 8px;
+            background: #f9fafb;
+            transition: all 0.2s ease;
+        }
+        .item-header:hover {
+            background: #f3f4f6;
         }
         .item-info {
             flex: 1;
             font-weight: 500;
             word-break: break-all;
+            color: #374151;
+        }
+        .item-info span {
+            color: #9ca3af;
+            font-size: 12px;
         }
         .item-actions {
             display: flex;
-            gap: 6px;
+            gap: 5px;
         }
         .item-actions button {
             padding: 4px 8px;
             font-size: 12px;
         }
         .form-row {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         .form-row label {
             display: block;
             font-size: 12px;
             font-weight: 500;
             margin-bottom: 4px;
-            color: #475569;
+            color: #6b7280;
         }
+        /* 弹窗：现代极简 */
         .modal {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s ease;
+        }
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
         }
         .modal-content {
             background: white;
-            border-radius: 20px;
+            border-radius: 14px;
             width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
+            max-width: 460px;
+            max-height: 85vh;
             overflow-y: auto;
-            padding: 20px;
+            padding: 18px;
+            transform: translateY(10px);
+            transition: all 0.25s ease;
+        }
+        .modal.show .modal-content {
+            transform: translateY(0);
         }
         .loading {
             text-align: center;
-            padding: 20px;
-            color: #64748b;
+            padding: 16px;
+            color: #9ca3af;
+            font-size: 13px;
         }
         .hidden {
-            display: none;
-        }
-        .tree-root {
-            margin-top: 12px;
+            display: none !important;
         }
         .tree-item {
-            margin-bottom: 12px;
-        }
-        .tree-title {
-            font-weight: 600;
-            margin-bottom: 6px;
+            margin-bottom: 10px;
         }
         hr {
-            margin: 16px 0;
+            margin: 14px 0;
             border: none;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid #f3f4f6;
         }
+        /* 自定义Toast提示（替代原生文字提示） */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #fff;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.success {
+            background: #10b981;
+        }
+        .toast.error {
+            background: #ef4444;
+        }
+        /* 适配手机 */
         @media (max-width: 640px) {
             body {
-                padding: 12px;
+                padding: 10px;
             }
             .item-header {
                 flex-direction: column;
@@ -167,10 +263,20 @@
             .item-actions {
                 justify-content: flex-end;
             }
+            .token-area {
+                width: 100%;
+                margin-top: 8px;
+            }
+            #tokenInput {
+                flex: 1;
+            }
         }
     </style>
 </head>
 <body>
+<!-- Toast容器 -->
+<div class="toast" id="toast"></div>
+
 <div class="container">
     <div class="card">
         <div class="header">
@@ -181,11 +287,9 @@
                 <button id="logoutBtn" class="secondary hidden">退出</button>
             </div>
         </div>
-        <div id="status"></div>
     </div>
 
     <div id="mainContent" class="hidden">
-        <!-- 分类管理区域 -->
         <div class="card">
             <div class="header">
                 <h2>📁 一级分类</h2>
@@ -200,7 +304,17 @@
     const API_BASE = 'https://api.xldh688.eu.cc';
     let token = localStorage.getItem('admin_token') || '';
 
-    // 通用 fetch 封装，自动携带 Authorization
+    // 自定义Toast提示（完全抛弃原生）
+    const toast = document.getElementById('toast');
+    function showStatus(msg, isError = false) {
+        toast.textContent = msg;
+        toast.className = `toast ${isError ? 'error' : 'success'} show`;
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2500);
+    }
+
+    // 通用请求封装
     async function apiFetch(endpoint, options = {}) {
         const headers = {
             'Content-Type': 'application/json',
@@ -214,7 +328,7 @@
             headers,
         });
         if (res.status === 401) {
-            alert('Token 无效或已过期，请重新登录');
+            showStatus('Token 无效或已过期', true);
             logout();
             throw new Error('Unauthorized');
         }
@@ -225,19 +339,11 @@
         return res.json();
     }
 
-    // 显示状态信息
-    function showStatus(msg, isError = false) {
-        const el = document.getElementById('status');
-        el.textContent = msg;
-        el.style.color = isError ? '#ef4444' : '#10b981';
-        setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3000);
-    }
-
     // 登录
     function login() {
         const inputToken = document.getElementById('tokenInput').value.trim();
         if (!inputToken) {
-            alert('请输入管理 Token');
+            showStatus('请输入管理 Token', true);
             return;
         }
         token = inputToken;
@@ -249,6 +355,7 @@
         showStatus('登录成功');
     }
 
+    // 退出
     function logout() {
         token = '';
         localStorage.removeItem('admin_token');
@@ -258,11 +365,8 @@
         showStatus('已退出登录');
     }
 
-    // 加载所有数据
-    let categories = [];
-    let subcategories = [];
-    let sites = [];
-
+    // 数据加载
+    let categories = [], subcategories = [], sites = [];
     async function loadAllData() {
         try {
             const [cats, subs, sits] = await Promise.all([
@@ -280,6 +384,12 @@
         }
     }
 
+    // HTML转义
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+    }
+
     // 渲染分类树
     function renderCategories() {
         const container = document.getElementById('categoriesList');
@@ -295,8 +405,8 @@
                     <div class="item-header">
                         <div class="item-info">
                             <strong>${escapeHtml(cat.name)}</strong>
-                            ${cat.icon ? ` <span style="font-size:12px;color:#666;">(${cat.icon})</span>` : ''}
-                            ${cat.description ? `<br><span style="font-size:12px;color:#666;">${escapeHtml(cat.description)}</span>` : ''}
+                            ${cat.icon ? ` <span>(${cat.icon})</span>` : ''}
+                            ${cat.description ? `<br><span>${escapeHtml(cat.description)}</span>` : ''}
                         </div>
                         <div class="item-actions">
                             <button class="edit-cat" data-id="${cat.id}">编辑</button>
@@ -311,42 +421,16 @@
             `;
         }
         container.innerHTML = html;
-
-        // 绑定事件
-        document.querySelectorAll('.edit-cat').forEach(btn => {
-            btn.addEventListener('click', () => editCategory(parseInt(btn.dataset.id)));
-        });
-        document.querySelectorAll('.delete-cat').forEach(btn => {
-            btn.addEventListener('click', () => deleteCategory(parseInt(btn.dataset.id)));
-        });
-        document.querySelectorAll('.add-sub').forEach(btn => {
-            btn.addEventListener('click', () => addSubcategory(parseInt(btn.dataset.catId)));
-        });
-        document.querySelectorAll('.edit-sub').forEach(btn => {
-            btn.addEventListener('click', () => editSubcategory(parseInt(btn.dataset.id)));
-        });
-        document.querySelectorAll('.delete-sub').forEach(btn => {
-            btn.addEventListener('click', () => deleteSubcategory(parseInt(btn.dataset.id)));
-        });
-        document.querySelectorAll('.add-site').forEach(btn => {
-            btn.addEventListener('click', () => addSite(parseInt(btn.dataset.subId)));
-        });
-        document.querySelectorAll('.edit-site').forEach(btn => {
-            btn.addEventListener('click', () => editSite(parseInt(btn.dataset.id)));
-        });
-        document.querySelectorAll('.delete-site').forEach(btn => {
-            btn.addEventListener('click', () => deleteSite(parseInt(btn.dataset.id)));
-        });
+        bindEvents();
     }
 
+    // 渲染子分类
     function renderSubcategory(sub, catId) {
         const subSites = sites.filter(s => s.subcategory_id === sub.id);
         return `
-            <div class="tree-item" style="margin-left: 16px;" data-sub-id="${sub.id}">
+            <div class="tree-item" style="margin-left: 12px;" data-sub-id="${sub.id}">
                 <div class="item-header">
-                    <div class="item-info">
-                        📂 ${escapeHtml(sub.name)}
-                    </div>
+                    <div class="item-info">📂 ${escapeHtml(sub.name)}</div>
                     <div class="item-actions">
                         <button class="edit-sub" data-id="${sub.id}">编辑</button>
                         <button class="delete-sub danger" data-id="${sub.id}">删除</button>
@@ -360,15 +444,15 @@
         `;
     }
 
+    // 渲染网站
     function renderSite(site) {
         return `
-            <div class="tree-item" style="margin-left: 32px;" data-site-id="${site.id}">
+            <div class="tree-item" style="margin-left: 24px;" data-site-id="${site.id}">
                 <div class="item-header">
                     <div class="item-info">
                         🔗 <strong>${escapeHtml(site.title)}</strong><br>
-                        <span style="font-size:12px;color:#666;">${escapeHtml(site.url)}</span>
-                        ${site.description ? `<span style="font-size:12px;color:#666;"> - ${escapeHtml(site.description)}</span>` : ''}
-                        ${site.icon ? `<span style="font-size:12px;color:#666;"> (${escapeHtml(site.icon)})</span>` : ''}
+                        <span>${escapeHtml(site.url)}</span>
+                        ${site.description ? `<span> - ${escapeHtml(site.description)}</span>` : ''}
                     </div>
                     <div class="item-actions">
                         <button class="edit-site" data-id="${site.id}">编辑</button>
@@ -379,13 +463,25 @@
         `;
     }
 
-    // 增删改分类
+    // 绑定所有事件
+    function bindEvents() {
+        document.querySelectorAll('.edit-cat').forEach(btn => btn.onclick = () => editCategory(+btn.dataset.id));
+        document.querySelectorAll('.delete-cat').forEach(btn => btn.onclick = () => deleteCategory(+btn.dataset.id));
+        document.querySelectorAll('.add-sub').forEach(btn => btn.onclick = () => addSubcategory(+btn.dataset.catId));
+        document.querySelectorAll('.edit-sub').forEach(btn => btn.onclick = () => editSubcategory(+btn.dataset.id));
+        document.querySelectorAll('.delete-sub').forEach(btn => btn.onclick = () => deleteSubcategory(+btn.dataset.id));
+        document.querySelectorAll('.add-site').forEach(btn => btn.onclick = () => addSite(+btn.dataset.subId));
+        document.querySelectorAll('.edit-site').forEach(btn => btn.onclick = () => editSite(+btn.dataset.id));
+        document.querySelectorAll('.delete-site').forEach(btn => btn.onclick = () => deleteSite(+btn.dataset.id));
+    }
+
+    // 分类操作
     async function addCategory() {
         const name = prompt('分类名称（必填）');
         if (!name) return;
-        const icon = prompt('图标（FontAwesome类名或图片URL，可选）', 'fas fa-folder');
+        const icon = prompt('图标（可选）', 'fas fa-folder');
         const description = prompt('描述（可选）', '');
-        const display_order = prompt('显示顺序（数字，越小越靠前）', categories.length);
+        const display_order = prompt('显示顺序', categories.length);
         try {
             await apiFetch('/admin/categories', {
                 method: 'POST',
@@ -397,7 +493,6 @@
             showStatus('添加失败: ' + err.message, true);
         }
     }
-
     async function editCategory(id) {
         const cat = categories.find(c => c.id === id);
         if (!cat) return;
@@ -417,7 +512,6 @@
             showStatus('修改失败: ' + err.message, true);
         }
     }
-
     async function deleteCategory(id) {
         if (!confirm('删除分类将同时删除其所有子分类和网站，确定吗？')) return;
         try {
@@ -445,7 +539,6 @@
             showStatus('添加失败: ' + err.message, true);
         }
     }
-
     async function editSubcategory(id) {
         const sub = subcategories.find(s => s.id === id);
         if (!sub) return;
@@ -463,7 +556,6 @@
             showStatus('修改失败: ' + err.message, true);
         }
     }
-
     async function deleteSubcategory(id) {
         if (!confirm('删除子分类将同时删除其下所有网站，确定吗？')) return;
         try {
@@ -479,10 +571,10 @@
     async function addSite(subcategoryId) {
         const title = prompt('网站标题（必填）');
         if (!title) return;
-        const url = prompt('网站URL（必填，包含https://）');
+        const url = prompt('网站URL（必填）');
         if (!url) return;
         const description = prompt('描述', '');
-        const icon = prompt('图标（图片URL或FontAwesome类名）', 'fas fa-link');
+        const icon = prompt('图标', 'fas fa-link');
         const display_order = prompt('显示顺序', 0);
         try {
             await apiFetch('/admin/sites', {
@@ -495,7 +587,6 @@
             showStatus('添加失败: ' + err.message, true);
         }
     }
-
     async function editSite(id) {
         const site = sites.find(s => s.id === id);
         if (!site) return;
@@ -516,7 +607,6 @@
             showStatus('修改失败: ' + err.message, true);
         }
     }
-
     async function deleteSite(id) {
         if (!confirm('确定删除该网站？')) return;
         try {
@@ -528,22 +618,10 @@
         }
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-
     // 初始化
     document.getElementById('loginBtn').addEventListener('click', login);
     document.getElementById('logoutBtn').addEventListener('click', logout);
     document.getElementById('addCategoryBtn').addEventListener('click', addCategory);
-
-    // 如果已有 token，自动登录
     if (token) {
         document.getElementById('tokenInput').value = token;
         login();
