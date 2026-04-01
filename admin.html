@@ -25,8 +25,7 @@
         .tab-btn{padding:8px 16px;border-radius:8px;background:#f1f5f9;color:#64748b;cursor:pointer}
         .tab-btn.active{background:#3b82f6;color:#fff}
 
-        /* 严格匹配示意图布局 */
-        /* 🔴 顶部一级分类通栏 */
+        /* 严格匹配你的布局 */
         .cat-bar{
             width:100%;padding:12px 16px;background:#fff;border-radius:12px;
             box-shadow:0 2px 8px rgba(0,0,0,0.05);border:1px solid #f1f3f5;
@@ -39,7 +38,6 @@
         }
         .cat-item.active{background:#3b82f6;color:#fff}
 
-        /* 🔵 左侧二级分类竖栏 + 🟢 右侧链接主区 */
         .content-layout{display:flex;gap:12px;margin-top:0}
         .sidebar{
             width:220px;flex-shrink:0;background:#fff;border-radius:12px;
@@ -182,7 +180,7 @@
                 <div class="tab-btn" data-tab="rank">点击排行</div>
             </div>
 
-            <!-- 数据管理页（严格匹配示意图布局） -->
+            <!-- 数据管理页（修复数据显示） -->
             <div id="manageTab" class="tab-panel">
                 <div class="flex-row" style="margin-bottom:12px">
                     <input type="text" class="search-box" id="searchInput" placeholder="搜索标题/链接...">
@@ -191,10 +189,10 @@
                     <button class="primary" id="addCategoryBtn">+一级分类</button>
                 </div>
 
-                <!-- 🔴 顶部一级分类通栏 -->
+                <!-- 顶部一级分类通栏 -->
                 <div class="cat-bar" id="catBar"></div>
 
-                <!-- 🔵 左侧二级分类 + 🟢 右侧链接 -->
+                <!-- 左侧二级分类 + 右侧链接 -->
                 <div class="content-layout">
                     <div class="sidebar" id="sidebar">
                         <h3 style="margin-bottom:8px">子分类</h3>
@@ -429,43 +427,85 @@
         }
     });
 
-    // 分类切换（修复自动选中逻辑，确保数据正常显示）
+    // ========== 核心修复：分类切换逻辑 ==========
     function selectCat(cid){
+        // 强制更新当前选中的一级分类
         currentCat = cid;
         currentSub = null;
+        // 更新选中状态
         document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
-        document.querySelector(`.cat-item[data-cid="${cid}"]`).classList.add('active');
+        const targetCat = document.querySelector(`.cat-item[data-cid="${cid}"]`);
+        if(targetCat) targetCat.classList.add('active');
+        // 渲染对应子分类
         renderSubList();
-        // 自动选中第一个二级分类
+        // 自动选中第一个子分类（如果有）
         const subs = subcategories.filter(s => s.category_id === cid);
-        if(subs.length) selectSub(subs[0].id);
-        else renderSiteList();
+        if(subs.length > 0){
+            selectSub(subs[0].id);
+        } else {
+            // 没有子分类，清空链接列表，显示提示
+            document.getElementById('siteList').innerHTML = '<div class="empty">请先添加子分类</div>';
+        }
     }
+
     function selectSub(sid){
+        // 强制更新当前选中的二级分类
         currentSub = sid;
+        // 更新选中状态
         document.querySelectorAll('.sub-item').forEach(i => i.classList.remove('active'));
-        document.querySelector(`.sub-item[data-sid="${sid}"]`).classList.add('active');
+        const targetSub = document.querySelector(`.sub-item[data-sid="${sid}"]`);
+        if(targetSub) targetSub.classList.add('active');
+        // 渲染对应链接
         renderSiteList();
     }
 
-    // 渲染分类
+    // ========== 核心修复：渲染逻辑 ==========
     function renderCatBar(){
+        if(categories.length === 0){
+            document.getElementById('catBar').innerHTML = '<div class="empty" style="width:100%">请先添加一级分类</div>';
+            document.getElementById('subList').innerHTML = '<div class="empty">请先添加一级分类</div>';
+            document.getElementById('siteList').innerHTML = '<div class="empty">请先添加一级分类</div>';
+            return;
+        }
+        // 渲染所有一级分类
         document.getElementById('catBar').innerHTML = categories.map(c => `
             <div class="cat-item ${c.id===currentCat?'active':''}" data-cid="${c.id}" onclick="selectCat(${c.id})">
                 ${c.name}
             </div>
-        `).join('') || '<div class="empty" style="width:100%">请添加一级分类</div>';
+        `).join('');
     }
+
     function renderSubList(){
+        if(!currentCat){
+            document.getElementById('subList').innerHTML = '<div class="empty">请先选择一级分类</div>';
+            return;
+        }
+        // 严格过滤当前一级分类下的子分类
         const subs = subcategories.filter(s => s.category_id === currentCat);
+        if(subs.length === 0){
+            document.getElementById('subList').innerHTML = '<div class="empty">请先添加子分类</div>';
+            return;
+        }
+        // 渲染子分类
         document.getElementById('subList').innerHTML = subs.map(s => `
             <div class="sub-item ${s.id===currentSub?'active':''}" data-sid="${s.id}" onclick="selectSub(${s.id})">
                 ${s.name}
             </div>
-        `).join('') || '<div class="empty">请添加子分类</div>';
+        `).join('');
     }
+
     function renderSiteList(){
+        if(!currentSub){
+            document.getElementById('siteList').innerHTML = '<div class="empty">请先选择子分类</div>';
+            return;
+        }
+        // 严格过滤当前二级分类下的链接
         const list = sites.filter(s => s.subcategory_id === currentSub);
+        if(list.length === 0){
+            document.getElementById('siteList').innerHTML = '<div class="empty">暂无链接，点击+添加链接</div>';
+            return;
+        }
+        // 渲染链接列表
         document.getElementById('siteList').innerHTML = list.map(s => `
             <div class="link-item">
                 <div class="link-info">${s.title}<br><small>${s.url}</small></div>
@@ -475,7 +515,7 @@
                     <button class="sm danger" onclick="delSite(${s.id})">删除</button>
                 </div>
             </div>
-        `).join('') || '<div class="empty">请选择子分类</div>';
+        `).join('');
     }
 
     // 单个链接检测
@@ -485,18 +525,35 @@
         showToast(`${s.title}：${ok?'正常':'异常'}`, ok?'success':'error');
     }
 
-    // 加载数据（修复自动选中，打开就显示数据）
+    // ========== 核心修复：数据加载逻辑 ==========
     async function loadAllData(){
         checkTokenExpire();
         try{
-            const [a,b,c] = await Promise.all([apiFetch('/admin/categories'),apiFetch('/admin/subcategories'),apiFetch('/admin/sites')]);
-            categories=a;subcategories=b;sites=c;
-            // 自动选中第一个分类，确保页面有数据显示
-            if(categories.length) selectCat(categories[0].id);
-            else renderCatBar();
+            // 并行拉取所有数据
+            const [catData, subData, siteData] = await Promise.all([
+                apiFetch('/admin/categories'),
+                apiFetch('/admin/subcategories'),
+                apiFetch('/admin/sites')
+            ]);
+            // 强制赋值数据
+            categories = catData;
+            subcategories = subData;
+            sites = siteData;
+            // 数据加载完成后，强制渲染和选中
+            renderCatBar();
+            // 如果有分类，自动选中第一个
+            if(categories.length > 0){
+                selectCat(categories[0].id);
+            }
+            addLog('数据加载完成');
         }catch(e){
-            if(e.message==='Unauthorized'){showToast('Token失效','warn');logout();}
-            else showToast('加载失败','error');
+            if(e.message==='Unauthorized'){
+                showToast('Token失效，请重新登录','warn');
+                logout();
+            } else {
+                showToast('数据加载失败：' + e.message,'error');
+                console.error(e);
+            }
         }
     }
 
@@ -509,7 +566,7 @@
             const name=document.getElementById('name').value.trim();
             if(!name){showToast('请填名称','error');return;}
             await apiFetch('/admin/categories',{method:'POST',body:JSON.stringify({name,display_order:+document.getElementById('sort').value})});
-            addLog(`新增分类：${name}`);showToast('添加成功');loadAllData();
+            addLog(`新增分类：${name}`);showToast('添加成功');await loadAllData();
         })
     }
     function openAddSub(){
@@ -521,7 +578,7 @@
             const name=document.getElementById('name').value.trim();
             if(!name){showToast('请填名称','error');return;}
             await apiFetch('/admin/subcategories',{method:'POST',body:JSON.stringify({category_id:currentCat,name,display_order:+document.getElementById('sort').value})});
-            addLog(`新增子分类：${name}`);showToast('添加成功');loadAllData();
+            addLog(`新增子分类：${name}`);showToast('添加成功');await loadAllData();
         })
     }
     function openAddSite(){
@@ -530,13 +587,19 @@
             <div class="form-row"><label>标题</label><input id="title"></div>
             <div class="form-row"><label>网址</label><input id="url" oninput="document.getElementById('icon').value=getFavicon(this.value)"></div>
             <div class="form-row"><label>图标</label><input id="icon" value="fas fa-link"></div>
+            <div class="form-row"><label>描述</label><input id="desc"></div>
             <div class="form-row"><label>排序</label><input type="number" id="sort" value="0"></div>
         `,async()=>{
             const t=document.getElementById('title').value,u=document.getElementById('url').value;
             if(!t||!u){showToast('标题/网址必填','error');return;}
             if(!checkUrl(u)){showToast('网址格式错误','error');return;}
-            await apiFetch('/admin/sites',{method:'POST',body:JSON.stringify({subcategory_id:currentSub,title:t,url:u,icon:document.getElementById('icon').value,display_order:+document.getElementById('sort').value})});
-            addLog(`新增链接：${t}`);showToast('添加成功');loadAllData();
+            await apiFetch('/admin/sites',{method:'POST',body:JSON.stringify({
+                subcategory_id:currentSub,title:t,url:u,
+                description:document.getElementById('desc').value,
+                icon:document.getElementById('icon').value,
+                display_order:+document.getElementById('sort').value
+            })});
+            addLog(`新增链接：${t}`);showToast('添加成功');await loadAllData();
         })
     }
     function openEditSite(id){
@@ -545,19 +608,25 @@
             <div class="form-row"><label>标题</label><input id="title" value="${s.title}"></div>
             <div class="form-row"><label>网址</label><input id="url" value="${s.url}" oninput="document.getElementById('icon').value=getFavicon(this.value)"></div>
             <div class="form-row"><label>图标</label><input id="icon" value="${s.icon||'fas fa-link'}"></div>
+            <div class="form-row"><label>描述</label><input id="desc" value="${s.description||''}"></div>
             <div class="form-row"><label>排序</label><input type="number" id="sort" value="${s.display_order}"></div>
         `,async()=>{
             const t=document.getElementById('title').value,u=document.getElementById('url').value;
             if(!t||!u){showToast('标题/网址必填','error');return;}
             if(!checkUrl(u)){showToast('网址格式错误','error');return;}
-            await apiFetch(`/admin/sites/${id}`,{method:'PUT',body:JSON.stringify({title:t,url:u,icon:document.getElementById('icon').value,display_order:+document.getElementById('sort').value})});
-            addLog(`编辑链接：${s.title}`);showToast('修改成功');loadAllData();
+            await apiFetch(`/admin/sites/${id}`,{method:'PUT',body:JSON.stringify({
+                title:t,url:u,
+                description:document.getElementById('desc').value,
+                icon:document.getElementById('icon').value,
+                display_order:+document.getElementById('sort').value
+            })});
+            addLog(`编辑链接：${s.title}`);showToast('修改成功');await loadAllData();
         })
     }
     async function delSite(id){
         if(!confirm('确定删除该链接？'))return;
         await apiFetch(`/admin/sites/${id}`,{method:'DELETE'});
-        addLog(`删除链接：${id}`);showToast('删除成功');loadAllData();
+        addLog(`删除链接：${id}`);showToast('删除成功');await loadAllData();
     }
 
     // 导出备份
@@ -597,7 +666,7 @@
     document.getElementById('sortRankBtn').onclick=renderRank;
     document.getElementById('tokenInput').addEventListener('keydown',e=>e.key==='Enter'&&login());
 
-    if(token)login();
+    if(token) login();
 </script>
 </body>
 </html>
