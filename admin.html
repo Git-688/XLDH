@@ -162,7 +162,8 @@
     let failCount = parseInt(localStorage.getItem('login_fail_count') || 0);
     let lockTime = localStorage.getItem('login_lock_time') || 0;
     const TOKEN_EXPIRE_HOURS = 24;
-    const IP_WHITELIST = ['127.0.0.1', '你的公网IP']; // 自行添加IP
+    // 👇 已填好你的公网IP
+    const IP_WHITELIST = ['127.0.0.1', '112.96.123.9'];
 
     // Toast提示
     const toast = document.getElementById('toast');
