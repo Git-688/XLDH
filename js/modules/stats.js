@@ -1,35 +1,8 @@
 // 统计接口域名（你的 Worker 路由）
 const WORKER_URL = 'https://api.xldh688.eu.cc';
 
-// ========== 一次性清除旧的 localStorage 统计键 ==========
-(function clearOldLocalStorageStats() {
-    // 需要清除的旧键列表（Storage 类使用 starlink_ 前缀）
-    const oldKeys = [
-        'starlink_site_views',      // 旧网站浏览量统计
-        'starlink_visit_count',     // 旧访问次数
-        'starlink_first_visit_time',
-        'starlink_last_visit_time',
-        'starlink_accumulated_uptime',  // 旧运行时间累计
-        'starlink_last_uptime_update',
-        // 如果有其他旧的统计键，可以继续添加
-    ];
-    let anyRemoved = false;
-    for (const key of oldKeys) {
-        if (localStorage.getItem(key) !== null) {
-            localStorage.removeItem(key);
-            anyRemoved = true;
-        }
-    }
-    // 也可以直接清除所有以 starlink_ 开头且与统计相关的键（保留用户配置等）
-    // 但为了安全，只删除明确列出的键
-    if (anyRemoved) {
-        console.log('[统计] 已清除旧的 localStorage 统计数据，现在完全依赖 Cloudflare Worker');
-    }
-})();
-// ====================================================
-
-// 全局存储运行时间起始时间戳（毫秒，UTC+8）
-let startTimeMs = null;
+// 心跳定时器句柄
+let heartbeatInterval = null;
 
 // 格式化运行时间（毫秒 -> 字符串）
 function formatUptime(ms) {
@@ -47,11 +20,10 @@ function formatUptime(ms) {
     return parts.join(" ") || "0秒";
 }
 
-// 更新运行时间显示（每秒调用）
-function updateUptimeDisplay() {
+// 更新运行时间显示
+function updateUptimeDisplay(startTimeMs) {
     if (!startTimeMs) return;
-    // 计算当前 UTC+8 时间（与 Worker 保持一致）
-    const nowMs = Date.now() + 8 * 3600 * 1000;
+    const nowMs = Date.now() + 8 * 3600 * 1000; // UTC+8
     const uptimeMs = nowMs - startTimeMs;
     const formatted = formatUptime(uptimeMs);
     $('#uptime').text(formatted);
@@ -63,10 +35,9 @@ async function fetchUptimeStart() {
         const res = await fetch(`${WORKER_URL}/uptime`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        startTimeMs = data.startTime;
-        updateUptimeDisplay();
-        // 每秒更新一次显示
-        setInterval(updateUptimeDisplay, 1000);
+        let startTimeMs = data.startTime;
+        updateUptimeDisplay(startTimeMs);
+        setInterval(() => updateUptimeDisplay(startTimeMs), 1000);
     } catch (e) {
         console.error('获取运行时间失败:', e);
         $('#uptime').text('获取失败');
@@ -92,24 +63,44 @@ async function refreshStats() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         $('#onlineCount').text(data.online);
-        $('#todayCount').text(data.today_uv);
-        $('#totalCount').text(data.total_pv);
+        $('#todayCount').text(data.today_uv);        // 今日独立访客
+        $('#totalCount').text(data.total_uv);        // 累计独立访客（总UV）
     } catch (e) {
         console.error('获取统计失败:', e);
     }
 }
 
+// 页面可见性变化时控制心跳
+function handleVisibilityChange() {
+    if (document.hidden) {
+        // 页面隐藏，停止心跳
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+        }
+    } else {
+        // 页面重新可见，立即发送一次心跳，并启动定时器
+        if (!heartbeatInterval) {
+            postToWorker('/heartbeat');
+            heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 30000);
+        }
+    }
+}
+
 // 初始化统计模块
 $(document).ready(function() {
+    // 发送访问记录
     postToWorker('/visit');
+    // 发送首次心跳
     postToWorker('/heartbeat');
+    // 启动心跳定时器
+    heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 30000);
+    // 监听页面可见性变化
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // 刷新统计数据
     refreshStats();
-    fetchUptimeStart();   // 获取运行时间起始点
-
-    // 30秒心跳
-    setInterval(() => {
-        postToWorker('/heartbeat');
-    }, 30000);
+    fetchUptimeStart();
 
     // 1分钟刷新一次统计数据
     setInterval(refreshStats, 60000);
