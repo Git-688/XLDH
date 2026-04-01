@@ -312,7 +312,7 @@
     <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部">
         <i class="fas fa-chevron-up"></i>
     </button>
-    <button class="floating-btn refresh-btn" id="refreshBtn" aria-label="日记本">
+    <button class="floating-btn refresh-btn" id="diaryBtn" aria-label="日记本">
         <i class="fas fa-book"></i>
     </button>
     <a href="./pages/tools/羊毛福利.html" class="floating-btn activity-btn" id="activityBtn" aria-label="羊毛福利">
@@ -577,7 +577,7 @@
     
 </main>
 
-<!-- ========== 核心统计+指纹逻辑 ========== -->
+<!-- ========== 核心统计+指纹+事件绑定逻辑 ========== -->
 <script>
 // 后端接口地址（和Worker完全一致）
 const WORKER_URL = 'https://api.xldh688.eu.cc';
@@ -587,25 +587,75 @@ window.deviceVisitorId = null;
 const channel = new BroadcastChannel('site_heartbeat');
 let isMasterTab = false;
 
-// ========== 1. 初始化设备指纹库（页面加载优先执行） ==========
+// ========== 1. 模态框事件绑定（修复搜索、日记按钮无响应） ==========
+$(document).ready(() => {
+    // 搜索按钮点击事件
+    $('#searchBtn').on('click', () => {
+        $('#searchModal').fadeIn(300);
+        $('#searchInput').focus();
+    });
+
+    // 点击搜索模态框空白处关闭
+    $('#searchModal').on('click', (e) => {
+        if (e.target === $('#searchModal')[0]) {
+            $('#searchModal').fadeOut(300);
+        }
+    });
+
+    // 日记按钮点击事件
+    $('#diaryBtn').on('click', () => {
+        $('#diaryModal').fadeIn(300);
+    });
+
+    // 日记关闭按钮点击事件
+    $('#diaryCloseBtn').on('click', () => {
+        $('#diaryModal').fadeOut(300);
+    });
+
+    // 点击日记模态框空白处关闭
+    $('#diaryModal').on('click', (e) => {
+        if (e.target === $('#diaryModal')[0]) {
+            $('#diaryModal').fadeOut(300);
+        }
+    });
+
+    // 返回顶部按钮
+    $('#backToTop').on('click', () => {
+        $('html, body').animate({ scrollTop: 0 }, 300);
+    });
+});
+
+// ========== 2. 初始化设备指纹库（持久化存储，解决在线人数不稳定） ==========
 async function initFingerprint() {
+    // 优先从localStorage读取已生成的指纹，避免每次刷新重新生成
+    const savedFingerprint = localStorage.getItem('device_visitor_id');
+    if (savedFingerprint) {
+        window.deviceVisitorId = savedFingerprint;
+        console.log('[设备指纹] 读取本地缓存指纹：', window.deviceVisitorId);
+        initNavigationAndStats();
+        return;
+    }
+
+    // 没有缓存则重新生成
     try {
-        // 加载指纹库并生成设备唯一ID
         const fp = await FingerprintJS.load();
         const result = await fp.get();
         window.deviceVisitorId = `device_${result.visitorId}`;
-        console.log('[设备指纹] 初始化完成，设备ID：', window.deviceVisitorId);
-        // 指纹生成后，初始化导航模块和统计
+        // 持久化存储到localStorage
+        localStorage.setItem('device_visitor_id', window.deviceVisitorId);
+        console.log('[设备指纹] 生成并缓存新指纹：', window.deviceVisitorId);
         initNavigationAndStats();
     } catch (e) {
         console.error('[设备指纹] 初始化失败，启用降级方案', e);
-        // 降级方案：生成临时设备ID
-        window.deviceVisitorId = `temp_${Math.random().toString(36).substring(2, 18)}_${Date.now()}`;
+        // 降级方案：生成永久设备ID，存在localStorage
+        const fallbackId = `device_fallback_${Math.random().toString(36).substring(2, 18)}_${Date.now()}`;
+        window.deviceVisitorId = fallbackId;
+        localStorage.setItem('device_visitor_id', fallbackId);
         initNavigationAndStats();
     }
 }
 
-// ========== 2. 多标签页主标签选举（避免重复上报） ==========
+// ========== 3. 多标签页主标签选举（避免重复上报） ==========
 channel.onmessage = (e) => {
     if (e.data === 'master_exists') {
         isMasterTab = false;
@@ -626,7 +676,7 @@ window.addEventListener('beforeunload', () => {
     channel.close();
 });
 
-// ========== 3. 统计核心函数 ==========
+// ========== 4. 统计核心函数 ==========
 // 格式化运行时间
 function formatUptime(ms) {
     if (ms < 0) return "刚刚上线";
@@ -697,7 +747,7 @@ async function refreshStats() {
     }
 }
 
-// ========== 4. 初始化导航和统计 ==========
+// ========== 5. 初始化导航和统计 ==========
 function initNavigationAndStats() {
     // 上报访问记录
     postToWorker('/visit');
