@@ -12,12 +12,10 @@
             background:#f7f8fa;font-size:12px;color:#2f3542;
             -webkit-font-smoothing:antialiased;padding:10px;
         }
-        /* 全局滚动条隐藏 */
         ::-webkit-scrollbar{display:none}
         *{-ms-overflow-style:none;scrollbar-width:none}
 
         .container{max-width:1200px;margin:0 auto;width:100%}
-        /* 简化层次：合并多余卡片，减少嵌套 */
         .header-card{
             background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;
             box-shadow:0 2px 8px rgba(0,0,0,0.05);border:1px solid #f1f3f5
@@ -31,8 +29,6 @@
         .tab-btn{padding:7px 14px;border-radius:7px;background:#f1f5f9;color:#64748b;cursor:pointer;font-size:12px}
         .tab-btn.active{background:#3b82f6;color:#fff}
 
-        /* ========== 核心布局（简化层次，无多余嵌套） ========== */
-        /* 1. 一级分类：横向滚动+隐藏滚动条 */
         .cat-bar{
             width:100%;padding:10px 14px;background:#f8fafc;border-radius:10px;
             margin-bottom:12px;display:flex;gap:7px;align-items:center;
@@ -46,7 +42,6 @@
         .cat-item.active{background:#3b82f6;color:#fff}
 
         .content-layout{display:flex;gap:10px;margin-top:0}
-        /* 2. 二级分类：纵向滚动+隐藏滚动条+按钮间距 */
         .sidebar{
             width:180px;flex-shrink:0;background:#f8fafc;border-radius:10px;
             padding:12px;display:flex;flex-direction:column;gap:0;
@@ -67,7 +62,6 @@
             flex:1;background:#f8fafc;border-radius:10px;
             padding:12px;
         }
-        /* 列表滚动容器 */
         .site-list,.rank-list,.bad-links-list{
             overflow-y:auto;max-height:calc(100vh - 260px);
         }
@@ -119,7 +113,6 @@
         .status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
         .dot-red{background:#dc2626}
 
-        /* 模态框：全端自动适配 */
         .modal{
             position:fixed;inset:0;background:rgba(0,0,0,0.25);
             display:flex;align-items:center;justify-content:center;
@@ -153,7 +146,6 @@
         .result-group h4{margin-bottom:7px;font-size:13px}
         .hidden{display:none}
 
-        /* 移动端适配 */
         @media (max-width:768px){
             .sidebar{width:150px}
             .cat-item{padding:7px 12px;font-size:11px}
@@ -193,7 +185,6 @@
 </div>
 
 <div class="container">
-    <!-- 简化层次：仅保留登录头部卡片 -->
     <div class="header-card">
         <div class="header">
             <h1 style="font-size:17px">📋 星链导航管理</h1>
@@ -205,7 +196,6 @@
         </div>
     </div>
 
-    <!-- 简化层次：主内容仅一个卡片，无多余嵌套 -->
     <div id="mainContent" class="hidden main-card">
         <div class="flex-row" style="margin-bottom:12px">
             <div class="tab-btn active" data-tab="manage">数据管理</div>
@@ -213,7 +203,6 @@
             <div class="tab-btn" data-tab="rank">点击排行</div>
         </div>
 
-        <!-- 数据管理页（扁平化结构，无多余嵌套） -->
         <div id="manageTab" class="tab-panel">
             <div class="flex-row" style="margin-bottom:10px">
                 <input type="text" class="search-box" id="searchInput" placeholder="搜索标题...">
@@ -222,18 +211,14 @@
                 <button class="primary sm" id="addCategoryBtn">+一级分类</button>
             </div>
 
-            <!-- 顶部一级分类栏 -->
             <div class="cat-bar" id="catBar"></div>
 
-            <!-- 左右分栏布局 -->
             <div class="content-layout">
-                <!-- 左侧子分类栏 -->
                 <div class="sidebar" id="sidebar">
                     <button class="primary" style="width:100%" id="addSubBtn">+子分类</button>
                     <div class="sub-list" id="subList"></div>
                 </div>
 
-                <!-- 右侧链接列表 -->
                 <div class="main-content" id="mainContentArea">
                     <div class="flex-row" style="margin-bottom:10px">
                         <button class="primary sm" id="addSiteBtn">+添加链接</button>
@@ -243,7 +228,6 @@
             </div>
         </div>
 
-        <!-- 死链检测页 -->
         <div id="checkTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px">
                 <button class="primary" id="checkAllBtn">重新检测所有链接</button>
@@ -257,7 +241,6 @@
             </div>
         </div>
 
-        <!-- 点击排行页 -->
         <div id="rankTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px">
                 <button class="primary sm" id="sortRankBtn">按点击数降序</button>
@@ -281,7 +264,6 @@
     let isChecking = false;
     let hasChecked = false;
 
-    // 提示框
     const toast = document.getElementById('toast');
     function showToast(msg, type = 'success') {
         toast.textContent = msg;
@@ -289,7 +271,6 @@
         setTimeout(() => toast.classList.remove('show'), 2300);
     }
 
-    // 模态框管理
     function openModal(title, html, cb) {
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalForm').innerHTML = html;
@@ -308,7 +289,6 @@
     }
     function closeLogModal() { document.getElementById('logModal').classList.remove('show'); }
 
-    // 操作日志
     function addLog(text) {
         const logs = JSON.parse(localStorage.getItem('operation_logs') || '[]');
         logs.unshift({ time: new Date().toLocaleString(), text });
@@ -321,7 +301,6 @@
         document.getElementById('logModal').classList.add('show');
     }
 
-    // API请求
     async function apiFetch(endpoint, opt = {}) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
         if (token) headers.Authorization = `Bearer ${token}`;
@@ -331,7 +310,6 @@
         return res.json();
     }
 
-    // IP白名单校验
     async function checkIP() {
         try {
             const {ip} = await (await fetch('https://api.ipify.org?format=json')).json();
@@ -341,14 +319,12 @@
         }
     }
 
-    // 登录锁定
     function checkLock() {
         if(Date.now() < lockTime){showToast('登录失败过多，锁定10分钟','error');return false;}
         if(failCount >=5){localStorage.setItem('login_lock_time',Date.now()+600000);showToast('失败5次，锁定10分钟','error');return false;}
         return true;
     }
 
-    // Token过期
     function checkTokenExpire() {
         const t = localStorage.getItem('login_time');
         if(!t)return;
@@ -356,7 +332,6 @@
         else if(Date.now()-t > TOKEN_EXPIRE_HOURS*3600000*0.9){showToast('Token即将过期','warn');}
     }
 
-    // 登录
     async function login() {
         if(!checkLock())return;
         if(!await checkIP()){showToast('当前IP无权限','error');return;}
@@ -381,7 +356,6 @@
         }finally{btn.disabled=0;btn.textContent='登录';}
     }
 
-    // 退出
     function logout() {
         token='';localStorage.clear();
         isChecking = false;
@@ -394,21 +368,17 @@
         addLog('退出登录');showToast('已退出');
     }
 
-    // ========== 替换为你指定的Favicon图标接口 ==========
     function getFavicon(url){
         try{
             const u = new URL(url);
-            // 完全匹配接口要求：GET请求，url参数传域名
             return `https://api.71xk.com/api/favicon?url=${u.hostname}`;
         } catch {
             return 'fas fa-link';
         }
     }
 
-    // 链接验证
     function checkUrl(url){try{new URL(url);return true;}catch{return false;}}
 
-    // 死链检测
     async function checkSingleLink(url){
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 10000);
@@ -455,22 +425,41 @@
             <div class="link-item">
                 <div class="link-info">
                     <span class="status-dot dot-red"></span>
-                    ${s.title}
-                    <span class="link-url">${s.url}</span>
+                    ${escapeHtml(s.title)}
+                    <span class="link-url">${escapeHtml(s.url)}</span>
                 </div>
             </div>
         `).join('') || '<div class="empty">🎉 所有链接均正常，无异常链接</div>';
     }
 
-    // 点击排行
-    function renderRank(){
-        const sorted = [...sites].sort((a,b) => (b.click||0)-(a.click||0));
-        document.getElementById('rankList').innerHTML = sorted.map(s => `
-            <div class="link-item">
-                <div class="link-info">${s.title}</div>
-                <span class="badge badge-blue">${s.click||0}次点击</span>
-            </div>
-        `).join('') || '<div class="empty">无数据</div>';
+    // 加载点击排行榜（从后端获取）
+    async function loadRanking() {
+        const rankList = document.getElementById('rankList');
+        if (!rankList) return;
+        rankList.innerHTML = '<div class="empty">加载中...</div>';
+        try {
+            const response = await fetch(API_BASE + '/admin/topclicks?limit=20', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('获取排行失败');
+            const data = await response.json();
+            if (!data.length) {
+                rankList.innerHTML = '<div class="empty">暂无点击数据</div>';
+                return;
+            }
+            rankList.innerHTML = data.map(item => `
+                <div class="link-item">
+                    <div class="link-info">
+                        <div>${escapeHtml(item.title)}</div>
+                        <div class="link-url">${escapeHtml(item.url)}</div>
+                    </div>
+                    <span class="badge badge-blue">${item.count}次点击</span>
+                </div>
+            `).join('');
+        } catch (err) {
+            console.error(err);
+            rankList.innerHTML = '<div class="empty">加载失败，请检查网络</div>';
+        }
     }
 
     // 标签切换
@@ -481,7 +470,7 @@
             btn.classList.add('active');
             const tab = btn.dataset.tab;
             document.getElementById(`${tab}Tab`).classList.remove('hidden');
-            if(tab === 'rank') renderRank();
+            if(tab === 'rank') loadRanking();
             if(tab === 'check' && !hasChecked && !isChecking){
                 checkAllLinks();
             }
@@ -508,7 +497,6 @@
         renderSiteList();
     }
 
-    // 渲染逻辑
     function renderCatBar(){
         if(categories.length === 0){
             document.getElementById('catBar').innerHTML = '<div class="empty" style="width:100%;flex-shrink:0">请先添加一级分类</div>';
@@ -518,7 +506,7 @@
         }
         document.getElementById('catBar').innerHTML = categories.map(c => `
             <div class="cat-item ${c.id===currentCat?'active':''}" data-cid="${c.id}" onclick="selectCat(${c.id})">
-                ${c.name}
+                ${escapeHtml(c.name)}
             </div>
         `).join('');
     }
@@ -534,7 +522,7 @@
         }
         document.getElementById('subList').innerHTML = subs.map(s => `
             <div class="sub-item ${s.id===currentSub?'active':''}" data-sid="${s.id}" onclick="selectSub(${s.id})">
-                ${s.name}
+                ${escapeHtml(s.name)}
             </div>
         `).join('');
     }
@@ -550,7 +538,7 @@
         }
         document.getElementById('siteList').innerHTML = list.map(s => `
             <div class="link-item">
-                <div class="link-info">${s.title}</div>
+                <div class="link-info">${escapeHtml(s.title)}</div>
                 <div class="link-actions">
                     <button class="sm primary" onclick="openEditSite(${s.id})">编辑</button>
                     <button class="sm danger" onclick="delSite(${s.id})">删除</button>
@@ -559,7 +547,6 @@
         `).join('');
     }
 
-    // 数据加载
     async function loadAllData(){
         checkTokenExpire();
         try{
@@ -586,7 +573,6 @@
         }
     }
 
-    // 增删改查
     function openAddCat(){
         openModal('新增一级分类',`
             <div class="form-row"><label>名称</label><input id="name"></div>
@@ -634,10 +620,10 @@
     function openEditSite(id){
         const s=sites.find(x=>x.id===id);
         openModal('编辑链接',`
-            <div class="form-row"><label>标题</label><input id="title" value="${s.title}"></div>
-            <div class="form-row"><label>网址</label><input id="url" value="${s.url}" oninput="document.getElementById('icon').value=getFavicon(this.value)"></div>
-            <div class="form-row"><label>图标</label><input id="icon" value="${s.icon||'fas fa-link'}"></div>
-            <div class="form-row"><label>描述</label><input id="desc" value="${s.description||''}"></div>
+            <div class="form-row"><label>标题</label><input id="title" value="${escapeHtml(s.title)}"></div>
+            <div class="form-row"><label>网址</label><input id="url" value="${escapeHtml(s.url)}" oninput="document.getElementById('icon').value=getFavicon(this.value)"></div>
+            <div class="form-row"><label>图标</label><input id="icon" value="${escapeHtml(s.icon||'fas fa-link')}"></div>
+            <div class="form-row"><label>描述</label><input id="desc" value="${escapeHtml(s.description||'')}"></div>
             <div class="form-row"><label>排序</label><input type="number" id="sort" value="${s.display_order}"></div>
         `,async()=>{
             const t=document.getElementById('title').value,u=document.getElementById('url').value;
@@ -658,14 +644,24 @@
         addLog(`删除链接：${id}`);showToast('删除成功');await loadAllData();
     }
 
-    // 导出备份
     function exportData(){
         const blob = new Blob([JSON.stringify({categories,subcategories,sites,time:new Date().toLocaleString()},null,2)],{type:'application/json'});
         const a = document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`导航备份_${new Date().getTime()}.json`;a.click();
         addLog('导出备份');showToast('导出成功');
     }
 
-    // 确认按钮逻辑
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
     document.getElementById('modalSubmit').onclick = async function(){
         if(!modalAction) return;
         const btn = this;
@@ -683,7 +679,6 @@
         }
     };
 
-    // 初始化
     document.getElementById('loginBtn').onclick=login;
     document.getElementById('logoutBtn').onclick=logout;
     document.getElementById('addCategoryBtn').onclick=openAddCat;
@@ -692,7 +687,7 @@
     document.getElementById('exportBtn').onclick=exportData;
     document.getElementById('logBtn').onclick=showLogs;
     document.getElementById('checkAllBtn').onclick=checkAllLinks;
-    document.getElementById('sortRankBtn').onclick=renderRank;
+    document.getElementById('sortRankBtn').onclick=loadRanking;
     document.getElementById('tokenInput').addEventListener('keydown',e=>e.key==='Enter'&&login());
 
     if(token) login();
