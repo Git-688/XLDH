@@ -2,344 +2,660 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>星链导航后台管理</title>
-    <meta name="description" content="星链导航后台管理系统">
-    <meta name="author" content="星链导航">
-    
-    <!-- 主题颜色 -->
-    <meta name="theme-color" content="#4361ee">
-    
-    <!-- 图标 -->
-    <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
-    
-    <!-- 基础依赖 -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    
-    <!-- Font Awesome 图标 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        html{scroll-behavior:smooth}
-        body{
-            font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-            background:#f7f8fa;font-size:12px;color:#2f3542;
-            -webkit-font-smoothing:antialiased;padding:10px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
-        ::-webkit-scrollbar{display:none}
-        *{-ms-overflow-style:none;scrollbar-width:none}
-        .container{max-width:1200px;margin:0 auto;width:100%}
-        .header-card{
-            background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.05);border:1px solid #f1f3f5
+        :root {
+            --primary: #4361ee;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
         }
-        .main-card{
-            background:#fff;border-radius:10px;padding:14px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.05);border:1px solid #f1f3f5
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
         }
-        .header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
-        .flex-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-        .tab-btn{padding:7px 14px;border-radius:7px;background:#f1f5f9;color:#64748b;cursor:pointer;font-size:12px}
-        .tab-btn.active{background:#3b82f6;color:#fff}
-        .cat-bar{
-            width:100%;padding:10px 14px;background:#f8fafc;border-radius:10px;
-            margin-bottom:12px;display:flex;gap:7px;align-items:center;
-            overflow-x:auto;flex-wrap:nowrap;
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
         }
-        .cat-item{
-            padding:8px 15px;border-radius:7px;background:#fff;
-            cursor:pointer;white-space:nowrap;font-weight:500;font-size:12px;
-            transition:all .2s;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05);
+        .header-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .cat-item.active{background:#3b82f6;color:#fff}
-        .content-layout{display:flex;gap:10px;margin-top:0}
-        .sidebar{
-            width:180px;flex-shrink:0;background:#f8fafc;border-radius:10px;
-            padding:12px;display:flex;flex-direction:column;gap:0;
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
         }
-        .sub-list{
-            display:flex;flex-direction:column;gap:8px;
-            overflow-y:auto;max-height:calc(100vh - 280px);
-            margin-top:12px;
+        .header-title i {
+            color: var(--primary);
         }
-        .sub-item{
-            padding:10px 12px;border-radius:7px;background:#fff;
-            text-align:left;cursor:pointer;font-weight:500;font-size:12px;
-            transition:all .2s;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05);
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
         }
-        .sub-item.active{background:#e0f2fe;color:#0369a1}
-        .main-content{
-            flex:1;background:#f8fafc;border-radius:10px;
-            padding:12px;
+        .tab-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .site-list,.rank-list,.bad-links-list{
-            overflow-y:auto;max-height:calc(100vh - 260px);
+        .tab-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
-        input,select{
-            padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;
-            font-size:12px;width:100%;background:#fff;outline:none;
-            transition:all .2s
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
         }
-        input:focus,select:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.12)}
-        .form-row{margin-bottom:12px}
-        .form-row label{font-size:11px;color:#64748b;margin-bottom:4px;display:block}
-        button{
-            border:none;border-radius:7px;padding:6px 10px;
-            font-size:12px;cursor:pointer;transition:all .2s;
-            display:inline-flex;align-items:center;justify-content:center;
-            font-weight:500
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
         }
-        button:disabled{opacity:0.6;cursor:not-allowed}
-        button.primary{background:#3b82f6;color:#fff}
-        button.primary:hover{background:#2563eb}
-        button.danger{background:#ef4444;color:#fff}
-        button.danger:hover{background:#dc2626}
-        button.secondary{background:#64748b;color:#fff}
-        button.secondary:hover{background:#475569}
-        button.text{background:transparent;color:#64748b;padding:4px 7px;font-size:11px}
-        button.text:hover{color:#3b82f6}
-        button.sm{padding:4px 7px;font-size:11px}
-        .search-box{max-width:220px}
-        .badge{padding:2px 7px;border-radius:5px;font-size:10px}
-        .badge-green{background:#dcfce7;color:#16a34a}
-        .badge-red{background:#fee2e2;color:#dc2626}
-        .badge-blue{background:#e0f2fe;color:#0369a1}
-        .link-item{
-            padding:10px;border-radius:7px;background:#fff;margin-bottom:7px;
-            display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:7px;
-            box-shadow:0 1px 3px rgba(0,0,0,0.05);
+        .tab-content {
+            display: none;
         }
-        .link-info{flex:1;min-width:150px}
-        .link-info .link-url{
-            display:block;overflow:hidden;text-overflow:ellipsis;
-            white-space:nowrap;max-width:100%;font-size:11px;color:#64748b;
-            margin-top:2px;
+        .tab-content.active {
+            display: block;
         }
-        .link-actions{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0}
-        .status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
-        .dot-red{background:#dc2626}
-        .modal{
-            position:fixed;inset:0;background:rgba(0,0,0,0.25);
-            display:flex;align-items:center;justify-content:center;
-            z-index:99;opacity:0;visibility:hidden;transition:all .2s;
-            padding:12px;
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
-        .modal.show{opacity:1;visibility:visible}
-        .modal-body{
-            background:#fff;border-radius:10px;width:100%;max-width:460px;
-            padding:18px;max-height:80vh;overflow-y:auto;
-            box-shadow:0 4px 20px rgba(0,0,0,0.1);
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .modal-title{font-size:15px;font-weight:600;margin-bottom:12px;color:#1e293b}
-        .modal-buttons{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
-        .toast{
-            position:fixed;bottom:20px;left:50%;transform:translate(-50%,12px);
-            padding:8px 16px;border-radius:7px;font-size:12px;color:#fff;
-            z-index:999;opacity:0;visibility:hidden;transition:all .25s ease;
-            box-shadow:0 4px 16px rgba(0,0,0,0.15)
+        .btn-primary {
+            background: var(--primary);
+            color: white;
         }
-        .toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
-        .toast.success{background:#10b981}
-        .toast.error{background:#ef4444}
-        .toast.warn{background:#f59e0b}
-        .log-item{padding:7px;border-bottom:1px solid #f1f5f9;font-size:11px}
-        .empty{text-align:center;padding:18px;color:#94a3b8;font-size:11px}
-        .check-result{padding:10px;border-radius:7px;background:#fff;margin-top:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
-        .result-group{margin-bottom:10px}
-        .result-group h4{margin-bottom:7px;font-size:13px}
-        .hidden{display:none}
-        @media (max-width:768px){
-            .sidebar{width:150px}
-            .cat-item{padding:7px 12px;font-size:11px}
-            .link-info{min-width:120px}
-            .modal-body{max-width:95%;padding:15px}
+        .btn-success {
+            background: var(--success);
+            color: white;
         }
-        @media (max-width:480px){
-            .sidebar{width:130px}
-            .sub-item{padding:8px 10px;font-size:11px}
-            .cat-item{padding:6px 10px}
-            .modal-body{max-width:98%;padding:12px}
-            .modal-buttons{justify-content:stretch}
-            .modal-buttons button{flex:1}
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .form-group label {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead {
+            background: var(--bg);
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+        .table-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 4px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-danger {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .login-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-title i {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+        .login-title h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .login-form .form-group {
+            margin-bottom: 20px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .stats-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: #fef3c7;
+            color: #92400e;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
-<div class="toast" id="toast"></div>
-
-<div class="modal" id="modal" onclick="if(event.target === this) closeModal()">
-    <div class="modal-body">
-        <div class="modal-title" id="modalTitle"></div>
-        <div id="modalForm"></div>
-        <div class="modal-buttons">
-            <button class="secondary" onclick="closeModal()">取消</button>
-            <button class="primary" id="modalSubmit">确认</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal" id="logModal" onclick="if(event.target === this) closeLogModal()">
-    <div class="modal-body" style="max-width:560px">
-        <div class="modal-title">操作日志</div>
-        <div id="logList" style="max-height:360px;overflow-y:auto"></div>
-        <div class="modal-buttons"><button class="primary" onclick="closeLogModal()">关闭</button></div>
-    </div>
-</div>
-
-<div class="container">
-    <div class="header-card">
-        <div class="header">
-            <h1 style="font-size:17px">📋 星链导航管理</h1>
-            <div class="flex-row">
-                <input type="password" id="tokenInput" placeholder="管理Token" style="width:130px" autocomplete="off">
-                <button class="primary" id="loginBtn">登录</button>
-                <button class="secondary hidden" id="logoutBtn">退出</button>
+    <!-- 登录页面 -->
+    <div class="login-container" id="loginPage">
+        <div class="login-card">
+            <div class="login-title">
+                <i class="fas fa-cogs"></i>
+                <h1>星链导航后台管理</h1>
             </div>
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="adminToken">管理密钥</label>
+                    <input type="password" id="adminToken" placeholder="请输入管理密钥" required>
+                </div>
+                <button type="submit" class="login-btn">登录</button>
+            </form>
         </div>
     </div>
 
-    <div id="mainContent" class="hidden main-card">
-        <div class="flex-row" style="margin-bottom:12px">
-            <div class="tab-btn active" data-tab="manage">数据管理</div>
-            <div class="tab-btn" data-tab="check">死链检测</div>
-            <div class="tab-btn" data-tab="rank">点击排行</div>
-        </div>
-
-        <div id="manageTab" class="tab-panel">
-            <div class="flex-row" style="margin-bottom:10px">
-                <input type="text" class="search-box" id="searchInput" placeholder="搜索标题...">
-                <button class="text" id="exportBtn">备份导出</button>
-                <button class="text" id="logBtn">操作日志</button>
-                <button class="primary sm" id="addCategoryBtn">+一级分类</button>
+    <!-- 管理主页面 -->
+    <div id="adminPage" style="display: none;">
+        <div class="container">
+            <div class="header-card">
+                <div class="header-title">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>星链导航管理</span>
+                </div>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> 退出
+                </button>
             </div>
 
-            <div class="cat-bar" id="catBar"></div>
-
-            <div class="content-layout">
-                <div class="sidebar" id="sidebar">
-                    <button class="primary" style="width:100%" id="addSubBtn">+子分类</button>
-                    <div class="sub-list" id="subList"></div>
+            <div class="tab-card">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="data">数据管理</button>
+                    <button class="tab-btn" data-tab="deadlink">死链检测</button>
+                    <button class="tab-btn" data-tab="clickrank">点击排行</button>
                 </div>
 
-                <div class="main-content" id="mainContentArea">
-                    <div class="flex-row" style="margin-bottom:10px">
-                        <button class="primary sm" id="addSiteBtn">+添加链接</button>
+                <!-- 数据管理 -->
+                <div class="tab-content active" id="dataTab">
+                    <div class="action-bar">
+                        <button class="action-btn btn-primary" id="addCategoryBtn">
+                            <i class="fas fa-plus"></i> 新增分类
+                        </button>
+                        <button class="action-btn btn-primary" id="addSubCategoryBtn">
+                            <i class="fas fa-plus"></i> 新增子分类
+                        </button>
+                        <button class="action-btn btn-primary" id="addSiteBtn">
+                            <i class="fas fa-plus"></i> 新增网站
+                        </button>
                     </div>
-                    <div class="site-list" id="siteList"></div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="categorySelect">一级分类</label>
+                            <select id="categorySelect">
+                                <option value="">请选择分类</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="subCategorySelect">二级分类</label>
+                            <select id="subCategorySelect">
+                                <option value="">请选择子分类</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="sitesTable">
+                            <thead>
+                                <tr>
+                                    <th>网站名称</th>
+                                    <th>链接</th>
+                                    <th>点击数</th>
+                                    <th>分类</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sitesTableBody">
+                                <tr>
+                                    <td colspan="5" class="empty-state">
+                                        <i class="fas fa-inbox"></i>
+                                        <div>暂无数据，请先选择分类</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 死链检测 -->
+                <div class="tab-content" id="deadlinkTab">
+                    <div class="action-bar">
+                        <button class="action-btn btn-warning" id="checkDeadlinkBtn">
+                            <i class="fas fa-sync-alt"></i> 重新检测所有链接
+                        </button>
+                        <span class="stats-badge" id="deadlinkCount">
+                            <i class="fas fa-exclamation-circle"></i> 异常链接 <span id="deadlinkNumber">0</span>
+                        </span>
+                    </div>
+                    <div class="table-container">
+                        <table id="deadlinkTable">
+                            <thead>
+                                <tr>
+                                    <th>网站名称</th>
+                                    <th>链接</th>
+                                    <th>分类</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deadlinkTableBody">
+                                <tr>
+                                    <td colspan="4" class="empty-state">
+                                        <i class="fas fa-check-circle"></i>
+                                        <div>暂无异常链接</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 点击排行 -->
+                <div class="tab-content" id="clickrankTab">
+                    <div class="action-bar">
+                        <button class="action-btn btn-success" id="refreshRankBtn">
+                            <i class="fas fa-sync-alt"></i> 刷新排行
+                        </button>
+                        <button class="action-btn btn-primary" id="sortRankBtn">
+                            <i class="fas fa-sort-amount-down"></i> 按点击数降序
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table id="rankTable">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>网站名称</th>
+                                    <th>链接</th>
+                                    <th>点击数</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rankTableBody">
+                                <tr>
+                                    <td colspan="4" class="empty-state">
+                                        <i class="fas fa-chart-line"></i>
+                                        <div>暂无点击数据</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div id="checkTab" class="tab-panel hidden">
-            <div class="flex-row" style="margin-bottom:10px">
-                <button class="primary" id="checkAllBtn">重新检测所有链接</button>
-                <span style="color:#64748b;font-size:11px">异常链接<span class="badge badge-red">红点</span></span>
-            </div>
-            <div class="check-result">
-                <div class="result-group">
-                    <h4>🔴 异常/无法访问链接</h4>
-                    <div class="bad-links-list" id="badLinks"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="rankTab" class="tab-panel hidden">
-            <div class="flex-row" style="margin-bottom:10px">
-                <button class="primary sm" id="sortRankBtn">按点击数降序</button>
-                <span class="badge badge-blue">按点击量从高到低排列</span>
-            </div>
-            <div class="rank-list" id="rankList"></div>
         </div>
     </div>
-</div>
 
-<script>
-    // ========== 核心配置（必须和你的Worker地址一致） ==========
-    const API_BASE = 'https://api.xldh688.eu.cc';
-    // ========== 全局变量 ==========
-    let token = localStorage.getItem('admin_token') || '';
-    let modalAction = null;
-    let categories = [], subcategories = [], sites = [];
-    let currentCat = null, currentSub = null;
-    let failCount = parseInt(localStorage.getItem('login_fail_count') || 0);
-    let lockTime = localStorage.getItem('login_lock_time') || 0;
-    const TOKEN_EXPIRE_HOURS = 24 * 7;
-    const IP_WHITELIST = [];
-    let isChecking = false;
-    let hasChecked = false;
+    <script>
+        const API_BASE = 'https://api.xldh688.eu.cc';
+        let authToken = localStorage.getItem('admin_token') || '';
+        let categoryList = [];
+        let subCategoryList = [];
+        let siteList = [];
+        let rankList = [];
 
-    // ========== 工具函数 ==========
-    const toast = document.getElementById('toast');
-    function showToast(msg, type = 'success') {
-        toast.textContent = msg;
-        toast.className = `toast ${type} show`;
-        setTimeout(() => toast.classList.remove('show'), 2300);
-    }
-
-    function openModal(title, html, cb) {
-        document.getElementById('modalTitle').textContent = title;
-        document.getElementById('modalForm').innerHTML = html;
-        modalAction = cb;
-        const btn = document.getElementById('modalSubmit');
-        btn.disabled = false;
-        btn.textContent = '确认';
-        document.getElementById('modal').classList.add('show');
-    }
-    function closeModal() {
-        document.getElementById('modal').classList.remove('show');
-        modalAction = null;
-        const btn = document.getElementById('modalSubmit');
-        btn.disabled = false;
-        btn.textContent = '确认';
-    }
-    function closeLogModal() { document.getElementById('logModal').classList.remove('show'); }
-
-    function addLog(text) {
-        const logs = JSON.parse(localStorage.getItem('operation_logs') || '[]');
-        logs.unshift({ time: new Date().toLocaleString(), text });
-        if (logs.length > 50) logs.splice(50);
-        localStorage.setItem('operation_logs', JSON.stringify(logs));
-    }
-    function showLogs() {
-        const logs = JSON.parse(localStorage.getItem('operation_logs') || '[]');
-        document.getElementById('logList').innerHTML = logs.length ? logs.map(i => `<div class="log-item"><span>${i.time}</span> ${i.text}</div>`).join('') : '<div class="empty">暂无记录</div>';
-        document.getElementById('logModal').classList.add('show');
-    }
-
-    // ========== API请求函数 ==========
-    async function apiFetch(endpoint, opt = {}) {
-        const headers = { 'Content-Type': 'application/json', ...opt.headers };
-        if (token) headers.Authorization = `Bearer ${token}`;
-        try {
-            const res = await fetch(API_BASE + endpoint, { ...opt, headers });
-            if(res.status === 401) throw new Error('Unauthorized');
-            if(!res.ok) throw new Error(await res.text() || '请求失败');
-            return res.json();
-        } catch (e) {
-            console.error('API请求错误：', e);
-            throw e;
+        // 请求头
+        function getHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            };
         }
-    }
 
-    // ========== 登录相关 ==========
-    async function checkIP() {
-        return true;
-    }
-    function checkLock() {
-        if(Date.now() < lockTime){showToast('登录失败过多，锁定10分钟','error');return false;}
-        if(failCount >=5){localStorage.setItem('login_lock_time',Date.now()+600000);showToast('失败5次，锁定10分钟','error');return false;}
-        return true;
-    }
-    function checkTokenExpire() {
-        const t = localStorage.getItem('login_time');
-        if(!t)return;
-        if(Date.now()-t > TOKEN_EXPIRE_HOURS*3600000){showToast('Token已过期','warn');logout();}
-    }
+        // 登录逻辑
+        $('#loginForm').on('submit', async (e) => {
+            e.preventDefault();
+            const token = $('#adminToken').val();
+            authToken = token;
+            
+            // 验证token
+            try {
+                const res = await fetch(`${API_BASE}/admin/categories`, {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+                if (res.ok) {
+                    localStorage.setItem('admin_token', authToken);
+                    $('#loginPage').hide();
+                    $('#adminPage').show();
+                    initAdminPage();
+                } else {
+                    alert('管理密钥错误，请重试');
+                }
+            } catch (e) {
+                alert('请求失败，请检查网络');
+            }
+        });
 
-    async function login() {
-        if(!checkLock())return;
-        if(!await checkIP()){showToast('当前IP无权限','error');return;}
-        const ipt = document.getElementById('tokenInput'), btn = document.getElementById('loginBtn');
-        const val = ipt.value.trim();
-        if(!val
+        // 退出登录
+        $('#logoutBtn').on('click', () => {
+            localStorage.removeItem('admin_token');
+            authToken = '';
+            $('#adminPage').hide();
+            $('#loginPage').show();
+        });
+
+        // 初始化管理页面
+        async function initAdminPage() {
+            await loadCategories();
+            await loadClickRank();
+        }
+
+        // 加载分类
+        async function loadCategories() {
+            try {
+                const res = await fetch(`${API_BASE}/admin/categories`, {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+                if (res.ok) {
+                    categoryList = await res.json();
+                    renderCategorySelect();
+                }
+            } catch (e) {
+                console.error('加载分类失败:', e);
+            }
+        }
+
+        // 渲染分类下拉框
+        function renderCategorySelect() {
+            const select = $('#categorySelect');
+            select.html('<option value="">请选择分类</option>');
+            categoryList.forEach(cat => {
+                select.append(`<option value="${cat.id}">${cat.name}</option>`);
+            });
+        }
+
+        // 分类切换时加载子分类
+        $('#categorySelect').on('change', async () => {
+            const categoryId = $('#categorySelect').val();
+            if (!categoryId) {
+                $('#subCategorySelect').html('<option value="">请选择子分类</option>');
+                $('#sitesTableBody').html(`
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <div>暂无数据，请先选择分类</div>
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/admin/subcategories?category_id=${categoryId}`, {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+                if (res.ok) {
+                    subCategoryList = await res.json();
+                    renderSubCategorySelect();
+                }
+            } catch (e) {
+                console.error('加载子分类失败:', e);
+            }
+        });
+
+        // 渲染子分类下拉框
+        function renderSubCategorySelect() {
+            const select = $('#subCategorySelect');
+            select.html('<option value="">请选择子分类</option>');
+            subCategoryList.forEach(sub => {
+                select.append(`<option value="${sub.id}">${sub.name}</option>`);
+            });
+        }
+
+        // 子分类切换时加载网站列表
+        $('#subCategorySelect').on('change', async () => {
+            const subCategoryId = $('#subCategorySelect').val();
+            if (!subCategoryId) {
+                $('#sitesTableBody').html(`
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <div>暂无数据，请先选择子分类</div>
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/admin/sites?subcategory_id=${subCategoryId}`, {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+                if (res.ok) {
+                    siteList = await res.json();
+                    renderSitesTable();
+                }
+            } catch (e) {
+                console.error('加载网站列表失败:', e);
+            }
+        });
+
+        // 渲染网站列表
+        function renderSitesTable() {
+            const tbody = $('#sitesTableBody');
+            if (siteList.length === 0) {
+                tbody.html(`
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <div>该分类下暂无网站</div>
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+            tbody.html('');
+            siteList.forEach(site => {
+                const category = categoryList.find(c => c.id === site.subcategory_id);
+                tbody.append(`
+                    <tr>
+                        <td>${site.title}</td>
+                        <td><a href="${site.url}" target="_blank">${site.url}</a></td>
+                        <td><span class="badge">${site.click || 0}</span></td>
+                        <td>${category?.name || '-'}</td>
+                        <td>
+                            <button class="table-btn btn-primary edit-site-btn" data-id="${site.id}">编辑</button>
+                            <button class="table-btn btn-danger delete-site-btn" data-id="${site.id}">删除</button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        // 加载点击排行
+        async function loadClickRank() {
+            try {
+                const res = await fetch(`${API_BASE}/admin/click-rank`, {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+                if (res.ok) {
+                    rankList = await res.json();
+                    renderRankTable();
+                }
+            } catch (e) {
+                console.error('加载点击排行失败:', e);
+            }
+        }
+
+        // 渲染点击排行
+        function renderRankTable() {
+            const tbody = $('#rankTableBody');
+            if (rankList.length === 0) {
+                tbody.html(`
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <i class="fas fa-chart-line"></i>
+                            <div>暂无点击数据</div>
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+            tbody.html('');
+            rankList.forEach((item, index) => {
+                tbody.append(`
+                    <tr>
+                        <td><span class="badge">${index + 1}</span></td>
+                        <td>${item.title}</td>
+                        <td><a href="https://${item.url}" target="_blank">${item.url}</a></td>
+                        <td><span class="badge badge-danger">${item.click_count}</span></td>
+                    </tr>
+                `);
+            });
+        }
+
+        // 标签切换
+        $('.tab-btn').on('click', function() {
+            const tab = $(this).data('tab');
+            $('.tab-btn').removeClass('active');
+            $(this).addClass('active');
+            $('.tab-content').removeClass('active');
+            $(`#${tab}Tab`).addClass('active');
+        });
+
+        // 刷新排行按钮
+        $('#refreshRankBtn').on('click', loadClickRank);
+
+        // 排序按钮
+        $('#sortRankBtn').on('click', () => {
+            rankList.sort((a, b) => b.click_count - a.click_count);
+            renderRankTable();
+        });
+
+        // 页面加载时检查登录状态
+        $(document).ready(() => {
+            if (authToken) {
+                $('#loginPage').hide();
+                $('#adminPage').show();
+                initAdminPage();
+            }
+        });
+    </script>
+</body>
+</html>
