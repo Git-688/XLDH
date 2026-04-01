@@ -4,6 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>星链导航后台管理</title>
+    <meta name="description" content="星链导航后台管理系统">
+    <meta name="author" content="星链导航">
+    
+    <!-- 主题颜色 -->
+    <meta name="theme-color" content="#4361ee">
+    
+    <!-- 图标 -->
+    <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
+    
+    <!-- 基础依赖 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Font Awesome 图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         html{scroll-behavior:smooth}
@@ -12,12 +27,9 @@
             background:#f7f8fa;font-size:12px;color:#2f3542;
             -webkit-font-smoothing:antialiased;padding:10px;
         }
-        /* 全局滚动条隐藏 */
         ::-webkit-scrollbar{display:none}
         *{-ms-overflow-style:none;scrollbar-width:none}
-
         .container{max-width:1200px;margin:0 auto;width:100%}
-        /* 简化层次：合并多余卡片，减少嵌套 */
         .header-card{
             background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;
             box-shadow:0 2px 8px rgba(0,0,0,0.05);border:1px solid #f1f3f5
@@ -30,9 +42,6 @@
         .flex-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
         .tab-btn{padding:7px 14px;border-radius:7px;background:#f1f5f9;color:#64748b;cursor:pointer;font-size:12px}
         .tab-btn.active{background:#3b82f6;color:#fff}
-
-        /* ========== 核心布局（简化层次，无多余嵌套） ========== */
-        /* 1. 一级分类：横向滚动+隐藏滚动条 */
         .cat-bar{
             width:100%;padding:10px 14px;background:#f8fafc;border-radius:10px;
             margin-bottom:12px;display:flex;gap:7px;align-items:center;
@@ -44,9 +53,7 @@
             transition:all .2s;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05);
         }
         .cat-item.active{background:#3b82f6;color:#fff}
-
         .content-layout{display:flex;gap:10px;margin-top:0}
-        /* 2. 二级分类：纵向滚动+隐藏滚动条+按钮间距 */
         .sidebar{
             width:180px;flex-shrink:0;background:#f8fafc;border-radius:10px;
             padding:12px;display:flex;flex-direction:column;gap:0;
@@ -62,16 +69,13 @@
             transition:all .2s;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05);
         }
         .sub-item.active{background:#e0f2fe;color:#0369a1}
-
         .main-content{
             flex:1;background:#f8fafc;border-radius:10px;
             padding:12px;
         }
-        /* 列表滚动容器 */
         .site-list,.rank-list,.bad-links-list{
             overflow-y:auto;max-height:calc(100vh - 260px);
         }
-
         input,select{
             padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;
             font-size:12px;width:100%;background:#fff;outline:none;
@@ -80,7 +84,6 @@
         input:focus,select:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.12)}
         .form-row{margin-bottom:12px}
         .form-row label{font-size:11px;color:#64748b;margin-bottom:4px;display:block}
-
         button{
             border:none;border-radius:7px;padding:6px 10px;
             font-size:12px;cursor:pointer;transition:all .2s;
@@ -97,13 +100,11 @@
         button.text{background:transparent;color:#64748b;padding:4px 7px;font-size:11px}
         button.text:hover{color:#3b82f6}
         button.sm{padding:4px 7px;font-size:11px}
-
         .search-box{max-width:220px}
         .badge{padding:2px 7px;border-radius:5px;font-size:10px}
         .badge-green{background:#dcfce7;color:#16a34a}
         .badge-red{background:#fee2e2;color:#dc2626}
         .badge-blue{background:#e0f2fe;color:#0369a1}
-
         .link-item{
             padding:10px;border-radius:7px;background:#fff;margin-bottom:7px;
             display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:7px;
@@ -118,8 +119,6 @@
         .link-actions{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0}
         .status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
         .dot-red{background:#dc2626}
-
-        /* 模态框：全端自动适配 */
         .modal{
             position:fixed;inset:0;background:rgba(0,0,0,0.25);
             display:flex;align-items:center;justify-content:center;
@@ -134,7 +133,6 @@
         }
         .modal-title{font-size:15px;font-weight:600;margin-bottom:12px;color:#1e293b}
         .modal-buttons{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
-
         .toast{
             position:fixed;bottom:20px;left:50%;transform:translate(-50%,12px);
             padding:8px 16px;border-radius:7px;font-size:12px;color:#fff;
@@ -145,15 +143,12 @@
         .toast.success{background:#10b981}
         .toast.error{background:#ef4444}
         .toast.warn{background:#f59e0b}
-
         .log-item{padding:7px;border-bottom:1px solid #f1f5f9;font-size:11px}
         .empty{text-align:center;padding:18px;color:#94a3b8;font-size:11px}
         .check-result{padding:10px;border-radius:7px;background:#fff;margin-top:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
         .result-group{margin-bottom:10px}
         .result-group h4{margin-bottom:7px;font-size:13px}
         .hidden{display:none}
-
-        /* 移动端适配 */
         @media (max-width:768px){
             .sidebar{width:150px}
             .cat-item{padding:7px 12px;font-size:11px}
@@ -193,7 +188,6 @@
 </div>
 
 <div class="container">
-    <!-- 简化层次：仅保留登录头部卡片 -->
     <div class="header-card">
         <div class="header">
             <h1 style="font-size:17px">📋 星链导航管理</h1>
@@ -205,7 +199,6 @@
         </div>
     </div>
 
-    <!-- 简化层次：主内容仅一个卡片，无多余嵌套 -->
     <div id="mainContent" class="hidden main-card">
         <div class="flex-row" style="margin-bottom:12px">
             <div class="tab-btn active" data-tab="manage">数据管理</div>
@@ -213,7 +206,6 @@
             <div class="tab-btn" data-tab="rank">点击排行</div>
         </div>
 
-        <!-- 数据管理页（扁平化结构，无多余嵌套） -->
         <div id="manageTab" class="tab-panel">
             <div class="flex-row" style="margin-bottom:10px">
                 <input type="text" class="search-box" id="searchInput" placeholder="搜索标题...">
@@ -222,18 +214,14 @@
                 <button class="primary sm" id="addCategoryBtn">+一级分类</button>
             </div>
 
-            <!-- 顶部一级分类栏 -->
             <div class="cat-bar" id="catBar"></div>
 
-            <!-- 左右分栏布局 -->
             <div class="content-layout">
-                <!-- 左侧子分类栏 -->
                 <div class="sidebar" id="sidebar">
                     <button class="primary" style="width:100%" id="addSubBtn">+子分类</button>
                     <div class="sub-list" id="subList"></div>
                 </div>
 
-                <!-- 右侧链接列表 -->
                 <div class="main-content" id="mainContentArea">
                     <div class="flex-row" style="margin-bottom:10px">
                         <button class="primary sm" id="addSiteBtn">+添加链接</button>
@@ -243,7 +231,6 @@
             </div>
         </div>
 
-        <!-- 死链检测页 -->
         <div id="checkTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px">
                 <button class="primary" id="checkAllBtn">重新检测所有链接</button>
@@ -257,7 +244,6 @@
             </div>
         </div>
 
-        <!-- 点击排行页 -->
         <div id="rankTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px">
                 <button class="primary sm" id="sortRankBtn">按点击数降序</button>
@@ -269,19 +255,21 @@
 </div>
 
 <script>
+    // ========== 核心配置（必须和你的Worker地址一致） ==========
     const API_BASE = 'https://api.xldh688.eu.cc';
+    // ========== 全局变量 ==========
     let token = localStorage.getItem('admin_token') || '';
     let modalAction = null;
     let categories = [], subcategories = [], sites = [];
     let currentCat = null, currentSub = null;
     let failCount = parseInt(localStorage.getItem('login_fail_count') || 0);
     let lockTime = localStorage.getItem('login_lock_time') || 0;
-    const TOKEN_EXPIRE_HOURS = 24;
-    const IP_WHITELIST = ['127.0.0.1', '112.96.123.9'];
+    const TOKEN_EXPIRE_HOURS = 24 * 7;
+    const IP_WHITELIST = [];
     let isChecking = false;
     let hasChecked = false;
 
-    // 提示框
+    // ========== 工具函数 ==========
     const toast = document.getElementById('toast');
     function showToast(msg, type = 'success') {
         toast.textContent = msg;
@@ -289,7 +277,6 @@
         setTimeout(() => toast.classList.remove('show'), 2300);
     }
 
-    // 模态框管理
     function openModal(title, html, cb) {
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalForm').innerHTML = html;
@@ -308,7 +295,6 @@
     }
     function closeLogModal() { document.getElementById('logModal').classList.remove('show'); }
 
-    // 操作日志
     function addLog(text) {
         const logs = JSON.parse(localStorage.getItem('operation_logs') || '[]');
         logs.unshift({ time: new Date().toLocaleString(), text });
@@ -321,381 +307,39 @@
         document.getElementById('logModal').classList.add('show');
     }
 
-    // API请求
+    // ========== API请求函数 ==========
     async function apiFetch(endpoint, opt = {}) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
         if (token) headers.Authorization = `Bearer ${token}`;
-        const res = await fetch(API_BASE + endpoint, { ...opt, headers });
-        if(res.status === 401) throw new Error('Unauthorized');
-        if(!res.ok) throw new Error(await res.text() || '请求失败');
-        return res.json();
-    }
-
-    // IP白名单校验
-    async function checkIP() {
         try {
-            const {ip} = await (await fetch('https://api.ipify.org?format=json')).json();
-            return IP_WHITELIST.includes(ip);
-        } catch {
-            return true;
+            const res = await fetch(API_BASE + endpoint, { ...opt, headers });
+            if(res.status === 401) throw new Error('Unauthorized');
+            if(!res.ok) throw new Error(await res.text() || '请求失败');
+            return res.json();
+        } catch (e) {
+            console.error('API请求错误：', e);
+            throw e;
         }
     }
 
-    // 登录锁定
+    // ========== 登录相关 ==========
+    async function checkIP() {
+        return true;
+    }
     function checkLock() {
         if(Date.now() < lockTime){showToast('登录失败过多，锁定10分钟','error');return false;}
         if(failCount >=5){localStorage.setItem('login_lock_time',Date.now()+600000);showToast('失败5次，锁定10分钟','error');return false;}
         return true;
     }
-
-    // Token过期
     function checkTokenExpire() {
         const t = localStorage.getItem('login_time');
         if(!t)return;
         if(Date.now()-t > TOKEN_EXPIRE_HOURS*3600000){showToast('Token已过期','warn');logout();}
-        else if(Date.now()-t > TOKEN_EXPIRE_HOURS*3600000*0.9){showToast('Token即将过期','warn');}
     }
 
-    // 登录
     async function login() {
         if(!checkLock())return;
         if(!await checkIP()){showToast('当前IP无权限','error');return;}
         const ipt = document.getElementById('tokenInput'), btn = document.getElementById('loginBtn');
         const val = ipt.value.trim();
-        if(!val){showToast('请输入Token','error');return;}
-        btn.disabled=1;btn.textContent='登录中…';token=val;
-        try{
-            await apiFetch('/admin/categories');
-            localStorage.setItem('admin_token',token);localStorage.setItem('login_time',Date.now());
-            localStorage.setItem('login_fail_count',0);failCount=0;
-            ipt.style.display='none';
-            document.getElementById('loginBtn').classList.add('hidden');
-            document.getElementById('logoutBtn').classList.remove('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
-            await loadAllData();
-            addLog('管理员登录');
-            showToast('登录成功');
-        }catch(e){
-            token='';failCount++;localStorage.setItem('login_fail_count',failCount);
-            showToast('Token无效','error');
-        }finally{btn.disabled=0;btn.textContent='登录';}
-    }
-
-    // 退出
-    function logout() {
-        token='';localStorage.clear();
-        isChecking = false;
-        hasChecked = false;
-        document.getElementById('loginBtn').classList.remove('hidden');
-        document.getElementById('logoutBtn').classList.add('hidden');
-        document.getElementById('mainContent').classList.add('hidden');
-        document.getElementById('tokenInput').style.display='block';
-        document.getElementById('tokenInput').value='';
-        addLog('退出登录');showToast('已退出');
-    }
-
-    // ========== 替换为你指定的Favicon图标接口 ==========
-    function getFavicon(url){
-        try{
-            const u = new URL(url);
-            // 完全匹配接口要求：GET请求，url参数传域名
-            return `https://api.71xk.com/api/favicon?url=${u.hostname}`;
-        } catch {
-            return 'fas fa-link';
-        }
-    }
-
-    // 链接验证
-    function checkUrl(url){try{new URL(url);return true;}catch{return false;}}
-
-    // 死链检测
-    async function checkSingleLink(url){
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-        try{
-            const res = await fetch(`https://api.oioweb.cn/api/urlcheck?url=${encodeURIComponent(url)}`, {
-                signal: controller.signal
-            });
-            const data = await res.json();
-            clearTimeout(timeout);
-            return data.code === 200 && data.data.status === 1;
-        }catch{
-            clearTimeout(timeout);
-            return false;
-        }
-    }
-    async function checkAllLinks(){
-        if(isChecking) return;
-        if(sites.length === 0){
-            showToast('暂无链接可检测','warn');
-            return;
-        }
-        isChecking = true;
-        hasChecked = false;
-        const btn = document.getElementById('checkAllBtn');
-        btn.disabled = true;
-        btn.textContent = '检测中...';
-        document.getElementById('badLinks').innerHTML = '<div class="empty">正在检测链接，请稍候...</div>';
-        showToast('开始检测所有链接，请稍候...','warn');
-
-        const bad = [];
-        for(const s of sites){
-            const ok = await checkSingleLink(s.url);
-            if(!ok) bad.push(s);
-        }
-        renderCheckResult(bad);
-        isChecking = false;
-        hasChecked = true;
-        btn.disabled = false;
-        btn.textContent = '重新检测所有链接';
-        showToast(`检测完成：共${sites.length}个链接，异常${bad.length}个`);
-    }
-    function renderCheckResult(bad){
-        document.getElementById('badLinks').innerHTML = bad.map(s => `
-            <div class="link-item">
-                <div class="link-info">
-                    <span class="status-dot dot-red"></span>
-                    ${s.title}
-                    <span class="link-url">${s.url}</span>
-                </div>
-            </div>
-        `).join('') || '<div class="empty">🎉 所有链接均正常，无异常链接</div>';
-    }
-
-    // 点击排行
-    function renderRank(){
-        const sorted = [...sites].sort((a,b) => (b.click||0)-(a.click||0));
-        document.getElementById('rankList').innerHTML = sorted.map(s => `
-            <div class="link-item">
-                <div class="link-info">${s.title}</div>
-                <span class="badge badge-blue">${s.click||0}次点击</span>
-            </div>
-        `).join('') || '<div class="empty">无数据</div>';
-    }
-
-    // 标签切换
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-            btn.classList.add('active');
-            const tab = btn.dataset.tab;
-            document.getElementById(`${tab}Tab`).classList.remove('hidden');
-            if(tab === 'rank') renderRank();
-            if(tab === 'check' && !hasChecked && !isChecking){
-                checkAllLinks();
-            }
-        }
-    });
-
-    // 分类切换
-    function selectCat(cid){
-        currentCat = cid;
-        currentSub = null;
-        document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
-        const targetCat = document.querySelector(`.cat-item[data-cid="${cid}"]`);
-        if(targetCat) targetCat.classList.add('active');
-        renderSubList();
-        const subs = subcategories.filter(s => s.category_id === cid);
-        if(subs.length > 0) selectSub(subs[0].id);
-        else document.getElementById('siteList').innerHTML = '<div class="empty">请先添加子分类</div>';
-    }
-    function selectSub(sid){
-        currentSub = sid;
-        document.querySelectorAll('.sub-item').forEach(i => i.classList.remove('active'));
-        const targetSub = document.querySelector(`.sub-item[data-sid="${sid}"]`);
-        if(targetSub) targetSub.classList.add('active');
-        renderSiteList();
-    }
-
-    // 渲染逻辑
-    function renderCatBar(){
-        if(categories.length === 0){
-            document.getElementById('catBar').innerHTML = '<div class="empty" style="width:100%;flex-shrink:0">请先添加一级分类</div>';
-            document.getElementById('subList').innerHTML = '<div class="empty">请先添加一级分类</div>';
-            document.getElementById('siteList').innerHTML = '<div class="empty">请先添加一级分类</div>';
-            return;
-        }
-        document.getElementById('catBar').innerHTML = categories.map(c => `
-            <div class="cat-item ${c.id===currentCat?'active':''}" data-cid="${c.id}" onclick="selectCat(${c.id})">
-                ${c.name}
-            </div>
-        `).join('');
-    }
-    function renderSubList(){
-        if(!currentCat){
-            document.getElementById('subList').innerHTML = '<div class="empty">请先选择一级分类</div>';
-            return;
-        }
-        const subs = subcategories.filter(s => s.category_id === currentCat);
-        if(subs.length === 0){
-            document.getElementById('subList').innerHTML = '<div class="empty">请先添加子分类</div>';
-            return;
-        }
-        document.getElementById('subList').innerHTML = subs.map(s => `
-            <div class="sub-item ${s.id===currentSub?'active':''}" data-sid="${s.id}" onclick="selectSub(${s.id})">
-                ${s.name}
-            </div>
-        `).join('');
-    }
-    function renderSiteList(){
-        if(!currentSub){
-            document.getElementById('siteList').innerHTML = '<div class="empty">请先选择子分类</div>';
-            return;
-        }
-        const list = sites.filter(s => s.subcategory_id === currentSub);
-        if(list.length === 0){
-            document.getElementById('siteList').innerHTML = '<div class="empty">暂无链接，点击+添加链接</div>';
-            return;
-        }
-        document.getElementById('siteList').innerHTML = list.map(s => `
-            <div class="link-item">
-                <div class="link-info">${s.title}</div>
-                <div class="link-actions">
-                    <button class="sm primary" onclick="openEditSite(${s.id})">编辑</button>
-                    <button class="sm danger" onclick="delSite(${s.id})">删除</button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    // 数据加载
-    async function loadAllData(){
-        checkTokenExpire();
-        try{
-            const [catData, subData, siteData] = await Promise.all([
-                apiFetch('/admin/categories'),
-                apiFetch('/admin/subcategories'),
-                apiFetch('/admin/sites')
-            ]);
-            categories = catData;
-            subcategories = subData;
-            sites = siteData;
-            hasChecked = false;
-            renderCatBar();
-            if(categories.length > 0) selectCat(categories[0].id);
-            addLog('数据加载完成');
-        }catch(e){
-            if(e.message==='Unauthorized'){
-                showToast('Token失效，请重新登录','warn');
-                logout();
-            } else {
-                showToast('数据加载失败：' + e.message,'error');
-                console.error(e);
-            }
-        }
-    }
-
-    // 增删改查
-    function openAddCat(){
-        openModal('新增一级分类',`
-            <div class="form-row"><label>名称</label><input id="name"></div>
-            <div class="form-row"><label>排序</label><input type="number" id="sort" value="${categories.length}"></div>
-        `,async()=>{
-            const name=document.getElementById('name').value.trim();
-            if(!name){showToast('请填名称','error');return;}
-            await apiFetch('/admin/categories',{method:'POST',body:JSON.stringify({name,display_order:+document.getElementById('sort').value})});
-            addLog(`新增分类：${name}`);showToast('添加成功');await loadAllData();
-        })
-    }
-    function openAddSub(){
-        if(!currentCat){showToast('请先选择一级分类','error');return;}
-        openModal('新增子分类',`
-            <div class="form-row"><label>名称</label><input id="name"></div>
-            <div class="form-row"><label>排序</label><input type="number" id="sort" value="0"></div>
-        `,async()=>{
-            const name=document.getElementById('name').value.trim();
-            if(!name){showToast('请填名称','error');return;}
-            await apiFetch('/admin/subcategories',{method:'POST',body:JSON.stringify({category_id:currentCat,name,display_order:+document.getElementById('sort').value})});
-            addLog(`新增子分类：${name}`);showToast('添加成功');await loadAllData();
-        })
-    }
-    function openAddSite(){
-        if(!currentSub){showToast('请先选择子分类','error');return;}
-        openModal('新增链接',`
-            <div class="form-row"><label>标题</label><input id="title"></div>
-            <div class="form-row"><label>网址</label><input id="url" oninput="document.getElementById('icon').value=getFavicon(this.value)"></div>
-            <div class="form-row"><label>图标</label><input id="icon" value="fas fa-link"></div>
-            <div class="form-row"><label>描述</label><input id="desc"></div>
-            <div class="form-row"><label>排序</label><input type="number" id="sort" value="0"></div>
-        `,async()=>{
-            const t=document.getElementById('title').value,u=document.getElementById('url').value;
-            if(!t||!u){showToast('标题/网址必填','error');return;}
-            if(!checkUrl(u)){showToast('网址格式错误','error');return;}
-            await apiFetch('/admin/sites',{method:'POST',body:JSON.stringify({
-                subcategory_id:currentSub,title:t,url:u,
-                description:document.getElementById('desc').value,
-                icon:document.getElementById('icon').value,
-                display_order:+document.getElementById('sort').value
-            })});
-            addLog(`新增链接：${t}`);showToast('添加成功');await loadAllData();
-        })
-    }
-    function openEditSite(id){
-        const s=sites.find(x=>x.id===id);
-        openModal('编辑链接',`
-            <div class="form-row"><label>标题</label><input id="title" value="${s.title}"></div>
-            <div class="form-row"><label>网址</label><input id="url" value="${s.url}" oninput="document.getElementById('icon').value=getFavicon(this.value)"></div>
-            <div class="form-row"><label>图标</label><input id="icon" value="${s.icon||'fas fa-link'}"></div>
-            <div class="form-row"><label>描述</label><input id="desc" value="${s.description||''}"></div>
-            <div class="form-row"><label>排序</label><input type="number" id="sort" value="${s.display_order}"></div>
-        `,async()=>{
-            const t=document.getElementById('title').value,u=document.getElementById('url').value;
-            if(!t||!u){showToast('标题/网址必填','error');return;}
-            if(!checkUrl(u)){showToast('网址格式错误','error');return;}
-            await apiFetch(`/admin/sites/${id}`,{method:'PUT',body:JSON.stringify({
-                title:t,url:u,
-                description:document.getElementById('desc').value,
-                icon:document.getElementById('icon').value,
-                display_order:+document.getElementById('sort').value
-            })});
-            addLog(`编辑链接：${s.title}`);showToast('修改成功');await loadAllData();
-        })
-    }
-    async function delSite(id){
-        if(!confirm('确定删除该链接？'))return;
-        await apiFetch(`/admin/sites/${id}`,{method:'DELETE'});
-        addLog(`删除链接：${id}`);showToast('删除成功');await loadAllData();
-    }
-
-    // 导出备份
-    function exportData(){
-        const blob = new Blob([JSON.stringify({categories,subcategories,sites,time:new Date().toLocaleString()},null,2)],{type:'application/json'});
-        const a = document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`导航备份_${new Date().getTime()}.json`;a.click();
-        addLog('导出备份');showToast('导出成功');
-    }
-
-    // 确认按钮逻辑
-    document.getElementById('modalSubmit').onclick = async function(){
-        if(!modalAction) return;
-        const btn = this;
-        btn.disabled = true;
-        btn.textContent = '提交中…';
-        try{
-            await modalAction();
-        }catch(e){
-            showToast('操作失败', 'error');
-            console.error(e);
-        }finally{
-            btn.disabled = false;
-            btn.textContent = '确认';
-            closeModal();
-        }
-    };
-
-    // 初始化
-    document.getElementById('loginBtn').onclick=login;
-    document.getElementById('logoutBtn').onclick=logout;
-    document.getElementById('addCategoryBtn').onclick=openAddCat;
-    document.getElementById('addSubBtn').onclick=openAddSub;
-    document.getElementById('addSiteBtn').onclick=openAddSite;
-    document.getElementById('exportBtn').onclick=exportData;
-    document.getElementById('logBtn').onclick=showLogs;
-    document.getElementById('checkAllBtn').onclick=checkAllLinks;
-    document.getElementById('sortRankBtn').onclick=renderRank;
-    document.getElementById('tokenInput').addEventListener('keydown',e=>e.key==='Enter'&&login());
-
-    if(token) login();
-</script>
-</body>
-</html>
+        if(!val
