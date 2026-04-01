@@ -18,9 +18,11 @@
     <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon-16x16.png">
     
-<!-- Cloudflare统计系统需引用 -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
+    <!-- 基础依赖 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- 新增：FingerprintJS 官方稳定CDN（设备指纹库） -->
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
+    
     <!-- 主样式 -->
     <link rel="stylesheet" href="./css/style.css">
     
@@ -36,7 +38,6 @@
     <link rel="stylesheet" href="./css/modules/greeting.css">
     <link rel="stylesheet" href="./css/modules/stats.css">
     <link rel="stylesheet" href="./css/modules/compact-tags.css">
-    <!-- 移除了 activity.css -->
     
     <!-- 响应式样式 -->
     <link rel="stylesheet" href="./css/responsive.css">
@@ -52,7 +53,6 @@
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
 </head>
 <body>
-
 <!-- 导航栏 -->
 <nav class="navbar" id="navbar">
     <div class="nav-container">
@@ -82,7 +82,6 @@
         </div>
     </div>
 </nav>
-
 <!-- 侧滑栏 -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-wallpaper" id="sidebarWallpaper">
@@ -98,7 +97,6 @@
             </div>
         </div>
     </div>
-
     <div class="sidebar-content">
         <div class="daily-quote-card">
             <div class="quote-icon">
@@ -106,13 +104,11 @@
             </div>
             <p id="dailyQuote">加载中...</p>
         </div>
-
         <div class="categories-container">
             <div class="sidebar-categories">
                 <!-- 分类内容将通过JS动态生成 -->
             </div>
         </div>
-
         <div class="sidebar-footer">
             <button class="footer-btn" onclick="window.open('https://example.com/feedback', '_blank')" aria-label="留言反馈">
                 <i class="fas fa-comment"></i>
@@ -129,7 +125,6 @@
         </div>
     </div>
 </aside>
-
 <!-- 主内容区域 -->
 <main class="main-content">
     
@@ -146,7 +141,6 @@
             </div>
         </div>
     </section>
-
     <!-- 问候语和书签区域 -->
     <section class="greeting-section">
         <div class="greeting-container">
@@ -193,7 +187,6 @@
             </a>
         </div>
     </section>
-
     <!-- 简约标签区域 -->
     <section class="minimal-tags-section">
         <div class="container">
@@ -208,7 +201,6 @@
             </div>
         </div>
     </section>
-
     <!-- 分类导航 -->
     <section class="navigation-section">
         <div class="container">
@@ -234,20 +226,17 @@
                     </div>
                 </div>
             </div>
-
             <div class="navigation-body">
                 <div class="navigation-left">
                     <div class="level1-nav" id="level1Nav">
                         <!-- 一级分类按钮将通过JS动态生成 -->
                     </div>
                 </div>
-
                 <div class="navigation-middle">
                     <div class="level2-nav" id="level2Nav">
                         <!-- 二级分类标签将通过JS动态生成 -->
                     </div>
                 </div>
-
                 <div class="navigation-right">
                     <div class="level3-content" id="level3Content">
                         <!-- 网站卡片将通过JS动态生成 -->
@@ -256,7 +245,6 @@
             </div>
         </div>
     </section>
-
     <!-- 页脚 -->
     <footer class="footer">
         <div class="footer-compact-container">
@@ -271,7 +259,6 @@
                     联系处理。严禁用于商业或非法目的。
                 </div>
             </div>
-
             <div class="footer-stats-cards">
                 <div class="stat-card">
                     <div class="stat-card-inner">
@@ -284,7 +271,6 @@
                         </div>
                     </div>
                 </div>
-
     <div class="stat-card">
         <div class="stat-card-inner">
             <div class="stat-icon online-icon">
@@ -321,14 +307,13 @@
             </div>
         </div>
     </footer>
-
     <!-- 返回顶部和天气按钮 -->
 <div class="floating-buttons">
     <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部">
         <i class="fas fa-chevron-up"></i>
     </button>
     <button class="floating-btn refresh-btn" id="refreshBtn" aria-label="日记本">
-        <i class="fas fa-book"></i>   <!-- 原为 fa-redo，现改为书本图标 -->
+        <i class="fas fa-book"></i>
     </button>
     <a href="./pages/tools/羊毛福利.html" class="floating-btn activity-btn" id="activityBtn" aria-label="羊毛福利">
         <i class="fas fa-gift"></i>
@@ -338,14 +323,8 @@
     </button>
 </div>
 
-    <!-- Toast容器（由 toast.js 动态生成，此容器已不再需要，但保留不影响，可安全删除） -->
-    <!-- <div class="toast-container" id="toastContainer"></div> -->
-    
-<!-- 移除了活动模态框 -->
-
 <!-- 音乐播放器主体 -->
 <div class="music-player" id="musicPlayer">
-    <!-- 上部：封面和基本信息 -->
     <div class="player-top">
         <div class="cover-section">
             <div class="album-cover">
@@ -544,94 +523,250 @@
         </div>
     </div>
 </div>
+<audio id="audio-element" preload="metadata">
 
-    <audio id="audio-element" preload="metadata"></audio>
-    
-    <!-- 已删除旧的 .notification 元素 -->
-
-    <!-- 搜索模态框 - 无关闭按钮版本 -->
-    <div class="search-modal" id="searchModal" style="display: none;">
-        <div class="modal-content">
-            <div class="search-header">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" class="search-input" id="searchInput" 
-                       placeholder="输入搜索内容..." onkeydown="handleSearch(event)"
-                       oninput="showSuggestions(this.value)">
-                <div class="suggestions" id="suggestions"></div>
-            </div>
-
-            <div class="engine-selector" id="engineSelector">
-                <!-- 引擎按钮将通过JS动态生成 -->
-            </div>
-
-            <div class="toolbar">
-                <button class="toolbar-btn" onclick="togglePanel('history')">
-                    <i class="fas fa-history"></i> 历史
-                </button>
-                <button class="toolbar-btn" onclick="togglePanel('settings')">
-                    <i class="fas fa-cog"></i> 设置
-                </button>
-            </div>
-
-            <div class="history-panel" id="historyPanel"></div>
-            <div class="settings-panel" id="settingsPanel">
-                <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">添加自定义搜索引擎</div>
-                <div class="custom-engine-form">
-                    <input type="text" id="customName" placeholder="引擎名称（如：知乎）">
-                    <input type="text" id="customUrl" placeholder="搜索URL（如：https://www.zhihu.com/search?q=%s）">
-                    <input type="text" id="customIcon" placeholder="图标：FontAwesome类名或图片URL">
-                    <button onclick="addCustomEngine()">添加引擎</button>
-                </div>
+<!-- 搜索模态框 -->
+<div class="search-modal" id="searchModal" style="display: none;">
+    <div class="modal-content">
+        <div class="search-header">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" id="searchInput" 
+                   placeholder="输入搜索内容..." onkeydown="handleSearch(event)"
+                   oninput="showSuggestions(this.value)">
+            <div class="suggestions" id="suggestions"></div>
+        </div>
+        <div class="engine-selector" id="engineSelector">
+            <!-- 引擎按钮将通过JS动态生成 -->
+        </div>
+        <div class="toolbar">
+            <button class="toolbar-btn" onclick="togglePanel('history')">
+                <i class="fas fa-history"></i> 历史
+            </button>
+            <button class="toolbar-btn" onclick="togglePanel('settings')">
+                <i class="fas fa-cog"></i> 设置
+            </button>
+        </div>
+        <div class="history-panel" id="historyPanel"></div>
+        <div class="settings-panel" id="settingsPanel">
+            <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">添加自定义搜索引擎</div>
+            <div class="custom-engine-form">
+                <input type="text" id="customName" placeholder="引擎名称（如：知乎）">
+                <input type="text" id="customUrl" placeholder="搜索URL（如：https://www.zhihu.com/search?q=%s）">
+                <input type="text" id="customIcon" placeholder="图标：FontAwesome类名或图片URL">
+                <button onclick="addCustomEngine()">添加引擎</button>
             </div>
         </div>
     </div>
-
-    <!-- 名称提示工具 -->
-    <div class="engine-tooltip" id="engineTooltip"></div>
-
-    <!-- ========== 日记模态框（列表版） ========== -->
-    <div class="diary-modal" id="diaryModal" style="display: none;">
-        <div class="modal-content">
-            <div class="diary-header">
-                <h3><i class="fas fa-book-open"></i> 神木日记</h3>
-                <button class="diary-close" id="diaryCloseBtn"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="diary-body">
-                <div class="diary-list" id="diaryList">
-                    <div class="loading">加载日记中...</div>
-                </div>
-                <!-- 已移除底部刷新按钮 -->
+</div>
+<!-- 名称提示工具 -->
+<div class="engine-tooltip" id="engineTooltip"></div>
+<!-- 日记模态框 -->
+<div class="diary-modal" id="diaryModal" style="display: none;">
+    <div class="modal-content">
+        <div class="diary-header">
+            <h3><i class="fas fa-book-open"></i> 神木日记</h3>
+            <button class="diary-close" id="diaryCloseBtn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="diary-body">
+            <div class="diary-list" id="diaryList">
+                <div class="loading">加载日记中...</div>
             </div>
         </div>
     </div>
-    <!-- ========== 日记模态框结束 ========== -->
+</div>
     
 </main>
+
+<!-- ========== 核心统计+指纹逻辑 ========== -->
+<script>
+// 后端接口地址（和Worker完全一致）
+const WORKER_URL = 'https://api.xldh688.eu.cc';
+// 全局变量：设备唯一指纹ID
+window.deviceVisitorId = null;
+// 多标签页通信通道
+const channel = new BroadcastChannel('site_heartbeat');
+let isMasterTab = false;
+
+// ========== 1. 初始化设备指纹库（页面加载优先执行） ==========
+async function initFingerprint() {
+    try {
+        // 加载指纹库并生成设备唯一ID
+        const fp = await FingerprintJS.load();
+        const result = await fp.get();
+        window.deviceVisitorId = `device_${result.visitorId}`;
+        console.log('[设备指纹] 初始化完成，设备ID：', window.deviceVisitorId);
+        // 指纹生成后，初始化导航模块和统计
+        initNavigationAndStats();
+    } catch (e) {
+        console.error('[设备指纹] 初始化失败，启用降级方案', e);
+        // 降级方案：生成临时设备ID
+        window.deviceVisitorId = `temp_${Math.random().toString(36).substring(2, 18)}_${Date.now()}`;
+        initNavigationAndStats();
+    }
+}
+
+// ========== 2. 多标签页主标签选举（避免重复上报） ==========
+channel.onmessage = (e) => {
+    if (e.data === 'master_exists') {
+        isMasterTab = false;
+    }
+};
+// 广播自己申请成为主标签
+channel.postMessage('master_exists');
+// 300ms后无其他主标签，自己成为主标签
+setTimeout(() => {
+    isMasterTab = true;
+    console.log('[多标签页] 当前标签页为主标签，负责心跳上报');
+}, 300);
+// 页面关闭时释放主标签权限
+window.addEventListener('beforeunload', () => {
+    if (isMasterTab) {
+        channel.postMessage('master_closed');
+    }
+    channel.close();
+});
+
+// ========== 3. 统计核心函数 ==========
+// 格式化运行时间
+function formatUptime(ms) {
+    if (ms < 0) return "刚刚上线";
+    const seconds = Math.floor(ms / 1000);
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    let parts = [];
+    if (days > 0) parts.push(`${days}天`);
+    if (hours > 0) parts.push(`${hours}时`);
+    if (minutes > 0) parts.push(`${minutes}分`);
+    if (secs > 0) parts.push(`${secs}秒`);
+    return parts.join(" ") || "0秒";
+}
+
+// 更新运行时间显示
+let startTimeMs = null;
+function updateUptimeDisplay() {
+    if (!startTimeMs) return;
+    const nowMs = Date.now() + 8 * 3600 * 1000;
+    const uptimeMs = nowMs - startTimeMs;
+    const formatted = formatUptime(uptimeMs);
+    $('#uptime').text(formatted);
+}
+
+// 从后端获取运行时间
+async function fetchUptimeStart() {
+    try {
+        const res = await fetch(`${WORKER_URL}/uptime`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        startTimeMs = data.startTime;
+        updateUptimeDisplay();
+        setInterval(updateUptimeDisplay, 1000);
+    } catch (e) {
+        console.error('获取运行时间失败:', e);
+        $('#uptime').text('获取失败');
+    }
+}
+
+// 向后端发送请求
+async function postToWorker(endpoint) {
+    if (!window.deviceVisitorId) return;
+    try {
+        await fetch(`${WORKER_URL}${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ visitorId: window.deviceVisitorId }),
+            keepalive: true
+        });
+    } catch (e) {
+        console.error('统计请求失败:', e);
+    }
+}
+
+// 刷新页脚统计数字
+async function refreshStats() {
+    try {
+        const res = await fetch(`${WORKER_URL}/stats`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        $('#onlineCount').text(data.online);
+        $('#todayCount').text(data.today_uv);
+        $('#totalCount').text(data.total_pv);
+    } catch (e) {
+        console.error('获取统计数据失败:', e);
+    }
+}
+
+// ========== 4. 初始化导航和统计 ==========
+function initNavigationAndStats() {
+    // 上报访问记录
+    postToWorker('/visit');
+    // 主标签页发送心跳
+    if (isMasterTab) {
+        postToWorker('/heartbeat');
+    }
+    // 刷新统计数字
+    refreshStats();
+    // 获取运行时间
+    fetchUptimeStart();
+
+    // 定时任务
+    // 30秒一次心跳（仅主标签页）
+    setInterval(() => {
+        if (isMasterTab && window.deviceVisitorId) {
+            postToWorker('/heartbeat');
+        }
+    }, 30000);
+    // 1分钟刷新一次统计数字
+    setInterval(refreshStats, 60000);
+
+    // 初始化导航模块（确保指纹生成后再初始化）
+    if (window.OptimizedNavigation) {
+        window.optimizedNavigation = new OptimizedNavigation();
+        window.optimizedNavigation.init();
+    }
+}
+
+// ========== 页面加载完成后，启动指纹初始化 ==========
+$(document).ready(() => {
+    // 清除旧的本地统计数据
+    (function clearOldLocalStorageStats() {
+        const oldKeys = [
+            'starlink_site_views',
+            'starlink_visit_count',
+            'starlink_first_visit_time',
+            'starlink_last_visit_time',
+            'starlink_accumulated_uptime',
+            'starlink_last_uptime_update',
+        ];
+        oldKeys.forEach(key => localStorage.removeItem(key));
+    })();
+
+    // 启动指纹初始化
+    initFingerprint();
+});
+</script>
 
 <!-- 脚本引入 -->
 <!-- 基础工具 -->
 <script src="./js/storage.js"></script>
 <script src="./js/api.js"></script>
-
 <!-- 基础组件 -->
 <script src="./js/components/navbar.js"></script>
 <script src="./js/components/sidebar.js"></script>
-
 <!-- 模块 -->
 <script src="./js/modules/announcement.js"></script>
 <script src="./js/modules/search.js"></script>
 <script src="./js/modules/weather.js"></script>
 <script src="./js/modules/about.js"></script>
+<!-- 导航核心模块 -->
 <script src="./js/modules/navigation.js"></script>
 <script src="./js/modules/wallpaper.js"></script>
 <script src="./js/modules/greeting.js"></script>
-<script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
-
 <!-- 主应用程序 -->
 <script src="./js/toast.js"></script>
 <script src="./js/main.js"></script>
-
 <!-- 音乐播放器 -->
 <script src="./js/xfyy/utils.js"></script>
 <script src="./js/xfyy/cache-manager.js"></script>
