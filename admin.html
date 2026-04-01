@@ -10,23 +10,17 @@
         body{
             font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
             background:#f5f7fa;font-size:12px;color:#333;
-            -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent
+            -webkit-font-smoothing:antialiased
         }
-        /* 隐藏滚动条 */
         ::-webkit-scrollbar{display:none}
         *{-ms-overflow-style:none;scrollbar-width:none}
 
         .container{max-width:700px;margin:0 auto;padding:10px}
-        /* 极简卡片 */
-        .card{
-            background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;
-            box-shadow:0 1px 4px rgba(0,0,0,0.04)
-        }
+        .card{background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
         .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
         h1{font-size:16px;font-weight:600;color:#222}
         h2{font-size:14px;font-weight:600;color:#333}
 
-        /* 输入框/表单 极致规整 */
         input{
             padding:6px 10px;border:1px solid #e6e8eb;border-radius:6px;
             font-size:12px;width:100%;background:#fafbfc;outline:none;
@@ -36,27 +30,23 @@
         .form-row{margin-bottom:8px}
         .form-row label{font-size:11px;color:#666;margin-bottom:3px;display:block}
 
-        /* 按钮极简 */
         button{
             border:none;border-radius:6px;padding:6px 10px;
             font-size:12px;cursor:pointer;transition:all .2s;
             display:inline-flex;align-items:center;justify-content:center
         }
+        button:disabled{opacity:0.6;cursor:not-allowed}
         button.primary{background:#409eff;color:#fff}
         button.primary:hover{background:#3388e8}
         button.danger{background:#f56c6c;color:#fff}
-        button.danger:hover{background:#e55656}
         button.secondary{background:#909399;color:#fff}
-        button.secondary:hover{background:#7a7e84}
         button.text{background:transparent;color:#666;padding:3px 6px}
         button.text:hover{color:#409eff}
 
-        /* 树形结构 极简无杂乱 */
         .tree-item{margin-bottom:8px}
         .item-header{
             display:flex;justify-content:space-between;align-items:center;
-            padding:6px 10px;border-radius:6px;background:#fafbfc;
-            gap:8px
+            padding:6px 10px;border-radius:6px;background:#fafbfc;gap:8px
         }
         .item-info{flex:1;font-weight:500;word-break:break-all;display:flex;align-items:center;gap:6px}
         .item-info span{font-size:11px;color:#999}
@@ -64,44 +54,35 @@
         .item-actions button{padding:3px 6px;font-size:11px}
         .category-item,.subcategory-item{
             border-left:1px solid #e6e8eb;margin-left:10px;padding-left:10px;margin-top:4px;
-            overflow:hidden;transition:all 0.2s ease;
+            overflow:hidden;transition:all 0.2s;
         }
         .folded{max-height:0;padding:0;margin:0;border:none}
 
-        /* 自定义模态框 整洁无乱 */
         .modal{
             position:fixed;inset:0;background:rgba(0,0,0,.25);
             display:flex;align-items:center;justify-content:center;
             z-index:99;opacity:0;visibility:hidden;transition:all .2s
         }
         .modal.show{opacity:1;visibility:visible}
-        .modal-body{
-            background:#fff;border-radius:10px;width:90%;max-width:380px;
-            padding:15px;max-height:80vh;overflow-y:auto
-        }
-        .modal-title{font-size:14px;font-weight:600;margin-bottom:10px;color:#222}
+        .modal-body{background:#fff;border-radius:10px;width:90%;max-width:380px;padding:15px}
+        .modal-title{font-size:14px;font-weight:600;margin-bottom:10px}
         .modal-buttons{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 
-        /* 极简Toast 不遮挡·不杂乱 */
         .toast{
             position:fixed;bottom:20px;left:50%;transform:translate(-50%,10px);
             padding:6px 12px;border-radius:6px;font-size:12px;color:#fff;
-            background:rgba(0,0,0,.7);z-index:999;opacity:0;
-            visibility:hidden;transition:all .2s
+            z-index:999;opacity:0;visibility:hidden;transition:all .2s
         }
         .toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
         .toast.success{background:rgba(67,160,71,.9)}
         .toast.error{background:rgba(244,67,54,.9)}
 
-        .loading{text-align:center;padding:15px;color:#999;font-size:12px}
+        .loading{text-align:center;padding:15px;color:#999}
         .hidden{display:none!important}
     </style>
 </head>
 <body>
-<!-- 轻量Toast -->
 <div class="toast" id="toast"></div>
-
-<!-- 全局模态框 -->
 <div class="modal" id="modal">
     <div class="modal-body">
         <div class="modal-title" id="modalTitle"></div>
@@ -118,7 +99,7 @@
         <div class="header">
             <h1>📋 导航管理</h1>
             <div style="display:flex;gap:6px;align-items:center">
-                <input type="password" id="tokenInput" placeholder="管理Token" style="width:120px">
+                <input type="password" id="tokenInput" placeholder="管理Token" style="width:120px" autocomplete="off">
                 <button class="primary" id="loginBtn">登录</button>
                 <button class="secondary hidden" id="logoutBtn">退出</button>
             </div>
@@ -145,92 +126,94 @@
     let token = localStorage.getItem('admin_token') || '';
     let modalAction = null;
 
-    // 极简Toast
     const toast = document.getElementById('toast');
-    function showToast(msg, isError = false){
+    function showToast(msg, isError=false){
         toast.textContent = msg;
-        toast.className = `toast ${isError ? 'error' : 'success'} show`;
-        setTimeout(() => toast.classList.remove('show'), 2200);
+        toast.className = `toast ${isError?'error':'success'} show`;
+        setTimeout(()=>toast.classList.remove('show'),2200);
     }
 
-    // 模态框控制
     const modal = document.getElementById('modal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalForm = document.getElementById('modalForm');
-    function openModal(title, formHtml, callback){
-        modalTitle.textContent = title;
-        modalForm.innerHTML = formHtml;
-        modalAction = async () => {
-            try {
-                await callback();
-            } catch (e) {
-                showToast('操作失败：'+e.message, true);
-                console.error(e);
-            }
-        };
+    function openModal(title, html, cb){
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalForm').innerHTML = html;
+        modalAction = cb;
         modal.classList.add('show');
     }
-    function closeModal(){
-        modal.classList.remove('show');
-        modalAction = null;
-    }
+    function closeModal(){ modal.classList.remove('show'); modalAction=null; }
 
-    // API请求
-    async function apiFetch(endpoint, options = {}){
-        const headers = {'Content-Type':'application/json',...options.headers};
+    async function apiFetch(endpoint, opt={}){
+        const headers = {'Content-Type':'application/json',...opt.headers};
         if(token) headers.Authorization = `Bearer ${token}`;
-        const res = await fetch(API_BASE + endpoint, {...options, headers});
-        if(res.status === 401){showToast('Token无效', true);logout();throw new Error('Unauthorized')}
-        if(!res.ok){const t=await res.text();throw new Error(t||'请求失败')}
+        const res = await fetch(API_BASE+endpoint, {...opt, headers});
+        if(res.status===401) throw new Error('Unauthorized');
+        if(!res.ok) throw new Error(await res.text()||'请求失败');
         return res.json();
     }
 
-    // 登录/退出
-    function login(){
-        const t = document.getElementById('tokenInput').value.trim();
-        if(!t){showToast('请输入Token', true);return}
-        token = t; localStorage.setItem('admin_token', token);
-        document.getElementById('loginBtn').classList.add('hidden');
-        document.getElementById('logoutBtn').classList.remove('hidden');
-        document.getElementById('mainContent').classList.remove('hidden');
-        loadAllData(); showToast('登录成功');
+    // ====================== 【完善安全登录】核心修复 ======================
+    async function login(){
+        const input = document.getElementById('tokenInput');
+        const btn = document.getElementById('loginBtn');
+        const val = input.value.trim();
+
+        if(!val){ showToast('请输入Token',true); return; }
+        
+        btn.disabled = true; btn.textContent = '登录中…';
+        token = val;
+
+        try {
+            await apiFetch('/admin/categories'); // 强制验证Token
+            localStorage.setItem('admin_token', token);
+            input.style.display = 'none'; // 登录后隐藏，彻底不弹密码提示
+            document.getElementById('loginBtn').classList.add('hidden');
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+            await loadAllData();
+            showToast('登录成功');
+        } catch(e) {
+            token = ''; localStorage.removeItem('admin_token');
+            showToast('Token无效，登录失败',true);
+        } finally {
+            btn.disabled = false; btn.textContent = '登录';
+        }
     }
+
     function logout(){
         token = ''; localStorage.removeItem('admin_token');
         document.getElementById('loginBtn').classList.remove('hidden');
         document.getElementById('logoutBtn').classList.add('hidden');
         document.getElementById('mainContent').classList.add('hidden');
+        document.getElementById('tokenInput').style.display = 'block';
+        document.getElementById('tokenInput').value = '';
         showToast('已退出');
     }
 
-    // 展开/收起控制
-    function toggleCat(catId){
-        const el = document.querySelector(`.tree-item[data-cat="${catId}"] .category-item`);
-        el.classList.toggle('folded');
+    // 展开/收起
+    function toggleCat(id){
+        document.querySelector(`.tree-item[data-cat="${id}"] .category-item`).classList.toggle('folded');
     }
-    function expandAll(){
-        document.querySelectorAll('.category-item').forEach(el => el.classList.remove('folded'));
-    }
-    function foldAll(){
-        document.querySelectorAll('.category-item').forEach(el => el.classList.add('folded'));
-    }
+    function expandAll(){ document.querySelectorAll('.category-item').forEach(e=>e.classList.remove('folded')); }
+    function foldAll(){ document.querySelectorAll('.category-item').forEach(e=>e.classList.add('folded')); }
 
-    // 数据渲染
     let categories=[],subcategories=[],sites=[];
     async function loadAllData(){
-        try{
-            const [cats,subs,sits] = await Promise.all([
+        try {
+            const [a,b,c] = await Promise.all([
                 apiFetch('/admin/categories'),apiFetch('/admin/subcategories'),apiFetch('/admin/sites')
             ]);
-            categories=cats;subcategories=subs;sites=sits;renderAll();
-        }catch(e){showToast('加载失败：'+e.message, true)}
+            categories=a; subcategories=b; sites=c; renderAll();
+        } catch(e) {
+            if(e.message==='Unauthorized'){ showToast('Token已失效',true); logout(); }
+            else showToast('加载失败：'+e.message,true);
+        }
     }
-    function esc(s){return s?s.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])):''}
 
-    // 渲染结构
+    function esc(s){ return s?s.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])):''; }
+
     function renderAll(){
         const el = document.getElementById('categoriesList');
-        if(!categories.length){el.innerHTML='<div class="loading">暂无分类</div>';return}
+        if(!categories.length){ el.innerHTML='<div class="loading">暂无分类</div>'; return; }
         let html = '';
         for(const c of categories){
             const subs = subcategories.filter(s=>s.category_id===c.id);
@@ -251,8 +234,9 @@
                 <div class="category-item">${subs.map(s=>renderSub(s)).join('')}</div>
             </div>`;
         }
-        el.innerHTML=html;bindEvent();
+        el.innerHTML=html; bind();
     }
+
     function renderSub(sub){
         const sts = sites.filter(s=>s.subcategory_id===sub.id);
         return `
@@ -268,13 +252,12 @@
             <div class="subcategory-item">${sts.map(s=>renderSite(s)).join('')}</div>
         </div>`;
     }
+
     function renderSite(s){
         return `
         <div class="tree-item" data-site="${s.id}">
             <div class="item-header">
-                <div class="item-info">
-                    🔗 ${esc(s.title)}<br><span>${esc(s.url)}</span>
-                </div>
+                <div class="item-info">🔗 ${esc(s.title)}<br><span>${esc(s.url)}</span></div>
                 <div class="item-actions">
                     <button class="primary edit-site" data-id="${s.id}">编辑</button>
                     <button class="danger del-site" data-id="${s.id}">删除</button>
@@ -283,8 +266,7 @@
         </div>`;
     }
 
-    // 事件绑定
-    function bindEvent(){
+    function bind(){
         document.querySelectorAll('.edit-cat').forEach(b=>b.onclick=()=>openEditCat(+b.dataset.id));
         document.querySelectorAll('.del-cat').forEach(b=>b.onclick=()=>delCat(+b.dataset.id));
         document.querySelectorAll('.add-sub').forEach(b=>b.onclick=()=>openAddSub(+b.dataset.cid));
@@ -295,16 +277,16 @@
         document.querySelectorAll('.del-site').forEach(b=>b.onclick=()=>delSite(+b.dataset.id));
     }
 
-    // 分类操作（自定义表单）
+    // 分类操作
     function openAddCat(){
         openModal('新增分类',`
-            <div class="form-row"><label>名称</label><input id="name" required></div>
+            <div class="form-row"><label>名称</label><input id="name"></div>
             <div class="form-row"><label>图标</label><input id="icon" placeholder="fas fa-folder"></div>
             <div class="form-row"><label>描述</label><input id="desc"></div>
             <div class="form-row"><label>排序</label><input type="number" id="sort" value="${categories.length}"></div>
         `,async()=>{
             const name=document.getElementById('name').value.trim();
-            if(!name){showToast('请填写名称', true);return}
+            if(!name){showToast('请填名称',true);return}
             await apiFetch('/admin/categories',{method:'POST',body:JSON.stringify({
                 name,icon:document.getElementById('icon').value,
                 description:document.getElementById('desc').value,
@@ -328,20 +310,18 @@
             showToast('修改成功');loadAllData();closeModal();
         })
     }
-    async function delCat(id){
-        if(!confirm('确认删除？将清空子分类与网站'))return;
+    async function delCat(id){ if(!confirm('确定删除？'))return;
         await apiFetch(`/admin/categories/${id}`,{method:'DELETE'});
         showToast('删除成功');loadAllData();
     }
 
-    // 子分类
     function openAddSub(cid){
         openModal('新增子分类',`
             <div class="form-row"><label>名称</label><input id="name"></div>
             <div class="form-row"><label>排序</label><input type="number" id="sort" value="0"></div>
         `,async()=>{
             const name=document.getElementById('name').value.trim();
-            if(!name){showToast('请填写名称', true);return}
+            if(!name){showToast('请填名称',true);return}
             await apiFetch('/admin/subcategories',{method:'POST',body:JSON.stringify({
                 category_id:cid,name,display_order:+document.getElementById('sort').value||0
             })});
@@ -360,13 +340,11 @@
             showToast('修改成功');loadAllData();closeModal();
         })
     }
-    async function delSub(id){
-        if(!confirm('确认删除？将清空该子分类网站'))return;
+    async function delSub(id){ if(!confirm('确定删除？'))return;
         await apiFetch(`/admin/subcategories/${id}`,{method:'DELETE'});
         showToast('删除成功');loadAllData();
     }
 
-    // 网站
     function openAddSite(sid){
         openModal('新增网站',`
             <div class="form-row"><label>标题</label><input id="title"></div>
@@ -376,7 +354,7 @@
             <div class="form-row"><label>排序</label><input type="number" id="sort" value="0"></div>
         `,async()=>{
             const t=document.getElementById('title').value,u=document.getElementById('url').value;
-            if(!t||!u){showToast('标题/网址必填', true);return}
+            if(!t||!u){showToast('标题/网址必填',true);return}
             await apiFetch('/admin/sites',{method:'POST',body:JSON.stringify({
                 subcategory_id:sid,title:t,url:u,description:document.getElementById('desc').value,
                 icon:document.getElementById('icon').value,display_order:+document.getElementById('sort').value||0
@@ -401,8 +379,7 @@
             showToast('修改成功');loadAllData();closeModal();
         })
     }
-    async function delSite(id){
-        if(!confirm('确认删除该网站？'))return;
+    async function delSite(id){ if(!confirm('确定删除？'))return;
         await apiFetch(`/admin/sites/${id}`,{method:'DELETE'});
         showToast('删除成功');loadAllData();
     }
@@ -413,8 +390,11 @@
     document.getElementById('addCategoryBtn').onclick=openAddCat;
     document.getElementById('expandAll').onclick=expandAll;
     document.getElementById('foldAll').onclick=foldAll;
-    document.getElementById('modalSubmit').onclick=()=>{if(modalAction) modalAction()};
-    if(token){document.getElementById('tokenInput').value=token;login()}
+    document.getElementById('modalSubmit').onclick=()=>modalAction&&modalAction();
+    document.getElementById('tokenInput').addEventListener('keydown',e=>e.key==='Enter'&&login());
+
+    // 安全自动登录
+    if(token) login();
 </script>
 </body>
 </html>
