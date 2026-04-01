@@ -20,7 +20,7 @@
     
     <!-- 基础依赖 -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <!-- 新增：FingerprintJS 官方稳定CDN（设备指纹库） -->
+    <!-- 设备指纹库（官方稳定版） -->
     <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
     
     <!-- 主样式 -->
@@ -577,107 +577,56 @@
     
 </main>
 
-<!-- ========== 核心统计+指纹+事件绑定逻辑 ========== -->
+<!-- ========== 全局核心配置 ========== -->
 <script>
-// 后端接口地址（和Worker完全一致）
+// 后端接口固定地址（和你的Worker域名一致）
 const WORKER_URL = 'https://api.xldh688.eu.cc';
-// 全局变量：设备唯一指纹ID
+// 全局设备唯一ID
 window.deviceVisitorId = null;
 // 多标签页通信通道
 const channel = new BroadcastChannel('site_heartbeat');
 let isMasterTab = false;
 
-// ========== 1. 模态框事件绑定（修复搜索、日记按钮无响应） ==========
-$(document).ready(() => {
-    // 搜索按钮点击事件
-    $('#searchBtn').on('click', () => {
-        $('#searchModal').fadeIn(300);
-        $('#searchInput').focus();
-    });
-
-    // 点击搜索模态框空白处关闭
-    $('#searchModal').on('click', (e) => {
-        if (e.target === $('#searchModal')[0]) {
-            $('#searchModal').fadeOut(300);
-        }
-    });
-
-    // 日记按钮点击事件
-    $('#diaryBtn').on('click', () => {
-        $('#diaryModal').fadeIn(300);
-    });
-
-    // 日记关闭按钮点击事件
-    $('#diaryCloseBtn').on('click', () => {
-        $('#diaryModal').fadeOut(300);
-    });
-
-    // 点击日记模态框空白处关闭
-    $('#diaryModal').on('click', (e) => {
-        if (e.target === $('#diaryModal')[0]) {
-            $('#diaryModal').fadeOut(300);
-        }
-    });
-
-    // 返回顶部按钮
-    $('#backToTop').on('click', () => {
-        $('html, body').animate({ scrollTop: 0 }, 300);
-    });
-});
-
-// ========== 2. 初始化设备指纹库（持久化存储，解决在线人数不稳定） ==========
+// ========== 1. 设备指纹初始化 ==========
 async function initFingerprint() {
-    // 优先从localStorage读取已生成的指纹，避免每次刷新重新生成
-    const savedFingerprint = localStorage.getItem('device_visitor_id');
-    if (savedFingerprint) {
-        window.deviceVisitorId = savedFingerprint;
-        console.log('[设备指纹] 读取本地缓存指纹：', window.deviceVisitorId);
-        initNavigationAndStats();
-        return;
-    }
-
-    // 没有缓存则重新生成
     try {
         const fp = await FingerprintJS.load();
         const result = await fp.get();
         window.deviceVisitorId = `device_${result.visitorId}`;
-        // 持久化存储到localStorage
-        localStorage.setItem('device_visitor_id', window.deviceVisitorId);
-        console.log('[设备指纹] 生成并缓存新指纹：', window.deviceVisitorId);
-        initNavigationAndStats();
+        console.log('[设备指纹] 初始化完成：', window.deviceVisitorId);
     } catch (e) {
         console.error('[设备指纹] 初始化失败，启用降级方案', e);
-        // 降级方案：生成永久设备ID，存在localStorage
-        const fallbackId = `device_fallback_${Math.random().toString(36).substring(2, 18)}_${Date.now()}`;
-        window.deviceVisitorId = fallbackId;
-        localStorage.setItem('device_visitor_id', fallbackId);
-        initNavigationAndStats();
+        const ua = navigator.userAgent;
+        const ip = 'unknown';
+        let hash = 0;
+        const sourceStr = `${ip}|${ua}`;
+        for (let i = 0; i < sourceStr.length; i++) {
+            hash = (hash << 5) - hash + sourceStr.charCodeAt(i);
+            hash |= 0;
+        }
+        window.deviceVisitorId = `device_${Math.abs(hash).toString(36)}`;
     }
+    // 指纹初始化完成后启动统计
+    initStats();
 }
 
-// ========== 3. 多标签页主标签选举（避免重复上报） ==========
+// ========== 2. 多标签页主标签选举 ==========
 channel.onmessage = (e) => {
     if (e.data === 'master_exists') {
         isMasterTab = false;
     }
 };
-// 广播自己申请成为主标签
 channel.postMessage('master_exists');
-// 300ms后无其他主标签，自己成为主标签
 setTimeout(() => {
     isMasterTab = true;
-    console.log('[多标签页] 当前标签页为主标签，负责心跳上报');
+    console.log('[多标签页] 当前为主标签页，负责心跳上报');
 }, 300);
-// 页面关闭时释放主标签权限
 window.addEventListener('beforeunload', () => {
-    if (isMasterTab) {
-        channel.postMessage('master_closed');
-    }
+    if (isMasterTab) channel.postMessage('master_closed');
     channel.close();
 });
 
-// ========== 4. 统计核心函数 ==========
-// 格式化运行时间
+// ========== 3. 统计核心函数 ==========
 function formatUptime(ms) {
     if (ms < 0) return "刚刚上线";
     const seconds = Math.floor(ms / 1000);
@@ -693,17 +642,14 @@ function formatUptime(ms) {
     return parts.join(" ") || "0秒";
 }
 
-// 更新运行时间显示
 let startTimeMs = null;
 function updateUptimeDisplay() {
     if (!startTimeMs) return;
     const nowMs = Date.now() + 8 * 3600 * 1000;
     const uptimeMs = nowMs - startTimeMs;
-    const formatted = formatUptime(uptimeMs);
-    $('#uptime').text(formatted);
+    $('#uptime').text(formatUptime(uptimeMs));
 }
 
-// 从后端获取运行时间
 async function fetchUptimeStart() {
     try {
         const res = await fetch(`${WORKER_URL}/uptime`);
@@ -718,7 +664,6 @@ async function fetchUptimeStart() {
     }
 }
 
-// 向后端发送请求
 async function postToWorker(endpoint) {
     if (!window.deviceVisitorId) return;
     try {
@@ -733,7 +678,6 @@ async function postToWorker(endpoint) {
     }
 }
 
-// 刷新页脚统计数字
 async function refreshStats() {
     try {
         const res = await fetch(`${WORKER_URL}/stats`);
@@ -747,40 +691,34 @@ async function refreshStats() {
     }
 }
 
-// ========== 5. 初始化导航和统计 ==========
-function initNavigationAndStats() {
-    // 上报访问记录
+function initStats() {
     postToWorker('/visit');
-    // 主标签页发送心跳
-    if (isMasterTab) {
-        postToWorker('/heartbeat');
-    }
-    // 刷新统计数字
+    if (isMasterTab) postToWorker('/heartbeat');
     refreshStats();
-    // 获取运行时间
     fetchUptimeStart();
 
     // 定时任务
-    // 30秒一次心跳（仅主标签页）
     setInterval(() => {
         if (isMasterTab && window.deviceVisitorId) {
             postToWorker('/heartbeat');
         }
     }, 30000);
-    // 1分钟刷新一次统计数字
     setInterval(refreshStats, 60000);
+}
 
-    // 初始化导航模块（确保指纹生成后再初始化）
+// ========== 4. 页面加载完成后，初始化所有功能 ==========
+$(document).ready(async () => {
+    // 1. 优先初始化设备指纹
+    await initFingerprint();
+
+    // 2. 初始化导航模块
     if (window.OptimizedNavigation) {
         window.optimizedNavigation = new OptimizedNavigation();
         window.optimizedNavigation.init();
     }
-}
 
-// ========== 页面加载完成后，启动指纹初始化 ==========
-$(document).ready(() => {
-    // 清除旧的本地统计数据
-    (function clearOldLocalStorageStats() {
+    // 3. 清除旧的无效本地数据
+    (function clearOldLocalStorage() {
         const oldKeys = [
             'starlink_site_views',
             'starlink_visit_count',
@@ -792,8 +730,40 @@ $(document).ready(() => {
         oldKeys.forEach(key => localStorage.removeItem(key));
     })();
 
-    // 启动指纹初始化
-    initFingerprint();
+    // 4. 绑定搜索按钮点击事件（修复搜索框不弹出）
+    $('#searchBtn').on('click', () => {
+        $('#searchModal').fadeIn(200);
+        $('#searchInput').focus();
+    });
+
+    // 5. 绑定日记按钮点击事件（修复笔记框不弹出）
+    $('#diaryBtn').on('click', () => {
+        $('#diaryModal').fadeIn(200);
+    });
+
+    // 6. 绑定关闭按钮事件
+    $('#diaryCloseBtn').on('click', () => {
+        $('#diaryModal').fadeOut(200);
+    });
+
+    // 7. 点击模态框空白处关闭
+    $('#searchModal').on('click', (e) => {
+        if (e.target === $('#searchModal')[0]) {
+            $('#searchModal').fadeOut(200);
+        }
+    });
+    $('#diaryModal').on('click', (e) => {
+        if (e.target === $('#diaryModal')[0]) {
+            $('#diaryModal').fadeOut(200);
+        }
+    });
+
+    // 8. 绑定返回顶部按钮
+    $('#backToTop').on('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    console.log('✅ 页面所有模块初始化完成');
 });
 </script>
 
@@ -809,7 +779,6 @@ $(document).ready(() => {
 <script src="./js/modules/search.js"></script>
 <script src="./js/modules/weather.js"></script>
 <script src="./js/modules/about.js"></script>
-<!-- 导航核心模块 -->
 <script src="./js/modules/navigation.js"></script>
 <script src="./js/modules/wallpaper.js"></script>
 <script src="./js/modules/greeting.js"></script>
