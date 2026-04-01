@@ -47,11 +47,8 @@ class OptimizedNavigation {
         }
     }
 
-    /**
-     * 从 Cloudflare Worker 加载导航数据（仅此一种来源）
-     */
     async loadNavigationData() {
-        const apiUrl = 'https://api.xldh688.eu.cc/navigation'; // 请确保与你的 Worker 路由一致
+        const apiUrl = 'https://api.xldh688.eu.cc/navigation';
         
         try {
             const response = await fetch(apiUrl);
@@ -62,14 +59,10 @@ class OptimizedNavigation {
             console.log('✅ 导航数据从 Cloudflare Worker 加载成功');
         } catch (error) {
             console.error('❌ 从 Worker 加载导航数据失败:', error);
-            // 不再尝试本地 fallback，直接抛出错误，让页面显示错误状态
             throw new Error('无法加载导航数据，请检查网络或稍后重试');
         }
     }
 
-    /**
-     * 计算统计信息（兼容 D1 返回的数据结构）
-     */
     calculateStats() {
         if (this.navigationData && this.navigationData.categories) {
             let totalWebsites = 0;
@@ -81,7 +74,6 @@ class OptimizedNavigation {
             this.stats.totalCategories = Object.keys(this.navigationData.categories).length;
             this.stats.totalWebsites = totalWebsites;
         } else {
-            // 如果没有数据，设置默认值（但这种情况不应发生，因为 loadNavigationData 已确保有数据）
             this.stats.totalCategories = 0;
             this.stats.totalWebsites = 0;
         }
@@ -171,11 +163,12 @@ class OptimizedNavigation {
             
             card.dataset.url = site.url;
             card.dataset.title = site.title;
-            const normalizedUrl = Storage.normalizeUrl(site.url);
+            const normalizedUrl = this.normalizeUrl(site.url);
             card.dataset.urlNormalized = normalizedUrl;
             
-            const views = Storage.getSiteViews(site.url);
-            const formattedViews = Storage.formatViews(views);
+            // 从后端返回的数据中获取 views
+            const views = site.views || 0;
+            const formattedViews = this.formatViews(views);
             
             let iconHtml = '';
             if (site.icon) {
@@ -200,12 +193,12 @@ class OptimizedNavigation {
                 </div>
                 <div class="divider-line"></div>
                 <div class="card-bottom">
-                    <div class="site-title">${Utils.escapeHtml(site.title)}</div>
-                    <div class="site-description">${Utils.escapeHtml(site.description || '暂无描述')}</div>
+                    <div class="site-title">${this.escapeHtml(site.title)}</div>
+                    <div class="site-description">${this.escapeHtml(site.description || '暂无描述')}</div>
                 </div>
             `;
             
-            // 点击事件（包含点击统计上报）
+            // 点击事件（包含点击统计上报 + 立即更新视图）
             card.addEventListener('click', (e) => {
                 this.isNavigationClick = true;
                 e.stopPropagation();
@@ -224,8 +217,16 @@ class OptimizedNavigation {
                     body: JSON.stringify({ url: clickUrl, title: clickTitle })
                 }).catch(err => console.warn('点击上报失败:', err));
                 
-                // 原有的浏览量统计
-                this.incrementSiteViews(site.url, card);
+                // 立即更新卡片上的浏览次数（乐观更新）
+                const viewCountEl = card.querySelector('.view-count');
+                if (viewCountEl) {
+                    let currentViews = parseInt(viewCountEl.dataset.views) || 0;
+                    currentViews++;
+                    viewCountEl.dataset.views = currentViews;
+                    viewCountEl.textContent = this.formatViews(currentViews);
+                    viewCountEl.classList.add('increasing');
+                    setTimeout(() => viewCountEl.classList.remove('increasing'), 300);
+                }
                 
                 setTimeout(() => {
                     this.isNavigationClick = false;
@@ -247,6 +248,28 @@ class OptimizedNavigation {
         this.showStatsSummary();
     }
 
+    normalizeUrl(url) {
+        if (!url) return '';
+        try {
+            let normalized = url.toLowerCase();
+            normalized = normalized.replace(/^(https?:\/\/)?(www\.)?/, '');
+            normalized = normalized.replace(/\/$/, '');
+            return normalized;
+        } catch {
+            return url;
+        }
+    }
+
+    formatViews(views) {
+        if (views >= 1000000) {
+            return `${(views / 1000000).toFixed(1).replace('.0', '')}M`;
+        } else if (views >= 1000) {
+            return `${(views / 1000).toFixed(1).replace('.0', '')}K`;
+        } else {
+            return views.toString();
+        }
+    }
+
     applyValidityStyleToCard(card, url) {
         const cached = Storage.getLinkValidity(url);
         if (cached && !cached.valid) {
@@ -266,35 +289,13 @@ class OptimizedNavigation {
         `;
     }
 
-    incrementSiteViews(url, cardElement = null) {
-        if (!url) return;
-        const newViews = Storage.incrementSiteViews(url);
-        const formattedViews = Storage.formatViews(newViews);
-        
-        if (cardElement) {
-            const viewCountElement = cardElement.querySelector('.view-count');
-            if (viewCountElement) {
-                viewCountElement.classList.remove('increasing');
-                void viewCountElement.offsetWidth;
-                viewCountElement.classList.add('increasing');
-                viewCountElement.textContent = formattedViews;
-                viewCountElement.dataset.views = newViews;
-                setTimeout(() => viewCountElement.classList.remove('increasing'), 300);
-            }
-        }
-        return newViews;
-    }
-
     getPopularSites(limit = 5) {
-        return Storage.getPopularSites(limit);
+        // 由于点击数据都在后端，这里返回空或留作他用
+        return [];
     }
 
     showStatsSummary() {
-        const statsSummary = Storage.getSiteStatsSummary();
-        const totalViewsElement = document.getElementById('totalSiteViews');
-        if (totalViewsElement) {
-            totalViewsElement.textContent = Storage.formatViews(statsSummary.totalViews);
-        }
+        // 可留空或显示其他统计
     }
 
     selectLevel1(level1, isUserClick = false) {
@@ -423,7 +424,6 @@ class OptimizedNavigation {
         this.init();
     }
 
-    // 链接有效性检测（保持不变）
     startLinkValidation() {
         const allWebsites = this.getAllWebsites();
         const urls = [...new Set(allWebsites.map(site => site.url))];
@@ -494,7 +494,7 @@ class OptimizedNavigation {
     }
 
     updateCardValidityStyle(url, valid) {
-        const normalizedUrl = Storage.normalizeUrl(url);
+        const normalizedUrl = this.normalizeUrl(url);
         const cards = document.querySelectorAll(`.site-card[data-url-normalized="${normalizedUrl}"]`);
         cards.forEach(card => {
             if (valid) card.classList.remove('invalid');
@@ -512,6 +512,13 @@ class OptimizedNavigation {
         }
         return websites;
     }
+
+    escapeHtml(text) {
+        if (typeof text !== 'string') return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 }
 
 // 全局访问函数
@@ -520,21 +527,15 @@ window.getOptimizedNavigation = function() {
 };
 
 window.getSiteStatsSummary = function() {
-    return Storage.getSiteStatsSummary();
+    // 改为从后端获取？此处若需保留可后续添加
+    return { totalSites: 0, totalViews: 0 };
 };
 
 window.getPopularSites = function(limit = 5) {
-    return Storage.getPopularSites(limit);
+    return [];
 };
 
 window.resetSiteStats = function() {
-    if (confirm('确定要重置所有网站的统计信息吗？此操作不可撤销。')) {
-        Storage.resetAllSiteStats();
-        const nav = window.getOptimizedNavigation();
-        if (nav && nav.selectedLevel1 && nav.selectedLevel2) {
-            nav.renderLevel3(nav.selectedLevel1, nav.selectedLevel2);
-        }
-        return true;
-    }
+    // 由于点击数据在后端，前端无法直接重置
     return false;
 };
