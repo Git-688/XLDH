@@ -229,15 +229,16 @@
         </div>
 
         <div id="checkTab" class="tab-panel hidden">
-            <div class="flex-row" style="margin-bottom:10px">
-                <button class="primary" id="checkAllBtn">重新检测所有链接</button>
-                <span style="color:#64748b;font-size:11px">异常链接<span class="badge badge-red">红点</span></span>
+            <div class="flex-row" style="margin-bottom:10px; justify-content: space-between;">
+                <div class="flex-row">
+                    <button class="primary" id="checkAllBtn">开始检测所有链接</button>
+                    <span id="checkProgress" style="margin-left:12px; font-size:12px; color:#f59e0b;"></span>
+                </div>
+                <button class="secondary sm" id="refreshInvalidBtn">刷新列表</button>
             </div>
             <div class="check-result">
-                <div class="result-group">
-                    <h4>🔴 异常/无法访问链接</h4>
-                    <div class="bad-links-list" id="badLinks"></div>
-                </div>
+                <h4>🔴 异常/无法访问链接</h4>
+                <div class="bad-links-list" id="badLinks"></div>
             </div>
         </div>
 
@@ -262,7 +263,7 @@
     const TOKEN_EXPIRE_HOURS = 24;
     const IP_WHITELIST = ['127.0.0.1', '112.96.123.9'];
     let isChecking = false;
-    let hasChecked = false;
+    let progressInterval = null;
 
     const toast = document.getElementById('toast');
     function showToast(msg, type = 'success') {
@@ -358,8 +359,7 @@
 
     function logout() {
         token='';localStorage.clear();
-        isChecking = false;
-        hasChecked = false;
+        if (progressInterval) clearInterval(progressInterval);
         document.getElementById('loginBtn').classList.remove('hidden');
         document.getElementById('logoutBtn').classList.add('hidden');
         document.getElementById('mainContent').classList.add('hidden');
@@ -379,60 +379,7 @@
 
     function checkUrl(url){try{new URL(url);return true;}catch{return false;}}
 
-    async function checkSingleLink(url){
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-        try{
-            const res = await fetch(`https://api.oioweb.cn/api/urlcheck?url=${encodeURIComponent(url)}`, {
-                signal: controller.signal
-            });
-            const data = await res.json();
-            clearTimeout(timeout);
-            return data.code === 200 && data.data.status === 1;
-        }catch{
-            clearTimeout(timeout);
-            return false;
-        }
-    }
-    async function checkAllLinks(){
-        if(isChecking) return;
-        if(sites.length === 0){
-            showToast('暂无链接可检测','warn');
-            return;
-        }
-        isChecking = true;
-        hasChecked = false;
-        const btn = document.getElementById('checkAllBtn');
-        btn.disabled = true;
-        btn.textContent = '检测中...';
-        document.getElementById('badLinks').innerHTML = '<div class="empty">正在检测链接，请稍候...</div>';
-        showToast('开始检测所有链接，请稍候...','warn');
-
-        const bad = [];
-        for(const s of sites){
-            const ok = await checkSingleLink(s.url);
-            if(!ok) bad.push(s);
-        }
-        renderCheckResult(bad);
-        isChecking = false;
-        hasChecked = true;
-        btn.disabled = false;
-        btn.textContent = '重新检测所有链接';
-        showToast(`检测完成：共${sites.length}个链接，异常${bad.length}个`);
-    }
-    function renderCheckResult(bad){
-        document.getElementById('badLinks').innerHTML = bad.map(s => `
-            <div class="link-item">
-                <div class="link-info">
-                    <span class="status-dot dot-red"></span>
-                    ${escapeHtml(s.title)}
-                    <span class="link-url">${escapeHtml(s.url)}</span>
-                </div>
-            </div>
-        `).join('') || '<div class="empty">🎉 所有链接均正常，无异常链接</div>';
-    }
-
-    // 加载点击排行榜（从后端获取）
+    // 加载点击排行榜
     async function loadRanking() {
         const rankList = document.getElementById('rankList');
         if (!rankList) return;
@@ -462,6 +409,90 @@
         }
     }
 
+    // 死链检测相关
+    async function startCheckLinks() {
+        if (isChecking) return;
+        isChecking = true;
+        const btn = document.getElementById('checkAllBtn');
+        const progressSpan = document.getElementById('checkProgress');
+        btn.disabled = true;
+        btn.textContent = '检测中...';
+        progressSpan.textContent = '正在启动检测...';
+        
+        try {
+            const res = await fetch(`${API_BASE}/admin/check-links`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('启动检测失败');
+            
+            progressInterval = setInterval(async () => {
+                const progressRes = await fetch(`${API_BASE}/admin/check-progress`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (progressRes.ok) {
+                    const data = await progressRes.json();
+                    if (data.total > 0) {
+                        progressSpan.textContent = `已检测 ${data.checked}/${data.total}`;
+                        if (data.checked >= data.total) {
+                            clearInterval(progressInterval);
+                            progressSpan.textContent = '检测完成';
+                            await loadInvalidLinks();
+                            btn.disabled = false;
+                            btn.textContent = '开始检测所有链接';
+                            isChecking = false;
+                        }
+                    }
+                }
+            }, 2000);
+            
+            setTimeout(() => {
+                if (progressInterval) {
+                    clearInterval(progressInterval);
+                    progressSpan.textContent = '检测超时，请手动刷新';
+                    btn.disabled = false;
+                    btn.textContent = '开始检测所有链接';
+                    isChecking = false;
+                }
+            }, 120000);
+            
+        } catch (err) {
+            showToast('启动检测失败', 'error');
+            btn.disabled = false;
+            btn.textContent = '开始检测所有链接';
+            isChecking = false;
+        }
+    }
+
+    async function loadInvalidLinks() {
+        const listEl = document.getElementById('badLinks');
+        listEl.innerHTML = '<div class="loading">加载中...</div>';
+        try {
+            const res = await fetch(`${API_BASE}/admin/invalid-links`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (!data.length) {
+                listEl.innerHTML = '<div class="empty">🎉 所有链接均正常，无异常链接</div>';
+                return;
+            }
+            listEl.innerHTML = data.map(link => `
+                <div class="link-item">
+                    <div class="link-info">
+                        <div>${escapeHtml(link.title)}</div>
+                        <div class="link-url">${escapeHtml(link.url)}</div>
+                    </div>
+                    <div class="link-actions">
+                        <span class="badge badge-red">HTTP ${link.statusCode || '失败'}</span>
+                        <button class="sm primary" onclick="window.open('${link.url}', '_blank')">访问</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (err) {
+            listEl.innerHTML = '<div class="empty">加载失败</div>';
+        }
+    }
+
     // 标签切换
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.onclick = () => {
@@ -471,9 +502,7 @@
             const tab = btn.dataset.tab;
             document.getElementById(`${tab}Tab`).classList.remove('hidden');
             if(tab === 'rank') loadRanking();
-            if(tab === 'check' && !hasChecked && !isChecking){
-                checkAllLinks();
-            }
+            if(tab === 'check') loadInvalidLinks();
         }
     });
 
@@ -558,7 +587,6 @@
             categories = catData;
             subcategories = subData;
             sites = siteData;
-            hasChecked = false;
             renderCatBar();
             if(categories.length > 0) selectCat(categories[0].id);
             addLog('数据加载完成');
@@ -686,7 +714,8 @@
     document.getElementById('addSiteBtn').onclick=openAddSite;
     document.getElementById('exportBtn').onclick=exportData;
     document.getElementById('logBtn').onclick=showLogs;
-    document.getElementById('checkAllBtn').onclick=checkAllLinks;
+    document.getElementById('checkAllBtn').onclick=startCheckLinks;
+    document.getElementById('refreshInvalidBtn').onclick=loadInvalidLinks;
     document.getElementById('sortRankBtn').onclick=loadRanking;
     document.getElementById('tokenInput').addEventListener('keydown',e=>e.key==='Enter'&&login());
 
