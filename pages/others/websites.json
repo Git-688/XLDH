@@ -1,0 +1,14 @@
+window.WebsitesData = [
+  {
+    "name": "在线文档",
+    "icon": "https://via.placeholder.com/40",
+    "desc": "免费在线文档编辑平台",
+    "url": "#"
+  },
+  {
+    "name": "设计资源",
+    "icon": "https://via.placeholder.com/40",
+    "desc": "免费图片、图标下载网站",
+    "url": "#"
+  }
+];
