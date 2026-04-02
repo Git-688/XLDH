@@ -16,12 +16,6 @@ class OptimizedNavigation {
         };
         
         this.isNavigationClick = false;
-        
-        this.validationQueue = [];
-        this.isValidating = false;
-        this.maxConcurrent = 5;
-        this.currentValidations = 0;
-        this.validationCacheTTL = 24 * 60 * 60 * 1000;
     }
 
     async init() {
@@ -39,7 +33,6 @@ class OptimizedNavigation {
             }
             
             this.isInitialized = true;
-            this.startLinkValidation();
             
         } catch (error) {
             console.error('优化分类导航初始化失败:', error);
@@ -66,16 +59,21 @@ class OptimizedNavigation {
     calculateStats() {
         if (this.navigationData && this.navigationData.categories) {
             let totalWebsites = 0;
+            let invalidCount = 0;
             for (const category in this.navigationData.categories) {
                 for (const subCategory in this.navigationData.categories[category]) {
-                    totalWebsites += this.navigationData.categories[category][subCategory].length;
+                    const sites = this.navigationData.categories[category][subCategory];
+                    totalWebsites += sites.length;
+                    invalidCount += sites.filter(site => site.valid === false).length;
                 }
             }
             this.stats.totalCategories = Object.keys(this.navigationData.categories).length;
             this.stats.totalWebsites = totalWebsites;
+            this.stats.invalidCount = invalidCount;
         } else {
             this.stats.totalCategories = 0;
             this.stats.totalWebsites = 0;
+            this.stats.invalidCount = 0;
         }
         this.updateStatsDisplay();
     }
@@ -166,9 +164,13 @@ class OptimizedNavigation {
             const normalizedUrl = this.normalizeUrl(site.url);
             card.dataset.urlNormalized = normalizedUrl;
             
-            // 从后端返回的数据中获取 views
             const views = site.views || 0;
             const formattedViews = this.formatViews(views);
+            const isValid = site.valid !== false;
+            
+            if (!isValid) {
+                card.classList.add('invalid');
+            }
             
             let iconHtml = '';
             if (site.icon) {
@@ -198,7 +200,6 @@ class OptimizedNavigation {
                 </div>
             `;
             
-            // 点击事件（包含点击统计上报 + 立即更新视图）
             card.addEventListener('click', (e) => {
                 this.isNavigationClick = true;
                 e.stopPropagation();
@@ -208,16 +209,12 @@ class OptimizedNavigation {
                     window.musicPlayer.isHandlingNavigationClick = true;
                 }
                 
-                // 上报点击统计（异步，不阻塞跳转）
-                const clickUrl = site.url;
-                const clickTitle = site.title;
                 fetch('https://api.xldh688.eu.cc/click', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: clickUrl, title: clickTitle })
+                    body: JSON.stringify({ url: site.url, title: site.title })
                 }).catch(err => console.warn('点击上报失败:', err));
                 
-                // 立即更新卡片上的浏览次数（乐观更新）
                 const viewCountEl = card.querySelector('.view-count');
                 if (viewCountEl) {
                     let currentViews = parseInt(viewCountEl.dataset.views) || 0;
@@ -241,8 +238,6 @@ class OptimizedNavigation {
             });
             
             container.appendChild(card);
-            
-            this.applyValidityStyleToCard(card, site.url);
         });
         
         this.showStatsSummary();
@@ -270,13 +265,6 @@ class OptimizedNavigation {
         }
     }
 
-    applyValidityStyleToCard(card, url) {
-        const cached = Storage.getLinkValidity(url);
-        if (cached && !cached.valid) {
-            card.classList.add('invalid');
-        }
-    }
-
     renderEmptyState() {
         const container = document.getElementById('level3Content');
         if (!container) return;
@@ -289,13 +277,8 @@ class OptimizedNavigation {
         `;
     }
 
-    getPopularSites(limit = 5) {
-        // 由于点击数据都在后端，这里返回空或留作他用
-        return [];
-    }
-
     showStatsSummary() {
-        // 可留空或显示其他统计
+        // 可留空
     }
 
     selectLevel1(level1, isUserClick = false) {
@@ -424,95 +407,6 @@ class OptimizedNavigation {
         this.init();
     }
 
-    startLinkValidation() {
-        const allWebsites = this.getAllWebsites();
-        const urls = [...new Set(allWebsites.map(site => site.url))];
-        this.stats.invalidCount = 0;
-        urls.forEach(url => {
-            const cached = Storage.getLinkValidity(url);
-            const now = Date.now();
-            if (cached && cached.timestamp && (now - cached.timestamp < this.validationCacheTTL)) {
-                if (!cached.valid) this.stats.invalidCount++;
-                this.updateCardValidityStyle(url, cached.valid);
-            } else {
-                this.validationQueue.push(url);
-            }
-        });
-        this.updateStatsDisplay();
-        if (this.validationQueue.length > 0) this.processValidationQueue();
-    }
-
-    async processValidationQueue() {
-        if (this.isValidating) return;
-        this.isValidating = true;
-        while (this.validationQueue.length > 0) {
-            if (this.currentValidations < this.maxConcurrent) {
-                const url = this.validationQueue.shift();
-                this.currentValidations++;
-                this.validateLink(url).finally(() => {
-                    this.currentValidations--;
-                    if (this.validationQueue.length === 0 && this.currentValidations === 0) {
-                        this.isValidating = false;
-                    }
-                });
-            } else {
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-        }
-        if (this.currentValidations === 0) this.isValidating = false;
-    }
-
-    async validateLink(url) {
-        let valid = false;
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-            await fetch(url, { method: 'HEAD', mode: 'no-cors', signal: controller.signal });
-            clearTimeout(timeoutId);
-            valid = true;
-        } catch { valid = false; }
-        Storage.setLinkValidity(url, valid);
-        if (!valid) {
-            this.stats.invalidCount++;
-        } else {
-            this.recalculateInvalidCount();
-        }
-        this.updateStatsDisplay();
-        this.updateCardValidityStyle(url, valid);
-        return valid;
-    }
-
-    recalculateInvalidCount() {
-        let count = 0;
-        const allWebsites = this.getAllWebsites();
-        const urls = [...new Set(allWebsites.map(site => site.url))];
-        urls.forEach(url => {
-            const cached = Storage.getLinkValidity(url);
-            if (cached && cached.valid === false) count++;
-        });
-        this.stats.invalidCount = count;
-    }
-
-    updateCardValidityStyle(url, valid) {
-        const normalizedUrl = this.normalizeUrl(url);
-        const cards = document.querySelectorAll(`.site-card[data-url-normalized="${normalizedUrl}"]`);
-        cards.forEach(card => {
-            if (valid) card.classList.remove('invalid');
-            else card.classList.add('invalid');
-        });
-    }
-
-    getAllWebsites() {
-        if (!this.navigationData?.categories) return [];
-        const websites = [];
-        for (const category in this.navigationData.categories) {
-            for (const subCat in this.navigationData.categories[category]) {
-                websites.push(...this.navigationData.categories[category][subCat]);
-            }
-        }
-        return websites;
-    }
-
     escapeHtml(text) {
         if (typeof text !== 'string') return '';
         const div = document.createElement('div');
@@ -521,13 +415,11 @@ class OptimizedNavigation {
     }
 }
 
-// 全局访问函数
 window.getOptimizedNavigation = function() {
     return window.optimizedNavigation;
 };
 
 window.getSiteStatsSummary = function() {
-    // 改为从后端获取？此处若需保留可后续添加
     return { totalSites: 0, totalViews: 0 };
 };
 
@@ -536,6 +428,5 @@ window.getPopularSites = function(limit = 5) {
 };
 
 window.resetSiteStats = function() {
-    // 由于点击数据在后端，前端无法直接重置
     return false;
 };
