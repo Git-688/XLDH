@@ -63,14 +63,14 @@ async function refreshStats() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         $('#onlineCount').text(data.online);
-        $('#todayCount').text(data.today_uv);        // 今日独立访客
-        $('#totalCount').text(data.total_uv);        // 累计独立访客（总UV）
+        $('#todayCount').text(data.today_uv);
+        $('#totalCount').text(data.total_uv);
     } catch (e) {
         console.error('获取统计失败:', e);
     }
 }
 
-// 页面可见性变化时控制心跳
+// 页面可见性变化时控制心跳（优化版）
 function handleVisibilityChange() {
     if (document.hidden) {
         // 页面隐藏，停止心跳
@@ -79,10 +79,10 @@ function handleVisibilityChange() {
             heartbeatInterval = null;
         }
     } else {
-        // 页面重新可见，立即发送一次心跳，并启动定时器
+        // 页面重新可见，立即发送一次心跳，并启动定时器（5分钟间隔）
         if (!heartbeatInterval) {
             postToWorker('/heartbeat');
-            heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 30000);
+            heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 300000); // 5分钟
         }
     }
 }
@@ -93,8 +93,8 @@ $(document).ready(function() {
     postToWorker('/visit');
     // 发送首次心跳
     postToWorker('/heartbeat');
-    // 启动心跳定时器
-    heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 30000);
+    // 启动心跳定时器（5分钟间隔）
+    heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 300000);
     // 监听页面可见性变化
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
