@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短剧聚合搜索</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #eef2ff;
+            --secondary: #64748b;
+            --accent: #f43f5e;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --text: #334155;
+            --text-light: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 6px 15px rgba(0, 0, 0, 0.12);
+            --transition: all 0.2s ease;
+            --radius: 10px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: #f5f7fa;
+            color: var(--text);
+            line-height: 1.5;
+            font-size: 14px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 12px;
+            flex: 1;
+            width: 100%;
+        }
+        
+        header {
+            padding: 16px 0;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .logo i {
+            font-size: 22px;
+            color: var(--primary);
+        }
+        
+        .logo h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        .tagline {
+            color: var(--text-light);
+            font-size: 12px;
+            margin-bottom: 16px;
+        }
+        
+        main {
+            padding: 16px 0;
+            width: 100%;
+        }
+        
+        .tabs-container {
+            margin-bottom: 16px;
+            position: relative;
+            width: 100%;
+        }
+        
+        .tabs-scroll {
+            display: flex;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            background: white;
+            border-radius: var(--radius);
+            padding: 4px;
+            box-shadow: var(--shadow);
+            width: 100%;
+        }
+        
+        .tabs-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .tab {
+            background: transparent;
+            border: none;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            margin-right: 4px;
+            color: var(--text-light);
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .vertical-list {
+            max-height: calc(100vh - 180px);
+            overflow-y: auto;
+            width: 100%;
+        }
+        
+        .vertical-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .vertical-list::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 10px;
+        }
+        
+        .vertical-list::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        
+        .search-box {
+            display: flex;
+            width: 100%;
+            margin-bottom: 16px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-right: none;
+            font-size: 14px;
+            transition: var(--transition);
+            background: white;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .search-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .search-btn:hover {
+            background: #3a56d4;
+        }
+        
+        .search-hint {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            padding: 0 4px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 30px 16px;
+            color: var(--text-light);
+        }
+        
+        .no-results i {
+            font-size: 36px;
+            margin-bottom: 12px;
+            color: #cbd5e1;
+        }
+        
+        .no-results h3 {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 16px;
+        }
+        
+        .no-results p {
+            font-size: 12px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px 16px;
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(67, 97, 238, 0.2);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .drama-item {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .drama-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .drama-poster {
+            width: 70px;
+            height: 95px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        
+        .drama-icon {
+            width: 70px;
+            height: 95px;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .drama-info {
+            padding: 12px;
+            flex: 1;
+        }
+        
+        .drama-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .drama-desc {
+            color: var(--text);
+            font-size: 12px;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .drama-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        
+        .drama-episodes {
+            background: var(--accent);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .drama-time {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        
+        .drama-link {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        .new-drama-item {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .new-drama-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .new-drama-icon {
+            width: 70px;
+            height: 95px;
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .new-drama-info {
+            padding: 12px;
+            flex: 1;
+        }
+        
+        .new-drama-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .new-drama-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        
+        .new-drama-time {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        
+        .new-drama-link {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #8b5cf6;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        /* 详情模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+        
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .modal-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+        
+        .video-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            background-color: #000;
+        }
+        
+        .video-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls-container {
+            padding: 12px;
+            background-color: white;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .quality-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .quality-btn {
+            padding: 6px 12px;
+            background-color: var(--light);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+        
+        .quality-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .episode-list {
+            display: flex;
+            overflow-x: auto;
+            gap: 8px;
+            margin-top: 8px;
+            padding-bottom: 8px;
+        }
+        
+        .episode-item {
+            background-color: var(--light);
+            padding: 8px 12px;
+            text-align: center;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 12px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+            font-weight: 500;
+        }
+        
+        .episode-item:hover {
+            background-color: var(--primary-light);
+            border-color: var(--primary);
+        }
+        
+        .episode-item.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .actors-container {
+            padding: 12px;
+            background-color: white;
+        }
+        
+        .actors-title {
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .actors-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .actor-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 70px;
+        }
+        
+        .actor-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 6px;
+            border: 2px solid var(--border);
+        }
+        
+        .actor-name {
+            font-size: 11px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            color: var(--text);
+        }
+        
+        .download-container {
+            padding: 12px;
+            background-color: white;
+            border-top: 1px solid var(--border);
+        }
+        
+        .download-title {
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .download-link {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 12px;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+        
+        .download-link:hover {
+            background-color: #3a56d4;
+        }
+        
+        .footer-note {
+            text-align: center;
+            padding: 12px 0;
+            margin-top: 16px;
+            color: var(--text-light);
+            font-size: 11px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 16px;
+            gap: 8px;
+        }
+        
+        .page-btn {
+            padding: 8px 12px;
+            background-color: white;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .page-btn:hover {
+            background-color: var(--light);
+        }
+        
+        .page-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        @media (max-width: 767px) {
+            .container {
+                padding: 0 10px;
+            }
+            
+            header {
+                padding: 12px 0;
+                margin-bottom: 12px;
+            }
+            
+            .logo h1 {
+                font-size: 16px;
+            }
+            
+            .tagline {
+                font-size: 11px;
+            }
+            
+            .tab {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            
+            .search-input {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            
+            .search-btn {
+                padding: 0 14px;
+                font-size: 13px;
+            }
+            
+            .drama-poster, .drama-icon, .new-drama-icon {
+                width: 60px;
+                height: 80px;
+            }
+            
+            .drama-info, .new-drama-info {
+                padding: 10px;
+            }
+            
+            .drama-name, .new-drama-name {
+                font-size: 14px;
+            }
+            
+            .vertical-list {
+                max-height: calc(100vh - 160px);
+            }
+            
+            .modal-header {
+                padding: 10px 12px;
+            }
+            
+            .close-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+            
+            .episode-item {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+            
+            .actor-card {
+                width: 60px;
+            }
+            
+            .actor-avatar {
+                width: 40px;
+                height: 40px;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 1000px;
+            }
+            
+            .drama-item, .new-drama-item {
+                flex-direction: row;
+            }
+            
+            .drama-poster, .drama-icon, .new-drama-icon {
+                width: 90px;
+                height: 120px;
+            }
+            
+            .tabs-scroll {
+                justify-content: center;
+            }
+            
+            .tab {
+                flex: none;
+                min-width: 120px;
+            }
+            
+            .modal-content {
+                margin: 20px auto;
+                width: 90%;
+                height: 90%;
+                border-radius: var(--radius);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-film"></i>
+            <h1>短剧聚合搜索</h1>
+        </div>
+        <p class="tagline">发现精彩短剧内容，尽在掌握</p>
+    </header>
+
+    <main class="container">
+        <!-- 选项卡 -->
+        <div class="tabs-container">
+            <div class="tabs-scroll">
+                <div class="tab active" data-tab="hongguo">红果短剧</div>
+                <div class="tab" data-tab="qimao">七猫短剧</div>
+                <div class="tab" data-tab="quanwang">全网短剧</div>
+                <div class="tab" data-tab="short-drama">短剧搜索</div>
+                <div class="tab" data-tab="new-short-drama">短剧资源</div>
+            </div>
+        </div>
+        
+        <!-- 红果短剧 -->
+        <div id="hongguo" class="tab-content active">
+            <div class="search-box">
+                <input type="text" class="search-input" id="hongguo-search-input" placeholder="搜索红果短剧...">
+                <button class="search-btn" id="hongguo-search-btn">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+            <div id="hongguo-container" class="vertical-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在加载红果短剧推荐...</p>
+                </div>
+            </div>
+            <div class="pagination" id="hongguo-pagination"></div>
+        </div>
+        
+        <!-- 七猫短剧 -->
+        <div id="qimao" class="tab-content">
+            <div class="search-box">
+                <input type="text" class="search-input" id="qimao-search-input" placeholder="搜索七猫短剧...">
+                <button class="search-btn" id="qimao-search-btn">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+            <div id="qimao-container" class="vertical-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在加载七猫短剧推荐...</p>
+                </div>
+            </div>
+            <div class="pagination" id="qimao-pagination"></div>
+        </div>
+        
+        <!-- 全网短剧 -->
+        <div id="quanwang" class="tab-content">
+            <div class="search-box">
+                <input type="text" class="search-input" id="quanwang-search-input" placeholder="搜索全网短剧...">
+                <button class="search-btn" id="quanwang-search-btn">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+            <div id="quanwang-container" class="vertical-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在加载全网短剧推荐...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 短剧搜索 -->
+        <div id="short-drama" class="tab-content">
+            <div class="search-box">
+                <input type="text" class="search-input" id="short-drama-input" placeholder="搜索短剧名称...">
+                <button class="search-btn" id="short-drama-btn">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+            <div id="short-drama-results" class="vertical-list">
+                <div class="no-results">
+                    <i class="fas fa-video"></i>
+                    <h3>短剧搜索</h3>
+                    <p>输入短剧名称并点击搜索按钮</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 短剧资源 -->
+        <div id="new-short-drama" class="tab-content">
+            <div class="search-box">
+                <input type="text" class="search-input" id="new-short-drama-input" placeholder="搜索短剧名称...">
+                <button class="search-btn" id="new-short-drama-btn">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+            <div id="new-short-drama-results" class="vertical-list">
+                <div class="no-results">
+                    <i class="fas fa-video"></i>
+                    <h3>短剧资源</h3>
+                    <p>输入短剧名称并点击搜索按钮</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 详情模态框 -->
+        <div class="modal" id="detailModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">短剧详情</h2>
+                    <button class="close-btn" id="closeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="video-container">
+                        <div class="video-player" id="videoPlayer">
+                            <div style="display: flex; justify-content: center; align-items: center; height: 100%; color: white; font-size: 14px;">
+                                选择集数播放视频
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="controls-container" id="controlsContainer">
+                        <div class="quality-selector" id="qualitySelector">
+                            <button class="quality-btn active" data-quality="1080p">1080P</button>
+                            <button class="quality-btn" data-quality="720p">720P</button>
+                            <button class="quality-btn" data-quality="480p">480P</button>
+                            <button class="quality-btn" data-quality="360p">360P</button>
+                        </div>
+                        
+                        <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--dark);">剧集列表</h3>
+                        <div class="episode-list" id="episodeList"></div>
+                    </div>
+                    
+                    <div class="download-container" id="downloadContainer" style="display: none;">
+                        <h3 class="download-title">网盘下载</h3>
+                        <a href="#" class="download-link" id="downloadLink" target="_blank">点击下载</a>
+                    </div>
+                    
+                    <div class="actors-container" id="actorsContainer">
+                        <h3 class="actors-title">演员信息</h3>
+                        <div class="actors-list" id="actorsList">
+                            <div class="loading">加载演员信息中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部提示文字 -->
+        <div class="footer-note">
+            当前搜索工具支持多种短剧内容搜索和播放
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 全局变量
+            let currentPage = 1;
+            let currentSearchTerm = '';
+            let currentAPI = 'hongguo';
+            let currentDramaId = '';
+            let currentVideoId = '';
+            let currentQuality = '1080p';
+            let currentVideoElement = null;
+            
+            // 获取所有需要的DOM元素
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            // 红果短剧
+            const hongguoSearchInput = document.getElementById('hongguo-search-input');
+            const hongguoSearchBtn = document.getElementById('hongguo-search-btn');
+            const hongguoContainer = document.getElementById('hongguo-container');
+            const hongguoPagination = document.getElementById('hongguo-pagination');
+            
+            // 七猫短剧
+            const qimaoSearchInput = document.getElementById('qimao-search-input');
+            const qimaoSearchBtn = document.getElementById('qimao-search-btn');
+            const qimaoContainer = document.getElementById('qimao-container');
+            const qimaoPagination = document.getElementById('qimao-pagination');
+            
+            // 全网短剧
+            const quanwangSearchInput = document.getElementById('quanwang-search-input');
+            const quanwangSearchBtn = document.getElementById('quanwang-search-btn');
+            const quanwangContainer = document.getElementById('quanwang-container');
+            
+            // 短剧搜索
+            const shortDramaInput = document.getElementById('short-drama-input');
+            const shortDramaBtn = document.getElementById('short-drama-btn');
+            const shortDramaResults = document.getElementById('short-drama-results');
+            
+            // 短剧资源
+            const newShortDramaInput = document.getElementById('new-short-drama-input');
+            const newShortDramaBtn = document.getElementById('new-short-drama-btn');
+            const newShortDramaResults = document.getElementById('new-short-drama-results');
+            
+            // 详情模态框
+            const detailModal = document.getElementById('detailModal');
+            const closeModal = document.getElementById('closeModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const videoPlayer = document.getElementById('videoPlayer');
+            const episodeList = document.getElementById('episodeList');
+            const qualityBtns = document.querySelectorAll('.quality-btn');
+            const actorsList = document.getElementById('actorsList');
+            const downloadContainer = document.getElementById('downloadContainer');
+            const downloadLink = document.getElementById('downloadLink');
+            const controlsContainer = document.getElementById('controlsContainer');
+            const qualitySelector = document.getElementById('qualitySelector');
+            
+            // 数据缓存
+            let shortDramaData = null;
+            let newShortDramaData = null;
+            let hongguoData = null;
+            let qimaoData = null;
+            let quanwangData = null;
+            
+            // 选项卡切换功能
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // 移除所有激活状态
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // 添加当前激活状态
+                    tab.classList.add('active');
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // 更新当前API
+                    currentAPI = tabId;
+                    
+                    // 加载对应数据
+                    if (tabId === 'hongguo' && !hongguoData) {
+                        loadHongguoRecommendations();
+                    } else if (tabId === 'qimao' && !qimaoData) {
+                        loadQimaoRecommendations();
+                    } else if (tabId === 'quanwang' && !quanwangData) {
+                        loadQuanwangRecommendations();
+                    }
+                });
+            });
+            
+            // 搜索功能绑定
+            hongguoSearchBtn.addEventListener('click', performHongguoSearch);
+            hongguoSearchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') performHongguoSearch();
+            });
+            
+            qimaoSearchBtn.addEventListener('click', performQimaoSearch);
+            qimaoSearchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') performQimaoSearch();
+            });
+            
+            quanwangSearchBtn.addEventListener('click', performQuanwangSearch);
+            quanwangSearchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') performQuanwangSearch();
+            });
+            
+            shortDramaBtn.addEventListener('click', performShortDramaSearch);
+            shortDramaInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') performShortDramaSearch();
+            });
+            
+            newShortDramaBtn.addEventListener('click', performNewShortDramaSearch);
+            newShortDramaInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') performNewShortDramaSearch();
+            });
+            
+            // 模态框控制
+            closeModal.addEventListener('click', function() {
+                stopVideoPlayback();
+                detailModal.style.display = 'none';
+            });
+            
+            window.addEventListener('click', function(e) {
+                if (e.target === detailModal) {
+                    stopVideoPlayback();
+                    detailModal.style.display = 'none';
+                }
+            });
+            
+            // 质量选择
+            qualityBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    qualityBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentQuality = this.getAttribute('data-quality');
+                    if (currentVideoId && currentAPI === 'hongguo') {
+                        playHongguoVideo(currentVideoId, currentQuality);
+                    }
+                });
+            });
+            
+            // 初始化加载红果短剧数据
+            loadHongguoRecommendations();
+            
+            // 停止视频播放
+            function stopVideoPlayback() {
+                if (currentVideoElement) {
+                    currentVideoElement.pause();
+                    currentVideoElement = null;
+                }
+                videoPlayer.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100%; color: white; font-size: 14px;">选择集数播放视频</div>';
+            }
+            
+            // 加载红果短剧推荐
+            function loadHongguoRecommendations() {
+                const url = 'https://api.cenguigui.cn/api/duanju/api.php?type=recommend&showRawParams=false';
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        hongguoData = data;
+                        displayHongguoResults(data);
+                    })
+                    .catch(error => {
+                        console.error('加载红果短剧推荐出错:', error);
+                        hongguoContainer.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>加载失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 加载七猫短剧推荐
+            function loadQimaoRecommendations() {
+                const url = 'https://api.cenguigui.cn/api/duanju/qimao/?name=逆袭&page=1';
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        qimaoData = data;
+                        displayQimaoResults(data);
+                    })
+                    .catch(error => {
+                        console.error('加载七猫短剧推荐出错:', error);
+                        qimaoContainer.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>加载失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 加载全网短剧推荐
+            function loadQuanwangRecommendations() {
+                const url = 'https://api.cenguigui.cn/api/video/duanju/?act=day';
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        quanwangData = data;
+                        displayQuanwangResults(data);
+                    })
+                    .catch(error => {
+                        console.error('加载全网短剧推荐出错:', error);
+                        quanwangContainer.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>加载失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 红果短剧搜索
+            function performHongguoSearch() {
+                const query = hongguoSearchInput.value.trim();
+                if (!query) return;
+                
+                currentSearchTerm = query;
+                currentPage = 1;
+                
+                hongguoContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在搜索红果短剧 "${query}"...</p>
+                    </div>
+                `;
+                
+                const url = `https://api.cenguigui.cn/api/duanju/api.php?name=${encodeURIComponent(query)}&page=${currentPage}&showRawParams=false`;
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        hongguoData = data;
+                        displayHongguoResults(data);
+                    })
+                    .catch(error => {
+                        console.error('红果短剧搜索出错:', error);
+                        hongguoContainer.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>搜索失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 七猫短剧搜索
+            function performQimaoSearch() {
+                const query = qimaoSearchInput.value.trim();
+                if (!query) return;
+                
+                currentSearchTerm = query;
+                currentPage = 1;
+                
+                qimaoContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在搜索七猫短剧 "${query}"...</p>
+                    </div>
+                `;
+                
+                const url = `https://api.cenguigui.cn/api/duanju/qimao/?name=${encodeURIComponent(query)}&page=${currentPage}`;
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        qimaoData = data;
+                        displayQimaoResults(data);
+                    })
+                    .catch(error => {
+                        console.error('七猫短剧搜索出错:', error);
+                        qimaoContainer.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>搜索失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 全网短剧搜索
+            function performQuanwangSearch() {
+                const query = quanwangSearchInput.value.trim();
+                if (!query) return;
+                
+                quanwangContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在搜索全网短剧 "${query}"...</p>
+                    </div>
+                `;
+                
+                const url = `https://api.cenguigui.cn/api/video/duanju/?act=search&name=${encodeURIComponent(query)}`;
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        quanwangData = data;
+                        displayQuanwangResults(data);
+                    })
+                    .catch(error => {
+                        console.error('全网短剧搜索出错:', error);
+                        quanwangContainer.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>搜索失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 短剧搜索
+            function performShortDramaSearch() {
+                const query = shortDramaInput.value.trim();
+                if (!query) return;
+                
+                shortDramaResults.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在搜索短剧 "${query}"...</p>
+                    </div>
+                `;
+                
+                const apiUrl = `https://api.ahfi.cn/api/short?text=${encodeURIComponent(query)}`;
+                
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        shortDramaData = data;
+                        displayShortDramaResults(data);
+                    })
+                    .catch(error => {
+                        console.error('短剧搜索出错:', error);
+                        shortDramaResults.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>搜索失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 新短剧资源搜索
+            function performNewShortDramaSearch() {
+                const query = newShortDramaInput.value.trim();
+                if (!query) return;
+                
+                newShortDramaResults.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在搜索短剧 "${query}"...</p>
+                    </div>
+                `;
+                
+                const apiUrl = `https://api.jkyai.top/API/djzyss.php?search=${encodeURIComponent(query)}&type=json`;
+                
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        displayNewShortDramaResults(data);
+                    })
+                    .catch(error => {
+                        console.error('短剧资源搜索出错:', error);
+                        newShortDramaResults.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>搜索失败</h3>
+                                <p>请检查网络连接或稍后重试</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // 显示红果短剧搜索结果
+            function displayHongguoResults(data) {
+                if (data && data.code === 200 && data.data) {
+                    const dramas = Array.isArray(data.data) ? data.data : [data.data];
+                    
+                    if (dramas.length === 0 || (dramas.length === 1 && !dramas[0].title)) {
+                        hongguoContainer.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-search"></i>
+                                <h3>未找到相关短剧</h3>
+                                <p>请尝试使用其他关键词搜索</p>
+                            </div>
+                        `;
+                        hongguoPagination.innerHTML = '';
+                        return;
+                    }
+                    
+                    let html = '';
+                    
+                    dramas.forEach(drama => {
+                        if (!drama.title) return;
+                        
+                        html += `
+                            <div class="drama-item" data-id="${drama.book_id || drama.id}">
+                                <img src="${drama.cover || 'https://via.placeholder.com/180x140?text=无封面'}" alt="${drama.title}" class="drama-poster">
+                                <div class="drama-info">
+                                    <h3 class="drama-name">${drama.title}</h3>
+                                    <p class="drama-desc">${drama.description || '暂无简介'}</p>
+                                    <div class="drama-meta">
+                                        <span>${drama.author || '未知作者'}</span>
+                                        <span>${drama.category || '未知分类'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    hongguoContainer.innerHTML = html;
+                    
+                    // 添加点击事件
+                    document.querySelectorAll('.drama-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            const dramaId = this.getAttribute('data-id');
+                            showHongguoDramaDetail(dramaId);
+                        });
+                    });
+                    
+                    // 更新分页
+                    updateHongguoPagination();
+                } else {
+                    hongguoContainer.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>未找到相关短剧</h3>
+                            <p>请尝试使用其他关键词搜索</p>
+                        </div>
+                    `;
+                    hongguoPagination.innerHTML = '';
+                }
+            }
+            
+            // 显示七猫短剧搜索结果
+            function displayQimaoResults(data) {
+                if (data && data.code === 200 && data.data && data.data.list) {
+                    const dramas = data.data.list;
+                    
+                    if (dramas.length === 0) {
+                        qimaoContainer.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-search"></i>
+                                <h3>未找到相关短剧</h3>
+                                <p>请尝试使用其他关键词搜索</p>
+                            </div>
+                        `;
+                        qimaoPagination.innerHTML = '';
+                        return;
+                    }
+                    
+                    let html = '';
+                    
+                    dramas.forEach(drama => {
+                        html += `
+                            <div class="drama-item" data-id="${drama.id}">
+                                <img src="${drama.image_link || 'https://via.placeholder.com/180x140?text=无封面'}" alt="${drama.title}" class="drama-poster">
+                                <div class="drama-info">
+                                    <h3 class="drama-name">${drama.title.replace(/<[^>]*>/g, '')}</h3>
+                                    <p class="drama-desc">${drama.sub_title || '暂无简介'}</p>
+                                    <div class="drama-meta">
+                                        <span>${drama.total_num || '未知集数'}</span>
+                                        <span>${drama.label_name || '未知分类'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    qimaoContainer.innerHTML = html;
+                    
+                    // 添加点击事件
+                    document.querySelectorAll('.drama-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            const dramaId = this.getAttribute('data-id');
+                            showQimaoDramaDetail(dramaId);
+                        });
+                    });
+                    
+                    // 更新分页
+                    updateQimaoPagination();
+                } else {
+                    qimaoContainer.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>未找到相关短剧</h3>
+                            <p>请尝试使用其他关键词搜索</p>
+                        </div>
+                    `;
+                    qimaoPagination.innerHTML = '';
+                }
+            }
+            
+            // 显示全网短剧搜索结果 - 修改为与短剧搜索和短剧资源相同的样式
+            function displayQuanwangResults(data) {
+                if (data && data.code === 200 && data.data) {
+                    const dramas = data.data;
+                    
+                    if (dramas.length === 0) {
+                        quanwangContainer.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-search"></i>
+                                <h3>未找到相关短剧</h3>
+                                <p>请尝试使用其他关键词搜索</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    let html = '';
+                    
+                    dramas.forEach(drama => {
+                        html += `
+                            <div class="drama-item" data-link="${drama.url || '#'}">
+                                <div class="drama-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <div class="drama-info">
+                                    <h3 class="drama-name">${drama.name}</h3>
+                                    <div class="drama-meta">
+                                        <span class="drama-episodes">${drama.episodes || '未知'}集</span>
+                                        <span class="drama-time"><i class="fas fa-clock"></i> ${drama.addtime || '未知时间'}</span>
+                                    </div>
+                                    <div class="drama-link">
+                                        <i class="fas fa-external-link-alt"></i> 点击查看网盘链接
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    quanwangContainer.innerHTML = html;
+                    
+                    // 添加点击事件 - 直接打开网盘链接
+                    document.querySelectorAll('.drama-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            const link = this.getAttribute('data-link');
+                            if (link && link !== '#') {
+                                window.open(link, '_blank');
+                            } else {
+                                alert('暂无网盘链接');
+                            }
+                        });
+                    });
+                } else {
+                    quanwangContainer.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>未找到相关短剧</h3>
+                            <p>请尝试使用其他关键词搜索</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 更新红果短剧分页
+            function updateHongguoPagination() {
+                hongguoPagination.innerHTML = '';
+                
+                if (currentPage > 1) {
+                    const prevBtn = document.createElement('button');
+                    prevBtn.className = 'page-btn';
+                    prevBtn.textContent = '上一页';
+                    prevBtn.addEventListener('click', function() {
+                        currentPage--;
+                        performHongguoSearch();
+                    });
+                    hongguoPagination.appendChild(prevBtn);
+                }
+                
+                const currentBtn = document.createElement('button');
+                currentBtn.className = 'page-btn active';
+                currentBtn.textContent = currentPage;
+                hongguoPagination.appendChild(currentBtn);
+                
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'page-btn';
+                nextBtn.textContent = '下一页';
+                nextBtn.addEventListener('click', function() {
+                    currentPage++;
+                    performHongguoSearch();
+                });
+                hongguoPagination.appendChild(nextBtn);
+            }
+            
+            // 更新七猫短剧分页
+            function updateQimaoPagination() {
+                qimaoPagination.innerHTML = '';
+                
+                if (currentPage > 1) {
+                    const prevBtn = document.createElement('button');
+                    prevBtn.className = 'page-btn';
+                    prevBtn.textContent = '上一页';
+                    prevBtn.addEventListener('click', function() {
+                        currentPage--;
+                        performQimaoSearch();
+                    });
+                    qimaoPagination.appendChild(prevBtn);
+                }
+                
+                const currentBtn = document.createElement('button');
+                currentBtn.className = 'page-btn active';
+                currentBtn.textContent = currentPage;
+                qimaoPagination.appendChild(currentBtn);
+                
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'page-btn';
+                nextBtn.textContent = '下一页';
+                nextBtn.addEventListener('click', function() {
+                    currentPage++;
+                    performQimaoSearch();
+                });
+                qimaoPagination.appendChild(nextBtn);
+            }
+            
+            // 显示红果短剧详情
+            function showHongguoDramaDetail(dramaId) {
+                currentDramaId = dramaId;
+                controlsContainer.style.display = 'block';
+                downloadContainer.style.display = 'none';
+                qualitySelector.style.display = 'flex';
+                
+                // 加载剧集列表
+                loadHongguoEpisodeList(dramaId);
+                
+                detailModal.style.display = 'block';
+            }
+            
+            // 显示七猫短剧详情
+            function showQimaoDramaDetail(dramaId) {
+                currentDramaId = dramaId;
+                controlsContainer.style.display = 'block';
+                downloadContainer.style.display = 'none';
+                qualitySelector.style.display = 'none';
+                
+                // 加载剧集列表
+                loadQimaoEpisodeList(dramaId);
+                
+                detailModal.style.display = 'block';
+            }
+            
+            // 显示全网短剧详情 - 修改为直接打开网盘链接
+            function showQuanwangDramaDetail(dramaId) {
+                // 全网短剧直接打开网盘链接，不需要详情页
+                // 这里保持空实现，因为点击事件已经在displayQuanwangResults中处理
+            }
+            
+            // 加载红果剧集列表
+            function loadHongguoEpisodeList(bookId) {
+                episodeList.innerHTML = '<div class="loading">加载剧集中...</div>';
+                actorsList.innerHTML = '<div class="loading">加载演员信息中...</div>';
+                
+                const url = `https://api.cenguigui.cn/api/duanju/api.php?book_id=${bookId}&showRawParams=false`;
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.code === 200) {
+                            displayHongguoEpisodeList(data);
+                            loadActorsInfo(bookId);
+                        } else {
+                            episodeList.innerHTML = '<div class="error">加载剧集失败</div>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('加载剧集出错:', error);
+                        episodeList.innerHTML = '<div class="error">加载剧集失败，请检查网络连接</div>';
+                    });
+            }
+            
+            // 加载七猫剧集列表
+            function loadQimaoEpisodeList(bookId) {
+                episodeList.innerHTML = '<div class="loading">加载剧集中...</div>';
+                actorsList.innerHTML = '<div class="error">暂无演员信息</div>';
+                
+                const url = `https://api.cenguigui.cn/api/duanju/qimao/?id=${bookId}`;
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.code === 200) {
+                            displayQimaoEpisodeList(data);
+                        } else {
+                            episodeList.innerHTML = '<div class="error">加载剧集失败</div>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('加载七猫剧集出错:', error);
+                        episodeList.innerHTML = '<div class="error">加载剧集失败，请检查网络连接</div>';
+                    });
+            }
+            
+            // 显示红果剧集列表
+            function displayHongguoEpisodeList(data) {
+                if (!data || !data.data) {
+                    episodeList.innerHTML = '<div class="error">暂无剧集数据</div>';
+                    return;
+                }
+                
+                const episodes = Array.isArray(data.data) ? data.data : [data.data];
+                episodeList.innerHTML = '';
+                
+                episodes.forEach((episode, index) => {
+                    if (!episode.series_id && !episode.video_id) return;
+                    
+                    const episodeItem = document.createElement('div');
+                    episodeItem.className = 'episode-item';
+                    episodeItem.textContent = `第${index + 1}集`;
+                    episodeItem.addEventListener('click', function() {
+                        document.querySelectorAll('.episode-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                        
+                        const videoId = episode.series_id || episode.video_id;
+                        playHongguoVideo(videoId, currentQuality);
+                    });
+                    
+                    episodeList.appendChild(episodeItem);
+                });
+                
+                if (episodes.length > 0) {
+                    const firstEpisode = episodes[0];
+                    if (firstEpisode.series_id || firstEpisode.video_id) {
+                        episodeList.firstChild.classList.add('active');
+                        const videoId = firstEpisode.series_id || firstEpisode.video_id;
+                        playHongguoVideo(videoId, currentQuality);
+                    }
+                }
+            }
+            
+            // 显示七猫剧集列表
+            function displayQimaoEpisodeList(data) {
+                if (!data || !data.data || !data.data.play_list) {
+                    episodeList.innerHTML = '<div class="error">暂无剧集数据</div>';
+                    return;
+                }
+                
+                const episodes = data.data.play_list;
+                episodeList.innerHTML = '';
+                
+                episodes.forEach((episode, index) => {
+                    const episodeItem = document.createElement('div');
+                    episodeItem.className = 'episode-item';
+                    episodeItem.textContent = `第${index + 1}集`;
+                    episodeItem.addEventListener('click', function() {
+                        document.querySelectorAll('.episode-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                        
+                        playQimaoVideo(episode);
+                    });
+                    
+                    episodeList.appendChild(episodeItem);
+                });
+                
+                if (episodes.length > 0) {
+                    episodeList.firstChild.classList.add('active');
+                    playQimaoVideo(episodes[0]);
+                }
+            }
+            
+            // 加载演员信息
+            function loadActorsInfo(bookId) {
+                const url = `https://api.cenguigui.cn/api/duanju/api.php?user_id=${bookId}&page=1&showRawParams=false`;
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.code === 200) {
+                            displayActorsInfo(data);
+                        } else {
+                            actorsList.innerHTML = '<div class="error">加载演员信息失败</div>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('加载演员信息出错:', error);
+                        actorsList.innerHTML = '<div class="error">加载演员信息失败，请检查网络连接</div>';
+                    });
+            }
+            
+            // 显示演员信息
+            function displayActorsInfo(data) {
+                if (!data || !data.data) {
+                    actorsList.innerHTML = '<div class="error">暂无演员信息</div>';
+                    return;
+                }
+                
+                const actors = Array.isArray(data.data) ? data.data : [data.data];
+                actorsList.innerHTML = '';
+                
+                if (actors.length === 0) {
+                    actorsList.innerHTML = '<div class="error">暂无演员信息</div>';
+                    return;
+                }
+                
+                actors.forEach(actor => {
+                    if (!actor.name) return;
+                    
+                    const actorCard = document.createElement('div');
+                    actorCard.className = 'actor-card';
+                    actorCard.innerHTML = `
+                        <img src="${actor.avatar || 'https://via.placeholder.com/50x50?text=头像'}" alt="${actor.name}" class="actor-avatar">
+                        <div class="actor-name">${actor.name}</div>
+                    `;
+                    
+                    actorsList.appendChild(actorCard);
+                });
+            }
+            
+            // 播放红果视频
+            function playHongguoVideo(videoId, quality) {
+                currentVideoId = videoId;
+                videoPlayer.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100%; color: white;">加载视频中...</div>';
+                
+                const url = `https://api.cenguigui.cn/api/duanju/api.php?video_id=${videoId}&type=json&level=${quality}&showRawParams=false`;
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.code === 200 && data.data && data.data.url) {
+                            videoPlayer.innerHTML = `
+                                <video controls autoplay style="width: 100%; height: 100%;">
+                                    <source src="${data.data.url}" type="video/mp4">
+                                    您的浏览器不支持视频播放
+                                </video>
+                            `;
+                            
+                            currentVideoElement = videoPlayer.querySelector('video');
+                        } else {
+                            videoPlayer.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100%; color: white;">视频加载失败</div>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('播放视频出错:', error);
+                        videoPlayer.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100%; color: white;">视频加载失败</div>';
+                    });
+            }
+            
+            // 播放七猫视频
+            function playQimaoVideo(episode) {
+                videoPlayer.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100%; color: white;">加载视频中...</div>';
+                
+                const videoUrl = episode.video_url || episode.video_h265_url;
+                
+                if (videoUrl) {
+                    videoPlayer.innerHTML = `
+                        <video controls autoplay style="width: 100%; height: 100%;">
+                            <source src="${videoUrl}" type="video/mp4">
+                            您的浏览器不支持视频播放
+                        </video>
+                    `;
+                    
+                    currentVideoElement = videoPlayer.querySelector('video');
+                } else {
+                    videoPlayer.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100%; color: white;">视频加载失败</div>';
+                }
+            }
+            
+            // 显示短剧搜索结果
+            function displayShortDramaResults(data) {
+                if (data && data.code === 0 && data.data && data.data.length > 0) {
+                    const shortDramas = data.data;
+                    let html = '';
+                    
+                    shortDramas.forEach(drama => {
+                        html += `
+                            <div class="drama-item" data-link="${drama.viewlink}">
+                                <div class="drama-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <div class="drama-info">
+                                    <h3 class="drama-name">${drama.name}</h3>
+                                    <div class="drama-meta">
+                                        <span class="drama-episodes">${drama.episodes}集</span>
+                                        <span class="drama-time"><i class="fas fa-clock"></i> ${drama.addtime}</span>
+                                    </div>
+                                    <div class="drama-link">
+                                        <i class="fas fa-external-link-alt"></i> 点击查看网盘链接
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    shortDramaResults.innerHTML = html;
+                    
+                    document.querySelectorAll('.drama-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            const link = this.getAttribute('data-link');
+                            window.open(link, '_blank');
+                        });
+                    });
+                } else {
+                    shortDramaResults.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>未找到相关短剧</h3>
+                            <p>请尝试使用其他关键词搜索</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 显示新短剧资源搜索结果
+            function displayNewShortDramaResults(data) {
+                if (data && data.code === 200 && data.data && data.data.length > 0) {
+                    const dramas = data.data;
+                    let html = '';
+                    
+                    dramas.forEach(drama => {
+                        let viewlink = drama.viewlink;
+                        if (viewlink.includes('\t')) {
+                            viewlink = viewlink.split('\t').pop();
+                        }
+                        
+                        html += `
+                            <div class="new-drama-item" data-link="${viewlink}">
+                                <div class="new-drama-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <div class="new-drama-info">
+                                    <h3 class="new-drama-name">${drama.name}</h3>
+                                    <div class="new-drama-meta">
+                                        <span class="new-drama-time"><i class="fas fa-clock"></i> ${drama.addtime}</span>
+                                    </div>
+                                    <div class="new-drama-link">
+                                        <i class="fas fa-external-link-alt"></i> 点击查看网盘链接
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    newShortDramaResults.innerHTML = html;
+                    
+                    document.querySelectorAll('.new-drama-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            const link = this.getAttribute('data-link');
+                            window.open(link, '_blank');
+                        });
+                    });
+                } else {
+                    newShortDramaResults.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-search"></i>
+                            <h3>未找到相关短剧</h3>
+                            <p>请尝试使用其他关键词搜索</p>
+                        </div>
+                    `;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

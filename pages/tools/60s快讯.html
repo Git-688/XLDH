@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资讯速览</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4a6cf7;
+            --primary-dark: #3a5ce5;
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --border: #e2e8f0;
+            --error: #f56565;
+            --radius: 12px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 15px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .control-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 12px;
+            flex-wrap: nowrap;
+        }
+
+        .tab-container {
+            display: flex;
+            background-color: #f1f5f9;
+            border-radius: 10px;
+            padding: 6px;
+            flex: 1;
+            min-width: 0;
+            overflow-x: auto;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px 8px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 60px;
+        }
+
+        .tab.active {
+            background-color: white;
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .refresh-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(74, 108, 247, 0.25);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .refresh-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(74, 108, 247, 0.3);
+        }
+
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .image-container {
+            width: 100%;
+            margin: 0 auto;
+            position: relative;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .news-image {
+            width: 100%;
+            height: auto;
+            display: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .text-content {
+            width: 100%;
+            padding: 20px;
+            background-color: white;
+            border-radius: var(--radius);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            display: none;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .text-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .news-image.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .status-area {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .loading {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(74, 108, 247, 0.2);
+            border-left: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .status {
+            display: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .status.error {
+            background-color: rgba(245, 101, 101, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(245, 101, 101, 0.3);
+        }
+
+        .timestamp {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .news-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .news-item:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+
+        .news-date {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--primary);
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .news-tip {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8fafc;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            font-style: italic;
+        }
+
+        .json-cover-image {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            .control-bar {
+                gap: 8px;
+            }
+            
+            .tab {
+                padding: 8px 6px;
+                font-size: 0.75rem;
+                min-width: 55px;
+            }
+            
+            .refresh-btn {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+            
+            .text-content {
+                padding: 15px;
+            }
+        }
+
+        /* 超小屏幕优化 */
+        @media (max-width: 360px) {
+            .tab {
+                padding: 8px 4px;
+                font-size: 0.7rem;
+                min-width: 50px;
+            }
+            
+            .refresh-btn {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+            
+            .refresh-btn span {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="control-bar">
+                <div class="tab-container">
+                    <div class="tab active" data-api="api1">源一</div>
+                    <div class="tab" data-api="api2">源二</div>
+                    <div class="tab" data-api="api3">源三</div>
+                    <div class="tab" data-api="api4">源四</div>
+                    <div class="tab" data-api="api5">源五</div>
+                </div>
+                
+                <button id="refresh-btn" class="refresh-btn">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>刷新</span>
+                </button>
+            </div>
+            
+            <div class="content-area">
+                <div class="image-container">
+                    <img id="news-image1" class="news-image active" alt="资讯图片">
+                    <img id="news-image2" class="news-image" alt="资讯图片">
+                    <img id="news-image4" class="news-image" alt="资讯图片">
+                    <img id="news-image5" class="news-image" alt="资讯图片">
+                </div>
+                
+                <div id="text-content3" class="text-content">
+                    <!-- 第三个API的JSON内容将在这里显示 -->
+                </div>
+                
+                <div id="text-content5" class="text-content">
+                    <!-- 第五个API的JSON内容将在这里显示 -->
+                </div>
+                
+                <div class="status-area">
+                    <div id="loading" class="loading">
+                        <div class="spinner"></div>
+                        <p>正在加载最新资讯...</p>
+                    </div>
+                    
+                    <div id="status" class="status"></div>
+                    
+                    <div id="timestamp" class="timestamp"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API配置
+        const apiConfig = {
+            api1: {
+                url: 'https://api.zxki.cn/api/mt60s',
+                name: 'zxki.cn',
+                type: 'image',
+                imageElement: document.getElementById('news-image1')
+            },
+            api2: {
+                url: 'https://api.pearktrue.cn/api/60s/image/',
+                name: 'pearktrue.cn',
+                type: 'image',
+                imageElement: document.getElementById('news-image2')
+            },
+            api3: {
+                url: 'https://xiaodi.jujukai.cn/Api/60sksj.php',
+                name: 'xiaodi.jujukai.cn',
+                type: 'json',
+                textElement: document.getElementById('text-content3'),
+                format: 'type1'
+            },
+            api4: {
+                url: 'https://api.cenguigui.cn/api/zaobao/',
+                name: 'cenguigui.cn',
+                type: 'image',
+                imageElement: document.getElementById('news-image4')
+            },
+            api5: {
+                url: 'https://v.api.aa1.cn/api/60s-v3/',
+                name: 'v.api.aa1.cn',
+                type: 'auto',
+                imageElement: document.getElementById('news-image5'),
+                textElement: document.getElementById('text-content5')
+            }
+        };
+
+        // 元素引用
+        const tabs = document.querySelectorAll('.tab');
+        const refreshButton = document.getElementById('refresh-btn');
+        const loadingElement = document.getElementById('loading');
+        const statusElement = document.getElementById('status');
+        const timestampElement = document.getElementById('timestamp');
+        
+        // 当前激活的API
+        let activeApi = 'api1';
+        
+        // 初始化
+        function init() {
+            // 设置选项卡事件监听
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 移除所有active类
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // 为当前选项卡添加active类
+                    this.classList.add('active');
+                    // 更新激活的API
+                    activeApi = this.getAttribute('data-api');
+                    // 切换显示的内容
+                    switchContent();
+                    // 加载新API的数据
+                    fetchNews();
+                });
+            });
+            
+            // 设置刷新按钮事件监听
+            refreshButton.addEventListener('click', fetchNews);
+            
+            // 初始加载数据
+            fetchNews();
+        }
+        
+        // 切换显示的内容
+        function switchContent() {
+            // 隐藏所有内容
+            document.querySelectorAll('.news-image').forEach(img => {
+                img.classList.remove('active');
+            });
+            document.querySelectorAll('.text-content').forEach(text => {
+                text.classList.remove('active');
+            });
+            
+            // 显示当前激活的API对应的内容
+            const api = apiConfig[activeApi];
+            if (api.type === 'image' || api.type === 'auto') {
+                api.imageElement.classList.add('active');
+            } else if (api.type === 'json') {
+                api.textElement.classList.add('active');
+            }
+        }
+        
+        // 获取新闻数据
+        async function fetchNews() {
+            // 显示加载中，隐藏状态信息
+            loadingElement.style.display = 'flex';
+            statusElement.style.display = 'none';
+            statusElement.textContent = '';
+            
+            const api = apiConfig[activeApi];
+            
+            try {
+                if (api.type === 'image') {
+                    await fetchImage(api);
+                } else if (api.type === 'json') {
+                    await fetchJson(api);
+                } else if (api.type === 'auto') {
+                    // 自动检测API类型
+                    await fetchAuto(api);
+                }
+                
+                // 更新时间戳
+                const now = new Date();
+                timestampElement.textContent = `最后更新: ${now.toLocaleString()}`;
+                loadingElement.style.display = 'none';
+            } catch (error) {
+                console.error(`API ${api.name} 加载失败:`, error);
+                loadingElement.style.display = 'none';
+                statusElement.textContent = '加载失败，请检查网络连接或稍后重试';
+                statusElement.className = 'status error';
+                statusElement.style.display = 'block';
+                
+                // 尝试切换到下一个可用的API
+                switchToNextAPI();
+            }
+        }
+        
+        // 获取图片数据
+        function fetchImage(api) {
+            return new Promise((resolve, reject) => {
+                // 添加时间戳防止缓存
+                const timestamp = new Date().getTime();
+                const urlWithTimestamp = `${api.url}?t=${timestamp}`;
+                
+                // 使用Image对象加载图片
+                const img = new Image();
+                
+                img.onload = function() {
+                    // 图片加载成功
+                    api.imageElement.src = urlWithTimestamp;
+                    resolve();
+                };
+                
+                img.onerror = function() {
+                    reject(new Error('图片加载失败'));
+                };
+                
+                // 开始加载
+                img.src = urlWithTimestamp;
+            });
+        }
+        
+        // 获取JSON数据
+        async function fetchJson(api) {
+            // 添加时间戳防止缓存
+            const timestamp = new Date().getTime();
+            const urlWithTimestamp = `${api.url}?t=${timestamp}`;
+            
+            // 使用fetch获取JSON内容
+            const response = await fetch(urlWithTimestamp);
+            
+            if (!response.ok) {
+                throw new Error(`网络响应异常: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            formatJsonContent(api, data);
+        }
+        
+        // 自动检测API类型
+        async function fetchAuto(api) {
+            // 添加时间戳防止缓存
+            const timestamp = new Date().getTime();
+            const urlWithTimestamp = `${api.url}?t=${timestamp}`;
+            
+            try {
+                // 先尝试作为图片加载
+                await fetchImage(api);
+                // 如果成功，将API类型标记为image
+                api.type = 'image';
+            } catch (imageError) {
+                // 图片加载失败，尝试作为JSON加载
+                try {
+                    await fetchJson(api);
+                    // 如果成功，将API类型标记为json
+                    api.type = 'json';
+                } catch (jsonError) {
+                    // 两种方式都失败，抛出错误
+                    throw new Error('无法确定API返回格式');
+                }
+            }
+        }
+        
+        // 格式化JSON内容
+        function formatJsonContent(api, data) {
+            let htmlContent = '';
+            
+            if (api.format === 'type1') {
+                // 第三个API的格式
+                // 显示日期
+                if (data.date) {
+                    htmlContent += `<div class="news-date">${data.date}</div>`;
+                }
+                
+                // 显示封面图片
+                if (data.cover) {
+                    htmlContent += `<img src="${data.cover}" class="json-cover-image" alt="资讯封面" onload="this.style.display='block'">`;
+                }
+                
+                // 显示新闻列表
+                if (data.news && Array.isArray(data.news)) {
+                    data.news.forEach((item, index) => {
+                        htmlContent += `<div class="news-item">${index + 1}. ${item}</div>`;
+                    });
+                }
+                
+                // 显示提示
+                if (data.tip) {
+                    htmlContent += `<div class="news-tip">${data.tip}</div>`;
+                }
+            } else {
+                // 通用JSON格式处理
+                // 显示日期
+                if (data.date) {
+                    htmlContent += `<div class="news-date">${data.date}</div>`;
+                } else if (data.time) {
+                    // 将时间格式化为YYYY-MM-DD
+                    const timeStr = data.time.toString();
+                    const formattedDate = `${timeStr.substring(0,4)}-${timeStr.substring(4,6)}-${timeStr.substring(6,8)}`;
+                    htmlContent += `<div class="news-date">${formattedDate}</div>`;
+                }
+                
+                // 显示新闻列表
+                if (data.news && Array.isArray(data.news)) {
+                    data.news.forEach((item, index) => {
+                        htmlContent += `<div class="news-item">${index + 1}. ${item}</div>`;
+                    });
+                } else if (data.data && Array.isArray(data.data)) {
+                    data.data.forEach((item, index) => {
+                        htmlContent += `<div class="news-item">${index + 1}. ${item}</div>`;
+                    });
+                }
+                
+                // 显示提示
+                if (data.tip) {
+                    htmlContent += `<div class="news-tip">${data.tip}</div>`;
+                }
+            }
+            
+            api.textElement.innerHTML = htmlContent;
+        }
+        
+        // 切换到下一个API
+        function switchToNextAPI() {
+            const apiKeys = Object.keys(apiConfig);
+            const currentIndex = apiKeys.indexOf(activeApi);
+            const nextIndex = (currentIndex + 1) % apiKeys.length;
+            
+            setTimeout(() => {
+                document.querySelector(`.tab[data-api="${apiKeys[nextIndex]}"]`).click();
+            }, 2000);
+        }
+        
+        // 初始化应用
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

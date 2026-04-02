@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>铃声搜索 - 简约铃声库</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 图标 -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 配置Tailwind -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4263EB',
+                        secondary: '#F5F7FA',
+                        darkSecondary: '#2D2D2D',
+                        neutral: '#E5E7EB',
+                        darkNeutral: '#3D3D3D',
+                        textPrimary: '#374151',
+                        darkTextPrimary: '#E0E0E0',
+                        textSecondary: '#6B7280',
+                        darkTextSecondary: '#A0A0A0',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            }
+            .dark .card-shadow {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            }
+            .search-focus {
+                box-shadow: 0 0 0 3px rgba(66, 99, 235, 0.1);
+            }
+            .dark .search-focus {
+                box-shadow: 0 0 0 3px rgba(66, 99, 235, 0.2);
+            }
+            .progress-fill {
+                transition: width 0.3s ease;
+            }
+            .btn-active {
+                background-color: #4263EB !important;
+                color: white !important;
+            }
+            .circle-btn {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+            }
+            .circle-btn-lg {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-textPrimary dark:text-darkTextPrimary min-h-screen flex flex-col transition-colors duration-300 text-sm">
+    <!-- 头部导航 -->
+    <header class="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-neutral dark:border-darkNeutral backdrop-blur-sm bg-white/90 dark:bg-gray-900/90 transition-colors duration-300">
+        <div class="container mx-auto px-4 py-2 flex items-center justify-between">
+            <h1 class="text-base font-bold text-primary flex items-center">
+                <i class="fa fa-music mr-1.5"></i>铃声搜索
+            </h1>
+            <div class="flex items-center gap-2">
+                <button id="themeToggle" class="circle-btn bg-secondary dark:bg-darkSecondary hover:bg-primary hover:text-white transition-colors">
+                    <i class="fa fa-moon-o dark:hidden text-xs"></i>
+                    <i class="fa fa-sun-o hidden dark:inline-block text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-4">
+        <!-- 搜索区域 -->
+        <section class="mb-6">
+            <div class="relative max-w-2xl mx-auto">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="输入关键词搜索铃声（如：晚风）"
+                    class="w-full px-3 py-2 pl-8 pr-10 rounded-lg border border-neutral dark:border-darkNeutral bg-white dark:bg-gray-800 focus:border-primary focus:outline-none focus:search-focus transition-all text-sm"
+                >
+                <i class="fa fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-textSecondary dark:text-darkTextSecondary text-xs"></i>
+                <button id="searchBtn" class="absolute right-2.5 top-1/2 -translate-y-1/2 bg-primary text-white px-2.5 py-0.5 rounded-md hover:bg-primary/90 transition-colors text-xs">
+                    搜索
+                </button>
+            </div>
+            <div class="mt-2 text-center text-xs text-textSecondary dark:text-darkTextSecondary">
+                热门搜索：<a href="javascript:search('晚风')" class="text-primary hover:underline mx-1">晚风</a>
+                <a href="javascript:search('错位时空')" class="text-primary hover:underline mx-1">错位时空</a>
+                <a href="javascript:search('落日')" class="text-primary hover:underline mx-1">落日</a>
+            </div>
+        </section>
+
+        <!-- 加载状态 -->
+        <section id="loadingSection" class="hidden flex-col items-center justify-center py-12">
+            <div class="w-10 h-10 border-3 border-neutral dark:border-darkNeutral border-t-primary rounded-full animate-spin mb-3"></div>
+            <p class="text-textSecondary dark:text-darkTextSecondary text-xs">正在搜索铃声...</p>
+        </section>
+
+        <!-- 错误提示 -->
+        <section id="errorSection" class="hidden flex-col items-center justify-center py-12">
+            <i class="fa fa-exclamation-circle text-3xl text-red-500 mb-3"></i>
+            <p class="text-textSecondary dark:text-darkTextSecondary mb-2 text-xs" id="errorMessage">搜索失败，请稍后重试</p>
+            <button id="retryBtn" class="mt-3 px-3 py-1.5 border border-primary text-primary rounded-md hover:bg-primary hover:text-white transition-colors text-xs">
+                重新搜索
+            </button>
+        </section>
+
+        <!-- 结果为空 -->
+        <section id="emptySection" class="hidden flex-col items-center justify-center py-12">
+            <i class="fa fa-music text-3xl text-neutral dark:text-darkNeutral mb-3"></i>
+            <p class="text-textSecondary dark:text-darkTextSecondary text-xs">未找到相关铃声</p>
+            <p class="text-textSecondary/80 dark:text-darkTextSecondary/80 text-xs mt-1">请尝试其他关键词</p>
+        </section>
+
+        <!-- 搜索结果 -->
+        <section id="resultsSection" class="hidden">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-base font-semibold" id="resultsCount">找到 0 首铃声</h2>
+            </div>
+            <div class="grid grid-cols-1 gap-2.5" id="resultsList">
+                <!-- 结果项将通过JS动态生成 -->
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部播放器（固定在底部） -->
+    <footer id="playerFooter" class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-neutral dark:border-darkNeutral py-2 px-3 hidden z-40 transition-colors duration-300">
+        <div class="container mx-auto flex flex-col">
+            <!-- 播放信息 -->
+            <div class="flex items-center mb-1.5">
+                <div class="w-8 h-8 bg-secondary dark:bg-darkSecondary rounded-md flex items-center justify-center mr-2 flex-shrink-0">
+                    <i class="fa fa-music text-primary text-xs"></i>
+                </div>
+                <div class="flex-1 min-w-0 mr-2">
+                    <h3 class="font-medium truncate text-sm" id="playingTitle">未播放歌曲</h3>
+                    <p class="text-xs text-textSecondary dark:text-darkTextSecondary truncate" id="playingSinger">未知歌手</p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button id="prevBtn" class="circle-btn bg-secondary dark:bg-darkSecondary hover:bg-primary hover:text-white transition-colors" disabled>
+                        <i class="fa fa-step-backward text-xs"></i>
+                    </button>
+                    <button id="playPauseBtn" class="circle-btn-lg bg-primary text-white hover:bg-primary/90 transition-colors">
+                        <i class="fa fa-play text-sm" id="playPauseIcon"></i>
+                    </button>
+                    <button id="nextBtn" class="circle-btn bg-secondary dark:bg-darkSecondary hover:bg-primary hover:text-white transition-colors" disabled>
+                        <i class="fa fa-step-forward text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- 进度条和时间 -->
+            <div class="flex items-center gap-1.5">
+                <span class="text-xs text-textSecondary dark:text-darkTextSecondary w-8 text-right" id="currentTime">00:00</span>
+                <div class="flex-1 h-1 bg-neutral dark:bg-darkNeutral rounded-full overflow-hidden">
+                    <div id="progressBar" class="progress-fill h-full bg-primary w-0"></div>
+                </div>
+                <span class="text-xs text-textSecondary dark:text-darkTextSecondary w-8" id="totalTime">00:00</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 音频播放器（全局单例） -->
+    <audio id="audioPlayer" preload="metadata">
+
+    <script>
+        // 全局变量
+        const API_URL = 'https://api.andeer.top/API/private_ring_kg.php';
+        let currentAudioIndex = -1; // 当前播放的索引
+        let ringList = []; // 铃声列表
+        let searchHistory = [];
+        let downloadTasks = new Map(); // 下载任务映射
+
+        // DOM 元素
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsList = document.getElementById('resultsList');
+        const resultsCount = document.getElementById('resultsCount');
+        const loadingSection = document.getElementById('loadingSection');
+        const errorSection = document.getElementById('errorSection');
+        const emptySection = document.getElementById('emptySection');
+        const errorMessage = document.getElementById('errorMessage');
+        const retryBtn = document.getElementById('retryBtn');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const themeToggle = document.getElementById('themeToggle');
+        const playerFooter = document.getElementById('playerFooter');
+        const playingTitle = document.getElementById('playingTitle');
+        const playingSinger = document.getElementById('playingSinger');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const playPauseIcon = document.getElementById('playPauseIcon');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressBar = document.getElementById('progressBar');
+        const currentTime = document.getElementById('currentTime');
+        const totalTime = document.getElementById('totalTime');
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 加载用户主题偏好
+            loadThemePreference();
+            
+            // 绑定事件
+            searchBtn.addEventListener('click', handleSearch);
+            searchInput.addEventListener('keypress', (e) => e.key === 'Enter' && handleSearch());
+            retryBtn.addEventListener('click', handleSearch);
+            themeToggle.addEventListener('click', toggleTheme);
+            playPauseBtn.addEventListener('click', togglePlayPause);
+            prevBtn.addEventListener('click', playPrevious);
+            nextBtn.addEventListener('click', playNext);
+            audioPlayer.addEventListener('timeupdate', updateProgress);
+            audioPlayer.addEventListener('loadedmetadata', updateTotalTime);
+            audioPlayer.addEventListener('ended', playNext);
+            audioPlayer.addEventListener('error', handleAudioError);
+
+            // 初始化进度条点击事件
+            document.querySelector('.h-1.bg-neutral').addEventListener('click', handleProgressClick);
+
+            // 默认搜索热门关键词
+            search('晚风');
+        });
+
+        // 加载主题偏好
+        function loadThemePreference() {
+            const savedTheme = localStorage.getItem('theme');
+            const isDarkMode = savedTheme === 'dark' || 
+                              (savedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // 切换主题
+        function toggleTheme() {
+            const isDarkMode = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        }
+
+        // 搜索处理
+        function handleSearch() {
+            const keyword = searchInput.value.trim() || '晚风';
+            search(keyword);
+        }
+
+        // 执行搜索
+        function search(keyword) {
+            // 更新搜索框
+            searchInput.value = keyword;
+            
+            // 显示加载状态
+            toggleSections('loading');
+            
+            // 记录搜索历史
+            if (!searchHistory.includes(keyword)) {
+                searchHistory.unshift(keyword);
+                if (searchHistory.length > 10) searchHistory.pop();
+            }
+
+            // 发送请求
+            fetch(`${API_URL}?msg=${encodeURIComponent(keyword)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('网络请求失败');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.code === 200 && data.data.length > 0) {
+                        // 过滤无效URL的铃声
+                        ringList = data.data.filter(ring => 
+                            ring.url && ring.url.trim() && !ring.url.endsWith('/')
+                        );
+                        
+                        if (ringList.length > 0) {
+                            renderResults(ringList);
+                            toggleSections('results');
+                            // 更新上一曲/下一曲按钮状态
+                            updateNavButtons();
+                        } else {
+                            toggleSections('empty');
+                            ringList = [];
+                            currentAudioIndex = -1;
+                            updateNavButtons();
+                            hidePlayer();
+                        }
+                    } else {
+                        errorMessage.textContent = data.msg || '未找到相关铃声';
+                        toggleSections('error');
+                        ringList = [];
+                        currentAudioIndex = -1;
+                        updateNavButtons();
+                        hidePlayer();
+                    }
+                })
+                .catch(error => {
+                    console.error('搜索错误:', error);
+                    errorMessage.textContent = '网络异常，请检查网络连接后重试';
+                    toggleSections('error');
+                    ringList = [];
+                    currentAudioIndex = -1;
+                    updateNavButtons();
+                    hidePlayer();
+                });
+        }
+
+        // 渲染搜索结果
+        function renderResults(rings) {
+            // 更新结果计数
+            resultsCount.textContent = `找到 ${rings.length} 首铃声`;
+            
+            // 清空结果列表
+            resultsList.innerHTML = '';
+            
+            // 生成结果项
+            rings.forEach((ring, index) => {
+                const ringItem = document.createElement('div');
+                ringItem.className = `bg-white dark:bg-gray-800 rounded-lg p-2.5 border border-neutral dark:border-darkNeutral card-shadow hover:border-primary/30 transition-all ${currentAudioIndex === index ? 'border-primary/50 bg-primary/5 dark:bg-primary/10' : ''}`;
+                ringItem.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-medium truncate text-sm" title="${ring.songname || '未知歌曲'}">
+                                ${ring.songname || '未知歌曲'}
+                            </h3>
+                            <p class="text-xs text-textSecondary dark:text-darkTextSecondary mt-0.5 truncate" title="${ring.singer || '未知歌手'}">
+                                ${ring.singer || '未知歌手'}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-1.5 ml-2">
+                            <button class="play-btn circle-btn bg-secondary dark:bg-darkSecondary hover:bg-primary hover:text-white transition-colors ${currentAudioIndex === index && !audioPlayer.paused ? 'btn-active' : ''}" 
+                                    data-index="${index}" 
+                                    data-url="${ring.url}" 
+                                    data-title="${ring.songname || '未知歌曲'}"
+                                    data-singer="${ring.singer || '未知歌手'}"
+                                    title="${currentAudioIndex === index && !audioPlayer.paused ? '暂停' : '播放'}">
+                                <i class="fa ${currentAudioIndex === index && !audioPlayer.paused ? 'fa-pause' : 'fa-play'} text-xs"></i>
+                            </button>
+                            <button class="download-btn circle-btn bg-secondary dark:bg-darkSecondary hover:bg-primary hover:text-white transition-colors"
+                                    data-url="${ring.url}"
+                                    data-title="${ring.songname || '未知歌曲'}"
+                                    data-singer="${ring.singer || '未知歌手'}"
+                                    title="下载">
+                                <i class="fa fa-download text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // 绑定播放按钮事件
+                const playBtn = ringItem.querySelector('.play-btn');
+                playBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const index = parseInt(playBtn.dataset.index);
+                    playAudioByIndex(index);
+                });
+                
+                // 绑定下载按钮事件
+                const downloadBtn = ringItem.querySelector('.download-btn');
+                downloadBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const url = downloadBtn.dataset.url;
+                    const title = downloadBtn.dataset.title;
+                    const singer = downloadBtn.dataset.singer;
+                    downloadRing(url, title, singer, downloadBtn);
+                });
+                
+                resultsList.appendChild(ringItem);
+            });
+        }
+
+        // 按索引播放音频
+        function playAudioByIndex(index) {
+            if (index < 0 || index >= ringList.length) return;
+            
+            const ring = ringList[index];
+            const url = ring.url;
+            const title = ring.songname || '未知歌曲';
+            const singer = ring.singer || '未知歌手';
+            
+            // 更新当前播放索引
+            currentAudioIndex = index;
+            
+            // 更新播放器信息
+            playingTitle.textContent = title;
+            playingSinger.textContent = singer;
+            audioPlayer.src = url;
+            
+            // 播放音频
+            audioPlayer.play().then(() => {
+                showPlayer();
+                updatePlayPauseIcon(true);
+                updatePlayButtonsUI();
+                updateNavButtons();
+            }).catch(error => {
+                console.error('播放失败:', error);
+                alert('播放失败，请尝试下载后收听');
+                updatePlayPauseIcon(false);
+            });
+        }
+
+        // 切换播放/暂停
+        function togglePlayPause() {
+            if (currentAudioIndex === -1 || ringList.length === 0) return;
+            
+            if (audioPlayer.paused) {
+                audioPlayer.play().then(() => {
+                    updatePlayPauseIcon(true);
+                    updatePlayButtonsUI();
+                }).catch(error => {
+                    console.error('播放失败:', error);
+                    alert('播放失败，请尝试下载后收听');
+                });
+            } else {
+                audioPlayer.pause();
+                updatePlayPauseIcon(false);
+                updatePlayButtonsUI();
+            }
+        }
+
+        // 播放上一曲
+        function playPrevious() {
+            if (ringList.length <= 1) return;
+            
+            let newIndex = currentAudioIndex - 1;
+            if (newIndex < 0) newIndex = ringList.length - 1;
+            
+            playAudioByIndex(newIndex);
+        }
+
+        // 播放下一曲
+        function playNext() {
+            if (ringList.length === 0) return;
+            
+            let newIndex = currentAudioIndex + 1;
+            if (newIndex >= ringList.length) newIndex = 0;
+            
+            playAudioByIndex(newIndex);
+        }
+
+        // 更新播放/暂停图标
+        function updatePlayPauseIcon(isPlaying) {
+            if (isPlaying) {
+                playPauseIcon.classList.replace('fa-play', 'fa-pause');
+            } else {
+                playPauseIcon.classList.replace('fa-pause', 'fa-play');
+            }
+        }
+
+        // 更新所有播放按钮UI
+        function updatePlayButtonsUI() {
+            const playButtons = document.querySelectorAll('.play-btn');
+            playButtons.forEach(btn => {
+                const index = parseInt(btn.dataset.index);
+                const icon = btn.querySelector('i');
+                
+                if (index === currentAudioIndex) {
+                    if (!audioPlayer.paused) {
+                        btn.classList.add('btn-active');
+                        icon.classList.replace('fa-play', 'fa-pause');
+                        btn.title = '暂停';
+                    } else {
+                        btn.classList.remove('btn-active');
+                        icon.classList.replace('fa-pause', 'fa-play');
+                        btn.title = '播放';
+                    }
+                } else {
+                    btn.classList.remove('btn-active');
+                    icon.classList.replace('fa-pause', 'fa-play');
+                    btn.title = '播放';
+                }
+            });
+            
+            // 更新列表项边框样式
+            const listItems = document.querySelectorAll('#resultsList > div');
+            listItems.forEach((item, index) => {
+                if (index === currentAudioIndex) {
+                    item.classList.add('border-primary/50', 'bg-primary/5', 'dark:bg-primary/10');
+                } else {
+                    item.classList.remove('border-primary/50', 'bg-primary/5', 'dark:bg-primary/10');
+                }
+            });
+        }
+
+        // 更新导航按钮状态
+        function updateNavButtons() {
+            if (ringList.length <= 1) {
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                prevBtn.disabled = false;
+                nextBtn.disabled = false;
+                prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // 更新进度条
+        function updateProgress() {
+            if (!audioPlayer.duration) return;
+            
+            const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            progressBar.style.width = `${progress}%`;
+            
+            // 更新当前时间
+            currentTime.textContent = formatTime(audioPlayer.currentTime);
+        }
+
+        // 更新总时长
+        function updateTotalTime() {
+            totalTime.textContent = formatTime(audioPlayer.duration);
+        }
+
+        // 处理进度条点击
+        function handleProgressClick(e) {
+            const progressContainer = e.currentTarget;
+            const clickPosition = (e.clientX - progressContainer.getBoundingClientRect().left) / progressContainer.offsetWidth;
+            const newTime = clickPosition * audioPlayer.duration;
+            
+            if (!isNaN(newTime)) {
+                audioPlayer.currentTime = newTime;
+                updateProgress();
+            }
+        }
+
+        // 格式化时间（秒转分:秒）
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // 显示播放器
+        function showPlayer() {
+            playerFooter.classList.remove('hidden');
+            // 给主内容区添加底部内边距，避免被播放器遮挡
+            document.querySelector('main').style.paddingBottom = '60px';
+        }
+
+        // 隐藏播放器
+        function hidePlayer() {
+            playerFooter.classList.add('hidden');
+            document.querySelector('main').style.paddingBottom = '0';
+        }
+
+        // 处理音频错误
+        function handleAudioError() {
+            alert('音频播放失败，请尝试下载后收听');
+            updatePlayPauseIcon(false);
+            updatePlayButtonsUI();
+        }
+
+        // 下载铃声
+        function downloadRing(url, title, singer, btnElement) {
+            // 检查是否正在下载
+            if (downloadTasks.has(url)) {
+                alert('正在下载中，请稍候');
+                return;
+            }
+            
+            const fileName = `${title}-${singer}.mp3`.replace(/[\\/:*?"<>|]/g, '-');
+            const icon = btnElement.querySelector('i');
+            const originalIcon = icon.className;
+            
+            // 更新按钮状态
+            btnElement.disabled = true;
+            btnElement.classList.add('btn-active');
+            icon.className = 'fa fa-spinner fa-spin text-xs';
+            btnElement.title = '下载中...';
+            
+            // 记录下载任务
+            downloadTasks.set(url, true);
+            
+            // 创建下载链接
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('下载失败');
+                    return response.blob();
+                })
+                .then(blob => {
+                    const downloadUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    // 清理
+                    setTimeout(() => {
+                        URL.revokeObjectURL(downloadUrl);
+                        document.body.removeChild(a);
+                    }, 100);
+                    
+                    // 更新按钮状态
+                    icon.className = 'fa fa-check text-xs';
+                    btnElement.title = '下载完成';
+                    
+                    // 3秒后恢复原始状态
+                    setTimeout(() => {
+                        btnElement.classList.remove('btn-active');
+                        icon.className = originalIcon;
+                        btnElement.title = '下载';
+                        btnElement.disabled = false;
+                    }, 3000);
+                })
+                .catch(error => {
+                    console.error('下载错误:', error);
+                    icon.className = 'fa fa-exclamation-circle text-xs';
+                    btnElement.title = '下载失败';
+                    
+                    // 3秒后恢复原始状态
+                    setTimeout(() => {
+                        btnElement.classList.remove('btn-active');
+                        icon.className = originalIcon;
+                        btnElement.title = '下载';
+                        btnElement.disabled = false;
+                    }, 3000);
+                    
+                    alert('下载失败，请稍后重试');
+                })
+                .finally(() => {
+                    downloadTasks.delete(url);
+                });
+        }
+
+        // 切换显示区域
+        function toggleSections(showSection) {
+            const sections = ['results', 'loading', 'error', 'empty'];
+            sections.forEach(section => {
+                const element = document.getElementById(`${section}Section`);
+                element.classList.add('hidden');
+            });
+            document.getElementById(`${showSection}Section`).classList.remove('hidden');
+        }
+
+        // 暴露搜索函数到全局，供热门搜索使用
+        window.search = search;
+    </script>
+</body>
+</html>
