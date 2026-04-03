@@ -1,4 +1,4 @@
-/* 公告模态框 - 全屏透明遮罩 + 中心缩放弹性动画 */
+/* 公告模态框 - 全屏透明遮罩 + 中心缩放弹性动画（向上移动版） */
 .announcement-modal-simple {
     position: fixed;
     top: 0;
@@ -7,7 +7,7 @@
     height: 100vh;          /* 覆盖整个视口 */
     background: transparent; /* 完全透明 */
     display: flex;
-    align-items: center;
+    align-items: flex-start; /* 从顶部开始排列，让模态框上移 */
     justify-content: center;
     z-index: 10000;
     opacity: 0;
@@ -30,6 +30,7 @@
     transform: scale(0.85);
     opacity: 0;
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    margin-top: 80px;      /* 桌面端默认上边距 */
 }
 
 .announcement-modal-simple.active .announcement-modal-container {
@@ -191,8 +192,11 @@
     box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
 }
 
-/* 移动端适配（保持不变） */
+/* 响应式适配：移动端减小上边距 */
 @media (max-width: 600px) {
+    .announcement-modal-container {
+        margin-top: 60px;
+    }
     .announcement-header {
         padding: 16px 20px 8px;
     }
@@ -225,8 +229,10 @@
     }
 }
 
+/* 超小屏幕（手机窄屏）进一步减小上边距 */
 @media (max-width: 400px) {
     .announcement-modal-container {
+        margin-top: 50px;
         border-radius: 6px;
     }
     .announcement-header {
