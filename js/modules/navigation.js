@@ -40,18 +40,25 @@ class OptimizedNavigation {
         }
     }
 
-    async loadNavigationData() {
+    async loadNavigationData(retryCount = 0) {
         const apiUrl = 'https://api.xldh688.eu.cc/navigation';
-        
         try {
-            const response = await fetch(apiUrl);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
+            const response = await fetch(apiUrl, { signal: controller.signal });
+            clearTimeout(timeoutId);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             this.navigationData = await response.json();
             console.log('✅ 导航数据从 Cloudflare Worker 加载成功');
         } catch (error) {
-            console.error('❌ 从 Worker 加载导航数据失败:', error);
+            console.error('❌ 加载失败，重试次数:', retryCount);
+            if (retryCount < 3) {
+                const delay = Math.pow(2, retryCount) * 1000;
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return this.loadNavigationData(retryCount + 1);
+            }
             throw new Error('无法加载导航数据，请检查网络或稍后重试');
         }
     }
