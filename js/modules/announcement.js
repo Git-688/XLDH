@@ -1,6 +1,5 @@
 /**
- * 简约公告模块 - 清爽现代版（遮罩透明，动画由CSS控制）
- * 遮罩从导航栏下方开始，导航栏始终可见且可点击
+ * 简约公告模块 - 清爽现代版（独立 escapeHtml）
  * @class AnnouncementModule
  */
 class AnnouncementModule {
@@ -15,6 +14,14 @@ class AnnouncementModule {
         this.init();
     }
 
+    // 内嵌 escapeHtml 方法
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     init() {
         if (this.isInitialized) return;
         this.loadAnnouncements();
@@ -24,9 +31,6 @@ class AnnouncementModule {
         window.announcementModule = this;
     }
 
-    /**
-     * 加载公告：如果存储中的公告与当前默认公告内容不同，则自动更新存储
-     */
     loadAnnouncements() {
         const stored = Storage.get('announcements');
         const defaultAnn = this.getDefaultAnnouncements()[0];
@@ -37,7 +41,6 @@ class AnnouncementModule {
         } else {
             const storedFirst = stored[0];
             const needUpdate = this.isAnnouncementDifferent(storedFirst, defaultAnn);
-
             if (needUpdate) {
                 const newAnnouncements = this.getDefaultAnnouncements();
                 Storage.set('announcements', newAnnouncements);
@@ -49,9 +52,6 @@ class AnnouncementModule {
         this.currentAnnouncement = this.announcements[0] || {};
     }
 
-    /**
-     * 判断存储的公告与默认公告是否不同（只比较核心内容）
-     */
     isAnnouncementDifferent(stored, defaultAnn) {
         if (stored.id !== defaultAnn.id) return true;
         if (stored.title !== defaultAnn.title) return true;
@@ -61,26 +61,20 @@ class AnnouncementModule {
     }
 
     getDefaultAnnouncements() {
-        return [
-            {
-                id: 'static_announcement',
-                title: '系统公告',
-                focus: '欢迎使用星链导航！本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台。',
-                updates: [
-                    '全新界面设计-更加现代化和美观的视觉体验',
-                    '音乐播放器-支持多平台音乐搜索和播放',
-                    '个性化设置-可自定义书签',
-                    '更多实用工具-新增多个日常使用的小工具',
-                    '性能优化-更快的加载速度和响应时间',
-                ],
-                time: new Date().toLocaleDateString('zh-CN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                }),
-                read: false
-            }
-        ];
+        return [{
+            id: 'static_announcement',
+            title: '系统公告',
+            focus: '欢迎使用星链导航！本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台。',
+            updates: [
+                '全新界面设计-更加现代化和美观的视觉体验',
+                '音乐播放器-支持多平台音乐搜索和播放',
+                '个性化设置-可自定义书签',
+                '更多实用工具-新增多个日常使用的小工具',
+                '性能优化-更快的加载速度和响应时间',
+            ],
+            time: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }),
+            read: false
+        }];
     }
 
     createModal() {
@@ -94,10 +88,10 @@ class AnnouncementModule {
         this.modalElement.id = 'announcementModal';
 
         const ann = this.currentAnnouncement || {};
-        const title = Utils.escapeHtml(ann.title || '公告');
-        const focus = Utils.escapeHtml(ann.focus || '暂无重要提醒');
+        const title = this.escapeHtml(ann.title || '公告');
+        const focus = this.escapeHtml(ann.focus || '暂无重要提醒');
         const updates = ann.updates && Array.isArray(ann.updates) ? ann.updates : [];
-        const time = Utils.escapeHtml(ann.time || new Date().toLocaleDateString());
+        const time = this.escapeHtml(ann.time || new Date().toLocaleDateString());
 
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
@@ -124,7 +118,7 @@ class AnnouncementModule {
                             <span>更新内容</span>
                         </div>
                         <ul class="updates-list">
-                            ${updates.map(item => `<li>${Utils.escapeHtml(item)}</li>`).join('')}
+                            ${updates.map(item => `<li>${this.escapeHtml(item)}</li>`).join('')}
                         </ul>
                     </div>
                 </div>
@@ -281,18 +275,12 @@ class AnnouncementModule {
         return this.announcements;
     }
 
-    /**
-     * 手动更新公告内容（外部调用）
-     * @param {Array} newAnnouncements - 新的公告数组
-     */
     updateAnnouncements(newAnnouncements) {
         if (!Array.isArray(newAnnouncements) || newAnnouncements.length === 0) return;
         Storage.set('announcements', newAnnouncements);
         this.loadAnnouncements();
         this.createModal();
-        if (this.isVisible) {
-            this.showModal();
-        }
+        if (this.isVisible) this.showModal();
         if (window.navbar) window.navbar.updateNotificationBadge();
     }
 
