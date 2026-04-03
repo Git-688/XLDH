@@ -1,5 +1,5 @@
 /**
- * 关于网站模块 - 包含收款模态框（独立 escapeHtml）
+ * 关于网站模块 - 包含收款模态框（模态框尺寸已调大）
  * @class AboutModule
  */
 class AboutModule {
@@ -187,7 +187,7 @@ class AboutModule {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -196,33 +196,96 @@ class AboutModule {
             transition: opacity 0.3s ease;
             padding: 20px;
         `;
+
         donateModal.innerHTML = `
-            <div class="donate-modal-content">
-                <div class="donate-header">
-                    <div class="donate-title-group"><h3 class="donate-title">感谢支持</h3><div class="donate-heart"><i class="fas fa-heart"></i></div></div>
-                    <p class="donate-subtitle">您的支持是我持续更新的动力</p>
-                    <button class="donate-close-btn-top" id="donateCloseBtnTop"><i class="fas fa-times"></i></button>
-                </div>
-                <div class="donate-main">
-                    <div class="donate-methods">
-                        <button class="donate-method-btn active" data-type="qq" title="QQ支付"><i class="fab fa-qq"></i></button>
-                        <button class="donate-method-btn" data-type="wechat" title="微信支付"><i class="fab fa-weixin"></i></button>
-                        <button class="donate-method-btn" data-type="alipay" title="支付宝"><i class="fab fa-alipay"></i></button>
-                        <button class="donate-method-btn help-btn" data-type="help" title="使用帮助"><i class="fas fa-question"></i></button>
+            <div class="donate-modal-content" style="
+                max-width: 540px;
+                width: 100%;
+                background: var(--bg-primary);
+                border-radius: 20px;
+                padding: 28px 24px;
+                box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25);
+                transform: scale(0.96);
+                transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            ">
+                <div class="donate-header" style="text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); position: relative;">
+                    <div class="donate-title-group" style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
+                        <h3 class="donate-title" style="font-size: 1.6rem; font-weight: 700; margin: 0;">感谢支持</h3>
+                        <div class="donate-heart" style="color: #FF7B7B; font-size: 1.6rem; animation: pulse 2s infinite;"><i class="fas fa-heart"></i></div>
                     </div>
-                    <div class="donate-qrcode-container">
-                        <div class="donate-qrcode active" data-type="qq"><div class="qrcode-image-container"><img src="${this.escapeHtml(this.qrCodes.qq)}" alt="QQ收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';"><div class="qrcode-placeholder"><i class="fab fa-qq"></i><span>QQ收款码</span><small>请使用QQ扫描二维码</small></div></div></div>
-                        <div class="donate-qrcode" data-type="wechat"><div class="qrcode-image-container"><img src="${this.escapeHtml(this.qrCodes.wechat)}" alt="微信收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';"><div class="qrcode-placeholder"><i class="fab fa-weixin"></i><span>微信收款码</span><small>请使用微信扫描二维码</small></div></div></div>
-                        <div class="donate-qrcode" data-type="alipay"><div class="qrcode-image-container"><img src="${this.escapeHtml(this.qrCodes.alipay)}" alt="支付宝收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';"><div class="qrcode-placeholder"><i class="fab fa-alipay"></i><span>支付宝收款码</span><small>请使用支付宝扫描二维码</small></div></div></div>
-                        <div class="donate-qrcode" data-type="help"><div class="help-content"><h4>使用说明</h4><ul><li>选择您要使用的支付方式</li><li>使用对应App扫描二维码</li><li>输入您想支持的金额</li><li>在备注中留下您的名字</li></ul><p>感谢您的支持！</p></div></div>
+                    <p class="donate-subtitle" style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">您的支持是我持续更新的动力</p>
+                    <button class="donate-close-btn-top" id="donateCloseBtnTop" style="
+                        position: absolute;
+                        top: 0;
+                        right: 0;
+                        width: 32px;
+                        height: 32px;
+                        border: none;
+                        background: var(--bg-secondary);
+                        color: var(--text-secondary);
+                        border-radius: 50%;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 16px;
+                    "><i class="fas fa-times"></i></button>
+                </div>
+                <div class="donate-main" style="display: flex; gap: 28px; margin-bottom: 28px; min-height: 260px; flex-wrap: wrap; justify-content: center;">
+                    <div class="donate-methods" style="display: flex; flex-direction: column; gap: 12px; min-width: 70px;">
+                        <button class="donate-method-btn active" data-type="qq" title="QQ支付" style="width: 56px; height: 56px; border-radius: 14px; font-size: 24px; background: var(--bg-secondary); border: 2px solid var(--border-color); cursor: pointer; transition: all 0.2s;"><i class="fab fa-qq"></i></button>
+                        <button class="donate-method-btn" data-type="wechat" title="微信支付" style="width: 56px; height: 56px; border-radius: 14px; font-size: 24px; background: var(--bg-secondary); border: 2px solid var(--border-color); cursor: pointer;"><i class="fab fa-weixin"></i></button>
+                        <button class="donate-method-btn" data-type="alipay" title="支付宝" style="width: 56px; height: 56px; border-radius: 14px; font-size: 24px; background: var(--bg-secondary); border: 2px solid var(--border-color); cursor: pointer;"><i class="fab fa-alipay"></i></button>
+                        <button class="donate-method-btn help-btn" data-type="help" title="使用帮助" style="width: 56px; height: 56px; border-radius: 14px; font-size: 24px; background: var(--bg-secondary); border: 2px solid var(--border-color); cursor: pointer;"><i class="fas fa-question"></i></button>
+                    </div>
+                    <div class="donate-qrcode-container" style="flex: 1; min-width: 220px; position: relative;">
+                        <div class="donate-qrcode active" data-type="qq" style="display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border-radius: 16px; border: 1px solid var(--border-color); padding: 16px;">
+                            <div class="qrcode-image-container" style="text-align: center;">
+                                <img src="${this.escapeHtml(this.qrCodes.qq)}" alt="QQ收款码" class="qrcode-image" style="max-width: 100%; max-height: 240px; object-fit: contain;" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
+                                <div class="qrcode-placeholder" style="display: none; flex-direction: column; align-items: center; gap: 12px;">
+                                    <i class="fab fa-qq" style="font-size: 48px;"></i>
+                                    <span>QQ收款码</span>
+                                    <small>请使用QQ扫描二维码</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="donate-qrcode" data-type="wechat" style="display: none; align-items: center; justify-content: center; background: var(--bg-secondary); border-radius: 16px; border: 1px solid var(--border-color); padding: 16px;">
+                            <div class="qrcode-image-container">
+                                <img src="${this.escapeHtml(this.qrCodes.wechat)}" alt="微信收款码" class="qrcode-image" style="max-width: 100%; max-height: 240px; object-fit: contain;" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
+                                <div class="qrcode-placeholder" style="display: none; flex-direction: column; align-items: center; gap: 12px;"><i class="fab fa-weixin" style="font-size: 48px;"></i><span>微信收款码</span><small>请使用微信扫描二维码</small></div>
+                            </div>
+                        </div>
+                        <div class="donate-qrcode" data-type="alipay" style="display: none; align-items: center; justify-content: center; background: var(--bg-secondary); border-radius: 16px; border: 1px solid var(--border-color); padding: 16px;">
+                            <div class="qrcode-image-container">
+                                <img src="${this.escapeHtml(this.qrCodes.alipay)}" alt="支付宝收款码" class="qrcode-image" style="max-width: 100%; max-height: 240px; object-fit: contain;" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
+                                <div class="qrcode-placeholder" style="display: none; flex-direction: column; align-items: center; gap: 12px;"><i class="fab fa-alipay" style="font-size: 48px;"></i><span>支付宝收款码</span><small>请使用支付宝扫描二维码</small></div>
+                            </div>
+                        </div>
+                        <div class="donate-qrcode" data-type="help" style="display: none; align-items: center; justify-content: center; background: var(--bg-secondary); border-radius: 16px; padding: 20px;">
+                            <div class="help-content" style="max-width: 280px;">
+                                <h4 style="margin-bottom: 12px;">使用说明</h4>
+                                <ul style="margin-bottom: 16px; padding-left: 20px;">
+                                    <li>选择您要使用的支付方式</li>
+                                    <li>使用对应App扫描二维码</li>
+                                    <li>输入您想支持的金额</li>
+                                    <li>在备注中留下您的名字</li>
+                                </ul>
+                                <p>感谢您的支持！</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="supporters-section">
-                    <h4 class="supporters-title">支持者名单</h4>
-                    <div class="supporters-card"><div class="supporters-list">${this.supporters.map(name => `<span class="supporter-name">${this.escapeHtml(name)}</span>`).join('')}</div></div>
+                <div class="supporters-section" style="position: relative; margin-top: 20px;">
+                    <h4 class="supporters-title" style="position: absolute; top: -12px; left: 16px; background: var(--bg-primary); padding: 0 8px; font-size: 14px; font-weight: 600;">支持者名单</h4>
+                    <div class="supporters-card" style="border: 1px solid var(--border-color); border-radius: 16px; padding: 20px 16px; max-height: 140px; overflow-y: auto;">
+                        <div class="supporters-list" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            ${this.supporters.map(name => `<span class="supporter-name" style="background: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">${this.escapeHtml(name)}</span>`).join('')}
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
+
         document.body.appendChild(donateModal);
         setTimeout(() => donateModal.style.opacity = '1', 10);
         this.bindDonateModalEvents(donateModal);
