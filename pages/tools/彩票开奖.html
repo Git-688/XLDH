@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全国彩票开奖查询</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ssq: '#E74C3C',
+                        dlt: '#2E86AB',
+                        ball: '#3498DB',
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .ball-red { @apply bg-ssq text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow; }
+            .ball-blue{ @apply bg-ball text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow; }
+            .ball-gray{ @apply bg-gray-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow; }
+            .card-box { @apply shadow-md rounded-lg bg-white p-3; }
+            .tab-item { @apply px-2 py-1.5 text-xs whitespace-nowrap rounded transition-colors; }
+            .tab-on { @apply bg-blue-600 text-white; }
+            .tab-off { @apply bg-white text-gray-600 hover:bg-gray-100; }
+        }
+        body { font-size: 12px; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen pb-6 text-xs">
+    <div class="max-w-3xl mx-auto px-3 pt-4">
+        <div class="text-center mb-3">
+            <h1 class="text-base font-bold text-gray-800 flex items-center justify-center gap-1">
+                <i class="fa-solid fa-ticket text-blue-600"></i> 全国彩票开奖查询
+            </h1>
+            <p class="text-[10px] text-gray-500">数据仅供参考，请以官方发布为准</p>
+        </div>
+
+        <!-- 8彩种切换栏 -->
+        <div class="flex gap-1 overflow-x-auto pb-2 mb-3 scrollbar-hide">
+            <button data-type="ssq" class="tab-item tab-on">双色球</button>
+            <button data-type="dlt" class="tab-item tab-off">大乐透</button>
+            <button data-type="3d" class="tab-item tab-off">福彩3D</button>
+            <button data-type="kl8" class="tab-item tab-off">快乐8</button>
+            <button data-type="pl5" class="tab-item tab-off">排列5</button>
+            <button data-type="pl3" class="tab-item tab-off">排列3</button>
+            <button data-type="qxc" class="tab-item tab-off">七星彩</button>
+            <button data-type="qlc" class="tab-item tab-off">七乐彩</button>
+        </div>
+
+        <!-- 查询区 -->
+        <div class="card-box mb-3">
+            <div class="flex gap-2">
+                <input type="text" id="qh" placeholder="期号留空查最新" 
+                       class="flex-1 px-2 py-1.5 border rounded text-xs outline-none focus:border-blue-500">
+                <button id="search" class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs">
+                    <i class="fa-solid fa-search mr-1"></i>查询
+                </button>
+            </div>
+        </div>
+
+        <!-- 加载/提示 -->
+        <div id="loading" class="hidden text-center py-4 text-gray-500 text-xs">
+            <i class="fa-solid fa-spinner fa-spin mr-1"></i>加载中...
+        </div>
+        <div id="msg" class="hidden text-center py-3 text-red-500 text-xs"></div>
+
+        <!-- 结果区 -->
+        <div id="result" class="hidden space-y-3">
+            <!-- 基础信息 -->
+            <div class="card-box text-center">
+                <p class="text-[11px]">
+                    期号：<span id="qihao" class="font-semibold text-blue-600"></span>
+                    <span class="mx-1">|</span>
+                    开奖：<span id="time"></span>
+                </p>
+                <p id="endtime" class="text-[10px] text-gray-500 mt-1 hidden"></p>
+            </div>
+
+            <!-- 开奖号码 -->
+            <div class="card-box">
+                <h3 class="text-[11px] font-semibold text-center mb-2">开奖号码</h3>
+                <div id="numBox" class="flex flex-wrap justify-center gap-1.5"></div>
+            </div>
+
+            <!-- 销售/奖池 -->
+            <div class="grid grid-cols-2 gap-2">
+                <div class="card-box text-center">
+                    <p class="text-[10px] text-gray-500">销售额</p>
+                    <p id="sale" class="text-[11px] font-semibold"></p>
+                </div>
+                <div class="card-box text-center">
+                    <p class="text-[10px] text-gray-500">奖池金额</p>
+                    <p id="pool" class="text-[11px] font-semibold"></p>
+                </div>
+            </div>
+
+            <!-- 中奖详情 -->
+            <div class="card-box">
+                <h3 class="text-[11px] font-semibold mb-2">中奖详情</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-[10px]">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="py-1.5 text-left font-medium">奖项</th>
+                                <th class="py-1.5 text-center">注数</th>
+                                <th class="py-1.5 text-right">奖金</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prizeTable"></tbody>
+                    </table>
+                </div>
+                <div id="extra" class="mt-2 p-1.5 bg-gray-50 rounded text-[10px] hidden"></div>
+            </div>
+        </div>
+
+        <div class="text-center text-[10px] text-gray-400 mt-4">
+            © 彩票开奖查询 仅作展示使用
+        </div>
+    </div>
+
+    <script>
+        // 配置
+        const USER = {
+            id: '10014221',
+            key: '4a7768de1cf2e0f41fc0a4005240c837',
+            current: 'ssq'
+        };
+
+        // 彩种配置
+        const LOTTERY = {
+            ssq:  {name:'双色球',  api:'shuangseqiu.php'},
+            dlt:  {name:'大乐透',  api:'daletou.php'},
+            '3d': {name:'福彩3D',  api:'fucai3d.php'},
+            kl8:  {name:'快乐8',   api:'kuaile8.php'},
+            pl5:  {name:'排列5',   api:'pailie5.php'},
+            pl3:  {name:'排列3',   api:'pailie3.php'},
+            qxc:  {name:'七星彩',  api:'qixingcai.php'},
+            qlc:  {name:'七乐彩',  api:'qilecai.php'}
+        };
+
+        const $ = id => document.getElementById(id);
+        const tabs = document.querySelectorAll('[data-type]');
+        const numBox = $('numBox');
+        const prizeTable = $('prizeTable');
+        const extra = $('extra');
+
+        // 金额格式化
+        function money(v) {
+            if(!v || isNaN(v)) return '0元';
+            return Number(v).toLocaleString() + '元';
+        }
+
+        // 切换彩种
+        tabs.forEach(t => {
+            t.onclick = () => {
+                tabs.forEach(i => i.className = 'tab-item tab-off');
+                t.className = 'tab-item tab-on';
+                USER.current = t.dataset.type;
+                load();
+            }
+        });
+
+        // 渲染号码球
+        function drawNumber(data) {
+            numBox.innerHTML = '';
+            let arr = data.number.split('|');
+            let t = USER.current;
+
+            arr.forEach((n, i) => {
+                let b = document.createElement('div');
+                b.textContent = n.padStart(2, '0');
+                if(t === 'ssq') b.className = i < 6 ? 'ball-red' : 'ball-blue';
+                else if(t === 'dlt') b.className = i < 5 ? 'ball-red' : 'ball-blue';
+                else if(t === 'qxc' || t === 'qlc') b.className = i < 7 ? 'ball-red' : 'ball-blue';
+                else b.className = 'ball-gray';
+                numBox.appendChild(b);
+            });
+        }
+
+        // 渲染奖项
+        function drawPrize(d) {
+            prizeTable.innerHTML = '';
+            extra.classList.add('hidden');
+            extra.innerHTML = '';
+            $('endtime').classList.add('hidden');
+
+            let t = USER.current;
+            let rows = [];
+            let ext = '';
+
+            if(t === 'ssq') {
+                rows = [
+                    {n:'一等奖', num:d.no1num, m:d.no1money},
+                    {n:'二等奖', num:d.no2num, m:d.no2money},
+                    {n:'三等奖', num:d.no3num, m:d.no3money},
+                    {n:'四等奖', num:d.no4num, m:d.no4money},
+                    {n:'五等奖', num:d.no5num, m:d.no5money},
+                    {n:'六等奖', num:d.no6num, m:d.no6money}
+                ];
+                ext = `一等奖地区：${d.no1msg||'暂无'}`;
+            }
+
+            else if(t === 'dlt') {
+                rows = [
+                    {n:'一等奖', num:d.no1num, m:d.no1money},
+                    {n:'二等奖', num:d.no2num, m:d.no2money},
+                    {n:'三等奖', num:d.no3num, m:d.no3money},
+                    {n:'四等奖', num:d.no4num, m:d.no4money},
+                    {n:'五等奖', num:d.no5num, m:d.no5money},
+                    {n:'六等奖', num:d.no6num, m:d.no6money},
+                    {n:'七等奖', num:d.no7num, m:d.no7money},
+                    {n:'八等奖', num:d.no8num, m:d.no8money},
+                    {n:'九等奖', num:d.no9num, m:d.no9money}
+                ];
+                ext = `一等奖追加：${d.no1numjia||0}注，奖金${money(d.no1moneyjia)}`;
+                $('endtime').classList.remove('hidden');
+                $('endtime').textContent = '兑奖截止：'+d.endtime;
+            }
+
+            else if(t === 'pl5') {
+                rows = [{n:'直选', num:d.zhixuannum, m:d.zhixuanmoney}];
+                $('endtime').classList.remove('hidden');
+                $('endtime').textContent = '兑奖截止：'+d.endtime;
+            }
+
+            else if(t === 'pl3') {
+                rows = [
+                    {n:'直选', num:d.zhixuannum, m:d.zhixuanmoney},
+                    {n:'组选3', num:d.zuxuan3num, m:d.zuxuan3money},
+                    {n:'组选6', num:d.zuxuan6num, m:d.zuxuan6money}
+                ];
+                $('endtime').classList.remove('hidden');
+                $('endtime').textContent = '兑奖截止：'+d.endtime;
+            }
+
+            else if(t === 'qxc') {
+                rows = [
+                    {n:'一等奖', num:d.no1num, m:d.no1money},
+                    {n:'二等奖', num:d.no2num, m:d.no2money},
+                    {n:'三等奖', num:d.no3num, m:d.no3money},
+                    {n:'四等奖', num:d.no4num, m:d.no4money},
+                    {n:'五等奖', num:d.no5num, m:d.no5money},
+                    {n:'六等奖', num:d.no6num, m:d.no6money}
+                ];
+                $('endtime').classList.remove('hidden');
+                $('endtime').textContent = '兑奖截止：'+d.endtime;
+            }
+
+            else if(t === 'qlc') {
+                rows = [
+                    {n:'一等奖', num:d.no1num, m:d.no1money},
+                    {n:'二等奖', num:d.no2num, m:d.no2money},
+                    {n:'三等奖', num:d.no3num, m:d.no3money},
+                    {n:'四等奖', num:d.no4num, m:d.no4money},
+                    {n:'五等奖', num:d.no5num, m:d.no5money},
+                    {n:'六等奖', num:d.no6num, m:d.no6money}
+                ];
+                ext = `一等奖地区：${d.no1msg||'暂无'}`;
+            }
+
+            // 生成表格行
+            rows.forEach(item => {
+                let tr = document.createElement('tr');
+                tr.className = 'border-b border-gray-100 last:border-0';
+                tr.innerHTML = `
+                    <td class="py-1">${item.n}</td>
+                    <td class="py-1 text-center">${item.num||0}注</td>
+                    <td class="py-1 text-right">${money(item.m)}</td>
+                `;
+                prizeTable.appendChild(tr);
+            });
+
+            if(ext) {
+                extra.classList.remove('hidden');
+                extra.textContent = ext;
+            }
+        }
+
+        // 请求数据
+        async function load() {
+            let qh = $('qh').value.trim();
+            $('search').disabled = true;
+            $('loading').classList.remove('hidden');
+            $('msg').classList.add('hidden');
+            $('result').classList.add('hidden');
+
+            try {
+                let api = `https://cn.apihz.cn/api/caipiao/${LOTTERY[USER.current].api}`;
+                let p = new URLSearchParams();
+                p.append('id', USER.id);
+                p.append('key', USER.key);
+                if(qh) p.append('qh', qh);
+
+                let res = await fetch(`${api}?${p}`);
+                let data = await res.json();
+
+                if(data.code !== 200) {
+                    $('msg').textContent = data.msg;
+                    $('msg').classList.remove('hidden');
+                    return;
+                }
+
+                // 基础信息
+                $('qihao').textContent = data.qihao;
+                $('time').textContent = data.time;
+                $('sale').textContent = money(data.xiaoshou);
+                $('pool').textContent = money(data.jiangchi);
+
+                drawNumber(data);
+                drawPrize(data);
+                $('result').classList.remove('hidden');
+
+            } catch(e) {
+                $('msg').textContent = '网络请求失败';
+                $('msg').classList.remove('hidden');
+            } finally {
+                $('loading').classList.add('hidden');
+                $('search').disabled = false;
+            }
+        }
+
+        // 事件
+        $('search').onclick = load;
+        $('qh').onkeydown = e => e.key === 'Enter' && load();
+        window.onload = load;
+    </script>
+</body>
+</html>
