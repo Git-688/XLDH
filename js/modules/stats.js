@@ -23,7 +23,7 @@ function formatUptime(ms) {
 // 更新运行时间显示
 function updateUptimeDisplay(startTimeMs) {
     if (!startTimeMs) return;
-    const nowMs = Date.now() + 8 * 3600 * 1000; // UTC+8
+    const nowMs = Date.now() + 8 * 3600 * 1000;
     const uptimeMs = nowMs - startTimeMs;
     const formatted = formatUptime(uptimeMs);
     $('#uptime').text(formatted);
@@ -70,19 +70,17 @@ async function refreshStats() {
     }
 }
 
-// 页面可见性变化时控制心跳（优化版）
+// 页面可见性变化时控制心跳
 function handleVisibilityChange() {
     if (document.hidden) {
-        // 页面隐藏，停止心跳
         if (heartbeatInterval) {
             clearInterval(heartbeatInterval);
             heartbeatInterval = null;
         }
     } else {
-        // 页面重新可见，立即发送一次心跳，并启动定时器（5分钟间隔）
         if (!heartbeatInterval) {
             postToWorker('/heartbeat');
-            heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 300000); // 5分钟
+            heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 900000); // 15分钟
         }
     }
 }
@@ -93,8 +91,8 @@ $(document).ready(function() {
     postToWorker('/visit');
     // 发送首次心跳
     postToWorker('/heartbeat');
-    // 启动心跳定时器（5分钟间隔）
-    heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 300000);
+    // 启动心跳定时器（15分钟间隔）
+    heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 900000);
     // 监听页面可见性变化
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
