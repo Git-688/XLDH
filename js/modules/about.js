@@ -1,5 +1,5 @@
 /**
- * 关于网站模块 - 包含收款模态框（模态框尺寸已调大）
+ * 关于网站模块 - 包含收款模态框（完全自适应移动端/桌面端）
  * @class AboutModule
  */
 class AboutModule {
@@ -179,6 +179,65 @@ class AboutModule {
     }
 
     showDonateModal() {
+        // 创建自适应样式（桌面/移动端）
+        const style = document.createElement('style');
+        style.textContent = `
+            .donate-modal-content {
+                max-width: 540px;
+                width: 90%;
+                background: var(--bg-primary);
+                border-radius: 20px;
+                padding: 28px 24px;
+                box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25);
+                transform: scale(0.96);
+                transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            }
+            @media (max-width: 640px) {
+                .donate-modal-content {
+                    width: 92%;
+                    padding: 20px 16px;
+                }
+                .donate-main {
+                    flex-direction: column !important;
+                    align-items: center !important;
+                    gap: 20px !important;
+                }
+                .donate-methods {
+                    flex-direction: row !important;
+                    justify-content: center;
+                    gap: 16px !important;
+                    min-width: auto !important;
+                }
+                .donate-method-btn {
+                    width: 48px !important;
+                    height: 48px !important;
+                    font-size: 20px !important;
+                }
+                .donate-qrcode-container {
+                    min-width: auto !important;
+                    width: 100%;
+                }
+                .qrcode-image {
+                    max-height: 200px !important;
+                }
+                .supporters-card {
+                    max-height: 120px !important;
+                    padding: 16px 12px !important;
+                }
+                .supporter-name {
+                    font-size: 10px !important;
+                    padding: 2px 8px !important;
+                }
+                .donate-title {
+                    font-size: 1.4rem !important;
+                }
+                .donate-heart {
+                    font-size: 1.4rem !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
         donateModal.style.cssText = `
@@ -198,16 +257,7 @@ class AboutModule {
         `;
 
         donateModal.innerHTML = `
-            <div class="donate-modal-content" style="
-                max-width: 540px;
-                width: 100%;
-                background: var(--bg-primary);
-                border-radius: 20px;
-                padding: 28px 24px;
-                box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25);
-                transform: scale(0.96);
-                transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-            ">
+            <div class="donate-modal-content">
                 <div class="donate-header" style="text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); position: relative;">
                     <div class="donate-title-group" style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
                         <h3 class="donate-title" style="font-size: 1.6rem; font-weight: 700; margin: 0;">感谢支持</h3>
