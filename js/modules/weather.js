@@ -501,7 +501,7 @@ class WeatherModule {
                 ">
                     <div class="weather-title-container">
                         <div class="weather-title" style="display: flex; align-items: center; gap: 6px;">
-                            <span style="font-size:14px; font-weight:600;">天气预报</span>
+                            <span style="font-size:14px; font-weight:600;">天气小贴士</span>
                             ${this.useAutoLocation ? 
                                 '<span style="font-size:10px; padding:2px 6px; background:#e6f7ff; color:#1890ff; border-radius:10px;">定位</span>' : 
                                 ''
