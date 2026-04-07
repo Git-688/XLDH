@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聚合热搜榜单</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.5;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .platforms-container {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        
+        .platforms-scroll {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 8px 0;
+            margin: 0 -20px;
+            padding-left: 20px;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .platforms-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .platform-btn {
+            padding: 10px 18px;
+            background: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+            margin-right: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            color: #64748b;
+            flex-shrink: 0;
+        }
+        
+        .platform-btn:hover {
+            background: #f1f5f9;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+        
+        .platform-btn.active {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+        
+        .hot-list {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .list-header {
+            padding: 18px 24px;
+            background: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .list-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .update-time {
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+        
+        .list-content {
+            padding: 0;
+        }
+        
+        .hot-item {
+            display: flex;
+            padding: 16px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.2s;
+            align-items: flex-start;
+        }
+        
+        .hot-item:last-child {
+            border-bottom: none;
+        }
+        
+        .hot-item:hover {
+            background: #f8fafc;
+        }
+        
+        .rank {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #64748b;
+            background: #f1f5f9;
+            border-radius: 6px;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+        
+        .rank.top {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .rank.top-3 {
+            background: #ffedd5;
+            color: #ea580c;
+        }
+        
+        .content {
+            flex: 1;
+        }
+        
+        .title {
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        
+        .title a {
+            color: #1e293b;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .title a:hover {
+            color: #3b82f6;
+        }
+        
+        .metrics {
+            display: flex;
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+        
+        .hot-value {
+            margin-right: 15px;
+        }
+        
+        .description {
+            color: #64748b;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin-top: 4px;
+        }
+        
+        .news-image {
+            width: 80px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-left: 16px;
+            flex-shrink: 0;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #dc2626;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+        
+        .scroll-indicator {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            background: linear-gradient(90deg, transparent, #f8fafc);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .scroll-indicator.visible {
+            opacity: 1;
+        }
+        
+        .scroll-indicator i {
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .platform-btn {
+                padding: 8px 14px;
+                font-size: 0.8rem;
+            }
+            
+            .hot-item {
+                padding: 14px 16px;
+            }
+            
+            .title {
+                font-size: 0.9rem;
+            }
+            
+            .list-header {
+                padding: 14px 16px;
+            }
+            
+            .list-title {
+                font-size: 1rem;
+            }
+            
+            .update-time {
+                font-size: 0.75rem;
+            }
+            
+            .rank {
+                width: 24px;
+                height: 24px;
+                font-size: 0.8rem;
+                margin-right: 12px;
+            }
+            
+            .news-image {
+                width: 60px;
+                height: 45px;
+                margin-left: 12px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .platforms-scroll {
+                margin: 0 -16px;
+                padding-left: 16px;
+            }
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .hot-item {
+            animation: fadeIn 0.3s ease forwards;
+        }
+        
+        .hot-item:nth-child(1) { animation-delay: 0.05s; }
+        .hot-item:nth-child(2) { animation-delay: 0.1s; }
+        .hot-item:nth-child(3) { animation-delay: 0.15s; }
+        .hot-item:nth-child(4) { animation-delay: 0.2s; }
+        .hot-item:nth-child(5) { animation-delay: 0.25s; }
+        .hot-item:nth-child(6) { animation-delay: 0.3s; }
+        .hot-item:nth-child(7) { animation-delay: 0.35s; }
+        .hot-item:nth-child(8) { animation-delay: 0.4s; }
+        .hot-item:nth-child(9) { animation-delay: 0.45s; }
+        .hot-item:nth-child(10) { animation-delay: 0.5s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="platforms-container">
+            <div class="platforms-scroll" id="platformsScroll">
+                <!-- 平台按钮将通过JS动态生成 -->
+            </div>
+            <div class="scroll-indicator" id="scrollIndicator">
+                <i class="fas fa-chevron-right"></i>
+            </div>
+        </div>
+        
+        <div class="hot-list">
+            <div class="list-header">
+                <div class="list-title" id="currentPlatform">热门榜单</div>
+                <div class="update-time" id="updateTime">最后更新: --</div>
+            </div>
+            <div class="list-content" id="listContent">
+                <div class="loading" id="loading">加载中...</div>
+                <div class="error hidden" id="error"></div>
+                <!-- 热搜列表将通过JS动态生成 -->
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>数据来源: 觅知博客——聚合热搜榜</p>
+        </div>
+    </div>
+
+    <script>
+        // API配置
+        const API_BASE = 'https://api.tcslw.cn/api/hotlist';
+        
+        // 平台配置
+        const platforms = [
+            { id: 'weibo', name: '微博', param: '?type=weibo' },
+            { id: 'zhihu', name: '知乎', param: '?type=zhihu' },
+            { id: 'douyin', name: '抖音', param: '?type=douyin' },
+            { id: 'bilihot', name: 'B站热搜', param: '?type=bilihot' },
+            { id: 'toutiao', name: '头条', param: '?type=toutiao' },
+            { id: 'baidu', name: '百度', param: '?type=baidu' },
+            { id: 'github', name: 'GitHub', param: '?type=github' },
+            { id: 'juejin', name: '掘金', param: '?type=juejin' },
+            { id: 'sspai', name: '少数派', param: '?type=sspai' },
+            { id: 'csdn', name: 'CSDN', param: '?type=csdn' },
+            { id: 'acfun', name: 'A站', param: '?type=acfun' },
+            { id: 'history', name: '历史上的今天', param: '?type=history' },
+            { id: 'petnews', name: '宠物新闻', url: 'https://whyta.cn/api/tx/petnews?key=738b541a5f7a&num=50' },
+            { id: 'esports', name: '电竞资讯', url: 'https://whyta.cn/api/tx/esports?key=738b541a5f7a&num=50' },
+            { id: 'film', name: '影视资讯', url: 'https://whyta.cn/api/tx/film?key=738b541a5f7a&num=50' },
+            { id: 'aikx', name: 'AI快讯', url: 'https://api.jkyai.top/API/mraikx.php?type=json' }
+        ];
+        
+        // DOM元素
+        const platformsScrollEl = document.getElementById('platformsScroll');
+        const scrollIndicatorEl = document.getElementById('scrollIndicator');
+        const currentPlatformEl = document.getElementById('currentPlatform');
+        const updateTimeEl = document.getElementById('updateTime');
+        const listContentEl = document.getElementById('listContent');
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+        
+        // 状态变量
+        let currentData = [];
+        let activePlatform = 'weibo';
+        
+        // 初始化
+        function init() {
+            renderPlatformButtons();
+            loadPlatformData(activePlatform);
+            setupEventListeners();
+            checkScrollIndicator();
+        }
+        
+        // 渲染平台按钮
+        function renderPlatformButtons() {
+            platforms.forEach(platform => {
+                const button = document.createElement('button');
+                button.className = `platform-btn ${platform.id === activePlatform ? 'active' : ''}`;
+                button.textContent = platform.name;
+                button.dataset.platform = platform.id;
+                platformsScrollEl.appendChild(button);
+            });
+        }
+        
+        // 设置事件监听
+        function setupEventListeners() {
+            // 平台按钮点击事件
+            platformsScrollEl.addEventListener('click', (e) => {
+                if (e.target.classList.contains('platform-btn')) {
+                    const platformId = e.target.dataset.platform;
+                    switchPlatform(platformId);
+                }
+            });
+            
+            // 平台滚动事件
+            platformsScrollEl.addEventListener('scroll', checkScrollIndicator);
+            
+            // 窗口大小变化事件
+            window.addEventListener('resize', checkScrollIndicator);
+        }
+        
+        // 检查是否需要显示滚动指示器
+        function checkScrollIndicator() {
+            const scrollable = platformsScrollEl.scrollWidth > platformsScrollEl.clientWidth;
+            const scrolledToEnd = platformsScrollEl.scrollLeft + platformsScrollEl.clientWidth >= platformsScrollEl.scrollWidth - 10;
+            
+            if (scrollable && !scrolledToEnd) {
+                scrollIndicatorEl.classList.add('visible');
+            } else {
+                scrollIndicatorEl.classList.remove('visible');
+            }
+        }
+        
+        // 切换平台
+        function switchPlatform(platformId) {
+            // 更新活跃按钮
+            document.querySelectorAll('.platform-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.platform-btn[data-platform="${platformId}"]`).classList.add('active');
+            
+            // 更新活跃平台
+            activePlatform = platformId;
+            
+            // 加载数据
+            loadPlatformData(platformId);
+        }
+        
+        // 加载平台数据
+        async function loadPlatformData(platformId) {
+            // 显示加载状态
+            showLoading();
+            
+            // 查找平台参数
+            const platform = platforms.find(p => p.id === platformId);
+            if (!platform) {
+                showError('未找到该平台');
+                return;
+            }
+            
+            // 更新当前平台标题
+            currentPlatformEl.textContent = platform.name;
+            
+            try {
+                // 调用API
+                const apiUrl = platform.url || `${API_BASE}${platform.param}`;
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`网络响应错误: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // 处理API返回的数据
+                if (platformId === 'petnews' || platformId === 'esports' || platformId === 'film') {
+                    // 新闻类API的特殊处理
+                    if (data && data.code === 200 && data.result && data.result.newslist) {
+                        currentData = data.result.newslist;
+                        renderNewsList(currentData, platformId);
+                        updateTimeEl.textContent = `最后更新: ${new Date().toLocaleTimeString()}`;
+                    } else {
+                        throw new Error(`${platform.name} API返回数据格式异常`);
+                    }
+                } else if (platformId === 'aikx') {
+                    // AI快讯API的特殊处理
+                    if (data && data.status === "success" && data.data && data.data.length > 0) {
+                        currentData = data.data[0].news;
+                        renderAIList(currentData);
+                        updateTimeEl.textContent = `最后更新: ${new Date().toLocaleTimeString()}`;
+                    } else {
+                        throw new Error('AI快讯API返回数据格式异常');
+                    }
+                } else {
+                    // 其他API的处理
+                    if (data && data.data) {
+                        currentData = data.data;
+                        renderHotList(currentData);
+                        updateTimeEl.textContent = `最后更新: ${new Date().toLocaleTimeString()}`;
+                    } else {
+                        throw new Error('API返回数据格式异常');
+                    }
+                }
+            } catch (error) {
+                console.error('获取数据失败:', error);
+                showError(`加载失败: ${error.message}`);
+            }
+        }
+        
+        // 渲染热搜列表
+        function renderHotList(data) {
+            // 隐藏加载状态和错误状态
+            hideLoading();
+            hideError();
+            
+            // 清空当前内容
+            listContentEl.innerHTML = '';
+            
+            // 检查数据是否为空
+            if (!data || data.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'loading';
+                emptyMsg.textContent = '暂无数据';
+                listContentEl.appendChild(emptyMsg);
+                return;
+            }
+            
+            // 渲染热搜项
+            data.forEach((item, index) => {
+                const hotItem = document.createElement('div');
+                hotItem.className = 'hot-item';
+                
+                // 根据不同平台的数据结构适配
+                const title = item.title || item.name || item.query || '未知标题';
+                const url = item.url || item.link || '#';
+                const hotValue = item.hot || item.index || item.count || '';
+                const rank = index + 1;
+                
+                // 设置排名样式
+                let rankClass = '';
+                if (rank === 1) {
+                    rankClass = 'top';
+                } else if (rank <= 3) {
+                    rankClass = 'top-3';
+                }
+                
+                hotItem.innerHTML = `
+                    <div class="rank ${rankClass}">${rank}</div>
+                    <div class="content">
+                        <div class="title">
+                            <a href="${url}" target="_blank">${title}</a>
+                        </div>
+                        <div class="metrics">
+                            ${hotValue ? `<div class="hot-value">${formatHotValue(hotValue)}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                listContentEl.appendChild(hotItem);
+            });
+        }
+        
+        // 渲染新闻列表（宠物新闻、电竞资讯和影视资讯）
+        function renderNewsList(data, platformId) {
+            // 隐藏加载状态和错误状态
+            hideLoading();
+            hideError();
+            
+            // 清空当前内容
+            listContentEl.innerHTML = '';
+            
+            // 检查数据是否为空
+            if (!data || data.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'loading';
+                emptyMsg.textContent = '暂无数据';
+                listContentEl.appendChild(emptyMsg);
+                return;
+            }
+            
+            // 渲染新闻项
+            data.forEach((item, index) => {
+                const hotItem = document.createElement('div');
+                hotItem.className = 'hot-item';
+                
+                const title = item.title || '未知标题';
+                let url = item.url || '#';
+                const description = item.description || '';
+                const source = item.source || '未知来源';
+                const time = item.ctime || '';
+                const picUrl = item.picUrl || '';
+                const rank = index + 1;
+                
+                // 处理URL协议
+                if (url && url.startsWith('//')) {
+                    url = 'https:' + url;
+                }
+                
+                // 处理图片URL协议
+                let fullPicUrl = '';
+                if (picUrl) {
+                    fullPicUrl = picUrl.startsWith('//') ? 'https:' + picUrl : picUrl;
+                }
+                
+                // 设置排名样式
+                let rankClass = '';
+                if (rank === 1) {
+                    rankClass = 'top';
+                } else if (rank <= 3) {
+                    rankClass = 'top-3';
+                }
+                
+                let imageHtml = '';
+                if (fullPicUrl && (platformId === 'esports' || platformId === 'film')) {
+                    imageHtml = `<img src="${fullPicUrl}" alt="${title}" class="news-image" onerror="this.style.display='none'">`;
+                }
+                
+                hotItem.innerHTML = `
+                    <div class="rank ${rankClass}">${rank}</div>
+                    <div class="content">
+                        <div class="title">
+                            <a href="${url}" target="_blank">${title}</a>
+                        </div>
+                        ${description ? `<div class="description">${description}</div>` : ''}
+                        <div class="metrics">
+                            <div class="hot-value">${source}</div>
+                            ${time ? `<div class="hot-value">${time}</div>` : ''}
+                        </div>
+                    </div>
+                    ${imageHtml}
+                `;
+                
+                listContentEl.appendChild(hotItem);
+            });
+        }
+        
+        // 渲染AI快讯列表
+        function renderAIList(data) {
+            // 隐藏加载状态和错误状态
+            hideLoading();
+            hideError();
+            
+            // 清空当前内容
+            listContentEl.innerHTML = '';
+            
+            // 检查数据是否为空
+            if (!data || data.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'loading';
+                emptyMsg.textContent = '暂无数据';
+                listContentEl.appendChild(emptyMsg);
+                return;
+            }
+            
+            // 渲染AI快讯项
+            data.forEach((item, index) => {
+                const hotItem = document.createElement('div');
+                hotItem.className = 'hot-item';
+                
+                const title = item.title || '未知标题';
+                const url = item.link || '#';
+                const content = item.content || '';
+                const rank = index + 1;
+                
+                // 设置排名样式
+                let rankClass = '';
+                if (rank === 1) {
+                    rankClass = 'top';
+                } else if (rank <= 3) {
+                    rankClass = 'top-3';
+                }
+                
+                hotItem.innerHTML = `
+                    <div class="rank ${rankClass}">${rank}</div>
+                    <div class="content">
+                        <div class="title">
+                            <a href="${url}" target="_blank">${title}</a>
+                        </div>
+                        ${content ? `<div class="description">${content}</div>` : ''}
+                    </div>
+                `;
+                
+                listContentEl.appendChild(hotItem);
+            });
+        }
+        
+        // 格式化热度值
+        function formatHotValue(value) {
+            if (value >= 10000) {
+                return (value / 10000).toFixed(1) + '万';
+            }
+            return value.toString();
+        }
+        
+        // 显示加载状态
+        function showLoading() {
+            loadingEl.classList.remove('hidden');
+            hideError();
+        }
+        
+        // 隐藏加载状态
+        function hideLoading() {
+            loadingEl.classList.add('hidden');
+        }
+        
+        // 显示错误状态
+        function showError(message) {
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+            hideLoading();
+        }
+        
+        // 隐藏错误状态
+        function hideError() {
+            errorEl.classList.add('hidden');
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

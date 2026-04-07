@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>民间智慧宝库</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 自定义Tailwind配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        culture: {
+                            main: '#8B4513',
+                            light: '#F5F5DC',
+                            dark: '#3E2723',
+                            red: '#C41E3A'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"PingFang SC"', '"Microsoft YaHei"', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow-sm {
+                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            }
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+            }
+            .tab-active {
+                @apply bg-culture-main text-white border-culture-main;
+            }
+            .surname-paragraph {
+                @apply mb-4 leading-relaxed;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-culture-light flex flex-col justify-center items-center p-4 md:p-6">
+    <div class="w-full max-w-2xl mx-auto">
+        <!-- 标题 -->
+        <h1 class="text-center text-3xl md:text-4xl font-bold text-culture-dark mb-8 text-shadow-sm">
+            民间智慧宝库
+        </h1>
+        <!-- Tab标签导航 -->
+        <div class="flex border-b border-culture-main/30 mb-6">
+            <button 
+                class="tab-item flex-1 py-3 px-4 text-center font-medium rounded-t-lg border border-b-0 border-transparent transition-all duration-200 hover:bg-culture-main/10 tab-active"
+                data-tab="proverb"
+                onclick="switchTab('proverb')"
+            >
+                随机谚语
+            </button>
+            <button 
+                class="tab-item flex-1 py-3 px-4 text-center font-medium rounded-t-lg border border-b-0 border-transparent transition-all duration-200 hover:bg-culture-main/10"
+                data-tab="couplet"
+                onclick="switchTab('couplet')"
+            >
+                对联查询
+            </button>
+            <!-- 百家姓Tab -->
+            <button 
+                class="tab-item flex-1 py-3 px-4 text-center font-medium rounded-t-lg border border-b-0 border-transparent transition-all duration-200 hover:bg-culture-main/10"
+                data-tab="surname"
+                onclick="switchTab('surname')"
+            >
+                百家姓查询
+            </button>
+        </div>
+        <!-- Tab内容区域 -->
+        <div class="tab-content">
+            <!-- 随机谚语Tab内容 -->
+            <div id="tab-proverb" class="tab-panel active">
+                <div class="bg-white rounded-2xl shadow-md p-6 md:p-8 card-hover w-full">
+                    <!-- 加载状态 -->
+                    <div id="proverb-loading" class="text-center py-12 text-culture-dark/70">
+                        <p class="text-lg">正在获取谚语...</p>
+                    </div>
+                    <!-- 错误提示 -->
+                    <div id="proverb-error" class="text-center py-12 text-red-600 hidden">
+                        <p class="text-lg">获取谚语失败，请稍后重试</p>
+                    </div>
+                    <!-- 谚语内容区域 -->
+                    <div id="proverb-content" class="hidden">
+                        <div class="mb-6">
+                            <p class="text-xl md:text-2xl font-bold text-center text-culture-dark leading-relaxed">
+                                <span>“</span>
+                                <span id="saying"></span>
+                                <span>”</span>
+                            </p>
+                        </div>
+                        <div class="border-t border-stone-200 pt-4">
+                            <p id="content" class="text-base md:text-lg text-stone-600 text-center leading-relaxed"></p>
+                        </div>
+                    </div>
+                    <!-- 操作按钮 -->
+                    <div class="mt-8 flex justify-center">
+                        <button 
+                            id="proverb-btn" 
+                            class="w-full md:w-auto px-8 py-3 bg-culture-main hover:bg-culture-dark text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            换一条谚语
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- 对联查询Tab内容 -->
+            <div id="tab-couplet" class="tab-panel hidden">
+                <div class="bg-white rounded-2xl shadow-md p-6 md:p-8 w-full">
+                    <!-- 查询输入区 -->
+                    <div class="flex flex-col md:flex-row gap-3 mb-6">
+                        <input 
+                            type="text" 
+                            id="couplet-input" 
+                            placeholder="请输入查询关键词，建议单字查询（如：马、春、福）" 
+                            maxlength="20"
+                            class="flex-1 px-4 py-3 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-culture-main focus:border-transparent"
+                        >
+                        <button 
+                            id="couplet-search-btn" 
+                            class="px-6 py-3 bg-culture-main hover:bg-culture-dark text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            查询对联
+                        </button>
+                    </div>
+                    <!-- 加载状态 -->
+                    <div id="couplet-loading" class="text-center py-12 text-culture-dark/70 hidden">
+                        <p class="text-lg">正在查询对联...</p>
+                    </div>
+                    <!-- 错误提示 -->
+                    <div id="couplet-error" class="text-center py-12 text-red-600 hidden">
+                        <p class="text-lg" id="couplet-error-text">查询失败，请稍后重试</p>
+                    </div>
+                    <!-- 空状态提示 -->
+                    <div id="couplet-empty" class="text-center py-12 text-culture-dark/60">
+                        <p class="text-lg">输入关键词，即可查询相关对联</p>
+                    </div>
+                    <!-- 对联列表区域 -->
+                    <div id="couplet-list" class="space-y-4 hidden"></div>
+                    <!-- 分页控件 -->
+                    <div id="couplet-pagination" class="mt-6 flex items-center justify-center gap-4 hidden">
+                        <button 
+                            id="prev-page-btn" 
+                            class="px-4 py-2 border border-stone-300 rounded-lg hover:bg-culture-main/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                        >
+                            上一页
+                        </button>
+                        <span class="text-culture-dark font-medium" id="page-text">第 1 页</span>
+                        <button 
+                            id="next-page-btn" 
+                            class="px-4 py-2 border border-stone-300 rounded-lg hover:bg-culture-main/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                        >
+                            下一页
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- 百家姓查询Tab内容 -->
+            <div id="tab-surname" class="tab-panel hidden">
+                <div class="bg-white rounded-2xl shadow-md p-6 md:p-8 card-hover w-full">
+                    <!-- 查询输入区 -->
+                    <div class="flex flex-col md:flex-row gap-3 mb-6">
+                        <input 
+                            type="text" 
+                            id="surname-input" 
+                            placeholder="请输入要查询的姓氏，如：李、王、张、郭" 
+                            maxlength="10"
+                            class="flex-1 px-4 py-3 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-culture-main focus:border-transparent"
+                        >
+                        <button 
+                            id="surname-search-btn" 
+                            class="px-6 py-3 bg-culture-main hover:bg-culture-dark text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            查询姓氏
+                        </button>
+                        <button 
+                            id="surname-random-btn" 
+                            class="px-6 py-3 bg-culture-red hover:bg-culture-red/90 text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            随机姓氏
+                        </button>
+                    </div>
+                    <!-- 加载状态 -->
+                    <div id="surname-loading" class="text-center py-12 text-culture-dark/70 hidden">
+                        <p class="text-lg">正在获取姓氏信息...</p>
+                    </div>
+                    <!-- 错误提示 -->
+                    <div id="surname-error" class="text-center py-12 text-red-600 hidden">
+                        <p class="text-lg" id="surname-error-text">查询失败，请稍后重试</p>
+                    </div>
+                    <!-- 空状态提示 -->
+                    <div id="surname-empty" class="text-center py-12 text-culture-dark/60">
+                        <p class="text-lg">输入姓氏或点击随机按钮，查询相关姓氏信息</p>
+                    </div>
+                    <!-- 姓氏内容区域 -->
+                    <div id="surname-content" class="hidden">
+                        <div class="mb-6 text-center">
+                            <h2 class="text-3xl md:text-4xl font-bold text-culture-main mb-2">
+                                <span id="surname-text"></span>
+                            </h2>
+                            <p class="text-stone-500">首字母：<span id="surname-initial"></span></p>
+                        </div>
+                        <!-- 姓氏图腾图片 -->
+                        <div class="mb-6 flex justify-center">
+                            <img id="surname-img" src="" alt="姓氏图腾" class="max-w-full h-auto rounded-xl shadow-md max-h-60" onerror="this.classList.add('hidden')">
+                        </div>
+                        <!-- 详细内容 -->
+                        <div class="border-t border-stone-200 pt-4">
+                            <div id="surname-detail" class="text-base md:text-lg text-stone-700"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 页脚 -->
+        <p class="text-center text-stone-500 text-sm mt-8">
+            传承民间智慧，品味传统文化
+        </p>
+    </div>
+    <script>
+        // ===================== 全局Tab切换功能 =====================
+        function switchTab(tabName) {
+            const tabItems = document.querySelectorAll('.tab-item');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+            
+            tabItems.forEach(item => {
+                item.classList.remove('tab-active');
+                if(item.dataset.tab === tabName) {
+                    item.classList.add('tab-active');
+                }
+            });
+            tabPanels.forEach(panel => {
+                panel.classList.add('hidden');
+                panel.classList.remove('active');
+            });
+            const activePanel = document.getElementById(`tab-${tabName}`);
+            activePanel.classList.remove('hidden');
+            activePanel.classList.add('active');
+        }
+
+        // ===================== 随机谚语功能 =====================
+        const PROVERB_API = "https://cn.apihz.cn/api/zici/yanyu.php?id=10014221&key=4a7768de1cf2e0f41fc0a4005240c837";
+        const proverbLoadingEl = document.getElementById('proverb-loading');
+        const proverbErrorEl = document.getElementById('proverb-error');
+        const proverbContentEl = document.getElementById('proverb-content');
+        const sayingEl = document.getElementById('saying');
+        const explainEl = document.getElementById('content');
+        const proverbBtn = document.getElementById('proverb-btn');
+
+        async function getRandomProverb() {
+            proverbLoadingEl.classList.remove('hidden');
+            proverbErrorEl.classList.add('hidden');
+            proverbContentEl.classList.add('hidden');
+            proverbBtn.disabled = true;
+            try {
+                const res = await fetch(PROVERB_API);
+                const data = await res.json();
+                if (data.code === 200) {
+                    sayingEl.textContent = data.saying;
+                    explainEl.textContent = data.content;
+                    proverbContentEl.classList.remove('hidden');
+                } else {
+                    proverbErrorEl.textContent = data.msg || '获取谚语失败，请稍后重试';
+                    proverbErrorEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error('谚语请求失败：', err);
+                proverbErrorEl.textContent = '网络请求失败，请检查网络连接后重试';
+                proverbErrorEl.classList.remove('hidden');
+            } finally {
+                proverbLoadingEl.classList.add('hidden');
+                proverbBtn.disabled = false;
+            }
+        }
+        window.addEventListener('DOMContentLoaded', getRandomProverb);
+        proverbBtn.addEventListener('click', getRandomProverb);
+
+        // ===================== 对联查询功能 =====================
+        const COUPLET_API_BASE = "https://cn.apihz.cn/api/zici/duilian.php?id=10014221&key=4a7768de1cf2e0f41fc0a4005240c837";
+        let currentWords = '';
+        let currentPage = 1;
+        const MAX_PAGE = 10;
+        const coupletInputEl = document.getElementById('couplet-input');
+        const coupletSearchBtn = document.getElementById('couplet-search-btn');
+        const coupletLoadingEl = document.getElementById('couplet-loading');
+        const coupletErrorEl = document.getElementById('couplet-error');
+        const coupletErrorTextEl = document.getElementById('couplet-error-text');
+        const coupletEmptyEl = document.getElementById('couplet-empty');
+        const coupletListEl = document.getElementById('couplet-list');
+        const coupletPaginationEl = document.getElementById('couplet-pagination');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+        const pageTextEl = document.getElementById('page-text');
+
+        async function fetchCouplet(words, page = 1) {
+            if(!words || words.trim() === '') {
+                coupletErrorTextEl.textContent = '请输入查询关键词';
+                coupletErrorEl.classList.remove('hidden');
+                coupletEmptyEl.classList.add('hidden');
+                coupletListEl.classList.add('hidden');
+                coupletPaginationEl.classList.add('hidden');
+                return;
+            }
+            currentWords = words.trim();
+            currentPage = page;
+            coupletLoadingEl.classList.remove('hidden');
+            coupletErrorEl.classList.add('hidden');
+            coupletEmptyEl.classList.add('hidden');
+            coupletListEl.classList.add('hidden');
+            coupletPaginationEl.classList.add('hidden');
+            coupletSearchBtn.disabled = true;
+            try {
+                const requestUrl = `${COUPLET_API_BASE}&words=${encodeURIComponent(currentWords)}&page=${currentPage}`;
+                const res = await fetch(requestUrl);
+                const data = await res.json();
+                if (data.code === 200) {
+                    if(data.data && data.data.length > 0) {
+                        renderCoupletList(data.data);
+                        updatePagination();
+                        coupletListEl.classList.remove('hidden');
+                        coupletPaginationEl.classList.remove('hidden');
+                    } else {
+                        coupletEmptyEl.textContent = '未查询到相关对联，请更换关键词重试';
+                        coupletEmptyEl.classList.remove('hidden');
+                    }
+                } else {
+                    coupletErrorTextEl.textContent = data.msg || '查询对联失败，请稍后重试';
+                    coupletErrorEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error('对联请求失败：', err);
+                coupletErrorTextEl.textContent = '网络请求失败，请检查网络连接后重试';
+                coupletErrorEl.classList.remove('hidden');
+            } finally {
+                coupletLoadingEl.classList.add('hidden');
+                coupletSearchBtn.disabled = false;
+            }
+        }
+        function renderCoupletList(data) {
+            let html = '';
+            data.forEach(item => {
+                html += `
+                <div class="border border-stone-200 rounded-xl p-4 md:p-5 hover:shadow-lg transition-all duration-200">
+                    <div class="text-center mb-4">
+                        <span class="inline-block px-4 py-1 bg-culture-red text-white rounded-full font-bold text-lg">
+                            ${item.hp || '无横批'}
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <div class="p-3 bg-culture-light/50 rounded-lg">
+                            <p class="text-sm text-stone-500 mb-1">上联</p>
+                            <p class="text-base md:text-lg font-medium text-culture-dark">${item.sl}</p>
+                        </div>
+                        <div class="p-3 bg-culture-light/50 rounded-lg">
+                            <p class="text-sm text-stone-500 mb-1">下联</p>
+                            <p class="text-base md:text-lg font-medium text-culture-dark">${item.xl}</p>
+                        </div>
+                    </div>
+                    <div class="border-t border-stone-100 pt-3">
+                        <p class="text-sm text-stone-500 mb-1">寓意</p>
+                        <p class="text-sm text-stone-600 leading-relaxed">${item.yy || '暂无寓意'}</p>
+                    </div>
+                </div>
+                `;
+            });
+            coupletListEl.innerHTML = html;
+        }
+        function updatePagination() {
+            pageTextEl.textContent = `第 ${currentPage} 页`;
+            prevPageBtn.disabled = currentPage <= 1;
+            nextPageBtn.disabled = currentPage >= MAX_PAGE;
+        }
+        prevPageBtn.addEventListener('click', () => {
+            if(currentPage > 1) {
+                fetchCouplet(currentWords, currentPage - 1);
+            }
+        });
+        nextPageBtn.addEventListener('click', () => {
+            if(currentPage < MAX_PAGE) {
+                fetchCouplet(currentWords, currentPage + 1);
+            }
+        });
+        coupletSearchBtn.addEventListener('click', () => {
+            const words = coupletInputEl.value;
+            fetchCouplet(words, 1);
+        });
+        coupletInputEl.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter') {
+                const words = coupletInputEl.value;
+                fetchCouplet(words, 1);
+            }
+        });
+
+        // ===================== 百家姓查询功能 =====================
+        const SURNAME_API_BASE = "https://cn.apihz.cn/api/zici/baijiaxing.php?id=10014221&key=4a7768de1cf2e0f41fc0a4005240c837";
+        const surnameInputEl = document.getElementById('surname-input');
+        const surnameSearchBtn = document.getElementById('surname-search-btn');
+        const surnameRandomBtn = document.getElementById('surname-random-btn');
+        const surnameLoadingEl = document.getElementById('surname-loading');
+        const surnameErrorEl = document.getElementById('surname-error');
+        const surnameErrorTextEl = document.getElementById('surname-error-text');
+        const surnameEmptyEl = document.getElementById('surname-empty');
+        const surnameContentEl = document.getElementById('surname-content');
+        const surnameTextEl = document.getElementById('surname-text');
+        const surnameInitialEl = document.getElementById('surname-initial');
+        const surnameImgEl = document.getElementById('surname-img');
+        const surnameDetailEl = document.getElementById('surname-detail');
+
+        // 文本格式化函数，处理排版问题
+        function formatSurnameContent(text) {
+            // 替换所有HTML空格实体为正常空格
+            let formatted = text.replace(/&nbsp;/g, ' ');
+            // 替换连续多个空格为单个空格
+            formatted = formatted.replace(/\s+/g, ' ');
+            // 按换行符分割成段落，过滤空段落
+            const paragraphs = formatted.split(/\n+/).filter(p => p.trim() !== '');
+            // 给每个段落加上样式类
+            return paragraphs.map(p => `<p class="surname-paragraph">${p.trim()}</p>`).join('');
+        }
+
+        async function fetchSurname(xing = '') {
+            surnameLoadingEl.classList.remove('hidden');
+            surnameErrorEl.classList.add('hidden');
+            surnameEmptyEl.classList.add('hidden');
+            surnameContentEl.classList.add('hidden');
+            surnameSearchBtn.disabled = true;
+            surnameRandomBtn.disabled = true;
+            try {
+                let requestUrl = SURNAME_API_BASE;
+                if(xing && xing.trim() !== '') {
+                    requestUrl += `&xing=${encodeURIComponent(xing.trim())}`;
+                }
+                const res = await fetch(requestUrl);
+                const data = await res.json();
+                if (data.code === 200) {
+                    surnameTextEl.textContent = data.surname;
+                    surnameInitialEl.textContent = data.initial;
+                    // 处理图片，加载失败自动隐藏
+                    surnameImgEl.src = data.img;
+                    surnameImgEl.classList.remove('hidden');
+                    // 格式化内容，修复排版
+                    surnameDetailEl.innerHTML = formatSurnameContent(data.content);
+                    surnameContentEl.classList.remove('hidden');
+                } else {
+                    surnameErrorTextEl.textContent = data.msg || '查询姓氏失败，请稍后重试';
+                    surnameErrorEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error('姓氏请求失败：', err);
+                surnameErrorTextEl.textContent = '网络请求失败，请检查网络连接后重试';
+                surnameErrorEl.classList.remove('hidden');
+            } finally {
+                surnameLoadingEl.classList.add('hidden');
+                surnameSearchBtn.disabled = false;
+                surnameRandomBtn.disabled = false;
+            }
+        }
+        // 点击查询
+        surnameSearchBtn.addEventListener('click', () => {
+            const xing = surnameInputEl.value;
+            if(!xing || xing.trim() === '') {
+                surnameErrorTextEl.textContent = '请输入要查询的姓氏';
+                surnameErrorEl.classList.remove('hidden');
+                return;
+            }
+            fetchSurname(xing);
+        });
+        // 回车查询
+        surnameInputEl.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter') {
+                const xing = surnameInputEl.value;
+                if(!xing || xing.trim() === '') {
+                    surnameErrorTextEl.textContent = '请输入要查询的姓氏';
+                    surnameErrorEl.classList.remove('hidden');
+                    return;
+                }
+                fetchSurname(xing);
+            }
+        });
+        // 随机姓氏
+        surnameRandomBtn.addEventListener('click', () => {
+            surnameInputEl.value = '';
+            fetchSurname();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>硬件性能排行榜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 15px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        header h1 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        /* 切换tab样式 */
+        .tab-nav {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            background-color: #fff;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .tab-btn.active {
+            background-color: #3498db;
+            color: #fff;
+        }
+        .tab-btn:hover:not(.active) {
+            background-color: #f0f2f5;
+        }
+        .update-time {
+            color: #666;
+            font-size: 14px;
+        }
+        .loading, .error {
+            text-align: center;
+            padding: 50px 20px;
+            font-size: 16px;
+            color: #666;
+        }
+        .error {
+            color: #e74c3c;
+        }
+        .rank-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .rank-item {
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .rank-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .rank-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .rank-1 {
+            background-color: #FFD700;
+            color: #fff;
+        }
+        .rank-2 {
+            background-color: #C0C0C0;
+            color: #fff;
+        }
+        .rank-3 {
+            background-color: #CD7F32;
+            color: #fff;
+        }
+        .rank-other {
+            background-color: #f0f2f5;
+            color: #666;
+        }
+        .hardware-name {
+            font-size: 18px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #999;
+            font-size: 14px;
+        }
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 22px;
+            }
+            .tab-btn {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+            .rank-item {
+                padding: 12px 15px;
+            }
+            .rank-num {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+                margin-right: 12px;
+            }
+            .hardware-name {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 id="pageTitle">手机CPU性能排行榜</h1>
+            <!-- 切换tab -->
+            <div class="tab-nav">
+                <button class="tab-btn active" data-type="cpu">手机CPU</button>
+                <button class="tab-btn" data-type="desktop_cpu">桌面CPU</button>
+                <button class="tab-btn" data-type="laptop_cpu">笔记本CPU</button>
+                <button class="tab-btn" data-type="desktop_gpu">桌面显卡</button>
+                <button class="tab-btn" data-type="laptop_gpu">笔记本显卡</button>
+            </div>
+            <p class="update-time" id="updateTime">数据更新中...</p>
+        </header>
+
+        <main>
+            <div class="loading" id="loading">正在加载排行榜数据...</div>
+            <div class="error" id="error" style="display: none;">数据加载失败，请刷新页面重试</div>
+            <ul class="rank-list" id="rankList" style="display: none;"></ul>
+        </main>
+
+        <footer>
+            <p>数据每日更新，仅供参考</p>
+        </footer>
+    </div>
+
+    <script>
+        // 接口配置
+        const API_CONFIG = {
+            cpu: {
+                url: 'https://cn.apihz.cn/api/bang/cpu2.php?id=10014221&key=4a7768de1cf2e0f41fc0a4005240c837',
+                title: '手机CPU性能排行榜'
+            },
+            desktop_cpu: {
+                url: 'https://cn.apihz.cn/api/bang/cpu1.php?id=10014221&key=4a7768de1cf2e0f41fc0a4005240c837',
+                title: '桌面CPU性能排行榜'
+            },
+            laptop_cpu: {
+                url: 'https://cn.apihz.cn/api/bang/cpu3.php?id=10014221&key=4a7768de1cf2e0f41fc0a4005240c837',
+                title: '笔记本CPU性能排行榜'
+            },
+            desktop_gpu: {
+                url: 'https://cn.apihz.cn/api/bang/xianka1.php?id=10014221&key=4a7768de1cf2e0f41fc0a4005240c837',
+                title: '桌面显卡性能排行榜'
+            },
+            laptop_gpu: {
+                url: 'https://cn.apihz.cn/api/bang/xianka2.php?id=10014221&key=4a7768de1cf2e0f41fc0a4005240c837',
+                title: '笔记本显卡性能排行榜'
+            }
+        };
+
+        // 元素获取
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+        const rankListEl = document.getElementById('rankList');
+        const updateTimeEl = document.getElementById('updateTime');
+        const pageTitleEl = document.getElementById('pageTitle');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+
+        // 当前激活的类型
+        let currentType = 'cpu';
+
+        // 切换tab事件绑定
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.type;
+                if (type === currentType) return;
+
+                // 更新激活状态
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // 切换类型并重新加载数据
+                currentType = type;
+                pageTitleEl.textContent = API_CONFIG[currentType].title;
+                loadRankData();
+            });
+        });
+
+        // 加载排行数据
+        async function loadRankData() {
+            // 重置显示状态
+            loadingEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            rankListEl.style.display = 'none';
+
+            try {
+                const response = await fetch(API_CONFIG[currentType].url);
+                if (!response.ok) throw new Error('请求失败');
+                const result = await response.json();
+                if (result.code !== 200) throw new Error(result.msg || '数据获取失败');
+
+                // 渲染列表与更新时间
+                renderRankList(result.data);
+                updateTimeEl.textContent = `数据更新时间：${result.time2}`;
+
+                // 切换显示状态
+                loadingEl.style.display = 'none';
+                rankListEl.style.display = 'flex';
+            } catch (err) {
+                console.error(err);
+                // 显示错误提示
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+            }
+        }
+
+        // 渲染排行列表
+        function renderRankList(data) {
+            let html = '';
+            data.forEach(item => {
+                let rankClass = 'rank-other';
+                if (item.top === 1) rankClass = 'rank-1';
+                if (item.top === 2) rankClass = 'rank-2';
+                if (item.top === 3) rankClass = 'rank-3';
+
+                html += `
+                    <li class="rank-item">
+                        <div class="rank-num ${rankClass}">${item.top}</div>
+                        <div class="hardware-name">${item.name}</div>
+                    </li>
+                `;
+            });
+            rankListEl.innerHTML = html;
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', loadRankData);
+    </script>
+</body>
+</html>
