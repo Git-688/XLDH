@@ -67,11 +67,7 @@ class CompactSidebar {
                 icon: 'fas fa-ellipsis-h',
                 expanded: false,
                 items: [
-                    { icon: 'fas fa-solid fa-chart-pie fa-baidu-stat', label: '百度统计', badge: null, action: 'link', link: 'https://tongji.baidu.com/main/homepage/10000302679/homepage/index' },
-                    { icon: 'fas fa-user-circle', label: '头像', badge: null, action: 'link', link: './pages/chl/头像链接.html' },
-                    { icon: 'fas fa-image', label: '壁纸', badge: null, action: 'link', link: './pages/chl/壁纸链接.html' },
-                    { icon: 'fas fa-star', label: '星空', badge: null, action: 'link', link: './pages/chl/星空.html' },
-                    { icon: 'fas fa-gamepad', label: '游戏', badge: null, action: 'link', link: './pages/chl/游戏.html' }
+                    { icon: 'fas fa-fire', label: '烟花模拟器', badge: null, action: 'link', link: './pages/chl/烟花模拟器.html' }
                 ]
             }
         ];
