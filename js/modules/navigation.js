@@ -192,26 +192,30 @@ class OptimizedNavigation {
                 iconHtml = '<i class="fas fa-link"></i>';
             }
             
+            // 修改后的卡片 HTML：按钮在浏览量左边，只显示图标，使用带圆角三角形的样式
             card.innerHTML = `
                 <div class="card-top">
                     <div class="icon-container">${iconHtml}</div>
-                    <div class="views-container">
-                        <i class="fas fa-eye views-icon"></i>
-                        <span class="view-count" data-views="${views}">${formattedViews}</span>
+                    <div class="card-top-right">
+                        <button class="report-dead-link-btn" data-url="${site.url}" data-title="${this.escapeHtml(site.title)}" title="报告死链">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </button>
+                        <div class="views-container">
+                            <i class="fas fa-eye views-icon"></i>
+                            <span class="view-count" data-views="${views}">${formattedViews}</span>
+                        </div>
                     </div>
                 </div>
                 <div class="divider-line"></div>
                 <div class="card-bottom">
                     <div class="site-title">${this.escapeHtml(site.title)}</div>
                     <div class="site-description">${this.escapeHtml(site.description || '暂无描述')}</div>
-                    <button class="report-dead-link-btn" data-url="${site.url}" data-title="${this.escapeHtml(site.title)}">📢 报告死链</button>
                 </div>
             `;
             
+            // 绑定点击统计（点击卡片时，排除按钮区域）
             card.addEventListener('click', (e) => {
-                if (e.target.classList.contains('report-dead-link-btn')) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) {
                     return;
                 }
                 this.isNavigationClick = true;
