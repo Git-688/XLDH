@@ -1505,3 +1505,58 @@ select {
     color: var(--error-color);
 }
 /* ====== 日记模态框结束 ====== */
+
+
+/* 卡片顶部布局 */
+.site-card .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.site-card .card-top-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 报告死链按钮 - 带圆角三角形的样式 */
+.site-card .report-dead-link-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    transition: all 0.2s ease;
+    font-size: 16px;
+}
+
+.site-card .report-dead-link-btn i {
+    font-size: 16px;
+}
+
+.site-card .report-dead-link-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    transform: scale(1.05);
+}
+
+.site-card .report-dead-link-btn:active {
+    transform: scale(0.95);
+}
+
+/* 浏览量容器保持原有样式 */
+.site-card .views-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #64748b;
+}
