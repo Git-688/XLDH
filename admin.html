@@ -62,7 +62,7 @@
             flex:1;background:#f8fafc;border-radius:10px;
             padding:12px;
         }
-        .site-list,.rank-list,.bad-links-list{
+        .site-list,.rank-list,.bad-links-list,.feedback-list{
             overflow-y:auto;max-height:calc(100vh - 260px);
         }
 
@@ -201,6 +201,7 @@
             <div class="tab-btn active" data-tab="manage">数据管理</div>
             <div class="tab-btn" data-tab="check">死链检测</div>
             <div class="tab-btn" data-tab="rank">点击排行</div>
+            <div class="tab-btn" data-tab="feedback">用户反馈</div>
         </div>
 
         <div id="manageTab" class="tab-panel">
@@ -248,6 +249,14 @@
                 <span class="badge badge-blue">按点击量从高到低排列</span>
             </div>
             <div class="rank-list" id="rankList"></div>
+        </div>
+
+        <div id="feedbackTab" class="tab-panel hidden">
+            <div class="flex-row" style="margin-bottom:10px">
+                <button class="primary sm" id="refreshFeedbackBtn">刷新列表</button>
+                <span class="badge badge-blue">用户提交的失效链接</span>
+            </div>
+            <div class="feedback-list" id="feedbackList"></div>
         </div>
     </div>
 </div>
@@ -493,6 +502,50 @@
         }
     }
 
+    // 用户反馈相关
+    async function loadFeedback() {
+        const listEl = document.getElementById('feedbackList');
+        listEl.innerHTML = '<div class="empty">加载中...</div>';
+        try {
+            const res = await fetch(`${API_BASE}/admin/dead-link-reports`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (!data.length) {
+                listEl.innerHTML = '<div class="empty">暂无用户反馈</div>';
+                return;
+            }
+            listEl.innerHTML = data.map(item => `
+                <div class="link-item">
+                    <div class="link-info">
+                        <div>${escapeHtml(item.title || '无标题')}</div>
+                        <div class="link-url">${escapeHtml(item.url)}</div>
+                        <div style="font-size:10px; color:#999;">来自 ${item.reporter_ip} 于 ${new Date(item.report_time).toLocaleString()}</div>
+                    </div>
+                    <div class="link-actions">
+                        <button class="sm primary" onclick="markFeedbackDone(${item.id})">标记已处理</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (err) {
+            listEl.innerHTML = '<div class="empty">加载失败</div>';
+        }
+    }
+
+    async function markFeedbackDone(id) {
+        try {
+            await fetch(`${API_BASE}/admin/report-status/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ status: 'done' })
+            });
+            showToast('已标记处理', 'success');
+            loadFeedback();
+        } catch (err) {
+            showToast('操作失败', 'error');
+        }
+    }
+
     // 标签切换
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.onclick = () => {
@@ -503,6 +556,7 @@
             document.getElementById(`${tab}Tab`).classList.remove('hidden');
             if(tab === 'rank') loadRanking();
             if(tab === 'check') loadInvalidLinks();
+            if(tab === 'feedback') loadFeedback();
         }
     });
 
@@ -717,6 +771,7 @@
     document.getElementById('checkAllBtn').onclick=startCheckLinks;
     document.getElementById('refreshInvalidBtn').onclick=loadInvalidLinks;
     document.getElementById('sortRankBtn').onclick=loadRanking;
+    document.getElementById('refreshFeedbackBtn').onclick=loadFeedback;
     document.getElementById('tokenInput').addEventListener('keydown',e=>e.key==='Enter'&&login());
 
     if(token) login();
