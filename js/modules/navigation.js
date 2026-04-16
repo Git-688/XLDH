@@ -44,7 +44,7 @@ class OptimizedNavigation {
         const apiUrl = 'https://api.xldh688.eu.cc/navigation';
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
             const response = await fetch(apiUrl, { signal: controller.signal });
             clearTimeout(timeoutId);
             if (!response.ok) {
@@ -204,10 +204,16 @@ class OptimizedNavigation {
                 <div class="card-bottom">
                     <div class="site-title">${this.escapeHtml(site.title)}</div>
                     <div class="site-description">${this.escapeHtml(site.description || '暂无描述')}</div>
+                    <button class="report-dead-link-btn" data-url="${site.url}" data-title="${this.escapeHtml(site.title)}">📢 报告死链</button>
                 </div>
             `;
             
             card.addEventListener('click', (e) => {
+                if (e.target.classList.contains('report-dead-link-btn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
                 this.isNavigationClick = true;
                 e.stopPropagation();
                 e.stopImmediatePropagation();
@@ -239,6 +245,35 @@ class OptimizedNavigation {
                     }
                 }, 100);
             }, true);
+            
+            // 绑定报告死链按钮独立事件
+            const reportBtn = card.querySelector('.report-dead-link-btn');
+            if (reportBtn) {
+                reportBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const url = reportBtn.dataset.url;
+                    const title = reportBtn.dataset.title;
+                    try {
+                        const res = await fetch('https://api.xldh688.eu.cc/report-dead-link', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url, title })
+                        });
+                        if (res.ok) {
+                            if (window.toast) window.toast.show('已反馈，感谢您！', 'success');
+                            else alert('已反馈，感谢您！');
+                        } else {
+                            if (window.toast) window.toast.show('反馈失败，请稍后再试', 'error');
+                            else alert('反馈失败');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        if (window.toast) window.toast.show('网络错误', 'error');
+                        else alert('网络错误');
+                    }
+                });
+            }
             
             requestAnimationFrame(() => {
                 card.style.animation = 'fadeIn 0.2s ease forwards';
