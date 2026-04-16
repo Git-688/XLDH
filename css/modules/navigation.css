@@ -1304,7 +1304,7 @@
 
 
 
-/* ====================== 报告死链按钮样式 ====================== */
+/* ====================== 报告死链按钮样式（与眼睛图标大小一致） ====================== */
 
 /* 卡片顶部右侧区域布局 */
 .site-card .card-top {
@@ -1319,15 +1319,15 @@
     gap: 8px;
 }
 
-/* 报告死链按钮 - 带圆角三角形的样式 */
+/* 报告死链按钮 - 尺寸与眼睛图标区域一致 */
 .site-card .report-dead-link-btn {
     background: transparent;
     border: none;
     cursor: pointer;
     padding: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1337,8 +1337,10 @@
     flex-shrink: 0;
 }
 
+/* 按钮内的图标大小 = 按钮大小（视觉上填满） */
 .site-card .report-dead-link-btn i {
     font-size: 16px;
+    line-height: 1;
 }
 
 .site-card .report-dead-link-btn:hover {
@@ -1351,10 +1353,26 @@
     transform: scale(0.95);
 }
 
-/* 浏览量容器保持不变（如果原有样式已定义则无需修改） */
+/* 浏览量容器 - 保持与按钮同等高度 */
 .site-card .views-container {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 2px;
+    height: 28px;
+}
+
+/* 浏览量图标大小略微增大，与按钮图标协调 */
+.site-card .views-icon {
+    font-size: 14px;
+    color: var(--primary-color);
+}
+
+/* 浏览量数字大小 */
+.site-card .view-count {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    color: #4361ee;
 }
