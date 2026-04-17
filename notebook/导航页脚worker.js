@@ -1,17 +1,26 @@
-// Cloudflare Worker 完整版（Token 从环境变量读取）
-// 绑定 KV 变量名：STATS_KV
-// 绑定 D1 变量名：DB
-// 环境变量：ADMIN_TOKEN（在 Worker 设置中添加）
+// Cloudflare Worker 最终版（包含6项优化）
+// 绑定：STATS_KV，D1：DB，环境变量：ADMIN_TOKEN, API_HEZI_ID, API_HEZI_KEY
 
 const CONFIG = {
     ONLINE_TTL: 20 * 60 * 1000,
     ONLINE_UPDATE_INTERVAL: 15 * 60 * 1000,
     TIMEZONE_OFFSET: 8 * 60 * 60 * 1000,
+    RATE_LIMIT_WINDOW_MS: 60 * 1000,
+    RATE_LIMIT_PUBLIC_MAX: 120,
+    RATE_LIMIT_ADMIN_MAX: 20,
 };
 
-const ALLOW_ORIGIN = 'https://xldh688.eu.cc';
+const ALLOW_ORIGINS = [
+    'https://xldh688.eu.cc',
+    'https://www.xldh688.eu.cc',
+    'http://localhost:3000',
+];
 
-// 注意：ADMIN_TOKEN 不再硬编码，而是从环境变量 env.ADMIN_TOKEN 获取
+const NODES = [
+    { type: 1, name: '国内' },
+    { type: 2, name: '香港' },
+    { type: 3, name: '美国' }
+];
 
 // ================== 通用工具 ==================
 function getCurrentTimeMs() {
@@ -65,18 +74,7 @@ function formatUptime(ms) {
     return parts.join(" ") || "0秒";
 }
 
-// ================== 访问统计（D1 日志，30天自动清理） ==================
-// 需要在 D1 中创建 visit_logs 表：
-// CREATE TABLE IF NOT EXISTS visit_logs (
-//     id INTEGER PRIMARY KEY AUTOINCREMENT,
-//     visitor_id TEXT NOT NULL,
-//     timestamp INTEGER NOT NULL,
-//     date TEXT NOT NULL,
-//     is_unique INTEGER DEFAULT 1
-// );
-// CREATE INDEX idx_visit_logs_date ON visit_logs(date);
-// CREATE INDEX idx_visit_logs_visitor_date ON visit_logs(visitor_id, date);
-
+// ================== 访问统计（D1） ==================
 async function recordVisit(visitorId, db) {
     try {
         const now = Date.now();
@@ -104,8 +102,7 @@ async function getStats(db, kv) {
         ).bind(today).first();
         const totalPVResult = await db.prepare('SELECT COUNT(*) as count FROM visit_logs').first();
         const totalUVResult = await db.prepare('SELECT COUNT(DISTINCT visitor_id) as count FROM visit_logs').first();
-
-        const online = await getOnlineCount(kv);
+        let online = parseInt(await kv.get('online:count') || '0', 10);
         return {
             total_pv: totalPVResult?.count || 0,
             today_pv: todayPVResult?.count || 0,
@@ -114,26 +111,23 @@ async function getStats(db, kv) {
             online: online
         };
     } catch (err) {
-        console.error('getStats 失败:', err);
         return { total_pv: 0, today_pv: 0, today_uv: 0, total_uv: 0, online: 0 };
     }
 }
 
-// 清理 30 天前的访问日志
 async function cleanOldLogs(db) {
     try {
         const cutoffDate = new Date(getCurrentTimeMs() - 30 * 24 * 60 * 60 * 1000);
         const cutoffStr = cutoffDate.toISOString().slice(0, 10);
         const result = await db.prepare('DELETE FROM visit_logs WHERE date < ?').bind(cutoffStr).run();
-        console.log(`清理了 ${result.meta.changes} 条 30 天前的旧日志`);
+        console.log(`清理了 ${result.meta.changes} 条旧日志`);
         return result.meta.changes;
     } catch (e) {
-        console.error('清理旧日志失败:', e);
         return 0;
     }
 }
 
-// ================== 在线人数（KV） ==================
+// ================== 在线人数 ==================
 async function updateOnline(visitorId, kv) {
     try {
         const now = Date.now();
@@ -144,111 +138,239 @@ async function updateOnline(visitorId, kv) {
     } catch (e) {}
 }
 
-async function getOnlineCount(kv) {
+async function updateOnlineCountCache(kv) {
     try {
         const { keys } = await kv.list({ prefix: 'online:' });
         let online = 0;
         const now = Date.now();
         for (const key of keys) {
-            try {
-                const data = await kv.get(key.name, 'json');
-                if (data && (now - data.lastUpdate) < CONFIG.ONLINE_TTL) online++;
-            } catch (e) {}
+            const data = await kv.get(key.name, 'json');
+            if (data && (now - data.lastUpdate) < CONFIG.ONLINE_TTL) online++;
         }
+        await kv.put('online:count', online.toString());
+        console.log(`在线人数缓存更新：${online}`);
         return online;
     } catch (e) {
+        console.error('更新在线人数缓存失败', e);
         return 0;
     }
 }
 
-// ================== 点击统计（KV） ==================
+// ================== 点击统计（D1） ==================
+async function recordClick(url, title, db) {
+    if (!url) return 0;
+    try {
+        const site = await db.prepare('SELECT id, views FROM sites WHERE url = ?').bind(url).first();
+        if (!site) return 0;
+        const newViews = (site.views || 0) + 1;
+        await db.prepare('UPDATE sites SET views = ? WHERE id = ?').bind(newViews, site.id).run();
+        return newViews;
+    } catch (e) {
+        console.error('记录点击失败:', e);
+        return 0;
+    }
+}
+
+async function getTopClicks(db, limit = 10) {
+    try {
+        const { results } = await db.prepare(
+            'SELECT id, title, url, views FROM sites ORDER BY views DESC LIMIT ?'
+        ).bind(limit).all();
+        return results.map(site => ({
+            url: site.url,
+            title: site.title,
+            count: site.views || 0
+        }));
+    } catch (e) {
+        return [];
+    }
+}
+
+// ================== 速率限制（细化） ==================
+async function rateLimit(request, db) {
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const url = new URL(request.url);
+    const isAdmin = url.pathname.startsWith('/admin');
+    const maxRequests = isAdmin ? CONFIG.RATE_LIMIT_ADMIN_MAX : CONFIG.RATE_LIMIT_PUBLIC_MAX;
+    const now = Math.floor(Date.now() / 1000);
+    const windowSec = CONFIG.RATE_LIMIT_WINDOW_MS / 1000;
+
+    try {
+        let record = await db.prepare(
+            'SELECT count, reset_time FROM rate_limit WHERE ip = ?'
+        ).bind(ip).first();
+
+        if (!record) {
+            await db.prepare(
+                'INSERT INTO rate_limit (ip, count, reset_time) VALUES (?, 1, ?)'
+            ).bind(ip, now + windowSec).run();
+            return { allowed: true };
+        }
+
+        if (now > record.reset_time) {
+            await db.prepare(
+                'UPDATE rate_limit SET count = 1, reset_time = ? WHERE ip = ?'
+            ).bind(now + windowSec, ip).run();
+            return { allowed: true };
+        }
+
+        if (record.count >= maxRequests) {
+            const retryAfter = record.reset_time - now;
+            return { allowed: false, retryAfter };
+        }
+
+        await db.prepare(
+            'UPDATE rate_limit SET count = count + 1 WHERE ip = ?'
+        ).bind(ip).run();
+        return { allowed: true };
+    } catch (e) {
+        console.error('限流检查失败:', e);
+        return { allowed: true };
+    }
+}
+
+// ================== 死链检测（多节点并发） ==================
 function normalizeClickUrl(url) {
     try {
         let u = new URL(url);
         let host = u.hostname.replace(/^www\./, '');
         let path = u.pathname.replace(/\/$/, '');
         return `${host}${path}`;
-    } catch { return url; }
-}
-
-async function recordClick(url, title, kv) {
-    if (!url) return;
-    try {
-        const normalized = normalizeClickUrl(url);
-        const key = `click:${normalized}`;
-        let count = parseInt(await kv.get(key) || '0', 10);
-        count++;
-        await kv.put(key, count.toString());
-        const titleKey = `click_title:${normalized}`;
-        const existingTitle = await kv.get(titleKey);
-        if (!existingTitle && title) await kv.put(titleKey, title);
-        return count;
-    } catch (e) {
-        return 0;
+    } catch {
+        return url;
     }
 }
 
-async function getTopClicks(kv, limit = 10) {
-    try {
-        const { keys } = await kv.list({ prefix: 'click:' });
-        const clicks = [];
-        for (const key of keys) {
-            if (key.name.startsWith('click_title:')) continue;
-            const normalized = key.name.substring(6);
-            const count = parseInt(await kv.get(key.name) || '0', 10);
-            const titleKey = `click_title:${normalized}`;
-            const title = await kv.get(titleKey) || normalized;
-            clicks.push({ url: normalized, title, count });
-        }
-        clicks.sort((a, b) => b.count - a.count);
-        return clicks.slice(0, limit);
-    } catch (e) {
-        return [];
-    }
-}
+async function checkNode(url, node, apiId, apiKey) {
+    const apiUrl = new URL('https://cn.apihz.cn/api/wangzhan/getcode.php');
+    const params = new URLSearchParams({
+        id: apiId,
+        key: apiKey,
+        url: url,
+        type: node.type.toString()
+    });
+    apiUrl.search = params.toString();
 
-// ================== 死链检测（KV） ==================
-async function checkLinkValidity(url, kv) {
-    const normalized = normalizeClickUrl(url);
-    const key = `link_status:${normalized}`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    let valid = false, statusCode = 0;
     try {
-        const res = await fetch(url, { method: 'HEAD', signal: controller.signal });
-        statusCode = res.status;
-        valid = res.ok;
-    } catch (err) {
-        valid = false;
-        statusCode = 0;
-    } finally {
+        const response = await fetch(apiUrl.toString(), { signal: controller.signal });
         clearTimeout(timeoutId);
+        const result = await response.json();
+        if (result.code === 200) {
+            const statusCode = parseInt(result.msg, 10);
+            const valid = (statusCode >= 200 && statusCode < 400);
+            return { node: node.name, valid, statusCode, error: null };
+        } else {
+            return { node: node.name, valid: false, statusCode: 0, error: result.msg };
+        }
+    } catch (error) {
+        clearTimeout(timeoutId);
+        return { node: node.name, valid: false, statusCode: 0, error: error.message };
     }
-    const data = { valid, lastCheck: Date.now(), statusCode };
-    await kv.put(key, JSON.stringify(data));
-    return data;
 }
 
-async function checkAllLinks(db, kv, reportProgress = false) {
+async function checkLinkValidity(url, kv, env) {
+    const normalized = normalizeClickUrl(url);
+    const cacheKey = `link_status:${normalized}`;
+
+    const cached = await kv.get(cacheKey, 'json');
+    if (cached && (Date.now() - cached.lastCheck) < 7 * 24 * 3600 * 1000) {
+        return { valid: cached.valid, statusCode: cached.statusCode, node: cached.node };
+    }
+
+    const apiId = env.API_HEZI_ID;
+    const apiKey = env.API_HEZI_KEY;
+    if (!apiId || !apiKey) {
+        console.error('API_HEZI_ID 或 API_HEZI_KEY 未设置');
+        return { valid: false, statusCode: 0, node: 'none' };
+    }
+
+    const promises = NODES.map(node => checkNode(url, node, apiId, apiKey));
+    const results = await Promise.all(promises);
+    const successResult = results.find(r => r.valid === true);
+    if (successResult) {
+        const { node, statusCode } = successResult;
+        await kv.put(cacheKey, JSON.stringify({ valid: true, lastCheck: Date.now(), statusCode, node }), { expirationTtl: 7 * 86400 });
+        return { valid: true, statusCode, node };
+    } else {
+        const lastResult = results[results.length - 1];
+        const statusCode = lastResult?.statusCode || 0;
+        await kv.put(cacheKey, JSON.stringify({ valid: false, lastCheck: Date.now(), statusCode, node: '所有节点均失败' }), { expirationTtl: 7 * 86400 });
+        return { valid: false, statusCode, node: '所有节点均失败' };
+    }
+}
+
+async function checkAllLinks(db, kv, env, reportProgress = false, concurrency = 5) {
     try {
         const { results } = await db.prepare('SELECT DISTINCT url FROM sites').all();
         const urls = results.map(r => r.url);
+        const total = urls.length;
         let checked = 0;
+        let index = 0;
+        const errors = [];
+
         if (reportProgress) {
-            await kv.put('link_check_progress', JSON.stringify({ total: urls.length, checked: 0 }));
+            await kv.put('link_check_progress', JSON.stringify({ total, checked: 0 }));
         }
-        for (const url of urls) {
-            await checkLinkValidity(url, kv);
-            checked++;
-            if (reportProgress) {
-                await kv.put('link_check_progress', JSON.stringify({ total: urls.length, checked }));
+
+        const runTask = async () => {
+            while (index < total) {
+                const i = index++;
+                const url = urls[i];
+                try {
+                    await checkLinkValidity(url, kv, env);
+                } catch (err) {
+                    errors.push({ url, err: err.message });
+                } finally {
+                    checked++;
+                    if (reportProgress) {
+                        await kv.put('link_check_progress', JSON.stringify({ total, checked }));
+                    }
+                }
             }
-            await new Promise(r => setTimeout(r, 200));
+        };
+
+        const workers = [];
+        for (let i = 0; i < Math.min(concurrency, total); i++) {
+            workers.push(runTask());
         }
+        await Promise.all(workers);
+
         if (reportProgress) await kv.delete('link_check_progress');
-        return { total: urls.length, checked };
-    } catch (e) {
-        return { total: 0, checked: 0 };
+        return { total, checked, errors };
+    } catch (err) {
+        console.error('批量检测失败', err);
+        return { total: 0, checked: 0, errors: [] };
+    }
+}
+
+async function recheckInvalidLinks(db, kv, env) {
+    try {
+        const { keys } = await kv.list({ prefix: 'link_status:' });
+        const invalidKeys = [];
+        for (const key of keys) {
+            const data = await kv.get(key.name, 'json');
+            if (data && !data.valid) {
+                invalidKeys.push(key.name);
+            }
+        }
+        console.log(`找到 ${invalidKeys.length} 个失效链接，开始重新检测...`);
+        let rechecked = 0;
+        for (const key of invalidKeys) {
+            const normalized = key.substring(12);
+            const site = await db.prepare('SELECT url FROM sites WHERE url LIKE ?').bind(`%${normalized}%`).first();
+            if (site && site.url) {
+                await checkLinkValidity(site.url, kv, env);
+                rechecked++;
+                await new Promise(r => setTimeout(r, 200));
+            }
+        }
+        console.log(`重新检测完成，共检测 ${rechecked} 个链接`);
+        return { total: invalidKeys.length, rechecked };
+    } catch (err) {
+        console.error('自动重新检测失效链接失败', err);
+        return { total: 0, rechecked: 0 };
     }
 }
 
@@ -265,12 +387,13 @@ async function getInvalidLinks(kv, db) {
                     url: site?.url || normalized,
                     title: site?.title || normalized,
                     statusCode: data.statusCode,
-                    lastCheck: data.lastCheck
+                    lastCheck: data.lastCheck,
+                    node: data.node
                 });
             }
         }
         return invalid;
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -279,37 +402,75 @@ async function getCheckProgress(kv) {
     try {
         const progress = await kv.get('link_check_progress', 'json');
         return progress || { total: 0, checked: 0 };
-    } catch (e) {
+    } catch {
         return { total: 0, checked: 0 };
     }
 }
 
-// ================== 导航快照（KV 存储） ==================
-async function getNavigationData(db, kv) {
+// ================== 用户反馈死链 ==================
+async function reportDeadLink(url, title, request, db) {
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const reportTime = Date.now();
+    try {
+        await db.prepare(
+            'INSERT INTO dead_link_reports (url, title, reporter_ip, report_time, status) VALUES (?, ?, ?, ?, ?)'
+        ).bind(url, title || '', ip, reportTime, 'pending').run();
+        return true;
+    } catch (e) {
+        console.error('记录死链反馈失败:', e);
+        return false;
+    }
+}
+
+async function getDeadLinkReports(db, status = 'pending') {
+    try {
+        const { results } = await db.prepare(
+            'SELECT id, url, title, reporter_ip, report_time, status FROM dead_link_reports WHERE status = ? ORDER BY report_time DESC'
+        ).bind(status).all();
+        return results;
+    } catch (e) {
+        console.error('查询死链反馈失败:', e);
+        return [];
+    }
+}
+
+async function updateReportStatus(id, newStatus, db) {
+    try {
+        await db.prepare('UPDATE dead_link_reports SET status = ? WHERE id = ?').bind(newStatus, id).run();
+        return true;
+    } catch (e) {
+        console.error('更新反馈状态失败:', e);
+        return false;
+    }
+}
+
+// ================== 导航数据缓存 ==================
+async function generateNavigationSnapshot(db, kv) {
+    try {
+        const data = await getNavigationData(db);
+        await kv.put('navigation:snapshot', JSON.stringify(data));
+        await kv.put('navigation:snapshot_time', Date.now().toString());
+        console.log('导航快照已生成');
+        return data;
+    } catch (e) {
+        console.error('生成导航快照失败', e);
+        return null;
+    }
+}
+
+async function getNavigationData(db) {
     try {
         const { results: categories } = await db.prepare('SELECT * FROM categories ORDER BY display_order ASC').all();
         const { results: subcategories } = await db.prepare('SELECT * FROM subcategories ORDER BY category_id, display_order ASC').all();
         const { results: sites } = await db.prepare('SELECT * FROM sites ORDER BY subcategory_id, display_order ASC').all();
 
-        // 批量并发读取 KV
-        const clickPromises = sites.map(site => {
-            const key = `click:${normalizeClickUrl(site.url)}`;
-            return kv.get(key).then(v => parseInt(v || '0', 10)).catch(() => 0);
-        });
-        const statusPromises = sites.map(site => {
-            const key = `link_status:${normalizeClickUrl(site.url)}`;
-            return kv.get(key, 'json').catch(() => null);
-        });
-        const [clicks, statuses] = await Promise.all([Promise.all(clickPromises), Promise.all(statusPromises)]);
-
         const siteMap = new Map();
-        for (let i = 0; i < sites.length; i++) {
-            const s = sites[i];
-            if (!siteMap.has(s.subcategory_id)) siteMap.set(s.subcategory_id, []);
-            siteMap.get(s.subcategory_id).push({
-                ...s,
-                views: clicks[i],
-                valid: statuses[i] ? statuses[i].valid : true
+        for (const site of sites) {
+            if (!siteMap.has(site.subcategory_id)) siteMap.set(site.subcategory_id, []);
+            siteMap.get(site.subcategory_id).push({
+                ...site,
+                views: site.views || 0,
+                valid: true
             });
         }
 
@@ -331,42 +492,56 @@ async function getNavigationData(db, kv) {
             result.categoryIcons[cat.name] = cat.icon || 'fas fa-folder';
         }
         return result;
-    } catch (err) {
-        console.error('getNavigationData 失败', err);
+    } catch (e) {
+        console.error('获取导航数据失败', e);
         return { categories: {}, descriptions: {}, categoryIcons: {} };
     }
 }
 
-async function generateNavigationSnapshot(db, kv) {
+// ================== 定期清理KV过期键 ==================
+async function cleanExpiredKVKeys(kv) {
     try {
-        const data = await getNavigationData(db, kv);
-        await kv.put('navigation:snapshot', JSON.stringify(data));
-        await kv.put('navigation:snapshot_time', Date.now().toString());
-        return data;
-    } catch (err) {
-        console.error('生成快照失败', err);
-        return null;
+        const prefixes = ['link_status:', 'online:'];
+        let totalDeleted = 0;
+        for (const prefix of prefixes) {
+            const { keys } = await kv.list({ prefix });
+            for (const key of keys) {
+                if (prefix === 'online:') {
+                    const data = await kv.get(key.name, 'json');
+                    if (data && (Date.now() - data.lastUpdate) > CONFIG.ONLINE_TTL) {
+                        await kv.delete(key.name);
+                        totalDeleted++;
+                    }
+                } else if (prefix === 'link_status:') {
+                    const data = await kv.get(key.name, 'json');
+                    if (data && (Date.now() - data.lastCheck) > 30 * 24 * 3600 * 1000) {
+                        await kv.delete(key.name);
+                        totalDeleted++;
+                    }
+                }
+            }
+        }
+        console.log(`清理KV过期键完成，共删除 ${totalDeleted} 个`);
+        return totalDeleted;
+    } catch (e) {
+        console.error('清理KV过期键失败', e);
+        return 0;
     }
 }
 
-// ================== 管理API鉴权（使用环境变量中的 ADMIN_TOKEN） ==================
-async function checkAuth(request, env) {
-    const auth = request.headers.get('Authorization');
-    const adminToken = env.ADMIN_TOKEN;  // 从环境变量读取
-    if (!adminToken) {
-        console.error('ADMIN_TOKEN 未在环境变量中设置');
-        return corsResponse({ error: 'Server configuration error' }, 500);
+// ================== CORS（动态白名单） ==================
+function corsResponse(body = null, status = 200, request = null) {
+    let origin = '*';
+    if (request) {
+        const reqOrigin = request.headers.get('Origin');
+        if (reqOrigin && ALLOW_ORIGINS.includes(reqOrigin)) {
+            origin = reqOrigin;
+        }
     }
-    if (auth !== `Bearer ${adminToken}`) return corsResponse({ error: 'Unauthorized' }, 401);
-    return null;
-}
-
-// ================== CORS ==================
-function corsResponse(body = null, status = 200) {
     return new Response(body ? JSON.stringify(body) : null, {
         status,
         headers: {
-            'Access-Control-Allow-Origin': ALLOW_ORIGIN,
+            'Access-Control-Allow-Origin': origin,
             'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type,Authorization',
             'Access-Control-Max-Age': '86400',
@@ -374,39 +549,63 @@ function corsResponse(body = null, status = 200) {
         },
     });
 }
-
-function handleOptions() {
-    return corsResponse(null, 204);
+function handleOptions(request) {
+    let origin = '*';
+    const reqOrigin = request.headers.get('Origin');
+    if (reqOrigin && ALLOW_ORIGINS.includes(reqOrigin)) {
+        origin = reqOrigin;
+    }
+    return new Response(null, {
+        status: 204,
+        headers: {
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+            'Access-Control-Max-Age': '86400',
+        },
+    });
 }
 
-// ================== 分类 CRUD ==================
+// ================== 管理鉴权 ==================
+async function checkAuth(request, env) {
+    const auth = request.headers.get('Authorization');
+    const adminToken = env.ADMIN_TOKEN;
+    if (!adminToken) {
+        console.error('ADMIN_TOKEN 未设置');
+        return corsResponse({ error: 'Server config error' }, 500, request);
+    }
+    if (auth !== `Bearer ${adminToken}`) return corsResponse({ error: 'Unauthorized' }, 401, request);
+    return null;
+}
+
+// ================== CRUD 函数 ==================
 async function handleCategories(request, db, method, reqUrl, env) {
     const authRes = await checkAuth(request, env);
     if (authRes) return authRes;
     if (method === 'GET') {
         const { results } = await db.prepare('SELECT * FROM categories ORDER BY display_order ASC').all();
-        return corsResponse(results);
+        return corsResponse(results, 200, request);
     }
     if (method === 'POST') {
         const { name, icon, description, display_order } = await request.json();
-        if (!name) return corsResponse({ error: 'Missing name' }, 400);
+        if (!name) return corsResponse({ error: 'Missing name' }, 400, request);
         await db.prepare('INSERT INTO categories (name,icon,description,display_order) VALUES (?,?,?,?)')
             .bind(name, icon || null, description || null, display_order || 0).run();
-        return corsResponse({ success: true });
+        return corsResponse({ success: true }, 200, request);
     }
     if (method === 'PUT') {
         const id = parseInt(reqUrl.pathname.split('/').pop());
         const { name, icon, description, display_order } = await request.json();
         await db.prepare('UPDATE categories SET name=COALESCE(?,name),icon=COALESCE(?,icon),description=COALESCE(?,description),display_order=COALESCE(?,display_order) WHERE id=?')
             .bind(name || null, icon || null, description || null, display_order !== undefined ? display_order : null, id).run();
-        return corsResponse({ success: true });
+        return corsResponse({ success: true }, 200, request);
     }
     if (method === 'DELETE') {
         const id = parseInt(reqUrl.pathname.split('/').pop());
         await db.prepare('DELETE FROM categories WHERE id=?').bind(id).run();
-        return corsResponse({ success: true });
+        return corsResponse({ success: true }, 200, request);
     }
-    return corsResponse({ error: 'Method Not Allowed' }, 405);
+    return corsResponse({ error: 'Method Not Allowed' }, 405, request);
 }
 
 async function handleSubcategories(request, db, method, reqUrl, env) {
@@ -417,28 +616,28 @@ async function handleSubcategories(request, db, method, reqUrl, env) {
         const stmt = cid ? db.prepare('SELECT * FROM subcategories WHERE category_id=? ORDER BY display_order ASC').bind(parseInt(cid))
             : db.prepare('SELECT * FROM subcategories ORDER BY category_id,display_order');
         const { results } = await stmt.all();
-        return corsResponse(results);
+        return corsResponse(results, 200, request);
     }
     if (method === 'POST') {
         const { category_id, name, display_order } = await request.json();
-        if (!category_id || !name) return corsResponse({ error: 'Missing required fields' }, 400);
+        if (!category_id || !name) return corsResponse({ error: 'Missing required fields' }, 400, request);
         await db.prepare('INSERT INTO subcategories (category_id,name,display_order) VALUES (?,?,?)')
             .bind(category_id, name, display_order || 0).run();
-        return corsResponse({ success: true });
+        return corsResponse({ success: true }, 200, request);
     }
     if (method === 'PUT') {
         const id = parseInt(reqUrl.pathname.split('/').pop());
         const { name, display_order } = await request.json();
         await db.prepare('UPDATE subcategories SET name=COALESCE(?,name),display_order=COALESCE(?,display_order) WHERE id=?')
             .bind(name || null, display_order !== undefined ? display_order : null, id).run();
-        return corsResponse({ success: true });
+        return corsResponse({ success: true }, 200, request);
     }
     if (method === 'DELETE') {
         const id = parseInt(reqUrl.pathname.split('/').pop());
         await db.prepare('DELETE FROM subcategories WHERE id=?').bind(id).run();
-        return corsResponse({ success: true });
+        return corsResponse({ success: true }, 200, request);
     }
-    return corsResponse({ error: 'Method Not Allowed' }, 405);
+    return corsResponse({ error: 'Method Not Allowed' }, 405, request);
 }
 
 async function handleSites(request, db, method, reqUrl, env) {
@@ -449,28 +648,28 @@ async function handleSites(request, db, method, reqUrl, env) {
         const stmt = sid ? db.prepare('SELECT * FROM sites WHERE subcategory_id=? ORDER BY display_order ASC').bind(parseInt(sid))
             : db.prepare('SELECT * FROM sites ORDER BY subcategory_id,display_order');
         const { results } = await stmt.all();
-        return corsResponse(results);
+        return corsResponse(results, 200, request);
     }
     if (method === 'POST') {
         const { subcategory_id, title, url: siteUrl, description, icon, display_order } = await request.json();
-        if (!subcategory_id || !title || !siteUrl) return corsResponse({ error: 'Missing required fields' }, 400);
+        if (!subcategory_id || !title || !siteUrl) return corsResponse({ error: 'Missing required fields' }, 400, request);
         await db.prepare('INSERT INTO sites (subcategory_id,title,url,description,icon,display_order) VALUES (?,?,?,?,?,?)')
             .bind(subcategory_id, title, siteUrl, description || null, icon || null, display_order || 0).run();
-        return corsResponse({ success: true });
+        return corsResponse({ success: true }, 200, request);
     }
     if (method === 'PUT') {
         const id = parseInt(reqUrl.pathname.split('/').pop());
         const { title, url: siteUrl, description, icon, display_order } = await request.json();
         await db.prepare('UPDATE sites SET title=COALESCE(?,title),url=COALESCE(?,url),description=COALESCE(?,description),icon=COALESCE(?,icon),display_order=COALESCE(?,display_order) WHERE id=?')
             .bind(title || null, siteUrl || null, description || null, icon || null, display_order !== undefined ? display_order : null, id).run();
-        return corsResponse({ success: true });
+        return corsResponse({ success: true }, 200, request);
     }
     if (method === 'DELETE') {
         const id = parseInt(reqUrl.pathname.split('/').pop());
         await db.prepare('DELETE FROM sites WHERE id=?').bind(id).run();
-        return corsResponse({ success: true });
+        return corsResponse({ success: true }, 200, request);
     }
-    return corsResponse({ error: 'Method Not Allowed' }, 405);
+    return corsResponse({ error: 'Method Not Allowed' }, 405, request);
 }
 
 // ================== 主路由 ==================
@@ -478,92 +677,138 @@ export default {
     async scheduled(event, env, ctx) {
         const kv = env.STATS_KV;
         const db = env.DB;
-        // 每小时刷新导航快照
-        await generateNavigationSnapshot(db, kv);
-        // 每天凌晨 3 点执行清理（需要配合 Cron 表达式 '0 3 * * *'）
+
+        if (event.cron === '*/5 * * * *') {
+            await generateNavigationSnapshot(db, kv);
+        }
+        if (event.cron === '*/10 * * * *') {
+            await updateOnlineCountCache(kv);
+        }
+        if (event.cron === '0 4 * * *') {
+            await recheckInvalidLinks(db, kv, env);
+        }
         if (event.cron === '0 3 * * *') {
             await cleanOldLogs(db);
         }
+        if (event.cron === '0 2 * * 0') {
+            await cleanExpiredKVKeys(kv);
+        }
     },
+
     async fetch(request, env, ctx) {
         const kv = env.STATS_KV;
         const db = env.DB;
         const { method } = request;
         const reqUrl = new URL(request.url);
 
-        if (method === 'OPTIONS') return handleOptions();
+        if (method === 'OPTIONS') return handleOptions(request);
+
+        const limit = await rateLimit(request, db);
+        if (!limit.allowed) {
+            return new Response(JSON.stringify({ error: 'Too Many Requests', retryAfter: limit.retryAfter }), {
+                status: 429,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Retry-After': limit.retryAfter,
+                    'Access-Control-Allow-Origin': (() => {
+                        const origin = request.headers.get('Origin');
+                        return origin && ALLOW_ORIGINS.includes(origin) ? origin : '*';
+                    })(),
+                },
+            });
+        }
 
         // 公开接口
         if (method === 'POST' && reqUrl.pathname === '/visit') {
             await recordVisit(getVisitorId(request), db);
-            return corsResponse({ success: true });
+            return corsResponse({ success: true }, 200, request);
         }
         if (method === 'POST' && reqUrl.pathname === '/heartbeat') {
             await updateOnline(getVisitorId(request), kv);
-            return corsResponse({ success: true });
+            return corsResponse({ success: true }, 200, request);
         }
         if (method === 'GET' && reqUrl.pathname === '/stats') {
-            return corsResponse(await getStats(db, kv));
+            let stats = await getStats(db, kv);
+            if (stats.online === 0) {
+                const realOnline = await updateOnlineCountCache(kv);
+                if (realOnline > 0) stats = await getStats(db, kv);
+            }
+            const res = corsResponse(stats, 200, request);
+            res.headers.set('Cache-Control', 'public, max-age=60');
+            return res;
         }
         if (method === 'GET' && reqUrl.pathname === '/uptime') {
-            return corsResponse(await getUptime(kv));
+            return corsResponse(await getUptime(kv), 200, request);
         }
         if (method === 'POST' && reqUrl.pathname === '/click') {
             const { url, title } = await request.json();
-            return corsResponse({ success: true, count: await recordClick(url, title, kv) });
+            const newCount = await recordClick(url, title, db);
+            return corsResponse({ success: true, count: newCount }, 200, request);
         }
         if (method === 'GET' && reqUrl.pathname === '/navigation') {
             let snapshot = await kv.get('navigation:snapshot', 'json');
             if (!snapshot) {
                 snapshot = await generateNavigationSnapshot(db, kv);
             }
-            const res = corsResponse(snapshot || { categories: {}, descriptions: {}, categoryIcons: {} });
-            res.headers.set('Cache-Control', 'public, max-age=60');
+            const res = corsResponse(snapshot || { categories: {}, descriptions: {}, categoryIcons: {} }, 200, request);
+            res.headers.set('Cache-Control', 'public, max-age=300');
             return res;
         }
+        if (method === 'POST' && reqUrl.pathname === '/report-dead-link') {
+            const { url, title } = await request.json();
+            if (!url) return corsResponse({ error: 'Missing url' }, 400, request);
+            const success = await reportDeadLink(url, title, request, db);
+            return corsResponse({ success }, 200, request);
+        }
 
-        // 管理接口（需要鉴权）
+        // 管理接口
         if (reqUrl.pathname === '/admin/topclicks' && method === 'GET') {
             const authRes = await checkAuth(request, env);
             if (authRes) return authRes;
-            const limit = parseInt(reqUrl.searchParams.get('limit') || '10', 10);
-            const top = await getTopClicks(kv, limit);
-            return corsResponse(top);
+            const limitNum = parseInt(reqUrl.searchParams.get('limit') || '10', 10);
+            return corsResponse(await getTopClicks(db, limitNum), 200, request);
         }
         if (reqUrl.pathname === '/admin/check-links' && method === 'POST') {
             const authRes = await checkAuth(request, env);
             if (authRes) return authRes;
-            ctx.waitUntil(checkAllLinks(db, kv, true));
-            return corsResponse({ success: true, message: '检测已开始' });
+            ctx.waitUntil(checkAllLinks(db, kv, env, true, 5));
+            return corsResponse({ success: true, message: '检测已开始' }, 200, request);
         }
         if (reqUrl.pathname === '/admin/invalid-links' && method === 'GET') {
             const authRes = await checkAuth(request, env);
             if (authRes) return authRes;
-            const invalid = await getInvalidLinks(kv, db);
-            return corsResponse(invalid);
+            return corsResponse(await getInvalidLinks(kv, db), 200, request);
         }
         if (reqUrl.pathname === '/admin/check-progress' && method === 'GET') {
             const authRes = await checkAuth(request, env);
             if (authRes) return authRes;
-            const progress = await getCheckProgress(kv);
-            return corsResponse(progress);
+            return corsResponse(await getCheckProgress(kv), 200, request);
         }
         if (reqUrl.pathname === '/admin/refresh-navigation' && method === 'POST') {
             const authRes = await checkAuth(request, env);
             if (authRes) return authRes;
             ctx.waitUntil(generateNavigationSnapshot(db, kv));
-            return corsResponse({ success: true, message: '快照刷新中' });
+            return corsResponse({ success: true, message: '快照刷新中' }, 200, request);
         }
-        if (reqUrl.pathname.startsWith('/admin/categories')) {
-            return handleCategories(request, db, method, reqUrl, env);
+        if (reqUrl.pathname === '/admin/dead-link-reports' && method === 'GET') {
+            const authRes = await checkAuth(request, env);
+            if (authRes) return authRes;
+            const reports = await getDeadLinkReports(db, 'pending');
+            return corsResponse(reports, 200, request);
         }
-        if (reqUrl.pathname.startsWith('/admin/subcategories')) {
-            return handleSubcategories(request, db, method, reqUrl, env);
-        }
-        if (reqUrl.pathname.startsWith('/admin/sites')) {
-            return handleSites(request, db, method, reqUrl, env);
+        if (reqUrl.pathname.startsWith('/admin/report-status/') && method === 'PUT') {
+            const authRes = await checkAuth(request, env);
+            if (authRes) return authRes;
+            const id = parseInt(reqUrl.pathname.split('/').pop());
+            const { status } = await request.json();
+            await updateReportStatus(id, status, db);
+            return corsResponse({ success: true }, 200, request);
         }
 
-        return corsResponse({ error: 'Not Found' }, 404);
+        if (reqUrl.pathname.startsWith('/admin/categories')) return handleCategories(request, db, method, reqUrl, env);
+        if (reqUrl.pathname.startsWith('/admin/subcategories')) return handleSubcategories(request, db, method, reqUrl, env);
+        if (reqUrl.pathname.startsWith('/admin/sites')) return handleSites(request, db, method, reqUrl, env);
+
+        return corsResponse({ error: 'Not Found' }, 404, request);
     }
 };
