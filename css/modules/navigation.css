@@ -1304,11 +1304,11 @@
 
 
 
-/* ====================== 报告死链按钮样式（完全透明背景） ====================== */
+/* ====================== 报告死链按钮样式（与眼睛图标水平精确居中） ====================== */
 
 .site-card .card-top {
     display: flex;
-    justify-content: space-between;
+    justify-align: space-between;
     align-items: center;
 }
 
@@ -1319,7 +1319,7 @@
 }
 
 .site-card .report-dead-link-btn {
-    background: transparent !important;   /* 始终透明 */
+    background: transparent;
     border: none;
     cursor: pointer;
     padding: 0;
@@ -1334,6 +1334,8 @@
     font-size: 14px;
     flex-shrink: 0;
     line-height: 1;
+    /* 微调垂直位置，根据实际效果调整 */
+    transform: translateY(1px);  /* 如果按钮偏上，改为 translateY(1px)；偏下则改为 -1px */
 }
 
 .site-card .report-dead-link-btn i {
@@ -1342,21 +1344,22 @@
 }
 
 .site-card .report-dead-link-btn:hover {
-    background: transparent !important;   /* 悬停无背景 */
+    background: transparent;
     color: #ef4444;
-    transform: scale(1.1);
+    transform: scale(1.1) translateY(1px);
 }
 
 .site-card .report-dead-link-btn:active {
-    background: transparent !important;   /* 激活无背景 */
-    transform: scale(0.95);
+    transform: scale(0.95) translateY(1px);
 }
 
+/* 浏览量容器 - 保持原有布局 */
 .site-card .views-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    line-height: 1; /* 避免额外行高影响 */
 }
 
 .site-card .views-icon {
