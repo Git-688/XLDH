@@ -1302,10 +1302,9 @@
     }
 }
 
+/* ====================== 报告死链按钮最终样式 ====================== */
 
-
-/* ====================== 报告死链按钮样式（使用 relative 偏移，避免点击时复位） ====================== */
-
+/* 卡片顶部右侧区域布局（覆盖原有 .card-top 样式，仅补充） */
 .site-card .card-top {
     display: flex;
     justify-content: space-between;
@@ -1318,6 +1317,7 @@
     gap: 6px;
 }
 
+/* 报告死链按钮：14×14，图标14px，向上偏移8px，无背景色 */
 .site-card .report-dead-link-btn {
     background: transparent;
     border: none;
@@ -1334,9 +1334,8 @@
     font-size: 14px;
     flex-shrink: 0;
     line-height: 1;
-    /* 使用 relative + top 偏移，不受 transform 影响 */
     position: relative;
-    top: -8px;  /* 向上偏移10px，可根据需要调整 */
+    top: -8px;
 }
 
 .site-card .report-dead-link-btn i {
@@ -1354,6 +1353,7 @@
     transform: scale(0.95);
 }
 
+/* 浏览量容器（覆盖原有 .views-container 样式，确保眼睛和数字为14px） */
 .site-card .views-container {
     display: flex;
     flex-direction: column;
@@ -1362,12 +1362,12 @@
 }
 
 .site-card .views-icon {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--primary-color);
 }
 
 .site-card .view-count {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
     line-height: 1;
     color: #4361ee;
