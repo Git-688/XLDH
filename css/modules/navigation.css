@@ -1304,9 +1304,8 @@
 
 
 
-/* ====================== 报告死链按钮样式（14×14，与眼睛图标大小一致） ====================== */
+/* ====================== 报告死链按钮样式（完全透明背景） ====================== */
 
-/* 卡片顶部右侧区域布局 */
 .site-card .card-top {
     display: flex;
     justify-content: space-between;
@@ -1316,61 +1315,55 @@
 .site-card .card-top-right {
     display: flex;
     align-items: center;
-    gap: 6px;  /* 适当减小间距 */
+    gap: 6px;
 }
 
-/* 报告死链按钮 - 14×14 像素 */
 .site-card .report-dead-link-btn {
-    background: transparent;
+    background: transparent !important;   /* 始终透明 */
     border: none;
     cursor: pointer;
     padding: 0;
     width: 14px;
     height: 14px;
-    border-radius: 3px;  /* 小圆角 */
+    border-radius: 3px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     color: #94a3b8;
     transition: all 0.2s ease;
-    font-size: 14px;      /* 图标大小 = 按钮大小 */
+    font-size: 14px;
     flex-shrink: 0;
     line-height: 1;
 }
 
-/* 按钮内的图标填满按钮 */
 .site-card .report-dead-link-btn i {
     font-size: 14px;
     line-height: 1;
 }
 
 .site-card .report-dead-link-btn:hover {
-    background: rgba(239, 68, 68, 0.15);
+    background: transparent !important;   /* 悬停无背景 */
     color: #ef4444;
     transform: scale(1.1);
 }
 
 .site-card .report-dead-link-btn:active {
-    transform: scale(0.9);
+    background: transparent !important;   /* 激活无背景 */
+    transform: scale(0.95);
 }
 
-/* 浏览量容器 - 保持对齐 */
 .site-card .views-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    height: 28px;  /* 保持原有高度，避免布局跳动 */
 }
 
-/* 浏览量图标大小 */
 .site-card .views-icon {
     font-size: 12px;
     color: var(--primary-color);
 }
 
-/* 浏览量数字大小 */
 .site-card .view-count {
     font-size: 12px;
     font-weight: 700;
