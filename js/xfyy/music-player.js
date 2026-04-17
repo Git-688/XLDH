@@ -1,6 +1,197 @@
 /**
- * 主播放器类 - 精简版
+ * 主播放器类 - 精简版（集成自定义下拉选择器）
  */
+
+// ==================== 自定义下拉选择器组件 ====================
+class CustomSelect {
+    constructor(selectElement) {
+        this.selectElement = selectElement;
+        this.container = null;
+        this.trigger = null;
+        this.dropdown = null;
+        this.options = [];
+        this.isOpen = false;
+        this.value = selectElement.value;
+        
+        this.init();
+    }
+    
+    init() {
+        // 隐藏原生 select
+        this.selectElement.style.display = 'none';
+        
+        // 创建自定义容器
+        this.container = document.createElement('div');
+        this.container.className = 'custom-select';
+        this.container.setAttribute('data-select-id', this.selectElement.id || '');
+        
+        // 创建触发器
+        this.trigger = document.createElement('div');
+        this.trigger.className = 'custom-select-trigger';
+        this.trigger.innerHTML = `
+            <span class="custom-select-value">${this.getSelectedText()}</span>
+            <span class="arrow"></span>
+        `;
+        
+        // 创建下拉菜单
+        this.dropdown = document.createElement('div');
+        this.dropdown.className = 'custom-select-dropdown';
+        
+        // 填充选项
+        this.populateOptions();
+        
+        this.container.appendChild(this.trigger);
+        this.container.appendChild(this.dropdown);
+        
+        // 插入到原生 select 后面
+        this.selectElement.parentNode.insertBefore(this.container, this.selectElement.nextSibling);
+        
+        // 绑定事件
+        this.bindEvents();
+        
+        // 监听原生 select 变化（外部可能动态修改）
+        this.selectElement.addEventListener('change', () => {
+            this.setValue(this.selectElement.value, false);
+        });
+        
+        // 保存实例引用
+        this.container.__customSelectInstance = this;
+    }
+    
+    getSelectedText() {
+        const option = this.selectElement.options[this.selectElement.selectedIndex];
+        return option ? option.textContent : '';
+    }
+    
+    populateOptions() {
+        this.dropdown.innerHTML = '';
+        this.options = [];
+        
+        for (let i = 0; i < this.selectElement.options.length; i++) {
+            const option = this.selectElement.options[i];
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'custom-select-option';
+            if (i === this.selectElement.selectedIndex) {
+                optionDiv.classList.add('selected');
+            }
+            optionDiv.textContent = option.textContent;
+            optionDiv.setAttribute('data-value', option.value);
+            optionDiv.setAttribute('data-index', i);
+            
+            optionDiv.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.selectOption(i);
+                this.closeDropdown();
+            });
+            
+            this.dropdown.appendChild(optionDiv);
+            this.options.push(optionDiv);
+        }
+    }
+    
+    selectOption(index) {
+        if (index === this.selectElement.selectedIndex) return;
+        
+        this.selectElement.selectedIndex = index;
+        this.value = this.selectElement.value;
+        
+        // 更新触发器显示
+        const valueSpan = this.trigger.querySelector('.custom-select-value');
+        if (valueSpan) {
+            valueSpan.textContent = this.selectElement.options[index].textContent;
+        }
+        
+        // 更新选项高亮
+        this.options.forEach((opt, i) => {
+            if (i === index) {
+                opt.classList.add('selected');
+            } else {
+                opt.classList.remove('selected');
+            }
+        });
+        
+        // 触发原生 change 事件，保持原有逻辑
+        const changeEvent = new Event('change', { bubbles: true });
+        this.selectElement.dispatchEvent(changeEvent);
+    }
+    
+    setValue(value, triggerChange = true) {
+        for (let i = 0; i < this.selectElement.options.length; i++) {
+            if (this.selectElement.options[i].value === value) {
+                this.selectOption(i);
+                break;
+            }
+        }
+    }
+    
+    openDropdown() {
+        if (this.isOpen) return;
+        this.isOpen = true;
+        this.trigger.classList.add('open');
+        this.dropdown.classList.add('open');
+        
+        // 滚动到选中项
+        const selected = this.dropdown.querySelector('.custom-select-option.selected');
+        if (selected) {
+            selected.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+        
+        // 点击外部关闭
+        this.handleOutsideClick = (e) => {
+            if (!this.container.contains(e.target)) {
+                this.closeDropdown();
+            }
+        };
+        setTimeout(() => {
+            document.addEventListener('click', this.handleOutsideClick);
+        }, 0);
+    }
+    
+    closeDropdown() {
+        if (!this.isOpen) return;
+        this.isOpen = false;
+        this.trigger.classList.remove('open');
+        this.dropdown.classList.remove('open');
+        document.removeEventListener('click', this.handleOutsideClick);
+    }
+    
+    bindEvents() {
+        this.trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (this.isOpen) {
+                this.closeDropdown();
+            } else {
+                this.openDropdown();
+            }
+        });
+    }
+    
+    refreshOptions() {
+        this.populateOptions();
+        const valueSpan = this.trigger.querySelector('.custom-select-value');
+        if (valueSpan) {
+            valueSpan.textContent = this.getSelectedText();
+        }
+    }
+    
+    destroy() {
+        this.closeDropdown();
+        this.container.remove();
+        this.selectElement.style.display = '';
+    }
+}
+
+// 初始化所有自定义下拉
+function initCustomSelects() {
+    const selects = document.querySelectorAll('.playlist-selector select, .speed-selector select');
+    selects.forEach(select => {
+        if (!select.parentNode.querySelector('.custom-select')) {
+            new CustomSelect(select);
+        }
+    });
+}
+
+// ==================== 主播放器类 ====================
 class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audio-element');
@@ -292,6 +483,14 @@ class MusicPlayer {
                         <button class="retry-btn" onclick="musicPlayer.loadApiPlaylist('${apiId}')">重试</button>
                     </div>
                 `;
+            }
+        }
+        
+        // 刷新对应的自定义下拉选择器
+        if (elements.playlistSelect && elements.playlistSelect.parentNode) {
+            const customSelect = elements.playlistSelect.parentNode.querySelector('.custom-select');
+            if (customSelect && customSelect.__customSelectInstance) {
+                customSelect.__customSelectInstance.refreshOptions();
             }
         }
     }
@@ -1066,6 +1265,11 @@ class MusicPlayer {
         this.loadApiPlaylist(this.currentApi);
         
         setInterval(() => this.cacheManager.cleanup(), 30 * 60 * 1000);
+        
+        // 初始化自定义下拉选择器
+        setTimeout(() => {
+            initCustomSelects();
+        }, 100);
         
         this.hasInitialized = true;
     }
