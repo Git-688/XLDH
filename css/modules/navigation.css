@@ -1336,7 +1336,7 @@
     line-height: 1;
     /* 使用 relative + top 偏移，不受 transform 影响 */
     position: relative;
-    top: -10px;  /* 向上偏移10px，可根据需要调整 */
+    top: -8px;  /* 向上偏移10px，可根据需要调整 */
 }
 
 .site-card .report-dead-link-btn i {
