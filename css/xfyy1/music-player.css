@@ -521,21 +521,146 @@
 }
 
 .speed-selector {
-    width: 55px;
+    width: 65px;
 }
 
-.speed-selector select {
+/* 原生select隐藏 */
+.music-player select {
+    display: none !important;
+}
+
+/* ==================== 自定义下拉选择器 ==================== */
+.custom-select {
+    position: relative;
     width: 100%;
-    padding: 4px 6px;
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
-    font-size: 11px;
-    outline: none;
-    background: white;
+    user-select: none;
 }
 
-.speed-selector select:focus {
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #2c3e50;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 32px;
+}
+
+.custom-select-trigger:hover {
     border-color: #3764F4;
+    background: rgba(55, 100, 244, 0.02);
+}
+
+.custom-select-trigger.open {
+    border-color: #3764F4;
+    box-shadow: 0 0 0 2px rgba(55, 100, 244, 0.1);
+}
+
+.custom-select-trigger .arrow {
+    transition: transform 0.2s ease;
+    width: 16px;
+    height: 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%237f8c8d'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.custom-select-trigger.open .arrow {
+    transform: rotate(180deg);
+}
+
+.custom-select-value {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.custom-select-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 100;
+    max-height: 240px;
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+    scroll-behavior: smooth;
+}
+
+/* 隐藏滚动条但保留滚动功能 */
+.custom-select-dropdown::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    background: transparent;
+}
+
+.custom-select-dropdown {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.custom-select-dropdown.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.custom-select-option {
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #2c3e50;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.custom-select-option:hover {
+    background: rgba(55, 100, 244, 0.08);
+    color: #3764F4;
+}
+
+.custom-select-option.selected {
+    background: rgba(55, 100, 244, 0.12);
+    color: #3764F4;
+    font-weight: 500;
+    position: relative;
+}
+
+.custom-select-option.selected::before {
+    content: '✓';
+    position: absolute;
+    right: 12px;
+    font-size: 12px;
+}
+
+/* 速度选择器专用宽度 */
+.speed-control .custom-select {
+    width: 65px;
+}
+
+.speed-control .custom-select-trigger {
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+/* 歌单选择器全宽 */
+.playlist-selector .custom-select {
+    width: 100%;
 }
 
 /* ==================== 歌词显示（垂直三行，无动态背景） ==================== */
@@ -661,20 +786,6 @@
 
 .playlist-selector {
     flex: 1;
-}
-
-.playlist-selector select {
-    width: 100%;
-    padding: 6px 10px;
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
-    font-size: 12px;
-    outline: none;
-    background: white;
-}
-
-.playlist-selector select:focus {
-    border-color: #3764F4;
 }
 
 /* 内容容器 */
@@ -1092,8 +1203,6 @@
 .album-cover.playing img {
     animation: rotate 20s linear infinite;
 }
-
-/* 已删除旧的 .notification 样式 */
 
 /* 错误消息样式 */
 .error-message {
