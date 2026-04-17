@@ -1,5 +1,6 @@
 /**
  * 工具函数模块 - 精简版（仅保留项目实际使用的函数）
+ * 注意：Toast 由 toast.js 统一管理，此处不再定义 window.toast
  */
 
 class Utils {
