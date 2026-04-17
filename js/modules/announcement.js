@@ -69,7 +69,7 @@ class AnnouncementModule {
                 '全新界面设计-更加现代化和美观的视觉体验',
                 '音乐播放器-支持多平台音乐搜索和播放',
                 '个性化设置-可自定义书签',
-                '所有数据存储在本地浏览器中',
+                '更多实用工具-新增多个日常使用的小工具',
                 '性能优化-更快的加载速度和响应时间',
             ],
             time: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }),
@@ -97,7 +97,7 @@ class AnnouncementModule {
             <div class="announcement-modal-container">
                 <div class="announcement-header">
                     <div class="announcement-title">
-                        <i class="fas fa-bullhorn" style="color: #4361ee; font-size: 1.2rem;"></i>
+                        <i class="fas fa-bell" style="color: #4361ee; font-size: 1.2rem;"></i>
                         <span>${title}</span>
                     </div>
                     <button class="announcement-close" id="announcementClose" aria-label="关闭">
