@@ -512,19 +512,21 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    /* 关键修复：确保播放倍速下拉菜单不被裁剪 */
+    overflow: visible !important;
 }
 
 /* 播放速度控制 */
 .speed-control {
     display: flex;
     align-items: center;
-    /* 修复：确保父容器不裁剪下拉菜单 */
+    /* 关键修复：确保父容器不裁剪下拉菜单 */
     overflow: visible !important;
 }
 
 .speed-selector {
     width: 65px;
-    /* 修复：确保父容器不裁剪下拉菜单 */
+    /* 关键修复：确保父容器不裁剪下拉菜单 */
     overflow: visible !important;
 }
 
@@ -533,7 +535,7 @@
     display: none !important;
 }
 
-/* ==================== 自定义下拉选择器（修复版） ==================== */
+/* ==================== 自定义下拉选择器（修复版 - 置于最上层） ==================== */
 .custom-select {
     position: relative;
     width: 100%;
@@ -596,8 +598,8 @@
     border: 1px solid #e9ecef;
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    /* 关键修复：大幅提高 z-index，确保在所有播放器元素之上 */
-    z-index: 10001;
+    /* 关键修复：大幅提高 z-index，确保在所有播放器元素之上（包括播放器本身 z-index:10000） */
+    z-index: 10020;
     max-height: 240px;
     overflow-y: auto;
     opacity: 0;
@@ -675,7 +677,8 @@
 .playlist-selector,
 .music-player .bottom-section,
 .music-player .tab-content,
-.music-player .content-container {
+.music-player .content-container,
+.progress-actions {
     overflow: visible !important;
 }
 
