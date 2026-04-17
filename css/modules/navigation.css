@@ -1335,7 +1335,7 @@
     flex-shrink: 0;
     line-height: 1;
     /* 微调垂直位置，根据实际效果调整 */
-    transform: translateY(-8px);  /* 如果按钮偏上，改为 translateY(1px)；偏下则改为 -1px */
+    transform: translateY(-10px);  /* 如果按钮偏上，改为 translateY(1px)；偏下则改为 -1px */
 }
 
 .site-card .report-dead-link-btn i {
