@@ -1304,11 +1304,11 @@
 
 
 
-/* ====================== 报告死链按钮样式（与眼睛图标水平精确居中） ====================== */
+/* ====================== 报告死链按钮样式（使用 relative 偏移，避免点击时复位） ====================== */
 
 .site-card .card-top {
     display: flex;
-    justify-align: space-between;
+    justify-content: space-between;
     align-items: center;
 }
 
@@ -1334,8 +1334,9 @@
     font-size: 14px;
     flex-shrink: 0;
     line-height: 1;
-    /* 微调垂直位置，根据实际效果调整 */
-    transform: translateY(-10px);  /* 如果按钮偏上，改为 translateY(1px)；偏下则改为 -1px */
+    /* 使用 relative + top 偏移，不受 transform 影响 */
+    position: relative;
+    top: -10px;  /* 向上偏移10px，可根据需要调整 */
 }
 
 .site-card .report-dead-link-btn i {
@@ -1346,20 +1347,18 @@
 .site-card .report-dead-link-btn:hover {
     background: transparent;
     color: #ef4444;
-    transform: scale(1.1) translateY(1px);
+    transform: scale(1.1);
 }
 
 .site-card .report-dead-link-btn:active {
-    transform: scale(0.95) translateY(1px);
+    transform: scale(0.95);
 }
 
-/* 浏览量容器 - 保持原有布局 */
 .site-card .views-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    line-height: 1; /* 避免额外行高影响 */
 }
 
 .site-card .views-icon {
