@@ -518,10 +518,14 @@
 .speed-control {
     display: flex;
     align-items: center;
+    /* 修复：确保父容器不裁剪下拉菜单 */
+    overflow: visible !important;
 }
 
 .speed-selector {
     width: 65px;
+    /* 修复：确保父容器不裁剪下拉菜单 */
+    overflow: visible !important;
 }
 
 /* 原生select隐藏 */
@@ -529,11 +533,13 @@
     display: none !important;
 }
 
-/* ==================== 自定义下拉选择器 ==================== */
+/* ==================== 自定义下拉选择器（修复版） ==================== */
 .custom-select {
     position: relative;
     width: 100%;
     user-select: none;
+    /* 关键修复：确保下拉菜单不被父容器裁剪 */
+    overflow: visible !important;
 }
 
 .custom-select-trigger {
@@ -590,7 +596,8 @@
     border: 1px solid #e9ecef;
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    z-index: 100;
+    /* 关键修复：大幅提高 z-index，确保在所有播放器元素之上 */
+    z-index: 10001;
     max-height: 240px;
     overflow-y: auto;
     opacity: 0;
@@ -661,6 +668,15 @@
 /* 歌单选择器全宽 */
 .playlist-selector .custom-select {
     width: 100%;
+}
+
+/* 关键修复：强制确保速度控制和歌单选择器的父容器不裁剪下拉菜单 */
+.speed-control,
+.playlist-selector,
+.music-player .bottom-section,
+.music-player .tab-content,
+.music-player .content-container {
+    overflow: visible !important;
 }
 
 /* ==================== 歌词显示（垂直三行，无动态背景） ==================== */
@@ -786,6 +802,8 @@
 
 .playlist-selector {
     flex: 1;
+    /* 修复：确保歌单选择器不裁剪下拉菜单 */
+    overflow: visible !important;
 }
 
 /* 内容容器 */
