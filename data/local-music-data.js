@@ -7,11 +7,11 @@
 window.localMusicData = [
     {
         id: 'local_001',
-        title: '起风了',
-        artist: '买辣椒也用券',
-        src: 'https://music.163.com/song/media/outer/url?id=1330348068.mp3',
+        title: 'All Rise',
+        artist: 'Blue',
+        src: 'https://ak688.eu.cc/file/音乐目录/1776479332023_All_Rise.mp3',
         cover: 'https://p1.music.126.net/diGAyEmpymX8G7JcnElncQ==/109951163699673355.jpg',
-        lrc: '',
+        lrc: 'https://ak688.eu.cc/file/音乐目录/1776479334143_All_Rise.lrc',
         isOnline: true,
         source: 'local'
     },
