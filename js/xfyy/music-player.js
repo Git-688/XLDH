@@ -1,8 +1,8 @@
 /**
- * 主播放器类 - 精简版（集成自定义下拉选择器）
+ * 主播放器类 - 精简版（修复下拉菜单被遮挡问题）
  */
 
-// ==================== 自定义下拉选择器组件 ====================
+// ==================== 自定义下拉选择器组件（挂载到 body） ====================
 class CustomSelect {
     constructor(selectElement) {
         this.selectElement = selectElement;
@@ -33,18 +33,19 @@ class CustomSelect {
             <span class="arrow"></span>
         `;
         
-        // 创建下拉菜单
+        this.container.appendChild(this.trigger);
+        
+        // 插入到原生 select 后面
+        this.selectElement.parentNode.insertBefore(this.container, this.selectElement.nextSibling);
+        
+        // 创建下拉菜单（挂载到 body）
         this.dropdown = document.createElement('div');
-        this.dropdown.className = 'custom-select-dropdown';
+        this.dropdown.className = 'custom-select-dropdown-global';
         
         // 填充选项
         this.populateOptions();
         
-        this.container.appendChild(this.trigger);
-        this.container.appendChild(this.dropdown);
-        
-        // 插入到原生 select 后面
-        this.selectElement.parentNode.insertBefore(this.container, this.selectElement.nextSibling);
+        document.body.appendChild(this.dropdown);
         
         // 绑定事件
         this.bindEvents();
@@ -56,6 +57,10 @@ class CustomSelect {
         
         // 保存实例引用
         this.container.__customSelectInstance = this;
+        
+        // 监听窗口滚动和缩放，重新计算位置
+        window.addEventListener('scroll', this.handleScrollResize.bind(this), true);
+        window.addEventListener('resize', this.handleScrollResize.bind(this));
     }
     
     getSelectedText() {
@@ -124,10 +129,51 @@ class CustomSelect {
         }
     }
     
+    updateDropdownPosition() {
+        if (!this.isOpen) return;
+        
+        const rect = this.trigger.getBoundingClientRect();
+        const dropdownHeight = this.dropdown.offsetHeight;
+        const viewportHeight = window.innerHeight;
+        
+        // 计算位置：默认显示在下方
+        let top = rect.bottom + window.scrollY + 4;
+        let left = rect.left + window.scrollX;
+        
+        // 如果下方空间不足，显示在上方
+        if (rect.bottom + dropdownHeight + 10 > viewportHeight) {
+            top = rect.top + window.scrollY - dropdownHeight - 4;
+        }
+        
+        // 确保不超出左右边界
+        const dropdownWidth = this.dropdown.offsetWidth;
+        if (left + dropdownWidth > window.innerWidth + window.scrollX) {
+            left = window.innerWidth + window.scrollX - dropdownWidth - 10;
+        }
+        if (left < 0) {
+            left = 10;
+        }
+        
+        this.dropdown.style.top = top + 'px';
+        this.dropdown.style.left = left + 'px';
+        this.dropdown.style.width = rect.width + 'px';
+    }
+    
+    handleScrollResize() {
+        this.updateDropdownPosition();
+    }
+    
     openDropdown() {
         if (this.isOpen) return;
         this.isOpen = true;
         this.trigger.classList.add('open');
+        
+        // 填充最新选项（确保选项与原生 select 同步）
+        this.populateOptions();
+        
+        // 计算位置
+        this.updateDropdownPosition();
+        
         this.dropdown.classList.add('open');
         
         // 滚动到选中项
@@ -138,7 +184,7 @@ class CustomSelect {
         
         // 点击外部关闭
         this.handleOutsideClick = (e) => {
-            if (!this.container.contains(e.target)) {
+            if (!this.container.contains(e.target) && !this.dropdown.contains(e.target)) {
                 this.closeDropdown();
             }
         };
@@ -177,7 +223,12 @@ class CustomSelect {
     destroy() {
         this.closeDropdown();
         this.container.remove();
+        if (this.dropdown && this.dropdown.parentNode) {
+            this.dropdown.remove();
+        }
         this.selectElement.style.display = '';
+        window.removeEventListener('scroll', this.handleScrollResize, true);
+        window.removeEventListener('resize', this.handleScrollResize);
     }
 }
 
