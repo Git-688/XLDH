@@ -512,22 +512,16 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    /* 关键修复：确保播放倍速下拉菜单不被裁剪 */
-    overflow: visible !important;
 }
 
 /* 播放速度控制 */
 .speed-control {
     display: flex;
     align-items: center;
-    /* 关键修复：确保父容器不裁剪下拉菜单 */
-    overflow: visible !important;
 }
 
 .speed-selector {
     width: 65px;
-    /* 关键修复：确保父容器不裁剪下拉菜单 */
-    overflow: visible !important;
 }
 
 /* 原生select隐藏 */
@@ -535,13 +529,11 @@
     display: none !important;
 }
 
-/* ==================== 自定义下拉选择器（修复版 - 置于最上层） ==================== */
+/* ==================== 自定义下拉选择器（挂载到 body 版） ==================== */
 .custom-select {
     position: relative;
     width: 100%;
     user-select: none;
-    /* 关键修复：确保下拉菜单不被父容器裁剪 */
-    overflow: visible !important;
 }
 
 .custom-select-trigger {
@@ -589,42 +581,36 @@
     text-overflow: ellipsis;
 }
 
-.custom-select-dropdown {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
+/* 下拉菜单全局样式（挂载到 body） */
+.custom-select-dropdown-global {
+    position: fixed;
     background: #ffffff;
     border: 1px solid #e9ecef;
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    /* 关键修复：大幅提高 z-index，确保在所有播放器元素之上（包括播放器本身 z-index:10000） */
-    z-index: 10020;
+    z-index: 100000;
     max-height: 240px;
     overflow-y: auto;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-8px);
-    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
     scroll-behavior: smooth;
 }
 
-/* 隐藏滚动条但保留滚动功能 */
-.custom-select-dropdown::-webkit-scrollbar {
+.custom-select-dropdown-global::-webkit-scrollbar {
     width: 0;
     height: 0;
     background: transparent;
 }
 
-.custom-select-dropdown {
+.custom-select-dropdown-global {
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
 
-.custom-select-dropdown.open {
+.custom-select-dropdown-global.open {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
 }
 
 .custom-select-option {
@@ -670,16 +656,6 @@
 /* 歌单选择器全宽 */
 .playlist-selector .custom-select {
     width: 100%;
-}
-
-/* 关键修复：强制确保速度控制和歌单选择器的父容器不裁剪下拉菜单 */
-.speed-control,
-.playlist-selector,
-.music-player .bottom-section,
-.music-player .tab-content,
-.music-player .content-container,
-.progress-actions {
-    overflow: visible !important;
 }
 
 /* ==================== 歌词显示（垂直三行，无动态背景） ==================== */
@@ -805,8 +781,6 @@
 
 .playlist-selector {
     flex: 1;
-    /* 修复：确保歌单选择器不裁剪下拉菜单 */
-    overflow: visible !important;
 }
 
 /* 内容容器 */
