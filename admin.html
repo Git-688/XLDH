@@ -38,8 +38,24 @@
             padding:8px 15px;border-radius:7px;background:#fff;
             cursor:pointer;white-space:nowrap;font-weight:500;font-size:12px;
             transition:all .2s;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .cat-item.active{background:#3b82f6;color:#fff}
+        .cat-item .rename-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 11px;
+            opacity: 0.6;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .cat-item .rename-btn:hover {
+            opacity: 1;
+            background: rgba(0,0,0,0.1);
+        }
 
         .content-layout{display:flex;gap:10px;margin-top:0}
         .sidebar{
@@ -55,8 +71,24 @@
             padding:10px 12px;border-radius:7px;background:#fff;
             text-align:left;cursor:pointer;font-weight:500;font-size:12px;
             transition:all .2s;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         .sub-item.active{background:#e0f2fe;color:#0369a1}
+        .sub-item .rename-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 11px;
+            opacity: 0.6;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .sub-item .rename-btn:hover {
+            opacity: 1;
+            background: rgba(0,0,0,0.1);
+        }
 
         .main-content{
             flex:1;background:#f8fafc;border-radius:10px;
@@ -547,6 +579,39 @@
         }
     }
 
+    // 重命名函数
+    async function renameCategory(id, oldName) {
+        const newName = prompt('请输入新的分类名称', oldName);
+        if (!newName || newName === oldName) return;
+        try {
+            await apiFetch(`/admin/categories/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ name: newName })
+            });
+            addLog(`重命名分类：${oldName} → ${newName}`);
+            showToast('重命名成功');
+            await loadAllData();
+        } catch (err) {
+            showToast('重命名失败', 'error');
+        }
+    }
+
+    async function renameSubcategory(id, oldName) {
+        const newName = prompt('请输入新的子分类名称', oldName);
+        if (!newName || newName === oldName) return;
+        try {
+            await apiFetch(`/admin/subcategories/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ name: newName })
+            });
+            addLog(`重命名子分类：${oldName} → ${newName}`);
+            showToast('重命名成功');
+            await loadAllData();
+        } catch (err) {
+            showToast('重命名失败', 'error');
+        }
+    }
+
     // 标签切换
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.onclick = () => {
@@ -589,8 +654,9 @@
             return;
         }
         document.getElementById('catBar').innerHTML = categories.map(c => `
-            <div class="cat-item ${c.id===currentCat?'active':''}" data-cid="${c.id}" onclick="selectCat(${c.id})">
-                ${escapeHtml(c.name)}
+            <div class="cat-item ${c.id===currentCat?'active':''}" data-cid="${c.id}">
+                <span onclick="selectCat(${c.id})">${escapeHtml(c.name)}</span>
+                <button class="rename-btn" onclick="renameCategory(${c.id}, '${escapeHtml(c.name)}')" title="重命名">✏️</button>
             </div>
         `).join('');
     }
@@ -605,8 +671,9 @@
             return;
         }
         document.getElementById('subList').innerHTML = subs.map(s => `
-            <div class="sub-item ${s.id===currentSub?'active':''}" data-sid="${s.id}" onclick="selectSub(${s.id})">
-                ${escapeHtml(s.name)}
+            <div class="sub-item ${s.id===currentSub?'active':''}" data-sid="${s.id}">
+                <span onclick="selectSub(${s.id})">${escapeHtml(s.name)}</span>
+                <button class="rename-btn" onclick="renameSubcategory(${s.id}, '${escapeHtml(s.name)}')" title="重命名">✏️</button>
             </div>
         `).join('');
     }
@@ -620,49 +687,18 @@
             document.getElementById('siteList').innerHTML = '<div class="empty">暂无链接，点击+添加链接</div>';
             return;
         }
+        // 只显示标题，不显示 URL
         document.getElementById('siteList').innerHTML = list.map(s => `
             <div class="link-item">
                 <div class="link-info">
                     <div>${escapeHtml(s.title)}</div>
-                    <div class="link-url">${escapeHtml(s.url)}</div>
                 </div>
                 <div class="link-actions">
-                    <button class="sm primary check-site-btn" data-id="${s.id}" data-url="${s.url}">检测</button>
                     <button class="sm primary" onclick="openEditSite(${s.id})">编辑</button>
                     <button class="sm danger" onclick="delSite(${s.id})">删除</button>
                 </div>
             </div>
         `).join('');
-
-        // 绑定检测按钮事件
-        document.querySelectorAll('.check-site-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const url = btn.dataset.url;
-                const btnEl = btn;
-                btnEl.disabled = true;
-                btnEl.textContent = '检测中...';
-                try {
-                    const res = await fetch(`${API_BASE}/admin/check-link`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                        body: JSON.stringify({ url })
-                    });
-                    const data = await res.json();
-                    let msg = data.valid ? `✅ 链接正常 (HTTP ${data.statusCode})` : `❌ 链接异常 (HTTP ${data.statusCode || '失败'})`;
-                    if (data.details) {
-                        msg += '\n节点详情：\n' + data.details.map(d => `${d.node}: ${d.valid ? '成功' : '失败'} (${d.statusCode || d.error})`).join('\n');
-                    }
-                    alert(msg);
-                    // 刷新当前列表以更新状态（可选）
-                    // renderSiteList();
-                } catch (err) {
-                    alert('检测失败：' + err.message);
-                } finally {
-                    btnEl.disabled = false;
-                    btnEl.textContent = '检测';
-                }
-            });
-        });
     }
 
     async function loadAllData(){
