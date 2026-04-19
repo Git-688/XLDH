@@ -209,6 +209,7 @@
                 <input type="text" class="search-box" id="searchInput" placeholder="搜索标题...">
                 <button class="text" id="exportBtn">备份导出</button>
                 <button class="text" id="logBtn">操作日志</button>
+                <button class="primary sm" id="refreshNavBtn">刷新导航缓存</button>
                 <button class="primary sm" id="addCategoryBtn">+一级分类</button>
             </div>
 
@@ -621,13 +622,47 @@
         }
         document.getElementById('siteList').innerHTML = list.map(s => `
             <div class="link-item">
-                <div class="link-info">${escapeHtml(s.title)}</div>
+                <div class="link-info">
+                    <div>${escapeHtml(s.title)}</div>
+                    <div class="link-url">${escapeHtml(s.url)}</div>
+                </div>
                 <div class="link-actions">
+                    <button class="sm primary check-site-btn" data-id="${s.id}" data-url="${s.url}">检测</button>
                     <button class="sm primary" onclick="openEditSite(${s.id})">编辑</button>
                     <button class="sm danger" onclick="delSite(${s.id})">删除</button>
                 </div>
             </div>
         `).join('');
+
+        // 绑定检测按钮事件
+        document.querySelectorAll('.check-site-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const url = btn.dataset.url;
+                const btnEl = btn;
+                btnEl.disabled = true;
+                btnEl.textContent = '检测中...';
+                try {
+                    const res = await fetch(`${API_BASE}/admin/check-link`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ url })
+                    });
+                    const data = await res.json();
+                    let msg = data.valid ? `✅ 链接正常 (HTTP ${data.statusCode})` : `❌ 链接异常 (HTTP ${data.statusCode || '失败'})`;
+                    if (data.details) {
+                        msg += '\n节点详情：\n' + data.details.map(d => `${d.node}: ${d.valid ? '成功' : '失败'} (${d.statusCode || d.error})`).join('\n');
+                    }
+                    alert(msg);
+                    // 刷新当前列表以更新状态（可选）
+                    // renderSiteList();
+                } catch (err) {
+                    alert('检测失败：' + err.message);
+                } finally {
+                    btnEl.disabled = false;
+                    btnEl.textContent = '检测';
+                }
+            });
+        });
     }
 
     async function loadAllData(){
@@ -772,6 +807,18 @@
     document.getElementById('refreshInvalidBtn').onclick=loadInvalidLinks;
     document.getElementById('sortRankBtn').onclick=loadRanking;
     document.getElementById('refreshFeedbackBtn').onclick=loadFeedback;
+    document.getElementById('refreshNavBtn').onclick = async () => {
+        if (!token) { showToast('请先登录', 'error'); return; }
+        try {
+            await fetch(`${API_BASE}/admin/refresh-navigation`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            showToast('导航缓存已刷新，前端将重新加载', 'success');
+        } catch (err) {
+            showToast('刷新失败', 'error');
+        }
+    };
     document.getElementById('tokenInput').addEventListener('keydown',e=>e.key==='Enter'&&login());
 
     if(token) login();
