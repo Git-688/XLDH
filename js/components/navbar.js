@@ -331,7 +331,7 @@ class Navbar {
             this.announcements = Storage.get('announcements') || [
                 {
                     id: 'single_announcement',
-                    title: '星链导航公告',
+                    title: '星聚导航公告',
                     subtitle: '重要通知',
                     focus: '本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台',
                     updates: [
