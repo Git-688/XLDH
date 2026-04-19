@@ -83,15 +83,15 @@ class AboutModule {
                         </div>
                         <div class="about-header-right">
                             <div class="about-brand">
-                                <div class="about-logo"><img src="${this.escapeHtml(this.logoUrl)}" alt="星链导航Logo" class="about-logo-img" loading="lazy"></div>
-                                <div class="about-title-group"><div class="about-title">星链导航</div><div class="about-subtitle">您的个人导航中心</div></div>
+                                <div class="about-logo"><img src="${this.escapeHtml(this.logoUrl)}" alt="星聚导航Logo" class="about-logo-img" loading="lazy"></div>
+                                <div class="about-title-group"><div class="about-title">星聚导航</div><div class="about-subtitle">您的个人导航中心</div></div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="about-main-content">
                     <div class="about-cards">
-                        <div class="about-card"><div class="card-icon intro-icon"><i class="fas fa-info-circle"></i></div><div class="card-content"><h3>简介</h3><p>星链导航是一个现代化的个人导航网站，致力于收集整理网络上的优质资源和个人开发的小工具，为用户提供便捷的上网导航体验。</p></div></div>
+                        <div class="about-card"><div class="card-icon intro-icon"><i class="fas fa-info-circle"></i></div><div class="card-content"><h3>简介</h3><p>星聚导航是一个现代化的个人导航网站，致力于收集整理网络上的优质资源和个人开发的小工具，为用户提供便捷的上网导航体验。</p></div></div>
                         <div class="about-card"><div class="card-icon disclaimer-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="card-content"><h3>免责声明</h3><p>本站所有资源均来自互联网收集整理，仅供个人学习交流使用，不得用于商业用途。如有侵犯您的权益，请联系我们删除。</p></div></div>
                     </div>
                 </div>
