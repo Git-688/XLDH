@@ -177,6 +177,18 @@
         .result-group{margin-bottom:10px}
         .result-group h4{margin-bottom:7px;font-size:13px}
         .hidden{display:none}
+        
+        /* 新增：反馈日期分组样式 */
+        .feedback-date-group {
+            margin-bottom: 20px;
+        }
+        .feedback-date-group h4 {
+            font-size: 13px;
+            margin: 10px 0 8px 0;
+            padding-left: 4px;
+            border-left: 3px solid #3b82f6;
+            color: #1e293b;
+        }
 
         @media (max-width:768px){
             .sidebar{width:150px}
@@ -231,7 +243,6 @@
     <div id="mainContent" class="hidden main-card">
         <div class="flex-row" style="margin-bottom:12px">
             <div class="tab-btn active" data-tab="manage">数据管理</div>
-            <div class="tab-btn" data-tab="check">死链检测</div>
             <div class="tab-btn" data-tab="rank">点击排行</div>
             <div class="tab-btn" data-tab="feedback">用户反馈</div>
         </div>
@@ -262,20 +273,6 @@
             </div>
         </div>
 
-        <div id="checkTab" class="tab-panel hidden">
-            <div class="flex-row" style="margin-bottom:10px; justify-content: space-between;">
-                <div class="flex-row">
-                    <button class="primary" id="checkAllBtn">开始检测所有链接</button>
-                    <span id="checkProgress" style="margin-left:12px; font-size:12px; color:#f59e0b;"></span>
-                </div>
-                <button class="secondary sm" id="refreshInvalidBtn">刷新列表</button>
-            </div>
-            <div class="check-result">
-                <h4>🔴 异常/无法访问链接</h4>
-                <div class="bad-links-list" id="badLinks"></div>
-            </div>
-        </div>
-
         <div id="rankTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px">
                 <button class="primary sm" id="sortRankBtn">按点击数降序</button>
@@ -287,7 +284,7 @@
         <div id="feedbackTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px">
                 <button class="primary sm" id="refreshFeedbackBtn">刷新列表</button>
-                <span class="badge badge-blue">用户提交的失效链接</span>
+                <span class="badge badge-blue">用户提交的失效链接（修复后12小时自动清除）</span>
             </div>
             <div class="feedback-list" id="feedbackList"></div>
         </div>
@@ -304,8 +301,6 @@
     let lockTime = localStorage.getItem('login_lock_time') || 0;
     const TOKEN_EXPIRE_HOURS = 24;
     const IP_WHITELIST = ['127.0.0.1', '112.96.123.9'];
-    let isChecking = false;
-    let progressInterval = null;
 
     const toast = document.getElementById('toast');
     function showToast(msg, type = 'success') {
@@ -401,7 +396,6 @@
 
     function logout() {
         token='';localStorage.clear();
-        if (progressInterval) clearInterval(progressInterval);
         document.getElementById('loginBtn').classList.remove('hidden');
         document.getElementById('logoutBtn').classList.add('hidden');
         document.getElementById('mainContent').classList.add('hidden');
@@ -451,91 +445,7 @@
         }
     }
 
-    // 死链检测相关
-    async function startCheckLinks() {
-        if (isChecking) return;
-        isChecking = true;
-        const btn = document.getElementById('checkAllBtn');
-        const progressSpan = document.getElementById('checkProgress');
-        btn.disabled = true;
-        btn.textContent = '检测中...';
-        progressSpan.textContent = '正在启动检测...';
-        
-        try {
-            const res = await fetch(`${API_BASE}/admin/check-links`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!res.ok) throw new Error('启动检测失败');
-            
-            progressInterval = setInterval(async () => {
-                const progressRes = await fetch(`${API_BASE}/admin/check-progress`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (progressRes.ok) {
-                    const data = await progressRes.json();
-                    if (data.total > 0) {
-                        progressSpan.textContent = `已检测 ${data.checked}/${data.total}`;
-                        if (data.checked >= data.total) {
-                            clearInterval(progressInterval);
-                            progressSpan.textContent = '检测完成';
-                            await loadInvalidLinks();
-                            btn.disabled = false;
-                            btn.textContent = '开始检测所有链接';
-                            isChecking = false;
-                        }
-                    }
-                }
-            }, 2000);
-            
-            setTimeout(() => {
-                if (progressInterval) {
-                    clearInterval(progressInterval);
-                    progressSpan.textContent = '检测超时，请手动刷新';
-                    btn.disabled = false;
-                    btn.textContent = '开始检测所有链接';
-                    isChecking = false;
-                }
-            }, 600000);
-            
-        } catch (err) {
-            showToast('启动检测失败', 'error');
-            btn.disabled = false;
-            btn.textContent = '开始检测所有链接';
-            isChecking = false;
-        }
-    }
-
-    async function loadInvalidLinks() {
-        const listEl = document.getElementById('badLinks');
-        listEl.innerHTML = '<div class="loading">加载中...</div>';
-        try {
-            const res = await fetch(`${API_BASE}/admin/invalid-links`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (!data.length) {
-                listEl.innerHTML = '<div class="empty">🎉 所有链接均正常，无异常链接</div>';
-                return;
-            }
-            listEl.innerHTML = data.map(link => `
-                <div class="link-item">
-                    <div class="link-info">
-                        <div>${escapeHtml(link.title)}</div>
-                        <div class="link-url">${escapeHtml(link.url)}</div>
-                    </div>
-                    <div class="link-actions">
-                        <span class="badge badge-red">HTTP ${link.statusCode || '失败'}</span>
-                        <button class="sm primary" onclick="window.open('${link.url}', '_blank')">访问</button>
-                    </div>
-                </div>
-            `).join('');
-        } catch (err) {
-            listEl.innerHTML = '<div class="empty">加载失败</div>';
-        }
-    }
-
-    // 用户反馈相关
+    // 用户反馈相关 - 按日期分组
     async function loadFeedback() {
         const listEl = document.getElementById('feedbackList');
         listEl.innerHTML = '<div class="empty">加载中...</div>';
@@ -548,21 +458,59 @@
                 listEl.innerHTML = '<div class="empty">暂无用户反馈</div>';
                 return;
             }
-            listEl.innerHTML = data.map(item => `
-                <div class="link-item">
-                    <div class="link-info">
-                        <div>${escapeHtml(item.title || '无标题')}</div>
-                        <div class="link-url">${escapeHtml(item.url)}</div>
-                        <div style="font-size:10px; color:#999;">来自 ${item.reporter_ip} 于 ${new Date(item.report_time).toLocaleString()}</div>
-                    </div>
-                    <div class="link-actions">
-                        <button class="sm primary" onclick="markFeedbackDone(${item.id})">标记已处理</button>
-                    </div>
-                </div>
-            `).join('');
+            
+            // 获取今天的零点时间戳
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            const groups = { today: [], yesterday: [], older: [] };
+            
+            data.forEach(item => {
+                const reportDate = new Date(item.report_time);
+                reportDate.setHours(0, 0, 0, 0);
+                if (reportDate.getTime() === today.getTime()) {
+                    groups.today.push(item);
+                } else if (reportDate.getTime() === yesterday.getTime()) {
+                    groups.yesterday.push(item);
+                } else {
+                    groups.older.push(item);
+                }
+            });
+            
+            let html = '';
+            if (groups.today.length) {
+                html += `<div class="feedback-date-group"><h4>📅 今天</h4>${renderFeedbackItems(groups.today)}</div>`;
+            }
+            if (groups.yesterday.length) {
+                html += `<div class="feedback-date-group"><h4>📅 昨天</h4>${renderFeedbackItems(groups.yesterday)}</div>`;
+            }
+            if (groups.older.length) {
+                html += `<div class="feedback-date-group"><h4>📅 更早</h4>${renderFeedbackItems(groups.older)}</div>`;
+            }
+            listEl.innerHTML = html;
         } catch (err) {
             listEl.innerHTML = '<div class="empty">加载失败</div>';
         }
+    }
+    
+    function renderFeedbackItems(items) {
+        return items.map(item => `
+            <div class="link-item">
+                <div class="link-info">
+                    <div><strong>${escapeHtml(item.title || '无标题')}</strong></div>
+                    <div class="link-url">${escapeHtml(item.url)}</div>
+                    <div style="font-size:10px; color:#999;">
+                        来自 ${item.reporter_ip} 于 ${new Date(item.report_time).toLocaleString()}
+                    </div>
+                </div>
+                <div class="link-actions">
+                    <button class="sm primary" onclick="replaceLink(${item.id}, ${item.site_id || 0}, '${escapeHtml(item.url)}', '${escapeHtml(item.title)}')">更换链接</button>
+                    <button class="sm primary" onclick="markFeedbackDone(${item.id})">标记已处理</button>
+                </div>
+            </div>
+        `).join('');
     }
 
     async function markFeedbackDone(id) {
@@ -572,44 +520,55 @@
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ status: 'done' })
             });
-            showToast('已标记处理', 'success');
-            loadFeedback();
+            showToast('已标记处理（12小时后自动清除）', 'success');
+            loadFeedback();  // 刷新列表，该条记录会立即消失
         } catch (err) {
             showToast('操作失败', 'error');
         }
     }
 
-    // 重命名函数
-    async function renameCategory(id, oldName) {
-        const newName = prompt('请输入新的分类名称', oldName);
-        if (!newName || newName === oldName) return;
-        try {
-            await apiFetch(`/admin/categories/${id}`, {
-                method: 'PUT',
-                body: JSON.stringify({ name: newName })
-            });
-            addLog(`重命名分类：${oldName} → ${newName}`);
-            showToast('重命名成功');
-            await loadAllData();
-        } catch (err) {
-            showToast('重命名失败', 'error');
+    async function replaceLink(reportId, siteId, oldUrl, oldTitle) {
+        if (!siteId) {
+            showToast('无法找到对应的网站记录，请手动处理', 'error');
+            return;
         }
-    }
-
-    async function renameSubcategory(id, oldName) {
-        const newName = prompt('请输入新的子分类名称', oldName);
-        if (!newName || newName === oldName) return;
-        try {
-            await apiFetch(`/admin/subcategories/${id}`, {
-                method: 'PUT',
-                body: JSON.stringify({ name: newName })
-            });
-            addLog(`重命名子分类：${oldName} → ${newName}`);
-            showToast('重命名成功');
-            await loadAllData();
-        } catch (err) {
-            showToast('重命名失败', 'error');
+        // 获取当前网站详细信息（可从已有的 sites 数据获取）
+        const site = sites.find(s => s.id === siteId);
+        if (!site) {
+            showToast('未找到对应的网站记录', 'error');
+            return;
         }
+        const html = `
+            <div class="form-row"><label>标题</label><input id="newTitle" value="${escapeHtml(site.title)}"></div>
+            <div class="form-row"><label>网址</label><input id="newUrl" value="${escapeHtml(site.url)}"></div>
+            <div class="form-row"><label>描述</label><input id="newDesc" value="${escapeHtml(site.description || '')}"></div>
+            <div class="form-row"><label>图标</label><input id="newIcon" value="${escapeHtml(site.icon || 'fas fa-link')}"></div>
+        `;
+        openModal('更换链接', html, async () => {
+            const newTitle = document.getElementById('newTitle').value.trim();
+            const newUrl = document.getElementById('newUrl').value.trim();
+            const newDesc = document.getElementById('newDesc').value.trim();
+            const newIcon = document.getElementById('newIcon').value.trim();
+            if (!newTitle || !newUrl) {
+                showToast('标题和网址不能为空', 'error');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/admin/replace-link`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: newDesc, newIcon })
+                });
+                if (!res.ok) throw new Error('更换失败');
+                showToast('链接已更新，无效标记已清除', 'success');
+                loadFeedback();       // 刷新反馈列表
+                await loadAllData();   // 刷新整个管理数据（会重新加载 sites）
+                // 通知前端刷新导航缓存
+                await fetch(`${API_BASE}/admin/refresh-navigation`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+            } catch (err) {
+                showToast('更换失败：' + err.message, 'error');
+            }
+        });
     }
 
     // 标签切换
@@ -621,7 +580,6 @@
             const tab = btn.dataset.tab;
             document.getElementById(`${tab}Tab`).classList.remove('hidden');
             if(tab === 'rank') loadRanking();
-            if(tab === 'check') loadInvalidLinks();
             if(tab === 'feedback') loadFeedback();
         }
     });
@@ -687,7 +645,6 @@
             document.getElementById('siteList').innerHTML = '<div class="empty">暂无链接，点击+添加链接</div>';
             return;
         }
-        // 只显示标题，不显示 URL
         document.getElementById('siteList').innerHTML = list.map(s => `
             <div class="link-item">
                 <div class="link-info">
@@ -839,8 +796,6 @@
     document.getElementById('addSiteBtn').onclick=openAddSite;
     document.getElementById('exportBtn').onclick=exportData;
     document.getElementById('logBtn').onclick=showLogs;
-    document.getElementById('checkAllBtn').onclick=startCheckLinks;
-    document.getElementById('refreshInvalidBtn').onclick=loadInvalidLinks;
     document.getElementById('sortRankBtn').onclick=loadRanking;
     document.getElementById('refreshFeedbackBtn').onclick=loadFeedback;
     document.getElementById('refreshNavBtn').onclick = async () => {
