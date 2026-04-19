@@ -1,6 +1,6 @@
 /**
  * 优化分类导航系统（完全基于后端 Worker + D1）
- * 文件位置：./js/modules/navigation.js
+ * 移除了单链接检测按钮
  */
 class OptimizedNavigation {
     constructor() {
@@ -192,14 +192,11 @@ class OptimizedNavigation {
                 iconHtml = '<i class="fas fa-link"></i>';
             }
             
-            // 卡片 HTML（增加检测按钮）
+            // 卡片 HTML（移除了检测按钮）
             card.innerHTML = `
                 <div class="card-top">
                     <div class="icon-container">${iconHtml}</div>
                     <div class="card-top-right">
-                        <button class="check-link-btn" data-url="${site.url}" data-title="${this.escapeHtml(site.title)}" title="检测链接有效性">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
                         <button class="report-dead-link-btn" data-url="${site.url}" data-title="${this.escapeHtml(site.title)}" title="报告死链">
                             <i class="fas fa-exclamation-triangle"></i>
                         </button>
@@ -218,8 +215,7 @@ class OptimizedNavigation {
             
             // 绑定点击统计（点击卡片时，排除按钮区域）
             card.addEventListener('click', (e) => {
-                if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn') ||
-                    e.target.classList.contains('check-link-btn') || e.target.closest('.check-link-btn')) {
+                if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) {
                     return;
                 }
                 this.isNavigationClick = true;
@@ -253,40 +249,6 @@ class OptimizedNavigation {
                     }
                 }, 100);
             }, true);
-            
-            // 绑定检测按钮事件
-            const checkBtn = card.querySelector('.check-link-btn');
-            if (checkBtn) {
-                checkBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const url = checkBtn.dataset.url;
-                    const title = checkBtn.dataset.title;
-                    const originalIcon = checkBtn.innerHTML;
-                    checkBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i>';
-                    checkBtn.disabled = true;
-                    try {
-                        const res = await fetch('https://api.xldh688.eu.cc/admin/check-link', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ url })
-                        });
-                        const data = await res.json();
-                        if (data.valid) {
-                            window.toast.show(`✅ ${title} 链接正常 (HTTP ${data.statusCode})`, 'success');
-                            card.classList.remove('invalid');
-                        } else {
-                            window.toast.show(`❌ ${title} 链接异常 (HTTP ${data.statusCode || '检测失败'})`, 'error');
-                            card.classList.add('invalid');
-                        }
-                    } catch (err) {
-                        window.toast.show(`检测失败：${err.message}`, 'error');
-                    } finally {
-                        checkBtn.innerHTML = originalIcon;
-                        checkBtn.disabled = false;
-                    }
-                });
-            }
             
             // 绑定报告死链按钮事件
             const reportBtn = card.querySelector('.report-dead-link-btn');
