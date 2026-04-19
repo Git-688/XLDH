@@ -132,7 +132,7 @@
 .about-logo-img {
     width: 100%;
     height: 100%;
-    border-radius: 8px; /* 调整圆角以适应内边距 */
+    border-radius: 16px; /* 调整圆角以适应内边距 */
     object-fit: contain; /* 确保图片完整显示，不会被裁剪 */
     display: block;
 }
