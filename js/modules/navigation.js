@@ -41,7 +41,7 @@ class OptimizedNavigation {
     }
 
     async loadNavigationData(retryCount = 0) {
-        const apiUrl = 'https://api.xldh688.eu.cc/navigation';
+        const apiUrl = `https://api.xldh688.eu.cc/navigation?_=${Date.now()}`;
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -192,11 +192,14 @@ class OptimizedNavigation {
                 iconHtml = '<i class="fas fa-link"></i>';
             }
             
-            // 修改后的卡片 HTML：按钮在浏览量左边，只显示图标，使用带圆角三角形的样式
+            // 卡片 HTML（增加检测按钮）
             card.innerHTML = `
                 <div class="card-top">
                     <div class="icon-container">${iconHtml}</div>
                     <div class="card-top-right">
+                        <button class="check-link-btn" data-url="${site.url}" data-title="${this.escapeHtml(site.title)}" title="检测链接有效性">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
                         <button class="report-dead-link-btn" data-url="${site.url}" data-title="${this.escapeHtml(site.title)}" title="报告死链">
                             <i class="fas fa-exclamation-triangle"></i>
                         </button>
@@ -215,7 +218,8 @@ class OptimizedNavigation {
             
             // 绑定点击统计（点击卡片时，排除按钮区域）
             card.addEventListener('click', (e) => {
-                if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) {
+                if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn') ||
+                    e.target.classList.contains('check-link-btn') || e.target.closest('.check-link-btn')) {
                     return;
                 }
                 this.isNavigationClick = true;
@@ -250,7 +254,41 @@ class OptimizedNavigation {
                 }, 100);
             }, true);
             
-            // 绑定报告死链按钮独立事件
+            // 绑定检测按钮事件
+            const checkBtn = card.querySelector('.check-link-btn');
+            if (checkBtn) {
+                checkBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const url = checkBtn.dataset.url;
+                    const title = checkBtn.dataset.title;
+                    const originalIcon = checkBtn.innerHTML;
+                    checkBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i>';
+                    checkBtn.disabled = true;
+                    try {
+                        const res = await fetch('https://api.xldh688.eu.cc/admin/check-link', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url })
+                        });
+                        const data = await res.json();
+                        if (data.valid) {
+                            window.toast.show(`✅ ${title} 链接正常 (HTTP ${data.statusCode})`, 'success');
+                            card.classList.remove('invalid');
+                        } else {
+                            window.toast.show(`❌ ${title} 链接异常 (HTTP ${data.statusCode || '检测失败'})`, 'error');
+                            card.classList.add('invalid');
+                        }
+                    } catch (err) {
+                        window.toast.show(`检测失败：${err.message}`, 'error');
+                    } finally {
+                        checkBtn.innerHTML = originalIcon;
+                        checkBtn.disabled = false;
+                    }
+                });
+            }
+            
+            // 绑定报告死链按钮事件
             const reportBtn = card.querySelector('.report-dead-link-btn');
             if (reportBtn) {
                 reportBtn.addEventListener('click', async (e) => {
@@ -265,16 +303,13 @@ class OptimizedNavigation {
                             body: JSON.stringify({ url, title })
                         });
                         if (res.ok) {
-                            if (window.toast) window.toast.show('已反馈，感谢您！', 'success');
-                            else alert('已反馈，感谢您！');
+                            window.toast.show('已收到反馈，我们将尽快核实处理，感谢您！', 'success');
                         } else {
-                            if (window.toast) window.toast.show('反馈失败，请稍后再试', 'error');
-                            else alert('反馈失败');
+                            window.toast.show('反馈失败，请稍后再试', 'error');
                         }
                     } catch (err) {
                         console.error(err);
-                        if (window.toast) window.toast.show('网络错误', 'error');
-                        else alert('网络错误');
+                        window.toast.show('网络错误', 'error');
                     }
                 });
             }
