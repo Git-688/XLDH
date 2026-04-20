@@ -109,11 +109,13 @@ class App {
     }
     // =========================================
 
-    // ========== 新增：反馈模态框管理 ==========
+    // ========== 反馈模态框管理（已修复显示问题）==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
         
+        // 关键修复：显式设置 display 为 flex，覆盖内联样式
+        modal.style.display = 'flex';
         modal.classList.add('active');
         
         // 初始化 Twikoo（仅一次）
@@ -130,7 +132,10 @@ class App {
 
     closeFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
-        if (modal) modal.classList.remove('active');
+        if (modal) {
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+        }
     }
 
     initFeedbackModalEvents() {
@@ -157,7 +162,7 @@ class App {
         this.initDependentComponents();
         this.setupGlobalEvents();
         this.initDiaryModalEvents();
-        this.initFeedbackModalEvents();  // 新增：绑定反馈模态框事件
+        this.initFeedbackModalEvents();  // 绑定反馈模态框事件
         this.isInitialized = true;
         
         // 将方法挂载到全局，供侧边栏等调用
