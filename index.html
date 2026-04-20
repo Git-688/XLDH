@@ -43,9 +43,10 @@
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
 
 <!-- KaTeX 数学公式支持（评论区使用） -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"></script>
+<!-- KaTeX 最新稳定版 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
     
     <style>
         /* 反馈模态框样式 - 头部精简 · 移动端高度90% · 流畅动画 */
@@ -461,8 +462,15 @@
             <button class="feedback-modal-close">&times;</button>
         </div>
         <div class="feedback-modal-body">
-            <div id="twikoo-feedback"></div>
-        </div>
+    <div style="padding: 8px 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: #666;">
+        <i class="fas fa-function" style="margin-right: 6px; color: #4361ee;"></i>
+        <strong>支持数学公式：</strong> 
+        行内 <code>$E=mc^2$</code>， 
+        块级 <code>$$\int_a^b f(x)\dx$$</code>（可换行），
+        矩阵 <code>$$\begin{pmatrix} a & b \\ c & d \end{pmatrix}$$</code>
+    </div>
+    <div id="twikoo-feedback"></div>
+</div>
     </div>
 </div>
 
@@ -499,6 +507,7 @@
 <script src="./js/xfyy/music-main.js"></script>
 
 <!-- Twikoo 核心库，用于反馈模态框 -->
-<script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.min.js"></script>
+<!-- Twikoo 最新版 -->
+<script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.11/dist/twikoo.all.min.js"></script>
 </body>
 </html>
