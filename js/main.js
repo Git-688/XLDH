@@ -1,5 +1,5 @@
 /**
- * 星链导航主应用程序（新增反馈模态框管理）
+ * 星链导航主应用程序（新增反馈模态框管理 + KaTeX 公式支持）
  */
 class App {
     constructor() {
@@ -109,31 +109,30 @@ class App {
     }
     // =========================================
 
-    // ========== 反馈模态框管理（已修复显示问题）==========
+    // ========== 反馈模态框管理（已修复显示问题，并添加 KaTeX 支持）==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
         
-        // 关键修复：显式设置 display 为 flex，覆盖内联样式
         modal.style.display = 'flex';
         modal.classList.add('active');
         
-        // 初始化 Twikoo（仅一次）
-        if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined')
-twikoo.init({
-  envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
-  el: '#twikoo-feedback',
-  lang: 'zh-CN',
-  path: '/feedback',
-  katex: {
-    delimiters: [
-      { left: '$$', right: '$$', display: true },
-      { left: '$', right: '$', display: false },
-      { left: '\\(', right: '\\)', display: false },
-      { left: '\\[', right: '\\]', display: true }
-    ]
-  }
-})
+        if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
+            twikoo.init({
+                envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',  // 替换为你的实际地址
+                el: '#twikoo-feedback',
+                lang: 'zh-CN',
+                path: '/feedback',
+                // 新增 KaTeX 配置
+                katex: {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false },
+                        { left: '\\(', right: '\\)', display: false },
+                        { left: '\\[', right: '\\]', display: true }
+                    ]
+                }
+            });
             window.twikooFeedbackInited = true;
         }
     }
@@ -150,7 +149,6 @@ twikoo.init({
         const modal = document.getElementById('feedbackModal');
         const closeBtn = document.querySelector('.feedback-modal-close');
         if (modal) {
-            // 点击背景关闭
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) this.closeFeedbackModal();
             });
@@ -415,7 +413,7 @@ twikoo.init({
         if (this.modules.search && this.modules.search.isModalOpen && this.modules.search.hide) {
             this.modules.search.hide();
         }
-        this.closeFeedbackModal(); // 新增：关闭反馈模态框
+        this.closeFeedbackModal(); // 关闭反馈模态框
     }
 
     showToast(message, type = 'info') {
