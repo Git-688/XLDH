@@ -118,23 +118,36 @@ class App {
         modal.classList.add('active');
         
         if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
-            twikoo.init({
-                envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',  // 替换为你的实际地址
-                el: '#twikoo-feedback',
-                lang: 'zh-CN',
-                path: '/feedback',
-                // 新增 KaTeX 配置
-                katex: {
-                    delimiters: [
-                        { left: '$$', right: '$$', display: true },
-                        { left: '$', right: '$', display: false },
-                        { left: '\\(', right: '\\)', display: false },
-                        { left: '\\[', right: '\\]', display: true }
-                    ]
-                }
-            });
-            window.twikooFeedbackInited = true;
+    twikoo.init({
+        envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
+        el: '#twikoo-feedback',
+        lang: 'zh-CN',
+        path: '/feedback',
+        katex: {
+            delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '$', right: '$', display: false },
+                { left: '\\(', right: '\\)', display: false },
+                { left: '\\[', right: '\\]', display: true }
+            ],
+            strict: false,
+            throwOnError: false,
+            trust: true,
+            macros: {
+                "\\R": "\\mathbb{R}",
+                "\\N": "\\mathbb{N}",
+                "\\Z": "\\mathbb{Z}",
+                "\\C": "\\mathbb{C}",
+                "\\Q": "\\mathbb{Q}",
+                "\\dx": "\\,dx",
+                "\\dy": "\\,dy",
+                "\\dint": "\\displaystyle\\int",
+                "\\dsum": "\\displaystyle\\sum"
+            }
         }
+    });
+    window.twikooFeedbackInited = true;
+}
     }
 
     closeFeedbackModal() {
