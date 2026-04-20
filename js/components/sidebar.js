@@ -550,6 +550,8 @@ class CompactSidebar {
                     // 兜底：直接显示模态框并初始化 Twikoo
                     const modal = document.getElementById('feedbackModal');
                     if (modal) {
+                        // 关键修复：显式设置 display 为 flex
+                        modal.style.display = 'flex';
                         modal.classList.add('active');
                         if (typeof twikoo !== 'undefined' && !window.twikooFeedbackInited) {
                             twikoo.init({
