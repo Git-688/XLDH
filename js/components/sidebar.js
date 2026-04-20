@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 简化版本
+ * 侧边栏组件 - 简化版本（修改反馈按钮行为）
  */
 class CompactSidebar {
     constructor() {
@@ -543,14 +543,36 @@ class CompactSidebar {
             const iconClass = icon.className;
             
             if (iconClass.includes('fa-comment')) {
-                window.open('https://support.qq.com/products/760416', '_blank');
-            } else if (iconClass.includes('fa-paper-plane')) {
+                // 修改：打开反馈模态框，不再跳转兔小巢
+                if (typeof window.openFeedbackModal === 'function') {
+                    window.openFeedbackModal();
+                } else {
+                    // 兜底：直接显示模态框并初始化 Twikoo
+                    const modal = document.getElementById('feedbackModal');
+                    if (modal) {
+                        modal.classList.add('active');
+                        if (typeof twikoo !== 'undefined' && !window.twikooFeedbackInited) {
+                            twikoo.init({
+                                envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
+                                el: '#twikoo-feedback',
+                                lang: 'zh-CN',
+                                path: '/feedback'
+                            });
+                            window.twikooFeedbackInited = true;
+                        }
+                    }
+                }
+                this.hide(); // 关闭侧边栏
+            } 
+            else if (iconClass.includes('fa-paper-plane')) {
                 window.open('https://f.wps.cn/g/TI3Gxbe1/', '_blank');
-            } else if (iconClass.includes('fa-info-circle')) {
+            } 
+            else if (iconClass.includes('fa-info-circle')) {
                 if (window.aboutModule) {
                     window.aboutModule.show();
                 }
-            } else if (iconClass.includes('fa-qq')) {
+            } 
+            else if (iconClass.includes('fa-qq')) {
                 window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
             }
             
@@ -780,7 +802,6 @@ class CompactSidebar {
             video.setAttribute('playsinline', 'true');
             video.setAttribute('preload', 'auto');
             
-            // 视频加载错误时回退
             video.onerror = () => {
                 console.warn('视频加载失败，使用备用背景');
                 this.setFallbackBackground();
