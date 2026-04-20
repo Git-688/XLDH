@@ -1,6 +1,5 @@
 /**
- * 星链导航主应用程序（彻底移除旧运行时间逻辑）
- * @class App
+ * 星链导航主应用程序（新增反馈模态框管理）
  */
 class App {
     constructor() {
@@ -110,6 +109,45 @@ class App {
     }
     // =========================================
 
+    // ========== 新增：反馈模态框管理 ==========
+    openFeedbackModal() {
+        const modal = document.getElementById('feedbackModal');
+        if (!modal) return;
+        
+        modal.classList.add('active');
+        
+        // 初始化 Twikoo（仅一次）
+        if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
+            twikoo.init({
+                envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',  // 替换为你的实际地址
+                el: '#twikoo-feedback',
+                lang: 'zh-CN',
+                path: '/feedback'  // 统一反馈路径，便于管理
+            });
+            window.twikooFeedbackInited = true;
+        }
+    }
+
+    closeFeedbackModal() {
+        const modal = document.getElementById('feedbackModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    initFeedbackModalEvents() {
+        const modal = document.getElementById('feedbackModal');
+        const closeBtn = document.querySelector('.feedback-modal-close');
+        if (modal) {
+            // 点击背景关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) this.closeFeedbackModal();
+            });
+        }
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.closeFeedbackModal());
+        }
+    }
+    // =========================================
+
     init() {
         if (this.isInitialized) return;
         this.setupErrorHandling();
@@ -119,8 +157,12 @@ class App {
         this.initDependentComponents();
         this.setupGlobalEvents();
         this.initDiaryModalEvents();
+        this.initFeedbackModalEvents();  // 新增：绑定反馈模态框事件
         this.isInitialized = true;
-        // 不再启动任何运行时间定时器
+        
+        // 将方法挂载到全局，供侧边栏等调用
+        window.openFeedbackModal = this.openFeedbackModal.bind(this);
+        window.closeFeedbackModal = this.closeFeedbackModal.bind(this);
     }
 
     initCoreComponents() {
@@ -360,6 +402,7 @@ class App {
         if (this.modules.search && this.modules.search.isModalOpen && this.modules.search.hide) {
             this.modules.search.hide();
         }
+        this.closeFeedbackModal(); // 新增：关闭反馈模态框
     }
 
     showToast(message, type = 'info') {
