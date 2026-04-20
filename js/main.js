@@ -119,13 +119,21 @@ class App {
         modal.classList.add('active');
         
         // 初始化 Twikoo（仅一次）
-        if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
-            twikoo.init({
-                envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',  // 替换为你的实际地址
-                el: '#twikoo-feedback',
-                lang: 'zh-CN',
-                path: '/feedback'  // 统一反馈路径，便于管理
-            });
+        if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined')
+twikoo.init({
+  envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
+  el: '#twikoo-feedback',
+  lang: 'zh-CN',
+  path: '/feedback',
+  katex: {
+    delimiters: [
+      { left: '$$', right: '$$', display: true },
+      { left: '$', right: '$', display: false },
+      { left: '\\(', right: '\\)', display: false },
+      { left: '\\[', right: '\\]', display: true }
+    ]
+  }
+})
             window.twikooFeedbackInited = true;
         }
     }
