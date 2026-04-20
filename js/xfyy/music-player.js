@@ -764,11 +764,19 @@ class MusicPlayer {
             this.checkTextOverflow(this.elements.songArtist);
         }
         
-        if (this.elements.coverImg && song.cover) {
-            this.elements.coverImg.src = song.cover;
+        // 设置封面：优先使用歌曲封面，否则使用默认 Logo
+        const coverUrl = song.cover || '/assets/logo.png';
+        if (this.elements.coverImg) {
+            this.elements.coverImg.src = coverUrl;
             this.elements.coverImg.style.display = 'block';
+            // 隐藏占位符
             const placeholder = document.querySelector('.cover-placeholder');
             if (placeholder) placeholder.style.display = 'none';
+            
+            // 图片加载失败时回退到默认 Logo
+            this.elements.coverImg.onerror = () => {
+                this.elements.coverImg.src = '/assets/logo.png';
+            };
         }
     }
 
@@ -1312,6 +1320,20 @@ class MusicPlayer {
         this.setPlaybackSpeed(this.playbackSpeed);
         this.updateModeIcon();
         this.updatePlayButton();
+        
+        // 设置默认封面为网站 Logo
+        const defaultLogo = '/assets/logo.png';
+        if (this.elements.coverImg) {
+            this.elements.coverImg.src = defaultLogo;
+            this.elements.coverImg.style.display = 'block';
+            // 隐藏占位符
+            const placeholder = document.querySelector('.cover-placeholder');
+            if (placeholder) placeholder.style.display = 'none';
+            // 图片加载失败时的回退
+            this.elements.coverImg.onerror = () => {
+                this.elements.coverImg.src = defaultLogo;
+            };
+        }
         
         this.loadApiPlaylist(this.currentApi);
         
