@@ -102,11 +102,11 @@ class AboutModule {
                         </div>
                         <div class="about-header-right">
                             <div class="about-brand">
-                                <div class="about-logo">
-                                    <img src="${Utils.escapeHtml(this.logoUrl)}" alt="星链导航Logo" class="about-logo-img">
+                                <div class="about-logo" style="border-radius: 8px; overflow: hidden;">
+                                    <img src="${Utils.escapeHtml(this.logoUrl)}" alt="星聚导航Logo" class="about-logo-img" style="border-radius: 8px; width: 100%; height: 100%; object-fit: cover;">
                                 </div>
                                 <div class="about-title-group">
-                                    <div class="about-title">星链导航</div>
+                                    <div class="about-title">星聚导航</div>
                                     <div class="about-subtitle">您的个人导航中心</div>
                                 </div>
                             </div>
@@ -123,7 +123,7 @@ class AboutModule {
                             </div>
                             <div class="card-content">
                                 <h3>简介</h3>
-                                <p>星链导航是一个现代化的个人导航网站，致力于收集整理网络上的优质资源和个人开发的小工具，为用户提供便捷的上网导航体验。</p>
+                                <p>星聚导航是一个现代化的个人导航网站，致力于收集整理网络上的优质资源和个人开发的小工具，为用户提供便捷的上网导航体验。</p>
                             </div>
                         </div>
                         <div class="about-card">
@@ -157,11 +157,6 @@ class AboutModule {
                             <button class="about-social-btn space-btn tooltip" id="aboutPrivateSpaceBtn">
                                 <i class="fas fa-user-secret"></i>
                                 <span class="tooltip-text">私密空间</span>
-                            </button>
-                            <!-- 新增日记本按钮 -->
-                            <button class="about-social-btn diary-btn tooltip" id="aboutDiaryBtn">
-                                <i class="fas fa-book"></i>
-                                <span class="tooltip-text">神木日记</span>
                             </button>
                         </div>
                         <button class="about-close-btn" id="aboutCloseBtn">
@@ -257,16 +252,7 @@ class AboutModule {
             });
         }
 
-        // 新增日记本按钮事件
-        const diaryBtn = document.getElementById('aboutDiaryBtn');
-        if (diaryBtn) {
-            diaryBtn.addEventListener('click', () => {
-                this.hide();
-                setTimeout(() => {
-                    window.open('https://www.apihz.cn/user/', '_blank');
-                }, 300);
-            });
-        }
+        // 神木日记按钮已移除
 
         const closeBtn = document.getElementById('aboutCloseBtn');
         if (closeBtn) {
