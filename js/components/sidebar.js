@@ -555,20 +555,11 @@ class CompactSidebar {
                         modal.classList.add('active');
                         if (typeof twikoo !== 'undefined' && !window.twikooFeedbackInited) {
                             twikoo.init({
-  envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
-  el: '#twikoo-feedback',
-  lang: 'zh-CN',
-  path: '/feedback',
-  // 👇 以下是新增的进阶配置
-  katex: {
-    delimiters: [
-      { left: '$$', right: '$$', display: true },   // 块级公式：$$ ... $$
-      { left: '$', right: '$', display: false },    // 行内公式：$ ... $
-      { left: '\\(', right: '\\)', display: false }, // 行内公式：\( ... \)
-      { left: '\\[', right: '\\]', display: true }   // 块级公式：\[ ... \]
-    ]
-  }
-})
+                                envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
+                                el: '#twikoo-feedback',
+                                lang: 'zh-CN',
+                                path: '/feedback'
+                            });
                             window.twikooFeedbackInited = true;
                         }
                     }
