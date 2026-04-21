@@ -1,5 +1,5 @@
 /**
- * 星链导航主应用程序（新增反馈模态框管理 + KaTeX 公式支持）
+ * 星链导航主应用程序（反馈模态框 + KaTeX 完整支持）
  */
 class App {
     constructor() {
@@ -109,7 +109,7 @@ class App {
     }
     // =========================================
 
-    // ========== 反馈模态框管理（已修复显示问题，并添加 KaTeX 支持）==========
+    // ========== 反馈模态框管理（完整 KaTeX 支持）==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -118,36 +118,36 @@ class App {
         modal.classList.add('active');
         
         if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
-    twikoo.init({
-        envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
-        el: '#twikoo-feedback',
-        lang: 'zh-CN',
-        path: '/feedback',
-        katex: {
-            delimiters: [
-                { left: '$$', right: '$$', display: true },
-                { left: '$', right: '$', display: false },
-                { left: '\\(', right: '\\)', display: false },
-                { left: '\\[', right: '\\]', display: true }
-            ],
-            strict: false,
-            throwOnError: false,
-            trust: true,
-            macros: {
-                "\\R": "\\mathbb{R}",
-                "\\N": "\\mathbb{N}",
-                "\\Z": "\\mathbb{Z}",
-                "\\C": "\\mathbb{C}",
-                "\\Q": "\\mathbb{Q}",
-                "\\dx": "\\,dx",
-                "\\dy": "\\,dy",
-                "\\dint": "\\displaystyle\\int",
-                "\\dsum": "\\displaystyle\\sum"
-            }
+            twikoo.init({
+                envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
+                el: '#twikoo-feedback',
+                lang: 'zh-CN',
+                path: '/feedback',
+                katex: {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false },
+                        { left: '\\(', right: '\\)', display: false },
+                        { left: '\\[', right: '\\]', display: true }
+                    ],
+                    strict: false,
+                    throwOnError: false,
+                    trust: true,
+                    macros: {
+                        "\\R": "\\mathbb{R}",
+                        "\\N": "\\mathbb{N}",
+                        "\\Z": "\\mathbb{Z}",
+                        "\\C": "\\mathbb{C}",
+                        "\\Q": "\\mathbb{Q}",
+                        "\\dx": "\\,dx",
+                        "\\dy": "\\,dy",
+                        "\\dint": "\\displaystyle\\int",
+                        "\\dsum": "\\displaystyle\\sum"
+                    }
+                }
+            });
+            window.twikooFeedbackInited = true;
         }
-    });
-    window.twikooFeedbackInited = true;
-}
     }
 
     closeFeedbackModal() {
@@ -181,10 +181,9 @@ class App {
         this.initDependentComponents();
         this.setupGlobalEvents();
         this.initDiaryModalEvents();
-        this.initFeedbackModalEvents();  // 绑定反馈模态框事件
+        this.initFeedbackModalEvents();
         this.isInitialized = true;
         
-        // 将方法挂载到全局，供侧边栏等调用
         window.openFeedbackModal = this.openFeedbackModal.bind(this);
         window.closeFeedbackModal = this.closeFeedbackModal.bind(this);
     }
@@ -426,7 +425,7 @@ class App {
         if (this.modules.search && this.modules.search.isModalOpen && this.modules.search.hide) {
             this.modules.search.hide();
         }
-        this.closeFeedbackModal(); // 关闭反馈模态框
+        this.closeFeedbackModal();
     }
 
     showToast(message, type = 'info') {
