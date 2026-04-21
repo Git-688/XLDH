@@ -1,4 +1,4 @@
-// 统计接口域名（你的 Worker 路由）
+// 统计接口域名（从配置读取）
 const WORKER_URL = window.APP_CONFIG?.API_BASE || 'https://api.xldh688.eu.cc';
 
 // 心跳定时器句柄
