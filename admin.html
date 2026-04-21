@@ -204,6 +204,23 @@
             color: #1e293b;
         }
 
+        /* 记住密码复选框样式 */
+        .remember-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .remember-checkbox input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        .remember-checkbox label {
+            font-size: 11px;
+            color: #64748b;
+            cursor: pointer;
+        }
+
         @media (max-width:768px){
             .sidebar{width:150px}
             .cat-item{padding:7px 12px;font-size:11px}
@@ -247,9 +264,17 @@
         <div class="header">
             <h1 style="font-size:17px">📋 星链导航管理</h1>
             <div class="flex-row">
-                <input type="password" id="tokenInput" placeholder="管理Token" style="width:130px" autocomplete="off">
-                <button class="primary" id="loginBtn">登录</button>
-                <button class="secondary hidden" id="logoutBtn">退出</button>
+                <div style="display:flex; flex-direction:column;">
+                    <div style="display:flex; gap:5px;">
+                        <input type="password" id="tokenInput" placeholder="管理Token" style="width:130px" autocomplete="off">
+                        <button class="primary" id="loginBtn">登录</button>
+                        <button class="secondary hidden" id="logoutBtn">退出</button>
+                    </div>
+                    <div class="remember-checkbox">
+                        <input type="checkbox" id="rememberToken">
+                        <label for="rememberToken">记住密码（8小时有效）</label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -307,13 +332,79 @@
 
 <script>
     const API_BASE = 'https://api.xldh688.eu.cc';
-    let token = localStorage.getItem('admin_token') || '';
+    
+    // 改用 sessionStorage，并支持记住密码（存入 localStorage 并设置8小时过期）
+    function getStoredToken() {
+        // 优先检查 sessionStorage（当前会话）
+        let token = sessionStorage.getItem('admin_token');
+        if (token) {
+            const expires = sessionStorage.getItem('admin_expires');
+            if (expires && Date.now() < parseInt(expires)) {
+                return token;
+            } else {
+                // 过期则清除
+                sessionStorage.removeItem('admin_token');
+                sessionStorage.removeItem('admin_expires');
+            }
+        }
+        
+        // 检查 localStorage 记住的密码
+        const remember = localStorage.getItem('admin_remember');
+        if (remember === 'true') {
+            token = localStorage.getItem('admin_token_saved');
+            const savedTime = localStorage.getItem('admin_saved_time');
+            if (token && savedTime) {
+                const expires = parseInt(savedTime) + (8 * 3600000); // 8小时
+                if (Date.now() < expires) {
+                    // 恢复到 sessionStorage
+                    sessionStorage.setItem('admin_token', token);
+                    sessionStorage.setItem('admin_expires', expires.toString());
+                    return token;
+                } else {
+                    // 过期清理
+                    localStorage.removeItem('admin_token_saved');
+                    localStorage.removeItem('admin_saved_time');
+                    localStorage.removeItem('admin_remember');
+                }
+            }
+        }
+        return '';
+    }
+
+    function saveToken(token, remember) {
+        // 计算过期时间（8小时后）
+        const expires = Date.now() + (8 * 3600000);
+        
+        // 存入 sessionStorage
+        sessionStorage.setItem('admin_token', token);
+        sessionStorage.setItem('admin_expires', expires.toString());
+        
+        // 如果勾选记住密码，存入 localStorage
+        if (remember) {
+            localStorage.setItem('admin_remember', 'true');
+            localStorage.setItem('admin_token_saved', token);
+            localStorage.setItem('admin_saved_time', Date.now().toString());
+        } else {
+            localStorage.removeItem('admin_remember');
+            localStorage.removeItem('admin_token_saved');
+            localStorage.removeItem('admin_saved_time');
+        }
+    }
+
+    function clearToken() {
+        sessionStorage.clear();
+        localStorage.removeItem('admin_remember');
+        localStorage.removeItem('admin_token_saved');
+        localStorage.removeItem('admin_saved_time');
+    }
+
+    let token = getStoredToken();
     let modalAction = null;
     let categories = [], subcategories = [], sites = [];
     let currentCat = null, currentSub = null;
-    let failCount = parseInt(localStorage.getItem('login_fail_count') || 0);
-    let lockTime = localStorage.getItem('login_lock_time') || 0;
-    const TOKEN_EXPIRE_HOURS = 24;
+    let failCount = parseInt(sessionStorage.getItem('login_fail_count') || 0);
+    let lockTime = sessionStorage.getItem('login_lock_time') || 0;
+    const TOKEN_EXPIRE_HOURS = 8; // 8小时有效
     const IP_WHITELIST = ['127.0.0.1', '112.96.123.9'];
 
     const toast = document.getElementById('toast');
@@ -342,13 +433,13 @@
     function closeLogModal() { document.getElementById('logModal').classList.remove('show'); }
 
     function addLog(text) {
-        const logs = JSON.parse(localStorage.getItem('operation_logs') || '[]');
+        const logs = JSON.parse(sessionStorage.getItem('operation_logs') || '[]');
         logs.unshift({ time: new Date().toLocaleString(), text });
         if (logs.length > 50) logs.splice(50);
-        localStorage.setItem('operation_logs', JSON.stringify(logs));
+        sessionStorage.setItem('operation_logs', JSON.stringify(logs));
     }
     function showLogs() {
-        const logs = JSON.parse(localStorage.getItem('operation_logs') || '[]');
+        const logs = JSON.parse(sessionStorage.getItem('operation_logs') || '[]');
         document.getElementById('logList').innerHTML = logs.length ? logs.map(i => `<div class="log-item"><span>${i.time}</span> ${i.text}</div>`).join('') : '<div class="empty">暂无记录</div>';
         document.getElementById('logModal').classList.add('show');
     }
@@ -373,49 +464,81 @@
 
     function checkLock() {
         if(Date.now() < lockTime){showToast('登录失败过多，锁定10分钟','error');return false;}
-        if(failCount >=5){localStorage.setItem('login_lock_time',Date.now()+600000);showToast('失败5次，锁定10分钟','error');return false;}
+        if(failCount >=5){sessionStorage.setItem('login_lock_time',Date.now()+600000);showToast('失败5次，锁定10分钟','error');return false;}
         return true;
     }
 
     function checkTokenExpire() {
-        const t = localStorage.getItem('login_time');
-        if(!t)return;
-        if(Date.now()-t > TOKEN_EXPIRE_HOURS*3600000){showToast('Token已过期','warn');logout();}
-        else if(Date.now()-t > TOKEN_EXPIRE_HOURS*3600000*0.9){showToast('Token即将过期','warn');}
+        const expires = sessionStorage.getItem('admin_expires');
+        if (expires && Date.now() > parseInt(expires)) {
+            showToast('登录已过期，请重新登录','warn');
+            logout();
+            return false;
+        }
+        return true;
     }
 
     async function login() {
         if(!checkLock())return;
         if(!await checkIP()){showToast('当前IP无权限','error');return;}
         const ipt = document.getElementById('tokenInput'), btn = document.getElementById('loginBtn');
+        const rememberCheck = document.getElementById('rememberToken');
         const val = ipt.value.trim();
         if(!val){showToast('请输入Token','error');return;}
         btn.disabled=1;btn.textContent='登录中…';token=val;
         try{
             await apiFetch('/admin/categories');
-            localStorage.setItem('admin_token',token);localStorage.setItem('login_time',Date.now());
-            localStorage.setItem('login_fail_count',0);failCount=0;
+            const remember = rememberCheck ? rememberCheck.checked : false;
+            saveToken(token, remember);
+            sessionStorage.setItem('login_fail_count',0);failCount=0;
             ipt.style.display='none';
             document.getElementById('loginBtn').classList.add('hidden');
             document.getElementById('logoutBtn').classList.remove('hidden');
             document.getElementById('mainContent').classList.remove('hidden');
+            document.querySelector('.remember-checkbox').style.display = 'none';
             await loadAllData();
             addLog('管理员登录');
-            showToast('登录成功');
+            showToast('登录成功' + (remember ? '（已记住密码）' : ''));
         }catch(e){
-            token='';failCount++;localStorage.setItem('login_fail_count',failCount);
+            token='';failCount++;sessionStorage.setItem('login_fail_count',failCount);
             showToast('Token无效','error');
         }finally{btn.disabled=0;btn.textContent='登录';}
     }
 
     function logout() {
-        token='';localStorage.clear();
+        token='';
+        clearToken();
         document.getElementById('loginBtn').classList.remove('hidden');
         document.getElementById('logoutBtn').classList.add('hidden');
         document.getElementById('mainContent').classList.add('hidden');
         document.getElementById('tokenInput').style.display='block';
         document.getElementById('tokenInput').value='';
+        document.querySelector('.remember-checkbox').style.display = 'block';
         addLog('退出登录');showToast('已退出');
+    }
+
+    // 自动登录检查
+    if(token) {
+        // 检查是否过期
+        const expires = sessionStorage.getItem('admin_expires');
+        if (expires && Date.now() < parseInt(expires)) {
+            // 有效，自动登录
+            (async () => {
+                try {
+                    await apiFetch('/admin/categories');
+                    document.getElementById('tokenInput').style.display='none';
+                    document.getElementById('loginBtn').classList.add('hidden');
+                    document.getElementById('logoutBtn').classList.remove('hidden');
+                    document.getElementById('mainContent').classList.remove('hidden');
+                    document.querySelector('.remember-checkbox').style.display = 'none';
+                    await loadAllData();
+                } catch(e) {
+                    logout();
+                }
+            })();
+        } else {
+            logout();
+        }
     }
 
     function getFavicon(url){
@@ -429,7 +552,6 @@
 
     function checkUrl(url){try{new URL(url);return true;}catch{return false;}}
 
-    // 加载点击排行榜
     async function loadRanking() {
         const rankList = document.getElementById('rankList');
         if (!rankList) return;
@@ -459,7 +581,6 @@
         }
     }
 
-    // 用户反馈相关 - 按日期分组
     async function loadFeedback() {
         const listEl = document.getElementById('feedbackList');
         listEl.innerHTML = '<div class="empty">加载中...</div>';
@@ -582,7 +703,6 @@
         });
     }
 
-    // 标签切换
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.onclick = () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -595,7 +715,6 @@
         }
     });
 
-    // 分类切换
     function selectCat(cid){
         currentCat = cid;
         currentSub = null;
@@ -670,7 +789,7 @@
     }
 
     async function loadAllData(){
-        checkTokenExpire();
+        if(!checkTokenExpire()) return;
         try{
             const [catData, subData, siteData] = await Promise.all([
                 apiFetch('/admin/categories'),
@@ -729,6 +848,10 @@
             const t=document.getElementById('title').value,u=document.getElementById('url').value;
             if(!t||!u){showToast('标题/网址必填','error');return;}
             if(!checkUrl(u)){showToast('网址格式错误','error');return;}
+            // 禁止危险协议
+            if(u.toLowerCase().startsWith('javascript:') || u.toLowerCase().startsWith('data:')){
+                showToast('不允许使用危险协议','error');return;
+            }
             await apiFetch('/admin/sites',{method:'POST',body:JSON.stringify({
                 subcategory_id:currentSub,title:t,url:u,
                 description:document.getElementById('desc').value,
@@ -750,6 +873,9 @@
             const t=document.getElementById('title').value,u=document.getElementById('url').value;
             if(!t||!u){showToast('标题/网址必填','error');return;}
             if(!checkUrl(u)){showToast('网址格式错误','error');return;}
+            if(u.toLowerCase().startsWith('javascript:') || u.toLowerCase().startsWith('data:')){
+                showToast('不允许使用危险协议','error');return;
+            }
             await apiFetch(`/admin/sites/${id}`,{method:'PUT',body:JSON.stringify({
                 title:t,url:u,
                 description:document.getElementById('desc').value,
@@ -765,7 +891,6 @@
         addLog(`删除链接：${id}`);showToast('删除成功');await loadAllData();
     }
 
-    // ========== 新增：修改分类和子分类的函数 ==========
     function renameCategory(id, oldName) {
         openModal('修改分类名称', `
             <div class="form-row"><label>新名称</label><input id="newName" value="${escapeHtml(oldName)}"></div>
@@ -797,7 +922,6 @@
             await loadAllData();
         });
     }
-    // ========== 修改函数结束 ==========
 
     function exportData(){
         const blob = new Blob([JSON.stringify({categories,subcategories,sites,time:new Date().toLocaleString()},null,2)],{type:'application/json'});
@@ -856,8 +980,6 @@
         }
     };
     document.getElementById('tokenInput').addEventListener('keydown',e=>e.key==='Enter'&&login());
-
-    if(token) login();
 </script>
 </body>
 </html>
