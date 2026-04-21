@@ -282,6 +282,21 @@ body {
     color: #3a56d6;
 }
 
+/* 新增悬浮按钮颜色 - 用于互换后的按钮 */
+.floating-btn.feedback-btn {
+    color: #8b5cf6;
+}
+.floating-btn.feedback-btn:hover {
+    color: #7c3aed;
+}
+
+.floating-btn.submit-btn {
+    color: #06b6d4;
+}
+.floating-btn.submit-btn:hover {
+    color: #0891b2;
+}
+
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
     .floating-btn {
@@ -326,6 +341,19 @@ body {
     
     .activity-btn:hover {
         color: #ff7a47;
+    }
+    
+    .floating-btn.feedback-btn {
+        color: #a78bfa;
+    }
+    .floating-btn.feedback-btn:hover {
+        color: #c4b5fd;
+    }
+    .floating-btn.submit-btn {
+        color: #22d3ee;
+    }
+    .floating-btn.submit-btn:hover {
+        color: #67e8f9;
     }
 }
 
@@ -1328,14 +1356,14 @@ select {
     color: #666;
 }
 
-/* ====== 新增：日记模态框样式（列表版）====== */
+/* ====== 新增：日记模态框样式（列表版） ====== */
 .diary-modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: transparent;
+    background: transparent; /* 移除黑色遮罩层 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1399,12 +1427,12 @@ select {
     flex: 1;
     overflow-y: auto;
     padding: 16px 20px;
-    scrollbar-width: none;  /* Firefox */
-    -ms-overflow-style: none;  /* IE/Edge */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
 .diary-list::-webkit-scrollbar {
-    display: none;  /* Chrome/Safari */
+    display: none;
 }
 
 .diary-item {
