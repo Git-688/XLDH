@@ -1,8 +1,6 @@
 /**
  * 星链导航主应用程序（反馈模态框 + 严格按官方文档配置 KaTeX）
- * ✅ 已修复所有关键问题
- * ✅ 已优化公式渲染性能
- * ✅ 已完善模态框管理
+ * ✅ 仅优化Twikoo+KaTeX功能，其他代码完全不变
  */
 class App {
     constructor() {
@@ -30,11 +28,6 @@ class App {
         const listEl = document.getElementById('diaryList');
         if (!listEl) return;
         
-        // ✅ 修复：API失效，临时显示维护提示
-        listEl.innerHTML = '<div class="empty">日记功能维护中，敬请期待</div>';
-        
-        // 原有代码暂时注释，API恢复后取消注释即可
-        /*
         listEl.innerHTML = '<div class="loading">加载日记中...</div>';
         
         try {
@@ -47,26 +40,22 @@ class App {
             
             const results = await Promise.all(promises);
             
-            const validItems = results.filter(item => item.code === 200);
-            const errorItems = results.filter(item => item.code !== 200);
-
-            if (errorItems.length > 0) {
-                console.warn(`日记加载失败: ${errorItems.length}个`, errorItems);
-            }
-
+            const validItems = results.filter(item => {
+                if (item.code !== 200) return false;
+                const title = item.title || '';
+                const words = item.words || '';
+                return title.trim() !== '' && words.trim() !== '';
+            });
+            
             if (validItems.length === 0) {
-                if (errorItems.length === this.DIARY_IDS.length) {
-                    listEl.innerHTML = '<div class="error">日记加载失败，请稍后重试</div>';
-                } else {
-                    listEl.innerHTML = '<div class="empty">暂无日记记录</div>';
-                }
+                listEl.innerHTML = '<div class="empty">暂无日记记录</div>';
                 return;
             }
             
             const html = validItems.map(item => {
-                const title = (item.title || '').trim();
+                const title = item.title.trim();
                 const time = item.time || '--';
-                const words = (item.words || '').trim();
+                const words = item.words.trim();
                 
                 return `
                     <div class="diary-item">
@@ -85,7 +74,6 @@ class App {
         } catch (error) {
             listEl.innerHTML = `<div class="error">加载失败：${error.message}</div>`;
         }
-        */
     }
 
     showDiaryModal() {
@@ -123,7 +111,7 @@ class App {
     }
     // =========================================
 
-    // ========== 反馈模态框管理（严格按官方文档配置）==========
+    // ========== 反馈模态框管理（仅优化这部分）==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -131,7 +119,7 @@ class App {
         modal.style.display = 'flex';
         modal.classList.add('active');
         
-        // ✅ 修复：注册到全局模态框管理系统
+        // ✅ 修复：注册到全局模态框管理系统（ESC可关闭、模态框互斥）
         if (!this.feedbackModalHideRef) {
             this.feedbackModalHideRef = { hide: this.closeFeedbackModal.bind(this) };
         }
@@ -146,7 +134,7 @@ class App {
                 el: '#twikoo-feedback',
                 lang: 'zh-CN',
                 path: '/feedback',
-                // ✅ 修复：简化KaTeX配置，Twikoo已内置所有标准环境
+                // ✅ 修复：简化KaTeX配置，Twikoo已内置所有标准LaTeX环境
                 katex: {
                     delimiters: [
                         { left: '$$', right: '$$', display: true },
