@@ -184,11 +184,30 @@ class App {
         this.setupGlobalEvents();
         this.initDiaryModalEvents();
         this.initFeedbackModalEvents();
+        this.initFloatingButtonsEffect(); // 新增：悬浮按钮滚动效果
         this.isInitialized = true;
         
         window.openFeedbackModal = this.openFeedbackModal.bind(this);
         window.closeFeedbackModal = this.closeFeedbackModal.bind(this);
     }
+
+    // ========== 新增：悬浮按钮滚动半透明效果 ==========
+    initFloatingButtonsEffect() {
+        let scrollTimer;
+        const floatingBtns = document.querySelector('.floating-buttons');
+        if (!floatingBtns) return;
+        
+        window.addEventListener('scroll', () => {
+            floatingBtns.style.opacity = '0.4';
+            floatingBtns.style.transition = 'opacity 0.3s ease';
+            
+            clearTimeout(scrollTimer);
+            scrollTimer = setTimeout(() => {
+                floatingBtns.style.opacity = '1';
+            }, 1000);
+        }, { passive: true });
+    }
+    // =========================================
 
     initCoreComponents() {
         try {
