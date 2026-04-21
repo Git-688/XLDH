@@ -237,13 +237,13 @@
             font-size: 11px;
         }
 
-        /* ✅ 新增：数学公式全局样式优化 */
-        /* 调整所有公式字体大小（默认1.21em偏大） */
+        /* ✅ 新增：Twikoo数学公式全局优化（仅修改这部分） */
+        /* 调整公式字体大小，与正文比例协调 */
         .twikoo .katex {
             font-size: 1.05em !important;
             line-height: 1.5 !important;
         }
-        /* 单独调整块级公式大小 */
+        /* 块级公式大小和间距优化 */
         .twikoo .katex-display {
             font-size: 1.15em !important;
             margin: 0.8em 0 !important;
@@ -251,19 +251,17 @@
             overflow-y: hidden;
             padding-bottom: 4px;
         }
-        /* 公式内间距优化 */
+        /* 公式内元素间距优化 */
         .twikoo .katex .base {
             margin: 0 2px;
         }
-        /* 深色模式下公式颜色自动适配 */
+        /* 深色模式下公式颜色强制适配（解决部分元素不变色问题） */
         [data-theme="dark"] .twikoo .katex,
         @media (prefers-color-scheme: dark) {
             .twikoo .katex {
                 color: #ffffff !important;
             }
-            .twikoo .katex .katex-html {
-                color: #ffffff !important;
-            }
+            .twikoo .katex .katex-html,
             .twikoo .katex .mord,
             .twikoo .katex .mop,
             .twikoo .katex .mbin,
@@ -274,7 +272,7 @@
                 color: #ffffff !important;
             }
         }
-        /* 公式滚动条美化 */
+        /* 长公式横向滚动条美化 */
         .twikoo .katex-display::-webkit-scrollbar {
             height: 4px;
         }
@@ -519,7 +517,7 @@
             <button class="feedback-modal-close">&times;</button>
         </div>
         <div class="feedback-modal-body">
-            <!-- ✅ 修复：完善公式提示内容 -->
+            <!-- ✅ 修复：完善公式使用提示 -->
             <div class="math-hint">
                 <i class="fas fa-function"></i>
                 支持 LaTeX 数学公式：行内公式用 <code>$E=mc^2$</code>，块级公式用 <code>$$\begin{pmatrix}a&b\\c&d\end{pmatrix}$$</code>
