@@ -16,6 +16,9 @@ class OptimizedNavigation {
         };
         
         this.isNavigationClick = false;
+        
+        // 从配置获取 API 地址
+        this.apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xldh688.eu.cc';
     }
 
     async init() {
@@ -41,7 +44,7 @@ class OptimizedNavigation {
     }
 
     async loadNavigationData(retryCount = 0) {
-        const apiUrl = `https://api.xldh688.eu.cc/navigation?_=${Date.now()}`;
+        const apiUrl = `${this.apiBase}/navigation?_=${Date.now()}`;
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -182,7 +185,6 @@ class OptimizedNavigation {
             let iconHtml = '';
             if (site.icon) {
                 if (site.icon.startsWith('http') || site.icon.startsWith('./') || site.icon.startsWith('../') || site.icon.includes('assets/') || site.icon.includes('.png') || site.icon.includes('.jpg') || site.icon.includes('.ico') || site.icon.includes('.svg')) {
-                    // ===== 修改点：添加 loading="lazy" 和 decoding="async" =====
                     iconHtml = `<img src="${site.icon}" alt="${site.title}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTYgMkM4LjIgMiAyIDguMiAyIDE2czYuMiAxNCAxNCAxNCAxNC02LjIgMTQtMTRTMjMuOCAyIDE2IDJ6bTAgNGEyIDIgMCAxIDAgMCA0IDIgMiAwIDAgMCAwLTR6bTQgMTRINnYtMmg0LjdsMy42LTMuNmMuMi0uMi4zLS40LjMtLjZWMTRoNHY0LjhsLTQgNHYyaDZ2LTJ6IiBmaWxsPSIjZmZmIi8+PC9zdmc+'">`;
                 } else if (site.icon.startsWith('fas ') || site.icon.startsWith('fab ') || site.icon.startsWith('far ')) {
                     iconHtml = `<i class="${site.icon}"></i>`;
@@ -193,7 +195,6 @@ class OptimizedNavigation {
                 iconHtml = '<i class="fas fa-link"></i>';
             }
             
-            // 卡片 HTML（移除了检测按钮）
             card.innerHTML = `
                 <div class="card-top">
                     <div class="icon-container">${iconHtml}</div>
@@ -214,7 +215,6 @@ class OptimizedNavigation {
                 </div>
             `;
             
-            // 绑定点击统计（点击卡片时，排除按钮区域）
             card.addEventListener('click', (e) => {
                 if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) {
                     return;
@@ -227,7 +227,7 @@ class OptimizedNavigation {
                     window.musicPlayer.isHandlingNavigationClick = true;
                 }
                 
-                fetch('https://api.xldh688.eu.cc/click', {
+                fetch(`${this.apiBase}/click`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url: site.url, title: site.title })
@@ -251,7 +251,6 @@ class OptimizedNavigation {
                 }, 100);
             }, true);
             
-            // 绑定报告死链按钮事件
             const reportBtn = card.querySelector('.report-dead-link-btn');
             if (reportBtn) {
                 reportBtn.addEventListener('click', async (e) => {
@@ -260,7 +259,7 @@ class OptimizedNavigation {
                     const url = reportBtn.dataset.url;
                     const title = reportBtn.dataset.title;
                     try {
-                        const res = await fetch('https://api.xldh688.eu.cc/report-dead-link', {
+                        const res = await fetch(`${this.apiBase}/report-dead-link`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ url, title })
@@ -321,9 +320,7 @@ class OptimizedNavigation {
         `;
     }
 
-    showStatsSummary() {
-        // 可留空
-    }
+    showStatsSummary() {}
 
     selectLevel1(level1, isUserClick = false) {
         if (this.selectedLevel1 === level1) return;
