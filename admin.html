@@ -331,7 +331,7 @@
 </div>
 
 <script>
-    const API_BASE = 'https://api.xldh688.eu.cc';
+    const API_BASE = window.APP_CONFIG?.API_BASE || 'https://api.xldh688.eu.cc';
     
     // 改用 sessionStorage，并支持记住密码（存入 localStorage 并设置8小时过期）
     function getStoredToken() {
