@@ -1,6 +1,5 @@
 /**
- * 侧边栏组件 - 简化版本（移动端手势优化版）
- * 支持：右滑打开、左滑关闭、边缘检测、避免与滚动冲突
+ * 侧边栏组件 - 简化版本（修改反馈按钮行为）
  */
 class CompactSidebar {
     constructor() {
@@ -75,15 +74,6 @@ class CompactSidebar {
         
         this.isInitialized = false;
         this.currentVideo = null;
-        
-        // ===== 新增：手势状态 =====
-        this.touchStartX = 0;
-        this.touchStartY = 0;
-        this.touchCurrentX = 0;
-        this.isTouching = false;
-        this.swipeThreshold = 50; // 滑动阈值（像素）
-        this.edgeWidth = 30;      // 边缘触发宽度（从屏幕左侧边缘开始算）
-        this.isSwipeDisabled = false; // 是否禁用手势（当有模态框打开时）
     }
 
     async init() {
@@ -107,9 +97,6 @@ class CompactSidebar {
             this.adjustSidebarHeight();
             this.createProfileModal();
             
-            // ===== 新增：绑定额外手势事件 =====
-            this.bindGestureEvents();
-            
             this.isInitialized = true;
             
             window.sidebar = this;
@@ -118,94 +105,6 @@ class CompactSidebar {
         } catch (error) {
             console.error('侧滑栏初始化失败:', error);
             window.toast.show('侧滑栏初始化失败', 'error');
-        }
-    }
-
-    // ===== 新增：手势事件绑定 =====
-    bindGestureEvents() {
-        const sidebar = document.getElementById('sidebar');
-        if (!sidebar) return;
-        
-        // 在 document 上监听触摸事件（因为需要检测边缘滑动）
-        document.addEventListener('touchstart', (e) => {
-            // 如果手势被禁用（例如模态框打开时），不处理
-            if (this.isSwipeDisabled) return;
-            
-            const touch = e.touches[0];
-            this.touchStartX = touch.clientX;
-            this.touchStartY = touch.clientY;
-            this.touchCurrentX = touch.clientX;
-            this.isTouching = true;
-            
-            // 如果侧边栏已打开，记录侧边栏内的触摸起始位置（用于左滑关闭）
-            if (this.isVisible()) {
-                // 后续在 touchmove 中判断
-            }
-        }, { passive: true });
-        
-        document.addEventListener('touchmove', (e) => {
-            if (!this.isTouching || this.isSwipeDisabled) return;
-            
-            const touch = e.touches[0];
-            const currentX = touch.clientX;
-            const currentY = touch.clientY;
-            const diffX = currentX - this.touchStartX;
-            const diffY = currentY - this.touchStartY;
-            
-            this.touchCurrentX = currentX;
-            
-            // 如果垂直滑动距离大于水平滑动距离，可能是页面滚动，不处理手势
-            if (Math.abs(diffY) > Math.abs(diffX)) {
-                return;
-            }
-            
-            // 侧边栏关闭时：检测右滑打开手势（需从屏幕左侧边缘开始）
-            if (!this.isVisible()) {
-                // 只有从屏幕左侧边缘（< edgeWidth）开始的右滑才触发
-                if (this.touchStartX < this.edgeWidth && diffX > this.swipeThreshold) {
-                    e.preventDefault(); // 阻止默认滚动
-                    this.show();
-                    this.isTouching = false; // 重置状态，避免重复触发
-                }
-            } 
-            // 侧边栏打开时：检测左滑关闭手势（在侧边栏区域内向左滑动）
-            else {
-                // 如果触摸起始点在侧边栏内部，且向左滑动超过阈值
-                const sidebarRect = sidebar.getBoundingClientRect();
-                const isTouchInsideSidebar = this.touchStartX >= sidebarRect.left && 
-                                            this.touchStartX <= sidebarRect.right;
-                
-                if (isTouchInsideSidebar && diffX < -this.swipeThreshold) {
-                    e.preventDefault();
-                    this.hide();
-                    this.isTouching = false;
-                }
-            }
-        }, { passive: false }); // 需要 preventDefault，所以 passive 为 false
-        
-        document.addEventListener('touchend', () => {
-            this.isTouching = false;
-            this.touchStartX = 0;
-            this.touchStartY = 0;
-        });
-        
-        // 当有其他模态框打开时，禁用手势（避免冲突）
-        const originalRegisterModal = window.app?.registerModal;
-        if (window.app) {
-            window.app.registerModal = (modal) => {
-                this.isSwipeDisabled = true;
-                if (originalRegisterModal) {
-                    originalRegisterModal.call(window.app, modal);
-                }
-            };
-            
-            const originalUnregisterModal = window.app?.unregisterModal;
-            window.app.unregisterModal = (modal) => {
-                this.isSwipeDisabled = false;
-                if (originalUnregisterModal) {
-                    originalUnregisterModal.call(window.app, modal);
-                }
-            };
         }
     }
 
@@ -224,7 +123,7 @@ class CompactSidebar {
                         <form class="profile-form" id="profileForm">
                             <div class="qq-avatar-section">
                                 <div class="qq-avatar-preview">
-                                    <img id="qqAvatarPreview" src="" alt="QQ头像预览" loading="lazy" decoding="async">
+                                    <img id="qqAvatarPreview" src="" alt="QQ头像预览">
                                 </div>
                                 <div class="qq-avatar-input-group">
                                     <input type="text" class="form-input qq-avatar-input" id="qqNumber" 
@@ -332,8 +231,6 @@ class CompactSidebar {
             
             if (avatarUrl) {
                 qqAvatarPreview.src = avatarUrl;
-                qqAvatarPreview.setAttribute('loading', 'lazy');
-                qqAvatarPreview.setAttribute('decoding', 'async');
                 qqAvatarStatus.textContent = '头像获取成功';
                 qqAvatarStatus.className = 'qq-avatar-status success';
                 
@@ -342,11 +239,7 @@ class CompactSidebar {
                 Storage.set('userConfig', userConfig);
                 
                 const sidebarAvatar = document.getElementById('sidebarWallpaperAvatar');
-                if (sidebarAvatar) {
-                    sidebarAvatar.src = avatarUrl;
-                    sidebarAvatar.setAttribute('loading', 'lazy');
-                    sidebarAvatar.setAttribute('decoding', 'async');
-                }
+                if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
             } else {
                 qqAvatarStatus.textContent = '获取头像失败';
                 qqAvatarStatus.className = 'qq-avatar-status error';
@@ -432,8 +325,6 @@ class CompactSidebar {
             if (qqNumberInput) qqNumberInput.value = '';
             if (qqAvatarPreview) {
                 qqAvatarPreview.src = userConfig.avatar || this.getDefaultAvatarSVG();
-                qqAvatarPreview.setAttribute('loading', 'lazy');
-                qqAvatarPreview.setAttribute('decoding', 'async');
             }
 
             profileModal.classList.add('active');
@@ -526,7 +417,8 @@ class CompactSidebar {
                 `).join('');
             }
 
-            // 侧边栏底部的按钮已在 index.html 中静态定义，此处无需再生成。
+            // 注意：侧滑栏底部的按钮已在 index.html 中静态定义，此处无需再生成。
+            // 但我们需要确保侧边栏底部按钮的事件绑定能正确识别新的按钮。
         } catch (error) {
             console.error('渲染侧边栏内容失败:', error);
         }
@@ -653,13 +545,16 @@ class CompactSidebar {
 
             const iconClass = icon.className;
             
+            // 修改后的底部按钮逻辑：神木日记（fa-book）、羊毛福利（fa-gift）、关于（fa-info-circle）、QQ群（fa-qq）
             if (iconClass.includes('fa-book')) {
+                // 神木日记
                 if (window.app && typeof window.app.showDiaryModal === 'function') {
                     window.app.showDiaryModal();
                 }
                 this.hide();
             } 
             else if (iconClass.includes('fa-gift')) {
+                // 羊毛福利已在 HTML 中通过 onclick 处理，这里不需要额外操作
                 this.hide();
             } 
             else if (iconClass.includes('fa-info-circle')) {
@@ -672,6 +567,8 @@ class CompactSidebar {
                 window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
                 this.hide();
             }
+            
+            // 注意：用户反馈（fa-comment）和网站投稿（fa-paper-plane）已移至右下角悬浮按钮，不再处理
         } catch (error) {
             console.error('处理底部按钮点击失败:', error);
         }
@@ -807,8 +704,6 @@ class CompactSidebar {
             if (wallpaperAvatar) {
                 if (userConfig.avatar) {
                     wallpaperAvatar.src = userConfig.avatar;
-                    wallpaperAvatar.setAttribute('loading', 'lazy');
-                    wallpaperAvatar.setAttribute('decoding', 'async');
                     wallpaperAvatar.style.display = 'block';
                 } else {
                     await this.loadRandomAvatar();
@@ -951,8 +846,6 @@ class CompactSidebar {
                 const wallpaperAvatar = document.getElementById('sidebarWallpaperAvatar');
                 if (wallpaperAvatar) {
                     wallpaperAvatar.src = avatarUrl;
-                    wallpaperAvatar.setAttribute('loading', 'lazy');
-                    wallpaperAvatar.setAttribute('decoding', 'async');
                     wallpaperAvatar.style.display = 'block';
                     const userConfig = Storage.get('userConfig') || {};
                     userConfig.avatar = avatarUrl;
