@@ -1,5 +1,5 @@
 /**
- * 星链导航主应用程序（反馈模态框 + KaTeX 完整支持）
+ * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 完整支持）
  */
 class App {
     constructor() {
@@ -133,6 +133,7 @@ class App {
                     strict: false,
                     throwOnError: false,
                     trust: true,
+                    output: 'html',
                     macros: {
                         "\\R": "\\mathbb{R}",
                         "\\N": "\\mathbb{N}",
@@ -140,9 +141,7 @@ class App {
                         "\\C": "\\mathbb{C}",
                         "\\Q": "\\mathbb{Q}",
                         "\\dx": "\\,dx",
-                        "\\dy": "\\,dy",
-                        "\\dint": "\\displaystyle\\int",
-                        "\\dsum": "\\displaystyle\\sum"
+                        "\\dint": "\\displaystyle\\int"
                     }
                 }
             });
