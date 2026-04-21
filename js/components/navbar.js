@@ -119,19 +119,68 @@ class Navbar {
             // ========== 修改：刷新按钮 → 日记功能 ==========
             const refreshBtn = document.getElementById('refreshBtn');
             if (refreshBtn) {
-                refreshBtn.replaceWith(refreshBtn.cloneNode(true));  // 清除旧监听
+                refreshBtn.replaceWith(refreshBtn.cloneNode(true));
                 const newRefreshBtn = document.getElementById('refreshBtn');
                 newRefreshBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     if (window.app) {
-                        window.app.showDiaryModal();   // 打开日记模态框
+                        window.app.showDiaryModal();
                     } else {
                         console.error('App 未初始化');
                     }
                 });
             }
             // =============================================
+
+            // ========== 新增：右下角悬浮按钮事件绑定（用户反馈、网站投稿） ==========
+            const floatingFeedbackBtn = document.getElementById('floatingFeedbackBtn');
+            if (floatingFeedbackBtn) {
+                floatingFeedbackBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.closeAllModalsExcept(['feedback']);
+                    if (typeof window.openFeedbackModal === 'function') {
+                        window.openFeedbackModal();
+                    } else {
+                        // 降级方案：手动显示反馈模态框
+                        const modal = document.getElementById('feedbackModal');
+                        if (modal) {
+                            modal.style.display = 'flex';
+                            modal.classList.add('active');
+                            if (typeof twikoo !== 'undefined' && !window.twikooFeedbackInited) {
+                                twikoo.init({
+                                    envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
+                                    el: '#twikoo-feedback',
+                                    lang: 'zh-CN',
+                                    path: '/feedback',
+                                    katex: {
+                                        delimiters: [
+                                            { left: '$$', right: '$$', display: true },
+                                            { left: '$', right: '$', display: false },
+                                            { left: '\\(', right: '\\)', display: false },
+                                            { left: '\\[', right: '\\]', display: true }
+                                        ],
+                                        throwOnError: false
+                                    }
+                                });
+                                window.twikooFeedbackInited = true;
+                            }
+                        }
+                    }
+                });
+            }
+
+            const floatingSubmitBtn = document.getElementById('floatingSubmitBtn');
+            if (floatingSubmitBtn) {
+                floatingSubmitBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.closeAllModalsExcept(['submit']);
+                    window.open('https://f.wps.cn/g/TI3Gxbe1/', '_blank');
+                });
+            }
+            // ========== 悬浮按钮事件绑定结束 ==========
 
             document.addEventListener('click', this.handleDocumentClick.bind(this));
 
@@ -185,6 +234,7 @@ class Navbar {
                     window.aboutModule.hide();
                 }
             }
+            // 反馈模态框不在自动关闭列表中，由按钮自身控制，或可添加
         } catch (error) {
             console.error('关闭模态框失败:', error);
         }
