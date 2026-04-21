@@ -1,5 +1,5 @@
 /**
- * 星链导航主应用程序（反馈模态框 + markdown-it + texmath 完整 LaTeX 支持）
+ * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 官方标准配置）
  */
 class App {
     constructor() {
@@ -109,52 +109,7 @@ class App {
     }
     // =========================================
 
-    // ========== 创建自定义 markdown-it 渲染器（支持完整 LaTeX）==========
-    createMarkdownRenderer() {
-        // 检查依赖是否已加载
-        if (typeof markdownit === 'undefined') {
-            console.warn('markdown-it 未加载，将使用标准 KaTeX 配置');
-            return null;
-        }
-        
-        // 创建 markdown-it 实例
-        const md = window.markdownit({
-            html: true,
-            linkify: true,
-            typographer: true,
-            breaks: true
-        });
-        
-        // 如果 texmath 扩展已加载，则启用
-        if (typeof texmath !== 'undefined') {
-            md.use(texmath, {
-                engine: katex,
-                delimiters: ['dollars', 'brackets', 'doxygen', 'gitlab', 'julia', 'kramdown'],
-                katexOptions: {
-                    macros: {
-                        "\\R": "\\mathbb{R}",
-                        "\\N": "\\mathbb{N}",
-                        "\\Z": "\\mathbb{Z}",
-                        "\\C": "\\mathbb{C}",
-                        "\\Q": "\\mathbb{Q}",
-                        "\\dx": "\\,dx",
-                        "\\dint": "\\displaystyle\\int"
-                    },
-                    throwOnError: false,
-                    strict: false,
-                    trust: true,
-                    displayMode: true
-                }
-            });
-            console.log('✅ markdown-it + texmath 渲染器已启用');
-        } else {
-            console.warn('texmath 扩展未加载');
-        }
-        
-        return md;
-    }
-
-    // ========== 反馈模态框管理（使用自定义渲染器）==========
+    // ========== 反馈模态框管理（官方标准配置，无额外处理）==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -163,26 +118,13 @@ class App {
         modal.classList.add('active');
         
         if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
-            // 创建自定义渲染器
-            const mdRenderer = this.createMarkdownRenderer();
-            
-            // Twikoo 基础配置
-            const twikooConfig = {
+            twikoo.init({
                 envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
                 el: '#twikoo-feedback',
                 lang: 'zh-CN',
-                path: '/feedback'
-            };
-            
-            // 如果自定义渲染器可用，则使用它
-            if (mdRenderer) {
-                twikooConfig.commentRenderer = function(content) {
-                    return mdRenderer.render(content);
-                };
-                console.log('🎯 使用 markdown-it + texmath 渲染器');
-            } else {
-                // 降级方案：使用标准 KaTeX 配置
-                twikooConfig.katex = {
+                path: '/feedback',
+                // 完全按照官方文档配置
+                katex: {
                     delimiters: [
                         { left: '$$', right: '$$', display: true },
                         { left: '$', right: '$', display: false },
@@ -190,29 +132,22 @@ class App {
                         { left: '\\[', right: '\\]', display: true }
                     ],
                     throwOnError: false
-                };
-                console.log('⚠️ 降级使用标准 KaTeX 配置');
-            }
-            
-            // 评论加载后的钩子（确保动态内容也被渲染）
-            twikooConfig.onCommentLoaded = function() {
-                const container = document.getElementById('twikoo-feedback');
-                if (!container || typeof renderMathInElement === 'undefined') return;
-                
-                renderMathInElement(container, {
-                    delimiters: [
-                        { left: '$$', right: '$$', display: true },
-                        { left: '$', right: '$', display: false },
-                        { left: '\\(', right: '\\)', display: false },
-                        { left: '\\[', right: '\\]', display: true }
-                    ],
-                    throwOnError: false,
-                    strict: false,
-                    trust: true
-                });
-            };
-            
-            twikoo.init(twikooConfig);
+                },
+                onCommentLoaded: function() {
+                    const container = document.getElementById('twikoo-feedback');
+                    if (!container || typeof renderMathInElement === 'undefined') return;
+                    // 再次调用渲染，确保所有公式都被处理
+                    renderMathInElement(container, {
+                        delimiters: [
+                            { left: '$$', right: '$$', display: true },
+                            { left: '$', right: '$', display: false },
+                            { left: '\\(', right: '\\)', display: false },
+                            { left: '\\[', right: '\\]', display: true }
+                        ],
+                        throwOnError: false
+                    });
+                }
+            });
             window.twikooFeedbackInited = true;
         }
     }
@@ -249,14 +184,14 @@ class App {
         this.setupGlobalEvents();
         this.initDiaryModalEvents();
         this.initFeedbackModalEvents();
-        this.initFloatingButtonsEffect();
+        this.initFloatingButtonsEffect(); // 新增：悬浮按钮滚动效果
         this.isInitialized = true;
         
         window.openFeedbackModal = this.openFeedbackModal.bind(this);
         window.closeFeedbackModal = this.closeFeedbackModal.bind(this);
     }
 
-    // ========== 悬浮按钮滚动半透明效果 ==========
+    // ========== 新增：悬浮按钮滚动半透明效果 ==========
     initFloatingButtonsEffect() {
         let scrollTimer;
         const floatingBtns = document.querySelector('.floating-buttons');
