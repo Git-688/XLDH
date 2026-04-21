@@ -416,6 +416,9 @@ class CompactSidebar {
                     </div>
                 `).join('');
             }
+
+            // 注意：侧滑栏底部的按钮已在 index.html 中静态定义，此处无需再生成。
+            // 但我们需要确保侧边栏底部按钮的事件绑定能正确识别新的按钮。
         } catch (error) {
             console.error('渲染侧边栏内容失败:', error);
         }
@@ -542,40 +545,30 @@ class CompactSidebar {
 
             const iconClass = icon.className;
             
-            if (iconClass.includes('fa-comment')) {
-                if (typeof window.openFeedbackModal === 'function') {
-                    window.openFeedbackModal();
-                } else {
-                    const modal = document.getElementById('feedbackModal');
-                    if (modal) {
-                        modal.style.display = 'flex';
-                        modal.classList.add('active');
-                        if (typeof twikoo !== 'undefined' && !window.twikooFeedbackInited) {
-                            twikoo.init({
-                                envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
-                                el: '#twikoo-feedback',
-                                lang: 'zh-CN',
-                                path: '/feedback'
-                            });
-                            window.twikooFeedbackInited = true;
-                        }
-                    }
+            // 修改后的底部按钮逻辑：神木日记（fa-book）、羊毛福利（fa-gift）、关于（fa-info-circle）、QQ群（fa-qq）
+            if (iconClass.includes('fa-book')) {
+                // 神木日记
+                if (window.app && typeof window.app.showDiaryModal === 'function') {
+                    window.app.showDiaryModal();
                 }
                 this.hide();
             } 
-            else if (iconClass.includes('fa-paper-plane')) {
-                window.open('https://f.wps.cn/g/TI3Gxbe1/', '_blank');
+            else if (iconClass.includes('fa-gift')) {
+                // 羊毛福利已在 HTML 中通过 onclick 处理，这里不需要额外操作
+                this.hide();
             } 
             else if (iconClass.includes('fa-info-circle')) {
                 if (window.aboutModule) {
                     window.aboutModule.show();
                 }
+                this.hide();
             } 
             else if (iconClass.includes('fa-qq')) {
                 window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
+                this.hide();
             }
             
-            this.hide();
+            // 注意：用户反馈（fa-comment）和网站投稿（fa-paper-plane）已移至右下角悬浮按钮，不再处理
         } catch (error) {
             console.error('处理底部按钮点击失败:', error);
         }
