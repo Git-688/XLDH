@@ -250,12 +250,13 @@
             overflow-x: auto;
             overflow-y: hidden;
             padding-bottom: 4px;
+            white-space: pre !important; /* ✅ 终极修复：强制保留多行公式换行 */
         }
         /* 公式内元素间距优化 */
         .twikoo .katex .base {
             margin: 0 2px;
         }
-        /* ✅ 新增：优化多行公式的垂直对齐 */
+        /* 优化多行公式的垂直对齐 */
         .twikoo .katex-display .katex {
             vertical-align: middle !important;
         }
