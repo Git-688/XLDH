@@ -42,10 +42,8 @@
     <link rel="preload" href="./js/main.js" as="script">
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
 
-    <!-- KaTeX 数学公式支持 v0.16.45 -->
+    <!-- KaTeX 数学公式支持 v0.16.45（仅样式） -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
     
     <style>
         /* 反馈模态框样式 - 头部正常大小，空间占用不变 */
@@ -510,6 +508,10 @@
         </div>
     </div>
 </div>
+
+<!-- KaTeX 核心库（同步加载，确保在 texmath 之前定义） -->
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
 <!-- 基础工具 -->
 <script src="./js/storage.js"></script>
