@@ -1,6 +1,6 @@
 /**
  * 优化分类导航系统（完全基于后端 Worker + D1）
- * 移除了单链接检测按钮
+ * 移除了单链接检测按钮，新增骨架屏加载效果
  */
 class OptimizedNavigation {
     constructor() {
@@ -19,10 +19,16 @@ class OptimizedNavigation {
         
         // 从配置获取 API 地址
         this.apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xldh688.eu.cc';
+        
+        // ===== 新增：骨架屏配置 =====
+        this.skeletonCount = 6; // 显示的骨架卡片数量
     }
 
     async init() {
         if (this.isInitialized) return;
+        
+        // ===== 新增：立即显示骨架屏 =====
+        this.showSkeleton();
         
         try {
             await this.loadNavigationData();
@@ -41,6 +47,40 @@ class OptimizedNavigation {
             console.error('优化分类导航初始化失败:', error);
             this.showError();
         }
+    }
+
+    // ===== 新增：显示骨架屏 =====
+    showSkeleton() {
+        const container = document.getElementById('level3Content');
+        if (!container) return;
+        
+        container.innerHTML = this.generateSkeletonHTML();
+    }
+
+    // ===== 新增：生成骨架屏 HTML =====
+    generateSkeletonHTML() {
+        let html = '';
+        for (let i = 0; i < this.skeletonCount; i++) {
+            html += `
+                <div class="site-card skeleton-card">
+                    <div class="card-top">
+                        <div class="icon-container skeleton-icon"></div>
+                        <div class="card-top-right">
+                            <div class="skeleton-btn"></div>
+                            <div class="views-container">
+                                <div class="skeleton-views"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="divider-line skeleton-divider"></div>
+                    <div class="card-bottom">
+                        <div class="site-title skeleton-title"></div>
+                        <div class="site-description skeleton-description"></div>
+                    </div>
+                </div>
+            `;
+        }
+        return html;
     }
 
     async loadNavigationData(retryCount = 0) {
@@ -102,7 +142,7 @@ class OptimizedNavigation {
 
     renderNavigation() {
         this.renderLevel1();
-        this.renderEmptyState();
+        // 初始不渲染空状态，保持骨架屏
     }
 
     renderLevel1() {
@@ -159,7 +199,9 @@ class OptimizedNavigation {
         }
         
         const sortedSites = [...sites].sort((a, b) => (b.priority || 0) - (a.priority || 0));
-        container.innerHTML = '';
+        
+        // ===== 修改：使用文档片段批量插入，提升性能 =====
+        const fragment = document.createDocumentFragment();
         
         sortedSites.forEach((site) => {
             const card = document.createElement('a');
@@ -215,6 +257,7 @@ class OptimizedNavigation {
                 </div>
             `;
             
+            // 绑定点击统计
             card.addEventListener('click', (e) => {
                 if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) {
                     return;
@@ -251,6 +294,7 @@ class OptimizedNavigation {
                 }, 100);
             }, true);
             
+            // 绑定报告死链按钮事件
             const reportBtn = card.querySelector('.report-dead-link-btn');
             if (reportBtn) {
                 reportBtn.addEventListener('click', async (e) => {
@@ -276,11 +320,19 @@ class OptimizedNavigation {
                 });
             }
             
+            fragment.appendChild(card);
+        });
+        
+        // 清空容器并一次性添加所有卡片
+        container.innerHTML = '';
+        container.appendChild(fragment);
+        
+        // 添加淡入动画
+        const cards = container.querySelectorAll('.site-card');
+        cards.forEach((card, index) => {
             requestAnimationFrame(() => {
-                card.style.animation = 'fadeIn 0.2s ease forwards';
+                card.style.animation = `fadeIn 0.2s ease ${index * 0.02}s forwards`;
             });
-            
-            container.appendChild(card);
         });
         
         this.showStatsSummary();
@@ -314,13 +366,15 @@ class OptimizedNavigation {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon"><i class="fas fa-compass"></i></div>
-                <h3 class="empty-title">选择一个分类开始探索</h3>
-                <p class="empty-subtitle">点击左侧分类查看详细内容</p>
+                <h3 class="empty-title">暂无内容</h3>
+                <p class="empty-subtitle">该分类下暂时没有链接</p>
             </div>
         `;
     }
 
-    showStatsSummary() {}
+    showStatsSummary() {
+        // 可留空
+    }
 
     selectLevel1(level1, isUserClick = false) {
         if (this.selectedLevel1 === level1) return;
@@ -338,6 +392,10 @@ class OptimizedNavigation {
         }
         
         this.renderLevel2(level1);
+        
+        // ===== 新增：切换分类时显示骨架屏 =====
+        this.showSkeleton();
+        
         const firstLevel2 = this.getFirstSubCategory(level1);
         if (firstLevel2) {
             this.selectLevel2(firstLevel2, isUserClick);
@@ -363,7 +421,14 @@ class OptimizedNavigation {
             }
         }
         
-        this.renderLevel3(this.selectedLevel1, level2);
+        // ===== 新增：切换子分类时显示骨架屏 =====
+        this.showSkeleton();
+        
+        // 使用 setTimeout 确保 UI 更新后再渲染内容，让骨架屏有时间显示
+        setTimeout(() => {
+            this.renderLevel3(this.selectedLevel1, level2);
+        }, 50);
+        
         setTimeout(() => { this.isNavigationClick = false; }, 100);
     }
 
@@ -437,6 +502,9 @@ class OptimizedNavigation {
                     <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
                     <h3 class="empty-title">导航数据加载失败</h3>
                     <p class="empty-subtitle">请检查网络或稍后重试</p>
+                    <button class="retry-btn" onclick="window.optimizedNavigation.refresh()" style="margin-top: 16px; padding: 8px 20px; background: #4361ee; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        <i class="fas fa-redo"></i> 重试
+                    </button>
                 </div>
             `;
         }
@@ -445,6 +513,7 @@ class OptimizedNavigation {
     refresh() {
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
+        this.showSkeleton();
         this.init();
     }
 
