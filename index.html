@@ -42,8 +42,10 @@
     <link rel="preload" href="./js/main.js" as="script">
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
 
-    <!-- KaTeX 数学公式支持 v0.16.45（仅样式） -->
+    <!-- KaTeX 数学公式支持 v0.16.45 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
     
     <style>
         /* 反馈模态框样式 - 头部正常大小，空间占用不变 */
@@ -509,10 +511,6 @@
     </div>
 </div>
 
-<!-- KaTeX 核心库（同步加载，确保在 texmath 之前定义） -->
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
-
 <!-- 基础工具 -->
 <script src="./js/storage.js"></script>
 <script src="./js/api.js"></script>
@@ -544,11 +542,6 @@
 <script src="./js/xfyy/plugin-manager.js"></script>
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
-
-<!-- markdown-it 渲染器（用于自定义 Twikoo 评论渲染） -->
-<script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
-<!-- markdown-it-texmath 扩展（支持 LaTeX 公式） -->
-<script src="https://cdn.jsdelivr.net/npm/markdown-it-texmath@1.0.0/texmath.min.js"></script>
 
 <!-- Twikoo v1.7.7 核心库 -->
 <script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
