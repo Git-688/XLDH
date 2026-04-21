@@ -123,7 +123,7 @@ class CompactSidebar {
                         <form class="profile-form" id="profileForm">
                             <div class="qq-avatar-section">
                                 <div class="qq-avatar-preview">
-                                    <img id="qqAvatarPreview" src="" alt="QQ头像预览">
+                                    <img id="qqAvatarPreview" src="" alt="QQ头像预览" loading="lazy" decoding="async">
                                 </div>
                                 <div class="qq-avatar-input-group">
                                     <input type="text" class="form-input qq-avatar-input" id="qqNumber" 
@@ -231,6 +231,9 @@ class CompactSidebar {
             
             if (avatarUrl) {
                 qqAvatarPreview.src = avatarUrl;
+                // 确保图片属性保持懒加载
+                qqAvatarPreview.setAttribute('loading', 'lazy');
+                qqAvatarPreview.setAttribute('decoding', 'async');
                 qqAvatarStatus.textContent = '头像获取成功';
                 qqAvatarStatus.className = 'qq-avatar-status success';
                 
@@ -239,7 +242,11 @@ class CompactSidebar {
                 Storage.set('userConfig', userConfig);
                 
                 const sidebarAvatar = document.getElementById('sidebarWallpaperAvatar');
-                if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
+                if (sidebarAvatar) {
+                    sidebarAvatar.src = avatarUrl;
+                    sidebarAvatar.setAttribute('loading', 'lazy');
+                    sidebarAvatar.setAttribute('decoding', 'async');
+                }
             } else {
                 qqAvatarStatus.textContent = '获取头像失败';
                 qqAvatarStatus.className = 'qq-avatar-status error';
@@ -325,6 +332,8 @@ class CompactSidebar {
             if (qqNumberInput) qqNumberInput.value = '';
             if (qqAvatarPreview) {
                 qqAvatarPreview.src = userConfig.avatar || this.getDefaultAvatarSVG();
+                qqAvatarPreview.setAttribute('loading', 'lazy');
+                qqAvatarPreview.setAttribute('decoding', 'async');
             }
 
             profileModal.classList.add('active');
@@ -417,8 +426,7 @@ class CompactSidebar {
                 `).join('');
             }
 
-            // 注意：侧滑栏底部的按钮已在 index.html 中静态定义，此处无需再生成。
-            // 但我们需要确保侧边栏底部按钮的事件绑定能正确识别新的按钮。
+            // 侧边栏底部的按钮已在 index.html 中静态定义，此处无需再生成。
         } catch (error) {
             console.error('渲染侧边栏内容失败:', error);
         }
@@ -467,6 +475,29 @@ class CompactSidebar {
                     this.hide();
                 }
             });
+
+            // ===== 修改点：添加右滑手势打开侧边栏 =====
+            let touchStartX = 0;
+            let touchStartY = 0;
+            document.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+
+            document.addEventListener('touchmove', (e) => {
+                if (touchStartX === null) return;
+                const currentX = e.touches[0].clientX;
+                const currentY = e.touches[0].clientY;
+                const diffX = currentX - touchStartX;
+                const diffY = currentY - touchStartY;
+                
+                // 水平滑动距离大于垂直滑动距离，且向右滑动超过50px
+                if (Math.abs(diffX) > Math.abs(diffY) && diffX > 50 && !this.isVisible()) {
+                    this.show();
+                    touchStartX = null; // 防止重复触发
+                }
+            }, { passive: true });
+            // ===== 结束修改 =====
 
         } catch (error) {
             console.error('绑定侧边栏事件失败:', error);
@@ -545,16 +576,13 @@ class CompactSidebar {
 
             const iconClass = icon.className;
             
-            // 修改后的底部按钮逻辑：神木日记（fa-book）、羊毛福利（fa-gift）、关于（fa-info-circle）、QQ群（fa-qq）
             if (iconClass.includes('fa-book')) {
-                // 神木日记
                 if (window.app && typeof window.app.showDiaryModal === 'function') {
                     window.app.showDiaryModal();
                 }
                 this.hide();
             } 
             else if (iconClass.includes('fa-gift')) {
-                // 羊毛福利已在 HTML 中通过 onclick 处理，这里不需要额外操作
                 this.hide();
             } 
             else if (iconClass.includes('fa-info-circle')) {
@@ -567,8 +595,6 @@ class CompactSidebar {
                 window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
                 this.hide();
             }
-            
-            // 注意：用户反馈（fa-comment）和网站投稿（fa-paper-plane）已移至右下角悬浮按钮，不再处理
         } catch (error) {
             console.error('处理底部按钮点击失败:', error);
         }
@@ -704,6 +730,8 @@ class CompactSidebar {
             if (wallpaperAvatar) {
                 if (userConfig.avatar) {
                     wallpaperAvatar.src = userConfig.avatar;
+                    wallpaperAvatar.setAttribute('loading', 'lazy');
+                    wallpaperAvatar.setAttribute('decoding', 'async');
                     wallpaperAvatar.style.display = 'block';
                 } else {
                     await this.loadRandomAvatar();
@@ -846,6 +874,8 @@ class CompactSidebar {
                 const wallpaperAvatar = document.getElementById('sidebarWallpaperAvatar');
                 if (wallpaperAvatar) {
                     wallpaperAvatar.src = avatarUrl;
+                    wallpaperAvatar.setAttribute('loading', 'lazy');
+                    wallpaperAvatar.setAttribute('decoding', 'async');
                     wallpaperAvatar.style.display = 'block';
                     const userConfig = Storage.get('userConfig') || {};
                     userConfig.avatar = avatarUrl;
