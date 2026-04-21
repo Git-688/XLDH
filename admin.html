@@ -43,18 +43,27 @@
             gap: 8px;
         }
         .cat-item.active{background:#3b82f6;color:#fff}
-        .cat-item .rename-btn {
-            background: none;
+        .cat-item .rename-text-btn {
+            background: #e2e8f0;
             border: none;
             cursor: pointer;
             font-size: 11px;
-            opacity: 0.6;
-            padding: 2px 4px;
+            padding: 3px 8px;
             border-radius: 4px;
+            color: #475569;
+            transition: all 0.2s;
+            font-weight: 500;
         }
-        .cat-item .rename-btn:hover {
-            opacity: 1;
-            background: rgba(0,0,0,0.1);
+        .cat-item .rename-text-btn:hover {
+            background: #cbd5e1;
+            color: #1e293b;
+        }
+        .cat-item.active .rename-text-btn {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+        .cat-item.active .rename-text-btn:hover {
+            background: rgba(255,255,255,0.3);
         }
 
         .content-layout{display:flex;gap:10px;margin-top:0}
@@ -76,18 +85,24 @@
             justify-content: space-between;
         }
         .sub-item.active{background:#e0f2fe;color:#0369a1}
-        .sub-item .rename-btn {
-            background: none;
+        .sub-item .rename-text-btn {
+            background: #e2e8f0;
             border: none;
             cursor: pointer;
-            font-size: 11px;
-            opacity: 0.6;
-            padding: 2px 4px;
+            font-size: 10px;
+            padding: 2px 6px;
             border-radius: 4px;
+            color: #475569;
+            transition: all 0.2s;
+            font-weight: 500;
         }
-        .sub-item .rename-btn:hover {
-            opacity: 1;
-            background: rgba(0,0,0,0.1);
+        .sub-item .rename-text-btn:hover {
+            background: #cbd5e1;
+            color: #1e293b;
+        }
+        .sub-item.active .rename-text-btn {
+            background: rgba(3,105,161,0.1);
+            color: #0369a1;
         }
 
         .main-content{
@@ -178,7 +193,6 @@
         .result-group h4{margin-bottom:7px;font-size:13px}
         .hidden{display:none}
         
-        /* 新增：反馈日期分组样式 */
         .feedback-date-group {
             margin-bottom: 20px;
         }
@@ -459,7 +473,6 @@
                 return;
             }
             
-            // 获取今天的零点时间戳
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const yesterday = new Date(today);
@@ -521,7 +534,7 @@
                 body: JSON.stringify({ status: 'done' })
             });
             showToast('已标记处理（12小时后自动清除）', 'success');
-            loadFeedback();  // 刷新列表，该条记录会立即消失
+            loadFeedback();
         } catch (err) {
             showToast('操作失败', 'error');
         }
@@ -532,7 +545,6 @@
             showToast('无法找到对应的网站记录，请手动处理', 'error');
             return;
         }
-        // 获取当前网站详细信息（可从已有的 sites 数据获取）
         const site = sites.find(s => s.id === siteId);
         if (!site) {
             showToast('未找到对应的网站记录', 'error');
@@ -561,9 +573,8 @@
                 });
                 if (!res.ok) throw new Error('更换失败');
                 showToast('链接已更新，无效标记已清除', 'success');
-                loadFeedback();       // 刷新反馈列表
-                await loadAllData();   // 刷新整个管理数据（会重新加载 sites）
-                // 通知前端刷新导航缓存
+                loadFeedback();
+                await loadAllData();
                 await fetch(`${API_BASE}/admin/refresh-navigation`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
             } catch (err) {
                 showToast('更换失败：' + err.message, 'error');
@@ -614,7 +625,7 @@
         document.getElementById('catBar').innerHTML = categories.map(c => `
             <div class="cat-item ${c.id===currentCat?'active':''}" data-cid="${c.id}">
                 <span onclick="selectCat(${c.id})">${escapeHtml(c.name)}</span>
-                <button class="rename-btn" onclick="renameCategory(${c.id}, '${escapeHtml(c.name)}')" title="重命名">✏️</button>
+                <button class="rename-text-btn" onclick="renameCategory(${c.id}, '${escapeHtml(c.name)}')">修改</button>
             </div>
         `).join('');
     }
@@ -631,7 +642,7 @@
         document.getElementById('subList').innerHTML = subs.map(s => `
             <div class="sub-item ${s.id===currentSub?'active':''}" data-sid="${s.id}">
                 <span onclick="selectSub(${s.id})">${escapeHtml(s.name)}</span>
-                <button class="rename-btn" onclick="renameSubcategory(${s.id}, '${escapeHtml(s.name)}')" title="重命名">✏️</button>
+                <button class="rename-text-btn" onclick="renameSubcategory(${s.id}, '${escapeHtml(s.name)}')">修改</button>
             </div>
         `).join('');
     }
@@ -753,6 +764,40 @@
         await apiFetch(`/admin/sites/${id}`,{method:'DELETE'});
         addLog(`删除链接：${id}`);showToast('删除成功');await loadAllData();
     }
+
+    // ========== 新增：修改分类和子分类的函数 ==========
+    function renameCategory(id, oldName) {
+        openModal('修改分类名称', `
+            <div class="form-row"><label>新名称</label><input id="newName" value="${escapeHtml(oldName)}"></div>
+        `, async () => {
+            const newName = document.getElementById('newName').value.trim();
+            if (!newName) { showToast('名称不能为空', 'error'); return; }
+            await apiFetch(`/admin/categories/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ name: newName })
+            });
+            addLog(`修改分类：${oldName} → ${newName}`);
+            showToast('修改成功');
+            await loadAllData();
+        });
+    }
+
+    function renameSubcategory(id, oldName) {
+        openModal('修改子分类名称', `
+            <div class="form-row"><label>新名称</label><input id="newName" value="${escapeHtml(oldName)}"></div>
+        `, async () => {
+            const newName = document.getElementById('newName').value.trim();
+            if (!newName) { showToast('名称不能为空', 'error'); return; }
+            await apiFetch(`/admin/subcategories/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ name: newName })
+            });
+            addLog(`修改子分类：${oldName} → ${newName}`);
+            showToast('修改成功');
+            await loadAllData();
+        });
+    }
+    // ========== 修改函数结束 ==========
 
     function exportData(){
         const blob = new Blob([JSON.stringify({categories,subcategories,sites,time:new Date().toLocaleString()},null,2)],{type:'application/json'});
