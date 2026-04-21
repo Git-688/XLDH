@@ -1,5 +1,5 @@
 /**
- * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 完整支持 + 换行预处理）
+ * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 + 彻底修复换行问题）
  */
 class App {
     constructor() {
@@ -109,7 +109,7 @@ class App {
     }
     // =========================================
 
-    // ========== 反馈模态框管理（完整 KaTeX + 换行预处理）==========
+    // ========== 反馈模态框管理（彻底修复换行问题）==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -144,39 +144,25 @@ class App {
                         "\\dint": "\\displaystyle\\int"
                     }
                 },
-                // 关键：在评论加载后手动触发渲染，并预处理换行符
+                // 关键修复：直接处理 HTML，将 $$...$$ 内部换行替换为空格
                 onCommentLoaded: function() {
                     const container = document.getElementById('twikoo-feedback');
                     if (!container || typeof renderMathInElement === 'undefined') return;
 
-                    // 预处理：将 $$...$$ 内部的换行符替换为空格，但不影响其他内容
-                    const walker = document.createTreeWalker(
-                        container,
-                        NodeFilter.SHOW_TEXT,
-                        {
-                            acceptNode: function(node) {
-                                // 只处理包含 $$ 的文本节点
-                                if (node.nodeValue && node.nodeValue.includes('$$')) {
-                                    return NodeFilter.FILTER_ACCEPT;
-                                }
-                                return NodeFilter.FILTER_SKIP;
-                            }
-                        }
-                    );
-
-                    let node;
-                    while (node = walker.nextNode()) {
-                        let text = node.nodeValue;
-                        // 正则匹配 $$...$$ 块，将内部连续空白（含换行）压缩为单个空格
-                        text = text.replace(/\$\$([\s\S]*?)\$\$/g, function(match, content) {
-                            // 保留公式内容，但将换行/多余空白压缩为一个空格
-                            const cleaned = content.replace(/\s+/g, ' ').trim();
-                            return '$$' + cleaned + '$$';
-                        });
-                        node.nodeValue = text;
-                    }
-
-                    // 强制 KaTeX 渲染
+                    // 获取当前 HTML，用正则处理 $$ 块内的换行符
+                    let html = container.innerHTML;
+                    
+                    // 匹配所有 $$...$$ 块（非贪婪），将其内部的连续空白（含换行）压缩为一个空格
+                    html = html.replace(/\$\$([\s\S]*?)\$\$/g, function(match, content) {
+                        // 将内部所有空白序列替换为单个空格
+                        const cleaned = content.replace(/\s+/g, ' ').trim();
+                        return '$$' + cleaned + '$$';
+                    });
+                    
+                    // 更新容器 HTML（注意：这会触发浏览器重绘，但不会丢失事件，因为 Twikoo 已渲染完毕）
+                    container.innerHTML = html;
+                    
+                    // 强制 KaTeX 渲染整个容器
                     renderMathInElement(container, {
                         delimiters: [
                             { left: '$$', right: '$$', display: true },
