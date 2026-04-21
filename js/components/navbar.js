@@ -116,7 +116,7 @@ class Navbar {
                 });
             }
 
-            // 刷新按钮 → 日记功能
+            // ========== 修改：刷新按钮 → 日记功能 ==========
             const refreshBtn = document.getElementById('refreshBtn');
             if (refreshBtn) {
                 refreshBtn.replaceWith(refreshBtn.cloneNode(true));
@@ -131,8 +131,9 @@ class Navbar {
                     }
                 });
             }
+            // =============================================
 
-            // 右下角悬浮按钮：用户反馈
+            // ========== 新增：右下角悬浮按钮事件绑定（用户反馈、网站投稿） ==========
             const floatingFeedbackBtn = document.getElementById('floatingFeedbackBtn');
             if (floatingFeedbackBtn) {
                 floatingFeedbackBtn.addEventListener('click', (e) => {
@@ -142,6 +143,7 @@ class Navbar {
                     if (typeof window.openFeedbackModal === 'function') {
                         window.openFeedbackModal();
                     } else {
+                        // 降级方案：手动显示反馈模态框
                         const modal = document.getElementById('feedbackModal');
                         if (modal) {
                             modal.style.display = 'flex';
@@ -169,17 +171,16 @@ class Navbar {
                 });
             }
 
-            // 右下角悬浮按钮：网站投稿（从配置读取链接）
             const floatingSubmitBtn = document.getElementById('floatingSubmitBtn');
             if (floatingSubmitBtn) {
                 floatingSubmitBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     this.closeAllModalsExcept(['submit']);
-                    const submitUrl = window.APP_CONFIG?.SUBMIT_FORM_URL || 'https://f.wps.cn/g/TI3Gxbe1/';
-                    window.open(submitUrl, '_blank');
+                    window.open('https://f.wps.cn/g/TI3Gxbe1/', '_blank');
                 });
             }
+            // ========== 悬浮按钮事件绑定结束 ==========
 
             document.addEventListener('click', this.handleDocumentClick.bind(this));
 
@@ -233,6 +234,7 @@ class Navbar {
                     window.aboutModule.hide();
                 }
             }
+            // 反馈模态框不在自动关闭列表中，由按钮自身控制，或可添加
         } catch (error) {
             console.error('关闭模态框失败:', error);
         }
