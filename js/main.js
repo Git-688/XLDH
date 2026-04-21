@@ -1,5 +1,6 @@
 /**
  * 星链导航主应用程序（反馈模态框 + 严格按官方文档配置 KaTeX）
+ * ✅ 已修复多行公式无法渲染问题
  * ✅ 仅优化Twikoo+KaTeX功能，其他代码完全不变
  */
 class App {
@@ -10,7 +11,7 @@ class App {
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.diaryModalHideRef = null;
-        this.feedbackModalHideRef = null; // ✅ 新增：反馈模态框引用
+        this.feedbackModalHideRef = null; // 反馈模态框引用
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -111,7 +112,7 @@ class App {
     }
     // =========================================
 
-    // ========== 反馈模态框管理（仅优化这部分）==========
+    // ========== 反馈模态框管理（已修复多行公式）==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -119,14 +120,14 @@ class App {
         modal.style.display = 'flex';
         modal.classList.add('active');
         
-        // ✅ 修复：注册到全局模态框管理系统（ESC可关闭、模态框互斥）
+        // 注册到全局模态框管理系统（ESC可关闭、模态框互斥）
         if (!this.feedbackModalHideRef) {
             this.feedbackModalHideRef = { hide: this.closeFeedbackModal.bind(this) };
         }
         this.registerModal(this.feedbackModalHideRef);
         
         if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
-            window.twikooFeedbackInited = true; // ✅ 修复：提前设置标志，防止重复初始化
+            window.twikooFeedbackInited = true; // 提前设置标志，防止重复初始化
             
             // 严格按照 Twikoo 官方文档配置
             twikoo.init({
@@ -134,7 +135,7 @@ class App {
                 el: '#twikoo-feedback',
                 lang: 'zh-CN',
                 path: '/feedback',
-                // ✅ 修复：简化KaTeX配置，Twikoo已内置所有标准LaTeX环境
+                // 简化KaTeX配置，Twikoo已内置所有标准LaTeX环境
                 katex: {
                     delimiters: [
                         { left: '$$', right: '$$', display: true },
@@ -145,7 +146,21 @@ class App {
                     throwOnError: false,
                     strict: false
                 },
-                // ✅ 修复：优化评论加载后渲染，避免重复渲染
+                // ✅ 新增：修复多行公式被插入<br>的核心问题
+                markdown: {
+                    renderer: {
+                        // 拦截所有段落渲染，清理公式块内的<br>标签
+                        paragraph(text) {
+                            // 匹配所有$$包裹的块级公式
+                            return `<p>${text.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
+                                // 移除公式内所有<br>标签和多余的空白符
+                                const cleanFormula = formula.replace(/<br\s*\/?>/gi, '\n').trim();
+                                return `$$${cleanFormula}$$`;
+                            })}</p>`;
+                        }
+                    }
+                },
+                // 优化评论加载后渲染，避免重复渲染
                 onCommentLoaded: function() {
                     if (typeof renderMathInElement === 'undefined') return;
                     
@@ -173,7 +188,7 @@ class App {
             modal.classList.remove('active');
             modal.style.display = 'none';
         }
-        // ✅ 修复：从全局模态框管理系统注销
+        // 从全局模态框管理系统注销
         if (this.feedbackModalHideRef) {
             this.unregisterModal(this.feedbackModalHideRef);
         }
