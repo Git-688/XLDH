@@ -1,5 +1,5 @@
 /**
- * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 + 提交前预处理换行）
+ * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 + 简化提示）
  */
 class App {
     constructor() {
@@ -109,7 +109,7 @@ class App {
     }
     // =========================================
 
-    // ========== 反馈模态框管理（提交前预处理换行）==========
+    // ========== 反馈模态框管理（KaTeX 标准配置）==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -144,23 +144,11 @@ class App {
                         "\\dint": "\\displaystyle\\int"
                     }
                 },
-                // 关键：在评论发送前预处理，将 $$ 内部的换行符替换为空格
-                onCommentBeforeSend: function(comment) {
-                    // 处理评论内容中的 $$ 块
-                    if (comment.comment) {
-                        comment.comment = comment.comment.replace(/\$\$([\s\S]*?)\$\$/g, function(match, content) {
-                            // 将内部所有空白序列（包括换行）替换为单个空格
-                            const cleaned = content.replace(/\s+/g, ' ').trim();
-                            return '$$' + cleaned + '$$';
-                        });
-                    }
-                    return comment;
-                },
-                // 评论加载后也确保渲染
+                // 评论加载后确保渲染（不做额外预处理，依赖 KaTeX 自身）
                 onCommentLoaded: function() {
                     const container = document.getElementById('twikoo-feedback');
                     if (!container || typeof renderMathInElement === 'undefined') return;
-
+                    
                     renderMathInElement(container, {
                         delimiters: [
                             { left: '$$', right: '$$', display: true },
