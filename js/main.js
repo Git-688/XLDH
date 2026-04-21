@@ -1,5 +1,5 @@
 /**
- * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 + 简化提示）
+ * 星链导航主应用程序（反馈模态框 + 严格按官方文档配置 KaTeX）
  */
 class App {
     constructor() {
@@ -109,7 +109,7 @@ class App {
     }
     // =========================================
 
-    // ========== 反馈模态框管理（KaTeX 标准配置）==========
+    // ========== 反馈模态框管理（严格按官方文档配置）==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -118,33 +118,39 @@ class App {
         modal.classList.add('active');
         
         if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
+            // 严格按照 Twikoo 官方文档配置
             twikoo.init({
                 envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
                 el: '#twikoo-feedback',
                 lang: 'zh-CN',
                 path: '/feedback',
+                // 使用官方推荐的完整 delimiters 配置
                 katex: {
                     delimiters: [
                         { left: '$$', right: '$$', display: true },
                         { left: '$', right: '$', display: false },
                         { left: '\\(', right: '\\)', display: false },
-                        { left: '\\[', right: '\\]', display: true }
+                        { left: '\\[', right: '\\]', display: true },
+                        // 官方默认支持的环境（关键！）
+                        { left: '\\begin{equation}', right: '\\end{equation}', display: true },
+                        { left: '\\begin{align}', right: '\\end{align}', display: true },
+                        { left: '\\begin{alignat}', right: '\\end{alignat}', display: true },
+                        { left: '\\begin{gather}', right: '\\end{gather}', display: true },
+                        { left: '\\begin{CD}', right: '\\end{CD}', display: true },
+                        { left: '\\begin{cases}', right: '\\end{cases}', display: true },
+                        { left: '\\begin{pmatrix}', right: '\\end{pmatrix}', display: true },
+                        { left: '\\begin{bmatrix}', right: '\\end{bmatrix}', display: true },
+                        { left: '\\begin{Bmatrix}', right: '\\end{Bmatrix}', display: true },
+                        { left: '\\begin{vmatrix}', right: '\\end{vmatrix}', display: true },
+                        { left: '\\begin{Vmatrix}', right: '\\end{Vmatrix}', display: true },
+                        { left: '\\begin{matrix}', right: '\\end{matrix}', display: true }
                     ],
-                    strict: false,
                     throwOnError: false,
+                    strict: false,
                     trust: true,
-                    output: 'html',
-                    macros: {
-                        "\\R": "\\mathbb{R}",
-                        "\\N": "\\mathbb{N}",
-                        "\\Z": "\\mathbb{Z}",
-                        "\\C": "\\mathbb{C}",
-                        "\\Q": "\\mathbb{Q}",
-                        "\\dx": "\\,dx",
-                        "\\dint": "\\displaystyle\\int"
-                    }
+                    output: 'html'
                 },
-                // 评论加载后确保渲染（不做额外预处理，依赖 KaTeX 自身）
+                // 评论加载后再次调用渲染（确保动态加载的评论也能渲染）
                 onCommentLoaded: function() {
                     const container = document.getElementById('twikoo-feedback');
                     if (!container || typeof renderMathInElement === 'undefined') return;
@@ -154,10 +160,22 @@ class App {
                             { left: '$$', right: '$$', display: true },
                             { left: '$', right: '$', display: false },
                             { left: '\\(', right: '\\)', display: false },
-                            { left: '\\[', right: '\\]', display: true }
+                            { left: '\\[', right: '\\]', display: true },
+                            { left: '\\begin{equation}', right: '\\end{equation}', display: true },
+                            { left: '\\begin{align}', right: '\\end{align}', display: true },
+                            { left: '\\begin{alignat}', right: '\\end{alignat}', display: true },
+                            { left: '\\begin{gather}', right: '\\end{gather}', display: true },
+                            { left: '\\begin{CD}', right: '\\end{CD}', display: true },
+                            { left: '\\begin{cases}', right: '\\end{cases}', display: true },
+                            { left: '\\begin{pmatrix}', right: '\\end{pmatrix}', display: true },
+                            { left: '\\begin{bmatrix}', right: '\\end{bmatrix}', display: true },
+                            { left: '\\begin{Bmatrix}', right: '\\end{Bmatrix}', display: true },
+                            { left: '\\begin{vmatrix}', right: '\\end{vmatrix}', display: true },
+                            { left: '\\begin{Vmatrix}', right: '\\end{Vmatrix}', display: true },
+                            { left: '\\begin{matrix}', right: '\\end{matrix}', display: true }
                         ],
-                        strict: false,
                         throwOnError: false,
+                        strict: false,
                         trust: true
                     });
                 }
