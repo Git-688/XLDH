@@ -1,5 +1,5 @@
 /**
- * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 + 彻底修复换行问题）
+ * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 + 提交前预处理换行）
  */
 class App {
     constructor() {
@@ -109,7 +109,7 @@ class App {
     }
     // =========================================
 
-    // ========== 反馈模态框管理（彻底修复换行问题）==========
+    // ========== 反馈模态框管理（提交前预处理换行）==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -144,25 +144,23 @@ class App {
                         "\\dint": "\\displaystyle\\int"
                     }
                 },
-                // 关键修复：直接处理 HTML，将 $$...$$ 内部换行替换为空格
+                // 关键：在评论发送前预处理，将 $$ 内部的换行符替换为空格
+                onCommentBeforeSend: function(comment) {
+                    // 处理评论内容中的 $$ 块
+                    if (comment.comment) {
+                        comment.comment = comment.comment.replace(/\$\$([\s\S]*?)\$\$/g, function(match, content) {
+                            // 将内部所有空白序列（包括换行）替换为单个空格
+                            const cleaned = content.replace(/\s+/g, ' ').trim();
+                            return '$$' + cleaned + '$$';
+                        });
+                    }
+                    return comment;
+                },
+                // 评论加载后也确保渲染
                 onCommentLoaded: function() {
                     const container = document.getElementById('twikoo-feedback');
                     if (!container || typeof renderMathInElement === 'undefined') return;
 
-                    // 获取当前 HTML，用正则处理 $$ 块内的换行符
-                    let html = container.innerHTML;
-                    
-                    // 匹配所有 $$...$$ 块（非贪婪），将其内部的连续空白（含换行）压缩为一个空格
-                    html = html.replace(/\$\$([\s\S]*?)\$\$/g, function(match, content) {
-                        // 将内部所有空白序列替换为单个空格
-                        const cleaned = content.replace(/\s+/g, ' ').trim();
-                        return '$$' + cleaned + '$$';
-                    });
-                    
-                    // 更新容器 HTML（注意：这会触发浏览器重绘，但不会丢失事件，因为 Twikoo 已渲染完毕）
-                    container.innerHTML = html;
-                    
-                    // 强制 KaTeX 渲染整个容器
                     renderMathInElement(container, {
                         delimiters: [
                             { left: '$$', right: '$$', display: true },
