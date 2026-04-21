@@ -17,6 +17,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon-16x16.png">
     
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
     <link rel="stylesheet" href="./css/modules/sidebar.css">
@@ -40,6 +41,7 @@
     
     <link rel="preload" href="./js/main.js" as="script">
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
+
     <!-- KaTeX 数学公式支持 v0.16.45 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
@@ -93,6 +95,7 @@
             transform: scale(1) translateY(0);
             opacity: 1;
         }
+
         /* 头部尺寸缩小一半 */
         .feedback-modal-header {
             display: flex;
@@ -147,6 +150,7 @@
         .feedback-modal-body::-webkit-scrollbar {
             display: none;
         }
+
         /* 移动端：高度90% · 保留边距 */
         @media (max-width: 600px) {
             .feedback-modal {
@@ -180,6 +184,7 @@
                 font-size: 22px;
             }
         }
+
         /* 桌面端头部减半后的微调 */
         @media (min-width: 601px) {
             .feedback-modal-header {
@@ -192,6 +197,7 @@
                 padding: 16px 20px;
             }
         }
+
         /* 暗色模式 */
         @media (prefers-color-scheme: dark) {
             .feedback-modal-content {
@@ -209,6 +215,7 @@
                 background: rgba(255, 255, 255, 0.08);
             }
         }
+
         /* 公式提示卡片样式 */
         .math-hint {
             padding: 8px 12px;
@@ -236,62 +243,10 @@
             font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
             font-size: 11px;
         }
-
-        /* ✅ Twikoo数学公式全局优化 */
-        /* 调整公式字体大小，与正文比例协调 */
-        .twikoo .katex {
-            font-size: 1.05em !important;
-            line-height: 1.5 !important;
-        }
-        /* 块级公式大小和间距优化 */
-        .twikoo .katex-display {
-            font-size: 1.15em !important;
-            margin: 0.8em 0 !important;
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding-bottom: 4px;
-            white-space: pre !important; /* ✅ 终极修复：强制保留多行公式换行 */
-        }
-        /* 公式内元素间距优化 */
-        .twikoo .katex .base {
-            margin: 0 2px;
-        }
-        /* 优化多行公式的垂直对齐 */
-        .twikoo .katex-display .katex {
-            vertical-align: middle !important;
-        }
-        /* 深色模式下公式颜色强制适配（解决部分元素不变色问题） */
-        [data-theme="dark"] .twikoo .katex,
-        @media (prefers-color-scheme: dark) {
-            .twikoo .katex {
-                color: #ffffff !important;
-            }
-            .twikoo .katex .katex-html,
-            .twikoo .katex .mord,
-            .twikoo .katex .mop,
-            .twikoo .katex .mbin,
-            .twikoo .katex .mrel,
-            .twikoo .katex .mopen,
-            .twikoo .katex .mclose,
-            .twikoo .katex .mpunct {
-                color: #ffffff !important;
-            }
-        }
-        /* 长公式横向滚动条美化 */
-        .twikoo .katex-display::-webkit-scrollbar {
-            height: 4px;
-        }
-        .twikoo .katex-display::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.05);
-            border-radius: 2px;
-        }
-        .twikoo .katex-display::-webkit-scrollbar-thumb {
-            background: var(--primary-color, #4361ee);
-            border-radius: 2px;
-        }
     </style>
 </head>
 <body>
+
 <!-- 导航栏 -->
 <nav class="navbar" id="navbar">
     <div class="nav-container">
@@ -312,6 +267,7 @@
         </div>
     </div>
 </nav>
+
 <!-- 侧滑栏 -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-wallpaper" id="sidebarWallpaper">
@@ -343,6 +299,7 @@
         </div>
     </div>
 </aside>
+
 <main class="main-content">
     <section class="wallpaper-section">
         <div class="container">
@@ -356,6 +313,7 @@
             </div>
         </div>
     </section>
+
     <section class="greeting-section">
         <div class="greeting-container">
             <div class="greeting-main-card">
@@ -382,6 +340,7 @@
             <a href="./pages/others/sq.html" class="bookmark-btn" aria-label="我的书签" target="_blank"><i class="fas fa-bookmark"></i><span>我的书签</span></a>
         </div>
     </section>
+
     <section class="minimal-tags-section">
         <div class="container">
             <div class="tags-header">
@@ -393,6 +352,7 @@
             </div>
         </div>
     </section>
+
     <section class="navigation-section">
         <div class="container">
             <div class="navigation-header">
@@ -413,6 +373,7 @@
             </div>
         </div>
     </section>
+
     <footer class="footer">
         <div class="footer-compact-container">
             <div class="footer-disclaimer-card">
@@ -433,12 +394,14 @@
             </div>
         </div>
     </footer>
+
     <div class="floating-buttons">
         <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
         <button class="floating-btn refresh-btn" id="refreshBtn" aria-label="日记本"><i class="fas fa-book"></i></button>
         <a href="./pages/tools/羊毛福利.html" class="floating-btn activity-btn" id="activityBtn" aria-label="羊毛福利"><i class="fas fa-gift"></i></a>
         <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
     </div>
+
     <!-- 音乐播放器主体 -->
     <div class="music-player" id="musicPlayer">
         <div class="player-top">
@@ -496,7 +459,8 @@
             <div class="tab-content" id="local-content"><div class="content-container"><div class="playlist-container" id="local-playlist-container"><div class="loading">加载本地歌曲中...</div></div></div></div>
         </div>
     </div>
-    <audio id="audio-element" preload="metadata">
+    <audio id="audio-element" preload="metadata"></audio>
+
     <div class="search-modal" id="searchModal" style="display: none;">
         <div class="modal-content">
             <div class="search-header"><i class="fas fa-search search-icon"></i><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." onkeydown="handleSearch(event)" oninput="showSuggestions(this.value)"><div class="suggestions" id="suggestions"></div></div>
@@ -507,6 +471,7 @@
         </div>
     </div>
     <div class="engine-tooltip" id="engineTooltip"></div>
+
     <div class="diary-modal" id="diaryModal" style="display: none;">
         <div class="modal-content">
             <div class="diary-header"><h3><i class="fas fa-book-open"></i> 神木日记</h3><button class="diary-close" id="diaryCloseBtn"><i class="fas fa-times"></i></button></div>
@@ -514,6 +479,7 @@
         </div>
     </div>
 </main>
+
 <!-- 反馈模态框（Twikoo评论区） -->
 <div id="feedbackModal" class="feedback-modal" style="display: none;">
     <div class="feedback-modal-content">
@@ -522,21 +488,19 @@
             <button class="feedback-modal-close">&times;</button>
         </div>
         <div class="feedback-modal-body">
-            <!-- ✅ 完善公式使用提示 -->
-            <div class="math-hint">
-                <i class="fas fa-function"></i>
-                支持 LaTeX 数学公式：行内公式用 <code>$E=mc^2$</code>，块级公式用 <code>$$\begin{pmatrix}a&b\\c&d\end{pmatrix}$$</code>
-            </div>
             <div id="twikoo-feedback"></div>
         </div>
     </div>
 </div>
+
 <!-- 基础工具 -->
 <script src="./js/storage.js"></script>
 <script src="./js/api.js"></script>
+
 <!-- 核心组件 -->
 <script src="./js/components/navbar.js"></script>
 <script src="./js/components/sidebar.js"></script>
+
 <!-- 模块 -->
 <script src="./js/modules/announcement.js"></script>
 <script src="./js/modules/search.js"></script>
@@ -547,9 +511,11 @@
 <script src="./js/modules/greeting.js"></script>
 <script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
+
 <!-- 主应用程序 -->
 <script src="./js/toast.js"></script>
 <script src="./js/main.js"></script>
+
 <!-- 音乐播放器 -->
 <script src="./js/xfyy/utils.js"></script>
 <script src="./js/xfyy/cache-manager.js"></script>
@@ -558,6 +524,7 @@
 <script src="./js/xfyy/plugin-manager.js"></script>
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
+
 <!-- Twikoo v1.7.7 核心库 -->
 <script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
 </body>
