@@ -1,5 +1,6 @@
 /**
- * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 官方标准配置）
+ * 星链导航主应用程序（错误边界与降级优化版）
+ * 包含全局错误处理、模块降级、重试机制
  */
 class App {
     constructor() {
@@ -9,6 +10,13 @@ class App {
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.diaryModalHideRef = null;
+        
+        // 错误收集
+        this.errorLog = [];
+        this.maxErrorLogSize = 20;
+        
+        // 模块降级状态
+        this.moduleStatus = new Map();
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -107,9 +115,8 @@ class App {
             if (e.target === modal) this.hideDiaryModal();
         });
     }
-    // =========================================
 
-    // ========== 反馈模态框管理（官方标准配置，无额外处理）==========
+    // ========== 反馈模态框管理 ==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -123,7 +130,6 @@ class App {
                 el: '#twikoo-feedback',
                 lang: 'zh-CN',
                 path: '/feedback',
-                // 完全按照官方文档配置
                 katex: {
                     delimiters: [
                         { left: '$$', right: '$$', display: true },
@@ -136,7 +142,6 @@ class App {
                 onCommentLoaded: function() {
                     const container = document.getElementById('twikoo-feedback');
                     if (!container || typeof renderMathInElement === 'undefined') return;
-                    // 再次调用渲染，确保所有公式都被处理
                     renderMathInElement(container, {
                         delimiters: [
                             { left: '$$', right: '$$', display: true },
@@ -172,26 +177,151 @@ class App {
             closeBtn.addEventListener('click', () => this.closeFeedbackModal());
         }
     }
-    // =========================================
 
+    // ========== 主初始化流程 ==========
     init() {
         if (this.isInitialized) return;
+        
         this.setupErrorHandling();
         this.initStorage();
-        this.initCoreComponents();
-        this.initModules();
-        this.initDependentComponents();
-        this.setupGlobalEvents();
-        this.initDiaryModalEvents();
-        this.initFeedbackModalEvents();
-        this.initFloatingButtonsEffect(); // 新增：悬浮按钮滚动效果
-        this.isInitialized = true;
+        
+        // 显示加载状态（可选）
+        this.showInitialLoading();
+        
+        // 按顺序初始化核心组件和模块
+        this.initCoreComponents()
+            .then(() => this.initModules())
+            .then(() => {
+                this.initDependentComponents();
+                this.setupGlobalEvents();
+                this.initDiaryModalEvents();
+                this.initFeedbackModalEvents();
+                this.initFloatingButtonsEffect();
+                this.isInitialized = true;
+                this.hideInitialLoading();
+                
+                // 检查模块降级状态并提示
+                this.reportModuleStatus();
+            })
+            .catch(error => {
+                console.error('应用初始化失败:', error);
+                this.logError('init', '应用初始化失败', error);
+                this.showToast('应用初始化失败，请刷新页面', 'error');
+                this.hideInitialLoading();
+                this.showFatalError();
+            });
         
         window.openFeedbackModal = this.openFeedbackModal.bind(this);
         window.closeFeedbackModal = this.closeFeedbackModal.bind(this);
     }
 
-    // ========== 新增：悬浮按钮滚动半透明效果 ==========
+    showInitialLoading() {
+        // 可以在页面顶部显示一个细微的加载条
+        const loader = document.createElement('div');
+        loader.id = 'app-loading-bar';
+        loader.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #4361ee, #7209b7);
+            z-index: 99999;
+            animation: loadingProgress 2s ease-in-out infinite;
+        `;
+        if (!document.getElementById('app-loading-bar')) {
+            document.body.appendChild(loader);
+        }
+    }
+
+    hideInitialLoading() {
+        const loader = document.getElementById('app-loading-bar');
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.remove(), 300);
+        }
+    }
+
+    showFatalError() {
+        const container = document.createElement('div');
+        container.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            z-index: 100000;
+            text-align: center;
+            max-width: 90%;
+        `;
+        container.innerHTML = `
+            <h3 style="color: #ef4444; margin-bottom: 12px;">⚠️ 应用启动失败</h3>
+            <p style="margin-bottom: 16px;">请尝试刷新页面或检查网络连接</p>
+            <button onclick="location.reload()" style="background: #4361ee; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer;">刷新页面</button>
+        `;
+        document.body.appendChild(container);
+    }
+
+    // ========== 错误处理与降级 ==========
+    setupErrorHandling() {
+        const ignoredErrors = [
+            'Script error',
+            'ResizeObserver loop',
+            'Loading failed',
+            'Failed to fetch',
+            'NetworkError',
+            'AbortError'
+        ];
+        
+        const handleError = (event) => {
+            const error = event.error || event.reason;
+            const errorMessage = error?.message || event.message || '未知错误';
+            
+            const shouldIgnore = ignoredErrors.some(ignored => 
+                errorMessage.includes(ignored)
+            );
+            
+            if (!shouldIgnore) {
+                console.error('应用错误:', errorMessage, error);
+                this.logError('global', errorMessage, error);
+                
+                if (!document.hidden) {
+                    // 避免过多提示
+                    if (this.errorLog.length <= 3) {
+                        this.showToast('页面遇到问题，部分功能可能异常', 'warning');
+                    }
+                }
+            }
+        };
+        
+        window.addEventListener('error', handleError);
+        window.addEventListener('unhandledrejection', handleError);
+    }
+
+    logError(source, message, error) {
+        const entry = {
+            time: new Date().toISOString(),
+            source,
+            message,
+            stack: error?.stack || null
+        };
+        this.errorLog.unshift(entry);
+        if (this.errorLog.length > this.maxErrorLogSize) {
+            this.errorLog.pop();
+        }
+        
+        // 可选：上报到监控服务
+        // this.reportError(entry);
+    }
+
+    getErrorLog() {
+        return this.errorLog;
+    }
+
+    // ========== 悬浮按钮滚动效果 ==========
     initFloatingButtonsEffect() {
         let scrollTimer;
         const floatingBtns = document.querySelector('.floating-buttons');
@@ -207,101 +337,183 @@ class App {
             }, 1000);
         }, { passive: true });
     }
-    // =========================================
 
-    initCoreComponents() {
+    // ========== 核心组件初始化（带降级） ==========
+    async initCoreComponents() {
         try {
             if (typeof CompactSidebar !== 'undefined') {
                 if (!window.sidebar || !window.sidebar.isInitialized) {
                     this.components.sidebar = new CompactSidebar();
-                    this.components.sidebar.init().catch(error => {
+                    await this.components.sidebar.init().catch(error => {
                         console.error('侧边栏初始化失败:', error);
+                        this.moduleStatus.set('sidebar', { status: 'error', error });
                         this.showToast('侧边栏初始化失败，部分功能可能不可用', 'warning');
                     });
+                    if (!this.moduleStatus.has('sidebar')) {
+                        this.moduleStatus.set('sidebar', { status: 'ok' });
+                    }
                 } else {
                     this.components.sidebar = window.sidebar;
                 }
             }
         } catch (error) {
             console.error('核心组件初始化失败:', error);
-            this.showToast('核心组件初始化失败', 'error');
+            this.logError('coreComponents', '核心组件初始化失败', error);
+            this.moduleStatus.set('sidebar', { status: 'error', error });
         }
     }
 
-    initModules() {
-        try {
-            const initPromises = [];
-            
-            if (typeof SearchModule !== 'undefined') {
-                try {
-                    if (!window.searchModule || !(window.searchModule instanceof SearchModule)) {
-                        this.modules.search = new SearchModule();
-                        window.searchModule = this.modules.search;
-                        initPromises.push(this.modules.search.init?.());
-                        console.log('搜索模块已通过App初始化');
-                    } else {
-                        this.modules.search = window.searchModule;
-                        console.log('使用现有的搜索模块实例');
-                    }
-                } catch (error) {
-                    console.error('搜索模块初始化失败:', error);
+    // ========== 模块初始化（逐个捕获错误，支持降级展示） ==========
+    async initModules() {
+        const moduleConfigs = [
+            { name: 'search', class: 'SearchModule', displayName: '搜索' },
+            { name: 'wallpaper', class: 'WallpaperModule', displayName: '壁纸' },
+            { name: 'greeting', class: 'GreetingModule', displayName: '问候语' },
+            { name: 'navigation', class: 'OptimizedNavigation', displayName: '导航' },
+            { name: 'footer', class: 'FooterModule', displayName: '页脚统计' },
+            { name: 'weather', class: 'WeatherModule', displayName: '天气' },
+            { name: 'announcement', class: 'AnnouncementModule', displayName: '公告' },
+            { name: 'about', class: 'AboutModule', displayName: '关于' }
+        ];
+
+        for (const cfg of moduleConfigs) {
+            try {
+                await this.initSingleModule(cfg);
+            } catch (error) {
+                console.error(`${cfg.displayName}模块初始化失败:`, error);
+                this.logError(`module:${cfg.name}`, `${cfg.displayName}初始化失败`, error);
+                this.moduleStatus.set(cfg.name, { status: 'error', error });
+                this.applyModuleFallback(cfg.name);
+            }
+        }
+    }
+
+    async initSingleModule(cfg) {
+        const ModuleClass = window[cfg.class];
+        if (!ModuleClass) {
+            throw new Error(`类 ${cfg.class} 未定义`);
+        }
+
+        // 特殊处理某些模块（如已有全局实例）
+        if (cfg.name === 'search' && window.searchModule instanceof ModuleClass) {
+            this.modules.search = window.searchModule;
+            this.moduleStatus.set('search', { status: 'ok' });
+            return;
+        }
+        if (cfg.name === 'announcement' && window.announcementModule) {
+            this.modules.announcement = window.announcementModule;
+            this.moduleStatus.set('announcement', { status: 'ok' });
+            return;
+        }
+        if (cfg.name === 'about' && window.aboutModule) {
+            this.modules.about = window.aboutModule;
+            this.moduleStatus.set('about', { status: 'ok' });
+            return;
+        }
+
+        const instance = new ModuleClass();
+        if (instance.init) {
+            await instance.init();
+        }
+        this.modules[cfg.name] = instance;
+        
+        // 设置全局引用
+        if (cfg.name === 'navigation') window.optimizedNavigation = instance;
+        if (cfg.name === 'search') window.searchModule = instance;
+        if (cfg.name === 'announcement') window.announcementModule = instance;
+        if (cfg.name === 'about') window.aboutModule = instance;
+        
+        this.moduleStatus.set(cfg.name, { status: 'ok' });
+    }
+
+    applyModuleFallback(moduleName) {
+        // 根据不同模块进行降级处理
+        switch (moduleName) {
+            case 'navigation':
+                this.showNavigationFallback();
+                break;
+            case 'wallpaper':
+                this.showWallpaperFallback();
+                break;
+            case 'weather':
+                // 天气模块失败不影响主要功能
+                break;
+            default:
+                // 其他模块静默降级
+                break;
+        }
+    }
+
+    showNavigationFallback() {
+        const container = document.getElementById('level3Content');
+        if (container) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <h3 class="empty-title">导航数据加载失败</h3>
+                    <p class="empty-subtitle">请检查网络连接</p>
+                    <button class="retry-btn" onclick="window.app.retryModule('navigation')" style="margin-top: 16px; padding: 8px 20px; background: #4361ee; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        <i class="fas fa-redo"></i> 重试
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    showWallpaperFallback() {
+        const wallpaperImg = document.getElementById('wallpaper');
+        if (wallpaperImg) {
+            wallpaperImg.style.display = 'none';
+        }
+        const info = document.getElementById('wallpaperInfo');
+        if (info) {
+            info.innerHTML = '<span style="color: #999;">壁纸加载失败</span>';
+        }
+    }
+
+    retryModule(moduleName) {
+        this.showToast(`正在重新加载${moduleName}模块...`, 'info');
+        
+        const cfg = {
+            navigation: { class: 'OptimizedNavigation', displayName: '导航' },
+            wallpaper: { class: 'WallpaperModule', displayName: '壁纸' },
+            weather: { class: 'WeatherModule', displayName: '天气' }
+        }[moduleName];
+        
+        if (!cfg) return;
+        
+        this.initSingleModule({ name: moduleName, ...cfg })
+            .then(() => {
+                this.moduleStatus.set(moduleName, { status: 'ok' });
+                this.showToast(`${cfg.displayName}模块已恢复`, 'success');
+                // 如果之前有降级UI，刷新页面显示
+                if (moduleName === 'navigation' && this.modules.navigation) {
+                    this.modules.navigation.refresh();
                 }
-            }
-            
-            if (typeof WallpaperModule !== 'undefined') {
-                this.modules.wallpaper = new WallpaperModule();
-                initPromises.push(this.modules.wallpaper.init?.());
-            }
-            
-            if (typeof GreetingModule !== 'undefined') {
-                this.modules.greeting = new GreetingModule();
-                initPromises.push(this.modules.greeting.init?.());
-            }
-            
-            if (typeof OptimizedNavigation !== 'undefined') {
-                this.modules.navigation = new OptimizedNavigation();
-                window.optimizedNavigation = this.modules.navigation;
-                initPromises.push(this.modules.navigation.init?.());
-            }
-            
-            if (typeof FooterModule !== 'undefined') {
-                this.modules.footer = new FooterModule();
-                initPromises.push(this.modules.footer.init?.());
-            }
-            
-            if (typeof WeatherModule !== 'undefined') {
-                this.modules.weather = new WeatherModule();
-                initPromises.push(this.modules.weather.init?.());
-            }
-            
-            if (typeof AnnouncementModule !== 'undefined') {
-                if (!window.announcementModule) {
-                    this.modules.announcement = new AnnouncementModule();
-                    window.announcementModule = this.modules.announcement;
-                } else {
-                    this.modules.announcement = window.announcementModule;
-                }
-            }
-            
-            if (typeof AboutModule !== 'undefined') {
-                if (!window.aboutModule) {
-                    this.modules.about = new AboutModule();
-                    window.aboutModule = this.modules.about;
-                } else {
-                    this.modules.about = window.aboutModule;
-                }
-            }
-            
-            Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {
-                console.log('所有模块初始化完成');
+            })
+            .catch(error => {
+                console.error(`重试${moduleName}失败:`, error);
+                this.showToast(`重试失败，请刷新页面`, 'error');
             });
+    }
 
-        } catch (error) {
-            console.error('模块初始化失败:', error);
-            this.showToast('部分模块初始化失败', 'warning');
+    reportModuleStatus() {
+        const failedModules = [];
+        for (const [name, status] of this.moduleStatus) {
+            if (status.status === 'error') {
+                failedModules.push(name);
+            }
+        }
+        if (failedModules.length > 0) {
+            console.warn('部分模块初始化失败:', failedModules);
+            // 避免过多提示
+            if (failedModules.length <= 2) {
+                this.showToast('部分功能加载失败，可尝试刷新', 'warning');
+            }
         }
     }
 
+    // ========== 其他组件初始化 ==========
     initDependentComponents() {
         try {
             if (typeof Navbar !== 'undefined') {
@@ -309,37 +521,11 @@ class App {
             }
         } catch (error) {
             console.error('依赖组件初始化失败:', error);
+            this.logError('dependentComponents', '依赖组件初始化失败', error);
         }
     }
 
-    setupErrorHandling() {
-        const ignoredErrors = [
-            'Script error',
-            'ResizeObserver loop',
-            'Loading failed',
-            'Failed to fetch'
-        ];
-        
-        const handleError = (event) => {
-            const error = event.error || event.reason;
-            const errorMessage = error?.message || event.message || '未知错误';
-            
-            const shouldIgnore = ignoredErrors.some(ignored => 
-                errorMessage.includes(ignored)
-            );
-            
-            if (!shouldIgnore) {
-                console.error('应用错误:', errorMessage);
-                if (!document.hidden) {
-                    this.showToast('页面遇到问题，建议刷新页面', 'error');
-                }
-            }
-        };
-        
-        window.addEventListener('error', handleError);
-        window.addEventListener('unhandledrejection', handleError);
-    }
-
+    // ========== 存储初始化 ==========
     initStorage() {
         if (typeof Storage === 'undefined') {
             console.error('浏览器不支持localStorage');
@@ -367,6 +553,7 @@ class App {
         }
     }
 
+    // ========== 全局事件 ==========
     setupGlobalEvents() {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -410,6 +597,7 @@ class App {
         }
     }
 
+    // ========== 模态框管理 ==========
     registerModal(modal) {
         if (!modal || typeof modal.hide !== 'function') return;
         if (!this.activeModals.includes(modal)) {
@@ -449,6 +637,7 @@ class App {
         this.closeFeedbackModal();
     }
 
+    // ========== 公共 API ==========
     showToast(message, type = 'info') {
         window.toast.show(message, type);
     }
