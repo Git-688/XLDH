@@ -221,6 +221,13 @@
             cursor: pointer;
         }
 
+        /* 安全锁定提示 */
+        .lock-message {
+            color: #ef4444;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
         @media (max-width:768px){
             .sidebar{width:150px}
             .cat-item{padding:7px 12px;font-size:11px}
@@ -274,6 +281,7 @@
                         <input type="checkbox" id="rememberToken">
                         <label for="rememberToken">记住密码（8小时有效）</label>
                     </div>
+                    <div id="loginLockMessage" class="lock-message"></div>
                 </div>
             </div>
         </div>
@@ -331,9 +339,15 @@
 </div>
 
 <script>
+    // 从全局配置读取 API 地址（如果存在）
     const API_BASE = window.APP_CONFIG?.API_BASE || 'https://api.xldh688.eu.cc';
     
-    // 改用 sessionStorage，并支持记住密码（存入 localStorage 并设置8小时过期）
+    // ==================== Token 安全管理 ====================
+    const TOKEN_EXPIRE_HOURS = 8; // 8小时有效
+    const MAX_FAIL_COUNT = 5;
+    const LOCK_DURATION_MS = 10 * 60 * 1000; // 10分钟
+    
+    // 获取存储的 token（优先 sessionStorage，其次检查 localStorage 中的记住密码）
     function getStoredToken() {
         // 优先检查 sessionStorage（当前会话）
         let token = sessionStorage.getItem('admin_token');
@@ -354,7 +368,7 @@
             token = localStorage.getItem('admin_token_saved');
             const savedTime = localStorage.getItem('admin_saved_time');
             if (token && savedTime) {
-                const expires = parseInt(savedTime) + (8 * 3600000); // 8小时
+                const expires = parseInt(savedTime) + (TOKEN_EXPIRE_HOURS * 3600000);
                 if (Date.now() < expires) {
                     // 恢复到 sessionStorage
                     sessionStorage.setItem('admin_token', token);
@@ -372,14 +386,11 @@
     }
 
     function saveToken(token, remember) {
-        // 计算过期时间（8小时后）
-        const expires = Date.now() + (8 * 3600000);
+        const expires = Date.now() + (TOKEN_EXPIRE_HOURS * 3600000);
         
-        // 存入 sessionStorage
         sessionStorage.setItem('admin_token', token);
         sessionStorage.setItem('admin_expires', expires.toString());
         
-        // 如果勾选记住密码，存入 localStorage
         if (remember) {
             localStorage.setItem('admin_remember', 'true');
             localStorage.setItem('admin_token_saved', token);
@@ -392,20 +403,68 @@
     }
 
     function clearToken() {
-        sessionStorage.clear();
+        sessionStorage.removeItem('admin_token');
+        sessionStorage.removeItem('admin_expires');
         localStorage.removeItem('admin_remember');
         localStorage.removeItem('admin_token_saved');
         localStorage.removeItem('admin_saved_time');
     }
 
+    // ==================== 登录失败锁定（前端辅助） ====================
+    let failCount = parseInt(sessionStorage.getItem('login_fail_count') || '0');
+    let lockUntil = parseInt(sessionStorage.getItem('login_lock_until') || '0');
+
+    function updateLockMessage() {
+        const msgEl = document.getElementById('loginLockMessage');
+        if (!msgEl) return;
+        if (Date.now() < lockUntil) {
+            const remaining = Math.ceil((lockUntil - Date.now()) / 1000 / 60);
+            msgEl.textContent = `登录锁定中，剩余 ${remaining} 分钟`;
+        } else {
+            msgEl.textContent = '';
+        }
+    }
+
+    function checkLock() {
+        if (Date.now() < lockUntil) {
+            updateLockMessage();
+            showToast('登录失败过多，锁定10分钟', 'error');
+            return false;
+        }
+        if (failCount >= MAX_FAIL_COUNT) {
+            lockUntil = Date.now() + LOCK_DURATION_MS;
+            sessionStorage.setItem('login_lock_until', lockUntil);
+            sessionStorage.setItem('login_fail_count', failCount);
+            updateLockMessage();
+            showToast('失败5次，锁定10分钟', 'error');
+            return false;
+        }
+        return true;
+    }
+
+    function recordLoginFailure() {
+        failCount++;
+        sessionStorage.setItem('login_fail_count', failCount);
+        if (failCount >= MAX_FAIL_COUNT) {
+            lockUntil = Date.now() + LOCK_DURATION_MS;
+            sessionStorage.setItem('login_lock_until', lockUntil);
+            updateLockMessage();
+        }
+    }
+
+    function resetLoginFailure() {
+        failCount = 0;
+        lockUntil = 0;
+        sessionStorage.removeItem('login_fail_count');
+        sessionStorage.removeItem('login_lock_until');
+        document.getElementById('loginLockMessage').textContent = '';
+    }
+
+    // ==================== 全局变量 ====================
     let token = getStoredToken();
     let modalAction = null;
     let categories = [], subcategories = [], sites = [];
     let currentCat = null, currentSub = null;
-    let failCount = parseInt(sessionStorage.getItem('login_fail_count') || 0);
-    let lockTime = sessionStorage.getItem('login_lock_time') || 0;
-    const TOKEN_EXPIRE_HOURS = 8; // 8小时有效
-    const IP_WHITELIST = ['127.0.0.1', '112.96.123.9'];
 
     const toast = document.getElementById('toast');
     function showToast(msg, type = 'success') {
@@ -414,6 +473,7 @@
         setTimeout(() => toast.classList.remove('show'), 2300);
     }
 
+    // ==================== 模态框 ====================
     function openModal(title, html, cb) {
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalForm').innerHTML = html;
@@ -432,6 +492,7 @@
     }
     function closeLogModal() { document.getElementById('logModal').classList.remove('show'); }
 
+    // ==================== 操作日志 ====================
     function addLog(text) {
         const logs = JSON.parse(sessionStorage.getItem('operation_logs') || '[]');
         logs.unshift({ time: new Date().toLocaleString(), text });
@@ -444,95 +505,100 @@
         document.getElementById('logModal').classList.add('show');
     }
 
+    // ==================== API 请求封装 ====================
     async function apiFetch(endpoint, opt = {}) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
         if (token) headers.Authorization = `Bearer ${token}`;
         const res = await fetch(API_BASE + endpoint, { ...opt, headers });
-        if(res.status === 401) throw new Error('Unauthorized');
-        if(!res.ok) throw new Error(await res.text() || '请求失败');
+        if (res.status === 401) {
+            // Token 失效，自动登出
+            logout();
+            throw new Error('Unauthorized');
+        }
+        if (res.status === 403) {
+            showToast('IP 不在白名单中', 'error');
+            throw new Error('Forbidden');
+        }
+        if (!res.ok) throw new Error(await res.text() || '请求失败');
         return res.json();
     }
 
-    async function checkIP() {
-        try {
-            const {ip} = await (await fetch('https://api.ipify.org?format=json')).json();
-            return IP_WHITELIST.includes(ip);
-        } catch {
-            return true;
-        }
-    }
-
-    function checkLock() {
-        if(Date.now() < lockTime){showToast('登录失败过多，锁定10分钟','error');return false;}
-        if(failCount >=5){sessionStorage.setItem('login_lock_time',Date.now()+600000);showToast('失败5次，锁定10分钟','error');return false;}
-        return true;
-    }
-
-    function checkTokenExpire() {
-        const expires = sessionStorage.getItem('admin_expires');
-        if (expires && Date.now() > parseInt(expires)) {
-            showToast('登录已过期，请重新登录','warn');
-            logout();
-            return false;
-        }
-        return true;
-    }
-
+    // ==================== 登录/登出 ====================
     async function login() {
-        if(!checkLock())return;
-        if(!await checkIP()){showToast('当前IP无权限','error');return;}
-        const ipt = document.getElementById('tokenInput'), btn = document.getElementById('loginBtn');
+        if (!checkLock()) return;
+        
+        const ipt = document.getElementById('tokenInput');
+        const btn = document.getElementById('loginBtn');
         const rememberCheck = document.getElementById('rememberToken');
         const val = ipt.value.trim();
-        if(!val){showToast('请输入Token','error');return;}
-        btn.disabled=1;btn.textContent='登录中…';token=val;
-        try{
+        
+        if (!val) {
+            showToast('请输入Token', 'error');
+            return;
+        }
+        
+        btn.disabled = true;
+        btn.textContent = '登录中…';
+        token = val;
+        
+        try {
             await apiFetch('/admin/categories');
+            
+            // 登录成功
+            resetLoginFailure();
             const remember = rememberCheck ? rememberCheck.checked : false;
             saveToken(token, remember);
-            sessionStorage.setItem('login_fail_count',0);failCount=0;
-            ipt.style.display='none';
+            
+            ipt.style.display = 'none';
             document.getElementById('loginBtn').classList.add('hidden');
             document.getElementById('logoutBtn').classList.remove('hidden');
             document.getElementById('mainContent').classList.remove('hidden');
             document.querySelector('.remember-checkbox').style.display = 'none';
+            
             await loadAllData();
             addLog('管理员登录');
             showToast('登录成功' + (remember ? '（已记住密码）' : ''));
-        }catch(e){
-            token='';failCount++;sessionStorage.setItem('login_fail_count',failCount);
-            showToast('Token无效','error');
-        }finally{btn.disabled=0;btn.textContent='登录';}
+        } catch (e) {
+            token = '';
+            recordLoginFailure();
+            if (e.message === 'Unauthorized') {
+                showToast('Token无效', 'error');
+            } else {
+                showToast('登录失败: ' + e.message, 'error');
+            }
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '登录';
+        }
     }
 
     function logout() {
-        token='';
+        token = '';
         clearToken();
         document.getElementById('loginBtn').classList.remove('hidden');
         document.getElementById('logoutBtn').classList.add('hidden');
         document.getElementById('mainContent').classList.add('hidden');
-        document.getElementById('tokenInput').style.display='block';
-        document.getElementById('tokenInput').value='';
+        document.getElementById('tokenInput').style.display = 'block';
+        document.getElementById('tokenInput').value = '';
         document.querySelector('.remember-checkbox').style.display = 'block';
-        addLog('退出登录');showToast('已退出');
+        addLog('退出登录');
+        showToast('已退出');
     }
 
-    // 自动登录检查
-    if(token) {
-        // 检查是否过期
+    // ==================== 自动登录检查 ====================
+    if (token) {
         const expires = sessionStorage.getItem('admin_expires');
         if (expires && Date.now() < parseInt(expires)) {
-            // 有效，自动登录
             (async () => {
                 try {
                     await apiFetch('/admin/categories');
-                    document.getElementById('tokenInput').style.display='none';
+                    document.getElementById('tokenInput').style.display = 'none';
                     document.getElementById('loginBtn').classList.add('hidden');
                     document.getElementById('logoutBtn').classList.remove('hidden');
                     document.getElementById('mainContent').classList.remove('hidden');
                     document.querySelector('.remember-checkbox').style.display = 'none';
                     await loadAllData();
-                } catch(e) {
+                } catch (e) {
                     logout();
                 }
             })();
@@ -541,8 +607,17 @@
         }
     }
 
+    // 定期检查 token 是否即将过期（可选）
+    setInterval(() => {
+        const expires = sessionStorage.getItem('admin_expires');
+        if (expires && Date.now() > parseInt(expires) - 60000) { // 剩余1分钟
+            showToast('登录即将过期，请重新登录', 'warn');
+        }
+    }, 30000);
+
+    // ==================== 辅助函数 ====================
     function getFavicon(url){
-        try{
+        try {
             const u = new URL(url);
             return `https://api.71xk.com/api/favicon?url=${u.hostname}`;
         } catch {
@@ -550,18 +625,59 @@
         }
     }
 
-    function checkUrl(url){try{new URL(url);return true;}catch{return false;}}
+    function checkUrl(url){
+        try {
+            const parsed = new URL(url);
+            // 禁止危险协议
+            if (parsed.protocol === 'javascript:' || parsed.protocol === 'data:') {
+                return false;
+            }
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // ==================== 数据加载 ====================
+    async function loadAllData(){
+        try {
+            const [catData, subData, siteData] = await Promise.all([
+                apiFetch('/admin/categories'),
+                apiFetch('/admin/subcategories'),
+                apiFetch('/admin/sites')
+            ]);
+            categories = catData;
+            subcategories = subData;
+            sites = siteData;
+            renderCatBar();
+            if (categories.length > 0) selectCat(categories[0].id);
+            addLog('数据加载完成');
+        } catch (e) {
+            if (e.message === 'Unauthorized') {
+                logout();
+            } else {
+                showToast('数据加载失败：' + e.message, 'error');
+                console.error(e);
+            }
+        }
+    }
 
     async function loadRanking() {
         const rankList = document.getElementById('rankList');
         if (!rankList) return;
         rankList.innerHTML = '<div class="empty">加载中...</div>';
         try {
-            const response = await fetch(API_BASE + '/admin/topclicks?limit=20', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('获取排行失败');
-            const data = await response.json();
+            const data = await apiFetch('/admin/topclicks?limit=20');
             if (!data.length) {
                 rankList.innerHTML = '<div class="empty">暂无点击数据</div>';
                 return;
@@ -585,10 +701,7 @@
         const listEl = document.getElementById('feedbackList');
         listEl.innerHTML = '<div class="empty">加载中...</div>';
         try {
-            const res = await fetch(`${API_BASE}/admin/dead-link-reports`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data = await apiFetch('/admin/dead-link-reports');
             if (!data.length) {
                 listEl.innerHTML = '<div class="empty">暂无用户反馈</div>';
                 return;
@@ -614,15 +727,9 @@
             });
             
             let html = '';
-            if (groups.today.length) {
-                html += `<div class="feedback-date-group"><h4>📅 今天</h4>${renderFeedbackItems(groups.today)}</div>`;
-            }
-            if (groups.yesterday.length) {
-                html += `<div class="feedback-date-group"><h4>📅 昨天</h4>${renderFeedbackItems(groups.yesterday)}</div>`;
-            }
-            if (groups.older.length) {
-                html += `<div class="feedback-date-group"><h4>📅 更早</h4>${renderFeedbackItems(groups.older)}</div>`;
-            }
+            if (groups.today.length) html += `<div class="feedback-date-group"><h4>📅 今天</h4>${renderFeedbackItems(groups.today)}</div>`;
+            if (groups.yesterday.length) html += `<div class="feedback-date-group"><h4>📅 昨天</h4>${renderFeedbackItems(groups.yesterday)}</div>`;
+            if (groups.older.length) html += `<div class="feedback-date-group"><h4>📅 更早</h4>${renderFeedbackItems(groups.older)}</div>`;
             listEl.innerHTML = html;
         } catch (err) {
             listEl.innerHTML = '<div class="empty">加载失败</div>';
@@ -649,9 +756,8 @@
 
     async function markFeedbackDone(id) {
         try {
-            await fetch(`${API_BASE}/admin/report-status/${id}`, {
+            await apiFetch(`/admin/report-status/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ status: 'done' })
             });
             showToast('已标记处理（12小时后自动清除）', 'success');
@@ -663,7 +769,7 @@
 
     async function replaceLink(reportId, siteId, oldUrl, oldTitle) {
         if (!siteId) {
-            showToast('无法找到对应的网站记录，请手动处理', 'error');
+            showToast('无法找到对应的网站记录', 'error');
             return;
         }
         const site = sites.find(s => s.id === siteId);
@@ -686,23 +792,26 @@
                 showToast('标题和网址不能为空', 'error');
                 return;
             }
+            if (!checkUrl(newUrl)) {
+                showToast('网址格式错误或包含危险协议', 'error');
+                return;
+            }
             try {
-                const res = await fetch(`${API_BASE}/admin/replace-link`, {
+                await apiFetch('/admin/replace-link', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                     body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: newDesc, newIcon })
                 });
-                if (!res.ok) throw new Error('更换失败');
                 showToast('链接已更新，无效标记已清除', 'success');
                 loadFeedback();
                 await loadAllData();
-                await fetch(`${API_BASE}/admin/refresh-navigation`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
             } catch (err) {
                 showToast('更换失败：' + err.message, 'error');
             }
         });
     }
 
+    // ==================== 标签页切换 ====================
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.onclick = () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -710,32 +819,34 @@
             btn.classList.add('active');
             const tab = btn.dataset.tab;
             document.getElementById(`${tab}Tab`).classList.remove('hidden');
-            if(tab === 'rank') loadRanking();
-            if(tab === 'feedback') loadFeedback();
+            if (tab === 'rank') loadRanking();
+            if (tab === 'feedback') loadFeedback();
         }
     });
 
+    // ==================== 分类/子分类/链接 操作 ====================
     function selectCat(cid){
         currentCat = cid;
         currentSub = null;
         document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
         const targetCat = document.querySelector(`.cat-item[data-cid="${cid}"]`);
-        if(targetCat) targetCat.classList.add('active');
+        if (targetCat) targetCat.classList.add('active');
         renderSubList();
         const subs = subcategories.filter(s => s.category_id === cid);
-        if(subs.length > 0) selectSub(subs[0].id);
+        if (subs.length > 0) selectSub(subs[0].id);
         else document.getElementById('siteList').innerHTML = '<div class="empty">请先添加子分类</div>';
     }
+
     function selectSub(sid){
         currentSub = sid;
         document.querySelectorAll('.sub-item').forEach(i => i.classList.remove('active'));
         const targetSub = document.querySelector(`.sub-item[data-sid="${sid}"]`);
-        if(targetSub) targetSub.classList.add('active');
+        if (targetSub) targetSub.classList.add('active');
         renderSiteList();
     }
 
     function renderCatBar(){
-        if(categories.length === 0){
+        if (categories.length === 0){
             document.getElementById('catBar').innerHTML = '<div class="empty" style="width:100%;flex-shrink:0">请先添加一级分类</div>';
             document.getElementById('subList').innerHTML = '<div class="empty">请先添加一级分类</div>';
             document.getElementById('siteList').innerHTML = '<div class="empty">请先添加一级分类</div>';
@@ -748,13 +859,14 @@
             </div>
         `).join('');
     }
+
     function renderSubList(){
-        if(!currentCat){
+        if (!currentCat){
             document.getElementById('subList').innerHTML = '<div class="empty">请先选择一级分类</div>';
             return;
         }
         const subs = subcategories.filter(s => s.category_id === currentCat);
-        if(subs.length === 0){
+        if (subs.length === 0){
             document.getElementById('subList').innerHTML = '<div class="empty">请先添加子分类</div>';
             return;
         }
@@ -765,13 +877,14 @@
             </div>
         `).join('');
     }
+
     function renderSiteList(){
-        if(!currentSub){
+        if (!currentSub){
             document.getElementById('siteList').innerHTML = '<div class="empty">请先选择子分类</div>';
             return;
         }
         const list = sites.filter(s => s.subcategory_id === currentSub);
-        if(list.length === 0){
+        if (list.length === 0){
             document.getElementById('siteList').innerHTML = '<div class="empty">暂无链接，点击+添加链接</div>';
             return;
         }
@@ -788,107 +901,80 @@
         `).join('');
     }
 
-    async function loadAllData(){
-        if(!checkTokenExpire()) return;
-        try{
-            const [catData, subData, siteData] = await Promise.all([
-                apiFetch('/admin/categories'),
-                apiFetch('/admin/subcategories'),
-                apiFetch('/admin/sites')
-            ]);
-            categories = catData;
-            subcategories = subData;
-            sites = siteData;
-            renderCatBar();
-            if(categories.length > 0) selectCat(categories[0].id);
-            addLog('数据加载完成');
-        }catch(e){
-            if(e.message==='Unauthorized'){
-                showToast('Token失效，请重新登录','warn');
-                logout();
-            } else {
-                showToast('数据加载失败：' + e.message,'error');
-                console.error(e);
-            }
-        }
-    }
-
+    // ==================== 增删改操作（带二次确认） ====================
     function openAddCat(){
-        openModal('新增一级分类',`
+        openModal('新增一级分类', `
             <div class="form-row"><label>名称</label><input id="name"></div>
             <div class="form-row"><label>排序</label><input type="number" id="sort" value="${categories.length}"></div>
-        `,async()=>{
-            const name=document.getElementById('name').value.trim();
-            if(!name){showToast('请填名称','error');return;}
-            await apiFetch('/admin/categories',{method:'POST',body:JSON.stringify({name,display_order:+document.getElementById('sort').value})});
-            addLog(`新增分类：${name}`);showToast('添加成功');await loadAllData();
-        })
+        `, async () => {
+            const name = document.getElementById('name').value.trim();
+            if (!name) { showToast('请填名称', 'error'); return; }
+            await apiFetch('/admin/categories', { method: 'POST', body: JSON.stringify({ name, display_order: +document.getElementById('sort').value }) });
+            addLog(`新增分类：${name}`); showToast('添加成功'); await loadAllData();
+        });
     }
+
     function openAddSub(){
-        if(!currentCat){showToast('请先选择一级分类','error');return;}
-        openModal('新增子分类',`
+        if (!currentCat) { showToast('请先选择一级分类', 'error'); return; }
+        openModal('新增子分类', `
             <div class="form-row"><label>名称</label><input id="name"></div>
             <div class="form-row"><label>排序</label><input type="number" id="sort" value="0"></div>
-        `,async()=>{
-            const name=document.getElementById('name').value.trim();
-            if(!name){showToast('请填名称','error');return;}
-            await apiFetch('/admin/subcategories',{method:'POST',body:JSON.stringify({category_id:currentCat,name,display_order:+document.getElementById('sort').value})});
-            addLog(`新增子分类：${name}`);showToast('添加成功');await loadAllData();
-        })
+        `, async () => {
+            const name = document.getElementById('name').value.trim();
+            if (!name) { showToast('请填名称', 'error'); return; }
+            await apiFetch('/admin/subcategories', { method: 'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('sort').value }) });
+            addLog(`新增子分类：${name}`); showToast('添加成功'); await loadAllData();
+        });
     }
+
     function openAddSite(){
-        if(!currentSub){showToast('请先选择子分类','error');return;}
-        openModal('新增链接',`
+        if (!currentSub) { showToast('请先选择子分类', 'error'); return; }
+        openModal('新增链接', `
             <div class="form-row"><label>标题</label><input id="title"></div>
             <div class="form-row"><label>网址</label><input id="url" oninput="document.getElementById('icon').value=getFavicon(this.value)"></div>
             <div class="form-row"><label>图标</label><input id="icon" value="fas fa-link"></div>
             <div class="form-row"><label>描述</label><input id="desc"></div>
             <div class="form-row"><label>排序</label><input type="number" id="sort" value="0"></div>
-        `,async()=>{
-            const t=document.getElementById('title').value,u=document.getElementById('url').value;
-            if(!t||!u){showToast('标题/网址必填','error');return;}
-            if(!checkUrl(u)){showToast('网址格式错误','error');return;}
-            // 禁止危险协议
-            if(u.toLowerCase().startsWith('javascript:') || u.toLowerCase().startsWith('data:')){
-                showToast('不允许使用危险协议','error');return;
-            }
-            await apiFetch('/admin/sites',{method:'POST',body:JSON.stringify({
-                subcategory_id:currentSub,title:t,url:u,
-                description:document.getElementById('desc').value,
-                icon:document.getElementById('icon').value,
-                display_order:+document.getElementById('sort').value
+        `, async () => {
+            const t = document.getElementById('title').value, u = document.getElementById('url').value;
+            if (!t || !u) { showToast('标题/网址必填', 'error'); return; }
+            if (!checkUrl(u)) { showToast('网址格式错误或包含危险协议', 'error'); return; }
+            await apiFetch('/admin/sites', { method: 'POST', body: JSON.stringify({
+                subcategory_id: currentSub, title: t, url: u,
+                description: document.getElementById('desc').value,
+                icon: document.getElementById('icon').value,
+                display_order: +document.getElementById('sort').value
             })});
-            addLog(`新增链接：${t}`);showToast('添加成功');await loadAllData();
-        })
+            addLog(`新增链接：${t}`); showToast('添加成功'); await loadAllData();
+        });
     }
+
     function openEditSite(id){
-        const s=sites.find(x=>x.id===id);
-        openModal('编辑链接',`
+        const s = sites.find(x => x.id === id);
+        openModal('编辑链接', `
             <div class="form-row"><label>标题</label><input id="title" value="${escapeHtml(s.title)}"></div>
             <div class="form-row"><label>网址</label><input id="url" value="${escapeHtml(s.url)}" oninput="document.getElementById('icon').value=getFavicon(this.value)"></div>
             <div class="form-row"><label>图标</label><input id="icon" value="${escapeHtml(s.icon||'fas fa-link')}"></div>
             <div class="form-row"><label>描述</label><input id="desc" value="${escapeHtml(s.description||'')}"></div>
             <div class="form-row"><label>排序</label><input type="number" id="sort" value="${s.display_order}"></div>
-        `,async()=>{
-            const t=document.getElementById('title').value,u=document.getElementById('url').value;
-            if(!t||!u){showToast('标题/网址必填','error');return;}
-            if(!checkUrl(u)){showToast('网址格式错误','error');return;}
-            if(u.toLowerCase().startsWith('javascript:') || u.toLowerCase().startsWith('data:')){
-                showToast('不允许使用危险协议','error');return;
-            }
-            await apiFetch(`/admin/sites/${id}`,{method:'PUT',body:JSON.stringify({
-                title:t,url:u,
-                description:document.getElementById('desc').value,
-                icon:document.getElementById('icon').value,
-                display_order:+document.getElementById('sort').value
+        `, async () => {
+            const t = document.getElementById('title').value, u = document.getElementById('url').value;
+            if (!t || !u) { showToast('标题/网址必填', 'error'); return; }
+            if (!checkUrl(u)) { showToast('网址格式错误或包含危险协议', 'error'); return; }
+            await apiFetch(`/admin/sites/${id}`, { method: 'PUT', body: JSON.stringify({
+                title: t, url: u,
+                description: document.getElementById('desc').value,
+                icon: document.getElementById('icon').value,
+                display_order: +document.getElementById('sort').value
             })});
-            addLog(`编辑链接：${s.title}`);showToast('修改成功');await loadAllData();
-        })
+            addLog(`编辑链接：${s.title}`); showToast('修改成功'); await loadAllData();
+        });
     }
+
     async function delSite(id){
-        if(!confirm('确定删除该链接？'))return;
-        await apiFetch(`/admin/sites/${id}`,{method:'DELETE'});
-        addLog(`删除链接：${id}`);showToast('删除成功');await loadAllData();
+        if (!confirm('确定删除该链接？')) return;
+        await apiFetch(`/admin/sites/${id}`, { method: 'DELETE' });
+        addLog(`删除链接：${id}`); showToast('删除成功'); await loadAllData();
     }
 
     function renameCategory(id, oldName) {
@@ -897,13 +983,8 @@
         `, async () => {
             const newName = document.getElementById('newName').value.trim();
             if (!newName) { showToast('名称不能为空', 'error'); return; }
-            await apiFetch(`/admin/categories/${id}`, {
-                method: 'PUT',
-                body: JSON.stringify({ name: newName })
-            });
-            addLog(`修改分类：${oldName} → ${newName}`);
-            showToast('修改成功');
-            await loadAllData();
+            await apiFetch(`/admin/categories/${id}`, { method: 'PUT', body: JSON.stringify({ name: newName }) });
+            addLog(`修改分类：${oldName} → ${newName}`); showToast('修改成功'); await loadAllData();
         });
     }
 
@@ -913,73 +994,78 @@
         `, async () => {
             const newName = document.getElementById('newName').value.trim();
             if (!newName) { showToast('名称不能为空', 'error'); return; }
-            await apiFetch(`/admin/subcategories/${id}`, {
-                method: 'PUT',
-                body: JSON.stringify({ name: newName })
-            });
-            addLog(`修改子分类：${oldName} → ${newName}`);
-            showToast('修改成功');
-            await loadAllData();
+            await apiFetch(`/admin/subcategories/${id}`, { method: 'PUT', body: JSON.stringify({ name: newName }) });
+            addLog(`修改子分类：${oldName} → ${newName}`); showToast('修改成功'); await loadAllData();
         });
     }
+
+    // 删除分类（带二次确认）
+    async function deleteCategory(id, name) {
+        if (!confirm(`确定删除分类 "${name}" 及其所有子分类和链接吗？此操作不可恢复！`)) return;
+        await apiFetch(`/admin/categories/${id}`, { method: 'DELETE' });
+        addLog(`删除分类：${name}`); showToast('删除成功'); await loadAllData();
+    }
+
+    // 删除子分类（带二次确认）
+    async function deleteSubcategory(id, name) {
+        if (!confirm(`确定删除子分类 "${name}" 及其所有链接吗？`)) return;
+        await apiFetch(`/admin/subcategories/${id}`, { method: 'DELETE' });
+        addLog(`删除子分类：${name}`); showToast('删除成功'); await loadAllData();
+    }
+
+    // 为分类和子分类添加删除按钮（修改 renderCatBar 和 renderSubList 中的内容）
+    // 由于原文件中没有删除按钮，这里补充一下（可选），但为了保持简洁，暂不强制添加。
 
     function exportData(){
-        const blob = new Blob([JSON.stringify({categories,subcategories,sites,time:new Date().toLocaleString()},null,2)],{type:'application/json'});
-        const a = document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`导航备份_${new Date().getTime()}.json`;a.click();
-        addLog('导出备份');showToast('导出成功');
+        const blob = new Blob([JSON.stringify({ categories, subcategories, sites, time: new Date().toLocaleString() }, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `导航备份_${new Date().getTime()}.json`;
+        a.click();
+        addLog('导出备份');
+        showToast('导出成功');
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-            return c;
-        });
-    }
-
+    // ==================== 事件绑定 ====================
     document.getElementById('modalSubmit').onclick = async function(){
-        if(!modalAction) return;
+        if (!modalAction) return;
         const btn = this;
         btn.disabled = true;
         btn.textContent = '提交中…';
-        try{
+        try {
             await modalAction();
-        }catch(e){
+        } catch (e) {
             showToast('操作失败', 'error');
             console.error(e);
-        }finally{
+        } finally {
             btn.disabled = false;
             btn.textContent = '确认';
             closeModal();
         }
     };
 
-    document.getElementById('loginBtn').onclick=login;
-    document.getElementById('logoutBtn').onclick=logout;
-    document.getElementById('addCategoryBtn').onclick=openAddCat;
-    document.getElementById('addSubBtn').onclick=openAddSub;
-    document.getElementById('addSiteBtn').onclick=openAddSite;
-    document.getElementById('exportBtn').onclick=exportData;
-    document.getElementById('logBtn').onclick=showLogs;
-    document.getElementById('sortRankBtn').onclick=loadRanking;
-    document.getElementById('refreshFeedbackBtn').onclick=loadFeedback;
+    document.getElementById('loginBtn').onclick = login;
+    document.getElementById('logoutBtn').onclick = logout;
+    document.getElementById('addCategoryBtn').onclick = openAddCat;
+    document.getElementById('addSubBtn').onclick = openAddSub;
+    document.getElementById('addSiteBtn').onclick = openAddSite;
+    document.getElementById('exportBtn').onclick = exportData;
+    document.getElementById('logBtn').onclick = showLogs;
+    document.getElementById('sortRankBtn').onclick = loadRanking;
+    document.getElementById('refreshFeedbackBtn').onclick = loadFeedback;
     document.getElementById('refreshNavBtn').onclick = async () => {
         if (!token) { showToast('请先登录', 'error'); return; }
         try {
-            await fetch(`${API_BASE}/admin/refresh-navigation`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            showToast('导航缓存已刷新，前端将重新加载', 'success');
+            await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+            showToast('导航缓存已刷新', 'success');
         } catch (err) {
             showToast('刷新失败', 'error');
         }
     };
-    document.getElementById('tokenInput').addEventListener('keydown',e=>e.key==='Enter'&&login());
+    document.getElementById('tokenInput').addEventListener('keydown', e => e.key === 'Enter' && login());
+
+    // 初始化锁定消息显示
+    updateLockMessage();
 </script>
 </body>
 </html>
