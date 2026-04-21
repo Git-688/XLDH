@@ -1,6 +1,7 @@
 /**
  * 优化分类导航系统（完全基于后端 Worker + D1）
  * 已集成网站图标本地缓存（localStorage base64）+ 7天有效期
+ * 修复异步错误处理
  */
 class OptimizedNavigation {
     constructor() {
@@ -39,7 +40,6 @@ class OptimizedNavigation {
                 Object.entries(data).forEach(([url, item]) => {
                     // 兼容旧格式（直接存 base64 字符串）
                     if (typeof item === 'string') {
-                        // 旧格式没有时间戳，视为已过期，不加载
                         expiredCount++;
                         return;
                     }
@@ -60,7 +60,11 @@ class OptimizedNavigation {
                 }
             }
         } catch (e) {
-            console.warn('加载图标缓存失败:', e);
+            console.warn('加载图标缓存失败，将忽略缓存:', e);
+            // 清除可能损坏的缓存
+            try {
+                localStorage.removeItem(this.ICON_CACHE_KEY);
+            } catch (e2) {}
         }
     }
 
@@ -113,15 +117,19 @@ class OptimizedNavigation {
     // 手动清除所有图标缓存（可在控制台调用）
     clearAllIconCache() {
         this.iconCache.clear();
-        localStorage.removeItem(this.ICON_CACHE_KEY);
+        try {
+            localStorage.removeItem(this.ICON_CACHE_KEY);
+        } catch (e) {}
         console.log('🗑️ 已清除所有图标缓存');
-        window.toast?.show('图标缓存已清除，刷新后将重新获取', 'success');
+        if (window.toast) {
+            window.toast.show('图标缓存已清除，刷新后将重新获取', 'success');
+        }
     }
 
     // 将图片 URL 转为 base64（带缓存和有效期检查）
     async getIconBase64(url) {
         // 如果已经是 base64 或本地路径，直接返回
-        if (url.startsWith('data:') || url.startsWith('./') || url.startsWith('../') || url.includes('assets/')) {
+        if (!url || url.startsWith('data:') || url.startsWith('./') || url.startsWith('../') || url.includes('assets/')) {
             return url;
         }
         
@@ -130,7 +138,6 @@ class OptimizedNavigation {
             const cached = this.iconCache.get(url);
             // 兼容旧格式
             if (typeof cached === 'string') {
-                // 旧格式无时间戳，视为过期，删除并重新获取
                 this.iconCache.delete(url);
             } else {
                 const now = Date.now();
@@ -145,10 +152,23 @@ class OptimizedNavigation {
         }
         
         try {
-            // 使用 fetch 获取图片，并通过 canvas 转为 base64
-            const response = await fetch(url, { mode: 'cors' });
-            if (!response.ok) throw new Error('fetch failed');
+            // 使用 fetch 获取图片
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+            const response = await fetch(url, { 
+                mode: 'cors',
+                signal: controller.signal 
+            });
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const blob = await response.blob();
+            
+            // 限制图片大小，超过 100KB 就不缓存，直接返回 URL
+            if (blob.size > 100 * 1024) {
+                console.warn('图标过大，不缓存:', url);
+                return url;
+            }
             
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -161,7 +181,7 @@ class OptimizedNavigation {
                 reader.readAsDataURL(blob);
             });
         } catch (e) {
-            console.warn('图标转 base64 失败，将使用原始 URL:', url);
+            console.warn('图标转 base64 失败，将使用原始 URL:', url, e.message);
             return url; // 降级使用原始 URL
         }
     }
@@ -296,7 +316,7 @@ class OptimizedNavigation {
         });
     }
 
-    async renderLevel3(level1, level2) {
+    renderLevel3(level1, level2) {
         const container = document.getElementById('level3Content');
         if (!container || !this.navigationData?.categories?.[level1]?.[level2]) return;
         
@@ -315,12 +335,13 @@ class OptimizedNavigation {
             container.appendChild(card);
         });
         
-        // 异步加载图标
-        for (let i = 0; i < sortedSites.length; i++) {
-            const site = sortedSites[i];
-            const card = container.children[i];
-            await this.updateCardIcon(card, site);
-        }
+        // 异步加载图标，不阻塞渲染
+        sortedSites.forEach((site, index) => {
+            const card = container.children[index];
+            this.updateCardIcon(card, site).catch(err => {
+                console.warn('更新图标失败，保留默认图标:', site.title, err);
+            });
+        });
         
         this.showStatsSummary();
     }
@@ -400,9 +421,15 @@ class OptimizedNavigation {
         
         try {
             const base64 = await this.getIconBase64(iconUrl);
-            iconContainer.innerHTML = `<img src="${base64}" alt="${this.escapeHtml(site.title)}" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\'fas fa-link\'></i>';">`;
+            if (base64) {
+                iconContainer.innerHTML = `<img src="${base64}" alt="${this.escapeHtml(site.title)}" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\'fas fa-link\'></i>';">`;
+            } else {
+                throw new Error('base64 为空');
+            }
         } catch (e) {
-            iconContainer.innerHTML = '<i class="fas fa-link"></i>';
+            // 失败则回退到原始 URL 方式，让浏览器自己去加载
+            console.warn('图标转换失败，使用原始 URL:', iconUrl);
+            iconContainer.innerHTML = `<img src="${iconUrl}" alt="${this.escapeHtml(site.title)}" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\'fas fa-link\'></i>';">`;
         }
     }
 
