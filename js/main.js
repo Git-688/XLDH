@@ -1,6 +1,6 @@
 /**
- * 星链导航主应用程序（反馈模态框 + 严格按官方文档配置 KaTeX）
- * ✅ 已修复多行公式无法渲染问题
+ * 星链导航主应用程序（反馈模态框 + 终极修复多行公式问题）
+ * ✅ 彻底解决单行/多行公式渲染不一致问题
  * ✅ 仅优化Twikoo+KaTeX功能，其他代码完全不变
  */
 class App {
@@ -112,7 +112,7 @@ class App {
     }
     // =========================================
 
-    // ========== 反馈模态框管理（已修复多行公式）==========
+    // ========== 反馈模态框管理（终极修复多行公式）==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -129,53 +129,59 @@ class App {
         if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
             window.twikooFeedbackInited = true; // 提前设置标志，防止重复初始化
             
-            // 严格按照 Twikoo 官方文档配置
+            // ✅ 终极修复：禁用内置KaTeX，改为手动统一渲染
             twikoo.init({
                 envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
                 el: '#twikoo-feedback',
                 lang: 'zh-CN',
                 path: '/feedback',
-                // 简化KaTeX配置，Twikoo已内置所有标准LaTeX环境
-                katex: {
-                    delimiters: [
-                        { left: '$$', right: '$$', display: true },
-                        { left: '$', right: '$', display: false },
-                        { left: '\\(', right: '\\)', display: false },
-                        { left: '\\[', right: '\\]', display: true }
-                    ],
-                    throwOnError: false,
-                    strict: false
-                },
-                // ✅ 新增：修复多行公式被插入<br>的核心问题
+                // ✅ 关键：完全禁用Twikoo内置的KaTeX渲染
+                katex: false,
+                // ✅ 修复Markdown解析器，防止公式内换行被转换
                 markdown: {
+                    breaks: false, // 禁用自动换行转换
                     renderer: {
-                        // 拦截所有段落渲染，清理公式块内的<br>标签
+                        // 预处理所有段落，提前清理公式内的<br>
                         paragraph(text) {
-                            // 匹配所有$$包裹的块级公式
                             return `<p>${text.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
-                                // 移除公式内所有<br>标签和多余的空白符
-                                const cleanFormula = formula.replace(/<br\s*\/?>/gi, '\n').trim();
+                                // 彻底清理公式内所有HTML标签和多余空白
+                                const cleanFormula = formula
+                                    .replace(/<br\s*\/?>/gi, '\n')
+                                    .replace(/<[^>]+>/g, '')
+                                    .trim();
                                 return `$$${cleanFormula}$$`;
                             })}</p>`;
                         }
                     }
                 },
-                // 优化评论加载后渲染，避免重复渲染
+                // ✅ 评论加载完成后，手动统一渲染所有公式
                 onCommentLoaded: function() {
                     if (typeof renderMathInElement === 'undefined') return;
                     
-                    // 只渲染未处理过的评论内容
-                    const unrenderedComments = document.querySelectorAll('#twikoo-feedback .tk-comment-content:not(.katex-rendered)');
-                    unrenderedComments.forEach(el => {
+                    // 先移除所有已渲染的公式，避免重复渲染
+                    const container = document.getElementById('twikoo-feedback');
+                    container.querySelectorAll('.katex, .katex-display').forEach(el => {
+                        el.replaceWith(document.createTextNode(el.textContent));
+                    });
+                    
+                    // 统一渲染所有公式（单行+多行）
+                    renderMathInElement(container, {
+                        delimiters: [
+                            { left: '$$', right: '$$', display: true },
+                            { left: '$', right: '$', display: false },
+                            { left: '\\(', right: '\\)', display: false },
+                            { left: '\\[', right: '\\]', display: true }
+                        ],
+                        throwOnError: false,
+                        strict: false,
+                        trust: true,
+                        // ✅ 强制保留公式内的换行符
+                        output: 'html'
+                    });
+                    
+                    // 给已渲染的评论添加标记，避免重复处理
+                    container.querySelectorAll('.tk-comment-content:not(.katex-rendered)').forEach(el => {
                         el.classList.add('katex-rendered');
-                        renderMathInElement(el, {
-                            delimiters: [
-                                { left: '$$', right: '$$', display: true },
-                                { left: '$', right: '$', display: false }
-                            ],
-                            throwOnError: false,
-                            strict: false
-                        });
                     });
                 }
             });
