@@ -1,8 +1,5 @@
 /**
- * 星链导航主应用程序（反馈模态框 + 绝对终极修复多行公式问题）
- * ✅ 100% 解决单行/多行公式渲染不一致问题
- * ✅ 实时处理所有评论（包括分页加载的评论）
- * ✅ 仅优化 Twikoo+KaTeX 功能，其他代码完全不变
+ * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 官方标准配置）
  */
 class App {
     constructor() {
@@ -12,7 +9,6 @@ class App {
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.diaryModalHideRef = null;
-        this.feedbackModalHideRef = null; // 反馈模态框引用
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -113,7 +109,7 @@ class App {
     }
     // =========================================
 
-    // ========== 反馈模态框管理（绝对终极修复多行公式）==========
+    // ========== 反馈模态框管理（官方标准配置，无额外处理）==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -121,112 +117,39 @@ class App {
         modal.style.display = 'flex';
         modal.classList.add('active');
         
-        // 注册到全局模态框管理系统（ESC可关闭、模态框互斥）
-        if (!this.feedbackModalHideRef) {
-            this.feedbackModalHideRef = { hide: this.closeFeedbackModal.bind(this) };
-        }
-        this.registerModal(this.feedbackModalHideRef);
-        
         if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
-            window.twikooFeedbackInited = true; // 提前设置标志，防止重复初始化
-            
-            // ✅ 绝对终极修复：完全禁用所有内置渲染，使用MutationObserver实时处理
             twikoo.init({
                 envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
                 el: '#twikoo-feedback',
                 lang: 'zh-CN',
                 path: '/feedback',
-                // ✅ 完全禁用Twikoo内置的KaTeX
-                katex: false
-            }).then(() => {
-                // ✅ Twikoo初始化完成后，启动DOM监听
-                this.startFormulaObserver();
-            });
-        }
-    }
-
-    // ✅ 新增：实时公式渲染监听器（核心修复）
-    startFormulaObserver() {
-        const container = document.getElementById('twikoo-feedback');
-        if (!container) return;
-        
-        // 先处理已经存在的评论
-        this.renderAllFormulas(container);
-        
-        // 创建DOM变化监听器
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.addedNodes.length > 0) {
-                    // 有新节点添加时，重新渲染所有未处理的公式
-                    this.renderAllFormulas(container);
+                // 完全按照官方文档配置
+                katex: {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false },
+                        { left: '\\(', right: '\\)', display: false },
+                        { left: '\\[', right: '\\]', display: true }
+                    ],
+                    throwOnError: false
+                },
+                onCommentLoaded: function() {
+                    const container = document.getElementById('twikoo-feedback');
+                    if (!container || typeof renderMathInElement === 'undefined') return;
+                    // 再次调用渲染，确保所有公式都被处理
+                    renderMathInElement(container, {
+                        delimiters: [
+                            { left: '$$', right: '$$', display: true },
+                            { left: '$', right: '$', display: false },
+                            { left: '\\(', right: '\\)', display: false },
+                            { left: '\\[', right: '\\]', display: true }
+                        ],
+                        throwOnError: false
+                    });
                 }
             });
-        });
-        
-        // 开始监听容器内的所有变化
-        observer.observe(container, {
-            childList: true,
-            subtree: true,
-            attributes: false,
-            characterData: false
-        });
-        
-        // 保存监听器引用，关闭模态框时断开
-        window.formulaObserver = observer;
-    }
-
-    // ✅ 新增：统一渲染所有公式
-    renderAllFormulas(container) {
-        if (typeof renderMathInElement === 'undefined') return;
-        
-        // 找到所有未处理的评论内容
-        const unprocessedComments = container.querySelectorAll('.tk-comment-content:not(.katex-processed)');
-        
-        unprocessedComments.forEach(commentEl => {
-            // 标记为已处理，避免重复渲染
-            commentEl.classList.add('katex-processed');
-            
-            // ✅ 核心修复：彻底清理公式内的所有<br>标签
-            let html = commentEl.innerHTML;
-            
-            // 匹配所有$$包裹的块级公式
-            html = html.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
-                // 移除所有<br>标签，恢复原始换行
-                const cleanFormula = formula
-                    .replace(/<br\s*\/?>/gi, '\n')
-                    .replace(/<br>/gi, '\n')
-                    .replace(/&nbsp;/gi, ' ')
-                    .trim();
-                return `$$${cleanFormula}$$`;
-            });
-            
-            // 匹配所有$包裹的行内公式
-            html = html.replace(/\$([^\$]+?)\$/g, (match, formula) => {
-                const cleanFormula = formula
-                    .replace(/<br\s*\/?>/gi, ' ')
-                    .replace(/<br>/gi, ' ')
-                    .replace(/&nbsp;/gi, ' ')
-                    .trim();
-                return `$${cleanFormula}$`;
-            });
-            
-            // 更新清理后的HTML
-            commentEl.innerHTML = html;
-            
-            // ✅ 渲染公式
-            renderMathInElement(commentEl, {
-                delimiters: [
-                    { left: '$$', right: '$$', display: true },
-                    { left: '$', right: '$', display: false },
-                    { left: '\\(', right: '\\)', display: false },
-                    { left: '\\[', right: '\\]', display: true }
-                ],
-                throwOnError: false,
-                strict: false,
-                trust: true,
-                output: 'html'
-            });
-        });
+            window.twikooFeedbackInited = true;
+        }
     }
 
     closeFeedbackModal() {
@@ -234,15 +157,6 @@ class App {
         if (modal) {
             modal.classList.remove('active');
             modal.style.display = 'none';
-        }
-        // 断开DOM监听器，防止内存泄漏
-        if (window.formulaObserver) {
-            window.formulaObserver.disconnect();
-            window.formulaObserver = null;
-        }
-        // 从全局模态框管理系统注销
-        if (this.feedbackModalHideRef) {
-            this.unregisterModal(this.feedbackModalHideRef);
         }
     }
 
