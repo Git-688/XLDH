@@ -543,14 +543,11 @@ class CompactSidebar {
             const iconClass = icon.className;
             
             if (iconClass.includes('fa-comment')) {
-                // 修改：打开反馈模态框，不再跳转兔小巢
                 if (typeof window.openFeedbackModal === 'function') {
                     window.openFeedbackModal();
                 } else {
-                    // 兜底：直接显示模态框并初始化 Twikoo
                     const modal = document.getElementById('feedbackModal');
                     if (modal) {
-                        // 关键修复：显式设置 display 为 flex
                         modal.style.display = 'flex';
                         modal.classList.add('active');
                         if (typeof twikoo !== 'undefined' && !window.twikooFeedbackInited) {
@@ -564,7 +561,7 @@ class CompactSidebar {
                         }
                     }
                 }
-                this.hide(); // 关闭侧边栏
+                this.hide();
             } 
             else if (iconClass.includes('fa-paper-plane')) {
                 window.open('https://f.wps.cn/g/TI3Gxbe1/', '_blank');
