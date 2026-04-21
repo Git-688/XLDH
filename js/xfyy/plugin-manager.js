@@ -67,7 +67,7 @@ class PluginManager {
                 if (cached) return cached;
 
                 try {
-                    const response = await fetch(`https://api.i-meto.com/meting/api?server=tencent&type=playlist&id=${playlistId}`);
+                    const response = await fetch(`https://xingyu.1b21.cn/api/musichotlist.php?server=tencent&type=playlist&id=${playlistId}`);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
                     const formatted = data.map(song => this.formatSong(song, 'qq'));
@@ -84,7 +84,7 @@ class PluginManager {
                 if (cached) return cached;
 
                 try {
-                    const response = await fetch(`https://api.i-meto.com/meting/api?server=tencent&type=search&id=${encodeURIComponent(keyword)}`);
+                    const response = await fetch(`https://xingyu.1b21.cn/api/musichotlist.php?server=tencent&type=search&id=${encodeURIComponent(keyword)}`);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
                     const formatted = data.map(song => this.formatSong(song, 'qq'));
