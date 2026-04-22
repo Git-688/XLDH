@@ -1,4 +1,4 @@
-// 问候区模块 - 优化效果和显示（优化10：音效反馈版）
+// 问候区模块 - 优化效果和显示（优化10：Howler.js 音效版）
 class GreetingModule {
     constructor() {
         this.initialized = false;
@@ -7,12 +7,76 @@ class GreetingModule {
         this.holidayCheckTimer = null;
         this.currentHoliday = null;
         
-        // ===== 优化10：音频上下文 =====
-        this.audioCtx = null;
-        this.audioInitialized = false;
-        this.isAudioEnabled = false;
+        // ===== 方案E：Howler.js 音效 =====
+        this.sounds = {};
+        this.soundsReady = false;
+        this.initSounds();
         
         this.init();
+    }
+
+    // ===== 初始化 Howler 音效 =====
+    initSounds() {
+        // 使用免费在线木鱼音效（可替换为自己的音频文件）
+        // 来源：https://freesound.org/ 搜索 "wooden fish"
+        const soundUrls = {
+            merit: 'https://cdn.freesound.org/previews/256/256529_3263906-lq.mp3',   // 功德 - 低沉
+            luck: 'https://cdn.freesound.org/previews/256/256530_3263906-lq.mp3',     // 幸运 - 清脆
+            wealth: 'https://cdn.freesound.org/previews/256/256531_3263906-lq.mp3',   // 财富 - 明亮
+            health: 'https://cdn.freesound.org/previews/256/256532_3263906-lq.mp3'    // 健康 - 柔和
+        };
+        
+        // 备用方案：如果上述链接失效，使用本地文件（需自行放置）
+        // const soundUrls = {
+        //     merit: './assets/audio/merit.mp3',
+        //     luck: './assets/audio/luck.mp3',
+        //     wealth: './assets/audio/wealth.mp3',
+        //     health: './assets/audio/health.mp3'
+        // };
+        
+        try {
+            this.sounds.merit = new Howl({
+                src: [soundUrls.merit],
+                volume: 0.4,
+                preload: true,
+                onload: () => console.log('功德音效加载完成'),
+                onloaderror: (id, err) => console.warn('功德音效加载失败:', err)
+            });
+            
+            this.sounds.luck = new Howl({
+                src: [soundUrls.luck],
+                volume: 0.4,
+                preload: true
+            });
+            
+            this.sounds.wealth = new Howl({
+                src: [soundUrls.wealth],
+                volume: 0.4,
+                preload: true
+            });
+            
+            this.sounds.health = new Howl({
+                src: [soundUrls.health],
+                volume: 0.4,
+                preload: true
+            });
+            
+            this.soundsReady = true;
+        } catch (error) {
+            console.error('Howler.js 初始化失败:', error);
+            this.soundsReady = false;
+        }
+    }
+
+    // ===== 播放木鱼音效（Howler 版本） =====
+    playWoodenFishSound(type = 'merit') {
+        if (!this.soundsReady) return;
+        
+        const sound = this.sounds[type];
+        if (sound) {
+            // 如果已经在播放，重新播放（允许多次点击叠加）
+            sound.play();
+        }
     }
 
     async init() {
@@ -27,110 +91,6 @@ class GreetingModule {
         window.addEventListener('resize', this.handleResize.bind(this));
         
         this.initialized = true;
-    }
-
-    // ===== 优化10：初始化音频上下文 =====
-    initAudio() {
-        if (this.audioCtx) return;
-        
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) {
-                console.warn('浏览器不支持 Web Audio API');
-                return;
-            }
-            
-            this.audioCtx = new AudioContext();
-            this.audioInitialized = true;
-            
-            if (this.audioCtx.state === 'suspended') {
-                console.log('AudioContext 已创建，等待用户交互恢复');
-            }
-            
-            console.log('音频上下文初始化成功');
-        } catch (error) {
-            console.error('初始化音频上下文失败:', error);
-        }
-    }
-
-    // ===== 优化10：恢复音频上下文 =====
-    async resumeAudio() {
-        if (!this.audioCtx) {
-            this.initAudio();
-        }
-        
-        if (this.audioCtx && this.audioCtx.state === 'suspended') {
-            try {
-                await this.audioCtx.resume();
-                this.isAudioEnabled = true;
-                console.log('音频上下文已恢复');
-            } catch (error) {
-                console.warn('恢复音频上下文失败:', error);
-                this.isAudioEnabled = false;
-            }
-        } else if (this.audioCtx && this.audioCtx.state === 'running') {
-            this.isAudioEnabled = true;
-        }
-    }
-
-    // ===== 优化10：播放木鱼敲击音效 =====
-    playWoodenFishSound(type = 'merit') {
-        if (!this.audioCtx || this.audioCtx.state !== 'running') {
-            return;
-        }
-        
-        try {
-            const now = this.audioCtx.currentTime;
-            
-            const frequencyMap = {
-                merit: 440,
-                luck: 523.25,
-                wealth: 659.25,
-                health: 783.99
-            };
-            
-            const baseFreq = frequencyMap[type] || 440;
-            
-            const osc1 = this.audioCtx.createOscillator();
-            osc1.type = 'sine';
-            osc1.frequency.value = baseFreq;
-            
-            const osc2 = this.audioCtx.createOscillator();
-            osc2.type = 'triangle';
-            osc2.frequency.value = baseFreq * 2;
-            
-            const gainNode = this.audioCtx.createGain();
-            gainNode.gain.setValueAtTime(0.3, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-            
-            const gainNode2 = this.audioCtx.createGain();
-            gainNode2.gain.setValueAtTime(0.15, now);
-            gainNode2.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-            
-            osc1.connect(gainNode);
-            osc2.connect(gainNode2);
-            gainNode.connect(this.audioCtx.destination);
-            gainNode2.connect(this.audioCtx.destination);
-            
-            osc1.start(now);
-            osc2.start(now);
-            osc1.stop(now + 0.08);
-            osc2.stop(now + 0.06);
-            
-            osc1.onended = () => {
-                osc1.disconnect();
-                gainNode.disconnect();
-            };
-            osc2.onended = () => {
-                osc2.disconnect();
-                gainNode2.disconnect();
-            };
-            
-            console.log(`播放木鱼音效: ${type}`);
-            
-        } catch (error) {
-            console.error('播放音效失败:', error);
-        }
     }
 
     handleResize() {
@@ -537,7 +497,7 @@ class GreetingModule {
                     const btn = document.querySelector(`.fish-btn[data-type="${type}"]`);
                     if (btn) {
                         this.showFishEffect(btn);
-                        // ===== 优化10：快捷键也触发音效 =====
+                        // ===== 方案E：快捷键也触发 Howler 音效 =====
                         this.playWoodenFishSound(type);
                     }
                 }
@@ -547,21 +507,15 @@ class GreetingModule {
         this.eventBound = true;
     }
 
-    // ===== 优化10：处理木鱼点击事件，添加音效 =====
+    // ===== 处理木鱼点击事件，使用 Howler 音效 =====
     handleFishClick(e) {
         e.preventDefault();
         e.stopPropagation();
         
         const type = e.currentTarget.dataset.type;
         
-        // 首次点击时初始化并恢复音频
-        if (!this.audioCtx) {
-            this.initAudio();
-        }
-        
-        this.resumeAudio().then(() => {
-            this.playWoodenFishSound(type);
-        });
+        // 播放音效（Howler 会自动处理音频上下文）
+        this.playWoodenFishSound(type);
         
         this.incrementFishCount(type, 1);
         this.showFishEffect(e.currentTarget);
@@ -813,7 +767,7 @@ class GreetingModule {
         }
     }
 
-    // ===== 优化10：销毁时关闭音频上下文 =====
+    // ===== 销毁时卸载 Howler 音效 =====
     destroy() {
         if (this.holidayRefreshTimer) {
             clearTimeout(this.holidayRefreshTimer);
@@ -822,12 +776,16 @@ class GreetingModule {
             clearInterval(this.holidayCheckTimer);
         }
         
-        if (this.audioCtx) {
-            this.audioCtx.close();
-            this.audioCtx = null;
-            this.audioInitialized = false;
-            this.isAudioEnabled = false;
+        // 卸载所有 Howl 实例
+        if (this.sounds) {
+            Object.values(this.sounds).forEach(sound => {
+                if (sound && typeof sound.unload === 'function') {
+                    sound.unload();
+                }
+            });
+            this.sounds = {};
         }
+        this.soundsReady = false;
         
         this.initialized = false;
         this.eventBound = false;
