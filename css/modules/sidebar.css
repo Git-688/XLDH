@@ -1,13 +1,13 @@
-/* ===== 悬浮卡片式侧滑栏 - 毛玻璃效果（修复版） ===== */
+/* ===== 悬浮卡片式侧滑栏 - 毛玻璃效果（最终修复版） ===== */
 
-/* ----- 基础定位：默认隐藏在屏幕左侧外，激活后滑入并垂直居中 ----- */
+/* 1. 基础定位：固定定位，水平垂直居中 */
 .sidebar {
     position: fixed;
     top: 50%;
-    left: -100%;                     /* 默认完全隐藏在左侧屏幕外 */
-    transform: translateY(-50%);
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 280px;
-    max-height: calc(100vh - 40px);  /* 上下各留 20px 空隙 */
+    max-height: calc(100vh - 40px);
     background: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -17,17 +17,18 @@
                 0 0 0 1px rgba(255, 255, 255, 0.3) inset;
     border: none;
     z-index: 999;
-    transition: left 0.35s cubic-bezier(0.2, 0.9, 0.3, 1),
-                opacity 0.25s ease;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    
+    /* 动画控制 */
     opacity: 0;
     pointer-events: none;
+    transition: opacity 0.3s ease;
 }
 
+/* 激活状态：显示卡片 */
 .sidebar.active {
-    left: 20px;                      /* 激活时距离屏幕左侧 20px，垂直居中由 transform 保证 */
     opacity: 1;
     pointer-events: auto;
 }
@@ -42,10 +43,10 @@
     }
 }
 
-/* ----- 顶部壁纸区域 ----- */
+/* 2. 顶部壁纸区域 */
 .sidebar-wallpaper {
     position: relative;
-    height: 120px;                   /* 固定高度，不撑满 */
+    height: 120px;
     flex-shrink: 0;
     border-radius: 24px 24px 0 0;
     overflow: hidden;
@@ -116,7 +117,6 @@
     text-overflow: ellipsis;
 }
 
-/* 视频背景 */
 .sidebar-wallpaper video {
     position: absolute;
     top: 0;
@@ -127,7 +127,7 @@
     z-index: 0;
 }
 
-/* ----- 内容区域（可滚动） ----- */
+/* 3. 内容区域（可滚动） */
 .sidebar-content {
     flex: 1;
     display: flex;
@@ -136,7 +136,6 @@
     padding: 8px 0 12px;
 }
 
-/* 每日一言卡片 */
 .daily-quote-card {
     margin: 4px 16px 8px;
     padding: 10px 12px;
@@ -160,7 +159,6 @@
     margin: 0;
 }
 
-/* 分类容器 - 可滚动 */
 .categories-container {
     flex: 1;
     overflow-y: auto;
@@ -283,7 +281,7 @@
     flex: 1;
 }
 
-/* 底部按钮区域 */
+/* 4. 底部按钮区域 */
 .sidebar-footer {
     padding: 8px 16px 4px;
     display: flex;
@@ -330,14 +328,11 @@
     }
 }
 
-/* ===== 移动端适配 ===== */
+/* 5. 移动端适配：精确控制宽度和边界 */
 @media (max-width: 768px) {
     .sidebar {
         width: 260px;
         max-height: calc(100vh - 24px);
-    }
-    .sidebar.active {
-        left: 12px;
     }
     .sidebar-wallpaper {
         height: 100px;
@@ -356,14 +351,12 @@
 
 @media (max-width: 480px) {
     .sidebar {
-        width: 240px;
-    }
-    .sidebar.active {
-        left: 8px;
+        width: calc(100vw - 32px);
+        max-width: 240px;
     }
 }
 
-/* ===== QQ 信息设置模态框强制居中（修复显示在左下角的问题） ===== */
+/* 6. QQ信息模态框强制居中 */
 .profile-modal {
     display: flex !important;
     align-items: center !important;
@@ -381,7 +374,7 @@
     margin: 0 !important;
 }
 
-/* ===== 遮罩层样式（配合 JS 使用，点击关闭侧边栏） ===== */
+/* 7. 遮罩层样式 */
 .sidebar-backdrop {
     position: fixed;
     top: 0;
