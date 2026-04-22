@@ -1,4 +1,4 @@
-// 问候区模块 - 优化效果和显示（优化10：Howler.js 音效版）
+// 问候区模块 - 优化效果和显示（优化10：统一木鱼音效文件版）
 class GreetingModule {
     constructor() {
         this.initialized = false;
@@ -7,76 +7,10 @@ class GreetingModule {
         this.holidayCheckTimer = null;
         this.currentHoliday = null;
         
-        // ===== 方案E：Howler.js 音效 =====
-        this.sounds = {};
-        this.soundsReady = false;
-        this.initSounds();
+        // 统一的木鱼音效文件 URL
+        this.woodenFishSoundUrl = 'https://ak688.eu.cc/file/其他/1776844918501_木鱼.wav';
         
         this.init();
-    }
-
-    // ===== 初始化 Howler 音效 =====
-    initSounds() {
-        // 使用免费在线木鱼音效（可替换为自己的音频文件）
-        // 来源：https://freesound.org/ 搜索 "wooden fish"
-        const soundUrls = {
-            merit: 'https://cdn.freesound.org/previews/256/256529_3263906-lq.mp3',   // 功德 - 低沉
-            luck: 'https://cdn.freesound.org/previews/256/256530_3263906-lq.mp3',     // 幸运 - 清脆
-            wealth: 'https://cdn.freesound.org/previews/256/256531_3263906-lq.mp3',   // 财富 - 明亮
-            health: 'https://cdn.freesound.org/previews/256/256532_3263906-lq.mp3'    // 健康 - 柔和
-        };
-        
-        // 备用方案：如果上述链接失效，使用本地文件（需自行放置）
-        // const soundUrls = {
-        //     merit: './assets/audio/merit.mp3',
-        //     luck: './assets/audio/luck.mp3',
-        //     wealth: './assets/audio/wealth.mp3',
-        //     health: './assets/audio/health.mp3'
-        // };
-        
-        try {
-            this.sounds.merit = new Howl({
-                src: [soundUrls.merit],
-                volume: 0.4,
-                preload: true,
-                onload: () => console.log('功德音效加载完成'),
-                onloaderror: (id, err) => console.warn('功德音效加载失败:', err)
-            });
-            
-            this.sounds.luck = new Howl({
-                src: [soundUrls.luck],
-                volume: 0.4,
-                preload: true
-            });
-            
-            this.sounds.wealth = new Howl({
-                src: [soundUrls.wealth],
-                volume: 0.4,
-                preload: true
-            });
-            
-            this.sounds.health = new Howl({
-                src: [soundUrls.health],
-                volume: 0.4,
-                preload: true
-            });
-            
-            this.soundsReady = true;
-        } catch (error) {
-            console.error('Howler.js 初始化失败:', error);
-            this.soundsReady = false;
-        }
-    }
-
-    // ===== 播放木鱼音效（Howler 版本） =====
-    playWoodenFishSound(type = 'merit') {
-        if (!this.soundsReady) return;
-        
-        const sound = this.sounds[type];
-        if (sound) {
-            // 如果已经在播放，重新播放（允许多次点击叠加）
-            sound.play();
-        }
     }
 
     async init() {
@@ -91,6 +25,19 @@ class GreetingModule {
         window.addEventListener('resize', this.handleResize.bind(this));
         
         this.initialized = true;
+    }
+
+    // ===== 播放木鱼音效（统一音频文件） =====
+    playWoodenFishSound() {
+        try {
+            const audio = new Audio(this.woodenFishSoundUrl);
+            audio.volume = 0.5; // 音量适中
+            audio.play().catch(err => {
+                console.warn('音效播放失败:', err);
+            });
+        } catch (error) {
+            console.error('创建音频对象失败:', error);
+        }
     }
 
     handleResize() {
@@ -379,8 +326,6 @@ class GreetingModule {
         const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
         const timeUntilMidnight = tomorrow.getTime() - now.getTime();
         
-        console.log(`安排节日刷新在 ${Math.round(timeUntilMidnight / 1000 / 60)} 分钟后`);
-        
         this.holidayRefreshTimer = setTimeout(async () => {
             console.log('节日结束，自动刷新数据');
             localStorage.removeItem('holidayDataCache');
@@ -497,8 +442,7 @@ class GreetingModule {
                     const btn = document.querySelector(`.fish-btn[data-type="${type}"]`);
                     if (btn) {
                         this.showFishEffect(btn);
-                        // ===== 方案E：快捷键也触发 Howler 音效 =====
-                        this.playWoodenFishSound(type);
+                        this.playWoodenFishSound(); // 快捷键也播放音效
                     }
                 }
             }
@@ -507,15 +451,14 @@ class GreetingModule {
         this.eventBound = true;
     }
 
-    // ===== 处理木鱼点击事件，使用 Howler 音效 =====
     handleFishClick(e) {
         e.preventDefault();
         e.stopPropagation();
         
         const type = e.currentTarget.dataset.type;
         
-        // 播放音效（Howler 会自动处理音频上下文）
-        this.playWoodenFishSound(type);
+        // 播放统一音效
+        this.playWoodenFishSound();
         
         this.incrementFishCount(type, 1);
         this.showFishEffect(e.currentTarget);
@@ -534,8 +477,6 @@ class GreetingModule {
         Storage.set('woodenFish', fishData);
         
         this.updateFishCounts(fishData);
-        
-        console.log(`${type} 计数增加 ${amount}，当前值: ${fishData[type]}`);
     }
 
     showFishEffect(element) {
@@ -592,8 +533,6 @@ class GreetingModule {
         
         effect.offsetHeight;
         effect.style.opacity = '1';
-        
-        console.log(`${type} 效果显示`);
         
         setTimeout(() => {
             if (effect.parentNode) {
@@ -767,7 +706,6 @@ class GreetingModule {
         }
     }
 
-    // ===== 销毁时卸载 Howler 音效 =====
     destroy() {
         if (this.holidayRefreshTimer) {
             clearTimeout(this.holidayRefreshTimer);
@@ -775,17 +713,6 @@ class GreetingModule {
         if (this.holidayCheckTimer) {
             clearInterval(this.holidayCheckTimer);
         }
-        
-        // 卸载所有 Howl 实例
-        if (this.sounds) {
-            Object.values(this.sounds).forEach(sound => {
-                if (sound && typeof sound.unload === 'function') {
-                    sound.unload();
-                }
-            });
-            this.sounds = {};
-        }
-        this.soundsReady = false;
         
         this.initialized = false;
         this.eventBound = false;
