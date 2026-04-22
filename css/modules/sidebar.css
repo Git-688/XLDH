@@ -1,212 +1,503 @@
-/* ===== 侧滑栏悬浮重构版 ===== */
+/* ==================== 侧滑栏悬浮毛玻璃重构版 ==================== */
+/* 注意：仅修改样式，保留所有原始 class 名称及 JS 交互逻辑 */
+
 .sidebar {
     position: fixed;
-    top: calc(60px + 16px);          /* 导航栏下方 + 顶部留白 */
-    left: -300px;                    /* 宽度增大至 300px，视觉更舒适 */
+    top: 50%;                         /* 垂直居中 */
+    left: -300px;                     /* 宽度同步调整 */
     width: 300px;
-    height: calc(100vh - 60px - 32px); /* 总高度减去导航栏和上下留白 */
-    max-height: calc(100vh - 60px - 32px);
-    background: rgba(255, 255, 255, 0.85); /* 半透明背景，增强悬浮感 */
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-radius: 0 20px 20px 0;    /* 右侧圆角，悬浮卡片效果 */
-    box-shadow: 8px 8px 30px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.05);
-    border-right: 1px solid rgba(255, 255, 255, 0.3);
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    height: 78vh;                     /* 高度占屏幕 78% 左右，适配 75%~80% 范围 */
+    max-height: calc(100vh - 60px - 40px); /* 防止超出视口 */
+    transform: translateY(-50%);      /* 垂直居中核心 */
+    
+    /* 毛玻璃效果 + 半透明背景 */
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    
+    border-radius: 24px;              /* 大圆角悬浮感 */
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 8px 8px 30px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.02) inset;
+    
     z-index: 999;
-    transition: left 0.35s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.3s;
+    transition: left 0.35s cubic-bezier(0.2, 0.9, 0.3, 1), 
+                box-shadow 0.3s ease, 
+                transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+    
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    /* 确保在移动端也能正确适配安全区 */
-    padding: 0;
     box-sizing: border-box;
+    
+    /* 文字整体默认白色（继承后可被内部覆盖） */
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar.active {
-    left: 0;
+    left: 16px;                       /* 展开时距离左边缘留白，悬浮感更强 */
+    transform: translateY(-50%);
 }
 
-/* 深色模式悬浮适配 */
+/* ===== 深色模式自动适配 ===== */
 @media (prefers-color-scheme: dark) {
     .sidebar {
-        background: rgba(30, 30, 30, 0.85);
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
-        border-right: 1px solid rgba(80, 80, 80, 0.4);
-        border-top: 1px solid rgba(80, 80, 80, 0.3);
-        border-bottom: 1px solid rgba(80, 80, 80, 0.3);
-        box-shadow: 8px 8px 30px rgba(0, 0, 0, 0.3);
+        background: rgba(30, 30, 30, 0.75);
+        backdrop-filter: blur(25px) saturate(180%);
+        -webkit-backdrop-filter: blur(25px) saturate(180%);
+        border-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 8px 8px 30px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+        color: #f0f0f0;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     }
 }
 
-/* 壁纸区域调整 —— 保持比例，且不破坏留白 */
+/* ===== 壁纸区域：保留原有功能，仅微调圆角 ===== */
 .sidebar-wallpaper {
     position: relative;
-    height: 36%;                     /* 稍微降低，让内容区域更舒适 */
+    height: 35%;
     background: transparent;
     overflow: hidden;
     flex-shrink: 0;
-    border-radius: 0 20px 0 0;       /* 与父容器圆角保持一致 */
+    border-radius: 24px 24px 0 0;      /* 与父容器顶部圆角一致 */
+    user-select: none !important;
+    pointer-events: none !important;
 }
 
-/* 用户信息区域微调 */
+/* 视频/图片保持原有样式，增加毛玻璃融合感 */
+.sidebar-wallpaper video,
+.sidebar-wallpaper img {
+    animation: wallpaperFadeIn 0.5s ease-in-out;
+}
+
+.sidebar-wallpaper-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.1) 0%,
+        rgba(0, 0, 0, 0.2) 50%,
+        rgba(0, 0, 0, 0.4) 100%
+    );
+    z-index: 1;
+    pointer-events: none !important;
+}
+
+/* 用户信息区域：文字白色，可点击 */
 .sidebar-wallpaper-user-info {
     position: absolute;
-    left: 18px;
-    bottom: 18px;
+    left: 20px;
+    bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 14px;
-    color: white;
-    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    gap: 16px;
+    color: #fff;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     z-index: 20;
-    max-width: calc(100% - 36px);
+    max-width: calc(100% - 40px);
     pointer-events: auto !important;
 }
 
-/* 内容区域弹性滚动 */
+.sidebar-wallpaper-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    pointer-events: auto !important;
+}
+
+.sidebar-wallpaper-avatar:hover {
+    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+.sidebar-wallpaper-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+}
+
+.sidebar-wallpaper-nickname {
+    font-size: 21px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-wallpaper-signature {
+    font-size: 14px;
+    opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ===== 侧边栏内容区 ===== */
 .sidebar-content {
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     pointer-events: auto;
-    padding: 0;
+    padding: 0 6px 6px;               /* 轻微内边距，让内容不贴边 */
 }
 
-/* 每日一言卡片适配悬浮风格 */
+/* 每日一言卡片：半透明毛玻璃风格 */
 .daily-quote-card {
-    margin: 14px 16px;
-    padding: 12px 16px;
-    background: rgba(67, 97, 238, 0.08);
-    border: 1px solid rgba(67, 97, 238, 0.15);
-    border-radius: 14px;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    margin: 14px 10px 10px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* 分类容器滚动优化 */
+.daily-quote-card p {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    margin: 0;
+    text-align: justify;
+    word-wrap: break-word;
+}
+
+/* 分类容器 */
 .categories-container {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 0 12px 8px;
+    padding: 0 8px 8px;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    margin-bottom: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 .categories-container::-webkit-scrollbar {
-    display: none;
+    width: 4px;
+}
+.categories-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+.categories-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
 }
 
-/* 分类组卡片化 */
+.sidebar-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 分类组：毛玻璃卡片 */
 .category-group {
-    background: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
     overflow: hidden;
-    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 8px;
+}
+
+.category-group-header {
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.category-group-header:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.category-group-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.category-group-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #fff;
+    opacity: 0.9;
+}
+
+.category-toggle {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+    font-size: 12px;
+    border-radius: 50%;
+}
+
+.category-toggle:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.category-group.expanded .category-toggle {
+    transform: rotate(180deg);
+}
+
+.category-items {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.category-group.expanded .category-items {
+    max-height: 500px;
+}
+
+/* 分类项：白色文字，hover 加深半透明背景 */
+.category-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px 10px 34px;
+    width: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.category-item:hover {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.category-item:active {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.category-icon {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: inherit;
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.category-label {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+    font-size: 13px;
+}
+
+.category-badge {
+    background: rgba(239, 68, 68, 0.8);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 20px;
+    min-width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+    font-weight: 500;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
-@media (prefers-color-scheme: dark) {
-    .category-group {
-        background: rgba(45, 45, 45, 0.6);
-        border-color: rgba(255,255,255,0.08);
-    }
-}
-
-/* 底部按钮区域悬浮处理 */
+/* ===== 底部按钮区域 ===== */
 .sidebar-footer {
-    padding: 12px 16px 16px;
+    padding: 12px 14px 16px;
     background: transparent;
-    border-top: 1px solid rgba(0,0,0,0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
     display: flex;
     gap: 8px;
     flex-shrink: 0;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
 }
 
 .footer-btn {
-    background: rgba(255,255,255,0.7);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    border: 1px solid rgba(255,255,255,0.5);
+    flex: 1;
+    padding: 10px 6px;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 30px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    font-size: 13px;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
 }
 
-/* ===== 移动端精细调整 ===== */
+.footer-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.footer-btn:active {
+    transform: translateY(0);
+}
+
+.footer-btn i {
+    font-size: 14px;
+}
+
+/* 底部按钮图标颜色微调 */
+.footer-btn:nth-child(1) i { color: #fff; }
+.footer-btn:nth-child(2) i { color: #fff; }
+.footer-btn:nth-child(3) i { color: #fff; }
+.footer-btn:nth-child(4) i { color: #fff; }
+
+/* ===== 响应式适配 ===== */
 @media (max-width: 768px) {
     .sidebar {
-        top: calc(60px + 12px);
-        height: calc(100dvh - 60px - 24px);
-        max-height: calc(100dvh - 60px - 24px);
         width: 280px;
         left: -280px;
-        border-radius: 0 20px 20px 0;
+        height: 80vh;
+        border-radius: 20px;
     }
-    
+    .sidebar.active {
+        left: 12px;
+    }
     .sidebar-wallpaper {
-        height: 32%;
+        height: 30%;
+        border-radius: 20px 20px 0 0;
     }
-    
+    .sidebar-wallpaper-user-info {
+        left: 16px;
+        bottom: 16px;
+        gap: 12px;
+    }
+    .sidebar-wallpaper-avatar {
+        width: 60px;
+        height: 60px;
+    }
+    .sidebar-wallpaper-nickname {
+        font-size: 18px;
+    }
+    .sidebar-wallpaper-signature {
+        font-size: 12px;
+    }
     .daily-quote-card {
-        margin: 10px 12px;
-        padding: 10px 14px;
+        margin: 12px 8px 8px;
+        padding: 12px 14px;
     }
-    
     .categories-container {
-        padding: 0 10px 6px;
+        padding: 0 6px 6px;
     }
-    
     .sidebar-footer {
         padding: 10px 12px 14px;
     }
 }
 
-/* 小屏手机优化 */
 @media (max-width: 480px) {
     .sidebar {
-        top: calc(60px + 10px);
-        height: calc(100dvh - 60px - 20px);
         width: 260px;
         left: -260px;
+        height: 82vh;
     }
-    
+    .sidebar.active {
+        left: 10px;
+    }
     .sidebar-wallpaper-user-info {
-        left: 14px;
-        bottom: 14px;
-        gap: 10px;
+        left: 12px;
+        bottom: 12px;
     }
-    
     .sidebar-wallpaper-avatar {
-        width: 54px;
-        height: 54px;
+        width: 50px;
+        height: 50px;
+    }
+    .category-group-header {
+        padding: 10px 12px;
+    }
+    .category-item {
+        padding: 8px 12px 8px 30px;
+    }
+    .footer-btn {
+        padding: 8px 4px;
+        font-size: 12px;
+        min-height: 34px;
     }
 }
 
-/* 确保所有内容不溢出，圆角裁剪 */
-.sidebar,
-.sidebar-wallpaper,
-.category-group,
-.daily-quote-card,
-.sidebar-footer {
-    overflow: hidden;
+/* 横屏矮屏优化 */
+@media (max-height: 500px) and (orientation: landscape) {
+    .sidebar {
+        height: 85vh;
+    }
+    .sidebar-wallpaper {
+        height: 25%;
+    }
 }
 
-/* 提升交互细节 */
-.category-group-header {
-    cursor: pointer;
-    transition: background 0.2s;
+/* 保留原有动画 */
+@keyframes wallpaperFadeIn {
+    from { opacity: 0; }
+    to { opacity: 0.95; }
 }
-.category-group-header:hover {
-    background: rgba(67, 97, 238, 0.05);
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+    .sidebar,
+    .category-group-header,
+    .category-item,
+    .footer-btn {
+        transition: none;
+    }
+    .sidebar-wallpaper video,
+    .sidebar-wallpaper img {
+        animation: none;
+    }
 }
