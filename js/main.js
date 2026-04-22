@@ -1,5 +1,6 @@
 /**
- * 星链导航主应用程序（优化6：错误边界与降级版）
+ * 星链导航主应用程序（优化6：错误边界与降级 - 修复版）
+ * 修复：缺失的模块类不会导致初始化中断，保持与原版一致的宽容度
  */
 class App {
     constructor() {
@@ -287,7 +288,6 @@ class App {
                 this.logError('global', errorMessage, error);
                 
                 if (!document.hidden) {
-                    // 避免过多提示
                     if (this.errorLog.length <= 3) {
                         this.showToast('页面遇到问题，部分功能可能异常', 'warning');
                     }
@@ -333,7 +333,7 @@ class App {
         }, { passive: true });
     }
 
-    // ========== 核心组件初始化（带降级） ==========
+    // ========== 核心组件初始化 ==========
     async initCoreComponents() {
         try {
             if (typeof CompactSidebar !== 'undefined') {
@@ -358,7 +358,7 @@ class App {
         }
     }
 
-    // ========== 模块初始化（逐个捕获错误，支持降级展示） ==========
+    // ========== 模块初始化（宽容处理：缺失的类静默跳过） ==========
     async initModules() {
         const moduleConfigs = [
             { name: 'search', class: 'SearchModule', displayName: '搜索' },
@@ -371,58 +371,72 @@ class App {
             { name: 'about', class: 'AboutModule', displayName: '关于' }
         ];
 
+        // 使用原版的并行初始化方式，但每个模块用 try-catch 包裹
+        const initPromises = [];
+        
         for (const cfg of moduleConfigs) {
             try {
-                await this.initSingleModule(cfg);
+                const ModuleClass = window[cfg.class];
+                if (!ModuleClass) {
+                    console.warn(`${cfg.displayName}模块类未定义，跳过`);
+                    this.moduleStatus.set(cfg.name, { status: 'skipped', reason: '类未定义' });
+                    continue;
+                }
+
+                // 特殊处理已有实例的模块
+                if (cfg.name === 'search' && window.searchModule instanceof ModuleClass) {
+                    this.modules.search = window.searchModule;
+                    this.moduleStatus.set('search', { status: 'ok' });
+                    continue;
+                }
+                if (cfg.name === 'announcement' && window.announcementModule) {
+                    this.modules.announcement = window.announcementModule;
+                    this.moduleStatus.set('announcement', { status: 'ok' });
+                    continue;
+                }
+                if (cfg.name === 'about' && window.aboutModule) {
+                    this.modules.about = window.aboutModule;
+                    this.moduleStatus.set('about', { status: 'ok' });
+                    continue;
+                }
+
+                const instance = new ModuleClass();
+                if (instance.init) {
+                    initPromises.push(
+                        instance.init().then(() => {
+                            this.modules[cfg.name] = instance;
+                            if (cfg.name === 'navigation') window.optimizedNavigation = instance;
+                            if (cfg.name === 'search') window.searchModule = instance;
+                            if (cfg.name === 'announcement') window.announcementModule = instance;
+                            if (cfg.name === 'about') window.aboutModule = instance;
+                            this.moduleStatus.set(cfg.name, { status: 'ok' });
+                        }).catch(error => {
+                            console.error(`${cfg.displayName}初始化失败:`, error);
+                            this.moduleStatus.set(cfg.name, { status: 'error', error });
+                            this.applyModuleFallback(cfg.name);
+                        })
+                    );
+                } else {
+                    this.modules[cfg.name] = instance;
+                    if (cfg.name === 'navigation') window.optimizedNavigation = instance;
+                    if (cfg.name === 'search') window.searchModule = instance;
+                    if (cfg.name === 'announcement') window.announcementModule = instance;
+                    if (cfg.name === 'about') window.aboutModule = instance;
+                    this.moduleStatus.set(cfg.name, { status: 'ok' });
+                }
             } catch (error) {
-                console.error(`${cfg.displayName}模块初始化失败:`, error);
-                this.logError(`module:${cfg.name}`, `${cfg.displayName}初始化失败`, error);
+                console.error(`${cfg.displayName}模块创建失败:`, error);
                 this.moduleStatus.set(cfg.name, { status: 'error', error });
                 this.applyModuleFallback(cfg.name);
             }
         }
-    }
 
-    async initSingleModule(cfg) {
-        const ModuleClass = window[cfg.class];
-        if (!ModuleClass) {
-            throw new Error(`类 ${cfg.class} 未定义`);
-        }
-
-        // 特殊处理某些模块（如已有全局实例）
-        if (cfg.name === 'search' && window.searchModule instanceof ModuleClass) {
-            this.modules.search = window.searchModule;
-            this.moduleStatus.set('search', { status: 'ok' });
-            return;
-        }
-        if (cfg.name === 'announcement' && window.announcementModule) {
-            this.modules.announcement = window.announcementModule;
-            this.moduleStatus.set('announcement', { status: 'ok' });
-            return;
-        }
-        if (cfg.name === 'about' && window.aboutModule) {
-            this.modules.about = window.aboutModule;
-            this.moduleStatus.set('about', { status: 'ok' });
-            return;
-        }
-
-        const instance = new ModuleClass();
-        if (instance.init) {
-            await instance.init();
-        }
-        this.modules[cfg.name] = instance;
-        
-        // 设置全局引用
-        if (cfg.name === 'navigation') window.optimizedNavigation = instance;
-        if (cfg.name === 'search') window.searchModule = instance;
-        if (cfg.name === 'announcement') window.announcementModule = instance;
-        if (cfg.name === 'about') window.aboutModule = instance;
-        
-        this.moduleStatus.set(cfg.name, { status: 'ok' });
+        // 等待所有异步初始化完成（忽略失败）
+        await Promise.allSettled(initPromises);
+        console.log('所有模块初始化流程结束');
     }
 
     applyModuleFallback(moduleName) {
-        // 根据不同模块进行降级处理
         switch (moduleName) {
             case 'navigation':
                 this.showNavigationFallback();
@@ -430,11 +444,7 @@ class App {
             case 'wallpaper':
                 this.showWallpaperFallback();
                 break;
-            case 'weather':
-                // 天气模块失败不影响主要功能
-                break;
             default:
-                // 其他模块静默降级
                 break;
         }
     }
@@ -457,51 +467,52 @@ class App {
 
     showWallpaperFallback() {
         const wallpaperImg = document.getElementById('wallpaper');
-        if (wallpaperImg) {
-            wallpaperImg.style.display = 'none';
-        }
+        if (wallpaperImg) wallpaperImg.style.display = 'none';
         const info = document.getElementById('wallpaperInfo');
-        if (info) {
-            info.innerHTML = '<span style="color: #999;">壁纸加载失败</span>';
-        }
+        if (info) info.innerHTML = '<span style="color: #999;">壁纸加载失败</span>';
     }
 
     retryModule(moduleName) {
         this.showToast(`正在重新加载${moduleName}模块...`, 'info');
-        
         const cfg = {
             navigation: { class: 'OptimizedNavigation', displayName: '导航' },
             wallpaper: { class: 'WallpaperModule', displayName: '壁纸' },
             weather: { class: 'WeatherModule', displayName: '天气' }
         }[moduleName];
-        
         if (!cfg) return;
         
-        this.initSingleModule({ name: moduleName, ...cfg })
-            .then(() => {
+        try {
+            const ModuleClass = window[cfg.class];
+            if (!ModuleClass) throw new Error('类未定义');
+            const instance = new ModuleClass();
+            if (instance.init) {
+                instance.init().then(() => {
+                    this.modules[moduleName] = instance;
+                    if (moduleName === 'navigation') window.optimizedNavigation = instance;
+                    this.moduleStatus.set(moduleName, { status: 'ok' });
+                    this.showToast(`${cfg.displayName}模块已恢复`, 'success');
+                    if (moduleName === 'navigation') instance.refresh?.();
+                }).catch(error => {
+                    throw error;
+                });
+            } else {
+                this.modules[moduleName] = instance;
                 this.moduleStatus.set(moduleName, { status: 'ok' });
                 this.showToast(`${cfg.displayName}模块已恢复`, 'success');
-                // 如果之前有降级UI，刷新页面显示
-                if (moduleName === 'navigation' && this.modules.navigation) {
-                    this.modules.navigation.refresh();
-                }
-            })
-            .catch(error => {
-                console.error(`重试${moduleName}失败:`, error);
-                this.showToast(`重试失败，请刷新页面`, 'error');
-            });
+            }
+        } catch (error) {
+            console.error(`重试${moduleName}失败:`, error);
+            this.showToast(`重试失败，请刷新页面`, 'error');
+        }
     }
 
     reportModuleStatus() {
         const failedModules = [];
         for (const [name, status] of this.moduleStatus) {
-            if (status.status === 'error') {
-                failedModules.push(name);
-            }
+            if (status.status === 'error') failedModules.push(name);
         }
         if (failedModules.length > 0) {
             console.warn('部分模块初始化失败:', failedModules);
-            // 避免过多提示
             if (failedModules.length <= 2) {
                 this.showToast('部分功能加载失败，可尝试刷新', 'warning');
             }
@@ -564,46 +575,33 @@ class App {
             }
         });
         
-        window.addEventListener('online', () => {
-            this.showToast('网络已连接', 'success');
-        });
-        
-        window.addEventListener('offline', () => {
-            this.showToast('网络已断开，部分功能可能受限', 'warning');
-        });
-        
+        window.addEventListener('online', () => this.showToast('网络已连接', 'success'));
+        window.addEventListener('offline', () => this.showToast('网络已断开，部分功能可能受限', 'warning'));
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                this.refreshOnVisibility();
-            }
+            if (!document.hidden) this.refreshOnVisibility();
         });
     }
 
     refreshOnVisibility() {
-        if (this.modules.greeting && this.modules.greeting.updateDateTime) {
-            this.modules.greeting.updateDateTime();
-        }
+        if (this.modules.greeting?.updateDateTime) this.modules.greeting.updateDateTime();
         const now = Date.now();
         if (this.lastWeatherUpdate && (now - this.lastWeatherUpdate > 10 * 60 * 1000)) {
-            if (this.modules.weather && this.modules.weather.loadWeatherData) {
+            if (this.modules.weather?.loadWeatherData) {
                 this.modules.weather.loadWeatherData();
                 this.lastWeatherUpdate = now;
             }
         }
     }
 
-    // ========== 模态框管理 ==========
     registerModal(modal) {
         if (!modal || typeof modal.hide !== 'function') return;
         if (!this.activeModals.includes(modal)) {
             this.activeModals.push(modal);
             if (this.activeModals.length > 1) {
-                const previousModal = this.activeModals[this.activeModals.length - 2];
-                if (previousModal && previousModal.hide) previousModal.hide();
+                const prev = this.activeModals[this.activeModals.length - 2];
+                if (prev?.hide) prev.hide();
             }
-            if (this.components.sidebar && this.components.sidebar.isVisible && this.components.sidebar.isVisible()) {
-                this.components.sidebar.hide();
-            }
+            if (this.components.sidebar?.isVisible?.()) this.components.sidebar.hide();
         }
     }
 
@@ -613,58 +611,29 @@ class App {
     }
 
     closeAllModals() {
-        this.activeModals.forEach((modal) => {
-            if (modal && typeof modal.hide === 'function') {
-                try { modal.hide(); } catch (error) { console.error('关闭模态框失败:', error); }
-            }
-        });
+        this.activeModals.forEach(modal => { if (modal?.hide) try { modal.hide(); } catch (e) {} });
         this.activeModals = [];
-        
-        if (this.components.sidebar && this.components.sidebar.isVisible && this.components.sidebar.isVisible()) {
-            this.components.sidebar.hide();
-        }
-        if (this.components.navbar && this.components.navbar.hideMusicPlayer) {
-            this.components.navbar.hideMusicPlayer();
-        }
-        if (this.modules.search && this.modules.search.isModalOpen && this.modules.search.hide) {
-            this.modules.search.hide();
-        }
+        if (this.components.sidebar?.isVisible?.()) this.components.sidebar.hide();
+        if (this.components.navbar?.hideMusicPlayer) this.components.navbar.hideMusicPlayer();
+        if (this.modules.search?.isModalOpen && this.modules.search.hide) this.modules.search.hide();
         this.closeFeedbackModal();
     }
 
-    // ========== 公共 API ==========
-    showToast(message, type = 'info') {
-        window.toast.show(message, type);
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+    showToast(message, type = 'info') { window.toast.show(message, type); }
+    escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
 
     getVisitStats() {
-        const visitCount = Storage.get('visit_count') || 0;
-        const firstVisitTime = Storage.get('first_visit_time');
-        const lastVisitTime = Storage.get('last_visit_time');
         return {
-            count: visitCount,
-            firstVisit: firstVisitTime ? new Date(firstVisitTime) : null,
-            lastVisit: lastVisitTime ? new Date(lastVisitTime) : null,
-            formatted: `访问 ${visitCount} 次`
+            count: Storage.get('visit_count') || 0,
+            firstVisit: Storage.get('first_visit_time') ? new Date(Storage.get('first_visit_time')) : null,
+            lastVisit: Storage.get('last_visit_time') ? new Date(Storage.get('last_visit_time')) : null,
+            formatted: `访问 ${Storage.get('visit_count') || 0} 次`
         };
     }
 
-    updateAnnouncement(newContent) {
-        if (!this.modules.announcement || !newContent) return;
-        this.modules.announcement.updateAnnouncement(newContent);
-    }
-
+    updateAnnouncement(newContent) { if (this.modules.announcement) this.modules.announcement.updateAnnouncement(newContent); }
     refreshWallpaper() {
-        if (!this.modules.wallpaper) {
-            this.showToast('壁纸模块未初始化', 'warning');
-            return;
-        }
+        if (!this.modules.wallpaper) { this.showToast('壁纸模块未初始化', 'warning'); return; }
         this.modules.wallpaper.refreshWallpaper();
         this.showToast('正在刷新壁纸...', 'info');
     }
@@ -675,143 +644,59 @@ class App {
         document.body.style.transition = 'opacity 0.3s ease';
         setTimeout(() => {
             this.refreshAllModules();
-            setTimeout(() => {
-                document.body.style.opacity = '1';
-                this.showToast('页面刷新完成', 'success');
-            }, 500);
+            setTimeout(() => { document.body.style.opacity = '1'; this.showToast('页面刷新完成', 'success'); }, 500);
         }, 300);
     }
 
-    toggleSidebar() {
-        if (this.components.sidebar && this.components.sidebar.toggle) {
-            this.components.sidebar.toggle();
-        }
-    }
-
-    showSidebar() {
-        if (this.components.sidebar && this.components.sidebar.show) {
-            this.components.sidebar.show();
-        }
-    }
-
-    hideSidebar() {
-        if (this.components.sidebar && this.components.sidebar.hide) {
-            this.components.sidebar.hide();
-        }
-    }
+    toggleSidebar() { if (this.components.sidebar?.toggle) this.components.sidebar.toggle(); }
+    showSidebar() { if (this.components.sidebar?.show) this.components.sidebar.show(); }
+    hideSidebar() { if (this.components.sidebar?.hide) this.components.sidebar.hide(); }
 
     showSearch() {
-        if (this.modules.search && this.modules.search.showModal) {
-            this.modules.search.showModal();
-        } else {
-            this.showToast('搜索功能暂不可用', 'warning');
-        }
+        if (this.modules.search?.showModal) this.modules.search.showModal();
+        else this.showToast('搜索功能暂不可用', 'warning');
     }
-
     showAnnouncement() {
-        if (this.modules.announcement && this.modules.announcement.showModal) {
-            this.modules.announcement.showModal();
-        } else {
-            this.showToast('公告功能暂不可用', 'warning');
-        }
+        if (this.modules.announcement?.showModal) this.modules.announcement.showModal();
+        else this.showToast('公告功能暂不可用', 'warning');
     }
-
     showWeather() {
-        if (this.modules.weather && typeof this.modules.weather.showModal === 'function') {
-            this.modules.weather.showModal();
-        } else {
-            console.error('天气模块未正确初始化');
-            this.showToast('天气功能暂不可用', 'warning');
-        }
+        if (this.modules.weather?.showModal) this.modules.weather.showModal();
+        else this.showToast('天气功能暂不可用', 'warning');
     }
-
     showAbout() {
-        if (this.modules.about && this.modules.about.show) {
-            this.modules.about.show();
-        } else {
-            this.showToast('关于功能暂不可用', 'warning');
-        }
+        if (this.modules.about?.show) this.modules.about.show();
+        else this.showToast('关于功能暂不可用', 'warning');
     }
-
     toggleMusicPlayer() {
-        if (this.components.navbar && this.components.navbar.toggleMusicPlayer) {
-            this.components.navbar.toggleMusicPlayer();
-        } else {
-            this.showToast('音乐播放器暂不可用', 'warning');
-        }
+        if (this.components.navbar?.toggleMusicPlayer) this.components.navbar.toggleMusicPlayer();
+        else this.showToast('音乐播放器暂不可用', 'warning');
     }
 
     refreshAllModules() {
         this.showToast('开始刷新所有模块', 'info');
-        
-        if (this.modules.wallpaper && this.modules.wallpaper.refreshWallpaper) {
-            this.modules.wallpaper.refreshWallpaper().catch(err => {
-                console.error('壁纸刷新失败:', err);
-            });
-        }
-        
-        if (this.modules.weather && this.modules.weather.loadWeatherData) {
-            this.modules.weather.loadWeatherData().catch(err => {
-                console.error('天气刷新失败:', err);
-            });
-        }
-        
-        if (this.modules.announcement && this.modules.announcement.loadAnnouncements) {
-            this.modules.announcement.loadAnnouncements();
-        }
-        
+        if (this.modules.wallpaper?.refreshWallpaper) this.modules.wallpaper.refreshWallpaper().catch(e => console.error(e));
+        if (this.modules.weather?.loadWeatherData) this.modules.weather.loadWeatherData().catch(e => console.error(e));
+        if (this.modules.announcement?.loadAnnouncements) this.modules.announcement.loadAnnouncements();
         if (this.components.sidebar) {
-            if (this.components.sidebar.loadWallpaperUserInfo) {
-                this.components.sidebar.loadWallpaperUserInfo();
-            }
-            if (this.components.sidebar.loadDailyQuote) {
-                this.components.sidebar.loadDailyQuote();
-            }
+            if (this.components.sidebar.loadWallpaperUserInfo) this.components.sidebar.loadWallpaperUserInfo();
+            if (this.components.sidebar.loadDailyQuote) this.components.sidebar.loadDailyQuote();
         }
-        
-        setTimeout(() => {
-            this.showToast('所有模块已刷新', 'success');
-        }, 1500);
+        setTimeout(() => this.showToast('所有模块已刷新', 'success'), 1500);
     }
 
     resetApp() {
-        if (!confirm('确定要重置应用状态吗？这将清除所有临时数据，但不会删除您的个人配置。')) return;
-        
+        if (!confirm('确定要重置应用状态吗？')) return;
         this.closeAllModals();
-        
-        const keysToRemove = [
-            'sidebar_categories_state',
-            'last_wallpaper_update',
-            'musicPlayer_volume',
-            'musicPlayer_playbackSpeed',
-            'musicPlayer_playMode',
-            'musicPlayer_playState',
-            'musicPlayer_lyricsMode'
-        ];
-        
-        keysToRemove.forEach(key => {
-            Storage.remove(key);
-        });
-        
-        setTimeout(() => {
-            this.refreshAllModules();
-        }, 500);
-        
+        ['sidebar_categories_state', 'last_wallpaper_update', 'musicPlayer_volume', 'musicPlayer_playbackSpeed', 'musicPlayer_playMode', 'musicPlayer_playState'].forEach(k => Storage.remove(k));
+        setTimeout(() => this.refreshAllModules(), 500);
         this.showToast('应用状态已重置', 'success');
     }
 
     destroy() {
         this.closeAllModals();
-        Object.entries(this.components).forEach(([name, component]) => {
-            if (component && typeof component.destroy === 'function') {
-                try { component.destroy(); } catch (error) { console.error(`销毁组件 ${name} 失败:`, error); }
-            }
-        });
-        Object.entries(this.modules).forEach(([name, module]) => {
-            if (module && typeof module.destroy === 'function') {
-                try { module.destroy(); } catch (error) { console.error(`销毁模块 ${name} 失败:`, error); }
-            }
-        });
+        Object.entries(this.components).forEach(([n, c]) => { if (c?.destroy) try { c.destroy(); } catch (e) {} });
+        Object.entries(this.modules).forEach(([n, m]) => { if (m?.destroy) try { m.destroy(); } catch (e) {} });
         this.components = {};
         this.modules = {};
         this.activeModals = [];
@@ -819,18 +704,8 @@ class App {
     }
 }
 
-if (!window.app) {
-    window.app = new App();
-}
-
+if (!window.app) window.app = new App();
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        if (window.app && !window.app.isInitialized) {
-            window.app.init();
-        }
-    });
+    document.addEventListener('DOMContentLoaded', () => { if (window.app && !window.app.isInitialized) window.app.init(); });
 }
-
-window.getApp = function() {
-    return window.app;
-};
+window.getApp = () => window.app;
