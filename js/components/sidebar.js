@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 简化版本（修改反馈按钮行为）
+ * 侧边栏组件 - 简化版本（优化1：添加图片懒加载属性）
  */
 class CompactSidebar {
     constructor() {
@@ -123,7 +123,8 @@ class CompactSidebar {
                         <form class="profile-form" id="profileForm">
                             <div class="qq-avatar-section">
                                 <div class="qq-avatar-preview">
-                                    <img id="qqAvatarPreview" src="" alt="QQ头像预览">
+                                    <!-- ===== 优化1：添加懒加载属性 ===== -->
+                                    <img id="qqAvatarPreview" src="" alt="QQ头像预览" loading="lazy" decoding="async">
                                 </div>
                                 <div class="qq-avatar-input-group">
                                     <input type="text" class="form-input qq-avatar-input" id="qqNumber" 
@@ -231,6 +232,9 @@ class CompactSidebar {
             
             if (avatarUrl) {
                 qqAvatarPreview.src = avatarUrl;
+                // ===== 优化1：确保懒加载属性存在 =====
+                qqAvatarPreview.setAttribute('loading', 'lazy');
+                qqAvatarPreview.setAttribute('decoding', 'async');
                 qqAvatarStatus.textContent = '头像获取成功';
                 qqAvatarStatus.className = 'qq-avatar-status success';
                 
@@ -239,7 +243,11 @@ class CompactSidebar {
                 Storage.set('userConfig', userConfig);
                 
                 const sidebarAvatar = document.getElementById('sidebarWallpaperAvatar');
-                if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
+                if (sidebarAvatar) {
+                    sidebarAvatar.src = avatarUrl;
+                    sidebarAvatar.setAttribute('loading', 'lazy');
+                    sidebarAvatar.setAttribute('decoding', 'async');
+                }
             } else {
                 qqAvatarStatus.textContent = '获取头像失败';
                 qqAvatarStatus.className = 'qq-avatar-status error';
@@ -325,6 +333,9 @@ class CompactSidebar {
             if (qqNumberInput) qqNumberInput.value = '';
             if (qqAvatarPreview) {
                 qqAvatarPreview.src = userConfig.avatar || this.getDefaultAvatarSVG();
+                // ===== 优化1：确保懒加载属性存在 =====
+                qqAvatarPreview.setAttribute('loading', 'lazy');
+                qqAvatarPreview.setAttribute('decoding', 'async');
             }
 
             profileModal.classList.add('active');
@@ -704,6 +715,9 @@ class CompactSidebar {
             if (wallpaperAvatar) {
                 if (userConfig.avatar) {
                     wallpaperAvatar.src = userConfig.avatar;
+                    // ===== 优化1：添加懒加载属性 =====
+                    wallpaperAvatar.setAttribute('loading', 'lazy');
+                    wallpaperAvatar.setAttribute('decoding', 'async');
                     wallpaperAvatar.style.display = 'block';
                 } else {
                     await this.loadRandomAvatar();
@@ -846,6 +860,9 @@ class CompactSidebar {
                 const wallpaperAvatar = document.getElementById('sidebarWallpaperAvatar');
                 if (wallpaperAvatar) {
                     wallpaperAvatar.src = avatarUrl;
+                    // ===== 优化1：添加懒加载属性 =====
+                    wallpaperAvatar.setAttribute('loading', 'lazy');
+                    wallpaperAvatar.setAttribute('decoding', 'async');
                     wallpaperAvatar.style.display = 'block';
                     const userConfig = Storage.get('userConfig') || {};
                     userConfig.avatar = avatarUrl;
