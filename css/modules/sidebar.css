@@ -1,9 +1,10 @@
-/* 侧滑栏优化版 - 悬浮毛玻璃效果 */
+/* 侧滑栏优化版 - 悬浮毛玻璃效果 + 壁纸显示统一 */
 :root {
     --navbar-height: 60px;       /* 顶部导航栏固定高度 */
     --sidebar-margin: 20px;      /* 上下统一留白距离（导航栏底部→侧滑栏顶部 / 侧滑栏底部→浏览器底部） */
     --sidebar-radius: 16px;      /* 悬浮圆角大小 */
     --sidebar-blur: 12px;        /* 毛玻璃模糊程度 */
+    --wallpaper-fade-duration: 0.5s; /* 壁纸淡入时长 */
 }
 
 .sidebar {
@@ -33,15 +34,15 @@
     left: var(--sidebar-margin); /* 展开时左侧也留白，完全悬浮 */
 }
 
-/* 侧滑栏壁纸区域 */
+/* 侧滑栏壁纸区域 - 统一高度比例 */
 .sidebar-wallpaper {
     position: relative;
-    height: 32%; /* 从35%下调，适配更短的侧滑栏 */
+    height: 30%; /* 从32%下调，与移动端比例统一 */
     background: transparent;
     overflow: hidden;
     flex-shrink: 0;
     background-size: cover;
-    background-position: center;
+    background-position: center center; /* 统一背景图居中 */
     background-repeat: no-repeat;
     user-select: none !important;
     -webkit-user-select: none !important;
@@ -90,6 +91,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center center; /* 头像统一居中 */
     display: block;
     pointer-events: none;
 }
@@ -119,14 +121,18 @@
     text-overflow: ellipsis;
 }
 
-/* 视频壁纸样式 */
+/* 视频壁纸样式 - 核心修改：统一显示效果 */
 .sidebar-wallpaper video {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* 绝对居中 */
+    min-height: 100%; /* 强制高度填满容器 */
+    min-width: 100%; /* 最小宽度填满容器 */
+    width: auto; /* 宽度自动计算 */
+    height: 100%; /* 高度永远等于容器高度 */
     object-fit: cover;
+    object-position: center center; /* 统一裁剪中心区域 */
     z-index: 0;
     display: block !important;
     opacity: 0.95 !important;
@@ -142,6 +148,8 @@
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
+    image-rendering: -webkit-optimize-contrast; /* 优化视频清晰度 */
+    image-rendering: crisp-edges;
 }
 
 /* 移除暗色覆盖层，改为轻微亮色覆盖以提高对比度 */
@@ -536,6 +544,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center center;
 }
 
 .qq-avatar-input-group {
@@ -595,7 +604,7 @@
     color: var(--text-primary);
 }
 
-/* 响应式设计 */
+/* 响应式设计 - 壁纸高度统一调整 */
 @media (max-width: 768px) {
     :root {
         --sidebar-margin: 16px; /* 平板端留白减小 */
@@ -608,7 +617,7 @@
         left: var(--sidebar-margin);
     }
     .sidebar-wallpaper {
-        height: 28%;
+        height: 28%; /* 与桌面端30%接近 */
     }
     
     .sidebar-wallpaper-user-info {
@@ -661,7 +670,7 @@
         left: var(--sidebar-margin);
     }
     .sidebar-wallpaper {
-        height: 26%;
+        height: 26%; /* 与桌面端30%接近 */
     }
     
     .sidebar-wallpaper-user-info {
@@ -704,7 +713,7 @@
         --sidebar-margin: 10px;
     }
     .sidebar-wallpaper {
-        height: 24%;
+        height: 24%; /* 横屏小高度设备微调 */
     }
     
     .sidebar-wallpaper-user-info {
@@ -728,7 +737,7 @@
 
 @media (min-width: 1920px) {
     .sidebar-wallpaper {
-        height: 35%;
+        height: 32%; /* 超大屏幕稍微增加高度 */
     }
     
     .sidebar-wallpaper-user-info {
@@ -767,6 +776,12 @@
     .sidebar-wallpaper {
         -webkit-touch-callout: none !important;
         -webkit-user-select: none !important;
+    }
+    
+    /* iOS 视频播放优化 */
+    .sidebar-wallpaper video {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
     }
 }
 
@@ -872,7 +887,7 @@
     }
 }
 
-/* 壁纸淡入动画 - 调整最终透明度 */
+/* 壁纸淡入动画 - 统一所有设备 */
 @keyframes wallpaperFadeIn {
     from {
         opacity: 0;
@@ -884,7 +899,7 @@
 
 .sidebar-wallpaper video,
 .sidebar-wallpaper img {
-    animation: wallpaperFadeIn 0.5s ease-in-out;
+    animation: wallpaperFadeIn var(--wallpaper-fade-duration) ease-in-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
