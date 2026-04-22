@@ -32,7 +32,15 @@
     <link rel="stylesheet" href="./css/modules/compact-tags.css">
     <link rel="stylesheet" href="./css/responsive.css">
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- ===== 优化2：FontAwesome 按需加载 ===== -->
+    <!-- 核心样式（必须） -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
+    <!-- 按需引入图标类型：solid（实心）、brands（品牌）、regular（常规） -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/regular.min.css">
+    <!-- ===== 优化2结束 ===== -->
     
     <!-- 预连接关键域名 -->
     <link rel="preconnect" href="https://api.xldh688.eu.cc">
@@ -40,7 +48,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     
     <link rel="preload" href="./js/main.js" as="script">
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
 
     <!-- KaTeX 数学公式支持 v0.16.45 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
