@@ -1,3 +1,6 @@
+/**
+ * 侧边栏组件（iOS 手势增强完整版）
+ */
 class CompactSidebar {
     constructor() {
         if (!document.getElementById('sidebar')) return;
@@ -19,10 +22,14 @@ class CompactSidebar {
         this.adjustSidebarHeight();
         this.initGesture();
 
+        this.bindBasicEvents();
+
         this.isInitialized = true;
     }
 
-    /* ===== 自动上下留白 ===== */
+    /* =====================
+       自动计算上下留白
+    ===================== */
     adjustSidebarHeight() {
         const update = () => {
             const nav = document.querySelector('.navbar');
@@ -41,16 +48,19 @@ class CompactSidebar {
         window.addEventListener('resize', update);
     }
 
-    /* ===== 显示 ===== */
+    /* =====================
+       显示 / 隐藏
+    ===================== */
     show() {
         this.sidebar.classList.add('active');
         this.sidebar.style.transform = 'translateX(16px)';
+        document.body.classList.add('sidebar-open');
     }
 
-    /* ===== 隐藏 ===== */
     hide() {
         this.sidebar.classList.remove('active');
         this.sidebar.style.transform = 'translateX(-110%)';
+        document.body.classList.remove('sidebar-open');
     }
 
     toggle() {
@@ -61,7 +71,22 @@ class CompactSidebar {
         return this.sidebar.classList.contains('active');
     }
 
-    /* ===== iOS 手势（完整版） ===== */
+    /* =====================
+       基础点击关闭逻辑
+    ===================== */
+    bindBasicEvents() {
+        document.addEventListener('click', (e) => {
+            if (!this.isVisible()) return;
+
+            if (!this.sidebar.contains(e.target)) {
+                this.hide();
+            }
+        });
+    }
+
+    /* =====================
+       iOS 手势（完整版）
+    ===================== */
     initGesture() {
         const sidebar = this.sidebar;
         const threshold = 80;
@@ -84,13 +109,13 @@ class CompactSidebar {
 
             let delta = this.currentX - this.startX;
 
-            /* 从左滑出 */
+            /* 从左边拖出 */
             if (!this.isVisible()) {
                 if (this.startX > 30) return;
 
                 delta = Math.max(0, Math.min(delta, this.sidebarWidth));
 
-                /* 阻尼（更像 iOS） */
+                /* 阻尼效果 */
                 const resistance = delta * 0.9;
 
                 sidebar.style.transform =
@@ -118,11 +143,11 @@ class CompactSidebar {
 
             const delta = this.currentX - this.startX;
 
-            /* 打开判定 */
+            /* 打开判断 */
             if (!this.isVisible()) {
                 delta > threshold ? this.show() : this.hide();
             }
-            /* 关闭判定 */
+            /* 关闭判断 */
             else {
                 delta < -threshold ? this.hide() : this.show();
             }
@@ -138,11 +163,8 @@ class CompactSidebar {
     }
 }
 
-/* ===== 初始化 ===== */
-if (!window.sidebar) {
+/* 初始化 */
+window.addEventListener('DOMContentLoaded', () => {
     window.sidebar = new CompactSidebar();
-
-    window.addEventListener('DOMContentLoaded', () => {
-        window.sidebar.init();
-    });
-}
+    window.sidebar.init();
+});
