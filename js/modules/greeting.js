@@ -1,40 +1,145 @@
-// 问候区模块 - 优化效果和显示
+// 问候区模块 - 优化效果和显示（优化10：音效反馈版）
 class GreetingModule {
     constructor() {
         this.initialized = false;
-        this.eventBound = false; // 添加事件绑定标记
+        this.eventBound = false;
         this.holidayRefreshTimer = null;
         this.holidayCheckTimer = null;
         this.currentHoliday = null;
+        
+        // ===== 优化10：音频上下文 =====
+        this.audioCtx = null;
+        this.audioInitialized = false;
+        this.isAudioEnabled = false;
+        
         this.init();
     }
 
     async init() {
         if (this.initialized) return;
         
-        // 移除已废弃的loadDailyTags调用
         this.loadWoodenFishData();
         this.bindEvents();
         this.startTimers();
         await this.setupHolidayCountdown();
         
-        // 添加窗口大小变化监听
         this.handleResize();
         window.addEventListener('resize', this.handleResize.bind(this));
         
         this.initialized = true;
     }
 
+    // ===== 优化10：初始化音频上下文 =====
+    initAudio() {
+        if (this.audioCtx) return;
+        
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) {
+                console.warn('浏览器不支持 Web Audio API');
+                return;
+            }
+            
+            this.audioCtx = new AudioContext();
+            this.audioInitialized = true;
+            
+            if (this.audioCtx.state === 'suspended') {
+                console.log('AudioContext 已创建，等待用户交互恢复');
+            }
+            
+            console.log('音频上下文初始化成功');
+        } catch (error) {
+            console.error('初始化音频上下文失败:', error);
+        }
+    }
+
+    // ===== 优化10：恢复音频上下文 =====
+    async resumeAudio() {
+        if (!this.audioCtx) {
+            this.initAudio();
+        }
+        
+        if (this.audioCtx && this.audioCtx.state === 'suspended') {
+            try {
+                await this.audioCtx.resume();
+                this.isAudioEnabled = true;
+                console.log('音频上下文已恢复');
+            } catch (error) {
+                console.warn('恢复音频上下文失败:', error);
+                this.isAudioEnabled = false;
+            }
+        } else if (this.audioCtx && this.audioCtx.state === 'running') {
+            this.isAudioEnabled = true;
+        }
+    }
+
+    // ===== 优化10：播放木鱼敲击音效 =====
+    playWoodenFishSound(type = 'merit') {
+        if (!this.audioCtx || this.audioCtx.state !== 'running') {
+            return;
+        }
+        
+        try {
+            const now = this.audioCtx.currentTime;
+            
+            const frequencyMap = {
+                merit: 440,
+                luck: 523.25,
+                wealth: 659.25,
+                health: 783.99
+            };
+            
+            const baseFreq = frequencyMap[type] || 440;
+            
+            const osc1 = this.audioCtx.createOscillator();
+            osc1.type = 'sine';
+            osc1.frequency.value = baseFreq;
+            
+            const osc2 = this.audioCtx.createOscillator();
+            osc2.type = 'triangle';
+            osc2.frequency.value = baseFreq * 2;
+            
+            const gainNode = this.audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+            
+            const gainNode2 = this.audioCtx.createGain();
+            gainNode2.gain.setValueAtTime(0.15, now);
+            gainNode2.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+            
+            osc1.connect(gainNode);
+            osc2.connect(gainNode2);
+            gainNode.connect(this.audioCtx.destination);
+            gainNode2.connect(this.audioCtx.destination);
+            
+            osc1.start(now);
+            osc2.start(now);
+            osc1.stop(now + 0.08);
+            osc2.stop(now + 0.06);
+            
+            osc1.onended = () => {
+                osc1.disconnect();
+                gainNode.disconnect();
+            };
+            osc2.onended = () => {
+                osc2.disconnect();
+                gainNode2.disconnect();
+            };
+            
+            console.log(`播放木鱼音效: ${type}`);
+            
+        } catch (error) {
+            console.error('播放音效失败:', error);
+        }
+    }
+
     handleResize() {
         const holidayNameEl = document.getElementById('holidayName');
-        
-        // 移除可能存在的标题提示，让节日名称自适应显示
         if (holidayNameEl) {
             holidayNameEl.removeAttribute('title');
         }
     }
 
-    // 加载节日倒计时数据
     async loadHolidayData() {
         try {
             const response = await fetch('https://api.pearktrue.cn/api/countdownday/');
@@ -49,7 +154,6 @@ class GreetingModule {
         }
     }
 
-    // 获取默认节日数据
     getDefaultHolidays() {
         const today = new Date();
         const year = today.getFullYear();
@@ -62,7 +166,6 @@ class GreetingModule {
         ];
     }
 
-    // 处理节日数据，找到当前和下一个节日
     processHolidayData(holidayData) {
         if (!holidayData || holidayData.length === 0) {
             return this.getDefaultHoliday();
@@ -73,32 +176,27 @@ class GreetingModule {
         let next = null;
         let foundCurrent = false;
 
-        // 遍历节日数据
         for (const holidayStr of holidayData) {
             const holiday = this.parseSingleHoliday(holidayStr);
             
             if (!holiday) continue;
 
-            // 检查是否是当前节日（进行中）
             if (holiday.status === 'active') {
                 current = holiday;
                 foundCurrent = true;
                 continue;
             }
 
-            // 如果已经找到当前节日，下一个节日就是第一个未来节日
             if (foundCurrent) {
                 next = holiday;
                 break;
             }
 
-            // 如果还没找到当前节日，第一个未来节日就是下一个
             if (!next && holiday.days > 0) {
                 next = holiday;
             }
         }
 
-        // 如果没有当前节日，也没有下一个节日，使用第一个节日
         if (!current && !next && holidayData.length > 0) {
             const firstHoliday = this.parseSingleHoliday(holidayData[0]);
             if (firstHoliday) {
@@ -109,19 +207,12 @@ class GreetingModule {
         return { current, next };
     }
 
-    // 解析单个节日字符串
     parseSingleHoliday(holidayStr) {
         if (!holidayStr) return null;
 
-        // 支持多种格式：
-        // 1. "2025年春节 进行中"
-        // 2. "2025年春节 1天"
-        // 3. "2025年春节 剩余1天"
-        // 4. "春节 进行中"
         const match = holidayStr.match(/^(?:(\d{4})年)?(.+?)\s+(?:剩余)?(\d+天|进行中|\d+小时|\d+分钟)$/);
         
         if (!match) {
-            // 尝试其他格式
             const simpleMatch = holidayStr.match(/^(.+?)\s+(.+)$/);
             if (simpleMatch) {
                 const [, name, countdown] = simpleMatch;
@@ -134,7 +225,6 @@ class GreetingModule {
         return this.createHolidayObject(name, countdown);
     }
 
-    // 创建节日对象
     createHolidayObject(name, countdown) {
         const now = new Date();
         const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
@@ -152,23 +242,17 @@ class GreetingModule {
         };
     }
 
-    // 格式化倒计时显示
     formatCountdown(countdown) {
         if (countdown === '进行中') {
             return '进行中';
         }
         
-        // 如果是数字+天，简化显示
         const daysMatch = countdown.match(/(\d+)天/);
         if (daysMatch) {
             const days = parseInt(daysMatch[1]);
-            if (days <= 3) {
-                return `${days}天`;
-            }
             return `${days}天`;
         }
         
-        // 处理小时和分钟
         const hoursMatch = countdown.match(/(\d+)小时/);
         if (hoursMatch) {
             const hours = parseInt(hoursMatch[1]);
@@ -178,7 +262,6 @@ class GreetingModule {
         return countdown;
     }
 
-    // 提取天数
     extractDays(countdown) {
         if (countdown === '进行中') return 0;
         
@@ -190,7 +273,6 @@ class GreetingModule {
         return null;
     }
 
-    // 提取小时数
     extractHours(countdown) {
         const hoursMatch = countdown.match(/(\d+)小时/);
         if (hoursMatch) {
@@ -200,7 +282,6 @@ class GreetingModule {
         return null;
     }
 
-    // 获取默认节日对象
     getDefaultHoliday() {
         return {
             current: null,
@@ -216,7 +297,6 @@ class GreetingModule {
         };
     }
 
-    // 获取节日图标
     getHolidayIcon(name) {
         if (name.includes('春节')) return '🧧';
         else if (name.includes('圣诞')) return '🎄';
@@ -237,42 +317,30 @@ class GreetingModule {
         else return '🎉';
     }
 
-    // 设置节日倒计时 - 修改为实时刷新
     async setupHolidayCountdown() {
         try {
-            // 检查是否有节日正在进行且已过期
             await this.checkHolidayExpiration();
             
-            // 获取节日数据
             const holidayData = await this.loadHolidayData();
             const holidays = this.processHolidayData(holidayData);
             
-            // 决定显示哪个节日
             let displayHoliday = null;
             
             if (holidays.current) {
-                // 有当前进行中的节日
                 this.currentHoliday = holidays.current;
                 displayHoliday = holidays.current;
-                
-                // 设置节日结束时的刷新
                 this.scheduleHolidayRefresh(holidays.current);
             } else if (holidays.next) {
-                // 没有当前节日，显示下一个节日
                 displayHoliday = holidays.next;
                 this.currentHoliday = null;
             }
             
-            // 更新显示
             this.updateHolidayDisplay(displayHoliday);
-            
-            // 缓存数据
             this.cacheHolidayData(holidays);
             
         } catch (error) {
             console.error('设置节日倒计时失败:', error);
             
-            // 尝试使用缓存数据
             const cachedData = this.getCachedHolidayData();
             if (cachedData) {
                 const displayHoliday = cachedData.current || cachedData.next;
@@ -281,7 +349,6 @@ class GreetingModule {
         }
     }
 
-    // 检查节日是否过期
     async checkHolidayExpiration() {
         const cachedData = this.getCachedHolidayData();
         
@@ -290,7 +357,6 @@ class GreetingModule {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         
-        // 如果当前节日已经过期（过了当天），清除缓存
         if (cachedData.current.status === 'active') {
             const lastUpdate = new Date(cachedData.timestamp);
             const lastUpdateDate = new Date(lastUpdate.getFullYear(), lastUpdate.getMonth(), lastUpdate.getDate());
@@ -303,7 +369,6 @@ class GreetingModule {
         }
     }
 
-    // 缓存节日数据 - 修改为实时刷新策略
     cacheHolidayData(holidays) {
         try {
             const now = new Date();
@@ -313,10 +378,9 @@ class GreetingModule {
                 current: holidays.current,
                 next: holidays.next,
                 timestamp: Date.now(),
-                // 如果有当前节日，在节日结束后过期
                 expiresAt: holidays.current ? 
-                    tomorrow.getTime() : // 当前节日：明天0点过期
-                    Date.now() + (24 * 60 * 60 * 1000) // 其他：24小时后过期
+                    tomorrow.getTime() : 
+                    Date.now() + (24 * 60 * 60 * 1000)
             };
             
             localStorage.setItem('holidayDataCache', JSON.stringify(cache));
@@ -326,7 +390,6 @@ class GreetingModule {
         }
     }
 
-    // 获取缓存的节日数据
     getCachedHolidayData() {
         try {
             const cacheStr = localStorage.getItem('holidayDataCache');
@@ -334,7 +397,6 @@ class GreetingModule {
             
             const cache = JSON.parse(cacheStr);
             
-            // 检查是否过期
             if (Date.now() > cache.expiresAt) {
                 localStorage.removeItem('holidayDataCache');
                 return null;
@@ -346,11 +408,9 @@ class GreetingModule {
         }
     }
 
-    // 安排节日刷新 - 节日结束后立即刷新
     scheduleHolidayRefresh(holiday) {
         if (!holiday || holiday.status !== 'active') return;
         
-        // 清除现有的定时器
         if (this.holidayRefreshTimer) {
             clearTimeout(this.holidayRefreshTimer);
         }
@@ -361,24 +421,17 @@ class GreetingModule {
         
         console.log(`安排节日刷新在 ${Math.round(timeUntilMidnight / 1000 / 60)} 分钟后`);
         
-        // 在午夜刷新
         this.holidayRefreshTimer = setTimeout(async () => {
             console.log('节日结束，自动刷新数据');
-            
-            // 清除缓存
             localStorage.removeItem('holidayDataCache');
-            
-            // 重新获取数据
             await this.setupHolidayCountdown();
             
-            // 显示提示
             if (window.app && window.app.showToast) {
                 window.app.showToast('节日数据已更新', 'info');
             }
-        }, timeUntilMidnight + 1000); // 多加1秒确保过了午夜
+        }, timeUntilMidnight + 1000);
     }
 
-    // 更新节日显示 - 自适应显示节日名称
     updateHolidayDisplay(holidayInfo) {
         const holidayNameEl = document.getElementById('holidayName');
         const holidayCountdownEl = document.getElementById('holidayCountdown');
@@ -394,17 +447,12 @@ class GreetingModule {
             return;
         }
         
-        // 完全显示节日名称，自适应显示
         holidayNameEl.innerHTML = `<span class="holiday-icon">${holidayInfo.icon}</span> ${holidayInfo.name}`;
-        holidayNameEl.removeAttribute('title'); // 移除标题，让名称自适应显示
-        
-        // 显示倒计时
+        holidayNameEl.removeAttribute('title');
         holidayCountdownEl.textContent = holidayInfo.displayText;
         
-        // 根据状态设置样式（使用CSS类）
         this.setHolidayStyle(holidayCountdownEl, holidayInfo);
         
-        // 如果是进行中的节日，添加特殊标记
         if (holidayInfo.status === 'active') {
             holidayCountdownEl.classList.add('active-countdown');
         } else {
@@ -412,12 +460,9 @@ class GreetingModule {
         }
     }
 
-    // 设置节日样式 - 修改为使用类名控制样式
     setHolidayStyle(element, holidayInfo) {
-        // 清除所有状态类
         element.classList.remove('active-countdown', 'status-3days', 'status-7days', 'status-more', 'status-unknown');
         
-        // 根据状态添加类名
         if (holidayInfo.status === 'active') {
             element.classList.add('active-countdown');
         } else if (holidayInfo.days !== null && holidayInfo.days <= 3) {
@@ -430,7 +475,6 @@ class GreetingModule {
             element.classList.add('status-unknown');
         }
         
-        // 移除内联样式，让CSS类控制样式
         element.style.background = '';
         element.style.color = '';
         element.style.border = '';
@@ -470,22 +514,17 @@ class GreetingModule {
     }
 
     bindEvents() {
-        // 防止重复绑定事件
         if (this.eventBound) return;
         
-        // 移除可能存在的旧事件监听器（使用更精确的选择器）
         document.querySelectorAll('.fish-btn').forEach(btn => {
-            // 克隆按钮并替换，彻底移除所有事件监听器
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
         });
         
-        // 添加新的事件监听器
         document.querySelectorAll('.fish-btn').forEach(btn => {
             btn.addEventListener('click', this.handleFishClick.bind(this), { once: false });
         });
 
-        // 添加键盘快捷键支持
         document.addEventListener('keydown', (e) => {
             if (e.altKey) {
                 const type = e.key === '1' ? 'merit' : 
@@ -495,11 +534,11 @@ class GreetingModule {
                 
                 if (type) {
                     this.incrementFishCount(type, 1);
-                    
-                    // 找到对应的按钮显示效果
                     const btn = document.querySelector(`.fish-btn[data-type="${type}"]`);
                     if (btn) {
                         this.showFishEffect(btn);
+                        // ===== 优化10：快捷键也触发音效 =====
+                        this.playWoodenFishSound(type);
                     }
                 }
             }
@@ -508,16 +547,28 @@ class GreetingModule {
         this.eventBound = true;
     }
 
-    // 处理木鱼点击事件
+    // ===== 优化10：处理木鱼点击事件，添加音效 =====
     handleFishClick(e) {
         e.preventDefault();
-        e.stopPropagation(); // 阻止事件冒泡
+        e.stopPropagation();
         
         const type = e.currentTarget.dataset.type;
-        this.incrementFishCount(type, 1);
         
-        // 添加点击效果
+        // 首次点击时初始化并恢复音频
+        if (!this.audioCtx) {
+            this.initAudio();
+        }
+        
+        this.resumeAudio().then(() => {
+            this.playWoodenFishSound(type);
+        });
+        
+        this.incrementFishCount(type, 1);
         this.showFishEffect(e.currentTarget);
+        
+        if (navigator.vibrate) {
+            navigator.vibrate(20);
+        }
     }
 
     incrementFishCount(type, amount = 1) {
@@ -525,25 +576,17 @@ class GreetingModule {
             merit: 0, luck: 0, wealth: 0, health: 0
         };
         
-        // 每次只增加1次 - 修复：确保只增加1次
         fishData[type] = (fishData[type] || 0) + amount;
         Storage.set('woodenFish', fishData);
         
         this.updateFishCounts(fishData);
         
-        // 震动反馈（如果支持）
-        if (navigator.vibrate) {
-            navigator.vibrate(30); // 缩短震动时间
-        }
-        
         console.log(`${type} 计数增加 ${amount}，当前值: ${fishData[type]}`);
     }
 
     showFishEffect(element) {
-        // 创建+1效果元素
         const effect = document.createElement('div');
         
-        // 根据按钮类型设置不同的文字
         const type = element.dataset.type;
         const textMap = {
             merit: '功德+1',
@@ -554,12 +597,10 @@ class GreetingModule {
         effect.innerHTML = textMap[type] || '+1';
         effect.className = 'fish-effect';
         
-        // 获取按钮位置和大小
         const rect = element.getBoundingClientRect();
         const btnCenterX = rect.left + rect.width / 2;
         const btnCenterY = rect.top + rect.height / 2;
         
-        // 根据按钮类型设置颜色
         const colors = {
             merit: '#70c1ff',
             luck: '#ff9e9e',
@@ -568,11 +609,9 @@ class GreetingModule {
         };
         const color = colors[type] || '#FFFFFF';
         
-        // 随机偏移位置，避免效果重叠
         const offsetX = (Math.random() - 0.5) * 30;
         const offsetY = (Math.random() - 0.5) * 10;
         
-        // 设置样式，让效果显示在按钮外面
         effect.style.cssText = `
             position: fixed;
             color: ${color};
@@ -597,13 +636,9 @@ class GreetingModule {
         
         document.body.appendChild(effect);
         
-        // 强制重绘，确保动画开始
         effect.offsetHeight;
-        
-        // 开始动画
         effect.style.opacity = '1';
         
-        // 添加日志
         console.log(`${type} 效果显示`);
         
         setTimeout(() => {
@@ -627,18 +662,15 @@ class GreetingModule {
         this.updateTime();
         this.updateGreeting();
         
-        // 每秒更新时间
         setInterval(() => {
             this.updateTime();
             this.updateGreeting();
         }, 1000);
         
-        // 每5分钟检查一次节日状态
         setInterval(async () => {
             await this.checkAndUpdateHoliday();
         }, 5 * 60 * 1000);
         
-        // 每整点检查一次
         setInterval(async () => {
             const now = new Date();
             if (now.getMinutes() === 0) {
@@ -647,7 +679,6 @@ class GreetingModule {
         }, 60 * 1000);
     }
 
-    // 检查并更新节日
     async checkAndUpdateHoliday() {
         try {
             const cachedData = this.getCachedHolidayData();
@@ -660,7 +691,6 @@ class GreetingModule {
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             
-            // 如果当前节日是进行中，检查是否已过午夜
             if (cachedData.current && cachedData.current.status === 'active') {
                 const lastUpdate = new Date(cachedData.timestamp);
                 const lastUpdateDate = new Date(lastUpdate.getFullYear(), lastUpdate.getMonth(), lastUpdate.getDate());
@@ -673,7 +703,6 @@ class GreetingModule {
                 }
             }
             
-            // 如果缓存即将过期（10分钟内），重新获取
             if (cachedData.expiresAt - Date.now() < 10 * 60 * 1000) {
                 await this.setupHolidayCountdown();
             }
@@ -712,41 +741,36 @@ class GreetingModule {
         let greeting = '';
         let emoji = '';
         
-        // 固定10个字（不含标点符号）的问候语
         if (hour >= 5 && hour < 9) {
-            greeting = '早上好，朋友！'; // 10个字
+            greeting = '早上好，朋友！';
             emoji = '🍞';
         } else if (hour >= 9 && hour < 12) {
-            greeting = '上午好，朋友！'; // 10个字
+            greeting = '上午好，朋友！';
             emoji = '☀️';
         } else if (hour >= 12 && hour < 14) {
-            greeting = '中午好，朋友！'; // 10个字
+            greeting = '中午好，朋友！';
             emoji = '🍱';
         } else if (hour >= 14 && hour < 18) {
-            greeting = '下午好，朋友！'; // 10个字
+            greeting = '下午好，朋友！';
             emoji = '🌤️';
         } else if (hour >= 18 && hour < 22) {
-            greeting = '晚上好，朋友！'; // 10个字
+            greeting = '晚上好，朋友！';
             emoji = '🍻';
         } else {
-            greeting = '夜深啦，朋友早点休息！'; // 10个字
+            greeting = '夜深啦，朋友早点休息！';
             emoji = '🌌';
         }
         
         const greetingElement = document.getElementById('greeting');
         if (greetingElement) {
-            // 使用新的HTML结构，将emoji和文本分开
             greetingElement.innerHTML = `<span class="greeting-emoji">${emoji}</span> <span class="greeting-text-content">${greeting}</span>`;
         }
     }
 
-    // 添加手动刷新方法
     async refreshHolidayData() {
         try {
-            // 清除缓存
             localStorage.removeItem('holidayDataCache');
             
-            // 显示加载状态
             const holidayCountdownEl = document.getElementById('holidayCountdown');
             if (holidayCountdownEl) {
                 holidayCountdownEl.textContent = "刷新中...";
@@ -754,7 +778,6 @@ class GreetingModule {
                 holidayCountdownEl.classList.remove('active-countdown', 'status-3days', 'status-7days', 'status-more');
             }
             
-            // 重新获取数据
             await this.setupHolidayCountdown();
             
             if (window.app && window.app.showToast) {
@@ -769,14 +792,12 @@ class GreetingModule {
         }
     }
 
-    // 获取木鱼统计数据
     getFishStats() {
         return Storage.get('woodenFish') || {
             merit: 0, luck: 0, wealth: 0, health: 0
         };
     }
 
-    // 重置木鱼数据
     resetFishData() {
         if (confirm('确定要重置所有木鱼计数吗？')) {
             const fishData = {
@@ -791,13 +812,32 @@ class GreetingModule {
             }
         }
     }
+
+    // ===== 优化10：销毁时关闭音频上下文 =====
+    destroy() {
+        if (this.holidayRefreshTimer) {
+            clearTimeout(this.holidayRefreshTimer);
+        }
+        if (this.holidayCheckTimer) {
+            clearInterval(this.holidayCheckTimer);
+        }
+        
+        if (this.audioCtx) {
+            this.audioCtx.close();
+            this.audioCtx = null;
+            this.audioInitialized = false;
+            this.isAudioEnabled = false;
+        }
+        
+        this.initialized = false;
+        this.eventBound = false;
+    }
 }
 
 // 初始化模块
 document.addEventListener('DOMContentLoaded', () => {
     window.greetingModule = new GreetingModule();
     
-    // 添加手动刷新按钮（可选）
     const refreshBtn = document.getElementById('refreshHolidayBtn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
