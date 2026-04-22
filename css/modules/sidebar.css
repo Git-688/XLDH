@@ -1,34 +1,37 @@
-/* ===== 悬浮毛玻璃侧边栏（iOS风格） ===== */
+/* =========================
+   iOS 悬浮毛玻璃侧边栏（完整版）
+========================= */
+
 .sidebar {
     position: fixed;
     left: 0;
 
-    /* 自动上下留白（由JS控制变量） */
+    /* 自动上下留白（JS控制） */
     top: var(--sidebar-top, 80px);
     bottom: var(--sidebar-bottom, 80px);
 
     width: 280px;
     height: auto;
 
-    border-radius: 16px;
+    border-radius: 18px;
     overflow: hidden;
 
-    /* 毛玻璃 */
-    background: rgba(255, 255, 255, 0.6);
+    /* 毛玻璃核心 */
+    background: rgba(255,255,255,0.6);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
 
-    border: 1px solid rgba(255,255,255,0.3);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.25);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
 
     z-index: 999;
 
-    /* 核心：transform 控制进出 */
-    transform: translateX(-110%);
-    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-
     display: flex;
     flex-direction: column;
+
+    /* 动画核心 */
+    transform: translateX(-110%);
+    transition: transform 0.45s cubic-bezier(0.22,1,0.36,1);
 
     will-change: transform;
 }
@@ -38,7 +41,7 @@
     transform: translateX(16px);
 }
 
-/* 内容区 */
+/* 内容区域 */
 .sidebar-content {
     flex: 1;
     display: flex;
@@ -51,6 +54,7 @@
     flex: 1;
     overflow-y: auto;
     padding: 12px;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* 底部 */
