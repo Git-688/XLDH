@@ -1,4 +1,4 @@
-/* 侧滑栏优化版 - 悬浮毛玻璃效果 + 壁纸显示统一 */
+/* 侧滑栏优化版 - 悬浮毛玻璃效果 + 壁纸完整显示无裁剪 */
 :root {
     --navbar-height: 60px;       /* 顶部导航栏固定高度 */
     --sidebar-margin: 20px;      /* 上下统一留白距离（导航栏底部→侧滑栏顶部 / 侧滑栏底部→浏览器底部） */
@@ -34,15 +34,15 @@
     left: var(--sidebar-margin); /* 展开时左侧也留白，完全悬浮 */
 }
 
-/* 侧滑栏壁纸区域 - 统一高度比例 */
+/* 侧滑栏壁纸区域 - 完整显示无裁剪 */
 .sidebar-wallpaper {
     position: relative;
-    height: 30%; /* 从32%下调，与移动端比例统一 */
-    background: transparent;
+    height: 30%; /* 壁纸容器高度，可根据需要调整 */
+    background: rgba(255, 255, 255, 0.1); /* 壁纸留白区域背景，与整体融合 */
     overflow: hidden;
     flex-shrink: 0;
-    background-size: cover;
-    background-position: center center; /* 统一背景图居中 */
+    background-size: contain; /* 图片壁纸完整显示 */
+    background-position: center center; /* 壁纸居中 */
     background-repeat: no-repeat;
     user-select: none !important;
     -webkit-user-select: none !important;
@@ -121,18 +121,17 @@
     text-overflow: ellipsis;
 }
 
-/* 视频壁纸样式 - 核心修改：统一显示效果 */
+/* 视频壁纸样式 - 核心修改：完整显示无裁剪 */
 .sidebar-wallpaper video {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%); /* 绝对居中 */
-    min-height: 100%; /* 强制高度填满容器 */
-    min-width: 100%; /* 最小宽度填满容器 */
-    width: auto; /* 宽度自动计算 */
-    height: 100%; /* 高度永远等于容器高度 */
-    object-fit: cover;
-    object-position: center center; /* 统一裁剪中心区域 */
+    width: 100%; /* 宽度与侧滑栏完全一致 */
+    height: auto; /* 高度按比例自动缩放 */
+    max-height: 100%; /* 最大高度不超过容器 */
+    object-fit: contain; /* 完整显示，不裁剪 */
+    object-position: center center; /* 居中对齐 */
     z-index: 0;
     display: block !important;
     opacity: 0.95 !important;
@@ -604,7 +603,7 @@
     color: var(--text-primary);
 }
 
-/* 响应式设计 - 壁纸高度统一调整 */
+/* 响应式设计 - 壁纸完整显示统一 */
 @media (max-width: 768px) {
     :root {
         --sidebar-margin: 16px; /* 平板端留白减小 */
@@ -617,7 +616,8 @@
         left: var(--sidebar-margin);
     }
     .sidebar-wallpaper {
-        height: 28%; /* 与桌面端30%接近 */
+        height: 28%; /* 与桌面端比例统一 */
+        background: rgba(255, 255, 255, 0.1);
     }
     
     .sidebar-wallpaper-user-info {
@@ -670,7 +670,8 @@
         left: var(--sidebar-margin);
     }
     .sidebar-wallpaper {
-        height: 26%; /* 与桌面端30%接近 */
+        height: 26%; /* 与桌面端比例统一 */
+        background: rgba(255, 255, 255, 0.1);
     }
     
     .sidebar-wallpaper-user-info {
@@ -714,6 +715,7 @@
     }
     .sidebar-wallpaper {
         height: 24%; /* 横屏小高度设备微调 */
+        background: rgba(255, 255, 255, 0.1);
     }
     
     .sidebar-wallpaper-user-info {
@@ -738,6 +740,7 @@
 @media (min-width: 1920px) {
     .sidebar-wallpaper {
         height: 32%; /* 超大屏幕稍微增加高度 */
+        background: rgba(255, 255, 255, 0.1);
     }
     
     .sidebar-wallpaper-user-info {
@@ -790,6 +793,10 @@
     .sidebar {
         background: rgba(30, 30, 30, 0.85); /* 深色半透明背景 */
         border-color: rgba(255, 255, 255, 0.15); /* 深色模式边框 */
+    }
+    
+    .sidebar-wallpaper {
+        background: rgba(30, 30, 30, 0.2); /* 深色模式壁纸留白背景 */
     }
     
     .sidebar-wallpaper-overlay {
