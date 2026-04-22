@@ -1,7 +1,6 @@
 /**
  * 优化分类导航系统（完全基于后端 Worker + D1）
- * 移除了单链接检测按钮
- * 优化1：添加图片懒加载属性
+ * 优化9：添加加载骨架屏
  */
 class OptimizedNavigation {
     constructor() {
@@ -17,10 +16,16 @@ class OptimizedNavigation {
         };
         
         this.isNavigationClick = false;
+        
+        // 骨架屏配置
+        this.skeletonCount = 6; // 显示的骨架卡片数量
     }
 
     async init() {
         if (this.isInitialized) return;
+        
+        // 立即显示骨架屏
+        this.showSkeleton();
         
         try {
             await this.loadNavigationData();
@@ -39,6 +44,39 @@ class OptimizedNavigation {
             console.error('优化分类导航初始化失败:', error);
             this.showError();
         }
+    }
+
+    // 显示骨架屏
+    showSkeleton() {
+        const container = document.getElementById('level3Content');
+        if (!container) return;
+        container.innerHTML = this.generateSkeletonHTML();
+    }
+
+    // 生成骨架屏 HTML
+    generateSkeletonHTML() {
+        let html = '';
+        for (let i = 0; i < this.skeletonCount; i++) {
+            html += `
+                <div class="site-card skeleton-card">
+                    <div class="card-top">
+                        <div class="icon-container skeleton-icon"></div>
+                        <div class="card-top-right">
+                            <div class="skeleton-btn"></div>
+                            <div class="views-container">
+                                <div class="skeleton-views"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="divider-line skeleton-divider"></div>
+                    <div class="card-bottom">
+                        <div class="site-title skeleton-title"></div>
+                        <div class="site-description skeleton-description"></div>
+                    </div>
+                </div>
+            `;
+        }
+        return html;
     }
 
     async loadNavigationData(retryCount = 0) {
@@ -157,7 +195,9 @@ class OptimizedNavigation {
         }
         
         const sortedSites = [...sites].sort((a, b) => (b.priority || 0) - (a.priority || 0));
-        container.innerHTML = '';
+        
+        // 使用文档片段批量插入，提升性能
+        const fragment = document.createDocumentFragment();
         
         sortedSites.forEach((site) => {
             const card = document.createElement('a');
@@ -183,8 +223,7 @@ class OptimizedNavigation {
             let iconHtml = '';
             if (site.icon) {
                 if (site.icon.startsWith('http') || site.icon.startsWith('./') || site.icon.startsWith('../') || site.icon.includes('assets/') || site.icon.includes('.png') || site.icon.includes('.jpg') || site.icon.includes('.ico') || site.icon.includes('.svg')) {
-                    // ===== 优化1：添加 loading="lazy" 和 decoding="async" =====
-                    iconHtml = `<img src="${site.icon}" alt="${site.title}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTYgMkM4LjIgMiAyIDguMiAyIDE2czYuMiAxNCAxNCAxNCAxNC02LjIgMTQtMTRTMjMuOCAyIDE2IDJ6bTAgNGEyIDIgMCAxIDAgMCA0IDIgMiAwIDAgMCAwLTR6bTQgMTRINnYtMmg0LjdsMy42LTMuNmMuMi0uMi4zLS40LjMtLjZWMTRoNHY0LjhsLTQgNHYyaDZ2LTJ6IiBmaWxsPSIjZmZmIi8+PC9zdmc+'">`;
+                    iconHtml = `<img src="${site.icon}" alt="${site.title}" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTYgMkM4LjIgMiAyIDguMiAyIDE2czYuMiAxNCAxNCAxNCAxNC02LjIgMTQtMTRTMjMuOCAyIDE2IDJ6bTAgNGEyIDIgMCAxIDAgMCA0IDIgMiAwIDAgMCAwLTR6bTQgMTRINnYtMmg0LjdsMy42LTMuNmMuMi0uMi4zLS40LjMtLjZWMTRoNHY0LjhsLTQgNHYyaDZ2LTJ6IiBmaWxsPSIjZmZmIi8+PC9zdmc+'">`;
                 } else if (site.icon.startsWith('fas ') || site.icon.startsWith('fab ') || site.icon.startsWith('far ')) {
                     iconHtml = `<i class="${site.icon}"></i>`;
                 } else {
@@ -194,7 +233,6 @@ class OptimizedNavigation {
                 iconHtml = '<i class="fas fa-link"></i>';
             }
             
-            // 卡片 HTML（移除了检测按钮）
             card.innerHTML = `
                 <div class="card-top">
                     <div class="icon-container">${iconHtml}</div>
@@ -215,7 +253,7 @@ class OptimizedNavigation {
                 </div>
             `;
             
-            // 绑定点击统计（点击卡片时，排除按钮区域）
+            // 绑定点击统计
             card.addEventListener('click', (e) => {
                 if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) {
                     return;
@@ -278,11 +316,19 @@ class OptimizedNavigation {
                 });
             }
             
+            fragment.appendChild(card);
+        });
+        
+        // 清空容器并一次性添加所有卡片
+        container.innerHTML = '';
+        container.appendChild(fragment);
+        
+        // 添加淡入动画
+        const cards = container.querySelectorAll('.site-card');
+        cards.forEach((card, index) => {
             requestAnimationFrame(() => {
-                card.style.animation = 'fadeIn 0.2s ease forwards';
+                card.style.animation = `fadeIn 0.2s ease ${index * 0.02}s forwards`;
             });
-            
-            container.appendChild(card);
         });
         
         this.showStatsSummary();
@@ -342,6 +388,10 @@ class OptimizedNavigation {
         }
         
         this.renderLevel2(level1);
+        
+        // 切换分类时显示骨架屏
+        this.showSkeleton();
+        
         const firstLevel2 = this.getFirstSubCategory(level1);
         if (firstLevel2) {
             this.selectLevel2(firstLevel2, isUserClick);
@@ -367,7 +417,14 @@ class OptimizedNavigation {
             }
         }
         
-        this.renderLevel3(this.selectedLevel1, level2);
+        // 切换子分类时显示骨架屏
+        this.showSkeleton();
+        
+        // 使用 setTimeout 确保 UI 更新后再渲染内容
+        setTimeout(() => {
+            this.renderLevel3(this.selectedLevel1, level2);
+        }, 50);
+        
         setTimeout(() => { this.isNavigationClick = false; }, 100);
     }
 
@@ -449,6 +506,7 @@ class OptimizedNavigation {
     refresh() {
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
+        this.showSkeleton();
         this.init();
     }
 
