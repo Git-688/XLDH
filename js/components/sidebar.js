@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 动态计算悬浮毛玻璃版
+ * 侧边栏组件 - 强制留白+动态计算修复版
  */
 class CompactSidebar {
     constructor() {
@@ -75,23 +75,29 @@ class CompactSidebar {
         this.currentVideo = null;
     }
 
-    // 核心：动态计算侧边栏位置（自动适配导航栏+底部工具栏）
+    // 核心修复：强制超大留白，绝不贴顶贴底
     computeSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
         const navbar = document.getElementById('navbar');
         if (!sidebar || !navbar) return;
 
+        // 强制顶部留白：导航栏高度 + 60px超大间距
         const navbarHeight = navbar.offsetHeight;
-        const gap = parseInt(getComputedStyle(sidebar).getPropertyValue('--sidebar-gap') || 30);
+        const top = navbarHeight + 60;
+        // 强制底部留白：60px超大间距 + 系统安全区
         const bottomSafe = parseInt(getComputedStyle(document.documentElement).getPropertyValue('safe-area-inset-bottom') || 0);
-        
-        const top = navbarHeight + gap;
-        const bottom = gap + bottomSafe;
+        const bottom = 60 + bottomSafe;
+        // 最大高度：确保上下都有留白
         const maxHeight = `calc(100vh - ${top}px - ${bottom}px)`;
 
+        // 强制赋值CSS变量，覆盖所有样式
         sidebar.style.setProperty('--sidebar-top', `${top}px`);
         sidebar.style.setProperty('--sidebar-bottom', `${bottom}px`);
         sidebar.style.setProperty('--sidebar-max-height', maxHeight);
+        // 双保险：直接行内样式覆盖
+        sidebar.style.top = `${top}px`;
+        sidebar.style.bottom = `${bottom}px`;
+        sidebar.style.maxHeight = maxHeight;
     }
 
     async init() {
@@ -110,7 +116,7 @@ class CompactSidebar {
             await this.loadWallpaperUserInfo();
             this.createProfileModal();
 
-            // 初始化动态计算 + 监听窗口变化
+            // 初始化计算 + 监听窗口变化
             this.computeSidebarPosition();
             window.addEventListener('resize', () => this.computeSidebarPosition());
             window.addEventListener('orientationchange', () => {
@@ -121,7 +127,6 @@ class CompactSidebar {
             window.sidebar = this;
         } catch (error) {
             console.error('侧滑栏初始化失败:', error);
-            window.toast.show('侧滑栏初始化失败', 'error');
         }
     }
 
@@ -168,7 +173,6 @@ class CompactSidebar {
         const close = () => modal.classList.remove('active');
         closeBtn?.addEventListener('click', close);
         modal?.addEventListener('click', e => e.target === modal && close());
-        document.addEventListener('keydown', e => e.key === 'Escape' && modal.classList.contains('active') && close());
         qqInput?.addEventListener('input', () => this.autoGetQQAvatar());
         form?.addEventListener('submit', e => { e.preventDefault(); this.saveProfileSettings(); });
     }
@@ -189,7 +193,6 @@ class CompactSidebar {
         if (url) {
             preview.src = url;
             status.textContent = '获取成功'; status.className = 'qq-avatar-status success';
-            Storage.set('userConfig', { ...Storage.get('userConfig'), avatar: url });
         } else {
             status.textContent = '获取失败'; status.className = 'qq-avatar-status error';
         }
@@ -204,7 +207,7 @@ class CompactSidebar {
         Storage.set('userConfig', user);
         this.loadWallpaperUserInfo();
         document.getElementById('profileModal').classList.remove('active');
-        window.toast.show('保存成功', 'success');
+        window.toast?.show('保存成功', 'success');
     }
 
     openProfileModal() {
@@ -213,7 +216,6 @@ class CompactSidebar {
         document.getElementById('nickname').value = user.nickname || '';
         document.getElementById('signature').value = user.signature || '';
         document.getElementById('qqAvatarPreview').src = user.avatar || this.getDefaultAvatarSVG();
-        document.getElementById('qqNumber').value = '';
         modal.classList.add('active');
     }
 
@@ -254,7 +256,6 @@ class CompactSidebar {
                     cat.expanded = !cat.expanded;
                     group.classList.toggle('expanded', cat.expanded);
                     group.querySelector('.category-items').style.maxHeight = cat.expanded ? '500px' : '0';
-                    Storage.set('sidebar_categories_state', this.categories.map(c => ({name:c.name, expanded:c.expanded})));
                 }
             }
             if (item) {
@@ -269,8 +270,7 @@ class CompactSidebar {
     show() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
-        this.closeAllModals();
-        this.computeSidebarPosition();
+        this.computeSidebarPosition(); // 打开时重新计算
         sidebar.classList.add('active');
         this.loadSidebarWallpaper();
         document.body.classList.add('sidebar-open');
@@ -290,13 +290,6 @@ class CompactSidebar {
 
     isVisible() {
         return document.getElementById('sidebar')?.classList.contains('active') || false;
-    }
-
-    closeAllModals() {
-        window.searchModule?.hide();
-        window.announcementModule?.hide();
-        window.app?.modules.weather?.hide();
-        window.aboutModule?.hide();
     }
 
     async loadSidebarWallpaper() {
@@ -335,19 +328,11 @@ class CompactSidebar {
     getDefaultAvatarSVG() {
         return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
     }
-
-    destroy() {
-        this.currentVideo?.pause();
-        this.isInitialized = false;
-    }
 }
 
 // 自动初始化
-if (!window.sidebarInitialized) {
-    window.sidebarInitialized = true;
-    document.addEventListener('DOMContentLoaded', () => {
-        window.sidebar = new CompactSidebar();
-        window.sidebar.init();
-    });
-}
+document.addEventListener('DOMContentLoaded', () => {
+    window.sidebar = new CompactSidebar();
+    window.sidebar.init();
+});
 window.getSidebar = () => window.sidebar;
