@@ -149,62 +149,6 @@ this.registerPlugin('qq', {
 });
 
 
-
-    // 获取热歌榜（自动填充播放地址+封面+准确专辑名）
-    getPlaylist: async (playlistId, count = 30) => {
-        const safeCount = Math.min(Math.max(1, count), 30);
-        const cacheKey = `qq_hot_playlist_full_${safeCount}`;
-        const cached = this.cacheManager.get(cacheKey);
-        if (cached) return cached;
-
-        try {
-            // 1. 从云智API获取热歌基础列表
-            const hotResponse = await fetch(
-                `https://yunzhiapi.cn/API/qqrgbd.php?token=XIZhAXKnSQcH&count=${safeCount}`,
-                { signal: AbortSignal.timeout(8000) }
-            );
-            
-            if (!hotResponse.ok) throw new Error(`热歌榜HTTP错误: ${hotResponse.status}`);
-            const hotResult = await hotResponse.json();
-            
-            if (hotResult.code !== 1) throw new Error(`热歌榜API错误: ${hotResult.msg}`);
-
-            // 2. 批量获取所有歌曲的完整信息（播放地址+封面+准确专辑名）
-            const songsWithFullInfo = await Promise.all(
-                hotResult.data.map(async (song) => {
-                    const { playUrl, cover, album } = await this._getSongInfoBySongmid(song.songmid);
-                    return this.formatSong({
-                        // 优先使用Meting返回的准确歌曲名和专辑名
-                        title: song.albumname,
-                        artist: song.name,
-                        album: album || song.albumname, // 兜底使用原API的albumname
-                        url: playUrl, // 真实可播放音频地址
-                        cover: cover, // 自动获取的官方封面
-                        pageUrl: song.link,
-                        songmid: song.songmid
-                    }, 'qq');
-                })
-            );
-
-            // 过滤掉播放地址获取失败的无效歌曲
-            const validSongs = songsWithFullInfo.filter(song => song.url);
-            
-            // 完整热歌列表缓存30分钟
-            this.cacheManager.set(cacheKey, validSongs, 30 * 60 * 1000);
-            return validSongs;
-        } catch (error) {
-            console.error('QQ音乐热歌榜加载失败:', error);
-            return [];
-        }
-    },
-
-    // 搜索方法兼容（该API不支持搜索，返回热歌）
-    search: async (keyword, count = 20) => {
-        return await this.getPlaylist(null, count);
-    }
-});
-
-
         // 抖音热歌榜插件（原migu）
         this.registerPlugin('migu', {
             name: '抖音热歌榜',
