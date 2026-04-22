@@ -56,50 +56,56 @@ class PluginManager {
             }
         });
 
-        // QQ音乐插件（已更换为云智热歌API）
+        // QQ音乐插件（最终适配云智热歌API）
 this.registerPlugin('qq', {
     name: 'QQ音乐',
-    version: '1.1.0',
-    description: '基于云智API获取QQ音乐热歌榜',
-    // 原getPlaylist方法改为获取热歌（参数playlistId不再使用，保留兼容）
-    getPlaylist: async (playlistId, count = 20) => {
-        const cacheKey = `qq_hot_${count}`;
+    version: '1.2.0',
+    description: '基于云智API获取QQ音乐热歌榜（含songmid）',
+    // 获取热歌榜（原getPlaylist兼容，playlistId参数废弃）
+    getPlaylist: async (playlistId, count = 30) => {
+        // 限制最大返回数量为API支持的30条
+        const safeCount = Math.min(Math.max(1, count), 30);
+        const cacheKey = `qq_hot_${safeCount}`;
         const cached = this.cacheManager.get(cacheKey);
         if (cached) return cached;
 
         try {
-            // 云智API必填参数：token + count
-            const response = await fetch(`https://yunzhiapi.cn/API/qqrgbd.php?token=XIZhAXKnSQcH&count=${count}`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const response = await fetch(`https://yunzhiapi.cn/API/qqrgbd.php?token=XIZhAXKnSQcH&count=${safeCount}`);
+            if (!response.ok) throw new Error(`HTTP错误: ${response.status}`);
             
             const result = await response.json();
-            // 处理云智API业务错误（如token无效、参数错误）
-            if (result.code !== 200) throw new Error(`API错误: ${result.msg || '未知错误'}`);
+            // 修正：该API成功状态码为1，非200
+            if (result.code !== 1) throw new Error(`API业务错误: ${result.msg || '未知错误'}`);
             
-            // 适配接口返回字段（按文档：albumname=歌曲名，name=歌手，link=歌曲详情页）
-            // 注：文档中link类型标注为integer，实际应为字符串URL，使用时请根据真实返回调整
+            // 完全匹配你提供的真实返回字段
             const formatted = result.data.map(song => this.formatSong({
-                title: song.albumname,
+                // 字段歧义说明：albumname实际混合了歌曲名和专辑名
+                title: song.albumname, 
                 artist: song.name,
-                url: song.link,
-                // 可根据实际返回补充专辑、封面等字段
                 album: song.albumname,
+                // 注意：link是QQ音乐网页详情页，不是音频播放链接！
+                pageUrl: song.link,
+                // 新增QQ音乐标准songmid，用于后续获取真实播放地址
+                songmid: song.songmid,
+                // 预留播放地址字段（需额外接口获取）
+                url: '',
                 cover: ''
             }, 'qq'));
             
-            this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000); // 缓存30分钟
+            // 缓存时间调整为1小时（热歌榜更新频率）
+            this.cacheManager.set(cacheKey, formatted, 60 * 60 * 1000);
             return formatted;
         } catch (error) {
-            console.error('QQ音乐热歌请求失败:', error);
+            console.error('QQ音乐热歌榜获取失败:', error);
             return [];
         }
     },
-    // 原search方法改为获取热歌（参数keyword不再使用，保留兼容）
+    // 搜索方法兼容（该API不支持搜索，返回热歌）
     search: async (keyword, count = 20) => {
-        // 复用热歌获取逻辑（因接口不支持搜索）
         return await this.getPlaylist(null, count);
     }
 });
+
 
         // 抖音热歌榜插件（原migu）
         this.registerPlugin('migu', {
