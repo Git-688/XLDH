@@ -1,22 +1,28 @@
 class CompactSidebar {
     constructor() {
-        this.sidebar = document.getElementById('sidebar');
-        if (!this.sidebar) return;
+        if (!document.getElementById('sidebar')) return;
 
+        this.sidebar = document.getElementById('sidebar');
+
+        /* ===== 手势参数 ===== */
         this.dragging = false;
         this.startX = 0;
         this.currentX = 0;
         this.sidebarWidth = 280;
 
-        this.init();
+        this.isInitialized = false;
     }
 
     async init() {
+        if (this.isInitialized) return;
+
         this.adjustSidebarHeight();
         this.initGesture();
+
+        this.isInitialized = true;
     }
 
-    /* ===== 自动计算上下留白 ===== */
+    /* ===== 自动上下留白 ===== */
     adjustSidebarHeight() {
         const update = () => {
             const nav = document.querySelector('.navbar');
@@ -47,17 +53,22 @@ class CompactSidebar {
         this.sidebar.style.transform = 'translateX(-110%)';
     }
 
+    toggle() {
+        this.isVisible() ? this.hide() : this.show();
+    }
+
     isVisible() {
         return this.sidebar.classList.contains('active');
     }
 
-    /* ===== iOS 手势核心 ===== */
+    /* ===== iOS 手势（完整版） ===== */
     initGesture() {
         const sidebar = this.sidebar;
         const threshold = 80;
 
         const onStart = (e) => {
             const t = e.touches ? e.touches[0] : e;
+
             this.dragging = true;
             this.startX = t.clientX;
             this.currentX = t.clientX;
@@ -73,19 +84,28 @@ class CompactSidebar {
 
             let delta = this.currentX - this.startX;
 
-            /* 从左边拖出 */
+            /* 从左滑出 */
             if (!this.isVisible()) {
                 if (this.startX > 30) return;
 
                 delta = Math.max(0, Math.min(delta, this.sidebarWidth));
-                sidebar.style.transform = `translateX(${delta - this.sidebarWidth}px)`;
-            } 
+
+                /* 阻尼（更像 iOS） */
+                const resistance = delta * 0.9;
+
+                sidebar.style.transform =
+                    `translateX(${resistance - this.sidebarWidth}px)`;
+            }
+
             /* 拖回关闭 */
             else {
                 delta = Math.min(0, delta);
                 delta = Math.max(-this.sidebarWidth, delta);
 
-                sidebar.style.transform = `translateX(${delta + 16}px)`;
+                const resistance = delta * 0.9;
+
+                sidebar.style.transform =
+                    `translateX(${resistance + 16}px)`;
             }
         };
 
@@ -93,19 +113,23 @@ class CompactSidebar {
             if (!this.dragging) return;
             this.dragging = false;
 
-            sidebar.style.transition = 'transform 0.4s cubic-bezier(0.22,1,0.36,1)';
+            sidebar.style.transition =
+                'transform 0.45s cubic-bezier(0.22,1,0.36,1)';
 
             const delta = this.currentX - this.startX;
 
+            /* 打开判定 */
             if (!this.isVisible()) {
                 delta > threshold ? this.show() : this.hide();
-            } else {
+            }
+            /* 关闭判定 */
+            else {
                 delta < -threshold ? this.hide() : this.show();
             }
         };
 
-        document.addEventListener('touchstart', onStart);
-        document.addEventListener('touchmove', onMove);
+        document.addEventListener('touchstart', onStart, { passive: true });
+        document.addEventListener('touchmove', onMove, { passive: true });
         document.addEventListener('touchend', onEnd);
 
         document.addEventListener('mousedown', onStart);
@@ -114,7 +138,11 @@ class CompactSidebar {
     }
 }
 
-/* 初始化 */
-window.addEventListener('DOMContentLoaded', () => {
+/* ===== 初始化 ===== */
+if (!window.sidebar) {
     window.sidebar = new CompactSidebar();
-});
+
+    window.addEventListener('DOMContentLoaded', () => {
+        window.sidebar.init();
+    });
+}
