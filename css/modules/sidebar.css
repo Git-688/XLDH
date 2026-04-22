@@ -1,10 +1,14 @@
-/* 侧滑栏优化版 - 悬浮毛玻璃效果 */
+/* 侧滑栏最终优化版 - 统一显示+丝滑动画 */
 :root {
     --navbar-height: 60px;       /* 顶部导航栏固定高度 */
-    --sidebar-margin: 20px;      /* 上下统一留白距离（导航栏底部→侧滑栏顶部 / 侧滑栏底部→浏览器底部） */
+    --sidebar-margin: 24px;      /* 上下统一留白（增大4px） */
+    --sidebar-left-margin: 24px; /* 左侧留白（与上下一致） */
+    --sidebar-width: 260px;      /* 侧滑栏宽度（缩小20px） */
     --sidebar-radius: 16px;      /* 悬浮圆角大小 */
     --sidebar-blur: 12px;        /* 毛玻璃模糊程度 */
     --wallpaper-fade-duration: 0.5s; /* 壁纸淡入时长 */
+    --sidebar-animation-duration: 0.4s; /* 侧滑栏动画时长 */
+    --sidebar-animation-curve: cubic-bezier(0.4, 0, 0.2, 1); /* 丝滑缓动曲线 */
 }
 
 .sidebar {
@@ -13,31 +17,34 @@
     top: calc(var(--navbar-height) + env(safe-area-inset-top, 0px) + var(--sidebar-margin));
     /* 动态计算底部位置：底部留白 + 底部工具栏安全区域 */
     bottom: calc(var(--sidebar-margin) + env(safe-area-inset-bottom, 0px));
-    left: -290px; /* 比宽度多10px，隐藏时完全移出屏幕 */
-    width: 280px;
-    /* 移除固定高度，由 top+bottom 自动撑满，实现上下等距留白 */
+    left: 0;
+    /* 使用transform实现GPU加速动画，比left更流畅 */
+    transform: translateX(calc(-1 * (var(--sidebar-width) + var(--sidebar-left-margin) + 10px)));
+    width: var(--sidebar-width);
     background: rgba(255, 255, 255, 0.85); /* 半透明白色背景 */
     backdrop-filter: blur(var(--sidebar-blur)); /* 核心毛玻璃效果 */
     -webkit-backdrop-filter: blur(var(--sidebar-blur)); /* Safari 兼容 */
     border: 1px solid rgba(255, 255, 255, 0.3); /* 白色细边框增强悬浮感 */
     border-radius: var(--sidebar-radius); /* 全圆角悬浮效果 */
     z-index: 998; /* 比导航栏低1级，避免覆盖导航栏 */
-    transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    /* 只过渡transform属性，性能最优，动画最丝滑 */
+    transition: transform var(--sidebar-animation-duration) var(--sidebar-animation-curve);
     display: flex;
     flex-direction: column;
     box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12); /* 柔和大阴影增强悬浮感 */
     overflow: hidden;
+    will-change: transform; /* 提前告知浏览器优化动画 */
 }
 
 /* 侧滑栏展开状态 */
 .sidebar.active {
-    left: var(--sidebar-margin); /* 展开时左侧也留白，完全悬浮 */
+    transform: translateX(var(--sidebar-left-margin));
 }
 
-/* 侧滑栏壁纸区域 - 完全铺满无留白 */
+/* 侧滑栏壁纸区域 - 全设备统一显示 */
 .sidebar-wallpaper {
     position: relative;
-    height: 30%;
+    height: 30%; /* 全设备统一高度比例 */
     background: transparent;
     overflow: hidden;
     flex-shrink: 0;
@@ -118,15 +125,15 @@
     text-overflow: ellipsis;
 }
 
-/* 视频壁纸样式 - 核心修复：按比例铺满无留白 */
+/* 视频壁纸样式 - 全设备统一显示逻辑 */
 .sidebar-wallpaper video {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 按比例铺满容器，无留白 */
-    object-position: center center; /* 居中裁剪多余部分 */
+    object-fit: cover; /* 按比例铺满无留白 */
+    object-position: center center; /* 全设备统一裁剪中心 */
     z-index: 0;
     display: block !important;
     opacity: 0.95 !important;
@@ -598,20 +605,16 @@
     color: var(--text-primary);
 }
 
-/* 响应式设计 */
+/* 响应式设计 - 全设备比例统一 */
 @media (max-width: 768px) {
     :root {
-        --sidebar-margin: 16px; /* 平板端留白减小 */
+        --sidebar-margin: 20px; /* 平板端留白同步减小 */
+        --sidebar-left-margin: 20px;
+        --sidebar-width: 240px; /* 平板端宽度同步缩小 */
     }
-    .sidebar {
-        width: 260px;
-        left: -270px;
-    }
-    .sidebar.active {
-        left: var(--sidebar-margin);
-    }
+    
     .sidebar-wallpaper {
-        height: 28%;
+        height: 30%; /* 与桌面端完全一致的高度比例 */
     }
     
     .sidebar-wallpaper-user-info {
@@ -654,17 +657,13 @@
 
 @media (max-width: 575px) {
     :root {
-        --sidebar-margin: 12px; /* 手机端留白进一步减小 */
+        --sidebar-margin: 16px; /* 手机端留白同步减小 */
+        --sidebar-left-margin: 16px;
+        --sidebar-width: 220px; /* 手机端宽度同步缩小 */
     }
-    .sidebar {
-        width: 240px;
-        left: -250px;
-    }
-    .sidebar.active {
-        left: var(--sidebar-margin);
-    }
+    
     .sidebar-wallpaper {
-        height: 26%;
+        height: 30%; /* 与桌面端完全一致的高度比例 */
     }
     
     .sidebar-wallpaper-user-info {
@@ -705,9 +704,11 @@
 @media (max-height: 500px) and (orientation: landscape) {
     :root {
         --sidebar-margin: 10px;
+        --sidebar-left-margin: 10px;
     }
+    
     .sidebar-wallpaper {
-        height: 24%;
+        height: 24%; /* 横屏小高度设备微调 */
     }
     
     .sidebar-wallpaper-user-info {
@@ -731,7 +732,7 @@
 
 @media (min-width: 1920px) {
     .sidebar-wallpaper {
-        height: 32%;
+        height: 30%; /* 超大屏幕也保持统一高度比例 */
     }
     
     .sidebar-wallpaper-user-info {
