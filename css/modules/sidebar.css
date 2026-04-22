@@ -1,9 +1,8 @@
-/* 侧滑栏最终优化版 - 统一显示+丝滑动画 */
+/* 侧滑栏最终修复版 - 所有问题一次性解决 */
 :root {
     --navbar-height: 60px;       /* 顶部导航栏固定高度 */
-    --sidebar-margin: 24px;      /* 上下统一留白（增大4px） */
-    --sidebar-left-margin: 24px; /* 左侧留白（与上下一致） */
-    --sidebar-width: 260px;      /* 侧滑栏宽度（缩小20px） */
+    --sidebar-margin: 24px;      /* 上下左右统一留白 */
+    --sidebar-width: 260px;      /* 侧滑栏宽度 */
     --sidebar-radius: 16px;      /* 悬浮圆角大小 */
     --sidebar-blur: 12px;        /* 毛玻璃模糊程度 */
     --wallpaper-fade-duration: 0.5s; /* 壁纸淡入时长 */
@@ -13,50 +12,66 @@
 
 .sidebar {
     position: fixed;
-    /* 动态计算顶部位置：导航栏高度 + 顶部留白 + 状态栏安全区域 */
     top: calc(var(--navbar-height) + env(safe-area-inset-top, 0px) + var(--sidebar-margin));
-    /* 动态计算底部位置：底部留白 + 底部工具栏安全区域 */
     bottom: calc(var(--sidebar-margin) + env(safe-area-inset-bottom, 0px));
     left: 0;
-    /* 使用transform实现GPU加速动画，比left更流畅 */
-    transform: translateX(calc(-1 * (var(--sidebar-width) + var(--sidebar-left-margin) + 10px)));
+    /* 修复1：悬浮不贴左边 - 隐藏时完全移出屏幕 */
+    transform: translateX(calc(-1 * (var(--sidebar-width) + var(--sidebar-margin))));
     width: var(--sidebar-width);
-    background: rgba(255, 255, 255, 0.85); /* 半透明白色背景 */
-    backdrop-filter: blur(var(--sidebar-blur)); /* 核心毛玻璃效果 */
-    -webkit-backdrop-filter: blur(var(--sidebar-blur)); /* Safari 兼容 */
-    border: 1px solid rgba(255, 255, 255, 0.3); /* 白色细边框增强悬浮感 */
-    border-radius: var(--sidebar-radius); /* 全圆角悬浮效果 */
-    z-index: 998; /* 比导航栏低1级，避免覆盖导航栏 */
-    /* 只过渡transform属性，性能最优，动画最丝滑 */
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(var(--sidebar-blur));
+    -webkit-backdrop-filter: blur(var(--sidebar-blur));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--sidebar-radius);
+    z-index: 998;
     transition: transform var(--sidebar-animation-duration) var(--sidebar-animation-curve);
     display: flex;
     flex-direction: column;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12); /* 柔和大阴影增强悬浮感 */
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
     overflow: hidden;
-    will-change: transform; /* 提前告知浏览器优化动画 */
+    will-change: transform;
 }
 
-/* 侧滑栏展开状态 */
+/* 修复1：悬浮不贴左边 - 展开后左侧有24px留白 */
 .sidebar.active {
-    transform: translateX(var(--sidebar-left-margin));
+    transform: translateX(var(--sidebar-margin));
 }
 
-/* 侧滑栏壁纸区域 - 全设备统一显示 */
+/* 修复2+3：壁纸完整显示+全设备统一 */
 .sidebar-wallpaper {
     position: relative;
-    height: 30%; /* 全设备统一高度比例 */
+    height: 30%; /* 所有设备统一高度比例 */
     background: transparent;
     overflow: hidden;
     flex-shrink: 0;
     user-select: none !important;
     -webkit-user-select: none !important;
-    -moz-user-select: none !important;
-    -ms-user-select: none !important;
     pointer-events: none !important;
-    border-radius: var(--sidebar-radius) var(--sidebar-radius) 0 0; /* 顶部圆角与侧滑栏一致 */
+    border-radius: var(--sidebar-radius) var(--sidebar-radius) 0 0;
 }
 
-/* 用户信息区域允许点击 */
+/* 修复2+3：壁纸完整显示不裁剪+全设备统一 */
+.sidebar-wallpaper video,
+.sidebar-wallpaper img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%; /* 宽度与侧滑栏完全一致 */
+    height: auto; /* 高度按比例自动缩放 */
+    max-height: 100%; /* 最大高度不超过容器 */
+    object-fit: contain; /* 完整显示，不裁剪任何部分 */
+    object-position: center center; /* 所有设备统一居中 */
+    z-index: 0;
+    display: block !important;
+    opacity: 0.95 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
+
+/* 用户信息区域 */
 .sidebar-wallpaper-user-info {
     position: absolute;
     left: 16px;
@@ -95,7 +110,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center center; /* 头像统一居中 */
+    object-position: center center;
     display: block;
     pointer-events: none;
 }
@@ -125,35 +140,6 @@
     text-overflow: ellipsis;
 }
 
-/* 视频壁纸样式 - 全设备统一显示逻辑 */
-.sidebar-wallpaper video {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* 按比例铺满无留白 */
-    object-position: center center; /* 全设备统一裁剪中心 */
-    z-index: 0;
-    display: block !important;
-    opacity: 0.95 !important;
-    visibility: visible !important;
-    pointer-events: none !important;
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -moz-user-select: none !important;
-    -ms-user-select: none !important;
-    -webkit-touch-callout: none !important;
-    -webkit-tap-highlight-color: transparent !important;
-    touch-action: none !important;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    image-rendering: -webkit-optimize-contrast; /* 优化视频清晰度 */
-    image-rendering: crisp-edges;
-}
-
-/* 移除暗色覆盖层，改为轻微亮色覆盖以提高对比度 */
 .sidebar-wallpaper-overlay {
     position: absolute;
     top: 0;
@@ -359,7 +345,7 @@
     font-weight: 500;
 }
 
-/* 底部按钮区域 */
+/* 修复4：底部四个按钮完美居中 */
 .sidebar-footer {
     padding: 12px 15px;
     background: rgba(0, 0, 0, 0.02);
@@ -367,11 +353,14 @@
     display: flex;
     gap: 8px;
     flex-shrink: 0;
-    border-radius: 0 0 var(--sidebar-radius) var(--sidebar-radius); /* 底部圆角与侧滑栏一致 */
+    border-radius: 0 0 var(--sidebar-radius) var(--sidebar-radius);
+    justify-content: center; /* 按钮整体居中 */
+    align-items: center;
 }
 
 .footer-btn {
     flex: 1;
+    max-width: 50px; /* 限制按钮最大宽度，避免太宽 */
     padding: 8px;
     border: 1px solid rgba(0, 0, 0, 0.1);
     background: rgba(255, 255, 255, 0.5);
@@ -605,153 +594,42 @@
     color: var(--text-primary);
 }
 
-/* 响应式设计 - 全设备比例统一 */
+/* 响应式设计 - 全设备完全统一 */
 @media (max-width: 768px) {
     :root {
-        --sidebar-margin: 20px; /* 平板端留白同步减小 */
-        --sidebar-left-margin: 20px;
-        --sidebar-width: 240px; /* 平板端宽度同步缩小 */
+        --sidebar-margin: 20px;
+        --sidebar-width: 240px;
     }
     
     .sidebar-wallpaper {
-        height: 30%; /* 与桌面端完全一致的高度比例 */
-    }
-    
-    .sidebar-wallpaper-user-info {
-        left: 12px;
-        bottom: 12px;
-        gap: 12px;
-        max-width: calc(100% - 24px);
-        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-    }
-    
-    .sidebar-wallpaper-avatar {
-        width: 60px;
-        height: 60px;
-    }
-    
-    .sidebar-wallpaper-nickname {
-        font-size: 18px;
-    }
-    
-    .sidebar-wallpaper-signature {
-        font-size: 12px;
-    }
-    
-    .categories-container {
-        padding: 0 12px 12px;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    .sidebar-footer {
-        padding: 10px 12px;
-        padding-bottom: max(10px, env(safe-area-inset-bottom));
-    }
-    
-    .profile-modal-content {
-        max-width: 300px;
-        max-height: 65vh;
+        height: 30%; /* 与桌面端完全一致 */
     }
 }
 
 @media (max-width: 575px) {
     :root {
-        --sidebar-margin: 16px; /* 手机端留白同步减小 */
-        --sidebar-left-margin: 16px;
-        --sidebar-width: 220px; /* 手机端宽度同步缩小 */
+        --sidebar-margin: 16px;
+        --sidebar-width: 220px;
     }
     
     .sidebar-wallpaper {
-        height: 30%; /* 与桌面端完全一致的高度比例 */
-    }
-    
-    .sidebar-wallpaper-user-info {
-        left: 10px;
-        bottom: 10px;
-        gap: 10px;
-        max-width: calc(100% - 20px);
-        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-    }
-    
-    .sidebar-wallpaper-avatar {
-        width: 50px;
-        height: 50px;
-        border-width: 2px;
-    }
-    
-    .sidebar-wallpaper-nickname {
-        font-size: 16px;
-    }
-    
-    .sidebar-wallpaper-signature {
-        font-size: 11px;
-    }
-    
-    .sidebar-footer {
-        padding: 8px 10px;
-        gap: 6px;
-        padding-bottom: max(12px, env(safe-area-inset-bottom));
-    }
-    
-    .profile-modal-content {
-        max-width: 280px;
-        max-height: 60vh;
-        padding: 16px;
+        height: 30%; /* 与桌面端完全一致 */
     }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
     :root {
         --sidebar-margin: 10px;
-        --sidebar-left-margin: 10px;
     }
     
     .sidebar-wallpaper {
         height: 24%; /* 横屏小高度设备微调 */
     }
-    
-    .sidebar-wallpaper-user-info {
-        left: 12px;
-        bottom: 12px;
-    }
-    
-    .sidebar-wallpaper-avatar {
-        width: 50px;
-        height: 50px;
-    }
-    
-    .sidebar-wallpaper-nickname {
-        font-size: 16px;
-    }
-    
-    .sidebar-wallpaper-signature {
-        font-size: 12px;
-    }
 }
 
 @media (min-width: 1920px) {
     .sidebar-wallpaper {
-        height: 30%; /* 超大屏幕也保持统一高度比例 */
-    }
-    
-    .sidebar-wallpaper-user-info {
-        left: 20px;
-        bottom: 20px;
-        gap: 20px;
-    }
-    
-    .sidebar-wallpaper-avatar {
-        width: 80px;
-        height: 80px;
-    }
-    
-    .sidebar-wallpaper-nickname {
-        font-size: 24px;
-    }
-    
-    .sidebar-wallpaper-signature {
-        font-size: 16px;
+        height: 30%; /* 与桌面端完全一致 */
     }
 }
 
@@ -773,7 +651,6 @@
         -webkit-user-select: none !important;
     }
     
-    /* iOS 视频播放优化 */
     .sidebar-wallpaper video {
         -webkit-transform: translateZ(0);
         transform: translateZ(0);
@@ -783,8 +660,8 @@
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
     .sidebar {
-        background: rgba(30, 30, 30, 0.85); /* 深色半透明背景 */
-        border-color: rgba(255, 255, 255, 0.15); /* 深色模式边框 */
+        background: rgba(30, 30, 30, 0.85);
+        border-color: rgba(255, 255, 255, 0.15);
     }
     
     .sidebar-wallpaper-overlay {
@@ -882,7 +759,7 @@
     }
 }
 
-/* 壁纸淡入动画 - 统一所有设备 */
+/* 壁纸淡入动画 */
 @keyframes wallpaperFadeIn {
     from {
         opacity: 0;
