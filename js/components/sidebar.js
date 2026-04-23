@@ -1,6 +1,5 @@
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版
- * 自动计算上下等距留白、全端自适应、壁纸宽度适配
+ * 侧边栏组件 - 悬浮毛玻璃优化版（修复顶部遮挡，上下等距留白）
  */
 class CompactSidebar {
     constructor() {
@@ -80,14 +79,19 @@ class CompactSidebar {
             desktop: { min: 24, max: 60 },
             mobile: { min: 16, max: 40 }
         };
-        this.navbarHeight = 60; // 导航栏固定高度
+        this.navbarHeight = 60; // 默认导航栏高度，会动态获取实际值
         this.minSidebarHeight = 400; // 侧滑栏最小高度
     }
 
-    // 核心：自动计算侧滑栏位置和高度，上下等距留白
+    // 核心：自动计算侧滑栏位置和高度，上下等距留白（修复顶部遮挡）
     calcSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
+
+        // 动态获取导航栏实际高度
+        const navbar = document.querySelector('.navbar');
+        const actualNavbarHeight = navbar ? navbar.offsetHeight : this.navbarHeight;
+        this.navbarHeight = actualNavbarHeight; // 更新缓存
 
         // 获取视口尺寸
         const viewportHeight = window.innerHeight;
@@ -96,19 +100,20 @@ class CompactSidebar {
         // 获取当前设备的留白配置
         const gapConfig = isMobile ? this.gapConfig.mobile : this.gapConfig.desktop;
         
-        // 计算最大可用高度
-        const maxAvailableHeight = viewportHeight - 2 * gapConfig.min;
-        // 侧滑栏高度 = 最小可用高度和最大可用高度之间的最优值
-        const sidebarHeight = Math.min(maxAvailableHeight, Math.max(this.minSidebarHeight, viewportHeight * 0.9));
+        // 可用最大高度 = 视口高度 - 导航栏高度 - 上下最小留白*2
+        const maxAvailableHeight = viewportHeight - this.navbarHeight - 2 * gapConfig.min;
+        // 侧滑栏高度：不低于最小高度，不高于最大可用高度，且尽量接近视口90%但不超出
+        let sidebarHeight = Math.min(maxAvailableHeight, Math.max(this.minSidebarHeight, viewportHeight * 0.9));
         
-        // 核心：上下等距留白计算
-        const totalGap = viewportHeight - sidebarHeight;
-        const finalGap = totalGap / 2;
+        // 核心：上下等距留白计算（基于导航栏下方和屏幕底部）
+        const totalMargin = viewportHeight - this.navbarHeight - sidebarHeight;
+        const margin = totalMargin / 2;
         
-        // 应用样式
+        // 应用样式：top = 导航栏高度 + 上边距，height 为计算高度，bottom 设为 auto 避免冲突
+        sidebar.style.top = `${this.navbarHeight + margin}px`;
         sidebar.style.height = `${sidebarHeight}px`;
-        sidebar.style.top = `${finalGap}px`;
-        sidebar.style.bottom = `${finalGap}px`;
+        sidebar.style.bottom = 'auto';
+        sidebar.style.maxHeight = 'none'; // 确保不限制
 
         // 同步调整壁纸区域，保证壁纸和侧滑栏同宽
         this.adjustWallpaperSize();
