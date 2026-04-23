@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域紧凑对称）
+ * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域紧凑对称 + 日记按钮修复）
  */
 class CompactSidebar {
     constructor() {
@@ -110,27 +110,20 @@ class CompactSidebar {
         sidebar.style.bottom = 'auto';
         sidebar.style.maxHeight = 'none';
 
-        // ★ 修改：缩小底部按钮区域内边距，使其更紧凑
+        // 缩小底部按钮区域内边距，使其更紧凑
         const footer = sidebar.querySelector('.sidebar-footer');
         if (footer) {
-            // 缩小内边距范围：8px ~ 16px（原为 12px ~ 24px）
-            const basePadding = Math.max(8, Math.floor(margin * 0.4)); // 降低系数
-            const targetPadding = Math.min(basePadding, 16); // 限制最大值
+            const basePadding = Math.max(8, Math.floor(margin * 0.4));
+            const targetPadding = Math.min(basePadding, 16);
             
-            // 设置上下内边距为相同值
             footer.style.paddingTop = `${targetPadding}px`;
             footer.style.paddingBottom = `max(${targetPadding}px, env(safe-area-inset-bottom))`;
             
-            // 移除可能干扰居中的 margin
             footer.style.marginTop = '0';
             footer.style.marginBottom = '0';
-            
-            // 确保 flex 容器垂直居中
             footer.style.display = 'flex';
             footer.style.alignItems = 'center';
-            
-            // 可选：略微缩小按钮之间的间距
-            footer.style.gap = '6px'; // 原 CSS 为 8px，可根据需要调整
+            footer.style.gap = '6px';
         }
 
         this.adjustWallpaperSize();
@@ -575,8 +568,18 @@ class CompactSidebar {
             const iconClass = icon.className;
             
             if (iconClass.includes('fa-book')) {
+                // 修复日记按钮：优先使用 app 方法，否则手动显示
                 if (window.app && typeof window.app.showDiaryModal === 'function') {
                     window.app.showDiaryModal();
+                } else {
+                    const diaryModal = document.getElementById('diaryModal');
+                    if (diaryModal) {
+                        diaryModal.style.display = 'flex';
+                        // 若 app 存在且能加载数据，则调用加载
+                        if (window.app && typeof window.app.loadDiaryBatch === 'function') {
+                            window.app.loadDiaryBatch();
+                        }
+                    }
                 }
                 this.hide();
             } else if (iconClass.includes('fa-gift')) {
