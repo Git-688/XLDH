@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域上下内边距对称）
+ * 侧边栏组件 - 悬浮毛玻璃优化版（修复顶部遮挡，上下等距留白）
  */
 class CompactSidebar {
     constructor() {
@@ -74,16 +74,16 @@ class CompactSidebar {
         
         this.isInitialized = false;
         this.currentVideo = null;
-        // 留白配置
+        // 核心：留白配置
         this.gapConfig = {
             desktop: { min: 24, max: 60 },
             mobile: { min: 16, max: 40 }
         };
-        this.navbarHeight = 60;
-        this.minSidebarHeight = 400;
+        this.navbarHeight = 60; // 默认导航栏高度，会动态获取实际值
+        this.minSidebarHeight = 400; // 侧滑栏最小高度
     }
 
-    // 核心：计算侧滑栏位置、高度，并同步底部按钮区域的上下内边距
+    // 核心：自动计算侧滑栏位置和高度，上下等距留白（修复顶部遮挡）
     calcSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
@@ -91,37 +91,31 @@ class CompactSidebar {
         // 动态获取导航栏实际高度
         const navbar = document.querySelector('.navbar');
         const actualNavbarHeight = navbar ? navbar.offsetHeight : this.navbarHeight;
-        this.navbarHeight = actualNavbarHeight;
+        this.navbarHeight = actualNavbarHeight; // 更新缓存
 
+        // 获取视口尺寸
         const viewportHeight = window.innerHeight;
         const isMobile = window.innerWidth < 768;
         
+        // 获取当前设备的留白配置
         const gapConfig = isMobile ? this.gapConfig.mobile : this.gapConfig.desktop;
         
+        // 可用最大高度 = 视口高度 - 导航栏高度 - 上下最小留白*2
         const maxAvailableHeight = viewportHeight - this.navbarHeight - 2 * gapConfig.min;
+        // 侧滑栏高度：不低于最小高度，不高于最大可用高度，且尽量接近视口90%但不超出
         let sidebarHeight = Math.min(maxAvailableHeight, Math.max(this.minSidebarHeight, viewportHeight * 0.9));
         
+        // 核心：上下等距留白计算（基于导航栏下方和屏幕底部）
         const totalMargin = viewportHeight - this.navbarHeight - sidebarHeight;
         const margin = totalMargin / 2;
         
-        // 设置侧滑栏整体位置
+        // 应用样式：top = 导航栏高度 + 上边距，height 为计算高度，bottom 设为 auto 避免冲突
         sidebar.style.top = `${this.navbarHeight + margin}px`;
         sidebar.style.height = `${sidebarHeight}px`;
         sidebar.style.bottom = 'auto';
-        sidebar.style.maxHeight = 'none';
+        sidebar.style.maxHeight = 'none'; // 确保不限制
 
-        // ★ 关键修改：强制底部按钮区域的上下内边距相等（保持对称）
-        const footer = sidebar.querySelector('.sidebar-footer');
-        if (footer) {
-            // 获取当前的 padding-top 值（可能是 CSS 中设置的 12px 或移动端的值）
-            const computedStyle = getComputedStyle(footer);
-            const paddingTop = parseInt(computedStyle.paddingTop) || 12;
-            
-            // 将 padding-bottom 设置为与 padding-top 相同的值，同时确保不低于安全区域
-            // 使用 max() 函数兼顾全面屏安全区
-            footer.style.paddingBottom = `max(${paddingTop}px, env(safe-area-inset-bottom))`;
-        }
-
+        // 同步调整壁纸区域，保证壁纸和侧滑栏同宽
         this.adjustWallpaperSize();
     }
 
@@ -131,10 +125,13 @@ class CompactSidebar {
         const wallpaper = document.getElementById('sidebarWallpaper');
         if (!sidebar || !wallpaper) return;
 
+        // 获取侧滑栏宽度
         const sidebarWidth = sidebar.offsetWidth;
+        // 壁纸宽度100%适配侧滑栏
         wallpaper.style.width = `${sidebarWidth}px`;
         wallpaper.style.maxWidth = '100%';
 
+        // 调整视频/图片元素
         const mediaEl = wallpaper.querySelector('video, img');
         if (mediaEl) {
             mediaEl.style.width = '100%';
@@ -143,7 +140,9 @@ class CompactSidebar {
         }
     }
 
+    // 窗口大小变化时重新计算
     handleResize() {
+        // 防抖处理
         let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
@@ -152,6 +151,7 @@ class CompactSidebar {
             }, 100);
         }, { passive: true });
 
+        // 屏幕旋转适配
         window.addEventListener('orientationchange', () => {
             setTimeout(() => {
                 this.calcSidebarPosition();
@@ -160,13 +160,19 @@ class CompactSidebar {
     }
 
     async init() {
-        if (this.isInitialized) return;
+        if (this.isInitialized) {
+            return;
+        }
         try {
             if (document.readyState === 'loading') {
-                await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
+                await new Promise(resolve => {
+                    document.addEventListener('DOMContentLoaded', resolve);
+                });
             }
 
+            // 初始化时先计算位置
             this.calcSidebarPosition();
+            // 绑定窗口变化事件
             this.handleResize();
 
             this.loadExpandedState();
@@ -189,7 +195,9 @@ class CompactSidebar {
     }
 
     createProfileModal() {
-        if (document.getElementById('profileModal')) return;
+        if (document.getElementById('profileModal')) {
+            return;
+        }
         try {
             const modalHTML = `
                 <div class="profile-modal" id="profileModal">
@@ -239,10 +247,12 @@ class CompactSidebar {
             const profileCancelBtn = document.getElementById('profileCancelBtn');
             const profileForm = document.getElementById('profileForm');
             const qqNumberInput = document.getElementById('qqNumber');
-            if (!profileModal || !profileForm || !qqNumberInput) return;
-            
-            const closeModal = () => profileModal.classList.remove('active');
-            
+            if (!profileModal || !profileForm || !qqNumberInput) {
+                return;
+            }
+            const closeModal = () => {
+                profileModal.classList.remove('active');
+            };
             if (profileModalClose) profileModalClose.addEventListener('click', closeModal);
             if (profileCancelBtn) profileCancelBtn.addEventListener('click', closeModal);
             profileModal.addEventListener('click', (e) => {
@@ -253,7 +263,9 @@ class CompactSidebar {
                     closeModal();
                 }
             });
-            qqNumberInput.addEventListener('input', () => this.autoGetQQAvatar());
+            qqNumberInput.addEventListener('input', () => {
+                this.autoGetQQAvatar();
+            });
             profileForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.saveProfileSettings();
@@ -268,12 +280,13 @@ class CompactSidebar {
             const qqNumberInput = document.getElementById('qqNumber');
             const qqAvatarPreview = document.getElementById('qqAvatarPreview');
             const qqAvatarStatus = document.getElementById('qqAvatarStatus');
-            if (!qqNumberInput || !qqAvatarPreview || !qqAvatarStatus) return;
-            
+            if (!qqNumberInput || !qqAvatarPreview || !qqAvatarStatus) {
+                return;
+            }
             const qqNumber = qqNumberInput.value.trim();
+            
             qqAvatarStatus.textContent = '';
             qqAvatarStatus.className = 'qq-avatar-status';
-            
             if (!qqNumber) {
                 qqAvatarPreview.src = this.getDefaultAvatarSVG();
                 return;
@@ -283,7 +296,6 @@ class CompactSidebar {
                 qqAvatarStatus.className = 'qq-avatar-status error';
                 return;
             }
-            
             qqAvatarStatus.textContent = '获取中...';
             qqAvatarStatus.className = 'qq-avatar-status loading';
             const avatarUrl = await this.getQQAvatar(qqNumber);
@@ -358,6 +370,7 @@ class CompactSidebar {
             const profileModal = document.getElementById('profileModal');
             if (profileModal) profileModal.classList.remove('active');
             window.toast.show('个人信息保存成功', 'success');
+            
         } catch (error) {
             console.error('保存个人资料设置失败:', error);
             window.toast.show('保存失败，请重试', 'error');
@@ -368,13 +381,13 @@ class CompactSidebar {
         try {
             const profileModal = document.getElementById('profileModal');
             const userConfig = Storage.get('userConfig') || {};
-            if (!profileModal) return;
-            
+            if (!profileModal) {
+                return;
+            }
             const nicknameInput = document.getElementById('nickname');
             const signatureInput = document.getElementById('signature');
             const qqNumberInput = document.getElementById('qqNumber');
             const qqAvatarPreview = document.getElementById('qqAvatarPreview');
-            
             if (nicknameInput) nicknameInput.value = userConfig.nickname || '';
             if (signatureInput) signatureInput.value = userConfig.signature || '';
             if (qqNumberInput) qqNumberInput.value = '';
@@ -419,8 +432,9 @@ class CompactSidebar {
     render() {
         try {
             const sidebar = document.getElementById('sidebar');
-            if (!sidebar) return;
-            
+            if (!sidebar) {
+                return;
+            }
             const categoriesContainer = sidebar.querySelector('.sidebar-categories');
             if (categoriesContainer) {
                 categoriesContainer.innerHTML = this.categories.map(category => `
@@ -463,7 +477,6 @@ class CompactSidebar {
                     const categoryItem = e.target.closest('.category-item');
                     const footerBtn = e.target.closest('.footer-btn');
                     const avatar = e.target.closest('.sidebar-wallpaper-avatar');
-                    
                     if (categoryHeader) {
                         this.toggleCategory(categoryHeader.closest('.category-group'));
                     } else if (categoryItem) {
@@ -477,7 +490,6 @@ class CompactSidebar {
                     console.error('处理侧边栏点击事件失败:', error);
                 }
             });
-            
             document.addEventListener('click', (e) => {
                 try {
                     const sidebar = document.getElementById('sidebar');
@@ -492,7 +504,6 @@ class CompactSidebar {
                     console.error('处理外部点击事件失败:', error);
                 }
             });
-            
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && this.isVisible()) {
                     this.hide();
@@ -515,7 +526,11 @@ class CompactSidebar {
                 
                 const itemsContainer = categoryGroup.querySelector('.category-items');
                 if (itemsContainer) {
-                    itemsContainer.style.maxHeight = category.expanded ? itemsContainer.scrollHeight + 'px' : '0';
+                    if (category.expanded) {
+                        itemsContainer.style.maxHeight = itemsContainer.scrollHeight + 'px';
+                    } else {
+                        itemsContainer.style.maxHeight = '0';
+                    }
                 }
                 
                 this.saveExpandedState();
@@ -538,13 +553,19 @@ class CompactSidebar {
             
             switch(action) {
                 case 'search':
-                    if (window.searchModule) window.searchModule.showModal();
+                    if (window.searchModule) {
+                        window.searchModule.showModal();
+                    }
                     break;
                 case 'music':
-                    if (window.app?.components?.navbar) window.app.components.navbar.toggleMusicPlayer();
+                    if (window.app?.components?.navbar) {
+                        window.app.components.navbar.toggleMusicPlayer();
+                    }
                     break;
                 case 'weather':
-                    if (window.app?.modules?.weather) window.app.modules.weather.showModal();
+                    if (window.app?.modules?.weather) {
+                        window.app.modules.weather.showModal();
+                    }
                     break;
                 case 'calculator':
                     this.openCalculator();
@@ -568,12 +589,17 @@ class CompactSidebar {
                     window.app.showDiaryModal();
                 }
                 this.hide();
-            } else if (iconClass.includes('fa-gift')) {
+            } 
+            else if (iconClass.includes('fa-gift')) {
                 this.hide();
-            } else if (iconClass.includes('fa-info-circle')) {
-                if (window.aboutModule) window.aboutModule.show();
+            } 
+            else if (iconClass.includes('fa-info-circle')) {
+                if (window.aboutModule) {
+                    window.aboutModule.show();
+                }
                 this.hide();
-            } else if (iconClass.includes('fa-qq')) {
+            } 
+            else if (iconClass.includes('fa-qq')) {
                 window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
                 this.hide();
             }
@@ -591,6 +617,7 @@ class CompactSidebar {
             const sidebar = document.getElementById('sidebar');
             if (sidebar) {
                 this.closeAllModals();
+                // 显示前重新计算位置，保证适配最新窗口尺寸
                 this.calcSidebarPosition();
                 sidebar.classList.add('active');
                 document.body.classList.add('sidebar-open');
@@ -603,12 +630,15 @@ class CompactSidebar {
                     sidebarContent.style.overflowY = 'auto';
                     sidebarContent.style.overflowX = 'hidden';
                 }
+                
                 if (categoriesContainer) {
                     categoriesContainer.style.overflowY = 'auto';
                     categoriesContainer.style.overflowX = 'hidden';
                 }
                 
-                setTimeout(() => this.adjustWallpaperSize(), 100);
+                setTimeout(() => {
+                    this.adjustWallpaperSize();
+                }, 100);
             }
         } catch (error) {
             console.error('显示侧边栏失败:', error);
@@ -629,13 +659,16 @@ class CompactSidebar {
                     sidebarContent.style.overflowY = '';
                     sidebarContent.style.overflowX = '';
                 }
+                
                 if (categoriesContainer) {
                     categoriesContainer.style.overflowY = '';
                     categoriesContainer.style.overflowX = '';
                 }
             }
             
-            if (this.currentVideo) this.currentVideo.pause();
+            if (this.currentVideo) {
+                this.currentVideo.pause();
+            }
         } catch (error) {
             console.error('隐藏侧边栏失败:', error);
         }
@@ -645,7 +678,11 @@ class CompactSidebar {
         try {
             const sidebar = document.getElementById('sidebar');
             if (sidebar) {
-                sidebar.classList.contains('active') ? this.hide() : this.show();
+                if (sidebar.classList.contains('active')) {
+                    this.hide();
+                } else {
+                    this.show();
+                }
             }
         } catch (error) {
             console.error('切换侧边栏失败:', error);
@@ -659,11 +696,25 @@ class CompactSidebar {
 
     closeAllModals() {
         try {
-            if (window.searchModule && window.searchModule.isModalOpen()) window.searchModule.hide();
-            if (window.app?.components?.navbar) window.app.components.navbar.hideMusicPlayer();
-            if (window.announcementModule) window.announcementModule.hide();
-            if (window.app?.modules?.weather) window.app.modules.weather.hide();
-            if (window.aboutModule) window.aboutModule.hide();
+            if (window.searchModule && window.searchModule.isModalOpen()) {
+                window.searchModule.hide();
+            }
+            
+            if (window.app && window.app.components && window.app.components.navbar) {
+                window.app.components.navbar.hideMusicPlayer();
+            }
+            
+            if (window.announcementModule) {
+                window.announcementModule.hide();
+            }
+            
+            if (window.app && window.app.modules && window.app.modules.weather) {
+                window.app.modules.weather.hide();
+            }
+            
+            if (window.aboutModule) {
+                window.aboutModule.hide();
+            }
         } catch (error) {
             console.error('关闭所有模态框失败:', error);
         }
@@ -677,8 +728,9 @@ class CompactSidebar {
             const wallpaperNickname = document.getElementById('sidebarWallpaperNickname');
             const wallpaperSignature = document.getElementById('sidebarWallpaperSignature');
             
-            if (wallpaperNickname) wallpaperNickname.textContent = userConfig.nickname || '访客用户';
-            if (wallpaperSignature) wallpaperSignature.textContent = userConfig.signature || '探索无限可能';
+            if (wallpaperNickname) {
+                wallpaperNickname.textContent = userConfig.nickname || '访客用户';
+            }
             
             if (wallpaperAvatar) {
                 if (userConfig.avatar) {
@@ -691,7 +743,12 @@ class CompactSidebar {
                 }
             }
             
+            if (wallpaperSignature) {
+                wallpaperSignature.textContent = userConfig.signature || '探索无限可能';
+            }
+            
             await this.loadSidebarWallpaper();
+            
         } catch (error) {
             console.error('加载壁纸用户信息失败:', error);
         }
@@ -728,6 +785,7 @@ class CompactSidebar {
             5: { type: 'video', url: './assets/wallpapers/friday.mp4' },
             6: { type: 'video', url: './assets/wallpapers/saturday.mp4' }
         };
+        
         return videoWallpapers[dayOfWeek] || { type: 'video', url: './assets/wallpapers/monday.mp4' };
     }
 
@@ -778,12 +836,19 @@ class CompactSidebar {
             this.currentVideo = video;
             
             const overlay = sidebarWallpaper.querySelector('.sidebar-wallpaper-overlay');
-            if (overlay) overlay.style.zIndex = '1';
+            if (overlay) {
+                overlay.style.zIndex = '1';
+            }
             
             const userInfo = sidebarWallpaper.querySelector('.sidebar-wallpaper-user-info');
-            if (userInfo) userInfo.style.zIndex = '2';
+            if (userInfo) {
+                userInfo.style.zIndex = '2';
+            }
             
-            video.onloadedmetadata = () => this.adjustWallpaperSize();
+            // 视频加载完成后调整尺寸
+            video.onloadedmetadata = () => {
+                this.adjustWallpaperSize();
+            };
 
             try {
                 await video.play();
@@ -791,6 +856,7 @@ class CompactSidebar {
                 console.warn('视频自动播放失败，使用备用背景');
                 this.setFallbackBackground();
             }
+            
         } catch (error) {
             console.error('设置视频壁纸失败:', error);
             this.setFallbackBackground();
@@ -805,6 +871,7 @@ class CompactSidebar {
                 existingVideo.remove();
                 this.currentVideo = null;
             }
+            
             sidebarWallpaper.style.backgroundImage = 'none';
             sidebarWallpaper.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
         }
@@ -859,11 +926,13 @@ class CompactSidebar {
     async loadUserData() {
         try {
             const userConfig = Storage.get('userConfig') || {};
+            
             if (!userConfig.nickname) {
                 userConfig.nickname = '访客用户';
                 userConfig.signature = '探索无限可能';
                 Storage.set('userConfig', userConfig);
             }
+            
         } catch (error) {
             console.error('加载用户数据失败:', error);
         }
@@ -872,8 +941,9 @@ class CompactSidebar {
     async loadDailyQuote() {
         try {
             const quoteElement = document.getElementById('dailyQuote');
-            if (!quoteElement) return;
-            
+            if (!quoteElement) {
+                return;
+            }
             const quote = await this.getDailyQuote();
             let cleanedQuote = quote.replace(/^["'「」"”‘’]|["'「」""”‘’]$/g, '').trim();
             if (!cleanedQuote) cleanedQuote = '每一天都是新的开始，充满无限可能。';
@@ -882,7 +952,9 @@ class CompactSidebar {
         } catch (error) {
             console.error('加载每日一言失败:', error);
             const quoteElement = document.getElementById('dailyQuote');
-            if (quoteElement) quoteElement.textContent = '每一天都是新的开始，充满无限可能。';
+            if (quoteElement) {
+                quoteElement.textContent = '每一天都是新的开始，充满无限可能。';
+            }
         }
     }
 
@@ -904,6 +976,7 @@ class CompactSidebar {
                 this.currentVideo.pause();
                 this.currentVideo = null;
             }
+            
             this.isInitialized = false;
         } catch (error) {
             console.error('销毁侧边栏失败:', error);
@@ -911,13 +984,14 @@ class CompactSidebar {
     }
 }
 
-// 单例初始化
 if (!window.sidebarInitialized) {
     window.sidebarInitialized = true;
     
     const initSidebar = async () => {
         if (document.readyState === 'loading') {
-            await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
+            await new Promise(resolve => {
+                document.addEventListener('DOMContentLoaded', resolve);
+            });
         }
         
         if (!window.sidebar) {
