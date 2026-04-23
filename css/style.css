@@ -1356,7 +1356,7 @@ select {
     color: #666;
 }
 
-/* ====== 新增：日记模态框样式（列表版） ====== */
+/* ====== 日记模态框样式（列表版） ====== */
 .diary-modal {
     position: fixed;
     top: 0;
@@ -1533,3 +1533,91 @@ select {
     color: var(--error-color);
 }
 /* ====== 日记模态框结束 ====== */
+
+/* ====== 神木日记模态框：毛玻璃效果 + 移动端缩小 ====== */
+.diary-modal {
+    background: rgba(0, 0, 0, 0.3);           /* 半透明背景，增加玻璃感 */
+    backdrop-filter: blur(8px);               /* 毛玻璃核心效果 */
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.diary-modal .modal-content {
+    background: rgba(255, 255, 255, 0.85);    /* 半透明白底 */
+    backdrop-filter: blur(20px);              /* 内容区进一步模糊 */
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+}
+
+/* 移动端缩小尺寸 */
+@media (max-width: 768px) {
+    .diary-modal .modal-content {
+        width: 85%;                          /* 宽度缩小 */
+        max-width: 400px;
+        max-height: 70vh;
+        border-radius: 14px;
+    }
+    
+    .diary-header {
+        padding: 12px 16px;
+    }
+    
+    .diary-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .diary-body {
+        padding: 12px 16px;
+    }
+    
+    .diary-item {
+        padding: 10px 12px;
+        margin-bottom: 10px;
+    }
+    
+    .diary-item-title {
+        font-size: 0.8rem;
+    }
+    
+    .diary-item-content {
+        font-size: 0.7rem;
+    }
+    
+    .diary-footer {
+        padding: 10px 16px;
+    }
+    
+    .diary-refresh-btn {
+        padding: 5px 12px;
+        font-size: 0.75rem;
+    }
+}
+
+/* 超小屏进一步缩小 */
+@media (max-width: 480px) {
+    .diary-modal .modal-content {
+        width: 90%;
+        max-width: 320px;
+        max-height: 65vh;
+        border-radius: 12px;
+    }
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    .diary-modal .modal-content {
+        background: rgba(30, 30, 30, 0.85);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .diary-item {
+        background: rgba(50, 50, 50, 0.6);
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .diary-item-content {
+        background: rgba(40, 40, 40, 0.8);
+    }
+}
+/* ====== 毛玻璃效果结束 ====== */
