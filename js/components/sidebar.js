@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域紧凑对称 + 日记按钮修复）
+ * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域紧凑对称 + 星聚笔记按钮）
  */
 class CompactSidebar {
     constructor() {
@@ -567,22 +567,25 @@ class CompactSidebar {
             if (!icon) return;
             const iconClass = icon.className;
             
-            if (iconClass.includes('fa-book')) {
-                // 修复日记按钮：优先使用 app 方法，否则手动显示
-                if (window.app && typeof window.app.showDiaryModal === 'function') {
-                    window.app.showDiaryModal();
+            // 星聚笔记按钮（紫色笔图标）
+            if (iconClass.includes('fa-pen')) {
+                if (window.app && typeof window.app.showNotebookModal === 'function') {
+                    window.app.showNotebookModal();
                 } else {
-                    const diaryModal = document.getElementById('diaryModal');
-                    if (diaryModal) {
-                        diaryModal.style.display = 'flex';
-                        // 若 app 存在且能加载数据，则调用加载
-                        if (window.app && typeof window.app.loadDiaryBatch === 'function') {
-                            window.app.loadDiaryBatch();
+                    const modal = document.getElementById('notebookModal');
+                    if (modal) {
+                        modal.style.display = 'flex';
+                        modal.classList.add('active');
+                        if (window.app && typeof window.app.loadNotebookData === 'function') {
+                            window.app.loadNotebookData();
                         }
                     }
                 }
                 this.hide();
-            } else if (iconClass.includes('fa-gift')) {
+                return;
+            }
+            
+            if (iconClass.includes('fa-gift')) {
                 this.hide();
             } else if (iconClass.includes('fa-info-circle')) {
                 if (window.aboutModule) window.aboutModule.show();
