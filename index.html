@@ -260,11 +260,11 @@
             color: #0891b2;
         }
 
-        /* ====== 星聚笔记模态框：毛玻璃效果 + 移动端适配 ====== */
+        /* ====== 星聚笔记模态框：无遮罩 + 毛玻璃内容 ====== */
         #notebookModal {
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background: transparent;          /* 完全透明，无遮罩 */
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
         }
         #notebookModal .feedback-modal-content {
             background: rgba(255, 255, 255, 0.85);
@@ -273,6 +273,7 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             border-radius: 16px;
+            /* 宽度由默认 .feedback-modal-content 的 max-width: 600px 控制，与反馈模态一致 */
         }
 
         /* 深色模式毛玻璃适配 */
@@ -391,12 +392,6 @@
 
         /* 移动端缩小尺寸 */
         @media (max-width: 768px) {
-            #notebookModal .feedback-modal-content {
-                width: 85%;
-                max-width: 400px;
-                max-height: 70vh;
-                border-radius: 18px;
-            }
             .notebook-item {
                 padding: 12px 14px;
             }
@@ -408,11 +403,8 @@
             }
         }
         @media (max-width: 480px) {
-            #notebookModal .feedback-modal-content {
-                width: 90%;
-                max-width: 320px;
-                max-height: 65vh;
-                border-radius: 16px;
+            .notebook-item {
+                padding: 10px 12px;
             }
         }
     </style>
@@ -648,9 +640,9 @@
     </div>
 </div>
 
-<!-- 星聚笔记模态框（毛玻璃效果） -->
+<!-- 星聚笔记模态框（无遮罩，毛玻璃内容） -->
 <div id="notebookModal" class="feedback-modal" style="display: none;">
-    <div class="feedback-modal-content" style="max-width: 650px;">
+    <div class="feedback-modal-content">
         <div class="feedback-modal-header">
             <h3><i class="fas fa-pen-fancy"></i> 星聚笔记</h3>
             <button class="feedback-modal-close">&times;</button>
