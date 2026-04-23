@@ -566,19 +566,33 @@ class CompactSidebar {
             const icon = footerBtn.querySelector('i');
             if (!icon) return;
             const iconClass = icon.className;
-            
+
             if (iconClass.includes('fa-book')) {
-                // 神木日记 - 调用增强版方法
+                console.log('📖 神木日记按钮被点击');
+                
+                // 优先使用 app 的方法
                 if (window.app && typeof window.app.showDiaryModal === 'function') {
+                    console.log('✅ 调用 window.app.showDiaryModal()');
                     window.app.showDiaryModal();
                 } else {
-                    // 降级方案：手动显示并尝试加载
+                    // 降级方案：手动显示模态框并加载数据
+                    console.warn('⚠️ window.app.showDiaryModal 不可用，使用降级方案');
                     const diaryModal = document.getElementById('diaryModal');
                     if (diaryModal) {
                         diaryModal.style.display = 'flex';
+                        const listEl = document.getElementById('diaryList');
+                        
+                        // 如果 app 存在且有 loadDiaryBatch 方法，调用之
                         if (window.app && typeof window.app.loadDiaryBatch === 'function') {
+                            console.log('🔄 调用 window.app.loadDiaryBatch(true) 加载数据');
                             window.app.loadDiaryBatch(true);
+                        } else if (listEl) {
+                            // 最终降级：显示提示
+                            console.warn('⚠️ 使用最终降级方案，显示提示信息');
+                            listEl.innerHTML = '<div class="diary-empty">📭 请刷新页面后重试</div>';
                         }
+                    } else {
+                        console.error('❌ 未找到 diaryModal 元素');
                     }
                 }
                 this.hide();
