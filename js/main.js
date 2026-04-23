@@ -1,5 +1,5 @@
 /**
- * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 官方标准配置）
+ * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 官方标准配置 + 增强版神木日记）
  */
 class App {
     constructor() {
@@ -10,6 +10,24 @@ class App {
         this.lastWeatherUpdate = null;
         this.diaryModalHideRef = null;
         
+        // ========== 神木日记增强配置 ==========
+        this.DIARY_CONFIG = {
+            API_BASE: 'https://cn.apihz.cn/api/cunchu/textzd.php',
+            API_KEY: '4a7768de1cf2e0f41fc0a4005240c837',
+            CONTAINER_ID: '10014221',
+            PAGE_SIZE: 10,
+            CACHE_TTL: 5 * 60 * 1000, // 5分钟内存缓存
+        };
+
+        this.diaryState = {
+            items: [],           // 当前显示的日记列表
+            page: 1,             // 当前页码
+            hasMore: true,       // 是否还有更多
+            loading: false,      // 是否正在加载
+            cache: null,         // { data: [], timestamp, totalPages }
+        };
+        // ========================================
+        
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 this.init();
@@ -19,72 +37,206 @@ class App {
         }
     }
 
-    // ========== 日记功能相关常量和方法 ==========
-    DIARY_IDS = [1,2,3,4,5,6,7,8,9,10];
-
-    async loadDiaryBatch() {
+    // ========== 增强版神木日记功能 ==========
+    async loadDiaryBatch(reset = false) {
         const listEl = document.getElementById('diaryList');
         if (!listEl) return;
-        
-        listEl.innerHTML = '<div class="loading">加载日记中...</div>';
-        
+
+        if (reset) {
+            this.diaryState.page = 1;
+            this.diaryState.items = [];
+            this.diaryState.hasMore = true;
+            listEl.innerHTML = '';
+        }
+
+        if (!this.diaryState.hasMore || this.diaryState.loading) return;
+
+        this.diaryState.loading = true;
+        this._showDiaryLoading(listEl, reset);
+
         try {
-            const promises = this.DIARY_IDS.map(id =>
-                fetch(`https://cn.apihz.cn/api/cunchu/textzd.php?id=10014221&key=4a7768de1cf2e0f41fc0a4005240c837&numid=${id}`)
-                    .then(res => res.json())
-                    .then(data => ({ id, ...data }))
-                    .catch(err => ({ id, code: 500, msg: err.message }))
-            );
-            
-            const results = await Promise.all(promises);
-            
-            const validItems = results.filter(item => {
-                if (item.code !== 200) return false;
-                const title = item.title || '';
-                const words = item.words || '';
-                return title.trim() !== '' && words.trim() !== '';
-            });
-            
-            if (validItems.length === 0) {
-                listEl.innerHTML = '<div class="empty">暂无日记记录</div>';
+            // 检查缓存（仅第一页）
+            if (reset && this._isDiaryCacheValid()) {
+                const cached = this.diaryState.cache;
+                this.diaryState.items = [...cached.data];
+                this.diaryState.hasMore = this.diaryState.page < cached.totalPages;
+                this._renderDiaryList(listEl, this.diaryState.items);
+                this.diaryState.loading = false;
                 return;
             }
+
+            // 计算当前页要请求的 ID 范围
+            const startId = (this.diaryState.page - 1) * this.DIARY_CONFIG.PAGE_SIZE + 1;
+            const endId = startId + this.DIARY_CONFIG.PAGE_SIZE - 1;
             
-            const html = validItems.map(item => {
-                const title = item.title.trim();
-                const time = item.time || '--';
-                const words = item.words.trim();
+            const promises = [];
+            for (let id = startId; id <= endId; id++) {
+                promises.push(
+                    fetch(`${this.DIARY_CONFIG.API_BASE}?id=${this.DIARY_CONFIG.CONTAINER_ID}&key=${this.DIARY_CONFIG.API_KEY}&numid=${id}`)
+                        .then(res => res.json())
+                        .catch(() => ({ code: 500 }))
+                );
+            }
+            
+            const results = await Promise.all(promises);
+            const validItems = results
+                .filter(item => item.code === 200 && item.title?.trim() && item.words?.trim())
+                .map(item => ({
+                    id: item.id || item.numid,
+                    title: item.title.trim(),
+                    time: item.time || '--',
+                    content: item.words.trim(),
+                    expanded: false
+                }));
+
+            if (validItems.length === 0) {
+                this.diaryState.hasMore = false;
+                if (reset) {
+                    listEl.innerHTML = '<div class="diary-empty">📭 暂无日记记录</div>';
+                }
+            } else {
+                this.diaryState.items = reset ? validItems : [...this.diaryState.items, ...validItems];
+                this.diaryState.page++;
+                this.diaryState.hasMore = validItems.length === this.DIARY_CONFIG.PAGE_SIZE;
                 
-                return `
-                    <div class="diary-item">
-                        <div class="diary-item-header">
-                            <span class="diary-item-id">#${item.id}</span>
-                            <span class="diary-item-time">${time}</span>
-                        </div>
-                        <div class="diary-item-title">${this.escapeHtml(title)}</div>
-                        <div class="diary-item-content">${this.escapeHtml(words)}</div>
+                if (reset) {
+                    this.diaryState.cache = {
+                        data: this.diaryState.items,
+                        timestamp: Date.now(),
+                        totalPages: this.diaryState.hasMore ? this.diaryState.page + 1 : this.diaryState.page
+                    };
+                }
+                
+                this._renderDiaryList(listEl, this.diaryState.items);
+            }
+        } catch (error) {
+            console.error('加载日记失败:', error);
+            if (reset) {
+                listEl.innerHTML = `
+                    <div class="diary-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>加载失败：${error.message}</p>
+                        <button class="diary-retry-btn" onclick="window.app.loadDiaryBatch(true)">重试</button>
                     </div>
                 `;
-            }).join('');
-            
-            listEl.innerHTML = html;
-            
-        } catch (error) {
-            listEl.innerHTML = `<div class="error">加载失败：${error.message}</div>`;
+            } else {
+                window.toast.show('加载更多失败，请稍后重试', 'error');
+            }
+        } finally {
+            this.diaryState.loading = false;
+            this._removeDiaryLoading(listEl);
         }
+    }
+
+    _showDiaryLoading(container, isReset) {
+        if (isReset) {
+            container.innerHTML = `
+                <div class="diary-skeleton">
+                    ${Array(3).fill(0).map(() => `
+                        <div class="diary-skeleton-item">
+                            <div class="skeleton-header"></div>
+                            <div class="skeleton-title"></div>
+                            <div class="skeleton-content"></div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            const loader = document.createElement('div');
+            loader.className = 'diary-load-more';
+            loader.id = 'diaryLoadMoreIndicator';
+            loader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加载中...';
+            container.appendChild(loader);
+        }
+    }
+
+    _removeDiaryLoading(container) {
+        const indicator = document.getElementById('diaryLoadMoreIndicator');
+        if (indicator) indicator.remove();
+    }
+
+    _isDiaryCacheValid() {
+        const cache = this.diaryState.cache;
+        return cache && (Date.now() - cache.timestamp) < this.DIARY_CONFIG.CACHE_TTL;
+    }
+
+    _renderDiaryList(container, items) {
+        const existingLoader = document.getElementById('diaryLoadMoreIndicator');
+        container.innerHTML = '';
+        
+        items.forEach((item, index) => {
+            const itemEl = document.createElement('div');
+            itemEl.className = `diary-item ${item.expanded ? 'expanded' : ''}`;
+            itemEl.dataset.index = index;
+            itemEl.innerHTML = `
+                <div class="diary-item-header">
+                    <span class="diary-item-id">#${item.id}</span>
+                    <span class="diary-item-time">${this.escapeHtml(item.time)}</span>
+                </div>
+                <div class="diary-item-title">${this.escapeHtml(item.title)}</div>
+                <div class="diary-item-content">${this.escapeHtml(item.content)}</div>
+                <div class="diary-item-footer">
+                    <button class="diary-expand-btn">
+                        <i class="fas fa-chevron-down"></i>
+                        <span>展开</span>
+                    </button>
+                </div>
+            `;
+            
+            const expandBtn = itemEl.querySelector('.diary-expand-btn');
+            expandBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                item.expanded = !item.expanded;
+                itemEl.classList.toggle('expanded');
+                const icon = expandBtn.querySelector('i');
+                const text = expandBtn.querySelector('span');
+                if (item.expanded) {
+                    icon.className = 'fas fa-chevron-up';
+                    text.textContent = '收起';
+                } else {
+                    icon.className = 'fas fa-chevron-down';
+                    text.textContent = '展开';
+                }
+            });
+            
+            container.appendChild(itemEl);
+        });
+        
+        if (existingLoader) {
+            container.appendChild(existingLoader);
+        }
+        
+        this._setupDiaryInfiniteScroll(container);
+    }
+
+    _setupDiaryInfiniteScroll(container) {
+        if (this.diaryScrollHandler) {
+            container.removeEventListener('scroll', this.diaryScrollHandler);
+        }
+        
+        this.diaryScrollHandler = () => {
+            const { scrollTop, scrollHeight, clientHeight } = container;
+            if (scrollHeight - scrollTop - clientHeight < 50) {
+                if (this.diaryState.hasMore && !this.diaryState.loading) {
+                    this.loadDiaryBatch(false);
+                }
+            }
+        };
+        
+        container.addEventListener('scroll', this.diaryScrollHandler);
     }
 
     showDiaryModal() {
         const modal = document.getElementById('diaryModal');
         if (!modal) return;
-        modal.style.display = 'flex';
         
+        modal.style.display = 'flex';
         if (!this.diaryModalHideRef) {
             this.diaryModalHideRef = { hide: this.hideDiaryModal.bind(this) };
         }
         this.registerModal(this.diaryModalHideRef);
         
-        this.loadDiaryBatch();
+        this.loadDiaryBatch(true);
     }
 
     hideDiaryModal() {
@@ -93,7 +245,14 @@ class App {
         if (this.diaryModalHideRef) {
             this.unregisterModal(this.diaryModalHideRef);
         }
+        const container = document.getElementById('diaryList');
+        if (container && this.diaryScrollHandler) {
+            container.removeEventListener('scroll', this.diaryScrollHandler);
+        }
     }
+
+    // ========== 原有日记相关方法（已整合，此处保留兼容） ==========
+    // 原 DIARY_IDS 和旧 loadDiaryBatch 已替换，不再需要
 
     initDiaryModalEvents() {
         const modal = document.getElementById('diaryModal');
@@ -109,7 +268,7 @@ class App {
     }
     // =========================================
 
-    // ========== 反馈模态框管理（官方标准配置，无额外处理）==========
+    // ========== 反馈模态框管理（官方标准配置）==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -123,7 +282,6 @@ class App {
                 el: '#twikoo-feedback',
                 lang: 'zh-CN',
                 path: '/feedback',
-                // 完全按照官方文档配置
                 katex: {
                     delimiters: [
                         { left: '$$', right: '$$', display: true },
@@ -136,7 +294,6 @@ class App {
                 onCommentLoaded: function() {
                     const container = document.getElementById('twikoo-feedback');
                     if (!container || typeof renderMathInElement === 'undefined') return;
-                    // 再次调用渲染，确保所有公式都被处理
                     renderMathInElement(container, {
                         delimiters: [
                             { left: '$$', right: '$$', display: true },
@@ -172,8 +329,8 @@ class App {
             closeBtn.addEventListener('click', () => this.closeFeedbackModal());
         }
     }
-    // =========================================
 
+    // ========== 核心初始化 ==========
     init() {
         if (this.isInitialized) return;
         this.setupErrorHandling();
@@ -184,14 +341,13 @@ class App {
         this.setupGlobalEvents();
         this.initDiaryModalEvents();
         this.initFeedbackModalEvents();
-        this.initFloatingButtonsEffect(); // 新增：悬浮按钮滚动效果
+        this.initFloatingButtonsEffect();
         this.isInitialized = true;
         
         window.openFeedbackModal = this.openFeedbackModal.bind(this);
         window.closeFeedbackModal = this.closeFeedbackModal.bind(this);
     }
 
-    // ========== 新增：悬浮按钮滚动半透明效果 ==========
     initFloatingButtonsEffect() {
         let scrollTimer;
         const floatingBtns = document.querySelector('.floating-buttons');
@@ -207,7 +363,6 @@ class App {
             }, 1000);
         }, { passive: true });
     }
-    // =========================================
 
     initCoreComponents() {
         try {
@@ -238,10 +393,8 @@ class App {
                         this.modules.search = new SearchModule();
                         window.searchModule = this.modules.search;
                         initPromises.push(this.modules.search.init?.());
-                        console.log('搜索模块已通过App初始化');
                     } else {
                         this.modules.search = window.searchModule;
-                        console.log('使用现有的搜索模块实例');
                     }
                 } catch (error) {
                     console.error('搜索模块初始化失败:', error);
