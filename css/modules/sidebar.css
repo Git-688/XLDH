@@ -402,16 +402,16 @@
 
 /* 底部按钮图标颜色 */
 .footer-btn:nth-child(1) i {
-    color: #4361ee;
+    color: #8b5cf6;  /* 星聚笔记 - 紫色 */
 }
 .footer-btn:nth-child(2) i {
-    color: #7209b7;
+    color: #7209b7;  /* 羊毛福利 */
 }
 .footer-btn:nth-child(3) i {
-    color: #f72585;
+    color: #f72585;  /* 关于网站 */
 }
 .footer-btn:nth-child(4) i {
-    color: #4cc9f0;
+    color: #4cc9f0;  /* QQ群 */
 }
 
 /* QQ头像状态样式 */
@@ -812,7 +812,7 @@
         border-color: rgba(67, 97, 238, 0.15);
     }
     .footer-btn:nth-child(1) i {
-        color: #4cc9f0;
+        color: #a78bfa;
     }
     .footer-btn:nth-child(2) i {
         color: #b5179e;
