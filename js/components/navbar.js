@@ -116,24 +116,7 @@ class Navbar {
                 });
             }
 
-            // ========== 修改：刷新按钮 → 日记功能 ==========
-            const refreshBtn = document.getElementById('refreshBtn');
-            if (refreshBtn) {
-                refreshBtn.replaceWith(refreshBtn.cloneNode(true));
-                const newRefreshBtn = document.getElementById('refreshBtn');
-                newRefreshBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (window.app) {
-                        window.app.showDiaryModal();
-                    } else {
-                        console.error('App 未初始化');
-                    }
-                });
-            }
-            // =============================================
-
-            // ========== 新增：右下角悬浮按钮事件绑定（用户反馈、网站投稿） ==========
+            // ========== 以下两行为右下角悬浮按钮事件，保持不变 ==========
             const floatingFeedbackBtn = document.getElementById('floatingFeedbackBtn');
             if (floatingFeedbackBtn) {
                 floatingFeedbackBtn.addEventListener('click', (e) => {
@@ -234,7 +217,9 @@ class Navbar {
                     window.aboutModule.hide();
                 }
             }
-            // 反馈模态框不在自动关闭列表中，由按钮自身控制，或可添加
+            if (!keepModules.includes('notebook') && window.app && typeof window.app.hideNotebookModal === 'function') {
+                window.app.hideNotebookModal();
+            }
         } catch (error) {
             console.error('关闭模态框失败:', error);
         }
