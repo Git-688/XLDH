@@ -259,6 +259,162 @@
         .floating-btn.submit-btn:hover {
             color: #0891b2;
         }
+
+        /* ====== 星聚笔记模态框：毛玻璃效果 + 移动端适配 ====== */
+        #notebookModal {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        #notebookModal .feedback-modal-content {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+        }
+
+        /* 深色模式毛玻璃适配 */
+        @media (prefers-color-scheme: dark) {
+            #notebookModal .feedback-modal-content {
+                background: rgba(30, 30, 30, 0.85);
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        /* 笔记列表容器 */
+        .notebook-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 4px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .notebook-list::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 笔记卡片 */
+        .notebook-item {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border-radius: 14px;
+            padding: 14px 18px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            transition: all 0.2s ease;
+        }
+        .notebook-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 卡片头部 */
+        .notebook-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .notebook-id {
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.7);
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        .notebook-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 卡片标题 */
+        .notebook-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        /* 卡片内容 */
+        .notebook-content {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            word-break: break-word;
+            white-space: pre-wrap;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 12px 14px;
+            border-radius: 10px;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        /* 深色模式卡片毛玻璃 */
+        @media (prefers-color-scheme: dark) {
+            .notebook-item {
+                background: rgba(40, 40, 40, 0.6);
+                border-color: rgba(255, 255, 255, 0.05);
+            }
+            .notebook-id {
+                background: rgba(50, 50, 50, 0.8);
+            }
+            .notebook-content {
+                background: rgba(30, 30, 30, 0.6);
+            }
+        }
+
+        /* 加载/空/错误状态 */
+        .notebook-list .loading,
+        .notebook-list .empty,
+        .notebook-list .error {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .notebook-list .error {
+            color: var(--error-color);
+        }
+
+        /* 移动端缩小尺寸 */
+        @media (max-width: 768px) {
+            #notebookModal .feedback-modal-content {
+                width: 85%;
+                max-width: 400px;
+                max-height: 70vh;
+                border-radius: 18px;
+            }
+            .notebook-item {
+                padding: 12px 14px;
+            }
+            .notebook-title {
+                font-size: 16px;
+            }
+            .notebook-content {
+                font-size: 13px;
+            }
+        }
+        @media (max-width: 480px) {
+            #notebookModal .feedback-modal-content {
+                width: 90%;
+                max-width: 320px;
+                max-height: 65vh;
+                border-radius: 16px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -306,7 +462,7 @@
             <div class="sidebar-categories"></div>
         </div>
         <div class="sidebar-footer">
-            <button class="footer-btn" id="sidebarDiaryBtn" aria-label="神木日记"><i class="fas fa-book"></i></button>
+            <button class="footer-btn" id="sidebarNotebookBtn" aria-label="星聚笔记"><i class="fas fa-pen"></i></button>
             <button class="footer-btn" onclick="window.open('./pages/tools/羊毛福利.html', '_blank')" aria-label="羊毛福利"><i class="fas fa-gift"></i></button>
             <button class="footer-btn" id="aboutBtn" aria-label="关于网站"><i class="fas fa-info-circle"></i></button>
             <button class="footer-btn" onclick="window.open('https://qm.qq.com/example', '_blank')" aria-label="加入QQ群"><i class="fab fa-qq"></i></button>
@@ -478,12 +634,6 @@
         </div>
     </div>
     <div class="engine-tooltip" id="engineTooltip"></div>
-    <div class="diary-modal" id="diaryModal" style="display: none;">
-        <div class="modal-content">
-            <div class="diary-header"><h3><i class="fas fa-book-open"></i> 神木日记</h3><button class="diary-close" id="diaryCloseBtn"><i class="fas fa-times"></i></button></div>
-            <div class="diary-body"><div class="diary-list" id="diaryList"><div class="loading">加载日记中...</div></div></div>
-        </div>
-    </div>
 </main>
 <!-- 反馈模态框（Twikoo评论区） -->
 <div id="feedbackModal" class="feedback-modal" style="display: none;">
@@ -497,6 +647,22 @@
         </div>
     </div>
 </div>
+
+<!-- 星聚笔记模态框（毛玻璃效果） -->
+<div id="notebookModal" class="feedback-modal" style="display: none;">
+    <div class="feedback-modal-content" style="max-width: 650px;">
+        <div class="feedback-modal-header">
+            <h3><i class="fas fa-pen-fancy"></i> 星聚笔记</h3>
+            <button class="feedback-modal-close">&times;</button>
+        </div>
+        <div class="feedback-modal-body">
+            <div id="notebook-list" class="notebook-list">
+                <div class="loading">加载笔记中...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 基础工具 -->
 <script src="./js/storage.js"></script>
 <script src="./js/api.js"></script>
