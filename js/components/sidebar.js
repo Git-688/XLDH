@@ -1,6 +1,6 @@
 /**
- * 侧边栏组件 - 遮挡修复+上下等距留白最终版
- * 动态计算导航栏高度，上下留白完全相等，底部按钮居中适配
+ * 侧边栏组件 - 悬浮毛玻璃优化版
+ * 自动计算上下等距留白、全端自适应、壁纸宽度适配
  */
 class CompactSidebar {
     constructor() {
@@ -75,53 +75,42 @@ class CompactSidebar {
         
         this.isInitialized = false;
         this.currentVideo = null;
-        // 留白配置（最小留白，保证不会贴边）
+        // 核心：留白配置
         this.gapConfig = {
-            desktop: { min: 24, max: 80 },
-            mobile: { min: 16, max: 60 }
+            desktop: { min: 24, max: 60 },
+            mobile: { min: 16, max: 40 }
         };
-        // 侧滑栏最小高度（保证内容完整显示）
-        this.minHeightConfig = {
-            desktop: 500,
-            mobile: 400
-        };
+        this.navbarHeight = 60; // 导航栏固定高度
+        this.minSidebarHeight = 400; // 侧滑栏最小高度
     }
 
-    // ========== 核心修复：动态计算上下等距留白，彻底解决导航栏遮挡 ==========
+    // 核心：自动计算侧滑栏位置和高度，上下等距留白
     calcSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
-        const navbar = document.getElementById('navbar');
-        if (!sidebar || !navbar) return;
+        if (!sidebar) return;
 
-        // 1. 获取核心尺寸（动态获取，非写死）
-        const navbarHeight = navbar.offsetHeight || 60; // 导航栏实际高度
-        const viewportHeight = window.innerHeight; // 浏览器视口总高度
+        // 获取视口尺寸
+        const viewportHeight = window.innerHeight;
         const isMobile = window.innerWidth < 768;
         
-        // 2. 获取当前设备配置
+        // 获取当前设备的留白配置
         const gapConfig = isMobile ? this.gapConfig.mobile : this.gapConfig.desktop;
-        const minSidebarHeight = isMobile ? this.minHeightConfig.mobile : this.minHeightConfig.desktop;
         
-        // 3. 计算侧滑栏可放置的总可用高度（导航栏底部 → 视口底部）
-        const availableTotalHeight = viewportHeight - navbarHeight;
+        // 计算最大可用高度
+        const maxAvailableHeight = viewportHeight - 2 * gapConfig.min;
+        // 侧滑栏高度 = 最小可用高度和最大可用高度之间的最优值
+        const sidebarHeight = Math.min(maxAvailableHeight, Math.max(this.minSidebarHeight, viewportHeight * 0.9));
         
-        // 4. 计算侧滑栏最优高度
-        // 最大可用高度 = 总可用高度 - 2倍最小留白（保证上下至少有minGap的距离）
-        const maxAvailableSidebarHeight = availableTotalHeight - 2 * gapConfig.min;
-        // 侧滑栏最终高度 = 不超过最大可用高度，不低于最小高度
-        const sidebarHeight = Math.min(maxAvailableSidebarHeight, Math.max(minSidebarHeight, availableTotalHeight * 0.9));
+        // 核心：上下等距留白计算
+        const totalGap = viewportHeight - sidebarHeight;
+        const finalGap = totalGap / 2;
         
-        // 5. 核心：上下等距留白计算（导航栏底部到侧滑栏顶部 = 侧滑栏底部到视口底部）
-        const totalGap = availableTotalHeight - sidebarHeight;
-        const finalEqualGap = totalGap / 2; // 上下完全相等的留白
-        
-        // 6. 应用最终样式（彻底避免导航栏遮挡）
+        // 应用样式
         sidebar.style.height = `${sidebarHeight}px`;
-        sidebar.style.top = `${navbarHeight + finalEqualGap}px`; // 顶部从导航栏底部+留白开始
-        sidebar.style.bottom = `${finalEqualGap}px`; // 底部留白和顶部完全相等
-        sidebar.style.left = isMobile ? '16px' : '24px'; // 左侧边距适配
+        sidebar.style.top = `${finalGap}px`;
+        sidebar.style.bottom = `${finalGap}px`;
 
-        // 同步调整壁纸尺寸
+        // 同步调整壁纸区域，保证壁纸和侧滑栏同宽
         this.adjustWallpaperSize();
     }
 
@@ -131,10 +120,13 @@ class CompactSidebar {
         const wallpaper = document.getElementById('sidebarWallpaper');
         if (!sidebar || !wallpaper) return;
 
+        // 获取侧滑栏宽度
         const sidebarWidth = sidebar.offsetWidth;
+        // 壁纸宽度100%适配侧滑栏
         wallpaper.style.width = `${sidebarWidth}px`;
         wallpaper.style.maxWidth = '100%';
 
+        // 调整视频/图片元素
         const mediaEl = wallpaper.querySelector('video, img');
         if (mediaEl) {
             mediaEl.style.width = '100%';
@@ -143,8 +135,9 @@ class CompactSidebar {
         }
     }
 
-    // 窗口变化防抖处理
+    // 窗口大小变化时重新计算
     handleResize() {
+        // 防抖处理
         let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
@@ -162,20 +155,20 @@ class CompactSidebar {
     }
 
     async init() {
-        if (this.isInitialized) return;
+        if (this.isInitialized) {
+            return;
+        }
         try {
             if (document.readyState === 'loading') {
-                await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
+                await new Promise(resolve => {
+                    document.addEventListener('DOMContentLoaded', resolve);
+                });
             }
 
-            // 初始化先计算位置
+            // 初始化时先计算位置
             this.calcSidebarPosition();
             // 绑定窗口变化事件
             this.handleResize();
-            // 页面完全加载后再次校准（避免导航栏渲染延迟导致的尺寸错误）
-            window.addEventListener('load', () => {
-                setTimeout(() => this.calcSidebarPosition(), 200);
-            });
 
             this.loadExpandedState();
             this.render();
@@ -186,17 +179,20 @@ class CompactSidebar {
             this.createProfileModal();
             
             this.isInitialized = true;
+            
             window.sidebar = this;
             window.CompactSidebar = CompactSidebar;
             
         } catch (error) {
             console.error('侧滑栏初始化失败:', error);
-            window.toast?.show?.('侧滑栏初始化失败', 'error');
+            window.toast.show('侧滑栏初始化失败', 'error');
         }
     }
 
     createProfileModal() {
-        if (document.getElementById('profileModal')) return;
+        if (document.getElementById('profileModal')) {
+            return;
+        }
         try {
             const modalHTML = `
                 <div class="profile-modal" id="profileModal">
@@ -246,14 +242,25 @@ class CompactSidebar {
             const profileCancelBtn = document.getElementById('profileCancelBtn');
             const profileForm = document.getElementById('profileForm');
             const qqNumberInput = document.getElementById('qqNumber');
-            if (!profileModal || !profileForm || !qqNumberInput) return;
-
-            const closeModal = () => profileModal.classList.remove('active');
-            profileModalClose?.addEventListener('click', closeModal);
-            profileCancelBtn?.addEventListener('click', closeModal);
-            profileModal.addEventListener('click', (e) => e.target === profileModal && closeModal());
-            document.addEventListener('keydown', (e) => e.key === 'Escape' && profileModal.classList.contains('active') && closeModal());
-            qqNumberInput.addEventListener('input', () => this.autoGetQQAvatar());
+            if (!profileModal || !profileForm || !qqNumberInput) {
+                return;
+            }
+            const closeModal = () => {
+                profileModal.classList.remove('active');
+            };
+            if (profileModalClose) profileModalClose.addEventListener('click', closeModal);
+            if (profileCancelBtn) profileCancelBtn.addEventListener('click', closeModal);
+            profileModal.addEventListener('click', (e) => {
+                if (e.target === profileModal) closeModal();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && profileModal.classList.contains('active')) {
+                    closeModal();
+                }
+            });
+            qqNumberInput.addEventListener('input', () => {
+                this.autoGetQQAvatar();
+            });
             profileForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.saveProfileSettings();
@@ -268,12 +275,13 @@ class CompactSidebar {
             const qqNumberInput = document.getElementById('qqNumber');
             const qqAvatarPreview = document.getElementById('qqAvatarPreview');
             const qqAvatarStatus = document.getElementById('qqAvatarStatus');
-            if (!qqNumberInput || !qqAvatarPreview || !qqAvatarStatus) return;
-
+            if (!qqNumberInput || !qqAvatarPreview || !qqAvatarStatus) {
+                return;
+            }
             const qqNumber = qqNumberInput.value.trim();
+            
             qqAvatarStatus.textContent = '';
             qqAvatarStatus.className = 'qq-avatar-status';
-
             if (!qqNumber) {
                 qqAvatarPreview.src = this.getDefaultAvatarSVG();
                 return;
@@ -283,7 +291,6 @@ class CompactSidebar {
                 qqAvatarStatus.className = 'qq-avatar-status error';
                 return;
             }
-
             qqAvatarStatus.textContent = '获取中...';
             qqAvatarStatus.className = 'qq-avatar-status loading';
             const avatarUrl = await this.getQQAvatar(qqNumber);
@@ -311,14 +318,19 @@ class CompactSidebar {
             }
         } catch (error) {
             console.error('自动获取QQ头像失败:', error);
-            document.getElementById('qqAvatarStatus')?.textContent && (document.getElementById('qqAvatarStatus').textContent = '获取失败，请重试');
+            const qqAvatarStatus = document.getElementById('qqAvatarStatus');
+            if (qqAvatarStatus) {
+                qqAvatarStatus.textContent = '获取失败，请重试';
+                qqAvatarStatus.className = 'qq-avatar-status error';
+            }
         }
     }
 
     async getQQAvatar(qqNumber) {
         try {
             const response = await fetch(`https://api.kuleu.com/api/qqimg?qq=${qqNumber}`);
-            return response.ok ? response.url : null;
+            if (!response.ok) throw new Error('获取QQ头像失败');
+            return response.url;
         } catch (error) {
             console.error('获取QQ头像失败:', error);
             return null;
@@ -335,10 +347,9 @@ class CompactSidebar {
             const signatureInput = document.getElementById('signature');
             const qqAvatarPreview = document.getElementById('qqAvatarPreview');
             if (!nicknameInput || !signatureInput || !qqAvatarPreview) {
-                window.toast?.show?.('保存失败，表单元素未找到', 'error');
+                window.toast.show('保存失败，表单元素未找到', 'error');
                 return;
             }
-
             const nickname = nicknameInput.value.trim();
             const signature = signatureInput.value.trim();
             const qqAvatar = qqAvatarPreview.src;
@@ -351,12 +362,13 @@ class CompactSidebar {
             }
             Storage.set('userConfig', userConfig);
             this.loadWallpaperUserInfo();
-            document.getElementById('profileModal')?.classList.remove('active');
-            window.toast?.show?.('个人信息保存成功', 'success');
+            const profileModal = document.getElementById('profileModal');
+            if (profileModal) profileModal.classList.remove('active');
+            window.toast.show('个人信息保存成功', 'success');
             
         } catch (error) {
             console.error('保存个人资料设置失败:', error);
-            window.toast?.show?.('保存失败，请重试', 'error');
+            window.toast.show('保存失败，请重试', 'error');
         }
     }
 
@@ -364,20 +376,25 @@ class CompactSidebar {
         try {
             const profileModal = document.getElementById('profileModal');
             const userConfig = Storage.get('userConfig') || {};
-            if (!profileModal) return;
-
-            document.getElementById('nickname').value = userConfig.nickname || '';
-            document.getElementById('signature').value = userConfig.signature || '';
-            document.getElementById('qqNumber').value = '';
-            const avatarPreview = document.getElementById('qqAvatarPreview');
-            if (avatarPreview) {
-                avatarPreview.src = userConfig.avatar || this.getDefaultAvatarSVG();
-                avatarPreview.setAttribute('loading', 'lazy');
+            if (!profileModal) {
+                return;
+            }
+            const nicknameInput = document.getElementById('nickname');
+            const signatureInput = document.getElementById('signature');
+            const qqNumberInput = document.getElementById('qqNumber');
+            const qqAvatarPreview = document.getElementById('qqAvatarPreview');
+            if (nicknameInput) nicknameInput.value = userConfig.nickname || '';
+            if (signatureInput) signatureInput.value = userConfig.signature || '';
+            if (qqNumberInput) qqNumberInput.value = '';
+            if (qqAvatarPreview) {
+                qqAvatarPreview.src = userConfig.avatar || this.getDefaultAvatarSVG();
+                qqAvatarPreview.setAttribute('loading', 'lazy');
+                qqAvatarPreview.setAttribute('decoding', 'async');
             }
             profileModal.classList.add('active');
         } catch (error) {
             console.error('打开个人资料模态框失败:', error);
-            window.toast?.show?.('打开设置失败', 'error');
+            window.toast.show('打开设置失败', 'error');
         }
     }
 
@@ -410,7 +427,9 @@ class CompactSidebar {
     render() {
         try {
             const sidebar = document.getElementById('sidebar');
-            if (!sidebar) return;
+            if (!sidebar) {
+                return;
+            }
             const categoriesContainer = sidebar.querySelector('.sidebar-categories');
             if (categoriesContainer) {
                 categoriesContainer.innerHTML = this.categories.map(category => `
@@ -470,8 +489,10 @@ class CompactSidebar {
                 try {
                     const sidebar = document.getElementById('sidebar');
                     const menuBtn = document.getElementById('menuBtn');
+                    
                     if (sidebar && sidebar.classList.contains('active') && 
-                        !sidebar.contains(e.target) && !menuBtn?.contains(e.target)) {
+                        !sidebar.contains(e.target) && 
+                        !menuBtn?.contains(e.target)) {
                         this.hide();
                     }
                 } catch (error) {
@@ -479,7 +500,9 @@ class CompactSidebar {
                 }
             });
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && this.isVisible()) this.hide();
+                if (e.key === 'Escape' && this.isVisible()) {
+                    this.hide();
+                }
             });
         } catch (error) {
             console.error('绑定侧边栏事件失败:', error);
@@ -491,13 +514,20 @@ class CompactSidebar {
         try {
             const categoryName = categoryGroup.dataset.category;
             const category = this.categories.find(cat => cat.name === categoryName);
+            
             if (category) {
                 category.expanded = !category.expanded;
                 categoryGroup.classList.toggle('expanded', category.expanded);
+                
                 const itemsContainer = categoryGroup.querySelector('.category-items');
                 if (itemsContainer) {
-                    itemsContainer.style.maxHeight = category.expanded ? `${itemsContainer.scrollHeight}px` : '0';
+                    if (category.expanded) {
+                        itemsContainer.style.maxHeight = itemsContainer.scrollHeight + 'px';
+                    } else {
+                        itemsContainer.style.maxHeight = '0';
+                    }
                 }
+                
                 this.saveExpandedState();
             }
         } catch (error) {
@@ -509,25 +539,34 @@ class CompactSidebar {
         try {
             const action = categoryItem.dataset.action;
             const link = categoryItem.dataset.link;
+            
             if (link) {
                 window.open(link, '_blank');
                 this.hide();
                 return;
             }
+            
             switch(action) {
                 case 'search':
-                    window.searchModule?.showModal?.();
+                    if (window.searchModule) {
+                        window.searchModule.showModal();
+                    }
                     break;
                 case 'music':
-                    window.app?.components?.navbar?.toggleMusicPlayer?.();
+                    if (window.app?.components?.navbar) {
+                        window.app.components.navbar.toggleMusicPlayer();
+                    }
                     break;
                 case 'weather':
-                    window.app?.modules?.weather?.showModal?.();
+                    if (window.app?.modules?.weather) {
+                        window.app.modules.weather.showModal();
+                    }
                     break;
                 case 'calculator':
                     this.openCalculator();
                     break;
             }
+            
             this.hide();
         } catch (error) {
             console.error('处理分类项点击失败:', error);
@@ -539,15 +578,23 @@ class CompactSidebar {
             const icon = footerBtn.querySelector('i');
             if (!icon) return;
             const iconClass = icon.className;
+            
             if (iconClass.includes('fa-book')) {
-                window.app?.showDiaryModal?.();
+                if (window.app && typeof window.app.showDiaryModal === 'function') {
+                    window.app.showDiaryModal();
+                }
                 this.hide();
-            } else if (iconClass.includes('fa-gift')) {
+            } 
+            else if (iconClass.includes('fa-gift')) {
                 this.hide();
-            } else if (iconClass.includes('fa-info-circle')) {
-                window.aboutModule?.show?.();
+            } 
+            else if (iconClass.includes('fa-info-circle')) {
+                if (window.aboutModule) {
+                    window.aboutModule.show();
+                }
                 this.hide();
-            } else if (iconClass.includes('fa-qq')) {
+            } 
+            else if (iconClass.includes('fa-qq')) {
                 window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
                 this.hide();
             }
@@ -557,7 +604,7 @@ class CompactSidebar {
     }
 
     openCalculator() {
-        window.toast?.show?.('计算器功能开发中', 'info');
+        window.toast.show('计算器功能开发中', 'info');
     }
 
     show() {
@@ -565,7 +612,7 @@ class CompactSidebar {
             const sidebar = document.getElementById('sidebar');
             if (sidebar) {
                 this.closeAllModals();
-                // 显示前重新计算位置，确保适配最新窗口尺寸
+                // 显示前重新计算位置，保证适配最新窗口尺寸
                 this.calcSidebarPosition();
                 sidebar.classList.add('active');
                 document.body.classList.add('sidebar-open');
@@ -573,15 +620,20 @@ class CompactSidebar {
                 
                 const sidebarContent = sidebar.querySelector('.sidebar-content');
                 const categoriesContainer = sidebar.querySelector('.categories-container');
+                
                 if (sidebarContent) {
                     sidebarContent.style.overflowY = 'auto';
                     sidebarContent.style.overflowX = 'hidden';
                 }
+                
                 if (categoriesContainer) {
                     categoriesContainer.style.overflowY = 'auto';
                     categoriesContainer.style.overflowX = 'hidden';
                 }
-                setTimeout(() => this.adjustWallpaperSize(), 100);
+                
+                setTimeout(() => {
+                    this.adjustWallpaperSize();
+                }, 100);
             }
         } catch (error) {
             console.error('显示侧边栏失败:', error);
@@ -594,20 +646,23 @@ class CompactSidebar {
             if (sidebar) {
                 sidebar.classList.remove('active');
                 document.body.classList.remove('sidebar-open');
+                
                 const sidebarContent = sidebar.querySelector('.sidebar-content');
                 const categoriesContainer = sidebar.querySelector('.categories-container');
+                
                 if (sidebarContent) {
                     sidebarContent.style.overflowY = '';
                     sidebarContent.style.overflowX = '';
                 }
+                
                 if (categoriesContainer) {
                     categoriesContainer.style.overflowY = '';
                     categoriesContainer.style.overflowX = '';
                 }
             }
+            
             if (this.currentVideo) {
                 this.currentVideo.pause();
-                this.currentVideo = null;
             }
         } catch (error) {
             console.error('隐藏侧边栏失败:', error);
@@ -618,7 +673,11 @@ class CompactSidebar {
         try {
             const sidebar = document.getElementById('sidebar');
             if (sidebar) {
-                sidebar.classList.contains('active') ? this.hide() : this.show();
+                if (sidebar.classList.contains('active')) {
+                    this.hide();
+                } else {
+                    this.show();
+                }
             }
         } catch (error) {
             console.error('切换侧边栏失败:', error);
@@ -632,11 +691,25 @@ class CompactSidebar {
 
     closeAllModals() {
         try {
-            window.searchModule?.isModalOpen?.() && window.searchModule.hide?.();
-            window.app?.components?.navbar?.hideMusicPlayer?.();
-            window.announcementModule?.hide?.();
-            window.app?.modules?.weather?.hide?.();
-            window.aboutModule?.hide?.();
+            if (window.searchModule && window.searchModule.isModalOpen()) {
+                window.searchModule.hide();
+            }
+            
+            if (window.app && window.app.components && window.app.components.navbar) {
+                window.app.components.navbar.hideMusicPlayer();
+            }
+            
+            if (window.announcementModule) {
+                window.announcementModule.hide();
+            }
+            
+            if (window.app && window.app.modules && window.app.modules.weather) {
+                window.app.modules.weather.hide();
+            }
+            
+            if (window.aboutModule) {
+                window.aboutModule.hide();
+            }
         } catch (error) {
             console.error('关闭所有模态框失败:', error);
         }
@@ -645,22 +718,32 @@ class CompactSidebar {
     async loadWallpaperUserInfo() {
         try {
             const userConfig = Storage.get('userConfig') || {};
+            
             const wallpaperAvatar = document.getElementById('sidebarWallpaperAvatar');
             const wallpaperNickname = document.getElementById('sidebarWallpaperNickname');
             const wallpaperSignature = document.getElementById('sidebarWallpaperSignature');
             
-            if (wallpaperNickname) wallpaperNickname.textContent = userConfig.nickname || '访客用户';
+            if (wallpaperNickname) {
+                wallpaperNickname.textContent = userConfig.nickname || '访客用户';
+            }
+            
             if (wallpaperAvatar) {
                 if (userConfig.avatar) {
                     wallpaperAvatar.src = userConfig.avatar;
                     wallpaperAvatar.setAttribute('loading', 'lazy');
+                    wallpaperAvatar.setAttribute('decoding', 'async');
                     wallpaperAvatar.style.display = 'block';
                 } else {
                     await this.loadRandomAvatar();
                 }
             }
-            if (wallpaperSignature) wallpaperSignature.textContent = userConfig.signature || '探索无限可能';
+            
+            if (wallpaperSignature) {
+                wallpaperSignature.textContent = userConfig.signature || '探索无限可能';
+            }
+            
             await this.loadSidebarWallpaper();
+            
         } catch (error) {
             console.error('加载壁纸用户信息失败:', error);
         }
@@ -671,8 +754,13 @@ class CompactSidebar {
             const dayOfWeek = new Date().getDay();
             const mediaInfo = this.getLocalWallpaper(dayOfWeek);
             const sidebarWallpaper = document.getElementById('sidebarWallpaper');
+            
             if (sidebarWallpaper && mediaInfo) {
-                mediaInfo.type === 'video' ? await this.setVideoWallpaper(mediaInfo.url) : this.setFallbackBackground();
+                if (mediaInfo.type === 'video') {
+                    await this.setVideoWallpaper(mediaInfo.url);
+                } else {
+                    this.setFallbackBackground();
+                }
             } else {
                 this.setFallbackBackground();
             }
@@ -692,19 +780,23 @@ class CompactSidebar {
             5: { type: 'video', url: './assets/wallpapers/friday.mp4' },
             6: { type: 'video', url: './assets/wallpapers/saturday.mp4' }
         };
+        
         return videoWallpapers[dayOfWeek] || { type: 'video', url: './assets/wallpapers/monday.mp4' };
     }
 
     async setVideoWallpaper(videoUrl) {
         const sidebarWallpaper = document.getElementById('sidebarWallpaper');
         if (!sidebarWallpaper) return;
+        
         sidebarWallpaper.style.backgroundImage = 'none';
         sidebarWallpaper.style.background = 'transparent';
+        
         const existingVideo = sidebarWallpaper.querySelector('video');
         if (existingVideo) {
             existingVideo.remove();
             this.currentVideo = null;
         }
+        
         try {
             const video = document.createElement('video');
             video.src = videoUrl;
@@ -713,6 +805,7 @@ class CompactSidebar {
             video.loop = true;
             video.playsInline = true;
             video.preload = "auto";
+            
             video.style.cssText = `
                 position: absolute;
                 top: 0;
@@ -722,25 +815,43 @@ class CompactSidebar {
                 object-fit: contain;
                 z-index: 0;
             `;
+            
             video.setAttribute('autoplay', 'true');
             video.setAttribute('muted', 'true');
             video.setAttribute('loop', 'true');
             video.setAttribute('playsinline', 'true');
+            video.setAttribute('preload', 'auto');
+            
             video.onerror = () => {
                 console.warn('视频加载失败，使用备用背景');
                 this.setFallbackBackground();
             };
+            
             sidebarWallpaper.appendChild(video);
             this.currentVideo = video;
+            
             const overlay = sidebarWallpaper.querySelector('.sidebar-wallpaper-overlay');
-            overlay && (overlay.style.zIndex = '1');
+            if (overlay) {
+                overlay.style.zIndex = '1';
+            }
+            
             const userInfo = sidebarWallpaper.querySelector('.sidebar-wallpaper-user-info');
-            userInfo && (userInfo.style.zIndex = '2');
-            video.onloadedmetadata = () => this.adjustWallpaperSize();
-            await video.play().catch(() => {
+            if (userInfo) {
+                userInfo.style.zIndex = '2';
+            }
+            
+            // 视频加载完成后调整尺寸
+            video.onloadedmetadata = () => {
+                this.adjustWallpaperSize();
+            };
+
+            try {
+                await video.play();
+            } catch (error) {
                 console.warn('视频自动播放失败，使用备用背景');
                 this.setFallbackBackground();
-            });
+            }
+            
         } catch (error) {
             console.error('设置视频壁纸失败:', error);
             this.setFallbackBackground();
@@ -751,7 +862,11 @@ class CompactSidebar {
         const sidebarWallpaper = document.getElementById('sidebarWallpaper');
         if (sidebarWallpaper) {
             const existingVideo = sidebarWallpaper.querySelector('video');
-            existingVideo && existingVideo.remove() && (this.currentVideo = null);
+            if (existingVideo) {
+                existingVideo.remove();
+                this.currentVideo = null;
+            }
+            
             sidebarWallpaper.style.backgroundImage = 'none';
             sidebarWallpaper.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
         }
@@ -765,6 +880,7 @@ class CompactSidebar {
                 if (wallpaperAvatar) {
                     wallpaperAvatar.src = avatarUrl;
                     wallpaperAvatar.setAttribute('loading', 'lazy');
+                    wallpaperAvatar.setAttribute('decoding', 'async');
                     wallpaperAvatar.style.display = 'block';
                     const userConfig = Storage.get('userConfig') || {};
                     userConfig.avatar = avatarUrl;
@@ -805,11 +921,13 @@ class CompactSidebar {
     async loadUserData() {
         try {
             const userConfig = Storage.get('userConfig') || {};
+            
             if (!userConfig.nickname) {
                 userConfig.nickname = '访客用户';
                 userConfig.signature = '探索无限可能';
                 Storage.set('userConfig', userConfig);
             }
+            
         } catch (error) {
             console.error('加载用户数据失败:', error);
         }
@@ -818,20 +936,29 @@ class CompactSidebar {
     async loadDailyQuote() {
         try {
             const quoteElement = document.getElementById('dailyQuote');
-            if (!quoteElement) return;
+            if (!quoteElement) {
+                return;
+            }
             const quote = await this.getDailyQuote();
             let cleanedQuote = quote.replace(/^["'「」"”‘’]|["'「」""”‘’]$/g, '').trim();
-            quoteElement.textContent = cleanedQuote || '每一天都是新的开始，充满无限可能。';
+            if (!cleanedQuote) cleanedQuote = '每一天都是新的开始，充满无限可能。';
+            
+            quoteElement.textContent = cleanedQuote;
         } catch (error) {
             console.error('加载每日一言失败:', error);
-            document.getElementById('dailyQuote') && (document.getElementById('dailyQuote').textContent = '每一天都是新的开始，充满无限可能。');
+            const quoteElement = document.getElementById('dailyQuote');
+            if (quoteElement) {
+                quoteElement.textContent = '每一天都是新的开始，充满无限可能。';
+            }
         }
     }
 
     async getDailyQuote() {
         try {
             const response = await fetch('https://api.kuleu.com/api/yiyan');
-            return response.ok ? await response.text() : '每一天都是新的开始，充满无限可能。';
+            if (!response.ok) return '每一天都是新的开始，充满无限可能。';
+            const text = await response.text();
+            return text || '每一天都是新的开始，充满无限可能。';
         } catch (error) {
             console.error('获取每日一言失败:', error);
             return '每一天都是新的开始，充满无限可能。';
@@ -844,6 +971,7 @@ class CompactSidebar {
                 this.currentVideo.pause();
                 this.currentVideo = null;
             }
+            
             this.isInitialized = false;
         } catch (error) {
             console.error('销毁侧边栏失败:', error);
@@ -853,17 +981,24 @@ class CompactSidebar {
 
 if (!window.sidebarInitialized) {
     window.sidebarInitialized = true;
+    
     const initSidebar = async () => {
         if (document.readyState === 'loading') {
-            await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
+            await new Promise(resolve => {
+                document.addEventListener('DOMContentLoaded', resolve);
+            });
         }
+        
         if (!window.sidebar) {
             window.CompactSidebar = CompactSidebar;
             window.sidebar = new CompactSidebar();
             await window.sidebar.init();
         }
     };
-    initSidebar().catch(error => console.error('侧边栏初始化失败:', error));
+    
+    initSidebar().catch(error => {
+        console.error('侧边栏初始化失败:', error);
+    });
 }
 
 window.getSidebar = function() {
