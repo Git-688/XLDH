@@ -17,7 +17,6 @@
     <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon-16x16.png">
     
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
     <link rel="stylesheet" href="./css/modules/sidebar.css">
@@ -48,7 +47,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     
     <link rel="preload" href="./js/main.js" as="script">
-
     <!-- KaTeX 数学公式支持 v0.16.45 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
@@ -102,7 +100,6 @@
             transform: scale(1) translateY(0);
             opacity: 1;
         }
-
         /* 头部尺寸保持不变，仅标题字体调整为正常大小 */
         .feedback-modal-header {
             display: flex;
@@ -157,7 +154,6 @@
         .feedback-modal-body::-webkit-scrollbar {
             display: none;
         }
-
         /* 移动端：高度90% · 保留边距 */
         @media (max-width: 600px) {
             .feedback-modal {
@@ -194,7 +190,6 @@
                 font-size: 22px;
             }
         }
-
         /* 桌面端头部字体调整 */
         @media (min-width: 601px) {
             .feedback-modal-header {
@@ -207,7 +202,6 @@
                 padding: 16px 20px;
             }
         }
-
         /* 暗色模式 */
         @media (prefers-color-scheme: dark) {
             .feedback-modal-content {
@@ -225,7 +219,6 @@
                 background: rgba(255, 255, 255, 0.08);
             }
         }
-
         /* 公式提示卡片样式 */
         .math-hint {
             padding: 8px 12px;
@@ -253,7 +246,6 @@
             font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
             font-size: 11px;
         }
-
         /* 悬浮按钮新样式 */
         .floating-btn.feedback-btn {
             color: #8b5cf6;
@@ -270,7 +262,6 @@
     </style>
 </head>
 <body>
-
 <!-- 导航栏 -->
 <nav class="navbar" id="navbar">
     <div class="nav-container">
@@ -291,7 +282,6 @@
         </div>
     </div>
 </nav>
-
 <!-- 侧滑栏 -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-wallpaper" id="sidebarWallpaper">
@@ -323,7 +313,6 @@
         </div>
     </div>
 </aside>
-
 <main class="main-content">
     <section class="wallpaper-section">
         <div class="container">
@@ -337,7 +326,6 @@
             </div>
         </div>
     </section>
-
     <section class="greeting-section">
         <div class="greeting-container">
             <div class="greeting-main-card">
@@ -364,7 +352,6 @@
             <a href="./pages/others/sq.html" class="bookmark-btn" aria-label="我的书签" target="_blank"><i class="fas fa-bookmark"></i><span>我的书签</span></a>
         </div>
     </section>
-
     <section class="minimal-tags-section">
         <div class="container">
             <div class="tags-header">
@@ -376,7 +363,6 @@
             </div>
         </div>
     </section>
-
     <section class="navigation-section">
         <div class="container">
             <div class="navigation-header">
@@ -397,7 +383,6 @@
             </div>
         </div>
     </section>
-
     <footer class="footer">
         <div class="footer-compact-container">
             <div class="footer-disclaimer-card">
@@ -418,7 +403,6 @@
             </div>
         </div>
     </footer>
-
     <!-- 修改后的悬浮按钮区域：用户反馈 + 网站投稿 -->
     <div class="floating-buttons">
         <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
@@ -426,7 +410,6 @@
         <button class="floating-btn submit-btn" id="floatingSubmitBtn" aria-label="网站投稿"><i class="fas fa-paper-plane"></i></button>
         <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
     </div>
-
     <!-- 音乐播放器主体 -->
     <div class="music-player" id="musicPlayer">
         <div class="player-top">
@@ -484,8 +467,7 @@
             <div class="tab-content" id="local-content"><div class="content-container"><div class="playlist-container" id="local-playlist-container"><div class="loading">加载本地歌曲中...</div></div></div></div>
         </div>
     </div>
-    <audio id="audio-element" preload="metadata"></audio>
-
+    <audio id="audio-element" preload="metadata">
     <div class="search-modal" id="searchModal" style="display: none;">
         <div class="modal-content">
             <div class="search-header"><i class="fas fa-search search-icon"></i><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." onkeydown="handleSearch(event)" oninput="showSuggestions(this.value)"><div class="suggestions" id="suggestions"></div></div>
@@ -496,7 +478,6 @@
         </div>
     </div>
     <div class="engine-tooltip" id="engineTooltip"></div>
-
     <div class="diary-modal" id="diaryModal" style="display: none;">
         <div class="modal-content">
             <div class="diary-header"><h3><i class="fas fa-book-open"></i> 神木日记</h3><button class="diary-close" id="diaryCloseBtn"><i class="fas fa-times"></i></button></div>
@@ -504,7 +485,6 @@
         </div>
     </div>
 </main>
-
 <!-- 反馈模态框（Twikoo评论区） -->
 <div id="feedbackModal" class="feedback-modal" style="display: none;">
     <div class="feedback-modal-content">
@@ -517,15 +497,12 @@
         </div>
     </div>
 </div>
-
 <!-- 基础工具 -->
 <script src="./js/storage.js"></script>
 <script src="./js/api.js"></script>
-
 <!-- 核心组件 -->
 <script src="./js/components/navbar.js"></script>
 <script src="./js/components/sidebar.js"></script>
-
 <!-- 模块 -->
 <script src="./js/modules/announcement.js"></script>
 <script src="./js/modules/search.js"></script>
@@ -536,11 +513,9 @@
 <script src="./js/modules/greeting.js"></script>
 <script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
-
 <!-- 主应用程序 -->
 <script src="./js/toast.js"></script>
 <script src="./js/main.js"></script>
-
 <!-- 音乐播放器 -->
 <script src="./js/xfyy/utils.js"></script>
 <script src="./js/xfyy/cache-manager.js"></script>
@@ -549,7 +524,6 @@
 <script src="./js/xfyy/plugin-manager.js"></script>
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
-
 <!-- Twikoo v1.7.7 核心库 -->
 <script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
 </body>
