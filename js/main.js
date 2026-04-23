@@ -261,15 +261,20 @@ class App {
         try {
             const initPromises = [];
             
-            // 搜索模块（确保只实例化一次）
-            if (typeof SearchModule !== 'undefined' && !window.searchModule) {
-                this.modules.search = new SearchModule();
-                window.searchModule = this.modules.search;
-                initPromises.push(this.modules.search.init?.());
-                console.log('搜索模块已通过App初始化');
-            } else if (window.searchModule) {
-                this.modules.search = window.searchModule;
-                console.log('使用现有的搜索模块实例');
+            if (typeof SearchModule !== 'undefined') {
+                try {
+                    if (!window.searchModule || !(window.searchModule instanceof SearchModule)) {
+                        this.modules.search = new SearchModule();
+                        window.searchModule = this.modules.search;
+                        initPromises.push(this.modules.search.init?.());
+                        console.log('搜索模块已通过App初始化');
+                    } else {
+                        this.modules.search = window.searchModule;
+                        console.log('使用现有的搜索模块实例');
+                    }
+                } catch (error) {
+                    console.error('搜索模块初始化失败:', error);
+                }
             }
             
             if (typeof WallpaperModule !== 'undefined') {
@@ -328,13 +333,8 @@ class App {
 
     initDependentComponents() {
         try {
-            // 重点修复：仅在 window.navbar 不存在时创建实例
-            if (typeof Navbar !== 'undefined' && !window.navbar) {
+            if (typeof Navbar !== 'undefined') {
                 this.components.navbar = new Navbar();
-                window.navbar = this.components.navbar;
-                console.log('Navbar 通过 App 初始化');
-            } else if (window.navbar) {
-                this.components.navbar = window.navbar;
             }
         } catch (error) {
             console.error('依赖组件初始化失败:', error);
