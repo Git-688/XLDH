@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域完全对称）
+ * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域紧凑对称）
  */
 class CompactSidebar {
     constructor() {
@@ -83,7 +83,7 @@ class CompactSidebar {
         this.minSidebarHeight = 400;
     }
 
-    // 核心：计算侧滑栏位置、高度，并强制底部按钮区域上下内边距完全相等
+    // 核心：计算侧滑栏位置、高度，并设置底部按钮区域为紧凑对称
     calcSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
@@ -110,12 +110,12 @@ class CompactSidebar {
         sidebar.style.bottom = 'auto';
         sidebar.style.maxHeight = 'none';
 
-        // ★ 关键修改：强制底部按钮区域的上下内边距完全相等，并移除 margin 干扰
+        // ★ 修改：缩小底部按钮区域内边距，使其更紧凑
         const footer = sidebar.querySelector('.sidebar-footer');
         if (footer) {
-            // 计算一个合适的内边距值（与整体留白协调）
-            const basePadding = Math.max(12, Math.floor(margin * 0.6)); // 动态基础值
-            const targetPadding = Math.min(basePadding, 24); // 限制最大值避免过大
+            // 缩小内边距范围：8px ~ 16px（原为 12px ~ 24px）
+            const basePadding = Math.max(8, Math.floor(margin * 0.4)); // 降低系数
+            const targetPadding = Math.min(basePadding, 16); // 限制最大值
             
             // 设置上下内边距为相同值
             footer.style.paddingTop = `${targetPadding}px`;
@@ -128,6 +128,9 @@ class CompactSidebar {
             // 确保 flex 容器垂直居中
             footer.style.display = 'flex';
             footer.style.alignItems = 'center';
+            
+            // 可选：略微缩小按钮之间的间距
+            footer.style.gap = '6px'; // 原 CSS 为 8px，可根据需要调整
         }
 
         this.adjustWallpaperSize();
