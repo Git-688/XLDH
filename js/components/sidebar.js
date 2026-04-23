@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域高度/内边距对称）
+ * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域完全对称）
  */
 class CompactSidebar {
     constructor() {
@@ -83,7 +83,7 @@ class CompactSidebar {
         this.minSidebarHeight = 400;
     }
 
-    // 核心：计算侧滑栏位置、高度，并同步底部按钮区域的上下内边距与高度
+    // 核心：计算侧滑栏位置、高度，并强制底部按钮区域上下内边距完全相等
     calcSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
@@ -110,22 +110,24 @@ class CompactSidebar {
         sidebar.style.bottom = 'auto';
         sidebar.style.maxHeight = 'none';
 
-        // ★ 修改：同步底部按钮区域的上下内边距，并调整高度以保持视觉对称
+        // ★ 关键修改：强制底部按钮区域的上下内边距完全相等，并移除 margin 干扰
         const footer = sidebar.querySelector('.sidebar-footer');
         if (footer) {
-            // 获取当前的 padding-top 值（CSS 中定义的基础值）
-            const computedStyle = getComputedStyle(footer);
-            const paddingTop = parseInt(computedStyle.paddingTop) || 12;
+            // 计算一个合适的内边距值（与整体留白协调）
+            const basePadding = Math.max(12, Math.floor(margin * 0.6)); // 动态基础值
+            const targetPadding = Math.min(basePadding, 24); // 限制最大值避免过大
             
-            // 根据上边距动态计算一个合适的底部内边距，确保与整体留白协调
-            // 这里我们采用与上边距相同的值，同时使用 max 确保安全区域
-            const targetPaddingBottom = Math.max(paddingTop, margin * 0.8); // 可调整系数 0.8 以微调
+            // 设置上下内边距为相同值
+            footer.style.paddingTop = `${targetPadding}px`;
+            footer.style.paddingBottom = `max(${targetPadding}px, env(safe-area-inset-bottom))`;
             
-            // 设置 padding-bottom，兼顾安全区域
-            footer.style.paddingBottom = `max(${targetPaddingBottom}px, env(safe-area-inset-bottom))`;
+            // 移除可能干扰居中的 margin
+            footer.style.marginTop = '0';
+            footer.style.marginBottom = '0';
             
-            // 若需要进一步调整高度，可设置 min-height（但非必须，由内容撑开即可）
-            // 这里我们不固定高度，让内容自然撑开，仅通过内边距控制留白
+            // 确保 flex 容器垂直居中
+            footer.style.display = 'flex';
+            footer.style.alignItems = 'center';
         }
 
         this.adjustWallpaperSize();
