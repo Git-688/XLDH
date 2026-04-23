@@ -467,9 +467,7 @@
             <div class="tab-content" id="local-content"><div class="content-container"><div class="playlist-container" id="local-playlist-container"><div class="loading">加载本地歌曲中...</div></div></div></div>
         </div>
     </div>
-    <!-- 修复：audio标签闭合 -->
     <audio id="audio-element" preload="metadata">
-    <!-- 搜索模态框 -->
     <div class="search-modal" id="searchModal" style="display: none;">
         <div class="modal-content">
             <div class="search-header"><i class="fas fa-search search-icon"></i><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." onkeydown="handleSearch(event)" oninput="showSuggestions(this.value)"><div class="suggestions" id="suggestions"></div></div>
@@ -480,8 +478,7 @@
         </div>
     </div>
     <div class="engine-tooltip" id="engineTooltip"></div>
-    <!-- 神木日记模态框 -->
-    <div class="diary-modal" id="diaryModal">
+    <div class="diary-modal" id="diaryModal" style="display: none;">
         <div class="modal-content">
             <div class="diary-header"><h3><i class="fas fa-book-open"></i> 神木日记</h3><button class="diary-close" id="diaryCloseBtn"><i class="fas fa-times"></i></button></div>
             <div class="diary-body"><div class="diary-list" id="diaryList"><div class="loading">加载日记中...</div></div></div>
@@ -489,7 +486,7 @@
     </div>
 </main>
 <!-- 反馈模态框（Twikoo评论区） -->
-<div id="feedbackModal" class="feedback-modal">
+<div id="feedbackModal" class="feedback-modal" style="display: none;">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
             <h3><i class="fas fa-comment-dots"></i> 用户反馈</h3>
