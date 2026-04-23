@@ -1,119 +1,525 @@
-/* 仅保留侧滑栏独立滚动控制及浮动按钮响应式优化 */
-/* 全局重置和容器样式已由 style.css 统一管理，此处不再重复 */
+/* ==========================================
+   星聚导航 - 完整响应式样式表
+   适配：悬浮毛玻璃侧滑栏、全端设备、横竖屏、安全区域
+   修复：滚动穿透、iOS Safari 兼容、横屏布局错乱
+   ========================================== */
 
-/* 侧滑栏完全独立滚动控制 */
-.sidebar.active { pointer-events: auto; transform: translateX(0); visibility: visible; }
+/* ========== 1. 核心CSS变量响应式适配 ========== */
+:root {
+  /* 桌面端默认变量 */
+  --sidebar-width-desktop: 300px;
+  --sidebar-width-mobile: 260px;
+  --sidebar-gap-desktop: 40px;
+  --sidebar-gap-mobile: 24px;
+  --sidebar-radius: 18px;
+  --container-padding-xs: 16px;
+  --container-padding-sm: 20px;
+  --container-padding-md: 24px;
+  --container-padding-lg: 28px;
+  --container-padding-xl: 32px;
+  --section-margin-xs: 16px;
+  --section-margin-sm: 20px;
+  --section-margin-md: 24px;
+  --section-margin-lg: 28px;
+  --section-margin-xl: 32px;
+}
 
+/* 大屏桌面端变量覆盖 */
+@media (min-width: 1920px) {
+  :root {
+    --sidebar-width-desktop: 320px;
+    --sidebar-gap-desktop: 60px;
+  }
+}
+
+/* 平板端变量覆盖 */
+@media (max-width: 992px) {
+  :root {
+    --sidebar-width-desktop: 280px;
+    --sidebar-gap-desktop: 30px;
+  }
+}
+
+/* 移动端变量覆盖 */
+@media (max-width: 768px) {
+  :root {
+    --sidebar-width-mobile: 260px;
+    --sidebar-gap-mobile: 24px;
+  }
+}
+
+/* 小屏移动端变量覆盖 */
+@media (max-width: 575px) {
+  :root {
+    --sidebar-width-mobile: 240px;
+    --sidebar-gap-mobile: 20px;
+  }
+}
+
+/* 超小屏移动端变量覆盖 */
+@media (max-width: 360px) {
+  :root {
+    --sidebar-width-mobile: 220px;
+    --sidebar-gap-mobile: 16px;
+  }
+}
+
+/* ========== 2. 侧滑栏核心响应式与滚动控制 ========== */
+/* 侧滑栏完全独立滚动控制 - 解决滚动穿透 */
+.sidebar {
+  touch-action: none;
+}
+.sidebar.active {
+  pointer-events: auto;
+  transform: translateY(-50%) translateX(0);
+  visibility: visible;
+  touch-action: pan-y;
+}
 .sidebar.active ~ .main-content {
-    pointer-events: auto;
-    overflow: auto;
-    position: static;
-    width: 100%;
-    height: auto;
+  pointer-events: auto;
+  overflow: auto;
+  position: static;
+  width: 100%;
+  height: auto;
+  touch-action: auto;
 }
 
+/* 侧滑栏内容区域滚动隔离 */
 .sidebar-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    pointer-events: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: auto;
+  touch-action: none;
 }
-
 .categories-container {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 0 12px 12px;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 12px 12px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
-
 .sidebar.active .categories-container,
 .sidebar.active .sidebar-content {
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
+/* 禁止body滚动穿透 - 移动端侧滑栏展开时 */
 @media (max-width: 768px) {
-    .sidebar.active { touch-action: pan-y; }
-    
-    .sidebar.active .categories-container {
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
-        touch-action: pan-y;
-    }
-    
-    body.sidebar-open {
-        overflow: auto;
-        position: relative;
-        width: 100%;
-        height: 100%;
-        touch-action: pan-y;
-    }
-    
-    .sidebar.active ~ .main-content { touch-action: pan-y; }
+  body.sidebar-open {
+    overflow: auto;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    touch-action: pan-y;
+  }
+  .sidebar.active ~ .main-content {
+    touch-action: pan-y;
+    pointer-events: none;
+  }
+  .sidebar.active ~ .main-content * {
+    pointer-events: none;
+  }
 }
 
-/* 侧滑栏滚动条样式（已在 sidebar.css 中定义，此处可保留或删除，无影响） */
-.categories-container::-webkit-scrollbar { width: 6px; }
-.categories-container::-webkit-scrollbar-track { background: #f8f9fa; border-radius: 3px; }
-.categories-container::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 3px; transition: background 0.2s ease; }
-.categories-container::-webkit-scrollbar-thumb:hover { background: #adb5bd; }
+/* ========== 3. 侧滑栏全断点响应式适配 ========== */
+/* 大屏桌面端适配 */
+@media (min-width: 1920px) {
+  .sidebar {
+    width: var(--sidebar-width-desktop);
+    height: calc(100vh - 2 * var(--sidebar-gap-desktop));
+    transform: translateY(-50%) translateX(calc(-1 * var(--sidebar-width-desktop) - 30px));
+  }
+  .sidebar.active {
+    left: 30px;
+    transform: translateY(-50%) translateX(0);
+  }
+}
 
-/* ====== 浮动按钮响应式优化 ====== */
+/* 平板端适配 */
+@media (max-width: 992px) {
+  .sidebar {
+    width: var(--sidebar-width-desktop);
+    height: calc(100vh - 2 * var(--sidebar-gap-desktop));
+    transform: translateY(-50%) translateX(calc(-1 * var(--sidebar-width-desktop) - 20px));
+  }
+  .sidebar.active {
+    left: 20px;
+    transform: translateY(-50%) translateX(0);
+  }
+  .container {
+    max-width: 960px;
+  }
+}
+
+/* 标准移动端适配 */
 @media (max-width: 768px) {
-    .floating-buttons {
-        bottom: 16px;
-        right: 16px;
-        gap: 8px;
-    }
-    
-    .floating-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 18px;
-    }
+  .sidebar {
+    width: var(--sidebar-width-mobile);
+    height: calc(100vh - 2 * var(--sidebar-gap-mobile));
+    max-height: -webkit-fill-available;
+    transform: translateY(-50%) translateX(calc(-1 * var(--sidebar-width-mobile) - 16px));
+  }
+  .sidebar.active {
+    left: 16px;
+    transform: translateY(-50%) translateX(0);
+  }
+
+  /* 容器边距适配 */
+  .container,
+  .container-fluid {
+    padding: 0 var(--container-padding-xs);
+  }
+  .nav-container {
+    padding: 0 var(--container-padding-xs);
+  }
+
+  /* 主内容区间距适配 */
+  .main-content {
+    margin-top: 60px;
+    min-height: calc(100dvh - 120px);
+  }
+
+  /* 分类导航适配 */
+  .navigation-body {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .navigation-left,
+  .navigation-middle {
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .navigation-right {
+    width: 100%;
+  }
+
+  /* 问候模块适配 */
+  .greeting-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .datetime {
+    align-self: flex-end;
+  }
+  .fish-section {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
 }
 
-@media (max-width: 480px) {
-    .floating-buttons {
-        bottom: 12px;
-        right: 12px;
-        gap: 6px;
-    }
-    
-    .floating-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-    }
+/* 小屏移动端适配 */
+@media (max-width: 575px) {
+  .sidebar {
+    width: var(--sidebar-width-mobile);
+    height: calc(100vh - 2 * var(--sidebar-gap-mobile));
+    max-height: -webkit-fill-available;
+    transform: translateY(-50%) translateX(calc(-1 * var(--sidebar-width-mobile) - 12px));
+  }
+  .sidebar.active {
+    left: 12px;
+    transform: translateY(-50%) translateX(0);
+  }
+
+  /* 导航栏适配 */
+  .nav-brand .brand-subtitle {
+    display: none;
+  }
+  .nav-actions {
+    gap: 6px;
+  }
+  .nav-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+  }
+
+  /* 标签网格适配 */
+  .tags-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  /* 页脚统计适配 */
+  .footer-stats-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .disclaimer-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 }
 
+/* 超小屏移动端适配 */
 @media (max-width: 360px) {
-    .floating-buttons {
-        bottom: 10px;
-        right: 10px;
-        gap: 5px;
-    }
-    
-    .floating-btn {
-        width: 38px;
-        height: 38px;
-        font-size: 15px;
-    }
+  .sidebar {
+    width: var(--sidebar-width-mobile);
+    height: calc(100vh - 2 * var(--sidebar-gap-mobile));
+    max-height: -webkit-fill-available;
+    transform: translateY(-50%) translateX(calc(-1 * var(--sidebar-width-mobile) - 10px));
+  }
+  .sidebar.active {
+    left: 10px;
+    transform: translateY(-50%) translateX(0);
+  }
+
+  /* 导航栏适配 */
+  .brand-text {
+    font-size: 14px;
+  }
+  .nav-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  /* 问候模块适配 */
+  .greeting-text h1 {
+    font-size: 1.5rem;
+  }
+  .datetime #currentTime {
+    font-size: 1.2rem;
+  }
+  .datetime #currentDate {
+    font-size: 0.75rem;
+  }
+
+  /* 标签网格适配 */
+  .tags-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
 }
 
+/* 横屏低高度移动端适配 */
 @media (max-height: 500px) and (orientation: landscape) {
+  .sidebar {
+    width: 240px;
+    height: calc(100vh - 2 * 16px);
+    max-height: -webkit-fill-available;
+    transform: translateY(-50%) translateX(calc(-1 * 240px - 16px));
+  }
+  .sidebar.active {
+    left: 16px;
+    transform: translateY(-50%) translateX(0);
+  }
+
+  /* 侧滑栏壁纸横屏适配 */
+  .sidebar-wallpaper {
+    aspect-ratio: 16 / 5;
+    max-height: 100px;
+  }
+  .sidebar-wallpaper-user-info {
+    left: 12px;
+    bottom: 8px;
+    gap: 10px;
+  }
+  .sidebar-wallpaper-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  .sidebar-wallpaper-nickname {
+    font-size: 14px;
+  }
+  .sidebar-wallpaper-signature {
+    font-size: 10px;
+  }
+  .daily-quote-card {
+    margin: 8px 12px;
+    padding: 8px 12px;
+  }
+  .daily-quote-card p {
+    font-size: 11px;
+  }
+
+  /* 导航栏适配 */
+  .navbar {
+    height: 50px;
+  }
+  .main-content {
+    margin-top: 50px;
+  }
+}
+
+/* ========== 4. 侧滑栏滚动条样式适配 ========== */
+.categories-container::-webkit-scrollbar {
+  width: 6px;
+}
+.categories-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 3px;
+}
+.categories-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+.categories-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* 深色模式滚动条适配 */
+@media (prefers-color-scheme: dark) {
+  .categories-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .categories-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .categories-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* ========== 5. 浮动按钮全响应式适配 ========== */
+@media (max-width: 768px) {
+  .floating-buttons {
+    bottom: 16px;
+    right: 16px;
+    gap: 8px;
+  }
+  .floating-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+}
+@media (max-width: 480px) {
+  .floating-buttons {
+    bottom: 12px;
+    right: 12px;
+    gap: 6px;
+  }
+  .floating-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+}
+@media (max-width: 360px) {
+  .floating-buttons {
+    bottom: 10px;
+    right: 10px;
+    gap: 5px;
+  }
+  .floating-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 15px;
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .floating-buttons {
+    bottom: 8px;
+    right: 8px;
+    gap: 5px;
+  }
+  .floating-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+}
+
+/* ========== 6. iOS Safari 专属适配 ========== */
+@supports (-webkit-touch-callout: none) {
+  /* 动态视口高度适配 */
+  .sidebar {
+    height: calc(-webkit-fill-available - 2 * var(--sidebar-gap-desktop));
+    max-height: -webkit-fill-available;
+  }
+  @media (max-width: 768px) {
+    .sidebar {
+      height: calc(-webkit-fill-available - 2 * var(--sidebar-gap-mobile));
+    }
+  }
+
+  /* 滚动优化 */
+  .categories-container {
+    -webkit-overflow-scrolling: touch;
+  }
+  .sidebar-wallpaper {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+  }
+
+  /* 安全区域适配 */
+  .sidebar {
+    padding-bottom: env(safe-area-inset-bottom);
+    box-sizing: border-box;
+  }
+  .sidebar-footer {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .floating-buttons {
+    bottom: max(24px, env(safe-area-inset-bottom));
+  }
+  @media (max-width: 768px) {
     .floating-buttons {
-        bottom: 8px;
-        right: 8px;
-        gap: 5px;
+      bottom: max(16px, env(safe-area-inset-bottom));
     }
-    
-    .floating-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 14px;
+  }
+  @media (max-width: 480px) {
+    .floating-buttons {
+      bottom: max(12px, env(safe-area-inset-bottom));
     }
+  }
+}
+
+/* ========== 7. 无障碍与减少动画模式适配 ========== */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .category-group-header,
+  .category-item,
+  .footer-btn,
+  .category-toggle,
+  .category-items,
+  .sidebar-wallpaper video,
+  .sidebar-wallpaper img,
+  .floating-btn {
+    transition: none !important;
+    animation: none !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* 焦点无障碍适配 */
+.sidebar *:focus-visible,
+.floating-btn:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+}
+.sidebar *:focus:not(:focus-visible),
+.floating-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ========== 8. 打印样式适配 ========== */
+@media print {
+  .sidebar,
+  .floating-buttons,
+  .navbar {
+    display: none !important;
+  }
+  .main-content {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+  .container {
+    max-width: 100%;
+    padding: 0;
+  }
 }
