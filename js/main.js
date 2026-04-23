@@ -70,21 +70,34 @@ class App {
             listEl.innerHTML = html;
             
         } catch (error) {
+            console.error('[日记] 数据加载失败:', error);
             listEl.innerHTML = `<div class="error">加载失败：${error.message}</div>`;
+            window.toast?.show('日记加载失败，请重试', 'error');
         }
     }
 
     showDiaryModal() {
+        console.log('[日记] 尝试显示模态框');
         const modal = document.getElementById('diaryModal');
-        if (!modal) return;
+        if (!modal) {
+            console.error('[日记] 找不到 #diaryModal 元素！');
+            window.toast?.show('日记模块加载失败，请刷新页面', 'error');
+            return;
+        }
+        
+        // 强制设置样式并显示
         modal.style.display = 'flex';
+        modal.style.zIndex = '10001'; // 确保在最上层
         
         if (!this.diaryModalHideRef) {
             this.diaryModalHideRef = { hide: this.hideDiaryModal.bind(this) };
         }
         this.registerModal(this.diaryModalHideRef);
         
-        this.loadDiaryBatch();
+        // 加载数据
+        this.loadDiaryBatch().catch(err => {
+            console.error('[日记] 数据加载异常:', err);
+        });
     }
 
     hideDiaryModal() {
@@ -189,6 +202,8 @@ class App {
         
         window.openFeedbackModal = this.openFeedbackModal.bind(this);
         window.closeFeedbackModal = this.closeFeedbackModal.bind(this);
+        
+        console.log('[App] 初始化完成，window.app 已挂载', window.app);
     }
 
     // ========== 新增：悬浮按钮滚动半透明效果 ==========
