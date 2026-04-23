@@ -8,7 +8,7 @@ class App {
         this.activeModals = [];
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
-        this.diaryModalHideRef = null;
+        this.notebookModalHideRef = null;
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -19,25 +19,36 @@ class App {
         }
     }
 
-    // ========== 日记功能相关常量和方法 ==========
-    DIARY_IDS = [1,2,3,4,5,6,7,8,9,10];
+    // ========== 星聚笔记 API 配置 ==========
+    NOTEBOOK_CONFIG = {
+        apiUrl: 'https://cn.apihz.cn/api/cunchu/textzd.php',
+        id: '10014221',
+        key: '4a7768de1cf2e0f41fc0a4005240c837',
+        maxNumId: 20  // 最多查询的记录ID，可根据需要调整
+    };
 
-    async loadDiaryBatch() {
-        const listEl = document.getElementById('diaryList');
+    // 加载星聚笔记数据（并行请求）
+    async loadNotebookData() {
+        const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
         
-        listEl.innerHTML = '<div class="loading">加载日记中...</div>';
+        listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
         
         try {
-            const promises = this.DIARY_IDS.map(id =>
-                fetch(`https://cn.apihz.cn/api/cunchu/textzd.php?id=10014221&key=4a7768de1cf2e0f41fc0a4005240c837&numid=${id}`)
-                    .then(res => res.json())
-                    .then(data => ({ id, ...data }))
-                    .catch(err => ({ id, code: 500, msg: err.message }))
-            );
+            // 并行请求所有 numid
+            const promises = [];
+            for (let i = 1; i <= this.NOTEBOOK_CONFIG.maxNumId; i++) {
+                promises.push(
+                    fetch(`${this.NOTEBOOK_CONFIG.apiUrl}?id=${this.NOTEBOOK_CONFIG.id}&key=${this.NOTEBOOK_CONFIG.key}&numid=${i}`)
+                        .then(res => res.json())
+                        .then(data => ({ numid: i, ...data }))
+                        .catch(err => ({ numid: i, code: 500, msg: err.message }))
+                );
+            }
             
             const results = await Promise.all(promises);
             
+            // 筛选有效记录 (code === 200 且标题和内容不为空)
             const validItems = results.filter(item => {
                 if (item.code !== 200) return false;
                 const title = item.title || '';
@@ -45,24 +56,29 @@ class App {
                 return title.trim() !== '' && words.trim() !== '';
             });
             
+            // 按记录ID倒序排列（最新的在前面）
+            validItems.sort((a, b) => b.numid - a.numid);
+            
             if (validItems.length === 0) {
-                listEl.innerHTML = '<div class="empty">暂无日记记录</div>';
+                listEl.innerHTML = '<div class="empty">暂无笔记记录</div>';
                 return;
             }
             
+            // 渲染笔记列表
             const html = validItems.map(item => {
-                const title = item.title.trim();
-                const time = item.time || '--';
-                const words = item.words.trim();
+                const title = this.escapeHtml(item.title.trim());
+                const time = this.escapeHtml(item.time || '--');
+                const words = this.escapeHtml(item.words.trim()).replace(/\n/g, '<br>');
+                const numid = item.numid;
                 
                 return `
-                    <div class="diary-item">
-                        <div class="diary-item-header">
-                            <span class="diary-item-id">#${item.id}</span>
-                            <span class="diary-item-time">${time}</span>
+                    <div class="notebook-item">
+                        <div class="notebook-header">
+                            <span class="notebook-id">#${numid}</span>
+                            <span class="notebook-time"><i class="far fa-calendar-alt"></i> ${time}</span>
                         </div>
-                        <div class="diary-item-title">${this.escapeHtml(title)}</div>
-                        <div class="diary-item-content">${this.escapeHtml(words)}</div>
+                        <div class="notebook-title">${title}</div>
+                        <div class="notebook-content">${words}</div>
                     </div>
                 `;
             }).join('');
@@ -70,42 +86,53 @@ class App {
             listEl.innerHTML = html;
             
         } catch (error) {
-            listEl.innerHTML = `<div class="error">加载失败：${error.message}</div>`;
+            console.error('加载星聚笔记失败:', error);
+            listEl.innerHTML = `<div class="error">加载失败：${this.escapeHtml(error.message)}</div>`;
         }
     }
 
-    showDiaryModal() {
-        const modal = document.getElementById('diaryModal');
+    // 显示星聚笔记模态框
+    showNotebookModal() {
+        const modal = document.getElementById('notebookModal');
         if (!modal) return;
+        
         modal.style.display = 'flex';
+        modal.classList.add('active');
         
-        if (!this.diaryModalHideRef) {
-            this.diaryModalHideRef = { hide: this.hideDiaryModal.bind(this) };
+        if (!this.notebookModalHideRef) {
+            this.notebookModalHideRef = { hide: this.hideNotebookModal.bind(this) };
         }
-        this.registerModal(this.diaryModalHideRef);
+        this.registerModal(this.notebookModalHideRef);
         
-        this.loadDiaryBatch();
+        this.loadNotebookData();
     }
 
-    hideDiaryModal() {
-        const modal = document.getElementById('diaryModal');
-        if (modal) modal.style.display = 'none';
-        if (this.diaryModalHideRef) {
-            this.unregisterModal(this.diaryModalHideRef);
+    // 隐藏星聚笔记模态框
+    hideNotebookModal() {
+        const modal = document.getElementById('notebookModal');
+        if (modal) {
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+        }
+        if (this.notebookModalHideRef) {
+            this.unregisterModal(this.notebookModalHideRef);
         }
     }
 
-    initDiaryModalEvents() {
-        const modal = document.getElementById('diaryModal');
-        const closeBtn = document.getElementById('diaryCloseBtn');
+    // 初始化星聚笔记模态框事件
+    initNotebookModalEvents() {
+        const modal = document.getElementById('notebookModal');
+        const closeBtn = modal?.querySelector('.feedback-modal-close');
         
-        if (!modal || !closeBtn) return;
-        
-        closeBtn.addEventListener('click', () => this.hideDiaryModal());
+        if (!modal) return;
         
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) this.hideDiaryModal();
+            if (e.target === modal) this.hideNotebookModal();
         });
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.hideNotebookModal());
+        }
     }
     // =========================================
 
@@ -182,13 +209,15 @@ class App {
         this.initModules();
         this.initDependentComponents();
         this.setupGlobalEvents();
-        this.initDiaryModalEvents();
+        this.initNotebookModalEvents();
         this.initFeedbackModalEvents();
         this.initFloatingButtonsEffect(); // 新增：悬浮按钮滚动效果
         this.isInitialized = true;
         
         window.openFeedbackModal = this.openFeedbackModal.bind(this);
         window.closeFeedbackModal = this.closeFeedbackModal.bind(this);
+        window.showNotebookModal = this.showNotebookModal.bind(this);
+        window.hideNotebookModal = this.hideNotebookModal.bind(this);
     }
 
     // ========== 新增：悬浮按钮滚动半透明效果 ==========
@@ -447,6 +476,7 @@ class App {
             this.modules.search.hide();
         }
         this.closeFeedbackModal();
+        this.hideNotebookModal();
     }
 
     showToast(message, type = 'info') {
