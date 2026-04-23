@@ -1,7 +1,7 @@
 /**
  * 导航栏组件 - 完全修复版
  * 负责导航栏的交互功能，包括搜索、音乐播放器控制、公告和侧边栏切换
- * @class Navbar
+ * 修复：移除底部自动实例化，避免双重实例导致事件重复绑定
  */
 class Navbar {
     constructor() {
@@ -16,13 +16,8 @@ class Navbar {
             this.loadAnnouncements();
             this.updateNotificationBadge();
             
-            setTimeout(() => {
-                this.handleScroll();
-            }, 100);
-            
-            setTimeout(() => {
-                this.checkSearchModule();
-            }, 1000);
+            setTimeout(() => this.handleScroll(), 100);
+            setTimeout(() => this.checkSearchModule(), 1000);
         } catch (error) {
             console.error('导航栏初始化失败:', error);
         }
@@ -75,9 +70,7 @@ class Navbar {
                     e.preventDefault();
                     e.stopPropagation();
                     this.closeAllModalsExcept(['announcement']);
-                    if (window.announcementModule) {
-                        window.announcementModule.toggleModal();
-                    }
+                    if (window.announcementModule) window.announcementModule.toggleModal();
                 });
             }
 
@@ -94,11 +87,7 @@ class Navbar {
                     } else {
                         if (typeof CompactSidebar !== 'undefined') {
                             window.sidebar = new CompactSidebar();
-                            window.sidebar.init().then(() => {
-                                window.sidebar.toggle();
-                            }).catch(error => {
-                                console.error('侧边栏初始化失败:', error);
-                            });
+                            window.sidebar.init().then(() => window.sidebar.toggle());
                         }
                     }
                 });
@@ -110,13 +99,10 @@ class Navbar {
                     e.preventDefault();
                     e.stopPropagation();
                     this.closeAllModalsExcept(['weather']);
-                    if (window.app && window.app.modules.weather) {
-                        window.app.modules.weather.showModal();
-                    }
+                    if (window.app && window.app.modules.weather) window.app.modules.weather.showModal();
                 });
             }
 
-            // ========== 以下两行为右下角悬浮按钮事件，保持不变 ==========
             const floatingFeedbackBtn = document.getElementById('floatingFeedbackBtn');
             if (floatingFeedbackBtn) {
                 floatingFeedbackBtn.addEventListener('click', (e) => {
@@ -126,7 +112,6 @@ class Navbar {
                     if (typeof window.openFeedbackModal === 'function') {
                         window.openFeedbackModal();
                     } else {
-                        // 降级方案：手动显示反馈模态框
                         const modal = document.getElementById('feedbackModal');
                         if (modal) {
                             modal.style.display = 'flex';
@@ -137,15 +122,7 @@ class Navbar {
                                     el: '#twikoo-feedback',
                                     lang: 'zh-CN',
                                     path: '/feedback',
-                                    katex: {
-                                        delimiters: [
-                                            { left: '$$', right: '$$', display: true },
-                                            { left: '$', right: '$', display: false },
-                                            { left: '\\(', right: '\\)', display: false },
-                                            { left: '\\[', right: '\\]', display: true }
-                                        ],
-                                        throwOnError: false
-                                    }
+                                    katex: { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }, { left: '\\(', right: '\\)', display: false }, { left: '\\[', right: '\\]', display: true }], throwOnError: false }
                                 });
                                 window.twikooFeedbackInited = true;
                             }
@@ -163,25 +140,17 @@ class Navbar {
                     window.open('https://f.wps.cn/g/TI3Gxbe1/', '_blank');
                 });
             }
-            // ========== 悬浮按钮事件绑定结束 ==========
 
             document.addEventListener('click', this.handleDocumentClick.bind(this));
-
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    this.closeAllModalsExcept([]);
-                }
+                if (e.key === 'Escape') this.closeAllModalsExcept([]);
             });
-
             window.addEventListener('scroll', this.handleScroll.bind(this));
 
             const backToTop = document.getElementById('backToTop');
             if (backToTop) {
-                backToTop.addEventListener('click', () => {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
+                backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
             }
-
         } catch (error) {
             console.error('导航栏事件绑定失败:', error);
         }
@@ -189,33 +158,21 @@ class Navbar {
 
     closeAllModalsExcept(keepModules = []) {
         try {
-            if (!keepModules.includes('music')) {
-                this.hideMusicPlayer();
-            }
+            if (!keepModules.includes('music')) this.hideMusicPlayer();
             if (!keepModules.includes('search') && window.searchModule) {
-                if (window.searchModule.isModalOpen && window.searchModule.isModalOpen()) {
-                    window.searchModule.hide();
-                }
+                if (window.searchModule.isModalOpen && window.searchModule.isModalOpen()) window.searchModule.hide();
             }
             if (!keepModules.includes('sidebar') && window.sidebar) {
-                if (window.sidebar.isVisible && window.sidebar.isVisible()) {
-                    window.sidebar.hide();
-                }
+                if (window.sidebar.isVisible && window.sidebar.isVisible()) window.sidebar.hide();
             }
             if (!keepModules.includes('announcement') && window.announcementModule) {
-                if (window.announcementModule.isVisible) {
-                    window.announcementModule.hide();
-                }
+                if (window.announcementModule.isVisible) window.announcementModule.hide();
             }
             if (!keepModules.includes('weather') && window.app && window.app.modules && window.app.modules.weather) {
-                if (window.app.modules.weather.hide) {
-                    window.app.modules.weather.hide();
-                }
+                if (window.app.modules.weather.hide) window.app.modules.weather.hide();
             }
             if (!keepModules.includes('about') && window.aboutModule) {
-                if (window.aboutModule.hide) {
-                    window.aboutModule.hide();
-                }
+                if (window.aboutModule.hide) window.aboutModule.hide();
             }
             if (!keepModules.includes('notebook') && window.app && typeof window.app.hideNotebookModal === 'function') {
                 window.app.hideNotebookModal();
@@ -239,9 +196,7 @@ class Navbar {
             } else {
                 console.error('搜索模块未加载');
                 window.toast.show('搜索功能暂时不可用，请刷新页面', 'error');
-                setTimeout(() => {
-                    this.loadSearchModule();
-                }, 100);
+                setTimeout(() => this.loadSearchModule(), 100);
             }
         } catch (error) {
             console.error('处理搜索按钮点击失败:', error);
@@ -254,9 +209,7 @@ class Navbar {
             try {
                 window.searchModule = new SearchModule();
                 window.toast.show('搜索模块已加载', 'success');
-                setTimeout(() => {
-                    window.searchModule.showModal();
-                }, 300);
+                setTimeout(() => window.searchModule.showModal(), 300);
             } catch (error) {
                 console.error('加载搜索模块失败:', error);
                 window.toast.show('搜索功能暂时不可用', 'warning');
@@ -295,9 +248,7 @@ class Navbar {
                 musicPlayer.classList.add('show');
                 musicBtn.classList.add('active');
                 musicBtn.classList.remove('loading');
-                setTimeout(() => {
-                    musicPlayer.classList.remove('animating');
-                }, 600);
+                setTimeout(() => musicPlayer.classList.remove('animating'), 600);
             }, 10);
         } catch (error) {
             console.error('显示音乐播放器失败:', error);
@@ -325,10 +276,7 @@ class Navbar {
         try {
             const musicPlayer = document.getElementById('musicPlayer');
             const musicBtn = document.getElementById('musicBtn');
-            if (musicPlayer && 
-                musicPlayer.classList.contains('show') && 
-                !musicPlayer.contains(e.target) && 
-                !musicBtn.contains(e.target)) {
+            if (musicPlayer && musicPlayer.classList.contains('show') && !musicPlayer.contains(e.target) && !musicBtn.contains(e.target)) {
                 this.hideMusicPlayer();
             }
         } catch (error) {
@@ -340,17 +288,11 @@ class Navbar {
         try {
             const navbar = document.getElementById('navbar');
             const backToTop = document.getElementById('backToTop');
-            if (navbar && window.scrollY > 100) {
-                navbar.classList.add('scrolled');
-            } else if (navbar) {
-                navbar.classList.remove('scrolled');
-            }
+            if (navbar && window.scrollY > 100) navbar.classList.add('scrolled');
+            else if (navbar) navbar.classList.remove('scrolled');
             if (backToTop) {
-                if (window.scrollY > 300) {
-                    backToTop.classList.add('visible');
-                } else {
-                    backToTop.classList.remove('visible');
-                }
+                if (window.scrollY > 300) backToTop.classList.add('visible');
+                else backToTop.classList.remove('visible');
             }
         } catch (error) {
             console.error('处理滚动事件失败:', error);
@@ -370,7 +312,7 @@ class Navbar {
                     subtitle: '重要通知',
                     focus: '本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台',
                     updates: [
-                        '全1新界面设计 - 更加现代化和美观的视觉体验',
+                        '全新界面设计 - 更加现代化和美观的视觉体验',
                         '音乐播放器 - 支持多平台音乐搜索和播放',
                         '个性化设置 - 可自定义主题和布局',
                         '更多实用工具 - 新增多个日常使用的小工具',
@@ -398,9 +340,7 @@ class Navbar {
                     badge.className = 'nav-badge';
                     badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
                     announcementBtn.appendChild(badge);
-                    setTimeout(() => {
-                        badge.classList.add('show');
-                    }, 100);
+                    setTimeout(() => badge.classList.add('show'), 100);
                 } else {
                     existingBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
                 }
@@ -408,9 +348,7 @@ class Navbar {
             } else if (existingBadge) {
                 existingBadge.classList.remove('show');
                 setTimeout(() => {
-                    if (existingBadge.parentNode) {
-                        existingBadge.parentNode.removeChild(existingBadge);
-                    }
+                    if (existingBadge.parentNode) existingBadge.parentNode.removeChild(existingBadge);
                 }, 300);
                 announcementBtn.classList.remove('has-unread');
             }
@@ -436,19 +374,10 @@ class Navbar {
         try {
             document.removeEventListener('click', this.handleDocumentClick);
             window.removeEventListener('scroll', this.handleScroll);
-            window.removeEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    this.closeAllModals();
-                }
-            });
         } catch (error) {
             console.error('销毁导航栏失败:', error);
         }
     }
 }
 
-window.navbar = new Navbar();
-
-window.getNavbar = function() {
-    return window.navbar;
-};
+// 不再自动实例化，由 main.js 的 App 统一创建
