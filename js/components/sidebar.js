@@ -1,11 +1,9 @@
 /**
  * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域紧凑对称 + 日记按钮修复）
- * 修复：神木日记按钮点击事件、容错处理、调用逻辑
  */
 class CompactSidebar {
     constructor() {
         if (!document.getElementById('sidebar')) {
-            console.warn('侧边栏DOM元素未找到');
             return;
         }
         
@@ -84,14 +82,17 @@ class CompactSidebar {
         this.navbarHeight = 60;
         this.minSidebarHeight = 400;
     }
+
     // 核心：计算侧滑栏位置、高度，并设置底部按钮区域为紧凑对称
     calcSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
+
         // 动态获取导航栏实际高度
         const navbar = document.querySelector('.navbar');
         const actualNavbarHeight = navbar ? navbar.offsetHeight : this.navbarHeight;
         this.navbarHeight = actualNavbarHeight;
+
         const viewportHeight = window.innerHeight;
         const isMobile = window.innerWidth < 768;
         
@@ -108,6 +109,7 @@ class CompactSidebar {
         sidebar.style.height = `${sidebarHeight}px`;
         sidebar.style.bottom = 'auto';
         sidebar.style.maxHeight = 'none';
+
         // 缩小底部按钮区域内边距，使其更紧凑
         const footer = sidebar.querySelector('.sidebar-footer');
         if (footer) {
@@ -121,19 +123,22 @@ class CompactSidebar {
             footer.style.marginBottom = '0';
             footer.style.display = 'flex';
             footer.style.alignItems = 'center';
-            footer.style.justifyContent = 'space-between';
             footer.style.gap = '6px';
         }
+
         this.adjustWallpaperSize();
     }
+
     // 调整壁纸尺寸，保证和侧滑栏同宽、完整显示
     adjustWallpaperSize() {
         const sidebar = document.getElementById('sidebar');
         const wallpaper = document.getElementById('sidebarWallpaper');
         if (!sidebar || !wallpaper) return;
+
         const sidebarWidth = sidebar.offsetWidth;
         wallpaper.style.width = `${sidebarWidth}px`;
         wallpaper.style.maxWidth = '100%';
+
         const mediaEl = wallpaper.querySelector('video, img');
         if (mediaEl) {
             mediaEl.style.width = '100%';
@@ -141,6 +146,7 @@ class CompactSidebar {
             mediaEl.style.objectFit = 'contain';
         }
     }
+
     handleResize() {
         let resizeTimer;
         window.addEventListener('resize', () => {
@@ -149,20 +155,24 @@ class CompactSidebar {
                 this.calcSidebarPosition();
             }, 100);
         }, { passive: true });
+
         window.addEventListener('orientationchange', () => {
             setTimeout(() => {
                 this.calcSidebarPosition();
             }, 200);
         }, { passive: true });
     }
+
     async init() {
         if (this.isInitialized) return;
         try {
             if (document.readyState === 'loading') {
                 await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
             }
+
             this.calcSidebarPosition();
             this.handleResize();
+
             this.loadExpandedState();
             this.render();
             this.bindEvents();
@@ -178,9 +188,10 @@ class CompactSidebar {
             
         } catch (error) {
             console.error('侧滑栏初始化失败:', error);
-            if (window.toast) window.toast.show('侧滑栏初始化失败', 'error');
+            window.toast.show('侧滑栏初始化失败', 'error');
         }
     }
+
     createProfileModal() {
         if (document.getElementById('profileModal')) return;
         try {
@@ -224,6 +235,7 @@ class CompactSidebar {
             console.error('创建个人资料模态框失败:', error);
         }
     }
+
     bindProfileModalEvents() {
         try {
             const profileModal = document.getElementById('profileModal');
@@ -254,6 +266,7 @@ class CompactSidebar {
             console.error('绑定个人资料模态框事件失败:', error);
         }
     }
+
     async autoGetQQAvatar() {
         try {
             const qqNumberInput = document.getElementById('qqNumber');
@@ -309,6 +322,7 @@ class CompactSidebar {
             }
         }
     }
+
     async getQQAvatar(qqNumber) {
         try {
             const response = await fetch(`https://api.kuleu.com/api/qqimg?qq=${qqNumber}`);
@@ -319,16 +333,18 @@ class CompactSidebar {
             return null;
         }
     }
+
     getDefaultAvatarSVG() {
         return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
     }
+
     saveProfileSettings() {
         try {
             const nicknameInput = document.getElementById('nickname');
             const signatureInput = document.getElementById('signature');
             const qqAvatarPreview = document.getElementById('qqAvatarPreview');
             if (!nicknameInput || !signatureInput || !qqAvatarPreview) {
-                if (window.toast) window.toast.show('保存失败，表单元素未找到', 'error');
+                window.toast.show('保存失败，表单元素未找到', 'error');
                 return;
             }
             const nickname = nicknameInput.value.trim();
@@ -345,12 +361,13 @@ class CompactSidebar {
             this.loadWallpaperUserInfo();
             const profileModal = document.getElementById('profileModal');
             if (profileModal) profileModal.classList.remove('active');
-            if (window.toast) window.toast.show('个人信息保存成功', 'success');
+            window.toast.show('个人信息保存成功', 'success');
         } catch (error) {
             console.error('保存个人资料设置失败:', error);
-            if (window.toast) window.toast.show('保存失败，请重试', 'error');
+            window.toast.show('保存失败，请重试', 'error');
         }
     }
+
     openProfileModal() {
         try {
             const profileModal = document.getElementById('profileModal');
@@ -373,9 +390,10 @@ class CompactSidebar {
             profileModal.classList.add('active');
         } catch (error) {
             console.error('打开个人资料模态框失败:', error);
-            if (window.toast) window.toast.show('打开设置失败', 'error');
+            window.toast.show('打开设置失败', 'error');
         }
     }
+
     loadExpandedState() {
         try {
             const savedState = Storage.get('sidebar_categories_state');
@@ -389,6 +407,7 @@ class CompactSidebar {
             console.error('加载展开状态失败:', error);
         }
     }
+
     saveExpandedState() {
         try {
             const stateToSave = this.categories.map(cat => ({
@@ -400,6 +419,7 @@ class CompactSidebar {
             console.error('保存展开状态失败:', error);
         }
     }
+
     render() {
         try {
             const sidebar = document.getElementById('sidebar');
@@ -438,9 +458,9 @@ class CompactSidebar {
             console.error('渲染侧边栏内容失败:', error);
         }
     }
+
     bindEvents() {
         try {
-            // 事件委托，处理所有侧边栏内的点击事件
             document.addEventListener('click', (e) => {
                 try {
                     const categoryHeader = e.target.closest('.category-group-header');
@@ -462,7 +482,6 @@ class CompactSidebar {
                 }
             });
             
-            // 点击侧边栏外部关闭
             document.addEventListener('click', (e) => {
                 try {
                     const sidebar = document.getElementById('sidebar');
@@ -478,7 +497,6 @@ class CompactSidebar {
                 }
             });
             
-            // ESC键关闭侧边栏
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && this.isVisible()) {
                     this.hide();
@@ -488,6 +506,7 @@ class CompactSidebar {
             console.error('绑定侧边栏事件失败:', error);
         }
     }
+
     toggleCategory(categoryGroup) {
         if (!categoryGroup) return;
         try {
@@ -509,6 +528,7 @@ class CompactSidebar {
             console.error('切换分类展开状态失败:', error);
         }
     }
+
     handleCategoryItemClick(categoryItem) {
         try {
             const action = categoryItem.dataset.action;
@@ -540,42 +560,27 @@ class CompactSidebar {
             console.error('处理分类项点击失败:', error);
         }
     }
-    // 修复：神木日记按钮点击逻辑，增强容错处理
+
     handleFooterClick(footerBtn) {
         try {
             const icon = footerBtn.querySelector('i');
             if (!icon) return;
             const iconClass = icon.className;
             
-            // 神木日记按钮处理
             if (iconClass.includes('fa-book')) {
-                e.preventDefault();
-                e.stopPropagation();
-                // 优先使用全局挂载的方法
-                if (typeof window.openDiaryModal === 'function') {
-                    window.openDiaryModal();
-                } 
-                // 降级使用app实例方法
-                else if (window.app && typeof window.app.showDiaryModal === 'function') {
+                // 修复日记按钮：优先使用 app 方法，否则手动显示
+                if (window.app && typeof window.app.showDiaryModal === 'function') {
                     window.app.showDiaryModal();
-                }
-                // 最终降级方案，直接操作DOM
-                else {
+                } else {
                     const diaryModal = document.getElementById('diaryModal');
                     if (diaryModal) {
                         diaryModal.style.display = 'flex';
-                        void diaryModal.offsetWidth;
-                        diaryModal.classList.add('active');
-                        // 手动加载日记数据
+                        // 若 app 存在且能加载数据，则调用加载
                         if (window.app && typeof window.app.loadDiaryBatch === 'function') {
                             window.app.loadDiaryBatch();
                         }
-                    } else {
-                        console.error('神木日记模态框未找到');
-                        if (window.toast) window.toast.show('神木日记功能暂不可用', 'error');
                     }
                 }
-                // 关闭侧边栏
                 this.hide();
             } else if (iconClass.includes('fa-gift')) {
                 this.hide();
@@ -588,12 +593,13 @@ class CompactSidebar {
             }
         } catch (error) {
             console.error('处理底部按钮点击失败:', error);
-            if (window.toast) window.toast.show('功能调用失败', 'error');
         }
     }
+
     openCalculator() {
-        if (window.toast) window.toast.show('计算器功能开发中', 'info');
+        window.toast.show('计算器功能开发中', 'info');
     }
+
     show() {
         try {
             const sidebar = document.getElementById('sidebar');
@@ -622,6 +628,7 @@ class CompactSidebar {
             console.error('显示侧边栏失败:', error);
         }
     }
+
     hide() {
         try {
             const sidebar = document.getElementById('sidebar');
@@ -647,6 +654,7 @@ class CompactSidebar {
             console.error('隐藏侧边栏失败:', error);
         }
     }
+
     toggle() {
         try {
             const sidebar = document.getElementById('sidebar');
@@ -657,10 +665,12 @@ class CompactSidebar {
             console.error('切换侧边栏失败:', error);
         }
     }
+
     isVisible() {
         const sidebar = document.getElementById('sidebar');
         return sidebar ? sidebar.classList.contains('active') : false;
     }
+
     closeAllModals() {
         try {
             if (window.searchModule && window.searchModule.isModalOpen()) window.searchModule.hide();
@@ -672,6 +682,7 @@ class CompactSidebar {
             console.error('关闭所有模态框失败:', error);
         }
     }
+
     async loadWallpaperUserInfo() {
         try {
             const userConfig = Storage.get('userConfig') || {};
@@ -699,6 +710,7 @@ class CompactSidebar {
             console.error('加载壁纸用户信息失败:', error);
         }
     }
+
     async loadSidebarWallpaper() {
         try {
             const dayOfWeek = new Date().getDay();
@@ -719,6 +731,7 @@ class CompactSidebar {
             this.setFallbackBackground();
         }
     }
+
     getLocalWallpaper(dayOfWeek) {
         const videoWallpapers = {
             0: { type: 'video', url: './assets/wallpapers/sunday.mp4' },
@@ -731,6 +744,7 @@ class CompactSidebar {
         };
         return videoWallpapers[dayOfWeek] || { type: 'video', url: './assets/wallpapers/monday.mp4' };
     }
+
     async setVideoWallpaper(videoUrl) {
         const sidebarWallpaper = document.getElementById('sidebarWallpaper');
         if (!sidebarWallpaper) return;
@@ -784,6 +798,7 @@ class CompactSidebar {
             if (userInfo) userInfo.style.zIndex = '2';
             
             video.onloadedmetadata = () => this.adjustWallpaperSize();
+
             try {
                 await video.play();
             } catch (error) {
@@ -795,6 +810,7 @@ class CompactSidebar {
             this.setFallbackBackground();
         }
     }
+
     setFallbackBackground() {
         const sidebarWallpaper = document.getElementById('sidebarWallpaper');
         if (sidebarWallpaper) {
@@ -807,6 +823,7 @@ class CompactSidebar {
             sidebarWallpaper.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
         }
     }
+
     async loadRandomAvatar() {
         try {
             const avatarUrl = await this.getAvatar();
@@ -829,6 +846,7 @@ class CompactSidebar {
             this.setDefaultAvatar();
         }
     }
+
     async getAvatar() {
         try {
             const randomId = Math.floor(Math.random() * 1000);
@@ -839,6 +857,7 @@ class CompactSidebar {
             return null;
         }
     }
+
     setDefaultAvatar() {
         const wallpaperAvatar = document.getElementById('sidebarWallpaperAvatar');
         if (wallpaperAvatar) {
@@ -850,6 +869,7 @@ class CompactSidebar {
             Storage.set('userConfig', userConfig);
         }
     }
+
     async loadUserData() {
         try {
             const userConfig = Storage.get('userConfig') || {};
@@ -862,6 +882,7 @@ class CompactSidebar {
             console.error('加载用户数据失败:', error);
         }
     }
+
     async loadDailyQuote() {
         try {
             const quoteElement = document.getElementById('dailyQuote');
@@ -878,6 +899,7 @@ class CompactSidebar {
             if (quoteElement) quoteElement.textContent = '每一天都是新的开始，充满无限可能。';
         }
     }
+
     async getDailyQuote() {
         try {
             const response = await fetch('https://api.kuleu.com/api/yiyan');
@@ -889,6 +911,7 @@ class CompactSidebar {
             return '每一天都是新的开始，充满无限可能。';
         }
     }
+
     destroy() {
         try {
             if (this.currentVideo) {
@@ -901,6 +924,7 @@ class CompactSidebar {
         }
     }
 }
+
 // 单例初始化
 if (!window.sidebarInitialized) {
     window.sidebarInitialized = true;
@@ -921,6 +945,7 @@ if (!window.sidebarInitialized) {
         console.error('侧边栏初始化失败:', error);
     });
 }
+
 window.getSidebar = function() {
     return window.sidebar;
 };
