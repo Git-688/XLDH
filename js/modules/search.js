@@ -1,15 +1,14 @@
 /**
  * 新版搜索模块 - 优化紧凑版本
  * 支持水平滚动引擎选择器和智能搜索建议
- * 修复：移除重复初始化，去除内联 transform，完全依赖 CSS 控制动画与位置
+ * 修复：恢复自动实例化，移除内联 transform 冲突
  */
 class SearchModule {
     constructor() {
         if (window.searchModule && window.searchModule instanceof SearchModule) {
-            console.warn('搜索模块已存在，返回现有实例');
             return window.searchModule;
         }
-        
+
         this.defaultEngines = {
             baidu: { name: '百度', url: 'https://www.baidu.com/s?wd=%s', icon: 'fas fa-search', iconType: 'fontawesome' },
             bing: { name: 'Bing', url: 'https://cn.bing.com/search?q=%s', icon: 'fab fa-microsoft', iconType: 'fontawesome' },
@@ -35,7 +34,7 @@ class SearchModule {
         this.tooltip = null;
         this.tooltipTimeout = null;
         this.isOpen = false;
-        
+
         this.init();
         window.searchModule = this;
     }
@@ -73,14 +72,11 @@ class SearchModule {
         });
 
         window.addEventListener('resize', () => {
-            if (this.isModalOpen()) {
-                this.positionModal();
-            }
+            if (this.isModalOpen()) this.positionModal();
         });
     }
 
     positionModal() {
-        // 仅处理 top 和 left/right，不设置 transform，由 CSS 控制
         const modal = document.getElementById('searchModal');
         if (!modal) return;
         modal.style.top = '60px';
@@ -100,14 +96,11 @@ class SearchModule {
             return;
         }
 
-        if (window.sidebar && window.sidebar.isVisible()) window.sidebar.hide();
-        if (window.app && window.app.components && window.app.components.navbar) {
-            window.app.components.navbar.hideMusicPlayer();
-        }
+        if (window.sidebar?.isVisible()) window.sidebar.hide();
+        if (window.app?.components?.navbar) window.app.components.navbar.hideMusicPlayer();
 
         this.positionModal();
         modal.style.display = 'block';
-        // 强制回流后添加 active 类，触发 CSS transition
         requestAnimationFrame(() => {
             modal.classList.add('active');
         });
@@ -125,11 +118,16 @@ class SearchModule {
 
         modal.classList.remove('active');
 
-        const handleTransitionEnd = () => {
+        const onTransitionEnd = () => {
             modal.style.display = 'none';
-            modal.removeEventListener('transitionend', handleTransitionEnd);
+            modal.removeEventListener('transitionend', onTransitionEnd);
         };
-        modal.addEventListener('transitionend', handleTransitionEnd, { once: true });
+        modal.addEventListener('transitionend', onTransitionEnd, { once: true });
+        setTimeout(() => {
+            if (!modal.classList.contains('active') && modal.style.display !== 'none') {
+                modal.style.display = 'none';
+            }
+        }, 300);
 
         this.clearSearchInput();
         this.hideSuggestions();
@@ -147,7 +145,6 @@ class SearchModule {
     renderEngines() {
         const container = document.getElementById('engineSelector');
         if (!container) return;
-
         container.innerHTML = '';
         Object.entries(this.searchEngines).forEach(([key, engine]) => {
             const btn = document.createElement('button');
@@ -193,19 +190,22 @@ class SearchModule {
     }
 
     isMobile() {
-        return window.matchMedia && window.matchMedia('(hover: none)').matches;
+        return window.matchMedia?.('(hover: none)').matches;
     }
 
     showTooltip(element, name, clientX, clientY) {
         clearTimeout(this.tooltipTimeout);
         this.tooltip.textContent = name;
         this.tooltip.classList.add('visible');
+
         const rect = element.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
         const tooltipRect = this.tooltip.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+
         let top, positionClass = '';
         const spaceAbove = rect.top;
         const spaceBelow = viewportHeight - rect.bottom;
+
         if (spaceAbove > tooltipRect.height + 8) {
             top = rect.top - 6;
         } else if (spaceBelow > tooltipRect.height + 8) {
@@ -215,6 +215,7 @@ class SearchModule {
             top = rect.top + rect.height / 2 - tooltipRect.height / 2;
             positionClass = 'right';
         }
+
         let left = rect.left + rect.width / 2;
         const minLeft = tooltipRect.width / 2 + 4;
         const maxLeft = window.innerWidth - tooltipRect.width / 2 - 4;
@@ -224,6 +225,7 @@ class SearchModule {
             left = rect.right + 6;
             if (left + tooltipRect.width > window.innerWidth - 6) left = rect.left - tooltipRect.width - 6;
         }
+
         this.tooltip.style.left = left + 'px';
         this.tooltip.style.top = top + 'px';
         this.tooltip.classList.toggle('below', positionClass === 'below');
@@ -234,19 +236,17 @@ class SearchModule {
     hideTooltip() {
         clearTimeout(this.tooltipTimeout);
         if (this.tooltip) {
-            this.tooltip.classList.remove('visible');
-            this.tooltip.classList.remove('below');
-            this.tooltip.classList.remove('right');
+            this.tooltip.classList.remove('visible', 'below', 'right');
         }
     }
 
     updateTooltipPosition(clientX, clientY) {
-        if (this.tooltip.classList.contains('visible') && !this.isMobile()) {
-            const tooltipRect = this.tooltip.getBoundingClientRect();
+        if (this.tooltip?.classList.contains('visible') && !this.isMobile()) {
+            const rect = this.tooltip.getBoundingClientRect();
             let left = clientX;
             let top = clientY - 30;
-            const minLeft = tooltipRect.width / 2 + 4;
-            const maxLeft = window.innerWidth - tooltipRect.width / 2 - 4;
+            const minLeft = rect.width / 2 + 4;
+            const maxLeft = window.innerWidth - rect.width / 2 - 4;
             if (left < minLeft) left = minLeft;
             else if (left > maxLeft) left = maxLeft;
             this.tooltip.style.left = left + 'px';
@@ -265,10 +265,12 @@ class SearchModule {
         const name = document.getElementById('customName')?.value.trim();
         const url = document.getElementById('customUrl')?.value.trim();
         const iconInput = document.getElementById('customIcon')?.value.trim();
+
         if (!name || !url || !url.includes('%s')) {
             window.toast.show('请填写完整信息，URL必须包含%s占位符', 'warning');
             return;
         }
+
         let icon, iconType;
         if (iconInput.startsWith('http')) {
             icon = iconInput;
@@ -277,16 +279,16 @@ class SearchModule {
             icon = iconInput || 'fas fa-search';
             iconType = 'fontawesome';
         }
+
         const key = 'custom_' + Date.now();
         this.searchEngines[key] = { name, url, icon, iconType };
         localStorage.setItem('searchEngines', JSON.stringify(this.searchEngines));
         this.renderEngines();
-        const customName = document.getElementById('customName');
-        const customUrl = document.getElementById('customUrl');
-        const customIcon = document.getElementById('customIcon');
-        if (customName) customName.value = '';
-        if (customUrl) customUrl.value = '';
-        if (customIcon) customIcon.value = '';
+
+        document.getElementById('customName').value = '';
+        document.getElementById('customUrl').value = '';
+        document.getElementById('customIcon').value = '';
+
         this.togglePanel('settings');
         this.hideTooltip();
         window.toast.show('自定义搜索引擎添加成功', 'success');
@@ -304,7 +306,7 @@ class SearchModule {
         const panel = document.getElementById('historyPanel');
         if (!panel) return;
         if (this.searchHistory.length === 0) {
-            panel.innerHTML = '<div style="text-align: center; color: var(--text-secondary); font-size: 0.75rem; padding: 0.5rem;">暂无搜索历史</div>';
+            panel.innerHTML = '<div style="text-align:center;color:var(--text-secondary);font-size:0.75rem;padding:0.5rem;">暂无搜索历史</div>';
             return;
         }
         panel.innerHTML = this.searchHistory.map(h => `
@@ -316,8 +318,8 @@ class SearchModule {
     }
 
     searchFromHistory(query) {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) searchInput.value = query;
+        const input = document.getElementById('searchInput');
+        if (input) input.value = query;
         this.togglePanel('history');
         this.focusSearchInput();
         this.hideTooltip();
@@ -337,12 +339,12 @@ class SearchModule {
             suggestions.classList.remove('active');
             return;
         }
-        const suggests = this.searchHistory.filter(h => h.includes(value)).slice(0, 4);
-        if (suggests.length === 0) {
+        const sug = this.searchHistory.filter(h => h.includes(value)).slice(0, 4);
+        if (sug.length === 0) {
             suggestions.classList.remove('active');
             return;
         }
-        suggestions.innerHTML = suggests.map(s => `
+        suggestions.innerHTML = sug.map(s => `
             <div class="suggestion-item" onclick="window.searchModule.selectSuggestion('${s.replace(/'/g, "\\'")}')">${s}</div>
         `).join('');
         suggestions.classList.add('active');
@@ -350,41 +352,37 @@ class SearchModule {
     }
 
     selectSuggestion(value) {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) searchInput.value = value;
+        document.getElementById('searchInput').value = value;
         this.hideSuggestions();
     }
 
     hideSuggestions() {
-        const suggestions = document.getElementById('suggestions');
-        if (suggestions) suggestions.classList.remove('active');
+        document.getElementById('suggestions')?.classList.remove('active');
     }
 
     togglePanel(type) {
-        const historyPanel = document.getElementById('historyPanel');
-        const settingsPanel = document.getElementById('settingsPanel');
+        const history = document.getElementById('historyPanel');
+        const settings = document.getElementById('settingsPanel');
         if (type === 'history') {
-            historyPanel?.classList.toggle('active');
-            settingsPanel?.classList.remove('active');
+            history?.classList.toggle('active');
+            settings?.classList.remove('active');
             this.renderHistory();
         } else {
-            settingsPanel?.classList.toggle('active');
-            historyPanel?.classList.remove('active');
+            settings?.classList.toggle('active');
+            history?.classList.remove('active');
         }
         this.hideTooltip();
     }
 
     hidePanels() {
-        const historyPanel = document.getElementById('historyPanel');
-        const settingsPanel = document.getElementById('settingsPanel');
-        historyPanel?.classList.remove('active');
-        settingsPanel?.classList.remove('active');
+        document.getElementById('historyPanel')?.classList.remove('active');
+        document.getElementById('settingsPanel')?.classList.remove('active');
     }
 
     handleSearch(event) {
         if (event.key === 'Enter') {
-            const searchInput = document.getElementById('searchInput');
-            const query = searchInput?.value.trim();
+            const input = document.getElementById('searchInput');
+            const query = input?.value.trim();
             if (query) {
                 this.hideTooltip();
                 const url = this.searchEngines[this.currentEngine].url.replace('%s', encodeURIComponent(query));
@@ -396,10 +394,7 @@ class SearchModule {
     }
 
     search(query, engine = null) {
-        if (engine) {
-            const selectedEngine = Object.keys(this.searchEngines).find(key => key === engine);
-            if (selectedEngine) this.currentEngine = selectedEngine;
-        }
+        if (engine) this.currentEngine = engine;
         if (query) {
             const url = this.searchEngines[this.currentEngine].url.replace('%s', encodeURIComponent(query));
             window.open(url, '_blank');
@@ -408,46 +403,46 @@ class SearchModule {
     }
 
     focusSearchInput() {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.focus();
-            searchInput.select();
+        const input = document.getElementById('searchInput');
+        if (input) {
+            input.focus();
+            input.select();
         }
     }
 
     clearSearchInput() {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) searchInput.value = '';
+        const input = document.getElementById('searchInput');
+        if (input) input.value = '';
     }
 
     updateScrollIndicators() {
         const container = document.getElementById('engineSelector');
         if (!container) return;
-        const updateIndicators = () => {
-            const scrollLeft = container.scrollLeft;
-            const scrollWidth = container.scrollWidth;
-            const clientWidth = container.clientWidth;
-            container.classList.toggle('scroll-start', scrollLeft === 0);
-            container.classList.toggle('scroll-end', scrollLeft + clientWidth >= scrollWidth - 1);
+        const update = () => {
+            const sl = container.scrollLeft, sw = container.scrollWidth, cw = container.clientWidth;
+            container.classList.toggle('scroll-start', sl === 0);
+            container.classList.toggle('scroll-end', sl + cw >= sw - 1);
         };
-        container.addEventListener('scroll', updateIndicators);
-        updateIndicators();
+        container.addEventListener('scroll', update);
+        update();
     }
 
     destroy() {
         this.hide();
         this.hideTooltip();
-        if (this.tooltip && this.tooltip.parentNode) this.tooltip.parentNode.removeChild(this.tooltip);
+        if (this.tooltip?.parentNode) this.tooltip.remove();
         this.isOpen = false;
     }
 }
 
-// 对外暴露的函数（供 HTML 内联 onclick 使用）
-function closeSearchModal() { if (window.searchModule) window.searchModule.hide(); }
-function handleSearch(event) { if (window.searchModule) window.searchModule.handleSearch(event); }
-function showSuggestions(value) { if (window.searchModule) window.searchModule.showSuggestions(value); }
-function togglePanel(type) { if (window.searchModule) window.searchModule.togglePanel(type); }
-function addCustomEngine() { if (window.searchModule) window.searchModule.addCustomEngine(); }
+// 全局快捷函数（供 HTML onclick 使用）
+function closeSearchModal() { window.searchModule?.hide(); }
+function handleSearch(event) { window.searchModule?.handleSearch(event); }
+function showSuggestions(value) { window.searchModule?.showSuggestions(value); }
+function togglePanel(type) { window.searchModule?.togglePanel(type); }
+function addCustomEngine() { window.searchModule?.addCustomEngine(); }
 
-// 初始化唯一实例由 App 完成，不再在此文件底部自动创建
-console.log('搜索模块已加载，等待 App 初始化');
+// 确保实例存在（与 App 协调，不会重复创建）
+if (!window.searchModule) {
+    new SearchModule();
+}
