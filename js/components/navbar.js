@@ -124,11 +124,16 @@ class Navbar {
                 newRefreshBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (window.app) {
-                        window.app.showDiaryModal();
-                    } else {
-                        console.error('App 未初始化');
-                    }
+                    const showDiary = () => {
+                        if (window.app?.showDiaryModal) {
+                            window.app.showDiaryModal();
+                        } else {
+                            console.error('[导航栏] app 未就绪');
+                            window.toast?.show('日记功能暂不可用', 'warning');
+                        }
+                    };
+                    if (!window.app) setTimeout(showDiary, 200);
+                    else showDiary();
                 });
             }
             // =============================================
