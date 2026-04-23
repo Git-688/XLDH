@@ -1,5 +1,5 @@
 /**
- * 导航栏组件 - 完全修复版（单例管理，不再自实例化）
+ * 导航栏组件 - 完全修复版
  * 负责导航栏的交互功能，包括搜索、音乐播放器控制、公告和侧边栏切换
  * @class Navbar
  */
@@ -447,5 +447,8 @@ class Navbar {
     }
 }
 
-// 将类暴露到全局供 main.js 使用
-window.Navbar = Navbar;
+window.navbar = new Navbar();
+
+window.getNavbar = function() {
+    return window.navbar;
+};
