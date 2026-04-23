@@ -1,5 +1,6 @@
 /**
- * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 官方标准配置 + 增强版神木日记）
+ * 星聚导航主应用程序
+ * 包含：反馈模态框 + KaTeX + 增强版神木日记（分页、缓存、骨架屏、动态创建模态框）
  */
 class App {
     constructor() {
@@ -9,7 +10,7 @@ class App {
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.diaryModalHideRef = null;
-        
+
         // ========== 神木日记增强配置 ==========
         this.DIARY_CONFIG = {
             API_BASE: 'https://cn.apihz.cn/api/cunchu/textzd.php',
@@ -26,18 +27,164 @@ class App {
             loading: false,      // 是否正在加载
             cache: null,         // { data: [], timestamp, totalPages }
         };
+        this.diaryScrollHandler = null;
         // ========================================
-        
+
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.init();
-            });
+            document.addEventListener('DOMContentLoaded', () => this.init());
         } else {
             this.init();
         }
     }
 
-    // ========== 增强版神木日记功能 ==========
+    // ========== 神木日记：动态创建模态框 ==========
+    createDiaryModal() {
+        if (document.getElementById('diaryModal')) {
+            return document.getElementById('diaryModal');
+        }
+
+        const modal = document.createElement('div');
+        modal.id = 'diaryModal';
+        modal.className = 'diary-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+            box-sizing: border-box;
+        `;
+
+        modal.innerHTML = `
+            <div class="modal-content" style="
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-radius: 16px;
+                width: 90%;
+                max-width: 600px;
+                max-height: 80vh;
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+            ">
+                <div class="diary-header" style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 16px 20px;
+                    border-bottom: 1px solid #e9ecef;
+                ">
+                    <h3 style="margin: 0; font-size: 1.2rem; font-weight: 500; color: #2b2d42;">
+                        <i class="fas fa-book-open" style="margin-right: 8px; color: #4361ee;"></i>
+                        神木日记
+                    </h3>
+                    <button id="diaryCloseBtn" style="
+                        background: none;
+                        border: none;
+                        font-size: 1.2rem;
+                        cursor: pointer;
+                        color: #6c757d;
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        transition: all 0.2s;
+                    ">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="diary-body" style="
+                    flex: 1;
+                    overflow: hidden;
+                    display: flex;
+                    flex-direction: column;
+                ">
+                    <div class="diary-list" id="diaryList" style="
+                        flex: 1;
+                        overflow-y: auto;
+                        padding: 16px 20px;
+                    ">
+                        <div class="loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>加载日记中...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // 绑定关闭事件
+        const closeBtn = modal.querySelector('#diaryCloseBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.hideDiaryModal());
+        }
+
+        // 点击背景关闭
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) this.hideDiaryModal();
+        });
+
+        // ESC 键关闭
+        const escHandler = (e) => {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                this.hideDiaryModal();
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+        modal._escHandler = escHandler;
+
+        return modal;
+    }
+
+    // ========== 显示日记模态框 ==========
+    showDiaryModal() {
+        let modal = document.getElementById('diaryModal');
+        if (!modal) {
+            modal = this.createDiaryModal();
+        }
+
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+
+        if (!this.diaryModalHideRef) {
+            this.diaryModalHideRef = { hide: this.hideDiaryModal.bind(this) };
+        }
+        this.registerModal(this.diaryModalHideRef);
+
+        // 重置并加载第一页
+        this.loadDiaryBatch(true);
+    }
+
+    // ========== 隐藏日记模态框 ==========
+    hideDiaryModal() {
+        const modal = document.getElementById('diaryModal');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('active');
+        }
+
+        if (this.diaryModalHideRef) {
+            this.unregisterModal(this.diaryModalHideRef);
+        }
+
+        const container = document.getElementById('diaryList');
+        if (container && this.diaryScrollHandler) {
+            container.removeEventListener('scroll', this.diaryScrollHandler);
+            this.diaryScrollHandler = null;
+        }
+    }
+
+    // ========== 加载日记数据（分页） ==========
     async loadDiaryBatch(reset = false) {
         const listEl = document.getElementById('diaryList');
         if (!listEl) return;
@@ -68,7 +215,7 @@ class App {
             // 计算当前页要请求的 ID 范围
             const startId = (this.diaryState.page - 1) * this.DIARY_CONFIG.PAGE_SIZE + 1;
             const endId = startId + this.DIARY_CONFIG.PAGE_SIZE - 1;
-            
+
             const promises = [];
             for (let id = startId; id <= endId; id++) {
                 promises.push(
@@ -77,7 +224,7 @@ class App {
                         .catch(() => ({ code: 500 }))
                 );
             }
-            
+
             const results = await Promise.all(promises);
             const validItems = results
                 .filter(item => item.code === 200 && item.title?.trim() && item.words?.trim())
@@ -98,7 +245,7 @@ class App {
                 this.diaryState.items = reset ? validItems : [...this.diaryState.items, ...validItems];
                 this.diaryState.page++;
                 this.diaryState.hasMore = validItems.length === this.DIARY_CONFIG.PAGE_SIZE;
-                
+
                 if (reset) {
                     this.diaryState.cache = {
                         data: this.diaryState.items,
@@ -106,7 +253,7 @@ class App {
                         totalPages: this.diaryState.hasMore ? this.diaryState.page + 1 : this.diaryState.page
                     };
                 }
-                
+
                 this._renderDiaryList(listEl, this.diaryState.items);
             }
         } catch (error) {
@@ -163,7 +310,7 @@ class App {
     _renderDiaryList(container, items) {
         const existingLoader = document.getElementById('diaryLoadMoreIndicator');
         container.innerHTML = '';
-        
+
         items.forEach((item, index) => {
             const itemEl = document.createElement('div');
             itemEl.className = `diary-item ${item.expanded ? 'expanded' : ''}`;
@@ -182,7 +329,7 @@ class App {
                     </button>
                 </div>
             `;
-            
+
             const expandBtn = itemEl.querySelector('.diary-expand-btn');
             expandBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -198,14 +345,14 @@ class App {
                     text.textContent = '展开';
                 }
             });
-            
+
             container.appendChild(itemEl);
         });
-        
+
         if (existingLoader) {
             container.appendChild(existingLoader);
         }
-        
+
         this._setupDiaryInfiniteScroll(container);
     }
 
@@ -213,7 +360,7 @@ class App {
         if (this.diaryScrollHandler) {
             container.removeEventListener('scroll', this.diaryScrollHandler);
         }
-        
+
         this.diaryScrollHandler = () => {
             const { scrollTop, scrollHeight, clientHeight } = container;
             if (scrollHeight - scrollTop - clientHeight < 50) {
@@ -222,60 +369,18 @@ class App {
                 }
             }
         };
-        
+
         container.addEventListener('scroll', this.diaryScrollHandler);
     }
 
-    showDiaryModal() {
-        const modal = document.getElementById('diaryModal');
-        if (!modal) return;
-        
-        modal.style.display = 'flex';
-        if (!this.diaryModalHideRef) {
-            this.diaryModalHideRef = { hide: this.hideDiaryModal.bind(this) };
-        }
-        this.registerModal(this.diaryModalHideRef);
-        
-        this.loadDiaryBatch(true);
-    }
-
-    hideDiaryModal() {
-        const modal = document.getElementById('diaryModal');
-        if (modal) modal.style.display = 'none';
-        if (this.diaryModalHideRef) {
-            this.unregisterModal(this.diaryModalHideRef);
-        }
-        const container = document.getElementById('diaryList');
-        if (container && this.diaryScrollHandler) {
-            container.removeEventListener('scroll', this.diaryScrollHandler);
-        }
-    }
-
-    // ========== 原有日记相关方法（已整合，此处保留兼容） ==========
-    // 原 DIARY_IDS 和旧 loadDiaryBatch 已替换，不再需要
-
-    initDiaryModalEvents() {
-        const modal = document.getElementById('diaryModal');
-        const closeBtn = document.getElementById('diaryCloseBtn');
-        
-        if (!modal || !closeBtn) return;
-        
-        closeBtn.addEventListener('click', () => this.hideDiaryModal());
-        
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) this.hideDiaryModal();
-        });
-    }
-    // =========================================
-
-    // ========== 反馈模态框管理（官方标准配置）==========
+    // ========== 反馈模态框（Twikoo） ==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
-        
+
         modal.style.display = 'flex';
         modal.classList.add('active');
-        
+
         if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
             twikoo.init({
                 envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
@@ -291,18 +396,17 @@ class App {
                     ],
                     throwOnError: false
                 },
-                onCommentLoaded: function() {
+                onCommentLoaded: () => {
                     const container = document.getElementById('twikoo-feedback');
-                    if (!container || typeof renderMathInElement === 'undefined') return;
-                    renderMathInElement(container, {
-                        delimiters: [
-                            { left: '$$', right: '$$', display: true },
-                            { left: '$', right: '$', display: false },
-                            { left: '\\(', right: '\\)', display: false },
-                            { left: '\\[', right: '\\]', display: true }
-                        ],
-                        throwOnError: false
-                    });
+                    if (container && typeof renderMathInElement !== 'undefined') {
+                        renderMathInElement(container, {
+                            delimiters: [
+                                { left: '$$', right: '$$', display: true },
+                                { left: '$', right: '$', display: false }
+                            ],
+                            throwOnError: false
+                        });
+                    }
                 }
             });
             window.twikooFeedbackInited = true;
@@ -330,6 +434,9 @@ class App {
         }
     }
 
+    // 日记模态框事件（占位，实际在 createDiaryModal 中绑定）
+    initDiaryModalEvents() {}
+
     // ========== 核心初始化 ==========
     init() {
         if (this.isInitialized) return;
@@ -343,7 +450,7 @@ class App {
         this.initFeedbackModalEvents();
         this.initFloatingButtonsEffect();
         this.isInitialized = true;
-        
+
         window.openFeedbackModal = this.openFeedbackModal.bind(this);
         window.closeFeedbackModal = this.closeFeedbackModal.bind(this);
     }
@@ -352,15 +459,12 @@ class App {
         let scrollTimer;
         const floatingBtns = document.querySelector('.floating-buttons');
         if (!floatingBtns) return;
-        
+
         window.addEventListener('scroll', () => {
             floatingBtns.style.opacity = '0.4';
             floatingBtns.style.transition = 'opacity 0.3s ease';
-            
             clearTimeout(scrollTimer);
-            scrollTimer = setTimeout(() => {
-                floatingBtns.style.opacity = '1';
-            }, 1000);
+            scrollTimer = setTimeout(() => floatingBtns.style.opacity = '1', 1000);
         }, { passive: true });
     }
 
@@ -369,241 +473,109 @@ class App {
             if (typeof CompactSidebar !== 'undefined') {
                 if (!window.sidebar || !window.sidebar.isInitialized) {
                     this.components.sidebar = new CompactSidebar();
-                    this.components.sidebar.init().catch(error => {
-                        console.error('侧边栏初始化失败:', error);
-                        this.showToast('侧边栏初始化失败，部分功能可能不可用', 'warning');
+                    this.components.sidebar.init().catch(e => {
+                        console.error('侧边栏初始化失败:', e);
+                        this.showToast('侧边栏初始化失败', 'warning');
                     });
                 } else {
                     this.components.sidebar = window.sidebar;
                 }
             }
-        } catch (error) {
-            console.error('核心组件初始化失败:', error);
-            this.showToast('核心组件初始化失败', 'error');
+        } catch (e) {
+            console.error('核心组件初始化失败:', e);
         }
     }
 
     initModules() {
         try {
-            const initPromises = [];
-            
             if (typeof SearchModule !== 'undefined') {
-                try {
-                    if (!window.searchModule || !(window.searchModule instanceof SearchModule)) {
-                        this.modules.search = new SearchModule();
-                        window.searchModule = this.modules.search;
-                        initPromises.push(this.modules.search.init?.());
-                    } else {
-                        this.modules.search = window.searchModule;
-                    }
-                } catch (error) {
-                    console.error('搜索模块初始化失败:', error);
+                if (!window.searchModule) {
+                    this.modules.search = new SearchModule();
+                    window.searchModule = this.modules.search;
+                } else {
+                    this.modules.search = window.searchModule;
                 }
             }
-            
-            if (typeof WallpaperModule !== 'undefined') {
-                this.modules.wallpaper = new WallpaperModule();
-                initPromises.push(this.modules.wallpaper.init?.());
-            }
-            
-            if (typeof GreetingModule !== 'undefined') {
-                this.modules.greeting = new GreetingModule();
-                initPromises.push(this.modules.greeting.init?.());
-            }
-            
+            if (typeof WallpaperModule !== 'undefined') this.modules.wallpaper = new WallpaperModule();
+            if (typeof GreetingModule !== 'undefined') this.modules.greeting = new GreetingModule();
             if (typeof OptimizedNavigation !== 'undefined') {
                 this.modules.navigation = new OptimizedNavigation();
                 window.optimizedNavigation = this.modules.navigation;
-                initPromises.push(this.modules.navigation.init?.());
+                this.modules.navigation.init?.();
             }
-            
-            if (typeof FooterModule !== 'undefined') {
-                this.modules.footer = new FooterModule();
-                initPromises.push(this.modules.footer.init?.());
+            if (typeof FooterModule !== 'undefined') this.modules.footer = new FooterModule();
+            if (typeof WeatherModule !== 'undefined') this.modules.weather = new WeatherModule();
+            if (typeof AnnouncementModule !== 'undefined' && !window.announcementModule) {
+                this.modules.announcement = new AnnouncementModule();
+                window.announcementModule = this.modules.announcement;
             }
-            
-            if (typeof WeatherModule !== 'undefined') {
-                this.modules.weather = new WeatherModule();
-                initPromises.push(this.modules.weather.init?.());
+            if (typeof AboutModule !== 'undefined' && !window.aboutModule) {
+                this.modules.about = new AboutModule();
+                window.aboutModule = this.modules.about;
             }
-            
-            if (typeof AnnouncementModule !== 'undefined') {
-                if (!window.announcementModule) {
-                    this.modules.announcement = new AnnouncementModule();
-                    window.announcementModule = this.modules.announcement;
-                } else {
-                    this.modules.announcement = window.announcementModule;
-                }
-            }
-            
-            if (typeof AboutModule !== 'undefined') {
-                if (!window.aboutModule) {
-                    this.modules.about = new AboutModule();
-                    window.aboutModule = this.modules.about;
-                } else {
-                    this.modules.about = window.aboutModule;
-                }
-            }
-            
-            Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {
-                console.log('所有模块初始化完成');
-            });
-
-        } catch (error) {
-            console.error('模块初始化失败:', error);
-            this.showToast('部分模块初始化失败', 'warning');
+        } catch (e) {
+            console.error('模块初始化失败:', e);
         }
     }
 
     initDependentComponents() {
         try {
-            if (typeof Navbar !== 'undefined') {
-                this.components.navbar = new Navbar();
-            }
-        } catch (error) {
-            console.error('依赖组件初始化失败:', error);
-        }
+            if (typeof Navbar !== 'undefined') this.components.navbar = new Navbar();
+        } catch (e) {}
     }
 
     setupErrorHandling() {
-        const ignoredErrors = [
-            'Script error',
-            'ResizeObserver loop',
-            'Loading failed',
-            'Failed to fetch'
-        ];
-        
-        const handleError = (event) => {
-            const error = event.error || event.reason;
-            const errorMessage = error?.message || event.message || '未知错误';
-            
-            const shouldIgnore = ignoredErrors.some(ignored => 
-                errorMessage.includes(ignored)
-            );
-            
-            if (!shouldIgnore) {
-                console.error('应用错误:', errorMessage);
-                if (!document.hidden) {
-                    this.showToast('页面遇到问题，建议刷新页面', 'error');
-                }
+        const ignored = ['Script error', 'ResizeObserver loop'];
+        const handler = (event) => {
+            const msg = event.error?.message || event.reason?.message || event.message || '';
+            if (!ignored.some(i => msg.includes(i))) {
+                console.error('应用错误:', msg);
             }
         };
-        
-        window.addEventListener('error', handleError);
-        window.addEventListener('unhandledrejection', handleError);
+        window.addEventListener('error', handler);
+        window.addEventListener('unhandledrejection', handler);
     }
 
     initStorage() {
-        if (typeof Storage === 'undefined') {
-            console.error('浏览器不支持localStorage');
-            this.showToast('浏览器不支持本地存储，部分功能可能受限', 'warning');
-            return;
-        }
-        this.initDefaultData();
-    }
-
-    initDefaultData() {
+        if (typeof Storage === 'undefined') return;
         if (!Storage.get('first_visit_time')) {
             Storage.set('first_visit_time', new Date().toISOString());
-        }
-        this.updateVisitStats();
-    }
-
-    updateVisitStats() {
-        try {
-            let visitCount = Storage.get('visit_count') || 0;
-            visitCount++;
-            Storage.set('visit_count', visitCount);
-            Storage.set('last_visit_time', new Date().toISOString());
-        } catch (error) {
-            console.warn('更新访问统计失败:', error);
         }
     }
 
     setupGlobalEvents() {
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.closeAllModals();
-            }
+            if (e.key === 'Escape') this.closeAllModals();
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
                 this.showSearch();
             }
-            if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key === 'r')) {
-                e.preventDefault();
-                this.refreshPageWithAnimation();
-            }
         });
-        
-        window.addEventListener('online', () => {
-            this.showToast('网络已连接', 'success');
-        });
-        
-        window.addEventListener('offline', () => {
-            this.showToast('网络已断开，部分功能可能受限', 'warning');
-        });
-        
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                this.refreshOnVisibility();
-            }
-        });
-    }
-
-    refreshOnVisibility() {
-        if (this.modules.greeting && this.modules.greeting.updateDateTime) {
-            this.modules.greeting.updateDateTime();
-        }
-        const now = Date.now();
-        if (this.lastWeatherUpdate && (now - this.lastWeatherUpdate > 10 * 60 * 1000)) {
-            if (this.modules.weather && this.modules.weather.loadWeatherData) {
-                this.modules.weather.loadWeatherData();
-                this.lastWeatherUpdate = now;
-            }
-        }
     }
 
     registerModal(modal) {
         if (!modal || typeof modal.hide !== 'function') return;
         if (!this.activeModals.includes(modal)) {
             this.activeModals.push(modal);
-            if (this.activeModals.length > 1) {
-                const previousModal = this.activeModals[this.activeModals.length - 2];
-                if (previousModal && previousModal.hide) previousModal.hide();
-            }
-            if (this.components.sidebar && this.components.sidebar.isVisible && this.components.sidebar.isVisible()) {
-                this.components.sidebar.hide();
-            }
         }
     }
 
     unregisterModal(modal) {
-        const index = this.activeModals.indexOf(modal);
-        if (index > -1) this.activeModals.splice(index, 1);
+        const idx = this.activeModals.indexOf(modal);
+        if (idx > -1) this.activeModals.splice(idx, 1);
     }
 
     closeAllModals() {
-        this.activeModals.forEach((modal) => {
-            if (modal && typeof modal.hide === 'function') {
-                try { modal.hide(); } catch (error) { console.error('关闭模态框失败:', error); }
-            }
-        });
+        this.activeModals.forEach(m => { try { m.hide(); } catch (e) {} });
         this.activeModals = [];
-        
-        if (this.components.sidebar && this.components.sidebar.isVisible && this.components.sidebar.isVisible()) {
-            this.components.sidebar.hide();
-        }
-        if (this.components.navbar && this.components.navbar.hideMusicPlayer) {
-            this.components.navbar.hideMusicPlayer();
-        }
-        if (this.modules.search && this.modules.search.isModalOpen && this.modules.search.hide) {
-            this.modules.search.hide();
-        }
+        if (this.components.sidebar?.isVisible?.()) this.components.sidebar.hide();
+        if (this.components.navbar?.hideMusicPlayer) this.components.navbar.hideMusicPlayer();
+        if (this.modules.search?.hide) this.modules.search.hide();
         this.closeFeedbackModal();
     }
 
-    showToast(message, type = 'info') {
-        window.toast.show(message, type);
+    showToast(msg, type = 'info') {
+        window.toast?.show(msg, type);
     }
 
     escapeHtml(text) {
@@ -612,194 +584,25 @@ class App {
         return div.innerHTML;
     }
 
-    getVisitStats() {
-        const visitCount = Storage.get('visit_count') || 0;
-        const firstVisitTime = Storage.get('first_visit_time');
-        const lastVisitTime = Storage.get('last_visit_time');
-        return {
-            count: visitCount,
-            firstVisit: firstVisitTime ? new Date(firstVisitTime) : null,
-            lastVisit: lastVisitTime ? new Date(lastVisitTime) : null,
-            formatted: `访问 ${visitCount} 次`
-        };
-    }
-
-    updateAnnouncement(newContent) {
-        if (!this.modules.announcement || !newContent) return;
-        this.modules.announcement.updateAnnouncement(newContent);
-    }
-
-    refreshWallpaper() {
-        if (!this.modules.wallpaper) {
-            this.showToast('壁纸模块未初始化', 'warning');
-            return;
-        }
-        this.modules.wallpaper.refreshWallpaper();
-        this.showToast('正在刷新壁纸...', 'info');
-    }
-
-    refreshPageWithAnimation() {
-        this.showToast('正在刷新页面数据...', 'info');
-        document.body.style.opacity = '0.8';
-        document.body.style.transition = 'opacity 0.3s ease';
-        setTimeout(() => {
-            this.refreshAllModules();
-            setTimeout(() => {
-                document.body.style.opacity = '1';
-                this.showToast('页面刷新完成', 'success');
-            }, 500);
-        }, 300);
-    }
-
-    toggleSidebar() {
-        if (this.components.sidebar && this.components.sidebar.toggle) {
-            this.components.sidebar.toggle();
-        }
-    }
-
-    showSidebar() {
-        if (this.components.sidebar && this.components.sidebar.show) {
-            this.components.sidebar.show();
-        }
-    }
-
-    hideSidebar() {
-        if (this.components.sidebar && this.components.sidebar.hide) {
-            this.components.sidebar.hide();
-        }
-    }
-
     showSearch() {
-        if (this.modules.search && this.modules.search.showModal) {
+        if (this.modules.search?.showModal) {
             this.modules.search.showModal();
         } else {
             this.showToast('搜索功能暂不可用', 'warning');
         }
     }
 
-    showAnnouncement() {
-        if (this.modules.announcement && this.modules.announcement.showModal) {
-            this.modules.announcement.showModal();
-        } else {
-            this.showToast('公告功能暂不可用', 'warning');
-        }
-    }
-
-    showWeather() {
-        if (this.modules.weather && typeof this.modules.weather.showModal === 'function') {
-            this.modules.weather.showModal();
-        } else {
-            console.error('天气模块未正确初始化');
-            this.showToast('天气功能暂不可用', 'warning');
-        }
-    }
-
-    showAbout() {
-        if (this.modules.about && this.modules.about.show) {
-            this.modules.about.show();
-        } else {
-            this.showToast('关于功能暂不可用', 'warning');
-        }
-    }
-
-    toggleMusicPlayer() {
-        if (this.components.navbar && this.components.navbar.toggleMusicPlayer) {
-            this.components.navbar.toggleMusicPlayer();
-        } else {
-            this.showToast('音乐播放器暂不可用', 'warning');
-        }
-    }
-
-    refreshAllModules() {
-        this.showToast('开始刷新所有模块', 'info');
-        
-        if (this.modules.wallpaper && this.modules.wallpaper.refreshWallpaper) {
-            this.modules.wallpaper.refreshWallpaper().catch(err => {
-                console.error('壁纸刷新失败:', err);
-            });
-        }
-        
-        if (this.modules.weather && this.modules.weather.loadWeatherData) {
-            this.modules.weather.loadWeatherData().catch(err => {
-                console.error('天气刷新失败:', err);
-            });
-        }
-        
-        if (this.modules.announcement && this.modules.announcement.loadAnnouncements) {
-            this.modules.announcement.loadAnnouncements();
-        }
-        
-        if (this.components.sidebar) {
-            if (this.components.sidebar.loadWallpaperUserInfo) {
-                this.components.sidebar.loadWallpaperUserInfo();
-            }
-            if (this.components.sidebar.loadDailyQuote) {
-                this.components.sidebar.loadDailyQuote();
-            }
-        }
-        
-        setTimeout(() => {
-            this.showToast('所有模块已刷新', 'success');
-        }, 1500);
-    }
-
-    resetApp() {
-        if (!confirm('确定要重置应用状态吗？这将清除所有临时数据，但不会删除您的个人配置。')) return;
-        
-        this.closeAllModals();
-        
-        const keysToRemove = [
-            'sidebar_categories_state',
-            'last_wallpaper_update',
-            'musicPlayer_volume',
-            'musicPlayer_playbackSpeed',
-            'musicPlayer_playMode',
-            'musicPlayer_playState',
-            'musicPlayer_lyricsMode'
-        ];
-        
-        keysToRemove.forEach(key => {
-            Storage.remove(key);
-        });
-        
-        setTimeout(() => {
-            this.refreshAllModules();
-        }, 500);
-        
-        this.showToast('应用状态已重置', 'success');
-    }
-
     destroy() {
         this.closeAllModals();
-        Object.entries(this.components).forEach(([name, component]) => {
-            if (component && typeof component.destroy === 'function') {
-                try { component.destroy(); } catch (error) { console.error(`销毁组件 ${name} 失败:`, error); }
-            }
-        });
-        Object.entries(this.modules).forEach(([name, module]) => {
-            if (module && typeof module.destroy === 'function') {
-                try { module.destroy(); } catch (error) { console.error(`销毁模块 ${name} 失败:`, error); }
-            }
-        });
-        this.components = {};
-        this.modules = {};
-        this.activeModals = [];
         this.isInitialized = false;
     }
 }
 
+// 全局单例
 if (!window.app) {
     window.app = new App();
 }
-
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        if (window.app && !window.app.isInitialized) {
-            window.app.init();
-        }
-    });
+    document.addEventListener('DOMContentLoaded', () => window.app?.init());
 }
-
-window.getApp = function() {
-    return window.app;
-};
+window.getApp = () => window.app;
