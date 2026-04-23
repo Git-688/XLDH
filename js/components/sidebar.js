@@ -568,20 +568,32 @@ class CompactSidebar {
             const iconClass = icon.className;
             
             if (iconClass.includes('fa-book')) {
-                // 修复日记按钮：优先使用 app 方法，否则手动显示
-                if (window.app && typeof window.app.showDiaryModal === 'function') {
-                    window.app.showDiaryModal();
-                } else {
-                    const diaryModal = document.getElementById('diaryModal');
-                    if (diaryModal) {
-                        diaryModal.style.display = 'flex';
-                        // 若 app 存在且能加载数据，则调用加载
-                        if (window.app && typeof window.app.loadDiaryBatch === 'function') {
-                            window.app.loadDiaryBatch();
+                // 修复日记按钮：增加重试和降级方案
+                const showDiary = () => {
+                    if (window.app && typeof window.app.showDiaryModal === 'function') {
+                        window.app.showDiaryModal();
+                    } else {
+                        console.warn('[侧边栏] app 未就绪，尝试手动显示');
+                        const modal = document.getElementById('diaryModal');
+                        if (modal) {
+                            modal.style.display = 'flex';
+                            modal.style.zIndex = '10001';
+                            // 手动加载数据
+                            if (window.app?.loadDiaryBatch) {
+                                window.app.loadDiaryBatch();
+                            }
+                        } else {
+                            window.toast?.show('日记模块未找到', 'error');
                         }
                     }
+                    this.hide();
+                };
+                
+                if (!window.app) {
+                    setTimeout(showDiary, 200);
+                } else {
+                    showDiary();
                 }
-                this.hide();
             } else if (iconClass.includes('fa-gift')) {
                 this.hide();
             } else if (iconClass.includes('fa-info-circle')) {
