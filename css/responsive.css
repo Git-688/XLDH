@@ -1,9 +1,16 @@
-/* 仅保留侧滑栏独立滚动控制及浮动按钮响应式优化 */
-/* 全局重置和容器样式已由 style.css 统一管理，此处不再重复 */
+/* ================================================
+   responsive.css 响应式适配文件
+   说明：仅针对侧滑栏、浮动按钮做响应式优化
+   完全不影响导航栏、搜索、音乐播放器、主内容等其他模块原有样式
+   所有样式仅做响应式断点补充，不覆盖核心模块的基础样式
+   ================================================ */
 
-/* 侧滑栏完全独立滚动控制 */
-.sidebar.active { pointer-events: auto; transform: translateX(0); visibility: visible; }
-
+/* ========== 1. 侧滑栏独立滚动控制（不影响主页面滚动） ========== */
+.sidebar.active { 
+    pointer-events: auto; 
+    transform: translateX(0); 
+    visibility: visible; 
+}
 .sidebar.active ~ .main-content {
     pointer-events: auto;
     overflow: auto;
@@ -11,7 +18,6 @@
     width: 100%;
     height: auto;
 }
-
 .sidebar-content {
     flex: 1;
     display: flex;
@@ -19,7 +25,6 @@
     overflow: hidden;
     pointer-events: auto;
 }
-
 .categories-container {
     flex: 1;
     overflow-y: auto;
@@ -28,22 +33,22 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
 }
-
 .sidebar.active .categories-container,
 .sidebar.active .sidebar-content {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
 }
 
+/* ========== 2. 移动端侧滑栏滚动专属适配（不锁页面整体滚动） ========== */
 @media (max-width: 768px) {
-    .sidebar.active { touch-action: pan-y; }
-    
+    .sidebar.active { 
+        touch-action: pan-y; 
+    }
     .sidebar.active .categories-container {
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
         touch-action: pan-y;
     }
-    
     body.sidebar-open {
         overflow: auto;
         position: relative;
@@ -51,69 +56,120 @@
         height: 100%;
         touch-action: pan-y;
     }
-    
-    .sidebar.active ~ .main-content { touch-action: pan-y; }
+    .sidebar.active ~ .main-content { 
+        touch-action: pan-y; 
+    }
 }
 
-/* 侧滑栏滚动条样式（已在 sidebar.css 中定义，此处可保留或删除，无影响） */
-.categories-container::-webkit-scrollbar { width: 6px; }
-.categories-container::-webkit-scrollbar-track { background: #f8f9fa; border-radius: 3px; }
-.categories-container::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 3px; transition: background 0.2s ease; }
-.categories-container::-webkit-scrollbar-thumb:hover { background: #adb5bd; }
+/* ========== 3. 侧滑栏滚动条样式（仅作用于侧滑栏，不影响全局） ========== */
+.categories-container::-webkit-scrollbar { 
+    width: 6px; 
+}
+.categories-container::-webkit-scrollbar-track { 
+    background: #f8f9fa; 
+    border-radius: 3px; 
+}
+.categories-container::-webkit-scrollbar-thumb { 
+    background: #dee2e6; 
+    border-radius: 3px; 
+    transition: background 0.2s ease; 
+}
+.categories-container::-webkit-scrollbar-thumb:hover { 
+    background: #adb5bd; 
+}
 
-/* ====== 浮动按钮响应式优化 ====== */
+/* ========== 4. 浮动按钮响应式优化（完全保留原有逻辑，无破坏性修改） ========== */
 @media (max-width: 768px) {
     .floating-buttons {
         bottom: 16px;
         right: 16px;
         gap: 8px;
     }
-    
     .floating-btn {
         width: 44px;
         height: 44px;
         font-size: 18px;
     }
 }
-
 @media (max-width: 480px) {
     .floating-buttons {
         bottom: 12px;
         right: 12px;
         gap: 6px;
     }
-    
     .floating-btn {
         width: 40px;
         height: 40px;
         font-size: 16px;
     }
 }
-
 @media (max-width: 360px) {
     .floating-buttons {
         bottom: 10px;
         right: 10px;
         gap: 5px;
     }
-    
     .floating-btn {
         width: 38px;
         height: 38px;
         font-size: 15px;
     }
 }
-
 @media (max-height: 500px) and (orientation: landscape) {
     .floating-buttons {
         bottom: 8px;
         right: 8px;
         gap: 5px;
     }
-    
     .floating-btn {
         width: 36px;
         height: 36px;
         font-size: 14px;
+    }
+}
+
+/* ========== 5. 深色模式适配（仅侧滑栏滚动条，不影响全局） ========== */
+@media (prefers-color-scheme: dark) {
+    .categories-container::-webkit-scrollbar-track { 
+        background: #2d2d2d; 
+    }
+    .categories-container::-webkit-scrollbar-thumb { 
+        background: #4a4a4a; 
+    }
+    .categories-container::-webkit-scrollbar-thumb:hover { 
+        background: #606060; 
+    }
+}
+
+/* ========== 6. 减少动画模式适配（无障碍优化，不影响其他样式） ========== */
+@media (prefers-reduced-motion: reduce) {
+    .sidebar,
+    .category-group-header,
+    .category-item,
+    .footer-btn,
+    .category-toggle,
+    .category-items,
+    .sidebar-wallpaper video,
+    .sidebar-wallpaper img,
+    .floating-btn {
+        transition: none;
+        animation: none;
+    }
+}
+
+/* ========== 7. 横屏小高度侧滑栏兜底适配（不影响其他模块） ========== */
+@media (max-height: 600px) and (orientation: landscape) {
+    .sidebar {
+        max-height: 85vh;
+    }
+    .sidebar-wallpaper {
+        aspect-ratio: 21/9;
+    }
+}
+
+/* ========== 8. 超大屏侧滑栏兜底适配（不影响其他模块） ========== */
+@media (min-width: 2560px) {
+    .sidebar {
+        max-width: 340px;
     }
 }
