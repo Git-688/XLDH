@@ -23,7 +23,7 @@
     background: rgba(255, 255, 255, 0.65);
     backdrop-filter: blur(24px) saturate(125%);
     -webkit-backdrop-filter: blur(24px) saturate(125%);
-    border-radius: 8px;            /* 统一 8px */
+    border-radius: 8px;
     padding: 12px 14px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -57,7 +57,7 @@
 
 .engine-dropdown {
     position: absolute; top: calc(12px + 36px + 6px); left: 14px; width: 170px;
-    background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px;  /* 统一 8px */
+    background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.06); z-index: 10001; max-height: 220px; overflow-y: auto;
     visibility: hidden; opacity: 0; transform: translateY(-6px) scale(0.95);
     transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; pointer-events: none; scrollbar-width: none;
@@ -87,7 +87,7 @@
 .suggestion-item:hover { background: var(--bg-secondary); }
 
 .history-panel {
-    margin-top: 6px; padding: 8px 10px; background: var(--bg-secondary); border-radius: 8px;  /* 统一 8px */
+    margin-top: 6px; padding: 8px 10px; background: var(--bg-secondary); border-radius: 8px;
     max-height: 200px; overflow-y: auto; scrollbar-width: none;
 }
 .history-panel::-webkit-scrollbar { display: none; }
