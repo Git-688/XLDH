@@ -18,7 +18,7 @@ class Navbar {
     }
 
     bindEvents() {
-        // ---------- 搜索按钮：toggle 新搜索模块 ----------
+        // ---------- 搜索按钮：无缝切换 ----------
         const searchBtn = document.getElementById('searchBtn');
         if (searchBtn) {
             searchBtn.replaceWith(searchBtn.cloneNode(true));
@@ -113,16 +113,27 @@ class Navbar {
         if (btt) btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
+    /**
+     * 关闭除 keep 之外的所有模态框
+     * 注意：关闭操作是立即移除 active 类，无额外延迟，实现无缝切换
+     */
     closeAllModalsExcept(keep = []) {
         try {
+            // 音乐播放器
             if (!keep.includes('music')) this.hideMusicPlayer();
+            // 搜索模块
             if (!keep.includes('search') && window.newSearchModule && window.newSearchModule.isOpen) {
                 window.newSearchModule.hide();
             }
+            // 侧边栏
             if (!keep.includes('sidebar') && window.sidebar?.isVisible()) window.sidebar.hide();
+            // 公告
             if (!keep.includes('announcement') && window.announcementModule?.isVisible) window.announcementModule.hide();
+            // 天气
             if (!keep.includes('weather')) window.app?.modules?.weather?.hide?.();
+            // 关于
             if (!keep.includes('about')) window.aboutModule?.hide?.();
+            // 星聚笔记
             if (!keep.includes('notebook')) window.app?.hideNotebookModal?.();
         } catch (e) {
             console.error('关闭模态框失败:', e);
