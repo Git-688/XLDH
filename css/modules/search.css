@@ -75,7 +75,7 @@
     font-size: 0.875rem;
 }
 
-/* 引擎选择器 */
+/* 引擎选择器（原版保留，已不再使用） */
 .engine-selector {
     display: flex;
     gap: 0.375rem;
@@ -311,7 +311,7 @@
     animation: slideDown 0.15s ease-out;
 }
 
-/* 名称提示工具 */
+/* 名称提示工具（保留用于兼容） */
 .engine-tooltip {
     position: fixed;
     background: var(--text-primary);
@@ -564,4 +564,131 @@
     .engine-selector {
         gap: 0.5rem;
     }
+}
+
+/* ---------- 新搜索模块补充样式 ---------- */
+.search-submit-btn {
+    padding: 6px 12px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-left: 6px;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+.search-submit-btn:hover {
+    background: var(--secondary-color);
+}
+.search-engines {
+    display: flex;
+    gap: 8px;
+    padding: 8px 0;
+    flex-wrap: wrap;
+}
+.search-engines .engine-btn {
+    padding: 5px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-card);
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: auto;
+    height: auto;
+}
+.search-engines .engine-btn i {
+    font-size: 0.9rem;
+}
+.search-engines .engine-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+.search-engines .engine-btn.active i {
+    color: white;
+}
+.history-panel {
+    margin-top: 10px;
+    padding: 10px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    max-height: 160px;
+    overflow-y: auto;
+}
+.history-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background 0.1s;
+}
+.history-item:hover {
+    background: rgba(0,0,0,0.05);
+}
+.history-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.delete-history {
+    color: var(--text-secondary);
+    opacity: 0.6;
+    cursor: pointer;
+    padding: 4px;
+    transition: opacity 0.2s, color 0.2s;
+}
+.delete-history:hover {
+    opacity: 1;
+    color: var(--error-color);
+}
+.suggestions {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-top: 4px;
+    display: none;
+    background: var(--bg-card);
+    position: relative; /* 改为相对定位，避免覆盖问题 */
+}
+.suggestions.active {
+    display: block;
+}
+.suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.1s;
+}
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+.suggestion-item:hover {
+    background: var(--bg-secondary);
+}
+.history-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    padding: 8px;
 }
