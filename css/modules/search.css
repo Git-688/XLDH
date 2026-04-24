@@ -16,8 +16,8 @@
 
 .search-modal .modal-content {
     position: absolute;
-    top: 70px;
-    right: 20px;
+    top: 24px;
+    right: 24px;
     width: 90%;
     max-width: 460px;
     background: rgba(255, 255, 255, 0.65);
@@ -105,6 +105,6 @@
 .history-empty { text-align: center; color: var(--text-secondary); font-size: 0.8rem; padding: 10px 0; margin: 0; }
 
 @media (max-width: 768px) {
-    .search-modal .modal-content { top: 100px; right: 3%; left: 3%; width: auto; max-width: none; padding: 10px 12px; }
+    .search-modal .modal-content { top: 16px; right: 4.2%; left: 4.2%; width: auto; max-width: none; padding: 10px 12px; }
     .engine-dropdown { width: 150px; }
 }
