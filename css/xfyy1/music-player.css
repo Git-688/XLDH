@@ -1,18 +1,20 @@
-/* 悬浮音乐播放器样式 - 精简版，移除冗余动画类 */
-
+/* 悬浮音乐播放器样式 - 毛玻璃版，圆角 8px */
 .music-player {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: #ffffff;
-    border-radius: 10px;
+    /* 毛玻璃效果 */
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 8px;                /* 与 Logo 一致 */
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     width: 420px;
     overflow: hidden;
     transition: all 0.3s ease;
     z-index: 10000;
     max-height: 700px;
-    border: 1px solid #e1e5e9;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     display: none;
     transform: translateY(20px) scale(0.95);
     opacity: 0;
@@ -40,6 +42,14 @@
     transform: translateY(20px) scale(0.95);
     opacity: 0;
     transition: all 0.6s ease;
+}
+
+/* 深色模式毛玻璃适配 */
+@media (prefers-color-scheme: dark) {
+    .music-player {
+        background: rgba(30, 30, 30, 0.8);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
 }
 
 /* 音乐按钮动画 */
@@ -83,68 +93,34 @@
 }
 
 @keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: scale(1.05);
-        opacity: 0.8;
-    }
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
 }
 
 @keyframes loading {
-    0% {
-        left: -100%;
-    }
-    100% {
-        left: 100%;
-    }
+    0% { left: -100%; }
+    100% { left: 100%; }
 }
 
 /* 动画关键帧 */
 @keyframes slideInUp {
-    from {
-        transform: translateY(100%) scale(0.9);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-    }
+    from { transform: translateY(100%) scale(0.9); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 @keyframes slideOutDown {
-    from {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-    }
-    to {
-        transform: translateY(100%) scale(0.9);
-        opacity: 0;
-    }
+    from { transform: translateY(0) scale(1); opacity: 1; }
+    to { transform: translateY(100%) scale(0.9); opacity: 0; }
 }
 
 @keyframes scaleIn {
-    from {
-        transform: scale(0.8);
-        opacity: 0;
-    }
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }
 
 @keyframes scaleOut {
-    from {
-        transform: scale(1);
-        opacity: 1;
-    }
-    to {
-        transform: scale(0.8);
-        opacity: 0;
-    }
+    from { transform: scale(1); opacity: 1; }
+    to { transform: scale(0.8); opacity: 0; }
 }
 
 @media (max-width: 768px) {
@@ -203,7 +179,7 @@
 .player-top {
     display: flex;
     padding: 12px 15px 8px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
 .cover-section {
@@ -290,15 +266,11 @@
 }
 
 @keyframes scrollText {
-    0% {
-        transform: translateX(100%);
-    }
-    100% {
-        transform: translateX(-100%);
-    }
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
 }
 
-/* 控制按钮统一样式（主题色 #3764F4） */
+/* 控制按钮统一样式 */
 .control-panel {
     display: flex;
     flex-direction: column;
@@ -434,7 +406,7 @@
 /* 进度条区域 */
 .progress-section {
     padding: 8px 15px 10px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -661,7 +633,7 @@
 /* ==================== 歌词显示（垂直三行，无动态背景） ==================== */
 .lyrics-section {
     padding: 8px 15px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
     min-height: 70px;
     display: flex;
     align-items: center;
@@ -715,11 +687,11 @@
 
 .bottom-tabs {
     display: flex;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
     overflow-x: auto;
     position: sticky;
     top: 0;
-    background: white;
+    background: inherit;
     z-index: 5;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -770,11 +742,11 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 15px 8px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
     min-height: 36px;
     position: sticky;
     top: 0;
-    background: white;
+    background: inherit;
     z-index: 10;
     margin-bottom: 0;
 }
@@ -879,7 +851,7 @@
     margin-bottom: 6px;
     position: sticky;
     top: 0;
-    background: white;
+    background: inherit;
     z-index: 5;
     margin-top: 8px;
 }
@@ -888,7 +860,7 @@
     display: flex;
     gap: 0;
     position: relative;
-    background: #f8fafc;
+    background: rgba(255,255,255,0.6);
     border-radius: 8px;
     padding: 0px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
@@ -1187,12 +1159,8 @@
 
 /* 动画 */
 @keyframes rotate {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 .album-cover.playing img {
