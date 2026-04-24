@@ -157,4 +157,4 @@
     cursor: pointer; transition: all 0.2s ease;
     font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;
 }
-.about-close-btn:hover { background: #6EC312; transform: translateY(-1px); }
+.about-close-btn:hover { background: #6EC312; transform: translateY(-1px); } 
