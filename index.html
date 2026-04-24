@@ -587,22 +587,29 @@
         </div>
     </div>
     <audio id="audio-element" preload="metadata"></audio>
-<!-- 搜索模态框 - 全新设计 -->
+    
+<!-- 搜索模态框 - 位置下移，引擎下拉，联想词，历史记录 -->
 <div class="search-modal" id="searchModal" style="display: none;">
     <div class="modal-content">
-        <div class="search-header">
-            <i class="fas fa-search search-icon"></i>
+        <!-- 搜索栏：引擎图标 - 输入框 - 搜索按钮 -->
+        <div class="search-bar">
+            <button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎">
+                <i id="engineIcon" class="fas fa-search"></i>
+            </button>
             <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." onkeydown="window.newSearchModule.handleSearch(event)" oninput="window.newSearchModule.showSuggestions()" autocomplete="off">
-            <button id="searchSubmitBtn" class="search-submit-btn" onclick="window.newSearchModule.submitSearch()">搜索</button>
+            <button class="search-submit-btn" onclick="window.newSearchModule.submitSearch()">搜索</button>
         </div>
-        <div class="search-engines" id="searchEngines">
-            <!-- 引擎按钮通过JS动态生成 -->
+        <!-- 搜索引擎下拉菜单 -->
+        <div class="engine-dropdown" id="engineDropdown" style="display:none;">
+            <!-- JS动态生成 -->
         </div>
+        <!-- 百度联想词 -->
         <div class="suggestions" id="suggestions"></div>
+        <!-- 搜索历史 -->
         <div class="history-panel" id="historyPanel">
             <div class="history-title">
-                <span>历史记录</span>
-                <span id="clearHistory" style="cursor:pointer;color:var(--primary-color);margin-left:auto;">清除</span>
+                <span>搜索历史</span>
+                <span id="clearHistory" class="clear-history-btn">清除</span>
             </div>
             <div id="historyList"></div>
         </div>
