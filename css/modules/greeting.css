@@ -1,751 +1,98 @@
-/* 问候语区域 - 精简现代化设计 */
-.greeting-section {
-    padding: var(--section-margin-sm) 0;
-    position: relative;
-}
+/* 问候语区域 - 弱亚克力，圆角统一 8px */
+.greeting-section { padding: var(--section-margin-sm) 0; position: relative; }
 
-/* 主容器 - 左右布局 */
 .greeting-container {
-    display: flex;
-    gap: 16px;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 var(--container-padding-xs);
-    align-items: stretch;
+    display: flex; gap: 16px; max-width: 1200px; margin: 0 auto;
+    padding: 0 var(--container-padding-xs); align-items: stretch;
 }
+@media (min-width: 576px) { .greeting-container { padding: 0 var(--container-padding-sm); } }
+@media (min-width: 768px) { .greeting-container { padding: 0 var(--container-padding-md); } .greeting-section { padding: var(--section-margin-md) 0; } }
+@media (min-width: 992px) { .greeting-container { padding: 0 var(--container-padding-lg); gap: 24px; } .greeting-section { padding: var(--section-margin-lg) 0; } }
+@media (min-width: 1200px) { .greeting-container { padding: 0 var(--container-padding-xl); } .greeting-section { padding: var(--section-margin-lg) 0; } }
 
-/* 响应式调整边距 */
-@media (min-width: 576px) {
-    .greeting-container {
-        padding: 0 var(--container-padding-sm);
-    }
-}
-
-@media (min-width: 768px) {
-    .greeting-container {
-        padding: 0 var(--container-padding-md);
-    }
-    .greeting-section {
-        padding: var(--section-margin-md) 0;
-    }
-}
-
-@media (min-width: 992px) {
-    .greeting-container {
-        padding: 0 var(--container-padding-lg);
-        gap: 24px;
-    }
-    .greeting-section {
-        padding: var(--section-margin-lg) 0;
-    }
-}
-
-@media (min-width: 1200px) {
-    .greeting-container {
-        padding: 0 var(--container-padding-xl);
-    }
-    .greeting-section {
-        padding: var(--section-margin-lg) 0;
-    }
-}
-
-/* 左侧大卡片 - 移除阴影 */
 .greeting-main-card {
     flex: 1;
-    background: var(--bg-card);
-    border-radius: 10px;
-    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px) saturate(110%);
+    -webkit-backdrop-filter: blur(10px) saturate(110%);
+    border-radius: 8px;              /* 统一 8px */
+    border: 1px solid rgba(255, 255, 255, 0.4);
     padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    display: flex; flex-direction: column; gap: 20px;
     transition: all 0.3s ease;
 }
+.greeting-main-card:hover { transform: translateY(-2px); }
 
-.greeting-main-card:hover {
-    transform: translateY(-2px);
-}
+.greeting-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: nowrap; }
+.greeting-left { flex: 1; min-width: 0; }
 
-/* 卡片顶部：问候语和时间在同一水平线 */
-.greeting-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: nowrap;
-}
-
-.greeting-left {
-    flex: 1;
-    min-width: 0;
-}
-
-/* 优化问候语文字样式 */
 .greeting-text h1 {
-    font-size: 1.6em;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 12px 0;
-    letter-spacing: 0.02em;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    position: relative;
-    display: inline-block;
+    font-size: 1.6em; font-weight: 700; color: var(--text-primary); margin: 0 0 12px 0;
+    letter-spacing: 0.02em; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
+.greeting-emoji { display: inline-block; margin-right: 6px; color: var(--primary-color); background: none !important; -webkit-text-fill-color: initial !important; }
+.greeting-text-content { color: var(--text-primary); font-weight: 700; }
 
-/* 修复：将渐变背景只应用到文本，不包括emoji */
-.greeting-text h1 .greeting-emoji {
-    display: inline-block;
-    margin-right: 6px;
-    color: var(--primary-color);
-    background: none !important;
-    -webkit-text-fill-color: initial !important;
-    background-clip: initial !important;
-    font-weight: normal;
-}
+.countdown-holiday { display: flex; align-items: center; gap: 8px; font-size: 0.9em; color: var(--text-secondary); flex-wrap: nowrap; min-height: 32px; overflow: visible; margin-top: 8px; }
+#holidayName { font-weight: 600; color: var(--text-secondary); white-space: nowrap; font-size: 1.425em; max-width: none; overflow: visible; }
+#holidayCountdown { display: inline-block; padding: 4px 12px; border-radius: 8px; color: #ffffff !important; font-weight: 500; font-size: 1.0em; white-space: nowrap; border: none !important; }
 
-/* 修改：移除问候语的渐变效果，改为普通颜色 */
-.greeting-text h1 .greeting-text-content {
-    color: var(--text-primary); /* 使用主题主文字颜色 */
-    font-weight: 700;
-}
-
-.countdown-holiday {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.9em;
-    color: var(--text-secondary);
-    flex-wrap: nowrap;
-    width: 100%;
-    min-height: 32px;
-    overflow: visible;
-    margin-top: 8px;
-}
-
-.holiday-icon { 
-    font-size: 1.2em;
-    flex-shrink: 0;
-}
-
-/* 修改：节日名称不使用特殊颜色 */
-#holidayName {
-    font-weight: 600;
-    color: var(--text-secondary); /* 使用次要文字颜色 */
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-    line-height: 1.3;
-    font-size: 1.425em;
-    max-width: none;
-    overflow: visible;
-    text-overflow: clip;
-}
-
-/* 修改：节日倒计时基础样式 - 白色文字，无边框，无悬停效果 */
-#holidayCountdown {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 8px;
-    color: #ffffff !important; /* 改为白色文字 */
-    font-weight: 500;
-    font-size: 1.0em;
-    white-space: nowrap;
-    flex-shrink: 0;
-    border: none !important; /* 移除边框 */
-}
-
-/* 移除所有悬停效果 */
-#holidayCountdown:hover {
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-/* 修改：时间和日期背景改为白色，添加边框 */
 .datetime {
-    text-align: right;
-    flex-shrink: 0;
-    background: #ffffff;
+    text-align: right; flex-shrink: 0;
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     padding: 12px 16px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;              /* 统一 8px */
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
+#currentTime { font-size: 1.2em; font-weight: 600; color: var(--primary-color); margin-bottom: 4px; }
+#currentDate { font-size: 0.85em; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
 
-#currentTime {
-    font-size: 1.2em;
-    font-weight: 600;
-    color: var(--primary-color);
-    font-variant-numeric: tabular-nums;
-    margin-bottom: 4px;
-}
-
-#currentDate {
-    font-size: 0.85em;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-#currentDate::before { content: "📅"; font-size: 0.9em; }
-
-/* 木鱼按钮区域 */
-.fish-section {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-}
-
-/* 修改：木鱼按钮背景改为白色，图标和文字改为颜色，显示边框 */
+.fish-section { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .fish-btn {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    background: #ffffff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    min-height: 50px;
-    text-decoration: none;
-    overflow: visible;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;              /* 统一 8px */
+    cursor: pointer; transition: all 0.2s ease; min-height: 50px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
+.fish-btn:active { transform: scale(0.95); }
+.fish-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+.fish-btn i { font-size: 18px; transition: transform 0.2s ease; }
+.fish-count { font-size: 1em; font-weight: 700; background: rgba(0,0,0,0.05); padding: 3px 8px; border-radius: 8px; min-width: 28px; text-align: center; transition: all 0.2s ease; }
 
-.fish-btn:active {
-    transform: scale(0.95);
-}
-
-.fish-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* 木鱼按钮颜色 - 修改为白色背景，彩色图标和文字 */
-.fish-btn[data-type="merit"] {
-    background: #ffffff;
-    color: #70c1ff;
-    border-color: rgba(112, 193, 255, 0.3);
-}
-
-.fish-btn[data-type="luck"] {
-    background: #ffffff;
-    color: #ff9e9e;
-    border-color: rgba(255, 158, 158, 0.3);
-}
-
-.fish-btn[data-type="wealth"] {
-    background: #ffffff;
-    color: #FFB600;
-    border-color: rgba(255, 214, 112, 0.3);
-}
-
-.fish-btn[data-type="health"] {
-    background: #ffffff;
-    color: #8ddf8d;
-    border-color: rgba(141, 223, 141, 0.3);
-}
-
-.fish-btn i { 
-    font-size: 18px; 
-    transition: transform 0.2s ease;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-}
-
-.fish-btn:hover i { 
-    transform: scale(1.05) translateY(-1px);
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-.fish-count {
-    font-size: 1em;
-    font-weight: 700;
-    background: rgba(0, 0, 0, 0.05);
-    padding: 3px 8px;
-    border-radius: 6px;
-    min-width: 28px;
-    text-align: center;
-    transition: all 0.2s ease;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
-}
-
-/* 移除木鱼计数的悬停效果 */
-.fish-count:hover {
-    transform: none;
-}
-
-/* 修改：书签按钮背景改为白色，图标和文字改为颜色，显示边框 */
 .bookmark-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 16px 12px;
-    background: #ffffff;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    width: 90px;
-    color: #9575CD;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 8px;              /* 统一 8px */
+    cursor: pointer; transition: all 0.3s ease;
+    text-decoration: none; width: 90px; color: #9575CD;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.bookmark-btn:hover { transform: translateY(-3px); color: #7E57C2; border-color: #7E57C2; }
+.bookmark-btn i { font-size: 24px; margin-bottom: 10px; }
+.bookmark-btn span { font-size: 0.85em; font-weight: 600; writing-mode: vertical-rl; text-orientation: mixed; }
+
+/* 深色模式 */
+@media (prefers-color-scheme: dark) {
+    .greeting-main-card { background: rgba(30,30,30,0.65); border-color: rgba(255,255,255,0.1); }
+    .datetime { background: rgba(30,30,30,0.6); border-color: rgba(255,255,255,0.1); }
+    .fish-btn { background: rgba(30,30,30,0.6); border-color: #404040; }
+    .bookmark-btn { background: rgba(30,30,30,0.6); border-color: rgba(255,255,255,0.1); color: #a78bfa; }
 }
 
-.bookmark-btn:hover {
-    transform: translateY(-3px);
-    background: #ffffff;
-    color: #7E57C2;
-    border-color: #7E57C2;
-    box-shadow: 0 4px 12px rgba(149, 117, 205, 0.2);
-}
-
-.bookmark-btn i {
-    font-size: 24px;
-    margin-bottom: 10px;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-}
-
-.bookmark-btn span {
-    font-size: 0.85em;
-    font-weight: 600;
-    line-height: 1.2;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-}
-
-/* 响应式设计 - 移动端调整 */
+/* 响应式 */
 @media (max-width: 992px) {
-    .greeting-container {
-        gap: 16px;
-        flex-direction: column;
-    }
-    
-    .greeting-main-card {
-        padding: 18px;
-        gap: 18px;
-        width: 100%;
-        order: 1;
-        border-radius: 10px;
-    }
-    
-    .bookmark-btn {
-        width: 100%;
-        padding: 14px 20px;
-        flex-direction: row;
-        justify-content: center;
-        gap: 12px;
-        order: 2;
-        border-radius: 8px;
-    }
-    
+    .greeting-container { gap: 16px; flex-direction: column; }
+    .greeting-main-card { padding: 18px; gap: 18px; width: 100%; order: 1; }
+    .bookmark-btn { width: 100%; padding: 14px 20px; flex-direction: row; justify-content: center; gap: 12px; order: 2; }
     .bookmark-btn i { margin-bottom: 0; font-size: 22px; }
     .bookmark-btn span { writing-mode: horizontal-tb; font-size: 0.85em; }
-    
-    .greeting-header {
-        flex-direction: row;
-        align-items: center;
-        gap: 16px;
-    }
-    
-    .greeting-left { flex: 1; }
-    
-    .datetime {
-        flex-shrink: 0;
-        width: auto;
-        text-align: right;
-        padding: 10px 14px;
-        border-radius: 8px;
-        background: #ffffff;
-    }
-    
-    .greeting-text h1 { 
-        font-size: 1.4em; 
-        margin-bottom: -2px;
-    }
-    .countdown-holiday { 
-        font-size: 0.85em;
-        margin-top: -2px;
-    }
-    #holidayName {
-        font-size: 1.275em;
-    }
-    #holidayCountdown { 
-        padding: 3px 10px; 
-        font-size: 0.95em;
-    }
-    #currentTime { font-size: 1.1em; }
-    #currentDate { font-size: 0.8em; }
-    
-    .fish-section { grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .fish-btn { padding: 8px 10px; min-height: 45px; border-radius: 8px; background: #ffffff; }
-    .fish-btn i { font-size: 16px; }
-    .fish-count { font-size: 0.9em; padding: 2px 6px; }
-}
-
-@media (max-width: 768px) {
-    .greeting-section { padding: var(--section-margin-sm) 0; }
-    .greeting-main-card { padding: 16px; gap: 16px; border-radius: 10px; }
-    .greeting-header { 
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 12px; 
-    }
-    
-    .greeting-left {
-        flex: 1;
-        min-width: 0;
-        overflow: hidden;
-    }
-    
-    .greeting-text h1 { 
-        font-size: 1.2em; 
-        margin-bottom: -3px;
-    }
-    .countdown-holiday { 
-        font-size: 0.82em;
-        gap: 4px;
-        flex-wrap: wrap;
-        margin-top: -3px;
-    }
-    
-    #holidayName {
-        white-space: nowrap;
-        overflow: visible;
-        text-overflow: clip;
-        font-size: 1.23em;
-    }
-    
-    #holidayCountdown { 
-        padding: 2px 8px; 
-        font-size: 0.88em;
-    }
-    
-    .datetime { 
-        flex-shrink: 0;
-        padding: 8px 12px; 
-        border-radius: 8px; 
-        margin-left: auto;
-        background: #ffffff;
-    }
-    
-    #currentTime { font-size: 1em; }
-    #currentDate { font-size: 0.75em; white-space: nowrap; }
-    
-    .fish-section { gap: 4px; }
-    .fish-btn { padding: 6px 8px; min-height: 40px; border-radius: 8px; background: #ffffff; }
-    .fish-btn i { font-size: 14px; }
-    .fish-count { font-size: 0.85em; padding: 2px 5px; }
-    
-    .bookmark-btn { padding: 12px 16px; border-radius: 8px; background: #ffffff; }
-    .bookmark-btn i { font-size: 20px; }
-}
-
-@media (max-width: 576px) {
-    .greeting-section { padding: var(--section-margin-xs) 0; }
-    .greeting-main-card { padding: 14px; gap: 14px; border-radius: 10px; }
-    .greeting-header { 
-        gap: 10px; 
-        flex-wrap: nowrap;
-    }
-    
-    .greeting-left { 
-        flex: 1;
-        min-width: 0;
-    }
-    
-    .greeting-text h1 {
-        font-size: 1.1em;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin-bottom: -4px;
-    }
-    
-    .countdown-holiday { 
-        font-size: 0.78em;
-        margin-top: -4px;
-    }
-    
-    #holidayName {
-        font-size: 1.17em;
-    }
-    
-    #holidayCountdown { 
-        padding: 2px 8px; 
-        font-size: 0.85em;
-    }
-    
-    .datetime { 
-        padding: 6px 10px; 
-        min-width: 110px; 
-        border-radius: 8px; 
-        margin-left: auto;
-        background: #ffffff;
-    }
-    
-    #currentTime { font-size: 0.95em; }
-    #currentDate { font-size: 0.7em; white-space: nowrap; }
-    
-    .fish-section { grid-template-columns: repeat(4, 1fr); gap: 4px; }
-    .fish-btn { padding: 5px 6px; min-height: 38px; border-radius: 8px; background: #ffffff; }
-    .fish-btn i { font-size: 12px; }
-    .fish-count { font-size: 0.8em; padding: 1px 4px; }
-    
-    .bookmark-btn { padding: 10px 14px; border-radius: 8px; background: #ffffff; }
-}
-
-@media (max-width: 400px) {
-    .greeting-header {
-        flex-direction: row;
-        align-items: flex-start;
-        gap: 8px;
-    }
-    
-    .datetime {
-        min-width: 100px;
-        padding: 5px 8px;
-        background: #ffffff;
-    }
-    
-    #holidayName {
-        font-size: 1.2em;
-    }
-    #holidayCountdown {
-        font-size: 0.8em;
-    }
-}
-
-/* 木鱼点击动画效果 */
-@keyframes floatUp {
-    from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    to { opacity: 0; transform: translate(-50%, -100px) scale(1.3); }
-}
-
-.fish-effect {
-    animation: floatUp 1.2s ease-out forwards;
-    z-index: 1000;
-    pointer-events: none;
-}
-
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.greeting-main-card,
-.bookmark-btn { animation: fadeInUp 0.6s ease forwards; }
-
-/* 减少动画模式支持 */
-@media (prefers-reduced-motion: reduce) {
-    .greeting-main-card,
-    .bookmark-btn,
-    .fish-btn { transition: none; animation: none; }
-    
-    .greeting-main-card:hover,
-    .bookmark-btn:hover,
-    .fish-btn:hover { transform: none !important; }
-    
-    .fish-btn:hover i { transform: none; }
-}
-
-/* 暗色模式优化 */
-@media (prefers-color-scheme: dark) {
-    .greeting-main-card {
-        background: rgba(45, 45, 45, 0.9);
-        border-color: #404040;
-    }
-    
-    /* 暗色模式下的时间和日期 */
-    .datetime {
-        background: rgba(30, 30, 30, 0.9);
-        border-color: #404040;
-    }
-    
-    /* 暗色模式下的书签按钮 */
-    .bookmark-btn {
-        background: rgba(30, 30, 30, 0.9);
-        border-color: #404040;
-        color: #a78bfa;
-    }
-    
-    .bookmark-btn:hover {
-        background: rgba(30, 30, 30, 0.9);
-        color: #8b5cf6;
-        border-color: #8b5cf6;
-    }
-    
-    /* 暗色模式下的木鱼按钮 */
-    .fish-btn {
-        background: rgba(30, 30, 30, 0.9);
-        border-color: #404040;
-    }
-    
-    .fish-btn[data-type="merit"] {
-        background: rgba(30, 30, 30, 0.9);
-        color: #70c1ff;
-        border-color: rgba(112, 193, 255, 0.3);
-    }
-    
-    .fish-btn[data-type="luck"] {
-        background: rgba(30, 30, 30, 0.9);
-        color: #ff9e9e;
-        border-color: rgba(255, 158, 158, 0.3);
-    }
-    
-    .fish-btn[data-type="wealth"] {
-        background: rgba(30, 30, 30, 0.9);
-        color: #ffd670;
-        border-color: rgba(255, 214, 112, 0.3);
-    }
-    
-    .fish-btn[data-type="health"] {
-        background: rgba(30, 30, 30, 0.9);
-        color: #8ddf8d;
-        border-color: rgba(141, 223, 141, 0.3);
-    }
-    
-    /* 暗色模式下的计数 */
-    .fish-count {
-        background: rgba(255, 255, 255, 0.1);
-    }
-    
-    /* 暗色模式下的问候语 */
-    .greeting-text h1 .greeting-text-content {
-        color: var(--text-primary); /* 使用主题主文字颜色 */
-    }
-    
-    .greeting-text h1 .greeting-emoji {
-        color: var(--primary-color);
-    }
-}
-
-/* 移除节日名称的悬停效果 */
-#holidayName:hover {
-    color: var(--text-secondary); /* 保持原色，无变化 */
-}
-
-/* 移除节日倒计时悬停效果 */
-#holidayCountdown:hover {
-    transform: none;
-}
-
-/* 节日进行中状态样式 - 纯色背景，白色文字，无边框 */
-#holidayCountdown.active-countdown {
-    background: #10b981 !important; /* 使用纯绿色背景 */
-    color: #ffffff !important; /* 白色文字 */
-    border: none !important; /* 移除边框 */
-    padding: 4px 12px;
-    border-radius: 8px;
-    font-weight: 600;
-    text-shadow: none !important; /* 移除文字阴影 */
-    animation: pulse 2s infinite !important;
-}
-
-/* 节日即将到来状态样式 - 不同颜色背景，白色文字，无边框 */
-/* 3天内状态 */
-#holidayCountdown.status-3days {
-    background: rgba(245, 158, 11, 0.9) !important; /* 橙色背景，提高不透明度 */
-    color: #ffffff !important; /* 白色文字 */
-    border: none !important; /* 移除边框 */
-    text-shadow: none !important;
-}
-
-/* 7天内状态 */
-#holidayCountdown.status-7days {
-    background: rgba(139, 92, 246, 0.9) !important; /* 紫色背景，提高不透明度 */
-    color: #ffffff !important; /* 白色文字 */
-    border: none !important; /* 移除边框 */
-    text-shadow: none !important;
-}
-
-/* 7天以上状态 */
-#holidayCountdown.status-more {
-    background: rgba(67, 97, 238, 0.9) !important; /* 蓝色背景，提高不透明度 */
-    color: #ffffff !important; /* 白色文字 */
-    border: none !important; /* 移除边框 */
-    text-shadow: none !important;
-}
-
-/* 未知/加载状态 */
-#holidayCountdown.status-unknown {
-    background: rgba(108, 117, 125, 0.9) !important; /* 灰色背景，提高不透明度 */
-    color: #ffffff !important; /* 白色文字 */
-    border: none !important; /* 移除边框 */
-    text-shadow: none !important;
-}
-
-/* 节日倒计时状态样式类定义 */
-#holidayCountdown.active-countdown,
-#holidayCountdown.status-3days,
-#holidayCountdown.status-7days,
-#holidayCountdown.status-more,
-#holidayCountdown.status-unknown {
-    transition: background-color 0.3s ease;
-}
-
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-    70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-/* 暗色模式适配 - 背景色稍暗，保持白色文字 */
-@media (prefers-color-scheme: dark) {
-    #holidayCountdown.active-countdown {
-        background: #0da271 !important; /* 暗色模式绿色 */
-        color: #ffffff !important;
-    }
-    
-    #holidayCountdown.status-3days {
-        background: rgba(245, 158, 11, 0.8) !important; /* 稍暗的橙色 */
-        color: #ffffff !important;
-    }
-    
-    #holidayCountdown.status-7days {
-        background: rgba(139, 92, 246, 0.8) !important; /* 稍暗的紫色 */
-        color: #ffffff !important;
-    }
-    
-    #holidayCountdown.status-more {
-        background: rgba(67, 97, 238, 0.8) !important; /* 稍暗的蓝色 */
-        color: #ffffff !important;
-    }
-    
-    #holidayCountdown.status-unknown {
-        background: rgba(108, 117, 125, 0.8) !important; /* 稍暗的灰色 */
-        color: #ffffff !important;
-    }
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-    #holidayCountdown {
-        padding: 3px 10px;
-        font-size: 0.95em;
-    }
-    
-    #holidayCountdown.active-countdown {
-        padding: 3px 10px;
-        font-size: 0.95em;
-    }
-}
-
-@media (max-width: 576px) {
-    #holidayCountdown {
-        padding: 2px 8px;
-        font-size: 0.85em;
-    }
-    
-    #holidayCountdown.active-countdown {
-        padding: 2px 8px;
-        font-size: 0.85em;
-    }
 }
