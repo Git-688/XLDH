@@ -6,7 +6,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: transparent;          /* 移除黑色遮罩 */
+    background: transparent;          /* 无黑色遮罩 */
     display: none;
     align-items: center;
     justify-content: center;
@@ -387,14 +387,18 @@
 }
 
 .donate-modal-content {
+    display: flex;                     /* 统一为flex布局 */
+    flex-direction: column;           /* 与about-m一致 */
     background: rgba(255, 255, 255, 0.65);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 8px;
     padding: 20px;
-    max-width: 420px;
+    max-width: 500px;                 /* 与about-m相同 */
     width: 100%;
+    max-height: 85vh;                 /* 桌面端最大高度一致 */
+    overflow: hidden;                 /* 超出滚动（内部滚动区域已定义） */
     transform: scale(0.8);
     transition: transform 0.3s ease;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
@@ -657,7 +661,7 @@
     background: rgba(255, 255, 255, 0.7);
     color: var(--text-primary);
     padding: 4px 8px;
-    border-radius: 8px;               /* 修改为与logo一致的8px圆角 */
+    border-radius: 8px;               /* 与logo一致的8px圆角 */
     font-size: 11px;
     font-weight: 500;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -671,6 +675,14 @@
 
 /* ===================== 响应式断点对齐主页容器 ===================== */
 /* 移动端优先 (<576px) 已设置 padding: 0 var(--container-padding-xs) */
+
+/* 移动端：缩小整体高度 */
+@media (max-width: 768px) {
+    .about-modal-content,
+    .donate-modal-content {
+        max-height: 75vh;   /* 比桌面端减小10vh */
+    }
+}
 
 /* >= 576px */
 @media (min-width: 576px) {
@@ -687,7 +699,10 @@
         padding: 0 var(--container-padding-md);
     }
     .about-modal-content {
-        max-height: 80vh;
+        max-height: 85vh;   /* 恢复桌面端高度 */
+    }
+    .donate-modal-content {
+        max-height: 85vh;   /* 爱发电同样恢复 */
     }
     .about-header { padding: 16px; min-height: 120px; }
     .about-logo { width: 40px; height: 40px; }
