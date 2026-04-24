@@ -1355,3 +1355,27 @@ select {
 .toast-close:hover {
     color: #666;
 }
+
+
+/* ========== 亚克力效果全局变量 ========== */
+:root {
+    /* 全亚克力属性 */
+    --acrylic-bg: rgba(255, 255, 255, 0.6);
+    --acrylic-blur: blur(24px) saturate(125%);
+    --acrylic-border: 1px solid rgba(255, 255, 255, 0.5);
+    --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    /* 弱亚克力（用于内容区） */
+    --acrylic-light-bg: rgba(255, 255, 255, 0.8);
+    --acrylic-light-blur: blur(10px) saturate(110%);
+    /* 亚克力噪点纹理（可复用） */
+    --acrylic-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --acrylic-bg: rgba(30, 30, 30, 0.7);
+        --acrylic-border: 1px solid rgba(255, 255, 255, 0.15);
+        --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        --acrylic-light-bg: rgba(40, 40, 40, 0.7);
+    }
+}
