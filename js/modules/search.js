@@ -14,6 +14,7 @@ class NewSearchModule {
         this.maxHistory = 20;
 
         this.modal = document.getElementById('searchModal');
+        this.contentBox = this.modal?.querySelector('.modal-content');
         this.input = document.getElementById('searchInput');
         this.triggerBtn = document.getElementById('engineTriggerBtn');
         this.engineIcon = document.getElementById('engineIcon');
@@ -25,6 +26,7 @@ class NewSearchModule {
         this.isOpen = false;
         this.suggestTimer = null;
 
+        this._onResize = this.positionModal.bind(this);
         this.init();
         window.newSearchModule = this;
     }
@@ -38,7 +40,7 @@ class NewSearchModule {
     }
 
     bindEvents() {
-        // 点击遮罩关闭
+        // 遮罩关闭
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.hide();
         });
@@ -46,7 +48,7 @@ class NewSearchModule {
             if (e.key === 'Escape' && this.isOpen) this.hide();
         });
 
-        // 引擎按钮切换下拉
+        // 引擎按钮
         if (this.triggerBtn) {
             this.triggerBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -54,14 +56,15 @@ class NewSearchModule {
             });
         }
 
-        // 点击外部关闭下拉
+        // 外部关闭下拉
         document.addEventListener('click', (e) => {
-            if (this.dropdown && !this.dropdown.contains(e.target) && e.target !== this.triggerBtn && !this.triggerBtn.contains(e.target)) {
+            if (this.dropdown && !this.dropdown.contains(e.target) &&
+                e.target !== this.triggerBtn && !this.triggerBtn.contains(e.target)) {
                 this.closeDropdown();
             }
         });
 
-        // 下拉列表点击
+        // 下拉选项点击
         if (this.dropdown) {
             this.dropdown.addEventListener('click', (e) => {
                 const item = e.target.closest('.engine-dropdown-item');
@@ -82,7 +85,6 @@ class NewSearchModule {
         }
     }
 
-    // 模拟公告的 toggle 行为
     toggle() {
         this.isOpen ? this.hide() : this.show();
     }
@@ -92,6 +94,10 @@ class NewSearchModule {
         // 关闭其他浮层
         if (window.sidebar?.isVisible()) window.sidebar.hide();
         if (window.app?.components?.navbar?.hideMusicPlayer) window.app.components.navbar.hideMusicPlayer();
+
+        // 对齐壁纸
+        this.positionModal();
+        window.addEventListener('resize', this._onResize);
 
         this.modal.classList.add('active');
         this.isOpen = true;
@@ -110,8 +116,20 @@ class NewSearchModule {
         this.isOpen = false;
         this.clearSuggestions();
         this.closeDropdown();
+        window.removeEventListener('resize', this._onResize);
 
         if (window.app) window.app.unregisterModal(this);
+    }
+
+    /** 动态对齐壁纸容器右上角 */
+    positionModal() {
+        const wallpaper = document.querySelector('.wallpaper-container');
+        const content = this.contentBox;
+        if (!wallpaper || !content) return;
+
+        const rect = wallpaper.getBoundingClientRect();
+        content.style.top = rect.top + 'px';
+        content.style.right = (window.innerWidth - rect.right) + 'px';
     }
 
     /* ========= 引擎下拉 ========= */
