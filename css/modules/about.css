@@ -1,19 +1,47 @@
-/* about.css - 顶部透明卡片版 */
-.about-modal { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+/* about.css - 亚克力效果 + 无黑遮罩 + 8px 圆角 + 移动端对齐主页 */
+.about-modal {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;          /* 移除黑色遮罩 */
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    padding: 0 var(--container-padding-xs);  /* 移动端优先左右间距 16px */
+    box-sizing: border-box;
+}
+
+.about-modal.active {
+    display: flex;
+    opacity: 1;
+}
 
 .about-modal-content {
     display: flex;
     flex-direction: column;
-    background: var(--bg-primary);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
     max-width: 500px;
     width: 100%;
     height: auto;
     max-height: 85vh;
     transform: scale(0.8);
     transition: transform 0.3s ease;
+}
+
+.about-modal.active .about-modal-content {
+    transform: scale(1);
 }
 
 /* 顶部区域 - 带壁纸背景 */
@@ -124,16 +152,16 @@
     margin-bottom: 8px;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
     overflow: hidden;
-    padding: 2px; /* 减小内边距以显示更多图片内容 */
-    box-sizing: border-box; /* 确保内边距不影响总尺寸 */
-    background-color: #ffffff; /* 背景改为白色 */
+    padding: 2px;
+    box-sizing: border-box;
+    background-color: #ffffff;
 }
 
 .about-logo-img {
     width: 100%;
     height: 100%;
-    border-radius: 16px; /* 调整圆角以适应内边距 */
-    object-fit: contain; /* 确保图片完整显示，不会被裁剪 */
+    border-radius: 8px;
+    object-fit: contain;
     display: block;
 }
 
@@ -176,16 +204,18 @@
     align-items: flex-start;
     gap: 12px;
     padding: 16px;
-    background: var(--bg-card);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: 8px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
 }
 
 .about-card:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
 .card-icon {
@@ -201,10 +231,7 @@
     color: white;
 }
 
-/* 简介图标 - 蓝色 */
 .intro-icon { background: #4A90E2; }
-
-/* 免责声明图标 - 橙色 */
 .disclaimer-icon { background: #FF6B6B; }
 
 .card-content { flex: 1; min-width: 0; }
@@ -229,8 +256,10 @@
 /* 底部按钮区域 */
 .about-footer {
     padding: 16px 20px 20px;
-    border-top: 1px solid var(--border-color);
-    background: #ffffff;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
 }
 
 .about-action-buttons {
@@ -263,23 +292,18 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* QQ按钮 - 浅蓝色 */
 .qq-btn { background: #6BC5FF; }
 .qq-btn:hover { background: #5AB5EF; }
 
-/* 微信按钮 - 浅绿色 */
 .wechat-btn { background: #7ED321; }
 .wechat-btn:hover { background: #6EC312; }
 
-/* 爱发电按钮 - 浅红色 */
 .donate-btn { background: #FF7B7B; }
 .donate-btn:hover { background: #FF6B6B; }
 
-/* 私密空间按钮 - 浅黄色 */
 .space-btn { background: #FFD166; }
 .space-btn:hover { background: #FFC952; }
 
-/* 日记本按钮 - 浅紫色 */
 .diary-btn { background: #A58BFF; }
 .diary-btn:hover { background: #9575E5; }
 
@@ -314,7 +338,6 @@
 
 .about-social-btn:hover .tooltip-text { visibility: visible; opacity: 1; }
 
-/* 关闭按钮 - 浅绿色 */
 .about-close-btn {
     padding: 10px 20px;
     border: none;
@@ -339,19 +362,47 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* 收款模态框样式 */
-.donate-modal { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+/* ========== 爱发电/收款模态框 - 亚克力效果 ========== */
+.donate-modal {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;          /* 无黑色遮罩 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    padding: 0 var(--container-padding-xs);  /* 与主页对齐 */
+    box-sizing: border-box;
+}
+
+.donate-modal.active {
+    opacity: 1;
+    display: flex;
+}
 
 .donate-modal-content {
-    background: var(--bg-primary);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
     padding: 20px;
     max-width: 420px;
     width: 100%;
     transform: scale(0.8);
     transition: transform 0.3s ease;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     position: relative;
+}
+
+.donate-modal.active .donate-modal-content {
+    transform: scale(1);
 }
 
 /* 顶部标题区域 */
@@ -359,7 +410,7 @@
     text-align: center;
     margin-bottom: 20px;
     padding-bottom: 16px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     position: relative;
 }
 
@@ -398,7 +449,7 @@
     width: 30px;
     height: 30px;
     border: none;
-    background: var(--bg-secondary);
+    background: rgba(0, 0, 0, 0.05);
     color: var(--text-secondary);
     border-radius: 50%;
     cursor: pointer;
@@ -434,9 +485,11 @@
 .donate-method-btn {
     width: 50px;
     height: 50px;
-    border: 2px solid var(--border-color);
-    background: var(--bg-secondary);
-    border-radius: 10px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
@@ -448,7 +501,7 @@
 }
 
 .donate-method-btn:hover {
-    background: var(--bg-card);
+    background: rgba(255, 255, 255, 0.7);
     border-color: var(--primary-color);
     transform: translateY(-2px);
 }
@@ -459,15 +512,15 @@
     color: white;
 }
 
-/* 支付按钮浅颜色 */
 .donate-method-btn[data-type="qq"] { color: #6BC5FF; border-color: #6BC5FF; }
 .donate-method-btn[data-type="qq"].active { background: #6BC5FF; color: white; }
+
 .donate-method-btn[data-type="wechat"] { color: #7ED321; border-color: #7ED321; }
 .donate-method-btn[data-type="wechat"].active { background: #7ED321; color: white; }
+
 .donate-method-btn[data-type="alipay"] { color: #1677FF; border-color: #1677FF; }
 .donate-method-btn[data-type="alipay"].active { background: #1677FF; color: white; }
 
-/* 问号按钮样式 */
 .donate-method-btn.help-btn {
     color: #FFD166;
     border-color: #FFD166;
@@ -488,14 +541,15 @@
     display: none;
     align-items: center;
     justify-content: center;
-    background: var(--bg-secondary);
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
     border-radius: 8px;
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .donate-qrcode.active { display: flex; }
 
-/* 收款码图片容器 */
 .qrcode-image-container {
     position: relative;
     width: 100%;
@@ -505,7 +559,6 @@
     justify-content: center;
 }
 
-/* 收款码图片样式 */
 .qrcode-image {
     max-width: 100%;
     max-height: 100%;
@@ -514,7 +567,6 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 二维码占位符 */
 .qrcode-placeholder {
     display: none;
     flex-direction: column;
@@ -529,7 +581,6 @@
 .qrcode-placeholder span { font-size: 13px; font-weight: 500; }
 .qrcode-placeholder small { font-size: 11px; opacity: 0.7; }
 
-/* 问号按钮内容样式 */
 .help-content {
     padding: 20px;
     color: var(--text-secondary);
@@ -569,7 +620,9 @@
     position: absolute;
     top: -10px;
     left: 10px;
-    background: var(--bg-primary);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 0 8px;
     font-size: 13px;
     color: var(--text-primary);
@@ -578,21 +631,21 @@
 }
 
 .supporters-card {
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
     border-radius: 8px;
     padding: 16px;
-    background: transparent;
     max-height: 120px;
     overflow-y: auto;
     position: relative;
 }
 
-/* 隐藏滚动条但保持滚动功能 */
 .supporters-card::-webkit-scrollbar { width: 0; height: 0; background: transparent; }
 .supporters-card::-webkit-scrollbar-thumb { background: transparent; }
 .supporters-card { scrollbar-width: none; -ms-overflow-style: none; }
 
-/* 支持者列表布局 */
 .supporters-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
@@ -600,9 +653,8 @@
     width: 100%;
 }
 
-/* 支持者标签样式 */
 .supporter-name {
-    background: white;
+    background: rgba(255, 255, 255, 0.7);
     color: var(--text-primary);
     padding: 4px 8px;
     border-radius: 4px;
@@ -617,34 +669,40 @@
     min-width: 0;
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-    .about-modal { padding: 16px; }
-    .about-modal-content { max-height: 80vh; }
+/* ===================== 响应式断点对齐主页容器 ===================== */
+/* 移动端优先 (<576px) 已设置 padding: 0 var(--container-padding-xs) */
+
+/* >= 576px */
+@media (min-width: 576px) {
+    .about-modal,
+    .donate-modal {
+        padding: 0 var(--container-padding-sm);
+    }
+}
+
+/* >= 768px */
+@media (min-width: 768px) {
+    .about-modal,
+    .donate-modal {
+        padding: 0 var(--container-padding-md);
+    }
+    .about-modal-content {
+        max-height: 80vh;
+    }
     .about-header { padding: 16px; min-height: 120px; }
-    .about-header-content { gap: 16px; }
-    .about-logo { width: 40px; height: 40px; padding: 2px; } /* 响应式调整内边距 */
-    .about-logo-img { border-radius: 7px; }
+    .about-logo { width: 40px; height: 40px; }
     .about-title { font-size: 13px; }
     .about-subtitle { font-size: 9px; }
-    .about-info-item { padding: 7px 10px; }
-    .info-label { font-size: 11px; min-width: 55px; }
-    .info-value { font-size: 11px; }
     .about-main-content { padding: 16px; }
-    .about-cards { gap: 12px; }
-    .about-card { padding: 14px; gap: 10px; }
-    .card-icon { width: 26px; height: 26px; font-size: 11px; }
+    .about-card { padding: 14px; }
+    .card-icon { width: 26px; height: 26px; }
     .card-content h3 { font-size: 12px; }
     .card-content p { font-size: 11px; }
     .about-footer { padding: 14px 16px 16px; }
-    .about-action-buttons { gap: 14px; }
-    .about-social-buttons { gap: 10px; }
     .about-social-btn { width: 38px; height: 38px; font-size: 15px; }
     .about-close-btn { padding: 9px 18px; font-size: 12px; min-width: 75px; }
-    
-    /* 收款模态框响应式 */
+
     .donate-modal-content { max-width: 360px; padding: 16px; }
-    .donate-title-group { gap: 10px; }
     .donate-title { font-size: 16px; }
     .donate-heart { font-size: 16px; }
     .donate-subtitle { font-size: 11px; }
@@ -653,15 +711,6 @@
     .donate-methods { min-width: 50px; gap: 6px; }
     .donate-method-btn { width: 45px; height: 45px; font-size: 18px; }
     .qrcode-image { max-width: 90%; max-height: 90%; }
-    .qrcode-placeholder { padding: 16px; gap: 10px; }
-    .qrcode-placeholder i { font-size: 32px; }
-    .qrcode-placeholder span { font-size: 12px; }
-    .qrcode-placeholder small { font-size: 10px; }
-    .help-content { padding: 16px; }
-    .help-content h4 { font-size: 15px; }
-    .help-content li { font-size: 12px; }
-    
-    /* 支持者名单响应式 */
     .supporters-section { margin-top: 16px; }
     .supporters-title { font-size: 12px; top: -8px; left: 8px; }
     .supporters-card { padding: 14px; max-height: 100px; }
@@ -669,104 +718,89 @@
     .supporter-name { font-size: 10px; padding: 3px 7px; }
 }
 
+/* >= 992px */
+@media (min-width: 992px) {
+    .about-modal,
+    .donate-modal {
+        padding: 0 var(--container-padding-lg);
+    }
+}
+
+/* >= 1200px */
+@media (min-width: 1200px) {
+    .about-modal,
+    .donate-modal {
+        padding: 0 var(--container-padding-xl);
+    }
+}
+
+/* 小屏优化 (≤480px) */
 @media (max-width: 480px) {
-    .about-modal { padding: 12px; }
+    .about-modal { padding: 0 var(--container-padding-xs); }
     .about-header { padding: 14px; min-height: 110px; }
-    .about-header-content { gap: 14px; }
-    .about-logo { width: 36px; height: 36px; padding: 2px; } /* 响应式调整内边距 */
-    .about-logo-img { border-radius: 6px; }
+    .about-logo { width: 36px; height: 36px; }
     .about-title { font-size: 12px; }
     .about-subtitle { font-size: 8px; }
-    .about-info-item { padding: 6px 8px; }
-    .info-label { font-size: 10px; min-width: 50px; }
-    .info-value { font-size: 10px; }
     .about-main-content { padding: 14px; }
-    .about-cards { gap: 10px; }
-    .about-card { padding: 12px; gap: 8px; }
-    .card-icon { width: 24px; height: 24px; font-size: 10px; }
-    .card-content h3 { font-size: 11px; }
-    .card-content p { font-size: 10px; }
+    .about-card { padding: 12px; }
     .about-footer { padding: 12px 14px 14px; }
-    .about-action-buttons { gap: 12px; }
-    .about-social-buttons { gap: 8px; }
     .about-social-btn { width: 36px; height: 36px; font-size: 14px; }
     .about-close-btn { padding: 8px 16px; font-size: 11px; min-width: 70px; }
-    
-    /* 收款模态框小屏幕优化 */
+
     .donate-modal-content { max-width: 320px; padding: 14px; }
-    .donate-title-group { gap: 8px; }
     .donate-title { font-size: 15px; }
-    .donate-heart { font-size: 15px; }
-    .donate-subtitle { font-size: 10px; }
-    .donate-close-btn-top { width: 26px; height: 26px; font-size: 12px; }
-    .donate-main { gap: 10px; margin-bottom: 14px; min-height: 160px; }
-    .donate-methods { min-width: 45px; gap: 5px; }
+    .donate-main { gap: 10px; min-height: 160px; }
     .donate-method-btn { width: 40px; height: 40px; font-size: 16px; }
-    .qrcode-image { max-width: 85%; max-height: 85%; }
-    .qrcode-placeholder { padding: 12px; gap: 8px; }
-    .qrcode-placeholder i { font-size: 28px; }
-    .qrcode-placeholder span { font-size: 11px; }
-    .qrcode-placeholder small { font-size: 9px; }
-    .help-content { padding: 12px; }
-    .help-content h4 { font-size: 14px; }
-    .help-content li { font-size: 11px; }
-    
-    /* 支持者名单小屏幕优化 */
-    .supporters-section { margin-top: 14px; }
-    .supporters-title { font-size: 11px; top: -7px; left: 7px; }
     .supporters-card { padding: 12px; max-height: 90px; }
     .supporters-list { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 4px; }
     .supporter-name { font-size: 9px; padding: 2px 6px; }
 }
 
-@media (min-width: 769px) and (max-width: 1024px) {
-    .supporters-list { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
-}
-
-@media (min-width: 1025px) {
-    .supporters-list { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
-}
-
-@media (max-height: 500px) and (orientation: landscape) {
-    .about-modal-content { max-height: 90vh; }
-    .donate-modal-content { max-width: 440px; }
-    .donate-main { min-height: 150px; }
-    .donate-methods { min-width: 55px; }
-    .qrcode-image { max-width: 80%; max-height: 80%; }
-    .supporters-card { max-height: 80px; }
-    .supporters-list { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
-}
-
-/* 深色模式适配 */
+/* ===================== 深色模式适配 ===================== */
 @media (prefers-color-scheme: dark) {
-    .about-modal-content { background: var(--bg-card); }
-    .about-header-bg { opacity: 0.8; }
-    .about-info-item { background: transparent; border-color: rgba(255, 255, 255, 0.2); }
-    .about-brand { background: transparent; border-color: rgba(255, 255, 255, 0.2); }
-    .about-card { background: rgba(30, 30, 30, 0.6); }
-    .about-footer { background: #ffffff; }
-    .donate-modal-content { background: var(--bg-card); }
-    .donate-qrcode { background: var(--bg-secondary); }
-    .supporters-title { background: var(--bg-card); }
-    .supporter-name { background: white; color: var(--text-primary); }
-    
-    /* 确保深色模式下logo背景保持白色 */
-    .about-logo {
-        background-color: #ffffff !important; /* 使用important确保白色背景在深色模式下不变 */
+    .about-modal-content {
+        background: rgba(30, 30, 30, 0.75);
+        border-color: rgba(255, 255, 255, 0.15);
     }
-}
+    .about-card {
+        background: rgba(40, 40, 40, 0.6);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    .about-footer {
+        background: rgba(30, 30, 30, 0.6);
+        border-top-color: rgba(255, 255, 255, 0.1);
+    }
 
-/* 动画优化 */
-@media (prefers-reduced-motion: reduce) {
-    .about-modal,
-    .about-modal-content,
-    .about-card,
-    .about-social-btn,
-    .about-close-btn,
-    .donate-modal,
-    .donate-modal-content,
-    .donate-method-btn,
-    .donate-close-btn-top { transition: none; }
+    .donate-modal-content {
+        background: rgba(30, 30, 30, 0.75);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    .donate-method-btn {
+        background: rgba(40, 40, 40, 0.6);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #adb5bd;
+    }
+    .donate-method-btn.active {
+        background: var(--primary-color);
+        color: white;
+    }
+    .donate-qrcode {
+        background: rgba(40, 40, 40, 0.4);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    .supporters-title {
+        background: rgba(30, 30, 30, 0.8);
+    }
+    .supporters-card {
+        background: rgba(40, 40, 40, 0.4);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    .supporter-name {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+    .about-close-btn { background: #5cb85c; }
+    .about-logo { background-color: #ffffff; }
 }
 
 /* 心跳动画 */
@@ -774,4 +808,17 @@
     0% { transform: scale(1); }
     50% { transform: scale(1.1); }
     100% { transform: scale(1); }
-} 
+}
+
+/* 减少动画模式 */
+@media (prefers-reduced-motion: reduce) {
+    .about-modal,
+    .donate-modal,
+    .about-modal-content,
+    .donate-modal-content,
+    .about-card,
+    .about-social-btn,
+    .about-close-btn,
+    .donate-method-btn,
+    .donate-close-btn-top { transition: none; }
+}
