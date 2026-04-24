@@ -53,6 +53,7 @@ class AboutModule {
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'about-modal';
         this.modalElement.innerHTML = this.renderModal();
+        // ===== 修改：移除内联 padding，让 about.css 的响应式 padding 生效 =====
         this.modalElement.style.cssText = `
             position: fixed;
             top: 0;
@@ -66,7 +67,6 @@ class AboutModule {
             z-index: 10000;
             opacity: 0;
             transition: opacity 0.3s ease;
-            padding: 20px;
         `;
 
         document.body.appendChild(this.modalElement);
@@ -252,8 +252,6 @@ class AboutModule {
             });
         }
 
-        // 神木日记按钮已移除
-
         const closeBtn = document.getElementById('aboutCloseBtn');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
@@ -263,11 +261,12 @@ class AboutModule {
     }
 
     /**
-     * 显示收款模态框 - 修改布局和样式
+     * 显示收款模态框
      */
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
+        // ===== 修改：移除内联 padding，让 about.css 的响应式 padding 生效 =====
         donateModal.style.cssText = `
             position: fixed;
             top: 0;
@@ -281,12 +280,10 @@ class AboutModule {
             z-index: 10001;
             opacity: 0;
             transition: opacity 0.3s ease;
-            padding: 20px;
         `;
 
         donateModal.innerHTML = `
             <div class="donate-modal-content">
-                <!-- 顶部标题区域 - 爱心在标题右边，右上角X关闭按钮 -->
                 <div class="donate-header">
                     <div class="donate-title-group">
                         <h3 class="donate-title">感谢支持</h3>
@@ -300,9 +297,7 @@ class AboutModule {
                     </button>
                 </div>
                 
-                <!-- 主要内容区域 -->
                 <div class="donate-main">
-                    <!-- 左侧支付方式选择 -->
                     <div class="donate-methods">
                         <button class="donate-method-btn active" data-type="qq" title="QQ支付">
                             <i class="fab fa-qq"></i>
@@ -318,7 +313,6 @@ class AboutModule {
                         </button>
                     </div>
                     
-                    <!-- 右侧二维码显示 -->
                     <div class="donate-qrcode-container">
                         <div class="donate-qrcode active" data-type="qq">
                             <div class="qrcode-image-container">
@@ -350,7 +344,6 @@ class AboutModule {
                                 </div>
                             </div>
                         </div>
-                        <!-- 问号按钮内容 -->
                         <div class="donate-qrcode" data-type="help">
                             <div class="help-content">
                                 <h4>使用说明</h4>
@@ -366,7 +359,6 @@ class AboutModule {
                     </div>
                 </div>
 
-                <!-- 支持者名单区域 -->
                 <div class="supporters-section">
                     <h4 class="supporters-title">支持者名单</h4>
                     <div class="supporters-card">
