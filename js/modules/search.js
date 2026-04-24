@@ -7,7 +7,8 @@ class NewSearchModule {
             { key: 'google',  label: '谷歌',   url: 'https://www.google.com/search?q=', icon: 'fab fa-google' },
             { key: '360',     label: '360',    url: 'https://www.so.com/s?q=', icon: 'fas fa-shield-alt' },
             { key: 'douyin',  label: '抖音',   url: 'https://www.douyin.com/search/', icon: 'fas fa-music' },
-            { key: 'all',     label: '全网',   url: 'https://www.baidu.com/s?wd=', icon: 'fas fa-globe' }
+            { key: 'all',     label: '全网',   url: 'https://searx.demo.koehlersaeule.de/
+search?q=', icon: 'fas fa-globe' }
         ];
         this.currentEngine = this.loadSetting('currentEngine2', 'baidu');
         this.history = this.loadSetting('searchHistory2', []);
