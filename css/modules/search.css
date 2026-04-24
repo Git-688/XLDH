@@ -226,7 +226,7 @@
 /* 移动端 */
 @media (max-width: 768px) {
     .search-modal .modal-content {
-        top: 30px;
+        top: 20px;
         right: 4.2%;
         left: 4.2%;
         width: auto;
