@@ -18,7 +18,7 @@ class Navbar {
     }
 
     bindEvents() {
-        // ---------- 搜索按钮：点击切换模态框 ----------
+        // ---------- 搜索按钮：toggle 新搜索模块 ----------
         const searchBtn = document.getElementById('searchBtn');
         if (searchBtn) {
             searchBtn.replaceWith(searchBtn.cloneNode(true));
@@ -34,7 +34,6 @@ class Navbar {
             });
         }
 
-        // 音乐按钮
         const musicBtn = document.getElementById('musicBtn');
         if (musicBtn) {
             musicBtn.addEventListener('click', (e) => {
@@ -45,7 +44,6 @@ class Navbar {
             });
         }
 
-        // 公告按钮
         const annBtn = document.getElementById('announcementBtn');
         if (annBtn) {
             annBtn.replaceWith(annBtn.cloneNode(true));
@@ -57,7 +55,6 @@ class Navbar {
             });
         }
 
-        // 菜单按钮
         const menuBtn = document.getElementById('menuBtn');
         if (menuBtn) {
             menuBtn.replaceWith(menuBtn.cloneNode(true));
@@ -69,7 +66,6 @@ class Navbar {
             });
         }
 
-        // 天气按钮
         const weatherBtn = document.getElementById('weatherBtn');
         if (weatherBtn) {
             weatherBtn.addEventListener('click', (e) => {
@@ -80,7 +76,6 @@ class Navbar {
             });
         }
 
-        // 反馈按钮
         const fbBtn = document.getElementById('floatingFeedbackBtn');
         if (fbBtn) {
             fbBtn.addEventListener('click', (e) => {
@@ -91,7 +86,6 @@ class Navbar {
             });
         }
 
-        // 投稿按钮
         const submitBtn = document.getElementById('floatingSubmitBtn');
         if (submitBtn) {
             submitBtn.addEventListener('click', (e) => {
@@ -102,7 +96,6 @@ class Navbar {
             });
         }
 
-        // 全局点击关闭音乐播放器
         document.addEventListener('click', (e) => {
             const mp = document.getElementById('musicPlayer');
             const mb = document.getElementById('musicBtn');
@@ -116,11 +109,8 @@ class Navbar {
         });
         window.addEventListener('scroll', this.handleScroll.bind(this));
 
-        // 返回顶部
         const btt = document.getElementById('backToTop');
-        if (btt) {
-            btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-        }
+        if (btt) btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
     closeAllModalsExcept(keep = []) {
@@ -208,12 +198,10 @@ class Navbar {
             badge.textContent = unread > 9 ? '9+' : unread;
             badge.classList.add('show');
             btn.classList.add('has-unread');
-        } else {
-            if (badge) {
-                badge.classList.remove('show');
-                setTimeout(() => badge.remove(), 300);
-                btn.classList.remove('has-unread');
-            }
+        } else if (badge) {
+            badge.classList.remove('show');
+            setTimeout(() => badge.remove(), 300);
+            btn.classList.remove('has-unread');
         }
     }
 
