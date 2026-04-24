@@ -85,7 +85,7 @@
     background: var(--secondary-color);
 }
 
-/* 搜索引擎下拉菜单（自定义，绝对定位） */
+/* 搜索引擎下拉菜单 */
 .engine-dropdown {
     position: absolute;
     top: calc(14px + 38px + 8px);
