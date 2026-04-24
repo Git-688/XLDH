@@ -1,4 +1,4 @@
-/* about.css - 亚克力效果 + 无黑遮罩 + 8px 圆角 + 移动端对齐主页 + 支持者标签8px圆角 */
+/* about.css - 亚克力效果 + 无黑遮罩 + 8px 圆角 + 仅移动端/桌面端适配 */
 .about-modal {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     position: fixed;
@@ -13,7 +13,7 @@
     z-index: 10000;
     opacity: 0;
     transition: opacity 0.3s ease;
-    padding: 0 var(--container-padding-xs);  /* 移动端优先左右间距 16px */
+    padding: 0 16px;                  /* 移动端左右间距 16px */
     box-sizing: border-box;
 }
 
@@ -34,8 +34,7 @@
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
     max-width: 500px;
     width: 100%;
-    height: auto;
-    max-height: 85vh;
+    max-height: 75vh;                 /* 移动端高度 */
     transform: scale(0.8);
     transition: transform 0.3s ease;
 }
@@ -362,7 +361,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* ========== 爱发电/收款模态框 - 亚克力效果 ========== */
+/* ========== 爱发电/收款模态框（完全对齐关于网站）========== */
 .donate-modal {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     position: fixed;
@@ -370,14 +369,14 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: transparent;          /* 无黑色遮罩 */
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10001;
     opacity: 0;
     transition: opacity 0.3s ease;
-    padding: 0 var(--container-padding-xs);  /* 与主页对齐 */
+    padding: 0 16px;                  /* 移动端一致 */
     box-sizing: border-box;
 }
 
@@ -387,18 +386,18 @@
 }
 
 .donate-modal-content {
-    display: flex;                     /* 统一为flex布局 */
-    flex-direction: column;           /* 与about-m一致 */
+    display: flex;
+    flex-direction: column;
     background: rgba(255, 255, 255, 0.65);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 8px;
-    padding: 20px;
-    max-width: 500px;                 /* 与about-m相同 */
+    max-width: 500px;                /* 与关于网站一致 */
     width: 100%;
-    max-height: 85vh;                 /* 桌面端最大高度一致 */
-    overflow: hidden;                 /* 超出滚动（内部滚动区域已定义） */
+    max-height: 75vh;                /* 与关于网站一致 */
+    overflow: hidden;
+    padding: 20px;
     transform: scale(0.8);
     transition: transform 0.3s ease;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
@@ -673,37 +672,19 @@
     min-width: 0;
 }
 
-/* ===================== 响应式断点对齐主页容器 ===================== */
-/* 移动端优先 (<576px) 已设置 padding: 0 var(--container-padding-xs) */
-
-/* 移动端：缩小整体高度 */
-@media (max-width: 768px) {
-    .about-modal-content,
-    .donate-modal-content {
-        max-height: 75vh;   /* 比桌面端减小10vh */
-    }
-}
-
-/* >= 576px */
-@media (min-width: 576px) {
-    .about-modal,
-    .donate-modal {
-        padding: 0 var(--container-padding-sm);
-    }
-}
-
-/* >= 768px */
+/* ===================== 桌面端适配（≥768px）===================== */
 @media (min-width: 768px) {
     .about-modal,
     .donate-modal {
-        padding: 0 var(--container-padding-md);
+        padding: 0 24px;               /* 桌面端左右间距 */
     }
-    .about-modal-content {
-        max-height: 85vh;   /* 恢复桌面端高度 */
-    }
+
+    .about-modal-content,
     .donate-modal-content {
-        max-height: 85vh;   /* 爱发电同样恢复 */
+        max-height: 85vh;              /* 桌面端恢复更高 */
     }
+
+    /* 关于网站内部调整 */
     .about-header { padding: 16px; min-height: 120px; }
     .about-logo { width: 40px; height: 40px; }
     .about-title { font-size: 13px; }
@@ -717,7 +698,8 @@
     .about-social-btn { width: 38px; height: 38px; font-size: 15px; }
     .about-close-btn { padding: 9px 18px; font-size: 12px; min-width: 75px; }
 
-    .donate-modal-content { max-width: 360px; padding: 16px; }
+    /* 爱发电内部调整（尺寸与关于网站统一） */
+    .donate-modal-content { padding: 16px; }
     .donate-title { font-size: 16px; }
     .donate-heart { font-size: 16px; }
     .donate-subtitle { font-size: 11px; }
@@ -733,45 +715,7 @@
     .supporter-name { font-size: 10px; padding: 3px 7px; border-radius: 8px; }
 }
 
-/* >= 992px */
-@media (min-width: 992px) {
-    .about-modal,
-    .donate-modal {
-        padding: 0 var(--container-padding-lg);
-    }
-}
-
-/* >= 1200px */
-@media (min-width: 1200px) {
-    .about-modal,
-    .donate-modal {
-        padding: 0 var(--container-padding-xl);
-    }
-}
-
-/* 小屏优化 (≤480px) */
-@media (max-width: 480px) {
-    .about-modal { padding: 0 var(--container-padding-xs); }
-    .about-header { padding: 14px; min-height: 110px; }
-    .about-logo { width: 36px; height: 36px; }
-    .about-title { font-size: 12px; }
-    .about-subtitle { font-size: 8px; }
-    .about-main-content { padding: 14px; }
-    .about-card { padding: 12px; }
-    .about-footer { padding: 12px 14px 14px; }
-    .about-social-btn { width: 36px; height: 36px; font-size: 14px; }
-    .about-close-btn { padding: 8px 16px; font-size: 11px; min-width: 70px; }
-
-    .donate-modal-content { max-width: 320px; padding: 14px; }
-    .donate-title { font-size: 15px; }
-    .donate-main { gap: 10px; min-height: 160px; }
-    .donate-method-btn { width: 40px; height: 40px; font-size: 16px; }
-    .supporters-card { padding: 12px; max-height: 90px; }
-    .supporters-list { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 4px; }
-    .supporter-name { font-size: 9px; padding: 2px 6px; border-radius: 8px; }
-}
-
-/* ===================== 深色模式适配 ===================== */
+/* ===================== 深色模式 ===================== */
 @media (prefers-color-scheme: dark) {
     .about-modal-content {
         background: rgba(30, 30, 30, 0.75);
