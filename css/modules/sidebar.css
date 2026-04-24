@@ -1,22 +1,21 @@
-/* 侧滑栏悬浮毛玻璃优化版 - 上下等距留白、全端自适应 */
+/* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角统一 + 个人资料模态框小型化 */
 .sidebar {
     position: fixed;
     left: -300px;
     width: 280px;
-    /* 核心：毛玻璃效果 */
-    background: rgba(255, 255, 255, 0.85);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    /* 亚克力效果 */
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     z-index: 999;
-    /* 动画过渡 */
+    /* 圆角与 logo 统一 */
+    border-radius: 8px;
+    overflow: hidden;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
-    /* 圆角悬浮效果 */
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
     /* 禁止用户选中优化 */
     user-select: none !important;
     -webkit-user-select: none !important;
@@ -45,7 +44,7 @@
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    border-radius: 16px 16px 0 0;
+    border-radius: 8px 8px 0 0;
 }
 
 /* 用户信息区域允许点击 */
@@ -168,7 +167,7 @@
     flex-direction: column;
     overflow: hidden;
     pointer-events: auto;
-    border-radius: 0 0 16px 16px;
+    border-radius: 0 0 8px 8px;
 }
 
 /* 每日一言卡片 */
@@ -363,14 +362,16 @@
     display: flex;
     gap: 8px;
     flex-shrink: 0;
-    border-radius: 0 0 16px 16px;
+    border-radius: 0 0 8px 8px;
 }
 
 .footer-btn {
     flex: 1;
-    padding: 8px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    background: rgba(255, 255, 255, 0.6);
+    padding: 10px 4px;
+    border: 1.5px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: 8px;
     font-size: 12px;
     color: var(--text-secondary);
@@ -379,22 +380,41 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 32px;
+    min-height: 36px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
     position: relative;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
 }
 
 .footer-btn:hover {
-    border-color: var(--primary-color, #4361ee);
-    color: var(--primary-color, #4361ee);
-    background: rgba(67, 97, 238, 0.06);
-    transform: translateY(-1px);
+    background: rgba(67, 97, 238, 0.08);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    box-shadow: 0 4px 10px rgba(67, 97, 238, 0.15);
+    transform: translateY(-2px);
 }
 
 .footer-btn:active {
     transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
+
+/* 按钮左侧色条标识 */
+.footer-btn::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 16px;
+    border-radius: 3px;
+    opacity: 0.6;
+}
+
+.footer-btn:nth-child(1)::before { background: #8b5cf6; }
+.footer-btn:nth-child(2)::before { background: #7209b7; }
+.footer-btn:nth-child(3)::before { background: #f72585; }
+.footer-btn:nth-child(4)::before { background: #4cc9f0; }
 
 .footer-btn i {
     font-size: 13px;
@@ -431,14 +451,14 @@
     color: var(--error-color, #ef4444);
 }
 
-/* 个人信息设置模态框 */
+/* ========== 个人资料设置模态框（小型化 + 亚克力 + 无黑色遮罩） ========== */
 .profile-modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: transparent;          /* 移除黑色半透明遮罩 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -446,130 +466,157 @@
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
+    pointer-events: none;             /* 未显示时不阻止点击 */
 }
+
 .profile-modal.active {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
 }
+
+/* 模态框内容 - 亚克力效果，尺寸缩小 */
 .profile-modal-content {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 12px;              /* 圆角可按需调整 */
+    padding: 18px 16px;
     width: 90%;
-    max-width: 350px;
+    max-width: 280px;                 /* 更窄的宽度 */
     max-height: 70vh;
     overflow-y: auto;
     transform: translateY(20px);
     transition: transform 0.3s ease;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
 }
+
 .profile-modal.active .profile-modal-content {
     transform: translateY(0);
 }
+
 .profile-modal-close {
     display: none;
 }
+
 .profile-form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;                        /* 减小间距 */
 }
+
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
 }
+
 .form-label {
-    font-size: 13px;
+    font-size: 12px;                  /* 缩小字体 */
     font-weight: 500;
     color: var(--text-primary);
 }
+
 .form-input {
-    padding: 10px 12px;
+    padding: 8px 10px;
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;                  /* 缩小输入框字体 */
     transition: all 0.2s ease;
-    background: white;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(5px);
 }
+
 .form-input:focus {
     outline: none;
     border-color: var(--primary-color, #4361ee);
     box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
 }
+
 .form-textarea {
     resize: vertical;
-    min-height: 80px;
+    min-height: 60px;                 /* 减小文本域高度 */
     font-family: inherit;
 }
+
 .qq-avatar-section {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px;
+    gap: 10px;
+    padding: 10px;
     background: rgba(67, 97, 238, 0.05);
     border-radius: 8px;
     border: 1px solid rgba(67, 97, 238, 0.1);
 }
+
 .qq-avatar-preview {
-    width: 60px;
-    height: 60px;
+    width: 48px;                      /* 缩小头像预览 */
+    height: 48px;
     border-radius: 50%;
     overflow: hidden;
     border: 2px solid rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
 }
+
 .qq-avatar-preview img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
+
 .qq-avatar-input-group {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
+
 .qq-avatar-input {
     width: 100%;
 }
+
 .get-qq-avatar-btn {
     display: none;
 }
+
 .profile-modal-actions {
     display: flex;
-    gap: 12px;
-    margin-top: 10px;
+    gap: 10px;
+    margin-top: 8px;
 }
+
 .profile-save-btn {
     flex: 1;
-    padding: 12px;
+    padding: 10px 0;
     background: var(--primary-color, #4361ee);
     color: white;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;                  /* 缩小按钮文字 */
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
 }
+
 .profile-save-btn:hover {
     background: var(--secondary-color, #3a0ca3);
     transform: translateY(-1px);
 }
+
 .profile-cancel-btn {
     flex: 1;
-    padding: 12px;
+    padding: 10px 0;
     background: rgba(0, 0, 0, 0.05);
     color: var(--text-secondary);
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
 }
+
 .profile-cancel-btn:hover {
     background: rgba(0, 0, 0, 0.1);
     color: var(--text-primary);
@@ -579,12 +626,14 @@
 @media (min-width: 1200px) {
     .sidebar {
         width: 300px;
+        border-radius: 8px;           /* 保持圆角一致 */
     }
     .sidebar.active {
         left: 32px;
     }
     .sidebar-wallpaper {
         aspect-ratio: 16/9;
+        border-radius: 8px 8px 0 0;
     }
     .sidebar-wallpaper-nickname {
         font-size: 20px;
@@ -599,6 +648,7 @@
 @media (min-width: 768px) and (max-width: 1199px) {
     .sidebar {
         width: 280px;
+        border-radius: 8px;
     }
     .sidebar.active {
         left: 20px;
@@ -610,14 +660,14 @@
     .sidebar {
         width: 260px;
         left: -280px;
-        border-radius: 18px;
+        border-radius: 8px;
     }
     .sidebar.active {
         left: 16px;
     }
     .sidebar-wallpaper {
         aspect-ratio: 16/9;
-        border-radius: 14px 14px 0 0;
+        border-radius: 8px 8px 0 0;
     }
     .sidebar-wallpaper-user-info {
         left: 12px;
@@ -643,7 +693,7 @@
     .sidebar-footer {
         padding: 10px 12px;
         padding-bottom: max(10px, env(safe-area-inset-bottom));
-        border-radius: 0 0 14px 14px;
+        border-radius: 0 0 8px 8px;
     }
     .profile-modal-content {
         max-width: 300px;
@@ -656,12 +706,14 @@
     .sidebar {
         width: 240px;
         left: -260px;
+        border-radius: 8px;
     }
     .sidebar.active {
         left: 12px;
     }
     .sidebar-wallpaper {
         aspect-ratio: 16/9;
+        border-radius: 8px 8px 0 0;
     }
     .sidebar-wallpaper-user-info {
         left: 10px;
@@ -684,6 +736,7 @@
         padding: 8px 10px;
         gap: 6px;
         padding-bottom: max(12px, env(safe-area-inset-bottom));
+        border-radius: 0 0 8px 8px;
     }
     .profile-modal-content {
         max-width: 280px;
@@ -717,6 +770,7 @@
 @media (min-width: 1920px) {
     .sidebar {
         width: 320px;
+        border-radius: 8px;
     }
     .sidebar.active {
         left: 40px;
@@ -766,8 +820,8 @@
     }
     /* 毛玻璃兼容 */
     .sidebar {
-        -webkit-backdrop-filter: blur(20px);
-        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        backdrop-filter: blur(28px) saturate(180%);
     }
     .category-group, .footer-btn {
         -webkit-backdrop-filter: blur(10px);
@@ -778,7 +832,7 @@
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
     .sidebar {
-        background: rgba(30, 30, 30, 0.85);
+        background: rgba(30, 30, 30, 0.8);
         border-color: rgba(255, 255, 255, 0.1);
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     }
@@ -823,13 +877,14 @@
     .footer-btn:nth-child(4) i {
         color: #4895ef;
     }
+    /* 个人资料模态框暗色适配 */
     .profile-modal-content {
-        background: #2d2d2d;
-        color: white;
+        background: rgba(30, 30, 30, 0.75);
+        border-color: rgba(255, 255, 255, 0.15);
     }
     .form-input {
-        background: #3d3d3d;
-        border-color: #404040;
+        background: rgba(40, 40, 40, 0.6);
+        border-color: rgba(255, 255, 255, 0.1);
         color: white;
     }
     .form-input:focus {
