@@ -1,11 +1,6 @@
-/**
- * 导航栏组件（适配全新搜索模块 NewSearchModule）
- */
 class Navbar {
     constructor() {
-        if (window.navbar && window.navbar instanceof Navbar) {
-            return window.navbar;
-        }
+        if (window.navbar && window.navbar instanceof Navbar) return window.navbar;
         this.announcements = [];
         this.init();
         window.navbar = this;
@@ -17,295 +12,219 @@ class Navbar {
             this.loadAnnouncements();
             this.updateNotificationBadge();
             setTimeout(() => this.handleScroll(), 100);
-        } catch (error) {
-            console.error('导航栏初始化失败:', error);
+        } catch (e) {
+            console.error('导航栏初始化失败:', e);
         }
     }
 
     bindEvents() {
-        try {
-            // ---------- 搜索按钮：调用新模块 ----------
-            const searchBtn = document.getElementById('searchBtn');
-            if (searchBtn) {
-                searchBtn.replaceWith(searchBtn.cloneNode(true));
-                const newSearchBtn = document.getElementById('searchBtn');
-                newSearchBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.closeAllModalsExcept(['search']);
-                    if (window.newSearchModule) {
-                        window.newSearchModule.show();
-                    } else {
-                        window.toast.show('搜索模块未加载，请刷新页面', 'error');
-                    }
-                });
-            }
-
-            // 音乐按钮
-            const musicBtn = document.getElementById('musicBtn');
-            if (musicBtn) {
-                musicBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.closeAllModalsExcept(['music']);
-                    this.toggleMusicPlayer();
-                });
-            }
-
-            // 公告按钮
-            const announcementBtn = document.getElementById('announcementBtn');
-            if (announcementBtn) {
-                announcementBtn.replaceWith(announcementBtn.cloneNode(true));
-                const newAnnouncementBtn = document.getElementById('announcementBtn');
-                newAnnouncementBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.closeAllModalsExcept(['announcement']);
-                    if (window.announcementModule) window.announcementModule.toggleModal();
-                });
-            }
-
-            // 菜单按钮
-            const menuBtn = document.getElementById('menuBtn');
-            if (menuBtn) {
-                menuBtn.replaceWith(menuBtn.cloneNode(true));
-                const newMenuBtn = document.getElementById('menuBtn');
-                newMenuBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.closeAllModalsExcept(['sidebar']);
-                    if (window.sidebar?.toggle) window.sidebar.toggle();
-                });
-            }
-
-            // 天气按钮
-            const weatherBtn = document.getElementById('weatherBtn');
-            if (weatherBtn) {
-                weatherBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.closeAllModalsExcept(['weather']);
-                    window.app?.modules?.weather?.showModal();
-                });
-            }
-
-            // 反馈按钮
-            const floatingFeedbackBtn = document.getElementById('floatingFeedbackBtn');
-            if (floatingFeedbackBtn) {
-                floatingFeedbackBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.closeAllModalsExcept(['feedback']);
-                    if (typeof window.openFeedbackModal === 'function') window.openFeedbackModal();
-                });
-            }
-
-            // 投稿按钮
-            const floatingSubmitBtn = document.getElementById('floatingSubmitBtn');
-            if (floatingSubmitBtn) {
-                floatingSubmitBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.closeAllModalsExcept(['submit']);
-                    window.open('https://f.wps.cn/g/TI3Gxbe1/', '_blank');
-                });
-            }
-
-            // 全局点击关闭音乐播放器
-            document.addEventListener('click', this.handleDocumentClick.bind(this));
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') this.closeAllModalsExcept([]);
+        // ---------- 搜索按钮：点击切换模态框 ----------
+        const searchBtn = document.getElementById('searchBtn');
+        if (searchBtn) {
+            searchBtn.replaceWith(searchBtn.cloneNode(true));
+            document.getElementById('searchBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.closeAllModalsExcept(['search']);
+                if (window.newSearchModule) {
+                    window.newSearchModule.toggle();
+                } else {
+                    window.toast.show('搜索模块未加载', 'error');
+                }
             });
-            window.addEventListener('scroll', this.handleScroll.bind(this));
+        }
 
-            // 返回顶部按钮
-            const backToTop = document.getElementById('backToTop');
-            if (backToTop) {
-                backToTop.addEventListener('click', () => {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
+        // 音乐按钮
+        const musicBtn = document.getElementById('musicBtn');
+        if (musicBtn) {
+            musicBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.closeAllModalsExcept(['music']);
+                this.toggleMusicPlayer();
+            });
+        }
+
+        // 公告按钮
+        const annBtn = document.getElementById('announcementBtn');
+        if (annBtn) {
+            annBtn.replaceWith(annBtn.cloneNode(true));
+            document.getElementById('announcementBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.closeAllModalsExcept(['announcement']);
+                window.announcementModule?.toggleModal();
+            });
+        }
+
+        // 菜单按钮
+        const menuBtn = document.getElementById('menuBtn');
+        if (menuBtn) {
+            menuBtn.replaceWith(menuBtn.cloneNode(true));
+            document.getElementById('menuBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.closeAllModalsExcept(['sidebar']);
+                window.sidebar?.toggle?.();
+            });
+        }
+
+        // 天气按钮
+        const weatherBtn = document.getElementById('weatherBtn');
+        if (weatherBtn) {
+            weatherBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.closeAllModalsExcept(['weather']);
+                window.app?.modules?.weather?.showModal();
+            });
+        }
+
+        // 反馈按钮
+        const fbBtn = document.getElementById('floatingFeedbackBtn');
+        if (fbBtn) {
+            fbBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.closeAllModalsExcept(['feedback']);
+                if (typeof window.openFeedbackModal === 'function') window.openFeedbackModal();
+            });
+        }
+
+        // 投稿按钮
+        const submitBtn = document.getElementById('floatingSubmitBtn');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.closeAllModalsExcept(['submit']);
+                window.open('https://f.wps.cn/g/TI3Gxbe1/', '_blank');
+            });
+        }
+
+        // 全局点击关闭音乐播放器
+        document.addEventListener('click', (e) => {
+            const mp = document.getElementById('musicPlayer');
+            const mb = document.getElementById('musicBtn');
+            if (mp && mp.classList.contains('show') && !mp.contains(e.target) && !mb.contains(e.target)) {
+                this.hideMusicPlayer();
             }
-        } catch (error) {
-            console.error('导航栏事件绑定失败:', error);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') this.closeAllModalsExcept([]);
+        });
+        window.addEventListener('scroll', this.handleScroll.bind(this));
+
+        // 返回顶部
+        const btt = document.getElementById('backToTop');
+        if (btt) {
+            btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
         }
     }
 
-    closeAllModalsExcept(keepModules = []) {
+    closeAllModalsExcept(keep = []) {
         try {
-            if (!keepModules.includes('music')) this.hideMusicPlayer();
-            // 新搜索模块
-            if (!keepModules.includes('search') && window.newSearchModule && window.newSearchModule.isOpen) {
+            if (!keep.includes('music')) this.hideMusicPlayer();
+            if (!keep.includes('search') && window.newSearchModule && window.newSearchModule.isOpen) {
                 window.newSearchModule.hide();
             }
-            if (!keepModules.includes('sidebar') && window.sidebar?.isVisible()) window.sidebar.hide();
-            if (!keepModules.includes('announcement') && window.announcementModule?.isVisible) window.announcementModule.hide();
-            if (!keepModules.includes('weather')) window.app?.modules?.weather?.hide?.();
-            if (!keepModules.includes('about')) window.aboutModule?.hide?.();
-            if (!keepModules.includes('notebook')) window.app?.hideNotebookModal?.();
-        } catch (error) {
-            console.error('关闭模态框失败:', error);
+            if (!keep.includes('sidebar') && window.sidebar?.isVisible()) window.sidebar.hide();
+            if (!keep.includes('announcement') && window.announcementModule?.isVisible) window.announcementModule.hide();
+            if (!keep.includes('weather')) window.app?.modules?.weather?.hide?.();
+            if (!keep.includes('about')) window.aboutModule?.hide?.();
+            if (!keep.includes('notebook')) window.app?.hideNotebookModal?.();
+        } catch (e) {
+            console.error('关闭模态框失败:', e);
         }
     }
 
     toggleMusicPlayer() {
-        try {
-            const musicPlayer = document.getElementById('musicPlayer');
-            const musicBtn = document.getElementById('musicBtn');
-            if (!musicPlayer || !musicBtn) return;
-            if (musicPlayer.classList.contains('animating')) return;
-            if (musicPlayer.classList.contains('show')) {
-                this.hideMusicPlayer();
-            } else {
-                this.showMusicPlayer();
-            }
-        } catch (error) {
-            console.error('切换音乐播放器失败:', error);
-        }
+        const mp = document.getElementById('musicPlayer');
+        const mb = document.getElementById('musicBtn');
+        if (!mp || !mb || mp.classList.contains('animating')) return;
+        mp.classList.contains('show') ? this.hideMusicPlayer() : this.showMusicPlayer();
     }
 
     showMusicPlayer() {
-        try {
-            const musicPlayer = document.getElementById('musicPlayer');
-            const musicBtn = document.getElementById('musicBtn');
-            if (!musicPlayer || !musicBtn) return;
-            musicPlayer.classList.add('animating');
-            musicBtn.classList.add('loading');
-            musicPlayer.style.display = 'block';
-            musicPlayer.style.zIndex = '10000';
-            setTimeout(() => {
-                musicPlayer.classList.add('show');
-                musicBtn.classList.add('active');
-                musicBtn.classList.remove('loading');
-                setTimeout(() => musicPlayer.classList.remove('animating'), 600);
-            }, 10);
-        } catch (error) {
-            console.error('显示音乐播放器失败:', error);
-        }
+        const mp = document.getElementById('musicPlayer');
+        const mb = document.getElementById('musicBtn');
+        if (!mp || !mb) return;
+        mp.classList.add('animating');
+        mb.classList.add('loading');
+        mp.style.display = 'block';
+        mp.style.zIndex = '10000';
+        setTimeout(() => {
+            mp.classList.add('show');
+            mb.classList.add('active');
+            mb.classList.remove('loading');
+            setTimeout(() => mp.classList.remove('animating'), 600);
+        }, 10);
     }
 
     hideMusicPlayer() {
-        try {
-            const musicPlayer = document.getElementById('musicPlayer');
-            const musicBtn = document.getElementById('musicBtn');
-            if (!musicPlayer || !musicBtn) return;
-            musicPlayer.classList.add('animating', 'hiding');
-            musicBtn.classList.remove('active');
-            musicPlayer.classList.remove('show');
-            setTimeout(() => {
-                musicPlayer.style.display = 'none';
-                musicPlayer.classList.remove('animating', 'hiding');
-            }, 600);
-        } catch (error) {
-            console.error('隐藏音乐播放器失败:', error);
-        }
-    }
-
-    handleDocumentClick(e) {
-        try {
-            const musicPlayer = document.getElementById('musicPlayer');
-            const musicBtn = document.getElementById('musicBtn');
-            if (musicPlayer && musicPlayer.classList.contains('show') &&
-                !musicPlayer.contains(e.target) && !musicBtn.contains(e.target)) {
-                this.hideMusicPlayer();
-            }
-        } catch (error) {
-            console.error('处理文档点击事件失败:', error);
-        }
+        const mp = document.getElementById('musicPlayer');
+        const mb = document.getElementById('musicBtn');
+        if (!mp || !mb) return;
+        mp.classList.add('animating', 'hiding');
+        mb.classList.remove('active');
+        mp.classList.remove('show');
+        setTimeout(() => {
+            mp.style.display = 'none';
+            mp.classList.remove('animating', 'hiding');
+        }, 600);
     }
 
     handleScroll() {
-        try {
-            const navbar = document.getElementById('navbar');
-            const backToTop = document.getElementById('backToTop');
-            if (navbar && window.scrollY > 100) {
-                navbar.classList.add('scrolled');
-            } else if (navbar) {
-                navbar.classList.remove('scrolled');
-            }
-            if (backToTop) {
-                if (window.scrollY > 300) backToTop.classList.add('visible');
-                else backToTop.classList.remove('visible');
-            }
-        } catch (error) {
-            console.error('处理滚动事件失败:', error);
-        }
+        const navbar = document.getElementById('navbar');
+        const btt = document.getElementById('backToTop');
+        if (window.scrollY > 100) navbar?.classList.add('scrolled');
+        else navbar?.classList.remove('scrolled');
+        if (btt) btt.classList.toggle('visible', window.scrollY > 300);
     }
 
     loadAnnouncements() {
-        try {
-            this.announcements = Storage.get('announcements') || [
-                {
-                    id: 'single_announcement',
-                    title: '星聚导航公告',
-                    subtitle: '重要通知',
-                    focus: '本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台',
-                    updates: [
-                        '全新界面设计 - 更加现代化和美观的视觉体验',
-                        '音乐播放器 - 支持多平台音乐搜索和播放',
-                        '个性化设置 - 可自定义主题和布局',
-                        '更多实用工具 - 新增多个日常使用的小工具',
-                        '性能优化 - 更快的加载速度和响应时间'
-                    ],
-                    time: new Date().toLocaleString('zh-CN'),
-                    source: '系统公告',
-                    read: false
-                }
-            ];
-        } catch (error) {
-            console.error('加载公告数据失败:', error);
-        }
+        this.announcements = Storage.get('announcements') || [{
+            id: 'single_announcement',
+            title: '星聚导航公告',
+            focus: '本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台',
+            updates: ['全新界面设计', '音乐播放器', '个性化设置', '更多实用工具', '性能优化'],
+            time: new Date().toLocaleString('zh-CN'),
+            read: false
+        }];
     }
 
     updateNotificationBadge() {
-        try {
-            const announcementBtn = document.getElementById('announcementBtn');
-            if (!announcementBtn) return;
-            const existingBadge = announcementBtn.querySelector('.nav-badge');
-            const unreadCount = this.getUnreadAnnouncementCount();
-            if (unreadCount > 0) {
-                if (!existingBadge) {
-                    const badge = document.createElement('div');
-                    badge.className = 'nav-badge';
-                    badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-                    announcementBtn.appendChild(badge);
-                    setTimeout(() => badge.classList.add('show'), 100);
-                } else {
-                    existingBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-                }
-                announcementBtn.classList.add('has-unread');
-            } else if (existingBadge) {
-                existingBadge.classList.remove('show');
-                setTimeout(() => {
-                    if (existingBadge.parentNode) {
-                        existingBadge.parentNode.removeChild(existingBadge);
-                    }
-                }, 300);
-                announcementBtn.classList.remove('has-unread');
+        const btn = document.getElementById('announcementBtn');
+        if (!btn) return;
+        const unread = this.getUnreadAnnouncementCount();
+        let badge = btn.querySelector('.nav-badge');
+        if (unread > 0) {
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.className = 'nav-badge';
+                btn.appendChild(badge);
             }
-        } catch (error) {
-            console.error('更新通知徽章失败:', error);
+            badge.textContent = unread > 9 ? '9+' : unread;
+            badge.classList.add('show');
+            btn.classList.add('has-unread');
+        } else {
+            if (badge) {
+                badge.classList.remove('show');
+                setTimeout(() => badge.remove(), 300);
+                btn.classList.remove('has-unread');
+            }
         }
     }
 
     getUnreadAnnouncementCount() {
-        try {
-            if (window.app && window.app.modules.announcement) {
-                return window.app.modules.announcement.getUnreadCount();
-            }
-            const announcements = Storage.get('announcements') || [];
-            return announcements.filter(ann => !ann.read).length;
-        } catch (error) {
-            console.error('获取未读公告数量失败:', error);
-            return 0;
-        }
+        if (window.app?.modules?.announcement) return window.app.modules.announcement.getUnreadCount();
+        const stored = Storage.get('announcements') || [];
+        return stored.filter(a => !a.read).length;
     }
 
     destroy() {
-        try {
-            document.removeEventListener('click', this.handleDocumentClick);
-            window.removeEventListener('scroll', this.handleScroll);
-        } catch (error) {
-            console.error('销毁导航栏失败:', error);
-        }
+        document.removeEventListener('click', this.closeAllModalsExcept);
+        window.removeEventListener('scroll', this.handleScroll);
     }
 }
