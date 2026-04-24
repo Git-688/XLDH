@@ -7,15 +7,13 @@ class NewSearchModule {
             { key: 'google',  label: '谷歌',   url: 'https://www.google.com/search?q=', icon: 'fab fa-google' },
             { key: '360',     label: '360',    url: 'https://www.so.com/s?q=', icon: 'fas fa-shield-alt' },
             { key: 'douyin',  label: '抖音',   url: 'https://www.douyin.com/search/', icon: 'fas fa-music' },
-            { key: 'all',     label: '全网',   url: 'https://searx.demo.koehlersaeule.de/
-search?q=', icon: 'fas fa-globe' }
+            { key: 'all',     label: '全网',   url: 'https://www.baidu.com/s?wd=', icon: 'fas fa-globe' }
         ];
         this.currentEngine = this.loadSetting('currentEngine2', 'baidu');
         this.history = this.loadSetting('searchHistory2', []);
         this.maxHistory = 20;
 
         this.modal = document.getElementById('searchModal');
-        this.contentBox = this.modal?.querySelector('.modal-content');
         this.input = document.getElementById('searchInput');
         this.triggerBtn = document.getElementById('engineTriggerBtn');
         this.engineIcon = document.getElementById('engineIcon');
@@ -27,7 +25,6 @@ search?q=', icon: 'fas fa-globe' }
         this.isOpen = false;
         this.suggestTimer = null;
 
-        this._onResize = this.positionModal.bind(this);
         this.init();
         window.newSearchModule = this;
     }
@@ -41,7 +38,6 @@ search?q=', icon: 'fas fa-globe' }
     }
 
     bindEvents() {
-        // 遮罩关闭
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.hide();
         });
@@ -49,7 +45,6 @@ search?q=', icon: 'fas fa-globe' }
             if (e.key === 'Escape' && this.isOpen) this.hide();
         });
 
-        // 引擎按钮
         if (this.triggerBtn) {
             this.triggerBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -57,7 +52,6 @@ search?q=', icon: 'fas fa-globe' }
             });
         }
 
-        // 外部关闭下拉
         document.addEventListener('click', (e) => {
             if (this.dropdown && !this.dropdown.contains(e.target) &&
                 e.target !== this.triggerBtn && !this.triggerBtn.contains(e.target)) {
@@ -65,7 +59,6 @@ search?q=', icon: 'fas fa-globe' }
             }
         });
 
-        // 下拉选项点击
         if (this.dropdown) {
             this.dropdown.addEventListener('click', (e) => {
                 const item = e.target.closest('.engine-dropdown-item');
@@ -76,7 +69,6 @@ search?q=', icon: 'fas fa-globe' }
             });
         }
 
-        // 清除历史
         if (this.clearHistoryBtn) {
             this.clearHistoryBtn.addEventListener('click', () => {
                 this.history = [];
@@ -92,13 +84,8 @@ search?q=', icon: 'fas fa-globe' }
 
     show() {
         if (!this.modal || this.isOpen) return;
-        // 关闭其他浮层
         if (window.sidebar?.isVisible()) window.sidebar.hide();
         if (window.app?.components?.navbar?.hideMusicPlayer) window.app.components.navbar.hideMusicPlayer();
-
-        // 对齐壁纸
-        this.positionModal();
-        window.addEventListener('resize', this._onResize);
 
         this.modal.classList.add('active');
         this.isOpen = true;
@@ -117,23 +104,10 @@ search?q=', icon: 'fas fa-globe' }
         this.isOpen = false;
         this.clearSuggestions();
         this.closeDropdown();
-        window.removeEventListener('resize', this._onResize);
 
         if (window.app) window.app.unregisterModal(this);
     }
 
-    /** 动态对齐壁纸容器右上角 */
-    positionModal() {
-        const wallpaper = document.querySelector('.wallpaper-container');
-        const content = this.contentBox;
-        if (!wallpaper || !content) return;
-
-        const rect = wallpaper.getBoundingClientRect();
-        content.style.top = rect.top + 'px';
-        content.style.right = (window.innerWidth - rect.right) + 'px';
-    }
-
-    /* ========= 引擎下拉 ========= */
     renderDropdown() {
         if (!this.dropdown) return;
         this.dropdown.innerHTML = '';
@@ -151,15 +125,8 @@ search?q=', icon: 'fas fa-globe' }
         this.dropdown.classList.contains('active') ? this.closeDropdown() : this.openDropdown();
     }
 
-    openDropdown() {
-        if (!this.dropdown) return;
-        this.dropdown.classList.add('active');
-    }
-
-    closeDropdown() {
-        if (!this.dropdown) return;
-        this.dropdown.classList.remove('active');
-    }
+    openDropdown() { if (this.dropdown) this.dropdown.classList.add('active'); }
+    closeDropdown() { if (this.dropdown) this.dropdown.classList.remove('active'); }
 
     setEngine(key) {
         if (this.currentEngine === key) return;
@@ -174,13 +141,9 @@ search?q=', icon: 'fas fa-globe' }
         if (this.engineIcon && eng) this.engineIcon.className = eng.icon;
     }
 
-    /* ========= 搜索 ========= */
     submitSearch() {
         const query = this.input.value.trim();
-        if (!query) {
-            window.toast.show('请输入搜索内容', 'warning');
-            return;
-        }
+        if (!query) { window.toast.show('请输入搜索内容', 'warning'); return; }
         const eng = this.engines.find(e => e.key === this.currentEngine) || this.engines[0];
         window.open(eng.url + encodeURIComponent(query), '_blank');
         this.addHistory(query);
@@ -191,7 +154,6 @@ search?q=', icon: 'fas fa-globe' }
         if (event.key === 'Enter') this.submitSearch();
     }
 
-    /* ========= 百度联想词 ========= */
     async fetchBaiduSuggestions(query) {
         const url = 'https://cn.apihz.cn/api/wangzhan/soubaiduxl.php';
         const params = new URLSearchParams({ id: '10014221', key: '4a7768de1cf2e0f41fc0a4005240c837', words: query });
@@ -215,10 +177,7 @@ search?q=', icon: 'fas fa-globe' }
 
     renderSuggestions(words) {
         if (!this.suggestionsContainer) return;
-        if (!words || words.length === 0) {
-            this.clearSuggestions();
-            return;
-        }
+        if (!words || words.length === 0) { this.clearSuggestions(); return; }
         this.suggestionsContainer.innerHTML = '';
         words.forEach(w => {
             const el = document.createElement('div');
@@ -241,7 +200,6 @@ search?q=', icon: 'fas fa-globe' }
         }
     }
 
-    /* ========= 历史记录 ========= */
     addHistory(query) {
         this.history = this.history.filter(h => h !== query);
         this.history.unshift(query);
@@ -278,11 +236,9 @@ search?q=', icon: 'fas fa-globe' }
         this.renderHistory();
     }
 
-    /* ========= 本地存储 ========= */
     loadSetting(key, def) {
         try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : def; } catch { return def; }
     }
-
     saveSetting(key, value) {
         try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
     }
