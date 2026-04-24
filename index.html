@@ -32,25 +32,21 @@
     <link rel="stylesheet" href="./css/responsive.css">
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
     
-    <!-- ===== 优化2：FontAwesome 按需加载 ===== -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/regular.min.css">
     
-    <!-- 预连接关键域名 -->
     <link rel="preconnect" href="https://api.xldh688.eu.cc">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     
     <link rel="preload" href="./js/main.js" as="script">
-    <!-- KaTeX 数学公式支持 v0.16.45 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
     
     <style>
-        /* 反馈模态框样式 - 头部正常大小，空间占用不变 */
         .feedback-modal {
             position: fixed;
             top: 0;
@@ -147,9 +143,7 @@
             scrollbar-width: none;
             -ms-overflow-style: none;
         }
-        .feedback-modal-body::-webkit-scrollbar {
-            display: none;
-        }
+        .feedback-modal-body::-webkit-scrollbar { display: none; }
         @media (max-width: 600px) {
             .feedback-modal {
                 padding: var(--container-padding-xs, 16px);
@@ -169,48 +163,21 @@
             .feedback-modal.active .feedback-modal-content {
                 transform: translateY(0);
             }
-            .feedback-modal-header {
-                padding: 8px 14px;
-            }
-            .feedback-modal-header h3 {
-                font-size: 1.2rem;
-            }
-            .feedback-modal-body {
-                padding: 12px 14px;
-                -webkit-overflow-scrolling: touch;
-            }
-            .feedback-modal-close {
-                width: 36px;
-                height: 36px;
-                font-size: 22px;
-            }
+            .feedback-modal-header { padding: 8px 14px; }
+            .feedback-modal-header h3 { font-size: 1.2rem; }
+            .feedback-modal-body { padding: 12px 14px; -webkit-overflow-scrolling: touch; }
+            .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
         }
         @media (min-width: 601px) {
-            .feedback-modal-header {
-                padding: 10px 16px;
-            }
-            .feedback-modal-header h3 {
-                font-size: 1.25rem;
-            }
-            .feedback-modal-body {
-                padding: 16px 20px;
-            }
+            .feedback-modal-header { padding: 10px 16px; }
+            .feedback-modal-header h3 { font-size: 1.25rem; }
+            .feedback-modal-body { padding: 16px 20px; }
         }
         @media (prefers-color-scheme: dark) {
-            .feedback-modal-content {
-                background: #2a2a2a;
-                border-color: #3e3e3e;
-            }
-            .feedback-modal-header {
-                background: #2a2a2a;
-                border-bottom-color: #3e3e3e;
-            }
-            .feedback-modal-body {
-                background: #2a2a2a;
-            }
-            .feedback-modal-close:hover {
-                background: rgba(255, 255, 255, 0.08);
-            }
+            .feedback-modal-content { background: #2a2a2a; border-color: #3e3e3e; }
+            .feedback-modal-header { background: #2a2a2a; border-bottom-color: #3e3e3e; }
+            .feedback-modal-body { background: #2a2a2a; }
+            .feedback-modal-close:hover { background: rgba(255, 255, 255, 0.08); }
         }
         .math-hint {
             padding: 8px 12px;
@@ -221,167 +188,34 @@
             color: #666;
             border-left: 3px solid var(--primary-color);
         }
-        @media (prefers-color-scheme: dark) {
-            .math-hint {
-                background: #1e1e1e;
-                color: #aaa;
-            }
-        }
-        .math-hint i {
-            margin-right: 6px;
-            color: var(--primary-color);
-        }
-        .math-hint code {
-            background: rgba(0,0,0,0.06);
-            padding: 2px 5px;
-            border-radius: 4px;
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
-            font-size: 11px;
-        }
-        .floating-btn.feedback-btn {
-            color: #8b5cf6;
-        }
-        .floating-btn.feedback-btn:hover {
-            color: #7c3aed;
-        }
-        .floating-btn.submit-btn {
-            color: #06b6d4;
-        }
-        .floating-btn.submit-btn:hover {
-            color: #0891b2;
-        }
+        @media (prefers-color-scheme: dark) { .math-hint { background: #1e1e1e; color: #aaa; } }
+        .math-hint i { margin-right: 6px; color: var(--primary-color); }
+        .math-hint code { background: rgba(0,0,0,0.06); padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 11px; }
+        .floating-btn.feedback-btn { color: #8b5cf6; }
+        .floating-btn.feedback-btn:hover { color: #7c3aed; }
+        .floating-btn.submit-btn { color: #06b6d4; }
+        .floating-btn.submit-btn:hover { color: #0891b2; }
 
-        #notebookModal {
-            background: transparent;
-            backdrop-filter: none;
-            -webkit-backdrop-filter: none;
-        }
-        #notebookModal .feedback-modal-content {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border-radius: 16px;
-        }
-        @media (prefers-color-scheme: dark) {
-            #notebookModal .feedback-modal-content {
-                background: rgba(30, 30, 30, 0.85);
-                border-color: rgba(255, 255, 255, 0.1);
-            }
-        }
-        .notebook-list {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            max-height: 60vh;
-            overflow-y: auto;
-            padding-right: 4px;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-        .notebook-list::-webkit-scrollbar {
-            display: none;
-        }
-        .notebook-item {
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            border-radius: 14px;
-            padding: 14px 18px;
-            border: 1px solid rgba(0, 0, 0, 0.06);
-            transition: all 0.2s ease;
-        }
-        .notebook-item:hover {
-            border-color: var(--primary-color);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-        .notebook-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .notebook-id {
-            font-size: 12px;
-            color: var(--text-secondary);
-            background: rgba(255, 255, 255, 0.7);
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-weight: 500;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-        }
-        .notebook-time {
-            font-size: 11px;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .notebook-title {
-            font-size: 17px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 10px;
-            line-height: 1.3;
-        }
-        .notebook-content {
-            font-size: 14px;
-            color: var(--text-secondary);
-            line-height: 1.6;
-            word-break: break-word;
-            white-space: pre-wrap;
-            background: rgba(255, 255, 255, 0.4);
-            padding: 12px 14px;
-            border-radius: 10px;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            border: 1px solid rgba(0, 0, 0, 0.03);
-        }
-        @media (prefers-color-scheme: dark) {
-            .notebook-item {
-                background: rgba(40, 40, 40, 0.6);
-                border-color: rgba(255, 255, 255, 0.05);
-            }
-            .notebook-id {
-                background: rgba(50, 50, 50, 0.8);
-            }
-            .notebook-content {
-                background: rgba(30, 30, 30, 0.6);
-            }
-        }
-        .notebook-list .loading,
-        .notebook-list .empty,
-        .notebook-list .error {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        .notebook-list .error {
-            color: var(--error-color);
-        }
-        @media (max-width: 768px) {
-            .notebook-item {
-                padding: 12px 14px;
-            }
-            .notebook-title {
-                font-size: 16px;
-            }
-            .notebook-content {
-                font-size: 13px;
-            }
-        }
-        @media (max-width: 480px) {
-            .notebook-item {
-                padding: 10px 12px;
-            }
-        }
+        #notebookModal { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+        #notebookModal .feedback-modal-content { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); border-radius: 16px; }
+        @media (prefers-color-scheme: dark) { #notebookModal .feedback-modal-content { background: rgba(30, 30, 30, 0.85); border-color: rgba(255, 255, 255, 0.1); } }
+        .notebook-list { display: flex; flex-direction: column; gap: 14px; max-height: 60vh; overflow-y: auto; padding-right: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+        .notebook-list::-webkit-scrollbar { display: none; }
+        .notebook-item { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border-radius: 14px; padding: 14px 18px; border: 1px solid rgba(0, 0, 0, 0.06); transition: all 0.2s ease; }
+        .notebook-item:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+        .notebook-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .notebook-id { font-size: 12px; color: var(--text-secondary); background: rgba(255, 255, 255, 0.7); padding: 2px 10px; border-radius: 20px; font-weight: 500; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+        .notebook-time { font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
+        .notebook-title { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; line-height: 1.3; }
+        .notebook-content { font-size: 14px; color: var(--text-secondary); line-height: 1.6; word-break: break-word; white-space: pre-wrap; background: rgba(255, 255, 255, 0.4); padding: 12px 14px; border-radius: 10px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 1px solid rgba(0, 0, 0, 0.03); }
+        @media (prefers-color-scheme: dark) { .notebook-item { background: rgba(40, 40, 40, 0.6); border-color: rgba(255, 255, 255, 0.05); } .notebook-id { background: rgba(50, 50, 50, 0.8); } .notebook-content { background: rgba(30, 30, 30, 0.6); } }
+        .notebook-list .loading, .notebook-list .empty, .notebook-list .error { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 14px; }
+        .notebook-list .error { color: var(--error-color); }
+        @media (max-width: 768px) { .notebook-item { padding: 12px 14px; } .notebook-title { font-size: 16px; } .notebook-content { font-size: 13px; } }
+        @media (max-width: 480px) { .notebook-item { padding: 10px 12px; } }
     </style>
 </head>
 <body>
-<!-- 导航栏 -->
 <nav class="navbar" id="navbar">
     <div class="nav-container">
         <div class="nav-brand">
@@ -401,7 +235,6 @@
         </div>
     </div>
 </nav>
-<!-- 侧滑栏 -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-wallpaper" id="sidebarWallpaper">
         <div class="sidebar-wallpaper-overlay"></div>
@@ -522,14 +355,12 @@
             </div>
         </div>
     </footer>
-    <!-- 悬浮按钮区域 -->
     <div class="floating-buttons">
         <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
         <button class="floating-btn feedback-btn" id="floatingFeedbackBtn" aria-label="用户反馈"><i class="fas fa-comment"></i></button>
         <button class="floating-btn submit-btn" id="floatingSubmitBtn" aria-label="网站投稿"><i class="fas fa-paper-plane"></i></button>
         <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
     </div>
-    <!-- 音乐播放器主体 -->
     <div class="music-player" id="musicPlayer">
         <div class="player-top">
             <div class="cover-section">
@@ -587,39 +418,31 @@
         </div>
     </div>
     <audio id="audio-element" preload="metadata"></audio>
-    
-<!-- 搜索模态框 - 位置下移，引擎下拉，联想词，历史记录 -->
-<div class="search-modal" id="searchModal" style="display: none;">
-    <div class="modal-content">
-        <!-- 搜索栏：引擎图标 - 输入框 - 搜索按钮 -->
-        <div class="search-bar">
-            <button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎">
-                <i id="engineIcon" class="fas fa-search"></i>
-            </button>
-            <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." onkeydown="window.newSearchModule.handleSearch(event)" oninput="window.newSearchModule.showSuggestions()" autocomplete="off">
-            <button class="search-submit-btn" onclick="window.newSearchModule.submitSearch()">搜索</button>
-        </div>
-        <!-- 搜索引擎下拉菜单 -->
-        <div class="engine-dropdown" id="engineDropdown" style="display:none;">
-            <!-- JS动态生成 -->
-        </div>
-        <!-- 百度联想词 -->
-        <div class="suggestions" id="suggestions"></div>
-        <!-- 搜索历史 -->
-        <div class="history-panel" id="historyPanel">
-            <div class="history-title">
-                <span>搜索历史</span>
-                <span id="clearHistory" class="clear-history-btn">清除</span>
+    <!-- ========== 搜索模态框（与公告相同 visibility 控制） ========== -->
+    <div class="search-modal" id="searchModal">
+        <div class="modal-content">
+            <div class="search-bar">
+                <button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎">
+                    <i id="engineIcon" class="fas fa-search"></i>
+                </button>
+                <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." onkeydown="window.newSearchModule.handleSearch(event)" oninput="window.newSearchModule.showSuggestions()" autocomplete="off">
+                <button class="search-submit-btn" onclick="window.newSearchModule.submitSearch()">搜索</button>
             </div>
-            <div id="historyList"></div>
+            <div class="engine-dropdown" id="engineDropdown">
+                <!-- JS动态生成 -->
+            </div>
+            <div class="suggestions" id="suggestions"></div>
+            <div class="history-panel" id="historyPanel">
+                <div class="history-title">
+                    <span>历史记录</span>
+                    <span id="clearHistory" class="clear-history-btn">清除</span>
+                </div>
+                <div id="historyList"></div>
+            </div>
         </div>
     </div>
-</div>
-
-    <!-- 引擎提示工具（可保留，新模块不依赖它） -->
     <div class="engine-tooltip" id="engineTooltip"></div>
 </main>
-<!-- 反馈模态框 -->
 <div id="feedbackModal" class="feedback-modal" style="display: none;">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
@@ -631,8 +454,6 @@
         </div>
     </div>
 </div>
-
-<!-- 星聚笔记模态框 -->
 <div id="notebookModal" class="feedback-modal" style="display: none;">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
@@ -647,13 +468,10 @@
     </div>
 </div>
 
-<!-- 基础工具 -->
 <script src="./js/storage.js"></script>
 <script src="./js/api.js"></script>
-<!-- 核心组件 -->
 <script src="./js/components/navbar.js"></script>
 <script src="./js/components/sidebar.js"></script>
-<!-- 模块 -->
 <script src="./js/modules/announcement.js"></script>
 <script src="./js/modules/search.js"></script>
 <script src="./js/modules/weather.js"></script>
@@ -663,10 +481,8 @@
 <script src="./js/modules/greeting.js"></script>
 <script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
-<!-- 主应用程序 -->
 <script src="./js/toast.js"></script>
 <script src="./js/main.js"></script>
-<!-- 音乐播放器 -->
 <script src="./js/xfyy/utils.js"></script>
 <script src="./js/xfyy/cache-manager.js"></script>
 <script src="./js/xfyy/lyric-parser.js"></script>
@@ -674,7 +490,6 @@
 <script src="./js/xfyy/plugin-manager.js"></script>
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
-<!-- Twikoo v1.7.7 核心库 -->
 <script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
 </body>
 </html>
