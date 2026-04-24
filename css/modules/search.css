@@ -1,4 +1,4 @@
-/* 搜索模态框 — 遮罩透明，内容毛玻璃 */
+/* 搜索模态框 — 使用 visibility 控制，毛玻璃效果 */
 .search-modal {
     position: fixed;
     top: 0;
@@ -17,9 +17,12 @@
     opacity: 1;
     pointer-events: auto;
 }
-/* 内容卡片：毛玻璃 + 自动定位由 JS 设置 */
+
+/* 内容卡片：毛玻璃 + 固定定位（桌面端上移） */
 .search-modal .modal-content {
     position: absolute;
+    top: 70px;
+    right: 20px;
     width: 90%;
     max-width: 480px;
     background: rgba(255, 255, 255, 0.75);
@@ -37,6 +40,7 @@
     transform: translateY(0) scale(1);
     opacity: 1;
 }
+
 /* 深色模式毛玻璃 */
 @media (prefers-color-scheme: dark) {
     .search-modal .modal-content {
@@ -45,7 +49,7 @@
     }
 }
 
-/* ---------- 内部组件保持不变 ---------- */
+/* ---------- 内部组件（保持不变） ---------- */
 .search-bar {
     display: flex;
     align-items: center;
@@ -103,6 +107,8 @@
 /* 引擎下拉 */
 .engine-dropdown {
     position: absolute;
+    top: calc(16px + 38px + 10px); /* 对齐搜索栏下方 */
+    left: 16px;
     width: 180px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -117,8 +123,6 @@
     transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
     pointer-events: none;
     scrollbar-width: none;
-    top: calc(100% + 6px);
-    left: 14px;
 }
 .engine-dropdown::-webkit-scrollbar { display: none; }
 .engine-dropdown.active {
@@ -215,13 +219,16 @@
 .delete-history:hover { color: var(--error-color); background: rgba(239,68,68,0.1); }
 .history-empty { text-align: center; color: var(--text-secondary); font-size: 0.8rem; padding: 12px 0; }
 
-/* 移动端削弱模糊 */
+/* 移动端：模态框下移 + 满宽 */
 @media (max-width: 768px) {
     .search-modal .modal-content {
-        width: 94%;
-        max-width: none;
-        left: 3%;
+        top: 100px;
         right: 3%;
+        left: 3%;
+        width: auto;
+        max-width: none;
     }
-    .engine-dropdown { width: 160px; }
+    .engine-dropdown {
+        width: 160px;
+    }
 }
