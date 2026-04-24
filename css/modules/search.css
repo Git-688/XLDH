@@ -1,7 +1,7 @@
 /* 搜索模态框 — 遮罩从导航栏下方开始 */
 .search-modal {
     position: fixed;
-    top: 60px;               /* 导航栏高度 */
+    top: 60px;
     left: 0;
     width: 100%;
     height: calc(100% - 60px);
@@ -18,7 +18,7 @@
     pointer-events: auto;
 }
 
-/* 内容卡片：毛玻璃 + 固定定位 */
+/* 内容卡片：毛玻璃 + 固定定位，圆角与 logo 一致（8px） */
 .search-modal .modal-content {
     position: absolute;
     top: 24px;
@@ -28,7 +28,7 @@
     background: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 12px;
+    border-radius: 8px;            /* ← 修改为 8px */
     padding: 12px 14px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -40,6 +40,8 @@
     transform: translateY(0) scale(1);
     opacity: 1;
 }
+
+/* 深色模式毛玻璃适配 */
 @media (prefers-color-scheme: dark) {
     .search-modal .modal-content {
         background: rgba(30, 30, 30, 0.8);
@@ -47,7 +49,7 @@
     }
 }
 
-/* 搜索栏 */
+/* ========= 内部组件样式 ========= */
 .search-bar {
     display: flex;
     align-items: center;
@@ -68,10 +70,7 @@
     transition: 0.2s;
     flex-shrink: 0;
 }
-.engine-trigger-btn:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-}
+.engine-trigger-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
 .engine-trigger-btn i { font-size: 1rem; }
 .search-input {
     flex: 1;
@@ -84,10 +83,7 @@
     outline: none;
     transition: border 0.2s;
 }
-.search-input:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(67,97,238,0.12);
-}
+.search-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(67,97,238,0.12); }
 .search-submit-btn {
     padding: 8px 14px;
     background: var(--primary-color);
@@ -102,7 +98,7 @@
 }
 .search-submit-btn:hover { background: var(--secondary-color); }
 
-/* 引擎下拉 */
+/* 引擎下拉菜单 */
 .engine-dropdown {
     position: absolute;
     top: calc(12px + 36px + 6px);
@@ -123,12 +119,7 @@
     scrollbar-width: none;
 }
 .engine-dropdown::-webkit-scrollbar { display: none; }
-.engine-dropdown.active {
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0) scale(1);
-}
+.engine-dropdown.active { visibility: visible; opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
 .engine-dropdown-item {
     display: flex;
     align-items: center;
@@ -140,11 +131,7 @@
     transition: background 0.15s;
 }
 .engine-dropdown-item:hover { background: var(--bg-secondary); }
-.engine-dropdown-item.active {
-    background: rgba(67,97,238,0.08);
-    color: var(--primary-color);
-    font-weight: 500;
-}
+.engine-dropdown-item.active { background: rgba(67,97,238,0.08); color: var(--primary-color); font-weight: 500; }
 .engine-dropdown-item i { width: 20px; text-align: center; font-size: 0.95rem; color: var(--text-secondary); }
 
 /* 联想词 */
@@ -173,7 +160,7 @@
 .suggestion-item:last-child { border-bottom: none; }
 .suggestion-item:hover { background: var(--bg-secondary); }
 
-/* 历史记录面板 */
+/* 历史记录 */
 .history-panel {
     margin-top: 6px;
     padding: 8px 10px;
@@ -208,22 +195,11 @@
 }
 .history-item:hover { background: rgba(0,0,0,0.04); }
 .history-text { flex: 1; overflow: hidden; text-overflow: ellipsis; }
-.delete-history {
-    color: var(--text-secondary);
-    padding: 4px;
-    border-radius: 4px;
-    transition: color 0.15s, background 0.15s;
-}
+.delete-history { color: var(--text-secondary); padding: 4px; border-radius: 4px; transition: color 0.15s, background 0.15s; }
 .delete-history:hover { color: var(--error-color); background: rgba(239,68,68,0.1); }
-.history-empty {
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    padding: 10px 0;
-    margin: 0;
-}
+.history-empty { text-align: center; color: var(--text-secondary); font-size: 0.8rem; padding: 10px 0; margin: 0; }
 
-/* 移动端 */
+/* 移动端适配 */
 @media (max-width: 768px) {
     .search-modal .modal-content {
         top: 16px;
@@ -233,7 +209,5 @@
         max-width: none;
         padding: 10px 12px;
     }
-    .engine-dropdown {
-        width: 150px;
-    }
+    .engine-dropdown { width: 150px; }
 }
