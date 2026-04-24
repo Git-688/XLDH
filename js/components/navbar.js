@@ -18,7 +18,7 @@ class Navbar {
     }
 
     bindEvents() {
-        // ---------- 搜索按钮 ----------
+        // ========== 搜索按钮 ==========
         const searchBtn = document.getElementById('searchBtn');
         if (searchBtn) {
             searchBtn.replaceWith(searchBtn.cloneNode(true));
@@ -29,7 +29,7 @@ class Navbar {
             });
         }
 
-        // ---------- 音乐按钮 ----------
+        // ========== 音乐按钮 ==========
         const musicBtn = document.getElementById('musicBtn');
         if (musicBtn) {
             musicBtn.addEventListener('click', (e) => {
@@ -39,7 +39,7 @@ class Navbar {
             });
         }
 
-        // ---------- 公告按钮 ----------
+        // ========== 公告按钮 ==========
         const annBtn = document.getElementById('announcementBtn');
         if (annBtn) {
             annBtn.replaceWith(annBtn.cloneNode(true));
@@ -50,7 +50,7 @@ class Navbar {
             });
         }
 
-        // ---------- 侧边栏按钮 ----------
+        // ========== 汉堡菜单（侧边栏） ==========
         const menuBtn = document.getElementById('menuBtn');
         if (menuBtn) {
             menuBtn.replaceWith(menuBtn.cloneNode(true));
@@ -61,7 +61,7 @@ class Navbar {
             });
         }
 
-        // ---------- 天气按钮（保留原逻辑，无二次点击问题） ----------
+        // ========== 天气按钮（不参与切换组，单独处理） ==========
         const weatherBtn = document.getElementById('weatherBtn');
         if (weatherBtn) {
             weatherBtn.addEventListener('click', (e) => {
@@ -72,7 +72,7 @@ class Navbar {
             });
         }
 
-        // ---------- 反馈按钮 ----------
+        // ========== 反馈按钮 ==========
         const fbBtn = document.getElementById('floatingFeedbackBtn');
         if (fbBtn) {
             fbBtn.addEventListener('click', (e) => {
@@ -83,7 +83,7 @@ class Navbar {
             });
         }
 
-        // ---------- 投稿按钮 ----------
+        // ========== 投稿按钮 ==========
         const submitBtn = document.getElementById('floatingSubmitBtn');
         if (submitBtn) {
             submitBtn.addEventListener('click', (e) => {
@@ -114,31 +114,22 @@ class Navbar {
         if (btt) btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
-    /**
-     * 统一处理四大功能的切换逻辑：
-     * - 如果当前功能已打开，则直接关闭；
-     * - 如果未打开，则先关闭其他所有浮层，再执行目标功能的 toggle（确保打开）。
-     */
+    // ---------- 核心：统一处理四大功能的切换 ----------
     handleFeatureToggle(featureKey, toggleFn) {
-        // 判断目标功能是否已经打开
         const isOpen = this.isFeatureOpen(featureKey);
-
         if (isOpen) {
-            // 已打开 -> 直接关闭（无需关闭其他）
+            // 功能已打开 → 直接关闭
             toggleFn();
         } else {
-            // 未打开 -> 先关闭其他所有浮层，再打开目标
+            // 功能未打开 → 先关闭其他所有，然后打开目标
             this.closeAllModalsExcept([featureKey]);
-            // 延迟一帧以确保其他关闭的动画不影响目标打开，但 toggleFn 本身会处理显示
             requestAnimationFrame(() => {
                 toggleFn();
             });
         }
     }
 
-    /**
-     * 检测指定功能模块当前是否处于显示状态
-     */
+    // ---------- 检测功能是否打开 ----------
     isFeatureOpen(key) {
         switch (key) {
             case 'search':
@@ -154,9 +145,7 @@ class Navbar {
         }
     }
 
-    /**
-     * 关闭除 keep 之外的所有模态框（立即关闭，无延迟）
-     */
+    // ---------- 关闭除 keep 之外的所有模态框 ----------
     closeAllModalsExcept(keep = []) {
         try {
             if (!keep.includes('music')) this.hideMusicPlayer();
