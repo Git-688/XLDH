@@ -1,32 +1,51 @@
-/* 搜索模态框 — 采用和系统公告相同的显隐方式（visibility + opacity） */
+/* 搜索模态框 — 遮罩透明，内容毛玻璃 */
 .search-modal {
     position: fixed;
-    top: 100px;
-    right: 20px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     z-index: 10000;
+    background: transparent;
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
-    transform: translateY(-10px) scale(0.95);
-    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
-    width: 90%;
-    max-width: 480px;
+    transition: opacity 0.25s ease, visibility 0.25s;
 }
 .search-modal.active {
     visibility: visible;
     opacity: 1;
     pointer-events: auto;
-    transform: translateY(0) scale(1);
 }
+/* 内容卡片：毛玻璃 + 自动定位由 JS 设置 */
 .search-modal .modal-content {
-    background: var(--bg-card);
-    border-radius: 12px;
-    padding: 14px;
-    box-shadow: 0 14px 36px rgba(0,0,0,0.14);
-    border: 1px solid var(--border-color);
+    position: absolute;
+    width: 90%;
+    max-width: 480px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    transform: translateY(-10px) scale(0.95);
+    opacity: 0;
+}
+.search-modal.active .modal-content {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+/* 深色模式毛玻璃 */
+@media (prefers-color-scheme: dark) {
+    .search-modal .modal-content {
+        background: rgba(30, 30, 30, 0.8);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
 }
 
-/* 搜索栏：引擎图标 - 输入框 - 搜索按钮 */
+/* ---------- 内部组件保持不变 ---------- */
 .search-bar {
     display: flex;
     align-items: center;
@@ -51,9 +70,7 @@
     border-color: var(--primary-color);
     color: var(--primary-color);
 }
-.engine-trigger-btn i {
-    font-size: 1.1rem;
-}
+.engine-trigger-btn i { font-size: 1.1rem; }
 .search-input {
     flex: 1;
     border: 1px solid var(--border-color);
@@ -81,15 +98,11 @@
     transition: background 0.2s;
     white-space: nowrap;
 }
-.search-submit-btn:hover {
-    background: var(--secondary-color);
-}
+.search-submit-btn:hover { background: var(--secondary-color); }
 
-/* 搜索引擎下拉菜单 */
+/* 引擎下拉 */
 .engine-dropdown {
     position: absolute;
-    top: calc(14px + 38px + 8px);
-    left: 14px;
     width: 180px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -104,10 +117,10 @@
     transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
     pointer-events: none;
     scrollbar-width: none;
+    top: calc(100% + 6px);
+    left: 14px;
 }
-.engine-dropdown::-webkit-scrollbar {
-    display: none;
-}
+.engine-dropdown::-webkit-scrollbar { display: none; }
 .engine-dropdown.active {
     visibility: visible;
     opacity: 1;
@@ -124,22 +137,15 @@
     cursor: pointer;
     transition: background 0.15s;
 }
-.engine-dropdown-item:hover {
-    background: var(--bg-secondary);
-}
+.engine-dropdown-item:hover { background: var(--bg-secondary); }
 .engine-dropdown-item.active {
     background: rgba(67,97,238,0.08);
     color: var(--primary-color);
     font-weight: 500;
 }
-.engine-dropdown-item i {
-    width: 20px;
-    text-align: center;
-    font-size: 1rem;
-    color: var(--text-secondary);
-}
+.engine-dropdown-item i { width: 20px; text-align: center; font-size: 1rem; color: var(--text-secondary); }
 
-/* 百度联想词 */
+/* 联想词 */
 .suggestions {
     max-height: 190px;
     overflow-y: auto;
@@ -152,13 +158,8 @@
     background: var(--bg-card);
     scrollbar-width: none;
 }
-.suggestions::-webkit-scrollbar {
-    display: none;
-}
-.suggestions.active {
-    visibility: visible;
-    opacity: 1;
-}
+.suggestions::-webkit-scrollbar { display: none; }
+.suggestions.active { visibility: visible; opacity: 1; }
 .suggestion-item {
     padding: 10px 14px;
     font-size: 0.88rem;
@@ -167,14 +168,10 @@
     border-bottom: 1px solid var(--border-color);
     transition: background 0.15s;
 }
-.suggestion-item:last-child {
-    border-bottom: none;
-}
-.suggestion-item:hover {
-    background: var(--bg-secondary);
-}
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover { background: var(--bg-secondary); }
 
-/* 历史记录面板 */
+/* 历史记录 */
 .history-panel {
     margin-top: 8px;
     padding: 10px;
@@ -184,9 +181,7 @@
     overflow-y: auto;
     scrollbar-width: none;
 }
-.history-panel::-webkit-scrollbar {
-    display: none;
-}
+.history-panel::-webkit-scrollbar { display: none; }
 .history-title {
     display: flex;
     justify-content: space-between;
@@ -196,15 +191,8 @@
     color: var(--text-secondary);
     margin-bottom: 8px;
 }
-.clear-history-btn {
-    cursor: pointer;
-    color: var(--primary-color);
-    font-size: 0.8rem;
-    transition: opacity 0.2s;
-}
-.clear-history-btn:hover {
-    opacity: 0.8;
-}
+.clear-history-btn { cursor: pointer; color: var(--primary-color); font-size: 0.8rem; transition: opacity 0.2s; }
+.clear-history-btn:hover { opacity: 0.8; }
 .history-item {
     display: flex;
     justify-content: space-between;
@@ -216,61 +204,24 @@
     color: var(--text-primary);
     transition: background 0.1s;
 }
-.history-item:hover {
-    background: rgba(0,0,0,0.04);
-}
-.history-text {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+.history-item:hover { background: rgba(0,0,0,0.04); }
+.history-text { flex: 1; overflow: hidden; text-overflow: ellipsis; }
 .delete-history {
     color: var(--text-secondary);
     padding: 4px;
     border-radius: 4px;
     transition: color 0.15s, background 0.15s;
 }
-.delete-history:hover {
-    color: var(--error-color);
-    background: rgba(239,68,68,0.1);
-}
-.history-empty {
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    padding: 12px 0;
-}
+.delete-history:hover { color: var(--error-color); background: rgba(239,68,68,0.1); }
+.history-empty { text-align: center; color: var(--text-secondary); font-size: 0.8rem; padding: 12px 0; }
 
-/* 移动端优化 */
+/* 移动端削弱模糊 */
 @media (max-width: 768px) {
-    .search-modal {
-        right: 5%;
-        left: 5%;
-        width: 90%;
-        margin: 0 auto;
-        top: 80px;
+    .search-modal .modal-content {
+        width: 94%;
+        max-width: none;
+        left: 3%;
+        right: 3%;
     }
-    .search-bar {
-        gap: 6px;
-    }
-    .engine-dropdown {
-        width: 160px;
-    }
-}
-@media (max-width: 480px) {
-    .search-modal {
-        top: 70px;
-    }
-    .engine-trigger-btn {
-        width: 34px;
-        height: 34px;
-    }
-    .search-input {
-        padding: 8px 10px;
-        font-size: 0.9rem;
-    }
-    .search-submit-btn {
-        padding: 8px 14px;
-        font-size: 0.85rem;
-    }
+    .engine-dropdown { width: 160px; }
 }
