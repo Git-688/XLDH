@@ -1,18 +1,21 @@
-/* 搜索模态框 - 位置下移至 100px */
+/* 搜索模态框 — 采用和系统公告相同的显隐方式（visibility + opacity） */
 .search-modal {
     position: fixed;
     top: 100px;
     right: 20px;
     z-index: 10000;
-    display: none;
+    visibility: hidden;
     opacity: 0;
+    pointer-events: none;
+    transform: translateY(-10px) scale(0.95);
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
     width: 90%;
     max-width: 480px;
-    transform: translateY(-10px) scale(0.95);
-    transition: opacity 0.25s ease, transform 0.25s ease;
 }
 .search-modal.active {
+    visibility: visible;
     opacity: 1;
+    pointer-events: auto;
     transform: translateY(0) scale(1);
 }
 .search-modal .modal-content {
@@ -85,7 +88,7 @@
 /* 搜索引擎下拉菜单（自定义，绝对定位） */
 .engine-dropdown {
     position: absolute;
-    top: calc(14px + 38px + 8px); /* 紧贴搜索栏下方 */
+    top: calc(14px + 38px + 8px);
     left: 14px;
     width: 180px;
     background: var(--bg-card);
@@ -95,18 +98,20 @@
     z-index: 10001;
     max-height: 240px;
     overflow-y: auto;
-    display: none;
+    visibility: hidden;
     opacity: 0;
     transform: translateY(-6px) scale(0.95);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    scrollbar-width: none; /* Firefox */
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    pointer-events: none;
+    scrollbar-width: none;
 }
 .engine-dropdown::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+    display: none;
 }
 .engine-dropdown.active {
-    display: block;
+    visibility: visible;
     opacity: 1;
+    pointer-events: auto;
     transform: translateY(0) scale(1);
 }
 .engine-dropdown-item {
@@ -141,7 +146,9 @@
     border: 1px solid var(--border-color);
     border-radius: 8px;
     margin: 8px 0;
-    display: none;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.15s, visibility 0.15s;
     background: var(--bg-card);
     scrollbar-width: none;
 }
@@ -149,7 +156,8 @@
     display: none;
 }
 .suggestions.active {
-    display: block;
+    visibility: visible;
+    opacity: 1;
 }
 .suggestion-item {
     padding: 10px 14px;
