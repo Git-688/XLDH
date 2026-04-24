@@ -1,4 +1,4 @@
-/* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角统一 + 个人资料模态框小型化 */
+/* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角统一 + 个人资料模态框小型化 + 左边距对齐主页 */
 .sidebar {
     position: fixed;
     left: -300px;
@@ -23,9 +23,9 @@
     -ms-user-select: none !important;
 }
 
-/* 侧滑栏展开状态 */
+/* 侧滑栏展开状态 - 左边距对齐主页容器 */
 .sidebar.active {
-    left: 24px;
+    left: var(--container-padding-xs);      /* <576px：16px */
     transform: translateX(0);
     visibility: visible;
     pointer-events: auto;
@@ -35,7 +35,6 @@
 .sidebar-wallpaper {
     position: relative;
     width: 100%;
-    /* 壁纸高度自适应，保持宽高比 */
     height: auto;
     aspect-ratio: 16/9;
     background: transparent;
@@ -47,7 +46,6 @@
     border-radius: 8px 8px 0 0;
 }
 
-/* 用户信息区域允许点击 */
 .sidebar-wallpaper-user-info {
     position: absolute;
     left: 16px;
@@ -115,7 +113,6 @@
     text-overflow: ellipsis;
 }
 
-/* 视频/图片壁纸样式 - 核心：宽度100%、完整显示不裁切 */
 .sidebar-wallpaper video,
 .sidebar-wallpaper img {
     position: absolute;
@@ -123,7 +120,6 @@
     left: 0;
     width: 100%;
     height: 100%;
-    /* 核心：contain保证完整显示，不裁切 */
     object-fit: contain;
     z-index: 0;
     display: block !important;
@@ -142,7 +138,6 @@
     appearance: none;
 }
 
-/* 壁纸覆盖层优化 */
 .sidebar-wallpaper-overlay {
     position: absolute;
     top: 0;
@@ -160,7 +155,6 @@
     border-radius: inherit;
 }
 
-/* 侧滑栏内容区域 */
 .sidebar-content {
     flex: 1;
     display: flex;
@@ -170,7 +164,6 @@
     border-radius: 0 0 8px 8px;
 }
 
-/* 每日一言卡片 */
 .daily-quote-card {
     margin: 12px 15px;
     padding: 12px 15px;
@@ -182,9 +175,7 @@
     flex-shrink: 0;
 }
 
-.quote-icon {
-    display: none;
-}
+.quote-icon { display: none; }
 
 .daily-quote-card p {
     font-size: 12px;
@@ -196,7 +187,6 @@
     overflow-wrap: break-word;
 }
 
-/* 分类容器 */
 .categories-container {
     flex: 1;
     overflow-y: auto;
@@ -207,17 +197,10 @@
     overscroll-behavior: contain;
 }
 
-.categories-container::-webkit-scrollbar {
-    display: none;
-}
+.categories-container::-webkit-scrollbar { display: none; }
 
-.sidebar-categories {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
+.sidebar-categories { display: flex; flex-direction: column; gap: 8px; }
 
-/* 分类组 */
 .category-group {
     background: rgba(255, 255, 255, 0.5);
     border: 1px solid rgba(0, 0, 0, 0.06);
@@ -241,9 +224,7 @@
     user-select: none;
 }
 
-.category-group-header:hover {
-    background: rgba(67, 97, 238, 0.06);
-}
+.category-group-header:hover { background: rgba(67, 97, 238, 0.06); }
 
 .category-group-name {
     font-size: 13px;
@@ -284,9 +265,7 @@
     border-radius: 4px;
 }
 
-.category-group.expanded .category-toggle {
-    transform: rotate(180deg);
-}
+.category-group.expanded .category-toggle { transform: rotate(180deg); }
 
 .category-items {
     max-height: 0;
@@ -295,9 +274,7 @@
     background: rgba(0, 0, 0, 0.01);
 }
 
-.category-group.expanded .category-items {
-    max-height: 500px;
-}
+.category-group.expanded .category-items { max-height: 500px; }
 
 .category-item {
     display: flex;
@@ -318,9 +295,7 @@
     color: #4361ee;
 }
 
-.category-item:active {
-    background: rgba(67, 97, 238, 0.12);
-}
+.category-item:active { background: rgba(67, 97, 238, 0.12); }
 
 .category-icon {
     width: 16px;
@@ -398,7 +373,6 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* 按钮左侧色条标识 */
 .footer-btn::before {
     content: '';
     position: absolute;
@@ -416,23 +390,12 @@
 .footer-btn:nth-child(3)::before { background: #f72585; }
 .footer-btn:nth-child(4)::before { background: #4cc9f0; }
 
-.footer-btn i {
-    font-size: 13px;
-}
+.footer-btn i { font-size: 13px; }
 
-/* 底部按钮图标颜色 */
-.footer-btn:nth-child(1) i {
-    color: #8b5cf6;  /* 星聚笔记 - 紫色 */
-}
-.footer-btn:nth-child(2) i {
-    color: #7209b7;  /* 羊毛福利 */
-}
-.footer-btn:nth-child(3) i {
-    color: #f72585;  /* 关于网站 */
-}
-.footer-btn:nth-child(4) i {
-    color: #4cc9f0;  /* QQ群 */
-}
+.footer-btn:nth-child(1) i { color: #8b5cf6; }
+.footer-btn:nth-child(2) i { color: #7209b7; }
+.footer-btn:nth-child(3) i { color: #f72585; }
+.footer-btn:nth-child(4) i { color: #4cc9f0; }
 
 /* QQ头像状态样式 */
 .qq-avatar-status {
@@ -441,15 +404,9 @@
     text-align: center;
     transition: all 0.3s ease;
 }
-.qq-avatar-status.loading {
-    color: var(--primary-color, #4361ee);
-}
-.qq-avatar-status.success {
-    color: var(--success-color, #10b981);
-}
-.qq-avatar-status.error {
-    color: var(--error-color, #ef4444);
-}
+.qq-avatar-status.loading { color: var(--primary-color, #4361ee); }
+.qq-avatar-status.success { color: var(--success-color, #10b981); }
+.qq-avatar-status.error { color: var(--error-color, #ef4444); }
 
 /* ========== 个人资料设置模态框（小型化 + 亚克力 + 无黑色遮罩） ========== */
 .profile-modal {
@@ -458,7 +415,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: transparent;          /* 移除黑色半透明遮罩 */
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -466,7 +423,7 @@
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
-    pointer-events: none;             /* 未显示时不阻止点击 */
+    pointer-events: none;
 }
 
 .profile-modal.active {
@@ -475,16 +432,15 @@
     pointer-events: auto;
 }
 
-/* 模态框内容 - 亚克力效果，尺寸缩小 */
 .profile-modal-content {
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(30px) saturate(180%);
     -webkit-backdrop-filter: blur(30px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.5);
-    border-radius: 12px;              /* 圆角可按需调整 */
+    border-radius: 12px;
     padding: 18px 16px;
     width: 90%;
-    max-width: 280px;                 /* 更窄的宽度 */
+    max-width: 280px;
     max-height: 70vh;
     overflow-y: auto;
     transform: translateY(20px);
@@ -492,28 +448,15 @@
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
 }
 
-.profile-modal.active .profile-modal-content {
-    transform: translateY(0);
-}
+.profile-modal.active .profile-modal-content { transform: translateY(0); }
+.profile-modal-close { display: none; }
 
-.profile-modal-close {
-    display: none;
-}
+.profile-form { display: flex; flex-direction: column; gap: 12px; }
 
-.profile-form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;                        /* 减小间距 */
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
+.form-group { display: flex; flex-direction: column; gap: 4px; }
 
 .form-label {
-    font-size: 12px;                  /* 缩小字体 */
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-primary);
 }
@@ -522,7 +465,7 @@
     padding: 8px 10px;
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 6px;
-    font-size: 13px;                  /* 缩小输入框字体 */
+    font-size: 13px;
     transition: all 0.2s ease;
     background: rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(5px);
@@ -536,7 +479,7 @@
 
 .form-textarea {
     resize: vertical;
-    min-height: 60px;                 /* 减小文本域高度 */
+    min-height: 60px;
     font-family: inherit;
 }
 
@@ -551,7 +494,7 @@
 }
 
 .qq-avatar-preview {
-    width: 48px;                      /* 缩小头像预览 */
+    width: 48px;
     height: 48px;
     border-radius: 50%;
     overflow: hidden;
@@ -559,32 +502,13 @@
     flex-shrink: 0;
 }
 
-.qq-avatar-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+.qq-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
 
-.qq-avatar-input-group {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
+.qq-avatar-input-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.qq-avatar-input { width: 100%; }
+.get-qq-avatar-btn { display: none; }
 
-.qq-avatar-input {
-    width: 100%;
-}
-
-.get-qq-avatar-btn {
-    display: none;
-}
-
-.profile-modal-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 8px;
-}
+.profile-modal-actions { display: flex; gap: 10px; margin-top: 8px; }
 
 .profile-save-btn {
     flex: 1;
@@ -593,7 +517,7 @@
     color: white;
     border: none;
     border-radius: 6px;
-    font-size: 13px;                  /* 缩小按钮文字 */
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -622,187 +546,107 @@
     color: var(--text-primary);
 }
 
-/* 桌面端适配 */
-@media (min-width: 1200px) {
-    .sidebar {
-        width: 300px;
-        border-radius: 8px;           /* 保持圆角一致 */
-    }
+/* ===================== 响应式边距对齐主页容器 ===================== */
+/* 移动端优先（<576px）已在默认 .sidebar.active 中使用 --container-padding-xs */
+
+/* >= 576px */
+@media (min-width: 576px) {
     .sidebar.active {
-        left: 32px;
-    }
-    .sidebar-wallpaper {
-        aspect-ratio: 16/9;
-        border-radius: 8px 8px 0 0;
-    }
-    .sidebar-wallpaper-nickname {
-        font-size: 20px;
-    }
-    .sidebar-wallpaper-avatar {
-        width: 72px;
-        height: 72px;
+        left: var(--container-padding-sm);      /* 20px */
     }
 }
 
-/* 平板端适配 */
-@media (min-width: 768px) and (max-width: 1199px) {
+/* >= 768px */
+@media (min-width: 768px) {
     .sidebar {
-        width: 280px;
-        border-radius: 8px;
+        width: 260px;                     /* 保留原有宽度调整 */
     }
     .sidebar.active {
-        left: 20px;
+        left: var(--container-padding-md);      /* 24px */
     }
-}
-
-/* 移动端适配 */
-@media (max-width: 768px) {
-    .sidebar {
-        width: 260px;
-        left: -280px;
-        border-radius: 8px;
-    }
-    .sidebar.active {
-        left: 16px;
-    }
-    .sidebar-wallpaper {
-        aspect-ratio: 16/9;
-        border-radius: 8px 8px 0 0;
-    }
+    .sidebar-wallpaper { aspect-ratio: 16/9; }
     .sidebar-wallpaper-user-info {
         left: 12px;
         bottom: 12px;
         gap: 12px;
         max-width: calc(100% - 24px);
     }
-    .sidebar-wallpaper-avatar {
-        width: 56px;
-        height: 56px;
-    }
-    .sidebar-wallpaper-nickname {
-        font-size: 16px;
-    }
-    .sidebar-wallpaper-signature {
-        font-size: 11px;
-    }
-    .categories-container {
-        padding: 0 12px 12px;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
+    .sidebar-wallpaper-avatar { width: 56px; height: 56px; }
+    .sidebar-wallpaper-nickname { font-size: 16px; }
+    .sidebar-wallpaper-signature { font-size: 11px; }
+    .categories-container { padding: 0 12px 12px; }
     .sidebar-footer {
         padding: 10px 12px;
         padding-bottom: max(10px, env(safe-area-inset-bottom));
-        border-radius: 0 0 8px 8px;
     }
-    .profile-modal-content {
-        max-width: 300px;
-        max-height: 65vh;
+    .profile-modal-content { max-width: 300px; max-height: 65vh; }
+}
+
+/* >= 992px */
+@media (min-width: 992px) {
+    .sidebar.active {
+        left: var(--container-padding-lg);      /* 28px */
     }
 }
 
-/* 超小屏幕适配 */
+/* >= 1200px */
+@media (min-width: 1200px) {
+    .sidebar {
+        width: 300px;
+    }
+    .sidebar.active {
+        left: var(--container-padding-xl);      /* 32px */
+    }
+    .sidebar-wallpaper { aspect-ratio: 16/9; }
+    .sidebar-wallpaper-nickname { font-size: 20px; }
+    .sidebar-wallpaper-avatar { width: 72px; height: 72px; }
+}
+
+/* 超小屏保留原有宽度调整，left 保持与基础一致（仍为 xs） */
 @media (max-width: 575px) {
     .sidebar {
         width: 240px;
         left: -260px;
-        border-radius: 8px;
     }
-    .sidebar.active {
-        left: 12px;
-    }
-    .sidebar-wallpaper {
-        aspect-ratio: 16/9;
-        border-radius: 8px 8px 0 0;
-    }
+    /* 注意：left 已有默认值，此处不再重复设置 */
+    .sidebar-wallpaper { aspect-ratio: 16/9; border-radius: 8px 8px 0 0; }
     .sidebar-wallpaper-user-info {
         left: 10px;
         bottom: 10px;
         gap: 10px;
         max-width: calc(100% - 20px);
     }
-    .sidebar-wallpaper-avatar {
-        width: 48px;
-        height: 48px;
-        border-width: 2px;
-    }
-    .sidebar-wallpaper-nickname {
-        font-size: 15px;
-    }
-    .sidebar-wallpaper-signature {
-        font-size: 10px;
-    }
-    .sidebar-footer {
-        padding: 8px 10px;
-        gap: 6px;
-        padding-bottom: max(12px, env(safe-area-inset-bottom));
-        border-radius: 0 0 8px 8px;
-    }
-    .profile-modal-content {
-        max-width: 280px;
-        max-height: 60vh;
-        padding: 16px;
-    }
+    .sidebar-wallpaper-avatar { width: 48px; height: 48px; border-width: 2px; }
+    .sidebar-wallpaper-nickname { font-size: 15px; }
+    .sidebar-wallpaper-signature { font-size: 10px; }
+    .sidebar-footer { padding: 8px 10px; gap: 6px; }
+    .profile-modal-content { max-width: 280px; max-height: 60vh; padding: 16px; }
 }
 
-/* 横屏小高度适配 */
+/* 横屏小高度 */
 @media (max-height: 500px) and (orientation: landscape) {
-    .sidebar-wallpaper {
-        aspect-ratio: 21/9;
-    }
-    .sidebar-wallpaper-user-info {
-        left: 12px;
-        bottom: 12px;
-    }
-    .sidebar-wallpaper-avatar {
-        width: 44px;
-        height: 44px;
-    }
-    .sidebar-wallpaper-nickname {
-        font-size: 14px;
-    }
-    .sidebar-wallpaper-signature {
-        font-size: 10px;
-    }
+    .sidebar-wallpaper { aspect-ratio: 21/9; }
+    .sidebar-wallpaper-user-info { left: 12px; bottom: 12px; }
+    .sidebar-wallpaper-avatar { width: 44px; height: 44px; }
+    .sidebar-wallpaper-nickname { font-size: 14px; }
+    .sidebar-wallpaper-signature { font-size: 10px; }
 }
 
-/* 超大屏适配 */
+/* 超大屏 */
 @media (min-width: 1920px) {
-    .sidebar {
-        width: 320px;
-        border-radius: 8px;
-    }
-    .sidebar.active {
-        left: 40px;
-    }
-    .sidebar-wallpaper {
-        aspect-ratio: 16/9;
-    }
-    .sidebar-wallpaper-user-info {
-        left: 20px;
-        bottom: 20px;
-        gap: 20px;
-    }
-    .sidebar-wallpaper-avatar {
-        width: 80px;
-        height: 80px;
-    }
-    .sidebar-wallpaper-nickname {
-        font-size: 22px;
-    }
-    .sidebar-wallpaper-signature {
-        font-size: 14px;
-    }
+    .sidebar { width: 320px; }
+    .sidebar.active { left: var(--container-padding-xl); } /* 32px */
+    .sidebar-wallpaper { aspect-ratio: 16/9; }
+    .sidebar-wallpaper-user-info { left: 20px; bottom: 20px; gap: 20px; }
+    .sidebar-wallpaper-avatar { width: 80px; height: 80px; }
+    .sidebar-wallpaper-nickname { font-size: 22px; }
+    .sidebar-wallpaper-signature { font-size: 14px; }
 }
 
 /* 安全区域支持 */
 @supports (padding: max(0px)) {
-    .sidebar {
-        padding-bottom: env(safe-area-inset-bottom);
-    }
-    .sidebar-footer {
-        padding-bottom: max(16px, env(safe-area-inset-bottom));
-    }
+    .sidebar { padding-bottom: env(safe-area-inset-bottom); }
+    .sidebar-footer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
 }
 
 /* iOS Safari 特定修复 */
@@ -811,14 +655,11 @@
         height: -webkit-fill-available;
         max-height: -webkit-fill-available;
     }
-    .categories-container {
-        -webkit-overflow-scrolling: touch;
-    }
+    .categories-container { -webkit-overflow-scrolling: touch; }
     .sidebar-wallpaper {
         -webkit-touch-callout: none !important;
         -webkit-user-select: none !important;
     }
-    /* 毛玻璃兼容 */
     .sidebar {
         -webkit-backdrop-filter: blur(28px) saturate(180%);
         backdrop-filter: blur(28px) saturate(180%);
@@ -865,19 +706,10 @@
         background: rgba(67, 97, 238, 0.08);
         border-color: rgba(67, 97, 238, 0.15);
     }
-    .footer-btn:nth-child(1) i {
-        color: #a78bfa;
-    }
-    .footer-btn:nth-child(2) i {
-        color: #b5179e;
-    }
-    .footer-btn:nth-child(3) i {
-        color: #f72585;
-    }
-    .footer-btn:nth-child(4) i {
-        color: #4895ef;
-    }
-    /* 个人资料模态框暗色适配 */
+    .footer-btn:nth-child(1) i { color: #a78bfa; }
+    .footer-btn:nth-child(2) i { color: #b5179e; }
+    .footer-btn:nth-child(3) i { color: #f72585; }
+    .footer-btn:nth-child(4) i { color: #4895ef; }
     .profile-modal-content {
         background: rgba(30, 30, 30, 0.75);
         border-color: rgba(255, 255, 255, 0.15);
@@ -895,39 +727,19 @@
         background: rgba(67, 97, 238, 0.1);
         border-color: rgba(67, 97, 238, 0.2);
     }
-    .profile-cancel-btn {
-        background: rgba(255, 255, 255, 0.1);
-        color: #adb5bd;
-    }
-    .profile-cancel-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-    }
-    .qq-avatar-status.loading {
-        color: #4cc9f0;
-    }
-    .qq-avatar-status.success {
-        color: #10b981;
-    }
-    .qq-avatar-status.error {
-        color: #ef4444;
-    }
-    .category-item {
-        color: #adb5bd;
-    }
-    .category-item:hover {
-        color: #4361ee;
-    }
+    .profile-cancel-btn { background: rgba(255, 255, 255, 0.1); color: #adb5bd; }
+    .profile-cancel-btn:hover { background: rgba(255, 255, 255, 0.2); color: white; }
+    .qq-avatar-status.loading { color: #4cc9f0; }
+    .qq-avatar-status.success { color: #10b981; }
+    .qq-avatar-status.error { color: #ef4444; }
+    .category-item { color: #adb5bd; }
+    .category-item:hover { color: #4361ee; }
 }
 
 /* 壁纸淡入动画 */
 @keyframes wallpaperFadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 .sidebar-wallpaper video,
 .sidebar-wallpaper img {
