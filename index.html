@@ -33,13 +33,10 @@
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
     
     <!-- ===== 优化2：FontAwesome 按需加载 ===== -->
-    <!-- 核心样式（必须） -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
-    <!-- 按需引入图标类型：solid（实心）、brands（品牌）、regular（常规） -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/regular.min.css">
-    <!-- ===== 优化2结束 ===== -->
     
     <!-- 预连接关键域名 -->
     <link rel="preconnect" href="https://api.xldh688.eu.cc">
@@ -100,7 +97,6 @@
             transform: scale(1) translateY(0);
             opacity: 1;
         }
-        /* 头部尺寸保持不变，仅标题字体调整为正常大小 */
         .feedback-modal-header {
             display: flex;
             justify-content: space-between;
@@ -154,7 +150,6 @@
         .feedback-modal-body::-webkit-scrollbar {
             display: none;
         }
-        /* 移动端：高度90% · 保留边距 */
         @media (max-width: 600px) {
             .feedback-modal {
                 padding: var(--container-padding-xs, 16px);
@@ -190,7 +185,6 @@
                 font-size: 22px;
             }
         }
-        /* 桌面端头部字体调整 */
         @media (min-width: 601px) {
             .feedback-modal-header {
                 padding: 10px 16px;
@@ -202,7 +196,6 @@
                 padding: 16px 20px;
             }
         }
-        /* 暗色模式 */
         @media (prefers-color-scheme: dark) {
             .feedback-modal-content {
                 background: #2a2a2a;
@@ -219,7 +212,6 @@
                 background: rgba(255, 255, 255, 0.08);
             }
         }
-        /* 公式提示卡片样式 */
         .math-hint {
             padding: 8px 12px;
             background: #f8f9fa;
@@ -246,7 +238,6 @@
             font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
             font-size: 11px;
         }
-        /* 悬浮按钮新样式 */
         .floating-btn.feedback-btn {
             color: #8b5cf6;
         }
@@ -260,9 +251,8 @@
             color: #0891b2;
         }
 
-        /* ====== 星聚笔记模态框：无遮罩 + 毛玻璃内容 ====== */
         #notebookModal {
-            background: transparent;          /* 完全透明，无遮罩 */
+            background: transparent;
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
         }
@@ -273,18 +263,13 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             border-radius: 16px;
-            /* 宽度由默认 .feedback-modal-content 的 max-width: 600px 控制，与反馈模态一致 */
         }
-
-        /* 深色模式毛玻璃适配 */
         @media (prefers-color-scheme: dark) {
             #notebookModal .feedback-modal-content {
                 background: rgba(30, 30, 30, 0.85);
                 border-color: rgba(255, 255, 255, 0.1);
             }
         }
-
-        /* 笔记列表容器 */
         .notebook-list {
             display: flex;
             flex-direction: column;
@@ -298,8 +283,6 @@
         .notebook-list::-webkit-scrollbar {
             display: none;
         }
-
-        /* 笔记卡片 */
         .notebook-item {
             background: rgba(255, 255, 255, 0.5);
             backdrop-filter: blur(5px);
@@ -313,8 +296,6 @@
             border-color: var(--primary-color);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
-
-        /* 卡片头部 */
         .notebook-header {
             display: flex;
             justify-content: space-between;
@@ -338,8 +319,6 @@
             align-items: center;
             gap: 4px;
         }
-
-        /* 卡片标题 */
         .notebook-title {
             font-size: 17px;
             font-weight: 700;
@@ -347,8 +326,6 @@
             margin-bottom: 10px;
             line-height: 1.3;
         }
-
-        /* 卡片内容 */
         .notebook-content {
             font-size: 14px;
             color: var(--text-secondary);
@@ -362,8 +339,6 @@
             -webkit-backdrop-filter: blur(4px);
             border: 1px solid rgba(0, 0, 0, 0.03);
         }
-
-        /* 深色模式卡片毛玻璃 */
         @media (prefers-color-scheme: dark) {
             .notebook-item {
                 background: rgba(40, 40, 40, 0.6);
@@ -376,8 +351,6 @@
                 background: rgba(30, 30, 30, 0.6);
             }
         }
-
-        /* 加载/空/错误状态 */
         .notebook-list .loading,
         .notebook-list .empty,
         .notebook-list .error {
@@ -389,8 +362,6 @@
         .notebook-list .error {
             color: var(--error-color);
         }
-
-        /* 移动端缩小尺寸 */
         @media (max-width: 768px) {
             .notebook-item {
                 padding: 12px 14px;
@@ -551,7 +522,7 @@
             </div>
         </div>
     </footer>
-    <!-- 修改后的悬浮按钮区域：用户反馈 + 网站投稿 -->
+    <!-- 悬浮按钮区域 -->
     <div class="floating-buttons">
         <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
         <button class="floating-btn feedback-btn" id="floatingFeedbackBtn" aria-label="用户反馈"><i class="fas fa-comment"></i></button>
@@ -615,19 +586,33 @@
             <div class="tab-content" id="local-content"><div class="content-container"><div class="playlist-container" id="local-playlist-container"><div class="loading">加载本地歌曲中...</div></div></div></div>
         </div>
     </div>
-    <audio id="audio-element" preload="metadata">
-    <div class="search-modal" id="searchModal" style="display: none;">
-        <div class="modal-content">
-            <div class="search-header"><i class="fas fa-search search-icon"></i><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." onkeydown="handleSearch(event)" oninput="showSuggestions(this.value)"><div class="suggestions" id="suggestions"></div></div>
-            <div class="engine-selector" id="engineSelector"></div>
-            <div class="toolbar"><button class="toolbar-btn" onclick="togglePanel('history')"><i class="fas fa-history"></i> 历史</button><button class="toolbar-btn" onclick="togglePanel('settings')"><i class="fas fa-cog"></i> 设置</button></div>
-            <div class="history-panel" id="historyPanel"></div>
-            <div class="settings-panel" id="settingsPanel"><div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">添加自定义搜索引擎</div><div class="custom-engine-form"><input type="text" id="customName" placeholder="引擎名称（如：知乎）"><input type="text" id="customUrl" placeholder="搜索URL（如：https://www.zhihu.com/search?q=%s）"><input type="text" id="customIcon" placeholder="图标：FontAwesome类名或图片URL"><button onclick="addCustomEngine()">添加引擎</button></div></div>
+    <audio id="audio-element" preload="metadata"></audio>
+<!-- 搜索模态框 - 全新设计 -->
+<div class="search-modal" id="searchModal" style="display: none;">
+    <div class="modal-content">
+        <div class="search-header">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." onkeydown="window.newSearchModule.handleSearch(event)" oninput="window.newSearchModule.showSuggestions()" autocomplete="off">
+            <button id="searchSubmitBtn" class="search-submit-btn" onclick="window.newSearchModule.submitSearch()">搜索</button>
+        </div>
+        <div class="search-engines" id="searchEngines">
+            <!-- 引擎按钮通过JS动态生成 -->
+        </div>
+        <div class="suggestions" id="suggestions"></div>
+        <div class="history-panel" id="historyPanel">
+            <div class="history-title">
+                <span>历史记录</span>
+                <span id="clearHistory" style="cursor:pointer;color:var(--primary-color);margin-left:auto;">清除</span>
+            </div>
+            <div id="historyList"></div>
         </div>
     </div>
+</div>
+
+    <!-- 引擎提示工具（可保留，新模块不依赖它） -->
     <div class="engine-tooltip" id="engineTooltip"></div>
 </main>
-<!-- 反馈模态框（Twikoo评论区） -->
+<!-- 反馈模态框 -->
 <div id="feedbackModal" class="feedback-modal" style="display: none;">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
@@ -640,7 +625,7 @@
     </div>
 </div>
 
-<!-- 星聚笔记模态框（无遮罩，毛玻璃内容） -->
+<!-- 星聚笔记模态框 -->
 <div id="notebookModal" class="feedback-modal" style="display: none;">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
