@@ -1,4 +1,4 @@
-/* about.css - 亚克力效果 + 无黑遮罩 + 8px 圆角 + 仅移动端/桌面端适配 */
+/* about.css - 亚克力效果 + 无黑遮罩 + 8px 圆角 + 简化适配 */
 .about-modal {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     position: fixed;
@@ -6,14 +6,14 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: transparent;          /* 无黑色遮罩 */
+    background: transparent;
     display: none;
     align-items: center;
     justify-content: center;
     z-index: 10000;
     opacity: 0;
     transition: opacity 0.3s ease;
-    padding: 0 16px;                  /* 移动端左右间距 16px */
+    padding: 0 16px;
     box-sizing: border-box;
 }
 
@@ -34,7 +34,7 @@
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
     max-width: 500px;
     width: 100%;
-    max-height: 75vh;                 /* 移动端高度 */
+    max-height: 70vh;                 /* 统一高度 */
     transform: scale(0.8);
     transition: transform 0.3s ease;
 }
@@ -293,18 +293,12 @@
 
 .qq-btn { background: #6BC5FF; }
 .qq-btn:hover { background: #5AB5EF; }
-
 .wechat-btn { background: #7ED321; }
 .wechat-btn:hover { background: #6EC312; }
-
 .donate-btn { background: #FF7B7B; }
 .donate-btn:hover { background: #FF6B6B; }
-
 .space-btn { background: #FFD166; }
 .space-btn:hover { background: #FFC952; }
-
-.diary-btn { background: #A58BFF; }
-.diary-btn:hover { background: #9575E5; }
 
 .about-social-btn .tooltip-text {
     visibility: hidden;
@@ -323,7 +317,6 @@
     transition: opacity 0.3s;
     font-size: 10px;
 }
-
 .about-social-btn .tooltip-text::after {
     content: "";
     position: absolute;
@@ -334,7 +327,6 @@
     border-style: solid;
     border-color: var(--text-primary) transparent transparent transparent;
 }
-
 .about-social-btn:hover .tooltip-text { visibility: visible; opacity: 1; }
 
 .about-close-btn {
@@ -354,14 +346,13 @@
     min-width: 80px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-
 .about-close-btn:hover {
     background: #6EC312;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* ========== 爱发电/收款模态框（完全对齐关于网站）========== */
+/* ========== 爱发电/收款模态框（尺寸与关于网站完全一致）========== */
 .donate-modal {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     position: fixed;
@@ -376,15 +367,13 @@
     z-index: 10001;
     opacity: 0;
     transition: opacity 0.3s ease;
-    padding: 0 16px;                  /* 移动端一致 */
+    padding: 0 16px;
     box-sizing: border-box;
 }
-
 .donate-modal.active {
     opacity: 1;
     display: flex;
 }
-
 .donate-modal-content {
     display: flex;
     flex-direction: column;
@@ -393,30 +382,38 @@
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 8px;
-    max-width: 500px;                /* 与关于网站一致 */
+    max-width: 500px;                /* 宽度一致 */
     width: 100%;
-    max-height: 75vh;                /* 与关于网站一致 */
+    max-height: 70vh;                /* 高度一致 */
     overflow: hidden;
-    padding: 20px;
+    /* 移除 padding，改为内部子元素控制 */
+    padding: 0;
     transform: scale(0.8);
     transition: transform 0.3s ease;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     position: relative;
 }
-
 .donate-modal.active .donate-modal-content {
     transform: scale(1);
 }
 
-/* 顶部标题区域 */
+/* 爱发电内部子元素左右间距 */
+.donate-header,
+.donate-main,
+.supporters-section {
+    padding-left: 20px;
+    padding-right: 20px;
+}
 .donate-header {
     text-align: center;
     margin-bottom: 20px;
-    padding-bottom: 16px;
+    padding-top: 20px;   /* 原本由外层 padding 提供的顶部距离 */
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     position: relative;
 }
-
+.donate-header {
+    padding-bottom: 16px;
+}
 .donate-title-group {
     display: flex;
     align-items: center;
@@ -424,31 +421,26 @@
     gap: 12px;
     margin-bottom: 8px;
 }
-
 .donate-title {
     font-size: 18px;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
 }
-
 .donate-heart {
     color: #FF7B7B;
     font-size: 18px;
     animation: pulse 2s infinite;
 }
-
 .donate-subtitle {
     font-size: 12px;
     color: var(--text-secondary);
     margin: 0;
 }
-
-/* 顶部右上角关闭按钮 */
 .donate-close-btn-top {
     position: absolute;
     top: 0;
-    right: 0;
+    right: 20px;         /* 与右侧内边距对齐 */
     width: 30px;
     height: 30px;
     border: none;
@@ -462,29 +454,24 @@
     justify-content: center;
     font-size: 14px;
 }
-
 .donate-close-btn-top:hover {
     background: var(--error-color);
     color: white;
     transform: scale(1.1);
 }
 
-/* 主要内容区域 */
 .donate-main {
     display: flex;
     gap: 16px;
     margin-bottom: 20px;
     min-height: 200px;
 }
-
-/* 左侧支付方式 */
 .donate-methods {
     display: flex;
     flex-direction: column;
     gap: 8px;
     min-width: 60px;
 }
-
 .donate-method-btn {
     width: 50px;
     height: 50px;
@@ -502,39 +489,30 @@
     color: var(--text-secondary);
     position: relative;
 }
-
 .donate-method-btn:hover {
     background: rgba(255, 255, 255, 0.7);
     border-color: var(--primary-color);
     transform: translateY(-2px);
 }
-
 .donate-method-btn.active {
     background: var(--primary-color);
     border-color: var(--primary-color);
     color: white;
 }
-
 .donate-method-btn[data-type="qq"] { color: #6BC5FF; border-color: #6BC5FF; }
 .donate-method-btn[data-type="qq"].active { background: #6BC5FF; color: white; }
-
 .donate-method-btn[data-type="wechat"] { color: #7ED321; border-color: #7ED321; }
 .donate-method-btn[data-type="wechat"].active { background: #7ED321; color: white; }
-
 .donate-method-btn[data-type="alipay"] { color: #1677FF; border-color: #1677FF; }
 .donate-method-btn[data-type="alipay"].active { background: #1677FF; color: white; }
-
 .donate-method-btn.help-btn {
     color: #FFD166;
     border-color: #FFD166;
     margin-top: 10px;
 }
-
 .donate-method-btn.help-btn.active { background: #FFD166; color: white; }
 
-/* 右侧二维码容器 */
 .donate-qrcode-container { flex: 1; position: relative; min-height: 200px; }
-
 .donate-qrcode {
     position: absolute;
     top: 0;
@@ -550,9 +528,7 @@
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
-
 .donate-qrcode.active { display: flex; }
-
 .qrcode-image-container {
     position: relative;
     width: 100%;
@@ -561,7 +537,6 @@
     align-items: center;
     justify-content: center;
 }
-
 .qrcode-image {
     max-width: 100%;
     max-height: 100%;
@@ -569,7 +544,6 @@
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
-
 .qrcode-placeholder {
     display: none;
     flex-direction: column;
@@ -579,46 +553,26 @@
     text-align: center;
     padding: 20px;
 }
-
 .qrcode-placeholder i { font-size: 40px; opacity: 0.6; }
 .qrcode-placeholder span { font-size: 13px; font-weight: 500; }
 .qrcode-placeholder small { font-size: 11px; opacity: 0.7; }
-
 .help-content {
     padding: 20px;
     color: var(--text-secondary);
     text-align: left;
     width: 100%;
 }
-
 .help-content h4 {
     font-size: 16px;
     margin-bottom: 12px;
     color: var(--text-primary);
     text-align: center;
 }
+.help-content ul { margin-bottom: 16px; padding-left: 20px; }
+.help-content li { margin-bottom: 8px; font-size: 13px; line-height: 1.4; }
+.help-content p { text-align: center; font-size: 12px; font-style: italic; margin: 0; }
 
-.help-content ul {
-    margin-bottom: 16px;
-    padding-left: 20px;
-}
-
-.help-content li {
-    margin-bottom: 8px;
-    font-size: 13px;
-    line-height: 1.4;
-}
-
-.help-content p {
-    text-align: center;
-    font-size: 12px;
-    font-style: italic;
-    margin: 0;
-}
-
-/* 支持者名单区域 */
 .supporters-section { position: relative; margin-top: 20px; }
-
 .supporters-title {
     position: absolute;
     top: -10px;
@@ -632,7 +586,6 @@
     font-weight: 600;
     z-index: 2;
 }
-
 .supporters-card {
     border: 1px solid rgba(255, 255, 255, 0.4);
     background: rgba(255, 255, 255, 0.4);
@@ -644,23 +597,19 @@
     overflow-y: auto;
     position: relative;
 }
-
 .supporters-card::-webkit-scrollbar { width: 0; height: 0; background: transparent; }
-.supporters-card::-webkit-scrollbar-thumb { background: transparent; }
 .supporters-card { scrollbar-width: none; -ms-overflow-style: none; }
-
 .supporters-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     gap: 6px;
     width: 100%;
 }
-
 .supporter-name {
     background: rgba(255, 255, 255, 0.7);
     color: var(--text-primary);
     padding: 4px 8px;
-    border-radius: 8px;               /* 与logo一致的8px圆角 */
+    border-radius: 8px;
     font-size: 11px;
     font-weight: 500;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -672,19 +621,12 @@
     min-width: 0;
 }
 
-/* ===================== 桌面端适配（≥768px）===================== */
+/* 桌面端适配 */
 @media (min-width: 768px) {
     .about-modal,
     .donate-modal {
-        padding: 0 24px;               /* 桌面端左右间距 */
+        padding: 0 24px;
     }
-
-    .about-modal-content,
-    .donate-modal-content {
-        max-height: 85vh;              /* 桌面端恢复更高 */
-    }
-
-    /* 关于网站内部调整 */
     .about-header { padding: 16px; min-height: 120px; }
     .about-logo { width: 40px; height: 40px; }
     .about-title { font-size: 13px; }
@@ -698,24 +640,21 @@
     .about-social-btn { width: 38px; height: 38px; font-size: 15px; }
     .about-close-btn { padding: 9px 18px; font-size: 12px; min-width: 75px; }
 
-    /* 爱发电内部调整（尺寸与关于网站统一） */
-    .donate-modal-content { padding: 16px; }
     .donate-title { font-size: 16px; }
     .donate-heart { font-size: 16px; }
     .donate-subtitle { font-size: 11px; }
-    .donate-close-btn-top { width: 28px; height: 28px; font-size: 13px; }
+    .donate-close-btn-top { width: 28px; height: 28px; font-size: 13px; right: 24px; }
     .donate-main { gap: 12px; margin-bottom: 16px; min-height: 180px; }
-    .donate-methods { min-width: 50px; gap: 6px; }
     .donate-method-btn { width: 45px; height: 45px; font-size: 18px; }
     .qrcode-image { max-width: 90%; max-height: 90%; }
     .supporters-section { margin-top: 16px; }
     .supporters-title { font-size: 12px; top: -8px; left: 8px; }
     .supporters-card { padding: 14px; max-height: 100px; }
     .supporters-list { grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 5px; }
-    .supporter-name { font-size: 10px; padding: 3px 7px; border-radius: 8px; }
+    .supporter-name { font-size: 10px; padding: 3px 7px; }
 }
 
-/* ===================== 深色模式 ===================== */
+/* 深色模式 */
 @media (prefers-color-scheme: dark) {
     .about-modal-content {
         background: rgba(30, 30, 30, 0.75);
@@ -729,7 +668,6 @@
         background: rgba(30, 30, 30, 0.6);
         border-top-color: rgba(255, 255, 255, 0.1);
     }
-
     .donate-modal-content {
         background: rgba(30, 30, 30, 0.75);
         border-color: rgba(255, 255, 255, 0.15);
@@ -747,9 +685,7 @@
         background: rgba(40, 40, 40, 0.4);
         border-color: rgba(255, 255, 255, 0.1);
     }
-    .supporters-title {
-        background: rgba(30, 30, 30, 0.8);
-    }
+    .supporters-title { background: rgba(30, 30, 30, 0.8); }
     .supporters-card {
         background: rgba(40, 40, 40, 0.4);
         border-color: rgba(255, 255, 255, 0.1);
@@ -757,28 +693,20 @@
     .supporter-name {
         background: rgba(255, 255, 255, 0.1);
         color: white;
-        border-radius: 8px;
     }
     .about-close-btn { background: #5cb85c; }
     .about-logo { background-color: #ffffff; }
 }
 
-/* 心跳动画 */
 @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.1); }
     100% { transform: scale(1); }
 }
 
-/* 减少动画模式 */
 @media (prefers-reduced-motion: reduce) {
-    .about-modal,
-    .donate-modal,
-    .about-modal-content,
-    .donate-modal-content,
-    .about-card,
-    .about-social-btn,
-    .about-close-btn,
-    .donate-method-btn,
-    .donate-close-btn-top { transition: none; }
+    .about-modal, .donate-modal,
+    .about-modal-content, .donate-modal-content,
+    .about-card, .about-social-btn, .about-close-btn,
+    .donate-method-btn, .donate-close-btn-top { transition: none; }
 }
