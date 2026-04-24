@@ -1,4 +1,4 @@
-/* 搜索模态框 — 遮罩从导航栏下方开始 */
+/* 搜索模态框 - 圆角统一 8px */
 .search-modal {
     position: fixed;
     top: 60px;
@@ -12,23 +12,18 @@
     pointer-events: none;
     transition: opacity 0.25s ease, visibility 0.25s;
 }
-.search-modal.active {
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-}
+.search-modal.active { visibility: visible; opacity: 1; pointer-events: auto; }
 
-/* 内容卡片：毛玻璃 + 固定定位，圆角与 logo 一致（8px） */
 .search-modal .modal-content {
     position: absolute;
-    top: 24px;
-    right: 24px;
+    top: 70px;
+    right: 20px;
     width: 90%;
     max-width: 460px;
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 8px;            /* ← 修改为 8px */
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(24px) saturate(125%);
+    -webkit-backdrop-filter: blur(24px) saturate(125%);
+    border-radius: 8px;            /* 统一 8px */
     padding: 12px 14px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -36,162 +31,72 @@
     transform: translateY(-10px) scale(0.95);
     opacity: 0;
 }
-.search-modal.active .modal-content {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-}
-
-/* 深色模式毛玻璃适配 */
+.search-modal.active .modal-content { transform: translateY(0) scale(1); opacity: 1; }
 @media (prefers-color-scheme: dark) {
-    .search-modal .modal-content {
-        background: rgba(30, 30, 30, 0.8);
-        border-color: rgba(255, 255, 255, 0.1);
-    }
+    .search-modal .modal-content { background: rgba(30,30,30,0.75); border-color: rgba(255,255,255,0.1); }
 }
 
-/* ========= 内部组件样式 ========= */
-.search-bar {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 8px;
-}
+.search-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
 .engine-trigger-btn {
-    width: 36px;
-    height: 36px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: var(--bg-card);
-    color: var(--text-secondary);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: 0.2s;
-    flex-shrink: 0;
+    width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 8px;
+    background: var(--bg-card); color: var(--text-secondary); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: 0.2s; flex-shrink: 0;
 }
 .engine-trigger-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
 .engine-trigger-btn i { font-size: 1rem; }
 .search-input {
-    flex: 1;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 8px 10px;
-    font-size: 0.9rem;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    outline: none;
-    transition: border 0.2s;
+    flex: 1; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;
+    font-size: 0.9rem; background: var(--bg-primary); color: var(--text-primary); outline: none; transition: border 0.2s;
 }
 .search-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(67,97,238,0.12); }
 .search-submit-btn {
-    padding: 8px 14px;
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s;
-    white-space: nowrap;
+    padding: 8px 14px; background: var(--primary-color); color: white; border: none;
+    border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: background 0.2s; white-space: nowrap;
 }
 .search-submit-btn:hover { background: var(--secondary-color); }
 
-/* 引擎下拉菜单 */
 .engine-dropdown {
-    position: absolute;
-    top: calc(12px + 36px + 6px);
-    left: 14px;
-    width: 170px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-    z-index: 10001;
-    max-height: 220px;
-    overflow-y: auto;
-    visibility: hidden;
-    opacity: 0;
-    transform: translateY(-6px) scale(0.95);
-    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-    pointer-events: none;
-    scrollbar-width: none;
+    position: absolute; top: calc(12px + 36px + 6px); left: 14px; width: 170px;
+    background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px;  /* 统一 8px */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06); z-index: 10001; max-height: 220px; overflow-y: auto;
+    visibility: hidden; opacity: 0; transform: translateY(-6px) scale(0.95);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; pointer-events: none; scrollbar-width: none;
 }
 .engine-dropdown::-webkit-scrollbar { display: none; }
 .engine-dropdown.active { visibility: visible; opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
 .engine-dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 12px;
-    font-size: 0.85rem;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: background 0.15s;
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px; font-size: 0.85rem;
+    color: var(--text-primary); cursor: pointer; transition: background 0.15s; border-radius: 6px;
 }
 .engine-dropdown-item:hover { background: var(--bg-secondary); }
 .engine-dropdown-item.active { background: rgba(67,97,238,0.08); color: var(--primary-color); font-weight: 500; }
 .engine-dropdown-item i { width: 20px; text-align: center; font-size: 0.95rem; color: var(--text-secondary); }
 
-/* 联想词 */
 .suggestions {
-    max-height: 160px;
-    overflow-y: auto;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    margin: 6px 0;
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity 0.15s, visibility 0.15s;
-    background: var(--bg-card);
-    scrollbar-width: none;
+    max-height: 160px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; margin: 6px 0;
+    visibility: hidden; opacity: 0; transition: opacity 0.15s, visibility 0.15s;
+    background: var(--bg-card); scrollbar-width: none;
 }
 .suggestions::-webkit-scrollbar { display: none; }
 .suggestions.active { visibility: visible; opacity: 1; }
 .suggestion-item {
-    padding: 9px 12px;
-    font-size: 0.85rem;
-    color: var(--text-primary);
-    cursor: pointer;
-    border-bottom: 1px solid var(--border-color);
-    transition: background 0.15s;
+    padding: 9px 12px; font-size: 0.85rem; color: var(--text-primary); cursor: pointer;
+    border-bottom: 1px solid var(--border-color); transition: background 0.15s;
 }
 .suggestion-item:last-child { border-bottom: none; }
 .suggestion-item:hover { background: var(--bg-secondary); }
 
-/* 历史记录 */
 .history-panel {
-    margin-top: 6px;
-    padding: 8px 10px;
-    background: var(--bg-secondary);
-    border-radius: 10px;
-    max-height: 200px;
-    overflow-y: auto;
-    scrollbar-width: none;
+    margin-top: 6px; padding: 8px 10px; background: var(--bg-secondary); border-radius: 8px;  /* 统一 8px */
+    max-height: 200px; overflow-y: auto; scrollbar-width: none;
 }
 .history-panel::-webkit-scrollbar { display: none; }
-.history-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    margin-bottom: 6px;
-}
+.history-title { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
 .clear-history-btn { cursor: pointer; color: var(--primary-color); font-size: 0.75rem; transition: opacity 0.2s; }
 .clear-history-btn:hover { opacity: 0.8; }
 .history-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    color: var(--text-primary);
-    transition: background 0.1s;
+    display: flex; justify-content: space-between; align-items: center; padding: 6px 8px;
+    border-radius: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text-primary); transition: background 0.1s;
 }
 .history-item:hover { background: rgba(0,0,0,0.04); }
 .history-text { flex: 1; overflow: hidden; text-overflow: ellipsis; }
@@ -199,15 +104,7 @@
 .delete-history:hover { color: var(--error-color); background: rgba(239,68,68,0.1); }
 .history-empty { text-align: center; color: var(--text-secondary); font-size: 0.8rem; padding: 10px 0; margin: 0; }
 
-/* 移动端适配 */
 @media (max-width: 768px) {
-    .search-modal .modal-content {
-        top: 16px;
-        right: 4.2%;
-        left: 4.2%;
-        width: auto;
-        max-width: none;
-        padding: 10px 12px;
-    }
+    .search-modal .modal-content { top: 100px; right: 3%; left: 3%; width: auto; max-width: none; padding: 10px 12px; }
     .engine-dropdown { width: 150px; }
 }
