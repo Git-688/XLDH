@@ -38,7 +38,7 @@ class NewSearchModule {
     }
 
     bindEvents() {
-        // 点击模态框外部区域关闭？（遮罩本身已是透明，点击modal即为遮罩）
+        // 点击遮罩关闭
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.hide();
         });
@@ -56,8 +56,7 @@ class NewSearchModule {
 
         // 点击外部关闭下拉
         document.addEventListener('click', (e) => {
-            if (this.dropdown && !this.dropdown.contains(e.target) && 
-                e.target !== this.triggerBtn && !this.triggerBtn.contains(e.target)) {
+            if (this.dropdown && !this.dropdown.contains(e.target) && e.target !== this.triggerBtn && !this.triggerBtn.contains(e.target)) {
                 this.closeDropdown();
             }
         });
@@ -176,19 +175,13 @@ class NewSearchModule {
     /* ========= 百度联想词 ========= */
     async fetchBaiduSuggestions(query) {
         const url = 'https://cn.apihz.cn/api/wangzhan/soubaiduxl.php';
-        const params = new URLSearchParams({
-            id: '10014221',
-            key: '4a7768de1cf2e0f41fc0a4005240c837',
-            words: query
-        });
+        const params = new URLSearchParams({ id: '10014221', key: '4a7768de1cf2e0f41fc0a4005240c837', words: query });
         try {
             const resp = await fetch(`${url}?${params.toString()}`);
             if (!resp.ok) return [];
             const data = await resp.json();
             return data.code === 200 && Array.isArray(data.datas) ? data.datas : [];
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
 
     showSuggestions() {
@@ -268,18 +261,11 @@ class NewSearchModule {
 
     /* ========= 本地存储 ========= */
     loadSetting(key, def) {
-        try {
-            const raw = localStorage.getItem(key);
-            return raw ? JSON.parse(raw) : def;
-        } catch {
-            return def;
-        }
+        try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : def; } catch { return def; }
     }
 
     saveSetting(key, value) {
-        try {
-            localStorage.setItem(key, JSON.stringify(value));
-        } catch {}
+        try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
     }
 }
 
