@@ -20,7 +20,6 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* 深色模式 */
 @media (prefers-color-scheme: dark) {
     .navbar {
         background: var(--acrylic-bg);
@@ -58,7 +57,7 @@
     width: 36px;
     height: 36px;
     background: white;
-    border-radius: 8px;          /* 与 Logo 一致 */
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -114,7 +113,7 @@
     height: 36px;
     border: none;
     background: var(--bg-secondary);
-    border-radius: 8px;          /* 统一 8px */
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -152,7 +151,7 @@
     right: -5px;
     background: #ef4444;
     color: white;
-    border-radius: 50%;           /* 圆形保持不变 */
+    border-radius: 50%;
     width: 16px;
     height: 16px;
     font-size: 10px;
@@ -182,7 +181,6 @@
     50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
 }
 
-/* 深色模式 logo 调整 */
 @media (prefers-color-scheme: dark) {
     .logo { background: #2d2d2d; border-color: #555; }
     .logo i { color: #7bc8ff; }
@@ -191,7 +189,6 @@
     .brand-subtitle { color: #adb5bd; }
 }
 
-/* 响应式调整 */
 @media (min-width: 768px) and (max-width: 991px) {
     .brand-text { font-size: 15px; }
     .brand-subtitle { font-size: 12px; }
