@@ -1,6 +1,5 @@
 /**
- * 导航栏组件（单例模式）
- * 修复：添加异常捕获，防止“搜索功能出错”无具体信息
+ * 导航栏组件（适配全新搜索模块 NewSearchModule）
  */
 class Navbar {
     constructor() {
@@ -8,7 +7,6 @@ class Navbar {
             return window.navbar;
         }
         this.announcements = [];
-        this.searchModuleReady = false;
         this.init();
         window.navbar = this;
     }
@@ -19,28 +17,14 @@ class Navbar {
             this.loadAnnouncements();
             this.updateNotificationBadge();
             setTimeout(() => this.handleScroll(), 100);
-            setTimeout(() => this.checkSearchModule(), 1000);
         } catch (error) {
             console.error('导航栏初始化失败:', error);
         }
     }
 
-    checkSearchModule() {
-        if (window.searchModule && typeof window.searchModule.showModal === 'function') {
-            this.searchModuleReady = true;
-        } else if (typeof SearchModule !== 'undefined') {
-            try {
-                window.searchModule = new SearchModule();
-                this.searchModuleReady = true;
-            } catch (e) {
-                console.error('动态初始化搜索模块失败:', e);
-            }
-        }
-    }
-
     bindEvents() {
         try {
-            // 搜索按钮
+            // ---------- 搜索按钮：调用新模块 ----------
             const searchBtn = document.getElementById('searchBtn');
             if (searchBtn) {
                 searchBtn.replaceWith(searchBtn.cloneNode(true));
@@ -49,7 +33,11 @@ class Navbar {
                     e.preventDefault();
                     e.stopPropagation();
                     this.closeAllModalsExcept(['search']);
-                    this.handleSearchButtonClick();
+                    if (window.newSearchModule) {
+                        window.newSearchModule.show();
+                    } else {
+                        window.toast.show('搜索模块未加载，请刷新页面', 'error');
+                    }
                 });
             }
 
@@ -86,9 +74,7 @@ class Navbar {
                     e.preventDefault();
                     e.stopPropagation();
                     this.closeAllModalsExcept(['sidebar']);
-                    if (window.sidebar && typeof window.sidebar.toggle === 'function') {
-                        window.sidebar.toggle();
-                    }
+                    if (window.sidebar?.toggle) window.sidebar.toggle();
                 });
             }
 
@@ -99,9 +85,7 @@ class Navbar {
                     e.preventDefault();
                     e.stopPropagation();
                     this.closeAllModalsExcept(['weather']);
-                    if (window.app && window.app.modules && window.app.modules.weather) {
-                        window.app.modules.weather.showModal();
-                    }
+                    window.app?.modules?.weather?.showModal();
                 });
             }
 
@@ -127,12 +111,14 @@ class Navbar {
                 });
             }
 
+            // 全局点击关闭音乐播放器
             document.addEventListener('click', this.handleDocumentClick.bind(this));
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') this.closeAllModalsExcept([]);
             });
             window.addEventListener('scroll', this.handleScroll.bind(this));
 
+            // 返回顶部按钮
             const backToTop = document.getElementById('backToTop');
             if (backToTop) {
                 backToTop.addEventListener('click', () => {
@@ -147,46 +133,17 @@ class Navbar {
     closeAllModalsExcept(keepModules = []) {
         try {
             if (!keepModules.includes('music')) this.hideMusicPlayer();
-            if (!keepModules.includes('search') && window.searchModule) {
-                if (window.searchModule.isModalOpen && window.searchModule.isModalOpen()) window.searchModule.hide();
+            // 新搜索模块
+            if (!keepModules.includes('search') && window.newSearchModule && window.newSearchModule.isOpen) {
+                window.newSearchModule.hide();
             }
-            if (!keepModules.includes('sidebar') && window.sidebar) {
-                if (window.sidebar.isVisible && window.sidebar.isVisible()) window.sidebar.hide();
-            }
-            if (!keepModules.includes('announcement') && window.announcementModule) {
-                if (window.announcementModule.isVisible) window.announcementModule.hide();
-            }
-            if (!keepModules.includes('weather') && window.app && window.app.modules && window.app.modules.weather) {
-                if (window.app.modules.weather.hide) window.app.modules.weather.hide();
-            }
-            if (!keepModules.includes('about') && window.aboutModule) {
-                if (window.aboutModule.hide) window.aboutModule.hide();
-            }
-            if (!keepModules.includes('notebook') && window.app && typeof window.app.hideNotebookModal === 'function') {
-                window.app.hideNotebookModal();
-            }
+            if (!keepModules.includes('sidebar') && window.sidebar?.isVisible()) window.sidebar.hide();
+            if (!keepModules.includes('announcement') && window.announcementModule?.isVisible) window.announcementModule.hide();
+            if (!keepModules.includes('weather')) window.app?.modules?.weather?.hide?.();
+            if (!keepModules.includes('about')) window.aboutModule?.hide?.();
+            if (!keepModules.includes('notebook')) window.app?.hideNotebookModal?.();
         } catch (error) {
             console.error('关闭模态框失败:', error);
-        }
-    }
-
-    handleSearchButtonClick() {
-        try {
-            if (window.searchModule && typeof window.searchModule.showModal === 'function') {
-                if (window.searchModule.isModalOpen && window.searchModule.isModalOpen()) {
-                    window.searchModule.hide();
-                } else {
-                    window.searchModule.showModal();
-                }
-            } else if (typeof SearchModule !== 'undefined') {
-                window.searchModule = new SearchModule();
-                window.searchModule.showModal();
-            } else {
-                window.toast.show('搜索功能暂不可用', 'error');
-            }
-        } catch (error) {
-            console.error('处理搜索按钮点击失败:', error);
-            window.toast.show('搜索功能出错: ' + error.message, 'error');
         }
     }
 
@@ -247,7 +204,7 @@ class Navbar {
         try {
             const musicPlayer = document.getElementById('musicPlayer');
             const musicBtn = document.getElementById('musicBtn');
-            if (musicPlayer && musicPlayer.classList.contains('show') && 
+            if (musicPlayer && musicPlayer.classList.contains('show') &&
                 !musicPlayer.contains(e.target) && !musicBtn.contains(e.target)) {
                 this.hideMusicPlayer();
             }
