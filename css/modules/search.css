@@ -21,7 +21,7 @@
 /* 内容卡片：毛玻璃 + 固定定位 */
 .search-modal .modal-content {
     position: absolute;
-    top: 20px;
+    top: 24px;
     right: 24px;
     width: 90%;
     max-width: 460px;
@@ -226,7 +226,7 @@
 /* 移动端 */
 @media (max-width: 768px) {
     .search-modal .modal-content {
-        top: 20px;
+        top: 14px;
         right: 4.2%;
         left: 4.2%;
         width: auto;
