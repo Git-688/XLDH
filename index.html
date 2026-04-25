@@ -47,6 +47,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
     
     <style>
+        /* ===== 通用反馈/笔记模态框基础样式 ===== */
         .feedback-modal {
             position: fixed;
             top: 0;
@@ -179,6 +180,8 @@
             .feedback-modal-body { background: #2a2a2a; }
             .feedback-modal-close:hover { background: rgba(255, 255, 255, 0.08); }
         }
+
+        /* ===== 反馈模块提示样式 ===== */
         .math-hint {
             padding: 8px 12px;
             background: #f8f9fa;
@@ -191,12 +194,14 @@
         @media (prefers-color-scheme: dark) { .math-hint { background: #1e1e1e; color: #aaa; } }
         .math-hint i { margin-right: 6px; color: var(--primary-color); }
         .math-hint code { background: rgba(0,0,0,0.06); padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 11px; }
+
+        /* 悬浮按钮颜色 */
         .floating-btn.feedback-btn { color: #8b5cf6; }
         .floating-btn.feedback-btn:hover { color: #7c3aed; }
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
 
-        /* 星聚笔记模态框 - 修改后样式 */
+        /* ===== 星聚笔记模态框专用样式（修复底部空白，圆角统一，字体缩小） ===== */
         #notebookModal {
             background: transparent;
             backdrop-filter: none;
@@ -207,36 +212,36 @@
             backdrop-filter: blur(24px) saturate(125%);
             -webkit-backdrop-filter: blur(24px) saturate(125%);
             border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             border-radius: 8px;          /* 与 logo 圆角一致 */
             overflow: hidden;
+            max-height: 75vh;             /* 限制整个卡片高度 */
+            display: flex;
+            flex-direction: column;
         }
-        @media (prefers-color-scheme: dark) {
-            #notebookModal .feedback-modal-content {
-                background: rgba(30, 30, 30, 0.75);
-                border-color: rgba(255, 255, 255, 0.15);
-            }
+        #notebookModal .feedback-modal-body {
+            padding: 0 12px 12px 12px;   /* 左右留白，底部仅保留少量间距 */
+            overflow: visible;           /* 不滚动，让列表自己滚动 */
+            flex: 0 0 auto;              /* 高度由内容决定，不拉伸 */
+            background: transparent;
         }
-
-        /* 笔记列表整体更紧凑，去掉底部多余空白 */
+        /* 笔记列表样式 */
         .notebook-list {
+            padding: 0;
+            margin: 0;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            max-height: 60vh;
+            max-height: calc(75vh - 70px); /* 减去标题栏高度，保证不超出卡片 */
             overflow-y: auto;
-            padding: 0;                 /* 移除多余 padding */
-            margin: 0;
             scrollbar-width: none;
             -ms-overflow-style: none;
         }
         .notebook-list::-webkit-scrollbar { display: none; }
-
         .notebook-item {
             background: rgba(255, 255, 255, 0.5);
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
-            border-radius: 8px;          /* 卡片圆角也统一 */
+            border-radius: 8px;
             padding: 10px 14px;
             border: 1px solid rgba(0, 0, 0, 0.06);
             transition: all 0.2s ease;
@@ -289,6 +294,10 @@
             border: 1px solid rgba(0, 0, 0, 0.03);
         }
         @media (prefers-color-scheme: dark) {
+            #notebookModal .feedback-modal-content {
+                background: rgba(30, 30, 30, 0.75);
+                border-color: rgba(255, 255, 255, 0.15);
+            }
             .notebook-item {
                 background: rgba(40, 40, 40, 0.6);
                 border-color: rgba(255, 255, 255, 0.05);
