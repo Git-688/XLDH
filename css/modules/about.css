@@ -1,4 +1,4 @@
-/* about.css - 亚克力效果 + 无黑遮罩 + 8px 圆角 + 高度缩小30% */
+/* about.css - 亚克力效果 + 高度自适应 + 内容缩小 */
 .about-modal {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     position: fixed;
@@ -34,7 +34,7 @@
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
     max-width: 500px;
     width: 100%;
-    max-height: 50vh;                 /* 70vh 缩小30% → 约50vh */
+    max-height: none;                 /* 高度自适应内容 */
     transform: scale(0.8);
     transition: transform 0.3s ease;
 }
@@ -46,8 +46,8 @@
 /* 顶部区域 */
 .about-header {
     position: relative;
-    padding: 14px;                    /* 20px → 14px */
-    min-height: 100px;                /* 140px → 100px */
+    padding: 14px;
+    min-height: 100px;
     display: flex;
     align-items: center;
     overflow: hidden;
@@ -83,7 +83,7 @@
     width: 100%;
     position: relative;
     z-index: 3;
-    gap: 14px;                        /* 20px → 14px */
+    gap: 14px;
 }
 
 .about-header-left { flex: 1; min-width: 0; }
@@ -91,15 +91,15 @@
 .about-info-grid {
     display: flex;
     flex-direction: column;
-    gap: 6px;                         /* 8px → 6px */
+    gap: 6px;
 }
 
 .about-info-item {
     display: flex;
     align-items: center;
-    gap: 6px;                         /* 8px → 6px */
+    gap: 6px;
     background: transparent;
-    padding: 6px 10px;                /* 8px 12px → 6px 10px */
+    padding: 6px 10px;
     border-radius: 8px;
     box-shadow: none;
     backdrop-filter: blur(5px);
@@ -107,7 +107,7 @@
 }
 
 .info-label {
-    font-size: 10px;                  /* 12px → 10px */
+    font-size: 10px;
     color: rgba(255, 255, 255, 0.9);
     font-weight: 600;
     min-width: 50px;
@@ -115,7 +115,7 @@
 }
 
 .info-value {
-    font-size: 10px;                  /* 12px → 10px */
+    font-size: 10px;
     color: rgba(255, 255, 255, 0.95);
     font-weight: 700;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -134,7 +134,7 @@
     flex-direction: column;
     align-items: center;
     background: transparent;
-    padding: 10px;                    /* 12px → 10px */
+    padding: 10px;
     border-radius: 10px;
     box-shadow: none;
     backdrop-filter: blur(5px);
@@ -142,7 +142,7 @@
 }
 
 .about-logo {
-    width: 32px;                      /* 44px → 32px */
+    width: 32px;
     height: 32px;
     border-radius: 8px;
     display: flex;
@@ -171,7 +171,7 @@
 }
 
 .about-title {
-    font-size: 12px;                  /* 14px → 12px */
+    font-size: 12px;
     font-weight: 800;
     color: rgba(255, 255, 255, 0.95);
     line-height: 1.2;
@@ -180,7 +180,7 @@
 }
 
 .about-subtitle {
-    font-size: 8px;                   /* 10px → 8px */
+    font-size: 8px;
     color: rgba(255, 255, 255, 0.8);
     margin-top: 2px;
     line-height: 1.2;
@@ -191,18 +191,18 @@
 /* 中部内容区域 */
 .about-main-content {
     flex: 1;
-    padding: 14px;                    /* 20px → 14px */
+    padding: 14px;
     overflow: visible;
     height: auto;
 }
 
-.about-cards { display: flex; flex-direction: column; gap: 12px; } /* 16px → 12px */
+.about-cards { display: flex; flex-direction: column; gap: 12px; }
 
 .about-card {
     display: flex;
     align-items: flex-start;
-    gap: 10px;                        /* 12px → 10px */
-    padding: 12px;                    /* 16px → 12px */
+    gap: 10px;
+    padding: 12px;
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -218,13 +218,13 @@
 }
 
 .card-icon {
-    width: 24px;                      /* 28px → 24px */
+    width: 24px;
     height: 24px;
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;                  /* 12px → 10px */
+    font-size: 10px;
     flex-shrink: 0;
     margin-top: 2px;
     color: white;
@@ -236,7 +236,7 @@
 .card-content { flex: 1; min-width: 0; }
 
 .card-content h3 {
-    font-size: 12px;                  /* 13px → 12px */
+    font-size: 12px;
     margin-bottom: 6px;
     color: var(--text-primary);
     font-weight: 700;
@@ -246,7 +246,7 @@
 }
 
 .card-content p {
-    font-size: 10px;                  /* 12px → 10px */
+    font-size: 10px;
     line-height: 1.5;
     color: var(--text-secondary);
     margin: 0;
@@ -254,7 +254,7 @@
 
 /* 底部按钮区域 */
 .about-footer {
-    padding: 12px 14px 14px;          /* 16px 20px 20px → 12px 14px 14px */
+    padding: 12px 14px 14px;
     border-top: 1px solid rgba(255, 255, 255, 0.3);
     background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(15px);
@@ -268,10 +268,10 @@
     gap: 12px;
 }
 
-.about-social-buttons { display: flex; gap: 10px; } /* 12px → 10px */
+.about-social-buttons { display: flex; gap: 10px; }
 
 .about-social-btn {
-    width: 32px;                      /* 40px → 32px */
+    width: 32px;
     height: 32px;
     border: none;
     border-radius: 50%;
@@ -282,7 +282,7 @@
     justify-content: center;
     position: relative;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    font-size: 14px;                  /* 16px → 14px */
+    font-size: 14px;
     color: white;
 }
 
@@ -330,14 +330,14 @@
 .about-social-btn:hover .tooltip-text { visibility: visible; opacity: 1; }
 
 .about-close-btn {
-    padding: 8px 14px;                /* 10px 20px → 8px 14px */
+    padding: 8px 14px;
     border: none;
     background: #7ED321;
     color: white;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 11px;                  /* 13px → 11px */
+    font-size: 11px;
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -352,7 +352,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* ========== 爱发电/收款模态框（尺寸与关于网站完全一致）========== */
+/* ========== 爱发电/收款模态框（与关于网站完全一致）========== */
 .donate-modal {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     position: fixed;
@@ -382,9 +382,9 @@
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 8px;
-    max-width: 500px;                 /* 宽度不变 */
+    max-width: 500px;
     width: 100%;
-    max-height: 50vh;                 /* 高度与关于网站一致 */
+    max-height: none;                 /* 高度自适应 */
     overflow: hidden;
     padding: 0;
     transform: scale(0.8);
@@ -396,18 +396,17 @@
     transform: scale(1);
 }
 
-/* 爱发电内部元素左右内边距 */
 .donate-header,
 .donate-main,
 .supporters-section {
-    padding-left: 14px;               /* 20px → 14px */
+    padding-left: 14px;
     padding-right: 14px;
 }
 .donate-header {
     text-align: center;
-    margin-bottom: 14px;              /* 20px → 14px */
-    padding-top: 14px;                /* 原由外层 padding 提供 */
-    padding-bottom: 12px;             /* 16px → 12px */
+    margin-bottom: 14px;
+    padding-top: 14px;
+    padding-bottom: 12px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     position: relative;
 }
@@ -415,30 +414,30 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;                         /* 12px → 8px */
+    gap: 8px;
     margin-bottom: 6px;
 }
 .donate-title {
-    font-size: 14px;                  /* 18px → 14px */
+    font-size: 14px;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
 }
 .donate-heart {
     color: #FF7B7B;
-    font-size: 14px;                  /* 18px → 14px */
+    font-size: 14px;
     animation: pulse 2s infinite;
 }
 .donate-subtitle {
-    font-size: 10px;                  /* 12px → 10px */
+    font-size: 10px;
     color: var(--text-secondary);
     margin: 0;
 }
 .donate-close-btn-top {
     position: absolute;
     top: 0;
-    right: 14px;                      /* 与右侧内边距对齐 */
-    width: 24px;                      /* 30px → 24px */
+    right: 14px;
+    width: 24px;
     height: 24px;
     border: none;
     background: rgba(0, 0, 0, 0.05);
@@ -449,7 +448,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;                  /* 14px → 12px */
+    font-size: 12px;
 }
 .donate-close-btn-top:hover {
     background: var(--error-color);
@@ -459,18 +458,18 @@
 
 .donate-main {
     display: flex;
-    gap: 12px;                        /* 16px → 12px */
-    margin-bottom: 14px;              /* 20px → 14px */
-    min-height: 140px;                /* 200px → 140px */
+    gap: 12px;
+    margin-bottom: 14px;
+    min-height: 140px;
 }
 .donate-methods {
     display: flex;
     flex-direction: column;
-    gap: 6px;                         /* 8px → 6px */
+    gap: 6px;
     min-width: 50px;
 }
 .donate-method-btn {
-    width: 40px;                      /* 50px → 40px */
+    width: 40px;
     height: 40px;
     border: 2px solid rgba(0, 0, 0, 0.1);
     background: rgba(255, 255, 255, 0.5);
@@ -482,7 +481,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;                  /* 20px → 16px */
+    font-size: 16px;
     color: var(--text-secondary);
     position: relative;
 }
@@ -509,7 +508,7 @@
 }
 .donate-method-btn.help-btn.active { background: #FFD166; color: white; }
 
-.donate-qrcode-container { flex: 1; position: relative; min-height: 140px; } /* 200px → 140px */
+.donate-qrcode-container { flex: 1; position: relative; min-height: 140px; }
 .donate-qrcode {
     position: absolute;
     top: 0;
@@ -550,9 +549,9 @@
     text-align: center;
     padding: 14px;
 }
-.qrcode-placeholder i { font-size: 30px; opacity: 0.6; }  /* 40px → 30px */
-.qrcode-placeholder span { font-size: 12px; }              /* 13px → 12px */
-.qrcode-placeholder small { font-size: 10px; }             /* 11px → 10px */
+.qrcode-placeholder i { font-size: 30px; opacity: 0.6; }
+.qrcode-placeholder span { font-size: 12px; }
+.qrcode-placeholder small { font-size: 10px; }
 .help-content {
     padding: 14px;
     color: var(--text-secondary);
@@ -560,7 +559,7 @@
     width: 100%;
 }
 .help-content h4 {
-    font-size: 14px;                  /* 16px → 14px */
+    font-size: 14px;
     margin-bottom: 10px;
     color: var(--text-primary);
     text-align: center;
@@ -569,7 +568,7 @@
 .help-content li { margin-bottom: 6px; font-size: 12px; line-height: 1.4; }
 .help-content p { text-align: center; font-size: 11px; font-style: italic; margin: 0; }
 
-.supporters-section { position: relative; margin-top: 14px; } /* 20px → 14px */
+.supporters-section { position: relative; margin-top: 14px; }
 .supporters-title {
     position: absolute;
     top: -8px;
@@ -589,8 +588,8 @@
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     border-radius: 8px;
-    padding: 12px;                    /* 16px → 12px */
-    max-height: 90px;                 /* 120px → 90px */
+    padding: 12px;
+    max-height: 90px;
     overflow-y: auto;
     position: relative;
 }
@@ -607,7 +606,7 @@
     color: var(--text-primary);
     padding: 3px 6px;
     border-radius: 8px;
-    font-size: 10px;                  /* 11px → 10px */
+    font-size: 10px;
     font-weight: 500;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     border: none;
@@ -618,7 +617,7 @@
     min-width: 0;
 }
 
-/* 桌面端适配（同样缩小） */
+/* 桌面端适配 */
 @media (min-width: 768px) {
     .about-modal,
     .donate-modal {
