@@ -1,5 +1,5 @@
 /**
- * 关于网站模块 - 包含收款模态框
+ * 关于网站模块 - 包含收款模态框（左右等宽布局）
  * @class AboutModule
  */
 class AboutModule {
@@ -164,11 +164,12 @@ class AboutModule {
             transition: opacity 0.3s ease;
         `;
 
-        // 注意：移除了原来的头部和右上角关闭按钮
+        // 左右等宽布局：左列标题+副标题+按钮网格，右列二维码
         donateModal.innerHTML = `
             <div class="donate-modal-content">
+                <!-- 中部主体：左右等分 -->
                 <div class="donate-main">
-                    <!-- 左侧面板：标题 + 支付方式按钮 -->
+                    <!-- 左侧面板 -->
                     <div class="donate-left-panel">
                         <div class="donate-left-title">
                             <div class="donate-title-group">
@@ -184,41 +185,44 @@ class AboutModule {
                             <button class="donate-method-btn help-btn" data-type="help" title="使用帮助"><i class="fas fa-question"></i></button>
                         </div>
                     </div>
-                    <!-- 右侧二维码区域 -->
-                    <div class="donate-qrcode-container">
-                        <div class="donate-qrcode active" data-type="qq">
-                            <div class="qrcode-image-container">
-                                <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
-                                <div class="qrcode-placeholder"><i class="fab fa-qq"></i><span>QQ收款码</span><small>请使用QQ扫描二维码</small></div>
+                    <!-- 右侧面板：二维码 -->
+                    <div class="donate-right-panel">
+                        <div class="donate-qrcode-wrapper">
+                            <div class="donate-qrcode active" data-type="qq">
+                                <div class="qrcode-image-container">
+                                    <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
+                                    <div class="qrcode-placeholder"><i class="fab fa-qq"></i><span>QQ收款码</span><small>请使用QQ扫描二维码</small></div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="donate-qrcode" data-type="wechat">
-                            <div class="qrcode-image-container">
-                                <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
-                                <div class="qrcode-placeholder"><i class="fab fa-weixin"></i><span>微信收款码</span><small>请使用微信扫描二维码</small></div>
+                            <div class="donate-qrcode" data-type="wechat">
+                                <div class="qrcode-image-container">
+                                    <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
+                                    <div class="qrcode-placeholder"><i class="fab fa-weixin"></i><span>微信收款码</span><small>请使用微信扫描二维码</small></div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="donate-qrcode" data-type="alipay">
-                            <div class="qrcode-image-container">
-                                <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
-                                <div class="qrcode-placeholder"><i class="fab fa-alipay"></i><span>支付宝收款码</span><small>请使用支付宝扫描二维码</small></div>
+                            <div class="donate-qrcode" data-type="alipay">
+                                <div class="qrcode-image-container">
+                                    <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
+                                    <div class="qrcode-placeholder"><i class="fab fa-alipay"></i><span>支付宝收款码</span><small>请使用支付宝扫描二维码</small></div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="donate-qrcode" data-type="help">
-                            <div class="help-content">
-                                <h4>使用说明</h4>
-                                <ul>
-                                    <li>选择您要使用的支付方式</li>
-                                    <li>使用对应App扫描二维码</li>
-                                    <li>输入您想支持的金额</li>
-                                    <li>在备注中留下您的名字</li>
-                                </ul>
-                                <p>感谢您的支持！</p>
+                            <div class="donate-qrcode" data-type="help">
+                                <div class="help-content">
+                                    <h4>使用说明</h4>
+                                    <ul>
+                                        <li>选择您要使用的支付方式</li>
+                                        <li>使用对应App扫描二维码</li>
+                                        <li>输入您想支持的金额</li>
+                                        <li>在备注中留下您的名字</li>
+                                    </ul>
+                                    <p>感谢您的支持！</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- 支持者名单 -->
+
+                <!-- 支持者名单（全宽） -->
                 <div class="supporters-section">
                     <h4 class="supporters-title">支持者名单</h4>
                     <div class="supporters-card">
@@ -227,7 +231,8 @@ class AboutModule {
                         </div>
                     </div>
                 </div>
-                <!-- 底部关闭按钮 -->
+
+                <!-- 底部关闭按钮（全宽居中） -->
                 <div class="donate-footer-close">
                     <button class="donate-close-btn-bottom" id="donateCloseBtnBottom">关闭</button>
                 </div>
@@ -308,10 +313,6 @@ class AboutModule {
         this.modalElement = null;
         this.isInitialized = false;
     }
-
-    getStatus() {
-        return { initialized: this.isInitialized, modalOpen: this.isShowing, version: this.version, ... };
-    }
 }
 
 if (document.readyState === 'loading') {
@@ -320,4 +321,4 @@ if (document.readyState === 'loading') {
     window.aboutModule = new AboutModule();
     window.aboutModule.init();
 }
-if (typeof module !== 'undefined' && module.exports) module.exports = AboutModule; 
+if (typeof module !== 'undefined' && module.exports) module.exports = AboutModule;
