@@ -201,7 +201,7 @@
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
 
-        /* ===== 星聚笔记模态框专用样式（修复底部空白，圆角统一，字体缩小） ===== */
+        /* ===== 星聚笔记模态框专用样式（头部亚克力，内容顶部间距） ===== */
         #notebookModal {
             background: transparent;
             backdrop-filter: none;
@@ -218,10 +218,24 @@
             display: flex;
             flex-direction: column;
         }
+        #notebookModal .feedback-modal-header {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px) saturate(125%);
+            -webkit-backdrop-filter: blur(12px) saturate(125%);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            color: #1e293b;
+        }
+        #notebookModal .feedback-modal-header h3,
+        #notebookModal .feedback-modal-header h3 i {
+            color: inherit;
+        }
+        #notebookModal .feedback-modal-close {
+            color: #64748b;
+        }
         #notebookModal .feedback-modal-body {
-            padding: 0 12px 12px 12px;   /* 左右留白，底部仅保留少量间距 */
-            overflow: visible;           /* 不滚动，让列表自己滚动 */
-            flex: 0 0 auto;              /* 高度由内容决定，不拉伸 */
+            padding: 12px 12px 12px 12px;  /* 顶部增加间距 */
+            overflow: visible;
+            flex: 0 0 auto;
             background: transparent;
         }
         /* 笔记列表样式 */
@@ -231,7 +245,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            max-height: calc(75vh - 70px); /* 减去标题栏高度，保证不超出卡片 */
+            max-height: calc(75vh - 70px);
             overflow-y: auto;
             scrollbar-width: none;
             -ms-overflow-style: none;
@@ -297,6 +311,14 @@
             #notebookModal .feedback-modal-content {
                 background: rgba(30, 30, 30, 0.75);
                 border-color: rgba(255, 255, 255, 0.15);
+            }
+            #notebookModal .feedback-modal-header {
+                background: rgba(30, 30, 30, 0.5);
+                border-bottom-color: rgba(255, 255, 255, 0.06);
+                color: #f1f5f9;
+            }
+            #notebookModal .feedback-modal-close {
+                color: #94a3b8;
             }
             .notebook-item {
                 background: rgba(40, 40, 40, 0.6);
