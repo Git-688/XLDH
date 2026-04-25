@@ -64,7 +64,8 @@ class AnnouncementModule {
         return [{
             id: 'static_announcement',
             title: '系统公告',
-            focus: '欢迎使用星聚导航！本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台。',
+            // ★ 已移除欢迎语
+            focus: '本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台。',
             updates: [
                 '全新界面设计-更加现代化和美观的视觉体验',
                 '音乐播放器-支持多平台音乐搜索和播放',
@@ -89,7 +90,7 @@ class AnnouncementModule {
 
         const ann = this.currentAnnouncement || {};
         const title = this.escapeHtml(ann.title || '公告');
-        const focus = this.escapeHtml(ann.focus || '暂无重要提醒');
+        const focus = this.escapeHtml(ann.focus || '');
         const updates = ann.updates && Array.isArray(ann.updates) ? ann.updates : [];
         const time = this.escapeHtml(ann.time || new Date().toLocaleDateString());
 
@@ -187,27 +188,11 @@ class AnnouncementModule {
     }
 
     adjustMaskPosition() {
-        const navbar = document.querySelector('.navbar');
-        if (!navbar) {
-            this.modalElement.style.top = '0';
-            this.modalElement.style.height = '100%';
-            return;
-        }
-
-        const navbarHeight = navbar.offsetHeight;
-        if (navbarHeight > 0) {
-            this.modalElement.style.top = navbarHeight + 'px';
-            this.modalElement.style.height = `calc(100vh - ${navbarHeight}px)`;
-        } else {
-            this.modalElement.style.top = '0';
-            this.modalElement.style.height = '100%';
-        }
+        // 不再需要动态调整 top/height，因为使用 flex 居中
     }
 
     onResize = () => {
-        if (this.isVisible) {
-            this.adjustMaskPosition();
-        }
+        // 不再需要，保留为空即可
     };
 
     showModal() {
@@ -215,7 +200,6 @@ class AnnouncementModule {
         if (this.isVisible) return;
 
         this.closeOtherModals();
-        this.adjustMaskPosition();
         this.modalElement.classList.add('active');
         this.isVisible = true;
 
