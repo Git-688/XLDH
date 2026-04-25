@@ -201,7 +201,7 @@
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
 
-        /* ===== 星聚笔记模态框专用样式（头部与公告一致） ===== */
+        /* ===== 星聚笔记模态框专用样式（滚动间距、宽度优化） ===== */
         #notebookModal {
             background: transparent;
             backdrop-filter: none;
@@ -212,15 +212,15 @@
             backdrop-filter: blur(24px) saturate(125%);
             -webkit-backdrop-filter: blur(24px) saturate(125%);
             border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 8px;
+            border-radius: 8px;          /* 与 logo 圆角一致 */
             overflow: hidden;
-            max-height: 75vh;
+            max-height: 75vh;             /* 限制整个卡片高度 */
             display: flex;
             flex-direction: column;
         }
-        /* 头部样式改为与系统公告完全一致 */
+        /* 头部样式与系统公告完全一致 */
         #notebookModal .feedback-modal-header {
-            background: transparent;                /* 使用父容器背景 */
+            background: transparent;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             padding: 18px 24px 10px;
             color: #1e293b;
@@ -253,15 +253,16 @@
             background: rgba(0, 0, 0, 0.05);
             color: #334155;
         }
+        /* 内容区（控制左右宽度和顶部间距） */
         #notebookModal .feedback-modal-body {
-            padding: 16px 24px 16px 24px;       /* 与公告内容左右内边距一致 */
+            padding: 16px 20px 0 20px;   /* 上间距16px，左右20px，底部0 */
             overflow: visible;
             flex: 0 0 auto;
             background: transparent;
         }
-        /* 笔记列表样式 */
+        /* 笔记列表滚动容器：增加顶部和底部空白 */
         .notebook-list {
-            padding: 0;
+            padding: 12px 0 16px 0;     /* 顶部12px，底部16px */
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -270,6 +271,7 @@
             overflow-y: auto;
             scrollbar-width: none;
             -ms-overflow-style: none;
+            box-sizing: border-box;      /* 让padding包含在max-height内 */
         }
         .notebook-list::-webkit-scrollbar { display: none; }
         .notebook-item {
