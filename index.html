@@ -201,7 +201,7 @@
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
 
-        /* ===== 星聚笔记模态框专用样式（滚动间距、宽度优化） ===== */
+        /* ===== 星聚笔记模态框专用样式（等距间距 + 更大宽度） ===== */
         #notebookModal {
             background: transparent;
             backdrop-filter: none;
@@ -212,13 +212,13 @@
             backdrop-filter: blur(24px) saturate(125%);
             -webkit-backdrop-filter: blur(24px) saturate(125%);
             border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 8px;          /* 与 logo 圆角一致 */
+            border-radius: 8px;
             overflow: hidden;
-            max-height: 75vh;             /* 限制整个卡片高度 */
+            max-height: 75vh;
             display: flex;
             flex-direction: column;
         }
-        /* 头部样式与系统公告完全一致 */
+        /* 头部（与公告一致） */
         #notebookModal .feedback-modal-header {
             background: transparent;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -253,25 +253,25 @@
             background: rgba(0, 0, 0, 0.05);
             color: #334155;
         }
-        /* 内容区（控制左右宽度和顶部间距） */
+        /* 内容区：左右间距更小，内容更宽 */
         #notebookModal .feedback-modal-body {
-            padding: 16px 20px 0 20px;   /* 上间距16px，左右20px，底部0 */
+            padding: 12px 12px 0 12px;   /* 上 右 下 左 */
             overflow: visible;
             flex: 0 0 auto;
             background: transparent;
         }
-        /* 笔记列表滚动容器：增加顶部和底部空白 */
+        /* 笔记列表：移除顶部空白，卡片间距 = 左右间距 (12px) */
         .notebook-list {
-            padding: 12px 0 16px 0;     /* 顶部12px，底部16px */
+            padding: 0 0 16px 0;         /* 底部保留滚动完成后的留白 */
             margin: 0;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;                   /* 与左右留白一一对应 */
             max-height: calc(75vh - 70px);
             overflow-y: auto;
             scrollbar-width: none;
             -ms-overflow-style: none;
-            box-sizing: border-box;      /* 让padding包含在max-height内 */
+            box-sizing: border-box;
         }
         .notebook-list::-webkit-scrollbar { display: none; }
         .notebook-item {
