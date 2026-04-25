@@ -2,7 +2,7 @@
  * 主播放器类 - 精简版（修复下拉菜单被遮挡问题 + 资源懒加载优化）
  */
 
-// ==================== 自定义下拉选择器组件（挂载到 body） ====================
+// ==================== 自定义下拉选择器组件（挂载到 body，修复定位） ====================
 class CustomSelect {
     constructor(selectElement) {
         this.selectElement = selectElement;
@@ -113,22 +113,26 @@ class CustomSelect {
         const dropdownHeight = this.dropdown.offsetHeight;
         const viewportHeight = window.innerHeight;
         
-        let top = rect.bottom + window.scrollY + 4;
-        let left = rect.left + window.scrollX;
+        let top = rect.bottom + 4;
+        let left = rect.left;
         
-        if (rect.bottom + dropdownHeight + 10 > viewportHeight) {
-            top = rect.top + window.scrollY - dropdownHeight - 4;
+        // 避免超出底部
+        if (top + dropdownHeight > viewportHeight - 10) {
+            top = rect.top - dropdownHeight - 4;
         }
         
+        // 避免超出右侧
         const dropdownWidth = this.dropdown.offsetWidth;
-        if (left + dropdownWidth > window.innerWidth + window.scrollX) {
-            left = window.innerWidth + window.scrollX - dropdownWidth - 10;
+        if (left + dropdownWidth > window.innerWidth - 10) {
+            left = window.innerWidth - dropdownWidth - 10;
         }
-        if (left < 0) left = 10;
+        if (left < 10) left = 10;
         
+        this.dropdown.style.position = 'fixed';
         this.dropdown.style.top = top + 'px';
         this.dropdown.style.left = left + 'px';
         this.dropdown.style.width = rect.width + 'px';
+        this.dropdown.style.zIndex = '100000';
     }
     
     handleScrollResize() {
@@ -213,7 +217,7 @@ class MusicPlayer {
         this.updateAnimationFrame = null;
         this.lastTimeUpdate = 0;
         
-        // ===== 新增：懒加载观察器 =====
+        // 懒加载观察器
         this.coverObserver = null;
         this.initCoverObserver();
         
@@ -226,7 +230,6 @@ class MusicPlayer {
         this.hasInitialized = false;
     }
 
-    // ===== 新增：初始化封面懒加载观察器 =====
     initCoverObserver() {
         this.coverObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -241,7 +244,7 @@ class MusicPlayer {
                 }
             });
         }, {
-            rootMargin: '100px', // 提前 100px 加载
+            rootMargin: '100px',
             threshold: 0.01
         });
     }
@@ -414,7 +417,6 @@ class MusicPlayer {
         const elements = this.apiElements[apiId];
         if (!elements) return;
         
-        // 显示加载状态
         if (elements.playlistContainer) {
             elements.playlistContainer.innerHTML = '<div class="loading">加载中...</div>';
             elements.playlistContainer.style.display = 'block';
@@ -514,7 +516,6 @@ class MusicPlayer {
         }
     }
 
-    // ===== 修改：渲染歌单，前5首立即加载封面，其余懒加载 =====
     renderPlaylist(apiId, playlist) {
         const elements = this.apiElements[apiId];
         if (!elements || !elements.playlistContainer) return;
@@ -527,10 +528,8 @@ class MusicPlayer {
             return;
         }
         
-        // 保存当前播放列表
         this.currentPlaylist = playlist;
         
-        // 创建文档片段以提高性能
         const fragment = document.createDocumentFragment();
         
         playlist.forEach((song, index) => {
@@ -540,7 +539,7 @@ class MusicPlayer {
         
         container.appendChild(fragment);
         
-        // ===== 新增：预加载前5首封面 =====
+        // 预加载前5首封面
         const preloadCount = Math.min(5, playlist.length);
         for (let i = 0; i < preloadCount; i++) {
             const song = playlist[i];
@@ -550,10 +549,10 @@ class MusicPlayer {
             }
         }
         
-        // ===== 新增：观察后续歌曲封面进行懒加载 =====
+        // 懒加载后续封面
         const songItems = container.querySelectorAll('.song-item');
         songItems.forEach((item, index) => {
-            if (index < 5) return; // 前5首已预加载
+            if (index < 5) return;
             
             const coverImg = item.querySelector('img[data-src]');
             if (coverImg) {
@@ -564,7 +563,6 @@ class MusicPlayer {
         this.scrollToCurrentSong(apiId);
     }
 
-    // ===== 修改：创建歌曲项，封面使用 data-src 延迟加载 =====
     createSongItem(song, index, playlist) {
         const songItem = document.createElement('div');
         songItem.className = 'song-item';
@@ -572,7 +570,6 @@ class MusicPlayer {
             songItem.classList.add('active');
         }
         
-        // 使用 data-src 而非直接设置 src，便于懒加载
         const coverUrl = song.cover || '';
         const coverHtml = coverUrl 
             ? `<img class="song-cover" data-src="${this.escapeHtml(coverUrl)}" alt="" loading="lazy" style="display:none;">` 
@@ -661,7 +658,6 @@ class MusicPlayer {
         return songItem;
     }
 
-    // ===== 修改：加载歌曲时，音频 src 在此刻才设置 =====
     async loadSong(index, playlist = null) {
         if (this.isHandlingNavigationClick) return;
         
@@ -675,23 +671,19 @@ class MusicPlayer {
         this.elements.playBtn.disabled = true;
         
         try {
-            // 预加载下一首的音频（可选）
             if (index < currentPlaylist.length - 1) {
                 const nextSong = currentPlaylist[index + 1];
                 if (nextSong.src) {
-                    // 使用轻量预加载，不阻塞当前
                     fetch(nextSong.src, { method: 'HEAD', mode: 'no-cors' }).catch(() => {});
                 }
             }
             
-            // ===== 关键修改：在此刻才设置音频 src =====
             this.audio.src = song.src;
             this.audio.load();
             
             await this.updateSongInfo(song);
             await this.loadLyrics(song);
             
-            // 等待音频元数据加载
             await new Promise((resolve) => {
                 const checkDuration = () => {
                     if (this.audio.duration && !isNaN(this.audio.duration)) {
@@ -719,11 +711,9 @@ class MusicPlayer {
     async updateSongInfo(song) {
         if (this.elements.songTitle) {
             this.elements.songTitle.textContent = song.title || '未知歌曲';
-            this.checkTextOverflow(this.elements.songTitle);
         }
         if (this.elements.songArtist) {
             this.elements.songArtist.textContent = song.artist || '未知歌手';
-            this.checkTextOverflow(this.elements.songArtist);
         }
         
         const coverUrl = song.cover || '/assets/logo.png';
@@ -736,15 +726,6 @@ class MusicPlayer {
             this.elements.coverImg.onerror = () => {
                 this.elements.coverImg.src = '/assets/logo.png';
             };
-        }
-    }
-
-    checkTextOverflow(element) {
-        const container = element.parentElement;
-        if (container.scrollWidth > container.clientWidth) {
-            element.classList.add('scrolling');
-        } else {
-            element.classList.remove('scrolling');
         }
     }
 
@@ -1294,7 +1275,6 @@ class MusicPlayer {
             window.musicPlayer = null;
         }
         
-        // ===== 新增：断开观察器 =====
         if (this.coverObserver) {
             this.coverObserver.disconnect();
         }
@@ -1338,7 +1318,6 @@ class MusicPlayer {
         return saved ? saved === 'true' : false;
     }
 
-    // 简单的转义函数
     escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
