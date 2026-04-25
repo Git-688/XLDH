@@ -271,4 +271,4 @@ class PluginManager {
     }
 }
 
-window.PluginManager = PluginManager;
+window.PluginManager = PluginManager; 
