@@ -16,6 +16,7 @@ class CustomSelect {
         this.container = document.createElement('div');
         this.container.className = 'custom-select';
         this.container.setAttribute('data-select-id', this.selectElement.id || '');
+
         this.trigger = document.createElement('div');
         this.trigger.className = 'custom-select-trigger';
         this.trigger.innerHTML = `
@@ -24,14 +25,18 @@ class CustomSelect {
         `;
         this.container.appendChild(this.trigger);
         this.selectElement.parentNode.insertBefore(this.container, this.selectElement.nextSibling);
+
         this.dropdown = document.createElement('div');
         this.dropdown.className = 'custom-select-dropdown-global';
         this.populateOptions();
         document.body.appendChild(this.dropdown);
+
         this.bindEvents();
+
         this.selectElement.addEventListener('change', () => {
             this.setValue(this.selectElement.value, false);
         });
+
         this.container.__customSelectInstance = this;
         window.addEventListener('scroll', this.handleScrollResize.bind(this), true);
         window.addEventListener('resize', this.handleScrollResize.bind(this));
@@ -45,6 +50,7 @@ class CustomSelect {
     populateOptions() {
         this.dropdown.innerHTML = '';
         this.options = [];
+
         for (let i = 0; i < this.selectElement.options.length; i++) {
             const option = this.selectElement.options[i];
             const optionDiv = document.createElement('div');
@@ -55,11 +61,13 @@ class CustomSelect {
             optionDiv.textContent = option.textContent;
             optionDiv.setAttribute('data-value', option.value);
             optionDiv.setAttribute('data-index', i);
+
             optionDiv.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.selectOption(i);
                 this.closeDropdown();
             });
+
             this.dropdown.appendChild(optionDiv);
             this.options.push(optionDiv);
         }
@@ -67,15 +75,19 @@ class CustomSelect {
 
     selectOption(index) {
         if (index === this.selectElement.selectedIndex) return;
+
         this.selectElement.selectedIndex = index;
         this.value = this.selectElement.value;
+
         const valueSpan = this.trigger.querySelector('.custom-select-value');
         if (valueSpan) {
             valueSpan.textContent = this.selectElement.options[index].textContent;
         }
+
         this.options.forEach((opt, i) => {
             opt.classList.toggle('selected', i === index);
         });
+
         const changeEvent = new Event('change', { bubbles: true });
         this.selectElement.dispatchEvent(changeEvent);
     }
@@ -91,19 +103,24 @@ class CustomSelect {
 
     updateDropdownPosition() {
         if (!this.isOpen) return;
+
         const rect = this.trigger.getBoundingClientRect();
         const dropdownHeight = this.dropdown.offsetHeight;
         const viewportHeight = window.innerHeight;
+
         let top = rect.bottom + 4;
         let left = rect.left;
+
         if (top + dropdownHeight > viewportHeight - 10) {
             top = rect.top - dropdownHeight - 4;
         }
+
         const dropdownWidth = this.dropdown.offsetWidth;
         if (left + dropdownWidth > window.innerWidth - 10) {
             left = window.innerWidth - dropdownWidth - 10;
         }
         if (left < 10) left = 10;
+
         this.dropdown.style.position = 'fixed';
         this.dropdown.style.top = top + 'px';
         this.dropdown.style.left = left + 'px';
@@ -117,19 +134,24 @@ class CustomSelect {
 
     openDropdown() {
         if (this.isOpen) return;
+
         if (window.__activeCustomSelect && window.__activeCustomSelect !== this) {
             window.__activeCustomSelect.closeDropdown();
         }
+
         this.isOpen = true;
         this.trigger.classList.add('open');
         this.populateOptions();
         this.updateDropdownPosition();
         this.dropdown.classList.add('open');
+
         window.__activeCustomSelect = this;
+
         const selected = this.dropdown.querySelector('.custom-select-option.selected');
         if (selected) {
             selected.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
+
         this.handleOutsideClick = (e) => {
             if (!this.container.contains(e.target) && !this.dropdown.contains(e.target)) {
                 this.closeDropdown();
@@ -145,9 +167,11 @@ class CustomSelect {
         this.isOpen = false;
         this.trigger.classList.remove('open');
         this.dropdown.classList.remove('open');
+
         if (window.__activeCustomSelect === this) {
             window.__activeCustomSelect = null;
         }
+
         document.removeEventListener('click', this.handleOutsideClick);
     }
 
@@ -194,14 +218,18 @@ class MusicPlayer {
         this.cacheManager = new CacheManager();
         this.lyricParser = new LyricParser();
         this.pluginManager = new PluginManager(this.cacheManager);
+
         this.updateAnimationFrame = null;
         this.lastTimeUpdate = 0;
+
         this.coverObserver = null;
         this.initCoverObserver();
+
         this.initializeProperties();
         this.initializeElements();
         this.bindEvents();
         this.initializePlayer();
+
         this.isHandlingNavigationClick = false;
         this.hasInitialized = false;
     }
@@ -228,22 +256,28 @@ class MusicPlayer {
     initializeProperties() {
         this.isPlaying = this.loadPlayState();
         this.isLoading = false;
+
         this.currentPlaylist = [];
         this.currentIndex = 0;
         this.currentApi = 'netease';
+
         this.volume = this.loadVolume();
         this.playMode = this.loadPlayMode();
         this.playbackSpeed = this.loadPlaybackSpeed();
         this.autoPlayNext = true;
+
         this.currentLyricIndex = -1;
         this.isDraggingProgress = false;
+
         this.isSearchMode = new Map();
         this.isVolumeSliderVisible = false;
+
         this.hasNotifiedLocal = false;
         this.hasNotifiedMigu = false;
+
         const apis = ['netease', 'qq', 'migu', 'local'];
         apis.forEach(api => this.isSearchMode.set(api, false));
-        // 歌词动画相关
+
         this.lyricScrollTarget = 0;
         this.lyricScrollCurrent = 0;
         this.lyricScrollAnimating = false;
@@ -254,6 +288,7 @@ class MusicPlayer {
             coverImg: document.getElementById('cover-img'),
             songTitle: document.getElementById('song-title'),
             songArtist: document.getElementById('song-artist'),
+
             playBtn: document.getElementById('play-btn'),
             prevBtn: document.getElementById('prev-btn'),
             nextBtn: document.getElementById('next-btn'),
@@ -263,28 +298,34 @@ class MusicPlayer {
             volumeSliderContainer: document.getElementById('volume-slider-container'),
             downloadBtn: document.getElementById('download-btn'),
             searchToggleBtn: document.getElementById('search-toggle-btn'),
+
             progressBar: document.getElementById('progress-bar'),
             progress: document.getElementById('progress'),
             progressHandle: document.getElementById('progress-handle'),
             currentTime: document.getElementById('current-time'),
             duration: document.getElementById('duration'),
             speedSelect: document.getElementById('speed-select'),
+
             lyricsContainer: document.getElementById('lyrics-container'),
             lyricsSection: document.querySelector('.lyrics-section'),
+
             player: document.querySelector('.music-player')
         };
+
         this.lyricsInner = document.createElement('div');
         this.lyricsInner.className = 'lyrics-inner';
         if (this.elements.lyricsContainer) {
             this.elements.lyricsContainer.innerHTML = '';
             this.elements.lyricsContainer.appendChild(this.lyricsInner);
         }
+
         this.initializeApiElements();
     }
 
     initializeApiElements() {
         const apis = ['netease', 'qq', 'migu', 'local'];
         this.apiElements = {};
+
         apis.forEach(api => {
             this.apiElements[api] = {
                 playlistContainer: document.getElementById(`${api}-playlist-container`),
@@ -314,15 +355,18 @@ class MusicPlayer {
         });
         this.elements.downloadBtn.addEventListener('click', () => this.downloadCurrentSong());
         this.elements.searchToggleBtn.addEventListener('click', () => this.toggleSearchMode(this.currentApi));
+
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const api = e.target.getAttribute('data-tab');
                 this.switchApiTab(api);
             });
         });
+
         this.bindProgressEvents();
         this.bindAudioEvents();
         this.bindApiEvents();
+
         document.addEventListener('click', (e) => {
             if (this.isVolumeSliderVisible &&
                 !this.elements.volumeBtn.contains(e.target) &&
@@ -330,12 +374,13 @@ class MusicPlayer {
                 this.hideVolumeSlider();
             }
         });
+
         document.addEventListener('click', (e) => {
             const isNavigationClick = e.target.closest('.site-card') ||
-                e.target.closest('.navigation-section') ||
-                e.target.closest('.navigation-body') ||
-                e.target.closest('.level1-btn') ||
-                e.target.closest('.level2-btn');
+                                     e.target.closest('.navigation-section') ||
+                                     e.target.closest('.navigation-body') ||
+                                     e.target.closest('.level1-btn') ||
+                                     e.target.closest('.level2-btn');
             if (isNavigationClick) {
                 this.isHandlingNavigationClick = true;
                 setTimeout(() => { this.isHandlingNavigationClick = false; }, 100);
@@ -383,11 +428,13 @@ class MusicPlayer {
     async loadApiPlaylist(apiId) {
         const elements = this.apiElements[apiId];
         if (!elements) return;
+
         if (elements.playlistContainer) {
             elements.playlistContainer.innerHTML = '<div class="loading">加载中...</div>';
             elements.playlistContainer.style.display = 'block';
         }
         if (elements.searchContainer) elements.searchContainer.style.display = 'none';
+
         try {
             let playlist;
             if (apiId === 'local') {
@@ -411,6 +458,7 @@ class MusicPlayer {
                     localStorage.setItem(cacheKey, 'true');
                 }
             }
+
             this.renderPlaylist(apiId, playlist);
         } catch (error) {
             console.error(`加载 ${apiId} 歌单失败:`, error);
@@ -423,6 +471,7 @@ class MusicPlayer {
                 `;
             }
         }
+
         if (elements.playlistSelect && elements.playlistSelect.parentNode) {
             const customSelect = elements.playlistSelect.parentNode.querySelector('.custom-select');
             if (customSelect && customSelect.__customSelectInstance) {
@@ -481,6 +530,7 @@ class MusicPlayer {
             fragment.appendChild(songItem);
         });
         container.appendChild(fragment);
+
         const preloadCount = Math.min(5, playlist.length);
         for (let i = 0; i < preloadCount; i++) {
             const song = playlist[i];
@@ -572,12 +622,12 @@ class MusicPlayer {
     }
 
     updateActiveSongInList() {
-        if (!this.currentApi) return;
+        this.clearAllActiveIndicators();
+        if (!this.currentApi || !this.isPlaying) return;
         const elements = this.apiElements[this.currentApi];
         if (!elements || !elements.playlistContainer) return;
         const items = elements.playlistContainer.querySelectorAll('.song-item');
-        items.forEach(item => item.classList.remove('active'));
-        if (this.isPlaying && this.currentPlaylist && this.currentIndex >= 0 && this.currentIndex < items.length) {
+        if (this.currentPlaylist && this.currentIndex >= 0 && this.currentIndex < items.length) {
             items[this.currentIndex].classList.add('active');
         }
     }
@@ -698,12 +748,19 @@ class MusicPlayer {
         lyrics.forEach((lyric, index) => {
             const line = document.createElement('div');
             line.className = 'lyrics-line';
-            line.textContent = lyric.text;
+            const text = lyric.text || '';
+            if (text.includes('\n')) {
+                const [original, translation] = text.split('\n');
+                line.innerHTML = `<span class="orig">${this.escapeHtml(original)}</span><br><span class="trans">${this.escapeHtml(translation)}</span>`;
+                line.classList.add('has-translation');
+            } else {
+                line.textContent = text;
+            }
             line.setAttribute('data-index', index);
             fragment.appendChild(line);
         });
         this.lyricsInner.appendChild(fragment);
-        // 检测溢出并应用跑马灯
+
         setTimeout(() => {
             const lines = this.lyricsInner.querySelectorAll('.lyrics-line');
             lines.forEach(line => {
@@ -716,25 +773,29 @@ class MusicPlayer {
                 } else {
                     line.classList.remove('overflow');
                 }
+                line.style.animationPlayState = 'paused';
             });
         }, 100);
     }
 
-    // 优化后的歌词定位与缩放效果
     updateLyricsPosition(currentTime) {
         if (!this.lyricsData || this.lyricsData.length === 0) return;
         const index = this.lyricParser.getCurrentIndex(currentTime);
         if (index === -1) return;
         const containerHeight = this.elements.lyricsContainer.clientHeight;
-        const lineHeight = 30;
+        const lineHeight = 24;
         this.lyricScrollTarget = (containerHeight / 2) - (index * lineHeight + lineHeight / 2);
         if (index !== this.currentLyricIndex) {
             this.currentLyricIndex = index;
             const lines = this.lyricsInner.querySelectorAll('.lyrics-line');
-            lines.forEach(line => line.classList.remove('active'));
-            if (index >= 0 && index < lines.length) {
-                lines[index].classList.add('active');
-            }
+            lines.forEach((line, i) => {
+                line.classList.toggle('active', i === index);
+                if (i === index) {
+                    line.style.animationPlayState = 'running';
+                } else {
+                    line.style.animationPlayState = 'paused';
+                }
+            });
         }
         if (!this.lyricScrollAnimating) {
             this.lyricScrollAnimating = true;
@@ -1213,14 +1274,41 @@ class MusicPlayer {
         console.log('音乐播放器资源已清理');
     }
 
-    saveVolume(volume) { localStorage.setItem('musicPlayer_volume', volume.toString()); }
-    loadVolume() { const saved = localStorage.getItem('musicPlayer_volume'); return saved ? parseFloat(saved) : 0.5; }
-    savePlaybackSpeed(speed) { localStorage.setItem('musicPlayer_playbackSpeed', speed.toString()); }
-    loadPlaybackSpeed() { const saved = localStorage.getItem('musicPlayer_playbackSpeed'); return saved ? parseFloat(saved) : 1.0; }
-    savePlayMode(mode) { localStorage.setItem('musicPlayer_playMode', mode.toString()); }
-    loadPlayMode() { const saved = localStorage.getItem('musicPlayer_playMode'); return saved ? parseInt(saved) : 0; }
-    savePlayState(isPlaying) { localStorage.setItem('musicPlayer_playState', isPlaying.toString()); }
-    loadPlayState() { const saved = localStorage.getItem('musicPlayer_playState'); return saved ? saved === 'true' : false; }
+    saveVolume(volume) {
+        localStorage.setItem('musicPlayer_volume', volume.toString());
+    }
+
+    loadVolume() {
+        const savedVolume = localStorage.getItem('musicPlayer_volume');
+        return savedVolume ? parseFloat(savedVolume) : 0.5;
+    }
+
+    savePlaybackSpeed(speed) {
+        localStorage.setItem('musicPlayer_playbackSpeed', speed.toString());
+    }
+
+    loadPlaybackSpeed() {
+        const saved = localStorage.getItem('musicPlayer_playbackSpeed');
+        return saved ? parseFloat(saved) : 1.0;
+    }
+
+    savePlayMode(mode) {
+        localStorage.setItem('musicPlayer_playMode', mode.toString());
+    }
+
+    loadPlayMode() {
+        const saved = localStorage.getItem('musicPlayer_playMode');
+        return saved ? parseInt(saved) : 0;
+    }
+
+    savePlayState(isPlaying) {
+        localStorage.setItem('musicPlayer_playState', isPlaying.toString());
+    }
+
+    loadPlayState() {
+        const saved = localStorage.getItem('musicPlayer_playState');
+        return saved ? saved === 'true' : false;
+    }
 
     escapeHtml(text) {
         if (!text) return '';
