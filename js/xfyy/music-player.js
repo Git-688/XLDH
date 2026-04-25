@@ -1,8 +1,4 @@
-/**
- * 主播放器类 - 精简版（修复下拉菜单被遮挡问题 + 资源懒加载优化）
- */
-
-// ==================== 自定义下拉选择器组件（挂载到 body，修复定位） ====================
+// ==================== 自定义下拉选择器组件（挂载到 body，互斥+动画） ====================
 class CustomSelect {
     constructor(selectElement) {
         this.selectElement = selectElement;
@@ -116,12 +112,10 @@ class CustomSelect {
         let top = rect.bottom + 4;
         let left = rect.left;
         
-        // 避免超出底部
         if (top + dropdownHeight > viewportHeight - 10) {
             top = rect.top - dropdownHeight - 4;
         }
         
-        // 避免超出右侧
         const dropdownWidth = this.dropdown.offsetWidth;
         if (left + dropdownWidth > window.innerWidth - 10) {
             left = window.innerWidth - dropdownWidth - 10;
@@ -141,11 +135,21 @@ class CustomSelect {
     
     openDropdown() {
         if (this.isOpen) return;
+        
+        // 互斥：关闭其他已打开的下拉
+        if (window.__activeCustomSelect && window.__activeCustomSelect !== this) {
+            window.__activeCustomSelect.closeDropdown();
+        }
+        
         this.isOpen = true;
         this.trigger.classList.add('open');
         this.populateOptions();
         this.updateDropdownPosition();
+        
+        // 添加打开动画类
         this.dropdown.classList.add('open');
+        
+        window.__activeCustomSelect = this;
         
         const selected = this.dropdown.querySelector('.custom-select-option.selected');
         if (selected) {
@@ -167,6 +171,11 @@ class CustomSelect {
         this.isOpen = false;
         this.trigger.classList.remove('open');
         this.dropdown.classList.remove('open');
+        
+        if (window.__activeCustomSelect === this) {
+            window.__activeCustomSelect = null;
+        }
+        
         document.removeEventListener('click', this.handleOutsideClick);
     }
     
@@ -217,7 +226,6 @@ class MusicPlayer {
         this.updateAnimationFrame = null;
         this.lastTimeUpdate = 0;
         
-        // 懒加载观察器
         this.coverObserver = null;
         this.initCoverObserver();
         
@@ -461,7 +469,6 @@ class MusicPlayer {
             }
         }
         
-        // 刷新自定义下拉
         if (elements.playlistSelect && elements.playlistSelect.parentNode) {
             const customSelect = elements.playlistSelect.parentNode.querySelector('.custom-select');
             if (customSelect && customSelect.__customSelectInstance) {
@@ -539,7 +546,6 @@ class MusicPlayer {
         
         container.appendChild(fragment);
         
-        // 预加载前5首封面
         const preloadCount = Math.min(5, playlist.length);
         for (let i = 0; i < preloadCount; i++) {
             const song = playlist[i];
@@ -549,11 +555,9 @@ class MusicPlayer {
             }
         }
         
-        // 懒加载后续封面
         const songItems = container.querySelectorAll('.song-item');
         songItems.forEach((item, index) => {
             if (index < 5) return;
-            
             const coverImg = item.querySelector('img[data-src]');
             if (coverImg) {
                 this.coverObserver.observe(coverImg);
@@ -583,7 +587,6 @@ class MusicPlayer {
             </div>
         `;
         
-        // 如果是前5首，立即加载封面
         if (index < 5 && coverUrl) {
             const img = songItem.querySelector('.song-cover');
             if (img) {
@@ -600,6 +603,19 @@ class MusicPlayer {
         return songItem;
     }
 
+    updateActiveSongInList() {
+        if (!this.currentApi) return;
+        const elements = this.apiElements[this.currentApi];
+        if (!elements || !elements.playlistContainer) return;
+        
+        const items = elements.playlistContainer.querySelectorAll('.song-item');
+        items.forEach(item => item.classList.remove('active'));
+        
+        if (this.currentIndex >= 0 && this.currentIndex < items.length) {
+            items[this.currentIndex].classList.add('active');
+        }
+    }
+
     scrollToCurrentSong(apiId) {
         const elements = this.apiElements[apiId];
         if (!elements || !elements.playlistContainer) return;
@@ -610,54 +626,6 @@ class MusicPlayer {
         }
     }
 
-    renderSearchResults(apiId, results) {
-        const elements = this.apiElements[apiId];
-        if (!elements || !elements.searchResults) return;
-        
-        const container = elements.searchResults;
-        container.innerHTML = '';
-        
-        if (results.length === 0) {
-            container.innerHTML = '<div class="loading">未找到相关结果</div>';
-            return;
-        }
-        
-        const fragment = document.createDocumentFragment();
-        results.forEach((song, index) => {
-            fragment.appendChild(this.createSearchSongItem(song, index, results));
-        });
-        container.appendChild(fragment);
-    }
-
-    createSearchSongItem(song, index, results) {
-        const songItem = document.createElement('div');
-        songItem.className = 'song-item';
-        songItem.innerHTML = `
-            <div class="song-item-info">
-                <div class="song-item-title">${this.escapeHtml(song.title || '未知歌曲')}</div>
-                <div class="song-item-artist">${this.escapeHtml(song.artist || '未知歌手')}</div>
-            </div>
-            <button class="search-download-btn" title="下载">
-                <svg viewBox="0 0 24 24">
-                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                </svg>
-            </button>
-        `;
-        
-        songItem.querySelector('.song-item-info').addEventListener('click', () => {
-            this.loadSong(index, results);
-            this.play();
-        });
-        
-        const downloadBtn = songItem.querySelector('.search-download-btn');
-        downloadBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            await this.downloadSong(song);
-        });
-        
-        return songItem;
-    }
-
     async loadSong(index, playlist = null) {
         if (this.isHandlingNavigationClick) return;
         
@@ -665,6 +633,7 @@ class MusicPlayer {
         if (index < 0 || index >= currentPlaylist.length) return;
         
         this.currentIndex = index;
+        this.currentPlaylist = currentPlaylist;
         const song = currentPlaylist[index];
         
         this.isLoading = true;
@@ -695,6 +664,7 @@ class MusicPlayer {
                 checkDuration();
             });
             
+            this.updateActiveSongInList();
             this.scrollToCurrentSong(this.currentApi);
             
         } catch (error) {
