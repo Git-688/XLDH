@@ -277,9 +277,6 @@ class MusicPlayer {
 
         const apis = ['netease', 'qq', 'migu', 'local'];
         apis.forEach(api => this.isSearchMode.set(api, false));
-
-        // 歌词滚动相关
-        this.lyricScrollAnimating = false;
     }
 
     initializeElements() {
@@ -706,7 +703,6 @@ class MusicPlayer {
         this.lyricsData = [];
         this.lyricsInner.innerHTML = '';
         this.currentLyricIndex = -1;
-        this.lyricScrollAnimating = false;
         if (!song.lrc) {
             this.buildLyricsInner([]);
             return;
@@ -749,6 +745,10 @@ class MusicPlayer {
         });
         this.lyricsInner.appendChild(fragment);
 
+        // 添加过渡动画类（与 CSS 中的 transition 配合）
+        this.lyricsInner.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2)';
+
+        // 检测溢出并设置跑马灯
         setTimeout(() => {
             const lines = this.lyricsInner.querySelectorAll('.lyrics-line');
             lines.forEach(line => {
@@ -766,11 +766,11 @@ class MusicPlayer {
         }, 100);
     }
 
-    // ★★★ 重写歌词定位：基于时间插值，实现与播放速度同步的平滑滚动 ★★★
+    // ★★★ 逐行切换歌词：只在索引变化时一次性滚动，不做连续插值 ★★★
     updateLyricsPosition(currentTime) {
         if (!this.lyricsData || this.lyricsData.length === 0) return;
 
-        // 找到当前时间对应的歌词索引
+        // 找到当前时间对应的歌词索引（与之前相同）
         let newIndex = -1;
         for (let i = 0; i < this.lyricsData.length; i++) {
             if (currentTime >= this.lyricsData[i].time) {
@@ -781,39 +781,29 @@ class MusicPlayer {
         }
         if (newIndex === -1) return;
 
-        const lineHeight = 30;
+        // 如果索引没变，什么都不做（不移动，不重复触发动画）
+        if (newIndex === this.currentLyricIndex) return;
+
+        // 索引改变，更新高亮
+        this.currentLyricIndex = newIndex;
+        const lines = this.lyricsInner.querySelectorAll('.lyrics-line');
+        lines.forEach((line, i) => {
+            line.classList.toggle('active', i === newIndex);
+            if (i === newIndex) {
+                line.style.animationPlayState = 'running';
+            } else {
+                line.style.animationPlayState = 'paused';
+            }
+        });
+
+        // 计算目标偏移，使当前行居中
+        const lineHeight = 30;  // 与 CSS 中 .lyrics-line 的高度保持一致
         const containerHeight = this.elements.lyricsContainer.clientHeight;
         const centerOffset = (containerHeight / 2) - (lineHeight / 2);
+        const targetY = centerOffset - (newIndex * lineHeight);
 
-        // 计算基础偏移（当前句放在中间时，整个列表的 translateY）
-        let baseOffset = centerOffset - (newIndex * lineHeight);
-
-        // 如果在两句之间，进行线性插值
-        if (newIndex < this.lyricsData.length - 1) {
-            const nextLyricTime = this.lyricsData[newIndex + 1].time;
-            const currentLyricTime = this.lyricsData[newIndex].time;
-            const duration = nextLyricTime - currentLyricTime;
-            if (duration > 0) {
-                const progress = (currentTime - currentLyricTime) / duration;
-                baseOffset -= progress * lineHeight; // 向上一行移动
-            }
-        }
-
-        this.lyricsInner.style.transform = `translateY(${baseOffset}px)`;
-
-        // 更新高亮状态
-        if (newIndex !== this.currentLyricIndex) {
-            this.currentLyricIndex = newIndex;
-            const lines = this.lyricsInner.querySelectorAll('.lyrics-line');
-            lines.forEach((line, i) => {
-                line.classList.toggle('active', i === newIndex);
-                if (i === newIndex) {
-                    line.style.animationPlayState = 'running';
-                } else {
-                    line.style.animationPlayState = 'paused';
-                }
-            });
-        }
+        // 直接通过 transform 滚动，借助 CSS transition 实现平滑动画
+        this.lyricsInner.style.transform = `translateY(${targetY}px)`;
     }
 
     togglePlay() {
