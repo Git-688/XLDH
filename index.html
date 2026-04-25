@@ -201,7 +201,7 @@
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
 
-        /* ===== 星聚笔记模态框专用样式（等距间距 + 更大宽度） ===== */
+        /* ===== 星聚笔记模态框专用样式（顶部间距由第一个卡片margin实现） ===== */
         #notebookModal {
             background: transparent;
             backdrop-filter: none;
@@ -253,20 +253,20 @@
             background: rgba(0, 0, 0, 0.05);
             color: #334155;
         }
-        /* 内容区：左右间距更小，内容更宽 */
+        /* 内容区：移除上下内边距，左右留12px让内容更宽 */
         #notebookModal .feedback-modal-body {
-            padding: 12px 12px 0 12px;   /* 上 右 下 左 */
+            padding: 0 12px 0 12px;     /* 上 右 下 左 */
             overflow: visible;
             flex: 0 0 auto;
             background: transparent;
         }
-        /* 笔记列表：移除顶部空白，卡片间距 = 左右间距 (12px) */
+        /* 笔记列表：移除顶部空白，用margin-top在第一个卡片上实现间距 */
         .notebook-list {
-            padding: 0 0 16px 0;         /* 底部保留滚动完成后的留白 */
+            padding: 0 0 16px 0;         /* 底部保留滚动结束后的留白 */
             margin: 0;
             display: flex;
             flex-direction: column;
-            gap: 12px;                   /* 与左右留白一一对应 */
+            gap: 12px;                   /* 卡片间距与左右留白一致 */
             max-height: calc(75vh - 70px);
             overflow-y: auto;
             scrollbar-width: none;
@@ -274,6 +274,10 @@
             box-sizing: border-box;
         }
         .notebook-list::-webkit-scrollbar { display: none; }
+        /* 第一个卡片顶部间距 */
+        .notebook-item:first-child {
+            margin-top: 12px;
+        }
         .notebook-item {
             background: rgba(255, 255, 255, 0.5);
             backdrop-filter: blur(5px);
