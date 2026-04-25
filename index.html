@@ -201,7 +201,7 @@
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
 
-        /* ===== 星聚笔记模态框专用样式（头部亚克力，内容顶部间距） ===== */
+        /* ===== 星聚笔记模态框专用样式（头部与公告一致） ===== */
         #notebookModal {
             background: transparent;
             backdrop-filter: none;
@@ -212,28 +212,49 @@
             backdrop-filter: blur(24px) saturate(125%);
             -webkit-backdrop-filter: blur(24px) saturate(125%);
             border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 8px;          /* 与 logo 圆角一致 */
+            border-radius: 8px;
             overflow: hidden;
-            max-height: 75vh;             /* 限制整个卡片高度 */
+            max-height: 75vh;
             display: flex;
             flex-direction: column;
         }
+        /* 头部样式改为与系统公告完全一致 */
         #notebookModal .feedback-modal-header {
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(12px) saturate(125%);
-            -webkit-backdrop-filter: blur(12px) saturate(125%);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            background: transparent;                /* 使用父容器背景 */
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 18px 24px 10px;
             color: #1e293b;
         }
-        #notebookModal .feedback-modal-header h3,
-        #notebookModal .feedback-modal-header h3 i {
+        #notebookModal .feedback-modal-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
             color: inherit;
         }
+        #notebookModal .feedback-modal-header h3 i {
+            color: #4361ee;
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
         #notebookModal .feedback-modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            border: none;
             color: #64748b;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #notebookModal .feedback-modal-close:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #334155;
         }
         #notebookModal .feedback-modal-body {
-            padding: 12px 12px 12px 12px;  /* 顶部增加间距 */
+            padding: 16px 24px 16px 24px;       /* 与公告内容左右内边距一致 */
             overflow: visible;
             flex: 0 0 auto;
             background: transparent;
@@ -313,12 +334,16 @@
                 border-color: rgba(255, 255, 255, 0.15);
             }
             #notebookModal .feedback-modal-header {
-                background: rgba(30, 30, 30, 0.5);
                 border-bottom-color: rgba(255, 255, 255, 0.06);
                 color: #f1f5f9;
             }
             #notebookModal .feedback-modal-close {
+                background: rgba(255, 255, 255, 0.1);
                 color: #94a3b8;
+            }
+            #notebookModal .feedback-modal-close:hover {
+                background: rgba(255, 255, 255, 0.2);
+                color: #e2e8f0;
             }
             .notebook-item {
                 background: rgba(40, 40, 40, 0.6);
