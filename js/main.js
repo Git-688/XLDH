@@ -56,8 +56,8 @@ class App {
                 return title.trim() !== '' && words.trim() !== '';
             });
             
-            // 按记录ID倒序排列（最新的在前面）
-            validItems.sort((a, b) => b.numid - a.numid);
+            // ★ 修改：按记录ID正序排列（由旧到新，1、2、3...）
+            validItems.sort((a, b) => a.numid - b.numid);
             
             if (validItems.length === 0) {
                 listEl.innerHTML = '<div class="empty">暂无笔记记录</div>';
