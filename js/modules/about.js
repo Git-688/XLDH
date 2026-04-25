@@ -1,5 +1,5 @@
 /**
- * 关于网站模块 - 包含收款模态框（正方形卡片 + 纯图标按钮 + 更小字体）
+ * 关于网站模块 - 包含收款模态框（自适应按钮 + 激活效果）
  * @class AboutModule
  */
 class AboutModule {
@@ -261,7 +261,7 @@ class AboutModule {
     }
 
     /**
-     * 显示收款模态框（正方形卡片 + 纯图标按钮 + 更小字体）
+     * 显示收款模态框（自适应按钮 + 激活优化）
      */
     showDonateModal() {
         const donateModal = document.createElement('div');
@@ -285,26 +285,55 @@ class AboutModule {
             pointer-events: auto;
         `;
 
-        // 注入全局样式（更小的字号）
+        // 注入全局样式
         const style = document.createElement('style');
         style.textContent = `
             .donate-modal-content {
                 font-size: 10px !important;
             }
+            /* 按钮自适应 + 激活效果 */
             .donate-method-btn-left {
+                width: 100%;
+                aspect-ratio: 1 / 1;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                padding: 10px;
-                border-radius: 8px;
-                cursor: pointer;
                 border: 2px solid;
-                transition: all 0.2s;
+                border-radius: 8px;
                 background: rgba(255,255,255,0.7);
-                font-size: 16px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                box-sizing: border-box;
+                padding: 0;
             }
             .donate-method-btn-left i {
-                font-size: 20px;
+                font-size: clamp(1.2rem, 5vw, 1.8rem);
+                transition: transform 0.2s;
+            }
+            .donate-method-btn-left.active {
+                color: #fff !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                transform: scale(1.08);
+                border-color: transparent !important;
+            }
+            .donate-method-btn-left.active i {
+                transform: scale(1.1);
+            }
+            /* 左右正方形卡片防止溢出 */
+            .donate-card-wrapper {
+                flex: 1;
+                min-width: 0;                 /* 关键：防止溢出 */
+                aspect-ratio: 1 / 1;
+                background: rgba(255,255,255,0.5);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border-radius: 12px;
+                padding: 12px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                box-sizing: border-box;
             }
         `;
         donateModal.appendChild(style);
@@ -326,24 +355,10 @@ class AboutModule {
                 transition: transform 0.3s ease;
                 pointer-events: auto;
             ">
-                <!-- 第一行：左右两个圆角正方形卡片 -->
-                <div style="display: flex; gap: 12px; padding: 16px 16px 0;">
+                <!-- 第一行：左右两个完全等大的正方形卡片 -->
+                <div style="display: flex; gap: 12px; padding: 16px 16px 0; min-width: 0;">
                     <!-- 左侧正方形卡片 -->
-                    <div style="
-                        flex: 1;
-                        aspect-ratio: 1/1;
-                        background: rgba(255,255,255,0.5);
-                        backdrop-filter: blur(10px);
-                        -webkit-backdrop-filter: blur(10px);
-                        border-radius: 12px;
-                        padding: 12px;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        text-align: center;
-                        box-sizing: border-box;
-                    ">
+                    <div class="donate-card-wrapper">
                         <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0;">感谢支持</h3>
                         <p style="font-size: 10px; color: #64748b; margin: 0 0 12px 0;">您的支持是我持续更新的动力</p>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;">
@@ -363,31 +378,18 @@ class AboutModule {
                     </div>
 
                     <!-- 右侧正方形卡片 -->
-                    <div class="donate-qrcode-card" style="
-                        flex: 1;
-                        aspect-ratio: 1/1;
-                        background: rgba(255,255,255,0.5);
-                        backdrop-filter: blur(10px);
-                        -webkit-backdrop-filter: blur(10px);
-                        border-radius: 12px;
-                        padding: 12px;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        box-sizing: border-box;
-                    ">
-                        <div class="qrcode-content active" data-type="qq" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ" style="max-width: 80%; max-height: 60%; margin-bottom: 0;">
+                    <div class="donate-card-wrapper" style="position: relative;">
+                        <div class="qrcode-content active" data-type="qq" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ" style="max-width: 80%; max-height: 80%; object-fit: contain;">
                         </div>
-                        <div class="qrcode-content" data-type="wechat" style="text-align: center; display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信" style="max-width: 80%; max-height: 60%; margin-bottom: 0;">
+                        <div class="qrcode-content" data-type="wechat" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信" style="max-width: 80%; max-height: 80%; object-fit: contain;">
                         </div>
-                        <div class="qrcode-content" data-type="alipay" style="text-align: center; display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝" style="max-width: 80%; max-height: 60%; margin-bottom: 0;">
+                        <div class="qrcode-content" data-type="alipay" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝" style="max-width: 80%; max-height: 80%; object-fit: contain;">
                         </div>
-                        <div class="qrcode-content" data-type="help" style="text-align: center; display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                            <div style="font-size: 10px; color: #64748b; line-height: 1.6; padding: 0 8px;">
+                        <div class="qrcode-content" data-type="help" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                            <div style="font-size: 10px; color: #64748b; line-height: 1.6; text-align: center;">
                                 <p style="margin: 0 0 6px 0;">1. 选择左侧支付方式</p>
                                 <p style="margin: 0 0 6px 0;">2. 使用对应App扫描</p>
                                 <p style="margin: 0 0 6px 0;">3. 输入您想支持的金额</p>
@@ -506,36 +508,48 @@ class AboutModule {
         };
         document.addEventListener('keydown', handleKeydown);
 
-        // 左侧按钮切换右侧内容
+        // 左侧按钮切换右侧内容 + 激活优化
         const buttons = donateModal.querySelectorAll('.donate-method-btn-left');
         const contents = donateModal.querySelectorAll('.qrcode-content');
-        
+
+        // 激活状态的辅助函数
+        const setActive = (activeBtn) => {
+            buttons.forEach(b => {
+                b.classList.remove('active');
+                // 恢复默认背景
+                b.style.background = 'rgba(255,255,255,0.7)';
+                // 恢复边框颜色（从内联样式取）
+                const borderColor = b.style.borderColor;
+                b.style.borderColor = borderColor;
+            });
+            activeBtn.classList.add('active');
+            // 激活态背景使用自身原色
+            const activeColor = activeBtn.style.color || '#6BC5FF';
+            activeBtn.style.background = activeColor;
+            activeBtn.style.borderColor = 'transparent';
+        };
+
         // 默认激活 QQ
-        const defaultType = 'qq';
-        buttons.forEach(btn => {
-            if (btn.dataset.type === defaultType) {
-                btn.style.background = btn.style.color;
-                btn.style.color = '#fff';
-            }
-        });
+        const defaultBtn = donateModal.querySelector('.donate-method-btn-left[data-type="qq"]');
+        if (defaultBtn) {
+            setActive(defaultBtn);
+        }
 
         buttons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const type = btn.dataset.type;
 
-                // 更新按钮样式
-                buttons.forEach(b => {
-                    b.style.background = 'rgba(255,255,255,0.7)';
-                    b.style.color = '';
-                });
-                btn.style.background = btn.style.color;
-                btn.style.color = '#fff';
+                // 激活指示
+                setActive(btn);
 
                 // 显示对应内容
                 contents.forEach(content => {
-                    content.style.display = 'none';
                     if (content.dataset.type === type) {
                         content.style.display = 'flex';
+                        content.classList.add('active');
+                    } else {
+                        content.style.display = 'none';
+                        content.classList.remove('active');
                     }
                 });
             });
