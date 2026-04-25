@@ -278,8 +278,7 @@ class MusicPlayer {
         const apis = ['netease', 'qq', 'migu', 'local'];
         apis.forEach(api => this.isSearchMode.set(api, false));
 
-        this.lyricScrollTarget = 0;
-        this.lyricScrollCurrent = 0;
+        // 歌词滚动相关
         this.lyricScrollAnimating = false;
     }
 
@@ -643,15 +642,6 @@ class MusicPlayer {
         });
     }
 
-    scrollToCurrentSong(apiId) {
-        const elements = this.apiElements[apiId];
-        if (!elements || !elements.playlistContainer) return;
-        const activeItem = elements.playlistContainer.querySelector('.song-item.active');
-        if (activeItem) {
-            activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-
     async loadSong(index, playlist = null) {
         if (this.isHandlingNavigationClick) return;
         const currentPlaylist = playlist || this.currentPlaylist;
@@ -716,8 +706,6 @@ class MusicPlayer {
         this.lyricsData = [];
         this.lyricsInner.innerHTML = '';
         this.currentLyricIndex = -1;
-        this.lyricScrollTarget = 0;
-        this.lyricScrollCurrent = 0;
         this.lyricScrollAnimating = false;
         if (!song.lrc) {
             this.buildLyricsInner([]);
@@ -751,7 +739,7 @@ class MusicPlayer {
             const text = lyric.text || '';
             if (text.includes('\n')) {
                 const [original, translation] = text.split('\n');
-                line.innerHTML = `<span class="orig">${this.escapeHtml(original)}</span><br><span class="trans">${this.escapeHtml(translation)}</span>`;
+                line.innerHTML = `<span class="orig">${this.escapeHtml(original)}</span><span class="trans">${this.escapeHtml(translation)}</span>`;
                 line.classList.add('has-translation');
             } else {
                 line.textContent = text;
@@ -778,41 +766,53 @@ class MusicPlayer {
         }, 100);
     }
 
+    // ★★★ 重写歌词定位：基于时间插值，实现与播放速度同步的平滑滚动 ★★★
     updateLyricsPosition(currentTime) {
         if (!this.lyricsData || this.lyricsData.length === 0) return;
-        const index = this.lyricParser.getCurrentIndex(currentTime);
-        if (index === -1) return;
+
+        // 找到当前时间对应的歌词索引
+        let newIndex = -1;
+        for (let i = 0; i < this.lyricsData.length; i++) {
+            if (currentTime >= this.lyricsData[i].time) {
+                newIndex = i;
+            } else {
+                break;
+            }
+        }
+        if (newIndex === -1) return;
+
+        const lineHeight = 30;
         const containerHeight = this.elements.lyricsContainer.clientHeight;
-        const lineHeight = 24;
-        this.lyricScrollTarget = (containerHeight / 2) - (index * lineHeight + lineHeight / 2);
-        if (index !== this.currentLyricIndex) {
-            this.currentLyricIndex = index;
+        const centerOffset = (containerHeight / 2) - (lineHeight / 2);
+
+        // 计算基础偏移（当前句放在中间时，整个列表的 translateY）
+        let baseOffset = centerOffset - (newIndex * lineHeight);
+
+        // 如果在两句之间，进行线性插值
+        if (newIndex < this.lyricsData.length - 1) {
+            const nextLyricTime = this.lyricsData[newIndex + 1].time;
+            const currentLyricTime = this.lyricsData[newIndex].time;
+            const duration = nextLyricTime - currentLyricTime;
+            if (duration > 0) {
+                const progress = (currentTime - currentLyricTime) / duration;
+                baseOffset -= progress * lineHeight; // 向上一行移动
+            }
+        }
+
+        this.lyricsInner.style.transform = `translateY(${baseOffset}px)`;
+
+        // 更新高亮状态
+        if (newIndex !== this.currentLyricIndex) {
+            this.currentLyricIndex = newIndex;
             const lines = this.lyricsInner.querySelectorAll('.lyrics-line');
             lines.forEach((line, i) => {
-                line.classList.toggle('active', i === index);
-                if (i === index) {
+                line.classList.toggle('active', i === newIndex);
+                if (i === newIndex) {
                     line.style.animationPlayState = 'running';
                 } else {
                     line.style.animationPlayState = 'paused';
                 }
             });
-        }
-        if (!this.lyricScrollAnimating) {
-            this.lyricScrollAnimating = true;
-            this.smoothLyricScroll();
-        }
-    }
-
-    smoothLyricScroll() {
-        if (!this.lyricScrollAnimating) return;
-        const ease = 0.08;
-        this.lyricScrollCurrent += (this.lyricScrollTarget - this.lyricScrollCurrent) * ease;
-        this.lyricsInner.style.transform = `translateY(${this.lyricScrollCurrent}px)`;
-        if (Math.abs(this.lyricScrollTarget - this.lyricScrollCurrent) > 0.5) {
-            requestAnimationFrame(() => this.smoothLyricScroll());
-        } else {
-            this.lyricsInner.style.transform = `translateY(${this.lyricScrollTarget}px)`;
-            this.lyricScrollAnimating = false;
         }
     }
 
@@ -849,7 +849,6 @@ class MusicPlayer {
             cancelAnimationFrame(this.updateAnimationFrame);
             this.updateAnimationFrame = null;
         }
-        this.lyricScrollAnimating = false;
         this.clearAllActiveIndicators();
     }
 
