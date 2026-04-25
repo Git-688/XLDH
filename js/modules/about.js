@@ -43,7 +43,7 @@ class AboutModule {
     }
 
     /**
-     * 创建模态框DOM结构
+     * 创建关于网站模态框 DOM 结构
      */
     createModal() {
         if (this.modalElement) {
@@ -53,7 +53,7 @@ class AboutModule {
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'about-modal';
         this.modalElement.innerHTML = this.renderModal();
-        // ===== 修改：移除内联 padding，让 about.css 的响应式 padding 生效 =====
+        // 移除内联 padding，由 CSS 控制左右间距
         this.modalElement.style.cssText = `
             position: fixed;
             top: 0;
@@ -74,7 +74,7 @@ class AboutModule {
     }
 
     /**
-     * 渲染模态框内容
+     * 渲染关于网站模态框内容
      */
     renderModal() {
         return `
@@ -114,7 +114,7 @@ class AboutModule {
                     </div>
                 </div>
                 
-                <!-- 中部内容区域 - 不滚动 -->
+                <!-- 中部内容区域 -->
                 <div class="about-main-content">
                     <div class="about-cards">
                         <div class="about-card">
@@ -138,7 +138,7 @@ class AboutModule {
                     </div>
                 </div>
                 
-                <!-- 底部按钮区域 - 白色背景 -->
+                <!-- 底部按钮区域 -->
                 <div class="about-footer">
                     <div class="about-action-buttons">
                         <div class="about-social-buttons">
@@ -169,7 +169,7 @@ class AboutModule {
     }
 
     /**
-     * 绑定模态框事件
+     * 绑定关于网站模态框事件
      */
     bindModalEvents() {
         if (!this.modalElement) return;
@@ -209,7 +209,7 @@ class AboutModule {
     }
 
     /**
-     * 绑定按钮事件
+     * 绑定关于网站模态框内按钮事件
      */
     bindButtonEvents() {
         const qqBtn = document.getElementById('aboutQQBtn');
@@ -225,7 +225,6 @@ class AboutModule {
                 const btn = e.currentTarget;
                 const originalHTML = btn.innerHTML;
                 btn.innerHTML = '<span>微信号: example</span>';
-                
                 setTimeout(() => {
                     btn.innerHTML = originalHTML;
                 }, 3000);
@@ -261,12 +260,11 @@ class AboutModule {
     }
 
     /**
-     * 显示收款模态框
+     * 显示爱发电/收款模态框
      */
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
-        // ===== 修改：移除内联 padding，让 about.css 的响应式 padding 生效 =====
         donateModal.style.cssText = `
             position: fixed;
             top: 0;
@@ -282,8 +280,13 @@ class AboutModule {
             transition: opacity 0.3s ease;
         `;
 
+        // 关闭按钮移到 modal-content 内部，作为独立定位元素
         donateModal.innerHTML = `
             <div class="donate-modal-content">
+                <button class="donate-close-btn-top" id="donateCloseBtnTop">
+                    <i class="fas fa-times"></i>
+                </button>
+
                 <div class="donate-header">
                     <div class="donate-title-group">
                         <h3 class="donate-title">感谢支持</h3>
@@ -292,9 +295,6 @@ class AboutModule {
                         </div>
                     </div>
                     <p class="donate-subtitle">您的支持是我持续更新的动力</p>
-                    <button class="donate-close-btn-top" id="donateCloseBtnTop">
-                        <i class="fas fa-times"></i>
-                    </button>
                 </div>
                 
                 <div class="donate-main">
@@ -382,7 +382,7 @@ class AboutModule {
     }
 
     /**
-     * 绑定收款模态框事件
+     * 绑定爱发电模态框事件
      */
     bindDonateModalEvents(donateModal) {
         const methodButtons = donateModal.querySelectorAll('.donate-method-btn');
@@ -435,7 +435,7 @@ class AboutModule {
     }
 
     /**
-     * 处理键盘事件
+     * 处理全局键盘事件
      */
     handleKeydown(e) {
         if (e.key === 'Escape' && this.isShowing) {
@@ -444,7 +444,7 @@ class AboutModule {
     }
 
     /**
-     * 绑定全局事件
+     * 绑定全局触发按钮
      */
     bindGlobalEvents() {
         const aboutBtn = document.getElementById('aboutBtn');
@@ -540,7 +540,7 @@ class AboutModule {
     }
 
     /**
-     * 设置壁纸URL
+     * 设置壁纸 URL
      */
     setWallpaper(url) {
         this.wallpaperUrl = url;
@@ -548,7 +548,7 @@ class AboutModule {
     }
 
     /**
-     * 设置logo图片URL
+     * 设置 Logo URL
      */
     setLogo(url) {
         this.logoUrl = url;
@@ -577,18 +577,15 @@ class AboutModule {
     }
 }
 
+// 初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.aboutModule = new AboutModule();
-        window.aboutModule.init().then(() => {
-        }).catch(error => {
-        });
+        window.aboutModule.init();
     });
 } else {
     window.aboutModule = new AboutModule();
-    window.aboutModule.init().then(() => {
-    }).catch(error => {
-    });
+    window.aboutModule.init();
 }
 
 if (typeof module !== 'undefined' && module.exports) {
