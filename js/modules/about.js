@@ -1,5 +1,5 @@
 /**
- * 关于网站模块 - 包含收款模态框
+ * 关于网站模块 - 包含收款模态框（左右双卡片 + 外部关闭按钮布局）
  * @class AboutModule
  */
 class AboutModule {
@@ -43,7 +43,7 @@ class AboutModule {
     }
 
     /**
-     * 创建模态框DOM结构
+     * 创建关于网站模态框DOM结构
      */
     createModal() {
         if (this.modalElement) {
@@ -53,7 +53,6 @@ class AboutModule {
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'about-modal';
         this.modalElement.innerHTML = this.renderModal();
-        // ===== 修改：移除内联 padding，让 about.css 的响应式 padding 生效 =====
         this.modalElement.style.cssText = `
             position: fixed;
             top: 0;
@@ -114,7 +113,7 @@ class AboutModule {
                     </div>
                 </div>
                 
-                <!-- 中部内容区域 - 不滚动 -->
+                <!-- 中部内容区域 -->
                 <div class="about-main-content">
                     <div class="about-cards">
                         <div class="about-card">
@@ -138,7 +137,7 @@ class AboutModule {
                     </div>
                 </div>
                 
-                <!-- 底部按钮区域 - 白色背景 -->
+                <!-- 底部按钮区域 -->
                 <div class="about-footer">
                     <div class="about-action-buttons">
                         <div class="about-social-buttons">
@@ -261,12 +260,11 @@ class AboutModule {
     }
 
     /**
-     * 显示收款模态框
+     * 显示收款模态框（全新布局：左右双卡片 + 下方支持者名单 + 外部关闭按钮）
      */
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
-        // ===== 修改：移除内联 padding，让 about.css 的响应式 padding 生效 =====
         donateModal.style.cssText = `
             position: fixed;
             top: 0;
@@ -275,48 +273,48 @@ class AboutModule {
             height: 100%;
             background: transparent;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 10001;
             opacity: 0;
             transition: opacity 0.3s ease;
+            padding: 16px;
+            box-sizing: border-box;
+            gap: 14px;
         `;
 
         donateModal.innerHTML = `
+            <!-- 白色主卡片 -->
             <div class="donate-modal-content">
-                <div class="donate-header">
-                    <div class="donate-title-group">
-                        <h3 class="donate-title">感谢支持</h3>
-                        <div class="donate-heart">
-                            <i class="fas fa-heart"></i>
+                <!-- 上半部分：左右双卡片 -->
+                <div class="donate-main">
+                    <!-- 左侧卡片：标题+副标题+2x2按钮 -->
+                    <div class="donate-left-card">
+                        <h3 class="donate-left-title">感谢支持 ❤️</h3>
+                        <p class="donate-left-subtitle">您的支持是我持续更新的动力</p>
+                        <div class="donate-methods-grid">
+                            <button class="donate-method-btn active" data-type="qq" data-label="QQ支付">
+                                <i class="fab fa-qq"></i>
+                            </button>
+                            <button class="donate-method-btn" data-type="wechat" data-label="微信支付">
+                                <i class="fab fa-weixin"></i>
+                            </button>
+                            <button class="donate-method-btn" data-type="alipay" data-label="支付宝">
+                                <i class="fab fa-alipay"></i>
+                            </button>
+                            <button class="donate-method-btn" data-type="help" data-label="使用说明">
+                                <i class="fas fa-question"></i>
+                            </button>
                         </div>
                     </div>
-                    <p class="donate-subtitle">您的支持是我持续更新的动力</p>
-                    <button class="donate-close-btn-top" id="donateCloseBtnTop">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                
-                <div class="donate-main">
-                    <div class="donate-methods">
-                        <button class="donate-method-btn active" data-type="qq" title="QQ支付">
-                            <i class="fab fa-qq"></i>
-                        </button>
-                        <button class="donate-method-btn" data-type="wechat" title="微信支付">
-                            <i class="fab fa-weixin"></i>
-                        </button>
-                        <button class="donate-method-btn" data-type="alipay" title="支付宝">
-                            <i class="fab fa-alipay"></i>
-                        </button>
-                        <button class="donate-method-btn help-btn" data-type="help" title="使用帮助">
-                            <i class="fas fa-question"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="donate-qrcode-container">
+
+                    <!-- 右侧卡片：二维码/使用说明居中 -->
+                    <div class="donate-right-card">
                         <div class="donate-qrcode active" data-type="qq">
                             <div class="qrcode-image-container">
-                                <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
+                                <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ收款码" class="qrcode-image"
+                                     onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
                                 <div class="qrcode-placeholder">
                                     <i class="fab fa-qq"></i>
                                     <span>QQ收款码</span>
@@ -326,7 +324,8 @@ class AboutModule {
                         </div>
                         <div class="donate-qrcode" data-type="wechat">
                             <div class="qrcode-image-container">
-                                <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
+                                <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信收款码" class="qrcode-image"
+                                     onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
                                 <div class="qrcode-placeholder">
                                     <i class="fab fa-weixin"></i>
                                     <span>微信收款码</span>
@@ -336,7 +335,8 @@ class AboutModule {
                         </div>
                         <div class="donate-qrcode" data-type="alipay">
                             <div class="qrcode-image-container">
-                                <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝收款码" class="qrcode-image" onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
+                                <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝收款码" class="qrcode-image"
+                                     onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
                                 <div class="qrcode-placeholder">
                                     <i class="fab fa-alipay"></i>
                                     <span>支付宝收款码</span>
@@ -359,8 +359,9 @@ class AboutModule {
                     </div>
                 </div>
 
-                <div class="supporters-section">
-                    <h4 class="supporters-title">支持者名单</h4>
+                <!-- 下方：支持者名单 -->
+                <div class="donate-supporters-section">
+                    <h4 class="supporters-title-outer">支持者名单</h4>
                     <div class="supporters-card">
                         <div class="supporters-list">
                             ${this.supporters.map(name => `<span class="supporter-name">${Utils.escapeHtml(name)}</span>`).join('')}
@@ -368,70 +369,104 @@ class AboutModule {
                     </div>
                 </div>
             </div>
+
+            <!-- 外部关闭按钮（在卡片下方） -->
+            <button class="donate-close-btn-outer" id="donateCloseBtnOuter" title="关闭">
+                <i class="fas fa-times"></i>
+            </button>
         `;
 
         document.body.appendChild(donateModal);
 
-        setTimeout(() => {
-            donateModal.style.opacity = '1';
-            const content = donateModal.querySelector('.donate-modal-content');
-            content.style.transform = 'scale(1)';
-        }, 10);
+        // 动画入场
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                donateModal.classList.add('active');
+            });
+        });
 
         this.bindDonateModalEvents(donateModal);
     }
 
     /**
-     * 绑定收款模态框事件
+     * 绑定收款模态框事件（适配新布局）
      */
     bindDonateModalEvents(donateModal) {
+        // ---- 左侧按钮切换 ----
         const methodButtons = donateModal.querySelectorAll('.donate-method-btn');
-        const qrcodes = donateModal.querySelectorAll('.donate-qrcode');
-        
+        const qrcodes = donateModal.querySelectorAll('.donate-right-card .donate-qrcode');
+
         methodButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const type = btn.dataset.type;
-                
+
+                // 更新按钮激活状态
                 methodButtons.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                
+
+                // 切换右侧显示内容
                 qrcodes.forEach(qr => qr.classList.remove('active'));
-                const targetQr = donateModal.querySelector(`.donate-qrcode[data-type="${type}"]`);
+                const targetQr = donateModal.querySelector(`.donate-right-card .donate-qrcode[data-type="${type}"]`);
                 if (targetQr) {
                     targetQr.classList.add('active');
                 }
             });
         });
 
-        const closeBtnTop = donateModal.querySelector('#donateCloseBtnTop');
-        if (closeBtnTop) {
-            const hideDonateModal = () => {
-                donateModal.style.opacity = '0';
-                const content = donateModal.querySelector('.donate-modal-content');
-                content.style.transform = 'scale(0.8)';
-                
-                setTimeout(() => {
+        // ---- 关闭逻辑 ----
+        const hideDonateModal = () => {
+            donateModal.classList.remove('active');
+            // 等待过渡动画结束后移除 DOM
+            const handleTransitionEnd = (e) => {
+                if (e.target === donateModal) {
+                    donateModal.removeEventListener('transitionend', handleTransitionEnd);
                     if (donateModal.parentNode) {
                         donateModal.parentNode.removeChild(donateModal);
                     }
-                }, 300);
-            };
-
-            closeBtnTop.addEventListener('click', hideDonateModal);
-            donateModal.addEventListener('click', (e) => {
-                if (e.target === donateModal) {
-                    hideDonateModal();
                 }
+            };
+            donateModal.addEventListener('transitionend', handleTransitionEnd);
+            // 兜底：600ms 后强制移除
+            setTimeout(() => {
+                if (donateModal.parentNode) {
+                    donateModal.parentNode.removeChild(donateModal);
+                }
+            }, 600);
+        };
+
+        // 外部关闭按钮
+        const closeBtnOuter = donateModal.querySelector('#donateCloseBtnOuter');
+        if (closeBtnOuter) {
+            closeBtnOuter.addEventListener('click', (e) => {
+                e.stopPropagation();
+                hideDonateModal();
             });
-
-            const handleKeydown = (e) => {
-                if (e.key === 'Escape') {
-                    hideDonateModal();
-                    document.removeEventListener('keydown', handleKeydown);
-                }
-            };
-            document.addEventListener('keydown', handleKeydown);
         }
+
+        // 点击遮罩层关闭
+        donateModal.addEventListener('click', (e) => {
+            if (e.target === donateModal) {
+                hideDonateModal();
+            }
+        });
+
+        // ESC 键关闭
+        const handleKeydown = (e) => {
+            if (e.key === 'Escape') {
+                hideDonateModal();
+                document.removeEventListener('keydown', handleKeydown);
+            }
+        };
+        document.addEventListener('keydown', handleKeydown);
+
+        // 清理：移除时解绑 ESC
+        const observer = new MutationObserver(() => {
+            if (!donateModal.parentNode) {
+                document.removeEventListener('keydown', handleKeydown);
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.body, { childList: true });
     }
 
     /**
