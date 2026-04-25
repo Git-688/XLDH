@@ -1,5 +1,5 @@
 /**
- * 关于网站模块 - 包含收款模态框
+ * 关于网站模块 - 包含收款模态框（正方形卡片 + 纯图标按钮 + 更小字体）
  * @class AboutModule
  */
 class AboutModule {
@@ -261,7 +261,7 @@ class AboutModule {
     }
 
     /**
-     * 显示收款模态框（新布局）
+     * 显示收款模态框（正方形卡片 + 纯图标按钮 + 更小字体）
      */
     showDonateModal() {
         const donateModal = document.createElement('div');
@@ -285,31 +285,26 @@ class AboutModule {
             pointer-events: auto;
         `;
 
-        // 插入自定义样式，用于移动端隐藏按钮文字、调整字体大小
+        // 注入全局样式（更小的字号）
         const style = document.createElement('style');
         style.textContent = `
             .donate-modal-content {
-                font-size: 12px; /* 整体字体缩小 */
+                font-size: 10px !important;
             }
             .donate-method-btn-left {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                gap: 4px;
+                padding: 10px;
+                border-radius: 8px;
+                cursor: pointer;
+                border: 2px solid;
+                transition: all 0.2s;
+                background: rgba(255,255,255,0.7);
+                font-size: 16px;
             }
-            .donate-method-btn-left .btn-icon {
-                display: none; /* 桌面端默认隐藏图标，移动端显示 */
-            }
-            .donate-method-btn-left .btn-text {
-                display: inline;
-            }
-            @media (max-width: 767px) {
-                .donate-method-btn-left .btn-text {
-                    display: none; /* 移动端隐藏文字 */
-                }
-                .donate-method-btn-left .btn-icon {
-                    display: inline-block; /* 移动端显示图标 */
-                }
+            .donate-method-btn-left i {
+                font-size: 20px;
             }
         `;
         donateModal.appendChild(style);
@@ -324,143 +319,105 @@ class AboutModule {
                 backdrop-filter: blur(24px) saturate(180%);
                 -webkit-backdrop-filter: blur(24px) saturate(180%);
                 border: 1px solid rgba(255,255,255,0.4);
-                border-radius: 8px;
+                border-radius: 12px;
                 overflow: hidden;
                 box-shadow: 0 10px 40px rgba(0,0,0,0.1);
                 transform: scale(0.8);
                 transition: transform 0.3s ease;
                 pointer-events: auto;
             ">
-                <!-- 第一行：左右两个卡片 -->
+                <!-- 第一行：左右两个圆角正方形卡片 -->
                 <div style="display: flex; gap: 12px; padding: 16px 16px 0;">
-                    <!-- 左侧卡片 -->
+                    <!-- 左侧正方形卡片 -->
                     <div style="
                         flex: 1;
+                        aspect-ratio: 1/1;
                         background: rgba(255,255,255,0.5);
                         backdrop-filter: blur(10px);
                         -webkit-backdrop-filter: blur(10px);
-                        border-radius: 8px;
-                        padding: 16px;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        text-align: center;
-                    ">
-                        <h3 style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0;">感谢支持</h3>
-                        <p style="font-size: 11px; color: #64748b; margin: 0 0 14px 0;">您的支持是我持续更新的动力</p>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 200px;">
-                            <button class="donate-method-btn-left" data-type="qq" style="
-                                padding: 10px;
-                                background: rgba(255,255,255,0.7);
-                                border: 2px solid #6BC5FF;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-size: 13px;
-                                color: #6BC5FF;
-                                transition: all 0.2s;
-                            ">
-                                <i class="fas fa-brands fa-qq btn-icon" style="font-size: 18px;"></i>
-                                <span class="btn-text">QQ</span>
-                            </button>
-                            <button class="donate-method-btn-left" data-type="wechat" style="
-                                padding: 10px;
-                                background: rgba(255,255,255,0.7);
-                                border: 2px solid #7ED321;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-size: 13px;
-                                color: #7ED321;
-                                transition: all 0.2s;
-                            ">
-                                <i class="fas fa-weixin btn-icon" style="font-size: 18px;"></i>
-                                <span class="btn-text">微信</span>
-                            </button>
-                            <button class="donate-method-btn-left" data-type="alipay" style="
-                                padding: 10px;
-                                background: rgba(255,255,255,0.7);
-                                border: 2px solid #1677FF;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-size: 13px;
-                                color: #1677FF;
-                                transition: all 0.2s;
-                            ">
-                                <i class="fas fa-alipay btn-icon" style="font-size: 18px;"></i>
-                                <span class="btn-text">支付宝</span>
-                            </button>
-                            <button class="donate-method-btn-left" data-type="help" style="
-                                padding: 10px;
-                                background: rgba(255,255,255,0.7);
-                                border: 2px solid #FFD166;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-size: 13px;
-                                color: #FFD166;
-                                transition: all 0.2s;
-                            ">
-                                <i class="fas fa-question-circle btn-icon" style="font-size: 18px;"></i>
-                                <span class="btn-text">使用说明</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 右侧卡片 -->
-                    <div class="donate-qrcode-card" style="
-                        flex: 1;
-                        background: rgba(255,255,255,0.5);
-                        backdrop-filter: blur(10px);
-                        -webkit-backdrop-filter: blur(10px);
-                        border-radius: 8px;
-                        padding: 16px;
+                        border-radius: 12px;
+                        padding: 12px;
                         display: flex;
                         flex-direction: column;
                         align-items: center;
                         justify-content: center;
-                        min-height: 200px;
+                        text-align: center;
+                        box-sizing: border-box;
                     ">
-                        <div class="qrcode-content active" data-type="qq" style="text-align: center;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ收款码" style="max-width: 120px; max-height: 120px; margin-bottom: 8px;">
-                            <!-- 已移除 QQ支付 文字 -->
+                        <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0;">感谢支持</h3>
+                        <p style="font-size: 10px; color: #64748b; margin: 0 0 12px 0;">您的支持是我持续更新的动力</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;">
+                            <button class="donate-method-btn-left" data-type="qq" style="color: #6BC5FF; border-color: #6BC5FF;">
+                                <i class="fab fa-qq"></i>
+                            </button>
+                            <button class="donate-method-btn-left" data-type="wechat" style="color: #7ED321; border-color: #7ED321;">
+                                <i class="fab fa-weixin"></i>
+                            </button>
+                            <button class="donate-method-btn-left" data-type="alipay" style="color: #1677FF; border-color: #1677FF;">
+                                <i class="fab fa-alipay"></i>
+                            </button>
+                            <button class="donate-method-btn-left" data-type="help" style="color: #FFD166; border-color: #FFD166;">
+                                <i class="fas fa-question-circle"></i>
+                            </button>
                         </div>
-                        <div class="qrcode-content" data-type="wechat" style="text-align: center; display: none;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信收款码" style="max-width: 120px; max-height: 120px; margin-bottom: 8px;">
-                            <!-- 已移除 微信支付 文字 -->
+                    </div>
+
+                    <!-- 右侧正方形卡片 -->
+                    <div class="donate-qrcode-card" style="
+                        flex: 1;
+                        aspect-ratio: 1/1;
+                        background: rgba(255,255,255,0.5);
+                        backdrop-filter: blur(10px);
+                        -webkit-backdrop-filter: blur(10px);
+                        border-radius: 12px;
+                        padding: 12px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        box-sizing: border-box;
+                    ">
+                        <div class="qrcode-content active" data-type="qq" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ" style="max-width: 80%; max-height: 60%; margin-bottom: 0;">
                         </div>
-                        <div class="qrcode-content" data-type="alipay" style="text-align: center; display: none;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝收款码" style="max-width: 120px; max-height: 120px; margin-bottom: 8px;">
-                            <!-- 已移除 支付宝 文字 -->
+                        <div class="qrcode-content" data-type="wechat" style="text-align: center; display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信" style="max-width: 80%; max-height: 60%; margin-bottom: 0;">
                         </div>
-                        <div class="qrcode-content" data-type="help" style="text-align: center; display: none;">
-                            <div style="font-size: 12px; color: #64748b; padding: 0 8px;">
-                                <p style="margin: 0 0 8px 0;">选择支付方式后扫描二维码</p>
-                                <p style="margin: 0 0 8px 0;">输入您想支持的金额</p>
-                                <p style="margin: 0;">请在备注中留下名字</p>
+                        <div class="qrcode-content" data-type="alipay" style="text-align: center; display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝" style="max-width: 80%; max-height: 60%; margin-bottom: 0;">
+                        </div>
+                        <div class="qrcode-content" data-type="help" style="text-align: center; display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                            <div style="font-size: 10px; color: #64748b; line-height: 1.6; padding: 0 8px;">
+                                <p style="margin: 0 0 6px 0;">1. 选择左侧支付方式</p>
+                                <p style="margin: 0 0 6px 0;">2. 使用对应App扫描</p>
+                                <p style="margin: 0 0 6px 0;">3. 输入您想支持的金额</p>
+                                <p style="margin: 0;">4. 备注留下您的名字</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 第二行：单个卡片 -->
+                <!-- 第二行：单个圆角卡片 -->
                 <div style="padding: 12px 16px 16px;">
                     <div style="
                         background: rgba(255,255,255,0.5);
                         backdrop-filter: blur(10px);
                         -webkit-backdrop-filter: blur(10px);
-                        border-radius: 8px;
-                        padding: 12px;
+                        border-radius: 12px;
+                        padding: 10px 12px;
                     ">
                         <h4 style="
-                            font-size: 12px;
+                            font-size: 11px;
                             color: #1e293b;
                             margin: 0 0 8px 0;
                             font-weight: 600;
                             text-align: center;
                         ">支持者名单</h4>
                         <div class="supporters-list-scroll" style="
-                            max-height: 80px;
+                            max-height: 70px;
                             overflow-y: auto;
                             display: grid;
-                            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
                             gap: 4px;
                             padding-right: 2px;
                             scrollbar-width: none;
@@ -469,9 +426,9 @@ class AboutModule {
                             ${this.supporters.map(name => `<span style="
                                 background: rgba(255,255,255,0.7);
                                 color: #1e293b;
-                                padding: 2px 6px;
+                                padding: 2px 5px;
                                 border-radius: 4px;
-                                font-size: 11px;
+                                font-size: 10px;
                                 text-align: center;
                                 white-space: nowrap;
                             ">${Utils.escapeHtml(name)}</span>`).join('')}
@@ -559,7 +516,6 @@ class AboutModule {
             if (btn.dataset.type === defaultType) {
                 btn.style.background = btn.style.color;
                 btn.style.color = '#fff';
-                btn.style.fontWeight = 'bold';
             }
         });
 
@@ -571,17 +527,15 @@ class AboutModule {
                 buttons.forEach(b => {
                     b.style.background = 'rgba(255,255,255,0.7)';
                     b.style.color = '';
-                    b.style.fontWeight = 'normal';
                 });
                 btn.style.background = btn.style.color;
                 btn.style.color = '#fff';
-                btn.style.fontWeight = 'bold';
 
                 // 显示对应内容
                 contents.forEach(content => {
                     content.style.display = 'none';
                     if (content.dataset.type === type) {
-                        content.style.display = 'block';
+                        content.style.display = 'flex';
                     }
                 });
             });
