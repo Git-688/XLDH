@@ -320,4 +320,4 @@ if (document.readyState === 'loading') {
     window.aboutModule = new AboutModule();
     window.aboutModule.init();
 }
-if (typeof module !== 'undefined' && module.exports) module.exports = AboutModule;
+if (typeof module !== 'undefined' && module.exports) module.exports = AboutModule; 
