@@ -201,7 +201,7 @@
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
 
-        /* ===== 星聚笔记模态框专用样式（顶部间距由第一个卡片margin实现） ===== */
+        /* ===== 星聚笔记模态框专用样式（头部与公告完全一致） ===== */
         #notebookModal {
             background: transparent;
             backdrop-filter: none;
@@ -218,22 +218,22 @@
             display: flex;
             flex-direction: column;
         }
-        /* 头部（与公告一致） */
+        /* 头部：与公告头部完全相同的 padding 和尺寸 */
         #notebookModal .feedback-modal-header {
             background: transparent;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            padding: 18px 24px 10px;
+            padding: 18px 24px 10px;           /* 公告头部内边距 */
             color: #1e293b;
         }
         #notebookModal .feedback-modal-header h3 {
-            font-size: 1.2rem;
+            font-size: 1.2rem;                  /* 公告标题字号 */
             font-weight: 600;
             color: inherit;
         }
         #notebookModal .feedback-modal-header h3 i {
             color: #4361ee;
-            font-size: 1.2rem;
-            margin-right: 10px;
+            font-size: 1.2rem;                  /* 公告图标大小 */
+            margin-right: 10px;                 /* 与公告一致的图标间距 */
         }
         #notebookModal .feedback-modal-close {
             width: 32px;
@@ -242,7 +242,7 @@
             background: rgba(255, 255, 255, 0.4);
             border: none;
             color: #64748b;
-            font-size: 1rem;
+            font-size: 1rem;                    /* 公告关闭按钮字号 */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -253,20 +253,19 @@
             background: rgba(0, 0, 0, 0.05);
             color: #334155;
         }
-        /* 内容区：移除上下内边距，左右留12px让内容更宽 */
+        /* 内容区 */
         #notebookModal .feedback-modal-body {
-            padding: 0 12px 0 12px;     /* 上 右 下 左 */
+            padding: 0 12px 0 12px;
             overflow: visible;
             flex: 0 0 auto;
             background: transparent;
         }
-        /* 笔记列表：移除顶部空白，用margin-top在第一个卡片上实现间距 */
         .notebook-list {
-            padding: 0 0 16px 0;         /* 底部保留滚动结束后的留白 */
+            padding: 0 0 16px 0;
             margin: 0;
             display: flex;
             flex-direction: column;
-            gap: 12px;                   /* 卡片间距与左右留白一致 */
+            gap: 12px;
             max-height: calc(75vh - 70px);
             overflow-y: auto;
             scrollbar-width: none;
@@ -274,7 +273,6 @@
             box-sizing: border-box;
         }
         .notebook-list::-webkit-scrollbar { display: none; }
-        /* 第一个卡片顶部间距 */
         .notebook-item:first-child {
             margin-top: 12px;
         }
