@@ -702,7 +702,10 @@ class MusicPlayer {
     async loadLyrics(song) {
         this.lyricsData = [];
         this.lyricsInner.innerHTML = '';
+        // ★ 关键修复：重置偏移，防止越滚越远
+        this.lyricsInner.style.transform = 'translateY(0px)';
         this.currentLyricIndex = -1;
+
         if (!song.lrc) {
             this.buildLyricsInner([]);
             return;
@@ -713,6 +716,8 @@ class MusicPlayer {
             this.lyricParser.parseLrc(text);
             this.lyricsData = this.lyricParser.lyrics;
             this.buildLyricsInner(this.lyricsData);
+            // 在歌词构建完成后设置过渡动画
+            this.lyricsInner.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2)';
         } catch (error) {
             console.error('加载歌词失败:', error);
             this.buildLyricsInner([]);
@@ -745,10 +750,7 @@ class MusicPlayer {
         });
         this.lyricsInner.appendChild(fragment);
 
-        // 添加过渡动画类（与 CSS 中的 transition 配合）
-        this.lyricsInner.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2)';
-
-        // 检测溢出并设置跑马灯
+        // 检测溢出设置跑马灯
         setTimeout(() => {
             const lines = this.lyricsInner.querySelectorAll('.lyrics-line');
             lines.forEach(line => {
@@ -766,11 +768,13 @@ class MusicPlayer {
         }, 100);
     }
 
-    // ★★★ 逐行切换歌词：只在索引变化时一次性滚动，不做连续插值 ★★★
+    // ★ 修复后：逐行切换，带容器高度检查和偏移重置保护
     updateLyricsPosition(currentTime) {
         if (!this.lyricsData || this.lyricsData.length === 0) return;
 
-        // 找到当前时间对应的歌词索引（与之前相同）
+        const containerHeight = this.elements.lyricsContainer.clientHeight;
+        if (!containerHeight || containerHeight <= 0) return; // 防止无效高度
+
         let newIndex = -1;
         for (let i = 0; i < this.lyricsData.length; i++) {
             if (currentTime >= this.lyricsData[i].time) {
@@ -780,12 +784,10 @@ class MusicPlayer {
             }
         }
         if (newIndex === -1) return;
-
-        // 如果索引没变，什么都不做（不移动，不重复触发动画）
         if (newIndex === this.currentLyricIndex) return;
 
-        // 索引改变，更新高亮
         this.currentLyricIndex = newIndex;
+
         const lines = this.lyricsInner.querySelectorAll('.lyrics-line');
         lines.forEach((line, i) => {
             line.classList.toggle('active', i === newIndex);
@@ -796,13 +798,10 @@ class MusicPlayer {
             }
         });
 
-        // 计算目标偏移，使当前行居中
-        const lineHeight = 30;  // 与 CSS 中 .lyrics-line 的高度保持一致
-        const containerHeight = this.elements.lyricsContainer.clientHeight;
+        const lineHeight = 30; // 与CSS中 .lyrics-line 高度一致
         const centerOffset = (containerHeight / 2) - (lineHeight / 2);
         const targetY = centerOffset - (newIndex * lineHeight);
 
-        // 直接通过 transform 滚动，借助 CSS transition 实现平滑动画
         this.lyricsInner.style.transform = `translateY(${targetY}px)`;
     }
 
