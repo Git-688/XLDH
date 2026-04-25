@@ -285,7 +285,36 @@ class AboutModule {
             pointer-events: auto;
         `;
 
-        donateModal.innerHTML = `
+        // 插入自定义样式，用于移动端隐藏按钮文字、调整字体大小
+        const style = document.createElement('style');
+        style.textContent = `
+            .donate-modal-content {
+                font-size: 12px; /* 整体字体缩小 */
+            }
+            .donate-method-btn-left {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+            }
+            .donate-method-btn-left .btn-icon {
+                display: none; /* 桌面端默认隐藏图标，移动端显示 */
+            }
+            .donate-method-btn-left .btn-text {
+                display: inline;
+            }
+            @media (max-width: 767px) {
+                .donate-method-btn-left .btn-text {
+                    display: none; /* 移动端隐藏文字 */
+                }
+                .donate-method-btn-left .btn-icon {
+                    display: inline-block; /* 移动端显示图标 */
+                }
+            }
+        `;
+        donateModal.appendChild(style);
+
+        donateModal.innerHTML += `
             <div class="donate-modal-content" style="
                 display: flex;
                 flex-direction: column;
@@ -317,8 +346,8 @@ class AboutModule {
                         align-items: center;
                         text-align: center;
                     ">
-                        <h3 style="font-size: 16px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0;">感谢支持</h3>
-                        <p style="font-size: 12px; color: #64748b; margin: 0 0 16px 0;">您的支持是我持续更新的动力</p>
+                        <h3 style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0;">感谢支持</h3>
+                        <p style="font-size: 11px; color: #64748b; margin: 0 0 14px 0;">您的支持是我持续更新的动力</p>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 200px;">
                             <button class="donate-method-btn-left" data-type="qq" style="
                                 padding: 10px;
@@ -326,40 +355,52 @@ class AboutModule {
                                 border: 2px solid #6BC5FF;
                                 border-radius: 8px;
                                 cursor: pointer;
-                                font-size: 14px;
+                                font-size: 13px;
                                 color: #6BC5FF;
                                 transition: all 0.2s;
-                            ">QQ</button>
+                            ">
+                                <i class="fas fa-brands fa-qq btn-icon" style="font-size: 18px;"></i>
+                                <span class="btn-text">QQ</span>
+                            </button>
                             <button class="donate-method-btn-left" data-type="wechat" style="
                                 padding: 10px;
                                 background: rgba(255,255,255,0.7);
                                 border: 2px solid #7ED321;
                                 border-radius: 8px;
                                 cursor: pointer;
-                                font-size: 14px;
+                                font-size: 13px;
                                 color: #7ED321;
                                 transition: all 0.2s;
-                            ">微信</button>
+                            ">
+                                <i class="fas fa-weixin btn-icon" style="font-size: 18px;"></i>
+                                <span class="btn-text">微信</span>
+                            </button>
                             <button class="donate-method-btn-left" data-type="alipay" style="
                                 padding: 10px;
                                 background: rgba(255,255,255,0.7);
                                 border: 2px solid #1677FF;
                                 border-radius: 8px;
                                 cursor: pointer;
-                                font-size: 14px;
+                                font-size: 13px;
                                 color: #1677FF;
                                 transition: all 0.2s;
-                            ">支付宝</button>
+                            ">
+                                <i class="fas fa-alipay btn-icon" style="font-size: 18px;"></i>
+                                <span class="btn-text">支付宝</span>
+                            </button>
                             <button class="donate-method-btn-left" data-type="help" style="
                                 padding: 10px;
                                 background: rgba(255,255,255,0.7);
                                 border: 2px solid #FFD166;
                                 border-radius: 8px;
                                 cursor: pointer;
-                                font-size: 14px;
+                                font-size: 13px;
                                 color: #FFD166;
                                 transition: all 0.2s;
-                            ">使用说明</button>
+                            ">
+                                <i class="fas fa-question-circle btn-icon" style="font-size: 18px;"></i>
+                                <span class="btn-text">使用说明</span>
+                            </button>
                         </div>
                     </div>
 
@@ -379,15 +420,15 @@ class AboutModule {
                     ">
                         <div class="qrcode-content active" data-type="qq" style="text-align: center;">
                             <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ收款码" style="max-width: 120px; max-height: 120px; margin-bottom: 8px;">
-                            <div style="font-size: 11px; color: #6BC5FF;">QQ支付</div>
+                            <!-- 已移除 QQ支付 文字 -->
                         </div>
                         <div class="qrcode-content" data-type="wechat" style="text-align: center; display: none;">
                             <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信收款码" style="max-width: 120px; max-height: 120px; margin-bottom: 8px;">
-                            <div style="font-size: 11px; color: #7ED321;">微信支付</div>
+                            <!-- 已移除 微信支付 文字 -->
                         </div>
                         <div class="qrcode-content" data-type="alipay" style="text-align: center; display: none;">
                             <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝收款码" style="max-width: 120px; max-height: 120px; margin-bottom: 8px;">
-                            <div style="font-size: 11px; color: #1677FF;">支付宝</div>
+                            <!-- 已移除 支付宝 文字 -->
                         </div>
                         <div class="qrcode-content" data-type="help" style="text-align: center; display: none;">
                             <div style="font-size: 12px; color: #64748b; padding: 0 8px;">
@@ -409,7 +450,7 @@ class AboutModule {
                         padding: 12px;
                     ">
                         <h4 style="
-                            font-size: 13px;
+                            font-size: 12px;
                             color: #1e293b;
                             margin: 0 0 8px 0;
                             font-weight: 600;
@@ -545,8 +586,6 @@ class AboutModule {
                 });
             });
         });
-
-        // 支持者列表隐藏滚动条（已通过内联样式设置）
     }
 
     /**
