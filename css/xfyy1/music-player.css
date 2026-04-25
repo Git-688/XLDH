@@ -166,13 +166,31 @@
 .custom-select-trigger .arrow { transition: transform 0.2s ease; width: 16px; height: 16px; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%237f8c8d' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-size: contain; background-repeat: no-repeat; }
 .custom-select-trigger.open .arrow { transform: rotate(180deg); }
 .custom-select-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ===== 增强动画的下拉菜单 ===== */
 .custom-select-dropdown-global {
-    position: fixed; background: #ffffff; border: 1px solid #e9ecef; border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 100000; max-height: 240px; overflow-y: auto;
-    opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s ease; scrollbar-width: none;
+    position: fixed;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 100000;
+    max-height: 240px;
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+    transform: scaleY(0.95);
+    transform-origin: top center;
+    scrollbar-width: none;
 }
 .custom-select-dropdown-global::-webkit-scrollbar { display: none; }
-.custom-select-dropdown-global.open { opacity: 1; visibility: visible; }
+.custom-select-dropdown-global.open {
+    opacity: 1;
+    visibility: visible;
+    transform: scaleY(1);
+}
+
 .custom-select-option { padding: 10px 12px; font-size: 12px; color: #2c3e50; cursor: pointer; transition: all 0.15s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .custom-select-option:hover { background: rgba(55,100,244,0.08); color: #3764F4; }
 .custom-select-option.selected { background: rgba(55,100,244,0.12); color: #3764F4; font-weight: 500; position: relative; }
