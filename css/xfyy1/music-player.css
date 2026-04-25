@@ -4,10 +4,12 @@
     bottom: 20px;
     right: 20px;
 
+    /* 亚克力材质核心 */
     background: rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(24px) saturate(125%);
     -webkit-backdrop-filter: blur(24px) saturate(125%);
 
+    /* 亚克力纹理叠加（极淡的噪点） */
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
     background-repeat: repeat;
 
@@ -48,6 +50,7 @@
     transition: all 0.6s ease;
 }
 
+/* 深色模式 - 亚克力效果 */
 @media (prefers-color-scheme: dark) {
     .music-player {
         background: rgba(30, 30, 30, 0.7);
@@ -60,6 +63,7 @@
     }
 }
 
+/* 音乐按钮动画 */
 #musicBtn { position: relative; transition: all 0.3s ease; }
 #musicBtn.active { background: var(--primary-color); color: white; transform: scale(1.1); }
 #musicBtn.active::after {
@@ -89,6 +93,7 @@
     .music-player.hiding { animation: scaleOut 0.5s ease forwards; }
 }
 
+/* 内容入场动画 */
 .music-player .player-top,
 .music-player .progress-section,
 .music-player .lyrics-section,
@@ -178,71 +183,67 @@
 .speed-control .custom-select-trigger { padding: 4px 8px; font-size: 11px; }
 .playlist-selector .custom-select { width: 100%; }
 
-/* ===== 歌词区域优化 ===== */
+/* ===== 歌词区域优化（缩放 + 横向跑马灯） ===== */
 .lyrics-section {
-    padding: 0 15px 8px;                     /* 减小上下内边距 */
+    padding: 0 15px 8px;
     border-bottom: 1px solid rgba(0,0,0,0.05);
     display: flex;
     align-items: center;
     position: relative;
     overflow: hidden;
-    height: 90px;                             /* 固定高度 */
+    height: 90px;
     box-sizing: border-box;
 }
-
 .lyrics-container {
     width: 100%;
     height: 100%;
     position: relative;
     overflow: hidden;
 }
-
 .lyrics-inner {
     position: absolute;
     width: 100%;
-    transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.2);
     will-change: transform;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: safe center;
+    gap: 6px;
 }
-
 .lyrics-line {
-    font-size: 12px;
+    font-size: 13px;
     color: #7f8c8d;
-    line-height: 30px;
-    height: 30px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: color 0.3s, font-weight 0.3s, opacity 0.3s, text-shadow 0.3s;
+    line-height: 30px;
+    height: 30px;
     padding: 0 10px;
     box-sizing: border-box;
+    transition: transform 0.3s, color 0.3s, font-weight 0.3s, opacity 0.3s;
+    transform-origin: center;
+    opacity: 0.65;
+    cursor: default;
     max-width: 100%;
-    text-align: center;
     flex-shrink: 0;
 }
-
 .lyrics-line.active {
+    transform: scale(1.25);
     color: #3764F4;
-    font-weight: 500;
+    font-weight: 700;
     opacity: 1;
-    text-shadow: 0 0 10px rgba(55,100,244,0.3);
+    text-shadow: 0 2px 8px rgba(55,100,244, 0.25);
 }
-
-/* 超长歌词横向跑马灯 */
 .lyrics-line.overflow {
-    animation: marquee 6s linear infinite alternate;
+    animation: marquee var(--marquee-duration, 8s) linear infinite;
+    text-overflow: clip;
     white-space: nowrap;
+    overflow: visible;
 }
-
 @keyframes marquee {
     0% { transform: translateX(0); }
-    20% { transform: translateX(0); }
-    100% { transform: translateX(calc(-100% + 100% - 20px)); }
+    100% { transform: translateX(-100%); }
 }
-
-/* 其余样式保持不变…… */
 
 .bottom-section { max-height: 400px; overflow: hidden; transition: max-height 0.3s ease; background: inherit; }
 .music-player.collapsed .bottom-section { max-height: 0; }
@@ -305,7 +306,7 @@
 @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .album-cover.playing img { animation: rotate 20s linear infinite; }
 
-/* ===== 移动端适配：两边到屏幕距离与主页一致 ===== */
+/* 移动端优化：两边到屏幕距离与主页一致 */
 @media (max-width: 480px) {
     .music-player {
         width: auto;
@@ -329,7 +330,8 @@
     .song-title-container { height: 22px; width: 80px; max-width: 80px; }
     .song-artist-container { height: 18px; width: 70px; max-width: 70px; }
     .lyrics-section { height: 80px; }
-    .lyrics-line { font-size: 11px; line-height: 28px; height: 28px; }
+    .lyrics-line { font-size: 12px; line-height: 28px; height: 28px; }
+    .lyrics-line.active { transform: scale(1.2); }
     .music-player .search-input-group { height: 28px; border-radius: 8px; }
     .music-player .search-input-group input { padding: 6px 12px; font-size: 12px; }
     .music-player .search-header { margin-top: 6px; }
