@@ -1,5 +1,5 @@
 /**
- * 关于网站模块 - 包含收款模态框（自适应按钮 + 激活效果）
+ * 关于网站模块 - 包含收款模态框（移动端按钮缩小一半）
  * @class AboutModule
  */
 class AboutModule {
@@ -53,7 +53,7 @@ class AboutModule {
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'about-modal';
         this.modalElement.innerHTML = this.renderModal();
-        // ===== 修改：移除内联 padding，让 about.css 的响应式 padding 生效 =====
+        // ===== 移除内联 padding，让 about.css 的响应式 padding 生效 =====
         this.modalElement.style.cssText = `
             position: fixed;
             top: 0;
@@ -261,7 +261,7 @@ class AboutModule {
     }
 
     /**
-     * 显示收款模态框（自适应按钮 + 激活优化）
+     * 显示收款模态框（自适应按钮 + 移动端缩小一半）
      */
     showDonateModal() {
         const donateModal = document.createElement('div');
@@ -285,16 +285,18 @@ class AboutModule {
             pointer-events: auto;
         `;
 
-        // 注入全局样式
+        // 注入全局样式（移动端按钮缩小）
         const style = document.createElement('style');
         style.textContent = `
             .donate-modal-content {
                 font-size: 10px !important;
             }
-            /* 按钮自适应 + 激活效果 */
+            /* 按钮自适应 + 缩小 + 居中 */
             .donate-method-btn-left {
                 width: 100%;
+                max-width: 48px;          /* 移动端最大宽度，桌面端可适当放大 */
                 aspect-ratio: 1 / 1;
+                margin: 0 auto;           /* 在网格单元格内居中 */
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -307,7 +309,7 @@ class AboutModule {
                 padding: 0;
             }
             .donate-method-btn-left i {
-                font-size: clamp(1.2rem, 5vw, 1.8rem);
+                font-size: clamp(1rem, 4vw, 1.3rem);  /* 图标随容器缩放 */
                 transition: transform 0.2s;
             }
             .donate-method-btn-left.active {
@@ -322,7 +324,7 @@ class AboutModule {
             /* 左右正方形卡片防止溢出 */
             .donate-card-wrapper {
                 flex: 1;
-                min-width: 0;                 /* 关键：防止溢出 */
+                min-width: 0;                 
                 aspect-ratio: 1 / 1;
                 background: rgba(255,255,255,0.5);
                 backdrop-filter: blur(10px);
@@ -334,6 +336,15 @@ class AboutModule {
                 align-items: center;
                 justify-content: center;
                 box-sizing: border-box;
+            }
+            /* 桌面端可适当放大按钮 */
+            @media (min-width: 768px) {
+                .donate-method-btn-left {
+                    max-width: 64px;
+                }
+                .donate-method-btn-left i {
+                    font-size: 1.5rem;
+                }
             }
         `;
         donateModal.appendChild(style);
@@ -516,14 +527,11 @@ class AboutModule {
         const setActive = (activeBtn) => {
             buttons.forEach(b => {
                 b.classList.remove('active');
-                // 恢复默认背景
                 b.style.background = 'rgba(255,255,255,0.7)';
-                // 恢复边框颜色（从内联样式取）
                 const borderColor = b.style.borderColor;
                 b.style.borderColor = borderColor;
             });
             activeBtn.classList.add('active');
-            // 激活态背景使用自身原色
             const activeColor = activeBtn.style.color || '#6BC5FF';
             activeBtn.style.background = activeColor;
             activeBtn.style.borderColor = 'transparent';
