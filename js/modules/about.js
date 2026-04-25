@@ -1,5 +1,5 @@
 /**
- * 关于网站模块 - 包含收款模态框（左右双卡片 + 外部关闭按钮布局）
+ * 关于网站模块 - 包含收款模态框
  * @class AboutModule
  */
 class AboutModule {
@@ -43,7 +43,7 @@ class AboutModule {
     }
 
     /**
-     * 创建关于网站模态框DOM结构
+     * 创建模态框DOM结构
      */
     createModal() {
         if (this.modalElement) {
@@ -53,6 +53,7 @@ class AboutModule {
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'about-modal';
         this.modalElement.innerHTML = this.renderModal();
+        // ===== 修改：移除内联 padding，让 about.css 的响应式 padding 生效 =====
         this.modalElement.style.cssText = `
             position: fixed;
             top: 0;
@@ -113,7 +114,7 @@ class AboutModule {
                     </div>
                 </div>
                 
-                <!-- 中部内容区域 -->
+                <!-- 中部内容区域 - 不滚动 -->
                 <div class="about-main-content">
                     <div class="about-cards">
                         <div class="about-card">
@@ -137,7 +138,7 @@ class AboutModule {
                     </div>
                 </div>
                 
-                <!-- 底部按钮区域 -->
+                <!-- 底部按钮区域 - 白色背景 -->
                 <div class="about-footer">
                     <div class="about-action-buttons">
                         <div class="about-social-buttons">
@@ -260,7 +261,7 @@ class AboutModule {
     }
 
     /**
-     * 显示收款模态框（全新布局：左右双卡片 + 下方支持者名单 + 外部关闭按钮）
+     * 显示收款模态框（新布局）
      */
     showDonateModal() {
         const donateModal = document.createElement('div');
@@ -281,176 +282,224 @@ class AboutModule {
             transition: opacity 0.3s ease;
             padding: 16px;
             box-sizing: border-box;
-            gap: 14px;
+            pointer-events: auto;
         `;
 
         donateModal.innerHTML = `
-            <!-- 白色主卡片 -->
-            <div class="donate-modal-content">
-                <!-- 上半部分：左右双卡片 -->
-                <div class="donate-main">
-                    <!-- 左侧卡片：标题+副标题+2x2按钮 -->
-                    <div class="donate-left-card">
-                        <h3 class="donate-left-title">感谢支持 ❤️</h3>
-                        <p class="donate-left-subtitle">您的支持是我持续更新的动力</p>
-                        <div class="donate-methods-grid">
-                            <button class="donate-method-btn active" data-type="qq" data-label="QQ支付">
-                                <i class="fab fa-qq"></i>
-                            </button>
-                            <button class="donate-method-btn" data-type="wechat" data-label="微信支付">
-                                <i class="fab fa-weixin"></i>
-                            </button>
-                            <button class="donate-method-btn" data-type="alipay" data-label="支付宝">
-                                <i class="fab fa-alipay"></i>
-                            </button>
-                            <button class="donate-method-btn" data-type="help" data-label="使用说明">
-                                <i class="fas fa-question"></i>
-                            </button>
+            <div class="donate-modal-content" style="
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                max-width: 500px;
+                background: rgba(255,255,255,0.65);
+                backdrop-filter: blur(24px) saturate(180%);
+                -webkit-backdrop-filter: blur(24px) saturate(180%);
+                border: 1px solid rgba(255,255,255,0.4);
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+                transform: scale(0.8);
+                transition: transform 0.3s ease;
+                pointer-events: auto;
+            ">
+                <!-- 第一行：左右两个卡片 -->
+                <div style="display: flex; gap: 12px; padding: 16px 16px 0;">
+                    <!-- 左侧卡片 -->
+                    <div style="
+                        flex: 1;
+                        background: rgba(255,255,255,0.5);
+                        backdrop-filter: blur(10px);
+                        -webkit-backdrop-filter: blur(10px);
+                        border-radius: 8px;
+                        padding: 16px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        text-align: center;
+                    ">
+                        <h3 style="font-size: 16px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0;">感谢支持</h3>
+                        <p style="font-size: 12px; color: #64748b; margin: 0 0 16px 0;">您的支持是我持续更新的动力</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 200px;">
+                            <button class="donate-method-btn-left" data-type="qq" style="
+                                padding: 10px;
+                                background: rgba(255,255,255,0.7);
+                                border: 2px solid #6BC5FF;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 14px;
+                                color: #6BC5FF;
+                                transition: all 0.2s;
+                            ">QQ</button>
+                            <button class="donate-method-btn-left" data-type="wechat" style="
+                                padding: 10px;
+                                background: rgba(255,255,255,0.7);
+                                border: 2px solid #7ED321;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 14px;
+                                color: #7ED321;
+                                transition: all 0.2s;
+                            ">微信</button>
+                            <button class="donate-method-btn-left" data-type="alipay" style="
+                                padding: 10px;
+                                background: rgba(255,255,255,0.7);
+                                border: 2px solid #1677FF;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 14px;
+                                color: #1677FF;
+                                transition: all 0.2s;
+                            ">支付宝</button>
+                            <button class="donate-method-btn-left" data-type="help" style="
+                                padding: 10px;
+                                background: rgba(255,255,255,0.7);
+                                border: 2px solid #FFD166;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 14px;
+                                color: #FFD166;
+                                transition: all 0.2s;
+                            ">使用说明</button>
                         </div>
                     </div>
 
-                    <!-- 右侧卡片：二维码/使用说明居中 -->
-                    <div class="donate-right-card">
-                        <div class="donate-qrcode active" data-type="qq">
-                            <div class="qrcode-image-container">
-                                <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ收款码" class="qrcode-image"
-                                     onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
-                                <div class="qrcode-placeholder">
-                                    <i class="fab fa-qq"></i>
-                                    <span>QQ收款码</span>
-                                    <small>请使用QQ扫描二维码</small>
-                                </div>
-                            </div>
+                    <!-- 右侧卡片 -->
+                    <div class="donate-qrcode-card" style="
+                        flex: 1;
+                        background: rgba(255,255,255,0.5);
+                        backdrop-filter: blur(10px);
+                        -webkit-backdrop-filter: blur(10px);
+                        border-radius: 8px;
+                        padding: 16px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 200px;
+                    ">
+                        <div class="qrcode-content active" data-type="qq" style="text-align: center;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ收款码" style="max-width: 120px; max-height: 120px; margin-bottom: 8px;">
+                            <div style="font-size: 11px; color: #6BC5FF;">QQ支付</div>
                         </div>
-                        <div class="donate-qrcode" data-type="wechat">
-                            <div class="qrcode-image-container">
-                                <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信收款码" class="qrcode-image"
-                                     onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
-                                <div class="qrcode-placeholder">
-                                    <i class="fab fa-weixin"></i>
-                                    <span>微信收款码</span>
-                                    <small>请使用微信扫描二维码</small>
-                                </div>
-                            </div>
+                        <div class="qrcode-content" data-type="wechat" style="text-align: center; display: none;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信收款码" style="max-width: 120px; max-height: 120px; margin-bottom: 8px;">
+                            <div style="font-size: 11px; color: #7ED321;">微信支付</div>
                         </div>
-                        <div class="donate-qrcode" data-type="alipay">
-                            <div class="qrcode-image-container">
-                                <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝收款码" class="qrcode-image"
-                                     onerror="this.style.display='none'; this.parentNode.querySelector('.qrcode-placeholder').style.display='flex';">
-                                <div class="qrcode-placeholder">
-                                    <i class="fab fa-alipay"></i>
-                                    <span>支付宝收款码</span>
-                                    <small>请使用支付宝扫描二维码</small>
-                                </div>
-                            </div>
+                        <div class="qrcode-content" data-type="alipay" style="text-align: center; display: none;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝收款码" style="max-width: 120px; max-height: 120px; margin-bottom: 8px;">
+                            <div style="font-size: 11px; color: #1677FF;">支付宝</div>
                         </div>
-                        <div class="donate-qrcode" data-type="help">
-                            <div class="help-content">
-                                <h4>使用说明</h4>
-                                <ul>
-                                    <li>选择您要使用的支付方式</li>
-                                    <li>使用对应App扫描二维码</li>
-                                    <li>输入您想支持的金额</li>
-                                    <li>在备注中留下您的名字</li>
-                                </ul>
-                                <p>感谢您的支持！</p>
+                        <div class="qrcode-content" data-type="help" style="text-align: center; display: none;">
+                            <div style="font-size: 12px; color: #64748b; padding: 0 8px;">
+                                <p style="margin: 0 0 8px 0;">选择支付方式后扫描二维码</p>
+                                <p style="margin: 0 0 8px 0;">输入您想支持的金额</p>
+                                <p style="margin: 0;">请在备注中留下名字</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 下方：支持者名单 -->
-                <div class="donate-supporters-section">
-                    <h4 class="supporters-title-outer">支持者名单</h4>
-                    <div class="supporters-card">
-                        <div class="supporters-list">
-                            ${this.supporters.map(name => `<span class="supporter-name">${Utils.escapeHtml(name)}</span>`).join('')}
+                <!-- 第二行：单个卡片 -->
+                <div style="padding: 12px 16px 16px;">
+                    <div style="
+                        background: rgba(255,255,255,0.5);
+                        backdrop-filter: blur(10px);
+                        -webkit-backdrop-filter: blur(10px);
+                        border-radius: 8px;
+                        padding: 12px;
+                    ">
+                        <h4 style="
+                            font-size: 13px;
+                            color: #1e293b;
+                            margin: 0 0 8px 0;
+                            font-weight: 600;
+                            text-align: center;
+                        ">支持者名单</h4>
+                        <div class="supporters-list-scroll" style="
+                            max-height: 80px;
+                            overflow-y: auto;
+                            display: grid;
+                            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                            gap: 4px;
+                            padding-right: 2px;
+                            scrollbar-width: none;
+                            -ms-overflow-style: none;
+                        ">
+                            ${this.supporters.map(name => `<span style="
+                                background: rgba(255,255,255,0.7);
+                                color: #1e293b;
+                                padding: 2px 6px;
+                                border-radius: 4px;
+                                font-size: 11px;
+                                text-align: center;
+                                white-space: nowrap;
+                            ">${Utils.escapeHtml(name)}</span>`).join('')}
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- 外部关闭按钮（在卡片下方） -->
-            <button class="donate-close-btn-outer" id="donateCloseBtnOuter" title="关闭">
-                <i class="fas fa-times"></i>
-            </button>
+            <!-- 关闭按钮在模态框外部底部 -->
+            <button class="donate-close-btn-bottom" style="
+                margin-top: 12px;
+                background: rgba(255,255,255,0.7);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(255,255,255,0.5);
+                border-radius: 50%;
+                width: 36px;
+                height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                color: #64748b;
+                font-size: 16px;
+                transition: all 0.2s;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                z-index: 1;
+            "><i class="fas fa-times"></i></button>
         `;
 
         document.body.appendChild(donateModal);
 
-        // 动画入场
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                donateModal.classList.add('active');
-            });
-        });
+        // 显示动画
+        setTimeout(() => {
+            donateModal.style.opacity = '1';
+            const content = donateModal.querySelector('.donate-modal-content');
+            content.style.transform = 'scale(1)';
+        }, 10);
 
-        this.bindDonateModalEvents(donateModal);
+        // 绑定事件
+        this.bindNewDonateEvents(donateModal);
     }
 
     /**
-     * 绑定收款模态框事件（适配新布局）
+     * 绑定新捐款模态框事件
      */
-    bindDonateModalEvents(donateModal) {
-        // ---- 左侧按钮切换 ----
-        const methodButtons = donateModal.querySelectorAll('.donate-method-btn');
-        const qrcodes = donateModal.querySelectorAll('.donate-right-card .donate-qrcode');
-
-        methodButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const type = btn.dataset.type;
-
-                // 更新按钮激活状态
-                methodButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                // 切换右侧显示内容
-                qrcodes.forEach(qr => qr.classList.remove('active'));
-                const targetQr = donateModal.querySelector(`.donate-right-card .donate-qrcode[data-type="${type}"]`);
-                if (targetQr) {
-                    targetQr.classList.add('active');
-                }
-            });
-        });
-
-        // ---- 关闭逻辑 ----
+    bindNewDonateEvents(donateModal) {
+        // 关闭按钮事件
+        const closeBtn = donateModal.querySelector('.donate-close-btn-bottom');
         const hideDonateModal = () => {
-            donateModal.classList.remove('active');
-            // 等待过渡动画结束后移除 DOM
-            const handleTransitionEnd = (e) => {
-                if (e.target === donateModal) {
-                    donateModal.removeEventListener('transitionend', handleTransitionEnd);
-                    if (donateModal.parentNode) {
-                        donateModal.parentNode.removeChild(donateModal);
-                    }
-                }
-            };
-            donateModal.addEventListener('transitionend', handleTransitionEnd);
-            // 兜底：600ms 后强制移除
+            donateModal.style.opacity = '0';
+            const content = donateModal.querySelector('.donate-modal-content');
+            content.style.transform = 'scale(0.8)';
             setTimeout(() => {
                 if (donateModal.parentNode) {
                     donateModal.parentNode.removeChild(donateModal);
                 }
-            }, 600);
+            }, 300);
         };
 
-        // 外部关闭按钮
-        const closeBtnOuter = donateModal.querySelector('#donateCloseBtnOuter');
-        if (closeBtnOuter) {
-            closeBtnOuter.addEventListener('click', (e) => {
-                e.stopPropagation();
-                hideDonateModal();
-            });
-        }
+        closeBtn.addEventListener('click', hideDonateModal);
 
-        // 点击遮罩层关闭
+        // 点击背景关闭
         donateModal.addEventListener('click', (e) => {
             if (e.target === donateModal) {
                 hideDonateModal();
             }
         });
 
-        // ESC 键关闭
+        // ESC 关闭
         const handleKeydown = (e) => {
             if (e.key === 'Escape') {
                 hideDonateModal();
@@ -459,14 +508,45 @@ class AboutModule {
         };
         document.addEventListener('keydown', handleKeydown);
 
-        // 清理：移除时解绑 ESC
-        const observer = new MutationObserver(() => {
-            if (!donateModal.parentNode) {
-                document.removeEventListener('keydown', handleKeydown);
-                observer.disconnect();
+        // 左侧按钮切换右侧内容
+        const buttons = donateModal.querySelectorAll('.donate-method-btn-left');
+        const contents = donateModal.querySelectorAll('.qrcode-content');
+        
+        // 默认激活 QQ
+        const defaultType = 'qq';
+        buttons.forEach(btn => {
+            if (btn.dataset.type === defaultType) {
+                btn.style.background = btn.style.color;
+                btn.style.color = '#fff';
+                btn.style.fontWeight = 'bold';
             }
         });
-        observer.observe(document.body, { childList: true });
+
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.type;
+
+                // 更新按钮样式
+                buttons.forEach(b => {
+                    b.style.background = 'rgba(255,255,255,0.7)';
+                    b.style.color = '';
+                    b.style.fontWeight = 'normal';
+                });
+                btn.style.background = btn.style.color;
+                btn.style.color = '#fff';
+                btn.style.fontWeight = 'bold';
+
+                // 显示对应内容
+                contents.forEach(content => {
+                    content.style.display = 'none';
+                    if (content.dataset.type === type) {
+                        content.style.display = 'block';
+                    }
+                });
+            });
+        });
+
+        // 支持者列表隐藏滚动条（已通过内联样式设置）
     }
 
     /**
