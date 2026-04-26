@@ -48,6 +48,7 @@
     transition: all 0.6s ease;
 }
 
+/* 深色模式 - 亚克力效果 */
 @media (prefers-color-scheme: dark) {
     .music-player {
         background: rgba(30, 30, 30, 0.7);
@@ -180,54 +181,43 @@
 .speed-control .custom-select-trigger { padding: 4px 8px; font-size: 11px; }
 .playlist-selector .custom-select { width: 100%; }
 
-/* ===== 全新歌词样式 ===== */
+/* ===== 单行歌词区域 ===== */
 .lyrics-section {
-    padding: 0;
+    padding: 4px 15px;
     border-bottom: 1px solid rgba(0,0,0,0.05);
-    height: 120px;
+    height: 44px;                /* 单行歌词高度 */
+    display: flex;
+    align-items: center;
     overflow: hidden;
 }
-
 .lyrics-container {
     width: 100%;
     height: 100%;
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.lyrics-container::-webkit-scrollbar {
-    display: none;
-}
-
-.lyrics-new-inner {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    padding-top: 40px;
-    padding-bottom: 40px;
 }
-
-.lyrics-line-new {
-    height: 40px;
-    line-height: 40px;
-    font-size: 14px;
-    color: #999;
-    transition: color 0.3s, font-size 0.3s, opacity 0.3s;
+.lyrics-single-line {
+    width: 100%;
+    text-align: center;
+    font-size: 15px;
+    color: #444;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 90%;
+    transition: color 0.3s, opacity 0.2s;
+    font-weight: 500;
 }
-
-.lyrics-line-new.active {
-    font-size: 18px;
+.lyrics-single-line.changed {
+    opacity: 0.7;
     color: var(--primary-color, #4361ee);
-    font-weight: 600;
-    opacity: 1;
 }
 
-/* 其他原有样式保持不变（列表、搜索、下载等） */
+/* 歌单列表高度增加 */
+.tab-content { max-height: 420px; overflow-y: auto; }
+.content-container { max-height: 350px; }
+.playlist-container { max-height: 350px; }
+
+/* 其他原有样式保持不变 */
 .bottom-section { max-height: 400px; overflow: hidden; transition: max-height 0.3s ease; background: inherit; }
 .music-player.collapsed .bottom-section { max-height: 0; }
 .bottom-tabs { display: flex; border-bottom: 1px solid rgba(0,0,0,0.05); overflow-x: auto; position: sticky; top: 0; background: inherit; z-index: 5; scrollbar-width: none; }
@@ -236,14 +226,14 @@
 .tab-btn:hover { color: #3764F4; background: rgba(55,100,244,0.05); }
 .tab-btn.active { color: #3764F4; border-bottom-color: #3764F4; }
 
-.tab-content { display: none; padding: 0; max-height: 350px; overflow-y: auto; }
+.tab-content { display: none; padding: 0; max-height: 420px; overflow-y: auto; }
 .tab-content.active { display: block; }
 .playlist-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); min-height: 36px; position: sticky; top: 0; background: inherit; z-index: 10; margin-bottom: 0; }
 .playlist-selector { flex: 1; }
-.content-container { max-height: 280px; overflow-y: auto; padding: 0 15px 15px; scrollbar-width: none; }
+.content-container { max-height: 350px; overflow-y: auto; padding: 0 15px 15px; scrollbar-width: none; }
 .content-container::-webkit-scrollbar { display: none; }
 
-.playlist-container { max-height: 280px; overflow-y: auto; }
+.playlist-container { max-height: 350px; overflow-y: auto; }
 .loading { text-align: center; color: #7f8c8d; padding: 20px; font-size: 12px; }
 .song-item { display: flex; align-items: center; padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; margin-bottom: 2px; font-size: 12px; min-height: 36px; }
 .song-item:hover { background: rgba(55,100,244,0.1); }
@@ -305,16 +295,15 @@
     .play-btn { padding: 10px; transform: scale(1.1); margin: 0 2px; width: 36px; height: 36px; }
     .volume-control .control-btn { padding: 8px; transform: scale(0.9); width: 32px; height: 32px; }
     .music-player .search-download-btn { padding: 8px; transform: scale(0.9); opacity: 1; width: 32px; height: 32px; }
-    .content-container { max-height: 220px; padding: 0 12px 12px; }
-    .playlist-container, .music-player .search-results { max-height: 220px; }
+    .content-container { max-height: 280px; padding: 0 12px 12px; }
+    .playlist-container, .music-player .search-results { max-height: 280px; }
     .progress-section { padding: 6px 12px 8px; }
     .time-text { font-size: 10px; padding: 1px 4px; }
     .progress-actions { gap: 6px; }
     .song-title-container { height: 22px; width: 80px; max-width: 80px; }
     .song-artist-container { height: 18px; width: 70px; max-width: 70px; }
-    .lyrics-section { height: 100px; }
-    .lyrics-line-new { font-size: 12px; height: 33px; line-height: 33px; }
-    .lyrics-line-new.active { font-size: 15px; }
+    .lyrics-section { height: 38px; padding: 2px 12px; }
+    .lyrics-single-line { font-size: 14px; }
     .music-player .search-input-group { height: 28px; border-radius: 8px; }
     .music-player .search-input-group input { padding: 6px 12px; font-size: 12px; }
     .music-player .search-header { margin-top: 6px; }
