@@ -211,7 +211,7 @@ function initCustomSelects() {
     });
 }
 
-// ==================== 主播放器类 ====================
+// ==================== 主播放器类（单行歌词、跑马灯） ====================
 class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audio-element');
@@ -310,7 +310,7 @@ class MusicPlayer {
             player: document.querySelector('.music-player')
         };
 
-        // 创建单行歌词显示元素，并添加淡入动画支持
+        // 创建单行歌词元素
         if (this.elements.lyricsContainer) {
             this.elements.lyricsContainer.innerHTML = '';
             this.lyricsLineEl = document.createElement('div');
@@ -410,13 +410,14 @@ class MusicPlayer {
         });
     }
 
-    // ========== 歌词系统（动态单行切换，带淡入动画） ==========
+    // ========== 歌词系统（单行切换 + 跑马灯） ==========
 
     async loadLyrics(song) {
         this.lyricsData = [];
         this.currentLyricIndex = -1;
         if (this.lyricsLineEl) {
             this.lyricsLineEl.textContent = '';
+            this.lyricsLineEl.classList.remove('switch-anim', 'overflow');
         }
 
         if (!song.lrc) {
@@ -436,7 +437,6 @@ class MusicPlayer {
     updateLyricDisplayByTime(currentTime) {
         if (!this.lyricsData || this.lyricsData.length === 0) return;
 
-        // 查找当前时间应该显示哪一句
         let activeIndex = -1;
         for (let i = 0; i < this.lyricsData.length; i++) {
             if (currentTime >= this.lyricsData[i].time) {
@@ -448,26 +448,31 @@ class MusicPlayer {
 
         if (activeIndex === -1 || activeIndex === this.currentLyricIndex) return;
 
-        // 更新当前歌词索引
         this.currentLyricIndex = activeIndex;
 
-        // 显示歌词并播放切换动画
         if (this.lyricsLineEl) {
             const lyricText = this.lyricsData[activeIndex].text || '';
             this.lyricsLineEl.textContent = lyricText;
 
-            // 移除可能存在的动画类，重新触发动画
-            this.lyricsLineEl.classList.remove('switch-anim');
-            void this.lyricsLineEl.offsetWidth; // 强制重绘
+            // 移除之前的动画类
+            this.lyricsLineEl.classList.remove('switch-anim', 'overflow');
+
+            // 强制重绘
+            void this.lyricsLineEl.offsetWidth;
+
+            // 检测是否需要跑马灯
+            if (this.lyricsLineEl.scrollWidth > this.lyricsLineEl.clientWidth) {
+                this.lyricsLineEl.classList.add('overflow');
+            }
+
+            // 添加入场动画
             this.lyricsLineEl.classList.add('switch-anim');
         }
     }
 
     // ========== 播放控制 ==========
 
-    togglePlay() {
-        this.isPlaying ? this.pause() : this.play();
-    }
+    togglePlay() { this.isPlaying ? this.pause() : this.play(); }
 
     play() {
         if (this.isHandlingNavigationClick) return;
@@ -625,7 +630,7 @@ class MusicPlayer {
         }
     }
 
-    // ========== 歌单与歌曲加载 ==========
+    // ========== 歌单与歌曲加载（完整保留） ==========
 
     async switchApiTab(apiId) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -920,6 +925,7 @@ class MusicPlayer {
         }
     }
 
+    // 下载、进度条、音频事件等其余方法完整保留，与之前版本完全相同
     async downloadCurrentSong() {
         if (!this.currentPlaylist[this.currentIndex]) {
             window.toast.show('没有可下载的歌曲', 'warning');
@@ -1022,35 +1028,11 @@ class MusicPlayer {
         }
     }
 
-    setVolume(volume) {
-        this.volume = volume;
-        this.audio.volume = volume;
-        if (this.elements.volumeSlider) {
-            this.elements.volumeSlider.value = volume * 100;
-        }
-    }
-
-    setPlaybackSpeed(speed) {
-        this.playbackSpeed = speed;
-        this.audio.playbackRate = speed;
-        if (this.elements.speedSelect) {
-            this.elements.speedSelect.value = speed.toString();
-        }
-    }
-
-    showVolumeSlider() {
-        this.elements.volumeSliderContainer.style.display = 'block';
-        this.isVolumeSliderVisible = true;
-    }
-
-    hideVolumeSlider() {
-        this.elements.volumeSliderContainer.style.display = 'none';
-        this.isVolumeSliderVisible = false;
-    }
-
-    toggleVolumeSlider() {
-        this.isVolumeSliderVisible ? this.hideVolumeSlider() : this.showVolumeSlider();
-    }
+    setVolume(volume) { this.volume = volume; this.audio.volume = volume; if (this.elements.volumeSlider) this.elements.volumeSlider.value = volume * 100; }
+    setPlaybackSpeed(speed) { this.playbackSpeed = speed; this.audio.playbackRate = speed; if (this.elements.speedSelect) this.elements.speedSelect.value = speed.toString(); }
+    showVolumeSlider() { this.elements.volumeSliderContainer.style.display = 'block'; this.isVolumeSliderVisible = true; }
+    hideVolumeSlider() { this.elements.volumeSliderContainer.style.display = 'none'; this.isVolumeSliderVisible = false; }
+    toggleVolumeSlider() { this.isVolumeSliderVisible ? this.hideVolumeSlider() : this.showVolumeSlider(); }
 
     bindProgressEvents() {
         this.elements.progressBar.addEventListener('mousedown', (e) => this.startSeek(e));
@@ -1059,94 +1041,39 @@ class MusicPlayer {
         this.elements.progressBar.addEventListener('touchstart', (e) => this.startSeek(e));
         document.addEventListener('touchmove', (e) => this.dragSeek(e));
         document.addEventListener('touchend', () => this.endSeek());
-        this.elements.progressBar.addEventListener('click', (e) => {
-            if (!this.isDraggingProgress) {
-                const seekTime = this.getSeekTime(e);
-                this.audio.currentTime = seekTime;
-            }
-        });
+        this.elements.progressBar.addEventListener('click', (e) => { if (!this.isDraggingProgress) { const seekTime = this.getSeekTime(e); this.audio.currentTime = seekTime; } });
     }
 
     bindAudioEvents() {
-        this.audio.addEventListener('loadedmetadata', () => {
-            this.updateDuration();
-            setTimeout(() => this.updateDuration(), 100);
-        });
-        this.audio.addEventListener('timeupdate', () => {
-            if (!this.updateAnimationFrame) {
-                this.updateProgress();
-            }
-        });
+        this.audio.addEventListener('loadedmetadata', () => { this.updateDuration(); setTimeout(() => this.updateDuration(), 100); });
+        this.audio.addEventListener('timeupdate', () => { if (!this.updateAnimationFrame) this.updateProgress(); });
         this.audio.addEventListener('ended', () => this.handleEnded());
-        this.audio.addEventListener('canplay', () => {
-            this.elements.playBtn.disabled = false;
-            this.isLoading = false;
-            this.updateDuration();
-        });
-        this.audio.addEventListener('waiting', () => {
-            this.isLoading = true;
-        });
+        this.audio.addEventListener('canplay', () => { this.elements.playBtn.disabled = false; this.isLoading = false; this.updateDuration(); });
+        this.audio.addEventListener('waiting', () => { this.isLoading = true; });
         this.audio.addEventListener('error', (e) => {
             console.error('音频加载错误:', e);
             if (!this.hasInitialized) return;
             if (this.isHandlingNavigationClick) return;
             this.isLoading = false;
-            if (!this.isHandlingNavigationClick) {
-                window.toast.show('音频加载失败，尝试下一首', 'error');
-                if (this.autoPlayNext) {
-                    setTimeout(() => this.next(), 1000);
-                }
-            }
-            if (this.updateAnimationFrame) {
-                cancelAnimationFrame(this.updateAnimationFrame);
-                this.updateAnimationFrame = null;
-            }
+            if (!this.isHandlingNavigationClick) { window.toast.show('音频加载失败，尝试下一首', 'error'); if (this.autoPlayNext) setTimeout(() => this.next(), 1000); }
+            if (this.updateAnimationFrame) { cancelAnimationFrame(this.updateAnimationFrame); this.updateAnimationFrame = null; }
         });
-        this.audio.addEventListener('pause', () => {
-            if (this.updateAnimationFrame) {
-                cancelAnimationFrame(this.updateAnimationFrame);
-                this.updateAnimationFrame = null;
-            }
-        });
+        this.audio.addEventListener('pause', () => { if (this.updateAnimationFrame) { cancelAnimationFrame(this.updateAnimationFrame); this.updateAnimationFrame = null; } });
     }
 
-    startSeek(e) {
-        e.preventDefault();
-        this.isDraggingProgress = true;
-        this.updateSeek(e);
-    }
-
-    dragSeek(e) {
-        if (!this.isDraggingProgress) return;
-        e.preventDefault();
-        this.updateSeek(e);
-    }
-
-    endSeek() {
-        if (!this.isDraggingProgress) return;
-        this.isDraggingProgress = false;
-        if (this.audio.duration) {
-            const progressPercent = parseFloat(this.elements.progress.style.width) / 100;
-            this.audio.currentTime = progressPercent * this.audio.duration;
-        }
-    }
-
+    startSeek(e) { e.preventDefault(); this.isDraggingProgress = true; this.updateSeek(e); }
+    dragSeek(e) { if (!this.isDraggingProgress) return; e.preventDefault(); this.updateSeek(e); }
+    endSeek() { if (!this.isDraggingProgress) return; this.isDraggingProgress = false; if (this.audio.duration) { const progressPercent = parseFloat(this.elements.progress.style.width) / 100; this.audio.currentTime = progressPercent * this.audio.duration; } }
     getSeekTime(e) {
         const progressBar = this.elements.progressBar;
         const rect = progressBar.getBoundingClientRect();
-        let clientX;
-        if (e.type.includes('touch')) {
-            clientX = e.touches[0].clientX;
-        } else {
-            clientX = e.clientX;
-        }
+        let clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
         const clickPosition = clientX - rect.left;
         const progressBarWidth = progressBar.clientWidth;
         let seekPercent = clickPosition / progressBarWidth;
         seekPercent = Math.max(0, Math.min(1, seekPercent));
         return seekPercent * (this.audio.duration || 0);
     }
-
     updateSeek(e) {
         const seekTime = this.getSeekTime(e);
         const duration = this.audio.duration;
@@ -1159,8 +1086,7 @@ class MusicPlayer {
     }
 
     initializePlayer() {
-        this.audio.src = '';
-        this.audio.load();
+        this.audio.src = ''; this.audio.load();
         this.setVolume(this.volume);
         this.setPlaybackSpeed(this.playbackSpeed);
         this.updateModeIcon();
@@ -1171,49 +1097,26 @@ class MusicPlayer {
             this.elements.coverImg.style.display = 'block';
             const placeholder = document.querySelector('.cover-placeholder');
             if (placeholder) placeholder.style.display = 'none';
-            this.elements.coverImg.onerror = () => {
-                this.elements.coverImg.src = defaultLogo;
-            };
+            this.elements.coverImg.onerror = () => { this.elements.coverImg.src = defaultLogo; };
         }
         this.loadApiPlaylist(this.currentApi);
         setInterval(() => this.cacheManager.cleanup(), 30 * 60 * 1000);
-        setTimeout(() => {
-            initCustomSelects();
-        }, 100);
+        setTimeout(() => { initCustomSelects(); }, 100);
         this.hasInitialized = true;
     }
 
     getApiName(apiId) {
-        const apiNames = {
-            'netease': '网易云音乐',
-            'qq': 'QQ音乐',
-            'migu': '抖音热歌榜',
-            'local': '本地音乐'
-        };
+        const apiNames = { 'netease': '网易云音乐', 'qq': 'QQ音乐', 'migu': '抖音热歌榜', 'local': '本地音乐' };
         return apiNames[apiId] || apiId;
     }
 
     cleanup() {
-        if (this.updateAnimationFrame) {
-            cancelAnimationFrame(this.updateAnimationFrame);
-            this.updateAnimationFrame = null;
-        }
-        if (this.audio) {
-            this.audio.pause();
-            this.audio.src = '';
-            this.audio.load();
-        }
-        if (this.cacheManager) {
-            this.cacheManager.cleanup();
-        }
-        this.hasNotifiedLocal = false;
-        this.hasNotifiedMigu = false;
-        if (window.musicPlayer === this) {
-            window.musicPlayer = null;
-        }
-        if (this.coverObserver) {
-            this.coverObserver.disconnect();
-        }
+        if (this.updateAnimationFrame) { cancelAnimationFrame(this.updateAnimationFrame); this.updateAnimationFrame = null; }
+        if (this.audio) { this.audio.pause(); this.audio.src = ''; this.audio.load(); }
+        if (this.cacheManager) this.cacheManager.cleanup();
+        this.hasNotifiedLocal = false; this.hasNotifiedMigu = false;
+        if (window.musicPlayer === this) window.musicPlayer = null;
+        if (this.coverObserver) this.coverObserver.disconnect();
         console.log('音乐播放器资源已清理');
     }
 
@@ -1226,12 +1129,7 @@ class MusicPlayer {
     savePlayState(isPlaying) { localStorage.setItem('musicPlayer_playState', isPlaying.toString()); }
     loadPlayState() { const saved = localStorage.getItem('musicPlayer_playState'); return saved ? saved === 'true' : false; }
 
-    escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+    escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
 }
 
 window.MusicPlayer = MusicPlayer;
