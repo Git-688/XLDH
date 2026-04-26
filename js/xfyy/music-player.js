@@ -1262,4 +1262,4 @@ class MusicPlayer {
     }
 }
 
-window.MusicPlayer = MusicPlayer;
+window.MusicPlayer = MusicPlayer; 
