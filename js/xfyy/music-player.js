@@ -211,7 +211,7 @@ function initCustomSelects() {
     });
 }
 
-// ==================== 主播放器类（全新简约歌词系统） ====================
+// ==================== 主播放器类（全新稳定歌词系统） ====================
 class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audio-element');
@@ -310,12 +310,10 @@ class MusicPlayer {
             player: document.querySelector('.music-player')
         };
 
-        // 创建全新的歌词内部容器
         if (this.elements.lyricsContainer) {
             this.elements.lyricsContainer.innerHTML = '';
             this.lyricsInner = document.createElement('div');
             this.lyricsInner.className = 'lyrics-new-inner';
-            this.lyricsInner.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2)';
             this.elements.lyricsContainer.appendChild(this.lyricsInner);
         }
 
@@ -410,13 +408,14 @@ class MusicPlayer {
         });
     }
 
-    // ========== 歌词系统（全新简约现代） ==========
+    // ========== 稳定歌词系统（基于原生滚动） ==========
 
     async loadLyrics(song) {
         this.lyricsData = [];
         this.lyricsInner.innerHTML = '';
-        this.lyricsInner.style.transition = 'none';
-        this.lyricsInner.style.transform = 'translateY(0px)';
+        if (this.elements.lyricsContainer) {
+            this.elements.lyricsContainer.scrollTop = 0;
+        }
         this.currentLyricIndex = -1;
 
         if (!song.lrc) {
@@ -430,7 +429,6 @@ class MusicPlayer {
             this.lyricParser.parseLrc(text);
             this.lyricsData = this.lyricParser.lyrics;
             this.buildLyricsUI(this.lyricsData);
-            this.lyricsInner.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2)';
         } catch (error) {
             console.error('加载歌词失败:', error);
             this.buildLyricsUI([]);
@@ -444,8 +442,6 @@ class MusicPlayer {
             const line = document.createElement('div');
             line.className = 'lyrics-line-new';
             line.textContent = '暂无歌词';
-            line.style.opacity = '1';
-            line.style.fontSize = '14px';
             this.lyricsInner.appendChild(line);
             return;
         }
@@ -459,16 +455,6 @@ class MusicPlayer {
             fragment.appendChild(line);
         });
         this.lyricsInner.appendChild(fragment);
-
-        // 初始居中第一句
-        if (lyrics.length > 0) {
-            const containerHeight = this.elements.lyricsContainer.clientHeight;
-            if (containerHeight) {
-                const lineHeight = 36;
-                const offset = (containerHeight / 2) - (lineHeight / 2);
-                this.lyricsInner.style.transform = `translateY(${offset}px)`;
-            }
-        }
     }
 
     updateLyricsPosition(currentTime) {
@@ -490,21 +476,19 @@ class MusicPlayer {
         const lines = this.lyricsInner.querySelectorAll('.lyrics-line-new');
         lines.forEach((line, i) => {
             line.classList.toggle('active', i === newIndex);
-            if (i === newIndex) {
-                line.style.opacity = '1';
-                line.style.fontWeight = '600';
-            } else {
-                line.style.opacity = '0.55';
-                line.style.fontWeight = '400';
-            }
         });
 
-        const containerHeight = this.elements.lyricsContainer.clientHeight;
-        if (!containerHeight) return;
+        const container = this.elements.lyricsContainer;
+        if (!container) return;
 
-        const lineHeight = 36;
-        const targetY = (containerHeight / 2) - (lineHeight / 2) - (newIndex * lineHeight);
-        this.lyricsInner.style.transform = `translateY(${targetY}px)`;
+        const lineHeight = 40;
+        const containerHeight = container.clientHeight;
+        const targetScrollTop = newIndex * lineHeight - (containerHeight / 2) + (lineHeight / 2);
+
+        container.scrollTo({
+            top: Math.max(0, targetScrollTop),
+            behavior: 'smooth'
+        });
     }
 
     // ========== 播放控制 ==========
@@ -669,7 +653,7 @@ class MusicPlayer {
         }
     }
 
-    // ========== 歌单与搜索 ==========
+    // ========== 歌单与歌曲加载 ==========
 
     async switchApiTab(apiId) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -1261,41 +1245,14 @@ class MusicPlayer {
         console.log('音乐播放器资源已清理');
     }
 
-    saveVolume(volume) {
-        localStorage.setItem('musicPlayer_volume', volume.toString());
-    }
-
-    loadVolume() {
-        const savedVolume = localStorage.getItem('musicPlayer_volume');
-        return savedVolume ? parseFloat(savedVolume) : 0.5;
-    }
-
-    savePlaybackSpeed(speed) {
-        localStorage.setItem('musicPlayer_playbackSpeed', speed.toString());
-    }
-
-    loadPlaybackSpeed() {
-        const saved = localStorage.getItem('musicPlayer_playbackSpeed');
-        return saved ? parseFloat(saved) : 1.0;
-    }
-
-    savePlayMode(mode) {
-        localStorage.setItem('musicPlayer_playMode', mode.toString());
-    }
-
-    loadPlayMode() {
-        const saved = localStorage.getItem('musicPlayer_playMode');
-        return saved ? parseInt(saved) : 0;
-    }
-
-    savePlayState(isPlaying) {
-        localStorage.setItem('musicPlayer_playState', isPlaying.toString());
-    }
-
-    loadPlayState() {
-        const saved = localStorage.getItem('musicPlayer_playState');
-        return saved ? saved === 'true' : false;
-    }
+    saveVolume(volume) { localStorage.setItem('musicPlayer_volume', volume.toString()); }
+    loadVolume() { const saved = localStorage.getItem('musicPlayer_volume'); return saved ? parseFloat(saved) : 0.5; }
+    savePlaybackSpeed(speed) { localStorage.setItem('musicPlayer_playbackSpeed', speed.toString()); }
+    loadPlaybackSpeed() { const saved = localStorage.getItem('musicPlayer_playbackSpeed'); return saved ? parseFloat(saved) : 1.0; }
+    savePlayMode(mode) { localStorage.setItem('musicPlayer_playMode', mode.toString()); }
+    loadPlayMode() { const saved = localStorage.getItem('musicPlayer_playMode'); return saved ? parseInt(saved) : 0; }
+    savePlayState(isPlaying) { localStorage.setItem('musicPlayer_playState', isPlaying.toString()); }
+    loadPlayState() { const saved = localStorage.getItem('musicPlayer_playState'); return saved ? saved === 'true' : false; }
 
     escapeHtml(text) {
         if (!text) return '';
