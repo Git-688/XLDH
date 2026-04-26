@@ -72,85 +72,75 @@
             visibility: visible;
             pointer-events: auto;
         }
-        .feedback-modal-content {
-            background: var(--bg-card, #ffffff);
-            border-radius: 18px;
+        /* 用户反馈模态框 - 亚克力效果，圆角 8px */
+        #feedbackModal .feedback-modal-content {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(24px) saturate(125%);
+            -webkit-backdrop-filter: blur(24px) saturate(125%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
             width: 100%;
             max-width: 600px;
             max-height: 75vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12),
-                        0 6px 12px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(0, 0, 0, 0.04);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             transform: scale(0.95) translateY(8px);
             opacity: 0;
             transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1),
                         opacity 0.25s ease;
             pointer-events: auto;
         }
-        .feedback-modal.active .feedback-modal-content {
-            transform: scale(1) translateY(0);
-            opacity: 1;
+        #feedbackModal .feedback-modal-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 18px 24px 10px;
+            color: #1e293b;
         }
-        .feedback-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            border-bottom: 1px solid var(--border-color, #f0f0f0);
-            background: var(--bg-card, #ffffff);
-            flex-shrink: 0;
-        }
-        .feedback-modal-header h3 {
-            margin: 0;
+        #feedbackModal .feedback-modal-header h3 {
             font-size: 1.2rem;
-            font-weight: 500;
-            color: var(--text-primary);
-            letter-spacing: 0.2px;
+            font-weight: 600;
+            color: inherit;
         }
-        .feedback-modal-header h3 i {
-            margin-right: 6px;
-            color: var(--primary-color);
-            font-size: 1.1rem;
+        #feedbackModal .feedback-modal-header h3 i {
+            color: #4361ee;
+            font-size: 1.2rem;
+            margin-right: 10px;
         }
-        .feedback-modal-close {
-            background: none;
+        /* 关闭按钮与公告/笔记统一 */
+        #feedbackModal .feedback-modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
             border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            line-height: 1;
-            padding: 4px;
-            border-radius: 6px;
-            transition: all 0.15s;
-            width: 28px;
-            height: 28px;
+            color: #64748b;
+            font-size: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0;
+            cursor: pointer;
+            transition: background 0.2s;
         }
-        .feedback-modal-close:hover {
-            background: rgba(0, 0, 0, 0.04);
-            color: var(--text-primary);
+        #feedbackModal .feedback-modal-close:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #334155;
         }
-        .feedback-modal-body {
-            flex: 1;
+        #feedbackModal .feedback-modal-body {
+            padding: 16px 24px;
             overflow-y: auto;
-            padding: 14px 16px;
-            background: var(--bg-card, #ffffff);
+            background: transparent;
             scrollbar-width: none;
             -ms-overflow-style: none;
         }
-        .feedback-modal-body::-webkit-scrollbar { display: none; }
+        #feedbackModal .feedback-modal-body::-webkit-scrollbar { display: none; }
         @media (max-width: 600px) {
             .feedback-modal {
                 padding: var(--container-padding-xs, 16px);
                 align-items: flex-end;
             }
-            .feedback-modal-content {
+            #feedbackModal .feedback-modal-content {
                 max-width: 100%;
                 height: 90%;
                 max-height: 90%;
@@ -164,24 +154,31 @@
             .feedback-modal.active .feedback-modal-content {
                 transform: translateY(0);
             }
-            .feedback-modal-header { padding: 8px 14px; }
-            .feedback-modal-header h3 { font-size: 1.2rem; }
-            .feedback-modal-body { padding: 12px 14px; -webkit-overflow-scrolling: touch; }
-            .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
-        }
-        @media (min-width: 601px) {
-            .feedback-modal-header { padding: 10px 16px; }
-            .feedback-modal-header h3 { font-size: 1.25rem; }
-            .feedback-modal-body { padding: 16px 20px; }
+            #feedbackModal .feedback-modal-header { padding: 12px 16px 8px; }
+            #feedbackModal .feedback-modal-header h3 { font-size: 1.1rem; }
+            #feedbackModal .feedback-modal-body { padding: 12px 16px; }
+            #feedbackModal .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
         }
         @media (prefers-color-scheme: dark) {
-            .feedback-modal-content { background: #2a2a2a; border-color: #3e3e3e; }
-            .feedback-modal-header { background: #2a2a2a; border-bottom-color: #3e3e3e; }
-            .feedback-modal-body { background: #2a2a2a; }
-            .feedback-modal-close:hover { background: rgba(255, 255, 255, 0.08); }
+            #feedbackModal .feedback-modal-content {
+                background: rgba(30, 30, 30, 0.75);
+                border-color: rgba(255, 255, 255, 0.15);
+            }
+            #feedbackModal .feedback-modal-header {
+                border-bottom-color: rgba(255, 255, 255, 0.06);
+                color: #f1f5f9;
+            }
+            #feedbackModal .feedback-modal-close {
+                background: rgba(255, 255, 255, 0.1);
+                color: #94a3b8;
+            }
+            #feedbackModal .feedback-modal-close:hover {
+                background: rgba(255, 255, 255, 0.2);
+                color: #e2e8f0;
+            }
         }
 
-        /* ===== 反馈模块提示样式 ===== */
+        /* 数学公式提示样式 */
         .math-hint {
             padding: 8px 12px;
             background: #f8f9fa;
@@ -201,7 +198,7 @@
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
 
-        /* ===== 星聚笔记模态框专用样式（头部与公告一致） ===== */
+        /* ===== 星聚笔记模态框样式（保持不变） ===== */
         #notebookModal {
             background: transparent;
             backdrop-filter: none;
@@ -212,13 +209,12 @@
             backdrop-filter: blur(24px) saturate(125%);
             -webkit-backdrop-filter: blur(24px) saturate(125%);
             border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 8px;          /* 与 logo 圆角一致 */
+            border-radius: 8px;
             overflow: hidden;
-            max-height: 75vh;             /* 限制整个卡片高度 */
+            max-height: 75vh;
             display: flex;
             flex-direction: column;
         }
-        /* 头部样式与系统公告完全一致 */
         #notebookModal .feedback-modal-header {
             background: transparent;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -253,16 +249,14 @@
             background: rgba(0, 0, 0, 0.05);
             color: #334155;
         }
-        /* 内容区（控制左右宽度和顶部间距） */
         #notebookModal .feedback-modal-body {
-            padding: 16px 20px 0 20px;   /* 上间距16px，左右20px，底部0 */
+            padding: 16px 20px 0 20px;
             overflow: visible;
             flex: 0 0 auto;
             background: transparent;
         }
-        /* 笔记列表滚动容器：增加顶部和底部空白 */
         .notebook-list {
-            padding: 12px 0 16px 0;     /* 顶部12px，底部16px */
+            padding: 12px 0 16px 0;
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -603,6 +597,7 @@
     </div>
     <div class="engine-tooltip" id="engineTooltip"></div>
 </main>
+<!-- 用户反馈模态框（已改为亚克力效果，圆角 8px） -->
 <div id="feedbackModal" class="feedback-modal" style="display: none;">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
