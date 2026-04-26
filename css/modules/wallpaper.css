@@ -1,4 +1,4 @@
-/* 壁纸区域 */
+/* 轮播图容器 */
 .wallpaper-section {
     padding: var(--section-margin-sm) 0 0 !important;
     position: relative;
@@ -6,9 +6,7 @@
     margin-bottom: 0 !important;
 }
 
-/* 壁纸容器使用统一边距 */
-.wallpaper-section .container,
-.wallpaper-section .container-fluid {
+.wallpaper-section .container {
     padding-left: var(--container-padding-xs) !important;
     padding-right: var(--container-padding-xs) !important;
     max-width: 1200px !important;
@@ -16,111 +14,127 @@
     margin: 0 auto !important;
 }
 
-/* 响应式调整边距 */
 @media (min-width: 576px) {
-    .wallpaper-section .container,
-    .wallpaper-section .container-fluid {
-        padding-left: var(--container-padding-sm) !important;
-        padding-right: var(--container-padding-sm) !important;
-    }
-    .wallpaper-section {
-        padding: var(--section-margin-md) 0 0 !important;
-    }
+    .wallpaper-section .container { padding-left: var(--container-padding-sm) !important; padding-right: var(--container-padding-sm) !important; }
+    .wallpaper-section { padding: var(--section-margin-md) 0 0 !important; }
 }
-
 @media (min-width: 768px) {
-    .wallpaper-section .container,
-    .wallpaper-section .container-fluid {
-        padding-left: var(--container-padding-md) !important;
-        padding-right: var(--container-padding-md) !important;
-    }
-    .wallpaper-section {
-        padding: var(--section-margin-md) 0 0 !important;
-    }
+    .wallpaper-section .container { padding-left: var(--container-padding-md) !important; padding-right: var(--container-padding-md) !important; }
+    .wallpaper-section { padding: var(--section-margin-md) 0 0 !important; }
 }
-
 @media (min-width: 992px) {
-    .wallpaper-section .container,
-    .wallpaper-section .container-fluid {
-        padding-left: var(--container-padding-lg) !important;
-        padding-right: var(--container-padding-lg) !important;
-    }
-    .wallpaper-section {
-        padding: var(--section-margin-lg) 0 0 !important;
-    }
+    .wallpaper-section .container { padding-left: var(--container-padding-lg) !important; padding-right: var(--container-padding-lg) !important; }
+    .wallpaper-section { padding: var(--section-margin-lg) 0 0 !important; }
 }
-
 @media (min-width: 1200px) {
-    .wallpaper-section .container,
-    .wallpaper-section .container-fluid {
-        padding-left: var(--container-padding-xl) !important;
-        padding-right: var(--container-padding-xl) !important;
-    }
-    .wallpaper-section {
-        padding: var(--section-margin-lg) 0 0 !important;
-    }
+    .wallpaper-section .container { padding-left: var(--container-padding-xl) !important; padding-right: var(--container-padding-xl) !important; }
+    .wallpaper-section { padding: var(--section-margin-lg) 0 0 !important; }
 }
 
+/* 轮播主容器 */
 .wallpaper-container {
     position: relative;
     width: 100% !important;
-    height: 26vh; /* 缩小高度到26vh */
-    min-height: 130px; /* 缩小最小高度到130px */
+    height: 26vh;
+    min-height: 130px;
     border-radius: 12px !important;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    /* 移除了transition，因为不再需要上浮效果 */
     margin: 0 !important;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    user-select: none;
 }
 
-/* 移除了.wallpaper-container:hover的上浮效果，仅保留阴影变化 */
-.wallpaper-container:hover {
-    /* 移除了transform: translateY(-2px); */
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.wallpaper-container img {
+/* 幻灯片轨道 */
+.carousel-track {
+    display: flex;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    display: block;
+    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+    will-change: transform;
 }
 
-.wallpaper-overlay {
+/* 单张幻灯片 */
+.carousel-slide {
+    flex: 0 0 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+}
+
+/* 左右箭头 */
+.carousel-arrow {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        135deg,
-        rgba(0, 0, 0, 0.3) 0%,
-        rgba(0, 0, 0, 0.1) 50%,
-        rgba(0, 0, 0, 0) 100%
-    );
-    z-index: 1;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: none;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.2rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
+.carousel-arrow:hover {
+    background: rgba(255, 255, 255, 0.45);
+    color: #fff;
+}
+
+.carousel-arrow-left {
+    left: 10px;
+}
+
+.carousel-arrow-right {
+    right: 10px;
+}
+
+/* 指示器圆点 */
+.carousel-dots {
+    position: absolute;
+    bottom: 12px;
+    right: 15px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.carousel-dot.active {
+    background: #fff;
+    transform: scale(1.3);
+    box-shadow: 0 0 4px rgba(0,0,0,0.3);
+}
+
+/* 图片信息（保持在左下角） */
 .wallpaper-info {
     position: absolute;
-    bottom: 10px; /* 靠近底部 */
-    left: 15px; /* 再往左移动，从30px改为15px */
+    bottom: 10px;
+    left: 15px;
     color: white;
     padding: 0;
     font-size: 12px;
-    z-index: 2;
-    background: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border: none;
-    border-radius: 0;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7),
-                 0 0 8px rgba(0, 0, 0, 0.5);
-    opacity: 1;
-    transform: none;
-    transition: none;
-    max-width: calc(100% - 30px); /* 调整最大宽度，左边15px + 右边15px = 30px */
+    z-index: 10;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7), 0 0 8px rgba(0, 0, 0, 0.5);
+    max-width: calc(100% - 60px);   /* 避让指示器 */
 }
 
 .wallpaper-title {
@@ -128,134 +142,80 @@
     margin-bottom: 2px;
     line-height: 1.3;
     font-size: 14px;
-    word-wrap: break-word; /* 允许单词换行 */
+    word-wrap: break-word;
 }
 
 .wallpaper-copyright {
     font-size: 10px;
     opacity: 0.9;
     line-height: 1.4;
-    word-wrap: break-word; /* 允许单词换行 */
-    white-space: normal; /* 允许正常换行 */
-    overflow: visible; /* 允许内容可见 */
-    text-overflow: clip; /* 不使用省略号 */
-    max-width: 100%; /* 允许使用最大宽度 */
+    word-wrap: break-word;
+    white-space: normal;
+    overflow: visible;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.wallpaper-container img {
-    opacity: 0;
-    transition: opacity 0.5s ease;
-}
-
-.wallpaper-container img.loaded {
-    opacity: 1;
-}
-
-.wallpaper-container:has(img[src=""]) {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.wallpaper-container:has(img[src=""])::before {
-    content: "🎨 星链导航 - 加载壁纸中...";
-    opacity: 0.8;
-}
-
-@media (prefers-color-scheme: dark) {
-    .wallpaper-container:has(img[src=""]) {
-        background: linear-gradient(135deg, #4f46e5 0%, #7e22ce 100%);
-    }
-}
-
-@media (prefers-contrast: high) {
-    .wallpaper-info {
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9),
-                     0 0 12px rgba(0, 0, 0, 0.8);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .wallpaper-container img {
-        transition: none;
-    }
-}
-
-/* 移动端样式修改 - 确保标题和副标题不允许换行，超出的省略 */
+/* 移动端适配 */
 @media (max-width: 768px) {
-    .wallpaper-section {
-        padding: var(--section-margin-sm) 0 0 !important;
-    }
-    
+    .wallpaper-section { padding: var(--section-margin-sm) 0 0 !important; }
     .wallpaper-container {
-        height: 26vh; /* 移动端保持一致高度 */
+        height: 26vh;
         min-height: 130px;
         border-radius: 10px !important;
     }
-    
-    .wallpaper-info {
-        bottom: 8px; /* 移动端适当调整，向下移动 */
-        left: 12px; /* 移动端向左移动 */
-        max-width: calc(100% - 24px); /* 调整最大宽度 */
+    .carousel-arrow {
+        width: 30px;
+        height: 30px;
+        font-size: 1rem;
     }
-    
-    /* 移动端：标题不允许换行，超出的省略 */
+    .wallpaper-info {
+        bottom: 8px;
+        left: 12px;
+        max-width: calc(100% - 50px);
+    }
     .wallpaper-title {
         font-size: 13px;
-        white-space: nowrap; /* 不允许换行 */
-        overflow: hidden; /* 超出隐藏 */
-        text-overflow: ellipsis; /* 显示省略号 */
-        max-width: 100%; /* 限制最大宽度 */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
-    
-    /* 移动端：副标题不允许换行，超出的省略 */
     .wallpaper-copyright {
         font-size: 10px;
-        white-space: nowrap; /* 不允许换行 */
-        overflow: hidden; /* 超出隐藏 */
-        text-overflow: ellipsis; /* 显示省略号 */
-        max-width: 100%; /* 限制最大宽度 */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 }
 
 @media (max-width: 480px) {
-    .wallpaper-section {
-        padding: var(--section-margin-xs) 0 0 !important;
-    }
-    
+    .wallpaper-section { padding: var(--section-margin-xs) 0 0 !important; }
     .wallpaper-container {
-        height: 26vh; /* 小屏幕保持一致高度 */
+        height: 26vh;
         min-height: 130px;
         border-radius: 8px !important;
     }
-    
     .wallpaper-info {
-        bottom: 6px; /* 小屏幕适当调整，向下移动 */
-        left: 10px; /* 小屏幕向左移动 */
-        max-width: calc(100% - 20px); /* 调整最大宽度 */
+        bottom: 6px;
+        left: 10px;
+        max-width: calc(100% - 45px);
     }
-    
-    /* 小屏幕：进一步减小字体，并确保不换行 */
-    .wallpaper-title {
-        font-size: 12px;
-        white-space: nowrap; /* 不允许换行 */
-        overflow: hidden; /* 超出隐藏 */
-        text-overflow: ellipsis; /* 显示省略号 */
+    .wallpaper-title { font-size: 12px; }
+    .wallpaper-copyright { font-size: 9px; }
+}
+
+/* 加载失败时背景色 */
+.carousel-slide[style*="background-color"] {
+    background-size: contain;
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    .wallpaper-container {
+        background: linear-gradient(135deg, #4f46e5 0%, #7e22ce 100%);
     }
-    
-    .wallpaper-copyright {
-        font-size: 9px;
-        white-space: nowrap; /* 不允许换行 */
-        overflow: hidden; /* 超出隐藏 */
-        text-overflow: ellipsis; /* 显示省略号 */
+    .carousel-arrow {
+        background: rgba(0, 0, 0, 0.3);
+    }
+    .carousel-arrow:hover {
+        background: rgba(0, 0, 0, 0.5);
     }
 }
