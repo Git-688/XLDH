@@ -211,7 +211,7 @@ function initCustomSelects() {
     });
 }
 
-// ==================== 主播放器类（全新稳定歌词系统） ====================
+// ==================== 主播放器类（单行歌词，完整功能） ====================
 class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audio-element');
@@ -310,11 +310,13 @@ class MusicPlayer {
             player: document.querySelector('.music-player')
         };
 
+        // 创建单行歌词元素
         if (this.elements.lyricsContainer) {
             this.elements.lyricsContainer.innerHTML = '';
-            this.lyricsInner = document.createElement('div');
-            this.lyricsInner.className = 'lyrics-new-inner';
-            this.elements.lyricsContainer.appendChild(this.lyricsInner);
+            this.lyricsLineEl = document.createElement('div');
+            this.lyricsLineEl.className = 'lyrics-single-line';
+            this.lyricsLineEl.textContent = '';
+            this.elements.lyricsContainer.appendChild(this.lyricsLineEl);
         }
 
         this.initializeApiElements();
@@ -408,18 +410,16 @@ class MusicPlayer {
         });
     }
 
-    // ========== 稳定歌词系统（基于原生滚动） ==========
+    // ========== 单行歌词系统 ==========
 
     async loadLyrics(song) {
         this.lyricsData = [];
-        this.lyricsInner.innerHTML = '';
-        if (this.elements.lyricsContainer) {
-            this.elements.lyricsContainer.scrollTop = 0;
-        }
         this.currentLyricIndex = -1;
+        if (this.lyricsLineEl) {
+            this.lyricsLineEl.textContent = '';
+        }
 
         if (!song.lrc) {
-            this.buildLyricsUI([]);
             return;
         }
 
@@ -428,33 +428,9 @@ class MusicPlayer {
             const text = await response.text();
             this.lyricParser.parseLrc(text);
             this.lyricsData = this.lyricParser.lyrics;
-            this.buildLyricsUI(this.lyricsData);
         } catch (error) {
             console.error('加载歌词失败:', error);
-            this.buildLyricsUI([]);
         }
-    }
-
-    buildLyricsUI(lyrics) {
-        this.lyricsInner.innerHTML = '';
-
-        if (lyrics.length === 0) {
-            const line = document.createElement('div');
-            line.className = 'lyrics-line-new';
-            line.textContent = '暂无歌词';
-            this.lyricsInner.appendChild(line);
-            return;
-        }
-
-        const fragment = document.createDocumentFragment();
-        lyrics.forEach((lyric, index) => {
-            const line = document.createElement('div');
-            line.className = 'lyrics-line-new';
-            line.textContent = lyric.text;
-            line.setAttribute('data-index', index);
-            fragment.appendChild(line);
-        });
-        this.lyricsInner.appendChild(fragment);
     }
 
     updateLyricsPosition(currentTime) {
@@ -470,25 +446,14 @@ class MusicPlayer {
         }
 
         if (newIndex === -1 || newIndex === this.currentLyricIndex) return;
-
         this.currentLyricIndex = newIndex;
 
-        const lines = this.lyricsInner.querySelectorAll('.lyrics-line-new');
-        lines.forEach((line, i) => {
-            line.classList.toggle('active', i === newIndex);
-        });
-
-        const container = this.elements.lyricsContainer;
-        if (!container) return;
-
-        const lineHeight = 40;
-        const containerHeight = container.clientHeight;
-        const targetScrollTop = newIndex * lineHeight - (containerHeight / 2) + (lineHeight / 2);
-
-        container.scrollTo({
-            top: Math.max(0, targetScrollTop),
-            behavior: 'smooth'
-        });
+        if (this.lyricsLineEl) {
+            const lyric = this.lyricsData[newIndex];
+            this.lyricsLineEl.textContent = lyric.text || '';
+            this.lyricsLineEl.classList.add('changed');
+            setTimeout(() => this.lyricsLineEl.classList.remove('changed'), 300);
+        }
     }
 
     // ========== 播放控制 ==========
@@ -1262,4 +1227,4 @@ class MusicPlayer {
     }
 }
 
-window.MusicPlayer = MusicPlayer; 
+window.MusicPlayer = MusicPlayer;
