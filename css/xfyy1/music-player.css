@@ -181,11 +181,11 @@
 .speed-control .custom-select-trigger { padding: 4px 8px; font-size: 11px; }
 .playlist-selector .custom-select { width: 100%; }
 
-/* ===== 单行歌词样式（简约现代） ===== */
+/* ===== 全新单行动态歌词（带切换动画） ===== */
 .lyrics-section {
-    padding: 4px 15px;
+    padding: 6px 15px;
     border-bottom: 1px solid rgba(0,0,0,0.05);
-    height: 44px;                /* 单行高度 */
+    height: 52px;               /* 足够容纳一行文字并留白 */
     display: flex;
     align-items: center;
     overflow: hidden;
@@ -199,20 +199,24 @@
 .lyrics-single-line {
     width: 100%;
     text-align: center;
-    font-size: 15px;
-    color: #444;
+    font-size: 16px;
+    color: #333;
+    font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: color 0.3s, opacity 0.2s;
-    font-weight: 500;
+    transition: opacity 0.15s ease;
 }
-.lyrics-single-line.changed {
-    opacity: 0.7;
-    color: var(--primary-color, #4361ee);
+.lyrics-single-line.switch-anim {
+    animation: lyricFadeIn 0.35s ease;
 }
 
-/* ===== 歌单、搜索等区域样式（列表高度增加） ===== */
+@keyframes lyricFadeIn {
+    0% { opacity: 0.4; transform: translateY(3px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 歌单、搜索等区域样式（适当增加高度） ===== */
 .bottom-section { max-height: 500px; overflow: hidden; transition: max-height 0.3s ease; background: inherit; }
 .music-player.collapsed .bottom-section { max-height: 0; }
 .bottom-tabs { display: flex; border-bottom: 1px solid rgba(0,0,0,0.05); overflow-x: auto; position: sticky; top: 0; background: inherit; z-index: 5; scrollbar-width: none; }
@@ -297,8 +301,11 @@
     .progress-actions { gap: 6px; }
     .song-title-container { height: 22px; width: 80px; max-width: 80px; }
     .song-artist-container { height: 18px; width: 70px; max-width: 70px; }
-    .lyrics-section { height: 38px; }
+    .lyrics-section { height: 44px; }
     .lyrics-single-line { font-size: 14px; }
+    .lyrics-single-line.switch-anim {
+        animation: lyricFadeIn 0.25s ease;
+    }
     .music-player .search-input-group { height: 28px; border-radius: 8px; }
     .music-player .search-input-group input { padding: 6px 12px; font-size: 12px; }
     .music-player .search-header { margin-top: 6px; }
