@@ -211,7 +211,7 @@ function initCustomSelects() {
     });
 }
 
-// ==================== 主播放器类（单行歌词，完整功能） ====================
+// ==================== 主播放器类 ====================
 class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audio-element');
@@ -310,7 +310,7 @@ class MusicPlayer {
             player: document.querySelector('.music-player')
         };
 
-        // 创建单行歌词元素
+        // 创建单行歌词显示元素，并添加淡入动画支持
         if (this.elements.lyricsContainer) {
             this.elements.lyricsContainer.innerHTML = '';
             this.lyricsLineEl = document.createElement('div');
@@ -410,7 +410,7 @@ class MusicPlayer {
         });
     }
 
-    // ========== 单行歌词系统 ==========
+    // ========== 歌词系统（动态单行切换，带淡入动画） ==========
 
     async loadLyrics(song) {
         this.lyricsData = [];
@@ -433,26 +433,33 @@ class MusicPlayer {
         }
     }
 
-    updateLyricsPosition(currentTime) {
+    updateLyricDisplayByTime(currentTime) {
         if (!this.lyricsData || this.lyricsData.length === 0) return;
 
-        let newIndex = -1;
+        // 查找当前时间应该显示哪一句
+        let activeIndex = -1;
         for (let i = 0; i < this.lyricsData.length; i++) {
             if (currentTime >= this.lyricsData[i].time) {
-                newIndex = i;
+                activeIndex = i;
             } else {
                 break;
             }
         }
 
-        if (newIndex === -1 || newIndex === this.currentLyricIndex) return;
-        this.currentLyricIndex = newIndex;
+        if (activeIndex === -1 || activeIndex === this.currentLyricIndex) return;
 
+        // 更新当前歌词索引
+        this.currentLyricIndex = activeIndex;
+
+        // 显示歌词并播放切换动画
         if (this.lyricsLineEl) {
-            const lyric = this.lyricsData[newIndex];
-            this.lyricsLineEl.textContent = lyric.text || '';
-            this.lyricsLineEl.classList.add('changed');
-            setTimeout(() => this.lyricsLineEl.classList.remove('changed'), 300);
+            const lyricText = this.lyricsData[activeIndex].text || '';
+            this.lyricsLineEl.textContent = lyricText;
+
+            // 移除可能存在的动画类，重新触发动画
+            this.lyricsLineEl.classList.remove('switch-anim');
+            void this.lyricsLineEl.offsetWidth; // 强制重绘
+            this.lyricsLineEl.classList.add('switch-anim');
         }
     }
 
@@ -1000,7 +1007,7 @@ class MusicPlayer {
                     this.elements.currentTime.textContent = Utils.formatTime(currentTime);
                     this.lastTimeUpdate = Date.now();
                 }
-                this.updateLyricsPosition(currentTime);
+                this.updateLyricDisplayByTime(currentTime);
             }
             this.updateAnimationFrame = null;
         });
