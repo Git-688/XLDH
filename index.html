@@ -201,7 +201,7 @@
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
 
-        /* ===== 星聚笔记模态框专用样式（头部与公告完全一致） ===== */
+        /* ===== 星聚笔记模态框专用样式（头部与公告一致） ===== */
         #notebookModal {
             background: transparent;
             backdrop-filter: none;
@@ -212,28 +212,28 @@
             backdrop-filter: blur(24px) saturate(125%);
             -webkit-backdrop-filter: blur(24px) saturate(125%);
             border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 8px;
+            border-radius: 8px;          /* 与 logo 圆角一致 */
             overflow: hidden;
-            max-height: 75vh;
+            max-height: 75vh;             /* 限制整个卡片高度 */
             display: flex;
             flex-direction: column;
         }
-        /* 头部：与公告头部完全相同的 padding 和尺寸 */
+        /* 头部样式与系统公告完全一致 */
         #notebookModal .feedback-modal-header {
             background: transparent;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            padding: 18px 24px 10px;           /* 公告头部内边距 */
+            padding: 18px 24px 10px;
             color: #1e293b;
         }
         #notebookModal .feedback-modal-header h3 {
-            font-size: 1.2rem;                  /* 公告标题字号 */
+            font-size: 1.2rem;
             font-weight: 600;
             color: inherit;
         }
         #notebookModal .feedback-modal-header h3 i {
             color: #4361ee;
-            font-size: 1.2rem;                  /* 公告图标大小 */
-            margin-right: 10px;                 /* 与公告一致的图标间距 */
+            font-size: 1.2rem;
+            margin-right: 10px;
         }
         #notebookModal .feedback-modal-close {
             width: 32px;
@@ -242,7 +242,7 @@
             background: rgba(255, 255, 255, 0.4);
             border: none;
             color: #64748b;
-            font-size: 1rem;                    /* 公告关闭按钮字号 */
+            font-size: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -253,19 +253,20 @@
             background: rgba(0, 0, 0, 0.05);
             color: #334155;
         }
-        /* 内容区 */
+        /* 内容区（控制左右宽度和顶部间距） */
         #notebookModal .feedback-modal-body {
-            padding: 0 12px 0 12px;
+            padding: 16px 20px 0 20px;   /* 上间距16px，左右20px，底部0 */
             overflow: visible;
             flex: 0 0 auto;
             background: transparent;
         }
+        /* 笔记列表滚动容器：增加顶部和底部空白 */
         .notebook-list {
-            padding: 0 0 16px 0;
+            padding: 12px 0 16px 0;     /* 顶部12px，底部16px */
             margin: 0;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
             max-height: calc(75vh - 70px);
             overflow-y: auto;
             scrollbar-width: none;
@@ -273,9 +274,6 @@
             box-sizing: border-box;
         }
         .notebook-list::-webkit-scrollbar { display: none; }
-        .notebook-item:first-child {
-            margin-top: 12px;
-        }
         .notebook-item {
             background: rgba(255, 255, 255, 0.5);
             backdrop-filter: blur(5px);
@@ -426,9 +424,15 @@
 <main class="main-content">
     <section class="wallpaper-section">
         <div class="container">
-            <div class="wallpaper-container">
-                <img id="wallpaper" src="" alt="壁纸" loading="lazy" onerror="this.style.display='none'">
-                <div class="wallpaper-overlay"></div>
+            <div class="wallpaper-container" id="wallpaperCarousel">
+                <div class="carousel-track" id="carouselTrack"></div>
+                <button class="carousel-arrow carousel-arrow-left" id="carouselArrowLeft" aria-label="上一张">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="carousel-arrow carousel-arrow-right" id="carouselArrowRight" aria-label="下一张">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <div class="carousel-dots" id="carouselDots"></div>
                 <div class="wallpaper-info" id="wallpaperInfo">
                     <div class="wallpaper-title" id="wallpaperTitle"></div>
                     <div class="wallpaper-copyright" id="wallpaperCopyright"></div>
@@ -576,7 +580,7 @@
         </div>
     </div>
     <audio id="audio-element" preload="metadata"></audio>
-    <!-- ========== 搜索模态框（与公告相同 visibility 控制） ========== -->
+    <!-- ========== 搜索模态框 ========== -->
     <div class="search-modal" id="searchModal">
         <div class="modal-content">
             <div class="search-bar">
@@ -586,9 +590,7 @@
                 <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." onkeydown="window.newSearchModule.handleSearch(event)" oninput="window.newSearchModule.showSuggestions()" autocomplete="off">
                 <button class="search-submit-btn" onclick="window.newSearchModule.submitSearch()">搜索</button>
             </div>
-            <div class="engine-dropdown" id="engineDropdown">
-                <!-- JS动态生成 -->
-            </div>
+            <div class="engine-dropdown" id="engineDropdown"></div>
             <div class="suggestions" id="suggestions"></div>
             <div class="history-panel" id="historyPanel">
                 <div class="history-title">
