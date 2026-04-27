@@ -34,12 +34,12 @@
 
 /* 1. 顶部声明卡片 - 缩小 */
 .footer-disclaimer-card {
-    background: var(--bg-card, #ffffff);
-    border: 1px solid var(--border-color, #e9ecef);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 10px 12px;
     margin-bottom: 10px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -50,19 +50,19 @@
     gap: 6px 10px;
     margin-bottom: 8px;
     padding-bottom: 7px;
-    border-bottom: 1px solid var(--border-color, #e9ecef);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .disclaimer-title {
     font-size: 11px;
     font-weight: 700;
-    color: var(--text-primary, #2b2d42);
+    color: var(--text-primary);
 }
 
 .disclaimer-version {
     font-size: 10px;
-    color: var(--text-secondary, #6c757d);
-    background: var(--bg-secondary, #f8f9fa);
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
     padding: 1px 6px;
     border-radius: 8px;
     margin-left: auto;
@@ -72,17 +72,17 @@
 .disclaimer-text {
     font-size: 11px;
     line-height: 1.4;
-    color: var(--text-secondary, #6c757d);
+    color: var(--text-secondary);
     text-align: justify;
 }
 
 .disclaimer-text strong {
-    color: var(--text-primary, #2b2d42);
+    color: var(--text-primary);
     font-weight: 650;
 }
 
 .email-text {
-    color: var(--primary-color, #4361ee);
+    color: var(--primary-color);
     font-weight: 500;
     font-style: italic;
 }
@@ -129,17 +129,17 @@
 
 /* 卡片样式 */
 .stat-card {
-    background: var(--bg-card, #ffffff);
-    border: 1px solid var(--border-color, #e9ecef);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 10px;
     transition: all 0.2s ease;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow);
     box-sizing: border-box;
 }
 
 .stat-card:hover {
-    border-color: var(--primary-color, #4361ee);
+    border-color: var(--primary-color);
     box-shadow: 0 2px 6px rgba(67, 97, 238, 0.08);
 }
 
@@ -163,10 +163,10 @@
 
 /* 运行时间图标样式 - 红色主题 */
 .running-icon {
-    border: 1.5px solid var(--error-color, #ff4757);
+    border: 1.5px solid var(--error-color);
 }
 .running-icon i {
-    color: var(--error-color, #ff4757);
+    color: var(--error-color);
     font-size: 14px;
 }
 
@@ -180,7 +180,7 @@
 }
 /* 总访问量图标样式 */
 .total-icon i {
-    color: #4361ee;
+    color: var(--primary-color);
 }
 
 /* 增强心跳动画 */
@@ -192,7 +192,7 @@
 @keyframes heartbeat-enhanced {
     0% {
         transform: scale(1);
-        color: var(--error-color, #ff4757);
+        color: var(--error-color);
     }
     25% {
         transform: scale(1.05);
@@ -206,7 +206,7 @@
     }
     100% {
         transform: scale(1);
-        color: var(--error-color, #ff4757);
+        color: var(--error-color);
     }
 }
 
@@ -217,7 +217,7 @@
 
 .stat-name {
     font-size: 10px;
-    color: var(--text-secondary, #6c757d);
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.3px;
     margin-bottom: 2px;
@@ -227,7 +227,7 @@
 .stat-number {
     font-size: 14px;
     font-weight: 800;
-    color: var(--text-primary, #2b2d42);
+    color: var(--text-primary);
     font-family: 'SF Mono', 'Roboto Mono', Consolas, monospace;
     line-height: 1.1;
     white-space: nowrap;
@@ -243,7 +243,7 @@
     color: #4cd964;
 }
 #totalCount {
-    color: #4361ee;
+    color: var(--primary-color);
 }
 
 /* ====== 响应式细节优化 ====== */
