@@ -1,5 +1,5 @@
 // compact-tags.js - 彩虹浅色标签模块（完整列表版）
-class CompactTagsModule {
+export default class CompactTagsModule {
     constructor() {
         // 最终标签列表：保留的原标签 + 新添加标签，按名称拼音排序
         this.tags = [
@@ -104,12 +104,3 @@ class CompactTagsModule {
         }, 120);
     }
 }
-
-// 初始化模块
-document.addEventListener('DOMContentLoaded', () => {
-    if (!window.compactTagsModule) {
-        window.compactTagsModule = new CompactTagsModule();
-    }
-});
-
-window.CompactTagsModule = CompactTagsModule;
