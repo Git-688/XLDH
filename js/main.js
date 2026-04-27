@@ -1,7 +1,7 @@
 /**
  * 星聚导航主应用程序（模块版）
  * 实现 Code Splitting：首屏核心模块静态导入，非首屏模块动态导入
- * 改进：Twikoo 反馈路径改为动态，避免多页面评论混杂；增强错误处理
+ * 说明：Twikoo 仅在主页使用，采用固定路径避免评论混杂
  */
 import { default as CompactSidebar } from './components/sidebar.js';
 import { default as Navbar } from './components/navbar.js';
@@ -140,10 +140,9 @@ class App {
         modal.classList.add('active');
         this.registerModal({ hide: () => this.closeFeedbackModal() });
 
+        // Twikoo 仅在主页使用，采用固定路径
         if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
-            // 动态生成评论路径：建议根据页面或功能模块区分，这里使用固定前缀 + 时间戳避免初次混杂
-            // 如果需要完全隔离，可改为 `/feedback-${window.location.pathname}` 或 `/feedback-${Date.now()}`
-            const commentPath = '/feedback-main';
+            const commentPath = '/feedback';   // 固定路径，清晰明了
             twikoo.init({
                 envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
                 el: '#twikoo-feedback',
@@ -337,7 +336,6 @@ class App {
 
     escapeHtml(text) {
         if (!text) return '';
-        // 优先使用全局 Utils（已在 utils.js 中定义，安全且高性能）
         if (window.Utils && typeof window.Utils.escapeHtml === 'function') {
             return window.Utils.escapeHtml(text);
         }
