@@ -1,6 +1,7 @@
 /**
  * 歌词解析器 - 精简版，仅支持 LRC，移除翻译、偏移、搜索、导出
  */
+
 class LyricParser {
     constructor() {
         this.lyrics = [];
@@ -162,4 +163,4 @@ class LyricParser {
     }
 }
 
-export default LyricParser;
+window.LyricParser = LyricParser;
