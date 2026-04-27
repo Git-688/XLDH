@@ -42,6 +42,27 @@
     --section-margin-md: 24px;
     --section-margin-lg: 28px;
     --section-margin-xl: 32px;
+
+    /* 新增：导航激活色 */
+    --nav-level1-active: #5dade2;
+    --nav-level2-active: #ff7043;
+
+    /* 新增：统计数字颜色 */
+    --stat-site-color: #81c784;
+    --stat-invalid-color: #e57373;
+
+    /* 新增：卡片悬停渐变起点 */
+    --card-hover-bg-start: rgba(67, 97, 238, 0.02);
+    --card-hover-bg-end: rgba(67, 97, 238, 0.05);
+
+    /* 亚克力效果全局变量 */
+    --acrylic-bg: rgba(255, 255, 255, 0.6);
+    --acrylic-blur: blur(24px) saturate(125%);
+    --acrylic-border: 1px solid rgba(255, 255, 255, 0.5);
+    --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --acrylic-light-bg: rgba(255, 255, 255, 0.8);
+    --acrylic-light-blur: blur(10px) saturate(110%);
+    --acrylic-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
 }
 
 /* 深色模式变量 */
@@ -53,6 +74,16 @@
         --bg-secondary: #1e1e1e;
         --bg-card: #2d2d2d;
         --border-color: #404040;
+        --nav-level1-active: #7bc8ff;
+        --nav-level2-active: #ff8a65;
+        --stat-site-color: #a5d6a7;
+        --stat-invalid-color: #ef9a9a;
+        --card-hover-bg-start: rgba(124, 200, 255, 0.05);
+        --card-hover-bg-end: rgba(124, 200, 255, 0.1);
+        --acrylic-bg: rgba(30, 30, 30, 0.7);
+        --acrylic-border: 1px solid rgba(255, 255, 255, 0.15);
+        --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        --acrylic-light-bg: rgba(40, 40, 40, 0.7);
     }
 }
 
@@ -324,7 +355,7 @@ body {
     }
     
     .refresh-btn:hover {
-        color: #10b981;
+        color: var(--success-color);
     }
     
     .weather-btn {
@@ -406,7 +437,7 @@ body {
 .stat-number {
     font-size: 14px;
     font-weight: 800;
-    color: var(--text-primary, #2b2d42);
+    color: var(--text-primary);
     font-family: 'SF Mono', 'Roboto Mono', Consolas, monospace;
     line-height: 1.1;
     white-space: nowrap;
@@ -427,11 +458,102 @@ body {
     transform: translateZ(0);
 }
 
-/* 工具类（保留常用类，可酌情精简） */
+/* 工具类 */
 .text-center { text-align: center; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
-/* ... 保留原有工具类，此处省略以节省篇幅，实际文件保留全部工具类 ... */
+.text-justify { text-align: justify; }
+.text-nowrap { white-space: nowrap; }
+.text-uppercase { text-transform: uppercase; }
+.text-lowercase { text-transform: lowercase; }
+.text-capitalize { text-transform: capitalize; }
+.font-bold { font-weight: bold; }
+.font-normal { font-weight: normal; }
+.font-light { font-weight: 300; }
+.font-italic { font-style: italic; }
+.m-0 { margin: 0; }
+.mt-0 { margin-top: 0; }
+.mr-0 { margin-right: 0; }
+.mb-0 { margin-bottom: 0; }
+.ml-0 { margin-left: 0; }
+.m-1 { margin: 4px; }
+.mt-1 { margin-top: 4px; }
+.mr-1 { margin-right: 4px; }
+.mb-1 { margin-bottom: 4px; }
+.ml-1 { margin-left: 4px; }
+.m-2 { margin: 8px; }
+.mt-2 { margin-top: 8px; }
+.mr-2 { margin-right: 8px; }
+.mb-2 { margin-bottom: 8px; }
+.ml-2 { margin-left: 8px; }
+.m-3 { margin: 16px; }
+.mt-3 { margin-top: 16px; }
+.mr-3 { margin-right: 16px; }
+.mb-3 { margin-bottom: 16px; }
+.ml-3 { margin-left: 16px; }
+.p-0 { padding: 0; }
+.pt-0 { padding-top: 0; }
+.pr-0 { padding-right: 0; }
+.pb-0 { padding-bottom: 0; }
+.pl-0 { padding-left: 0; }
+.p-1 { padding: 4px; }
+.pt-1 { padding-top: 4px; }
+.pr-1 { padding-right: 4px; }
+.pb-1 { padding-bottom: 4px; }
+.pl-1 { padding-left: 4px; }
+.p-2 { padding: 8px; }
+.pt-2 { padding-top: 8px; }
+.pr-2 { padding-right: 8px; }
+.pb-2 { padding-bottom: 8px; }
+.pl-2 { padding-left: 8px; }
+.p-3 { padding: 16px; }
+.pt-3 { padding-top: 16px; }
+.pr-3 { padding-right: 16px; }
+.pb-3 { padding-bottom: 16px; }
+.pl-3 { padding-left: 16px; }
+.d-none { display: none; }
+.d-block { display: block; }
+.d-inline { display: inline; }
+.d-inline-block { display: inline-block; }
+.d-flex { display: flex; }
+.d-grid { display: grid; }
+.justify-start { justify-content: flex-start; }
+.justify-end { justify-content: flex-end; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-around { justify-content: space-around; }
+.align-start { align-items: flex-start; }
+.align-end { align-items: flex-end; }
+.align-center { align-items: center; }
+.align-baseline { align-items: baseline; }
+.align-stretch { align-items: stretch; }
+.w-100 { width: 100%; }
+.h-100 { height: 100%; }
+.overflow-hidden { overflow: hidden; }
+.overflow-auto { overflow: auto; }
+.overflow-scroll { overflow: scroll; }
+.position-relative { position: relative; }
+.position-absolute { position: absolute; }
+.position-fixed { position: fixed; }
+.position-sticky { position: sticky; }
+.top-0 { top: 0; }
+.right-0 { right: 0; }
+.bottom-0 { bottom: 0; }
+.left-0 { left: 0; }
+.z-0 { z-index: 0; }
+.z-1 { z-index: 1; }
+.z-2 { z-index: 2; }
+.z-3 { z-index: 3; }
+.z-10 { z-index: 10; }
+.z-50 { z-index: 50; }
+.z-100 { z-index: 100; }
+.z-1000 { z-index: 1000; }
+.opacity-0 { opacity: 0; }
+.opacity-25 { opacity: 0.25; }
+.opacity-50 { opacity: 0.5; }
+.opacity-75 { opacity: 0.75; }
+.opacity-100 { opacity: 1; }
+.shadow-none { box-shadow: none; }
 
 /* 导航链接修复样式 */
 .navigation-section {
@@ -484,8 +606,6 @@ body {
 .site-card-link[data-navigation-fixed="true"] {
     cursor: pointer !important;
 }
-
-/* 移除调试样式 .debug-navigation-click */
 
 /* ====== 新增：优化动画性能 ====== */
 /* 为频繁更新的元素添加硬件加速 */
@@ -1331,14 +1451,14 @@ select {
 
 /* 类型颜色 */
 .toast-info { border-left-color: #3498db; }
-.toast-success { border-left-color: #2ecc71; }
-.toast-warning { border-left-color: #f39c12; }
-.toast-error { border-left-color: #e74c3c; }
+.toast-success { border-left-color: var(--success-color); }
+.toast-warning { border-left-color: var(--warning-color); }
+.toast-error { border-left-color: var(--error-color); }
 
 .toast-info i { color: #3498db; }
-.toast-success i { color: #2ecc71; }
-.toast-warning i { color: #f39c12; }
-.toast-error i { color: #e74c3c; }
+.toast-success i { color: var(--success-color); }
+.toast-warning i { color: var(--warning-color); }
+.toast-error i { color: var(--error-color); }
 
 /* 关闭按钮 */
 .toast-close {
@@ -1354,28 +1474,4 @@ select {
 
 .toast-close:hover {
     color: #666;
-}
-
-
-/* ========== 亚克力效果全局变量 ========== */
-:root {
-    /* 全亚克力属性 */
-    --acrylic-bg: rgba(255, 255, 255, 0.6);
-    --acrylic-blur: blur(24px) saturate(125%);
-    --acrylic-border: 1px solid rgba(255, 255, 255, 0.5);
-    --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    /* 弱亚克力（用于内容区） */
-    --acrylic-light-bg: rgba(255, 255, 255, 0.8);
-    --acrylic-light-blur: blur(10px) saturate(110%);
-    /* 亚克力噪点纹理（可复用） */
-    --acrylic-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --acrylic-bg: rgba(30, 30, 30, 0.7);
-        --acrylic-border: 1px solid rgba(255, 255, 255, 0.15);
-        --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        --acrylic-light-bg: rgba(40, 40, 40, 0.7);
-    }
 }
