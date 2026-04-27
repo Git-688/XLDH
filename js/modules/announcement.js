@@ -1,5 +1,5 @@
 /**
- * 简约公告模块 - 清爽现代版（独立 escapeHtml）
+ * 简约公告模块 - 清爽现代版（已统一使用 Utils.escapeHtml）
  * @class AnnouncementModule
  */
 export default class AnnouncementModule {
@@ -14,11 +14,14 @@ export default class AnnouncementModule {
         this.init();
     }
 
-    // 内嵌 escapeHtml 方法
-    escapeHtml(text) {
-        if (!text) return '';
+    // ========== 安全获取 escapeHtml 的辅助函数 ==========
+    _escapeHtml(text) {
+        if (window.Utils && typeof window.Utils.escapeHtml === 'function') {
+            return window.Utils.escapeHtml(text);
+        }
+        // 兜底
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = text || '';
         return div.innerHTML;
     }
 
@@ -88,10 +91,10 @@ export default class AnnouncementModule {
         this.modalElement.id = 'announcementModal';
 
         const ann = this.currentAnnouncement || {};
-        const title = this.escapeHtml(ann.title || '公告');
-        const focus = this.escapeHtml(ann.focus || '');
+        const title = this._escapeHtml(ann.title || '公告');
+        const focus = this._escapeHtml(ann.focus || '');
         const updates = ann.updates && Array.isArray(ann.updates) ? ann.updates : [];
-        const time = this.escapeHtml(ann.time || new Date().toLocaleDateString());
+        const time = this._escapeHtml(ann.time || new Date().toLocaleDateString());
 
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
@@ -118,7 +121,7 @@ export default class AnnouncementModule {
                             <span>更新内容</span>
                         </div>
                         <ul class="updates-list">
-                            ${updates.map(item => `<li>${this.escapeHtml(item)}</li>`).join('')}
+                            ${updates.map(item => `<li>${this._escapeHtml(item)}</li>`).join('')}
                         </ul>
                     </div>
                 </div>
@@ -186,14 +189,6 @@ export default class AnnouncementModule {
         return this.announcements.filter(a => !a.read).length;
     }
 
-    adjustMaskPosition() {
-        // 不再需要动态调整 top/height，因为使用 flex 居中
-    }
-
-    onResize = () => {
-        // 不再需要，保留为空即可
-    };
-
     showModal() {
         if (!this.modalElement) this.createModal();
         if (this.isVisible) return;
@@ -231,9 +226,13 @@ export default class AnnouncementModule {
         this.isVisible ? this.hide() : this.showModal();
     }
 
+    onResize() {
+        // 空方法，保留兼容性
+    }
+
     closeOtherModals() {
         if (window.sidebar?.isVisible?.()) window.sidebar.hide();
-        if (window.searchModule?.isModalOpen?.()) window.searchModule.hide();
+        if (window.newSearchModule?.isOpen) window.newSearchModule.hide();
         const musicPlayer = document.getElementById('musicPlayer');
         if (musicPlayer?.classList.contains('show') && window.app?.components?.navbar) {
             window.app.components.navbar.hideMusicPlayer();
