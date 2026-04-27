@@ -2,7 +2,7 @@
  * 简约公告模块 - 清爽现代版（独立 escapeHtml）
  * @class AnnouncementModule
  */
-class AnnouncementModule {
+export default class AnnouncementModule {
     constructor() {
         this.announcements = [];
         this.modalElement = null;
@@ -64,7 +64,6 @@ class AnnouncementModule {
         return [{
             id: 'static_announcement',
             title: '系统公告',
-            // ★ 已移除欢迎语
             focus: '本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台。',
             updates: [
                 '全新界面设计-更加现代化和美观的视觉体验',
@@ -280,5 +279,3 @@ class AnnouncementModule {
         this.isInitialized = false;
     }
 }
-
-window.announcementModule = new AnnouncementModule();
