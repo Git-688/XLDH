@@ -1,7 +1,3 @@
-import CacheManager from './cache-manager.js';
-import LyricParser from './lyric-parser.js';
-import PluginManager from './plugin-manager.js';
-
 // ==================== 自定义下拉选择器组件（挂载到 body，互斥+动画） ====================
 class CustomSelect {
     constructor(selectElement) {
@@ -216,7 +212,7 @@ function initCustomSelects() {
 }
 
 // ==================== 主播放器类 ====================
-export default class MusicPlayer {
+class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audio-element');
         this.cacheManager = new CacheManager();
@@ -342,16 +338,6 @@ export default class MusicPlayer {
         });
     }
 
-    // ========== 统一 escapeHtml ==========
-    _e(text) {
-        if (window.Utils && typeof window.Utils.escapeHtml === 'function') {
-            return window.Utils.escapeHtml(text);
-        }
-        const div = document.createElement('div');
-        div.textContent = text || '';
-        return div.innerHTML;
-    }
-
     bindEvents() {
         this.elements.playBtn.addEventListener('click', () => this.togglePlay());
         this.elements.prevBtn.addEventListener('click', () => this.previous());
@@ -468,19 +454,24 @@ export default class MusicPlayer {
         if (this.lyricsLineEl) {
             const lyricText = this.lyricsData[activeIndex].text || '';
 
+            // 移除跑马灯和过渡
             this.lyricsLineEl.classList.remove('overflow');
             this.lyricsLineEl.style.transition = 'none';
 
+            // 初始状态：上浮 + 淡入
             this.lyricsLineEl.style.opacity = '0.4';
             this.lyricsLineEl.style.transform = 'translateY(3px)';
             this.lyricsLineEl.textContent = lyricText;
 
+            // 强制重绘
             void this.lyricsLineEl.offsetWidth;
 
+            // 设置过渡，回到正常
             this.lyricsLineEl.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
             this.lyricsLineEl.style.opacity = '1';
             this.lyricsLineEl.style.transform = 'translateY(0)';
 
+            // 检测是否需要跑马灯
             const checkOverflow = () => {
                 if (this.lyricsLineEl.scrollWidth > this.lyricsLineEl.clientWidth) {
                     this.lyricsLineEl.classList.add('overflow');
@@ -651,6 +642,7 @@ export default class MusicPlayer {
             this.elements.searchToggleBtn.classList.remove('search-active');
         }
     }
+
     // ========== 歌单与歌曲加载 ==========
 
     async switchApiTab(apiId) {
@@ -708,7 +700,7 @@ export default class MusicPlayer {
             if (elements.playlistContainer) {
                 elements.playlistContainer.innerHTML = `
                     <div class="error-message">
-                        <p>加载失败: ${this._e(error.message)}</p>
+                        <p>加载失败: ${error.message}</p>
                         <button class="retry-btn" onclick="musicPlayer.loadApiPlaylist('${apiId}')">重试</button>
                     </div>
                 `;
@@ -751,7 +743,7 @@ export default class MusicPlayer {
         } catch (error) {
             console.error(`搜索失败:`, error);
             if (elements.searchResults) {
-                elements.searchResults.innerHTML = `<div class="error-message"><p>搜索失败: ${this._e(error.message)}</p></div>`;
+                elements.searchResults.innerHTML = `<div class="error-message"><p>搜索失败: ${error.message}</p></div>`;
             }
             window.toast.show('搜索失败', 'error');
         }
@@ -801,13 +793,13 @@ export default class MusicPlayer {
         }
         const coverUrl = song.cover || '';
         const coverHtml = coverUrl
-            ? `<img class="song-cover" data-src="${this._e(coverUrl)}" alt="" loading="lazy" style="display:none;">`
+            ? `<img class="song-cover" data-src="${this.escapeHtml(coverUrl)}" alt="" loading="lazy" style="display:none;">`
             : '';
         songItem.innerHTML = `
             ${coverHtml}
             <div class="song-item-info">
-                <div class="song-item-title">${this._e(song.title || '未知歌曲')}</div>
-                <div class="song-item-artist">${this._e(song.artist || '未知歌手')}</div>
+                <div class="song-item-title">${this.escapeHtml(song.title || '未知歌曲')}</div>
+                <div class="song-item-artist">${this.escapeHtml(song.artist || '未知歌手')}</div>
             </div>
         `;
         if (index < 5 && coverUrl) {
@@ -845,8 +837,8 @@ export default class MusicPlayer {
         songItem.className = 'song-item';
         songItem.innerHTML = `
             <div class="song-item-info">
-                <div class="song-item-title">${this._e(song.title || '未知歌曲')}</div>
-                <div class="song-item-artist">${this._e(song.artist || '未知歌手')}</div>
+                <div class="song-item-title">${this.escapeHtml(song.title || '未知歌曲')}</div>
+                <div class="song-item-artist">${this.escapeHtml(song.artist || '未知歌手')}</div>
             </div>
             <button class="search-download-btn" title="下载">
                 <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
@@ -1251,4 +1243,13 @@ export default class MusicPlayer {
     loadPlayMode() { const saved = localStorage.getItem('musicPlayer_playMode'); return saved ? parseInt(saved) : 0; }
     savePlayState(isPlaying) { localStorage.setItem('musicPlayer_playState', isPlaying.toString()); }
     loadPlayState() { const saved = localStorage.getItem('musicPlayer_playState'); return saved ? saved === 'true' : false; }
+
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 }
+
+window.MusicPlayer = MusicPlayer;
