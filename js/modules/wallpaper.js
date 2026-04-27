@@ -1,8 +1,8 @@
 /**
  * 轮播图模块 - 使用必应历史壁纸
- * @class WallpaperModule
+ * @class CarouselModule
  */
-export default class WallpaperModule {
+class CarouselModule {
     constructor() {
         this.currentIndex = 0;
         this.slides = [];          // 存放图片数据 { url, title, copyright }
@@ -211,3 +211,10 @@ export default class WallpaperModule {
         this.startAutoplay();
     }
 }
+
+// 初始化轮播图
+document.addEventListener('DOMContentLoaded', () => {
+    if (!window.carouselModule) {
+        window.carouselModule = new CarouselModule();
+    }
+});
