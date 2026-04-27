@@ -1,3 +1,7 @@
+import CacheManager from './cache-manager.js';
+import LyricParser from './lyric-parser.js';
+import PluginManager from './plugin-manager.js';
+
 // ==================== 自定义下拉选择器组件（挂载到 body，互斥+动画） ====================
 class CustomSelect {
     constructor(selectElement) {
@@ -212,7 +216,7 @@ function initCustomSelects() {
 }
 
 // ==================== 主播放器类 ====================
-class MusicPlayer {
+export default class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audio-element');
         this.cacheManager = new CacheManager();
@@ -1251,5 +1255,4 @@ class MusicPlayer {
         return div.innerHTML;
     }
 }
-
-window.MusicPlayer = MusicPlayer;
+// 注意：不再需要 window.MusicPlayer = MusicPlayer; 因为已通过 export default 导出
