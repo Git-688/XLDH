@@ -1,7 +1,6 @@
 /**
  * 缓存管理器
  */
-
 class CacheManager {
     constructor() {
         this.prefix = 'music_player_';
@@ -250,4 +249,4 @@ class CacheManager {
     }
 }
 
-window.CacheManager = CacheManager;
+export default CacheManager;
