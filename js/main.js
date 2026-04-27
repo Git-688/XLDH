@@ -39,7 +39,6 @@ class App {
         if (this.isInitialized) return;
         this.setupErrorHandling();
         await this.loadCoreModules();
-        this.initDependentComponents();
         this.setupGlobalEvents();
         this.initNotebookModalEvents();
         this.initFeedbackModalEvents();
@@ -195,7 +194,8 @@ class App {
     async loadNotebookData() {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
-        if (listEl.innerHTML !== '' && !listEl.querySelector('.loading')) return; // already loaded
+        // 如果已经加载过内容，不再重复加载
+        if (listEl.children.length > 0 && !listEl.querySelector('.loading')) return;
 
         listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
         try {
@@ -294,7 +294,6 @@ class App {
     registerModal(modal) {
         if (!modal || typeof modal.hide !== 'function') return;
         if (!this.activeModals.includes(modal)) {
-            // 关闭前一个模态框
             if (this.activeModals.length > 0) {
                 const prev = this.activeModals[this.activeModals.length - 1];
                 if (prev?.hide) prev.hide();
@@ -309,13 +308,11 @@ class App {
     }
 
     closeAllModals() {
-        // 关闭所有注册的模态框
         this.activeModals.forEach(modal => {
             if (modal?.hide) modal.hide();
         });
         this.activeModals = [];
 
-        // 强制关闭已知模态框
         if (this.components.sidebar?.isVisible?.()) this.components.sidebar.hide();
         if (this.components.navbar?.hideMusicPlayer) this.components.navbar.hideMusicPlayer();
         if (this.modules.search?.hide) this.modules.search.hide();
@@ -363,7 +360,6 @@ class App {
                 e.preventDefault();
                 this.showSearch();
             }
-            // 刷新（改为刷新数据，非浏览器刷新）
             if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key === 'r')) {
                 e.preventDefault();
                 this.refreshPageWithAnimation();
@@ -375,11 +371,9 @@ class App {
 
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
-                // 前台时更新时间（由greeting模块处理）
                 if (this.modules.greeting?.updateDateTime) {
                     this.modules.greeting.updateDateTime();
                 }
-                // 天气超过10分钟自动刷新
                 const now = Date.now();
                 if (this.lastWeatherUpdate && (now - this.lastWeatherUpdate > 10 * 60 * 1000)) {
                     if (this.modules.weather?.loadWeatherData) {
@@ -413,7 +407,6 @@ class App {
         this.modules.greeting?.refreshHolidayData?.();
     }
 
-    // 提供给外部获取 App 实例
     static getInstance() {
         return window.app;
     }
