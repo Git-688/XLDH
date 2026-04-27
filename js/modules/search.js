@@ -244,6 +244,4 @@ class NewSearchModule {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (!window.newSearchModule) new NewSearchModule();
-});
+export default NewSearchModule;
