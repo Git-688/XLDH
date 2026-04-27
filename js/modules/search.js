@@ -2,12 +2,12 @@ class NewSearchModule {
     constructor() {
         if (window.newSearchModule) return window.newSearchModule;
 
+        // 移除了不稳定的 SearXNG 演示站点，仅保留主流搜索引擎
         this.engines = [
             { key: 'baidu',   label: '百度',   url: 'https://www.baidu.com/s?wd=', icon: 'fas fa-search' },
             { key: 'google',  label: '谷歌',   url: 'https://www.google.com/search?q=', icon: 'fab fa-google' },
             { key: '360',     label: '360',    url: 'https://www.so.com/s?q=', icon: 'fas fa-shield-alt' },
-            { key: 'douyin',  label: '抖音',   url: 'https://www.douyin.com/search/', icon: 'fas fa-music' },
-            { key: 'all',     label: '全网',   url: 'https://searx.demo.koehlersaeule.de/search?q=', icon: 'fas fa-globe' }
+            { key: 'douyin',  label: '抖音',   url: 'https://www.douyin.com/search/', icon: 'fas fa-music' }
         ];
         this.currentEngine = this.loadSetting('currentEngine2', 'baidu');
         this.history = this.loadSetting('searchHistory2', []);
