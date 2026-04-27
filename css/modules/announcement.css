@@ -25,12 +25,12 @@
 .announcement-modal-container {
     width: 100%;
     max-width: 480px;
-    background: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(24px) saturate(125%);
-    -webkit-backdrop-filter: blur(24px) saturate(125%);
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: var(--acrylic-bg);
+    backdrop-filter: var(--acrylic-blur);
+    -webkit-backdrop-filter: var(--acrylic-blur);
+    border: var(--acrylic-border);
     border-radius: 8px;
-    box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.15), 0 5px 15px -5px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--acrylic-shadow);
     overflow: hidden;
     transform: scale(0.85);
     opacity: 0;
@@ -44,8 +44,8 @@
 
 @media (prefers-color-scheme: dark) {
     .announcement-modal-container {
-        background: rgba(30, 30, 30, 0.75);
-        border-color: rgba(255, 255, 255, 0.15);
+        background: var(--acrylic-bg);
+        border-color: var(--acrylic-border);
     }
 }
 
@@ -54,7 +54,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 18px 24px 10px;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .announcement-title {
@@ -63,7 +63,7 @@
     gap: 10px;
     font-weight: 600;
     font-size: 1.2rem;
-    color: #1e293b;
+    color: var(--text-primary);
 }
 
 .announcement-close {
@@ -72,7 +72,7 @@
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.4);
     border: none;
-    color: #64748b;
+    color: var(--text-secondary);
     font-size: 1rem;
     display: flex;
     align-items: center;
@@ -81,7 +81,10 @@
     transition: background 0.2s;
 }
 
-.announcement-close:hover { background: rgba(0,0,0,0.05); color: #334155; }
+.announcement-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
+}
 
 .announcement-body {
     padding: 20px 24px 16px;
@@ -92,7 +95,7 @@
 
 /* --- 重要提醒区域固定，不滚动 --- */
 .focus-section {
-    background: rgba(255,255,255,0.5);
+    background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: 8px;
@@ -101,11 +104,11 @@
     flex-shrink: 0;         /* 保证不被压缩 */
 }
 
-.focus-content { 
-    color: #1e293b; 
-    font-size: 0.95rem; 
-    line-height: 1.5; 
-    padding-left: 22px; 
+.focus-content {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    padding-left: 22px;
 }
 
 .updates-section {
@@ -116,18 +119,29 @@
     margin-bottom: 8px;
 }
 
-.updates-section::-webkit-scrollbar { display: none; }
+.updates-section::-webkit-scrollbar {
+    display: none;
+}
 
-.updates-list { list-style: none; padding: 0; margin: 0; }
+.updates-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
 .updates-list li {
     position: relative;
     padding: 8px 0 8px 24px;
-    color: #334155;
+    color: var(--text-primary);
     font-size: 0.9rem;
     line-height: 1.5;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
-.updates-list li:last-child { border-bottom: none; }
+
+.updates-list li:last-child {
+    border-bottom: none;
+}
+
 .updates-list li::before {
     content: '';
     position: absolute;
@@ -136,7 +150,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #4361ee;
+    background: var(--primary-color);
 }
 
 .announcement-footer {
@@ -144,16 +158,22 @@
     align-items: center;
     justify-content: space-between;
     padding: 14px 24px 20px;
-    background: rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-top: 1px solid rgba(0,0,0,0.05);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.announcement-date { display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 0.85rem; }
+.announcement-date {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
 
 .announcement-ack-btn {
-    background: #4361ee;
+    background: var(--primary-color);
     border: none;
     color: white;
     font-size: 0.9rem;
@@ -165,21 +185,46 @@
     box-shadow: 0 2px 8px rgba(67, 97, 238, 0.2);
 }
 
-.announcement-ack-btn:hover { background: #3651d4; box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3); }
+.announcement-ack-btn:hover {
+    background: #3651d4;                     /* 保留原有深色，与主题色保持协调 */
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+}
 
 /* 响应式 */
 @media (max-width: 600px) {
-    .announcement-header { padding: 16px 20px 8px; }
-    .announcement-title { font-size: 1.1rem; }
-    .announcement-body { padding: 16px 20px 12px; }
-    .focus-section { padding: 12px; }
-    .updates-list li { font-size: 0.85rem; padding: 6px 0 6px 22px; }
-    .announcement-footer { padding: 12px 20px 16px; }
-    .announcement-ack-btn { padding: 5px 16px; font-size: 0.85rem; }
+    .announcement-header {
+        padding: 16px 20px 8px;
+    }
+    .announcement-title {
+        font-size: 1.1rem;
+    }
+    .announcement-body {
+        padding: 16px 20px 12px;
+    }
+    .focus-section {
+        padding: 12px;
+    }
+    .updates-list li {
+        font-size: 0.85rem;
+        padding: 6px 0 6px 22px;
+    }
+    .announcement-footer {
+        padding: 12px 20px 16px;
+    }
+    .announcement-ack-btn {
+        padding: 5px 16px;
+        font-size: 0.85rem;
+    }
 }
 
 @media (max-width: 400px) {
-    .announcement-modal-container { border-radius: 6px; }
-    .announcement-header { padding: 14px 16px 6px; }
-    .announcement-body { padding: 14px 16px 10px; }
+    .announcement-modal-container {
+        border-radius: 6px;
+    }
+    .announcement-header {
+        padding: 14px 16px 6px;
+    }
+    .announcement-body {
+        padding: 14px 16px 10px;
+    }
 }
