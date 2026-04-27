@@ -1,6 +1,7 @@
 /**
  * 天气模块 - 简化卡片式设计
  * 负责天气预报功能和自动定位
+ * 修复：统一使用 window.Utils.escapeHtml 并添加本地兜底
  * @class WeatherModule
  */
 export default class WeatherModule {
@@ -17,6 +18,16 @@ export default class WeatherModule {
         this.useAutoLocation = false;
         this.escHandler = null;
         this.showModalBound = this.showModal.bind(this);
+
+        // 本地安全兜底，确保 escapeHtml 始终可用
+        this._escapeHtml = (text) => {
+            if (window.Utils && typeof window.Utils.escapeHtml === 'function') {
+                return window.Utils.escapeHtml(text);
+            }
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        };
     }
 
     async init() {
@@ -40,8 +51,8 @@ export default class WeatherModule {
         
         if (!navigator.geolocation) {
             console.log('浏览器不支持地理定位功能');
-            if (window.app && window.app.showToast) {
-                window.app.showToast('浏览器不支持地理定位，已使用默认城市', 'warning');
+            if (window.toast) {
+                window.toast.show('浏览器不支持地理定位，已使用默认城市', 'warning');
             }
             return;
         }
@@ -83,8 +94,8 @@ export default class WeatherModule {
                         const city = await this.reverseGeocode(latitude, longitude);
                         if (city) {
                             this.setCity(city);
-                            if (window.app && window.app.showToast) {
-                                window.app.showToast(`已定位到: ${city}`, 'success');
+                            if (window.toast) {
+                                window.toast.show(`已定位到: ${city}`, 'success');
                             }
                         }
                         resolve(city);
@@ -106,8 +117,8 @@ export default class WeatherModule {
                     const errorMessage = errorMessages[error.code] || '位置获取失败';
                     console.error('获取位置失败:', errorMessage);
                     
-                    if (window.app && window.app.showToast) {
-                        window.app.showToast(errorMessage, 'warning');
+                    if (window.toast) {
+                        window.toast.show(errorMessage, 'warning');
                     }
                     
                     reject(new Error(errorMessage));
@@ -315,36 +326,18 @@ export default class WeatherModule {
 
         const getWeatherTips = (weather) => {
             const tips = [];
-            
-            if (weather.includes('雨')) {
-                tips.push('今日有雨，请携带雨具');
-            }
-            if (weather.includes('雪')) {
-                tips.push('路面可能结冰，请注意交通安全');
-            }
-            if (weather.includes('雾')) {
-                tips.push('能见度较低，请注意行车安全');
-            }
-            if (weather.includes('晴')) {
-                tips.push('天气晴朗，适宜户外活动');
-            }
-            if (weather.includes('阴') || weather.includes('多云')) {
-                tips.push('天气适宜，注意适当增减衣物');
-            }
-            
             const dayTemp = parseInt(today.temperature.day) || 0;
             const nightTemp = parseInt(today.temperature.night) || 0;
-            
-            if (dayTemp > 30) {
-                tips.push('天气炎热，注意防暑降温');
-            } else if (dayTemp < 5) {
-                tips.push('天气寒冷，注意保暖');
-            }
-            
-            if (dayTemp - nightTemp > 10) {
-                tips.push('昼夜温差较大，请注意增减衣物');
-            }
-            
+
+            if (weather.includes('雨')) tips.push('今日有雨，请携带雨具');
+            if (weather.includes('雪')) tips.push('路面可能结冰，请注意交通安全');
+            if (weather.includes('雾')) tips.push('能见度较低，请注意行车安全');
+            if (weather.includes('晴')) tips.push('天气晴朗，适宜户外活动');
+            if (weather.includes('阴') || weather.includes('多云')) tips.push('天气适宜，注意适当增减衣物');
+            if (dayTemp > 30) tips.push('天气炎热，注意防暑降温');
+            if (dayTemp < 5) tips.push('天气寒冷，注意保暖');
+            if (dayTemp - nightTemp > 10) tips.push('昼夜温差较大，请注意增减衣物');
+
             return tips.length > 0 ? tips.join('；') : '天气信息更新，请注意查看详情';
         };
 
@@ -366,7 +359,6 @@ export default class WeatherModule {
                     wind: forecast.wind.day.direction + '风 ' + forecast.wind.day.power + '级'
                 });
             }
-            
             return result;
         };
 
@@ -395,9 +387,7 @@ export default class WeatherModule {
     showModal() {
         console.log('显示天气模态框');
         
-        if (this.isLoading) {
-            return;
-        }
+        if (this.isLoading) return;
         
         this.closeOtherModals();
         this.createModal();
@@ -423,14 +413,14 @@ export default class WeatherModule {
         try {
             this.loadWeatherData().then(() => {
                 this.updateModalContent();
-                if (window.app && window.app.showToast) {
-                    window.app.showToast('天气数据加载成功', 'success');
+                if (window.toast) {
+                    window.toast.show('天气数据加载成功', 'success');
                 }
             }).catch(error => {
                 console.error('加载天气数据失败:', error);
                 this.updateModalContent();
-                if (window.app && window.app.showToast) {
-                    window.app.showToast('天气数据加载失败，请稍后重试', 'error');
+                if (window.toast) {
+                    window.toast.show('天气数据加载失败，请稍后重试', 'error');
                 }
             }).finally(() => {
                 this.isLoading = false;
@@ -438,8 +428,8 @@ export default class WeatherModule {
         } catch (error) {
             console.error('加载天气数据失败:', error);
             this.updateModalContent();
-            if (window.app && window.app.showToast) {
-                window.app.showToast('天气数据加载失败，请稍后重试', 'error');
+            if (window.toast) {
+                window.toast.show('天气数据加载失败，请稍后重试', 'error');
             }
             this.isLoading = false;
         }
@@ -598,10 +588,7 @@ export default class WeatherModule {
     }
 
     addScrollbarStyles() {
-        if (document.getElementById('weather-scrollbar-style')) {
-            return;
-        }
-        
+        if (document.getElementById('weather-scrollbar-style')) return;
         const style = document.createElement('style');
         style.id = 'weather-scrollbar-style';
         style.textContent = `
@@ -611,36 +598,29 @@ export default class WeatherModule {
                 height: 0;
                 background: transparent;
             }
-            
             .weather-body::-webkit-scrollbar-track {
                 display: none;
                 background: transparent;
             }
-            
             .weather-body::-webkit-scrollbar-thumb {
                 display: none;
                 background: transparent;
             }
-            
             .weather-body::-webkit-scrollbar-thumb:hover {
                 display: none;
                 background: transparent;
             }
-            
             .weather-body {
                 -ms-overflow-style: none !important;
                 scrollbar-width: none !important;
             }
-            
             .city-prompt-content::-webkit-scrollbar {
                 display: none;
             }
-            
             .city-prompt-content {
                 -ms-overflow-style: none;
                 scrollbar-width: none;
             }
-            
             .weather-body {
                 -webkit-overflow-scrolling: touch;
             }
@@ -690,13 +670,14 @@ export default class WeatherModule {
         }
 
         const { weatherData } = this;
+        const e = this._escapeHtml; // 使用本地兜底函数
         
         return `
             <div class="weather-current" style="padding:16px 16px 12px; border-bottom:1px solid #eee; text-align:center;">
                 <div class="weather-city" style="font-size:12px; color:#666; margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap;">
                     <i class="fas fa-location-dot" style="font-size:11px;"></i>
-                    ${Utils.escapeHtml(weatherData.city)}
-                    <span class="weather-update-time" style="font-size:11px; color:#999; margin-left:4px;">${Utils.escapeHtml(weatherData.updateTime)}更新</span>
+                    ${e(weatherData.city)}
+                    <span class="weather-update-time" style="font-size:11px; color:#999; margin-left:4px;">${e(weatherData.updateTime)}更新</span>
                 </div>
                 <div class="weather-main" style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:12px;">
                     <div class="weather-icon" style="font-size:36px; color:#4361ee;">
@@ -704,20 +685,20 @@ export default class WeatherModule {
                     </div>
                     <div class="weather-temp-info" style="display:flex; flex-direction:column; align-items:center;">
                         <div class="weather-desc" style="font-size:14px; color:#333; font-weight:500; margin-bottom:4px;">
-                            ${weatherData.weather}
+                            ${e(weatherData.weather)}
                         </div>
                         <div class="temp-details" style="display:flex; gap:12px; align-items:center;">
                             <div class="temp-item" style="text-align:center;">
                                 <div class="temp-label" style="font-size:11px; color:#999; margin-bottom:2px;">白天</div>
                                 <div class="temp-value" style="font-size:18px; color:#ff6b6b; font-weight:600;">
-                                    ${weatherData.dayTemperature}
+                                    ${e(weatherData.dayTemperature)}
                                 </div>
                             </div>
                             <div style="color:#ccc; font-size:12px;">/</div>
                             <div class="temp-item" style="text-align:center;">
                                 <div class="temp-label" style="font-size:11px; color:#999; margin-bottom:2px;">夜间</div>
                                 <div class="temp-value" style="font-size:18px; color:#4dabf7; font-weight:600;">
-                                    ${weatherData.nightTemperature}
+                                    ${e(weatherData.nightTemperature)}
                                 </div>
                             </div>
                         </div>
@@ -726,7 +707,7 @@ export default class WeatherModule {
                 ${weatherData.tips ? `
                 <div class="weather-tips" style="margin-top:12px; padding:8px 12px; background:#f8f9fa; border-radius:6px; font-size:12px; color:#666; border-left:3px solid #4361ee;">
                     <i class="fas fa-lightbulb" style="font-size:11px; margin-right:6px; color:#4361ee;"></i>
-                    ${Utils.escapeHtml(weatherData.tips)}
+                    ${e(weatherData.tips)}
                 </div>
                 ` : ''}
             </div>
@@ -737,14 +718,14 @@ export default class WeatherModule {
                         <i class="fas fa-wind"></i>
                     </div>
                     <div class="detail-label" style="font-size:11px; color:#999; margin-bottom:4px;">风向风力</div>
-                    <div class="detail-value" style="font-size:14px; color:#333; font-weight:500;">${Utils.escapeHtml(weatherData.wind)}</div>
+                    <div class="detail-value" style="font-size:14px; color:#333; font-weight:500;">${e(weatherData.wind)}</div>
                 </div>
                 <div class="weather-detail" style="text-align:center; padding:12px; background:#f8f9fa; border-radius:8px;">
                     <div class="detail-icon" style="font-size:16px; color:#4361ee; margin-bottom:8px;">
                         <i class="fas fa-temperature-high"></i>
                     </div>
                     <div class="detail-label" style="font-size:11px; color:#999; margin-bottom:4px;">体感温度</div>
-                    <div class="detail-value" style="font-size:14px; color:#333; font-weight:500;">${weatherData.dayTemperature}</div>
+                    <div class="detail-value" style="font-size:14px; color:#333; font-weight:500;">${e(weatherData.dayTemperature)}</div>
                 </div>
             </div>
             
@@ -756,15 +737,15 @@ export default class WeatherModule {
                 <div class="forecast-days" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
                     ${weatherData.forecasts.map(day => `
                         <div class="forecast-day" style="text-align:center; padding:12px 6px; background:#f8f9fa; border-radius:8px;">
-                            <div class="forecast-day-name" style="font-size:12px; color:#666; margin-bottom:6px; font-weight:500;">${day.day}</div>
+                            <div class="forecast-day-name" style="font-size:12px; color:#666; margin-bottom:6px; font-weight:500;">${e(day.day)}</div>
                             <div class="forecast-day-icon" style="font-size:16px; color:#4361ee; margin-bottom:6px;">
                                 <i class="${day.icon}"></i>
                             </div>
-                            <div class="forecast-day-weather" style="font-size:11px; color:#333; margin-bottom:6px;">${day.weather}</div>
+                            <div class="forecast-day-weather" style="font-size:11px; color:#333; margin-bottom:6px;">${e(day.weather)}</div>
                             <div class="forecast-day-temp" style="display:flex; justify-content:center; gap:4px; font-size:12px;">
-                                <span style="color:#ff6b6b;">${day.dayTemp}</span>
+                                <span style="color:#ff6b6b;">${e(day.dayTemp)}</span>
                                 <span style="color:#ccc;">/</span>
-                                <span style="color:#4dabf7;">${day.nightTemp}</span>
+                                <span style="color:#4dabf7;">${e(day.nightTemp)}</span>
                             </div>
                         </div>
                     `).join('')}
@@ -784,40 +765,19 @@ export default class WeatherModule {
         if (!this.modalElement) return;
 
         const closeBtn = this.modalElement.querySelector('#weatherCloseBtn');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.hide();
-            });
-        }
+        if (closeBtn) closeBtn.addEventListener('click', (e) => { e.stopPropagation(); this.hide(); });
 
         const changeCityBtn = this.modalElement.querySelector('#changeCityBtn');
-        if (changeCityBtn) {
-            changeCityBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.showCityPrompt();
-            });
-        }
+        if (changeCityBtn) changeCityBtn.addEventListener('click', (e) => { e.stopPropagation(); this.showCityPrompt(); });
 
         const locationBtn = this.modalElement.querySelector('#weatherLocationBtn');
-        if (locationBtn) {
-            locationBtn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                await this.handleLocationRefresh();
-            });
-        }
+        if (locationBtn) locationBtn.addEventListener('click', async (e) => { e.stopPropagation(); await this.handleLocationRefresh(); });
 
         this.modalElement.addEventListener('click', (e) => {
-            if (e.target === this.modalElement) {
-                this.hide();
-            }
+            if (e.target === this.modalElement) this.hide();
         });
 
-        const escHandler = (e) => {
-            if (e.key === 'Escape' && this.isShowing) {
-                this.hide();
-            }
-        };
+        const escHandler = (e) => { if (e.key === 'Escape' && this.isShowing) this.hide(); };
         document.addEventListener('keydown', escHandler);
         this.escHandler = escHandler;
     }
@@ -826,120 +786,64 @@ export default class WeatherModule {
         const modal = document.createElement('div');
         modal.className = 'city-prompt-modal';
         modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10001;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            padding: 20px;
-            box-sizing: border-box;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; align-items: center;
+            justify-content: center; z-index: 10001; opacity: 0;
+            transition: opacity 0.2s ease; padding: 20px; box-sizing: border-box;
         `;
+
+        const e = this._escapeHtml;
+        const cities = ['北京市', '上海市', '广州市', '深圳市', '杭州市', '南京市', '成都市', '武汉市'];
 
         modal.innerHTML = `
             <div class="city-prompt-content" style="
-                background: white;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                padding: 20px;
-                width: 300px;
-                max-width: 100%;
-                transform: translateY(20px);
-                transition: transform 0.3s ease, opacity 0.3s ease;
+                background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                padding: 20px; width: 300px; max-width: 100%;
+                transform: translateY(20px); transition: transform 0.3s ease, opacity 0.3s ease;
                 opacity: 0;
             ">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
                     <i class="fas fa-exchange-alt" style="color: #4361ee;"></i>
                     <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #333;">切换城市</h3>
                 </div>
-                
                 <div style="margin-bottom: 16px;">
                     <label style="display: block; margin-bottom: 6px; font-size: 12px; color: #666;">请输入城市名称</label>
-                    <input type="text" id="cityInput" 
-                           value="${Utils.escapeHtml(this.currentCity)}"
-                           placeholder="例如：北京、上海、广州..."
-                           style="
-                                width: 100%;
-                                padding: 10px 12px;
-                                border: 1px solid #ddd;
-                                border-radius: 6px;
-                                font-size: 14px;
-                                box-sizing: border-box;
-                           ">
-                    <p style="margin: 8px 0 0 0; font-size: 11px; color: #999;">
-                        提示：请输入完整的城市名，如"北京市"、"上海市"
-                    </p>
+                    <input type="text" id="cityInput" value="${e(this.currentCity)}" placeholder="例如：北京、上海、广州..."
+                           style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px;
+                                  font-size: 14px; box-sizing: border-box;">
+                    <p style="margin: 8px 0 0 0; font-size: 11px; color: #999;">提示：请输入完整的城市名，如"北京市"、"上海市"</p>
                 </div>
-                
                 <div style="margin-bottom: 16px;">
                     <p style="margin: 0 0 8px 0; font-size: 12px; color: #666;">热门城市：</p>
                     <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        ${['北京市', '上海市', '广州市', '深圳市', '杭州市', '南京市', '成都市', '武汉市'].map(city => `
-                            <button type="button" class="quick-city-btn" 
-                                    data-city="${Utils.escapeHtml(city)}"
-                                    style="
-                                        padding: 6px 10px;
-                                        background: #f8f9fa;
-                                        border: 1px solid #e8e8e8;
-                                        border-radius: 4px;
-                                        font-size: 12px;
-                                        color: #666;
-                                        cursor: pointer;
-                                        transition: all 0.2s ease;
-                                    ">
-                                ${Utils.escapeHtml(city)}
+                        ${cities.map(city => `
+                            <button type="button" class="quick-city-btn" data-city="${e(city)}"
+                                    style="padding: 6px 10px; background: #f8f9fa; border: 1px solid #e8e8e8;
+                                           border-radius: 4px; font-size: 12px; color: #666; cursor: pointer;
+                                           transition: all 0.2s ease;">
+                                ${e(city)}
                             </button>
                         `).join('')}
                     </div>
                 </div>
-                
                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" id="cancelCityBtn" 
-                            style="
-                                padding: 8px 16px;
-                                background: #f8f9fa;
-                                border: 1px solid #ddd;
-                                border-radius: 6px;
-                                font-size: 13px;
-                                color: #666;
-                                cursor: pointer;
-                                transition: all 0.2s ease;
-                            ">
-                        取消
-                    </button>
-                    <button type="button" id="confirmCityBtn" 
-                            style="
-                                padding: 8px 20px;
-                                background: #4361ee;
-                                border: none;
-                                border-radius: 6px;
-                                font-size: 13px;
-                                color: white;
-                                cursor: pointer;
-                                transition: all 0.2s ease;
-                                font-weight: 500;
-                            ">
-                        确认切换
-                    </button>
+                    <button type="button" id="cancelCityBtn"
+                            style="padding: 8px 16px; background: #f8f9fa; border: 1px solid #ddd;
+                                   border-radius: 6px; font-size: 13px; color: #666; cursor: pointer;
+                                   transition: all 0.2s ease;">取消</button>
+                    <button type="button" id="confirmCityBtn"
+                            style="padding: 8px 20px; background: #4361ee; border: none; border-radius: 6px;
+                                   font-size: 13px; color: white; cursor: pointer; font-weight: 500;
+                                   transition: all 0.2s ease;">确认切换</button>
                 </div>
             </div>
         `;
 
         document.body.appendChild(modal);
-
         requestAnimationFrame(() => {
             modal.style.opacity = '1';
             const content = modal.querySelector('.city-prompt-content');
-            if (content) {
-                content.style.opacity = '1';
-                content.style.transform = 'translateY(0)';
-            }
+            if (content) { content.style.opacity = '1'; content.style.transform = 'translateY(0)'; }
         });
 
         const cancelBtn = modal.querySelector('#cancelCityBtn');
@@ -947,235 +851,129 @@ export default class WeatherModule {
         const cityInput = modal.querySelector('#cityInput');
         const quickCityBtns = modal.querySelectorAll('.quick-city-btn');
 
-        quickCityBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                cityInput.value = btn.dataset.city;
-            });
-        });
+        quickCityBtns.forEach(btn => btn.addEventListener('click', () => { cityInput.value = btn.dataset.city; }));
 
         confirmBtn.addEventListener('click', async () => {
             const newCity = cityInput.value.trim();
-            if (!newCity) {
-                alert('请输入城市名称');
-                return;
-            }
-
+            if (!newCity) { alert('请输入城市名称'); return; }
             this.useAutoLocation = false;
             this.setCity(newCity);
-            
             confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 切换中...';
             confirmBtn.disabled = true;
-            
             try {
                 await this.loadWeatherData();
                 this.updateModalContent();
                 this.hideCityPrompt(modal);
-                if (window.app && window.app.showToast) {
-                    window.app.showToast(`已切换到: ${newCity}`, 'success');
-                }
+                if (window.toast) window.toast.show(`已切换到: ${newCity}`, 'success');
             } catch (error) {
                 console.error('切换城市失败:', error);
                 confirmBtn.innerHTML = '确认切换';
                 confirmBtn.disabled = false;
-                if (window.app && window.app.showToast) {
-                    window.app.showToast(`切换城市失败: ${error.message || '请检查城市名称是否正确'}`, 'error');
-                }
+                if (window.toast) window.toast.show(`切换失败: ${error.message || '请检查城市名称是否正确'}`, 'error');
             }
         });
 
         const hidePrompt = () => {
             modal.style.opacity = '0';
             const content = modal.querySelector('.city-prompt-content');
-            if (content) {
-                content.style.opacity = '0';
-                content.style.transform = 'translateY(20px)';
-            }
-            setTimeout(() => {
-                if (modal.parentNode) {
-                    modal.parentNode.removeChild(modal);
-                }
-            }, 300);
+            if (content) { content.style.opacity = '0'; content.style.transform = 'translateY(20px)'; }
+            setTimeout(() => { if (modal.parentNode) modal.parentNode.removeChild(modal); }, 300);
         };
-
         cancelBtn.addEventListener('click', hidePrompt);
-        
-        const escHandler = (e) => {
-            if (e.key === 'Escape') {
-                hidePrompt();
-                document.removeEventListener('keydown', escHandler);
-            }
-        };
+        const escHandler = e => { if (e.key === 'Escape') { hidePrompt(); document.removeEventListener('keydown', escHandler); } };
         document.addEventListener('keydown', escHandler);
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                hidePrompt();
-                document.removeEventListener('keydown', escHandler);
-            }
-        });
-
+        modal.addEventListener('click', e => { if (e.target === modal) { hidePrompt(); document.removeEventListener('keydown', escHandler); } });
         cityInput.focus();
         cityInput.select();
     }
 
     hideCityPrompt(modal) {
         if (!modal) return;
-        
         modal.style.opacity = '0';
         const content = modal.querySelector('.city-prompt-content');
-        if (content) {
-            content.style.opacity = '0';
-            content.style.transform = 'translateY(20px)';
-        }
-        setTimeout(() => {
-            if (modal.parentNode) {
-                modal.parentNode.removeChild(modal);
-            }
-        }, 300);
+        if (content) { content.style.opacity = '0'; content.style.transform = 'translateY(20px)'; }
+        setTimeout(() => { if (modal.parentNode) modal.parentNode.removeChild(modal); }, 300);
     }
 
     async handleLocationRefresh() {
         try {
-            if (window.app && window.app.showToast) {
-                window.app.showToast('正在获取您的位置...', 'info');
-            }
-            
+            if (window.toast) window.toast.show('正在获取您的位置...', 'info');
             const locationBtn = this.modalElement.querySelector('#weatherLocationBtn');
-            if (locationBtn) {
-                locationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                locationBtn.disabled = true;
-            }
-            
+            if (locationBtn) { locationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; locationBtn.disabled = true; }
             await this.getCurrentPosition();
             await this.loadWeatherData();
             this.updateModalContent();
-            
-            if (window.app && window.app.showToast) {
-                window.app.showToast('位置已更新', 'success');
-            }
+            if (window.toast) window.toast.show('位置已更新', 'success');
         } catch (error) {
             console.error('定位刷新失败:', error);
-            if (window.app && window.app.showToast) {
-                window.app.showToast('定位失败，请检查权限设置', 'error');
-            }
+            if (window.toast) window.toast.show('定位失败，请检查权限设置', 'error');
         } finally {
             const locationBtn = this.modalElement.querySelector('#weatherLocationBtn');
-            if (locationBtn) {
-                locationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i>';
-                locationBtn.disabled = false;
-            }
+            if (locationBtn) { locationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i>'; locationBtn.disabled = false; }
         }
     }
 
     startAutoRefresh() {
-        if (this.refreshInterval) {
-            clearInterval(this.refreshInterval);
-        }
-        
+        if (this.refreshInterval) clearInterval(this.refreshInterval);
         this.refreshInterval = setInterval(async () => {
             console.log('自动刷新天气数据...');
             try {
                 await this.loadWeatherData();
-                
-                if (this.isShowing && this.modalElement) {
-                    this.updateModalContent();
-                }
-            } catch (error) {
-                console.warn('自动刷新天气数据失败:', error);
-            }
+                if (this.isShowing && this.modalElement) this.updateModalContent();
+            } catch (error) { console.warn('自动刷新天气数据失败:', error); }
         }, this.autoRefreshTime);
     }
 
     updateModalContent() {
         if (!this.modalElement) return;
-        
         const body = this.modalElement.querySelector('#weatherBody');
         if (body) {
             body.innerHTML = this.renderModalContent();
-            
             const retryBtn = body.querySelector('#weatherRetryBtn');
             if (retryBtn) {
                 retryBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    retryBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i>加载中...';
+                    retryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加载中...';
                     retryBtn.disabled = true;
-                    
-                    try {
-                        await this.loadWeatherData();
-                        this.updateModalContent();
-                    } catch (error) {
-                        console.error('重试加载天气数据失败:', error);
-                        retryBtn.innerHTML = '<i class="fas fa-redo" style="margin-right:6px;"></i>重新加载';
-                        retryBtn.disabled = false;
-                    }
+                    try { await this.loadWeatherData(); this.updateModalContent(); }
+                    catch (error) { retryBtn.innerHTML = '<i class="fas fa-redo"></i> 重新加载'; retryBtn.disabled = false; }
                 });
             }
-            
             const manualLocationBtn = body.querySelector('#weatherManualLocationBtn');
             if (manualLocationBtn) {
                 manualLocationBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    manualLocationBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i>定位中...';
+                    manualLocationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 定位中...';
                     manualLocationBtn.disabled = true;
-                    
-                    try {
-                        await this.handleLocationRefresh();
-                    } catch (error) {
-                        manualLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs" style="margin-right:6px;"></i>重新定位';
-                        manualLocationBtn.disabled = false;
-                    }
+                    try { await this.handleLocationRefresh(); }
+                    catch (error) { manualLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> 重新定位'; manualLocationBtn.disabled = false; }
                 });
             }
         }
     }
 
     closeOtherModals() {
-        if (window.sidebar && window.sidebar.isVisible) {
-            window.sidebar.hide();
-        }
-        
-        if (window.searchModule && window.searchModule.isModalOpen) {
-            window.searchModule.hide();
-        }
-        
-        if (window.app && window.app.components && window.app.components.navbar) {
-            window.app.components.navbar.hideMusicPlayer();
-        }
+        if (window.sidebar?.isVisible?.()) window.sidebar.hide();
+        if (window.newSearchModule?.isOpen) window.newSearchModule.hide();
+        if (window.app?.components?.navbar) window.app.components.navbar.hideMusicPlayer();
     }
 
     hide() {
         if (!this.isShowing || !this.modalElement) return;
-
         this.modalElement.style.opacity = '0';
         const content = this.modalElement.querySelector('.weather-modal-content');
-        if (content) {
-            content.style.transform = 'translateY(20px) scale(0.95)';
-            content.style.opacity = '0';
-        }
-        
+        if (content) { content.style.transform = 'translateY(20px) scale(0.95)'; content.style.opacity = '0'; }
         setTimeout(() => {
             this.modalElement.style.display = 'none';
             this.isShowing = false;
-            
-            if (this.escHandler) {
-                document.removeEventListener('keydown', this.escHandler);
-                this.escHandler = null;
-            }
-            
-            if (window.app) {
-                window.app.unregisterModal(this);
-            }
+            if (this.escHandler) { document.removeEventListener('keydown', this.escHandler); this.escHandler = null; }
+            if (window.app) window.app.unregisterModal(this);
         }, 200);
     }
 
     async refreshWeather() {
-        try {
-            await this.loadWeatherData();
-            return true;
-        } catch (error) {
-            console.error('手动刷新天气数据失败:', error);
-            return false;
-        }
+        try { await this.loadWeatherData(); return true; }
+        catch (error) { console.error('刷新天气失败:', error); return false; }
     }
 
     setCity(city) {
@@ -1184,30 +982,16 @@ export default class WeatherModule {
         this.weatherData = null;
     }
 
-    getWeatherData() {
-        return this.weatherData;
-    }
-
-    getCurrentCity() {
-        return this.currentCity;
-    }
+    getWeatherData() { return this.weatherData; }
+    getCurrentCity() { return this.currentCity; }
 
     destroy() {
         this.hide();
-        if (this.refreshInterval) {
-            clearInterval(this.refreshInterval);
-            this.refreshInterval = null;
-        }
-        if (this.modalElement && this.modalElement.parentNode) {
-            this.modalElement.parentNode.removeChild(this.modalElement);
-        }
+        if (this.refreshInterval) { clearInterval(this.refreshInterval); this.refreshInterval = null; }
+        if (this.modalElement?.parentNode) this.modalElement.parentNode.removeChild(this.modalElement);
         this.modalElement = null;
-        
         const weatherBtn = document.getElementById('weatherBtn');
-        if (weatherBtn) {
-            weatherBtn.removeEventListener('click', this.showModalBound);
-        }
-        
+        if (weatherBtn) weatherBtn.removeEventListener('click', this.showModalBound);
         this.initialized = false;
     }
 }
