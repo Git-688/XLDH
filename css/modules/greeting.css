@@ -148,7 +148,7 @@
     display: inline-block;
     padding: 4px 12px;
     border-radius: 8px;
-    color: #ffffff !important; /* 改为白色文字 */
+    color: #ffffff !important; /* 保持白色文字 */
     font-weight: 500;
     font-size: 1.0em;
     white-space: nowrap;
@@ -166,7 +166,7 @@
 .datetime {
     text-align: right;
     flex-shrink: 0;
-    background: #ffffff;
+    background: var(--bg-card);
     padding: 12px 16px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
@@ -205,7 +205,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 8px 12px;
-    background: #ffffff;
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     cursor: pointer;
@@ -229,25 +229,25 @@
 
 /* 木鱼按钮颜色 - 修改为白色背景，彩色图标和文字 */
 .fish-btn[data-type="merit"] {
-    background: #ffffff;
-    color: #70c1ff;
+    background: var(--bg-card);
+    color: #70c1ff;              /* 保留原有品牌色 */
     border-color: rgba(112, 193, 255, 0.3);
 }
 
 .fish-btn[data-type="luck"] {
-    background: #ffffff;
+    background: var(--bg-card);
     color: #ff9e9e;
     border-color: rgba(255, 158, 158, 0.3);
 }
 
 .fish-btn[data-type="wealth"] {
-    background: #ffffff;
+    background: var(--bg-card);
     color: #FFB600;
     border-color: rgba(255, 214, 112, 0.3);
 }
 
 .fish-btn[data-type="health"] {
-    background: #ffffff;
+    background: var(--bg-card);
     color: #8ddf8d;
     border-color: rgba(141, 223, 141, 0.3);
 }
@@ -287,20 +287,20 @@
     align-items: center;
     justify-content: center;
     padding: 16px 12px;
-    background: #ffffff;
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     text-decoration: none;
     width: 90px;
-    color: #9575CD;
+    color: #9575CD;               /* 保留紫色调 */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .bookmark-btn:hover {
     transform: translateY(-3px);
-    background: #ffffff;
+    background: var(--bg-card);
     color: #7E57C2;
     border-color: #7E57C2;
     box-shadow: 0 4px 12px rgba(149, 117, 205, 0.2);
@@ -362,7 +362,7 @@
         text-align: right;
         padding: 10px 14px;
         border-radius: 8px;
-        background: #ffffff;
+        background: var(--bg-card);
     }
     
     .greeting-text h1 { 
@@ -384,7 +384,7 @@
     #currentDate { font-size: 0.8em; }
     
     .fish-section { grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .fish-btn { padding: 8px 10px; min-height: 45px; border-radius: 8px; background: #ffffff; }
+    .fish-btn { padding: 8px 10px; min-height: 45px; border-radius: 8px; background: var(--bg-card); }
     .fish-btn i { font-size: 16px; }
     .fish-count { font-size: 0.9em; padding: 2px 6px; }
 }
@@ -433,18 +433,18 @@
         padding: 8px 12px; 
         border-radius: 8px; 
         margin-left: auto;
-        background: #ffffff;
+        background: var(--bg-card);
     }
     
     #currentTime { font-size: 1em; }
     #currentDate { font-size: 0.75em; white-space: nowrap; }
     
     .fish-section { gap: 4px; }
-    .fish-btn { padding: 6px 8px; min-height: 40px; border-radius: 8px; background: #ffffff; }
+    .fish-btn { padding: 6px 8px; min-height: 40px; border-radius: 8px; background: var(--bg-card); }
     .fish-btn i { font-size: 14px; }
     .fish-count { font-size: 0.85em; padding: 2px 5px; }
     
-    .bookmark-btn { padding: 12px 16px; border-radius: 8px; background: #ffffff; }
+    .bookmark-btn { padding: 12px 16px; border-radius: 8px; background: var(--bg-card); }
     .bookmark-btn i { font-size: 20px; }
 }
 
@@ -488,18 +488,18 @@
         min-width: 110px; 
         border-radius: 8px; 
         margin-left: auto;
-        background: #ffffff;
+        background: var(--bg-card);
     }
     
     #currentTime { font-size: 0.95em; }
     #currentDate { font-size: 0.7em; white-space: nowrap; }
     
     .fish-section { grid-template-columns: repeat(4, 1fr); gap: 4px; }
-    .fish-btn { padding: 5px 6px; min-height: 38px; border-radius: 8px; background: #ffffff; }
+    .fish-btn { padding: 5px 6px; min-height: 38px; border-radius: 8px; background: var(--bg-card); }
     .fish-btn i { font-size: 12px; }
     .fish-count { font-size: 0.8em; padding: 1px 4px; }
     
-    .bookmark-btn { padding: 10px 14px; border-radius: 8px; background: #ffffff; }
+    .bookmark-btn { padding: 10px 14px; border-radius: 8px; background: var(--bg-card); }
 }
 
 @media (max-width: 400px) {
@@ -512,7 +512,7 @@
     .datetime {
         min-width: 100px;
         padding: 5px 8px;
-        background: #ffffff;
+        background: var(--bg-card);
     }
     
     #holidayName {
@@ -560,19 +560,19 @@
 @media (prefers-color-scheme: dark) {
     .greeting-main-card {
         background: rgba(45, 45, 45, 0.9);
-        border-color: #404040;
+        border-color: var(--border-color);
     }
     
     /* 暗色模式下的时间和日期 */
     .datetime {
         background: rgba(30, 30, 30, 0.9);
-        border-color: #404040;
+        border-color: var(--border-color);
     }
     
     /* 暗色模式下的书签按钮 */
     .bookmark-btn {
         background: rgba(30, 30, 30, 0.9);
-        border-color: #404040;
+        border-color: var(--border-color);
         color: #a78bfa;
     }
     
@@ -585,7 +585,7 @@
     /* 暗色模式下的木鱼按钮 */
     .fish-btn {
         background: rgba(30, 30, 30, 0.9);
-        border-color: #404040;
+        border-color: var(--border-color);
     }
     
     .fish-btn[data-type="merit"] {
@@ -639,7 +639,7 @@
 
 /* 节日进行中状态样式 - 纯色背景，白色文字，无边框 */
 #holidayCountdown.active-countdown {
-    background: #10b981 !important; /* 使用纯绿色背景 */
+    background: #10b981 !important; /* 使用绿色背景 */
     color: #ffffff !important; /* 白色文字 */
     border: none !important; /* 移除边框 */
     padding: 4px 12px;
@@ -652,33 +652,33 @@
 /* 节日即将到来状态样式 - 不同颜色背景，白色文字，无边框 */
 /* 3天内状态 */
 #holidayCountdown.status-3days {
-    background: rgba(245, 158, 11, 0.9) !important; /* 橙色背景，提高不透明度 */
+    background: rgba(245, 158, 11, 0.9) !important; /* 橙色背景 */
     color: #ffffff !important; /* 白色文字 */
-    border: none !important; /* 移除边框 */
+    border: none !important;
     text-shadow: none !important;
 }
 
 /* 7天内状态 */
 #holidayCountdown.status-7days {
-    background: rgba(139, 92, 246, 0.9) !important; /* 紫色背景，提高不透明度 */
+    background: rgba(139, 92, 246, 0.9) !important; /* 紫色背景 */
     color: #ffffff !important; /* 白色文字 */
-    border: none !important; /* 移除边框 */
+    border: none !important;
     text-shadow: none !important;
 }
 
 /* 7天以上状态 */
 #holidayCountdown.status-more {
-    background: rgba(67, 97, 238, 0.9) !important; /* 蓝色背景，提高不透明度 */
+    background: rgba(67, 97, 238, 0.9) !important; /* 蓝色背景，可考虑用var但原设计未改 */
     color: #ffffff !important; /* 白色文字 */
-    border: none !important; /* 移除边框 */
+    border: none !important;
     text-shadow: none !important;
 }
 
 /* 未知/加载状态 */
 #holidayCountdown.status-unknown {
-    background: rgba(108, 117, 125, 0.9) !important; /* 灰色背景，提高不透明度 */
+    background: rgba(108, 117, 125, 0.9) !important; /* 灰色背景 */
     color: #ffffff !important; /* 白色文字 */
-    border: none !important; /* 移除边框 */
+    border: none !important;
     text-shadow: none !important;
 }
 
