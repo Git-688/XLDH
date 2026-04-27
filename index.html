@@ -201,7 +201,7 @@
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
 
-        /* ===== 星聚笔记模态框专用样式（头部与公告一致） ===== */
+        /* ===== 星聚笔记模态框（恢复滚动在 body 层，统一间距） ===== */
         #notebookModal {
             background: transparent;
             backdrop-filter: none;
@@ -223,6 +223,7 @@
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             padding: 18px 24px 10px;
             color: #1e293b;
+            flex-shrink: 0;
         }
         #notebookModal .feedback-modal-header h3 {
             font-size: 1.2rem;
@@ -252,25 +253,25 @@
             background: rgba(0, 0, 0, 0.05);
             color: #334155;
         }
+        /* 内容区：负责滚动，内边距设为0，让 notebook-list 统一控制间距 */
         #notebookModal .feedback-modal-body {
-            padding: 16px 20px 0 20px;
-            overflow: visible;
-            flex: 0 0 auto;
+            padding: 0;
+            overflow-y: auto;         /* 滚动发生在 body 层，内容在头部下边框消失 */
+            flex: 1;
             background: transparent;
+            -webkit-overflow-scrolling: touch;
         }
+        #notebookModal .feedback-modal-body::-webkit-scrollbar { display: none; }
+
+        /* 笔记列表容器：统一内边距，条目间距一致 */
         .notebook-list {
-            padding: 12px 0 16px 0;
+            padding: 16px;             /* 上下左右统一 16px */
             margin: 0;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            max-height: calc(75vh - 70px);
-            overflow-y: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+            gap: 10px;                /* 条目之间间距一致 */
             box-sizing: border-box;
         }
-        .notebook-list::-webkit-scrollbar { display: none; }
         .notebook-item {
             background: rgba(255, 255, 255, 0.5);
             backdrop-filter: blur(5px);
