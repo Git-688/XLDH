@@ -1,6 +1,7 @@
 /**
  * API数据管理
  * 简化版本，移除所有备用方案
+ * 修复：添加 window.toast 安全检查
  */
 class API {
     static CONFIG = {
@@ -102,6 +103,9 @@ class API {
             };
         } catch (error) {
             console.error("获取必应壁纸失败:", error);
+            if (window.toast) {
+                window.toast.show('壁纸获取失败，使用默认背景', 'warning');
+            }
             return {
                 url: '',
                 title: '默认壁纸',
@@ -132,6 +136,9 @@ class API {
             };
         } catch (error) {
             console.error("获取风景壁纸失败:", error);
+            if (window.toast) {
+                window.toast.show('风景壁纸加载失败', 'warning');
+            }
             return {
                 url: '',
                 title: '风景壁纸',
