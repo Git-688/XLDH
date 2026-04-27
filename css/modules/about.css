@@ -25,13 +25,13 @@
 .about-modal-content {
     display: flex;
     flex-direction: column;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: var(--acrylic-bg);
+    backdrop-filter: var(--acrylic-blur);
+    -webkit-backdrop-filter: var(--acrylic-blur);
+    border: var(--acrylic-border);
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--acrylic-shadow);
     max-width: 500px;
     width: 100%;
     max-height: none;                 /* 高度自适应内容 */
@@ -153,7 +153,7 @@
     overflow: hidden;
     padding: 2px;
     box-sizing: border-box;
-    background-color: #ffffff;
+    background-color: var(--bg-card);  /* 原为 #ffffff */
 }
 
 .about-logo-img {
@@ -208,13 +208,13 @@
     -webkit-backdrop-filter: blur(10px);
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow);
     transition: all 0.2s ease;
 }
 
 .about-card:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-lg);
 }
 
 .card-icon {
@@ -230,8 +230,8 @@
     color: white;
 }
 
-.intro-icon { background: #4A90E2; }
-.disclaimer-icon { background: #FF6B6B; }
+.intro-icon { background: var(--primary-color); }        /* 原 #4A90E2 */
+.disclaimer-icon { background: var(--error-color); }    /* 原 #FF6B6B */
 
 .card-content { flex: 1; min-width: 0; }
 
@@ -281,23 +281,23 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow);
     font-size: 14px;
     color: white;
 }
 
 .about-social-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-lg);
 }
 
-.qq-btn { background: #6BC5FF; }
+.qq-btn { background: #6BC5FF; }          /* 保持品牌色 */
 .qq-btn:hover { background: #5AB5EF; }
-.wechat-btn { background: #7ED321; }
+.wechat-btn { background: #7ED321; }      /* 微信绿 */
 .wechat-btn:hover { background: #6EC312; }
-.donate-btn { background: #FF7B7B; }
+.donate-btn { background: var(--error-color); }   /* 使用错误色，原 #FF7B7B */
 .donate-btn:hover { background: #FF6B6B; }
-.space-btn { background: #FFD166; }
+.space-btn { background: var(--warning-color); }  /* 使用警告色，原 #FFD166 */
 .space-btn:hover { background: #FFC952; }
 
 .about-social-btn .tooltip-text {
@@ -332,7 +332,7 @@
 .about-close-btn {
     padding: 8px 14px;
     border: none;
-    background: #7ED321;
+    background: var(--success-color);    /* 原 #7ED321 */
     color: white;
     border-radius: 6px;
     cursor: pointer;
@@ -344,12 +344,12 @@
     justify-content: center;
     gap: 4px;
     min-width: 70px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow);
 }
 .about-close-btn:hover {
-    background: #6EC312;
+    background: #6EC312;                  /* 稍深绿，保留具体值 */
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-lg);
 }
 
 /* ========== 爱发电/收款模态框（与关于网站完全一致）========== */
@@ -377,19 +377,19 @@
 .donate-modal-content {
     display: flex;
     flex-direction: column;
-    background: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: var(--acrylic-bg);
+    backdrop-filter: var(--acrylic-blur);
+    -webkit-backdrop-filter: var(--acrylic-blur);
+    border: var(--acrylic-border);
     border-radius: 8px;
     max-width: 500px;
     width: 100%;
-    max-height: none;                 /* 高度自适应 */
+    max-height: none;
     overflow: hidden;
     padding: 0;
     transform: scale(0.8);
     transition: transform 0.3s ease;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--acrylic-shadow);
     position: relative;
 }
 .donate-modal.active .donate-modal-content {
@@ -424,7 +424,7 @@
     margin: 0;
 }
 .donate-heart {
-    color: #FF7B7B;
+    color: var(--error-color);          /* 原 #FF7B7B */
     font-size: 14px;
     animation: pulse 2s infinite;
 }
@@ -502,11 +502,11 @@
 .donate-method-btn[data-type="alipay"] { color: #1677FF; border-color: #1677FF; }
 .donate-method-btn[data-type="alipay"].active { background: #1677FF; color: white; }
 .donate-method-btn.help-btn {
-    color: #FFD166;
-    border-color: #FFD166;
+    color: var(--warning-color);        /* 原 #FFD166 */
+    border-color: var(--warning-color);
     margin-top: 8px;
 }
-.donate-method-btn.help-btn.active { background: #FFD166; color: white; }
+.donate-method-btn.help-btn.active { background: var(--warning-color); color: white; }
 
 .donate-qrcode-container { flex: 1; position: relative; min-height: 140px; }
 .donate-qrcode {
@@ -538,7 +538,7 @@
     max-height: 100%;
     object-fit: contain;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow);
 }
 .qrcode-placeholder {
     display: none;
@@ -608,7 +608,7 @@
     border-radius: 8px;
     font-size: 10px;
     font-weight: 500;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow);
     border: none;
     white-space: nowrap;
     text-align: center;
@@ -653,8 +653,8 @@
 /* 深色模式 */
 @media (prefers-color-scheme: dark) {
     .about-modal-content {
-        background: rgba(30, 30, 30, 0.75);
-        border-color: rgba(255, 255, 255, 0.15);
+        background: var(--acrylic-bg);
+        border-color: var(--acrylic-border);
     }
     .about-card {
         background: rgba(40, 40, 40, 0.6);
@@ -665,13 +665,13 @@
         border-top-color: rgba(255, 255, 255, 0.1);
     }
     .donate-modal-content {
-        background: rgba(30, 30, 30, 0.75);
-        border-color: rgba(255, 255, 255, 0.15);
+        background: var(--acrylic-bg);
+        border-color: var(--acrylic-border);
     }
     .donate-method-btn {
         background: rgba(40, 40, 40, 0.6);
         border-color: rgba(255, 255, 255, 0.1);
-        color: #adb5bd;
+        color: var(--text-secondary);
     }
     .donate-method-btn.active {
         background: var(--primary-color);
@@ -690,8 +690,8 @@
         background: rgba(255, 255, 255, 0.1);
         color: white;
     }
-    .about-close-btn { background: #5cb85c; }
-    .about-logo { background-color: #ffffff; }
+    .about-close-btn { background: var(--success-color); }
+    .about-logo { background-color: var(--bg-card); }  /* 保持白色在深色模式下仍为亮色 */
 }
 
 @keyframes pulse {
