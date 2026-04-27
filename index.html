@@ -16,7 +16,11 @@
     <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon-16x16.png">
     
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- jQuery（带完整性校验，防劫持） -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+            crossorigin="anonymous"></script>
+            
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
     <link rel="stylesheet" href="./css/modules/sidebar.css">
@@ -32,19 +36,34 @@
     <link rel="stylesheet" href="./css/responsive.css">
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/regular.min.css">
+    <!-- Font Awesome 6.4.0 多个子集（免费版） -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css"
+          crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css"
+          crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css"
+          crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/regular.min.css"
+          crossorigin="anonymous">
+
+    <!-- KaTeX 数学公式样式（带完整性校验） -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
+          integrity="sha384-6qF9jwMYSObG3h8J54sM2UqcbbVnx1BqTJiLzEixs/4r8qX8GB0pGZzq8kcBb7j"
+          crossorigin="anonymous">
+    <!-- KaTeX 脚本（defer 加载，防止阻塞） -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"
+            integrity="sha384-6qF9jwMYSObG3h8J54sM2UqcbbVnx1BqTJiLzEixs/4r8qX8GB0pGZzq8kcBb7j"
+            crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"
+            integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+            crossorigin="anonymous"></script>
     
+    <!-- 预连接 API 域名（若 Worker 未部署可忽略） -->
     <link rel="preconnect" href="https://api.xldh688.eu.cc">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     
     <link rel="preload" href="./js/main.js" as="script">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
     
     <style>
         /* ===== 通用反馈/笔记模态框基础样式（亚克力效果 + 8px 圆角） ===== */
@@ -642,9 +661,9 @@
 <script src="./data/local-music-data.js"></script>
 
 <!-- Twikoo 和 KaTeX 的 CDN 脚本（defer 加载，供反馈模块按需使用） -->
-<script defer src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"
+        crossorigin="anonymous"></script>
+<!-- 注意：KaTeX 已在 head 中加载，此处不再重复引用 -->
 
 <!-- 主模块入口（ES Module） -->
 <script type="module" src="./js/main.js"></script>
