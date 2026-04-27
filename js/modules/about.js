@@ -215,7 +215,7 @@ class AboutModule {
         const qqBtn = document.getElementById('aboutQQBtn');
         if (qqBtn) {
             qqBtn.addEventListener('click', () => {
-                window.open('https://qm.qq.com/example', '_blank');
+                window.open('https://yunzhiapi.cn/API/QQtzmp.php?token=XIZhAXKnSQcH&qq=1595126534', '_blank');
             });
         }
 
