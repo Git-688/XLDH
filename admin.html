@@ -437,13 +437,21 @@
         btn.textContent = '确认';
         document.getElementById('modal').classList.add('show');
     }
+
     function closeModal() {
         document.getElementById('modal').classList.remove('show');
         modalAction = null;
         document.getElementById('modalSubmit').disabled = false;
         document.getElementById('modalSubmit').textContent = '确认';
     }
-    function closeLogModal() { document.getElementById('logModal').classList.remove('show'); }
+
+    function closeLogModal() { 
+        document.getElementById('logModal').classList.remove('show'); 
+    }
+
+    // 将关闭函数挂载到 window 上，使 HTML onclick 可以调用
+    window.closeModal = closeModal;
+    window.closeLogModal = closeLogModal;
 
     function addLog(text) {
         const logs = JSON.parse(sessionStorage.getItem('operation_logs') || '[]');
