@@ -56,7 +56,7 @@
 .logo {
     width: 36px;
     height: 36px;
-    background: white;
+    background: var(--bg-card);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -91,7 +91,7 @@
 .brand-text {
     font-weight: 700;
     font-size: 17px;
-    color: #000000;
+    color: var(--text-primary);
     white-space: nowrap;
     line-height: 1.1;
 }
@@ -149,7 +149,7 @@
     position: absolute;
     top: -5px;
     right: -5px;
-    background: #ef4444;
+    background: var(--error-color);
     color: white;
     border-radius: 50%;
     width: 16px;
@@ -182,11 +182,11 @@
 }
 
 @media (prefers-color-scheme: dark) {
-    .logo { background: #2d2d2d; border-color: #555; }
-    .logo i { color: #7bc8ff; }
-    .nav-brand:hover .logo { border-color: #7bc8ff; }
-    .brand-text { color: #ffffff; }
-    .brand-subtitle { color: #adb5bd; }
+    .logo { background: var(--bg-card); border-color: var(--border-color); }
+    .logo i { color: var(--nav-level1-active); }
+    .nav-brand:hover .logo { border-color: var(--nav-level1-active); }
+    .brand-text { color: var(--text-primary); }
+    .brand-subtitle { color: var(--text-secondary); }
 }
 
 @media (min-width: 768px) and (max-width: 991px) {
