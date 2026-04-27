@@ -2,7 +2,7 @@
  * 关于网站模块 - 包含收款模态框（移动端按钮缩小一半）
  * @class AboutModule
  */
-export default class AboutModule {
+class AboutModule {
     constructor() {
         this.modalElement = null;
         this.isShowing = false;
@@ -53,6 +53,7 @@ export default class AboutModule {
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'about-modal';
         this.modalElement.innerHTML = this.renderModal();
+        // ===== 移除内联 padding，让 about.css 的响应式 padding 生效 =====
         this.modalElement.style.cssText = `
             position: fixed;
             top: 0;
@@ -293,9 +294,9 @@ export default class AboutModule {
             /* 按钮自适应 + 缩小 + 居中 */
             .donate-method-btn-left {
                 width: 100%;
-                max-width: 48px;
+                max-width: 48px;          /* 移动端最大宽度，桌面端可适当放大 */
                 aspect-ratio: 1 / 1;
-                margin: 0 auto;
+                margin: 0 auto;           /* 在网格单元格内居中 */
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -308,7 +309,7 @@ export default class AboutModule {
                 padding: 0;
             }
             .donate-method-btn-left i {
-                font-size: clamp(1rem, 4vw, 1.3rem);
+                font-size: clamp(1rem, 4vw, 1.3rem);  /* 图标随容器缩放 */
                 transition: transform 0.2s;
             }
             .donate-method-btn-left.active {
@@ -323,7 +324,7 @@ export default class AboutModule {
             /* 左右正方形卡片防止溢出 */
             .donate-card-wrapper {
                 flex: 1;
-                min-width: 0;
+                min-width: 0;                 
                 aspect-ratio: 1 / 1;
                 background: rgba(255,255,255,0.5);
                 backdrop-filter: blur(10px);
@@ -527,6 +528,8 @@ export default class AboutModule {
             buttons.forEach(b => {
                 b.classList.remove('active');
                 b.style.background = 'rgba(255,255,255,0.7)';
+                const borderColor = b.style.borderColor;
+                b.style.borderColor = borderColor;
             });
             activeBtn.classList.add('active');
             const activeColor = activeBtn.style.color || '#6BC5FF';
@@ -702,4 +705,22 @@ export default class AboutModule {
             }
         }
     }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.aboutModule = new AboutModule();
+        window.aboutModule.init().then(() => {
+        }).catch(error => {
+        });
+    });
+} else {
+    window.aboutModule = new AboutModule();
+    window.aboutModule.init().then(() => {
+    }).catch(error => {
+    });
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = AboutModule;
 }
