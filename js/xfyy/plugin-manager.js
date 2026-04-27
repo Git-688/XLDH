@@ -2,7 +2,6 @@
  * 插件管理器 - 支持多个音乐API源
  * 仅保留网易云、QQ音乐、抖音热歌榜、本地音乐
  */
-import CacheManager from './cache-manager.js';
 
 class PluginManager {
     constructor(cacheManager) {
@@ -272,4 +271,4 @@ class PluginManager {
     }
 }
 
-export default PluginManager;
+window.PluginManager = PluginManager; 
