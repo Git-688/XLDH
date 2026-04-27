@@ -1,5 +1,5 @@
 // 问候区模块 - 优化效果和显示（优化10：统一木鱼音效文件版）
-class GreetingModule {
+export default class GreetingModule {
     constructor() {
         this.initialized = false;
         this.eventBound = false;
@@ -718,18 +718,3 @@ class GreetingModule {
         this.eventBound = false;
     }
 }
-
-// 初始化模块
-document.addEventListener('DOMContentLoaded', () => {
-    window.greetingModule = new GreetingModule();
-    
-    const refreshBtn = document.getElementById('refreshHolidayBtn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => {
-            window.greetingModule.refreshHolidayData();
-        });
-    }
-});
-
-// 导出到全局
-window.GreetingModule = GreetingModule;
