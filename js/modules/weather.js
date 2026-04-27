@@ -3,7 +3,7 @@
  * 负责天气预报功能和自动定位
  * @class WeatherModule
  */
-class WeatherModule {
+export default class WeatherModule {
     constructor() {
         this.currentCity = '北京';
         this.weatherData = null;
@@ -1210,47 +1210,4 @@ class WeatherModule {
         
         this.initialized = false;
     }
-}
-
-if (typeof window !== 'undefined') {
-    window.WeatherModule = WeatherModule;
-}
-
-if (!document.querySelector('#weather-animation-style')) {
-    const style = document.createElement('style');
-    style.id = 'weather-animation-style';
-    style.textContent = `
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .quick-city-btn:hover {
-            background: #e6f7ff !important;
-            border-color: #91d5ff !important;
-            color: #1890ff !important;
-        }
-        
-        .city-prompt-content button:not([disabled]):hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-        
-        #confirmCityBtn:hover {
-            background: #3a56d6 !important;
-        }
-        
-        #cancelCityBtn:hover {
-            background: #f0f0f0 !important;
-            border-color: #ccc !important;
-        }
-        
-        .change-city-btn:hover,
-        .location-btn:hover,
-        .weather-close-btn:hover {
-            background: rgba(67, 97, 238, 0.1) !important;
-            color: #4361ee !important;
-        }
-    `;
-    document.head.appendChild(style);
 }
