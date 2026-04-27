@@ -1,7 +1,7 @@
 /**
  * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域紧凑对称 + 星聚笔记按钮）
  */
-class CompactSidebar {
+export default class CompactSidebar {
     constructor() {
         if (!document.getElementById('sidebar')) {
             return;
@@ -892,7 +892,7 @@ class CompactSidebar {
             if (!quoteElement) return;
             
             const quote = await this.getDailyQuote();
-            let cleanedQuote = quote.replace(/^["'「」"”‘’]|["'「」""”‘’]$/g, '').trim();
+            let cleanedQuote = quote.replace(/^["'「」"”"']|["'「」""”"']$/g, '').trim();
             if (!cleanedQuote) cleanedQuote = '每一天都是新的开始，充满无限可能。';
             
             quoteElement.textContent = cleanedQuote;
@@ -927,28 +927,3 @@ class CompactSidebar {
         }
     }
 }
-
-// 单例初始化
-if (!window.sidebarInitialized) {
-    window.sidebarInitialized = true;
-    
-    const initSidebar = async () => {
-        if (document.readyState === 'loading') {
-            await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
-        }
-        
-        if (!window.sidebar) {
-            window.CompactSidebar = CompactSidebar;
-            window.sidebar = new CompactSidebar();
-            await window.sidebar.init();
-        }
-    };
-    
-    initSidebar().catch(error => {
-        console.error('侧边栏初始化失败:', error);
-    });
-}
-
-window.getSidebar = function() {
-    return window.sidebar;
-};
