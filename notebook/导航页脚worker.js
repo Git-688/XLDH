@@ -1,5 +1,5 @@
-// Cloudflare Worker - 星聚导航后端（死链检测移除版 + 反馈12小时自动清除）
-// 绑定：STATS_KV，D1：DB，环境变量：ADMIN_TOKEN
+// Cloudflare Worker - 星聚导航后端（死链检测移除版 + 反馈12小时自动清除 + CDN缓存优化）
+// 绑定：STATS_KV，D1：DB，环境变量：ADMIN_TOKEN, ADMIN_IP_WHITELIST
 
 const CONFIG = {
     ONLINE_TTL: 20 * 60 * 1000,
@@ -8,6 +8,13 @@ const CONFIG = {
     RATE_LIMIT_WINDOW_MS: 60 * 1000,
     RATE_LIMIT_PUBLIC_MAX: 120,
     RATE_LIMIT_ADMIN_MAX: 20,
+    // ===== 新增：CDN 缓存配置 =====
+    CACHE_TTL: {
+        NAVIGATION: 300,        // 导航数据缓存 5 分钟
+        STATS: 60,              // 统计数据缓存 1 分钟
+        UPTIME: 60,             // 运行时间缓存 1 分钟
+        TOPCLICKS: 300,         // 点击排行缓存 5 分钟
+    }
 };
 
 const ALLOW_ORIGINS = [
@@ -382,6 +389,7 @@ function corsResponse(body = null, status = 200, request = null) {
         },
     });
 }
+
 function handleOptions(request) {
     let origin = '*';
     const reqOrigin = request.headers.get('Origin');
@@ -399,7 +407,7 @@ function handleOptions(request) {
     });
 }
 
-// ================== 管理鉴权 ==================
+// ================== 管理鉴权（增强安全性） ==================
 async function checkAuth(request, env) {
     const auth = request.headers.get('Authorization');
     const adminToken = env.ADMIN_TOKEN;
@@ -407,7 +415,19 @@ async function checkAuth(request, env) {
         console.error('ADMIN_TOKEN 未设置');
         return corsResponse({ error: 'Server config error' }, 500, request);
     }
-    if (auth !== `Bearer ${adminToken}`) return corsResponse({ error: 'Unauthorized' }, 401, request);
+    if (auth !== `Bearer ${adminToken}`) {
+        return corsResponse({ error: 'Unauthorized' }, 401, request);
+    }
+    
+    // ===== 新增：IP 白名单校验（可选） =====
+    const ip = request.headers.get('CF-Connecting-IP') || '';
+    const whitelist = (env.ADMIN_IP_WHITELIST || '').split(',').map(s => s.trim()).filter(s => s);
+    if (whitelist.length > 0 && !whitelist.includes(ip)) {
+        console.warn(`拒绝未授权 IP 访问管理接口: ${ip}`);
+        return corsResponse({ error: 'Forbidden: IP not allowed' }, 403, request);
+    }
+    // ===== 结束新增 =====
+    
     return null;
 }
 
@@ -574,11 +594,15 @@ export default {
                 if (realOnline > 0) stats = await getStats(db, kv);
             }
             const res = corsResponse(stats, 200, request);
-            res.headers.set('Cache-Control', 'public, max-age=60');
+            // ===== 新增：添加 CDN 缓存头 =====
+            res.headers.set('Cache-Control', `public, max-age=${CONFIG.CACHE_TTL.STATS}`);
             return res;
         }
         if (method === 'GET' && reqUrl.pathname === '/uptime') {
-            return corsResponse(await getUptime(kv), 200, request);
+            const res = corsResponse(await getUptime(kv), 200, request);
+            // ===== 新增：添加 CDN 缓存头 =====
+            res.headers.set('Cache-Control', `public, max-age=${CONFIG.CACHE_TTL.UPTIME}`);
+            return res;
         }
         if (method === 'POST' && reqUrl.pathname === '/click') {
             const { url, title } = await request.json();
@@ -591,7 +615,8 @@ export default {
                 snapshot = await generateNavigationSnapshot(db, kv);
             }
             const res = corsResponse(snapshot || { categories: {}, descriptions: {}, categoryIcons: {} }, 200, request);
-            res.headers.set('Cache-Control', 'no-cache, max-age=0, must-revalidate');
+            // ===== 新增：添加 CDN 缓存头 =====
+            res.headers.set('Cache-Control', `public, max-age=${CONFIG.CACHE_TTL.NAVIGATION}`);
             return res;
         }
         if (method === 'POST' && reqUrl.pathname === '/report-dead-link') {
@@ -606,7 +631,10 @@ export default {
             const authRes = await checkAuth(request, env);
             if (authRes) return authRes;
             const limitNum = parseInt(reqUrl.searchParams.get('limit') || '10', 10);
-            return corsResponse(await getTopClicks(db, limitNum), 200, request);
+            const res = corsResponse(await getTopClicks(db, limitNum), 200, request);
+            // ===== 新增：添加 CDN 缓存头 =====
+            res.headers.set('Cache-Control', `public, max-age=${CONFIG.CACHE_TTL.TOPCLICKS}`);
+            return res;
         }
         if (reqUrl.pathname === '/admin/refresh-navigation' && method === 'POST') {
             const authRes = await checkAuth(request, env);
@@ -626,7 +654,6 @@ export default {
             const id = parseInt(reqUrl.pathname.split('/').pop());
             const { status } = await request.json();
             await updateReportStatus(id, status, db);
-            // 如果状态改为 done，同时将对应网站的 is_valid 更新为 1（可选，但更换链接已经做了，这里不做重复）
             return corsResponse({ success: true }, 200, request);
         }
         // 新增：更换链接接口
