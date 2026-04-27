@@ -1,8 +1,4 @@
-/**
- * 导航栏组件（ES Module）
- * 由 main.js 导入并实例化，不再自初始化
- */
-export default class Navbar {
+class Navbar {
     constructor() {
         if (window.navbar && window.navbar instanceof Navbar) return window.navbar;
         this.announcements = [];
@@ -29,7 +25,7 @@ export default class Navbar {
             document.getElementById('searchBtn').addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.handleFeatureToggle('search', () => window.app?.showSearch());
+                this.handleFeatureToggle('search', () => window.newSearchModule.toggle());
             });
         }
 
@@ -39,7 +35,7 @@ export default class Navbar {
             musicBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.handleFeatureToggle('music', () => window.app?.toggleMusicPlayer());
+                this.handleFeatureToggle('music', () => this.toggleMusicPlayer());
             });
         }
 
@@ -72,7 +68,7 @@ export default class Navbar {
                 e.preventDefault();
                 e.stopPropagation();
                 this.closeAllModalsExcept(['weather']);
-                window.app?.showWeather();
+                window.app?.modules?.weather?.showModal();
             });
         }
 
@@ -171,14 +167,14 @@ export default class Navbar {
     }
 
     // ---------- 音乐播放器独立控制 ----------
-    toggleMusicPlayerCore(player) {
+    toggleMusicPlayer() {
         const mp = document.getElementById('musicPlayer');
         const mb = document.getElementById('musicBtn');
         if (!mp || !mb || mp.classList.contains('animating')) return;
-        mp.classList.contains('show') ? this.hideMusicPlayer() : this.showMusicPlayer(player);
+        mp.classList.contains('show') ? this.hideMusicPlayer() : this.showMusicPlayer();
     }
 
-    showMusicPlayer(player) {
+    showMusicPlayer() {
         const mp = document.getElementById('musicPlayer');
         const mb = document.getElementById('musicBtn');
         if (!mp || !mb) return;
