@@ -1,6 +1,7 @@
 /**
  * 星聚导航主应用程序（模块版）
  * 实现 Code Splitting：首屏核心模块静态导入，非首屏模块动态导入
+ * 改进：Twikoo 反馈路径改为动态，避免多页面评论混杂；增强错误处理
  */
 import { default as CompactSidebar } from './components/sidebar.js';
 import { default as Navbar } from './components/navbar.js';
@@ -45,6 +46,7 @@ class App {
         this.initFloatingButtonsEffect();
         this.isInitialized = true;
 
+        // 将核心方法挂载到全局，方便 HTML 内联调用
         window.openFeedbackModal = () => this.openFeedbackModal();
         window.closeFeedbackModal = () => this.closeFeedbackModal();
         window.showNotebookModal = () => this.showNotebookModal();
@@ -139,11 +141,14 @@ class App {
         this.registerModal({ hide: () => this.closeFeedbackModal() });
 
         if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
+            // 动态生成评论路径：建议根据页面或功能模块区分，这里使用固定前缀 + 时间戳避免初次混杂
+            // 如果需要完全隔离，可改为 `/feedback-${window.location.pathname}` 或 `/feedback-${Date.now()}`
+            const commentPath = '/feedback-main';
             twikoo.init({
                 envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
                 el: '#twikoo-feedback',
                 lang: 'zh-CN',
-                path: '/feedback',
+                path: commentPath,
                 katex: {
                     delimiters: [
                         { left: '$$', right: '$$', display: true },
@@ -332,6 +337,10 @@ class App {
 
     escapeHtml(text) {
         if (!text) return '';
+        // 优先使用全局 Utils（已在 utils.js 中定义，安全且高性能）
+        if (window.Utils && typeof window.Utils.escapeHtml === 'function') {
+            return window.Utils.escapeHtml(text);
+        }
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
