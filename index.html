@@ -16,11 +16,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon-16x16.png">
     
-    <!-- jQuery（带完整性校验，防劫持） -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
-            crossorigin="anonymous"></script>
-            
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
     <link rel="stylesheet" href="./css/modules/sidebar.css">
@@ -36,37 +32,22 @@
     <link rel="stylesheet" href="./css/responsive.css">
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
     
-    <!-- Font Awesome 6.4.0 多个子集（免费版） -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css"
-          crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css"
-          crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css"
-          crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/regular.min.css"
-          crossorigin="anonymous">
-
-    <!-- KaTeX 数学公式样式（带完整性校验） -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
-          integrity="sha384-6qF9jwMYSObG3h8J54sM2UqcbbVnx1BqTJiLzEixs/4r8qX8GB0pGZzq8kcBb7j"
-          crossorigin="anonymous">
-    <!-- KaTeX 脚本（defer 加载，防止阻塞） -->
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"
-            integrity="sha384-6qF9jwMYSObG3h8J54sM2UqcbbVnx1BqTJiLzEixs/4r8qX8GB0pGZzq8kcBb7j"
-            crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"
-            integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
-            crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/regular.min.css">
     
-    <!-- 预连接 API 域名（若 Worker 未部署可忽略） -->
     <link rel="preconnect" href="https://api.xldh688.eu.cc">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     
     <link rel="preload" href="./js/main.js" as="script">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
     
     <style>
-        /* ===== 通用反馈/笔记模态框基础样式（亚克力效果 + 8px 圆角） ===== */
+        /* ===== 通用反馈/笔记模态框基础样式 ===== */
         .feedback-modal {
             position: fixed;
             top: 0;
@@ -92,18 +73,17 @@
             pointer-events: auto;
         }
         .feedback-modal-content {
-            background: var(--acrylic-bg);
-            backdrop-filter: var(--acrylic-blur);
-            -webkit-backdrop-filter: var(--acrylic-blur);
-            border: var(--acrylic-border);
-            border-radius: 8px; /* 与 logo 圆角统一 */
+            background: var(--bg-card, #ffffff);
+            border-radius: 18px;
             width: 100%;
             max-width: 600px;
             max-height: 75vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            box-shadow: var(--acrylic-shadow);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12),
+                        0 6px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.04);
             transform: scale(0.95) translateY(8px);
             opacity: 0;
             transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1),
@@ -119,8 +99,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 8px 12px;
-            border-bottom: 1px solid var(--border-color);
-            background: transparent;
+            border-bottom: 1px solid var(--border-color, #f0f0f0);
+            background: var(--bg-card, #ffffff);
             flex-shrink: 0;
         }
         .feedback-modal-header h3 {
@@ -160,7 +140,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 14px 16px;
-            background: transparent;
+            background: var(--bg-card, #ffffff);
             scrollbar-width: none;
             -ms-overflow-style: none;
         }
@@ -174,11 +154,11 @@
                 max-width: 100%;
                 height: 90%;
                 max-height: 90%;
-                border-radius: 8px 8px 8px 8px;
+                border-radius: 20px 20px 12px 12px;
                 transform: translateY(100%);
                 opacity: 1;
                 transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
-                box-shadow: var(--acrylic-shadow);
+                box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.1);
                 margin-bottom: 0;
             }
             .feedback-modal.active .feedback-modal-content {
@@ -195,29 +175,23 @@
             .feedback-modal-body { padding: 16px 20px; }
         }
         @media (prefers-color-scheme: dark) {
-            .feedback-modal-content {
-                background: var(--acrylic-bg);
-                border-color: var(--acrylic-border);
-            }
-            .feedback-modal-header {
-                background: transparent;
-                border-bottom-color: rgba(255, 255, 255, 0.06);
-            }
-            .feedback-modal-body { background: transparent; }
+            .feedback-modal-content { background: #2a2a2a; border-color: #3e3e3e; }
+            .feedback-modal-header { background: #2a2a2a; border-bottom-color: #3e3e3e; }
+            .feedback-modal-body { background: #2a2a2a; }
             .feedback-modal-close:hover { background: rgba(255, 255, 255, 0.08); }
         }
 
         /* ===== 反馈模块提示样式 ===== */
         .math-hint {
             padding: 8px 12px;
-            background: rgba(255,255,255,0.4);
+            background: #f8f9fa;
             border-radius: 8px;
             margin-bottom: 12px;
             font-size: 12px;
-            color: var(--text-secondary);
+            color: #666;
             border-left: 3px solid var(--primary-color);
         }
-        @media (prefers-color-scheme: dark) { .math-hint { background: rgba(30,30,30,0.6); color: var(--text-secondary); } }
+        @media (prefers-color-scheme: dark) { .math-hint { background: #1e1e1e; color: #aaa; } }
         .math-hint i { margin-right: 6px; color: var(--primary-color); }
         .math-hint code { background: rgba(0,0,0,0.06); padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 11px; }
 
@@ -234,21 +208,22 @@
             -webkit-backdrop-filter: none;
         }
         #notebookModal .feedback-modal-content {
-            background: var(--acrylic-bg);
-            backdrop-filter: var(--acrylic-blur);
-            -webkit-backdrop-filter: var(--acrylic-blur);
-            border: var(--acrylic-border);
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(24px) saturate(125%);
+            -webkit-backdrop-filter: blur(24px) saturate(125%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;          /* 与 logo 圆角一致 */
             overflow: hidden;
-            max-height: 75vh;
+            max-height: 75vh;             /* 限制整个卡片高度 */
             display: flex;
             flex-direction: column;
         }
+        /* 头部样式与系统公告完全一致 */
         #notebookModal .feedback-modal-header {
             background: transparent;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             padding: 18px 24px 10px;
-            color: var(--text-primary);
+            color: #1e293b;
         }
         #notebookModal .feedback-modal-header h3 {
             font-size: 1.2rem;
@@ -256,7 +231,7 @@
             color: inherit;
         }
         #notebookModal .feedback-modal-header h3 i {
-            color: var(--primary-color);
+            color: #4361ee;
             font-size: 1.2rem;
             margin-right: 10px;
         }
@@ -266,7 +241,7 @@
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.4);
             border: none;
-            color: var(--text-secondary);
+            color: #64748b;
             font-size: 1rem;
             display: flex;
             align-items: center;
@@ -276,16 +251,18 @@
         }
         #notebookModal .feedback-modal-close:hover {
             background: rgba(0, 0, 0, 0.05);
-            color: var(--text-primary);
+            color: #334155;
         }
+        /* 内容区（控制左右宽度和顶部间距） */
         #notebookModal .feedback-modal-body {
-            padding: 16px 20px 0 20px;
+            padding: 16px 20px 0 20px;   /* 上间距16px，左右20px，底部0 */
             overflow: visible;
             flex: 0 0 auto;
             background: transparent;
         }
+        /* 笔记列表滚动容器：增加顶部和底部空白 */
         .notebook-list {
-            padding: 12px 0 16px 0;
+            padding: 12px 0 16px 0;     /* 顶部12px，底部16px */
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -303,7 +280,7 @@
             -webkit-backdrop-filter: blur(5px);
             border-radius: 8px;
             padding: 10px 14px;
-            border: 1px solid var(--border-color);
+            border: 1px solid rgba(0, 0, 0, 0.06);
             transition: all 0.2s ease;
         }
         .notebook-item:hover {
@@ -355,20 +332,20 @@
         }
         @media (prefers-color-scheme: dark) {
             #notebookModal .feedback-modal-content {
-                background: var(--acrylic-bg);
-                border-color: var(--acrylic-border);
+                background: rgba(30, 30, 30, 0.75);
+                border-color: rgba(255, 255, 255, 0.15);
             }
             #notebookModal .feedback-modal-header {
                 border-bottom-color: rgba(255, 255, 255, 0.06);
-                color: var(--text-primary);
+                color: #f1f5f9;
             }
             #notebookModal .feedback-modal-close {
                 background: rgba(255, 255, 255, 0.1);
-                color: var(--text-secondary);
+                color: #94a3b8;
             }
             #notebookModal .feedback-modal-close:hover {
                 background: rgba(255, 255, 255, 0.2);
-                color: var(--text-primary);
+                color: #e2e8f0;
             }
             .notebook-item {
                 background: rgba(40, 40, 40, 0.6);
@@ -651,21 +628,28 @@
     </div>
 </div>
 
-<!-- 基础工具脚本（全局） -->
 <script src="./js/storage.js"></script>
 <script src="./js/api.js"></script>
+<script src="./js/components/navbar.js"></script>
+<script src="./js/components/sidebar.js"></script>
+<script src="./js/modules/announcement.js"></script>
+<script src="./js/modules/search.js"></script>
+<script src="./js/modules/weather.js"></script>
+<script src="./js/modules/about.js"></script>
+<script src="./js/modules/navigation.js"></script>
+<script src="./js/modules/wallpaper.js"></script>
+<script src="./js/modules/greeting.js"></script>
+<script src="./js/modules/stats.js"></script>
+<script src="./js/modules/compact-tags.js"></script>
 <script src="./js/toast.js"></script>
+<script src="./js/main.js"></script>
 <script src="./js/xfyy/utils.js"></script>
-
-<!-- 音乐数据（全局变量，音乐播放器依赖） -->
+<script src="./js/xfyy/cache-manager.js"></script>
+<script src="./js/xfyy/lyric-parser.js"></script>
 <script src="./data/local-music-data.js"></script>
-
-<!-- Twikoo 和 KaTeX 的 CDN 脚本（defer 加载，供反馈模块按需使用） -->
-<script defer src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"
-        crossorigin="anonymous"></script>
-<!-- 注意：KaTeX 已在 head 中加载，此处不再重复引用 -->
-
-<!-- 主模块入口（ES Module） -->
-<script type="module" src="./js/main.js"></script>
+<script src="./js/xfyy/plugin-manager.js"></script>
+<script src="./js/xfyy/music-player.js"></script>
+<script src="./js/xfyy/music-main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
 </body>
 </html>
