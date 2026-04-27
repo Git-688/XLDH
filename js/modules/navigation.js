@@ -2,7 +2,7 @@
  * 优化分类导航系统（完全基于后端 Worker + D1）
  * 优化9：添加加载骨架屏
  */
-class OptimizedNavigation {
+export default class OptimizedNavigation {
     constructor() {
         this.navigationData = null;
         this.selectedLevel1 = null;
@@ -518,6 +518,7 @@ class OptimizedNavigation {
     }
 }
 
+// 保留供外部调用的全局方法（不自动实例化）
 window.getOptimizedNavigation = function() {
     return window.optimizedNavigation;
 };
