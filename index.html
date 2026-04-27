@@ -212,13 +212,12 @@
             backdrop-filter: blur(24px) saturate(125%);
             -webkit-backdrop-filter: blur(24px) saturate(125%);
             border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 8px;          /* 与 logo 圆角一致 */
+            border-radius: 8px;
             overflow: hidden;
-            max-height: 75vh;             /* 限制整个卡片高度 */
+            max-height: 75vh;
             display: flex;
             flex-direction: column;
         }
-        /* 头部样式与系统公告完全一致 */
         #notebookModal .feedback-modal-header {
             background: transparent;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -253,16 +252,14 @@
             background: rgba(0, 0, 0, 0.05);
             color: #334155;
         }
-        /* 内容区（控制左右宽度和顶部间距） */
         #notebookModal .feedback-modal-body {
-            padding: 16px 20px 0 20px;   /* 上间距16px，左右20px，底部0 */
+            padding: 16px 20px 0 20px;
             overflow: visible;
             flex: 0 0 auto;
             background: transparent;
         }
-        /* 笔记列表滚动容器：增加顶部和底部空白 */
         .notebook-list {
-            padding: 12px 0 16px 0;     /* 顶部12px，底部16px */
+            padding: 12px 0 16px 0;
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -628,28 +625,21 @@
     </div>
 </div>
 
+<!-- 基础工具脚本（全局） -->
 <script src="./js/storage.js"></script>
 <script src="./js/api.js"></script>
-<script src="./js/components/navbar.js"></script>
-<script src="./js/components/sidebar.js"></script>
-<script src="./js/modules/announcement.js"></script>
-<script src="./js/modules/search.js"></script>
-<script src="./js/modules/weather.js"></script>
-<script src="./js/modules/about.js"></script>
-<script src="./js/modules/navigation.js"></script>
-<script src="./js/modules/wallpaper.js"></script>
-<script src="./js/modules/greeting.js"></script>
-<script src="./js/modules/stats.js"></script>
-<script src="./js/modules/compact-tags.js"></script>
 <script src="./js/toast.js"></script>
-<script src="./js/main.js"></script>
 <script src="./js/xfyy/utils.js"></script>
-<script src="./js/xfyy/cache-manager.js"></script>
-<script src="./js/xfyy/lyric-parser.js"></script>
+
+<!-- 音乐数据（全局变量，音乐播放器依赖） -->
 <script src="./data/local-music-data.js"></script>
-<script src="./js/xfyy/plugin-manager.js"></script>
-<script src="./js/xfyy/music-player.js"></script>
-<script src="./js/xfyy/music-main.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
+
+<!-- Twikoo 和 KaTeX 的 CDN 脚本（defer 加载，供反馈模块按需使用） -->
+<script defer src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
+
+<!-- 主模块入口（ES Module） -->
+<script type="module" src="./js/main.js"></script>
 </body>
 </html>
