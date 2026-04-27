@@ -5,17 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>星聚导航后台管理</title>
     
-    <!-- 安全加固：内容安全策略 -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' 'unsafe-inline' 'unsafe-eval';
         style-src 'self' 'unsafe-inline';
         img-src 'self' data: https:;
-        connect-src 'self' https://api.xldh688.eu.cc;
+        connect-src 'self' https://api.xldh688.eu.cc https://api.pearktrue.cn;
         font-src 'self';
         frame-ancestors 'none';
     ">
-    <!-- 防止点击劫持 -->
     <meta http-equiv="X-Frame-Options" content="DENY">
 
     <style>
@@ -38,7 +36,7 @@
             background:#fff;border-radius:10px;padding:14px;
             box-shadow:0 2px 8px rgba(0,0,0,0.05);border:1px solid #f1f3f5
         }
-        .header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+        .header{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:20px;flex-direction:column}
         .flex-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
         .tab-btn{padding:7px 14px;border-radius:7px;background:#f1f5f9;color:#64748b;cursor:pointer;font-size:12px}
         .tab-btn.active{background:#3b82f6;color:#fff}
@@ -183,11 +181,22 @@
 
         .lock-message {color:#ef4444;font-size:11px;margin-top:4px;}
 
+        .fetch-info-btn {
+            background: #10b981;
+            color: #fff;
+            padding: 6px 12px;
+            font-size: 11px;
+            margin-left: 6px;
+            white-space: nowrap;
+        }
+        .fetch-info-btn:hover { background: #059669; }
+
         @media (max-width:768px){
             .sidebar{width:150px}
             .cat-item{padding:7px 12px;font-size:11px}
             .link-info{min-width:120px}
             .modal-body{max-width:95%;padding:15px}
+            .fetch-info-btn { padding: 5px 10px; font-size: 10px; }
         }
         @media (max-width:480px){
             .sidebar{width:130px}
@@ -224,20 +233,18 @@
 <div class="container">
     <div class="header-card">
         <div class="header">
-            <h1 style="font-size:17px">📋 星链导航管理</h1>
-            <div class="flex-row">
-                <div style="display:flex; flex-direction:column;">
-                    <div style="display:flex; gap:5px;">
-                        <input type="password" id="tokenInput" placeholder="管理Token" style="width:130px" autocomplete="off">
-                        <button class="primary" id="loginBtn">登录</button>
-                        <button class="secondary hidden" id="logoutBtn">退出</button>
-                    </div>
-                    <div class="remember-checkbox">
-                        <input type="checkbox" id="rememberToken">
-                        <label for="rememberToken">记住密码（8小时有效，⚠️ 仅受信任设备）</label>
-                    </div>
-                    <div id="loginLockMessage" class="lock-message"></div>
+            <h1 style="font-size:17px; text-align:center;">📋 星聚导航管理</h1>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <div style="display:flex; gap:5px;">
+                    <input type="password" id="tokenInput" placeholder="管理Token" style="width:130px" autocomplete="off">
+                    <button class="primary" id="loginBtn">登录</button>
+                    <button class="secondary hidden" id="logoutBtn">退出</button>
                 </div>
+                <div class="remember-checkbox">
+                    <input type="checkbox" id="rememberToken">
+                    <label for="rememberToken">记住密码（8小时有效，⚠️ 仅受信任设备）</label>
+                </div>
+                <div id="loginLockMessage" class="lock-message"></div>
             </div>
         </div>
     </div>
@@ -301,7 +308,8 @@
     const MAX_FAIL_COUNT = 5;
     const LOCK_DURATION_MS = 10 * 60 * 1000;
 
-    // Token 及登录状态（私有变量）
+    const WEBSITE_INFO_API = 'https://api.pearktrue.cn/api/website/info/';
+
     let token = '';
     let modalAction = null;
     let categories = [], subcategories = [], sites = [];
@@ -309,13 +317,11 @@
     let failCount = parseInt(sessionStorage.getItem('login_fail_count') || '0', 10);
     let lockUntil = parseInt(sessionStorage.getItem('login_lock_until') || '0', 10);
 
-    // ==================== 安全工具：HTML转义 ====================
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
     }
 
-    // ==================== Toast 提示 ====================
     function showToast(msg, type = 'success') {
         const toast = document.getElementById('toast');
         toast.textContent = msg;
@@ -323,7 +329,6 @@
         setTimeout(() => toast.classList.remove('show'), 2300);
     }
 
-    // ==================== Token 安全管理 ====================
     function getStoredToken() {
         let tk = sessionStorage.getItem('admin_token');
         if (tk) {
@@ -334,7 +339,6 @@
             sessionStorage.removeItem('admin_token');
             sessionStorage.removeItem('admin_expires');
         }
-        // 检查记住密码
         const remember = localStorage.getItem('admin_remember');
         if (remember === 'true') {
             tk = localStorage.getItem('admin_token_saved');
@@ -378,7 +382,6 @@
         localStorage.removeItem('admin_saved_time');
     }
 
-    // ==================== 登录失败锁定 ====================
     function updateLockMessage() {
         const msgEl = document.getElementById('loginLockMessage');
         if (!msgEl) return;
@@ -425,7 +428,6 @@
         document.getElementById('loginLockMessage').textContent = '';
     }
 
-    // ==================== 模态框 ====================
     function openModal(title, html, cb) {
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalForm').innerHTML = html;
@@ -443,7 +445,6 @@
     }
     function closeLogModal() { document.getElementById('logModal').classList.remove('show'); }
 
-    // ==================== 操作日志 ====================
     function addLog(text) {
         const logs = JSON.parse(sessionStorage.getItem('operation_logs') || '[]');
         logs.unshift({ time: new Date().toLocaleString(), text });
@@ -456,7 +457,6 @@
         document.getElementById('logModal').classList.add('show');
     }
 
-    // ==================== API 请求封装 ====================
     async function apiFetch(endpoint, opt = {}) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
         if (token) headers.Authorization = `Bearer ${token}`;
@@ -473,7 +473,55 @@
         return res.json();
     }
 
-    // ==================== 登录/登出 ====================
+    async function fetchSiteInfo(urlInputId, titleInputId, iconInputId, descInputId) {
+        const urlInput = document.getElementById(urlInputId);
+        const titleInput = document.getElementById(titleInputId);
+        const iconInput = document.getElementById(iconInputId);
+        const descInput = document.getElementById(descInputId);
+        if (!urlInput || !titleInput || !iconInput || !descInput) return;
+
+        let rawUrl = urlInput.value.trim();
+        if (!rawUrl) {
+            showToast('请先输入网址', 'warn');
+            return;
+        }
+
+        if (!/^https?:\/\//i.test(rawUrl)) {
+            rawUrl = 'https://' + rawUrl;
+        }
+
+        const fetchBtn = document.getElementById('fetchInfoBtn');
+        if (fetchBtn) {
+            fetchBtn.disabled = true;
+            fetchBtn.textContent = '获取中...';
+        }
+
+        try {
+            const response = await fetch(WEBSITE_INFO_API + '?url=' + encodeURIComponent(rawUrl));
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (data.code === 200 && data.data) {
+                const info = data.data;
+                if (info.title) titleInput.value = info.title;
+                if (info.icon) iconInput.value = info.icon;
+                if (info.description) descInput.value = info.description;
+                showToast('网站信息获取成功', 'success');
+            } else {
+                showToast('获取信息失败: ' + (data.msg || '未知错误'), 'error');
+            }
+        } catch (err) {
+            console.error('获取网站信息出错:', err);
+            showToast('获取信息失败，请检查网络或网址', 'error');
+        } finally {
+            if (fetchBtn) {
+                fetchBtn.disabled = false;
+                fetchBtn.textContent = '获取信息';
+            }
+        }
+    }
+
+    window._fetchSiteInfo = fetchSiteInfo;
+
     async function login() {
         if (!checkLock()) return;
         const ipt = document.getElementById('tokenInput');
@@ -520,7 +568,6 @@
         showToast('已退出');
     }
 
-    // ==================== 自动登录检查 ====================
     const storedToken = getStoredToken();
     if (storedToken) {
         token = storedToken;
@@ -539,7 +586,6 @@
         })();
     }
 
-    // 定期检查 Token 过期
     setInterval(() => {
         const expires = sessionStorage.getItem('admin_expires');
         if (expires && Date.now() > parseInt(expires, 10) - 60000) {
@@ -547,7 +593,6 @@
         }
     }, 30000);
 
-    // ==================== 辅助函数 ====================
     function getFavicon(url){
         try { const u = new URL(url); return `https://api.71xk.com/api/favicon?url=${u.hostname}`; } catch { return 'fas fa-link'; }
     }
@@ -560,7 +605,6 @@
         } catch { return false; }
     }
 
-    // ==================== 数据加载 ====================
     async function loadAllData(){
         try {
             const [catData, subData, siteData] = await Promise.all([
@@ -634,7 +678,6 @@
         `).join('');
     }
 
-    // 将管理函数挂载到安全命名空间
     window._admin = {
         markFeedbackDone: async (id) => {
             try {
@@ -673,7 +716,6 @@
         }
     };
 
-    // ==================== 标签页切换 ====================
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.onclick = () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -686,7 +728,6 @@
         }
     });
 
-    // ==================== 分类/子分类/链接 操作 ====================
     function selectCat(cid){
         currentCat = cid; currentSub = null;
         document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
@@ -748,7 +789,6 @@
         `).join('');
     }
 
-    // ==================== 增删改操作 ====================
     function openAddCat(){
         openModal('新增一级分类', `
             <div class="form-row"><label>名称</label><input id="name"></div>
@@ -778,7 +818,13 @@
         if (!currentSub) { showToast('请先选择子分类', 'error'); return; }
         openModal('新增链接', `
             <div class="form-row"><label>标题</label><input id="title"></div>
-            <div class="form-row"><label>网址</label><input id="url" oninput="document.getElementById('icon').value=getFavicon(this.value)"></div>
+            <div class="form-row">
+                <label>网址</label>
+                <div style="display:flex; gap: 4px; align-items: center;">
+                    <input id="url" oninput="document.getElementById('icon').value=getFavicon(this.value)" style="flex:1;">
+                    <button type="button" id="fetchInfoBtn" class="fetch-info-btn" onclick="window._fetchSiteInfo('url','title','icon','desc')">获取信息</button>
+                </div>
+            </div>
             <div class="form-row"><label>图标</label><input id="icon" value="fas fa-link"></div>
             <div class="form-row"><label>描述</label><input id="desc"></div>
             <div class="form-row"><label>排序</label><input type="number" id="sort" value="0"></div>
@@ -798,7 +844,13 @@
         const s = sites.find(x => x.id === id);
         openModal('编辑链接', `
             <div class="form-row"><label>标题</label><input id="title" value="${escapeHtml(s.title)}"></div>
-            <div class="form-row"><label>网址</label><input id="url" value="${escapeHtml(s.url)}" oninput="document.getElementById('icon').value=getFavicon(this.value)"></div>
+            <div class="form-row">
+                <label>网址</label>
+                <div style="display:flex; gap: 4px; align-items: center;">
+                    <input id="url" value="${escapeHtml(s.url)}" oninput="document.getElementById('icon').value=getFavicon(this.value)" style="flex:1;">
+                    <button type="button" id="fetchInfoBtn" class="fetch-info-btn" onclick="window._fetchSiteInfo('url','title','icon','desc')">获取信息</button>
+                </div>
+            </div>
             <div class="form-row"><label>图标</label><input id="icon" value="${escapeHtml(s.icon||'fas fa-link')}"></div>
             <div class="form-row"><label>描述</label><input id="desc" value="${escapeHtml(s.description||'')}"></div>
             <div class="form-row"><label>排序</label><input type="number" id="sort" value="${s.display_order}"></div>
@@ -847,7 +899,6 @@
         addLog('导出备份'); showToast('导出成功');
     }
 
-    // ==================== 事件绑定 ====================
     document.getElementById('modalSubmit').onclick = async function(){
         if (!modalAction) return;
         const btn = this;
@@ -873,10 +924,8 @@
     };
     document.getElementById('tokenInput').addEventListener('keydown', e => e.key === 'Enter' && login());
 
-    // 初始化锁定消息
     updateLockMessage();
 
-    // 将需要内联调用的函数挂载到 window（仅在已认证的上下文中）
     window.selectCat = selectCat;
     window.selectSub = selectSub;
     window.renameCategory = renameCategory;
