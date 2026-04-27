@@ -1,4 +1,8 @@
-class Navbar {
+/**
+ * 导航栏组件（ES Module）
+ * 由 main.js 导入并实例化，不再自初始化
+ */
+export default class Navbar {
     constructor() {
         if (window.navbar && window.navbar instanceof Navbar) return window.navbar;
         this.announcements = [];
@@ -25,7 +29,7 @@ class Navbar {
             document.getElementById('searchBtn').addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.handleFeatureToggle('search', () => window.newSearchModule.toggle());
+                this.handleFeatureToggle('search', () => window.app?.showSearch());
             });
         }
 
@@ -35,7 +39,7 @@ class Navbar {
             musicBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.handleFeatureToggle('music', () => this.toggleMusicPlayer());
+                this.handleFeatureToggle('music', () => window.app?.toggleMusicPlayer());
             });
         }
 
@@ -68,7 +72,7 @@ class Navbar {
                 e.preventDefault();
                 e.stopPropagation();
                 this.closeAllModalsExcept(['weather']);
-                window.app?.modules?.weather?.showModal();
+                window.app?.showWeather();
             });
         }
 
@@ -167,14 +171,14 @@ class Navbar {
     }
 
     // ---------- 音乐播放器独立控制 ----------
-    toggleMusicPlayer() {
+    toggleMusicPlayerCore(player) {
         const mp = document.getElementById('musicPlayer');
         const mb = document.getElementById('musicBtn');
         if (!mp || !mb || mp.classList.contains('animating')) return;
-        mp.classList.contains('show') ? this.hideMusicPlayer() : this.showMusicPlayer();
+        mp.classList.contains('show') ? this.hideMusicPlayer() : this.showMusicPlayer(player);
     }
 
-    showMusicPlayer() {
+    showMusicPlayer(player) {
         const mp = document.getElementById('musicPlayer');
         const mb = document.getElementById('musicBtn');
         if (!mp || !mb) return;
