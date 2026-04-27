@@ -1,8 +1,8 @@
-// compact-tags.js - 彩虹浅色标签模块（完整列表版）
+// compact-tags.js - 彩虹浅色标签模块（修复排序兼容性）
 export default class CompactTagsModule {
     constructor() {
-        // 最终标签列表：保留的原标签 + 新添加标签，按名称拼音排序
-        this.tags = [
+        // 最终标签列表：保留的原标签 + 新添加标签
+        const rawTags = [
             { name: '60s快讯', icon: 'fas fa-newspaper', link: 'pages/tools/60s快讯.html' },
             { name: '本草药材', icon: 'fas fa-leaf', link: 'pages/tools/本草药材.html' },
             { name: '壁纸引擎', icon: 'fas fa-desktop', link: 'pages/tools/壁纸引擎.html' },
@@ -40,7 +40,18 @@ export default class CompactTagsModule {
             { name: '资源搜索', icon: 'fas fa-search', link: 'pages/tools/资源搜索.html' },
             { name: '子女血型', icon: 'fas fa-heartbeat', link: 'pages/tools/子女血型.html' },
             { name: '助眠声控', icon: 'fas fa-moon', link: 'pages/tools/助眠声控.html' }
-        ].sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+        ];
+
+        // 使用 Intl.Collator 进行拼音排序，兼容性更好
+        this.tags = rawTags.sort((a, b) => {
+            try {
+                const collator = new Intl.Collator('zh', { sensitivity: 'base' });
+                return collator.compare(a.name, b.name);
+            } catch (e) {
+                // 降级方案：普通字符串比较
+                return a.name.localeCompare(b.name);
+            }
+        });
 
         this.init();
     }
@@ -55,7 +66,6 @@ export default class CompactTagsModule {
         if (!grid) return;
 
         grid.innerHTML = this.tags.map((tag, index) => {
-            // 彩虹七色循环
             const colorNum = (index % 7) + 1;
             const colorClass = `tag-color-${colorNum}`;
             return `
