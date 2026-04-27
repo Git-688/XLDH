@@ -4,6 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>星聚导航后台管理</title>
+    
+    <!-- 安全加固：内容安全策略 -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: https:;
+        connect-src 'self' https://api.xldh688.eu.cc;
+        font-src 'self';
+        frame-ancestors 'none';
+    ">
+    <!-- 防止点击劫持 -->
+    <meta http-equiv="X-Frame-Options" content="DENY">
+
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         html{scroll-behavior:smooth}
@@ -38,33 +52,16 @@
             padding:8px 15px;border-radius:7px;background:#fff;
             cursor:pointer;white-space:nowrap;font-weight:500;font-size:12px;
             transition:all .2s;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display:flex;align-items:center;gap:8px;
         }
         .cat-item.active{background:#3b82f6;color:#fff}
         .cat-item .rename-text-btn {
-            background: #e2e8f0;
-            border: none;
-            cursor: pointer;
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 4px;
-            color: #475569;
-            transition: all 0.2s;
-            font-weight: 500;
+            background:#e2e8f0;border:none;cursor:pointer;font-size:11px;
+            padding:3px 8px;border-radius:4px;color:#475569;transition:all 0.2s;font-weight:500;
         }
-        .cat-item .rename-text-btn:hover {
-            background: #cbd5e1;
-            color: #1e293b;
-        }
-        .cat-item.active .rename-text-btn {
-            background: rgba(255,255,255,0.2);
-            color: #fff;
-        }
-        .cat-item.active .rename-text-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
+        .cat-item .rename-text-btn:hover {background:#cbd5e1;color:#1e293b;}
+        .cat-item.active .rename-text-btn {background:rgba(255,255,255,0.2);color:#fff;}
+        .cat-item.active .rename-text-btn:hover {background:rgba(255,255,255,0.3);}
 
         .content-layout{display:flex;gap:10px;margin-top:0}
         .sidebar{
@@ -73,41 +70,24 @@
         }
         .sub-list{
             display:flex;flex-direction:column;gap:8px;
-            overflow-y:auto;max-height:calc(100vh - 280px);
-            margin-top:12px;
+            overflow-y:auto;max-height:calc(100vh - 280px);margin-top:12px;
         }
         .sub-item{
             padding:10px 12px;border-radius:7px;background:#fff;
             text-align:left;cursor:pointer;font-weight:500;font-size:12px;
             transition:all .2s;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            display:flex;align-items:center;justify-content:space-between;
         }
         .sub-item.active{background:#e0f2fe;color:#0369a1}
         .sub-item .rename-text-btn {
-            background: #e2e8f0;
-            border: none;
-            cursor: pointer;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: #475569;
-            transition: all 0.2s;
-            font-weight: 500;
+            background:#e2e8f0;border:none;cursor:pointer;font-size:10px;
+            padding:2px 6px;border-radius:4px;color:#475569;transition:all 0.2s;font-weight:500;
         }
-        .sub-item .rename-text-btn:hover {
-            background: #cbd5e1;
-            color: #1e293b;
-        }
-        .sub-item.active .rename-text-btn {
-            background: rgba(3,105,161,0.1);
-            color: #0369a1;
-        }
+        .sub-item .rename-text-btn:hover {background:#cbd5e1;color:#1e293b;}
+        .sub-item.active .rename-text-btn {background:rgba(3,105,161,0.1);color:#0369a1;}
 
         .main-content{
-            flex:1;background:#f8fafc;border-radius:10px;
-            padding:12px;
+            flex:1;background:#f8fafc;border-radius:10px;padding:12px;
         }
         .site-list,.rank-list,.bad-links-list,.feedback-list{
             overflow-y:auto;max-height:calc(100vh - 260px);
@@ -115,8 +95,7 @@
 
         input,select{
             padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;
-            font-size:12px;width:100%;background:#fff;outline:none;
-            transition:all .2s
+            font-size:12px;width:100%;background:#fff;outline:none;transition:all .2s
         }
         input:focus,select:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.12)}
         .form-row{margin-bottom:12px}
@@ -125,8 +104,7 @@
         button{
             border:none;border-radius:7px;padding:6px 10px;
             font-size:12px;cursor:pointer;transition:all .2s;
-            display:inline-flex;align-items:center;justify-content:center;
-            font-weight:500
+            display:inline-flex;align-items:center;justify-content:center;font-weight:500
         }
         button:disabled{opacity:0.6;cursor:not-allowed}
         button.primary{background:#3b82f6;color:#fff}
@@ -153,8 +131,7 @@
         .link-info{flex:1;min-width:150px}
         .link-info .link-url{
             display:block;overflow:hidden;text-overflow:ellipsis;
-            white-space:nowrap;max-width:100%;font-size:11px;color:#64748b;
-            margin-top:2px;
+            white-space:nowrap;max-width:100%;font-size:11px;color:#64748b;margin-top:2px;
         }
         .link-actions{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0}
         .status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
@@ -163,8 +140,7 @@
         .modal{
             position:fixed;inset:0;background:rgba(0,0,0,0.25);
             display:flex;align-items:center;justify-content:center;
-            z-index:99;opacity:0;visibility:hidden;transition:all .2s;
-            padding:12px;
+            z-index:99;opacity:0;visibility:hidden;transition:all .2s;padding:12px;
         }
         .modal.show{opacity:1;visibility:visible}
         .modal-body{
@@ -193,40 +169,19 @@
         .result-group h4{margin-bottom:7px;font-size:13px}
         .hidden{display:none}
         
-        .feedback-date-group {
-            margin-bottom: 20px;
-        }
+        .feedback-date-group {margin-bottom:20px;}
         .feedback-date-group h4 {
-            font-size: 13px;
-            margin: 10px 0 8px 0;
-            padding-left: 4px;
-            border-left: 3px solid #3b82f6;
-            color: #1e293b;
+            font-size:13px;margin:10px 0 8px 0;padding-left:4px;
+            border-left:3px solid #3b82f6;color:#1e293b;
         }
 
-        /* 记住密码复选框样式 */
         .remember-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin-top: 4px;
+            display:flex;align-items:center;gap:4px;margin-top:4px;
         }
-        .remember-checkbox input[type="checkbox"] {
-            width: auto;
-            margin: 0;
-        }
-        .remember-checkbox label {
-            font-size: 11px;
-            color: #64748b;
-            cursor: pointer;
-        }
+        .remember-checkbox input[type="checkbox"] {width:auto;margin:0;}
+        .remember-checkbox label {font-size:11px;color:#64748b;cursor:pointer;}
 
-        /* 安全锁定提示 */
-        .lock-message {
-            color: #ef4444;
-            font-size: 11px;
-            margin-top: 4px;
-        }
+        .lock-message {color:#ef4444;font-size:11px;margin-top:4px;}
 
         @media (max-width:768px){
             .sidebar{width:150px}
@@ -279,7 +234,7 @@
                     </div>
                     <div class="remember-checkbox">
                         <input type="checkbox" id="rememberToken">
-                        <label for="rememberToken">记住密码（8小时有效）</label>
+                        <label for="rememberToken">记住密码（8小时有效，⚠️ 仅受信任设备）</label>
                     </div>
                     <div id="loginLockMessage" class="lock-message"></div>
                 </div>
@@ -339,43 +294,58 @@
 </div>
 
 <script>
-    // 从全局配置读取 API 地址（如果存在）
-    const API_BASE = window.APP_CONFIG?.API_BASE || 'https://api.xldh688.eu.cc';
-    
-    // ==================== Token 安全管理 ====================
-    const TOKEN_EXPIRE_HOURS = 8; // 8小时有效
+(function() {
+    // ==================== 安全作用域：避免全局泄露 ====================
+    const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xldh688.eu.cc';
+    const TOKEN_EXPIRE_HOURS = 8;
     const MAX_FAIL_COUNT = 5;
-    const LOCK_DURATION_MS = 10 * 60 * 1000; // 10分钟
-    
-    // 获取存储的 token（优先 sessionStorage，其次检查 localStorage 中的记住密码）
+    const LOCK_DURATION_MS = 10 * 60 * 1000;
+
+    // Token 及登录状态（私有变量）
+    let token = '';
+    let modalAction = null;
+    let categories = [], subcategories = [], sites = [];
+    let currentCat = null, currentSub = null;
+    let failCount = parseInt(sessionStorage.getItem('login_fail_count') || '0', 10);
+    let lockUntil = parseInt(sessionStorage.getItem('login_lock_until') || '0', 10);
+
+    // ==================== 安全工具：HTML转义 ====================
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+    }
+
+    // ==================== Toast 提示 ====================
+    function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className = `toast ${type} show`;
+        setTimeout(() => toast.classList.remove('show'), 2300);
+    }
+
+    // ==================== Token 安全管理 ====================
     function getStoredToken() {
-        // 优先检查 sessionStorage（当前会话）
-        let token = sessionStorage.getItem('admin_token');
-        if (token) {
+        let tk = sessionStorage.getItem('admin_token');
+        if (tk) {
             const expires = sessionStorage.getItem('admin_expires');
-            if (expires && Date.now() < parseInt(expires)) {
-                return token;
-            } else {
-                // 过期则清除
-                sessionStorage.removeItem('admin_token');
-                sessionStorage.removeItem('admin_expires');
+            if (expires && Date.now() < parseInt(expires, 10)) {
+                return tk;
             }
+            sessionStorage.removeItem('admin_token');
+            sessionStorage.removeItem('admin_expires');
         }
-        
-        // 检查 localStorage 记住的密码
+        // 检查记住密码
         const remember = localStorage.getItem('admin_remember');
         if (remember === 'true') {
-            token = localStorage.getItem('admin_token_saved');
+            tk = localStorage.getItem('admin_token_saved');
             const savedTime = localStorage.getItem('admin_saved_time');
-            if (token && savedTime) {
-                const expires = parseInt(savedTime) + (TOKEN_EXPIRE_HOURS * 3600000);
+            if (tk && savedTime) {
+                const expires = parseInt(savedTime, 10) + (TOKEN_EXPIRE_HOURS * 3600000);
                 if (Date.now() < expires) {
-                    // 恢复到 sessionStorage
-                    sessionStorage.setItem('admin_token', token);
+                    sessionStorage.setItem('admin_token', tk);
                     sessionStorage.setItem('admin_expires', expires.toString());
-                    return token;
+                    return tk;
                 } else {
-                    // 过期清理
                     localStorage.removeItem('admin_token_saved');
                     localStorage.removeItem('admin_saved_time');
                     localStorage.removeItem('admin_remember');
@@ -385,15 +355,13 @@
         return '';
     }
 
-    function saveToken(token, remember) {
+    function saveToken(tk, remember) {
         const expires = Date.now() + (TOKEN_EXPIRE_HOURS * 3600000);
-        
-        sessionStorage.setItem('admin_token', token);
+        sessionStorage.setItem('admin_token', tk);
         sessionStorage.setItem('admin_expires', expires.toString());
-        
         if (remember) {
             localStorage.setItem('admin_remember', 'true');
-            localStorage.setItem('admin_token_saved', token);
+            localStorage.setItem('admin_token_saved', tk);
             localStorage.setItem('admin_saved_time', Date.now().toString());
         } else {
             localStorage.removeItem('admin_remember');
@@ -410,10 +378,7 @@
         localStorage.removeItem('admin_saved_time');
     }
 
-    // ==================== 登录失败锁定（前端辅助） ====================
-    let failCount = parseInt(sessionStorage.getItem('login_fail_count') || '0');
-    let lockUntil = parseInt(sessionStorage.getItem('login_lock_until') || '0');
-
+    // ==================== 登录失败锁定 ====================
     function updateLockMessage() {
         const msgEl = document.getElementById('loginLockMessage');
         if (!msgEl) return;
@@ -460,19 +425,6 @@
         document.getElementById('loginLockMessage').textContent = '';
     }
 
-    // ==================== 全局变量 ====================
-    let token = getStoredToken();
-    let modalAction = null;
-    let categories = [], subcategories = [], sites = [];
-    let currentCat = null, currentSub = null;
-
-    const toast = document.getElementById('toast');
-    function showToast(msg, type = 'success') {
-        toast.textContent = msg;
-        toast.className = `toast ${type} show`;
-        setTimeout(() => toast.classList.remove('show'), 2300);
-    }
-
     // ==================== 模态框 ====================
     function openModal(title, html, cb) {
         document.getElementById('modalTitle').textContent = title;
@@ -486,9 +438,8 @@
     function closeModal() {
         document.getElementById('modal').classList.remove('show');
         modalAction = null;
-        const btn = document.getElementById('modalSubmit');
-        btn.disabled = false;
-        btn.textContent = '确认';
+        document.getElementById('modalSubmit').disabled = false;
+        document.getElementById('modalSubmit').textContent = '确认';
     }
     function closeLogModal() { document.getElementById('logModal').classList.remove('show'); }
 
@@ -501,7 +452,7 @@
     }
     function showLogs() {
         const logs = JSON.parse(sessionStorage.getItem('operation_logs') || '[]');
-        document.getElementById('logList').innerHTML = logs.length ? logs.map(i => `<div class="log-item"><span>${i.time}</span> ${i.text}</div>`).join('') : '<div class="empty">暂无记录</div>';
+        document.getElementById('logList').innerHTML = logs.length ? logs.map(i => `<div class="log-item"><span>${i.time}</span> ${escapeHtml(i.text)}</div>`).join('') : '<div class="empty">暂无记录</div>';
         document.getElementById('logModal').classList.add('show');
     }
 
@@ -511,7 +462,6 @@
         if (token) headers.Authorization = `Bearer ${token}`;
         const res = await fetch(API_BASE + endpoint, { ...opt, headers });
         if (res.status === 401) {
-            // Token 失效，自动登出
             logout();
             throw new Error('Unauthorized');
         }
@@ -526,46 +476,31 @@
     // ==================== 登录/登出 ====================
     async function login() {
         if (!checkLock()) return;
-        
         const ipt = document.getElementById('tokenInput');
         const btn = document.getElementById('loginBtn');
         const rememberCheck = document.getElementById('rememberToken');
         const val = ipt.value.trim();
-        
-        if (!val) {
-            showToast('请输入Token', 'error');
-            return;
-        }
-        
+        if (!val) { showToast('请输入Token', 'error'); return; }
         btn.disabled = true;
         btn.textContent = '登录中…';
         token = val;
-        
         try {
             await apiFetch('/admin/categories');
-            
-            // 登录成功
             resetLoginFailure();
             const remember = rememberCheck ? rememberCheck.checked : false;
             saveToken(token, remember);
-            
             ipt.style.display = 'none';
             document.getElementById('loginBtn').classList.add('hidden');
             document.getElementById('logoutBtn').classList.remove('hidden');
             document.getElementById('mainContent').classList.remove('hidden');
             document.querySelector('.remember-checkbox').style.display = 'none';
-            
             await loadAllData();
             addLog('管理员登录');
             showToast('登录成功' + (remember ? '（已记住密码）' : ''));
         } catch (e) {
             token = '';
             recordLoginFailure();
-            if (e.message === 'Unauthorized') {
-                showToast('Token无效', 'error');
-            } else {
-                showToast('登录失败: ' + e.message, 'error');
-            }
+            showToast(e.message === 'Unauthorized' ? 'Token无效' : '登录失败: ' + e.message, 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = '登录';
@@ -586,66 +521,43 @@
     }
 
     // ==================== 自动登录检查 ====================
-    if (token) {
-        const expires = sessionStorage.getItem('admin_expires');
-        if (expires && Date.now() < parseInt(expires)) {
-            (async () => {
-                try {
-                    await apiFetch('/admin/categories');
-                    document.getElementById('tokenInput').style.display = 'none';
-                    document.getElementById('loginBtn').classList.add('hidden');
-                    document.getElementById('logoutBtn').classList.remove('hidden');
-                    document.getElementById('mainContent').classList.remove('hidden');
-                    document.querySelector('.remember-checkbox').style.display = 'none';
-                    await loadAllData();
-                } catch (e) {
-                    logout();
-                }
-            })();
-        } else {
-            logout();
-        }
+    const storedToken = getStoredToken();
+    if (storedToken) {
+        token = storedToken;
+        (async () => {
+            try {
+                await apiFetch('/admin/categories');
+                document.getElementById('tokenInput').style.display = 'none';
+                document.getElementById('loginBtn').classList.add('hidden');
+                document.getElementById('logoutBtn').classList.remove('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                document.querySelector('.remember-checkbox').style.display = 'none';
+                await loadAllData();
+            } catch (e) {
+                logout();
+            }
+        })();
     }
 
-    // 定期检查 token 是否即将过期（可选）
+    // 定期检查 Token 过期
     setInterval(() => {
         const expires = sessionStorage.getItem('admin_expires');
-        if (expires && Date.now() > parseInt(expires) - 60000) { // 剩余1分钟
+        if (expires && Date.now() > parseInt(expires, 10) - 60000) {
             showToast('登录即将过期，请重新登录', 'warn');
         }
     }, 30000);
 
     // ==================== 辅助函数 ====================
     function getFavicon(url){
-        try {
-            const u = new URL(url);
-            return `https://api.71xk.com/api/favicon?url=${u.hostname}`;
-        } catch {
-            return 'fas fa-link';
-        }
+        try { const u = new URL(url); return `https://api.71xk.com/api/favicon?url=${u.hostname}`; } catch { return 'fas fa-link'; }
     }
 
     function checkUrl(url){
         try {
             const parsed = new URL(url);
-            // 禁止危险协议
-            if (parsed.protocol === 'javascript:' || parsed.protocol === 'data:') {
-                return false;
-            }
+            if (parsed.protocol === 'javascript:' || parsed.protocol === 'data:') return false;
             return true;
-        } catch {
-            return false;
-        }
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
+        } catch { return false; }
     }
 
     // ==================== 数据加载 ====================
@@ -663,38 +575,24 @@
             if (categories.length > 0) selectCat(categories[0].id);
             addLog('数据加载完成');
         } catch (e) {
-            if (e.message === 'Unauthorized') {
-                logout();
-            } else {
-                showToast('数据加载失败：' + e.message, 'error');
-                console.error(e);
-            }
+            if (e.message === 'Unauthorized') logout();
+            else showToast('数据加载失败：' + escapeHtml(e.message), 'error');
         }
     }
 
     async function loadRanking() {
         const rankList = document.getElementById('rankList');
-        if (!rankList) return;
         rankList.innerHTML = '<div class="empty">加载中...</div>';
         try {
             const data = await apiFetch('/admin/topclicks?limit=20');
-            if (!data.length) {
-                rankList.innerHTML = '<div class="empty">暂无点击数据</div>';
-                return;
-            }
+            if (!data.length) { rankList.innerHTML = '<div class="empty">暂无点击数据</div>'; return; }
             rankList.innerHTML = data.map(item => `
                 <div class="link-item">
-                    <div class="link-info">
-                        <div>${escapeHtml(item.title)}</div>
-                        <div class="link-url">${escapeHtml(item.url)}</div>
-                    </div>
+                    <div class="link-info"><div>${escapeHtml(item.title)}</div><div class="link-url">${escapeHtml(item.url)}</div></div>
                     <span class="badge badge-blue">${item.count}次点击</span>
                 </div>
             `).join('');
-        } catch (err) {
-            console.error(err);
-            rankList.innerHTML = '<div class="empty">加载失败，请检查网络</div>';
-        }
+        } catch { rankList.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
     async function loadFeedback() {
@@ -702,114 +600,78 @@
         listEl.innerHTML = '<div class="empty">加载中...</div>';
         try {
             const data = await apiFetch('/admin/dead-link-reports');
-            if (!data.length) {
-                listEl.innerHTML = '<div class="empty">暂无用户反馈</div>';
-                return;
-            }
-            
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            
-            const groups = { today: [], yesterday: [], older: [] };
-            
+            if (!data.length) { listEl.innerHTML = '<div class="empty">暂无用户反馈</div>'; return; }
+            const today = new Date(); today.setHours(0,0,0,0);
+            const yesterday = new Date(today); yesterday.setDate(yesterday.getDate()-1);
+            const groups = { today:[], yesterday:[], older:[] };
             data.forEach(item => {
-                const reportDate = new Date(item.report_time);
-                reportDate.setHours(0, 0, 0, 0);
-                if (reportDate.getTime() === today.getTime()) {
-                    groups.today.push(item);
-                } else if (reportDate.getTime() === yesterday.getTime()) {
-                    groups.yesterday.push(item);
-                } else {
-                    groups.older.push(item);
-                }
+                const d = new Date(item.report_time); d.setHours(0,0,0,0);
+                if (d.getTime()===today.getTime()) groups.today.push(item);
+                else if (d.getTime()===yesterday.getTime()) groups.yesterday.push(item);
+                else groups.older.push(item);
             });
-            
             let html = '';
             if (groups.today.length) html += `<div class="feedback-date-group"><h4>📅 今天</h4>${renderFeedbackItems(groups.today)}</div>`;
             if (groups.yesterday.length) html += `<div class="feedback-date-group"><h4>📅 昨天</h4>${renderFeedbackItems(groups.yesterday)}</div>`;
             if (groups.older.length) html += `<div class="feedback-date-group"><h4>📅 更早</h4>${renderFeedbackItems(groups.older)}</div>`;
             listEl.innerHTML = html;
-        } catch (err) {
-            listEl.innerHTML = '<div class="empty">加载失败</div>';
-        }
+        } catch { listEl.innerHTML = '<div class="empty">加载失败</div>'; }
     }
-    
+
     function renderFeedbackItems(items) {
         return items.map(item => `
             <div class="link-item">
                 <div class="link-info">
                     <div><strong>${escapeHtml(item.title || '无标题')}</strong></div>
                     <div class="link-url">${escapeHtml(item.url)}</div>
-                    <div style="font-size:10px; color:#999;">
-                        来自 ${item.reporter_ip} 于 ${new Date(item.report_time).toLocaleString()}
-                    </div>
+                    <div style="font-size:10px; color:#999;">来自 ${escapeHtml(item.reporter_ip)} 于 ${new Date(item.report_time).toLocaleString()}</div>
                 </div>
                 <div class="link-actions">
-                    <button class="sm primary" onclick="replaceLink(${item.id}, ${item.site_id || 0}, '${escapeHtml(item.url)}', '${escapeHtml(item.title)}')">更换链接</button>
-                    <button class="sm primary" onclick="markFeedbackDone(${item.id})">标记已处理</button>
+                    <button class="sm primary" onclick="window._admin.replaceLink(${item.id}, ${item.site_id || 0}, '${escapeHtml(item.url)}', '${escapeHtml(item.title)}')">更换链接</button>
+                    <button class="sm primary" onclick="window._admin.markFeedbackDone(${item.id})">标记已处理</button>
                 </div>
             </div>
         `).join('');
     }
 
-    async function markFeedbackDone(id) {
-        try {
-            await apiFetch(`/admin/report-status/${id}`, {
-                method: 'PUT',
-                body: JSON.stringify({ status: 'done' })
-            });
-            showToast('已标记处理（12小时后自动清除）', 'success');
-            loadFeedback();
-        } catch (err) {
-            showToast('操作失败', 'error');
-        }
-    }
-
-    async function replaceLink(reportId, siteId, oldUrl, oldTitle) {
-        if (!siteId) {
-            showToast('无法找到对应的网站记录', 'error');
-            return;
-        }
-        const site = sites.find(s => s.id === siteId);
-        if (!site) {
-            showToast('未找到对应的网站记录', 'error');
-            return;
-        }
-        const html = `
-            <div class="form-row"><label>标题</label><input id="newTitle" value="${escapeHtml(site.title)}"></div>
-            <div class="form-row"><label>网址</label><input id="newUrl" value="${escapeHtml(site.url)}"></div>
-            <div class="form-row"><label>描述</label><input id="newDesc" value="${escapeHtml(site.description || '')}"></div>
-            <div class="form-row"><label>图标</label><input id="newIcon" value="${escapeHtml(site.icon || 'fas fa-link')}"></div>
-        `;
-        openModal('更换链接', html, async () => {
-            const newTitle = document.getElementById('newTitle').value.trim();
-            const newUrl = document.getElementById('newUrl').value.trim();
-            const newDesc = document.getElementById('newDesc').value.trim();
-            const newIcon = document.getElementById('newIcon').value.trim();
-            if (!newTitle || !newUrl) {
-                showToast('标题和网址不能为空', 'error');
-                return;
-            }
-            if (!checkUrl(newUrl)) {
-                showToast('网址格式错误或包含危险协议', 'error');
-                return;
-            }
+    // 将管理函数挂载到安全命名空间
+    window._admin = {
+        markFeedbackDone: async (id) => {
             try {
-                await apiFetch('/admin/replace-link', {
-                    method: 'POST',
-                    body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: newDesc, newIcon })
-                });
-                showToast('链接已更新，无效标记已清除', 'success');
+                await apiFetch(`/admin/report-status/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'done' }) });
+                showToast('已标记处理（12小时后自动清除）', 'success');
                 loadFeedback();
-                await loadAllData();
-                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
-            } catch (err) {
-                showToast('更换失败：' + err.message, 'error');
-            }
-        });
-    }
+            } catch { showToast('操作失败', 'error'); }
+        },
+        replaceLink: async (reportId, siteId, oldUrl, oldTitle) => {
+            if (!siteId) { showToast('无法找到对应的网站记录', 'error'); return; }
+            const site = sites.find(s => s.id === siteId);
+            if (!site) { showToast('未找到对应的网站记录', 'error'); return; }
+            openModal('更换链接', `
+                <div class="form-row"><label>标题</label><input id="newTitle" value="${escapeHtml(site.title)}"></div>
+                <div class="form-row"><label>网址</label><input id="newUrl" value="${escapeHtml(site.url)}"></div>
+                <div class="form-row"><label>描述</label><input id="newDesc" value="${escapeHtml(site.description || '')}"></div>
+                <div class="form-row"><label>图标</label><input id="newIcon" value="${escapeHtml(site.icon || 'fas fa-link')}"></div>
+            `, async () => {
+                const newTitle = document.getElementById('newTitle').value.trim();
+                const newUrl = document.getElementById('newUrl').value.trim();
+                const newDesc = document.getElementById('newDesc').value.trim();
+                const newIcon = document.getElementById('newIcon').value.trim();
+                if (!newTitle || !newUrl) { showToast('标题和网址不能为空', 'error'); return; }
+                if (!checkUrl(newUrl)) { showToast('网址格式错误或包含危险协议', 'error'); return; }
+                try {
+                    await apiFetch('/admin/replace-link', {
+                        method: 'POST',
+                        body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: newDesc, newIcon })
+                    });
+                    showToast('链接已更新，无效标记已清除', 'success');
+                    loadFeedback();
+                    await loadAllData();
+                    await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+                } catch (err) { showToast('更换失败：' + err.message, 'error'); }
+            });
+        }
+    };
 
     // ==================== 标签页切换 ====================
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -826,8 +688,7 @@
 
     // ==================== 分类/子分类/链接 操作 ====================
     function selectCat(cid){
-        currentCat = cid;
-        currentSub = null;
+        currentCat = cid; currentSub = null;
         document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
         const targetCat = document.querySelector(`.cat-item[data-cid="${cid}"]`);
         if (targetCat) targetCat.classList.add('active');
@@ -846,8 +707,8 @@
     }
 
     function renderCatBar(){
-        if (categories.length === 0){
-            document.getElementById('catBar').innerHTML = '<div class="empty" style="width:100%;flex-shrink:0">请先添加一级分类</div>';
+        if (!categories.length){
+            document.getElementById('catBar').innerHTML = '<div class="empty" style="width:100%">请先添加一级分类</div>';
             document.getElementById('subList').innerHTML = '<div class="empty">请先添加一级分类</div>';
             document.getElementById('siteList').innerHTML = '<div class="empty">请先添加一级分类</div>';
             return;
@@ -861,15 +722,9 @@
     }
 
     function renderSubList(){
-        if (!currentCat){
-            document.getElementById('subList').innerHTML = '<div class="empty">请先选择一级分类</div>';
-            return;
-        }
+        if (!currentCat){ document.getElementById('subList').innerHTML = '<div class="empty">请先选择一级分类</div>'; return; }
         const subs = subcategories.filter(s => s.category_id === currentCat);
-        if (subs.length === 0){
-            document.getElementById('subList').innerHTML = '<div class="empty">请先添加子分类</div>';
-            return;
-        }
+        if (!subs.length){ document.getElementById('subList').innerHTML = '<div class="empty">请先添加子分类</div>'; return; }
         document.getElementById('subList').innerHTML = subs.map(s => `
             <div class="sub-item ${s.id===currentSub?'active':''}" data-sid="${s.id}">
                 <span onclick="selectSub(${s.id})">${escapeHtml(s.name)}</span>
@@ -879,20 +734,12 @@
     }
 
     function renderSiteList(){
-        if (!currentSub){
-            document.getElementById('siteList').innerHTML = '<div class="empty">请先选择子分类</div>';
-            return;
-        }
+        if (!currentSub){ document.getElementById('siteList').innerHTML = '<div class="empty">请先选择子分类</div>'; return; }
         const list = sites.filter(s => s.subcategory_id === currentSub);
-        if (list.length === 0){
-            document.getElementById('siteList').innerHTML = '<div class="empty">暂无链接，点击+添加链接</div>';
-            return;
-        }
+        if (!list.length){ document.getElementById('siteList').innerHTML = '<div class="empty">暂无链接</div>'; return; }
         document.getElementById('siteList').innerHTML = list.map(s => `
             <div class="link-item">
-                <div class="link-info">
-                    <div>${escapeHtml(s.title)}</div>
-                </div>
+                <div class="link-info"><div>${escapeHtml(s.title)}</div></div>
                 <div class="link-actions">
                     <button class="sm primary" onclick="openEditSite(${s.id})">编辑</button>
                     <button class="sm danger" onclick="delSite(${s.id})">删除</button>
@@ -901,7 +748,7 @@
         `).join('');
     }
 
-    // ==================== 增删改操作（带二次确认） ====================
+    // ==================== 增删改操作 ====================
     function openAddCat(){
         openModal('新增一级分类', `
             <div class="form-row"><label>名称</label><input id="name"></div>
@@ -909,7 +756,7 @@
         `, async () => {
             const name = document.getElementById('name').value.trim();
             if (!name) { showToast('请填名称', 'error'); return; }
-            await apiFetch('/admin/categories', { method: 'POST', body: JSON.stringify({ name, display_order: +document.getElementById('sort').value }) });
+            await apiFetch('/admin/categories', { method:'POST', body: JSON.stringify({ name, display_order: +document.getElementById('sort').value }) });
             addLog(`新增分类：${name}`); showToast('添加成功'); await loadAllData();
         });
     }
@@ -922,7 +769,7 @@
         `, async () => {
             const name = document.getElementById('name').value.trim();
             if (!name) { showToast('请填名称', 'error'); return; }
-            await apiFetch('/admin/subcategories', { method: 'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('sort').value }) });
+            await apiFetch('/admin/subcategories', { method:'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('sort').value }) });
             addLog(`新增子分类：${name}`); showToast('添加成功'); await loadAllData();
         });
     }
@@ -939,11 +786,9 @@
             const t = document.getElementById('title').value, u = document.getElementById('url').value;
             if (!t || !u) { showToast('标题/网址必填', 'error'); return; }
             if (!checkUrl(u)) { showToast('网址格式错误或包含危险协议', 'error'); return; }
-            await apiFetch('/admin/sites', { method: 'POST', body: JSON.stringify({
-                subcategory_id: currentSub, title: t, url: u,
-                description: document.getElementById('desc').value,
-                icon: document.getElementById('icon').value,
-                display_order: +document.getElementById('sort').value
+            await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
+                subcategory_id: currentSub, title:t, url:u, description: document.getElementById('desc').value,
+                icon: document.getElementById('icon').value, display_order: +document.getElementById('sort').value
             })});
             addLog(`新增链接：${t}`); showToast('添加成功'); await loadAllData();
         });
@@ -961,11 +806,9 @@
             const t = document.getElementById('title').value, u = document.getElementById('url').value;
             if (!t || !u) { showToast('标题/网址必填', 'error'); return; }
             if (!checkUrl(u)) { showToast('网址格式错误或包含危险协议', 'error'); return; }
-            await apiFetch(`/admin/sites/${id}`, { method: 'PUT', body: JSON.stringify({
-                title: t, url: u,
-                description: document.getElementById('desc').value,
-                icon: document.getElementById('icon').value,
-                display_order: +document.getElementById('sort').value
+            await apiFetch(`/admin/sites/${id}`, { method:'PUT', body: JSON.stringify({
+                title:t, url:u, description: document.getElementById('desc').value,
+                icon: document.getElementById('icon').value, display_order: +document.getElementById('sort').value
             })});
             addLog(`编辑链接：${s.title}`); showToast('修改成功'); await loadAllData();
         });
@@ -973,54 +816,35 @@
 
     async function delSite(id){
         if (!confirm('确定删除该链接？')) return;
-        await apiFetch(`/admin/sites/${id}`, { method: 'DELETE' });
+        await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
         addLog(`删除链接：${id}`); showToast('删除成功'); await loadAllData();
     }
 
     function renameCategory(id, oldName) {
-        openModal('修改分类名称', `
-            <div class="form-row"><label>新名称</label><input id="newName" value="${escapeHtml(oldName)}"></div>
-        `, async () => {
+        openModal('修改分类名称', `<div class="form-row"><label>新名称</label><input id="newName" value="${escapeHtml(oldName)}"></div>`, async () => {
             const newName = document.getElementById('newName').value.trim();
             if (!newName) { showToast('名称不能为空', 'error'); return; }
-            await apiFetch(`/admin/categories/${id}`, { method: 'PUT', body: JSON.stringify({ name: newName }) });
+            await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name: newName }) });
             addLog(`修改分类：${oldName} → ${newName}`); showToast('修改成功'); await loadAllData();
         });
     }
 
     function renameSubcategory(id, oldName) {
-        openModal('修改子分类名称', `
-            <div class="form-row"><label>新名称</label><input id="newName" value="${escapeHtml(oldName)}"></div>
-        `, async () => {
+        openModal('修改子分类名称', `<div class="form-row"><label>新名称</label><input id="newName" value="${escapeHtml(oldName)}"></div>`, async () => {
             const newName = document.getElementById('newName').value.trim();
             if (!newName) { showToast('名称不能为空', 'error'); return; }
-            await apiFetch(`/admin/subcategories/${id}`, { method: 'PUT', body: JSON.stringify({ name: newName }) });
+            await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name: newName }) });
             addLog(`修改子分类：${oldName} → ${newName}`); showToast('修改成功'); await loadAllData();
         });
     }
 
-    // 删除分类（带二次确认）
-    async function deleteCategory(id, name) {
-        if (!confirm(`确定删除分类 "${name}" 及其所有子分类和链接吗？此操作不可恢复！`)) return;
-        await apiFetch(`/admin/categories/${id}`, { method: 'DELETE' });
-        addLog(`删除分类：${name}`); showToast('删除成功'); await loadAllData();
-    }
-
-    // 删除子分类（带二次确认）
-    async function deleteSubcategory(id, name) {
-        if (!confirm(`确定删除子分类 "${name}" 及其所有链接吗？`)) return;
-        await apiFetch(`/admin/subcategories/${id}`, { method: 'DELETE' });
-        addLog(`删除子分类：${name}`); showToast('删除成功'); await loadAllData();
-    }
-
     function exportData(){
-        const blob = new Blob([JSON.stringify({ categories, subcategories, sites, time: new Date().toLocaleString() }, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify({ categories, subcategories, sites, time: new Date().toLocaleString() }, null, 2)], { type:'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = `导航备份_${new Date().getTime()}.json`;
         a.click();
-        addLog('导出备份');
-        showToast('导出成功');
+        addLog('导出备份'); showToast('导出成功');
     }
 
     // ==================== 事件绑定 ====================
@@ -1029,16 +853,8 @@
         const btn = this;
         btn.disabled = true;
         btn.textContent = '提交中…';
-        try {
-            await modalAction();
-        } catch (e) {
-            showToast('操作失败', 'error');
-            console.error(e);
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '确认';
-            closeModal();
-        }
+        try { await modalAction(); } catch (e) { showToast('操作失败', 'error'); }
+        finally { btn.disabled = false; btn.textContent = '确认'; closeModal(); }
     };
 
     document.getElementById('loginBtn').onclick = login;
@@ -1052,17 +868,23 @@
     document.getElementById('refreshFeedbackBtn').onclick = loadFeedback;
     document.getElementById('refreshNavBtn').onclick = async () => {
         if (!token) { showToast('请先登录', 'error'); return; }
-        try {
-            await apiFetch('/admin/refresh-navigation', { method: 'POST' });
-            showToast('导航缓存已刷新', 'success');
-        } catch (err) {
-            showToast('刷新失败', 'error');
-        }
+        try { await apiFetch('/admin/refresh-navigation', { method:'POST' }); showToast('导航缓存已刷新', 'success'); }
+        catch { showToast('刷新失败', 'error'); }
     };
     document.getElementById('tokenInput').addEventListener('keydown', e => e.key === 'Enter' && login());
 
-    // 初始化锁定消息显示
+    // 初始化锁定消息
     updateLockMessage();
+
+    // 将需要内联调用的函数挂载到 window（仅在已认证的上下文中）
+    window.selectCat = selectCat;
+    window.selectSub = selectSub;
+    window.renameCategory = renameCategory;
+    window.renameSubcategory = renameSubcategory;
+    window.openEditSite = openEditSite;
+    window.delSite = delSite;
+    window.getFavicon = getFavicon;
+})();
 </script>
 </body>
 </html>
