@@ -99,14 +99,37 @@
     right: 10px;
 }
 
-/* 指示器圆点 */
-.carousel-dots {
+/* 底部信息栏：标题 + 圆点 */
+.wallpaper-info {
     position: absolute;
-    bottom: 12px;
+    bottom: 10px;
+    left: 15px;
     right: 15px;
     display: flex;
-    gap: 8px;
+    align-items: center;
+    justify-content: space-between;
     z-index: 10;
+    padding: 0;
+    max-width: none;
+}
+
+.wallpaper-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7), 0 0 8px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 80px); /* 为圆点留出空间 */
+    line-height: 1.3;
+}
+
+/* 指示器圆点 */
+.carousel-dots {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .carousel-dot {
@@ -122,36 +145,6 @@
     background: #fff;
     transform: scale(1.3);
     box-shadow: 0 0 4px rgba(0,0,0,0.3);
-}
-
-/* 图片信息（保持在左下角） */
-.wallpaper-info {
-    position: absolute;
-    bottom: 10px;
-    left: 15px;
-    color: white;
-    padding: 0;
-    font-size: 12px;
-    z-index: 10;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7), 0 0 8px rgba(0, 0, 0, 0.5);
-    max-width: calc(100% - 60px);   /* 避让指示器 */
-}
-
-.wallpaper-title {
-    font-weight: 600;
-    margin-bottom: 2px;
-    line-height: 1.3;
-    font-size: 14px;
-    word-wrap: break-word;
-}
-
-.wallpaper-copyright {
-    font-size: 10px;
-    opacity: 0.9;
-    line-height: 1.4;
-    word-wrap: break-word;
-    white-space: normal;
-    overflow: visible;
 }
 
 /* 移动端适配 */
@@ -170,19 +163,11 @@
     .wallpaper-info {
         bottom: 8px;
         left: 12px;
-        max-width: calc(100% - 50px);
+        right: 12px;
     }
     .wallpaper-title {
         font-size: 13px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .wallpaper-copyright {
-        font-size: 10px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        max-width: calc(100% - 60px);
     }
 }
 
@@ -196,15 +181,9 @@
     .wallpaper-info {
         bottom: 6px;
         left: 10px;
-        max-width: calc(100% - 45px);
+        right: 10px;
     }
     .wallpaper-title { font-size: 12px; }
-    .wallpaper-copyright { font-size: 9px; }
-}
-
-/* 加载失败时背景色 */
-.carousel-slide[style*="background-color"] {
-    background-size: contain;
 }
 
 /* 深色模式适配 */
