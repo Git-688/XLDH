@@ -1,5 +1,5 @@
 // 统计接口域名（从配置读取）
-const WORKER_URL = window.APP_CONFIG?.API_BASE || 'https://api.xldh688.eu.cc';
+const WORKER_URL = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
 
 // 心跳定时器句柄
 let heartbeatInterval = null;
