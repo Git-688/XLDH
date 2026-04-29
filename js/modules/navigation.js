@@ -80,7 +80,7 @@ class OptimizedNavigation {
     }
 
     async loadNavigationData(retryCount = 0) {
-        const apiUrl = `https://api.xldh688.eu.cc/navigation?_=${Date.now()}`;
+        const apiUrl = `https://api.xjdh688.ccwu.cc/navigation?_=${Date.now()}`;
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -266,7 +266,7 @@ class OptimizedNavigation {
                     window.musicPlayer.isHandlingNavigationClick = true;
                 }
                 
-                fetch('https://api.xldh688.eu.cc/click', {
+                fetch('https://api.xjdh688.ccwu.cc/click', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url: site.url, title: site.title })
@@ -299,7 +299,7 @@ class OptimizedNavigation {
                     const url = reportBtn.dataset.url;
                     const title = reportBtn.dataset.title;
                     try {
-                        const res = await fetch('https://api.xldh688.eu.cc/report-dead-link', {
+                        const res = await fetch('https://api.xjdh688.ccwu.cc/report-dead-link', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ url, title })
