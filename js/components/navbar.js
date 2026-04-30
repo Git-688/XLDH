@@ -2,6 +2,9 @@ class Navbar {
     constructor() {
         if (window.navbar && window.navbar instanceof Navbar) return window.navbar;
         this.announcements = [];
+        // 滚动节流相关
+        this.ticking = false;
+        this.lastScrollY = 0;
         this.init();
         window.navbar = this;
     }
@@ -11,7 +14,8 @@ class Navbar {
             this.bindEvents();
             this.loadAnnouncements();
             this.updateNotificationBadge();
-            setTimeout(() => this.handleScroll(), 100);
+            // 首次滚动检测
+            this.handleScroll();
         } catch (e) {
             console.error('导航栏初始化失败:', e);
         }
@@ -108,20 +112,32 @@ class Navbar {
             if (e.key === 'Escape') this.closeAllModalsExcept([]);
         });
 
-        window.addEventListener('scroll', this.handleScroll.bind(this));
+        // 滚动事件：使用 requestAnimationFrame 优化，避免频繁触发
+        window.addEventListener('scroll', () => {
+            if (!this.ticking) {
+                requestAnimationFrame(() => {
+                    this.handleScroll();
+                    this.ticking = false;
+                });
+                this.ticking = true;
+            }
+        });
 
+        // 回到顶部按钮点击
         const btt = document.getElementById('backToTop');
-        if (btt) btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        if (btt) {
+            btt.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
     }
 
     // ---------- 核心：统一处理四大功能的切换 ----------
     handleFeatureToggle(featureKey, toggleFn) {
         const isOpen = this.isFeatureOpen(featureKey);
         if (isOpen) {
-            // 功能已打开 → 直接关闭
             toggleFn();
         } else {
-            // 功能未打开 → 先关闭其他所有，然后打开目标
             this.closeAllModalsExcept([featureKey]);
             requestAnimationFrame(() => {
                 toggleFn();
@@ -206,9 +222,18 @@ class Navbar {
     handleScroll() {
         const navbar = document.getElementById('navbar');
         const btt = document.getElementById('backToTop');
-        if (window.scrollY > 100) navbar?.classList.add('scrolled');
-        else navbar?.classList.remove('scrolled');
-        if (btt) btt.classList.toggle('visible', window.scrollY > 300);
+        const scrollY = window.scrollY;
+
+        if (navbar) {
+            navbar.classList.toggle('scrolled', scrollY > 100);
+        }
+
+        if (btt) {
+            // 使用 classList.toggle 平滑切换，避免频繁操作样式
+            btt.classList.toggle('visible', scrollY > 300);
+        }
+
+        this.lastScrollY = scrollY;
     }
 
     loadAnnouncements() {
