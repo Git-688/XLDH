@@ -679,4 +679,4 @@ if (document.readyState === 'loading') {
 
 window.getApp = function() {
     return window.app;
-};
+}; 
