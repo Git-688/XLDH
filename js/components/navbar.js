@@ -1,21 +1,17 @@
 class Navbar {
     constructor() {
-        // 不再检查 window.navbar，不再赋值给 window.navbar
+        if (window.navbar && window.navbar instanceof Navbar) return window.navbar;
         this.announcements = [];
-        this.ticking = false;          // 滚动节流标记
-        this.lastScrollY = 0;
-        this.isInitialized = false;
+        this.init();
+        window.navbar = this;
     }
 
     init() {
-        if (this.isInitialized) return;
         try {
             this.bindEvents();
             this.loadAnnouncements();
             this.updateNotificationBadge();
-            // 初始检测滚动状态
-            this.handleScroll();
-            this.isInitialized = true;
+            setTimeout(() => this.handleScroll(), 100);
         } catch (e) {
             console.error('导航栏初始化失败:', e);
         }
@@ -112,24 +108,10 @@ class Navbar {
             if (e.key === 'Escape') this.closeAllModalsExcept([]);
         });
 
-        // ========== 滚动事件：使用 requestAnimationFrame 节流 ==========
-        window.addEventListener('scroll', () => {
-            if (!this.ticking) {
-                requestAnimationFrame(() => {
-                    this.handleScroll();
-                    this.ticking = false;
-                });
-                this.ticking = true;
-            }
-        });
+        window.addEventListener('scroll', this.handleScroll.bind(this));
 
-        // 回到顶部按钮点击
         const btt = document.getElementById('backToTop');
-        if (btt) {
-            btt.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        }
+        if (btt) btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
     // ---------- 核心：统一处理四大功能的切换 ----------
@@ -178,9 +160,7 @@ class Navbar {
             }
             if (!keep.includes('weather')) window.app?.modules?.weather?.hide?.();
             if (!keep.includes('about')) window.aboutModule?.hide?.();
-            if (!keep.includes('notebook') && window.app?.hideNotebookModal) {
-                window.app.hideNotebookModal();
-            }
+            if (!keep.includes('notebook')) window.app?.hideNotebookModal?.();
         } catch (e) {
             console.error('关闭模态框失败:', e);
         }
@@ -223,24 +203,14 @@ class Navbar {
         }, 600);
     }
 
-    // ========== 滚动处理：导航栏样式 + 回到顶部按钮显隐 ==========
     handleScroll() {
         const navbar = document.getElementById('navbar');
         const btt = document.getElementById('backToTop');
-        const scrollY = window.scrollY;
-
-        if (navbar) {
-            navbar.classList.toggle('scrolled', scrollY > 100);
-        }
-
-        if (btt) {
-            btt.classList.toggle('visible', scrollY > 300);
-        }
-
-        this.lastScrollY = scrollY;
+        if (window.scrollY > 100) navbar?.classList.add('scrolled');
+        else navbar?.classList.remove('scrolled');
+        if (btt) btt.classList.toggle('visible', window.scrollY > 300);
     }
 
-    // ========== 公告相关 ==========
     loadAnnouncements() {
         this.announcements = Storage.get('announcements') || [{
             id: 'single_announcement',
@@ -282,9 +252,5 @@ class Navbar {
     destroy() {
         document.removeEventListener('click', this.closeAllModalsExcept);
         window.removeEventListener('scroll', this.handleScroll);
-        this.isInitialized = false;
-        // 清理其他事件监听器可根据需要扩展
     }
 }
-
-// 注意：不再赋值给 window.navbar，实例由 App 统一管理
