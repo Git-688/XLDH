@@ -1,9 +1,10 @@
 /**
- * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 官方标准配置）
+ * 星聚导航主应用程序（反馈模态框 + KaTeX v0.16.45 官方标准配置）
+ * 消除全局变量，所有核心组件由 App 实例统一管理
  */
 class App {
     constructor() {
-        this.components = {};
+        this.components = { navbar: null, sidebar: null };
         this.modules = {};
         this.activeModals = [];
         this.isInitialized = false;
@@ -35,7 +36,6 @@ class App {
         listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
         
         try {
-            // 并行请求所有 numid
             const promises = [];
             for (let i = 1; i <= this.NOTEBOOK_CONFIG.maxNumId; i++) {
                 promises.push(
@@ -48,7 +48,6 @@ class App {
             
             const results = await Promise.all(promises);
             
-            // 筛选有效记录 (code === 200 且标题和内容不为空)
             const validItems = results.filter(item => {
                 if (item.code !== 200) return false;
                 const title = item.title || '';
@@ -56,7 +55,6 @@ class App {
                 return title.trim() !== '' && words.trim() !== '';
             });
             
-            // ★ 修改：按记录ID正序排列（由旧到新，1、2、3...）
             validItems.sort((a, b) => a.numid - b.numid);
             
             if (validItems.length === 0) {
@@ -64,7 +62,6 @@ class App {
                 return;
             }
             
-            // 渲染笔记列表
             const html = validItems.map(item => {
                 const title = this.escapeHtml(item.title.trim());
                 const time = this.escapeHtml(item.time || '--');
@@ -134,9 +131,8 @@ class App {
             closeBtn.addEventListener('click', () => this.hideNotebookModal());
         }
     }
-    // =========================================
 
-    // ========== 反馈模态框管理（官方标准配置，无额外处理）==========
+    // ========== 反馈模态框管理 ==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -150,7 +146,6 @@ class App {
                 el: '#twikoo-feedback',
                 lang: 'zh-CN',
                 path: '/feedback',
-                // 完全按照官方文档配置
                 katex: {
                     delimiters: [
                         { left: '$$', right: '$$', display: true },
@@ -163,7 +158,6 @@ class App {
                 onCommentLoaded: function() {
                     const container = document.getElementById('twikoo-feedback');
                     if (!container || typeof renderMathInElement === 'undefined') return;
-                    // 再次调用渲染，确保所有公式都被处理
                     renderMathInElement(container, {
                         delimiters: [
                             { left: '$$', right: '$$', display: true },
@@ -199,28 +193,29 @@ class App {
             closeBtn.addEventListener('click', () => this.closeFeedbackModal());
         }
     }
-    // =========================================
 
+    // ========== App 初始化 ==========
     init() {
         if (this.isInitialized) return;
         this.setupErrorHandling();
         this.initStorage();
-        this.initCoreComponents();
-        this.initModules();
+        this.initCoreComponents();      // 创建导航栏、侧边栏等核心组件，不挂载全局
+        this.initModules();            // 初始化各个功能模块
         this.initDependentComponents();
         this.setupGlobalEvents();
         this.initNotebookModalEvents();
         this.initFeedbackModalEvents();
-        this.initFloatingButtonsEffect(); // 新增：悬浮按钮滚动效果
+        this.initFloatingButtonsEffect();
         this.isInitialized = true;
         
+        // 暴露全局方法（仅必要的接口）
         window.openFeedbackModal = this.openFeedbackModal.bind(this);
         window.closeFeedbackModal = this.closeFeedbackModal.bind(this);
         window.showNotebookModal = this.showNotebookModal.bind(this);
         window.hideNotebookModal = this.hideNotebookModal.bind(this);
     }
 
-    // ========== 新增：悬浮按钮滚动半透明效果 ==========
+    // 悬浮按钮滚动半透明效果
     initFloatingButtonsEffect() {
         let scrollTimer;
         const floatingBtns = document.querySelector('.floating-buttons');
@@ -236,10 +231,10 @@ class App {
             }, 1000);
         }, { passive: true });
     }
-    // =========================================
 
     initCoreComponents() {
         try {
+            // 侧边栏：如果已经存在实例则不重复创建
             if (typeof CompactSidebar !== 'undefined') {
                 if (!window.sidebar || !window.sidebar.isInitialized) {
                     this.components.sidebar = new CompactSidebar();
@@ -250,6 +245,12 @@ class App {
                 } else {
                     this.components.sidebar = window.sidebar;
                 }
+            }
+
+            // 导航栏：由 App 统一管理，不再挂载到 window.navbar
+            if (typeof Navbar !== 'undefined') {
+                this.components.navbar = new Navbar();
+                this.components.navbar.init();
             }
         } catch (error) {
             console.error('核心组件初始化失败:', error);
@@ -267,10 +268,8 @@ class App {
                         this.modules.search = new SearchModule();
                         window.searchModule = this.modules.search;
                         initPromises.push(this.modules.search.init?.());
-                        console.log('搜索模块已通过App初始化');
                     } else {
                         this.modules.search = window.searchModule;
-                        console.log('使用现有的搜索模块实例');
                     }
                 } catch (error) {
                     console.error('搜索模块初始化失败:', error);
@@ -332,13 +331,7 @@ class App {
     }
 
     initDependentComponents() {
-        try {
-            if (typeof Navbar !== 'undefined') {
-                this.components.navbar = new Navbar();
-            }
-        } catch (error) {
-            console.error('依赖组件初始化失败:', error);
-        }
+        // 其他依赖（如果有）可在此扩展
     }
 
     setupErrorHandling() {
@@ -665,18 +658,12 @@ class App {
     }
 }
 
+// 创建全局 app 实例，提供统一访问入口
 if (!window.app) {
     window.app = new App();
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        if (window.app && !window.app.isInitialized) {
-            window.app.init();
-        }
-    });
-}
-
+// 提供便捷获取 app 实例的方法
 window.getApp = function() {
     return window.app;
 };
