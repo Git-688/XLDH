@@ -26,7 +26,7 @@ jobs:
 
       # 步骤3：安装项目依赖（根据 package.json）
       - name: 安装依赖
-        run: npm ci                   # ci 比 install 更快且严格
+        run: npm install                   # ci 比 install 更快且严格
 
       # 步骤4：运行 ESLint 代码检查
       - name: 运行 ESLint 代码检查
