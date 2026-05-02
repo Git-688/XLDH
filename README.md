@@ -44,26 +44,69 @@
 5. 修改 `worker.js` 中的 `CACHE_TTL` 和域名配置以适应你的需求
 
 ## 📁 目录结构
-.
-├── index.html               # 首页主入口
-├── admin.html               # 后台管理（独立页面，带独立 CSP）
-├── 404.html                 # 自定义错误页
-├── assets/                  # 图片、图标、本地壁纸
+XLDH/
+├── index.html                 # 主站首页入口
+├── admin.html                 # 后台管理（独立的 CSP 保护)
+├── package.json               # 依赖与脚本（构建工具等)
+├── README.md                  # 项目说明文档
+│
+├── assets/                    # 静态资源（图片、logo、本地壁纸）
+│   ├── logo.png
+│   ├── images/
+│   └── wallpapers/
+│
 ├── css/
-│   ├── style.css            # 全局基础样式
-│   └── modules/             # 各功能模块样式（navbar、sidebar、search 等）
+│   ├── style.css              # 全局基础样式
+│   ├── responsive.css
+│   └── modules/               # 各功能模块样式
+│       ├── navbar.css
+│       ├── sidebar.css
+│       ├── search.css
+│       ├── navigation.css
+│       ├── wallpaper.css
+│       ├── greeting.css
+│       ├── stats.css
+│       ├── compact-tags.css
+│       ├── weather.css
+│       ├── announcement.css
+│       └── about.css
+│
 ├── js/
-│   ├── main.js              # App 主控
-│   ├── storage.js           # 本地存储工具
-│   ├── api.js               # 外部 API 封装
-│   ├── toast.js             # 全局 Toast 管理器
-│   ├── components/          # 核心组件（navbar、sidebar）
-│   ├── modules/             # 业务模块（navigation、greeting、weather 等）
-│   └── xfyy/                # 音乐播放器子系统
+│   ├── main.js                # App 主控制器（统一管理组件与模块）
+│   ├── storage.js             # localStorage 封装
+│   ├── api.js                 # 对外部 API 的封装（壁纸、一言等）
+│   ├── toast.js               # Toast 提示管理器
+│   ├── sw.js                  # Service Worker
+│   │
+│   ├── components/            # 核心 UI 组件
+│   │   ├── navbar.js          # 导航栏（App 管理，不挂全局）
+│   │   └── sidebar.js         # 侧边栏
+│   │
+│   ├── modules/               # 业务模块
+│   │   ├── announcement.js    # 公告模块
+│   │   ├── search.js          # 搜索模块
+│   │   ├── weather.js         # 天气模块
+│   │   ├── about.js           # 关于模块
+│   │   ├── navigation.js      # 分类导航（数据来自 Workers）
+│   │   ├── wallpaper.js       # 壁纸轮播
+│   │   ├── greeting.js        # 问候语与木鱼
+│   │   ├── stats.js           # 页脚访问统计
+│   │   └── compact-tags.js    # 常用工具标签
+│   │
+│   └── xfyy/                  # 音乐播放器子系统
+│       ├── utils.js
+│       ├── cache-manager.js
+│       ├── lyric-parser.js
+│       ├── plugin-manager.js
+│       ├── music-player.js
+│       └── music-main.js
+│
 ├── data/
-│   └── local-music-data.js  # 本地音乐示例数据
-├── pages/                   # 子页面（工具集、资源库等）
-└── README.md
+│   └── local-music-data.js    # 本地音乐列表（示例）
+│
+├── pages/                     # 扩展子页面（工具集、资源库等）
+    └── tools/                 # 各种小工具页面
+    
 ## 🔧 配置与管理
 
 管理后台
