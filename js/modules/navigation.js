@@ -1,6 +1,6 @@
 /**
  * 优化分类导航系统（完全基于后端 Worker + D1）
- * 优化9：添加加载骨架屏
+ * 优化：预生成快照 + 后台静默更新
  */
 class OptimizedNavigation {
     constructor() {
@@ -16,9 +16,7 @@ class OptimizedNavigation {
         };
         
         this.isNavigationClick = false;
-        
-        // 骨架屏配置
-        this.skeletonCount = 6; // 显示的骨架卡片数量
+        this.skeletonCount = 6; // 骨架屏卡片数量
     }
 
     async init() {
@@ -39,7 +37,6 @@ class OptimizedNavigation {
             }
             
             this.isInitialized = true;
-            
         } catch (error) {
             console.error('优化分类导航初始化失败:', error);
             this.showError();
@@ -79,7 +76,53 @@ class OptimizedNavigation {
         return html;
     }
 
+    // 加载导航数据：优先使用本地快照，后台拉取最新
     async loadNavigationData(retryCount = 0) {
+        // 1. 尝试加载本地打包的快照文件（最快）
+        let data = null;
+        try {
+            const snapshotResp = await fetch('./data/navigation-snapshot.json?_=' + Date.now());
+            if (snapshotResp.ok) {
+                data = await snapshotResp.json();
+                if (data && data.categories) {
+                    this.navigationData = data;
+                    this.calculateStats();
+                    this.renderAll();
+                    // 后台拉取最新数据，不阻塞
+                    this.fetchLatestFromAPI();
+                    console.log('✅ 导航数据从本地快照加载');
+                    return;
+                }
+            }
+        } catch (snapErr) {
+            console.warn('本地快照不可用，降级到 API');
+        }
+
+        // 2. 快照失败，直接请求 API
+        await this.loadFromAPI(retryCount);
+    }
+
+    // 从 Worker API 获取最新数据
+    async fetchLatestFromAPI() {
+        try {
+            const apiUrl = `https://api.xjdh688.ccwu.cc/navigation?_=${Date.now()}`;
+            const response = await fetch(apiUrl);
+            if (response.ok) {
+                const latest = await response.json();
+                if (latest && latest.categories) {
+                    this.navigationData = latest;
+                    this.calculateStats();
+                    this.renderAll();
+                    console.log('🔄 后台静默更新完成');
+                }
+            }
+        } catch (e) {
+            console.warn('后台更新失败，保留现有数据');
+        }
+    }
+
+    // 降级方案：直接调用 API
+    async loadFromAPI(retryCount = 0) {
         const apiUrl = `https://api.xjdh688.ccwu.cc/navigation?_=${Date.now()}`;
         try {
             const controller = new AbortController();
@@ -90,15 +133,26 @@ class OptimizedNavigation {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             this.navigationData = await response.json();
-            console.log('✅ 导航数据从 Cloudflare Worker 加载成功');
+            console.log('✅ 导航数据从 API 加载成功');
         } catch (error) {
-            console.error('❌ 加载失败，重试次数:', retryCount);
+            console.error('❌ API 加载失败，重试次数:', retryCount);
             if (retryCount < 3) {
                 const delay = Math.pow(2, retryCount) * 1000;
                 await new Promise(resolve => setTimeout(resolve, delay));
-                return this.loadNavigationData(retryCount + 1);
+                return this.loadFromAPI(retryCount + 1);
             }
             throw new Error('无法加载导航数据，请检查网络或稍后重试');
+        }
+    }
+
+    // 重新渲染全部视图（用于更新）
+    renderAll() {
+        this.renderNavigation();
+        // 如果之前已选中分类，尝试恢复选中状态
+        if (this.selectedLevel1) {
+            this.selectLevel1(this.selectedLevel1, false);
+        } else if (this.getFirstCategory()) {
+            this.selectLevel1(this.getFirstCategory(), false);
         }
     }
 
@@ -195,8 +249,6 @@ class OptimizedNavigation {
         }
         
         const sortedSites = [...sites].sort((a, b) => (b.priority || 0) - (a.priority || 0));
-        
-        // 使用文档片段批量插入，提升性能
         const fragment = document.createDocumentFragment();
         
         sortedSites.forEach((site) => {
@@ -253,7 +305,6 @@ class OptimizedNavigation {
                 </div>
             `;
             
-            // 绑定点击统计
             card.addEventListener('click', (e) => {
                 if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) {
                     return;
@@ -290,7 +341,6 @@ class OptimizedNavigation {
                 }, 100);
             }, true);
             
-            // 绑定报告死链按钮事件
             const reportBtn = card.querySelector('.report-dead-link-btn');
             if (reportBtn) {
                 reportBtn.addEventListener('click', async (e) => {
@@ -319,11 +369,9 @@ class OptimizedNavigation {
             fragment.appendChild(card);
         });
         
-        // 清空容器并一次性添加所有卡片
         container.innerHTML = '';
         container.appendChild(fragment);
         
-        // 添加淡入动画
         const cards = container.querySelectorAll('.site-card');
         cards.forEach((card, index) => {
             requestAnimationFrame(() => {
@@ -334,6 +382,7 @@ class OptimizedNavigation {
         this.showStatsSummary();
     }
 
+    // 其他辅助方法保持不变（原 navigation.js 中已包含）
     normalizeUrl(url) {
         if (!url) return '';
         try {
@@ -347,13 +396,9 @@ class OptimizedNavigation {
     }
 
     formatViews(views) {
-        if (views >= 1000000) {
-            return `${(views / 1000000).toFixed(1).replace('.0', '')}M`;
-        } else if (views >= 1000) {
-            return `${(views / 1000).toFixed(1).replace('.0', '')}K`;
-        } else {
-            return views.toString();
-        }
+        if (views >= 1000000) return `${(views / 1000000).toFixed(1).replace('.0', '')}M`;
+        if (views >= 1000) return `${(views / 1000).toFixed(1).replace('.0', '')}K`;
+        return views.toString();
     }
 
     renderEmptyState() {
@@ -368,9 +413,7 @@ class OptimizedNavigation {
         `;
     }
 
-    showStatsSummary() {
-        // 可留空
-    }
+    showStatsSummary() {}
 
     selectLevel1(level1, isUserClick = false) {
         if (this.selectedLevel1 === level1) return;
@@ -382,14 +425,10 @@ class OptimizedNavigation {
         
         if (window.innerWidth <= 1023 && isUserClick) {
             const activeBtn = document.querySelector('.level1-btn.active');
-            if (activeBtn) {
-                activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
+            if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
         
         this.renderLevel2(level1);
-        
-        // 切换分类时显示骨架屏
         this.showSkeleton();
         
         const firstLevel2 = this.getFirstSubCategory(level1);
@@ -412,15 +451,10 @@ class OptimizedNavigation {
         
         if (window.innerWidth <= 1023 && isUserClick) {
             const activeBtn = document.querySelector('.level2-btn.active');
-            if (activeBtn) {
-                activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
+            if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
         
-        // 切换子分类时显示骨架屏
         this.showSkeleton();
-        
-        // 使用 setTimeout 确保 UI 更新后再渲染内容
         setTimeout(() => {
             this.renderLevel3(this.selectedLevel1, level2);
         }, 50);
