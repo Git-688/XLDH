@@ -719,5 +719,19 @@
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
+
+<!-- Service Worker 注册（离线缓存 + 导航预缓存） -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then(registration => {
+        console.log('Service Worker 注册成功，范围:', registration.scope);
+      }).catch(error => {
+        console.error('Service Worker 注册失败:', error);
+      });
+    });
+  }
+</script>
+
 </body>
 </html>
