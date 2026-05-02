@@ -24,6 +24,14 @@
 - 💬 **Twikoo 评论系统**：净网支持 LaTeX
 - 📱 **响应式设计**：适配桌面、平板、手机
 
+## 🌐 在线体验
+
+主站：`https://xjdh688.ccwu.cc`  
+后台管理：`https://xjdh688.ccwu.cc/admin.html`（需授权）  
+图床：`https://tc688.ccwu.cc`（Cloudflare Images + Hugging Face）  
+影视：`https://ys688.ccwu.cc`（MoonTVPlus）
+
+
 ## 🚀 快速部署
 
 1. **Fork 本仓库** 并克隆到本地
