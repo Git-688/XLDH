@@ -566,4 +566,4 @@ window.getPopularSites = function(limit = 5) {
 
 window.resetSiteStats = function() {
     return false;
-};
+}; 
