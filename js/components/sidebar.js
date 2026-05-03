@@ -74,7 +74,6 @@ class CompactSidebar {
         
         this.isInitialized = false;
         this.currentVideo = null;
-        // 留白配置
         this.gapConfig = {
             desktop: { min: 24, max: 60 },
             mobile: { min: 16, max: 40 }
@@ -83,12 +82,10 @@ class CompactSidebar {
         this.minSidebarHeight = 400;
     }
 
-    // 核心：计算侧滑栏位置、高度，并设置底部按钮区域为紧凑对称
     calcSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
 
-        // 动态获取导航栏实际高度
         const navbar = document.querySelector('.navbar');
         const actualNavbarHeight = navbar ? navbar.offsetHeight : this.navbarHeight;
         this.navbarHeight = actualNavbarHeight;
@@ -104,13 +101,11 @@ class CompactSidebar {
         const totalMargin = viewportHeight - this.navbarHeight - sidebarHeight;
         const margin = totalMargin / 2;
         
-        // 设置侧滑栏整体位置
         sidebar.style.top = `${this.navbarHeight + margin}px`;
         sidebar.style.height = `${sidebarHeight}px`;
         sidebar.style.bottom = 'auto';
         sidebar.style.maxHeight = 'none';
 
-        // 缩小底部按钮区域内边距，使其更紧凑
         const footer = sidebar.querySelector('.sidebar-footer');
         if (footer) {
             const basePadding = Math.max(8, Math.floor(margin * 0.4));
@@ -118,7 +113,6 @@ class CompactSidebar {
             
             footer.style.paddingTop = `${targetPadding}px`;
             footer.style.paddingBottom = `max(${targetPadding}px, env(safe-area-inset-bottom))`;
-            
             footer.style.marginTop = '0';
             footer.style.marginBottom = '0';
             footer.style.display = 'flex';
@@ -129,7 +123,6 @@ class CompactSidebar {
         this.adjustWallpaperSize();
     }
 
-    // 调整壁纸尺寸，保证和侧滑栏同宽、完整显示
     adjustWallpaperSize() {
         const sidebar = document.getElementById('sidebar');
         const wallpaper = document.getElementById('sidebarWallpaper');
@@ -428,13 +421,13 @@ class CompactSidebar {
             const categoriesContainer = sidebar.querySelector('.sidebar-categories');
             if (categoriesContainer) {
                 categoriesContainer.innerHTML = this.categories.map(category => `
-                    <div class="category-group ${category.expanded ? 'expanded' : ''}" data-category="${category.name}">
+                    <div class="category-group ${category.expanded ? 'expanded' : ''}" data-category="${Utils.escapeHtml(category.name)}">
                         <div class="category-group-header">
                             <div class="category-group-name">
                                 <div class="category-group-icon">
                                     <i class="${category.icon}"></i>
                                 </div>
-                                <span>${category.name}</span>
+                                <span>${Utils.escapeHtml(category.name)}</span>
                             </div>
                             <button class="category-toggle" aria-label="${category.expanded ? '收起' : '展开'}">
                                 <i class="fas fa-chevron-down"></i>
@@ -446,8 +439,8 @@ class CompactSidebar {
                                     <div class="category-icon">
                                         <i class="${item.icon}"></i>
                                     </div>
-                                    <div class="category-label">${item.label}</div>
-                                    ${item.badge ? `<div class="category-badge">${item.badge}</div>` : ''}
+                                    <div class="category-label">${Utils.escapeHtml(item.label)}</div>
+                                    ${item.badge ? `<div class="category-badge">${Utils.escapeHtml(item.badge)}</div>` : ''}
                                 </button>
                             `).join('')}
                         </div>
@@ -567,7 +560,6 @@ class CompactSidebar {
             if (!icon) return;
             const iconClass = icon.className;
             
-            // 星聚笔记按钮（紫色笔图标）
             if (iconClass.includes('fa-pen')) {
                 if (window.app && typeof window.app.showNotebookModal === 'function') {
                     window.app.showNotebookModal();
@@ -892,7 +884,7 @@ class CompactSidebar {
             if (!quoteElement) return;
             
             const quote = await this.getDailyQuote();
-            let cleanedQuote = quote.replace(/^["'「」"”‘’]|["'「」""”‘’]$/g, '').trim();
+            let cleanedQuote = quote.replace(/^["'「」"”'']|["'「」""”'']$/g, '').trim();
             if (!cleanedQuote) cleanedQuote = '每一天都是新的开始，充满无限可能。';
             
             quoteElement.textContent = cleanedQuote;
