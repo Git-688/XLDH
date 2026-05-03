@@ -1,9 +1,27 @@
 /**
- * 工具函数模块 - 精简版（仅保留项目实际使用的函数）
- * 注意：Toast 由 toast.js 统一管理，此处不再定义 window.toast
+ * 工具函数模块 - 统一公共方法
+ * 注意：Toast 由 toast.js 统一管理
  */
-
 class Utils {
+    /**
+     * 转义 HTML 防止 XSS
+     */
+    static escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML;
+    }
+
+    /**
+     * 格式化浏览次数
+     */
+    static formatViews(views) {
+        if (views >= 1000000) return `${(views / 1000000).toFixed(1).replace('.0', '')}M`;
+        if (views >= 1000) return `${(views / 1000).toFixed(1).replace('.0', '')}K`;
+        return views.toString();
+    }
+
     /**
      * 格式化时间（秒 -> 分:秒）
      */
@@ -43,16 +61,6 @@ class Utils {
      */
     static isMobile() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }
-
-    /**
-     * 转义 HTML 防止 XSS
-     */
-    static escapeHtml(text) {
-        if (text === null || text === undefined) return '';
-        const div = document.createElement('div');
-        div.textContent = String(text);
-        return div.innerHTML;
     }
 }
 
