@@ -1,4 +1,4 @@
-// 问候区模块 - 优化效果和显示（优化10：统一木鱼音效文件版）
+// 问候区模块 - 优化效果和显示（自制木鱼音效）
 class GreetingModule {
     constructor() {
         this.initialized = false;
@@ -6,10 +6,8 @@ class GreetingModule {
         this.holidayRefreshTimer = null;
         this.holidayCheckTimer = null;
         this.currentHoliday = null;
-        
-        // 统一的木鱼音效文件 URL
-        this.woodenFishSoundUrl = 'https://ak688.eu.cc/file/其他/1776844918501_木鱼.wav';
-        
+        // 音频上下文（懒初始化）
+        this.audioCtx = null;
         this.init();
     }
 
@@ -27,16 +25,41 @@ class GreetingModule {
         this.initialized = true;
     }
 
-    // ===== 播放木鱼音效（统一音频文件） =====
-    playWoodenFishSound() {
+    // ===== 自制木鱼音效（Web Audio API） =====
+    createWoodenFishSound() {
         try {
-            const audio = new Audio(this.woodenFishSoundUrl);
-            audio.volume = 0.5; // 音量适中
-            audio.play().catch(err => {
-                console.warn('音效播放失败:', err);
-            });
-        } catch (error) {
-            console.error('创建音频对象失败:', error);
+            if (!this.audioCtx) {
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            const ctx = this.audioCtx;
+            const now = ctx.currentTime;
+            
+            // 创建两个振荡器模拟木鱼敲击的“笃”声
+            const osc1 = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(800, now);
+            osc1.frequency.exponentialRampToValueAtTime(400, now + 0.02);
+            
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(1200, now);
+            osc2.frequency.exponentialRampToValueAtTime(600, now + 0.03);
+            
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            
+            osc1.connect(gainNode);
+            osc2.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            osc1.start(now);
+            osc2.start(now);
+            osc1.stop(now + 0.1);
+            osc2.stop(now + 0.1);
+        } catch (e) {
+            // 静默失败
         }
     }
 
@@ -442,7 +465,7 @@ class GreetingModule {
                     const btn = document.querySelector(`.fish-btn[data-type="${type}"]`);
                     if (btn) {
                         this.showFishEffect(btn);
-                        this.playWoodenFishSound(); // 快捷键也播放音效
+                        this.createWoodenFishSound(); // 使用自制音效
                     }
                 }
             }
@@ -457,8 +480,8 @@ class GreetingModule {
         
         const type = e.currentTarget.dataset.type;
         
-        // 播放统一音效
-        this.playWoodenFishSound();
+        // 播放自制木鱼音效
+        this.createWoodenFishSound();
         
         this.incrementFishCount(type, 1);
         this.showFishEffect(e.currentTarget);
