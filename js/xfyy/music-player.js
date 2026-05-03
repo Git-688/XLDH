@@ -232,6 +232,10 @@ class MusicPlayer {
 
         this.isHandlingNavigationClick = false;
         this.hasInitialized = false;
+
+        // 连续播放失败计数器
+        this.consecutiveErrors = 0;
+        this.maxConsecutiveErrors = 3;
     }
 
     initCoverObserver() {
@@ -496,7 +500,7 @@ class MusicPlayer {
         }).catch(error => {
             console.error('播放失败:', error);
             if (!this.isHandlingNavigationClick) {
-                window.toast.show('播放失败', 'error');
+                this.handlePlaybackError(error);
             }
         });
     }
@@ -606,7 +610,6 @@ class MusicPlayer {
             window.toast.show('该功能不支持搜索', 'info');
             return;
         }
-        // QQ 音乐搜索已禁用，直接提示
         if (apiId === 'qq') {
             window.toast.show('QQ音乐搜索暂不可用', 'info');
             return;
@@ -908,14 +911,28 @@ class MusicPlayer {
                 };
                 checkDuration();
             });
+            this.consecutiveErrors = 0; // 加载成功，重置错误计数
         } catch (error) {
             console.error('加载歌曲失败:', error);
             if (!this.isHandlingNavigationClick) {
-                window.toast.show('加载歌曲失败', 'error');
+                this.handlePlaybackError(error);
             }
         } finally {
             this.isLoading = false;
             this.elements.playBtn.disabled = false;
+        }
+    }
+
+    // 统一的音频错误处理（避免频繁弹窗）
+    handlePlaybackError(error) {
+        this.consecutiveErrors++;
+        if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
+            window.toast.show('连续多首资源失效，请尝试切换歌单', 'error');
+            this.consecutiveErrors = 0; // 重置
+        }
+        // 自动尝试下一首（如果允许）
+        if (this.autoPlayNext && this.currentPlaylist.length > 1) {
+            setTimeout(() => this.next(), 1000);
         }
     }
 
@@ -1108,13 +1125,9 @@ class MusicPlayer {
         this.audio.addEventListener('error', (e) => {
             console.error('音频加载错误:', e);
             if (!this.hasInitialized) return;
-            if (this.isHandlingNavigationClick) return;
             this.isLoading = false;
             if (!this.isHandlingNavigationClick) {
-                window.toast.show('音频加载失败，尝试下一首', 'error');
-                if (this.autoPlayNext) {
-                    setTimeout(() => this.next(), 1000);
-                }
+                this.handlePlaybackError(new Error('Audio load error'));
             }
             if (this.updateAnimationFrame) {
                 cancelAnimationFrame(this.updateAnimationFrame);
