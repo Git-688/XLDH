@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>星聚导航后台管理</title>
     
-    <!-- 移除 unsafe-eval，增强安全性 -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' 'unsafe-inline';
@@ -243,7 +242,7 @@
                 </div>
                 <div class="remember-checkbox">
                     <input type="checkbox" id="rememberToken">
-                    <label for="rememberToken">记住密码（8小时有效，⚠️ 仅受信任设备）</label>
+                    <label for="rememberToken">记住密码（1小时有效，⚠️ 仅受信任设备）</label>
                 </div>
                 <div id="loginLockMessage" class="lock-message"></div>
             </div>
@@ -305,7 +304,7 @@
 (function() {
     // ==================== 安全作用域：避免全局泄露 ====================
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
-    const TOKEN_EXPIRE_HOURS = 8;
+    const TOKEN_EXPIRE_HOURS = 1; // 1小时有效
     const MAX_FAIL_COUNT = 5;
     const LOCK_DURATION_MS = 10 * 60 * 1000;
 
