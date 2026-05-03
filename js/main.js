@@ -1,5 +1,5 @@
 /**
- * 星链导航主应用程序（反馈模态框 + KaTeX v0.16.45 官方标准配置）
+ * 星聚导航主应用程序（反馈模态框 + KaTeX v0.16.45 官方标准配置）
  */
 class App {
     constructor() {
@@ -19,15 +19,12 @@ class App {
         }
     }
 
-    // ========== 星聚笔记 API 配置 ==========
+    // ========== 星聚笔记 API 配置（由后端 Worker 代理，不再暴露密钥） ==========
     NOTEBOOK_CONFIG = {
-        apiUrl: 'https://cn.apihz.cn/api/cunchu/textzd.php',
-        id: '10014221',
-        key: '4a7768de1cf2e0f41fc0a4005240c837',
-        maxNumId: 20  // 最多查询的记录ID，可根据需要调整
+        apiUrl: 'https://api.xjdh688.ccwu.cc/notebook'  // 需在 Worker 中实现 /notebook 代理
     };
 
-    // 加载星聚笔记数据（并行请求）
+    // 加载星聚笔记数据（请求自己的 Worker）
     async loadNotebookData() {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
@@ -35,40 +32,30 @@ class App {
         listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
         
         try {
-            // 并行请求所有 numid
-            const promises = [];
-            for (let i = 1; i <= this.NOTEBOOK_CONFIG.maxNumId; i++) {
-                promises.push(
-                    fetch(`${this.NOTEBOOK_CONFIG.apiUrl}?id=${this.NOTEBOOK_CONFIG.id}&key=${this.NOTEBOOK_CONFIG.key}&numid=${i}`)
-                        .then(res => res.json())
-                        .then(data => ({ numid: i, ...data }))
-                        .catch(err => ({ numid: i, code: 500, msg: err.message }))
-                );
-            }
+            const response = await fetch(this.NOTEBOOK_CONFIG.apiUrl);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const result = await response.json();
             
-            const results = await Promise.all(promises);
-            
-            // 筛选有效记录 (code === 200 且标题和内容不为空)
-            const validItems = results.filter(item => {
-                if (item.code !== 200) return false;
+            // 兼容两种返回格式：{ items: [...] } 或直接数组
+            const items = Array.isArray(result) ? result : (result.data || result.items || []);
+            const validItems = items.filter(item => {
                 const title = item.title || '';
                 const words = item.words || '';
                 return title.trim() !== '' && words.trim() !== '';
             });
             
-            // ★ 修改：按记录ID正序排列（由旧到新，1、2、3...）
-            validItems.sort((a, b) => a.numid - b.numid);
+            // 按记录ID正序排列（由旧到新）
+            validItems.sort((a, b) => (a.numid || 0) - (b.numid || 0));
             
             if (validItems.length === 0) {
                 listEl.innerHTML = '<div class="empty">暂无笔记记录</div>';
                 return;
             }
             
-            // 渲染笔记列表
             const html = validItems.map(item => {
-                const title = this.escapeHtml(item.title.trim());
-                const time = this.escapeHtml(item.time || '--');
-                const words = this.escapeHtml(item.words.trim()).replace(/\n/g, '<br>');
+                const title = Utils.escapeHtml(item.title.trim());
+                const time = Utils.escapeHtml(item.time || '--');
+                const words = Utils.escapeHtml(item.words.trim()).replace(/\n/g, '<br>');
                 const numid = item.numid;
                 
                 return `
@@ -87,7 +74,7 @@ class App {
             
         } catch (error) {
             console.error('加载星聚笔记失败:', error);
-            listEl.innerHTML = `<div class="error">加载失败：${this.escapeHtml(error.message)}</div>`;
+            listEl.innerHTML = `<div class="error">加载失败：${Utils.escapeHtml(error.message)}</div>`;
         }
     }
 
@@ -136,7 +123,7 @@ class App {
     }
     // =========================================
 
-    // ========== 反馈模态框管理（官方标准配置，无额外处理）==========
+    // ========== 反馈模态框管理 ==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -150,7 +137,6 @@ class App {
                 el: '#twikoo-feedback',
                 lang: 'zh-CN',
                 path: '/feedback',
-                // 完全按照官方文档配置
                 katex: {
                     delimiters: [
                         { left: '$$', right: '$$', display: true },
@@ -163,7 +149,6 @@ class App {
                 onCommentLoaded: function() {
                     const container = document.getElementById('twikoo-feedback');
                     if (!container || typeof renderMathInElement === 'undefined') return;
-                    // 再次调用渲染，确保所有公式都被处理
                     renderMathInElement(container, {
                         delimiters: [
                             { left: '$$', right: '$$', display: true },
@@ -211,7 +196,7 @@ class App {
         this.setupGlobalEvents();
         this.initNotebookModalEvents();
         this.initFeedbackModalEvents();
-        this.initFloatingButtonsEffect(); // 新增：悬浮按钮滚动效果
+        this.initFloatingButtonsEffect();
         this.isInitialized = true;
         
         window.openFeedbackModal = this.openFeedbackModal.bind(this);
@@ -220,7 +205,7 @@ class App {
         window.hideNotebookModal = this.hideNotebookModal.bind(this);
     }
 
-    // ========== 新增：悬浮按钮滚动半透明效果 ==========
+    // 悬浮按钮滚动半透明效果
     initFloatingButtonsEffect() {
         let scrollTimer;
         const floatingBtns = document.querySelector('.floating-buttons');
@@ -236,7 +221,6 @@ class App {
             }, 1000);
         }, { passive: true });
     }
-    // =========================================
 
     initCoreComponents() {
         try {
@@ -267,10 +251,8 @@ class App {
                         this.modules.search = new SearchModule();
                         window.searchModule = this.modules.search;
                         initPromises.push(this.modules.search.init?.());
-                        console.log('搜索模块已通过App初始化');
                     } else {
                         this.modules.search = window.searchModule;
-                        console.log('使用现有的搜索模块实例');
                     }
                 } catch (error) {
                     console.error('搜索模块初始化失败:', error);
@@ -481,12 +463,6 @@ class App {
 
     showToast(message, type = 'info') {
         window.toast.show(message, type);
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     getVisitStats() {
