@@ -1,5 +1,5 @@
 /**
- * 星聚导航主应用程序（反馈模态框 + KaTeX v0.16.45 官方标准配置）
+ * 星聚导航主应用程序（Waline 评论系统版本）
  */
 class App {
     constructor() {
@@ -19,12 +19,12 @@ class App {
         }
     }
 
-    // ========== 星聚笔记 API 配置（由后端 Worker 代理，不再暴露密钥） ==========
+    // ========== 星聚笔记 API 配置（由后端 Worker 代理） ==========
     NOTEBOOK_CONFIG = {
-        apiUrl: 'https://api.xjdh688.ccwu.cc/notebook'  // 需在 Worker 中实现 /notebook 代理
+        apiUrl: 'https://api.xjdh688.ccwu.cc/notebook'
     };
 
-    // 加载星聚笔记数据（请求自己的 Worker）
+    // 加载星聚笔记数据
     async loadNotebookData() {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
@@ -36,7 +36,6 @@ class App {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const result = await response.json();
             
-            // 兼容两种返回格式：{ items: [...] } 或直接数组
             const items = Array.isArray(result) ? result : (result.data || result.items || []);
             const validItems = items.filter(item => {
                 const title = item.title || '';
@@ -44,7 +43,6 @@ class App {
                 return title.trim() !== '' && words.trim() !== '';
             });
             
-            // 按记录ID正序排列（由旧到新）
             validItems.sort((a, b) => (a.numid || 0) - (b.numid || 0));
             
             if (validItems.length === 0) {
@@ -123,7 +121,7 @@ class App {
     }
     // =========================================
 
-    // ========== 反馈模态框管理 ==========
+    // ========== 反馈模态框管理（Waline 版本） ==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
@@ -131,36 +129,41 @@ class App {
         modal.style.display = 'flex';
         modal.classList.add('active');
         
-        if (!window.twikooFeedbackInited && typeof twikoo !== 'undefined') {
-            twikoo.init({
-                envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
-                el: '#twikoo-feedback',
-                lang: 'zh-CN',
-                path: '/feedback',
-                katex: {
-                    delimiters: [
-                        { left: '$$', right: '$$', display: true },
-                        { left: '$', right: '$', display: false },
-                        { left: '\\(', right: '\\)', display: false },
-                        { left: '\\[', right: '\\]', display: true }
-                    ],
-                    throwOnError: false
-                },
-                onCommentLoaded: function() {
-                    const container = document.getElementById('twikoo-feedback');
-                    if (!container || typeof renderMathInElement === 'undefined') return;
-                    renderMathInElement(container, {
-                        delimiters: [
-                            { left: '$$', right: '$$', display: true },
-                            { left: '$', right: '$', display: false },
-                            { left: '\\(', right: '\\)', display: false },
-                            { left: '\\[', right: '\\]', display: true }
-                        ],
-                        throwOnError: false
+        // Waline 初始化（仅首次执行）
+        if (!window.walineFeedbackInited) {
+            const walineContainer = document.getElementById('twikoo-feedback');
+            if (walineContainer) {
+                walineContainer.innerHTML = ''; // 清空容器
+                
+                // 使用 CDN 导入 Waline
+                import('https://unpkg.com/@waline/client@v3/dist/waline.js')
+                    .then(({ init }) => {
+                        init({
+                            el: '#twikoo-feedback',
+                            serverURL: 'https://yy688.ccwu.cc/',  // 你的 Waline 服务地址
+                            lang: 'zh-CN',
+                            dark: 'auto',                                 // 自动跟随系统暗色模式
+                            path: '/feedback',                            // 评论路径，区分不同页面
+                            pageSize: 10,                                 // 每页评论数
+                            requiredMeta: ['nick', 'mail'],              // 必填字段
+                            login: 'enable',                              // 允许登录注册
+                            wordLimit: 1000,                              // 评论字数限制
+                            imageUploader: false,                         // 禁用图片上传（可选）
+                            highlighter: true,                            // 启用代码高亮
+                            texRenderer: true,                            // 启用 KaTeX 支持
+                            search: false,                                // 禁用表情包搜索
+                            recaptchaV3Key: '',                           // Turnstile 不需要此参数
+                            turnstileKey: '',                             // 如需验证可配置 Turnstile
+                        });
+                        
+                        window.walineFeedbackInited = true;
+                        console.log('✅ Waline 评论系统初始化成功');
+                    })
+                    .catch(err => {
+                        console.error('Waline 初始化失败:', err);
+                        walineContainer.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;">评论系统加载失败，请刷新页面重试</div>';
                     });
-                }
-            });
-            window.twikooFeedbackInited = true;
+            }
         }
     }
 
@@ -174,7 +177,7 @@ class App {
 
     initFeedbackModalEvents() {
         const modal = document.getElementById('feedbackModal');
-        const closeBtn = document.querySelector('.feedback-modal-close');
+        const closeBtn = modal?.querySelector('.feedback-modal-close');
         if (modal) {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) this.closeFeedbackModal();
