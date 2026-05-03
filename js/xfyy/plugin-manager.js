@@ -13,24 +13,32 @@ class PluginManager {
     }
 
     initializePlugins() {
-        // 网易云音乐插件
+        // 网易云音乐插件（换成 api.injahow.cn 源，更稳定）
         this.registerPlugin('netease', {
             name: '网易云音乐',
-            version: '1.0.0',
-            description: '基于网易云音乐API',
+            version: '2.0.0',
+            description: '基于 injahow 网易云音乐API',
             getPlaylist: async (playlistId) => {
                 const cacheKey = `netease_playlist_${playlistId}`;
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+
                 try {
-                    const response = await fetch(`https://api.i-meto.com/meting/api?server=netease&type=playlist&id=${playlistId}`);
+                    const response = await fetch(
+                        `https://api.injahow.cn/meting/?server=netease&type=playlist&id=${playlistId}`,
+                        { signal: controller.signal }
+                    );
+                    clearTimeout(timeoutId);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
-                    const formatted = data.map(song => this.formatSong(song, 'netease'));
+                    const formatted = Array.isArray(data) ? data.map(song => this.formatSong(song, 'netease')) : [];
                     this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
                     return formatted;
                 } catch (error) {
+                    clearTimeout(timeoutId);
                     console.error('网易云歌单请求失败:', error);
                     return [];
                 }
@@ -40,21 +48,29 @@ class PluginManager {
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 6000);
+
                 try {
-                    const response = await fetch(`https://api.i-meto.com/meting/api?server=netease&type=search&id=${encodeURIComponent(keyword)}`);
+                    const response = await fetch(
+                        `https://api.injahow.cn/meting/?server=netease&type=search&id=${encodeURIComponent(keyword)}`,
+                        { signal: controller.signal }
+                    );
+                    clearTimeout(timeoutId);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
-                    const formatted = data.map(song => this.formatSong(song, 'netease'));
+                    const formatted = Array.isArray(data) ? data.map(song => this.formatSong(song, 'netease')) : [];
                     this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
                     return formatted;
                 } catch (error) {
+                    clearTimeout(timeoutId);
                     console.error('网易云搜索请求失败:', error);
                     return [];
                 }
             }
         });
 
-        // QQ音乐插件（修复搜索功能，移除 AbortSignal.timeout）
+        // QQ音乐插件（保持不变，仅修复注释）
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '2.2.0',
@@ -66,7 +82,6 @@ class PluginManager {
                 if (cached) return cached;
 
                 try {
-                    // 手动实现超时取消
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 5000);
                     const response = await fetch(
@@ -137,7 +152,6 @@ class PluginManager {
                 }
             },
 
-            // 搜索功能禁用，返回空数组，前端会提示“该功能不支持搜索”
             search: async (keyword, count = 20) => {
                 return [];
             }
@@ -149,12 +163,16 @@ class PluginManager {
             version: '1.0.0',
             description: '基于抖音热歌榜API',
             getPlaylist: async (playlistId) => {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
                 try {
-                    const response = await fetch('https://api.injahow.cn/meting/?type=playlist&id=2809513713');
+                    const response = await fetch('https://api.injahow.cn/meting/?type=playlist&id=2809513713', { signal: controller.signal });
+                    clearTimeout(timeoutId);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
                     return this.formatDouyinResponse(data);
                 } catch (error) {
+                    clearTimeout(timeoutId);
                     console.error('抖音热歌榜请求失败:', error);
                     return [];
                 }
