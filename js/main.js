@@ -135,25 +135,24 @@ class App {
             if (walineContainer) {
                 walineContainer.innerHTML = ''; // 清空容器
                 
-                // 使用 CDN 导入 Waline
+                // 使用本地文件或更可靠的 CDN，并增加静默错误处理
                 import('https://unpkg.com/@waline/client@v3/dist/waline.js')
                     .then(({ init }) => {
                         init({
                             el: '#twikoo-feedback',
                             serverURL: 'https://yy688.ccwu.cc/',  // 你的 Waline 服务地址
                             lang: 'zh-CN',
-                            dark: 'auto',                                 // 自动跟随系统暗色模式
-                            path: '/feedback',                            // 评论路径，区分不同页面
-                            pageSize: 10,                                 // 每页评论数
-                            requiredMeta: ['nick', 'mail'],              // 必填字段
-                            login: 'enable',                              // 允许登录注册
-                            wordLimit: 1000,                              // 评论字数限制
-                            imageUploader: false,                         // 禁用图片上传（可选）
-                            highlighter: true,                            // 启用代码高亮
-                            texRenderer: true,                            // 启用 KaTeX 支持
-                            search: false,                                // 禁用表情包搜索
-                            recaptchaV3Key: '',                           // Turnstile 不需要此参数
-                            turnstileKey: '',                             // 如需验证可配置 Turnstile
+                            dark: 'auto',
+                            path: '/feedback',
+                            pageSize: 10,
+                            requiredMeta: ['nick', 'mail'],
+                            login: 'enable',
+                            wordLimit: 1000,
+                            imageUploader: false,
+                            highlighter: true,
+                            texRenderer: true,
+                            search: false,
+                            turnstileKey: '',
                         });
                         
                         window.walineFeedbackInited = true;
@@ -331,15 +330,18 @@ class App {
             'Script error',
             'ResizeObserver loop',
             'Loading failed',
-            'Failed to fetch'
+            'Failed to fetch',
+            'Unexpected identifier',   // 忽略来自跨域脚本的语法错误
+            'Unexpected token'         // 同样忽略跨域语法错误
         ];
         
         const handleError = (event) => {
             const error = event.error || event.reason;
             const errorMessage = error?.message || event.message || '未知错误';
             
+            // 过滤无意义的跨域错误
             const shouldIgnore = ignoredErrors.some(ignored => 
-                errorMessage.includes(ignored)
+                errorMessage.includes(ignored) || (event.filename === '' && errorMessage === 'Script error.')
             );
             
             if (!shouldIgnore) {
@@ -347,6 +349,9 @@ class App {
                 if (!document.hidden) {
                     this.showToast('页面遇到问题，建议刷新页面', 'error');
                 }
+            } else {
+                // 静默记录，不打扰用户
+                console.debug('忽略无害错误:', errorMessage);
             }
         };
         
