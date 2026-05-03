@@ -217,12 +217,20 @@ class NewSearchModule {
         this.history.forEach(query => {
             const item = document.createElement('div');
             item.className = 'history-item';
-            item.innerHTML = `<span class="history-text">${query}</span><i class="fas fa-times delete-history"></i>`;
-            item.querySelector('.history-text').addEventListener('click', () => {
+            // 使用安全的文本节点，避免 XSS
+            const textSpan = document.createElement('span');
+            textSpan.className = 'history-text';
+            textSpan.textContent = query;
+            const deleteIcon = document.createElement('i');
+            deleteIcon.className = 'fas fa-times delete-history';
+            item.appendChild(textSpan);
+            item.appendChild(deleteIcon);
+
+            textSpan.addEventListener('click', () => {
                 this.input.value = query;
                 this.submitSearch();
             });
-            item.querySelector('.delete-history').addEventListener('click', (e) => {
+            deleteIcon.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.removeHistory(query);
             });
