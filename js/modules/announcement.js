@@ -1,5 +1,5 @@
 /**
- * 简约公告模块 - 清爽现代版（独立 escapeHtml）
+ * 简约公告模块 - 清爽现代版（使用 Utils.escapeHtml）
  * @class AnnouncementModule
  */
 class AnnouncementModule {
@@ -14,13 +14,7 @@ class AnnouncementModule {
         this.init();
     }
 
-    // 内嵌 escapeHtml 方法
-    escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+    // 移除内嵌 escapeHtml，统一使用全局 Utils.escapeHtml
 
     init() {
         if (this.isInitialized) return;
@@ -64,7 +58,6 @@ class AnnouncementModule {
         return [{
             id: 'static_announcement',
             title: '系统公告',
-            // ★ 已移除欢迎语
             focus: '本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台。',
             updates: [
                 '全新界面设计-更加现代化和美观的视觉体验',
@@ -89,10 +82,11 @@ class AnnouncementModule {
         this.modalElement.id = 'announcementModal';
 
         const ann = this.currentAnnouncement || {};
-        const title = this.escapeHtml(ann.title || '公告');
-        const focus = this.escapeHtml(ann.focus || '');
+        // 使用 Utils.escapeHtml 转义
+        const title = Utils.escapeHtml(ann.title || '公告');
+        const focus = Utils.escapeHtml(ann.focus || '');
         const updates = ann.updates && Array.isArray(ann.updates) ? ann.updates : [];
-        const time = this.escapeHtml(ann.time || new Date().toLocaleDateString());
+        const time = Utils.escapeHtml(ann.time || new Date().toLocaleDateString());
 
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
@@ -119,7 +113,7 @@ class AnnouncementModule {
                             <span>更新内容</span>
                         </div>
                         <ul class="updates-list">
-                            ${updates.map(item => `<li>${this.escapeHtml(item)}</li>`).join('')}
+                            ${updates.map(item => `<li>${Utils.escapeHtml(item)}</li>`).join('')}
                         </ul>
                     </div>
                 </div>
@@ -187,14 +181,6 @@ class AnnouncementModule {
         return this.announcements.filter(a => !a.read).length;
     }
 
-    adjustMaskPosition() {
-        // 不再需要动态调整 top/height，因为使用 flex 居中
-    }
-
-    onResize = () => {
-        // 不再需要，保留为空即可
-    };
-
     showModal() {
         if (!this.modalElement) this.createModal();
         if (this.isVisible) return;
@@ -247,6 +233,9 @@ class AnnouncementModule {
         const btn = document.getElementById('announcementBtn');
         if (btn) btn.classList.toggle('active', active);
     }
+
+    // 占位方法（保持兼容）
+    onResize() {}
 
     resetAnnouncements() {
         this.announcements = this.getDefaultAnnouncements();
