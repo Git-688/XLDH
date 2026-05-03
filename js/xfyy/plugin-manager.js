@@ -1,6 +1,7 @@
 /**
  * 插件管理器 - 支持多个音乐API源
  * 仅保留网易云、QQ音乐、抖音热歌榜、本地音乐
+ * 修复 QQ 音乐搜索不返回结果的问题（改为返回空数组，并禁用搜索入口）
  */
 
 class PluginManager {
@@ -53,10 +54,10 @@ class PluginManager {
             }
         });
 
-        // QQ音乐插件（修复）
+        // QQ音乐插件（修复搜索功能，移除 AbortSignal.timeout）
         this.registerPlugin('qq', {
             name: 'QQ音乐',
-            version: '2.1.0',
+            version: '2.2.0',
             description: '云智热歌榜 + Meting解析，支持直接播放+自动获取歌曲封面',
 
             _getSongInfoBySongmid: async function(songmid) {
@@ -65,10 +66,14 @@ class PluginManager {
                 if (cached) return cached;
 
                 try {
+                    // 手动实现超时取消
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
                     const response = await fetch(
                         `https://api.i-meto.com/meting/api?server=tencent&type=song&id=${songmid}`,
-                        { signal: AbortSignal.timeout(5000) }
+                        { signal: controller.signal }
                     );
+                    clearTimeout(timeoutId);
                     
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
@@ -94,10 +99,13 @@ class PluginManager {
                 if (cached) return cached;
 
                 try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
                     const hotResponse = await fetch(
                         `https://yunzhiapi.cn/API/qqrgbd.php?token=XIZhAXKnSQcH&count=${safeCount}`,
-                        { signal: AbortSignal.timeout(8000) }
+                        { signal: controller.signal }
                     );
+                    clearTimeout(timeoutId);
                     
                     if (!hotResponse.ok) throw new Error(`热歌榜HTTP错误: ${hotResponse.status}`);
                     const hotResult = await hotResponse.json();
@@ -129,8 +137,9 @@ class PluginManager {
                 }
             },
 
+            // 搜索功能禁用，返回空数组，前端会提示“该功能不支持搜索”
             search: async (keyword, count = 20) => {
-                return await this.getPlaylist(null, count);
+                return [];
             }
         });
 
@@ -249,7 +258,7 @@ class PluginManager {
     async search(apiId, keyword) {
         const plugin = this.getPlugin(apiId);
         if (!plugin || !plugin.search) {
-            throw new Error(`插件 ${apiId} 不支持搜索`);
+            return [];
         }
         return await plugin.search(keyword);
     }
@@ -271,4 +280,4 @@ class PluginManager {
     }
 }
 
-window.PluginManager = PluginManager; 
+window.PluginManager = PluginManager;
