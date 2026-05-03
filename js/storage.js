@@ -4,12 +4,9 @@
 class Storage {
     static PREFIX = 'starlink_';
     
-    // ==================== 基础存储方法 ====================
-    
     static get(key, defaultValue = null) {
         try {
-            const prefixedKey = this.PREFIX + key;
-            const item = localStorage.getItem(prefixedKey);
+            const item = localStorage.getItem(this.PREFIX + key);
             return item === null ? defaultValue : JSON.parse(item);
         } catch (error) {
             console.error(`获取存储数据失败 (${key}):`, error);
@@ -19,8 +16,7 @@ class Storage {
 
     static set(key, value) {
         try {
-            const prefixedKey = this.PREFIX + key;
-            localStorage.setItem(prefixedKey, JSON.stringify(value));
+            localStorage.setItem(this.PREFIX + key, JSON.stringify(value));
             return true;
         } catch (error) {
             console.error(`设置存储数据失败 (${key}):`, error);
@@ -30,8 +26,7 @@ class Storage {
 
     static remove(key) {
         try {
-            const prefixedKey = this.PREFIX + key;
-            localStorage.removeItem(prefixedKey);
+            localStorage.removeItem(this.PREFIX + key);
             return true;
         } catch (error) {
             console.error(`删除存储数据失败 (${key}):`, error);
@@ -138,16 +133,6 @@ class Storage {
             return normalized;
         } catch {
             return url;
-        }
-    }
-
-    static formatViews(views) {
-        if (views >= 1000000) {
-            return `${(views / 1000000).toFixed(1).replace('.0', '')}M`;
-        } else if (views >= 1000) {
-            return `${(views / 1000).toFixed(1).replace('.0', '')}K`;
-        } else {
-            return views.toString();
         }
     }
 
