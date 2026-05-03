@@ -27,9 +27,6 @@ class AboutModule {
         };
     }
 
-    /**
-     * 初始化关于网站模块
-     */
     init() {
         if (this.isInitialized) {
             return Promise.resolve();
@@ -42,9 +39,6 @@ class AboutModule {
         return Promise.resolve();
     }
 
-    /**
-     * 创建模态框DOM结构
-     */
     createModal() {
         if (this.modalElement) {
             this.modalElement.remove();
@@ -53,7 +47,6 @@ class AboutModule {
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'about-modal';
         this.modalElement.innerHTML = this.renderModal();
-        // ===== 移除内联 padding，让 about.css 的响应式 padding 生效 =====
         this.modalElement.style.cssText = `
             position: fixed;
             top: 0;
@@ -73,13 +66,9 @@ class AboutModule {
         this.bindModalEvents();
     }
 
-    /**
-     * 渲染模态框内容
-     */
     renderModal() {
         return `
             <div class="about-modal-content">
-                <!-- 顶部区域 - 带壁纸背景 -->
                 <div class="about-header">
                     <div class="about-header-bg" style="background-image: url('${Utils.escapeHtml(this.wallpaperUrl)}')"></div>
                     <div class="about-header-overlay"></div>
@@ -114,7 +103,6 @@ class AboutModule {
                     </div>
                 </div>
                 
-                <!-- 中部内容区域 - 不滚动 -->
                 <div class="about-main-content">
                     <div class="about-cards">
                         <div class="about-card">
@@ -138,7 +126,6 @@ class AboutModule {
                     </div>
                 </div>
                 
-                <!-- 底部按钮区域 - 白色背景 -->
                 <div class="about-footer">
                     <div class="about-action-buttons">
                         <div class="about-social-buttons">
@@ -168,9 +155,6 @@ class AboutModule {
         `;
     }
 
-    /**
-     * 绑定模态框事件
-     */
     bindModalEvents() {
         if (!this.modalElement) return;
 
@@ -185,9 +169,6 @@ class AboutModule {
         this.preloadImages();
     }
 
-    /**
-     * 预加载图片
-     */
     preloadImages() {
         const wallpaperImg = new Image();
         wallpaperImg.onload = () => {};
@@ -208,9 +189,6 @@ class AboutModule {
         logoImg.src = this.logoUrl;
     }
 
-    /**
-     * 绑定按钮事件
-     */
     bindButtonEvents() {
         const qqBtn = document.getElementById('aboutQQBtn');
         if (qqBtn) {
@@ -225,7 +203,6 @@ class AboutModule {
                 const btn = e.currentTarget;
                 const originalHTML = btn.innerHTML;
                 btn.innerHTML = '<span>微信号: example</span>';
-                
                 setTimeout(() => {
                     btn.innerHTML = originalHTML;
                 }, 3000);
@@ -260,9 +237,6 @@ class AboutModule {
         }
     }
 
-    /**
-     * 显示收款模态框（自适应按钮 + 移动端缩小一半）
-     */
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
@@ -285,18 +259,16 @@ class AboutModule {
             pointer-events: auto;
         `;
 
-        // 注入全局样式（移动端按钮缩小）
         const style = document.createElement('style');
         style.textContent = `
             .donate-modal-content {
                 font-size: 10px !important;
             }
-            /* 按钮自适应 + 缩小 + 居中 */
             .donate-method-btn-left {
                 width: 100%;
-                max-width: 48px;          /* 移动端最大宽度，桌面端可适当放大 */
+                max-width: 48px;
                 aspect-ratio: 1 / 1;
-                margin: 0 auto;           /* 在网格单元格内居中 */
+                margin: 0 auto;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -309,7 +281,7 @@ class AboutModule {
                 padding: 0;
             }
             .donate-method-btn-left i {
-                font-size: clamp(1rem, 4vw, 1.3rem);  /* 图标随容器缩放 */
+                font-size: clamp(1rem, 4vw, 1.3rem);
                 transition: transform 0.2s;
             }
             .donate-method-btn-left.active {
@@ -321,10 +293,9 @@ class AboutModule {
             .donate-method-btn-left.active i {
                 transform: scale(1.1);
             }
-            /* 左右正方形卡片防止溢出 */
             .donate-card-wrapper {
                 flex: 1;
-                min-width: 0;                 
+                min-width: 0;
                 aspect-ratio: 1 / 1;
                 background: rgba(255,255,255,0.5);
                 backdrop-filter: blur(10px);
@@ -337,7 +308,6 @@ class AboutModule {
                 justify-content: center;
                 box-sizing: border-box;
             }
-            /* 桌面端可适当放大按钮 */
             @media (min-width: 768px) {
                 .donate-method-btn-left {
                     max-width: 64px;
@@ -366,9 +336,7 @@ class AboutModule {
                 transition: transform 0.3s ease;
                 pointer-events: auto;
             ">
-                <!-- 第一行：左右两个完全等大的正方形卡片 -->
                 <div style="display: flex; gap: 12px; padding: 16px 16px 0; min-width: 0;">
-                    <!-- 左侧正方形卡片 -->
                     <div class="donate-card-wrapper">
                         <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0;">感谢支持</h3>
                         <p style="font-size: 10px; color: #64748b; margin: 0 0 12px 0;">您的支持是我持续更新的动力</p>
@@ -388,7 +356,6 @@ class AboutModule {
                         </div>
                     </div>
 
-                    <!-- 右侧正方形卡片 -->
                     <div class="donate-card-wrapper" style="position: relative;">
                         <div class="qrcode-content active" data-type="qq" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
                             <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ" style="max-width: 80%; max-height: 80%; object-fit: contain;">
@@ -410,7 +377,6 @@ class AboutModule {
                     </div>
                 </div>
 
-                <!-- 第二行：单个圆角卡片 -->
                 <div style="padding: 12px 16px 16px;">
                     <div style="
                         background: rgba(255,255,255,0.5);
@@ -449,7 +415,6 @@ class AboutModule {
                     </div>
                 </div>
             </div>
-            <!-- 关闭按钮在模态框外部底部 -->
             <button class="donate-close-btn-bottom" style="
                 margin-top: 12px;
                 background: rgba(255,255,255,0.7);
@@ -473,22 +438,16 @@ class AboutModule {
 
         document.body.appendChild(donateModal);
 
-        // 显示动画
         setTimeout(() => {
             donateModal.style.opacity = '1';
             const content = donateModal.querySelector('.donate-modal-content');
             content.style.transform = 'scale(1)';
         }, 10);
 
-        // 绑定事件
         this.bindNewDonateEvents(donateModal);
     }
 
-    /**
-     * 绑定新捐款模态框事件
-     */
     bindNewDonateEvents(donateModal) {
-        // 关闭按钮事件
         const closeBtn = donateModal.querySelector('.donate-close-btn-bottom');
         const hideDonateModal = () => {
             donateModal.style.opacity = '0';
@@ -503,14 +462,12 @@ class AboutModule {
 
         closeBtn.addEventListener('click', hideDonateModal);
 
-        // 点击背景关闭
         donateModal.addEventListener('click', (e) => {
             if (e.target === donateModal) {
                 hideDonateModal();
             }
         });
 
-        // ESC 关闭
         const handleKeydown = (e) => {
             if (e.key === 'Escape') {
                 hideDonateModal();
@@ -519,17 +476,13 @@ class AboutModule {
         };
         document.addEventListener('keydown', handleKeydown);
 
-        // 左侧按钮切换右侧内容 + 激活优化
         const buttons = donateModal.querySelectorAll('.donate-method-btn-left');
         const contents = donateModal.querySelectorAll('.qrcode-content');
 
-        // 激活状态的辅助函数
         const setActive = (activeBtn) => {
             buttons.forEach(b => {
                 b.classList.remove('active');
                 b.style.background = 'rgba(255,255,255,0.7)';
-                const borderColor = b.style.borderColor;
-                b.style.borderColor = borderColor;
             });
             activeBtn.classList.add('active');
             const activeColor = activeBtn.style.color || '#6BC5FF';
@@ -537,7 +490,6 @@ class AboutModule {
             activeBtn.style.borderColor = 'transparent';
         };
 
-        // 默认激活 QQ
         const defaultBtn = donateModal.querySelector('.donate-method-btn-left[data-type="qq"]');
         if (defaultBtn) {
             setActive(defaultBtn);
@@ -547,10 +499,8 @@ class AboutModule {
             btn.addEventListener('click', () => {
                 const type = btn.dataset.type;
 
-                // 激活指示
                 setActive(btn);
 
-                // 显示对应内容
                 contents.forEach(content => {
                     if (content.dataset.type === type) {
                         content.style.display = 'flex';
@@ -564,18 +514,12 @@ class AboutModule {
         });
     }
 
-    /**
-     * 处理键盘事件
-     */
     handleKeydown(e) {
         if (e.key === 'Escape' && this.isShowing) {
             this.hide();
         }
     }
 
-    /**
-     * 绑定全局事件
-     */
     bindGlobalEvents() {
         const aboutBtn = document.getElementById('aboutBtn');
         if (aboutBtn) {
@@ -585,9 +529,6 @@ class AboutModule {
         }
     }
 
-    /**
-     * 显示关于网站模态框
-     */
     show() {
         if (!this.modalElement) {
             this.createModal();
@@ -615,9 +556,6 @@ class AboutModule {
         }
     }
 
-    /**
-     * 隐藏关于网站模态框
-     */
     hide() {
         if (!this.isShowing || !this.modalElement) return;
 
@@ -635,9 +573,6 @@ class AboutModule {
         }, 300);
     }
 
-    /**
-     * 销毁模块
-     */
     destroy() {
         this.hide();
         
@@ -652,9 +587,6 @@ class AboutModule {
         this.isInitialized = false;
     }
 
-    /**
-     * 获取模块状态
-     */
     getStatus() {
         return {
             initialized: this.isInitialized,
@@ -669,32 +601,20 @@ class AboutModule {
         };
     }
 
-    /**
-     * 设置壁纸URL
-     */
     setWallpaper(url) {
         this.wallpaperUrl = url;
         this.refresh();
     }
 
-    /**
-     * 设置logo图片URL
-     */
     setLogo(url) {
         this.logoUrl = url;
         this.refresh();
     }
 
-    /**
-     * 设置收款码图片路径
-     */
     setQrCodes(codes) {
         this.qrCodes = {...this.qrCodes, ...codes};
     }
 
-    /**
-     * 刷新模态框内容
-     */
     refresh() {
         if (this.modalElement) {
             const contentElement = this.modalElement.querySelector('.about-modal-content');
@@ -710,17 +630,9 @@ class AboutModule {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.aboutModule = new AboutModule();
-        window.aboutModule.init().then(() => {
-        }).catch(error => {
-        });
+        window.aboutModule.init();
     });
 } else {
     window.aboutModule = new AboutModule();
-    window.aboutModule.init().then(() => {
-    }).catch(error => {
-    });
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AboutModule;
+    window.aboutModule.init();
 }
