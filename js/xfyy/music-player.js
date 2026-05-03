@@ -454,24 +454,19 @@ class MusicPlayer {
         if (this.lyricsLineEl) {
             const lyricText = this.lyricsData[activeIndex].text || '';
 
-            // 移除跑马灯和过渡
             this.lyricsLineEl.classList.remove('overflow');
             this.lyricsLineEl.style.transition = 'none';
 
-            // 初始状态：上浮 + 淡入
             this.lyricsLineEl.style.opacity = '0.4';
             this.lyricsLineEl.style.transform = 'translateY(3px)';
             this.lyricsLineEl.textContent = lyricText;
 
-            // 强制重绘
             void this.lyricsLineEl.offsetWidth;
 
-            // 设置过渡，回到正常
             this.lyricsLineEl.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
             this.lyricsLineEl.style.opacity = '1';
             this.lyricsLineEl.style.transform = 'translateY(0)';
 
-            // 检测是否需要跑马灯
             const checkOverflow = () => {
                 if (this.lyricsLineEl.scrollWidth > this.lyricsLineEl.clientWidth) {
                     this.lyricsLineEl.classList.add('overflow');
@@ -611,6 +606,11 @@ class MusicPlayer {
             window.toast.show('该功能不支持搜索', 'info');
             return;
         }
+        // QQ 音乐搜索已禁用，直接提示
+        if (apiId === 'qq') {
+            window.toast.show('QQ音乐搜索暂不可用', 'info');
+            return;
+        }
         const elements = this.apiElements[apiId];
         if (!elements) return;
         const isSearch = this.isSearchMode.get(apiId) || false;
@@ -700,7 +700,7 @@ class MusicPlayer {
             if (elements.playlistContainer) {
                 elements.playlistContainer.innerHTML = `
                     <div class="error-message">
-                        <p>加载失败: ${error.message}</p>
+                        <p>加载失败: ${Utils.escapeHtml(error.message)}</p>
                         <button class="retry-btn" onclick="musicPlayer.loadApiPlaylist('${apiId}')">重试</button>
                     </div>
                 `;
@@ -716,7 +716,7 @@ class MusicPlayer {
     }
 
     async searchApi(apiId) {
-        if (apiId === 'migu' || apiId === 'local') {
+        if (apiId === 'migu' || apiId === 'local' || apiId === 'qq') {
             const cacheKey = `searched_${apiId}`;
             if (!localStorage.getItem(cacheKey)) {
                 window.toast.show('该功能不支持搜索', 'info');
@@ -743,7 +743,7 @@ class MusicPlayer {
         } catch (error) {
             console.error(`搜索失败:`, error);
             if (elements.searchResults) {
-                elements.searchResults.innerHTML = `<div class="error-message"><p>搜索失败: ${error.message}</p></div>`;
+                elements.searchResults.innerHTML = `<div class="error-message"><p>搜索失败: ${Utils.escapeHtml(error.message)}</p></div>`;
             }
             window.toast.show('搜索失败', 'error');
         }
@@ -793,13 +793,13 @@ class MusicPlayer {
         }
         const coverUrl = song.cover || '';
         const coverHtml = coverUrl
-            ? `<img class="song-cover" data-src="${this.escapeHtml(coverUrl)}" alt="" loading="lazy" style="display:none;">`
+            ? `<img class="song-cover" data-src="${Utils.escapeHtml(coverUrl)}" alt="" loading="lazy" style="display:none;">`
             : '';
         songItem.innerHTML = `
             ${coverHtml}
             <div class="song-item-info">
-                <div class="song-item-title">${this.escapeHtml(song.title || '未知歌曲')}</div>
-                <div class="song-item-artist">${this.escapeHtml(song.artist || '未知歌手')}</div>
+                <div class="song-item-title">${Utils.escapeHtml(song.title || '未知歌曲')}</div>
+                <div class="song-item-artist">${Utils.escapeHtml(song.artist || '未知歌手')}</div>
             </div>
         `;
         if (index < 5 && coverUrl) {
@@ -837,8 +837,8 @@ class MusicPlayer {
         songItem.className = 'song-item';
         songItem.innerHTML = `
             <div class="song-item-info">
-                <div class="song-item-title">${this.escapeHtml(song.title || '未知歌曲')}</div>
-                <div class="song-item-artist">${this.escapeHtml(song.artist || '未知歌手')}</div>
+                <div class="song-item-title">${Utils.escapeHtml(song.title || '未知歌曲')}</div>
+                <div class="song-item-artist">${Utils.escapeHtml(song.artist || '未知歌手')}</div>
             </div>
             <button class="search-download-btn" title="下载">
                 <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
@@ -953,15 +953,16 @@ class MusicPlayer {
             const response = await fetch(song.src);
             const contentLength = response.headers.get('content-length');
             const total = parseInt(contentLength, 10);
-            let loaded = 0;
+
             const reader = response.body.getReader();
             const chunks = [];
+            let loaded = 0;
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
                 chunks.push(value);
                 loaded += value.length;
-                if (total) {
+                if (total && total > 0) {
                     const progress = (loaded / total) * 100;
                     this.updateDownloadProgress(progressElement, progress);
                 }
@@ -998,7 +999,7 @@ class MusicPlayer {
 
     updateDownloadProgress(progressElement, progress) {
         const fill = progressElement.querySelector('.download-progress-fill');
-        fill.style.width = `${progress}%`;
+        if (fill) fill.style.width = `${Math.min(progress, 100)}%`;
     }
 
     handleEnded() {
@@ -1243,13 +1244,6 @@ class MusicPlayer {
     loadPlayMode() { const saved = localStorage.getItem('musicPlayer_playMode'); return saved ? parseInt(saved) : 0; }
     savePlayState(isPlaying) { localStorage.setItem('musicPlayer_playState', isPlaying.toString()); }
     loadPlayState() { const saved = localStorage.getItem('musicPlayer_playState'); return saved ? saved === 'true' : false; }
-
-    escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
 }
 
 window.MusicPlayer = MusicPlayer;
