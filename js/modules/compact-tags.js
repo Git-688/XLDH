@@ -1,4 +1,4 @@
-// compact-tags.js - 彩虹浅色标签模块（完整列表版）
+// compact-tags.js - 彩虹浅色标签模块（完整列表版，使用 Utils.escapeHtml）
 class CompactTagsModule {
     constructor() {
         // 最终标签列表：保留的原标签 + 新添加标签，按名称拼音排序
@@ -58,14 +58,15 @@ class CompactTagsModule {
             // 彩虹七色循环
             const colorNum = (index % 7) + 1;
             const colorClass = `tag-color-${colorNum}`;
+            const safeName = Utils.escapeHtml(tag.name);
             return `
                 <a href="${tag.link}" 
                    class="minimal-tag ${colorClass}" 
                    data-index="${index}"
-                   data-name="${tag.name}"
-                   title="${tag.name}">
+                   data-name="${safeName}"
+                   title="${safeName}">
                     <i class="tag-icon ${tag.icon}"></i>
-                    <div class="tag-label">${tag.name}</div>
+                    <div class="tag-label">${safeName}</div>
                 </a>
             `;
         }).join('');
