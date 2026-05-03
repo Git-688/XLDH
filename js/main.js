@@ -36,24 +36,26 @@ class App {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const result = await response.json();
             
-            const items = Array.isArray(result) ? result : (result.data || result.items || []);
+            // 兼容不同的返回格式
+            const items = Array.isArray(result) ? result : (result.items || result.data || []);
+            
             const validItems = items.filter(item => {
-                const title = item.title || '';
-                const words = item.words || '';
-                return title.trim() !== '' && words.trim() !== '';
+                // 字段名可能为 title/name/note_title，内容可能是 words/content/text
+                const title = (item.title || item.name || item.note_title || '').toString().trim();
+                return title !== '';
             });
             
             validItems.sort((a, b) => (a.numid || 0) - (b.numid || 0));
             
             if (validItems.length === 0) {
-                listEl.innerHTML = '<div class="empty">暂无笔记记录</div>';
+                listEl.innerHTML = '<div class="empty">暂无笔记记录（请检查 Worker 环境变量是否已设置）</div>';
                 return;
             }
             
             const html = validItems.map(item => {
-                const title = Utils.escapeHtml(item.title.trim());
+                const title = Utils.escapeHtml((item.title || item.name || '').toString().trim());
                 const time = Utils.escapeHtml(item.time || '--');
-                const words = Utils.escapeHtml(item.words.trim()).replace(/\n/g, '<br>');
+                const words = Utils.escapeHtml((item.words || item.content || '').toString().trim()).replace(/\n/g, '<br>');
                 const numid = item.numid;
                 
                 return `
@@ -135,7 +137,7 @@ class App {
             if (walineContainer) {
                 walineContainer.innerHTML = ''; // 清空容器
                 
-                // 使用本地文件或更可靠的 CDN，并增加静默错误处理
+                // 使用 CDN 导入 Waline，并加入错误处理
                 import('https://unpkg.com/@waline/client@v3/dist/waline.js')
                     .then(({ init }) => {
                         init({
@@ -331,15 +333,16 @@ class App {
             'ResizeObserver loop',
             'Loading failed',
             'Failed to fetch',
-            'Unexpected identifier',   // 忽略来自跨域脚本的语法错误
-            'Unexpected token'         // 同样忽略跨域语法错误
+            'Unexpected identifier',
+            'Unexpected token',
+            'Script error.'
         ];
         
         const handleError = (event) => {
             const error = event.error || event.reason;
             const errorMessage = error?.message || event.message || '未知错误';
             
-            // 过滤无意义的跨域错误
+            // 过滤已知的无害跨域错误
             const shouldIgnore = ignoredErrors.some(ignored => 
                 errorMessage.includes(ignored) || (event.filename === '' && errorMessage === 'Script error.')
             );
@@ -350,7 +353,6 @@ class App {
                     this.showToast('页面遇到问题，建议刷新页面', 'error');
                 }
             } else {
-                // 静默记录，不打扰用户
                 console.debug('忽略无害错误:', errorMessage);
             }
         };
