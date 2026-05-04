@@ -1,5 +1,6 @@
 /**
  * 星聚导航主应用程序（Waline 评论系统版本）
+ * 增加评论统计移动、操作按钮布局调整
  */
 class App {
     constructor() {
@@ -9,6 +10,7 @@ class App {
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.notebookModalHideRef = null;
+        this.walineObserver = null; // 用于观察 Waline DOM 变化
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -121,7 +123,6 @@ class App {
             closeBtn.addEventListener('click', () => this.hideNotebookModal());
         }
     }
-    // =========================================
 
     // ========== 反馈模态框管理（Waline 版本） ==========
     openFeedbackModal() {
@@ -131,41 +132,152 @@ class App {
         modal.style.display = 'flex';
         modal.classList.add('active');
         
-        // Waline 初始化（仅首次执行）
-        if (!window.walineFeedbackInited) {
-            const walineContainer = document.getElementById('twikoo-feedback');
-            if (walineContainer) {
-                walineContainer.innerHTML = ''; // 清空容器
-                
-                // 使用 CDN 导入 Waline，并加入错误处理
-                import('https://unpkg.com/@waline/client@v3/dist/waline.js')
-                    .then(({ init }) => {
-                        init({
-                            el: '#twikoo-feedback',
-                            serverURL: 'https://yy688.ccwu.cc/',  // 你的 Waline 服务地址
-                            lang: 'zh-CN',
-                            dark: 'auto',
-                            path: '/feedback',
-                            pageSize: 10,
-                            requiredMeta: ['nick', 'mail'],
-                            login: 'enable',
-                            wordLimit: 1000,
-                            imageUploader: false,
-                            highlighter: true,
-                            texRenderer: true,
-                            search: false,
-                            turnstileKey: '',
-                        });
-                        
-                        window.walineFeedbackInited = true;
-                        console.log('✅ Waline 评论系统初始化成功');
-                    })
-                    .catch(err => {
-                        console.error('Waline 初始化失败:', err);
-                        walineContainer.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;">评论系统加载失败，请刷新页面重试</div>';
-                    });
-            }
+        // Waline 初始化（仅首次执行）并增加 DOM 调整回调
+        const walineContainer = document.getElementById('twikoo-feedback');
+        if (!walineContainer) return;
+
+        // 清理旧实例（如果存在）
+        if (window.walineInstance) {
+            try { window.walineInstance.destroy(); } catch (e) {}
         }
+
+        walineContainer.innerHTML = ''; // 清空容器
+        
+        import('https://unpkg.com/@waline/client@v3/dist/waline.js')
+            .then(({ init }) => {
+                window.walineInstance = init({
+                    el: '#twikoo-feedback',
+                    serverURL: 'https://yy688.ccwu.cc/',
+                    lang: 'zh-CN',
+                    dark: 'auto',
+                    path: '/feedback',
+                    pageSize: 10,
+                    requiredMeta: ['nick', 'mail'],
+                    login: 'enable',
+                    wordLimit: 1000,
+                    imageUploader: false,
+                    highlighter: true,
+                    texRenderer: true,
+                    search: false,
+                    turnstileKey: '',
+                });
+                
+                window.walineFeedbackInited = true;
+                console.log('✅ Waline 评论系统初始化成功');
+
+                // 调整 DOM 布局
+                this.adjustWalineLayout();
+            })
+            .catch(err => {
+                console.error('Waline 初始化失败:', err);
+                walineContainer.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;">评论系统加载失败，请刷新页面重试</div>';
+            });
+    }
+
+    /**
+     * 调整 Waline DOM 布局：
+     * - 将评论统计数移动到标题后面
+     * - 移动排序按钮到列表上方居中
+     * - 调整操作按钮左右分布
+     */
+    adjustWalineLayout() {
+        const container = document.getElementById('twikoo-feedback');
+        if (!container) return;
+
+        // 使用 MutationObserver 等待 Waline 渲染完成
+        if (this.walineObserver) this.walineObserver.disconnect();
+        this.walineObserver = new MutationObserver((mutations, obs) => {
+            const header = document.querySelector('#feedbackModal .feedback-modal-header h3');
+            const statsEl = container.querySelector('.wl-info');   // 评论统计
+            const sortEl = container.querySelector('.wl-sort');   // 排序按钮
+            const footer = container.querySelector('.wl-footer'); // 操作栏
+
+            if (statsEl && header) {
+                // 将统计信息插入标题后面
+                const countText = statsEl.textContent.trim();
+                if (countText && !header.querySelector('.wl-comment-count')) {
+                    const span = document.createElement('span');
+                    span.className = 'wl-comment-count';
+                    span.style.fontSize = '0.9rem';
+                    span.style.marginLeft = '12px';
+                    span.style.fontWeight = '400';
+                    span.style.color = 'var(--text-secondary)';
+                    span.textContent = countText;
+                    header.appendChild(span);
+                }
+                // 隐藏原位置统计
+                if (statsEl) statsEl.style.display = 'none';
+            }
+
+            // 排序按钮移动到评论列表上方居中
+            if (sortEl) {
+                const cards = container.querySelector('.wl-cards');
+                if (cards && cards.parentNode) {
+                    cards.parentNode.insertBefore(sortEl, cards);
+                }
+                sortEl.style.display = 'flex';
+                sortEl.style.justifyContent = 'center';
+                sortEl.style.marginBottom = '16px';
+                sortEl.style.padding = '0';
+            }
+
+            // 操作按钮左右分布
+            if (footer) {
+                const actions = footer.querySelector('.wl-actions');
+                if (actions) {
+                    actions.style.display = 'flex';
+                    actions.style.justifyContent = 'space-between';
+                    actions.style.width = '100%';
+                    actions.style.alignItems = 'center';
+                    // 确保左右部分在同一水平线
+                    const leftGroup = actions.querySelector('.wl-actions-left');
+                    const rightGroup = actions.querySelector('.wl-actions-right');
+                    if (!leftGroup && !rightGroup) {
+                        // 如果 Waline 没有分组，可以自己包装
+                        const allBtns = Array.from(actions.children);
+                        const loginBtn = allBtns.find(b => b.classList.contains('wl-login') || b.classList.contains('wl-user'));
+                        const submitBtn = allBtns.find(b => b.classList.contains('wl-submit'));
+                        const otherBtns = allBtns.filter(b => b !== loginBtn && b !== submitBtn);
+                        
+                        const leftDiv = document.createElement('div');
+                        leftDiv.className = 'wl-actions-left';
+                        leftDiv.style.display = 'flex';
+                        leftDiv.style.gap = '8px';
+                        otherBtns.forEach(b => leftDiv.appendChild(b));
+                        
+                        const rightDiv = document.createElement('div');
+                        rightDiv.className = 'wl-actions-right';
+                        rightDiv.style.display = 'flex';
+                        rightDiv.style.gap = '8px';
+                        if (loginBtn) rightDiv.appendChild(loginBtn);
+                        if (submitBtn) rightDiv.appendChild(submitBtn);
+
+                        actions.innerHTML = '';
+                        actions.appendChild(leftDiv);
+                        actions.appendChild(rightDiv);
+                    } else {
+                        // 已有分组，直接设置样式
+                        if (leftGroup) leftGroup.style.display = 'flex';
+                        if (rightGroup) rightGroup.style.display = 'flex';
+                    }
+                }
+            }
+
+            // 数字数已经在 CSS 中处理，这里无需额外操作
+            if (statsEl && sortEl && footer) {
+                // 所有目标都存在，停止观察
+                // 但排序可能晚出现，所以继续观察一段时间
+                // 简单起见，延迟停止观察
+                setTimeout(() => {
+                    if (this.walineObserver) {
+                        this.walineObserver.disconnect();
+                        this.walineObserver = null;
+                    }
+                }, 2000);
+            }
+        });
+
+        this.walineObserver.observe(container, { childList: true, subtree: true, attributes: false, characterData: false });
     }
 
     closeFeedbackModal() {
@@ -173,6 +285,11 @@ class App {
         if (modal) {
             modal.classList.remove('active');
             modal.style.display = 'none';
+        }
+        // 断开观察器
+        if (this.walineObserver) {
+            this.walineObserver.disconnect();
+            this.walineObserver = null;
         }
     }
 
