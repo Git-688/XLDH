@@ -32,8 +32,8 @@ class App {
         listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
         
         try {
-            // 指定 maxid=1000，一次性拉取全部 1000 条记录中的有效笔记
-            const response = await fetch(`${this.NOTEBOOK_CONFIG.apiUrl}?maxid=1000`);
+            // Worker 默认请求 maxid=1000，且会自动提前终止，因此无需传参
+            const response = await fetch(this.NOTEBOOK_CONFIG.apiUrl);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const result = await response.json();
             
