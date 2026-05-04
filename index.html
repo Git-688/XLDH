@@ -11,7 +11,6 @@
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
     
-    <!-- 网站图标：统一使用 logo.png -->
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
     
@@ -110,6 +109,7 @@
             letter-spacing: 0.2px;
             display: flex;
             align-items: center;
+            gap: 8px;
         }
         .feedback-modal-header h3 i {
             margin-right: 6px;
@@ -179,21 +179,7 @@
             .feedback-modal-body { background: #2a2a2a; }
         }
 
-        /* ===== 反馈模块提示样式 ===== */
-        .math-hint {
-            padding: 8px 12px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            font-size: 12px;
-            color: #666;
-            border-left: 3px solid var(--primary-color);
-        }
-        @media (prefers-color-scheme: dark) { .math-hint { background: #1e1e1e; color: #aaa; } }
-        .math-hint i { margin-right: 6px; color: var(--primary-color); }
-        .math-hint code { background: rgba(0,0,0,0.06); padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 11px; }
-
-        /* 悬浮按钮颜色 */
+        /* ===== 悬浮按钮颜色 ===== */
         .floating-btn.feedback-btn { color: #8b5cf6; }
         .floating-btn.feedback-btn:hover { color: #7c3aed; }
         .floating-btn.submit-btn { color: #06b6d4; }
@@ -348,33 +334,18 @@
             .notebook-id { background: rgba(50, 50, 50, 0.8); }
             .notebook-content { background: rgba(30, 30, 30, 0.6); }
         }
-        .notebook-list .loading, .notebook-list .empty, .notebook-list .error {
-            text-align: center;
-            padding: 20px 20px;
-            color: var(--text-secondary);
-            font-size: 12px;
-        }
-        .notebook-list .error { color: var(--error-color); }
-        @media (max-width: 768px) {
-            .notebook-item { padding: 10px 12px; }
-            .notebook-title { font-size: 14px; }
-            .notebook-content { font-size: 11px; }
-        }
-        @media (max-width: 480px) {
-            .notebook-item { padding: 8px 10px; }
-        }
 
-        /* ===== 用户反馈模态框（Waline 评论系统）无亚克力，纯色背景 ===== */
+        /* ===== 用户反馈模态框（Waline）纯色背景 ===== */
         #feedbackModal {
             background: transparent !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
         }
         #feedbackModal .feedback-modal-content {
-            background: var(--bg-card, #ffffff) !important;      /* 纯色背景 */
-            backdrop-filter: none !important;                     /* 移除模糊 */
+            background: var(--bg-card, #ffffff) !important;
+            backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
-            border: 1px solid var(--border-color, #e0e0e0) !important;  /* 普通边框 */
+            border: 1px solid var(--border-color, #e0e0e0) !important;
             border-radius: 8px !important;
             overflow: hidden !important;
         }
@@ -388,17 +359,28 @@
             font-size: 1.2rem;
             font-weight: 600;
             color: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         #feedbackModal .feedback-modal-header h3 i {
             color: #4361ee;
             font-size: 1.2rem;
             margin-right: 10px;
         }
+        /* 评论统计数插入标题后自动跟随 */
+        #feedbackModal .feedback-modal-header h3 .wl-comment-count {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-left: 4px;
+            white-space: nowrap;
+        }
         #feedbackModal .feedback-modal-close {
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            background: rgba(0, 0, 0, 0.05);                     /* 普通灰色半透明背景 */
+            background: rgba(0, 0, 0, 0.05);
             border: none;
             color: #64748b;
             font-size: 1rem;
@@ -413,7 +395,8 @@
             color: #334155;
         }
 
-        /* Waline 评论列表间距 */
+        /* ===== Waline 评论列表与发布区 ===== */
+        /* 评论列表内边距与笔记一致 */
         #twikoo-feedback .wl-cards {
             padding: 16px !important;
             margin: 0 !important;
@@ -428,6 +411,7 @@
             background: transparent !important;
         }
 
+        /* 编辑器内边距 */
         #twikoo-feedback .wl-editor {
             border-radius: 0 !important;
             border: none !important;
@@ -435,52 +419,57 @@
             padding: 8px 16px !important;
         }
 
-        #twikoo-feedback .wl-editor-wrapper {
-            position: relative;
-        }
-        #twikoo-feedback .wl-count {
-            position: absolute !important;
-            right: 16px !important;
-            bottom: 8px !important;
-            font-size: 12px !important;
-            color: var(--text-secondary);
-            pointer-events: none;
-            background: transparent !important;
-            margin: 0 !important;
-            line-height: 1 !important;
-        }
-
-        /* 排序按钮居中 */
+        /* ===== 排序按钮居中，上下留白相等且较小 ===== */
         #twikoo-feedback .wl-sort {
             display: flex;
             justify-content: center;
-            margin-bottom: 16px;
-            padding: 0;
+            margin: 8px 0 !important;
+            padding: 0 !important;
         }
 
-        /* 操作栏左右分布 */
-        #twikoo-feedback .wl-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 4px 16px !important;
-            border-top: none !important;
-            border-bottom: none !important;
-        }
+        /* ===== 操作按钮左右分组，按钮统一小尺寸 ===== */
         #twikoo-feedback .wl-actions {
             display: flex;
             justify-content: space-between;
-            width: 100%;
             align-items: center;
+            width: 100%;
+            padding: 4px 16px !important;
         }
+        /* 强制所有按钮大小一致 */
+        #twikoo-feedback .wl-btn {
+            font-size: 0.85rem !important;
+            padding: 4px 10px !important;
+            line-height: 1.2 !important;
+            height: auto !important;
+            min-width: auto !important;
+        }
+        /* 左右分组容器 */
         #twikoo-feedback .wl-actions-left,
         #twikoo-feedback .wl-actions-right {
             display: flex;
             gap: 8px;
             align-items: center;
         }
+        /* 确保组内按钮也一致 */
+        #twikoo-feedback .wl-actions-left .wl-btn,
+        #twikoo-feedback .wl-actions-right .wl-btn {
+            font-size: 0.85rem !important;
+            padding: 4px 10px !important;
+        }
 
-        /* 深色模式适配 */
+        /* ===== 字数统计：移到输入框下方的右下角 ===== */
+        #twikoo-feedback .wl-count {
+            position: static !important;
+            text-align: right !important;
+            margin-top: 4px !important;
+            padding: 0 16px !important;
+            font-size: 12px !important;
+            color: var(--text-secondary);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* 深色模式 */
         @media (prefers-color-scheme: dark) {
             #feedbackModal .feedback-modal-content {
                 background: #1e1e1e !important;
@@ -782,6 +771,5 @@
 <script src="./js/xfyy/plugin-manager.js"></script>
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
-<!-- 注意：不再引入 Twikoo 和 KaTeX，Waline 由 main.js 动态加载 -->
 </body>
 </html>
