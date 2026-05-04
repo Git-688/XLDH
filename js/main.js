@@ -32,7 +32,8 @@ class App {
         listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
         
         try {
-            const response = await fetch(this.NOTEBOOK_CONFIG.apiUrl);
+            // 指定 maxid=1000，一次性拉取全部 1000 条记录中的有效笔记
+            const response = await fetch(`${this.NOTEBOOK_CONFIG.apiUrl}?maxid=1000`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const result = await response.json();
             
@@ -40,7 +41,6 @@ class App {
             const items = Array.isArray(result) ? result : (result.items || result.data || []);
             
             const validItems = items.filter(item => {
-                // 字段名可能为 title/name/note_title，内容可能是 words/content/text
                 const title = (item.title || item.name || item.note_title || '').toString().trim();
                 return title !== '';
             });
@@ -342,7 +342,6 @@ class App {
             const error = event.error || event.reason;
             const errorMessage = error?.message || event.message || '未知错误';
             
-            // 过滤已知的无害跨域错误
             const shouldIgnore = ignoredErrors.some(ignored => 
                 errorMessage.includes(ignored) || (event.filename === '' && errorMessage === 'Script error.')
             );
