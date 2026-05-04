@@ -1,6 +1,6 @@
 /**
  * 优化分类导航系统（基于后端 Worker + D1）
- * 优化：直接使用 API 获取数据，增加本地缓存容错
+ * 优化：直接使用 API 获取数据，增加本地缓存容错，后台静默更新
  */
 class OptimizedNavigation {
     constructor() {
@@ -20,6 +20,13 @@ class OptimizedNavigation {
 
         // 用于缓存最近一次成功加载的数据
         this.cacheKey = 'nav_data_cache';
+        
+        // 后台更新定时器 ID
+        this.updateTimer = null;
+        // 后台更新间隔（毫秒）
+        this.UPDATE_INTERVAL = 5 * 60 * 1000;
+        // 是否允许静默更新 toast 提示
+        this.quietUpdate = true;
     }
 
     async init() {
@@ -38,9 +45,9 @@ class OptimizedNavigation {
             }
             
             this.isInitialized = true;
+            this.startBackgroundUpdates();          // 启动后台更新
         } catch (error) {
             console.error('导航初始化失败:', error);
-            // 如果初始化彻底失败，尝试使用缓存兜底
             const cached = this.loadCache();
             if (cached) {
                 this.navigationData = cached;
@@ -52,10 +59,28 @@ class OptimizedNavigation {
                 }
                 window.toast.show('网络异常，已加载本地缓存数据', 'warning');
                 this.isInitialized = true;
+                this.startBackgroundUpdates();      // 即使使用缓存，也尝试后台更新
             } else {
                 this.showError();
             }
         }
+    }
+
+    // 启动后台静默更新
+    startBackgroundUpdates() {
+        if (this.updateTimer) clearInterval(this.updateTimer);
+        
+        // 定时更新
+        this.updateTimer = setInterval(() => {
+            this.fetchLatestFromAPI(true);
+        }, this.UPDATE_INTERVAL);
+
+        // 页面可见性变化时更新
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                this.fetchLatestFromAPI(true);
+            }
+        });
     }
 
     showSkeleton() {
@@ -134,9 +159,7 @@ class OptimizedNavigation {
                 data: data,
                 timestamp: Date.now()
             }));
-        } catch (e) {
-            // storage 满或不可用，静默失败
-        }
+        } catch (e) {}
     }
 
     loadCache() {
@@ -144,7 +167,6 @@ class OptimizedNavigation {
             const raw = sessionStorage.getItem(this.cacheKey);
             if (!raw) return null;
             const parsed = JSON.parse(raw);
-            // 缓存有效期为 1 天
             if (Date.now() - parsed.timestamp < 86400000) {
                 return parsed.data;
             }
@@ -154,23 +176,42 @@ class OptimizedNavigation {
         return null;
     }
 
-    // 后台静默更新（仍调用 API）
-    async fetchLatestFromAPI() {
+    // 后台静默更新，参数 silent 控制是否静默（不弹出 toast）
+    async fetchLatestFromAPI(silent = false) {
         try {
             const apiUrl = `https://api.xjdh688.ccwu.cc/navigation?_=${Date.now()}`;
             const response = await fetch(apiUrl);
-            if (response.ok) {
-                const latest = await response.json();
-                if (latest && latest.categories) {
-                    this.navigationData = latest;
-                    this.saveCache(latest);
-                    this.calculateStats();
-                    this.renderAll();
-                    console.log('🔄 后台静默更新完成');
-                }
+            if (!response.ok) return;
+
+            const latest = await response.json();
+            if (!latest || !latest.categories) return;
+
+            // 检查数据是否真正变化（比较 JSON 字符串）
+            const oldDataStr = JSON.stringify(this.navigationData?.categories || {});
+            const newDataStr = JSON.stringify(latest.categories || {});
+            if (oldDataStr === newDataStr) {
+                if (!silent) console.log('🔄 导航数据无变化，跳过更新');
+                return;
             }
+
+            // 数据有变化，更新并重新渲染
+            this.navigationData = latest;
+            this.saveCache(latest);
+            this.calculateStats();
+            
+            // 仅在非静默模式下显示提示
+            if (!silent && this.quietUpdate) {
+                window.toast.show('导航数据已自动更新', 'info');
+            }
+            
+            // 如果用户没有选中任何分类，或者当前分类仍然存在，则重绘
+            if (!this.selectedLevel1 || 
+                (this.selectedLevel1 && latest.categories.hasOwnProperty(this.selectedLevel1))) {
+                this.renderAll();
+            }
+            console.log('🔄 后台静默更新完成');
         } catch (e) {
-            console.warn('后台更新失败');
+            console.warn('后台更新失败:', e.message);
         }
     }
 
@@ -476,6 +517,14 @@ class OptimizedNavigation {
         this.selectedLevel2 = null;
         this.showSkeleton();
         this.init();
+    }
+
+    // 清除定时器（可在组件销毁时调用，防内存泄漏）
+    destroy() {
+        if (this.updateTimer) {
+            clearInterval(this.updateTimer);
+            this.updateTimer = null;
+        }
     }
 }
 
