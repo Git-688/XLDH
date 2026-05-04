@@ -362,18 +362,18 @@
             .notebook-item { padding: 8px 10px; }
         }
 
-        /* ===== 用户反馈模态框（评论系统）样式覆盖 ===== */
+        /* ===== 用户反馈模态框（Waline 评论系统）布局定制 ===== */
         #feedbackModal .feedback-modal-body {
             padding: 0 !important;                 /* 取消 body 的默认内边距 */
         }
 
-        /* 评论列表区域：与笔记内容区 padding 一致 */
+        /* 评论列表区域：与笔记内容区 padding 一致 (16px) */
         #twikoo-feedback .wl-cards {
-            padding: 16px !important;              /* 与 .notebook-list 相同 */
+            padding: 16px !important;
             margin: 0 !important;
         }
 
-        /* 确保评论卡片没有多余的外边距，列表内部由 Waline 自行控制边距 */
+        /* 评论卡片左右无边距 */
         #twikoo-feedback .wl-item {
             margin-left: 0 !important;
             margin-right: 0 !important;
