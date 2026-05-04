@@ -364,23 +364,23 @@
             .notebook-item { padding: 8px 10px; }
         }
 
-        /* ===== 用户反馈模态框（Waline 评论系统）亚克力 + 细节布局 ===== */
+        /* ===== 用户反馈模态框（Waline 评论系统）无亚克力，纯色背景 ===== */
         #feedbackModal {
             background: transparent !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
         }
         #feedbackModal .feedback-modal-content {
-            background: rgba(255, 255, 255, 0.65) !important;
-            backdrop-filter: blur(24px) saturate(125%) !important;
-            -webkit-backdrop-filter: blur(24px) saturate(125%) !important;
-            border: 1px solid rgba(255, 255, 255, 0.4) !important;
+            background: var(--bg-card, #ffffff) !important;      /* 纯色背景 */
+            backdrop-filter: none !important;                     /* 移除模糊 */
+            -webkit-backdrop-filter: none !important;
+            border: 1px solid var(--border-color, #e0e0e0) !important;  /* 普通边框 */
             border-radius: 8px !important;
             overflow: hidden !important;
         }
         #feedbackModal .feedback-modal-header {
-            background: transparent !important;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+            background: var(--bg-card, #ffffff) !important;
+            border-bottom: 1px solid var(--border-color, #e0e0e0) !important;
             padding: 18px 24px 10px !important;
             color: #1e293b !important;
         }
@@ -398,7 +398,7 @@
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(0, 0, 0, 0.05);                     /* 普通灰色半透明背景 */
             border: none;
             color: #64748b;
             font-size: 1rem;
@@ -409,7 +409,7 @@
             transition: background 0.2s;
         }
         #feedbackModal .feedback-modal-close:hover {
-            background: rgba(0, 0, 0, 0.05);
+            background: rgba(0, 0, 0, 0.1);
             color: #334155;
         }
 
@@ -480,15 +480,15 @@
             align-items: center;
         }
 
-        /* 深色模式亚克力 */
+        /* 深色模式适配 */
         @media (prefers-color-scheme: dark) {
             #feedbackModal .feedback-modal-content {
-                background: rgba(30, 30, 30, 0.75) !important;
-                border-color: rgba(255, 255, 255, 0.15) !important;
+                background: #1e1e1e !important;
+                border-color: #3e3e3e !important;
             }
             #feedbackModal .feedback-modal-header {
-                background: transparent !important;
-                border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+                background: #1e1e1e !important;
+                border-bottom-color: #3e3e3e !important;
                 color: #f1f5f9 !important;
             }
             #feedbackModal .feedback-modal-close {
