@@ -42,7 +42,7 @@
     
     <link rel="preload" href="./js/main.js" as="script">
     
-    <!-- Waline 样式 (替换原 Twikoo/KaTeX 引用) -->
+    <!-- Waline 样式 -->
     <link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" />
     
     <style>
@@ -108,6 +108,8 @@
             font-weight: 500;
             color: var(--text-primary);
             letter-spacing: 0.2px;
+            display: flex;
+            align-items: center;
         }
         .feedback-modal-header h3 i {
             margin-right: 6px;
@@ -362,24 +364,66 @@
             .notebook-item { padding: 8px 10px; }
         }
 
-        /* ===== 用户反馈模态框（Waline 评论系统）布局定制 ===== */
-        #feedbackModal .feedback-modal-body {
-            padding: 0 !important;                 /* 取消 body 的默认内边距 */
+        /* ===== 用户反馈模态框（Waline 评论系统）亚克力 + 细节布局 ===== */
+        #feedbackModal {
+            background: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        #feedbackModal .feedback-modal-content {
+            background: rgba(255, 255, 255, 0.65) !important;
+            backdrop-filter: blur(24px) saturate(125%) !important;
+            -webkit-backdrop-filter: blur(24px) saturate(125%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.4) !important;
+            border-radius: 8px !important;
+            overflow: hidden !important;
+        }
+        #feedbackModal .feedback-modal-header {
+            background: transparent !important;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+            padding: 18px 24px 10px !important;
+            color: #1e293b !important;
+        }
+        #feedbackModal .feedback-modal-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: inherit;
+            flex: 1;
+        }
+        #feedbackModal .feedback-modal-header h3 i {
+            color: #4361ee;
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+        #feedbackModal .feedback-modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            border: none;
+            color: #64748b;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #feedbackModal .feedback-modal-close:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #334155;
         }
 
-        /* 评论列表区域：与笔记内容区 padding 一致 (16px) */
+        /* --- Waline 评论区域样式覆盖 --- */
+
+
+        /* 评论列表与笔记区统一间距 */
         #twikoo-feedback .wl-cards {
             padding: 16px !important;
             margin: 0 !important;
         }
 
-        /* 评论卡片左右无边距 */
-        #twikoo-feedback .wl-item {
-            margin-left: 0 !important;
-            margin-right: 0 !important;
-        }
-
-        /* 发布编辑区：无内边距，无边框，底部添加分割线 */
+        /* 发布面板：无内边距、无边框、底部分割线 */
         #twikoo-feedback .wl-panel {
             padding: 0 !important;
             border: none !important;
@@ -388,23 +432,21 @@
             background: transparent !important;
         }
 
-        /* 编辑区域内部输入框 */
+        /* 编辑器内部留白 */
         #twikoo-feedback .wl-editor {
             border-radius: 0 !important;
             border: none !important;
             margin: 0 !important;
-            padding: 8px 16px !important;        /* 左右与笔记区统一，上下收紧 */
+            padding: 8px 16px !important;
         }
 
-        /* 主内容输入框容器相对定位，用于放置字数统计 */
+        /* 字数统计：右下角绝对定位 */
         #twikoo-feedback .wl-editor-wrapper {
             position: relative;
         }
-
-        /* 字数统计置于输入框右下角 */
         #twikoo-feedback .wl-count {
             position: absolute !important;
-            right: 16px !important;               /* 与 padding 对齐 */
+            right: 16px !important;
             bottom: 8px !important;
             font-size: 12px !important;
             color: var(--text-secondary);
@@ -414,24 +456,51 @@
             line-height: 1 !important;
         }
 
-        /* 操作按钮栏右对齐，高度缩小 */
+        /* 排序按钮居中 */
+        #twikoo-feedback .wl-sort {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 16px;
+            padding: 0;
+        }
+
+        /* 操作栏左右分布 */
         #twikoo-feedback .wl-footer {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
-            padding: 4px 16px !important;        /* 左右统一，上下缩小 */
+            padding: 4px 16px !important;
             border-top: none !important;
             border-bottom: none !important;
         }
-
         #twikoo-feedback .wl-actions {
             display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: center;
+        }
+        #twikoo-feedback .wl-actions-left,
+        #twikoo-feedback .wl-actions-right {
+            display: flex;
             gap: 8px;
-            justify-content: flex-end;
+            align-items: center;
         }
 
-        /* 深色模式下的适配 */
+        /* 深色模式亚克力 */
         @media (prefers-color-scheme: dark) {
+            #feedbackModal .feedback-modal-content {
+                background: rgba(30, 30, 30, 0.75) !important;
+                border-color: rgba(255, 255, 255, 0.15) !important;
+            }
+            #feedbackModal .feedback-modal-header {
+                background: transparent !important;
+                border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+                color: #f1f5f9 !important;
+            }
+            #feedbackModal .feedback-modal-close {
+                background: rgba(255, 255, 255, 0.1);
+                color: #94a3b8;
+            }
             #twikoo-feedback .wl-panel {
                 border-bottom-color: rgba(255, 255, 255, 0.1) !important;
             }
