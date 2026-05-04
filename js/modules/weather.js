@@ -456,233 +456,61 @@ class WeatherModule {
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'weather-modal-card';
         
-        Object.assign(this.modalElement.style, {
-            position: 'fixed',
-            top: '0',
-            left: '0',
-            width: '100%',
-            height: '100%',
-            background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: '10000',
-            opacity: '0',
-            transition: 'opacity 0.2s ease',
-            padding: '20px',
-            boxSizing: 'border-box',
-            pointerEvents: 'auto'
-        });
-
+        // 改用 CSS 类名控制样式
         this.modalElement.innerHTML = `
-            <div class="weather-modal-content" style="
-                max-width: 350px;
-                width: 100%;
-                background: #fff;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                transform: translateY(20px) scale(0.95);
-                opacity: 0;
-                transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
-                            opacity 0.3s ease;
-                max-height: 450px;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-                border: 1px solid #e8e8e8;
-            ">
-                <div class="weather-header" style="
-                    padding: 12px 16px;
-                    background: #f8f9fa;
-                    border-bottom: 1px solid #e8e8e8;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                ">
+            <div class="weather-modal-content">
+                <div class="weather-header">
                     <div class="weather-title-container">
-                        <div class="weather-title" style="display: flex; align-items: center; gap: 6px;">
-                            <span style="font-size:14px; font-weight:600;">天气小贴士</span>
+                        <div class="weather-title">
+                            <span>天气小贴士</span>
                             ${this.useAutoLocation ? 
-                                '<span style="font-size:10px; padding:2px 6px; background:#e6f7ff; color:#1890ff; border-radius:10px;">定位</span>' : 
+                                '<span class="weather-auto-location-badge">定位</span>' : 
                                 ''
                             }
-                            <span class="auto-refresh-label" style="font-size:10px; color:#999; margin-left:8px;">
-                                <i class="fas fa-sync-alt" style="font-size:9px; margin-right:3px;"></i>
+                            <span class="auto-refresh-label">
+                                <i class="fas fa-sync-alt"></i>
                                 10分钟刷新
                             </span>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <button class="change-city-btn" id="changeCityBtn" style="
-                            background: none;
-                            border: none;
-                            color: #666;
-                            cursor: pointer;
-                            padding: 4px;
-                            border-radius: 4px;
-                            transition: all 0.2s ease;
-                            width: 28px;
-                            height: 28px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 12px;
-                        " title="切换城市">
+                    <div class="weather-header-actions">
+                        <button class="weather-icon-btn change-city-btn" id="changeCityBtn" title="切换城市">
                             <i class="fas fa-exchange-alt"></i>
                         </button>
-                        <button class="location-btn" id="weatherLocationBtn" style="
-                            background: none;
-                            border: none;
-                            color: #666;
-                            cursor: pointer;
-                            padding: 4px;
-                            border-radius: 4px;
-                            transition: all 0.2s ease;
-                            width: 28px;
-                            height: 28px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 12px;
-                        " title="重新定位">
+                        <button class="weather-icon-btn location-btn" id="weatherLocationBtn" title="重新定位">
                             <i class="fas fa-location-crosshairs"></i>
                         </button>
-                        <button class="weather-close-btn" id="weatherCloseBtn" style="
-                            background: none;
-                            border: none;
-                            color: #666;
-                            cursor: pointer;
-                            padding: 4px;
-                            border-radius: 4px;
-                            transition: all 0.2s ease;
-                            width: 28px;
-                            height: 28px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 14px;
-                        ">
+                        <button class="weather-icon-btn weather-close-btn" id="weatherCloseBtn">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
                 </div>
-                <div class="weather-body" id="weatherBody" style="
-                    overflow-y: auto; 
-                    overflow-x: hidden; 
-                    flex: 1;
-                    scrollbar-width: none;
-                    -ms-overflow-style: none;
-                ">
-                    <div class="loading-state" style="padding:40px 20px; text-align:center;">
-                        <div class="loading-spinner" style="
-                            display: inline-block;
-                            width: 20px;
-                            height: 20px;
-                            border: 2px solid #f3f3f3;
-                            border-top: 2px solid #4361ee;
-                            border-radius: 50%;
-                            animation: spin 1s linear infinite;
-                            margin-bottom: 10px;
-                        "></div>
-                        <p style="font-size:12px; color:#666; margin-top:10px;">正在加载天气数据...</p>
+                <div class="weather-body" id="weatherBody">
+                    <div class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <p>正在加载天气数据...</p>
                     </div>
                 </div>
             </div>
         `;
 
         document.body.appendChild(this.modalElement);
-        
-        this.addScrollbarStyles();
-        
         this.bindEvents();
-    }
-
-    addScrollbarStyles() {
-        if (document.getElementById('weather-scrollbar-style')) {
-            return;
-        }
-        
-        const style = document.createElement('style');
-        style.id = 'weather-scrollbar-style';
-        style.textContent = `
-            .weather-body::-webkit-scrollbar {
-                display: none;
-                width: 0;
-                height: 0;
-                background: transparent;
-            }
-            
-            .weather-body::-webkit-scrollbar-track {
-                display: none;
-                background: transparent;
-            }
-            
-            .weather-body::-webkit-scrollbar-thumb {
-                display: none;
-                background: transparent;
-            }
-            
-            .weather-body::-webkit-scrollbar-thumb:hover {
-                display: none;
-                background: transparent;
-            }
-            
-            .weather-body {
-                -ms-overflow-style: none !important;
-                scrollbar-width: none !important;
-            }
-            
-            .city-prompt-content::-webkit-scrollbar {
-                display: none;
-            }
-            
-            .city-prompt-content {
-                -ms-overflow-style: none;
-                scrollbar-width: none;
-            }
-            
-            .weather-body {
-                -webkit-overflow-scrolling: touch;
-            }
-        `;
-        document.head.appendChild(style);
     }
 
     renderModalContent() {
         if (!this.weatherData) {
             return `
-                <div class="error-state" style="padding:40px 20px; text-align:center;">
-                    <div class="error-icon" style="font-size:24px; color:#ff4d4f; margin-bottom:10px;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <p style="font-size:12px; color:#666; margin-bottom:8px;">天气数据加载失败</p>
-                    <p style="font-size:11px; color:#999; margin-bottom:12px;">请检查网络连接或稍后重试</p>
-                    <div style="display:flex; gap:8px; justify-content:center;">
-                        <button class="retry-btn" id="weatherRetryBtn" style="
-                            padding: 6px 16px;
-                            font-size: 12px;
-                            background: #4361ee;
-                            color: white;
-                            border: none;
-                            border-radius: 4px;
-                            cursor: pointer;
-                            transition: background-color 0.2s ease;
-                        ">
-                            <i class="fas fa-redo" style="margin-right:6px;"></i>
-                            重新加载
+                <div class="error-state">
+                    <div class="error-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <p>天气数据加载失败</p>
+                    <p class="error-sub-text">请检查网络连接或稍后重试</p>
+                    <div class="error-actions">
+                        <button class="weather-action-btn retry-btn" id="weatherRetryBtn">
+                            <i class="fas fa-redo"></i> 重新加载
                         </button>
-                        <button class="location-btn" id="weatherManualLocationBtn" style="
-                            padding: 6px 16px;
-                            font-size: 12px;
-                            background: #52c41a;
-                            color: white;
-                            border: none;
-                            border-radius: 4px;
-                            cursor: pointer;
-                            transition: background-color 0.2s ease;
-                        ">
-                            <i class="fas fa-location-crosshairs" style="margin-right:6px;"></i>
-                            重新定位
+                        <button class="weather-action-btn location-btn" id="weatherManualLocationBtn">
+                            <i class="fas fa-location-crosshairs"></i> 重新定位
                         </button>
                     </div>
                 </div>
@@ -692,90 +520,73 @@ class WeatherModule {
         const { weatherData } = this;
         
         return `
-            <div class="weather-current" style="padding:16px 16px 12px; border-bottom:1px solid #eee; text-align:center;">
-                <div class="weather-city" style="font-size:12px; color:#666; margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap;">
-                    <i class="fas fa-location-dot" style="font-size:11px;"></i>
+            <div class="weather-current">
+                <div class="weather-city">
+                    <i class="fas fa-location-dot"></i>
                     ${Utils.escapeHtml(weatherData.city)}
-                    <span class="weather-update-time" style="font-size:11px; color:#999; margin-left:4px;">${Utils.escapeHtml(weatherData.updateTime)}更新</span>
+                    <span class="weather-update-time">${Utils.escapeHtml(weatherData.updateTime)}更新</span>
                 </div>
-                <div class="weather-main" style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:12px;">
-                    <div class="weather-icon" style="font-size:36px; color:#4361ee;">
-                        <i class="${weatherData.weatherIcon}"></i>
-                    </div>
-                    <div class="weather-temp-info" style="display:flex; flex-direction:column; align-items:center;">
-                        <div class="weather-desc" style="font-size:14px; color:#333; font-weight:500; margin-bottom:4px;">
-                            ${weatherData.weather}
-                        </div>
-                        <div class="temp-details" style="display:flex; gap:12px; align-items:center;">
-                            <div class="temp-item" style="text-align:center;">
-                                <div class="temp-label" style="font-size:11px; color:#999; margin-bottom:2px;">白天</div>
-                                <div class="temp-value" style="font-size:18px; color:#ff6b6b; font-weight:600;">
-                                    ${weatherData.dayTemperature}
-                                </div>
+                <div class="weather-main">
+                    <div class="weather-icon"><i class="${weatherData.weatherIcon}"></i></div>
+                    <div class="weather-temp-info">
+                        <div class="weather-desc">${weatherData.weather}</div>
+                        <div class="temp-details">
+                            <div class="temp-item">
+                                <div class="temp-label">白天</div>
+                                <div class="temp-value day">${weatherData.dayTemperature}</div>
                             </div>
-                            <div style="color:#ccc; font-size:12px;">/</div>
-                            <div class="temp-item" style="text-align:center;">
-                                <div class="temp-label" style="font-size:11px; color:#999; margin-bottom:2px;">夜间</div>
-                                <div class="temp-value" style="font-size:18px; color:#4dabf7; font-weight:600;">
-                                    ${weatherData.nightTemperature}
-                                </div>
+                            <div class="temp-separator">/</div>
+                            <div class="temp-item">
+                                <div class="temp-label">夜间</div>
+                                <div class="temp-value night">${weatherData.nightTemperature}</div>
                             </div>
                         </div>
                     </div>
                 </div>
                 ${weatherData.tips ? `
-                <div class="weather-tips" style="margin-top:12px; padding:8px 12px; background:#f8f9fa; border-radius:6px; font-size:12px; color:#666; border-left:3px solid #4361ee;">
-                    <i class="fas fa-lightbulb" style="font-size:11px; margin-right:6px; color:#4361ee;"></i>
+                <div class="weather-tips">
+                    <i class="fas fa-lightbulb"></i>
                     ${Utils.escapeHtml(weatherData.tips)}
                 </div>
                 ` : ''}
             </div>
 
-            <div class="weather-details" style="padding:16px; display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;">
-                <div class="weather-detail" style="text-align:center; padding:12px; background:#f8f9fa; border-radius:8px;">
-                    <div class="detail-icon" style="font-size:16px; color:#4361ee; margin-bottom:8px;">
-                        <i class="fas fa-wind"></i>
-                    </div>
-                    <div class="detail-label" style="font-size:11px; color:#999; margin-bottom:4px;">风向风力</div>
-                    <div class="detail-value" style="font-size:14px; color:#333; font-weight:500;">${Utils.escapeHtml(weatherData.wind)}</div>
+            <div class="weather-details">
+                <div class="weather-detail">
+                    <div class="detail-icon"><i class="fas fa-wind"></i></div>
+                    <div class="detail-label">风向风力</div>
+                    <div class="detail-value">${Utils.escapeHtml(weatherData.wind)}</div>
                 </div>
-                <div class="weather-detail" style="text-align:center; padding:12px; background:#f8f9fa; border-radius:8px;">
-                    <div class="detail-icon" style="font-size:16px; color:#4361ee; margin-bottom:8px;">
-                        <i class="fas fa-temperature-high"></i>
-                    </div>
-                    <div class="detail-label" style="font-size:11px; color:#999; margin-bottom:4px;">体感温度</div>
-                    <div class="detail-value" style="font-size:14px; color:#333; font-weight:500;">${weatherData.dayTemperature}</div>
+                <div class="weather-detail">
+                    <div class="detail-icon"><i class="fas fa-temperature-high"></i></div>
+                    <div class="detail-label">体感温度</div>
+                    <div class="detail-value">${weatherData.dayTemperature}</div>
                 </div>
             </div>
             
-            <div class="weather-forecast" style="padding:0 16px 16px;">
-                <div class="forecast-title" style="font-size:12px; color:#666; margin:12px 0 8px; display:flex; align-items:center; gap:6px;">
-                    <i class="fas fa-calendar-alt" style="font-size:11px; color:#4361ee;"></i>
-                    未来几天预报
+            <div class="weather-forecast">
+                <div class="forecast-title">
+                    <i class="fas fa-calendar-alt"></i> 未来几天预报
                 </div>
-                <div class="forecast-days" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
+                <div class="forecast-days">
                     ${weatherData.forecasts.map(day => `
-                        <div class="forecast-day" style="text-align:center; padding:12px 6px; background:#f8f9fa; border-radius:8px;">
-                            <div class="forecast-day-name" style="font-size:12px; color:#666; margin-bottom:6px; font-weight:500;">${day.day}</div>
-                            <div class="forecast-day-icon" style="font-size:16px; color:#4361ee; margin-bottom:6px;">
-                                <i class="${day.icon}"></i>
-                            </div>
-                            <div class="forecast-day-weather" style="font-size:11px; color:#333; margin-bottom:6px;">${day.weather}</div>
-                            <div class="forecast-day-temp" style="display:flex; justify-content:center; gap:4px; font-size:12px;">
-                                <span style="color:#ff6b6b;">${day.dayTemp}</span>
-                                <span style="color:#ccc;">/</span>
-                                <span style="color:#4dabf7;">${day.nightTemp}</span>
+                        <div class="forecast-day">
+                            <div class="forecast-day-name">${day.day}</div>
+                            <div class="forecast-day-icon"><i class="${day.icon}"></i></div>
+                            <div class="forecast-day-weather">${day.weather}</div>
+                            <div class="forecast-day-temp">
+                                <span class="day">${day.dayTemp}</span>
+                                <span class="sep">/</span>
+                                <span class="night">${day.nightTemp}</span>
                             </div>
                         </div>
                     `).join('')}
                 </div>
             </div>
             
-            <div class="weather-footer" style="padding:12px 16px; border-top:1px solid #eee; text-align:center;">
-                <div style="font-size:11px; color:#999; display:flex; align-items:center; justify-content:center; gap:6px;">
-                    <i class="fas fa-circle-info" style="font-size:10px;"></i>
-                    点击"切换城市"可手动设置，点击"定位"图标可重新获取位置
-                </div>
+            <div class="weather-footer">
+                <i class="fas fa-circle-info"></i>
+                点击"切换城市"可手动设置，点击"定位"图标可重新获取位置
             </div>
         `;
     }
@@ -825,108 +636,32 @@ class WeatherModule {
     showCityPrompt() {
         const modal = document.createElement('div');
         modal.className = 'city-prompt-modal';
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10001;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            padding: 20px;
-            box-sizing: border-box;
-        `;
 
         modal.innerHTML = `
-            <div class="city-prompt-content" style="
-                background: white;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                padding: 20px;
-                width: 300px;
-                max-width: 100%;
-                transform: translateY(20px);
-                transition: transform 0.3s ease, opacity 0.3s ease;
-                opacity: 0;
-            ">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
-                    <i class="fas fa-exchange-alt" style="color: #4361ee;"></i>
-                    <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #333;">切换城市</h3>
+            <div class="city-prompt-content">
+                <div class="prompt-header">
+                    <i class="fas fa-exchange-alt"></i>
+                    <h3>切换城市</h3>
                 </div>
                 
-                <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 6px; font-size: 12px; color: #666;">请输入城市名称</label>
-                    <input type="text" id="cityInput" 
-                           value="${Utils.escapeHtml(this.currentCity)}"
-                           placeholder="例如：北京、上海、广州..."
-                           style="
-                                width: 100%;
-                                padding: 10px 12px;
-                                border: 1px solid #ddd;
-                                border-radius: 6px;
-                                font-size: 14px;
-                                box-sizing: border-box;
-                           ">
-                    <p style="margin: 8px 0 0 0; font-size: 11px; color: #999;">
-                        提示：请输入完整的城市名，如"北京市"、"上海市"
-                    </p>
+                <div class="prompt-input-group">
+                    <label>请输入城市名称</label>
+                    <input type="text" id="cityInput" value="${Utils.escapeHtml(this.currentCity)}" placeholder="例如：北京、上海、广州...">
+                    <p class="prompt-hint">提示：请输入完整的城市名，如"北京市"、"上海市"</p>
                 </div>
                 
-                <div style="margin-bottom: 16px;">
-                    <p style="margin: 0 0 8px 0; font-size: 12px; color: #666;">热门城市：</p>
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <div class="hot-cities">
+                    <p>热门城市：</p>
+                    <div class="hot-city-buttons">
                         ${['北京市', '上海市', '广州市', '深圳市', '杭州市', '南京市', '成都市', '武汉市'].map(city => `
-                            <button type="button" class="quick-city-btn" 
-                                    data-city="${Utils.escapeHtml(city)}"
-                                    style="
-                                        padding: 6px 10px;
-                                        background: #f8f9fa;
-                                        border: 1px solid #e8e8e8;
-                                        border-radius: 4px;
-                                        font-size: 12px;
-                                        color: #666;
-                                        cursor: pointer;
-                                        transition: all 0.2s ease;
-                                    ">
-                                ${Utils.escapeHtml(city)}
-                            </button>
+                            <button type="button" class="hot-city-btn" data-city="${Utils.escapeHtml(city)}">${Utils.escapeHtml(city)}</button>
                         `).join('')}
                     </div>
                 </div>
                 
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" id="cancelCityBtn" 
-                            style="
-                                padding: 8px 16px;
-                                background: #f8f9fa;
-                                border: 1px solid #ddd;
-                                border-radius: 6px;
-                                font-size: 13px;
-                                color: #666;
-                                cursor: pointer;
-                                transition: all 0.2s ease;
-                            ">
-                        取消
-                    </button>
-                    <button type="button" id="confirmCityBtn" 
-                            style="
-                                padding: 8px 20px;
-                                background: #4361ee;
-                                border: none;
-                                border-radius: 6px;
-                                font-size: 13px;
-                                color: white;
-                                cursor: pointer;
-                                transition: all 0.2s ease;
-                                font-weight: 500;
-                            ">
-                        确认切换
-                    </button>
+                <div class="prompt-actions">
+                    <button type="button" id="cancelCityBtn" class="weather-action-btn cancel-btn">取消</button>
+                    <button type="button" id="confirmCityBtn" class="weather-action-btn confirm-btn">确认切换</button>
                 </div>
             </div>
         `;
@@ -945,7 +680,7 @@ class WeatherModule {
         const cancelBtn = modal.querySelector('#cancelCityBtn');
         const confirmBtn = modal.querySelector('#confirmCityBtn');
         const cityInput = modal.querySelector('#cityInput');
-        const quickCityBtns = modal.querySelectorAll('.quick-city-btn');
+        const quickCityBtns = modal.querySelectorAll('.hot-city-btn');
 
         quickCityBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -1097,7 +832,7 @@ class WeatherModule {
             if (retryBtn) {
                 retryBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    retryBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i>加载中...';
+                    retryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加载中...';
                     retryBtn.disabled = true;
                     
                     try {
@@ -1105,7 +840,7 @@ class WeatherModule {
                         this.updateModalContent();
                     } catch (error) {
                         console.error('重试加载天气数据失败:', error);
-                        retryBtn.innerHTML = '<i class="fas fa-redo" style="margin-right:6px;"></i>重新加载';
+                        retryBtn.innerHTML = '<i class="fas fa-redo"></i> 重新加载';
                         retryBtn.disabled = false;
                     }
                 });
@@ -1115,13 +850,13 @@ class WeatherModule {
             if (manualLocationBtn) {
                 manualLocationBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    manualLocationBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i>定位中...';
+                    manualLocationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 定位中...';
                     manualLocationBtn.disabled = true;
                     
                     try {
                         await this.handleLocationRefresh();
                     } catch (error) {
-                        manualLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs" style="margin-right:6px;"></i>重新定位';
+                        manualLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> 重新定位';
                         manualLocationBtn.disabled = false;
                     }
                 });
@@ -1214,43 +949,4 @@ class WeatherModule {
 
 if (typeof window !== 'undefined') {
     window.WeatherModule = WeatherModule;
-}
-
-if (!document.querySelector('#weather-animation-style')) {
-    const style = document.createElement('style');
-    style.id = 'weather-animation-style';
-    style.textContent = `
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .quick-city-btn:hover {
-            background: #e6f7ff !important;
-            border-color: #91d5ff !important;
-            color: #1890ff !important;
-        }
-        
-        .city-prompt-content button:not([disabled]):hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-        
-        #confirmCityBtn:hover {
-            background: #3a56d6 !important;
-        }
-        
-        #cancelCityBtn:hover {
-            background: #f0f0f0 !important;
-            border-color: #ccc !important;
-        }
-        
-        .change-city-btn:hover,
-        .location-btn:hover,
-        .weather-close-btn:hover {
-            background: rgba(67, 97, 238, 0.1) !important;
-            color: #4361ee !important;
-        }
-    `;
-    document.head.appendChild(style);
 }
