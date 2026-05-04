@@ -1,6 +1,6 @@
 /**
  * 优化分类导航系统（基于后端 Worker + D1）
- * 优化：直接使用 API 获取数据，移除本地快照依赖
+ * 优化：直接使用 API 获取数据，增加本地缓存容错
  */
 class OptimizedNavigation {
     constructor() {
@@ -17,6 +17,9 @@ class OptimizedNavigation {
         
         this.isNavigationClick = false;
         this.skeletonCount = 6;
+
+        // 用于缓存最近一次成功加载的数据
+        this.cacheKey = 'nav_data_cache';
     }
 
     async init() {
@@ -28,7 +31,6 @@ class OptimizedNavigation {
             await this.loadNavigationData();
             this.calculateStats();
             this.renderNavigation();
-            this.bindEvents();
             
             const firstCategory = this.getFirstCategory();
             if (firstCategory) {
@@ -38,7 +40,21 @@ class OptimizedNavigation {
             this.isInitialized = true;
         } catch (error) {
             console.error('导航初始化失败:', error);
-            this.showError();
+            // 如果初始化彻底失败，尝试使用缓存兜底
+            const cached = this.loadCache();
+            if (cached) {
+                this.navigationData = cached;
+                this.calculateStats();
+                this.renderNavigation();
+                const firstCategory = this.getFirstCategory();
+                if (firstCategory) {
+                    this.selectLevel1(firstCategory, false);
+                }
+                window.toast.show('网络异常，已加载本地缓存数据', 'warning');
+                this.isInitialized = true;
+            } else {
+                this.showError();
+            }
         }
     }
 
@@ -71,9 +87,24 @@ class OptimizedNavigation {
         return html;
     }
 
-    // 直接通过 API 获取导航数据
+    // 直接通过 API 获取导航数据，带有缓存
     async loadNavigationData(retryCount = 0) {
-        await this.loadFromAPI(retryCount);
+        try {
+            const data = await this.loadFromAPI(retryCount);
+            this.navigationData = data;
+            this.saveCache(data); // 缓存成功加载的数据
+            console.log('✅ 导航数据从 API 加载成功');
+        } catch (error) {
+            // 如果 API 失败，尝试从缓存加载
+            const cached = this.loadCache();
+            if (cached) {
+                console.warn('⚠️ 使用本地缓存的导航数据');
+                this.navigationData = cached;
+                window.toast.show('数据更新失败，展示近期缓存', 'warning');
+            } else {
+                throw error; // 无缓存则抛出错误
+            }
+        }
     }
 
     // 从 Worker API 获取最新数据
@@ -85,8 +116,7 @@ class OptimizedNavigation {
             const response = await fetch(apiUrl, { signal: controller.signal });
             clearTimeout(timeoutId);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            this.navigationData = await response.json();
-            console.log('✅ 导航数据从 API 加载成功');
+            return await response.json();
         } catch (error) {
             if (retryCount < 3) {
                 const delay = Math.pow(2, retryCount) * 1000;
@@ -95,6 +125,33 @@ class OptimizedNavigation {
             }
             throw new Error('无法加载导航数据，请检查网络');
         }
+    }
+
+    // 缓存管理
+    saveCache(data) {
+        try {
+            sessionStorage.setItem(this.cacheKey, JSON.stringify({
+                data: data,
+                timestamp: Date.now()
+            }));
+        } catch (e) {
+            // storage 满或不可用，静默失败
+        }
+    }
+
+    loadCache() {
+        try {
+            const raw = sessionStorage.getItem(this.cacheKey);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            // 缓存有效期为 1 天
+            if (Date.now() - parsed.timestamp < 86400000) {
+                return parsed.data;
+            }
+        } catch (e) {
+            return null;
+        }
+        return null;
     }
 
     // 后台静默更新（仍调用 API）
@@ -106,6 +163,7 @@ class OptimizedNavigation {
                 const latest = await response.json();
                 if (latest && latest.categories) {
                     this.navigationData = latest;
+                    this.saveCache(latest);
                     this.calculateStats();
                     this.renderAll();
                     console.log('🔄 后台静默更新完成');
