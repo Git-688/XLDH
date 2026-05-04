@@ -388,7 +388,6 @@
             font-size: 1.2rem;
             font-weight: 600;
             color: inherit;
-            flex: 1;
         }
         #feedbackModal .feedback-modal-header h3 i {
             color: #4361ee;
@@ -414,16 +413,13 @@
             color: #334155;
         }
 
-        /* --- Waline 评论区域样式覆盖 --- */
-
-
-        /* 评论列表与笔记区统一间距 */
+        /* Waline 评论列表间距 */
         #twikoo-feedback .wl-cards {
             padding: 16px !important;
             margin: 0 !important;
         }
 
-        /* 发布面板：无内边距、无边框、底部分割线 */
+        /* 发布面板无边框、底部分割线 */
         #twikoo-feedback .wl-panel {
             padding: 0 !important;
             border: none !important;
@@ -432,7 +428,6 @@
             background: transparent !important;
         }
 
-        /* 编辑器内部留白 */
         #twikoo-feedback .wl-editor {
             border-radius: 0 !important;
             border: none !important;
@@ -440,7 +435,6 @@
             padding: 8px 16px !important;
         }
 
-        /* 字数统计：右下角绝对定位 */
         #twikoo-feedback .wl-editor-wrapper {
             position: relative;
         }
@@ -748,7 +742,7 @@
             <button class="feedback-modal-close">&times;</button>
         </div>
         <div class="feedback-modal-body">
-            <div id="twikoo-feedback"></div>   <!-- 保留容器ID不变，Waline将挂载于此 -->
+            <div id="twikoo-feedback"></div>
         </div>
     </div>
 </div>
