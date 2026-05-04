@@ -198,7 +198,8 @@ class PluginManager {
 
     formatSong(song, source) {
         return {
-            id: song.id || Utils.generateId(),
+            // 使用 MusicUtils.generateId 避免与全局 Utils 冲突
+            id: song.id || MusicUtils.generateId(),
             title: song.title || song.name || '未知歌曲',
             artist: song.author || song.artist || '未知歌手',
             src: song.url,
@@ -226,7 +227,7 @@ class PluginManager {
 
     formatDouyinSong(songData) {
         return {
-            id: songData.id || songData.hash || Utils.generateId(),
+            id: songData.id || songData.hash || MusicUtils.generateId(),
             title: songData.title || songData.name || songData.songname || '未知歌曲',
             artist: songData.author || songData.artist || songData.singer || '未知歌手',
             src: songData.url || songData.play_url || songData.audio_url,
