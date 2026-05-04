@@ -1,6 +1,6 @@
 /**
  * 星聚导航主应用程序（Waline 评论系统版本）
- * 增加评论统计移动、操作按钮布局调整
+ * 优化 Waline 布局调整，避免 MutationObserver 导致的性能问题
  */
 class App {
     constructor() {
@@ -10,7 +10,8 @@ class App {
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.notebookModalHideRef = null;
-        this.walineObserver = null; // 用于观察 Waline DOM 变化
+        this.walineLayoutTimer = null;  // 用于定时调整布局
+        this.walineAdjustAttempts = 0;  // 调整次数计数
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -34,12 +35,10 @@ class App {
         listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
         
         try {
-            // Worker 默认请求 maxid=1000，且会自动提前终止，因此无需传参
             const response = await fetch(this.NOTEBOOK_CONFIG.apiUrl);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const result = await response.json();
             
-            // 兼容不同的返回格式
             const items = Array.isArray(result) ? result : (result.items || result.data || []);
             
             const validItems = items.filter(item => {
@@ -132,16 +131,20 @@ class App {
         modal.style.display = 'flex';
         modal.classList.add('active');
         
-        // Waline 初始化（仅首次执行）并增加 DOM 调整回调
         const walineContainer = document.getElementById('twikoo-feedback');
         if (!walineContainer) return;
 
-        // 清理旧实例（如果存在）
+        // 清理旧实例和定时器
         if (window.walineInstance) {
             try { window.walineInstance.destroy(); } catch (e) {}
         }
+        if (this.walineLayoutTimer) {
+            clearTimeout(this.walineLayoutTimer);
+            this.walineLayoutTimer = null;
+        }
+        this.walineAdjustAttempts = 0;
 
-        walineContainer.innerHTML = ''; // 清空容器
+        walineContainer.innerHTML = '';
         
         import('https://unpkg.com/@waline/client@v3/dist/waline.js')
             .then(({ init }) => {
@@ -165,8 +168,8 @@ class App {
                 window.walineFeedbackInited = true;
                 console.log('✅ Waline 评论系统初始化成功');
 
-                // 调整 DOM 布局
-                this.adjustWalineLayout();
+                // 延迟后开始尝试调整布局（等待 Waline 渲染）
+                this.walineLayoutTimer = setTimeout(() => this.tryAdjustWalineLayout(), 300);
             })
             .catch(err => {
                 console.error('Waline 初始化失败:', err);
@@ -175,109 +178,94 @@ class App {
     }
 
     /**
-     * 调整 Waline DOM 布局：
-     * - 将评论统计数移动到标题后面
-     * - 移动排序按钮到列表上方居中
-     * - 调整操作按钮左右分布
+     * 定时尝试调整 Waline 布局，最多尝试 10 次 (每次间隔 200ms)
+     * 找到关键元素后立即调整并停止
      */
-    adjustWalineLayout() {
+    tryAdjustWalineLayout() {
+        this.walineAdjustAttempts++;
         const container = document.getElementById('twikoo-feedback');
         if (!container) return;
 
-        // 使用 MutationObserver 等待 Waline 渲染完成
-        if (this.walineObserver) this.walineObserver.disconnect();
-        this.walineObserver = new MutationObserver((mutations, obs) => {
-            const header = document.querySelector('#feedbackModal .feedback-modal-header h3');
-            const statsEl = container.querySelector('.wl-info');   // 评论统计
-            const sortEl = container.querySelector('.wl-sort');   // 排序按钮
-            const footer = container.querySelector('.wl-footer'); // 操作栏
+        const header = document.querySelector('#feedbackModal .feedback-modal-header h3');
+        const statsEl = container.querySelector('.wl-info');
+        const sortEl = container.querySelector('.wl-sort');
+        const footer = container.querySelector('.wl-footer');
 
-            if (statsEl && header) {
-                // 将统计信息插入标题后面
-                const countText = statsEl.textContent.trim();
-                if (countText && !header.querySelector('.wl-comment-count')) {
-                    const span = document.createElement('span');
-                    span.className = 'wl-comment-count';
-                    span.style.fontSize = '0.9rem';
-                    span.style.marginLeft = '12px';
-                    span.style.fontWeight = '400';
-                    span.style.color = 'var(--text-secondary)';
-                    span.textContent = countText;
-                    header.appendChild(span);
+        // 如果还没有关键元素，且未超过尝试次数，则继续等待
+        if ((!statsEl || !sortEl || !footer) && this.walineAdjustAttempts < 10) {
+            this.walineLayoutTimer = setTimeout(() => this.tryAdjustWalineLayout(), 200);
+            return;
+        }
+
+        // 一旦开始调整，立即执行
+        // 1. 移动统计数到标题后
+        if (statsEl && header) {
+            const countText = statsEl.textContent.trim();
+            if (countText && !header.querySelector('.wl-comment-count')) {
+                const span = document.createElement('span');
+                span.className = 'wl-comment-count';
+                span.style.fontSize = '0.9rem';
+                span.style.marginLeft = '12px';
+                span.style.fontWeight = '400';
+                span.style.color = 'var(--text-secondary)';
+                span.textContent = countText;
+                header.appendChild(span);
+            }
+            statsEl.style.display = 'none';
+        }
+
+        // 2. 排序按钮居中
+        if (sortEl) {
+            const cards = container.querySelector('.wl-cards');
+            if (cards && cards.parentNode) {
+                cards.parentNode.insertBefore(sortEl, cards);
+            }
+            sortEl.style.display = 'flex';
+            sortEl.style.justifyContent = 'center';
+            sortEl.style.marginBottom = '16px';
+            sortEl.style.padding = '0';
+        }
+
+        // 3. 操作按钮左右分布
+        if (footer) {
+            const actions = footer.querySelector('.wl-actions');
+            if (actions) {
+                // 防止重复调整
+                if (!actions.querySelector('.wl-actions-left') && !actions.querySelector('.wl-actions-right')) {
+                    const allBtns = Array.from(actions.children);
+                    const loginBtn = allBtns.find(b => b.classList.contains('wl-login') || b.classList.contains('wl-user'));
+                    const submitBtn = allBtns.find(b => b.classList.contains('wl-submit'));
+                    const otherBtns = allBtns.filter(b => b !== loginBtn && b !== submitBtn);
+
+                    const leftDiv = document.createElement('div');
+                    leftDiv.className = 'wl-actions-left';
+                    leftDiv.style.display = 'flex';
+                    leftDiv.style.gap = '8px';
+                    otherBtns.forEach(b => leftDiv.appendChild(b));
+
+                    const rightDiv = document.createElement('div');
+                    rightDiv.className = 'wl-actions-right';
+                    rightDiv.style.display = 'flex';
+                    rightDiv.style.gap = '8px';
+                    if (loginBtn) rightDiv.appendChild(loginBtn);
+                    if (submitBtn) rightDiv.appendChild(submitBtn);
+
+                    actions.innerHTML = '';
+                    actions.appendChild(leftDiv);
+                    actions.appendChild(rightDiv);
                 }
-                // 隐藏原位置统计
-                if (statsEl) statsEl.style.display = 'none';
+                actions.style.display = 'flex';
+                actions.style.justifyContent = 'space-between';
+                actions.style.width = '100%';
+                actions.style.alignItems = 'center';
             }
+        }
 
-            // 排序按钮移动到评论列表上方居中
-            if (sortEl) {
-                const cards = container.querySelector('.wl-cards');
-                if (cards && cards.parentNode) {
-                    cards.parentNode.insertBefore(sortEl, cards);
-                }
-                sortEl.style.display = 'flex';
-                sortEl.style.justifyContent = 'center';
-                sortEl.style.marginBottom = '16px';
-                sortEl.style.padding = '0';
-            }
-
-            // 操作按钮左右分布
-            if (footer) {
-                const actions = footer.querySelector('.wl-actions');
-                if (actions) {
-                    actions.style.display = 'flex';
-                    actions.style.justifyContent = 'space-between';
-                    actions.style.width = '100%';
-                    actions.style.alignItems = 'center';
-                    // 确保左右部分在同一水平线
-                    const leftGroup = actions.querySelector('.wl-actions-left');
-                    const rightGroup = actions.querySelector('.wl-actions-right');
-                    if (!leftGroup && !rightGroup) {
-                        // 如果 Waline 没有分组，可以自己包装
-                        const allBtns = Array.from(actions.children);
-                        const loginBtn = allBtns.find(b => b.classList.contains('wl-login') || b.classList.contains('wl-user'));
-                        const submitBtn = allBtns.find(b => b.classList.contains('wl-submit'));
-                        const otherBtns = allBtns.filter(b => b !== loginBtn && b !== submitBtn);
-                        
-                        const leftDiv = document.createElement('div');
-                        leftDiv.className = 'wl-actions-left';
-                        leftDiv.style.display = 'flex';
-                        leftDiv.style.gap = '8px';
-                        otherBtns.forEach(b => leftDiv.appendChild(b));
-                        
-                        const rightDiv = document.createElement('div');
-                        rightDiv.className = 'wl-actions-right';
-                        rightDiv.style.display = 'flex';
-                        rightDiv.style.gap = '8px';
-                        if (loginBtn) rightDiv.appendChild(loginBtn);
-                        if (submitBtn) rightDiv.appendChild(submitBtn);
-
-                        actions.innerHTML = '';
-                        actions.appendChild(leftDiv);
-                        actions.appendChild(rightDiv);
-                    } else {
-                        // 已有分组，直接设置样式
-                        if (leftGroup) leftGroup.style.display = 'flex';
-                        if (rightGroup) rightGroup.style.display = 'flex';
-                    }
-                }
-            }
-
-            // 数字数已经在 CSS 中处理，这里无需额外操作
-            if (statsEl && sortEl && footer) {
-                // 所有目标都存在，停止观察
-                // 但排序可能晚出现，所以继续观察一段时间
-                // 简单起见，延迟停止观察
-                setTimeout(() => {
-                    if (this.walineObserver) {
-                        this.walineObserver.disconnect();
-                        this.walineObserver = null;
-                    }
-                }, 2000);
-            }
-        });
-
-        this.walineObserver.observe(container, { childList: true, subtree: true, attributes: false, characterData: false });
+        // 清除定时器
+        if (this.walineLayoutTimer) {
+            clearTimeout(this.walineLayoutTimer);
+            this.walineLayoutTimer = null;
+        }
     }
 
     closeFeedbackModal() {
@@ -286,11 +274,12 @@ class App {
             modal.classList.remove('active');
             modal.style.display = 'none';
         }
-        // 断开观察器
-        if (this.walineObserver) {
-            this.walineObserver.disconnect();
-            this.walineObserver = null;
+        // 清理布局定时器
+        if (this.walineLayoutTimer) {
+            clearTimeout(this.walineLayoutTimer);
+            this.walineLayoutTimer = null;
         }
+        this.walineAdjustAttempts = 0;
     }
 
     initFeedbackModalEvents() {
