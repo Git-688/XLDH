@@ -107,9 +107,6 @@
             font-weight: 500;
             color: var(--text-primary);
             letter-spacing: 0.2px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
         .feedback-modal-header h3 i {
             margin-right: 6px;
@@ -145,6 +142,7 @@
             -ms-overflow-style: none;
         }
         .feedback-modal-body::-webkit-scrollbar { display: none; }
+
         @media (max-width: 600px) {
             .feedback-modal {
                 padding: var(--container-padding-xs, 16px);
@@ -169,10 +167,12 @@
             .feedback-modal-body { -webkit-overflow-scrolling: touch; }
             .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
         }
+
         @media (min-width: 601px) {
             .feedback-modal-header { padding: 10px 16px; }
             .feedback-modal-header h3 { font-size: 1.25rem; }
         }
+
         @media (prefers-color-scheme: dark) {
             .feedback-modal-content { background: #2a2a2a; border-color: #3e3e3e; }
             .feedback-modal-header { background: #2a2a2a; border-bottom-color: #3e3e3e; }
@@ -310,6 +310,7 @@
             -webkit-backdrop-filter: blur(4px);
             border: 1px solid rgba(0, 0, 0, 0.03);
         }
+
         @media (prefers-color-scheme: dark) {
             #notebookModal .feedback-modal-content {
                 background: rgba(30, 30, 30, 0.75);
@@ -335,158 +336,21 @@
             .notebook-content { background: rgba(30, 30, 30, 0.6); }
         }
 
-        /* ===== 用户反馈模态框（Waline）纯色背景 ===== */
-        #feedbackModal {
-            background: transparent !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-        }
-        #feedbackModal .feedback-modal-content {
-            background: var(--bg-card, #ffffff) !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            border: 1px solid var(--border-color, #e0e0e0) !important;
-            border-radius: 8px !important;
-            overflow: hidden !important;
-        }
-        #feedbackModal .feedback-modal-header {
-            background: var(--bg-card, #ffffff) !important;
-            border-bottom: 1px solid var(--border-color, #e0e0e0) !important;
-            padding: 18px 24px 10px !important;
-            color: #1e293b !important;
-        }
-        #feedbackModal .feedback-modal-header h3 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: inherit;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        #feedbackModal .feedback-modal-header h3 i {
-            color: #4361ee;
-            font-size: 1.2rem;
-            margin-right: 10px;
-        }
-        /* 评论统计数插入标题后自动跟随 */
-        #feedbackModal .feedback-modal-header h3 .wl-comment-count {
-            font-size: 0.9rem;
-            font-weight: 400;
+        .notebook-list .loading, .notebook-list .empty, .notebook-list .error {
+            text-align: center;
+            padding: 20px 20px;
             color: var(--text-secondary);
-            margin-left: 4px;
-            white-space: nowrap;
+            font-size: 12px;
         }
-        #feedbackModal .feedback-modal-close {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.05);
-            border: none;
-            color: #64748b;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        #feedbackModal .feedback-modal-close:hover {
-            background: rgba(0, 0, 0, 0.1);
-            color: #334155;
-        }
+        .notebook-list .error { color: var(--error-color); }
 
-        /* ===== Waline 评论列表与发布区 ===== */
-        /* 评论列表内边距与笔记一致 */
-        #twikoo-feedback .wl-cards {
-            padding: 16px !important;
-            margin: 0 !important;
+        @media (max-width: 768px) {
+            .notebook-item { padding: 10px 12px; }
+            .notebook-title { font-size: 14px; }
+            .notebook-content { font-size: 11px; }
         }
-
-        /* 发布面板无边框、底部分割线 */
-        #twikoo-feedback .wl-panel {
-            padding: 0 !important;
-            border: none !important;
-            border-bottom: 1px solid var(--border-color, #e0e0e0) !important;
-            margin: 0 !important;
-            background: transparent !important;
-        }
-
-        /* 编辑器内边距 */
-        #twikoo-feedback .wl-editor {
-            border-radius: 0 !important;
-            border: none !important;
-            margin: 0 !important;
-            padding: 8px 16px !important;
-        }
-
-        /* ===== 排序按钮居中，上下留白相等且较小 ===== */
-        #twikoo-feedback .wl-sort {
-            display: flex;
-            justify-content: center;
-            margin: 8px 0 !important;
-            padding: 0 !important;
-        }
-
-        /* ===== 操作按钮左右分组，按钮统一小尺寸 ===== */
-        #twikoo-feedback .wl-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: 4px 16px !important;
-        }
-        /* 强制所有按钮大小一致 */
-        #twikoo-feedback .wl-btn {
-            font-size: 0.85rem !important;
-            padding: 4px 10px !important;
-            line-height: 1.2 !important;
-            height: auto !important;
-            min-width: auto !important;
-        }
-        /* 左右分组容器 */
-        #twikoo-feedback .wl-actions-left,
-        #twikoo-feedback .wl-actions-right {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        /* 确保组内按钮也一致 */
-        #twikoo-feedback .wl-actions-left .wl-btn,
-        #twikoo-feedback .wl-actions-right .wl-btn {
-            font-size: 0.85rem !important;
-            padding: 4px 10px !important;
-        }
-
-        /* ===== 字数统计：移到输入框下方的右下角 ===== */
-        #twikoo-feedback .wl-count {
-            position: static !important;
-            text-align: right !important;
-            margin-top: 4px !important;
-            padding: 0 16px !important;
-            font-size: 12px !important;
-            color: var(--text-secondary);
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* 深色模式 */
-        @media (prefers-color-scheme: dark) {
-            #feedbackModal .feedback-modal-content {
-                background: #1e1e1e !important;
-                border-color: #3e3e3e !important;
-            }
-            #feedbackModal .feedback-modal-header {
-                background: #1e1e1e !important;
-                border-bottom-color: #3e3e3e !important;
-                color: #f1f5f9 !important;
-            }
-            #feedbackModal .feedback-modal-close {
-                background: rgba(255, 255, 255, 0.1);
-                color: #94a3b8;
-            }
-            #twikoo-feedback .wl-panel {
-                border-bottom-color: rgba(255, 255, 255, 0.1) !important;
-            }
+        @media (max-width: 480px) {
+            .notebook-item { padding: 8px 10px; }
         }
     </style>
 </head>
