@@ -1,6 +1,6 @@
 /**
  * 星聚导航主应用程序（Waline 评论系统版本）
- * 已优化布局调整，避免性能问题
+ * 不做任何 Waline DOM 修改，恢复为原始默认样式
  */
 class App {
     constructor() {
@@ -10,8 +10,6 @@ class App {
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.notebookModalHideRef = null;
-        this.walineLayoutTimer = null;
-        this.walineAdjustAttempts = 0;
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -29,26 +27,21 @@ class App {
     async loadNotebookData() {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
-        
         listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
-        
         try {
             const response = await fetch(this.NOTEBOOK_CONFIG.apiUrl);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const result = await response.json();
-            
             const items = Array.isArray(result) ? result : (result.items || result.data || []);
             const validItems = items.filter(item => {
                 const title = (item.title || item.name || item.note_title || '').toString().trim();
                 return title !== '';
             });
             validItems.sort((a, b) => (a.numid || 0) - (b.numid || 0));
-            
             if (validItems.length === 0) {
-                listEl.innerHTML = '<div class="empty">暂无笔记记录（请检查 Worker 环境变量是否已设置）</div>';
+                listEl.innerHTML = '<div class="empty">暂无笔记记录</div>';
                 return;
             }
-            
             const html = validItems.map(item => {
                 const title = Utils.escapeHtml((item.title || item.name || '').toString().trim());
                 const time = Utils.escapeHtml(item.time || '--');
@@ -103,26 +96,20 @@ class App {
         if (closeBtn) closeBtn.addEventListener('click', () => this.hideNotebookModal());
     }
 
-    // ========== 反馈模态框（Waline） ==========
+    // ========== Waline 原始加载，无 DOM 修改 ==========
     openFeedbackModal() {
         const modal = document.getElementById('feedbackModal');
         if (!modal) return;
         modal.style.display = 'flex';
         modal.classList.add('active');
-        
-        const walineContainer = document.getElementById('twikoo-feedback');
-        if (!walineContainer) return;
 
+        const container = document.getElementById('twikoo-feedback');
+        if (!container) return;
         if (window.walineInstance) {
             try { window.walineInstance.destroy(); } catch (e) {}
         }
-        if (this.walineLayoutTimer) {
-            clearTimeout(this.walineLayoutTimer);
-            this.walineLayoutTimer = null;
-        }
-        this.walineAdjustAttempts = 0;
-        walineContainer.innerHTML = '';
-        
+        container.innerHTML = '';
+
         import('https://unpkg.com/@waline/client@v3/dist/waline.js')
             .then(({ init }) => {
                 window.walineInstance = init({
@@ -142,87 +129,11 @@ class App {
                     turnstileKey: '',
                 });
                 window.walineFeedbackInited = true;
-                console.log('✅ Waline 初始化成功');
-                this.walineLayoutTimer = setTimeout(() => this.tryAdjustWalineLayout(), 300);
             })
             .catch(err => {
-                console.error('Waline 初始化失败:', err);
-                walineContainer.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;">评论系统加载失败，请刷新页面重试</div>';
+                console.error('Waline 加载失败:', err);
+                container.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;">评论系统加载失败</div>';
             });
-    }
-
-    tryAdjustWalineLayout() {
-        this.walineAdjustAttempts++;
-        const container = document.getElementById('twikoo-feedback');
-        if (!container) return;
-
-        const header = document.querySelector('#feedbackModal .feedback-modal-header h3');
-        const statsEl = container.querySelector('.wl-info');
-        const sortEl = container.querySelector('.wl-sort');
-        const footer = container.querySelector('.wl-footer');
-        const countEl = container.querySelector('.wl-count');
-
-        if ((!statsEl || !sortEl || !footer) && this.walineAdjustAttempts < 10) {
-            this.walineLayoutTimer = setTimeout(() => this.tryAdjustWalineLayout(), 200);
-            return;
-        }
-
-        // 1. 统计数移到标题右侧
-        if (statsEl && header) {
-            const countText = statsEl.textContent.trim();
-            if (countText && !header.querySelector('.wl-comment-count')) {
-                const span = document.createElement('span');
-                span.className = 'wl-comment-count';
-                span.textContent = countText;
-                header.appendChild(span);
-            }
-            statsEl.style.display = 'none';
-        }
-
-        // 2. 排序按钮居中（CSS 已处理）
-        if (sortEl) {
-            const cards = container.querySelector('.wl-cards');
-            if (cards && cards.parentNode) {
-                cards.parentNode.insertBefore(sortEl, cards);
-            }
-        }
-
-        // 3. 操作按钮左右分布
-        if (footer) {
-            const actions = footer.querySelector('.wl-actions');
-            if (actions && !actions.querySelector('.wl-actions-left')) {
-                const allBtns = Array.from(actions.children);
-                const loginBtn = allBtns.find(b => b.classList.contains('wl-login') || b.classList.contains('wl-user'));
-                const submitBtn = allBtns.find(b => b.classList.contains('wl-submit'));
-                const otherBtns = allBtns.filter(b => b !== loginBtn && b !== submitBtn);
-
-                const leftDiv = document.createElement('div');
-                leftDiv.className = 'wl-actions-left';
-                otherBtns.forEach(b => leftDiv.appendChild(b));
-
-                const rightDiv = document.createElement('div');
-                rightDiv.className = 'wl-actions-right';
-                if (loginBtn) rightDiv.appendChild(loginBtn);
-                if (submitBtn) rightDiv.appendChild(submitBtn);
-
-                actions.innerHTML = '';
-                actions.appendChild(leftDiv);
-                actions.appendChild(rightDiv);
-            }
-        }
-
-        // 4. 字数统计移到输入框下方右下角
-        if (countEl) {
-            const panel = container.querySelector('.wl-panel');
-            if (panel && !panel.contains(countEl)) {
-                panel.appendChild(countEl);
-            }
-        }
-
-        if (this.walineLayoutTimer) {
-            clearTimeout(this.walineLayoutTimer);
-            this.walineLayoutTimer = null;
-        }
     }
 
     closeFeedbackModal() {
@@ -231,11 +142,6 @@ class App {
             modal.classList.remove('active');
             modal.style.display = 'none';
         }
-        if (this.walineLayoutTimer) {
-            clearTimeout(this.walineLayoutTimer);
-            this.walineLayoutTimer = null;
-        }
-        this.walineAdjustAttempts = 0;
     }
 
     initFeedbackModalEvents() {
@@ -275,7 +181,9 @@ class App {
             floatingBtns.style.opacity = '0.4';
             floatingBtns.style.transition = 'opacity 0.3s ease';
             clearTimeout(scrollTimer);
-            scrollTimer = setTimeout(() => { floatingBtns.style.opacity = '1'; }, 1000);
+            scrollTimer = setTimeout(() => {
+                floatingBtns.style.opacity = '1';
+            }, 1000);
         }, { passive: true });
     }
 
