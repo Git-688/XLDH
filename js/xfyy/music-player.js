@@ -405,7 +405,8 @@ class MusicPlayer {
                 elements.searchInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.searchApi(api);
                 });
-                elements.searchInput.addEventListener('input', Utils.debounce(() => {
+                // 将 Utils.debounce 替换为 MusicUtils.debounce
+                elements.searchInput.addEventListener('input', MusicUtils.debounce(() => {
                     if (elements.searchInput.value.trim().length > 2) {
                         this.searchApi(api);
                     }
@@ -703,7 +704,7 @@ class MusicPlayer {
             if (elements.playlistContainer) {
                 elements.playlistContainer.innerHTML = `
                     <div class="error-message">
-                        <p>加载失败: ${Utils.escapeHtml(error.message)}</p>
+                        <p>加载失败: ${MusicUtils.escapeHtml(error.message)}</p>
                         <button class="retry-btn" onclick="musicPlayer.loadApiPlaylist('${apiId}')">重试</button>
                     </div>
                 `;
@@ -746,7 +747,7 @@ class MusicPlayer {
         } catch (error) {
             console.error(`搜索失败:`, error);
             if (elements.searchResults) {
-                elements.searchResults.innerHTML = `<div class="error-message"><p>搜索失败: ${Utils.escapeHtml(error.message)}</p></div>`;
+                elements.searchResults.innerHTML = `<div class="error-message"><p>搜索失败: ${MusicUtils.escapeHtml(error.message)}</p></div>`;
             }
             window.toast.show('搜索失败', 'error');
         }
@@ -796,13 +797,13 @@ class MusicPlayer {
         }
         const coverUrl = song.cover || '';
         const coverHtml = coverUrl
-            ? `<img class="song-cover" data-src="${Utils.escapeHtml(coverUrl)}" alt="" loading="lazy" style="display:none;">`
+            ? `<img class="song-cover" data-src="${MusicUtils.escapeHtml(coverUrl)}" alt="" loading="lazy" style="display:none;">`
             : '';
         songItem.innerHTML = `
             ${coverHtml}
             <div class="song-item-info">
-                <div class="song-item-title">${Utils.escapeHtml(song.title || '未知歌曲')}</div>
-                <div class="song-item-artist">${Utils.escapeHtml(song.artist || '未知歌手')}</div>
+                <div class="song-item-title">${MusicUtils.escapeHtml(song.title || '未知歌曲')}</div>
+                <div class="song-item-artist">${MusicUtils.escapeHtml(song.artist || '未知歌手')}</div>
             </div>
         `;
         if (index < 5 && coverUrl) {
@@ -840,8 +841,8 @@ class MusicPlayer {
         songItem.className = 'song-item';
         songItem.innerHTML = `
             <div class="song-item-info">
-                <div class="song-item-title">${Utils.escapeHtml(song.title || '未知歌曲')}</div>
-                <div class="song-item-artist">${Utils.escapeHtml(song.artist || '未知歌手')}</div>
+                <div class="song-item-title">${MusicUtils.escapeHtml(song.title || '未知歌曲')}</div>
+                <div class="song-item-artist">${MusicUtils.escapeHtml(song.artist || '未知歌手')}</div>
             </div>
             <button class="search-download-btn" title="下载">
                 <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
@@ -1040,7 +1041,7 @@ class MusicPlayer {
                 this.elements.progress.style.width = `${progressPercent}%`;
                 this.elements.progressHandle.style.left = `${progressPercent}%`;
                 if (!this.lastTimeUpdate || Date.now() - this.lastTimeUpdate > 500) {
-                    this.elements.currentTime.textContent = Utils.formatTime(currentTime);
+                    this.elements.currentTime.textContent = MusicUtils.formatTime(currentTime);
                     this.lastTimeUpdate = Date.now();
                 }
                 this.updateLyricDisplayByTime(currentTime);
@@ -1052,7 +1053,7 @@ class MusicPlayer {
     updateDuration() {
         const duration = this.audio.duration;
         if (duration && !isNaN(duration) && duration > 0) {
-            this.elements.duration.textContent = Utils.formatTime(duration);
+            this.elements.duration.textContent = MusicUtils.formatTime(duration);
         } else {
             this.elements.duration.textContent = '--:--';
         }
@@ -1186,7 +1187,7 @@ class MusicPlayer {
             const progressPercent = (seekTime / duration) * 100;
             this.elements.progress.style.width = `${progressPercent}%`;
             this.elements.progressHandle.style.left = `${progressPercent}%`;
-            this.elements.currentTime.textContent = Utils.formatTime(seekTime);
+            this.elements.currentTime.textContent = MusicUtils.formatTime(seekTime);
         }
     }
 
