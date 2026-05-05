@@ -1,34 +1,3 @@
-// ==================== Utils 兼容层（防止全局 Utils 未加载） ====================
-if (typeof Utils === 'undefined') {
-    window.Utils = {
-        escapeHtml(text) {
-            if (text == null) return '';
-            const div = document.createElement('div');
-            div.textContent = String(text);
-            return div.innerHTML;
-        },
-        formatTime(seconds) {
-            if (isNaN(seconds)) return '00:00';
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60);
-            return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-        },
-        generateId() {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-        },
-        debounce(fn, delay) {
-            let timer;
-            return function (...args) {
-                clearTimeout(timer);
-                timer = setTimeout(() => fn.apply(this, args), delay);
-            };
-        },
-        isMobile() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }
-    };
-}
-
 // ==================== 自定义下拉选择器组件（挂载到 body，互斥+动画） ====================
 class CustomSelect {
     constructor(selectElement) {
@@ -242,7 +211,7 @@ function initCustomSelects() {
     });
 }
 
-// ==================== 主播放器类（修复版） ====================
+// ==================== 主播放器类 ====================
 class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audio-element');
@@ -264,8 +233,11 @@ class MusicPlayer {
         this.isHandlingNavigationClick = false;
         this.hasInitialized = false;
 
+        // 连续播放失败计数器与最大尝试次数
         this.consecutiveErrors = 0;
         this.maxConsecutiveErrors = 3;
+        // 是否已显示连续错误提示
+        this.maxErrorShown = false;
     }
 
     initCoverObserver() {
@@ -344,6 +316,7 @@ class MusicPlayer {
             player: document.querySelector('.music-player')
         };
 
+        // 单行歌词元素
         if (this.elements.lyricsContainer) {
             this.elements.lyricsContainer.innerHTML = '';
             this.lyricsLineEl = document.createElement('div');
@@ -426,7 +399,7 @@ class MusicPlayer {
         apis.forEach(api => {
             const elements = this.apiElements[api];
             if (!elements) return;
-            if (api === 'local' || api === 'migu') return;
+            if (api === 'local' || api === 'migu' || api === 'qq') return; // 只允许netease搜索
             if (elements.playlistSelect) {
                 elements.playlistSelect.addEventListener('change', () => this.loadApiPlaylist(api));
             }
@@ -444,6 +417,7 @@ class MusicPlayer {
     }
 
     // ========== 歌词系统（单行居中 + 跑马灯 + 淡入过渡） ==========
+
     async loadLyrics(song) {
         this.lyricsData = [];
         this.currentLyricIndex = -1;
@@ -509,6 +483,7 @@ class MusicPlayer {
     }
 
     // ========== 播放控制 ==========
+
     togglePlay() {
         this.isPlaying ? this.pause() : this.play();
     }
@@ -526,9 +501,7 @@ class MusicPlayer {
             this.updateActiveSongInList();
         }).catch(error => {
             console.error('播放失败:', error);
-            if (error.name === 'NotAllowedError') {
-                window.toast.show('请点击播放按钮开始播放', 'warning');
-            } else if (!this.isHandlingNavigationClick) {
+            if (!this.isHandlingNavigationClick) {
                 this.handlePlaybackError(error);
             }
         });
@@ -560,7 +533,7 @@ class MusicPlayer {
     }
 
     next() {
-        if (this.isHandlingNavigationClick) return;
+        if (this.isHandlingNavigationClick || this.maxErrorShown) return;
         let newIndex;
         if (this.playMode === 1) {
             newIndex = Math.floor(Math.random() * this.currentPlaylist.length);
@@ -591,11 +564,7 @@ class MusicPlayer {
         this.savePlayMode(this.playMode);
         this.updateModeIcon();
         const modeText = this.getPlayModeText();
-        const lastMode = localStorage.getItem('lastPlayMode');
-        if (lastMode !== modeText) {
-            window.toast.show(`播放模式: ${modeText}`, 'info');
-            localStorage.setItem('lastPlayMode', modeText);
-        }
+        window.toast.show(`播放模式: ${modeText}`, 'info');
     }
 
     getPlayModeText() {
@@ -635,12 +604,9 @@ class MusicPlayer {
     }
 
     toggleSearchMode(apiId) {
-        if (apiId === 'migu' || apiId === 'local') {
+        if (apiId === 'migu' || apiId === 'local' || apiId === 'qq') {
+            // 不支持搜索的源：直接提示，不切换模式
             window.toast.show('该功能不支持搜索', 'info');
-            return;
-        }
-        if (apiId === 'qq') {
-            window.toast.show('QQ音乐搜索暂不可用', 'info');
             return;
         }
         const elements = this.apiElements[apiId];
@@ -676,6 +642,7 @@ class MusicPlayer {
     }
 
     // ========== 歌单与歌曲加载 ==========
+
     async switchApiTab(apiId) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -718,10 +685,12 @@ class MusicPlayer {
             } else {
                 const playlistId = elements.playlistSelect ? elements.playlistSelect.value : '3778678';
                 playlist = await this.pluginManager.getPlaylist(apiId, playlistId);
-                const cacheKey = `notified_${apiId}_${playlistId}`;
-                if (playlist.length > 0 && !localStorage.getItem(cacheKey)) {
-                    window.toast.show(`已加载 ${playlist.length} 首歌曲`, 'info');
-                    localStorage.setItem(cacheKey, 'true');
+                if (playlist.length > 0) {
+                    const cacheKey = `notified_${apiId}_${playlistId}`;
+                    if (!sessionStorage.getItem(cacheKey)) {
+                        window.toast.show(`已加载 ${playlist.length} 首歌曲`, 'info');
+                        sessionStorage.setItem(cacheKey, 'true');
+                    }
                 }
             }
 
@@ -748,11 +717,7 @@ class MusicPlayer {
 
     async searchApi(apiId) {
         if (apiId === 'migu' || apiId === 'local' || apiId === 'qq') {
-            const cacheKey = `searched_${apiId}`;
-            if (!localStorage.getItem(cacheKey)) {
-                window.toast.show('该功能不支持搜索', 'info');
-                localStorage.setItem(cacheKey, 'true');
-            }
+            // 不支持搜索，不执行
             return;
         }
         const elements = this.apiElements[apiId];
@@ -768,8 +733,6 @@ class MusicPlayer {
             this.renderSearchResults(apiId, results);
             if (results.length === 0) {
                 window.toast.show(`未找到与"${keyword}"相关的歌曲`, 'info');
-            } else if (results.length > 5) {
-                window.toast.show(`找到 ${results.length} 个结果`, 'info');
             }
         } catch (error) {
             console.error(`搜索失败:`, error);
@@ -909,35 +872,6 @@ class MusicPlayer {
         });
     }
 
-    // ============================================================
-    // 核心修复：使用事件监听 + 超时替代 duration 轮询
-    // ============================================================
-    waitForAudioReady(timeout = 10000) {
-        return new Promise((resolve, reject) => {
-            const onLoaded = () => {
-                cleanup();
-                resolve();
-            };
-            const onError = () => {
-                cleanup();
-                reject(new Error('音频加载错误'));
-            };
-            const onTimeout = () => {
-                cleanup();
-                reject(new Error('音频加载超时'));
-            };
-            const cleanup = () => {
-                this.audio.removeEventListener('loadedmetadata', onLoaded);
-                this.audio.removeEventListener('error', onError);
-                clearTimeout(timer);
-            };
-
-            this.audio.addEventListener('loadedmetadata', onLoaded);
-            this.audio.addEventListener('error', onError);
-            const timer = setTimeout(onTimeout, timeout);
-        });
-    }
-
     async loadSong(index, playlist = null) {
         if (this.isHandlingNavigationClick) return;
         const currentPlaylist = playlist || this.currentPlaylist;
@@ -947,19 +881,25 @@ class MusicPlayer {
         const song = currentPlaylist[index];
         this.isLoading = true;
         this.elements.playBtn.disabled = true;
-
         try {
             this.audio.src = song.src;
             this.audio.load();
-
-            // 等待音频真正加载完成或失败（不再是死循环）
-            await this.waitForAudioReady();
-            this.consecutiveErrors = 0; // 成功
-
             await this.updateSongInfo(song);
             await this.loadLyrics(song);
+            await new Promise((resolve) => {
+                const checkDuration = () => {
+                    if (this.audio.duration && !isNaN(this.audio.duration)) {
+                        resolve();
+                    } else {
+                        setTimeout(checkDuration, 100);
+                    }
+                };
+                checkDuration();
+            });
+            this.consecutiveErrors = 0; // 成功则重置错误计数
+            this.maxErrorShown = false;
         } catch (error) {
-            console.error('加载歌曲失败:', song.src, error);
+            console.error('加载歌曲失败:', error);
             if (!this.isHandlingNavigationClick) {
                 this.handlePlaybackError(error);
             }
@@ -969,12 +909,19 @@ class MusicPlayer {
         }
     }
 
+    // 统一的音频错误处理（限制自动跳歌次数）
     handlePlaybackError(error) {
         this.consecutiveErrors++;
         if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
-            window.toast.show('连续多首资源失效，请尝试切换歌单', 'error');
-            this.consecutiveErrors = 0;
+            if (!this.maxErrorShown) {
+                window.toast.show('连续多首资源失效，已停止自动播放', 'error');
+                this.maxErrorShown = true;
+            }
+            // 停止继续自动跳歌，但保留用户手动操作
+            this.autoPlayNext = false;
+            return;
         }
+        // 自动尝试下一首（如果允许）
         if (this.autoPlayNext && this.currentPlaylist.length > 1) {
             setTimeout(() => this.next(), 1000);
         }
@@ -1008,10 +955,12 @@ class MusicPlayer {
     }
 
     async downloadSong(song) {
+        let progressElement = null;
         try {
             window.toast.show(`开始下载: ${song.title}`, 'info');
-            const progressElement = this.createDownloadProgress();
+            progressElement = this.createDownloadProgress();
             const response = await fetch(song.src);
+            if (!response.ok) throw new Error('下载请求失败');
             const contentLength = response.headers.get('content-length');
             const total = parseInt(contentLength, 10);
 
@@ -1041,6 +990,7 @@ class MusicPlayer {
             window.toast.show(`下载完成: ${song.title}`, 'info');
         } catch (error) {
             console.error('下载失败:', error);
+            if (progressElement) progressElement.remove();
             window.toast.show(`下载失败: ${song.title}`, 'error');
         }
     }
@@ -1137,7 +1087,7 @@ class MusicPlayer {
         document.addEventListener('mousemove', (e) => this.dragSeek(e));
         document.addEventListener('mouseup', () => this.endSeek());
         this.elements.progressBar.addEventListener('touchstart', (e) => this.startSeek(e));
-        document.addEventListener('touchmove', (e) => this.dragSeek(e));
+        document.addEventListener('touchmove', (e) => this.dragSeek(e), { passive: false });
         document.addEventListener('touchend', () => this.endSeek());
         this.elements.progressBar.addEventListener('click', (e) => {
             if (!this.isDraggingProgress) {
@@ -1190,6 +1140,10 @@ class MusicPlayer {
         e.preventDefault();
         this.isDraggingProgress = true;
         this.updateSeek(e);
+        // 防止触摸时滚动
+        if (e.type === 'touchstart') {
+            document.body.style.overflow = 'hidden';
+        }
     }
 
     dragSeek(e) {
@@ -1205,6 +1159,7 @@ class MusicPlayer {
             const progressPercent = parseFloat(this.elements.progress.style.width) / 100;
             this.audio.currentTime = progressPercent * this.audio.duration;
         }
+        document.body.style.overflow = '';
     }
 
     getSeekTime(e) {
@@ -1269,6 +1224,18 @@ class MusicPlayer {
         return apiNames[apiId] || apiId;
     }
 
+    // 重置内部状态（用于隐藏播放器时）
+    resetUIState() {
+        // 隐藏搜索模式
+        this.isSearchMode.forEach((val, api) => {
+            if (val) {
+                this.toggleSearchMode(api); // 切换回歌单
+            }
+        });
+        // 隐藏音量滑块
+        if (this.isVolumeSliderVisible) this.hideVolumeSlider();
+    }
+
     cleanup() {
         if (this.updateAnimationFrame) {
             cancelAnimationFrame(this.updateAnimationFrame);
@@ -1294,7 +1261,7 @@ class MusicPlayer {
     }
 
     saveVolume(volume) { localStorage.setItem('musicPlayer_volume', volume.toString()); }
-    loadVolume() { const saved = localStorage.getItem('musicPlayer_volume'); return saved ? parseFloat(saved) : 0.5; }
+    loadVolume() { const saved = localStorage.setItem('musicPlayer_volume'); return saved ? parseFloat(saved) : 0.5; }
     savePlaybackSpeed(speed) { localStorage.setItem('musicPlayer_playbackSpeed', speed.toString()); }
     loadPlaybackSpeed() { const saved = localStorage.getItem('musicPlayer_playbackSpeed'); return saved ? parseFloat(saved) : 1.0; }
     savePlayMode(mode) { localStorage.setItem('musicPlayer_playMode', mode.toString()); }
