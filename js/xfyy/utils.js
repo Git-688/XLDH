@@ -1,7 +1,8 @@
 /**
- * 音乐播放器专用工具函数模块 - 避免与全局 Utils 冲突
+ * 工具函数模块 - 统一公共方法
+ * 注意：Toast 由 toast.js 统一管理
  */
-class MusicUtils {
+class Utils {
     /**
      * 转义 HTML 防止 XSS
      */
@@ -13,7 +14,7 @@ class MusicUtils {
     }
 
     /**
-     * 格式化浏览次数（用于音乐界面中可能的数字格式化）
+     * 格式化浏览次数
      */
     static formatViews(views) {
         if (views >= 1000000) return `${(views / 1000000).toFixed(1).replace('.0', '')}M`;
@@ -54,7 +55,13 @@ class MusicUtils {
     static generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
     }
+
+    /**
+     * 检查是否为移动设备
+     */
+    static isMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
 }
 
-// 暴露到全局，供音乐播放器模块使用，同时不污染顶层的 Utils 命名
-window.MusicUtils = MusicUtils;
+window.Utils = Utils;
