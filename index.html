@@ -8,10 +8,10 @@
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
 
-    <!-- ===== 内容安全策略 (CSP) ===== -->
+    <!-- ===== 内容安全策略 (CSP) – 已移除 unsafe-inline ===== -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' 'unsafe-inline' https://code.jquery.com https://cdnjs.cloudflare.com https://unpkg.com https://*.ccwu.cc;
+        script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com https://unpkg.com https://*.ccwu.cc;
         style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com;
         img-src * data:;
         connect-src *;
@@ -409,9 +409,9 @@
         </div>
         <div class="sidebar-footer">
             <button class="footer-btn" id="sidebarNotebookBtn" aria-label="星聚笔记"><i class="fas fa-pen"></i></button>
-            <button class="footer-btn" onclick="window.open('./pages/tools/羊毛福利.html', '_blank')" aria-label="羊毛福利"><i class="fas fa-gift"></i></button>
+            <button class="footer-btn" aria-label="羊毛福利"><i class="fas fa-gift"></i></button>
             <button class="footer-btn" id="aboutBtn" aria-label="关于网站"><i class="fas fa-info-circle"></i></button>
-            <button class="footer-btn" onclick="window.open('https://qm.qq.com/example', '_blank')" aria-label="加入QQ群"><i class="fab fa-qq"></i></button>
+            <button class="footer-btn" aria-label="加入QQ群"><i class="fab fa-qq"></i></button>
         </div>
     </div>
 </aside>
@@ -583,8 +583,8 @@
                 <button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎">
                     <i id="engineIcon" class="fas fa-search"></i>
                 </button>
-                <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." onkeydown="window.newSearchModule.handleSearch(event)" oninput="window.newSearchModule.showSuggestions()" autocomplete="off">
-                <button class="search-submit-btn" onclick="window.newSearchModule.submitSearch()">搜索</button>
+                <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off">
+                <button class="search-submit-btn" id="searchSubmitBtn">搜索</button>
             </div>
             <div class="engine-dropdown" id="engineDropdown"></div>
             <div class="suggestions" id="suggestions"></div>
