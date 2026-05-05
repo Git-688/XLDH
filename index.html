@@ -711,6 +711,10 @@
 <script src="./js/api.js"></script>
 <script src="./js/components/navbar.js"></script>
 <script src="./js/components/sidebar.js"></script>
+
+<!-- ✅ 关键修复：这行必须位于所有使用 Utils 的模块（如 announcement.js）之前 -->
+<script src="./js/utils.js"></script>
+
 <script src="./js/modules/announcement.js"></script>
 <script src="./js/modules/search.js"></script>
 <script src="./js/modules/weather.js"></script>
