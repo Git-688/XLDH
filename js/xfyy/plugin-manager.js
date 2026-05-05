@@ -13,34 +13,50 @@ class PluginManager {
     }
 
     initializePlugins() {
-        // 网易云音乐插件（换成 api.injahow.cn 源，更稳定）
+        // 网易云音乐插件（增加备用 API 与降级）
         this.registerPlugin('netease', {
             name: '网易云音乐',
-            version: '2.0.0',
-            description: '基于 injahow 网易云音乐API',
+            version: '2.1.0',
+            description: '基于 injahow 网易云音乐API (带备用)',
             getPlaylist: async (playlistId) => {
                 const cacheKey = `netease_playlist_${playlistId}`;
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                const primaryUrl = `https://api.injahow.cn/meting/?server=netease&type=playlist&id=${playlistId}`;
+                const fallbackUrl = `https://api.i-meto.com/meting/api?server=netease&type=playlist&id=${playlistId}`;
+
+                const fetchWithTimeout = async (url) => {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+                    try {
+                        const response = await fetch(url, { signal: controller.signal });
+                        clearTimeout(timeoutId);
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const data = await response.json();
+                        return data;
+                    } catch (error) {
+                        clearTimeout(timeoutId);
+                        throw error;
+                    }
+                };
 
                 try {
-                    const response = await fetch(
-                        `https://api.injahow.cn/meting/?server=netease&type=playlist&id=${playlistId}`,
-                        { signal: controller.signal }
-                    );
-                    clearTimeout(timeoutId);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
+                    const data = await fetchWithTimeout(primaryUrl);
                     const formatted = Array.isArray(data) ? data.map(song => this.formatSong(song, 'netease')) : [];
                     this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
                     return formatted;
-                } catch (error) {
-                    clearTimeout(timeoutId);
-                    console.error('网易云歌单请求失败:', error);
-                    return [];
+                } catch (primaryError) {
+                    console.warn('主网易云API失败，尝试备用源:', primaryError);
+                    try {
+                        const fallbackData = await fetchWithTimeout(fallbackUrl);
+                        const formatted = Array.isArray(fallbackData) ? fallbackData.map(song => this.formatSong(song, 'netease')) : [];
+                        this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
+                        return formatted;
+                    } catch (fallbackError) {
+                        console.error('备用网易云API也失败:', fallbackError);
+                        return [];
+                    }
                 }
             },
             search: async (keyword) => {
@@ -70,10 +86,10 @@ class PluginManager {
             }
         });
 
-        // QQ音乐插件（保持不变，仅修复注释）
+        // QQ音乐插件（增加热歌榜获取失败时的降级处理）
         this.registerPlugin('qq', {
             name: 'QQ音乐',
-            version: '2.2.0',
+            version: '2.3.0',
             description: '云智热歌榜 + Meting解析，支持直接播放+自动获取歌曲封面',
 
             _getSongInfoBySongmid: async function(songmid) {
@@ -148,11 +164,17 @@ class PluginManager {
                     return validSongs;
                 } catch (error) {
                     console.error('QQ音乐热歌榜加载失败:', error);
+                    // 尝试返回空，并给出持久化提示
+                    if (typeof window !== 'undefined' && !sessionStorage.getItem('qq_fallback_hint')) {
+                        sessionStorage.setItem('qq_fallback_hint', '1');
+                        // toast 在 plugin 内无法直接调用，由上层处理
+                    }
                     return [];
                 }
             },
 
             search: async (keyword, count = 20) => {
+                // QQ音乐搜索暂不可用，返回空数组
                 return [];
             }
         });
@@ -160,11 +182,11 @@ class PluginManager {
         // 抖音热歌榜插件（原migu）
         this.registerPlugin('migu', {
             name: '抖音热歌榜',
-            version: '1.0.0',
-            description: '基于抖音热歌榜API',
+            version: '1.1.0',
+            description: '基于抖音热歌榜API (可配置)',
             getPlaylist: async (playlistId) => {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
                 try {
                     const response = await fetch('https://api.injahow.cn/meting/?type=playlist&id=2809513713', { signal: controller.signal });
                     clearTimeout(timeoutId);
