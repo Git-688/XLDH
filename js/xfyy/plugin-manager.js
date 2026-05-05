@@ -72,7 +72,7 @@ class PluginManager {
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '2.2.0',
-            description: '云智热歌榜 + Meting解析，支持直接播放+自动获取歌曲封面',
+            description: '云智热歌榜 + Meting解析',
             _getSongInfoBySongmid: async function(songmid) {
                 const cacheKey = `qq_song_info_${songmid}`;
                 const cached = this.cacheManager.get(cacheKey);
@@ -187,7 +187,7 @@ class PluginManager {
 
     formatSong(song, source) {
         return {
-            id: song.id || MusicUtils.generateId(),
+            id: song.id || Utils.generateId(),
             title: song.title || song.name || '未知歌曲',
             artist: song.author || song.artist || '未知歌手',
             src: song.url,
@@ -215,7 +215,7 @@ class PluginManager {
 
     formatDouyinSong(songData) {
         return {
-            id: songData.id || songData.hash || MusicUtils.generateId(),
+            id: songData.id || songData.hash || Utils.generateId(),
             title: songData.title || songData.name || songData.songname || '未知歌曲',
             artist: songData.author || songData.artist || songData.singer || '未知歌手',
             src: songData.url || songData.play_url || songData.audio_url,
