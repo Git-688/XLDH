@@ -196,7 +196,7 @@
     height: 100%;
     display: flex;
     align-items: center;
-    justify-content: center;   /* 水平居中 */
+    justify-content: center;
     overflow: hidden;
 }
 
@@ -210,15 +210,22 @@
     transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
-/* 超长歌词跑马灯动画 */
+/* 超长歌词跑马灯动画（优化后无缝循环） */
 .lyrics-single-line.overflow {
-    max-width: none !important;  /* 允许超出容器宽度 */
-    animation: marquee 10s linear infinite;
+    max-width: none !important;
+    white-space: nowrap;
+    display: inline-block;
+    padding-right: 100%;               /* 制造滚动后的空白间隔，避免跳跃 */
+    animation: marquee 15s linear infinite;
 }
 
 @keyframes marquee {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-100%); }
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
 }
 
 /* ===== 底部区域（歌单、搜索等） ===== */
