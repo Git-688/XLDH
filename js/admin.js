@@ -11,7 +11,6 @@
     let lockUntil = parseInt(sessionStorage.getItem('login_lock_until') || '0', 10);
     let modalAction = null;
 
-    // ---------- 工具函数 ----------
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -30,7 +29,6 @@
         try { const u = new URL(url); return u.protocol !== 'javascript:' && u.protocol !== 'data:'; } catch { return false; }
     }
 
-    // ---------- 登录管理 ----------
     function getStoredToken() {
         let tk = sessionStorage.getItem('admin_token');
         if (tk) {
@@ -73,15 +71,11 @@
         if (!el) return;
         if (Date.now() < lockUntil) {
             el.textContent = `登录锁定中，剩余 ${Math.ceil((lockUntil - Date.now()) / 60000)} 分钟`;
-        } else {
-            el.textContent = '';
-        }
+        } else el.textContent = '';
     }
 
     function checkLock() {
-        if (Date.now() < lockUntil) {
-            updateLockMessage(); showToast('登录失败过多，锁定10分钟', 'error'); return false;
-        }
+        if (Date.now() < lockUntil) { updateLockMessage(); showToast('登录失败过多，锁定10分钟', 'error'); return false; }
         if (failCount >= MAX_FAIL_COUNT) {
             lockUntil = Date.now() + LOCK_DURATION_MS;
             sessionStorage.setItem('login_lock_until', lockUntil + ''); sessionStorage.setItem('login_fail_count', failCount + '');
@@ -103,7 +97,6 @@
         document.getElementById('loginLockMessage').textContent = '';
     }
 
-    // ---------- 模态框 ----------
     function openModal(title, formHtml, submitCb) {
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalForm').innerHTML = formHtml;
@@ -122,7 +115,6 @@
         document.getElementById('logModal').classList.remove('show');
     }
 
-    // ---------- 日志 ----------
     function addLog(text) {
         const logs = JSON.parse(sessionStorage.getItem('operation_logs') || '[]');
         logs.unshift({ time: new Date().toLocaleString(), text });
@@ -138,7 +130,6 @@
         document.getElementById('logModal').classList.add('show');
     }
 
-    // ---------- API ----------
     async function apiFetch(endpoint, opt = {}) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
         if (token) headers.Authorization = `Bearer ${token}`;
@@ -174,7 +165,6 @@
         finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
     }
 
-    // ---------- 登录/登出 ----------
     async function login() {
         if (!checkLock()) return;
         const val = document.getElementById('tokenInput').value.trim();
@@ -212,7 +202,6 @@
         addLog('退出登录'); showToast('已退出');
     }
 
-    // ---------- 数据加载 ----------
     async function loadAllData() {
         try {
             const [catData, subData, siteData] = await Promise.all([
@@ -228,7 +217,6 @@
         }
     }
 
-    // ---------- 渲染 ----------
     function selectCat(cid) {
         currentCat = cid; currentSub = null;
         document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
@@ -250,8 +238,7 @@
 
     function renderCatBar() {
         if (!categories.length) {
-            document.getElementById('catBar').innerHTML = '<div class="empty">暂无分类</div>';
-            return;
+            document.getElementById('catBar').innerHTML = '<div class="empty">暂无分类</div>'; return;
         }
         document.getElementById('catBar').innerHTML = categories.map(c => `
             <div class="cat-item ${c.id===currentCat?'active':''}" data-cid="${c.id}">
@@ -263,13 +250,9 @@
     }
 
     function renderSubList() {
-        if (!currentCat) {
-            document.getElementById('subList').innerHTML = '<div class="empty">选择分类</div>'; return;
-        }
+        if (!currentCat) { document.getElementById('subList').innerHTML = '<div class="empty">选择分类</div>'; return; }
         const subs = subcategories.filter(s => s.category_id === currentCat);
-        if (!subs.length) {
-            document.getElementById('subList').innerHTML = '<div class="empty">暂无子分类</div>'; return;
-        }
+        if (!subs.length) { document.getElementById('subList').innerHTML = '<div class="empty">暂无子分类</div>'; return; }
         document.getElementById('subList').innerHTML = subs.map(s => `
             <div class="sub-item ${s.id===currentSub?'active':''}" data-sid="${s.id}">
                 <span>${escapeHtml(s.name)}</span>
@@ -282,18 +265,13 @@
     }
 
     function renderSiteList() {
-        if (!currentSub) {
-            document.getElementById('siteList').innerHTML = '<div class="empty">选择子分类</div>'; return;
-        }
+        if (!currentSub) { document.getElementById('siteList').innerHTML = '<div class="empty">选择子分类</div>'; return; }
         const list = sites.filter(s => s.subcategory_id === currentSub);
-        if (!list.length) {
-            document.getElementById('siteList').innerHTML = '<div class="empty">暂无链接</div>'; return;
-        }
+        if (!list.length) { document.getElementById('siteList').innerHTML = '<div class="empty">暂无链接</div>'; return; }
         document.getElementById('siteList').innerHTML = list.map(s => `
             <div class="link-item">
                 <div class="link-info">
                     <div><strong>${escapeHtml(s.title)}</strong></div>
-                    <div class="link-url">${escapeHtml(s.url)}</div>
                 </div>
                 <div class="link-actions">
                     <button class="sm primary" data-action="editSite" data-id="${s.id}">编辑</button>
@@ -303,9 +281,7 @@
         `).join('');
     }
 
-    // ---------- 事件委托（核心修复） ----------
     function setupEventDelegation() {
-        // 分类栏点击（包括修改、删除按钮）
         document.getElementById('catBar').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
             if (btn) {
@@ -318,7 +294,6 @@
             if (item) selectCat(parseInt(item.dataset.cid));
         });
 
-        // 子分类列表点击
         document.getElementById('subList').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
             if (btn) {
@@ -331,7 +306,6 @@
             if (item) selectSub(parseInt(item.dataset.sid));
         });
 
-        // 链接列表点击（编辑、删除）
         document.getElementById('siteList').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
@@ -340,7 +314,6 @@
             else if (btn.dataset.action === 'delSite') deleteSite(id);
         });
 
-        // 标签切换
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -353,7 +326,6 @@
             });
         });
 
-        // 模态框提交
         document.getElementById('modalSubmit').addEventListener('click', async () => {
             if (!modalAction) return;
             const btn = document.getElementById('modalSubmit');
@@ -362,7 +334,6 @@
             finally { btn.disabled = false; btn.textContent = '确认'; closeModal(); }
         });
 
-        // 主要按钮绑定
         document.getElementById('loginBtn').addEventListener('click', login);
         document.getElementById('logoutBtn').addEventListener('click', logout);
         document.getElementById('addCategoryBtn').addEventListener('click', openAddCat);
@@ -377,12 +348,10 @@
         document.getElementById('closeLogBtn').addEventListener('click', closeLogModal);
         document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
 
-        // 模态框背景关闭
         document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
         document.getElementById('logModal').addEventListener('click', e => { if (e.target === document.getElementById('logModal')) closeLogModal(); });
     }
 
-    // ---------- 操作函数 ----------
     async function openAddCat() {
         openModal('新增一级分类', `
             <div class="form-row"><label>名称</label><input id="mName"></div>
@@ -503,7 +472,7 @@
             if (!data.length) { list.innerHTML = '<div class="empty">暂无数据</div>'; return; }
             list.innerHTML = data.map(item => `
                 <div class="link-item">
-                    <div class="link-info"><strong>${escapeHtml(item.title)}</strong><div class="link-url">${escapeHtml(item.url)}</div></div>
+                    <div class="link-info"><strong>${escapeHtml(item.title)}</strong></div>
                     <span class="badge badge-blue">${item.count}次</span>
                 </div>
             `).join('');
@@ -528,7 +497,7 @@
             let html = '';
             const renderItems = (items) => items.map(item => `
                 <div class="link-item">
-                    <div class="link-info"><strong>${escapeHtml(item.title||'无标题')}</strong><div class="link-url">${escapeHtml(item.url)}</div><div style="font-size:10px;color:#999">来自 ${escapeHtml(item.reporter_ip)} 于 ${new Date(item.report_time).toLocaleString()}</div></div>
+                    <div class="link-info"><strong>${escapeHtml(item.title||'无标题')}</strong><div class="link-url" style="display:none;">${escapeHtml(item.url)}</div><div style="font-size:10px;color:#999">来自 ${escapeHtml(item.reporter_ip)} 于 ${new Date(item.report_time).toLocaleString()}</div></div>
                     <div class="link-actions">
                         <button class="sm primary" data-action="replaceLink" data-reportid="${item.id}" data-siteid="${item.site_id||0}" data-url="${escapeHtml(item.url)}" data-title="${escapeHtml(item.title||'')}">更换链接</button>
                         <button class="sm primary" data-action="markDone" data-reportid="${item.id}">标记已处理</button>
@@ -540,14 +509,12 @@
             if (groups.older.length) html += `<div class="feedback-date-group"><h4>📅 更早</h4>${renderItems(groups.older)}</div>`;
             list.innerHTML = html;
 
-            // 反馈列表事件委托
             list.addEventListener('click', e => {
                 const btn = e.target.closest('[data-action]');
                 if (!btn) return;
                 const reportId = parseInt(btn.dataset.reportid);
-                if (btn.dataset.action === 'markDone') {
-                    markFeedbackDone(reportId);
-                } else if (btn.dataset.action === 'replaceLink') {
+                if (btn.dataset.action === 'markDone') markFeedbackDone(reportId);
+                else if (btn.dataset.action === 'replaceLink') {
                     const siteId = parseInt(btn.dataset.siteid);
                     const url = btn.dataset.url;
                     const title = btn.dataset.title;
@@ -600,12 +567,10 @@
         catch { showToast('刷新失败', 'error'); }
     }
 
-    // 全局获取 favicon 辅助函数
     window.getFavicon = function(url) {
         try { return `https://api.71xk.com/api/favicon?url=${new URL(url).hostname}`; } catch { return 'fas fa-link'; }
     };
 
-    // ---------- 初始化 ----------
     const storedToken = getStoredToken();
     if (storedToken) {
         token = storedToken;
