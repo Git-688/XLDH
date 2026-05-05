@@ -1,6 +1,5 @@
 /**
- * 星聚导航主应用程序（Waline 评论系统版本）
- * 不做任何 Waline DOM 修改，恢复为原始默认样式
+ * 星聚导航主应用程序（评论系统独立为 feedback.js 模块）
  */
 class App {
     constructor() {
@@ -20,8 +19,12 @@ class App {
         }
     }
 
+    // ========== 星聚笔记 API 配置 ==========
     NOTEBOOK_CONFIG = {
-        apiUrl: 'https://api.xjdh688.ccwu.cc/notebook'
+        apiUrl: 'https://cn.apihz.cn/api/cunchu/textzd.php',
+        id: '10014221',
+        key: '4a7768de1cf2e0f41fc0a4005240c837',
+        maxNumId: 20
     };
 
     async loadNotebookData() {
@@ -29,23 +32,31 @@ class App {
         if (!listEl) return;
         listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
         try {
-            const response = await fetch(this.NOTEBOOK_CONFIG.apiUrl);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const result = await response.json();
-            const items = Array.isArray(result) ? result : (result.items || result.data || []);
-            const validItems = items.filter(item => {
-                const title = (item.title || item.name || item.note_title || '').toString().trim();
-                return title !== '';
+            const promises = [];
+            for (let i = 1; i <= this.NOTEBOOK_CONFIG.maxNumId; i++) {
+                promises.push(
+                    fetch(`${this.NOTEBOOK_CONFIG.apiUrl}?id=${this.NOTEBOOK_CONFIG.id}&key=${this.NOTEBOOK_CONFIG.key}&numid=${i}`)
+                        .then(res => res.json())
+                        .then(data => ({ numid: i, ...data }))
+                        .catch(err => ({ numid: i, code: 500, msg: err.message }))
+                );
+            }
+            const results = await Promise.all(promises);
+            const validItems = results.filter(item => {
+                if (item.code !== 200) return false;
+                const title = item.title || '';
+                const words = item.words || '';
+                return title.trim() !== '' && words.trim() !== '';
             });
-            validItems.sort((a, b) => (a.numid || 0) - (b.numid || 0));
+            validItems.sort((a, b) => a.numid - b.numid);
             if (validItems.length === 0) {
                 listEl.innerHTML = '<div class="empty">暂无笔记记录</div>';
                 return;
             }
             const html = validItems.map(item => {
-                const title = Utils.escapeHtml((item.title || item.name || '').toString().trim());
-                const time = Utils.escapeHtml(item.time || '--');
-                const words = Utils.escapeHtml((item.words || item.content || '').toString().trim()).replace(/\n/g, '<br>');
+                const title = this.escapeHtml(item.title.trim());
+                const time = this.escapeHtml(item.time || '--');
+                const words = this.escapeHtml(item.words.trim()).replace(/\n/g, '<br>');
                 const numid = item.numid;
                 return `
                     <div class="notebook-item">
@@ -61,7 +72,7 @@ class App {
             listEl.innerHTML = html;
         } catch (error) {
             console.error('加载星聚笔记失败:', error);
-            listEl.innerHTML = `<div class="error">加载失败：${Utils.escapeHtml(error.message)}</div>`;
+            listEl.innerHTML = `<div class="error">加载失败：${this.escapeHtml(error.message)}</div>`;
         }
     }
 
@@ -83,7 +94,9 @@ class App {
             modal.classList.remove('active');
             modal.style.display = 'none';
         }
-        if (this.notebookModalHideRef) this.unregisterModal(this.notebookModalHideRef);
+        if (this.notebookModalHideRef) {
+            this.unregisterModal(this.notebookModalHideRef);
+        }
     }
 
     initNotebookModalEvents() {
@@ -93,68 +106,12 @@ class App {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) this.hideNotebookModal();
         });
-        if (closeBtn) closeBtn.addEventListener('click', () => this.hideNotebookModal());
-    }
-
-    // ========== Waline 原始加载，无 DOM 修改 ==========
-    openFeedbackModal() {
-        const modal = document.getElementById('feedbackModal');
-        if (!modal) return;
-        modal.style.display = 'flex';
-        modal.classList.add('active');
-
-        const container = document.getElementById('twikoo-feedback');
-        if (!container) return;
-        if (window.walineInstance) {
-            try { window.walineInstance.destroy(); } catch (e) {}
-        }
-        container.innerHTML = '';
-
-        import('https://unpkg.com/@waline/client@v3/dist/waline.js')
-            .then(({ init }) => {
-                window.walineInstance = init({
-                    el: '#twikoo-feedback',
-                    serverURL: 'https://yy688.ccwu.cc/',
-                    lang: 'zh-CN',
-                    dark: 'auto',
-                    path: '/feedback',
-                    pageSize: 10,
-                    requiredMeta: ['nick', 'mail'],
-                    login: 'enable',
-                    wordLimit: 1000,
-                    imageUploader: false,
-                    highlighter: true,
-                    texRenderer: true,
-                    search: false,
-                    turnstileKey: '',
-                });
-                window.walineFeedbackInited = true;
-            })
-            .catch(err => {
-                console.error('Waline 加载失败:', err);
-                container.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;">评论系统加载失败</div>';
-            });
-    }
-
-    closeFeedbackModal() {
-        const modal = document.getElementById('feedbackModal');
-        if (modal) {
-            modal.classList.remove('active');
-            modal.style.display = 'none';
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.hideNotebookModal());
         }
     }
 
-    initFeedbackModalEvents() {
-        const modal = document.getElementById('feedbackModal');
-        const closeBtn = modal?.querySelector('.feedback-modal-close');
-        if (modal) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) this.closeFeedbackModal();
-            });
-        }
-        if (closeBtn) closeBtn.addEventListener('click', () => this.closeFeedbackModal());
-    }
-
+    // ========== 应用初始化 ==========
     init() {
         if (this.isInitialized) return;
         this.setupErrorHandling();
@@ -164,11 +121,9 @@ class App {
         this.initDependentComponents();
         this.setupGlobalEvents();
         this.initNotebookModalEvents();
-        this.initFeedbackModalEvents();
         this.initFloatingButtonsEffect();
         this.isInitialized = true;
-        window.openFeedbackModal = this.openFeedbackModal.bind(this);
-        window.closeFeedbackModal = this.closeFeedbackModal.bind(this);
+
         window.showNotebookModal = this.showNotebookModal.bind(this);
         window.hideNotebookModal = this.hideNotebookModal.bind(this);
     }
@@ -192,149 +147,254 @@ class App {
             if (typeof CompactSidebar !== 'undefined') {
                 if (!window.sidebar || !window.sidebar.isInitialized) {
                     this.components.sidebar = new CompactSidebar();
-                    this.components.sidebar.init().catch(err => console.error('侧边栏初始化失败:', err));
+                    this.components.sidebar.init().catch(error => {
+                        console.error('侧边栏初始化失败:', error);
+                        this.showToast('侧边栏初始化失败，部分功能可能不可用', 'warning');
+                    });
                 } else {
                     this.components.sidebar = window.sidebar;
                 }
             }
-        } catch (e) { console.error('核心组件初始化失败:', e); }
+        } catch (error) {
+            console.error('核心组件初始化失败:', error);
+            this.showToast('核心组件初始化失败', 'error');
+        }
     }
 
     initModules() {
         try {
             const initPromises = [];
+            
             if (typeof SearchModule !== 'undefined') {
                 try {
                     if (!window.searchModule || !(window.searchModule instanceof SearchModule)) {
                         this.modules.search = new SearchModule();
                         window.searchModule = this.modules.search;
                         initPromises.push(this.modules.search.init?.());
-                    } else this.modules.search = window.searchModule;
-                } catch (e) { console.error('搜索模块初始化失败:', e); }
+                    } else {
+                        this.modules.search = window.searchModule;
+                    }
+                } catch (error) { console.error('搜索模块初始化失败:', error); }
             }
-            if (typeof WallpaperModule !== 'undefined') { this.modules.wallpaper = new WallpaperModule(); initPromises.push(this.modules.wallpaper.init?.()); }
-            if (typeof GreetingModule !== 'undefined') { this.modules.greeting = new GreetingModule(); initPromises.push(this.modules.greeting.init?.()); }
-            if (typeof OptimizedNavigation !== 'undefined') { this.modules.navigation = new OptimizedNavigation(); window.optimizedNavigation = this.modules.navigation; initPromises.push(this.modules.navigation.init?.()); }
-            if (typeof FooterModule !== 'undefined') { this.modules.footer = new FooterModule(); initPromises.push(this.modules.footer.init?.()); }
-            if (typeof WeatherModule !== 'undefined') { this.modules.weather = new WeatherModule(); initPromises.push(this.modules.weather.init?.()); }
+            
+            if (typeof WallpaperModule !== 'undefined') {
+                this.modules.wallpaper = new WallpaperModule();
+                initPromises.push(this.modules.wallpaper.init?.());
+            }
+            
+            if (typeof GreetingModule !== 'undefined') {
+                this.modules.greeting = new GreetingModule();
+                initPromises.push(this.modules.greeting.init?.());
+            }
+            
+            if (typeof OptimizedNavigation !== 'undefined') {
+                this.modules.navigation = new OptimizedNavigation();
+                window.optimizedNavigation = this.modules.navigation;
+                initPromises.push(this.modules.navigation.init?.());
+            }
+            
+            if (typeof FooterModule !== 'undefined') {
+                this.modules.footer = new FooterModule();
+                initPromises.push(this.modules.footer.init?.());
+            }
+            
+            if (typeof WeatherModule !== 'undefined') {
+                this.modules.weather = new WeatherModule();
+                initPromises.push(this.modules.weather.init?.());
+            }
+            
             if (typeof AnnouncementModule !== 'undefined') {
-                if (!window.announcementModule) { this.modules.announcement = new AnnouncementModule(); window.announcementModule = this.modules.announcement; }
-                else this.modules.announcement = window.announcementModule;
+                if (!window.announcementModule) {
+                    this.modules.announcement = new AnnouncementModule();
+                    window.announcementModule = this.modules.announcement;
+                } else {
+                    this.modules.announcement = window.announcementModule;
+                }
             }
+            
             if (typeof AboutModule !== 'undefined') {
-                if (!window.aboutModule) { this.modules.about = new AboutModule(); window.aboutModule = this.modules.about; }
-                else this.modules.about = window.aboutModule;
+                if (!window.aboutModule) {
+                    this.modules.about = new AboutModule();
+                    window.aboutModule = this.modules.about;
+                } else {
+                    this.modules.about = window.aboutModule;
+                }
             }
-            Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => console.log('所有模块初始化完成'));
-        } catch (e) { console.error('模块初始化失败:', e); }
+            
+            // 评论模块独立为 feedback.js，这里无需操作，feedback.js 自动初始化
+
+            Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {
+                console.log('所有模块初始化完成');
+            });
+
+        } catch (error) {
+            console.error('模块初始化失败:', error);
+            this.showToast('部分模块初始化失败', 'warning');
+        }
     }
 
     initDependentComponents() {
-        try { if (typeof Navbar !== 'undefined') this.components.navbar = new Navbar(); } catch (e) { console.error('依赖组件初始化失败:', e); }
+        try {
+            if (typeof Navbar !== 'undefined') {
+                this.components.navbar = new Navbar();
+            }
+        } catch (error) {
+            console.error('依赖组件初始化失败:', error);
+        }
     }
 
     setupErrorHandling() {
-        const ignored = ['Script error', 'ResizeObserver loop', 'Loading failed', 'Failed to fetch', 'Unexpected identifier', 'Unexpected token', 'Script error.'];
-        const handler = (event) => {
-            const msg = (event.error || event.reason)?.message || event.message || '未知错误';
-            if (!ignored.some(ig => msg.includes(ig) || (event.filename === '' && msg === 'Script error.'))) {
-                console.error('应用错误:', msg);
+        const ignoredErrors = ['Script error', 'ResizeObserver loop', 'Loading failed', 'Failed to fetch'];
+        const handleError = (event) => {
+            const error = event.error || event.reason;
+            const errorMessage = error?.message || event.message || '未知错误';
+            const shouldIgnore = ignoredErrors.some(ignored => errorMessage.includes(ignored));
+            if (!shouldIgnore) {
+                console.error('应用错误:', errorMessage);
                 if (!document.hidden) this.showToast('页面遇到问题，建议刷新页面', 'error');
             }
         };
-        window.addEventListener('error', handler);
-        window.addEventListener('unhandledrejection', handler);
+        window.addEventListener('error', handleError);
+        window.addEventListener('unhandledrejection', handleError);
     }
 
     initStorage() {
-        if (typeof Storage === 'undefined') return;
-        if (!Storage.get('first_visit_time')) Storage.set('first_visit_time', new Date().toISOString());
-        let vc = Storage.get('visit_count') || 0; Storage.set('visit_count', ++vc); Storage.set('last_visit_time', new Date().toISOString());
+        if (typeof Storage === 'undefined') {
+            console.error('浏览器不支持localStorage');
+            this.showToast('浏览器不支持本地存储，部分功能可能受限', 'warning');
+            return;
+        }
+        this.initDefaultData();
+    }
+
+    initDefaultData() {
+        if (!Storage.get('first_visit_time')) {
+            Storage.set('first_visit_time', new Date().toISOString());
+        }
+        this.updateVisitStats();
+    }
+
+    updateVisitStats() {
+        try {
+            let visitCount = Storage.get('visit_count') || 0;
+            visitCount++;
+            Storage.set('visit_count', visitCount);
+            Storage.set('last_visit_time', new Date().toISOString());
+        } catch (error) {
+            console.warn('更新访问统计失败:', error);
+        }
     }
 
     setupGlobalEvents() {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') this.closeAllModals();
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); this.showSearch(); }
-            if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key === 'r')) { e.preventDefault(); this.refreshPageWithAnimation(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                this.showSearch();
+            }
+            if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key === 'r')) {
+                e.preventDefault();
+                this.refreshPageWithAnimation();
+            }
         });
         window.addEventListener('online', () => this.showToast('网络已连接', 'success'));
-        window.addEventListener('offline', () => this.showToast('网络已断开', 'warning'));
-        document.addEventListener('visibilitychange', () => { if (!document.hidden) this.refreshOnVisibility(); });
+        window.addEventListener('offline', () => this.showToast('网络已断开，部分功能可能受限', 'warning'));
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) this.refreshOnVisibility();
+        });
     }
 
     refreshOnVisibility() {
-        if (this.modules.greeting?.updateDateTime) this.modules.greeting.updateDateTime();
+        if (this.modules.greeting && this.modules.greeting.updateDateTime) {
+            this.modules.greeting.updateDateTime();
+        }
         const now = Date.now();
-        if (this.lastWeatherUpdate && (now - this.lastWeatherUpdate > 10*60*1000)) {
-            if (this.modules.weather?.loadWeatherData) { this.modules.weather.loadWeatherData(); this.lastWeatherUpdate = now; }
+        if (this.lastWeatherUpdate && (now - this.lastWeatherUpdate > 10 * 60 * 1000)) {
+            if (this.modules.weather && this.modules.weather.loadWeatherData) {
+                this.modules.weather.loadWeatherData();
+                this.lastWeatherUpdate = now;
+            }
         }
     }
 
     registerModal(modal) {
-        if (!modal?.hide) return;
+        if (!modal || typeof modal.hide !== 'function') return;
         if (!this.activeModals.includes(modal)) {
             this.activeModals.push(modal);
             if (this.activeModals.length > 1) {
-                const prev = this.activeModals[this.activeModals.length-2];
-                if (prev?.hide) prev.hide();
+                const previousModal = this.activeModals[this.activeModals.length - 2];
+                if (previousModal && previousModal.hide) previousModal.hide();
             }
-            if (this.components.sidebar?.isVisible?.()) this.components.sidebar.hide();
+            if (this.components.sidebar && this.components.sidebar.isVisible && this.components.sidebar.isVisible()) {
+                this.components.sidebar.hide();
+            }
         }
     }
-    unregisterModal(modal) { const idx = this.activeModals.indexOf(modal); if (idx > -1) this.activeModals.splice(idx, 1); }
+
+    unregisterModal(modal) {
+        const index = this.activeModals.indexOf(modal);
+        if (index > -1) this.activeModals.splice(index, 1);
+    }
+
     closeAllModals() {
-        [...this.activeModals].forEach(m => { try { m.hide(); } catch(e) {} });
+        this.activeModals.forEach(modal => {
+            if (modal && typeof modal.hide === 'function') {
+                try { modal.hide(); } catch (e) { console.error('关闭模态框失败:', e); }
+            }
+        });
         this.activeModals = [];
         if (this.components.sidebar?.isVisible?.()) this.components.sidebar.hide();
         if (this.components.navbar?.hideMusicPlayer) this.components.navbar.hideMusicPlayer();
         if (this.modules.search?.isModalOpen && this.modules.search.hide) this.modules.search.hide();
-        this.closeFeedbackModal();
         this.hideNotebookModal();
+        // 评论弹窗由 feedback 模块管理
+        if (window.feedbackModule?.isVisible) window.feedbackModule.hide();
     }
 
-    showToast(msg, type='info') { window.toast.show(msg, type); }
-    showSearch() { this.modules.search?.showModal?.() || this.showToast('搜索暂不可用', 'warning'); }
-    showAnnouncement() { this.modules.announcement?.showModal?.() || this.showToast('公告暂不可用', 'warning'); }
-    showWeather() { this.modules.weather?.showModal?.() || this.showToast('天气暂不可用', 'warning'); }
-    showAbout() { this.modules.about?.show?.() || this.showToast('关于暂不可用', 'warning'); }
-    toggleMusicPlayer() { this.components.navbar?.toggleMusicPlayer?.() || this.showToast('音乐暂不可用', 'warning'); }
+    showToast(message, type = 'info') {
+        window.toast.show(message, type);
+    }
 
-    refreshAllModules() {
-        this.modules.wallpaper?.refreshWallpaper?.();
-        this.modules.weather?.loadWeatherData?.();
-        this.modules.announcement?.loadAnnouncements?.();
-        this.components.sidebar?.loadWallpaperUserInfo?.();
-        this.components.sidebar?.loadDailyQuote?.();
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    showSearch() {
+        if (this.modules.search && this.modules.search.showModal) {
+            this.modules.search.showModal();
+        } else {
+            this.showToast('搜索功能暂不可用', 'warning');
+        }
     }
 
     refreshPageWithAnimation() {
+        this.showToast('正在刷新页面数据...', 'info');
         document.body.style.opacity = '0.8';
-        document.body.style.transition = 'opacity 0.3s';
+        document.body.style.transition = 'opacity 0.3s ease';
         setTimeout(() => {
             this.refreshAllModules();
-            setTimeout(() => { document.body.style.opacity = '1'; }, 500);
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+                this.showToast('页面刷新完成', 'success');
+            }, 500);
         }, 300);
-    }
-
-    toggleSidebar() { this.components.sidebar?.toggle?.(); }
-    showSidebar() { this.components.sidebar?.show?.(); }
-    hideSidebar() { this.components.sidebar?.hide?.(); }
-
-    destroy() {
-        this.closeAllModals();
-        Object.entries(this.components).forEach(([n,c]) => c?.destroy?.());
-        Object.entries(this.modules).forEach(([n,m]) => m?.destroy?.());
-        this.components = {}; this.modules = {}; this.activeModals = []; this.isInitialized = false;
     }
 }
 
 if (!window.app) {
     window.app = new App();
 }
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        if (window.app && !window.app.isInitialized) window.app.init();
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.app && !window.app.isInitialized) {
+            window.app.init();
+        }
     });
 }
-window.getApp = () => window.app;
+
+window.getApp = function() {
+    return window.app;
+};
