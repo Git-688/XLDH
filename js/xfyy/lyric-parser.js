@@ -1,5 +1,5 @@
 /**
- * 歌词解析器 - 精简版，仅支持 LRC，移除翻译、偏移、搜索、导出
+ * 歌词解析器 - 精简版，仅支持 LRC，增强容错
  */
 
 class LyricParser {
@@ -13,35 +13,27 @@ class LyricParser {
      */
     parseLrc(lrcText) {
         this.lyrics = [];
+        if (!lrcText) return this.lyrics;
         const lines = lrcText.split('\n');
         
         lines.forEach(line => {
-            const timeTags = line.match(/\[(\d+):(\d+)\.(\d+)\]/g) || line.match(/\[(\d+):(\d+):(\d+)\]/g);
+            const timeTags = line.match(/\[\d{1,2}:\d{1,2}(?:\.\d{1,3})?\]/g);
             if (!timeTags) return;
 
-            const text = line.replace(/\[\d+:\d+\.\d+\]/g, '').trim();
+            const text = line.replace(/\[\d{1,2}:\d{1,2}(?:\.\d{1,3})?\]/g, '').trim();
             if (!text) return;
 
             timeTags.forEach(timeTag => {
-                let minutes, seconds, milliseconds;
-                
-                if (timeTag.includes('.')) {
-                    const parts = timeTag.match(/\[(\d+):(\d+)\.(\d+)\]/);
-                    if (!parts) return;
-                    minutes = parseInt(parts[1]);
-                    seconds = parseInt(parts[2]);
-                    milliseconds = parseInt(parts[3]);
-                    if (milliseconds < 100) {
-                        milliseconds *= 10;
-                    }
-                } else {
-                    const parts = timeTag.match(/\[(\d+):(\d+):(\d+)\]/);
-                    if (!parts) return;
-                    minutes = parseInt(parts[1]);
-                    seconds = parseInt(parts[2]);
-                    milliseconds = parseInt(parts[3]) * 10;
+                const match = timeTag.match(/\[(\d{1,2}):(\d{1,2})(?:\.(\d{1,3}))?\]/);
+                if (!match) return;
+                const minutes = parseInt(match[1]);
+                const seconds = parseInt(match[2]);
+                let milliseconds = 0;
+                if (match[3]) {
+                    // 兼容1位、2位和3位毫秒表示
+                    const msRaw = match[3].padEnd(3, '0'); // 补齐到3位
+                    milliseconds = parseInt(msRaw);
                 }
-
                 const time = minutes * 60 + seconds + milliseconds / 1000;
                 
                 this.lyrics.push({
