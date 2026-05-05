@@ -243,8 +243,10 @@
         document.getElementById('catBar').innerHTML = categories.map(c => `
             <div class="cat-item ${c.id===currentCat?'active':''}" data-cid="${c.id}">
                 <span>${escapeHtml(c.name)}</span>
-                <button class="rename-text-btn" data-action="renameCat" data-id="${c.id}" data-name="${escapeHtml(c.name)}">修改</button>
-                <button class="rename-text-btn" style="margin-left:4px;background:#fee2e2;color:#dc2626;" data-action="delCat" data-id="${c.id}">删除</button>
+                <div class="btn-group">
+                    <button class="rename-text-btn" data-action="renameCat" data-id="${c.id}" data-name="${escapeHtml(c.name)}">修改</button>
+                    <button class="rename-text-btn" style="background:#fee2e2;color:#dc2626;" data-action="delCat" data-id="${c.id}">删除</button>
+                </div>
             </div>
         `).join('');
     }
@@ -256,9 +258,9 @@
         document.getElementById('subList').innerHTML = subs.map(s => `
             <div class="sub-item ${s.id===currentSub?'active':''}" data-sid="${s.id}">
                 <span>${escapeHtml(s.name)}</span>
-                <div>
+                <div class="btn-group">
                     <button class="rename-text-btn" data-action="renameSub" data-id="${s.id}" data-name="${escapeHtml(s.name)}">修改</button>
-                    <button class="rename-text-btn" style="margin-left:4px;background:#fee2e2;color:#dc2626;" data-action="delSub" data-id="${s.id}">删除</button>
+                    <button class="rename-text-btn" style="background:#fee2e2;color:#dc2626;" data-action="delSub" data-id="${s.id}">删除</button>
                 </div>
             </div>
         `).join('');
@@ -274,8 +276,10 @@
                     <div><strong>${escapeHtml(s.title)}</strong></div>
                 </div>
                 <div class="link-actions">
-                    <button class="sm primary" data-action="editSite" data-id="${s.id}">编辑</button>
-                    <button class="sm danger" data-action="delSite" data-id="${s.id}">删除</button>
+                    <div class="btn-group">
+                        <button class="sm primary" data-action="editSite" data-id="${s.id}">编辑</button>
+                        <button class="sm danger" data-action="delSite" data-id="${s.id}">删除</button>
+                    </div>
                 </div>
             </div>
         `).join('');
@@ -499,8 +503,10 @@
                 <div class="link-item">
                     <div class="link-info"><strong>${escapeHtml(item.title||'无标题')}</strong><div class="link-url" style="display:none;">${escapeHtml(item.url)}</div><div style="font-size:10px;color:#999">来自 ${escapeHtml(item.reporter_ip)} 于 ${new Date(item.report_time).toLocaleString()}</div></div>
                     <div class="link-actions">
-                        <button class="sm primary" data-action="replaceLink" data-reportid="${item.id}" data-siteid="${item.site_id||0}" data-url="${escapeHtml(item.url)}" data-title="${escapeHtml(item.title||'')}">更换链接</button>
-                        <button class="sm primary" data-action="markDone" data-reportid="${item.id}">标记已处理</button>
+                        <div class="btn-group">
+                            <button class="sm primary" data-action="replaceLink" data-reportid="${item.id}" data-siteid="${item.site_id||0}" data-url="${escapeHtml(item.url)}" data-title="${escapeHtml(item.title||'')}">更换链接</button>
+                            <button class="sm primary" data-action="markDone" data-reportid="${item.id}" style="background:#10b981">标记已处理</button>
+                        </div>
                     </div>
                 </div>
             `).join('');
