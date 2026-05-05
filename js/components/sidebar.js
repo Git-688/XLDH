@@ -578,13 +578,21 @@ class CompactSidebar {
             }
             
             if (iconClass.includes('fa-gift')) {
+                window.open('./pages/tools/羊毛福利.html', '_blank');
                 this.hide();
-            } else if (iconClass.includes('fa-info-circle')) {
+                return;
+            }
+            
+            if (iconClass.includes('fa-info-circle')) {
                 if (window.aboutModule) window.aboutModule.show();
                 this.hide();
-            } else if (iconClass.includes('fa-qq')) {
+                return;
+            }
+            
+            if (iconClass.includes('fa-qq')) {
                 window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
                 this.hide();
+                return;
             }
         } catch (error) {
             console.error('处理底部按钮点击失败:', error);
