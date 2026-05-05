@@ -97,14 +97,12 @@
         document.getElementById('loginLockMessage').textContent = '';
     }
 
-    // 打开模态框（新增参数 showDelete: 是否显示左侧删除按钮，deleteCb: 删除回调）
     function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null) {
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalForm').innerHTML = formHtml;
         modalAction = submitCb;
 
         const buttonsContainer = document.getElementById('modalButtons');
-        // 构建按钮区域
         let html = '';
         if (showDelete && deleteCb) {
             html += `<div class="modal-buttons-left"><button class="danger" id="modalDeleteBtn">删除</button></div>`;
@@ -113,7 +111,6 @@
                  <button class="primary" id="modalSubmit">确认</button>`;
         buttonsContainer.innerHTML = html;
 
-        // 重新绑定事件（因为模态框按钮被重新生成）
         document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
         document.getElementById('modalSubmit').addEventListener('click', handleModalSubmit);
         if (showDelete && deleteCb) {
@@ -127,7 +124,6 @@
         document.getElementById('modal').classList.add('show');
     }
 
-    // 处理模态框提交
     async function handleModalSubmit() {
         if (!modalAction) return;
         const btn = document.getElementById('modalSubmit');
@@ -139,7 +135,6 @@
     function closeModal() {
         document.getElementById('modal').classList.remove('show');
         modalAction = null;
-        // 清理可能残留的删除按钮事件
     }
 
     function closeLogModal() {
@@ -286,9 +281,7 @@
         document.getElementById('subList').innerHTML = subs.map(s => `
             <div class="sub-item ${s.id===currentSub?'active':''}" data-sid="${s.id}">
                 <span>${escapeHtml(s.name)}</span>
-                <div>
-                    <button class="rename-text-btn" data-action="modifySub" data-id="${s.id}" data-name="${escapeHtml(s.name)}">修改</button>
-                </div>
+                <button class="rename-text-btn" data-action="modifySub" data-id="${s.id}" data-name="${escapeHtml(s.name)}">修改</button>
             </div>
         `).join('');
     }
@@ -303,7 +296,7 @@
                     <div><strong>${escapeHtml(s.title)}</strong></div>
                 </div>
                 <div class="link-actions">
-                    <button class="sm primary" data-action="editSite" data-id="${s.id}">编辑</button>
+                    <button class="primary" data-action="editSite" data-id="${s.id}">编辑</button>
                 </div>
             </div>
         `).join('');
@@ -353,7 +346,6 @@
             });
         });
 
-        // 其他固定按钮
         document.getElementById('loginBtn').addEventListener('click', login);
         document.getElementById('logoutBtn').addEventListener('click', logout);
         document.getElementById('addCategoryBtn').addEventListener('click', handleAddCategory);
@@ -367,14 +359,11 @@
         document.getElementById('closeLogBtn').addEventListener('click', closeLogModal);
         document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
 
-        // 模态框背景
         document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
         document.getElementById('logModal').addEventListener('click', e => { if (e.target === document.getElementById('logModal')) closeLogModal(); });
     }
 
-    // ========== 合并后的操作函数 ==========
-
-    // 修改分类（弹出重命名 + 删除）
+    // ========== 合并后的操作 ==========
     function handleModifyCategory(id, currentName) {
         openModal('修改分类',
             `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
@@ -384,7 +373,7 @@
                 await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
                 addLog(`修改分类：${currentName} → ${name}`); showToast('修改成功'); await loadAllData();
             },
-            true, // 显示删除
+            true,
             async () => {
                 await apiFetch(`/admin/categories/${id}`, { method:'DELETE' });
                 addLog(`删除分类 ${id}`); showToast('分类已删除'); await loadAllData();
@@ -392,7 +381,6 @@
         );
     }
 
-    // 修改子分类
     function handleModifySub(id, currentName) {
         openModal('修改子分类',
             `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
@@ -410,7 +398,6 @@
         );
     }
 
-    // 编辑链接
     async function handleEditSite(id) {
         const site = sites.find(s => s.id === id);
         if (!site) return;
@@ -443,7 +430,6 @@
         }, 50);
     }
 
-    // 新增分类（无删除）
     function handleAddCategory() {
         openModal('新增一级分类',
             `<div class="form-row"><label>名称</label><input id="mName"></div>
@@ -497,7 +483,6 @@
         }, 50);
     }
 
-    // 排行榜和反馈逻辑保持不变
     async function loadRanking() {
         const list = document.getElementById('rankList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -606,7 +591,6 @@
         try { return `https://api.71xk.com/api/favicon?url=${new URL(url).hostname}`; } catch { return 'fas fa-link'; }
     };
 
-    // 初始化
     const storedToken = getStoredToken();
     if (storedToken) {
         token = storedToken;
