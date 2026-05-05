@@ -1,35 +1,24 @@
 /**
- * 音乐播放器主入口文件 - 适配星链导航
+ * 音乐播放器主入口文件 - 适配星聚导航
  * 负责音乐播放器的初始化和全局控制
  */
 
 let musicPlayer = null;
 
-document.addEventListener('DOMContentLoaded', function() {
-    try {
-        console.log('初始化音乐播放器系统...');
-
-        initMusicPlayerControl();
-
-        setTimeout(() => {
-            initializeMusicPlayerCore();
-        }, 1500);
-
-    } catch (error) {
-        console.error('音乐播放器初始化失败:', error);
-        window.toast.show('音乐播放器初始化失败: ' + error.message, 'error');
-    }
-});
-
-function initializeMusicPlayerCore() {
-    try {
-        if (typeof MusicPlayer === 'undefined') {
-            throw new Error('MusicPlayer 类未定义，请确保 music-player.js 已加载');
+function tryInitMusicPlayer(retry = 0) {
+    if (typeof MusicPlayer === 'undefined') {
+        if (retry < 10) {
+            setTimeout(() => tryInitMusicPlayer(retry + 1), 300);
+        } else {
+            console.error('MusicPlayer 类长时间未加载');
+            window.toast?.show('音乐播放器加载失败', 'error');
         }
+        return;
+    }
 
+    try {
         musicPlayer = new MusicPlayer();
         window.musicPlayer = musicPlayer;
-
         console.log('悬浮音乐播放器初始化成功');
 
         setupGlobalErrorHandling();
@@ -43,21 +32,26 @@ function initializeMusicPlayerCore() {
             if (musicPlayer.loadApiPlaylist) {
                 musicPlayer.loadApiPlaylist(musicPlayer.currentApi);
             }
-        }, 2000);
-
+        }, 500);
     } catch (error) {
         console.error('音乐播放器核心初始化失败:', error);
-        window.toast.show('音乐播放器核心初始化失败: ' + error.message, 'error');
+        window.toast?.show('音乐播放器核心初始化失败', 'error');
     }
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('初始化音乐播放器系统...');
+    initMusicPlayerControl();
+    tryInitMusicPlayer();
+});
+
 function initMusicPlayerControl() {
-    const musicPlayer = document.getElementById('musicPlayer');
-    if (!musicPlayer) {
+    const musicPlayerEl = document.getElementById('musicPlayer');
+    if (!musicPlayerEl) {
         console.error('音乐播放器元素未找到');
         return;
     }
-    musicPlayer.style.display = 'none';
+    musicPlayerEl.style.display = 'none';
     console.log('音乐播放器控制初始化完成');
 }
 
@@ -135,21 +129,11 @@ document.addEventListener('keydown', (e) => {
 
 document.addEventListener('visibilitychange', () => {
     if (musicPlayer && document.hidden) {
-        if (musicPlayer.pauseBackgroundAnimation) {
-            musicPlayer.pauseBackgroundAnimation();
-        }
         if (musicPlayer.updateAnimationFrame) {
             cancelAnimationFrame(musicPlayer.updateAnimationFrame);
             musicPlayer.updateAnimationFrame = null;
         }
-    } else if (musicPlayer) {
-        if (musicPlayer.resumeBackgroundAnimation) {
-            musicPlayer.resumeBackgroundAnimation();
-        }
     }
 });
-
-window.initMusicPlayerControl = initMusicPlayerControl;
-window.initializeMusicPlayerCore = initializeMusicPlayerCore;
 
 console.log('music-main.js 加载完成');
