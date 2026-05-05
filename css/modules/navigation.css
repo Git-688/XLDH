@@ -1,7 +1,7 @@
 /* 
  * 优化分类导航样式
  * 文件位置：./css/modules/navigation.css
- * 功能：按钮宽度自适应文字长度 + 横向滑动 + 完整显示
+ * 完整文件，按钮宽度根据名称长度自适应，移动端可滑动，分类名称完整显示
  */
 
 /* 导航主容器 */
@@ -53,7 +53,7 @@
     }
 }
 
-/* 头部统计 */
+/* ====================== 头部 ====================== */
 .navigation-header {
     margin-bottom: 12px;
     display: flex;
@@ -211,7 +211,7 @@
     }
 }
 
-/* 导航主体 */
+/* ====================== 导航主体 ====================== */
 .navigation-body {
     display: flex;
     width: 100%;
@@ -223,7 +223,7 @@
     min-height: 200px;
 }
 
-/* ---- 一级分类 ---- */
+/* ---- 左侧：一级分类 ---- */
 .navigation-left {
     width: 140px;
     flex-shrink: 0;
@@ -241,7 +241,6 @@
 }
 
 .level1-btn {
-    /* 宽度由内容决定 */
     width: auto;
     min-width: 100%;
     padding: 12px 16px;
@@ -261,7 +260,7 @@
     overflow: visible;
     text-overflow: clip;
     min-height: 44px;
-    flex-shrink: 0;        /* 防止被压缩 */
+    flex-shrink: 0;
 }
 
 .level1-btn:hover {
@@ -280,7 +279,7 @@
     text-align: center;
 }
 
-/* ---- 二级分类 ---- */
+/* ---- 中间：二级分类 ---- */
 .navigation-middle {
     width: 160px;
     flex-shrink: 0;
@@ -356,7 +355,7 @@
     box-shadow: 0 2px 4px rgba(var(--nav-level2-active), 0.3);
 }
 
-/* ---- 三级内容 ---- */
+/* ---- 右侧：三级内容 ---- */
 .navigation-right {
     flex: 1;
     min-width: 0;
@@ -374,7 +373,7 @@
     grid-auto-rows: minmax(115px, auto);
 }
 
-/* 网站卡片 */
+/* ====================== 网站卡片 ====================== */
 .site-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -400,12 +399,297 @@
     background: linear-gradient(135deg, var(--card-hover-bg-start), var(--card-hover-bg-end));
 }
 
-/* 卡片内部组件保持不变，省略以节省篇幅，实际文件需保留原有完整卡片样式 */
-/* ...（此处应包含之前定义的所有 .card-top, .icon-container, .views-container 等）... */
+.card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    height: 38px;
+}
 
-/* 响应式设计 */
+.icon-container {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 0;
+}
 
-/* 桌面端 ≥ 1024px：垂直排列，不需要横向滚动 */
+.icon-container img,
+.icon-container i,
+.icon-container span {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.icon-container img {
+    border-radius: 6px;
+}
+
+.icon-container i {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+}
+
+.icon-container span {
+    font-size: 20px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.site-card:hover .icon-container {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-color);
+}
+
+.views-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 100%;
+}
+
+.views-icon {
+    color: var(--primary-color);
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.view-count {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1;
+}
+
+.divider-line {
+    height: 1px;
+    background: repeating-linear-gradient(
+        to right,
+        transparent,
+        transparent 2px,
+        #666 2px,
+        #666 4px
+    );
+    margin: 0 0 6px 0;
+    opacity: 0.4;
+    width: 100%;
+}
+
+.card-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-align: center;
+    flex: 1;
+    justify-content: flex-start;
+    min-height: 40px;
+    overflow: hidden;
+    padding-top: 1px;
+}
+
+.site-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    min-height: 17px;
+}
+
+.site-description {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.25;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.9;
+    width: 100%;
+    min-height: 30px;
+    max-height: 30px;
+    padding-top: 0;
+}
+
+/* 空状态 */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+}
+
+.empty-icon {
+    font-size: 24px;
+    color: var(--border-color);
+    margin-bottom: 8px;
+    opacity: 0.5;
+}
+
+.empty-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
+}
+
+.empty-subtitle {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin: 0;
+    opacity: 0.7;
+}
+
+/* 无效链接卡片样式 */
+.site-card.invalid {
+    opacity: 0.6;
+    filter: grayscale(0.7);
+    position: relative;
+}
+
+.site-card.invalid::after {
+    content: "无效";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--error-color);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 12px;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* 骨架屏 */
+.skeleton-card {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.skeleton-icon {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 8px;
+}
+
+.skeleton-btn {
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 3px;
+}
+
+.skeleton-views {
+    width: 30px;
+    height: 14px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+.skeleton-title {
+    width: 80%;
+    height: 16px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 6px;
+}
+
+.skeleton-description {
+    width: 95%;
+    height: 12px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+.skeleton-divider {
+    opacity: 0.3;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* 卡片淡入动画 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.site-card {
+    opacity: 0;
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* 浏览次数增加动画 */
+@keyframes pulseView {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.view-count.increasing {
+    animation: pulseView 0.3s ease;
+}
+
+/* ====================== 响应式设计 ====================== */
+
+/* 桌面端 ≥1024px：垂直排列，不需要横向滚动 */
 @media (min-width: 1024px) {
     .navigation-section {
         padding: 0 0 calc(var(--section-margin-md) * 0.5) 0;
@@ -433,10 +717,22 @@
         flex: 0 0 auto;
         white-space: nowrap;
     }
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+        padding: 12px;
+        grid-auto-rows: minmax(115px, auto);
+    }
+    .site-card {
+        min-height: 115px;
+    }
 }
 
-/* 平板/移动端 ≤ 1023px：横向排列，允许滑动 */
-@media (max-width: 1023px) {
+/* 平板端 768px-1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-sm) * 0.5) 0;
+    }
     .navigation-body {
         flex-direction: column;
     }
@@ -455,13 +751,13 @@
         white-space: nowrap;
     }
     .level1-btn, .level2-btn {
-        flex: 0 0 auto;          /* 不伸缩，宽度由内容决定 */
+        flex: 0 0 auto;
         width: auto;
         padding: 0 14px;
         border-bottom: none;
         border-right: 1px solid var(--border-color);
-        height: 44px;
-        min-height: 44px;
+        height: 46px;
+        min-height: 46px;
         font-size: 13px;
         white-space: nowrap;
         overflow: visible;
@@ -472,19 +768,231 @@
         padding: 1px 4px;
         min-width: 16px;
     }
-}
-
-/* 超小屏幕微调 */
-@media (max-width: 480px) {
-    .level1-btn, .level2-btn {
-        padding: 0 10px;
-        font-size: 12px;
-        height: 38px;
-        min-height: 38px;
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+        padding: 10px;
+        grid-auto-rows: minmax(105px, auto);
+    }
+    .site-card {
+        padding: 10px 8px 6px;
+        min-height: 105px;
+    }
+    .card-top {
+        height: 34px;
+        margin-bottom: 8px;
+    }
+    .icon-container {
+        width: 34px;
+        height: 34px;
+    }
+    .icon-container i {
+        font-size: 18px;
+    }
+    .icon-container span {
+        font-size: 18px;
+    }
+    .views-icon {
+        font-size: 11px;
+    }
+    .view-count {
+        font-size: 14px;
+    }
+    .divider-line {
+        margin: 0 0 5px 0;
+    }
+    .site-title {
+        font-size: 13px;
+        min-height: 16px;
+    }
+    .site-description {
+        font-size: 11px;
+        min-height: 27px;
+        max-height: 27px;
     }
 }
 
-/* 暗色模式适配 */
+/* 移动端 ≤768px */
+@media (max-width: 768px) {
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-xs) * 0.5) 0;
+    }
+    .header-content {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .navigation-title {
+        font-size: 15px;
+    }
+    .navigation-stats {
+        flex: 1;
+        justify-content: flex-end;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .stat-item {
+        font-size: 11px;
+    }
+    .stat-number {
+        font-size: 13px;
+    }
+    .stat-label {
+        font-size: 11px;
+    }
+    .navigation-body {
+        flex-direction: column;
+    }
+    .navigation-left, .navigation-middle {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .level1-nav, .level2-nav {
+        flex-direction: row;
+        height: auto;
+        padding: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+    }
+    .level1-btn, .level2-btn {
+        flex: 0 0 auto;
+        width: auto;
+        padding: 0 12px;
+        border-bottom: none;
+        border-right: 1px solid var(--border-color);
+        height: 40px;
+        min-height: 40px;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+    }
+    .level2-btn-count {
+        font-size: 9px;
+        padding: 0 3px;
+        min-width: 14px;
+    }
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 6px;
+        padding: 8px;
+        grid-auto-rows: minmax(100px, auto);
+    }
+    .site-card {
+        padding: 8px 6px 4px;
+        min-height: 100px;
+        border-radius: 6px;
+    }
+    .card-top {
+        height: 30px;
+        margin-bottom: 6px;
+    }
+    .icon-container {
+        width: 30px;
+        height: 30px;
+    }
+    .icon-container i {
+        font-size: 16px;
+    }
+    .icon-container span {
+        font-size: 16px;
+    }
+    .views-icon {
+        font-size: 10px;
+    }
+    .view-count {
+        font-size: 13px;
+    }
+    .divider-line {
+        margin: 0 0 4px 0;
+    }
+    .card-bottom {
+        gap: 2px;
+    }
+    .site-title {
+        font-size: 12px;
+        min-height: 15px;
+    }
+    .site-description {
+        font-size: 10px;
+        min-height: 25px;
+        max-height: 25px;
+    }
+}
+
+/* 极窄屏 ≤480px */
+@media (max-width: 480px) {
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-xs) * 0.4) 0;
+    }
+    .navigation-title {
+        font-size: 14px;
+    }
+    .stat-item {
+        font-size: 10px;
+    }
+    .stat-number {
+        font-size: 12px;
+    }
+    .stat-label {
+        font-size: 10px;
+    }
+    .navigation-stats {
+        gap: 4px;
+    }
+    .level1-btn, .level2-btn {
+        padding: 0 10px;
+        height: 36px;
+        min-height: 36px;
+        font-size: 11px;
+    }
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+        gap: 4px;
+        padding: 6px;
+        grid-auto-rows: minmax(90px, auto);
+    }
+    .site-card {
+        padding: 6px 4px 3px;
+        min-height: 90px;
+    }
+    .card-top {
+        height: 28px;
+        margin-bottom: 4px;
+    }
+    .icon-container {
+        width: 28px;
+        height: 28px;
+    }
+    .icon-container i {
+        font-size: 14px;
+    }
+    .icon-container span {
+        font-size: 14px;
+    }
+    .views-icon {
+        font-size: 9px;
+    }
+    .view-count {
+        font-size: 12px;
+    }
+    .divider-line {
+        margin: 0 0 3px 0;
+    }
+    .site-title {
+        font-size: 11px;
+        min-height: 14px;
+    }
+    .site-description {
+        font-size: 9px;
+        min-height: 22px;
+        max-height: 22px;
+    }
+}
+
+/* 暗色模式 */
 @media (prefers-color-scheme: dark) {
     .navigation-body, .navigation-left, .navigation-middle {
         background: var(--bg-card);
@@ -536,6 +1044,53 @@
     .views-icon {
         color: var(--nav-level1-active);
     }
+    .skeleton-icon,
+    .skeleton-btn,
+    .skeleton-views,
+    .skeleton-title,
+    .skeleton-description {
+        background: linear-gradient(90deg, #3a3a3a 25%, #4a4a4a 50%, #3a3a3a 75%);
+        background-size: 200% 100%;
+    }
 }
 
-/* 其他原有样式：无效卡片、骨架屏、动画等保持不变，需从之前版本补充完整 */
+/* ====================== 报告死链按钮 ====================== */
+.site-card .card-top-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.site-card .report-dead-link-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    font-size: 14px;
+    flex-shrink: 0;
+    line-height: 1;
+    position: relative;
+    top: -8px;
+}
+
+.site-card .report-dead-link-btn i {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.site-card .report-dead-link-btn:hover {
+    color: var(--error-color);
+    transform: scale(1.1);
+}
+
+.site-card .report-dead-link-btn:active {
+    transform: scale(0.95);
+}
