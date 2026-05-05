@@ -605,7 +605,6 @@ class MusicPlayer {
 
     toggleSearchMode(apiId) {
         if (apiId === 'migu' || apiId === 'local' || apiId === 'qq') {
-            // 不支持搜索的源：直接提示，不切换模式
             window.toast.show('该功能不支持搜索', 'info');
             return;
         }
@@ -717,7 +716,6 @@ class MusicPlayer {
 
     async searchApi(apiId) {
         if (apiId === 'migu' || apiId === 'local' || apiId === 'qq') {
-            // 不支持搜索，不执行
             return;
         }
         const elements = this.apiElements[apiId];
@@ -896,7 +894,7 @@ class MusicPlayer {
                 };
                 checkDuration();
             });
-            this.consecutiveErrors = 0; // 成功则重置错误计数
+            this.consecutiveErrors = 0;
             this.maxErrorShown = false;
         } catch (error) {
             console.error('加载歌曲失败:', error);
@@ -909,7 +907,6 @@ class MusicPlayer {
         }
     }
 
-    // 统一的音频错误处理（限制自动跳歌次数）
     handlePlaybackError(error) {
         this.consecutiveErrors++;
         if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
@@ -917,11 +914,9 @@ class MusicPlayer {
                 window.toast.show('连续多首资源失效，已停止自动播放', 'error');
                 this.maxErrorShown = true;
             }
-            // 停止继续自动跳歌，但保留用户手动操作
             this.autoPlayNext = false;
             return;
         }
-        // 自动尝试下一首（如果允许）
         if (this.autoPlayNext && this.currentPlaylist.length > 1) {
             setTimeout(() => this.next(), 1000);
         }
@@ -1140,7 +1135,6 @@ class MusicPlayer {
         e.preventDefault();
         this.isDraggingProgress = true;
         this.updateSeek(e);
-        // 防止触摸时滚动
         if (e.type === 'touchstart') {
             document.body.style.overflow = 'hidden';
         }
@@ -1224,15 +1218,12 @@ class MusicPlayer {
         return apiNames[apiId] || apiId;
     }
 
-    // 重置内部状态（用于隐藏播放器时）
     resetUIState() {
-        // 隐藏搜索模式
         this.isSearchMode.forEach((val, api) => {
             if (val) {
-                this.toggleSearchMode(api); // 切换回歌单
+                this.toggleSearchMode(api);
             }
         });
-        // 隐藏音量滑块
         if (this.isVolumeSliderVisible) this.hideVolumeSlider();
     }
 
@@ -1260,14 +1251,59 @@ class MusicPlayer {
         console.log('音乐播放器资源已清理');
     }
 
-    saveVolume(volume) { localStorage.setItem('musicPlayer_volume', volume.toString()); }
-    loadVolume() { const saved = localStorage.setItem('musicPlayer_volume'); return saved ? parseFloat(saved) : 0.5; }
-    savePlaybackSpeed(speed) { localStorage.setItem('musicPlayer_playbackSpeed', speed.toString()); }
-    loadPlaybackSpeed() { const saved = localStorage.getItem('musicPlayer_playbackSpeed'); return saved ? parseFloat(saved) : 1.0; }
-    savePlayMode(mode) { localStorage.setItem('musicPlayer_playMode', mode.toString()); }
-    loadPlayMode() { const saved = localStorage.getItem('musicPlayer_playMode'); return saved ? parseInt(saved) : 0; }
-    savePlayState(isPlaying) { localStorage.setItem('musicPlayer_playState', isPlaying.toString()); }
-    loadPlayState() { const saved = localStorage.getItem('musicPlayer_playState'); return saved ? saved === 'true' : false; }
+    // ========== 本地存储读写方法（已修复） ==========
+    saveVolume(volume) {
+        try {
+            localStorage.setItem('musicPlayer_volume', volume.toString());
+        } catch (e) {}
+    }
+    loadVolume() {
+        try {
+            const saved = localStorage.getItem('musicPlayer_volume');
+            return saved ? parseFloat(saved) : 0.5;
+        } catch (e) {
+            return 0.5;
+        }
+    }
+    savePlaybackSpeed(speed) {
+        try {
+            localStorage.setItem('musicPlayer_playbackSpeed', speed.toString());
+        } catch (e) {}
+    }
+    loadPlaybackSpeed() {
+        try {
+            const saved = localStorage.getItem('musicPlayer_playbackSpeed');
+            return saved ? parseFloat(saved) : 1.0;
+        } catch (e) {
+            return 1.0;
+        }
+    }
+    savePlayMode(mode) {
+        try {
+            localStorage.setItem('musicPlayer_playMode', mode.toString());
+        } catch (e) {}
+    }
+    loadPlayMode() {
+        try {
+            const saved = localStorage.getItem('musicPlayer_playMode');
+            return saved ? parseInt(saved) : 0;
+        } catch (e) {
+            return 0;
+        }
+    }
+    savePlayState(isPlaying) {
+        try {
+            localStorage.setItem('musicPlayer_playState', isPlaying.toString());
+        } catch (e) {}
+    }
+    loadPlayState() {
+        try {
+            const saved = localStorage.getItem('musicPlayer_playState');
+            return saved ? saved === 'true' : false;
+        } catch (e) {
+            return false;
+        }
+    }
 }
 
 window.MusicPlayer = MusicPlayer;
