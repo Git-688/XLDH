@@ -56,13 +56,6 @@
             display:flex;align-items:center;gap:8px;
         }
         .cat-item.active{background:#3b82f6;color:#fff}
-        .cat-item .rename-text-btn {
-            background:#e2e8f0;border:none;cursor:pointer;font-size:11px;
-            padding:3px 8px;border-radius:4px;color:#475569;transition:all 0.2s;font-weight:500;
-        }
-        .cat-item .rename-text-btn:hover {background:#cbd5e1;color:#1e293b;}
-        .cat-item.active .rename-text-btn {background:rgba(255,255,255,0.2);color:#fff;}
-        .cat-item.active .rename-text-btn:hover {background:rgba(255,255,255,0.3);}
 
         .content-layout{display:flex;gap:10px;margin-top:0;flex-wrap:nowrap;min-height:0}
         .sidebar{
@@ -80,21 +73,13 @@
             display:flex;align-items:center;justify-content:space-between;
         }
         .sub-item.active{background:#e0f2fe;color:#0369a1}
-        .sub-item .rename-text-btn {
-            background:#e2e8f0;border:none;cursor:pointer;font-size:10px;
-            padding:2px 6px;border-radius:4px;color:#475569;transition:all 0.2s;font-weight:500;
-        }
-        .sub-item .rename-text-btn:hover {background:#cbd5e1;color:#1e293b;}
-        .sub-item.active .rename-text-btn {background:rgba(3,105,161,0.1);color:#0369a1;}
 
         .main-content{
             flex:1;min-width:0;background:#f8fafc;border-radius:10px;padding:12px;
-            overflow-x:hidden;
-            display:flex;flex-direction:column;
+            overflow-x:hidden; display:flex;flex-direction:column;
         }
         .site-list,.rank-list,.feedback-list{
-            overflow-y:auto;max-height:calc(100vh - 260px);overflow-x:hidden;
-            flex:1;
+            overflow-y:auto;max-height:calc(100vh - 260px);overflow-x:hidden;flex:1;
         }
 
         input,select{
@@ -133,24 +118,41 @@
             box-shadow:0 1px 3px rgba(0,0,0,0.05);word-break:break-all;
         }
         .link-info{flex:1;min-width:150px;overflow:hidden}
-        .link-info .link-url{
-            display:none; /* 完全隐藏URL显示 */
-        }
-        .link-actions{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0}
+        .link-info .link-url{display:none;}
 
-        /* 统一按钮高度和样式 */
+        /* ★ 按钮组样式：修改/删除 或 编辑/删除 合并为一个整体 ★ */
+        .btn-group {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 7px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .btn-group button {
+            border-radius: 0;
+            margin: 0;
+            padding: 4px 8px;
+            font-size: 11px;
+            height: 28px;
+            line-height: 1;
+        }
+        .btn-group button:first-child {
+            border-top-left-radius: 7px;
+            border-bottom-left-radius: 7px;
+        }
+        .btn-group button:last-child {
+            border-top-right-radius: 7px;
+            border-bottom-right-radius: 7px;
+        }
+        .btn-group button + button {
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+
         .sidebar button.primary, .main-content button.primary.sm {
-            height: 38px;
-            padding: 0 14px;
-            font-size: 12px;
+            height: 38px; padding: 0 14px; font-size: 12px;
         }
-        #addSubBtn {
-            width: 100%;
-            margin-bottom: 8px;
-        }
-        #addSiteBtn {
-            min-width: 110px;
-        }
+        #addSubBtn { width: 100%; margin-bottom: 8px; }
+        #addSiteBtn { min-width: 110px; }
 
         .modal{
             position:fixed;inset:0;background:rgba(0,0,0,0.25);
@@ -196,44 +198,16 @@
         .lock-message {color:#ef4444;font-size:11px;margin-top:4px;}
 
         .fetch-info-btn {
-            background: #10b981;
-            color: #fff;
-            padding: 6px 12px;
-            font-size: 11px;
-            margin-left: 6px;
-            white-space: nowrap;
+            background: #10b981; color: #fff; padding: 6px 12px; font-size: 11px; margin-left: 6px; white-space: nowrap;
         }
         .fetch-info-btn:hover { background: #059669; }
 
-        /* ★ 强制左右并排，移除上下堆叠规则 ★ */
-        .content-layout {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: nowrap;
-        }
-        .sidebar {
-            width: 180px;
-            min-width: 130px;
-            flex-shrink: 0;
-        }
-        .main-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        /* 响应式：保持左右布局，但允许侧边栏变窄 */
-        @media (max-width: 768px) {
-            .sidebar { width: 140px; min-width: 110px; }
-        }
-        @media (max-width: 480px) {
-            .sidebar { width: 120px; min-width: 90px; }
-            .modal-body{max-width:98%;padding:12px}
-        }
+        @media (max-width: 768px) { .sidebar { width: 140px; min-width: 110px; } }
+        @media (max-width: 480px) { .sidebar { width: 120px; min-width: 90px; } .modal-body{max-width:98%;padding:12px} }
     </style>
 </head>
 <body>
 <div class="toast" id="toast"></div>
-
 <div class="modal" id="modal">
     <div class="modal-body">
         <div class="modal-title" id="modalTitle"></div>
@@ -244,7 +218,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal" id="logModal">
     <div class="modal-body" style="max-width:560px">
         <div class="modal-title">操作日志</div>
@@ -252,7 +225,6 @@
         <div class="modal-buttons"><button class="primary" id="closeLogBtn">关闭</button></div>
     </div>
 </div>
-
 <div class="container">
     <div class="header-card">
         <div class="header">
@@ -271,14 +243,12 @@
             </div>
         </div>
     </div>
-
     <div id="mainContent" class="hidden main-card">
         <div class="flex-row" style="margin-bottom:12px">
             <div class="tab-btn active" data-tab="manage">数据管理</div>
             <div class="tab-btn" data-tab="rank">点击排行</div>
             <div class="tab-btn" data-tab="feedback">用户反馈</div>
         </div>
-
         <div id="manageTab" class="tab-panel">
             <div class="flex-row" style="margin-bottom:10px">
                 <input type="text" class="search-box" id="searchInput" placeholder="搜索标题...">
@@ -287,15 +257,12 @@
                 <button class="primary sm" id="refreshNavBtn">刷新导航缓存</button>
                 <button class="primary sm" id="addCategoryBtn">+一级分类</button>
             </div>
-
             <div class="cat-bar" id="catBar"></div>
-
             <div class="content-layout">
                 <div class="sidebar" id="sidebar">
                     <button class="primary" id="addSubBtn">+子分类</button>
                     <div class="sub-list" id="subList"></div>
                 </div>
-
                 <div class="main-content" id="mainContentArea">
                     <div class="flex-row" style="margin-bottom:10px">
                         <button class="primary sm" id="addSiteBtn">+添加链接</button>
@@ -304,7 +271,6 @@
                 </div>
             </div>
         </div>
-
         <div id="rankTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px">
                 <button class="primary sm" id="sortRankBtn">按点击数降序</button>
@@ -312,7 +278,6 @@
             </div>
             <div class="rank-list" id="rankList"></div>
         </div>
-
         <div id="feedbackTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px">
                 <button class="primary sm" id="refreshFeedbackBtn">刷新列表</button>
@@ -322,7 +287,6 @@
         </div>
     </div>
 </div>
-
 <script src="./js/admin.js"></script>
 </body>
 </html>
