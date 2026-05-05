@@ -1,3 +1,34 @@
+// ==================== Utils 兼容层（防止全局 Utils 未加载） ====================
+if (typeof Utils === 'undefined') {
+    window.Utils = {
+        escapeHtml(text) {
+            if (text == null) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        },
+        formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        },
+        generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+        },
+        debounce(fn, delay) {
+            let timer;
+            return function (...args) {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(this, args), delay);
+            };
+        },
+        isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+    };
+}
+
 // ==================== 自定义下拉选择器组件（挂载到 body，互斥+动画） ====================
 class CustomSelect {
     constructor(selectElement) {
@@ -211,7 +242,7 @@ function initCustomSelects() {
     });
 }
 
-// ==================== 主播放器类 ====================
+// ==================== 主播放器类（修复版） ====================
 class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audio-element');
@@ -233,7 +264,6 @@ class MusicPlayer {
         this.isHandlingNavigationClick = false;
         this.hasInitialized = false;
 
-        // 连续播放失败计数器
         this.consecutiveErrors = 0;
         this.maxConsecutiveErrors = 3;
     }
@@ -314,7 +344,6 @@ class MusicPlayer {
             player: document.querySelector('.music-player')
         };
 
-        // 单行歌词元素
         if (this.elements.lyricsContainer) {
             this.elements.lyricsContainer.innerHTML = '';
             this.lyricsLineEl = document.createElement('div');
@@ -923,9 +952,9 @@ class MusicPlayer {
             this.audio.src = song.src;
             this.audio.load();
 
-            // Wait for audio to be ready (or fail)
+            // 等待音频真正加载完成或失败（不再是死循环）
             await this.waitForAudioReady();
-            this.consecutiveErrors = 0; // success
+            this.consecutiveErrors = 0; // 成功
 
             await this.updateSongInfo(song);
             await this.loadLyrics(song);
@@ -940,14 +969,12 @@ class MusicPlayer {
         }
     }
 
-    // 统一的音频错误处理（避免频繁弹窗）
     handlePlaybackError(error) {
         this.consecutiveErrors++;
         if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
             window.toast.show('连续多首资源失效，请尝试切换歌单', 'error');
-            this.consecutiveErrors = 0; // 重置后下次不会再报，除非连续失败达到阈值
+            this.consecutiveErrors = 0;
         }
-        // 自动尝试下一首（如果允许）
         if (this.autoPlayNext && this.currentPlaylist.length > 1) {
             setTimeout(() => this.next(), 1000);
         }
