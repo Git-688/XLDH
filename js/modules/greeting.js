@@ -72,7 +72,7 @@ class GreetingModule {
 
     async loadHolidayData() {
         try {
-            const response = await fetch('https://api.pearktrue.cn/api/countdownday/');
+            const response = await fetch('https://api.pearapi.ai/api/countdownday/');
             const data = await response.json();
             
             if (data.code === 200 && data.data && data.data.length > 0) {
