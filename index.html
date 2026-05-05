@@ -8,23 +8,24 @@
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
 
-    <!-- ===== 内容安全策略 (CSP) – 已移除 unsafe-inline ===== -->
+    <!-- ✅ 修复音乐播放问题：增加 media-src 允许外部音频 -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com https://unpkg.com https://*.ccwu.cc;
         style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com;
         img-src * data:;
+        media-src *;
         connect-src *;
         font-src 'self' https://cdnjs.cloudflare.com;
         frame-ancestors 'none';
     ">
-    
+
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
-    
+
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
-    
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
@@ -40,21 +41,21 @@
     <link rel="stylesheet" href="./css/modules/compact-tags.css">
     <link rel="stylesheet" href="./css/responsive.css">
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/regular.min.css">
-    
+
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    
+
     <link rel="preload" href="./js/main.js" as="script">
-    
-    <!-- Waline 样式 -->
-    <link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" />
-    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
+
     <style>
         /* ===== 通用反馈/笔记模态框基础样式 ===== */
         .feedback-modal {
@@ -148,12 +149,12 @@
         .feedback-modal-body {
             flex: 1;
             overflow-y: auto;
+            padding: 14px 16px;
             background: var(--bg-card, #ffffff);
             scrollbar-width: none;
             -ms-overflow-style: none;
         }
         .feedback-modal-body::-webkit-scrollbar { display: none; }
-
         @media (max-width: 600px) {
             .feedback-modal {
                 padding: var(--container-padding-xs, 16px);
@@ -175,22 +176,36 @@
             }
             .feedback-modal-header { padding: 8px 14px; }
             .feedback-modal-header h3 { font-size: 1.2rem; }
-            .feedback-modal-body { -webkit-overflow-scrolling: touch; }
+            .feedback-modal-body { padding: 12px 14px; -webkit-overflow-scrolling: touch; }
             .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
         }
-
         @media (min-width: 601px) {
             .feedback-modal-header { padding: 10px 16px; }
             .feedback-modal-header h3 { font-size: 1.25rem; }
+            .feedback-modal-body { padding: 16px 20px; }
         }
-
         @media (prefers-color-scheme: dark) {
             .feedback-modal-content { background: #2a2a2a; border-color: #3e3e3e; }
             .feedback-modal-header { background: #2a2a2a; border-bottom-color: #3e3e3e; }
             .feedback-modal-body { background: #2a2a2a; }
+            .feedback-modal-close:hover { background: rgba(255, 255, 255, 0.08); }
         }
 
-        /* ===== 悬浮按钮颜色 ===== */
+        /* ===== 反馈模块提示样式 ===== */
+        .math-hint {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: #666;
+            border-left: 3px solid var(--primary-color);
+        }
+        @media (prefers-color-scheme: dark) { .math-hint { background: #1e1e1e; color: #aaa; } }
+        .math-hint i { margin-right: 6px; color: var(--primary-color); }
+        .math-hint code { background: rgba(0,0,0,0.06); padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 11px; }
+
+        /* 悬浮按钮颜色 */
         .floating-btn.feedback-btn { color: #8b5cf6; }
         .floating-btn.feedback-btn:hover { color: #7c3aed; }
         .floating-btn.submit-btn { color: #06b6d4; }
@@ -321,7 +336,6 @@
             -webkit-backdrop-filter: blur(4px);
             border: 1px solid rgba(0, 0, 0, 0.03);
         }
-
         @media (prefers-color-scheme: dark) {
             #notebookModal .feedback-modal-content {
                 background: rgba(30, 30, 30, 0.75);
@@ -346,7 +360,6 @@
             .notebook-id { background: rgba(50, 50, 50, 0.8); }
             .notebook-content { background: rgba(30, 30, 30, 0.6); }
         }
-
         .notebook-list .loading, .notebook-list .empty, .notebook-list .error {
             text-align: center;
             padding: 20px 20px;
@@ -354,7 +367,6 @@
             font-size: 12px;
         }
         .notebook-list .error { color: var(--error-color); }
-
         @media (max-width: 768px) {
             .notebook-item { padding: 10px 12px; }
             .notebook-title { font-size: 14px; }
@@ -362,6 +374,77 @@
         }
         @media (max-width: 480px) {
             .notebook-item { padding: 8px 10px; }
+        }
+
+        /* ===== 用户反馈模态框：整体亚克力效果，头部与星聚笔记统一 ===== */
+        #feedbackModal {
+            background: transparent;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+        #feedbackModal .feedback-modal-content {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(24px) saturate(125%);
+            -webkit-backdrop-filter: blur(24px) saturate(125%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #feedbackModal .feedback-modal-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 18px 24px 10px;
+            color: #1e293b;
+        }
+        #feedbackModal .feedback-modal-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: inherit;
+        }
+        #feedbackModal .feedback-modal-header h3 i {
+            color: #4361ee;
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+        #feedbackModal .feedback-modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            border: none;
+            color: #64748b;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #feedbackModal .feedback-modal-close:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #334155;
+        }
+        #feedbackModal .feedback-modal-body {
+            padding: 16px 20px;
+            background: transparent;
+        }
+        @media (prefers-color-scheme: dark) {
+            #feedbackModal .feedback-modal-content {
+                background: rgba(30, 30, 30, 0.75);
+                border-color: rgba(255, 255, 255, 0.15);
+            }
+            #feedbackModal .feedback-modal-header {
+                border-bottom-color: rgba(255, 255, 255, 0.06);
+                color: #f1f5f9;
+            }
+            #feedbackModal .feedback-modal-close {
+                background: rgba(255, 255, 255, 0.1);
+                color: #94a3b8;
+            }
+            #feedbackModal .feedback-modal-close:hover {
+                background: rgba(255, 255, 255, 0.2);
+                color: #e2e8f0;
+            }
         }
     </style>
 </head>
@@ -409,14 +492,14 @@
         </div>
         <div class="sidebar-footer">
             <button class="footer-btn" id="sidebarNotebookBtn" aria-label="星聚笔记"><i class="fas fa-pen"></i></button>
-            <button class="footer-btn" aria-label="羊毛福利"><i class="fas fa-gift"></i></button>
+            <button class="footer-btn" onclick="window.open('./pages/tools/羊毛福利.html', '_blank')" aria-label="羊毛福利"><i class="fas fa-gift"></i></button>
             <button class="footer-btn" id="aboutBtn" aria-label="关于网站"><i class="fas fa-info-circle"></i></button>
-            <button class="footer-btn" aria-label="加入QQ群"><i class="fab fa-qq"></i></button>
+            <button class="footer-btn" onclick="window.open('https://qm.qq.com/example', '_blank')" aria-label="加入QQ群"><i class="fab fa-qq"></i></button>
         </div>
     </div>
 </aside>
 <main class="main-content">
-    <!-- ===== 轮播图 ===== -->
+    <!-- ===== 轮播图：优化后的结构 ===== -->
     <section class="wallpaper-section">
         <div class="container">
             <div class="wallpaper-container" id="wallpaperCarousel">
@@ -518,7 +601,7 @@
         <button class="floating-btn submit-btn" id="floatingSubmitBtn" aria-label="网站投稿"><i class="fas fa-paper-plane"></i></button>
         <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
     </div>
-    <!-- ===== 音乐播放器 ===== -->
+    <!-- ===== 音乐播放器（完整） ===== -->
     <div class="music-player" id="musicPlayer">
         <div class="player-top">
             <div class="cover-section">
@@ -583,8 +666,8 @@
                 <button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎">
                     <i id="engineIcon" class="fas fa-search"></i>
                 </button>
-                <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off">
-                <button class="search-submit-btn" id="searchSubmitBtn">搜索</button>
+                <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." onkeydown="window.newSearchModule.handleSearch(event)" oninput="window.newSearchModule.showSuggestions()" autocomplete="off">
+                <button class="search-submit-btn" onclick="window.newSearchModule.submitSearch()">搜索</button>
             </div>
             <div class="engine-dropdown" id="engineDropdown"></div>
             <div class="suggestions" id="suggestions"></div>
@@ -624,7 +707,6 @@
     </div>
 </div>
 
-<script src="./js/utils.js"></script>
 <script src="./js/storage.js"></script>
 <script src="./js/api.js"></script>
 <script src="./js/components/navbar.js"></script>
@@ -640,12 +722,27 @@
 <script src="./js/modules/compact-tags.js"></script>
 <script src="./js/toast.js"></script>
 <script src="./js/main.js"></script>
-
+<script src="./js/xfyy/utils.js"></script>
 <script src="./js/xfyy/cache-manager.js"></script>
 <script src="./js/xfyy/lyric-parser.js"></script>
 <script src="./data/local-music-data.js"></script>
 <script src="./js/xfyy/plugin-manager.js"></script>
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
+
+<!-- Service Worker 注册（离线缓存 + 导航预缓存） -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then(registration => {
+        console.log('Service Worker 注册成功，范围:', registration.scope);
+      }).catch(error => {
+        console.error('Service Worker 注册失败:', error);
+      });
+    });
+  }
+</script>
+
 </body>
 </html>
