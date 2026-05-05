@@ -1,5 +1,5 @@
 /**
- * 简约公告模块 - 清爽现代版（使用 Utils.escapeHtml）
+ * 简约公告模块 - 清爽现代版
  * @class AnnouncementModule
  */
 class AnnouncementModule {
@@ -14,7 +14,13 @@ class AnnouncementModule {
         this.init();
     }
 
-    // 移除内嵌 escapeHtml，统一使用全局 Utils.escapeHtml
+    // 内嵌 escapeHtml 方法，避免依赖 Utils
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
     init() {
         if (this.isInitialized) return;
@@ -82,11 +88,10 @@ class AnnouncementModule {
         this.modalElement.id = 'announcementModal';
 
         const ann = this.currentAnnouncement || {};
-        // 使用 Utils.escapeHtml 转义
-        const title = Utils.escapeHtml(ann.title || '公告');
-        const focus = Utils.escapeHtml(ann.focus || '');
+        const title = this.escapeHtml(ann.title || '公告');
+        const focus = this.escapeHtml(ann.focus || '');
         const updates = ann.updates && Array.isArray(ann.updates) ? ann.updates : [];
-        const time = Utils.escapeHtml(ann.time || new Date().toLocaleDateString());
+        const time = this.escapeHtml(ann.time || new Date().toLocaleDateString());
 
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
@@ -113,7 +118,7 @@ class AnnouncementModule {
                             <span>更新内容</span>
                         </div>
                         <ul class="updates-list">
-                            ${updates.map(item => `<li>${Utils.escapeHtml(item)}</li>`).join('')}
+                            ${updates.map(item => `<li>${this.escapeHtml(item)}</li>`).join('')}
                         </ul>
                     </div>
                 </div>
@@ -189,11 +194,6 @@ class AnnouncementModule {
         this.modalElement.classList.add('active');
         this.isVisible = true;
 
-        if (!this.resizeHandler) {
-            this.resizeHandler = this.onResize.bind(this);
-            window.addEventListener('resize', this.resizeHandler);
-        }
-
         if (window.app) window.app.registerModal(this);
         this.updateButtonState(true);
     }
@@ -206,10 +206,6 @@ class AnnouncementModule {
 
         setTimeout(() => {
             this.isVisible = false;
-            if (this.resizeHandler) {
-                window.removeEventListener('resize', this.resizeHandler);
-                this.resizeHandler = null;
-            }
             if (window.app) window.app.unregisterModal(this);
         }, 400);
     }
@@ -233,9 +229,6 @@ class AnnouncementModule {
         const btn = document.getElementById('announcementBtn');
         if (btn) btn.classList.toggle('active', active);
     }
-
-    // 占位方法（保持兼容）
-    onResize() {}
 
     resetAnnouncements() {
         this.announcements = this.getDefaultAnnouncements();
@@ -270,4 +263,11 @@ class AnnouncementModule {
     }
 }
 
-window.announcementModule = new AnnouncementModule();
+// 等待 DOM 加载完成后再初始化，确保依赖项已就绪
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.announcementModule = new AnnouncementModule();
+    });
+} else {
+    window.announcementModule = new AnnouncementModule();
+}
