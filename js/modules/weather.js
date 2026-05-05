@@ -123,7 +123,7 @@ class WeatherModule {
 
     async reverseGeocode(latitude, longitude) {
         return new Promise((resolve, reject) => {
-            const url = `https://api.pearktrue.cn/api/map/?lat=${latitude}&lng=${longitude}`;
+            const url = `https://api.pearapi.ai/api/map/?lat=${latitude}&lng=${longitude}`;
             
             console.log('正在逆地理编码...', url);
             
