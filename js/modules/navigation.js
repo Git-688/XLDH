@@ -1,6 +1,6 @@
 /**
  * 优化分类导航系统（基于后端 Worker + D1）
- * 包含：缓存容错、后台静默更新、图标协议修复、安全转义降级
+ * 包含：缓存容错、后台静默更新、图标协议修复、安全转义降级、事件绑定修复
  */
 class OptimizedNavigation {
     constructor() {
@@ -54,6 +54,7 @@ class OptimizedNavigation {
         if (this.isInitialized) return;
         
         this.showSkeleton();
+        this.bindEvents();                    // ★ 关键修复：提前绑定事件
         
         try {
             await this.loadNavigationData();
