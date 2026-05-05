@@ -1,6 +1,6 @@
 /**
  * 优化分类导航系统（基于后端 Worker + D1）
- * 优化：直接使用 API 获取数据，增加本地缓存容错，后台静默更新
+ * 包含：缓存容错、后台静默更新、图标协议修复、安全转义降级
  */
 class OptimizedNavigation {
     constructor() {
@@ -29,6 +29,27 @@ class OptimizedNavigation {
         this.quietUpdate = true;
     }
 
+    // ==================== 安全工具方法（兼容 Utils 未加载） ====================
+    _escapeHtml(str) {
+        if (typeof Utils !== 'undefined' && typeof Utils.escapeHtml === 'function') {
+            return Utils.escapeHtml(str);
+        }
+        if (!str) return '';
+        return String(str).replace(/[&<>"']/g, m => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[m]));
+    }
+
+    _formatViews(views) {
+        if (typeof Utils !== 'undefined' && typeof Utils.formatViews === 'function') {
+            return Utils.formatViews(views);
+        }
+        if (views >= 1000000) return `${(views / 1000000).toFixed(1).replace('.0', '')}M`;
+        if (views >= 1000) return `${(views / 1000).toFixed(1).replace('.0', '')}K`;
+        return String(views);
+    }
+
+    // ==================== 初始化 ====================
     async init() {
         if (this.isInitialized) return;
         
@@ -66,7 +87,7 @@ class OptimizedNavigation {
         }
     }
 
-    // 启动后台静默更新
+    // ==================== 后台静默更新 ====================
     startBackgroundUpdates() {
         if (this.updateTimer) clearInterval(this.updateTimer);
         
@@ -112,27 +133,25 @@ class OptimizedNavigation {
         return html;
     }
 
-    // 直接通过 API 获取导航数据，带有缓存
+    // ==================== 数据加载与缓存 ====================
     async loadNavigationData(retryCount = 0) {
         try {
             const data = await this.loadFromAPI(retryCount);
             this.navigationData = data;
-            this.saveCache(data); // 缓存成功加载的数据
+            this.saveCache(data);
             console.log('✅ 导航数据从 API 加载成功');
         } catch (error) {
-            // 如果 API 失败，尝试从缓存加载
             const cached = this.loadCache();
             if (cached) {
                 console.warn('⚠️ 使用本地缓存的导航数据');
                 this.navigationData = cached;
                 window.toast.show('数据更新失败，展示近期缓存', 'warning');
             } else {
-                throw error; // 无缓存则抛出错误
+                throw error;
             }
         }
     }
 
-    // 从 Worker API 获取最新数据
     async loadFromAPI(retryCount = 0) {
         const apiUrl = `https://api.xjdh688.ccwu.cc/navigation?_=${Date.now()}`;
         try {
@@ -152,7 +171,6 @@ class OptimizedNavigation {
         }
     }
 
-    // 缓存管理
     saveCache(data) {
         try {
             sessionStorage.setItem(this.cacheKey, JSON.stringify({
@@ -176,7 +194,6 @@ class OptimizedNavigation {
         return null;
     }
 
-    // 后台静默更新，参数 silent 控制是否静默（不弹出 toast）
     async fetchLatestFromAPI(silent = false) {
         try {
             const apiUrl = `https://api.xjdh688.ccwu.cc/navigation?_=${Date.now()}`;
@@ -186,7 +203,6 @@ class OptimizedNavigation {
             const latest = await response.json();
             if (!latest || !latest.categories) return;
 
-            // 检查数据是否真正变化（比较 JSON 字符串）
             const oldDataStr = JSON.stringify(this.navigationData?.categories || {});
             const newDataStr = JSON.stringify(latest.categories || {});
             if (oldDataStr === newDataStr) {
@@ -194,17 +210,14 @@ class OptimizedNavigation {
                 return;
             }
 
-            // 数据有变化，更新并重新渲染
             this.navigationData = latest;
             this.saveCache(latest);
             this.calculateStats();
             
-            // 仅在非静默模式下显示提示
             if (!silent && this.quietUpdate) {
                 window.toast.show('导航数据已自动更新', 'info');
             }
             
-            // 如果用户没有选中任何分类，或者当前分类仍然存在，则重绘
             if (!this.selectedLevel1 || 
                 (this.selectedLevel1 && latest.categories.hasOwnProperty(this.selectedLevel1))) {
                 this.renderAll();
@@ -215,15 +228,7 @@ class OptimizedNavigation {
         }
     }
 
-    renderAll() {
-        this.renderNavigation();
-        if (this.selectedLevel1) {
-            this.selectLevel1(this.selectedLevel1, false);
-        } else if (this.getFirstCategory()) {
-            this.selectLevel1(this.getFirstCategory(), false);
-        }
-    }
-
+    // ==================== 统计与渲染 ====================
     calculateStats() {
         if (this.navigationData && this.navigationData.categories) {
             let totalWebsites = 0;
@@ -253,6 +258,15 @@ class OptimizedNavigation {
         if (invalidCountEl) invalidCountEl.textContent = this.stats.invalidCount;
     }
 
+    renderAll() {
+        this.renderNavigation();
+        if (this.selectedLevel1) {
+            this.selectLevel1(this.selectedLevel1, false);
+        } else if (this.getFirstCategory()) {
+            this.selectLevel1(this.getFirstCategory(), false);
+        }
+    }
+
     renderNavigation() {
         this.renderLevel1();
         this.renderEmptyState();
@@ -268,7 +282,7 @@ class OptimizedNavigation {
             button.className = `level1-btn ${index === 0 ? 'active' : ''}`;
             button.dataset.level1 = categoryName;
             button.title = this.navigationData.descriptions?.[categoryName] || '';
-            button.innerHTML = `<span class="level1-btn-text">${categoryName}</span>`;
+            button.innerHTML = `<span class="level1-btn-text">${this._escapeHtml(categoryName)}</span>`;
             container.appendChild(button);
         });
     }
@@ -288,7 +302,7 @@ class OptimizedNavigation {
             button.className = `level2-btn ${index === 0 ? 'active' : ''}`;
             button.dataset.level2 = subCatName;
             button.title = subCatName;
-            button.innerHTML = `<span class="level2-btn-text">${subCatName}</span>
+            button.innerHTML = `<span class="level2-btn-text">${this._escapeHtml(subCatName)}</span>
                 ${sites.length > 0 ? `<span class="level2-btn-count">${sites.length}</span>` : ''}`;
             container.appendChild(button);
         });
@@ -302,133 +316,148 @@ class OptimizedNavigation {
             this.renderEmptyState();
             return;
         }
-        const fragment = document.createDocumentFragment();
-        sites.forEach((site) => {
-            const card = document.createElement('a');
-            card.className = 'site-card' + (site.valid === false ? ' invalid' : '');
-            card.href = site.url;
-            card.target = '_blank';
-            card.rel = 'noopener noreferrer';
-            card.title = `${site.title}\n${site.description || ''}`;
-            card.dataset.url = site.url;
-            card.dataset.title = site.title;
-            
-            // 使用 Utils 工具函数
-            const views = site.views || 0;
-            const formattedViews = Utils.formatViews(views);
-            
-            let iconHtml = '';
-            if (site.icon) {
-                if (site.icon.startsWith('http') || site.icon.startsWith('./') || site.icon.includes('assets/') || site.icon.includes('.png') || site.icon.includes('.jpg') || site.icon.includes('.ico') || site.icon.includes('.svg')) {
-                    iconHtml = `<img src="${site.icon}" alt="${Utils.escapeHtml(site.title)}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-link\'></i>'">`;
-                } else if (site.icon.startsWith('fas ') || site.icon.startsWith('fab ')) {
-                    iconHtml = `<i class="${site.icon}"></i>`;
-                } else {
-                    iconHtml = `<span>${Utils.escapeHtml(site.icon)}</span>`;
-                }
+        container.innerHTML = '';
+        sites.forEach((site, index) => {
+            const card = this.createSiteCard(site, index);
+            container.appendChild(card);
+        });
+    }
+
+    createSiteCard(site, index) {
+        const card = document.createElement('a');
+        card.className = `site-card ${site.valid === false ? 'invalid' : ''}`;
+        card.href = site.url;
+        card.target = '_blank';
+        card.rel = 'noopener noreferrer';
+        card.title = `${site.title}\n${site.description || ''}`;
+
+        // 图标处理：自动升级 http -> https，并加入 onerror 回退
+        let iconHtml = '<i class="fas fa-link"></i>';
+        if (site.icon) {
+            const rawIcon = site.icon.trim();
+            if (rawIcon.startsWith('http://')) {
+                const secureUrl = rawIcon.replace('http://', 'https://');
+                iconHtml = `<img src="${this._escapeHtml(secureUrl)}" alt="" loading="lazy" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-link\'></i>'">`;
+            } else if (rawIcon.startsWith('https://') || rawIcon.startsWith('./') || rawIcon.includes('assets/') || /\.(png|jpg|jpeg|ico|svg)/i.test(rawIcon)) {
+                iconHtml = `<img src="${this._escapeHtml(rawIcon)}" alt="" loading="lazy" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-link\'></i>'">`;
+            } else if (rawIcon.startsWith('fas ') || rawIcon.startsWith('fab ')) {
+                iconHtml = `<i class="${rawIcon}"></i>`;
             } else {
-                iconHtml = '<i class="fas fa-link"></i>';
+                iconHtml = `<span>${this._escapeHtml(rawIcon)}</span>`;
             }
-            
-            card.innerHTML = `
-                <div class="card-top">
-                    <div class="icon-container">${iconHtml}</div>
-                    <div class="card-top-right">
-                        <button class="report-dead-link-btn" data-url="${site.url}" data-title="${Utils.escapeHtml(site.title)}" title="报告死链">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </button>
-                        <div class="views-container">
-                            <i class="fas fa-eye views-icon"></i>
-                            <span class="view-count" data-views="${views}">${formattedViews}</span>
-                        </div>
+        }
+
+        const views = site.views || 0;
+        const formattedViews = this._formatViews(views);
+
+        card.innerHTML = `
+            <div class="card-top">
+                <div class="icon-container">${iconHtml}</div>
+                <div class="card-top-right">
+                    <button class="report-dead-link-btn" data-url="${this._escapeHtml(site.url)}" data-title="${this._escapeHtml(site.title)}" title="报告死链">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </button>
+                    <div class="views-container">
+                        <i class="fas fa-eye views-icon"></i>
+                        <span class="view-count" data-views="${views}">${formattedViews}</span>
                     </div>
                 </div>
-                <div class="divider-line"></div>
-                <div class="card-bottom">
-                    <div class="site-title">${Utils.escapeHtml(site.title)}</div>
-                    <div class="site-description">${Utils.escapeHtml(site.description || '暂无描述')}</div>
-                </div>
-            `;
+            </div>
+            <div class="divider-line"></div>
+            <div class="card-bottom">
+                <div class="site-title">${this._escapeHtml(site.title)}</div>
+                <div class="site-description">${this._escapeHtml(site.description || '暂无描述')}</div>
+            </div>
+        `;
+
+        // 点击事件（导航跳转 + 记录点击数）
+        card.addEventListener('click', (e) => {
+            if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
+            this.isNavigationClick = true;
+            if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
             
-            // 点击事件
-            card.addEventListener('click', (e) => {
-                if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
+            fetch('https://api.xjdh688.ccwu.cc/click', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: site.url, title: site.title })
+            }).catch(err => console.warn('点击上报失败:', err));
+            
+            const viewCountEl = card.querySelector('.view-count');
+            if (viewCountEl) {
+                let currentViews = parseInt(viewCountEl.dataset.views) || 0;
+                currentViews++;
+                viewCountEl.dataset.views = currentViews;
+                viewCountEl.textContent = this._formatViews(currentViews);
+                viewCountEl.classList.add('increasing');
+                setTimeout(() => viewCountEl.classList.remove('increasing'), 300);
+            }
+            
+            setTimeout(() => {
+                this.isNavigationClick = false;
+                if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
+            }, 100);
+        });
+
+        // 死链报告按钮
+        const reportBtn = card.querySelector('.report-dead-link-btn');
+        if (reportBtn) {
+            reportBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const url = reportBtn.dataset.url;
+                const title = reportBtn.dataset.title;
+                try {
+                    const res = await fetch('https://api.xjdh688.ccwu.cc/report-dead-link', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url, title })
+                    });
+                    if (res.ok) {
+                        window.toast.show('已收到反馈，我们将尽快核实处理', 'success');
+                    } else {
+                        window.toast.show('反馈失败，请稍后再试', 'error');
+                    }
+                } catch (err) {
+                    window.toast.show('网络错误', 'error');
+                }
+            });
+        }
+
+        return card;
+    }
+
+    // ==================== 事件绑定（事件委托） ====================
+    bindEvents() {
+        document.addEventListener('click', (e) => {
+            const level1Btn = e.target.closest('.level1-btn');
+            if (level1Btn) {
                 this.isNavigationClick = true;
                 if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
-                
-                fetch('https://api.xjdh688.ccwu.cc/click', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: site.url, title: site.title })
-                }).catch(err => console.warn('点击上报失败:', err));
-                
-                const viewCountEl = card.querySelector('.view-count');
-                if (viewCountEl) {
-                    let currentViews = parseInt(viewCountEl.dataset.views) || 0;
-                    currentViews++;
-                    viewCountEl.dataset.views = currentViews;
-                    viewCountEl.textContent = Utils.formatViews(currentViews);
-                    viewCountEl.classList.add('increasing');
-                    setTimeout(() => viewCountEl.classList.remove('increasing'), 300);
-                }
-                
+                const level1 = level1Btn.dataset.level1;
+                this.selectLevel1(level1, true);
                 setTimeout(() => {
                     this.isNavigationClick = false;
                     if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
                 }, 100);
-            }, true);
-            
-            // 死链报告按钮
-            const reportBtn = card.querySelector('.report-dead-link-btn');
-            if (reportBtn) {
-                reportBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const url = reportBtn.dataset.url;
-                    const title = reportBtn.dataset.title;
-                    try {
-                        const res = await fetch('https://api.xjdh688.ccwu.cc/report-dead-link', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ url, title })
-                        });
-                        if (res.ok) {
-                            window.toast.show('已收到反馈，我们将尽快核实处理', 'success');
-                        } else {
-                            window.toast.show('反馈失败，请稍后再试', 'error');
-                        }
-                    } catch (err) {
-                        window.toast.show('网络错误', 'error');
-                    }
-                });
+                return;
             }
             
-            fragment.appendChild(card);
-        });
-        
-        container.innerHTML = '';
-        container.appendChild(fragment);
-        
-        // 添加淡入动画
-        const cards = container.querySelectorAll('.site-card');
-        cards.forEach((card, index) => {
-            requestAnimationFrame(() => {
-                card.style.animation = `fadeIn 0.2s ease ${index * 0.02}s forwards`;
-            });
+            const level2Btn = e.target.closest('.level2-btn');
+            if (level2Btn) {
+                this.isNavigationClick = true;
+                if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
+                const level2 = level2Btn.dataset.level2;
+                this.selectLevel2(level2, true);
+                setTimeout(() => {
+                    this.isNavigationClick = false;
+                    if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
+                }, 100);
+                return;
+            }
         });
     }
 
-    renderEmptyState() {
-        const container = document.getElementById('level3Content');
-        if (!container) return;
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon"><i class="fas fa-compass"></i></div>
-                <h3 class="empty-title">选择一个分类开始探索</h3>
-                <p class="empty-subtitle">点击左侧分类查看详细内容</p>
-            </div>`;
-    }
-
+    // ==================== 分类选择 ====================
     selectLevel1(level1, isUserClick = false) {
         if (this.selectedLevel1 === level1) return;
         this.isNavigationClick = true;
@@ -472,32 +501,15 @@ class OptimizedNavigation {
         return subCategories.length > 0 ? subCategories[0] : null;
     }
 
-    bindEvents() {
-        document.addEventListener('click', (e) => {
-            const level1Btn = e.target.closest('.level1-btn');
-            if (level1Btn) {
-                this.isNavigationClick = true;
-                if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
-                const level1 = level1Btn.dataset.level1;
-                this.selectLevel1(level1, true);
-                setTimeout(() => {
-                    this.isNavigationClick = false;
-                    if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
-                }, 100);
-            }
-            
-            const level2Btn = e.target.closest('.level2-btn');
-            if (level2Btn) {
-                this.isNavigationClick = true;
-                if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
-                const level2 = level2Btn.dataset.level2;
-                this.selectLevel2(level2, true);
-                setTimeout(() => {
-                    this.isNavigationClick = false;
-                    if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
-                }, 100);
-            }
-        });
+    renderEmptyState() {
+        const container = document.getElementById('level3Content');
+        if (!container) return;
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon"><i class="fas fa-compass"></i></div>
+                <h3 class="empty-title">选择一个分类开始探索</h3>
+                <p class="empty-subtitle">点击左侧分类查看详细内容</p>
+            </div>`;
     }
 
     showError() {
@@ -519,7 +531,6 @@ class OptimizedNavigation {
         this.init();
     }
 
-    // 清除定时器（可在组件销毁时调用，防内存泄漏）
     destroy() {
         if (this.updateTimer) {
             clearInterval(this.updateTimer);
