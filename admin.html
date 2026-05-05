@@ -23,22 +23,25 @@
             font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
             background:#f7f8fa;font-size:12px;color:#2f3542;
             -webkit-font-smoothing:antialiased;padding:10px;
+            overflow-x: hidden; /* 防止水平溢出 */
         }
         ::-webkit-scrollbar{display:none}
         *{-ms-overflow-style:none;scrollbar-width:none}
 
-        .container{max-width:1200px;margin:0 auto;width:100%}
+        .container{max-width:1200px;margin:0 auto;width:100%;overflow-x:hidden}
+
         .header-card{
             background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;
             box-shadow:0 2px 8px rgba(0,0,0,0.05);border:1px solid #f1f3f5
         }
         .main-card{
             background:#fff;border-radius:10px;padding:14px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.05);border:1px solid #f1f3f5
+            box-shadow:0 2px 8px rgba(0,0,0,0.05);border:1px solid #f1f3f5;
+            overflow-x:hidden;
         }
         .header{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:20px;flex-direction:column}
         .flex-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-        .tab-btn{padding:7px 14px;border-radius:7px;background:#f1f5f9;color:#64748b;cursor:pointer;font-size:12px}
+        .tab-btn{padding:7px 14px;border-radius:7px;background:#f1f5f9;color:#64748b;cursor:pointer;font-size:12px;white-space:nowrap}
         .tab-btn.active{background:#3b82f6;color:#fff}
 
         .cat-bar{
@@ -61,9 +64,9 @@
         .cat-item.active .rename-text-btn {background:rgba(255,255,255,0.2);color:#fff;}
         .cat-item.active .rename-text-btn:hover {background:rgba(255,255,255,0.3);}
 
-        .content-layout{display:flex;gap:10px;margin-top:0}
+        .content-layout{display:flex;gap:10px;margin-top:0;flex-wrap:nowrap}
         .sidebar{
-            width:180px;flex-shrink:0;background:#f8fafc;border-radius:10px;
+            width:180px;min-width:130px;flex-shrink:0;background:#f8fafc;border-radius:10px;
             padding:12px;display:flex;flex-direction:column;gap:0;
         }
         .sub-list{
@@ -85,10 +88,11 @@
         .sub-item.active .rename-text-btn {background:rgba(3,105,161,0.1);color:#0369a1;}
 
         .main-content{
-            flex:1;background:#f8fafc;border-radius:10px;padding:12px;
+            flex:1;min-width:0;background:#f8fafc;border-radius:10px;padding:12px;
+            overflow-x:hidden;
         }
-        .site-list,.rank-list,.bad-links-list,.feedback-list{
-            overflow-y:auto;max-height:calc(100vh - 260px);
+        .site-list,.rank-list,.feedback-list{
+            overflow-y:auto;max-height:calc(100vh - 260px);overflow-x:hidden;
         }
 
         input,select{
@@ -124,16 +128,28 @@
         .link-item{
             padding:10px;border-radius:7px;background:#fff;margin-bottom:7px;
             display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:7px;
-            box-shadow:0 1px 3px rgba(0,0,0,0.05);
+            box-shadow:0 1px 3px rgba(0,0,0,0.05);word-break:break-all;
         }
-        .link-info{flex:1;min-width:150px}
+        .link-info{flex:1;min-width:150px;overflow:hidden}
         .link-info .link-url{
             display:block;overflow:hidden;text-overflow:ellipsis;
             white-space:nowrap;max-width:100%;font-size:11px;color:#64748b;margin-top:2px;
         }
         .link-actions{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0}
-        .status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
-        .dot-red{background:#dc2626}
+
+        /* 统一按钮高度和样式 */
+        .sidebar button.primary, .main-content button.primary.sm {
+            height: 38px;
+            padding: 0 14px;
+            font-size: 12px;
+        }
+        #addSubBtn {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        #addSiteBtn {
+            min-width: 110px;
+        }
 
         .modal{
             position:fixed;inset:0;background:rgba(0,0,0,0.25);
@@ -153,7 +169,7 @@
             position:fixed;bottom:20px;left:50%;transform:translate(-50%,12px);
             padding:8px 16px;border-radius:7px;font-size:12px;color:#fff;
             z-index:999;opacity:0;visibility:hidden;transition:all .25s ease;
-            box-shadow:0 4px 16px rgba(0,0,0,0.15)
+            box-shadow:0 4px 16px rgba(0,0,0,0.15);white-space:nowrap;
         }
         .toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
         .toast.success{background:#10b981}
@@ -162,9 +178,6 @@
 
         .log-item{padding:7px;border-bottom:1px solid #f1f5f9;font-size:11px}
         .empty{text-align:center;padding:18px;color:#94a3b8;font-size:11px}
-        .check-result{padding:10px;border-radius:7px;background:#fff;margin-top:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
-        .result-group{margin-bottom:10px}
-        .result-group h4{margin-bottom:7px;font-size:13px}
         .hidden{display:none}
         
         .feedback-date-group {margin-bottom:20px;}
@@ -191,49 +204,14 @@
         }
         .fetch-info-btn:hover { background: #059669; }
 
-        /* ★ 调整按钮大小一致 ★ */
-        .sidebar button.primary { width: 100%; box-sizing: border-box; }
-        .main-content button.primary.sm { height: 36px; padding: 0 14px; }
-
-        /* ★ 确保两个区域按钮宽度一致 ★ */
-        #addSubBtn, #addSiteBtn {
-            width: 100%;
-            height: 38px;
-            font-size: 12px;
-            background: #3b82f6;
-            color: #fff;
-            border-radius: 7px;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 500;
-        }
-        #addSiteBtn {
-            width: auto; min-width: 110px; padding: 0 16px;
-        }
-        .main-content .flex-row {
-            width: 100%;
-        }
-        #addSiteBtn {
-            margin-left: 0;
-        }
-
+        /* 响应式 */
         @media (max-width:768px){
-            .sidebar{width:150px}
-            .cat-item{padding:7px 12px;font-size:11px}
-            .link-info{min-width:120px}
-            .modal-body{max-width:95%;padding:15px}
-            .fetch-info-btn { padding: 5px 10px; font-size: 10px; }
+            .content-layout{flex-direction:column}
+            .sidebar{width:100%;min-width:auto}
+            .main-content{width:100%}
         }
         @media (max-width:480px){
-            .sidebar{width:130px}
-            .sub-item{padding:8px 10px;font-size:11px}
-            .cat-item{padding:6px 10px}
             .modal-body{max-width:98%;padding:12px}
-            .modal-buttons{justify-content:stretch}
-            .modal-buttons button{flex:1}
         }
     </style>
 </head>
