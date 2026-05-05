@@ -21,6 +21,7 @@ class NewSearchModule {
         this.suggestionsContainer = document.getElementById('suggestions');
         this.historyList = document.getElementById('historyList');
         this.clearHistoryBtn = document.getElementById('clearHistory');
+        this.submitBtn = document.getElementById('searchSubmitBtn');
 
         this.isOpen = false;
         this.suggestTimer = null;
@@ -74,6 +75,23 @@ class NewSearchModule {
                 this.history = [];
                 this.saveSetting('searchHistory2', this.history);
                 this.renderHistory();
+            });
+        }
+
+        // 输入框事件
+        if (this.input) {
+            this.input.addEventListener('keydown', (e) => {
+                this.handleSearch(e);
+            });
+            this.input.addEventListener('input', () => {
+                this.showSuggestions();
+            });
+        }
+
+        // 搜索按钮事件（替代原先的 onclick）
+        if (this.submitBtn) {
+            this.submitBtn.addEventListener('click', () => {
+                this.submitSearch();
             });
         }
     }
@@ -217,7 +235,6 @@ class NewSearchModule {
         this.history.forEach(query => {
             const item = document.createElement('div');
             item.className = 'history-item';
-            // 使用安全的文本节点，避免 XSS
             const textSpan = document.createElement('span');
             textSpan.className = 'history-text';
             textSpan.textContent = query;
