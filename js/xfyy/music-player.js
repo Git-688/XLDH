@@ -415,7 +415,6 @@ class MusicPlayer {
     }
 
     // ========== 歌词系统（单行居中 + 跑马灯 + 淡入过渡） ==========
-
     async loadLyrics(song) {
         this.lyricsData = [];
         this.currentLyricIndex = -1;
@@ -481,7 +480,6 @@ class MusicPlayer {
     }
 
     // ========== 播放控制 ==========
-
     togglePlay() {
         this.isPlaying ? this.pause() : this.play();
     }
@@ -499,7 +497,9 @@ class MusicPlayer {
             this.updateActiveSongInList();
         }).catch(error => {
             console.error('播放失败:', error);
-            if (!this.isHandlingNavigationClick) {
+            if (error.name === 'NotAllowedError') {
+                window.toast.show('请点击播放按钮开始播放', 'warning');
+            } else if (!this.isHandlingNavigationClick) {
                 this.handlePlaybackError(error);
             }
         });
@@ -647,7 +647,6 @@ class MusicPlayer {
     }
 
     // ========== 歌单与歌曲加载 ==========
-
     async switchApiTab(apiId) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -881,6 +880,35 @@ class MusicPlayer {
         });
     }
 
+    // ============================================================
+    // 核心修复：使用事件监听 + 超时替代 duration 轮询
+    // ============================================================
+    waitForAudioReady(timeout = 10000) {
+        return new Promise((resolve, reject) => {
+            const onLoaded = () => {
+                cleanup();
+                resolve();
+            };
+            const onError = () => {
+                cleanup();
+                reject(new Error('音频加载错误'));
+            };
+            const onTimeout = () => {
+                cleanup();
+                reject(new Error('音频加载超时'));
+            };
+            const cleanup = () => {
+                this.audio.removeEventListener('loadedmetadata', onLoaded);
+                this.audio.removeEventListener('error', onError);
+                clearTimeout(timer);
+            };
+
+            this.audio.addEventListener('loadedmetadata', onLoaded);
+            this.audio.addEventListener('error', onError);
+            const timer = setTimeout(onTimeout, timeout);
+        });
+    }
+
     async loadSong(index, playlist = null) {
         if (this.isHandlingNavigationClick) return;
         const currentPlaylist = playlist || this.currentPlaylist;
@@ -890,30 +918,19 @@ class MusicPlayer {
         const song = currentPlaylist[index];
         this.isLoading = true;
         this.elements.playBtn.disabled = true;
+
         try {
-            if (index < currentPlaylist.length - 1) {
-                const nextSong = currentPlaylist[index + 1];
-                if (nextSong.src) {
-                    fetch(nextSong.src, { method: 'HEAD', mode: 'no-cors' }).catch(() => {});
-                }
-            }
             this.audio.src = song.src;
             this.audio.load();
+
+            // Wait for audio to be ready (or fail)
+            await this.waitForAudioReady();
+            this.consecutiveErrors = 0; // success
+
             await this.updateSongInfo(song);
             await this.loadLyrics(song);
-            await new Promise((resolve) => {
-                const checkDuration = () => {
-                    if (this.audio.duration && !isNaN(this.audio.duration)) {
-                        resolve();
-                    } else {
-                        setTimeout(checkDuration, 100);
-                    }
-                };
-                checkDuration();
-            });
-            this.consecutiveErrors = 0; // 加载成功，重置错误计数
         } catch (error) {
-            console.error('加载歌曲失败:', error);
+            console.error('加载歌曲失败:', song.src, error);
             if (!this.isHandlingNavigationClick) {
                 this.handlePlaybackError(error);
             }
@@ -928,7 +945,7 @@ class MusicPlayer {
         this.consecutiveErrors++;
         if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
             window.toast.show('连续多首资源失效，请尝试切换歌单', 'error');
-            this.consecutiveErrors = 0; // 重置
+            this.consecutiveErrors = 0; // 重置后下次不会再报，除非连续失败达到阈值
         }
         // 自动尝试下一首（如果允许）
         if (this.autoPlayNext && this.currentPlaylist.length > 1) {
