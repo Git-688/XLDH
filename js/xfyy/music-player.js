@@ -233,7 +233,6 @@ class MusicPlayer {
         this.isHandlingNavigationClick = false;
         this.hasInitialized = false;
 
-        // 连续播放失败计数器
         this.consecutiveErrors = 0;
         this.maxConsecutiveErrors = 3;
     }
@@ -314,7 +313,6 @@ class MusicPlayer {
             player: document.querySelector('.music-player')
         };
 
-        // 单行歌词元素
         if (this.elements.lyricsContainer) {
             this.elements.lyricsContainer.innerHTML = '';
             this.lyricsLineEl = document.createElement('div');
@@ -405,7 +403,6 @@ class MusicPlayer {
                 elements.searchInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.searchApi(api);
                 });
-                // 将 Utils.debounce 替换为 MusicUtils.debounce
                 elements.searchInput.addEventListener('input', MusicUtils.debounce(() => {
                     if (elements.searchInput.value.trim().length > 2) {
                         this.searchApi(api);
@@ -415,8 +412,7 @@ class MusicPlayer {
         });
     }
 
-    // ========== 歌词系统（单行居中 + 跑马灯 + 淡入过渡） ==========
-
+    // ========== 歌词系统 ==========
     async loadLyrics(song) {
         this.lyricsData = [];
         this.currentLyricIndex = -1;
@@ -482,7 +478,6 @@ class MusicPlayer {
     }
 
     // ========== 播放控制 ==========
-
     togglePlay() {
         this.isPlaying ? this.pause() : this.play();
     }
@@ -648,7 +643,6 @@ class MusicPlayer {
     }
 
     // ========== 歌单与歌曲加载 ==========
-
     async switchApiTab(apiId) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -912,7 +906,7 @@ class MusicPlayer {
                 };
                 checkDuration();
             });
-            this.consecutiveErrors = 0; // 加载成功，重置错误计数
+            this.consecutiveErrors = 0;
         } catch (error) {
             console.error('加载歌曲失败:', error);
             if (!this.isHandlingNavigationClick) {
@@ -924,14 +918,12 @@ class MusicPlayer {
         }
     }
 
-    // 统一的音频错误处理（避免频繁弹窗）
     handlePlaybackError(error) {
         this.consecutiveErrors++;
         if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
             window.toast.show('连续多首资源失效，请尝试切换歌单', 'error');
-            this.consecutiveErrors = 0; // 重置
+            this.consecutiveErrors = 0;
         }
-        // 自动尝试下一首（如果允许）
         if (this.autoPlayNext && this.currentPlaylist.length > 1) {
             setTimeout(() => this.next(), 1000);
         }
@@ -969,21 +961,12 @@ class MusicPlayer {
             window.toast.show(`开始下载: ${song.title}`, 'info');
             const progressElement = this.createDownloadProgress();
             const response = await fetch(song.src);
-            const contentLength = response.headers.get('content-length');
-            const total = parseInt(contentLength, 10);
-
             const reader = response.body.getReader();
             const chunks = [];
-            let loaded = 0;
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
                 chunks.push(value);
-                loaded += value.length;
-                if (total && total > 0) {
-                    const progress = (loaded / total) * 100;
-                    this.updateDownloadProgress(progressElement, progress);
-                }
             }
             const blob = new Blob(chunks);
             const url = URL.createObjectURL(blob);
@@ -1013,11 +996,6 @@ class MusicPlayer {
         `;
         document.body.appendChild(progressElement);
         return progressElement;
-    }
-
-    updateDownloadProgress(progressElement, progress) {
-        const fill = progressElement.querySelector('.download-progress-fill');
-        if (fill) fill.style.width = `${Math.min(progress, 100)}%`;
     }
 
     handleEnded() {
@@ -1110,9 +1088,7 @@ class MusicPlayer {
             setTimeout(() => this.updateDuration(), 100);
         });
         this.audio.addEventListener('timeupdate', () => {
-            if (!this.updateAnimationFrame) {
-                this.updateProgress();
-            }
+            if (!this.updateAnimationFrame) this.updateProgress();
         });
         this.audio.addEventListener('ended', () => this.handleEnded());
         this.audio.addEventListener('canplay', () => {
@@ -1120,9 +1096,7 @@ class MusicPlayer {
             this.isLoading = false;
             this.updateDuration();
         });
-        this.audio.addEventListener('waiting', () => {
-            this.isLoading = true;
-        });
+        this.audio.addEventListener('waiting', () => { this.isLoading = true; });
         this.audio.addEventListener('error', (e) => {
             console.error('音频加载错误:', e);
             if (!this.hasInitialized) return;
@@ -1204,26 +1178,12 @@ class MusicPlayer {
             this.elements.coverImg.style.display = 'block';
             const placeholder = document.querySelector('.cover-placeholder');
             if (placeholder) placeholder.style.display = 'none';
-            this.elements.coverImg.onerror = () => {
-                this.elements.coverImg.src = defaultLogo;
-            };
+            this.elements.coverImg.onerror = () => { this.elements.coverImg.src = defaultLogo; };
         }
         this.loadApiPlaylist(this.currentApi);
         setInterval(() => this.cacheManager.cleanup(), 30 * 60 * 1000);
-        setTimeout(() => {
-            initCustomSelects();
-        }, 100);
+        setTimeout(() => { initCustomSelects(); }, 100);
         this.hasInitialized = true;
-    }
-
-    getApiName(apiId) {
-        const apiNames = {
-            'netease': '网易云音乐',
-            'qq': 'QQ音乐',
-            'migu': '抖音热歌榜',
-            'local': '本地音乐'
-        };
-        return apiNames[apiId] || apiId;
     }
 
     cleanup() {
@@ -1247,7 +1207,6 @@ class MusicPlayer {
         if (this.coverObserver) {
             this.coverObserver.disconnect();
         }
-        console.log('音乐播放器资源已清理');
     }
 
     saveVolume(volume) { localStorage.setItem('musicPlayer_volume', volume.toString()); }
