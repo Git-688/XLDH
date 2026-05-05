@@ -97,18 +97,49 @@
         document.getElementById('loginLockMessage').textContent = '';
     }
 
-    function openModal(title, formHtml, submitCb) {
+    // 打开模态框（新增参数 showDelete: 是否显示左侧删除按钮，deleteCb: 删除回调）
+    function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null) {
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalForm').innerHTML = formHtml;
         modalAction = submitCb;
-        document.getElementById('modalSubmit').disabled = false;
-        document.getElementById('modalSubmit').textContent = '确认';
+
+        const buttonsContainer = document.getElementById('modalButtons');
+        // 构建按钮区域
+        let html = '';
+        if (showDelete && deleteCb) {
+            html += `<div class="modal-buttons-left"><button class="danger" id="modalDeleteBtn">删除</button></div>`;
+        }
+        html += `<button class="secondary" id="modalCancelBtn">取消</button>
+                 <button class="primary" id="modalSubmit">确认</button>`;
+        buttonsContainer.innerHTML = html;
+
+        // 重新绑定事件（因为模态框按钮被重新生成）
+        document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+        document.getElementById('modalSubmit').addEventListener('click', handleModalSubmit);
+        if (showDelete && deleteCb) {
+            document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
+                if (confirm('确定删除？此操作不可恢复！')) {
+                    try { await deleteCb(); closeModal(); } catch (e) { showToast('删除失败', 'error'); }
+                }
+            });
+        }
+
         document.getElementById('modal').classList.add('show');
+    }
+
+    // 处理模态框提交
+    async function handleModalSubmit() {
+        if (!modalAction) return;
+        const btn = document.getElementById('modalSubmit');
+        btn.disabled = true; btn.textContent = '提交中…';
+        try { await modalAction(); } catch (e) { showToast('操作失败', 'error'); }
+        finally { btn.disabled = false; btn.textContent = '确认'; }
     }
 
     function closeModal() {
         document.getElementById('modal').classList.remove('show');
         modalAction = null;
+        // 清理可能残留的删除按钮事件
     }
 
     function closeLogModal() {
@@ -243,10 +274,7 @@
         document.getElementById('catBar').innerHTML = categories.map(c => `
             <div class="cat-item ${c.id===currentCat?'active':''}" data-cid="${c.id}">
                 <span>${escapeHtml(c.name)}</span>
-                <div class="btn-group">
-                    <button class="rename-text-btn" data-action="renameCat" data-id="${c.id}" data-name="${escapeHtml(c.name)}">修改</button>
-                    <button class="rename-text-btn" style="background:#fee2e2;color:#dc2626;" data-action="delCat" data-id="${c.id}">删除</button>
-                </div>
+                <button class="rename-text-btn" data-action="modifyCat" data-id="${c.id}" data-name="${escapeHtml(c.name)}">修改</button>
             </div>
         `).join('');
     }
@@ -258,9 +286,8 @@
         document.getElementById('subList').innerHTML = subs.map(s => `
             <div class="sub-item ${s.id===currentSub?'active':''}" data-sid="${s.id}">
                 <span>${escapeHtml(s.name)}</span>
-                <div class="btn-group">
-                    <button class="rename-text-btn" data-action="renameSub" data-id="${s.id}" data-name="${escapeHtml(s.name)}">修改</button>
-                    <button class="rename-text-btn" style="background:#fee2e2;color:#dc2626;" data-action="delSub" data-id="${s.id}">删除</button>
+                <div>
+                    <button class="rename-text-btn" data-action="modifySub" data-id="${s.id}" data-name="${escapeHtml(s.name)}">修改</button>
                 </div>
             </div>
         `).join('');
@@ -276,10 +303,7 @@
                     <div><strong>${escapeHtml(s.title)}</strong></div>
                 </div>
                 <div class="link-actions">
-                    <div class="btn-group">
-                        <button class="sm primary" data-action="editSite" data-id="${s.id}">编辑</button>
-                        <button class="sm danger" data-action="delSite" data-id="${s.id}">删除</button>
-                    </div>
+                    <button class="sm primary" data-action="editSite" data-id="${s.id}">编辑</button>
                 </div>
             </div>
         `).join('');
@@ -288,10 +312,10 @@
     function setupEventDelegation() {
         document.getElementById('catBar').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
-            if (btn) {
+            if (btn && btn.dataset.action === 'modifyCat') {
                 const id = parseInt(btn.dataset.id);
-                if (btn.dataset.action === 'renameCat') renameCategory(id, btn.dataset.name);
-                else if (btn.dataset.action === 'delCat') deleteCategory(id);
+                const name = btn.dataset.name;
+                handleModifyCategory(id, name);
                 return;
             }
             const item = e.target.closest('.cat-item');
@@ -300,10 +324,10 @@
 
         document.getElementById('subList').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
-            if (btn) {
+            if (btn && btn.dataset.action === 'modifySub') {
                 const id = parseInt(btn.dataset.id);
-                if (btn.dataset.action === 'renameSub') renameSubcategory(id, btn.dataset.name);
-                else if (btn.dataset.action === 'delSub') deleteSubcategory(id);
+                const name = btn.dataset.name;
+                handleModifySub(id, name);
                 return;
             }
             const item = e.target.closest('.sub-item');
@@ -314,8 +338,7 @@
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
             const id = parseInt(btn.dataset.id);
-            if (btn.dataset.action === 'editSite') openEditSite(id);
-            else if (btn.dataset.action === 'delSite') deleteSite(id);
+            if (btn.dataset.action === 'editSite') handleEditSite(id);
         });
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -330,144 +353,151 @@
             });
         });
 
-        document.getElementById('modalSubmit').addEventListener('click', async () => {
-            if (!modalAction) return;
-            const btn = document.getElementById('modalSubmit');
-            btn.disabled = true; btn.textContent = '提交中…';
-            try { await modalAction(); } catch (e) { showToast('操作失败', 'error'); }
-            finally { btn.disabled = false; btn.textContent = '确认'; closeModal(); }
-        });
-
+        // 其他固定按钮
         document.getElementById('loginBtn').addEventListener('click', login);
         document.getElementById('logoutBtn').addEventListener('click', logout);
-        document.getElementById('addCategoryBtn').addEventListener('click', openAddCat);
-        document.getElementById('addSubBtn').addEventListener('click', openAddSub);
-        document.getElementById('addSiteBtn').addEventListener('click', openAddSite);
+        document.getElementById('addCategoryBtn').addEventListener('click', handleAddCategory);
+        document.getElementById('addSubBtn').addEventListener('click', handleAddSub);
+        document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
         document.getElementById('exportBtn').addEventListener('click', exportData);
         document.getElementById('logBtn').addEventListener('click', showLogs);
         document.getElementById('sortRankBtn').addEventListener('click', loadRanking);
         document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
         document.getElementById('refreshNavBtn').addEventListener('click', refreshNavigation);
-        document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
         document.getElementById('closeLogBtn').addEventListener('click', closeLogModal);
         document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
 
+        // 模态框背景
         document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
         document.getElementById('logModal').addEventListener('click', e => { if (e.target === document.getElementById('logModal')) closeLogModal(); });
     }
 
-    async function openAddCat() {
-        openModal('新增一级分类', `
-            <div class="form-row"><label>名称</label><input id="mName"></div>
-            <div class="form-row"><label>排序</label><input type="number" id="mSort" value="0"></div>
-        `, async () => {
-            const name = document.getElementById('mName').value.trim();
-            if (!name) { showToast('名称不能为空', 'error'); return; }
-            await apiFetch('/admin/categories', { method:'POST', body: JSON.stringify({ name, display_order: +document.getElementById('mSort').value }) });
-            addLog(`新增分类：${name}`); showToast('添加成功'); await loadAllData();
-        });
+    // ========== 合并后的操作函数 ==========
+
+    // 修改分类（弹出重命名 + 删除）
+    function handleModifyCategory(id, currentName) {
+        openModal('修改分类',
+            `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
+            async () => {
+                const name = document.getElementById('mName').value.trim();
+                if (!name) { showToast('名称不能为空', 'error'); return; }
+                await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
+                addLog(`修改分类：${currentName} → ${name}`); showToast('修改成功'); await loadAllData();
+            },
+            true, // 显示删除
+            async () => {
+                await apiFetch(`/admin/categories/${id}`, { method:'DELETE' });
+                addLog(`删除分类 ${id}`); showToast('分类已删除'); await loadAllData();
+            }
+        );
     }
 
-    async function openAddSub() {
-        if (!currentCat) { showToast('请先选择一级分类', 'error'); return; }
-        openModal('新增子分类', `
-            <div class="form-row"><label>名称</label><input id="mName"></div>
-            <div class="form-row"><label>排序</label><input type="number" id="mSort" value="0"></div>
-        `, async () => {
-            const name = document.getElementById('mName').value.trim();
-            if (!name) { showToast('名称不能为空', 'error'); return; }
-            await apiFetch('/admin/subcategories', { method:'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('mSort').value }) });
-            addLog(`新增子分类：${name}`); showToast('添加成功'); await loadAllData();
-        });
+    // 修改子分类
+    function handleModifySub(id, currentName) {
+        openModal('修改子分类',
+            `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
+            async () => {
+                const name = document.getElementById('mName').value.trim();
+                if (!name) { showToast('名称不能为空', 'error'); return; }
+                await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
+                addLog(`修改子分类：${currentName} → ${name}`); showToast('修改成功'); await loadAllData();
+            },
+            true,
+            async () => {
+                await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' });
+                addLog(`删除子分类 ${id}`); showToast('子分类已删除'); await loadAllData();
+            }
+        );
     }
 
-    async function openAddSite() {
-        if (!currentSub) { showToast('请先选择子分类', 'error'); return; }
-        openModal('新增链接', `
-            <div class="form-row"><label>标题</label><input id="mTitle"></div>
-            <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" oninput="document.getElementById('mIcon').value=window.getFavicon(this.value)"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
-            <div class="form-row"><label>图标</label><input id="mIcon" value="fas fa-link"></div>
-            <div class="form-row"><label>描述</label><input id="mDesc"></div>
-            <div class="form-row"><label>排序</label><input type="number" id="mSort" value="0"></div>
-        `, async () => {
-            const title = document.getElementById('mTitle').value.trim();
-            const url = document.getElementById('mUrl').value.trim();
-            if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
-            if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
-            await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
-                subcategory_id: currentSub, title, url, description: document.getElementById('mDesc').value,
-                icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
-            })});
-            addLog(`新增链接：${title}`); showToast('添加成功'); await loadAllData();
-        });
-        setTimeout(() => {
-            const fetchBtn = document.getElementById('fetchInfoBtn');
-            if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
-        }, 50);
-    }
-
-    async function openEditSite(id) {
+    // 编辑链接
+    async function handleEditSite(id) {
         const site = sites.find(s => s.id === id);
         if (!site) return;
-        openModal('编辑链接', `
-            <div class="form-row"><label>标题</label><input id="mTitle" value="${escapeHtml(site.title)}"></div>
-            <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" value="${escapeHtml(site.url)}"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
-            <div class="form-row"><label>图标</label><input id="mIcon" value="${escapeHtml(site.icon||'fas fa-link')}"></div>
-            <div class="form-row"><label>描述</label><input id="mDesc" value="${escapeHtml(site.description||'')}"></div>
-            <div class="form-row"><label>排序</label><input type="number" id="mSort" value="${site.display_order}"></div>
-        `, async () => {
-            const title = document.getElementById('mTitle').value.trim();
-            const url = document.getElementById('mUrl').value.trim();
-            if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
-            if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
-            await apiFetch(`/admin/sites/${id}`, { method:'PUT', body: JSON.stringify({
-                title, url, description: document.getElementById('mDesc').value,
-                icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
-            })});
-            addLog(`编辑链接：${site.title}`); showToast('修改成功'); await loadAllData();
-        });
+        openModal('编辑链接',
+            `<div class="form-row"><label>标题</label><input id="mTitle" value="${escapeHtml(site.title)}"></div>
+             <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" value="${escapeHtml(site.url)}"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
+             <div class="form-row"><label>图标</label><input id="mIcon" value="${escapeHtml(site.icon||'fas fa-link')}"></div>
+             <div class="form-row"><label>描述</label><input id="mDesc" value="${escapeHtml(site.description||'')}"></div>
+             <div class="form-row"><label>排序</label><input type="number" id="mSort" value="${site.display_order}"></div>`,
+            async () => {
+                const title = document.getElementById('mTitle').value.trim();
+                const url = document.getElementById('mUrl').value.trim();
+                if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
+                if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
+                await apiFetch(`/admin/sites/${id}`, { method:'PUT', body: JSON.stringify({
+                    title, url, description: document.getElementById('mDesc').value,
+                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
+                })});
+                addLog(`编辑链接：${site.title}`); showToast('修改成功'); await loadAllData();
+            },
+            true,
+            async () => {
+                await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
+                addLog(`删除链接 ${id}`); showToast('删除成功'); await loadAllData();
+            }
+        );
         setTimeout(() => {
             const fetchBtn = document.getElementById('fetchInfoBtn');
             if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
         }, 50);
     }
 
-    async function deleteSite(id) {
-        if (!confirm('确定删除该链接？')) return;
-        try { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); addLog(`删除链接 ${id}`); showToast('删除成功'); await loadAllData(); }
-        catch { showToast('删除失败', 'error'); }
+    // 新增分类（无删除）
+    function handleAddCategory() {
+        openModal('新增一级分类',
+            `<div class="form-row"><label>名称</label><input id="mName"></div>
+             <div class="form-row"><label>排序</label><input type="number" id="mSort" value="${categories.length}"></div>`,
+            async () => {
+                const name = document.getElementById('mName').value.trim();
+                if (!name) { showToast('名称不能为空', 'error'); return; }
+                await apiFetch('/admin/categories', { method:'POST', body: JSON.stringify({ name, display_order: +document.getElementById('mSort').value }) });
+                addLog(`新增分类：${name}`); showToast('添加成功'); await loadAllData();
+            }
+        );
     }
 
-    async function renameCategory(id, oldName) {
-        openModal('修改分类名称', `<div class="form-row"><label>新名称</label><input id="mName" value="${escapeHtml(oldName)}"></div>`, async () => {
-            const name = document.getElementById('mName').value.trim();
-            if (!name) { showToast('名称不能为空', 'error'); return; }
-            await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
-            addLog(`修改分类：${oldName} → ${name}`); showToast('修改成功'); await loadAllData();
-        });
+    function handleAddSub() {
+        if (!currentCat) { showToast('请先选择一级分类', 'error'); return; }
+        openModal('新增子分类',
+            `<div class="form-row"><label>名称</label><input id="mName"></div>
+             <div class="form-row"><label>排序</label><input type="number" id="mSort" value="0"></div>`,
+            async () => {
+                const name = document.getElementById('mName').value.trim();
+                if (!name) { showToast('名称不能为空', 'error'); return; }
+                await apiFetch('/admin/subcategories', { method:'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('mSort').value }) });
+                addLog(`新增子分类：${name}`); showToast('添加成功'); await loadAllData();
+            }
+        );
     }
 
-    async function deleteCategory(id) {
-        if (!confirm('确定删除该一级分类？所有子分类和链接将被永久删除！')) return;
-        try { await apiFetch(`/admin/categories/${id}`, { method:'DELETE' }); addLog(`删除分类 ${id}`); showToast('分类已删除'); await loadAllData(); }
-        catch { showToast('删除失败', 'error'); }
+    function handleAddSite() {
+        if (!currentSub) { showToast('请先选择子分类', 'error'); return; }
+        openModal('新增链接',
+            `<div class="form-row"><label>标题</label><input id="mTitle"></div>
+             <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" oninput="document.getElementById('mIcon').value=window.getFavicon(this.value)"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
+             <div class="form-row"><label>图标</label><input id="mIcon" value="fas fa-link"></div>
+             <div class="form-row"><label>描述</label><input id="mDesc"></div>
+             <div class="form-row"><label>排序</label><input type="number" id="mSort" value="0"></div>`,
+            async () => {
+                const title = document.getElementById('mTitle').value.trim();
+                const url = document.getElementById('mUrl').value.trim();
+                if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
+                if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
+                await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
+                    subcategory_id: currentSub, title, url, description: document.getElementById('mDesc').value,
+                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
+                })});
+                addLog(`新增链接：${title}`); showToast('添加成功'); await loadAllData();
+            }
+        );
+        setTimeout(() => {
+            const fetchBtn = document.getElementById('fetchInfoBtn');
+            if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
+        }, 50);
     }
 
-    async function renameSubcategory(id, oldName) {
-        openModal('修改子分类名称', `<div class="form-row"><label>新名称</label><input id="mName" value="${escapeHtml(oldName)}"></div>`, async () => {
-            const name = document.getElementById('mName').value.trim();
-            if (!name) { showToast('名称不能为空', 'error'); return; }
-            await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
-            addLog(`修改子分类：${oldName} → ${name}`); showToast('修改成功'); await loadAllData();
-        });
-    }
-
-    async function deleteSubcategory(id) {
-        if (!confirm('确定删除该子分类？所有链接将被永久删除！')) return;
-        try { await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); addLog(`删除子分类 ${id}`); showToast('子分类已删除'); await loadAllData(); }
-        catch { showToast('删除失败', 'error'); }
-    }
-
+    // 排行榜和反馈逻辑保持不变
     async function loadRanking() {
         const list = document.getElementById('rankList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -503,10 +533,8 @@
                 <div class="link-item">
                     <div class="link-info"><strong>${escapeHtml(item.title||'无标题')}</strong><div class="link-url" style="display:none;">${escapeHtml(item.url)}</div><div style="font-size:10px;color:#999">来自 ${escapeHtml(item.reporter_ip)} 于 ${new Date(item.report_time).toLocaleString()}</div></div>
                     <div class="link-actions">
-                        <div class="btn-group">
-                            <button class="sm primary" data-action="replaceLink" data-reportid="${item.id}" data-siteid="${item.site_id||0}" data-url="${escapeHtml(item.url)}" data-title="${escapeHtml(item.title||'')}">更换链接</button>
-                            <button class="sm primary" data-action="markDone" data-reportid="${item.id}" style="background:#10b981">标记已处理</button>
-                        </div>
+                        <button class="sm primary" data-action="replaceLink" data-reportid="${item.id}" data-siteid="${item.site_id||0}" data-url="${escapeHtml(item.url)}" data-title="${escapeHtml(item.title||'')}">更换链接</button>
+                        <button class="sm primary" data-action="markDone" data-reportid="${item.id}">标记已处理</button>
                     </div>
                 </div>
             `).join('');
@@ -539,24 +567,25 @@
         if (!siteId) { showToast('未找到网站记录', 'error'); return; }
         const site = sites.find(s => s.id === siteId);
         if (!site) { showToast('未找到网站记录', 'error'); return; }
-        openModal('更换链接', `
-            <div class="form-row"><label>标题</label><input id="mTitle" value="${escapeHtml(site.title)}"></div>
-            <div class="form-row"><label>网址</label><input id="mUrl" value="${escapeHtml(site.url)}"></div>
-            <div class="form-row"><label>描述</label><input id="mDesc" value="${escapeHtml(site.description||'')}"></div>
-            <div class="form-row"><label>图标</label><input id="mIcon" value="${escapeHtml(site.icon||'fas fa-link')}"></div>
-        `, async () => {
-            const newTitle = document.getElementById('mTitle').value.trim();
-            const newUrl = document.getElementById('mUrl').value.trim();
-            if (!newTitle || !newUrl) { showToast('标题和网址不能为空', 'error'); return; }
-            if (!checkUrl(newUrl)) { showToast('网址格式错误', 'error'); return; }
-            await apiFetch('/admin/replace-link', { method:'POST', body: JSON.stringify({
-                reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value
-            })});
-            showToast('链接已更新', 'success');
-            loadFeedback();
-            await loadAllData();
-            await apiFetch('/admin/refresh-navigation', { method:'POST' });
-        });
+        openModal('更换链接',
+            `<div class="form-row"><label>标题</label><input id="mTitle" value="${escapeHtml(site.title)}"></div>
+             <div class="form-row"><label>网址</label><input id="mUrl" value="${escapeHtml(site.url)}"></div>
+             <div class="form-row"><label>描述</label><input id="mDesc" value="${escapeHtml(site.description||'')}"></div>
+             <div class="form-row"><label>图标</label><input id="mIcon" value="${escapeHtml(site.icon||'fas fa-link')}"></div>`,
+            async () => {
+                const newTitle = document.getElementById('mTitle').value.trim();
+                const newUrl = document.getElementById('mUrl').value.trim();
+                if (!newTitle || !newUrl) { showToast('标题和网址不能为空', 'error'); return; }
+                if (!checkUrl(newUrl)) { showToast('网址格式错误', 'error'); return; }
+                await apiFetch('/admin/replace-link', { method:'POST', body: JSON.stringify({
+                    reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value
+                })});
+                showToast('链接已更新', 'success');
+                loadFeedback();
+                await loadAllData();
+                await apiFetch('/admin/refresh-navigation', { method:'POST' });
+            }
+        );
     }
 
     function exportData() {
@@ -577,6 +606,7 @@
         try { return `https://api.71xk.com/api/favicon?url=${new URL(url).hostname}`; } catch { return 'fas fa-link'; }
     };
 
+    // 初始化
     const storedToken = getStoredToken();
     if (storedToken) {
         token = storedToken;
