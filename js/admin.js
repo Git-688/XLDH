@@ -459,6 +459,7 @@
             <div class="cat-item ${c.id===currentCat?'active':''}" data-cid="${c.id}">
                 <span onclick="window.selectCat(${c.id})">${escapeHtml(c.name)}</span>
                 <button class="rename-text-btn" onclick="window.renameCategory(${c.id}, '${escapeHtml(c.name)}')">修改</button>
+                <button class="rename-text-btn" style="margin-left:4px; background:#fee2e2; color:#dc2626;" onclick="window.delCategory(${c.id})">删除</button>
             </div>
         `).join('');
     }
@@ -471,6 +472,7 @@
             <div class="sub-item ${s.id===currentSub?'active':''}" data-sid="${s.id}">
                 <span onclick="window.selectSub(${s.id})">${escapeHtml(s.name)}</span>
                 <button class="rename-text-btn" onclick="window.renameSubcategory(${s.id}, '${escapeHtml(s.name)}')">修改</button>
+                <button class="rename-text-btn" style="margin-left:4px; background:#fee2e2; color:#dc2626;" onclick="window.delSubcategory(${s.id})">删除</button>
             </div>
         `).join('');
     }
@@ -488,6 +490,35 @@
                 </div>
             </div>
         `).join('');
+    }
+
+    // ========== 带确认的删除操作 ==========
+
+    // 删除网站链接（已有 confirm，保留）
+    async function delSite(id){
+        if (!confirm('确定删除该链接？此操作不可恢复！')) return;
+        try {
+            await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
+            addLog(`删除链接：${id}`); showToast('删除成功'); await loadAllData();
+        } catch { showToast('删除失败', 'error'); }
+    }
+
+    // 新增：删除分类
+    async function delCategory(id) {
+        if (!confirm('确定删除该一级分类？其下所有子分类和链接将一并删除，且不可恢复！')) return;
+        try {
+            await apiFetch(`/admin/categories/${id}`, { method:'DELETE' });
+            addLog(`删除分类：${id}`); showToast('分类已删除'); await loadAllData();
+        } catch { showToast('删除失败', 'error'); }
+    }
+
+    // 新增：删除子分类
+    async function delSubcategory(id) {
+        if (!confirm('确定删除该子分类？其下所有链接将永久删除！')) return;
+        try {
+            await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' });
+            addLog(`删除子分类：${id}`); showToast('子分类已删除'); await loadAllData();
+        } catch { showToast('删除失败', 'error'); }
     }
 
     function openAddCat(){
@@ -567,12 +598,6 @@
         });
     }
 
-    async function delSite(id){
-        if (!confirm('确定删除该链接？')) return;
-        await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
-        addLog(`删除链接：${id}`); showToast('删除成功'); await loadAllData();
-    }
-
     function renameCategory(id, oldName) {
         openModal('修改分类名称', `<div class="form-row"><label>新名称</label><input id="newName" value="${escapeHtml(oldName)}"></div>`, async () => {
             const newName = document.getElementById('newName').value.trim();
@@ -626,7 +651,6 @@
     });
     document.getElementById('tokenInput').addEventListener('keydown', e => e.key === 'Enter' && login());
 
-    // 确保 modal 点击事件正确调用
     document.getElementById('modal').addEventListener('click', function(e) {
         if (e.target === this) closeModal();
     });
@@ -636,13 +660,15 @@
 
     updateLockMessage();
 
-    // 暴露必要函数到全局
+    // 暴露必要函数到全局（增加了删除分类和子分类的函数）
     window.selectCat = selectCat;
     window.selectSub = selectSub;
     window.renameCategory = renameCategory;
     window.renameSubcategory = renameSubcategory;
     window.openEditSite = openEditSite;
     window.delSite = delSite;
+    window.delCategory = delCategory;
+    window.delSubcategory = delSubcategory;
     window.getFavicon = getFavicon;
     window.fetchSiteInfo = fetchSiteInfo;
     window.closeModal = closeModal;
