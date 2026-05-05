@@ -1,9 +1,7 @@
 /**
  * 插件管理器 - 支持多个音乐API源
  * 仅保留网易云、QQ音乐、抖音热歌榜、本地音乐
- * 修复 QQ 音乐搜索不返回结果的问题（改为返回空数组，并禁用搜索入口）
  */
-
 class PluginManager {
     constructor(cacheManager) {
         this.cacheManager = cacheManager || new CacheManager();
@@ -13,7 +11,7 @@ class PluginManager {
     }
 
     initializePlugins() {
-        // 网易云音乐插件（换成 api.injahow.cn 源，更稳定）
+        // 网易云音乐插件
         this.registerPlugin('netease', {
             name: '网易云音乐',
             version: '2.0.0',
@@ -70,12 +68,11 @@ class PluginManager {
             }
         });
 
-        // QQ音乐插件（保持不变，仅修复注释）
+        // QQ音乐插件
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '2.2.0',
             description: '云智热歌榜 + Meting解析，支持直接播放+自动获取歌曲封面',
-
             _getSongInfoBySongmid: async function(songmid) {
                 const cacheKey = `qq_song_info_${songmid}`;
                 const cached = this.cacheManager.get(cacheKey);
@@ -106,7 +103,6 @@ class PluginManager {
                     return { playUrl: '', cover: '', album: '' };
                 }
             },
-
             getPlaylist: async (playlistId, count = 30) => {
                 const safeCount = Math.min(Math.max(1, count), 30);
                 const cacheKey = `qq_hot_playlist_full_${safeCount}`;
@@ -151,18 +147,15 @@ class PluginManager {
                     return [];
                 }
             },
-
-            search: async (keyword, count = 20) => {
-                return [];
-            }
+            search: async () => []
         });
 
-        // 抖音热歌榜插件（原migu）
+        // 抖音热歌榜插件
         this.registerPlugin('migu', {
             name: '抖音热歌榜',
             version: '1.0.0',
             description: '基于抖音热歌榜API',
-            getPlaylist: async (playlistId) => {
+            getPlaylist: async () => {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
                 try {
@@ -177,9 +170,7 @@ class PluginManager {
                     return [];
                 }
             },
-            search: async (keyword) => {
-                return [];
-            }
+            search: async () => []
         });
         
         // 本地音乐插件
@@ -187,18 +178,15 @@ class PluginManager {
             name: '本地音乐',
             version: '1.0.0',
             description: '内置本地音乐列表',
-            getPlaylist: async (playlistId) => {
+            getPlaylist: async () => {
                 return window.getLocalMusicList ? window.getLocalMusicList() : [];
             },
-            search: async (keyword) => {
-                return [];
-            }
+            search: async () => []
         });
     }
 
     formatSong(song, source) {
         return {
-            // 使用 MusicUtils.generateId 避免与全局 Utils 冲突
             id: song.id || MusicUtils.generateId(),
             title: song.title || song.name || '未知歌曲',
             artist: song.author || song.artist || '未知歌手',
@@ -239,63 +227,31 @@ class PluginManager {
     }
 
     registerPlugin(id, plugin) {
-        this.plugins.set(id, {
-            id,
-            type: 'builtin',
-            ...plugin
-        });
+        this.plugins.set(id, { id, type: 'builtin', ...plugin });
     }
 
-    getPlugin(id) {
-        return this.plugins.get(id);
-    }
-
-    getAllPlugins() {
-        return Array.from(this.plugins.values());
-    }
-
-    setCurrentApi(apiId) {
-        if (this.plugins.has(apiId)) {
-            this.currentApi = apiId;
-            return true;
-        }
-        return false;
-    }
-
-    getCurrentApi() {
-        return this.currentApi;
-    }
+    getPlugin(id) { return this.plugins.get(id); }
+    getAllPlugins() { return Array.from(this.plugins.values()); }
+    setCurrentApi(apiId) { if (this.plugins.has(apiId)) { this.currentApi = apiId; return true; } return false; }
+    getCurrentApi() { return this.currentApi; }
 
     async getPlaylist(apiId, playlistId) {
         const plugin = this.getPlugin(apiId);
-        if (!plugin || !plugin.getPlaylist) {
-            throw new Error(`插件 ${apiId} 不支持获取歌单`);
-        }
+        if (!plugin || !plugin.getPlaylist) throw new Error(`插件 ${apiId} 不支持获取歌单`);
         return await plugin.getPlaylist(playlistId);
     }
 
     async search(apiId, keyword) {
         const plugin = this.getPlugin(apiId);
-        if (!plugin || !plugin.search) {
-            return [];
-        }
+        if (!plugin || !plugin.search) return [];
         return await plugin.search(keyword);
     }
 
     async preloadSong(song) {
         const promises = [];
-        if (song.src) {
-            promises.push(this.cacheManager.preloadResource(song.src, 'audio'));
-        }
-        if (song.cover) {
-            promises.push(this.cacheManager.preloadResource(song.cover, 'image'));
-        }
-        try {
-            await Promise.all(promises);
-            return true;
-        } catch {
-            return false;
-        }
+        if (song.src) promises.push(this.cacheManager.preloadResource(song.src, 'audio'));
+        if (song.cover) promises.push(this.cacheManager.preloadResource(song.cover, 'image'));
+        try { await Promise.all(promises); return true; } catch { return false; }
     }
 }
 
