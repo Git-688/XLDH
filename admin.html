@@ -191,6 +191,35 @@
         }
         .fetch-info-btn:hover { background: #059669; }
 
+        /* ★ 调整按钮大小一致 ★ */
+        .sidebar button.primary { width: 100%; box-sizing: border-box; }
+        .main-content button.primary.sm { height: 36px; padding: 0 14px; }
+
+        /* ★ 确保两个区域按钮宽度一致 ★ */
+        #addSubBtn, #addSiteBtn {
+            width: 100%;
+            height: 38px;
+            font-size: 12px;
+            background: #3b82f6;
+            color: #fff;
+            border-radius: 7px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+        }
+        #addSiteBtn {
+            width: auto; min-width: 110px; padding: 0 16px;
+        }
+        .main-content .flex-row {
+            width: 100%;
+        }
+        #addSiteBtn {
+            margin-left: 0;
+        }
+
         @media (max-width:768px){
             .sidebar{width:150px}
             .cat-item{padding:7px 12px;font-size:11px}
@@ -211,22 +240,22 @@
 <body>
 <div class="toast" id="toast"></div>
 
-<div class="modal" id="modal" onclick="if(event.target === this) window.adminApp.closeModal()">
+<div class="modal" id="modal">
     <div class="modal-body">
         <div class="modal-title" id="modalTitle"></div>
         <div id="modalForm"></div>
         <div class="modal-buttons">
-            <button class="secondary" onclick="window.adminApp.closeModal()">取消</button>
+            <button class="secondary" id="modalCancelBtn">取消</button>
             <button class="primary" id="modalSubmit">确认</button>
         </div>
     </div>
 </div>
 
-<div class="modal" id="logModal" onclick="if(event.target === this) window.adminApp.closeLogModal()">
+<div class="modal" id="logModal">
     <div class="modal-body" style="max-width:560px">
         <div class="modal-title">操作日志</div>
         <div id="logList" style="max-height:360px;overflow-y:auto"></div>
-        <div class="modal-buttons"><button class="primary" onclick="window.adminApp.closeLogModal()">关闭</button></div>
+        <div class="modal-buttons"><button class="primary" id="closeLogBtn">关闭</button></div>
     </div>
 </div>
 
@@ -269,7 +298,7 @@
 
             <div class="content-layout">
                 <div class="sidebar" id="sidebar">
-                    <button class="primary" style="width:100%" id="addSubBtn">+子分类</button>
+                    <button class="primary" id="addSubBtn">+子分类</button>
                     <div class="sub-list" id="subList"></div>
                 </div>
 
