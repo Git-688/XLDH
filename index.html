@@ -58,7 +58,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
     <style>
-        /* ===== 通用反馈/笔记模态框基础样式 ===== */
+        /* ===== 通用反馈/笔记模态框基础样式（共用） ===== */
         .feedback-modal {
             position: fixed;
             top: 0;
@@ -156,6 +156,7 @@
             -ms-overflow-style: none;
         }
         .feedback-modal-body::-webkit-scrollbar { display: none; }
+
         @media (max-width: 600px) {
             .feedback-modal {
                 padding: var(--container-padding-xs, 16px);
@@ -418,6 +419,7 @@
     </div>
 </aside>
 <main class="main-content">
+    <!-- ===== 轮播图：优化后的结构 ===== -->
     <section class="wallpaper-section">
         <div class="container">
             <div class="wallpaper-container" id="wallpaperCarousel">
@@ -519,6 +521,7 @@
         <button class="floating-btn submit-btn" id="floatingSubmitBtn" aria-label="网站投稿"><i class="fas fa-paper-plane"></i></button>
         <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
     </div>
+    <!-- ===== 音乐播放器（完整） ===== -->
     <div class="music-player" id="musicPlayer">
         <div class="player-top">
             <div class="cover-section">
@@ -576,6 +579,7 @@
         </div>
     </div>
     <audio id="audio-element" preload="metadata"></audio>
+    <!-- ===== 搜索模态框 ===== -->
     <div class="search-modal" id="searchModal">
         <div class="modal-content">
             <div class="search-bar">
@@ -648,6 +652,7 @@
 <script src="./js/xfyy/music-main.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.all.min.js"></script>
 
+<!-- Service Worker 注册（离线缓存 + 导航预缓存） -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
