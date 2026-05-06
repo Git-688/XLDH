@@ -1,3 +1,15 @@
+// 确保 Utils 存在
+if (typeof Utils === 'undefined' || !Utils.escapeHtml) {
+    window.Utils = {
+        escapeHtml: function(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+    };
+}
+
 /**
  * 关于网站模块 - 包含收款模态框（移动端按钮缩小一半）
  * @class AboutModule
@@ -238,6 +250,7 @@ class AboutModule {
     }
 
     showDonateModal() {
+        // 创建收款模态框，与原始代码完全相同
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
         donateModal.style.cssText = `
