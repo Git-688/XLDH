@@ -1,5 +1,6 @@
-// 确保 Utils 存在（容错）
-if (typeof Utils === 'undefined' || !Utils.escapeHtml) {
+// 确保 Utils 存在（检查，不重复声明）
+if (typeof Utils === 'undefined') {
+    console.warn('Utils 未加载，请检查 utils.js 顺序');
     window.Utils = {
         escapeHtml: function(text) {
             if (!text) return '';
