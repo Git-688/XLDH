@@ -23,19 +23,22 @@ function tryInitMusicPlayer(retry = 0) {
 
         setupGlobalErrorHandling();
 
-        if (Utils.isMobile()) {
+        // 安全调用 Utils.isMobile（已在前面加载）
+        if (typeof Utils !== 'undefined' && Utils.isMobile()) {
             document.body.classList.add('mobile-device');
             console.log('移动端设备检测，启用移动端优化');
         }
 
         setTimeout(() => {
-            if (musicPlayer.loadApiPlaylist) {
+            if (musicPlayer && musicPlayer.loadApiPlaylist) {
                 musicPlayer.loadApiPlaylist(musicPlayer.currentApi);
             }
         }, 500);
     } catch (error) {
         console.error('音乐播放器核心初始化失败:', error);
-        window.toast?.show('音乐播放器核心初始化失败', 'error');
+        if (window.toast) {
+            window.toast.show('音乐播放器初始化失败', 'error');
+        }
     }
 }
 
