@@ -52,8 +52,10 @@ class WeatherModule {
         if (!navigator.geolocation) {
             console.log('浏览器不支持地理定位功能');
             if (window.app && window.app.showToast) {
-                window.app.showToast('浏览器不支持地理定位，已使用默认城市', 'warning');
+                window.app.showToast('浏览器不支持地理定位，请手动选择城市', 'warning');
             }
+            // 提示手动选择
+            setTimeout(() => this.showCityPrompt(), 500);
             return;
         }
         
@@ -61,8 +63,13 @@ class WeatherModule {
             this.useAutoLocation = true;
             await this.getCurrentPosition();
         } catch (error) {
-            console.log('自动定位失败，使用默认城市:', error.message);
+            console.log('自动定位失败, 使用默认城市或手动选择:', error.message);
             this.useAutoLocation = false;
+            if (window.app && window.app.showToast) {
+                window.app.showToast('定位失败，请手动选择城市', 'warning');
+            }
+            // 弹出城市选择
+            setTimeout(() => this.showCityPrompt(), 500);
         }
     }
 
@@ -508,7 +515,6 @@ class WeatherModule {
         this.bindEvents();
     }
 
-    // 使用内置转义方法渲染模态框内容
     renderModalContent() {
         if (!this.weatherData) {
             return `
