@@ -1,3 +1,15 @@
+// 确保 Utils 存在
+if (typeof Utils === 'undefined' || !Utils.escapeHtml) {
+    window.Utils = {
+        escapeHtml: function(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+    };
+}
+
 // compact-tags.js - 彩虹浅色标签模块（完整列表版，使用 Utils.escapeHtml）
 class CompactTagsModule {
     constructor() {
