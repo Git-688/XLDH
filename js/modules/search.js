@@ -78,7 +78,6 @@ class NewSearchModule {
             });
         }
 
-        // 输入框事件
         if (this.input) {
             this.input.addEventListener('keydown', (e) => {
                 this.handleSearch(e);
@@ -88,7 +87,6 @@ class NewSearchModule {
             });
         }
 
-        // 搜索按钮事件（替代原先的 onclick）
         if (this.submitBtn) {
             this.submitBtn.addEventListener('click', () => {
                 this.submitSearch();
@@ -173,10 +171,10 @@ class NewSearchModule {
     }
 
     async fetchBaiduSuggestions(query) {
-        const url = 'https://cn.apihz.cn/api/wangzhan/soubaiduxl.php';
-        const params = new URLSearchParams({ id: '10014221', key: '4a7768de1cf2e0f41fc0a4005240c837', words: query });
+        // 移除 id/key 参数，直接调用无需鉴权
+        const url = `https://cn.apihz.cn/api/wangzhan/soubaiduxl.php?words=${encodeURIComponent(query)}`;
         try {
-            const resp = await fetch(`${url}?${params.toString()}`);
+            const resp = await fetch(url);
             if (!resp.ok) return [];
             const data = await resp.json();
             return data.code === 200 && Array.isArray(data.datas) ? data.datas : [];
