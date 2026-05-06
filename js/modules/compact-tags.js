@@ -1,7 +1,6 @@
-// compact-tags.js - 彩虹浅色标签模块（完整列表版，使用 Utils.escapeHtml）
+// compact-tags.js - 彩虹浅色标签模块（完整列表版，使用内置 escapeHtml）
 class CompactTagsModule {
     constructor() {
-        // 最终标签列表：保留的原标签 + 新添加标签，按名称拼音排序
         this.tags = [
             { name: '60s快讯', icon: 'fas fa-newspaper', link: 'pages/tools/60s快讯.html' },
             { name: '本草药材', icon: 'fas fa-leaf', link: 'pages/tools/本草药材.html' },
@@ -45,6 +44,17 @@ class CompactTagsModule {
         this.init();
     }
 
+    // 内置转义函数
+    _escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     init() {
         this.renderTags();
         this.bindEvents();
@@ -55,10 +65,9 @@ class CompactTagsModule {
         if (!grid) return;
 
         grid.innerHTML = this.tags.map((tag, index) => {
-            // 彩虹七色循环
             const colorNum = (index % 7) + 1;
             const colorClass = `tag-color-${colorNum}`;
-            const safeName = Utils.escapeHtml(tag.name);
+            const safeName = this._escapeHtml(tag.name);
             return `
                 <a href="${tag.link}" 
                    class="minimal-tag ${colorClass}" 
