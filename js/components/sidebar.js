@@ -1,3 +1,15 @@
+// 确保 Utils 存在（容错）
+if (typeof Utils === 'undefined' || !Utils.escapeHtml) {
+    window.Utils = {
+        escapeHtml: function(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+    };
+}
+
 /**
  * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域紧凑对称 + 星聚笔记按钮）
  */
@@ -850,13 +862,14 @@ class CompactSidebar {
         }
     }
 
+    // 修改后的 getAvatar 方法：失败时返回 null，触发默认头像
     async getAvatar() {
         try {
             const randomId = Math.floor(Math.random() * 1000);
             const response = await fetch(`https://api.multiavatar.com/${randomId}.png`);
             return response.ok ? response.url : null;
         } catch (error) {
-            console.error('获取头像失败:', error);
+            console.warn('远程获取头像失败，使用本地生成头像');
             return null;
         }
     }
@@ -928,7 +941,7 @@ class CompactSidebar {
     }
 }
 
-// 单例初始化
+// 单例初始化，与原始文件一致
 if (!window.sidebarInitialized) {
     window.sidebarInitialized = true;
     
