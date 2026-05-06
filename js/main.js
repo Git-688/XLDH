@@ -1,6 +1,3 @@
-/**
- * 星聚导航主应用程序（评论系统独立为 feedback.js 模块）
- */
 class App {
     constructor() {
         this.components = {};
@@ -9,7 +6,7 @@ class App {
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.notebookModalHideRef = null;
-        
+
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 this.init();
@@ -19,23 +16,18 @@ class App {
         }
     }
 
-    // ========== 星聚笔记 API 配置 ==========
     NOTEBOOK_CONFIG = {
         apiUrl: 'https://cn.apihz.cn/api/cunchu/textzd.php',
         id: '10014221',
         key: '4a7768de1cf2e0f41fc0a4005240c837',
-        maxNumId: 20  // 最多查询的记录ID
+        maxNumId: 20
     };
 
-    // 加载星聚笔记数据（并行请求）
     async loadNotebookData() {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
-        
         listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
-        
         try {
-            // 并行请求所有 numid
             const promises = [];
             for (let i = 1; i <= this.NOTEBOOK_CONFIG.maxNumId; i++) {
                 promises.push(
@@ -45,32 +37,23 @@ class App {
                         .catch(err => ({ numid: i, code: 500, msg: err.message }))
                 );
             }
-            
             const results = await Promise.all(promises);
-            
-            // 筛选有效记录 (code === 200 且标题和内容不为空)
             const validItems = results.filter(item => {
                 if (item.code !== 200) return false;
                 const title = item.title || '';
                 const words = item.words || '';
                 return title.trim() !== '' && words.trim() !== '';
             });
-            
-            // ★ 修改：按记录ID正序排列（由旧到新，1、2、3...）
             validItems.sort((a, b) => a.numid - b.numid);
-            
             if (validItems.length === 0) {
                 listEl.innerHTML = '<div class="empty">暂无笔记记录</div>';
                 return;
             }
-            
-            // 渲染笔记列表
             const html = validItems.map(item => {
                 const title = this.escapeHtml(item.title.trim());
                 const time = this.escapeHtml(item.time || '--');
                 const words = this.escapeHtml(item.words.trim()).replace(/\n/g, '<br>');
                 const numid = item.numid;
-                
                 return `
                     <div class="notebook-item">
                         <div class="notebook-header">
@@ -82,32 +65,25 @@ class App {
                     </div>
                 `;
             }).join('');
-            
             listEl.innerHTML = html;
-            
         } catch (error) {
             console.error('加载星聚笔记失败:', error);
             listEl.innerHTML = `<div class="error">加载失败：${this.escapeHtml(error.message)}</div>`;
         }
     }
 
-    // 显示星聚笔记模态框
     showNotebookModal() {
         const modal = document.getElementById('notebookModal');
         if (!modal) return;
-        
         modal.style.display = 'flex';
         modal.classList.add('active');
-        
         if (!this.notebookModalHideRef) {
             this.notebookModalHideRef = { hide: this.hideNotebookModal.bind(this) };
         }
         this.registerModal(this.notebookModalHideRef);
-        
         this.loadNotebookData();
     }
 
-    // 隐藏星聚笔记模态框
     hideNotebookModal() {
         const modal = document.getElementById('notebookModal');
         if (modal) {
@@ -119,22 +95,17 @@ class App {
         }
     }
 
-    // 初始化星聚笔记模态框事件
     initNotebookModalEvents() {
         const modal = document.getElementById('notebookModal');
         const closeBtn = modal?.querySelector('.feedback-modal-close');
-        
         if (!modal) return;
-        
         modal.addEventListener('click', (e) => {
             if (e.target === modal) this.hideNotebookModal();
         });
-        
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.hideNotebookModal());
         }
     }
-    // =========================================
 
     init() {
         if (this.isInitialized) return;
@@ -145,30 +116,26 @@ class App {
         this.initDependentComponents();
         this.setupGlobalEvents();
         this.initNotebookModalEvents();
-        this.initFloatingButtonsEffect(); // 悬浮按钮滚动效果
+        this.initFloatingButtonsEffect();
         this.isInitialized = true;
-        
+
         window.showNotebookModal = this.showNotebookModal.bind(this);
         window.hideNotebookModal = this.hideNotebookModal.bind(this);
     }
 
-    // ========== 悬浮按钮滚动半透明效果 ==========
     initFloatingButtonsEffect() {
         let scrollTimer;
         const floatingBtns = document.querySelector('.floating-buttons');
         if (!floatingBtns) return;
-        
         window.addEventListener('scroll', () => {
             floatingBtns.style.opacity = '0.4';
             floatingBtns.style.transition = 'opacity 0.3s ease';
-            
             clearTimeout(scrollTimer);
             scrollTimer = setTimeout(() => {
                 floatingBtns.style.opacity = '1';
             }, 1000);
         }, { passive: true });
     }
-    // =========================================
 
     initCoreComponents() {
         try {
@@ -192,49 +159,45 @@ class App {
     initModules() {
         try {
             const initPromises = [];
-            
+
             if (typeof SearchModule !== 'undefined') {
                 try {
                     if (!window.searchModule || !(window.searchModule instanceof SearchModule)) {
                         this.modules.search = new SearchModule();
                         window.searchModule = this.modules.search;
                         initPromises.push(this.modules.search.init?.());
-                        console.log('搜索模块已通过App初始化');
                     } else {
                         this.modules.search = window.searchModule;
-                        console.log('使用现有的搜索模块实例');
                     }
-                } catch (error) {
-                    console.error('搜索模块初始化失败:', error);
-                }
+                } catch (error) { console.error('搜索模块初始化失败:', error); }
             }
-            
+
             if (typeof WallpaperModule !== 'undefined') {
                 this.modules.wallpaper = new WallpaperModule();
                 initPromises.push(this.modules.wallpaper.init?.());
             }
-            
+
             if (typeof GreetingModule !== 'undefined') {
                 this.modules.greeting = new GreetingModule();
                 initPromises.push(this.modules.greeting.init?.());
             }
-            
+
             if (typeof OptimizedNavigation !== 'undefined') {
                 this.modules.navigation = new OptimizedNavigation();
                 window.optimizedNavigation = this.modules.navigation;
                 initPromises.push(this.modules.navigation.init?.());
             }
-            
+
             if (typeof FooterModule !== 'undefined') {
                 this.modules.footer = new FooterModule();
                 initPromises.push(this.modules.footer.init?.());
             }
-            
+
             if (typeof WeatherModule !== 'undefined') {
                 this.modules.weather = new WeatherModule();
                 initPromises.push(this.modules.weather.init?.());
             }
-            
+
             if (typeof AnnouncementModule !== 'undefined') {
                 if (!window.announcementModule) {
                     this.modules.announcement = new AnnouncementModule();
@@ -243,7 +206,7 @@ class App {
                     this.modules.announcement = window.announcementModule;
                 }
             }
-            
+
             if (typeof AboutModule !== 'undefined') {
                 if (!window.aboutModule) {
                     this.modules.about = new AboutModule();
@@ -252,8 +215,8 @@ class App {
                     this.modules.about = window.aboutModule;
                 }
             }
-            
-            // 评论模块独立为 feedback.js，这里无需操作，feedback.js 自动初始化
+
+            // Waline 评论模块独立为 feedback.js
 
             Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {
                 console.log('所有模块初始化完成');
@@ -276,29 +239,16 @@ class App {
     }
 
     setupErrorHandling() {
-        const ignoredErrors = [
-            'Script error',
-            'ResizeObserver loop',
-            'Loading failed',
-            'Failed to fetch'
-        ];
-        
+        const ignoredErrors = ['Script error', 'ResizeObserver loop', 'Loading failed', 'Failed to fetch'];
         const handleError = (event) => {
             const error = event.error || event.reason;
             const errorMessage = error?.message || event.message || '未知错误';
-            
-            const shouldIgnore = ignoredErrors.some(ignored => 
-                errorMessage.includes(ignored)
-            );
-            
+            const shouldIgnore = ignoredErrors.some(ignored => errorMessage.includes(ignored));
             if (!shouldIgnore) {
                 console.error('应用错误:', errorMessage);
-                if (!document.hidden) {
-                    this.showToast('页面遇到问题，建议刷新页面', 'error');
-                }
+                if (!document.hidden) this.showToast('页面遇到问题，建议刷新页面', 'error');
             }
         };
-        
         window.addEventListener('error', handleError);
         window.addEventListener('unhandledrejection', handleError);
     }
@@ -332,9 +282,7 @@ class App {
 
     setupGlobalEvents() {
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.closeAllModals();
-            }
+            if (e.key === 'Escape') this.closeAllModals();
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
                 this.showSearch();
@@ -344,19 +292,10 @@ class App {
                 this.refreshPageWithAnimation();
             }
         });
-        
-        window.addEventListener('online', () => {
-            this.showToast('网络已连接', 'success');
-        });
-        
-        window.addEventListener('offline', () => {
-            this.showToast('网络已断开，部分功能可能受限', 'warning');
-        });
-        
+        window.addEventListener('online', () => this.showToast('网络已连接', 'success'));
+        window.addEventListener('offline', () => this.showToast('网络已断开，部分功能可能受限', 'warning'));
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                this.refreshOnVisibility();
-            }
+            if (!document.hidden) this.refreshOnVisibility();
         });
     }
 
@@ -393,24 +332,17 @@ class App {
     }
 
     closeAllModals() {
-        this.activeModals.forEach((modal) => {
+        this.activeModals.forEach(modal => {
             if (modal && typeof modal.hide === 'function') {
                 try { modal.hide(); } catch (error) { console.error('关闭模态框失败:', error); }
             }
         });
         this.activeModals = [];
-        
-        if (this.components.sidebar && this.components.sidebar.isVisible && this.components.sidebar.isVisible()) {
-            this.components.sidebar.hide();
-        }
-        if (this.components.navbar && this.components.navbar.hideMusicPlayer) {
-            this.components.navbar.hideMusicPlayer();
-        }
-        if (this.modules.search && this.modules.search.isModalOpen && this.modules.search.hide) {
-            this.modules.search.hide();
-        }
+
+        if (this.components.sidebar?.isVisible?.()) this.components.sidebar.hide();
+        if (this.components.navbar?.hideMusicPlayer) this.components.navbar.hideMusicPlayer();
+        if (this.modules.search?.isModalOpen && this.modules.search.hide) this.modules.search.hide();
         this.hideNotebookModal();
-        // 评论弹窗由 feedback 模块管理
         if (window.feedbackModule?.isVisible) window.feedbackModule.hide();
     }
 
@@ -422,181 +354,6 @@ class App {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
-    }
-
-    getVisitStats() {
-        const visitCount = Storage.get('visit_count') || 0;
-        const firstVisitTime = Storage.get('first_visit_time');
-        const lastVisitTime = Storage.get('last_visit_time');
-        return {
-            count: visitCount,
-            firstVisit: firstVisitTime ? new Date(firstVisitTime) : null,
-            lastVisit: lastVisitTime ? new Date(lastVisitTime) : null,
-            formatted: `访问 ${visitCount} 次`
-        };
-    }
-
-    updateAnnouncement(newContent) {
-        if (!this.modules.announcement || !newContent) return;
-        this.modules.announcement.updateAnnouncement(newContent);
-    }
-
-    refreshWallpaper() {
-        if (!this.modules.wallpaper) {
-            this.showToast('壁纸模块未初始化', 'warning');
-            return;
-        }
-        this.modules.wallpaper.refreshWallpaper();
-        this.showToast('正在刷新壁纸...', 'info');
-    }
-
-    refreshPageWithAnimation() {
-        this.showToast('正在刷新页面数据...', 'info');
-        document.body.style.opacity = '0.8';
-        document.body.style.transition = 'opacity 0.3s ease';
-        setTimeout(() => {
-            this.refreshAllModules();
-            setTimeout(() => {
-                document.body.style.opacity = '1';
-                this.showToast('页面刷新完成', 'success');
-            }, 500);
-        }, 300);
-    }
-
-    toggleSidebar() {
-        if (this.components.sidebar && this.components.sidebar.toggle) {
-            this.components.sidebar.toggle();
-        }
-    }
-
-    showSidebar() {
-        if (this.components.sidebar && this.components.sidebar.show) {
-            this.components.sidebar.show();
-        }
-    }
-
-    hideSidebar() {
-        if (this.components.sidebar && this.components.sidebar.hide) {
-            this.components.sidebar.hide();
-        }
-    }
-
-    showSearch() {
-        if (this.modules.search && this.modules.search.showModal) {
-            this.modules.search.showModal();
-        } else {
-            this.showToast('搜索功能暂不可用', 'warning');
-        }
-    }
-
-    showAnnouncement() {
-        if (this.modules.announcement && this.modules.announcement.showModal) {
-            this.modules.announcement.showModal();
-        } else {
-            this.showToast('公告功能暂不可用', 'warning');
-        }
-    }
-
-    showWeather() {
-        if (this.modules.weather && typeof this.modules.weather.showModal === 'function') {
-            this.modules.weather.showModal();
-        } else {
-            console.error('天气模块未正确初始化');
-            this.showToast('天气功能暂不可用', 'warning');
-        }
-    }
-
-    showAbout() {
-        if (this.modules.about && this.modules.about.show) {
-            this.modules.about.show();
-        } else {
-            this.showToast('关于功能暂不可用', 'warning');
-        }
-    }
-
-    toggleMusicPlayer() {
-        if (this.components.navbar && this.components.navbar.toggleMusicPlayer) {
-            this.components.navbar.toggleMusicPlayer();
-        } else {
-            this.showToast('音乐播放器暂不可用', 'warning');
-        }
-    }
-
-    refreshAllModules() {
-        this.showToast('开始刷新所有模块', 'info');
-        
-        if (this.modules.wallpaper && this.modules.wallpaper.refreshWallpaper) {
-            this.modules.wallpaper.refreshWallpaper().catch(err => {
-                console.error('壁纸刷新失败:', err);
-            });
-        }
-        
-        if (this.modules.weather && this.modules.weather.loadWeatherData) {
-            this.modules.weather.loadWeatherData().catch(err => {
-                console.error('天气刷新失败:', err);
-            });
-        }
-        
-        if (this.modules.announcement && this.modules.announcement.loadAnnouncements) {
-            this.modules.announcement.loadAnnouncements();
-        }
-        
-        if (this.components.sidebar) {
-            if (this.components.sidebar.loadWallpaperUserInfo) {
-                this.components.sidebar.loadWallpaperUserInfo();
-            }
-            if (this.components.sidebar.loadDailyQuote) {
-                this.components.sidebar.loadDailyQuote();
-            }
-        }
-        
-        setTimeout(() => {
-            this.showToast('所有模块已刷新', 'success');
-        }, 1500);
-    }
-
-    resetApp() {
-        if (!confirm('确定要重置应用状态吗？这将清除所有临时数据，但不会删除您的个人配置。')) return;
-        
-        this.closeAllModals();
-        
-        const keysToRemove = [
-            'sidebar_categories_state',
-            'last_wallpaper_update',
-            'musicPlayer_volume',
-            'musicPlayer_playbackSpeed',
-            'musicPlayer_playMode',
-            'musicPlayer_playState',
-            'musicPlayer_lyricsMode'
-        ];
-        
-        keysToRemove.forEach(key => {
-            Storage.remove(key);
-        });
-        
-        setTimeout(() => {
-            this.refreshAllModules();
-        }, 500);
-        
-        this.showToast('应用状态已重置', 'success');
-    }
-
-    destroy() {
-        this.closeAllModals();
-        Object.entries(this.components).forEach(([name, component]) => {
-            if (component && typeof component.destroy === 'function') {
-                try { component.destroy(); } catch (error) { console.error(`销毁组件 ${name} 失败:`, error); }
-            }
-        });
-        Object.entries(this.modules).forEach(([name, module]) => {
-            if (module && typeof module.destroy === 'function') {
-                try { module.destroy(); } catch (error) { console.error(`销毁模块 ${name} 失败:`, error); }
-            }
-        });
-        this.components = {};
-        this.modules = {};
-        this.activeModals = [];
-        this.isInitialized = false;
     }
 }
 
