@@ -8,7 +8,7 @@
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
 
-    <!-- 修复音乐播放：允许外部媒体资源 -->
+    <!-- ✅ 修复音乐播放问题：增加 media-src 允许外部音频 -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com https://unpkg.com https://*.ccwu.cc;
@@ -34,9 +34,9 @@
     <link rel="stylesheet" href="./css/modules/search.css">
     <link rel="stylesheet" href="./css/modules/weather.css">
     <link rel="stylesheet" href="./css/modules/about.css">
-    <!-- Waline 官方样式 -->
+    <!-- ★ Waline 评论样式 -->
     <link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css">
-    <!-- 反馈模块自定义样式 -->
+    <!-- ★ 反馈模块独立样式 -->
     <link rel="stylesheet" href="./css/modules/feedback.css">
     <link rel="stylesheet" href="./css/modules/navigation.css">
     <link rel="stylesheet" href="./css/modules/wallpaper.css">
@@ -56,6 +56,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
 
     <link rel="preload" href="./js/main.js" as="script">
+    <!-- KaTeX 支持 (Waline 已内置 texRenderer，但保留以备其他用途) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
@@ -513,15 +514,10 @@
 <script src="./js/modules/greeting.js"></script>
 <script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
-
-<!-- Waline 评论库（异步加载，加载完成后自动初始化） -->
-<script async
-        src="https://unpkg.com/@waline/client@v3/dist/waline.js"
-        onload="console.log('✅ Waline 脚本已加载'); if(window.feedbackModule && !window.feedbackModule.isInited) window.feedbackModule.initWaline();">
-</script>
-<!-- 反馈模块 -->
+<!-- ★ 先加载 Waline 库 -->
+<script src="https://unpkg.com/@waline/client@v3/dist/waline.js"></script>
+<!-- ★ 再加载评论模块 -->
 <script src="./js/modules/feedback.js"></script>
-
 <script src="./js/toast.js"></script>
 <script src="./js/main.js"></script>
 <script src="./js/xfyy/utils.js"></script>
