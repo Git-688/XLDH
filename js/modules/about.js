@@ -27,6 +27,17 @@ class AboutModule {
         };
     }
 
+    // 内置 HTML 转义函数
+    _escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     init() {
         if (this.isInitialized) {
             return Promise.resolve();
@@ -70,29 +81,29 @@ class AboutModule {
         return `
             <div class="about-modal-content">
                 <div class="about-header">
-                    <div class="about-header-bg" style="background-image: url('${Utils.escapeHtml(this.wallpaperUrl)}')"></div>
+                    <div class="about-header-bg" style="background-image: url('${this._escapeHtml(this.wallpaperUrl)}')"></div>
                     <div class="about-header-overlay"></div>
                     <div class="about-header-content">
                         <div class="about-header-left">
                             <div class="about-info-grid">
                                 <div class="about-info-item">
                                     <span class="info-label">开发者：</span>
-                                    <span class="info-value">${Utils.escapeHtml(this.developer)}</span>
+                                    <span class="info-value">${this._escapeHtml(this.developer)}</span>
                                 </div>
                                 <div class="about-info-item">
                                     <span class="info-label">网站版本：</span>
-                                    <span class="info-value">${Utils.escapeHtml(this.version)}</span>
+                                    <span class="info-value">${this._escapeHtml(this.version)}</span>
                                 </div>
                                 <div class="about-info-item">
                                     <span class="info-label">更新日期：</span>
-                                    <span class="info-value">${Utils.escapeHtml(this.updateDate)}</span>
+                                    <span class="info-value">${this._escapeHtml(this.updateDate)}</span>
                                 </div>
                             </div>
                         </div>
                         <div class="about-header-right">
                             <div class="about-brand">
                                 <div class="about-logo" style="border-radius: 8px; overflow: hidden;">
-                                    <img src="${Utils.escapeHtml(this.logoUrl)}" alt="星聚导航Logo" class="about-logo-img" style="border-radius: 8px; width: 100%; height: 100%; object-fit: cover;">
+                                    <img src="${this._escapeHtml(this.logoUrl)}" alt="星聚导航Logo" class="about-logo-img" style="border-radius: 8px; width: 100%; height: 100%; object-fit: cover;">
                                 </div>
                                 <div class="about-title-group">
                                     <div class="about-title">星聚导航</div>
@@ -358,13 +369,13 @@ class AboutModule {
 
                     <div class="donate-card-wrapper" style="position: relative;">
                         <div class="qrcode-content active" data-type="qq" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ" style="max-width: 80%; max-height: 80%; object-fit: contain;">
+                            <img src="${this._escapeHtml(this.qrCodes.qq)}" alt="QQ" style="max-width: 80%; max-height: 80%; object-fit: contain;">
                         </div>
                         <div class="qrcode-content" data-type="wechat" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信" style="max-width: 80%; max-height: 80%; object-fit: contain;">
+                            <img src="${this._escapeHtml(this.qrCodes.wechat)}" alt="微信" style="max-width: 80%; max-height: 80%; object-fit: contain;">
                         </div>
                         <div class="qrcode-content" data-type="alipay" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝" style="max-width: 80%; max-height: 80%; object-fit: contain;">
+                            <img src="${this._escapeHtml(this.qrCodes.alipay)}" alt="支付宝" style="max-width: 80%; max-height: 80%; object-fit: contain;">
                         </div>
                         <div class="qrcode-content" data-type="help" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
                             <div style="font-size: 10px; color: #64748b; line-height: 1.6; text-align: center;">
@@ -410,7 +421,7 @@ class AboutModule {
                                 font-size: 10px;
                                 text-align: center;
                                 white-space: nowrap;
-                            ">${Utils.escapeHtml(name)}</span>`).join('')}
+                            ">${this._escapeHtml(name)}</span>`).join('')}
                         </div>
                     </div>
                 </div>
