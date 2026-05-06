@@ -1,5 +1,6 @@
 /**
  * 音乐播放器主入口文件 - 适配星聚导航
+ * 已彻底过滤 Script error / null 噪音
  */
 let musicPlayer = null;
 
@@ -19,8 +20,7 @@ function tryInitMusicPlayer(retry = 0) {
         window.musicPlayer = musicPlayer;
         console.log('悬浮音乐播放器初始化成功');
 
-        setupGlobalErrorHandling();
-
+        // 安全调用 Utils.isMobile()
         if (typeof Utils !== 'undefined' && typeof Utils.isMobile === 'function' && Utils.isMobile()) {
             document.body.classList.add('mobile-device');
         }
@@ -49,16 +49,28 @@ function initMusicPlayerControl() {
     el.style.display = 'none';
 }
 
+// ========== 静默所有噪音错误 ==========
 function setupGlobalErrorHandling() {
+    const shouldIgnore = (message) => {
+        const m = String(message || '');
+        return m === 'Script error.' || m === 'null' || m === 'undefined' || m.trim() === '';
+    };
+
     window.addEventListener('error', (event) => {
-        if (event.message === 'Script error.' && !event.filename) return;
+        const msg = event.message || (event.error && event.error.message) || '';
+        if (shouldIgnore(msg)) return;
         console.error('全局错误:', event.error);
     });
 
     window.addEventListener('unhandledrejection', (event) => {
-        console.error('未处理的Promise拒绝:', event.reason);
+        const reason = event.reason;
+        const msg = reason?.message || String(reason);
+        if (shouldIgnore(msg) || reason === null) return;
+        console.error('未处理的Promise拒绝:', reason);
     });
 }
+
+setupGlobalErrorHandling();   // 立即执行，尽早接管
 
 window.toggleMusicPlayer = () => window.app?.components?.navbar?.toggleMusicPlayer();
 window.showMusicPlayer = () => window.app?.components?.navbar?.showMusicPlayer();
