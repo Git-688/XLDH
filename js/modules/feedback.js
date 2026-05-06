@@ -1,5 +1,6 @@
 /**
  * 用户反馈模块 - 基于 Waline 评论系统
+ * 健壮初始化：等待 Waline 脚本加载完成再初始化
  */
 class FeedbackModule {
     constructor() {
@@ -10,7 +11,28 @@ class FeedbackModule {
         this.isInited = false;
         this.escHandler = null;
         this.walineInstance = null;
+        this.initCheckAttempts = 0;
+        this.maxInitCheckAttempts = 30;   // 最长等待 15 秒
         this.init();
+
+        // 确保 Waline 加载完成后自动初始化（以免首次打开延迟）
+        this.waitForWaline();
+    }
+
+    /**
+     * 轮询等待 Waline 全局对象可用
+     */
+    waitForWaline() {
+        if (typeof Waline !== 'undefined') {
+            this.isInited = true; // 提前标记避免重复 init
+            return;
+        }
+        this.initCheckAttempts++;
+        if (this.initCheckAttempts > this.maxInitCheckAttempts) {
+            console.error('Waline 脚本加载超时，请刷新页面或检查网络');
+            return;
+        }
+        setTimeout(() => this.waitForWaline(), 500);
     }
 
     init() {
@@ -59,6 +81,7 @@ class FeedbackModule {
             window.app.registerModal({ hide: this.hide.bind(this) });
         }
 
+        // 如果还没有初始化，尝试初始化（可能 waitForWaline 已完成）
         if (!this.isInited) {
             this.initWaline();
         }
@@ -79,6 +102,9 @@ class FeedbackModule {
         this.isVisible ? this.hide() : this.open();
     }
 
+    /**
+     * 真正初始化 Waline（只有 Waline 已加载且容器存在时才执行）
+     */
     initWaline() {
         const container = document.getElementById('waline-feedback');
         if (!container) {
@@ -86,10 +112,18 @@ class FeedbackModule {
             return;
         }
         if (typeof Waline === 'undefined') {
-            console.warn('Waline 脚本未加载，稍后重试');
-            // 如果脚本还在加载中，延迟重试
-            setTimeout(() => this.initWaline(), 500);
+            // Waline 还没加载，但 waitForWaline 会负责延迟初始化，
+            // 这里只记录一次，不反复弹警告
+            if (!this._warnedOnce) {
+                console.log('Waline 脚本尚未就绪，将在加载完成后自动初始化');
+                this._warnedOnce = true;
+            }
             return;
+        }
+
+        // 销毁旧实例（如果有）
+        if (this.walineInstance && typeof this.walineInstance.destroy === 'function') {
+            try { this.walineInstance.destroy(); } catch (e) {}
         }
 
         this.walineInstance = Waline.init({
@@ -109,6 +143,8 @@ class FeedbackModule {
         });
 
         this.isInited = true;
+        this._warnedOnce = false;
+        console.log('✅ Waline 评论初始化完成');
     }
 
     destroy() {
@@ -124,7 +160,7 @@ class FeedbackModule {
     }
 }
 
-// DOM 加载后实例化
+// DOM 加载后实例化（此时 Waline 脚本可能还在加载，但我们的轮询会处理）
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         new FeedbackModule();
