@@ -514,8 +514,11 @@
 <script src="./js/modules/greeting.js"></script>
 <script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
-<!-- ★ 先加载 Waline 库 -->
-<script src="https://unpkg.com/@waline/client@v3/dist/waline.js"></script>
+<!-- ★ 先异步加载 Waline 库，加载完成后自动初始化 -->
+<script async
+        src="https://unpkg.com/@waline/client@v3/dist/waline.js"
+        onload="console.log('✅ Waline 脚本已加载'); if(window.feedbackModule && !window.feedbackModule.isInited) window.feedbackModule.initWaline();">
+</script>
 <!-- ★ 再加载评论模块 -->
 <script src="./js/modules/feedback.js"></script>
 <script src="./js/toast.js"></script>
