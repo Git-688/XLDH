@@ -154,15 +154,32 @@ class NewSearchModule {
         if (event.key === 'Enter') this.submitSearch();
     }
 
+    // ================== 修改后的联想词获取方法（走 Worker 代理） ==================
     async fetchBaiduSuggestions(query) {
-        const url = 'https://cn.apihz.cn/api/wangzhan/soubaiduxl.php';
-        const params = new URLSearchParams({ id: '10014221', key: '4a7768de1cf2e0f41fc0a4005240c837', words: query });
+        const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
+        const url = `${apiBase}/search/suggest?q=${encodeURIComponent(query)}`;
         try {
-            const resp = await fetch(`${url}?${params.toString()}`);
+            const resp = await fetch(url);
             if (!resp.ok) return [];
             const data = await resp.json();
-            return data.code === 200 && Array.isArray(data.datas) ? data.datas : [];
-        } catch { return []; }
+            return data.code === 200 && Array.isArray(data.data) ? data.data : [];
+        } catch {
+            return [];
+        }
+    }
+
+    // ================== 新增：相关搜索内容获取方法（走 Worker 代理） ==================
+    async fetchRelatedSearches(query) {
+        const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
+        const url = `${apiBase}/search/related?q=${encodeURIComponent(query)}`;
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) return [];
+            const data = await resp.json();
+            return data.code === 200 && Array.isArray(data.data) ? data.data : [];
+        } catch {
+            return [];
+        }
     }
 
     showSuggestions() {
