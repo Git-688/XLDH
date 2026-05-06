@@ -30,6 +30,11 @@ class FeedbackModule {
         this.initCheckAttempts++;
         if (this.initCheckAttempts > this.maxInitCheckAttempts) {
             console.error('Waline 脚本加载超时，请刷新页面或检查网络');
+            // 超时后显示友好提示
+            const container = document.getElementById('waline-feedback');
+            if (container) {
+                container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">评论系统加载失败，请稍后刷新页面重试</div>';
+            }
             return;
         }
         setTimeout(() => this.waitForWaline(), 500);
@@ -120,6 +125,9 @@ class FeedbackModule {
             }
             return;
         }
+
+        // 容器内可能已有“加载失败”提示，需清空
+        container.innerHTML = '';
 
         // 销毁旧实例（如果有）
         if (this.walineInstance && typeof this.walineInstance.destroy === 'function') {
