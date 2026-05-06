@@ -56,7 +56,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
 
     <link rel="preload" href="./js/main.js" as="script">
-    <!-- KaTeX 支持 (Waline 已内置 texRenderer，但保留以备其他用途) -->
+    <!-- KaTeX 支持 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
@@ -501,10 +501,19 @@
     </div>
 </div>
 
+<!-- ========== 基础库（同步加载，顺序保证） ========== -->
+<script src="./js/utils.js"></script>
+<script src="./js/toast.js"></script>
 <script src="./js/storage.js"></script>
+
+<!-- ========== API 与数据层 ========== -->
 <script src="./js/api.js"></script>
+
+<!-- ========== 核心 UI 组件 ========== -->
 <script src="./js/components/navbar.js"></script>
 <script src="./js/components/sidebar.js"></script>
+
+<!-- ========== 业务模块 ========== -->
 <script src="./js/modules/announcement.js"></script>
 <script src="./js/modules/search.js"></script>
 <script src="./js/modules/weather.js"></script>
@@ -514,15 +523,18 @@
 <script src="./js/modules/greeting.js"></script>
 <script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
-<!-- ★ 先异步加载 Waline 库，加载完成后自动初始化 -->
+
+<!-- ========== 应用主入口 ========== -->
+<script src="./js/main.js"></script>
+
+<!-- ========== 异步第三方库 ========== -->
 <script async
         src="https://unpkg.com/@waline/client@v3/dist/waline.js"
         onload="console.log('✅ Waline 脚本已加载'); if(window.feedbackModule && !window.feedbackModule.isInited) window.feedbackModule.initWaline();">
 </script>
-<!-- ★ 再加载评论模块 -->
 <script src="./js/modules/feedback.js"></script>
-<script src="./js/toast.js"></script>
-<script src="./js/main.js"></script>
+
+<!-- ========== 音乐播放器子系统 ========== -->
 <script src="./js/xfyy/utils.js"></script>
 <script src="./js/xfyy/cache-manager.js"></script>
 <script src="./js/xfyy/lyric-parser.js"></script>
