@@ -19,6 +19,17 @@ class WeatherModule {
         this.showModalBound = this.showModal.bind(this);
     }
 
+    // 内置 HTML 转义方法（替代 Utils.escapeHtml）
+    _escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     async init() {
         if (this.initialized) return;
         
@@ -456,7 +467,6 @@ class WeatherModule {
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'weather-modal-card';
         
-        // 改用 CSS 类名控制样式
         this.modalElement.innerHTML = `
             <div class="weather-modal-content">
                 <div class="weather-header">
@@ -498,6 +508,7 @@ class WeatherModule {
         this.bindEvents();
     }
 
+    // 使用内置转义方法渲染模态框内容
     renderModalContent() {
         if (!this.weatherData) {
             return `
@@ -518,13 +529,14 @@ class WeatherModule {
         }
 
         const { weatherData } = this;
+        const esc = this._escapeHtml.bind(this);
         
         return `
             <div class="weather-current">
                 <div class="weather-city">
                     <i class="fas fa-location-dot"></i>
-                    ${Utils.escapeHtml(weatherData.city)}
-                    <span class="weather-update-time">${Utils.escapeHtml(weatherData.updateTime)}更新</span>
+                    ${esc(weatherData.city)}
+                    <span class="weather-update-time">${esc(weatherData.updateTime)}更新</span>
                 </div>
                 <div class="weather-main">
                     <div class="weather-icon"><i class="${weatherData.weatherIcon}"></i></div>
@@ -546,7 +558,7 @@ class WeatherModule {
                 ${weatherData.tips ? `
                 <div class="weather-tips">
                     <i class="fas fa-lightbulb"></i>
-                    ${Utils.escapeHtml(weatherData.tips)}
+                    ${esc(weatherData.tips)}
                 </div>
                 ` : ''}
             </div>
@@ -555,7 +567,7 @@ class WeatherModule {
                 <div class="weather-detail">
                     <div class="detail-icon"><i class="fas fa-wind"></i></div>
                     <div class="detail-label">风向风力</div>
-                    <div class="detail-value">${Utils.escapeHtml(weatherData.wind)}</div>
+                    <div class="detail-value">${esc(weatherData.wind)}</div>
                 </div>
                 <div class="weather-detail">
                     <div class="detail-icon"><i class="fas fa-temperature-high"></i></div>
@@ -634,6 +646,7 @@ class WeatherModule {
     }
 
     showCityPrompt() {
+        const esc = this._escapeHtml.bind(this);
         const modal = document.createElement('div');
         modal.className = 'city-prompt-modal';
 
@@ -646,7 +659,7 @@ class WeatherModule {
                 
                 <div class="prompt-input-group">
                     <label>请输入城市名称</label>
-                    <input type="text" id="cityInput" value="${Utils.escapeHtml(this.currentCity)}" placeholder="例如：北京、上海、广州...">
+                    <input type="text" id="cityInput" value="${esc(this.currentCity)}" placeholder="例如：北京、上海、广州...">
                     <p class="prompt-hint">提示：请输入完整的城市名，如"北京市"、"上海市"</p>
                 </div>
                 
@@ -654,7 +667,7 @@ class WeatherModule {
                     <p>热门城市：</p>
                     <div class="hot-city-buttons">
                         ${['北京市', '上海市', '广州市', '深圳市', '杭州市', '南京市', '成都市', '武汉市'].map(city => `
-                            <button type="button" class="hot-city-btn" data-city="${Utils.escapeHtml(city)}">${Utils.escapeHtml(city)}</button>
+                            <button type="button" class="hot-city-btn" data-city="${esc(city)}">${esc(city)}</button>
                         `).join('')}
                     </div>
                 </div>
