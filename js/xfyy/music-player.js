@@ -1,3 +1,35 @@
+// 自包含工具函数（不依赖外部 Utils）
+const MusicUtils = {
+    formatTime(seconds) {
+        if (isNaN(seconds)) return '00:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    },
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML;
+    },
+    debounce(func, wait, immediate = false) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                if (!immediate) func(...args);
+            };
+            const callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) func(...args);
+        };
+    },
+    generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+    }
+};
+
 // ==================== 自定义下拉选择器组件（挂载到 body，互斥+动画） ====================
 class CustomSelect {
     constructor(selectElement) {
@@ -233,10 +265,8 @@ class MusicPlayer {
         this.isHandlingNavigationClick = false;
         this.hasInitialized = false;
 
-        // 连续播放失败计数器与最大尝试次数
         this.consecutiveErrors = 0;
         this.maxConsecutiveErrors = 3;
-        // 是否已显示连续错误提示
         this.maxErrorShown = false;
     }
 
@@ -316,7 +346,6 @@ class MusicPlayer {
             player: document.querySelector('.music-player')
         };
 
-        // 单行歌词元素
         if (this.elements.lyricsContainer) {
             this.elements.lyricsContainer.innerHTML = '';
             this.lyricsLineEl = document.createElement('div');
@@ -399,7 +428,7 @@ class MusicPlayer {
         apis.forEach(api => {
             const elements = this.apiElements[api];
             if (!elements) return;
-            if (api === 'local' || api === 'migu' || api === 'qq') return; // 只允许netease搜索
+            if (api === 'local' || api === 'migu' || api === 'qq') return;
             if (elements.playlistSelect) {
                 elements.playlistSelect.addEventListener('change', () => this.loadApiPlaylist(api));
             }
@@ -407,7 +436,7 @@ class MusicPlayer {
                 elements.searchInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.searchApi(api);
                 });
-                elements.searchInput.addEventListener('input', Utils.debounce(() => {
+                elements.searchInput.addEventListener('input', MusicUtils.debounce(() => {
                     if (elements.searchInput.value.trim().length > 2) {
                         this.searchApi(api);
                     }
@@ -415,8 +444,6 @@ class MusicPlayer {
             }
         });
     }
-
-    // ========== 歌词系统（单行居中 + 跑马灯 + 淡入过渡） ==========
 
     async loadLyrics(song) {
         this.lyricsData = [];
@@ -481,8 +508,6 @@ class MusicPlayer {
             setTimeout(checkOverflow, 50);
         }
     }
-
-    // ========== 播放控制 ==========
 
     togglePlay() {
         this.isPlaying ? this.pause() : this.play();
@@ -640,8 +665,6 @@ class MusicPlayer {
         }
     }
 
-    // ========== 歌单与歌曲加载 ==========
-
     async switchApiTab(apiId) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -699,7 +722,7 @@ class MusicPlayer {
             if (elements.playlistContainer) {
                 elements.playlistContainer.innerHTML = `
                     <div class="error-message">
-                        <p>加载失败: ${Utils.escapeHtml(error.message)}</p>
+                        <p>加载失败: ${MusicUtils.escapeHtml(error.message)}</p>
                         <button class="retry-btn" onclick="musicPlayer.loadApiPlaylist('${apiId}')">重试</button>
                     </div>
                 `;
@@ -735,7 +758,7 @@ class MusicPlayer {
         } catch (error) {
             console.error(`搜索失败:`, error);
             if (elements.searchResults) {
-                elements.searchResults.innerHTML = `<div class="error-message"><p>搜索失败: ${Utils.escapeHtml(error.message)}</p></div>`;
+                elements.searchResults.innerHTML = `<div class="error-message"><p>搜索失败: ${MusicUtils.escapeHtml(error.message)}</p></div>`;
             }
             window.toast.show('搜索失败', 'error');
         }
@@ -785,13 +808,13 @@ class MusicPlayer {
         }
         const coverUrl = song.cover || '';
         const coverHtml = coverUrl
-            ? `<img class="song-cover" data-src="${Utils.escapeHtml(coverUrl)}" alt="" loading="lazy" style="display:none;">`
+            ? `<img class="song-cover" data-src="${MusicUtils.escapeHtml(coverUrl)}" alt="" loading="lazy" style="display:none;">`
             : '';
         songItem.innerHTML = `
             ${coverHtml}
             <div class="song-item-info">
-                <div class="song-item-title">${Utils.escapeHtml(song.title || '未知歌曲')}</div>
-                <div class="song-item-artist">${Utils.escapeHtml(song.artist || '未知歌手')}</div>
+                <div class="song-item-title">${MusicUtils.escapeHtml(song.title || '未知歌曲')}</div>
+                <div class="song-item-artist">${MusicUtils.escapeHtml(song.artist || '未知歌手')}</div>
             </div>
         `;
         if (index < 5 && coverUrl) {
@@ -829,8 +852,8 @@ class MusicPlayer {
         songItem.className = 'song-item';
         songItem.innerHTML = `
             <div class="song-item-info">
-                <div class="song-item-title">${Utils.escapeHtml(song.title || '未知歌曲')}</div>
-                <div class="song-item-artist">${Utils.escapeHtml(song.artist || '未知歌手')}</div>
+                <div class="song-item-title">${MusicUtils.escapeHtml(song.title || '未知歌曲')}</div>
+                <div class="song-item-artist">${MusicUtils.escapeHtml(song.artist || '未知歌手')}</div>
             </div>
             <button class="search-download-btn" title="下载">
                 <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
@@ -1029,7 +1052,7 @@ class MusicPlayer {
                 this.elements.progress.style.width = `${progressPercent}%`;
                 this.elements.progressHandle.style.left = `${progressPercent}%`;
                 if (!this.lastTimeUpdate || Date.now() - this.lastTimeUpdate > 500) {
-                    this.elements.currentTime.textContent = Utils.formatTime(currentTime);
+                    this.elements.currentTime.textContent = MusicUtils.formatTime(currentTime);
                     this.lastTimeUpdate = Date.now();
                 }
                 this.updateLyricDisplayByTime(currentTime);
@@ -1041,7 +1064,7 @@ class MusicPlayer {
     updateDuration() {
         const duration = this.audio.duration;
         if (duration && !isNaN(duration) && duration > 0) {
-            this.elements.duration.textContent = Utils.formatTime(duration);
+            this.elements.duration.textContent = MusicUtils.formatTime(duration);
         } else {
             this.elements.duration.textContent = '--:--';
         }
@@ -1179,7 +1202,7 @@ class MusicPlayer {
             const progressPercent = (seekTime / duration) * 100;
             this.elements.progress.style.width = `${progressPercent}%`;
             this.elements.progressHandle.style.left = `${progressPercent}%`;
-            this.elements.currentTime.textContent = Utils.formatTime(seekTime);
+            this.elements.currentTime.textContent = MusicUtils.formatTime(seekTime);
         }
     }
 
@@ -1251,7 +1274,6 @@ class MusicPlayer {
         console.log('音乐播放器资源已清理');
     }
 
-    // ========== 本地存储读写方法（已修复） ==========
     saveVolume(volume) {
         try {
             localStorage.setItem('musicPlayer_volume', volume.toString());
