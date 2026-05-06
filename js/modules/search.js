@@ -154,7 +154,7 @@ class NewSearchModule {
         if (event.key === 'Enter') this.submitSearch();
     }
 
-    // ================== 修改后的联想词获取方法（走 Worker 代理） ==================
+    // ========== 联想词获取（走 Worker 代理，不再直连 apihz.cn）==========
     async fetchBaiduSuggestions(query) {
         const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
         const url = `${apiBase}/search/suggest?q=${encodeURIComponent(query)}`;
@@ -168,7 +168,7 @@ class NewSearchModule {
         }
     }
 
-    // ================== 新增：相关搜索内容获取方法（走 Worker 代理） ==================
+    // ========== 新增：相关搜索内容获取（走 Worker 代理，供未来扩展）==========
     async fetchRelatedSearches(query) {
         const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
         const url = `${apiBase}/search/related?q=${encodeURIComponent(query)}`;
