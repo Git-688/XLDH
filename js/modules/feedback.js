@@ -1,6 +1,5 @@
 /**
- * 用户反馈模块 - 基于 Twikoo 评论系统
- * 独立封装，方便维护
+ * 用户反馈模块 - 基于 Waline 评论系统
  */
 class FeedbackModule {
     constructor() {
@@ -10,12 +9,10 @@ class FeedbackModule {
         this.isVisible = false;
         this.isInited = false;
         this.escHandler = null;
+        this.walineInstance = null;
         this.init();
     }
 
-    /**
-     * 初始化：绑定事件，不立即加载 Twikoo
-     */
     init() {
         if (!this.modal) {
             console.warn('FeedbackModule: 找不到 #feedbackModal');
@@ -49,27 +46,21 @@ class FeedbackModule {
             });
         }
 
-        // 挂载到全局，方便调用
         window.feedbackModule = this;
     }
 
-    /**
-     * 显示评论弹窗，首次显示时初始化 Twikoo
-     */
     open() {
         if (this.isVisible) return;
         this.modal.style.display = 'flex';
         this.modal.classList.add('active');
         this.isVisible = true;
 
-        // 注册到 App 模态框管理（如果存在）
         if (window.app && typeof window.app.registerModal === 'function') {
             window.app.registerModal({ hide: this.hide.bind(this) });
         }
 
-        // 首次打开时初始化 Twikoo
         if (!this.isInited) {
-            this.initTwikoo();
+            this.initWaline();
         }
     }
 
@@ -88,62 +79,52 @@ class FeedbackModule {
         this.isVisible ? this.hide() : this.open();
     }
 
-    /**
-     * 初始化 Twikoo 评论系统
-     */
-    initTwikoo() {
-        const container = document.getElementById('twikoo-feedback');
-        if (!container || typeof twikoo === 'undefined') {
-            console.warn('Twikoo 未加载或容器缺失');
+    initWaline() {
+        const container = document.getElementById('waline-feedback');
+        if (!container) {
+            console.warn('Waline 容器缺失 #waline-feedback');
+            return;
+        }
+        if (typeof Waline === 'undefined') {
+            console.warn('Waline 脚本未加载，稍后重试');
+            // 如果脚本还在加载中，延迟重试
+            setTimeout(() => this.initWaline(), 500);
             return;
         }
 
-        twikoo.init({
-            envId: 'https://twikoo688.netlify.app/.netlify/functions/twikoo',
-            el: '#twikoo-feedback',
+        this.walineInstance = Waline.init({
+            el: '#waline-feedback',
+            serverURL: 'https://yy688.ccwu.cc/',
             lang: 'zh-CN',
+            dark: 'auto',
             path: '/feedback',
-            // 启用 KaTeX 数学公式支持
-            katex: {
-                delimiters: [
-                    { left: '$$', right: '$$', display: true },
-                    { left: '$', right: '$', display: false },
-                    { left: '\\(', right: '\\)', display: false },
-                    { left: '\\[', right: '\\]', display: true }
-                ],
-                throwOnError: false
-            },
-            onCommentLoaded: function () {
-                if (typeof renderMathInElement !== 'undefined') {
-                    renderMathInElement(container, {
-                        delimiters: [
-                            { left: '$$', right: '$$', display: true },
-                            { left: '$', right: '$', display: false },
-                            { left: '\\(', right: '\\)', display: false },
-                            { left: '\\[', right: '\\]', display: true }
-                        ],
-                        throwOnError: false
-                    });
-                }
-            }
+            pageSize: 10,
+            requiredMeta: ['nick', 'mail'],
+            login: 'enable',
+            wordLimit: 1000,
+            imageUploader: false,
+            highlighter: true,
+            texRenderer: true,
+            search: false,
         });
+
         this.isInited = true;
     }
 
-    /**
-     * 销毁模块
-     */
     destroy() {
         if (this.escHandler) {
             document.removeEventListener('keydown', this.escHandler);
         }
-        // 移除 Twikoo 初始化标记，重新打开可再次初始化
+        if (this.walineInstance && typeof this.walineInstance.destroy === 'function') {
+            this.walineInstance.destroy();
+            this.walineInstance = null;
+        }
         this.isInited = false;
         this.hide();
     }
 }
 
-// 当 DOM 加载完成后实例化
+// DOM 加载后实例化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         new FeedbackModule();
