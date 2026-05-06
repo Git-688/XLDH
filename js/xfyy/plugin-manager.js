@@ -12,11 +12,6 @@ class PluginManager {
         this.initializePlugins();
     }
 
-    // 内置唯一ID生成方法（替代 Utils.generateId）
-    _generateId() {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-    }
-
     initializePlugins() {
         // 网易云音乐插件（增加备用 API 与降级）
         this.registerPlugin('netease', {
@@ -172,6 +167,7 @@ class PluginManager {
                     // 尝试返回空，并给出持久化提示
                     if (typeof window !== 'undefined' && !sessionStorage.getItem('qq_fallback_hint')) {
                         sessionStorage.setItem('qq_fallback_hint', '1');
+                        // toast 在 plugin 内无法直接调用，由上层处理
                     }
                     return [];
                 }
@@ -224,7 +220,7 @@ class PluginManager {
 
     formatSong(song, source) {
         return {
-            id: song.id || this._generateId(),
+            id: song.id || Utils.generateId(),
             title: song.title || song.name || '未知歌曲',
             artist: song.author || song.artist || '未知歌手',
             src: song.url,
@@ -252,7 +248,7 @@ class PluginManager {
 
     formatDouyinSong(songData) {
         return {
-            id: songData.id || songData.hash || this._generateId(),
+            id: songData.id || songData.hash || Utils.generateId(),
             title: songData.title || songData.name || songData.songname || '未知歌曲',
             artist: songData.author || songData.artist || songData.singer || '未知歌手',
             src: songData.url || songData.play_url || songData.audio_url,
