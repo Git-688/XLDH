@@ -7,7 +7,7 @@ class NewSearchModule {
             { key: 'google',  label: '谷歌',   url: 'https://www.google.com/search?q=', icon: 'fab fa-google' },
             { key: '360',     label: '360',    url: 'https://www.so.com/s?q=', icon: 'fas fa-shield-alt' },
             { key: 'douyin',  label: '抖音',   url: 'https://www.douyin.com/search/', icon: 'fas fa-music' },
-            { key: 'all',     label: '全网',   url: 'https://api.pearapi.ai/api/universalsearch/', icon: 'fas fa-globe' }
+            { key: 'all',     label: '全网',   url: 'https://api.pearktrue.cn/api/universalsearch/', icon: 'fas fa-globe' }
         ];
         this.currentEngine = this.loadSetting('currentEngine2', 'baidu');
         this.history = this.loadSetting('searchHistory2', []);
@@ -21,7 +21,6 @@ class NewSearchModule {
         this.suggestionsContainer = document.getElementById('suggestions');
         this.historyList = document.getElementById('historyList');
         this.clearHistoryBtn = document.getElementById('clearHistory');
-        this.submitBtn = document.getElementById('searchSubmitBtn');
 
         this.isOpen = false;
         this.suggestTimer = null;
@@ -75,23 +74,6 @@ class NewSearchModule {
                 this.history = [];
                 this.saveSetting('searchHistory2', this.history);
                 this.renderHistory();
-            });
-        }
-
-        // 输入框事件
-        if (this.input) {
-            this.input.addEventListener('keydown', (e) => {
-                this.handleSearch(e);
-            });
-            this.input.addEventListener('input', () => {
-                this.showSuggestions();
-            });
-        }
-
-        // 搜索按钮事件（替代原先的 onclick）
-        if (this.submitBtn) {
-            this.submitBtn.addEventListener('click', () => {
-                this.submitSearch();
             });
         }
     }
@@ -235,19 +217,12 @@ class NewSearchModule {
         this.history.forEach(query => {
             const item = document.createElement('div');
             item.className = 'history-item';
-            const textSpan = document.createElement('span');
-            textSpan.className = 'history-text';
-            textSpan.textContent = query;
-            const deleteIcon = document.createElement('i');
-            deleteIcon.className = 'fas fa-times delete-history';
-            item.appendChild(textSpan);
-            item.appendChild(deleteIcon);
-
-            textSpan.addEventListener('click', () => {
+            item.innerHTML = `<span class="history-text">${query}</span><i class="fas fa-times delete-history"></i>`;
+            item.querySelector('.history-text').addEventListener('click', () => {
                 this.input.value = query;
                 this.submitSearch();
             });
-            deleteIcon.addEventListener('click', (e) => {
+            item.querySelector('.delete-history').addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.removeHistory(query);
             });
