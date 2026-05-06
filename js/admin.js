@@ -25,8 +25,14 @@
         toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300);
     }
 
+    // 仅允许 http: 和 https: 协议
     function checkUrl(url) {
-        try { const u = new URL(url); return u.protocol !== 'javascript:' && u.protocol !== 'data:'; } catch { return false; }
+        try {
+            const u = new URL(url);
+            return ['http:', 'https:'].includes(u.protocol);
+        } catch {
+            return false;
+        }
     }
 
     function getStoredToken() {
@@ -411,7 +417,7 @@
                 const title = document.getElementById('mTitle').value.trim();
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
-                if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
+                if (!checkUrl(url)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
                 await apiFetch(`/admin/sites/${id}`, { method:'PUT', body: JSON.stringify({
                     title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
@@ -469,7 +475,7 @@
                 const title = document.getElementById('mTitle').value.trim();
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
-                if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
+                if (!checkUrl(url)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
                 await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
                     subcategory_id: currentSub, title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
@@ -561,7 +567,7 @@
                 const newTitle = document.getElementById('mTitle').value.trim();
                 const newUrl = document.getElementById('mUrl').value.trim();
                 if (!newTitle || !newUrl) { showToast('标题和网址不能为空', 'error'); return; }
-                if (!checkUrl(newUrl)) { showToast('网址格式错误', 'error'); return; }
+                if (!checkUrl(newUrl)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
                 await apiFetch('/admin/replace-link', { method:'POST', body: JSON.stringify({
                     reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value
                 })});
