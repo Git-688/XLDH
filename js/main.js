@@ -19,17 +19,30 @@ class App {
         }
     }
 
-    // 加载星聚笔记数据（通过 Worker 缓存接口）
+    // 加载星聚笔记数据（通过 Worker 缓存接口，含重试和友好提示）
     async loadNotebookData() {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
         listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
+        
+        const fetchNotebook = async (retry = 2) => {
+            try {
+                const response = await fetch('https://api.xjdh688.ccwu.cc/notebook');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                return data.items || [];
+            } catch (error) {
+                if (retry > 0) {
+                    return fetchNotebook(retry - 1);
+                }
+                throw error;
+            }
+        };
+
         try {
-            const response = await fetch('https://api.xjdh688.ccwu.cc/notebook');
-            const data = await response.json();
-            const items = data.items || [];
+            const items = await fetchNotebook(2);
             if (items.length === 0) {
-                listEl.innerHTML = '<div class="empty">暂无笔记记录</div>';
+                listEl.innerHTML = '<div class="empty">暂无笔记记录<br><small style="color:#999">请稍后刷新页面或联系管理员</small></div>';
                 return;
             }
             items.sort((a, b) => a.numid - b.numid);
@@ -52,7 +65,7 @@ class App {
             listEl.innerHTML = html;
         } catch (error) {
             console.error('加载星聚笔记失败:', error);
-            listEl.innerHTML = `<div class="error">加载失败：${this.escapeHtml(error.message)}</div>`;
+            listEl.innerHTML = `<div class="error">加载失败：${this.escapeHtml(error.message)}<br><small>可尝试刷新页面</small></div>`;
         }
     }
 
@@ -226,15 +239,14 @@ class App {
     }
 
     setupErrorHandling() {
-        const ignoredErrors = ['Script error', 'ResizeObserver loop', 'Loading failed', 'Failed to fetch'];
         const handleError = (event) => {
+            // 过滤无意义的跨域脚本错误
+            if (event.message === 'Script error.' && !event.filename) return;
             const error = event.error || event.reason;
             const errorMessage = error?.message || event.message || '未知错误';
-            const shouldIgnore = ignoredErrors.some(ignored => errorMessage.includes(ignored));
-            if (!shouldIgnore) {
-                console.error('应用错误:', errorMessage);
-                if (!document.hidden) this.showToast('页面遇到问题，建议刷新页面', 'error');
-            }
+            if (errorMessage === 'Script error.') return; // 再次过滤
+            console.error('应用错误:', errorMessage);
+            if (!document.hidden) this.showToast('页面遇到问题，建议刷新页面', 'error');
         };
         window.addEventListener('error', handleError);
         window.addEventListener('unhandledrejection', handleError);
@@ -330,7 +342,7 @@ class App {
         if (this.components.navbar?.hideMusicPlayer) this.components.navbar.hideMusicPlayer();
         if (this.modules.search?.isModalOpen && this.modules.search.hide) this.modules.search.hide();
         this.hideNotebookModal();
-        if (window.feedbackModule?.isVisible) window.feedbackModule.hide();
+        if (window.walineFeedback?.isVisible) window.walineFeedback.hide();
     }
 
     showToast(message, type = 'info') {
