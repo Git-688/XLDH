@@ -34,6 +34,7 @@
     <link rel="stylesheet" href="./css/modules/search.css">
     <link rel="stylesheet" href="./css/modules/weather.css">
     <link rel="stylesheet" href="./css/modules/about.css">
+    <!-- ★ 新增：评论系统独立样式 -->
     <link rel="stylesheet" href="./css/modules/feedback.css">
     <link rel="stylesheet" href="./css/modules/navigation.css">
     <link rel="stylesheet" href="./css/modules/wallpaper.css">
@@ -156,7 +157,6 @@
             -ms-overflow-style: none;
         }
         .feedback-modal-body::-webkit-scrollbar { display: none; }
-
         @media (max-width: 600px) {
             .feedback-modal {
                 padding: var(--container-padding-xs, 16px);
@@ -324,7 +324,6 @@
             -webkit-backdrop-filter: blur(4px);
             border: 1px solid rgba(0, 0, 0, 0.03);
         }
-
         @media (prefers-color-scheme: dark) {
             #notebookModal .feedback-modal-content {
                 background: rgba(30, 30, 30, 0.75);
@@ -349,7 +348,6 @@
             .notebook-id { background: rgba(50, 50, 50, 0.8); }
             .notebook-content { background: rgba(30, 30, 30, 0.6); }
         }
-
         .notebook-list .loading, .notebook-list .empty, .notebook-list .error {
             text-align: center;
             padding: 20px 20px;
@@ -357,7 +355,6 @@
             font-size: 12px;
         }
         .notebook-list .error { color: var(--error-color); }
-
         @media (max-width: 768px) {
             .notebook-item { padding: 10px 12px; }
             .notebook-title { font-size: 14px; }
@@ -640,10 +637,11 @@
 <script src="./js/modules/greeting.js"></script>
 <script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
+<!-- ★ 新增：评论系统独立模块 -->
 <script src="./js/modules/feedback.js"></script>
 <script src="./js/toast.js"></script>
 <script src="./js/main.js"></script>
-
+<script src="./js/xfyy/utils.js"></script>
 <script src="./js/xfyy/cache-manager.js"></script>
 <script src="./js/xfyy/lyric-parser.js"></script>
 <script src="./data/local-music-data.js"></script>
