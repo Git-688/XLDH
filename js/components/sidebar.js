@@ -82,17 +82,6 @@ class CompactSidebar {
         this.minSidebarHeight = 400;
     }
 
-    // 内置 HTML 转义函数，替代 Utils.escapeHtml
-    _escapeHtml(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-
     calcSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
@@ -192,7 +181,7 @@ class CompactSidebar {
             
         } catch (error) {
             console.error('侧滑栏初始化失败:', error);
-            if (window.toast) window.toast.show('侧滑栏初始化失败', 'error');
+            window.toast.show('侧滑栏初始化失败', 'error');
         }
     }
 
@@ -432,13 +421,13 @@ class CompactSidebar {
             const categoriesContainer = sidebar.querySelector('.sidebar-categories');
             if (categoriesContainer) {
                 categoriesContainer.innerHTML = this.categories.map(category => `
-                    <div class="category-group ${category.expanded ? 'expanded' : ''}" data-category="${this._escapeHtml(category.name)}">
+                    <div class="category-group ${category.expanded ? 'expanded' : ''}" data-category="${Utils.escapeHtml(category.name)}">
                         <div class="category-group-header">
                             <div class="category-group-name">
                                 <div class="category-group-icon">
                                     <i class="${category.icon}"></i>
                                 </div>
-                                <span>${this._escapeHtml(category.name)}</span>
+                                <span>${Utils.escapeHtml(category.name)}</span>
                             </div>
                             <button class="category-toggle" aria-label="${category.expanded ? '收起' : '展开'}">
                                 <i class="fas fa-chevron-down"></i>
@@ -450,8 +439,8 @@ class CompactSidebar {
                                     <div class="category-icon">
                                         <i class="${item.icon}"></i>
                                     </div>
-                                    <div class="category-label">${this._escapeHtml(item.label)}</div>
-                                    ${item.badge ? `<div class="category-badge">${this._escapeHtml(item.badge)}</div>` : ''}
+                                    <div class="category-label">${Utils.escapeHtml(item.label)}</div>
+                                    ${item.badge ? `<div class="category-badge">${Utils.escapeHtml(item.badge)}</div>` : ''}
                                 </button>
                             `).join('')}
                         </div>
