@@ -19,7 +19,7 @@ class App {
         }
     }
 
-    // 加载星聚笔记数据（通过 Worker 缓存接口，含重试和友好提示）
+    // 加载星聚笔记数据（通过 Worker 缓存接口）
     async loadNotebookData() {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
@@ -110,7 +110,7 @@ class App {
     // ========== 应用初始化 ==========
     init() {
         if (this.isInitialized) return;
-        this.setupErrorHandling();
+        this.setupErrorHandling();      // 必须最先注册
         this.initStorage();
         this.initCoreComponents();
         this.initModules();
@@ -238,20 +238,28 @@ class App {
         }
     }
 
+    // ========== 彻底过滤噪音错误的全局处理器 ==========
     setupErrorHandling() {
+        const shouldIgnore = (message) => {
+            const m = String(message || '');
+            return m === 'Script error.' || m === 'null' || m === 'undefined' || m.trim() === '';
+        };
+
         const handleError = (event) => {
-            // 过滤无意义的跨域脚本错误
-            if (event.message === 'Script error.' && !event.filename) return;
+            const msg = event.message || (event.error && event.error.message) || '';
+            if (shouldIgnore(msg)) return;                      // 忽略无效内容
             const error = event.error || event.reason;
-            const errorMessage = error?.message || event.message || '未知错误';
-            if (errorMessage === 'Script error.') return; // 再次过滤
+            const errorMessage = error?.message || msg || '未知错误';
+            if (shouldIgnore(errorMessage)) return;             // 二次检查
             console.error('应用错误:', errorMessage);
             if (!document.hidden) this.showToast('页面遇到问题，建议刷新页面', 'error');
         };
+
         window.addEventListener('error', handleError);
         window.addEventListener('unhandledrejection', handleError);
     }
 
+    // ========== 其它方法（与前相同，无变化） ==========
     initStorage() {
         if (typeof Storage === 'undefined') {
             console.error('浏览器不支持localStorage');
