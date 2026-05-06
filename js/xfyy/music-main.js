@@ -21,7 +21,6 @@ function tryInitMusicPlayer(retry = 0) {
 
         setupGlobalErrorHandling();
 
-        // 安全使用 Utils
         if (typeof Utils !== 'undefined' && typeof Utils.isMobile === 'function' && Utils.isMobile()) {
             document.body.classList.add('mobile-device');
         }
@@ -55,6 +54,7 @@ function setupGlobalErrorHandling() {
         if (event.message === 'Script error.' && !event.filename) return;
         console.error('全局错误:', event.error);
     });
+
     window.addEventListener('unhandledrejection', (event) => {
         console.error('未处理的Promise拒绝:', event.reason);
     });
