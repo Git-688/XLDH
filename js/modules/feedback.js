@@ -1,55 +1,28 @@
 /**
- * 用户反馈模块 - 基于 Waline 评论系统
- * 健壮初始化：等待 Waline 脚本加载完成再初始化
+ * Waline 评论系统 - 独立反馈模块
+ * 动态加载 Waline，简洁初始化，自带模态框管理
  */
-class FeedbackModule {
+class WalineFeedback {
     constructor() {
         this.modal = document.getElementById('feedbackModal');
-        this.closeBtn = this.modal ? this.modal.querySelector('.feedback-modal-close') : null;
+        this.closeBtn = this.modal?.querySelector('.feedback-modal-close') || null;
         this.triggerBtn = document.getElementById('floatingFeedbackBtn');
+        this.walineContainer = document.getElementById('waline-feedback');
         this.isVisible = false;
-        this.isInited = false;
-        this.escHandler = null;
         this.walineInstance = null;
-        this.initCheckAttempts = 0;
-        this.maxInitCheckAttempts = 30;   // 最长等待 15 秒
-        this.init();
+        this._loaded = false;       // Waline 库是否已加载
+        this._initialized = false;  // Waline 实例是否已创建
 
-        // 确保 Waline 加载完成后自动初始化（以免首次打开延迟）
-        this.waitForWaline();
+        this._initModalEvents();
+        this._loadWalineScript();
     }
 
-    /**
-     * 轮询等待 Waline 全局对象可用
-     */
-    waitForWaline() {
-        if (typeof Waline !== 'undefined') {
-            this.isInited = true; // 提前标记避免重复 init
-            return;
-        }
-        this.initCheckAttempts++;
-        if (this.initCheckAttempts > this.maxInitCheckAttempts) {
-            console.error('Waline 脚本加载超时，请刷新页面或检查网络');
-            // 超时后显示友好提示
-            const container = document.getElementById('waline-feedback');
-            if (container) {
-                container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">评论系统加载失败，请稍后刷新页面重试</div>';
-            }
-            return;
-        }
-        setTimeout(() => this.waitForWaline(), 500);
-    }
-
-    init() {
-        if (!this.modal) {
-            console.warn('FeedbackModule: 找不到 #feedbackModal');
-            return;
-        }
+    // ========== 模态框基础事件 ==========
+    _initModalEvents() {
+        if (!this.modal) return;
 
         // 关闭按钮
-        if (this.closeBtn) {
-            this.closeBtn.addEventListener('click', () => this.hide());
-        }
+        this.closeBtn?.addEventListener('click', () => this.hide());
 
         // 点击遮罩关闭
         this.modal.addEventListener('click', (e) => {
@@ -57,45 +30,128 @@ class FeedbackModule {
         });
 
         // ESC 关闭
-        this.escHandler = (e) => {
-            if (e.key === 'Escape' && this.isVisible) {
-                this.hide();
-            }
-        };
-        document.addEventListener('keydown', this.escHandler);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isVisible) this.hide();
+        });
 
-        // 浮动按钮点击
-        if (this.triggerBtn) {
-            this.triggerBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.toggle();
-            });
-        }
-
-        window.feedbackModule = this;
+        // 浮动按钮触发
+        this.triggerBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggle();
+        });
     }
 
-    open() {
-        if (this.isVisible) return;
-        this.modal.style.display = 'flex';
-        this.modal.classList.add('active');
-        this.isVisible = true;
-
-        if (window.app && typeof window.app.registerModal === 'function') {
-            window.app.registerModal({ hide: this.hide.bind(this) });
+    // ========== 动态加载 Waline 脚本 ==========
+    _loadWalineScript() {
+        // 如果已经全局存在或正在加载，直接尝试初始化
+        if (typeof Waline !== 'undefined') {
+            this._loaded = true;
+            return;
         }
 
-        // 如果还没有初始化，尝试初始化（可能 waitForWaline 已完成）
-        if (!this.isInited) {
-            this.initWaline();
+        // 避免重复加载
+        if (document.querySelector('script[src*="@waline/client"]')) {
+            // 脚本标签已存在但未加载完成，监听 load 事件
+            const existingScript = document.querySelector('script[src*="@waline/client"]');
+            existingScript.addEventListener('load', () => {
+                this._loaded = true;
+            });
+            existingScript.addEventListener('error', () => {
+                console.error('Waline 脚本加载失败');
+                this._showLoadError();
+            });
+            return;
+        }
+
+        // 动态创建脚本
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+        script.async = true;
+        script.onload = () => {
+            this._loaded = true;
+            console.log('✅ Waline 脚本动态加载成功');
+        };
+        script.onerror = () => {
+            console.error('❌ Waline 脚本动态加载失败');
+            this._showLoadError();
+        };
+        document.head.appendChild(script);
+    }
+
+    _showLoadError() {
+        if (this.walineContainer) {
+            this.walineContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">评论系统加载失败，请刷新页面后重试</div>';
+        }
+    }
+
+    // ========== Waline 初始化 ==========
+    _initWaline() {
+        if (!this.walineContainer || this._initialized) return;
+
+        // 确保脚本已加载
+        if (!this._loaded || typeof Waline === 'undefined') {
+            // 尚未加载，等待脚本 onload 后自动调用 _initWaline
+            return;
+        }
+
+        // 清空容器中的旧提示
+        this.walineContainer.innerHTML = '';
+
+        try {
+            this.walineInstance = Waline.init({
+                el: '#waline-feedback',
+                serverURL: 'https://yy688.ccwu.cc/',
+                lang: 'zh-CN',
+                dark: 'auto',
+                path: '/feedback',
+                pageSize: 10,
+                requiredMeta: ['nick', 'mail'],
+                login: 'enable',
+                wordLimit: 1000,
+                imageUploader: false,
+                highlighter: true,
+                texRenderer: true,
+                search: false,
+            });
+            this._initialized = true;
+            console.log('✅ Waline 评论初始化完成');
+        } catch (err) {
+            console.error('Waline 初始化失败:', err);
+            this._showLoadError();
+        }
+    }
+
+    // ========== 显示/隐藏控制 ==========
+    open() {
+        if (this.isVisible || !this.modal) return;
+
+        // 如果 Waline 尚未初始化，立刻尝试初始化（脚本可能已经就绪）
+        if (!this._initialized) {
+            this._initWaline();
+        }
+
+        this.modal.style.display = 'flex';
+        // 等待一帧后添加 active 类以触发过渡动画
+        requestAnimationFrame(() => {
+            this.modal.classList.add('active');
+        });
+        this.isVisible = true;
+
+        // 注册到全局 App，以便统一管理模态框
+        if (window.app && typeof window.app.registerModal === 'function') {
+            window.app.registerModal({ hide: this.hide.bind(this) });
         }
     }
 
     hide() {
-        if (!this.isVisible) return;
+        if (!this.isVisible || !this.modal) return;
+
         this.modal.classList.remove('active');
-        this.modal.style.display = 'none';
+        // 等待过渡动画完成后隐藏
+        setTimeout(() => {
+            this.modal.style.display = 'none';
+        }, 300);
         this.isVisible = false;
 
         if (window.app && typeof window.app.unregisterModal === 'function') {
@@ -107,72 +163,22 @@ class FeedbackModule {
         this.isVisible ? this.hide() : this.open();
     }
 
-    /**
-     * 真正初始化 Waline（只有 Waline 已加载且容器存在时才执行）
-     */
-    initWaline() {
-        const container = document.getElementById('waline-feedback');
-        if (!container) {
-            console.warn('Waline 容器缺失 #waline-feedback');
-            return;
-        }
-        if (typeof Waline === 'undefined') {
-            // Waline 还没加载，但 waitForWaline 会负责延迟初始化，
-            // 这里只记录一次，不反复弹警告
-            if (!this._warnedOnce) {
-                console.log('Waline 脚本尚未就绪，将在加载完成后自动初始化');
-                this._warnedOnce = true;
-            }
-            return;
-        }
-
-        // 容器内可能已有“加载失败”提示，需清空
-        container.innerHTML = '';
-
-        // 销毁旧实例（如果有）
-        if (this.walineInstance && typeof this.walineInstance.destroy === 'function') {
-            try { this.walineInstance.destroy(); } catch (e) {}
-        }
-
-        this.walineInstance = Waline.init({
-            el: '#waline-feedback',
-            serverURL: 'https://yy688.ccwu.cc/',
-            lang: 'zh-CN',
-            dark: 'auto',
-            path: '/feedback',
-            pageSize: 10,
-            requiredMeta: ['nick', 'mail'],
-            login: 'enable',
-            wordLimit: 1000,
-            imageUploader: false,
-            highlighter: true,
-            texRenderer: true,
-            search: false,
-        });
-
-        this.isInited = true;
-        this._warnedOnce = false;
-        console.log('✅ Waline 评论初始化完成');
-    }
-
+    // ========== 清理 ==========
     destroy() {
-        if (this.escHandler) {
-            document.removeEventListener('keydown', this.escHandler);
-        }
+        this.hide();
         if (this.walineInstance && typeof this.walineInstance.destroy === 'function') {
             this.walineInstance.destroy();
             this.walineInstance = null;
         }
-        this.isInited = false;
-        this.hide();
+        this._initialized = false;
     }
 }
 
-// DOM 加载后实例化（此时 Waline 脚本可能还在加载，但我们的轮询会处理）
+// 在 DOM 准备完毕后实例化（单例）
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        new FeedbackModule();
+        window.walineFeedback = new WalineFeedback();
     });
 } else {
-    new FeedbackModule();
+    window.walineFeedback = new WalineFeedback();
 }
