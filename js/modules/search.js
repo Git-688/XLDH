@@ -171,14 +171,14 @@ class NewSearchModule {
     }
 
     async fetchBaiduSuggestions(query) {
-        // 移除 id/key 参数，直接调用无需鉴权
-        const url = `https://cn.apihz.cn/api/wangzhan/soubaiduxl.php?words=${encodeURIComponent(query)}`;
         try {
-            const resp = await fetch(url);
-            if (!resp.ok) return [];
-            const data = await resp.json();
-            return data.code === 200 && Array.isArray(data.datas) ? data.datas : [];
-        } catch { return []; }
+            const response = await fetch(`https://api.xjdh688.ccwu.cc/suggest?q=${encodeURIComponent(query)}`);
+            if (!response.ok) return [];
+            const data = await response.json();
+            return data.suggestions || [];
+        } catch {
+            return [];
+        }
     }
 
     showSuggestions() {
