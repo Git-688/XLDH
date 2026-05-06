@@ -1,28 +1,4 @@
-/* ===== 反馈模块专用样式（独立模块） ===== */
-
-/* 数学公式提示 */
-.math-hint {
-    padding: 8px 12px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    font-size: 12px;
-    color: #666;
-    border-left: 3px solid var(--primary-color);
-}
-.math-hint i {
-    margin-right: 6px;
-    color: var(--primary-color);
-}
-.math-hint code {
-    background: rgba(0, 0, 0, 0.06);
-    padding: 2px 5px;
-    border-radius: 4px;
-    font-family: monospace;
-    font-size: 11px;
-}
-
-/* 反馈弹窗容器（覆盖基础模态框的部分样式） */
+/* 反馈模态框容器覆盖（Waline 版本） */
 #feedbackModal {
     background: transparent;
     backdrop-filter: none;
@@ -42,46 +18,22 @@
     padding: 18px 24px 10px;
     color: #1e293b;
 }
-#feedbackModal .feedback-modal-header h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: inherit;
-}
-#feedbackModal .feedback-modal-header h3 i {
-    color: #4361ee;
-    font-size: 1.2rem;
-    margin-right: 10px;
-}
 #feedbackModal .feedback-modal-close {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
-    border: none;
-    color: #64748b;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4); border: none;
+    color: #64748b; font-size: 1rem; cursor: pointer;
     transition: background 0.2s;
 }
 #feedbackModal .feedback-modal-close:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: #334155;
+    background: rgba(0, 0, 0, 0.05); color: #334155;
 }
 #feedbackModal .feedback-modal-body {
     padding: 16px 20px;
     background: transparent;
 }
 
-/* 暗色模式适配（仅反馈部分） */
+/* 暗色模式适配 */
 @media (prefers-color-scheme: dark) {
-    .math-hint {
-        background: #1e1e1e;
-        color: #aaa;
-    }
-
     #feedbackModal .feedback-modal-content {
         background: rgba(30, 30, 30, 0.75);
         border-color: rgba(255, 255, 255, 0.15);
@@ -95,7 +47,6 @@
         color: #94a3b8;
     }
     #feedbackModal .feedback-modal-close:hover {
-        background: rgba(255, 255, 255, 0.2);
-        color: #e2e8f0;
+        background: rgba(255, 255, 255, 0.2); color: #e2e8f0;
     }
 }
