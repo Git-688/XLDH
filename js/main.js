@@ -19,45 +19,24 @@ class App {
         }
     }
 
-    // ========== 星聚笔记 API 配置 ==========
-    NOTEBOOK_CONFIG = {
-        apiUrl: 'https://cn.apihz.cn/api/cunchu/textzd.php',
-        id: '10014221',
-        key: '4a7768de1cf2e0f41fc0a4005240c837',
-        maxNumId: 20
-    };
-
-    // 加载星聚笔记数据（并行请求）
+    // 加载星聚笔记数据（通过 Worker 缓存接口）
     async loadNotebookData() {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
         listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
         try {
-            const promises = [];
-            for (let i = 1; i <= this.NOTEBOOK_CONFIG.maxNumId; i++) {
-                promises.push(
-                    fetch(`${this.NOTEBOOK_CONFIG.apiUrl}?id=${this.NOTEBOOK_CONFIG.id}&key=${this.NOTEBOOK_CONFIG.key}&numid=${i}`)
-                        .then(res => res.json())
-                        .then(data => ({ numid: i, ...data }))
-                        .catch(err => ({ numid: i, code: 500, msg: err.message }))
-                );
-            }
-            const results = await Promise.all(promises);
-            const validItems = results.filter(item => {
-                if (item.code !== 200) return false;
-                const title = item.title || '';
-                const words = item.words || '';
-                return title.trim() !== '' && words.trim() !== '';
-            });
-            validItems.sort((a, b) => a.numid - b.numid);
-            if (validItems.length === 0) {
+            const response = await fetch('https://api.xjdh688.ccwu.cc/notebook');
+            const data = await response.json();
+            const items = data.items || [];
+            if (items.length === 0) {
                 listEl.innerHTML = '<div class="empty">暂无笔记记录</div>';
                 return;
             }
-            const html = validItems.map(item => {
-                const title = this.escapeHtml(item.title.trim());
+            items.sort((a, b) => a.numid - b.numid);
+            const html = items.map(item => {
+                const title = this.escapeHtml((item.title || '').trim());
                 const time = this.escapeHtml(item.time || '--');
-                const words = this.escapeHtml(item.words.trim()).replace(/\n/g, '<br>');
+                const words = this.escapeHtml((item.words || '').trim()).replace(/\n/g, '<br>');
                 const numid = item.numid;
                 return `
                     <div class="notebook-item">
@@ -225,8 +204,6 @@ class App {
                     this.modules.about = window.aboutModule;
                 }
             }
-
-            // 评论模块由 feedback.js 独立管理，无需在此初始化
 
             Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {
                 console.log('所有模块初始化完成');
