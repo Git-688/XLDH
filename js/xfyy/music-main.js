@@ -1,6 +1,6 @@
 /**
  * 音乐播放器主入口文件 - 适配星聚导航
- * 已彻底过滤 Script error / null 噪音
+ * 已支持按需动态加载（不依赖 DOMContentLoaded 二次触发）
  */
 let musicPlayer = null;
 
@@ -20,7 +20,6 @@ function tryInitMusicPlayer(retry = 0) {
         window.musicPlayer = musicPlayer;
         console.log('悬浮音乐播放器初始化成功');
 
-        // 安全调用 Utils.isMobile()
         if (typeof Utils !== 'undefined' && typeof Utils.isMobile === 'function' && Utils.isMobile()) {
             document.body.classList.add('mobile-device');
         }
@@ -33,12 +32,6 @@ function tryInitMusicPlayer(retry = 0) {
         window.toast?.show('音乐播放器初始化失败', 'error');
     }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('初始化音乐播放器系统...');
-    initMusicPlayerControl();
-    tryInitMusicPlayer();
-});
 
 function initMusicPlayerControl() {
     const el = document.getElementById('musicPlayer');
@@ -70,8 +63,23 @@ function setupGlobalErrorHandling() {
     });
 }
 
+// ===== 关键修复：根据文档状态决定如何初始化 =====
+function initWhenReady() {
+    initMusicPlayerControl();
+    tryInitMusicPlayer();
+}
+
+if (document.readyState === 'loading') {
+    // 页面尚未完全加载，等待 DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', initWhenReady);
+} else {
+    // 页面已加载（动态添加脚本的情况），直接执行
+    initWhenReady();
+}
+
 setupGlobalErrorHandling();   // 立即执行，尽早接管
 
+// 对外暴露的控制方法（与原先一致）
 window.toggleMusicPlayer = () => window.app?.components?.navbar?.toggleMusicPlayer();
 window.showMusicPlayer = () => window.app?.components?.navbar?.showMusicPlayer();
 window.hideMusicPlayer = () => window.app?.components?.navbar?.hideMusicPlayer();
