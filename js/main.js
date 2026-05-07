@@ -1,5 +1,5 @@
 /**
- * 星聚导航主应用程序（CSP修复版 + 音乐播放器按需加载优化）
+ * 星聚导航主应用程序（CSP修复版，音乐播放器还原为初始加载）
  */
 class App {
     constructor() {
@@ -9,7 +9,6 @@ class App {
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.notebookModalHideRef = null;
-        this._musicPlayerLoading = null; // 防止重复加载
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -117,7 +116,6 @@ class App {
             const fbType = img.dataset.fallbackType;
             const parent = img.parentElement;
             
-            // 防止重复触发
             img.classList.remove('js-img-fallback');
             
             if (fbType === 'hideAndShowIcon') {
@@ -140,79 +138,6 @@ class App {
                 }
             }
         }, true);
-    }
-
-    // ========== 动态加载音乐播放器 ==========
-    async loadMusicPlayer() {
-        // 如果已经加载过实例，直接跳过
-        if (window.musicPlayer) return;
-
-        // 如果正在加载中，返回相同 Promise 防止重复
-        if (this._musicPlayerLoading) return this._musicPlayerLoading;
-        this._musicPlayerLoading = this._doLoadMusicPlayer();
-        try {
-            await this._musicPlayerLoading;
-        } finally {
-            this._musicPlayerLoading = null;
-        }
-    }
-
-    async _doLoadMusicPlayer() {
-        const resources = [
-            { type: 'css', url: './css/xfyy1/music-player.css' },
-            { type: 'js',  url: './js/xfyy/cache-manager.js' },
-            { type: 'js',  url: './js/xfyy/lyric-parser.js' },
-            { type: 'js',  url: './data/local-music-data.js' },
-            { type: 'js',  url: './js/xfyy/plugin-manager.js' },
-            { type: 'js',  url: './js/xfyy/music-player.js' },
-            { type: 'js',  url: './js/xfyy/music-main.js' }
-        ];
-
-        const loadResource = (type, url) => {
-            return new Promise((resolve, reject) => {
-                if (type === 'css') {
-                    const link = document.createElement('link');
-                    link.rel = 'stylesheet';
-                    link.href = url;
-                    link.onload = resolve;
-                    link.onerror = reject;
-                    document.head.appendChild(link);
-                } else {
-                    const script = document.createElement('script');
-                    script.src = url;
-                    script.async = false;
-                    script.onload = resolve;
-                    script.onerror = reject;
-                    document.body.appendChild(script);
-                }
-            });
-        };
-
-        try {
-            for (const res of resources) {
-                await loadResource(res.type, res.url);
-            }
-            // 等待 window.musicPlayer 实例创建，最多等 5 秒
-            await new Promise((resolve, reject) => {
-                const start = Date.now();
-                const check = () => {
-                    if (window.musicPlayer) {
-                        resolve();
-                    } else if (Date.now() - start > 5000) {
-                        reject(new Error('MusicPlayer 初始化超时'));
-                    } else {
-                        setTimeout(check, 50);
-                    }
-                };
-                check();
-            });
-            // 短暂延迟确保 DOM 完全就绪
-            await new Promise(resolve => setTimeout(resolve, 150));
-        } catch (error) {
-            console.error('加载音乐播放器失败:', error);
-            this.showToast('音乐播放器加载失败', 'error');
-            throw error;
-        }
     }
 
     // ========== 应用初始化 ==========
