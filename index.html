@@ -211,8 +211,17 @@
             color: #1e293b;
             flex-shrink: 0;
         }
-        #notebookModal .feedback-modal-header h3 { font-size: 1.2rem; font-weight: 600; color: inherit; }
-        #notebookModal .feedback-modal-header h3 i { color: #4361ee; font-size: 1.2rem; margin-right: 10px; }
+        /* 缩小笔记头部字体和图标 */
+        #notebookModal .feedback-modal-header h3 {
+            font-size: 1.05rem;        /* 原 1.2rem */
+            font-weight: 600;
+            color: inherit;
+        }
+        #notebookModal .feedback-modal-header h3 i {
+            color: #4361ee;
+            font-size: 1.05rem;        /* 原 1.2rem */
+            margin-right: 10px;
+        }
         #notebookModal .feedback-modal-close {
             width: 32px; height: 32px; border-radius: 50%;
             background: rgba(255, 255, 255, 0.4);
