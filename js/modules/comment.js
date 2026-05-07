@@ -82,7 +82,7 @@ class CommentModal {
                 if (!this.walineInstance) {
                     this.walineInstance = Waline.init({
                         el: '#waline-comment',
-                        serverURL: 'https://your-waline-server.vercel.app',  // 替换为你的 Waline 服务地址
+                        serverURL: 'https://yy688.ccwu.cc',  // 替换为你的 Waline 服务地址
                         dark: 'auto',
                         meta: ['nick', 'mail', 'link'],
                         requiredMeta: ['nick'],
