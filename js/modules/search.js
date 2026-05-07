@@ -222,7 +222,8 @@ class NewSearchModule {
             ).join('');
         }
         if (related && related.length > 0) {
-            html += '<div class="suggestion-divider">— 相关搜索 —</div>';
+            // 优化样式并居中
+            html += '<div style="text-align:center;color:var(--text-secondary);font-size:11px;padding:10px 0 6px;letter-spacing:1px;opacity:0.8;">— 相关搜索 —</div>';
             html += related.map(r =>
                 `<div class="suggestion-item related-item" data-type="related">${this.escapeHtml(r)}</div>`
             ).join('');
