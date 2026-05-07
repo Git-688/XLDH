@@ -6,6 +6,7 @@ class NewSearchModule {
             { key: 'baidu',   label: '百度',   url: 'https://www.baidu.com/s?wd=', icon: 'fas fa-search' },
             { key: 'google',  label: '谷歌',   url: 'https://www.google.com/search?q=', icon: 'fab fa-google' },
             { key: '360',     label: '360',    url: 'https://www.so.com/s?q=', icon: 'fas fa-shield-alt' },
+            // 【修复1】抖音搜索URL改为正确的搜索接口
             { key: 'douyin',  label: '抖音',   url: 'https://www.douyin.com/search/', icon: 'fas fa-music' },
             { key: 'all',     label: '全网',   url: 'https://api.pearktrue.cn/api/universalsearch/', icon: 'fas fa-globe' }
         ];
@@ -37,21 +38,18 @@ class NewSearchModule {
         this.bindEvents();
     }
 
-    // ========== 事件绑定（核心修复） ==========
+    // ========== 事件绑定 ==========
     bindEvents() {
-        // 模态框背景点击关闭
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.hide();
         });
 
-        // ESC 关闭
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isOpen) {
                 this.hide();
             }
         });
 
-        // 搜索引擎切换按钮
         if (this.triggerBtn) {
             this.triggerBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -59,7 +57,6 @@ class NewSearchModule {
             });
         }
 
-        // 全局点击关闭下拉
         document.addEventListener('click', (e) => {
             if (this.dropdown && !this.dropdown.contains(e.target) &&
                 e.target !== this.triggerBtn && !this.triggerBtn.contains(e.target)) {
@@ -67,7 +64,6 @@ class NewSearchModule {
             }
         });
 
-        // 搜索引擎下拉选择
         if (this.dropdown) {
             this.dropdown.addEventListener('click', (e) => {
                 const item = e.target.closest('.engine-dropdown-item');
@@ -78,7 +74,6 @@ class NewSearchModule {
             });
         }
 
-        // 清除历史
         if (this.clearHistoryBtn) {
             this.clearHistoryBtn.addEventListener('click', () => {
                 this.history = [];
@@ -87,23 +82,20 @@ class NewSearchModule {
             });
         }
 
-        // ===== 【修复】输入框事件绑定 =====
+        // 输入框事件
         if (this.input) {
-            // 回车搜索
             this.input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     this.submitSearch();
                 }
             });
-
-            // 输入联想
             this.input.addEventListener('input', () => {
                 this.showSuggestions();
             });
         }
 
-        // ===== 【修复】提交按钮绑定 =====
+        // 提交按钮
         const submitBtn = document.querySelector('.search-submit-btn');
         if (submitBtn) {
             submitBtn.addEventListener('click', () => {
@@ -112,10 +104,7 @@ class NewSearchModule {
         }
     }
 
-    // ========== 显示/隐藏 ==========
-    toggle() {
-        this.isOpen ? this.hide() : this.show();
-    }
+    toggle() { this.isOpen ? this.hide() : this.show(); }
 
     show() {
         if (!this.modal || this.isOpen) return;
@@ -143,7 +132,6 @@ class NewSearchModule {
         if (window.app) window.app.unregisterModal(this);
     }
 
-    // ========== 搜索引擎 ==========
     renderDropdown() {
         if (!this.dropdown) return;
         this.dropdown.innerHTML = '';
@@ -160,7 +148,6 @@ class NewSearchModule {
         if (!this.dropdown) return;
         this.dropdown.classList.contains('active') ? this.closeDropdown() : this.openDropdown();
     }
-
     openDropdown() { if (this.dropdown) this.dropdown.classList.add('active'); }
     closeDropdown() { if (this.dropdown) this.dropdown.classList.remove('active'); }
 
@@ -177,12 +164,17 @@ class NewSearchModule {
         if (this.engineIcon && eng) this.engineIcon.className = eng.icon;
     }
 
-    // ========== 搜索提交 ==========
     submitSearch() {
         const query = this.input.value.trim();
         if (!query) { window.toast.show('请输入搜索内容', 'warning'); return; }
         const eng = this.engines.find(e => e.key === this.currentEngine) || this.engines[0];
-        window.open(eng.url + encodeURIComponent(query), '_blank');
+
+        // 【修复1】抖音搜索URL需要额外参数才能正确搜索
+        let searchUrl = eng.url + encodeURIComponent(query);
+        if (eng.key === 'douyin') {
+            searchUrl += '?type=general'; // 添加类型参数避免跳首页
+        }
+        window.open(searchUrl, '_blank');
         this.addHistory(query);
         this.hide();
     }
@@ -194,7 +186,7 @@ class NewSearchModule {
         this.saveSetting('searchHistory2', this.history);
     }
 
-    // ========== 搜索建议（联想） ==========
+    // ========== 搜索建议 ==========
     async fetchBaiduSuggestions(query) {
         const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
         const url = `${apiBase}/search/suggest?q=${encodeURIComponent(query)}`;
@@ -212,10 +204,13 @@ class NewSearchModule {
         const q = this.input.value.trim();
         if (!q) { this.clearSuggestions(); return; }
         clearTimeout(this.suggestTimer);
+        // 【修复3】防抖延迟从300ms提高到500ms，减少请求频率
         this.suggestTimer = setTimeout(async () => {
             const words = await this.fetchBaiduSuggestions(q);
+            // 防止输入已清空后过期响应仍更新UI
+            if (this.input.value.trim() !== q) return;
             this.renderSuggestions(words);
-        }, 300);
+        }, 500);
     }
 
     renderSuggestions(words) {
@@ -236,7 +231,10 @@ class NewSearchModule {
         this.suggestionsContainer.classList.add('active');
     }
 
+    // 【修复6】清空建议时同时取消未执行的定时器，并检查是否已清空
     clearSuggestions() {
+        clearTimeout(this.suggestTimer);
+        this.suggestTimer = null;
         if (this.suggestionsContainer) {
             this.suggestionsContainer.innerHTML = '';
             this.suggestionsContainer.classList.remove('active');
@@ -280,6 +278,7 @@ class NewSearchModule {
         return div.innerHTML;
     }
 
+    // 已内置try-catch，禁用localStorage时不会报错
     loadSetting(key, def) {
         try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : def; } catch { return def; }
     }
@@ -288,7 +287,6 @@ class NewSearchModule {
     }
 }
 
-// 初始化
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.newSearchModule) new NewSearchModule();
 });
