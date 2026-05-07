@@ -29,13 +29,16 @@ class Navbar {
             });
         }
 
-        // ========== 音乐按钮 ==========
+        // ========== 音乐按钮（按需加载） ==========
         const musicBtn = document.getElementById('musicBtn');
         if (musicBtn) {
             musicBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.handleFeatureToggle('music', () => this.toggleMusicPlayer());
+                // 加载音乐播放器（若未加载），然后再切换显示
+                window.app.loadMusicPlayer().then(() => {
+                    this.handleFeatureToggle('music', () => this.toggleMusicPlayer());
+                });
             });
         }
 
