@@ -1,6 +1,6 @@
 /**
- * 评论模块 - Waline 集成（静态资源版）
- * 页面初始化时 Waline 已加载，通过悬浮按钮控制模态框
+ * 评论模块 - Waline 集成 (V3 API 适配版)
+ * 采用 Waline Client V3 的 init 初始化方式，非动态加载
  */
 class CommentModal {
     constructor() {
@@ -11,6 +11,7 @@ class CommentModal {
             return;
         }
         this._bindButton();
+        // 确保 DOM 容器存在后，再进行 Waline 初始化
         this._initWaline();
     }
 
@@ -35,22 +36,32 @@ class CommentModal {
             console.error('Waline 未加载，请检查脚本引入');
             return;
         }
-        this.walineInstance = Waline.init({
-            el: '#waline-comment',
-            serverURL: 'https://yy688.ccwu.cc',  // 替换为你的 Waline 地址
-            dark: 'auto',
-            meta: ['nick', 'mail', 'link'],
-            requiredMeta: ['nick'],
-            pageSize: 10,
-        });
+        // 关键修复：Waline V3 使用 Waline.init() 而非 new Waline.init()
+        try {
+            this.walineInstance = Waline.init({
+                el: '#waline-comment',
+                serverURL: 'https://yy688.ccwu.cc',
+                dark: 'auto',
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: ['nick'],
+                pageSize: 10,
+            });
+        } catch (error) {
+            console.error('Waline 初始化失败:', error);
+            window.toast?.show('评论系统初始化失败，请稍后刷新重试', 'error');
+        }
     }
 
     show() {
+        if (!this.modal || !this.walineInstance) {
+            window.toast?.show('评论系统正在加载中，请稍后再试', 'warning');
+            return;
+        }
         this.modal.classList.add('active');
     }
 
     hide() {
-        this.modal.classList.remove('active');
+        this.modal?.classList.remove('active');
     }
 }
 
