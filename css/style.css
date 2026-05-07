@@ -335,13 +335,6 @@ p {
 }
 
 /* 新增悬浮按钮颜色 - 用于互换后的按钮 */
-.floating-btn.feedback-btn {
-    color: #8b5cf6;
-}
-.floating-btn.feedback-btn:hover {
-    color: #7c3aed;
-}
-
 .floating-btn.submit-btn {
     color: #06b6d4;
 }
@@ -395,12 +388,6 @@ p {
         color: #ff7a47;
     }
     
-    .floating-btn.feedback-btn {
-        color: #a78bfa;
-    }
-    .floating-btn.feedback-btn:hover {
-        color: #c4b5fd;
-    }
     .floating-btn.submit-btn {
         color: #22d3ee;
     }
