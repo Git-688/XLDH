@@ -1,4 +1,4 @@
-/* 公告模态框 - 亚克力效果 + 居中 + 移动端左右间距 */
+/* 公告模态框 - 亚克力效果 + 居中 + 移动端左右间距（字体缩小版） */
 .announcement-modal-simple {
     position: fixed;
     top: 0;
@@ -13,7 +13,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: calc(var(--container-padding-xs, 16px)) calc(var(--container-padding-xs, 16px)); /* 移动端水平间距与主页一致 */
+    padding: calc(var(--container-padding-xs, 16px)) calc(var(--container-padding-xs, 16px));
     box-sizing: border-box;
 }
 
@@ -53,27 +53,27 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 18px 24px 10px;
+    padding: 16px 20px 8px;       /* 稍微减小内边距 */
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .announcement-title {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     font-weight: 600;
-    font-size: 1.2rem;
+    font-size: 1.05rem;           /* 原 1.2rem 缩小 */
     color: var(--text-primary);
 }
 
 .announcement-close {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.4);
     border: none;
     color: var(--text-secondary);
-    font-size: 1rem;
+    font-size: 0.95rem;           /* 原 1rem */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -87,28 +87,39 @@
 }
 
 .announcement-body {
-    padding: 20px 24px 16px;
+    padding: 16px 20px 12px;      /* 原 20px 24px 16px 缩小 */
     display: flex;
     flex-direction: column;
-    max-height: 350px;      /* 总高度限制，由子元素分配 */
+    max-height: 350px;
 }
 
-/* --- 重要提醒区域固定，不滚动 --- */
+/* --- 重要提醒区域 --- */
 .focus-section {
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 20px;
-    flex-shrink: 0;         /* 保证不被压缩 */
+    padding: 12px;                 /* 原 16px */
+    margin-bottom: 16px;
+    flex-shrink: 0;
+}
+
+/* 新增：section 标签文字（"重要提醒"/"更新内容"） */
+.section-label {
+    font-size: 0.8rem;            /* 比正文稍大一点 */
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .focus-content {
     color: var(--text-primary);
-    font-size: 0.95rem;
+    font-size: 0.85rem;           /* 原 0.95rem */
     line-height: 1.5;
-    padding-left: 22px;
+    padding-left: 20px;
 }
 
 .updates-section {
@@ -131,9 +142,9 @@
 
 .updates-list li {
     position: relative;
-    padding: 8px 0 8px 24px;
+    padding: 6px 0 6px 22px;      /* 原 8px 0 8px 24px */
     color: var(--text-primary);
-    font-size: 0.9rem;
+    font-size: 0.8rem;            /* 原 0.9rem */
     line-height: 1.5;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
@@ -146,9 +157,9 @@
     content: '';
     position: absolute;
     left: 8px;
-    top: 14px;
-    width: 6px;
-    height: 6px;
+    top: 12px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: var(--primary-color);
 }
@@ -157,7 +168,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 24px 20px;
+    padding: 12px 20px 16px;      /* 原 14px 24px 20px */
     background: rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -167,18 +178,18 @@
 .announcement-date {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.78rem;           /* 原 0.85rem */
 }
 
 .announcement-ack-btn {
     background: var(--primary-color);
     border: none;
     color: white;
-    font-size: 0.9rem;
+    font-size: 0.82rem;           /* 原 0.9rem */
     font-weight: 500;
-    padding: 6px 20px;
+    padding: 5px 18px;            /* 原 6px 20px */
     border-radius: 40px;
     cursor: pointer;
     transition: background 0.2s, box-shadow 0.2s;
@@ -186,34 +197,40 @@
 }
 
 .announcement-ack-btn:hover {
-    background: #3651d4;                     /* 保留原有深色，与主题色保持协调 */
+    background: #3651d4;
     box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
 }
 
-/* 响应式 */
+/* 响应式微调 */
 @media (max-width: 600px) {
     .announcement-header {
-        padding: 16px 20px 8px;
+        padding: 14px 18px 6px;
     }
     .announcement-title {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
     .announcement-body {
-        padding: 16px 20px 12px;
+        padding: 14px 18px 10px;
     }
     .focus-section {
-        padding: 12px;
+        padding: 10px;
+    }
+    .focus-content {
+        font-size: 0.8rem;
     }
     .updates-list li {
-        font-size: 0.85rem;
-        padding: 6px 0 6px 22px;
+        font-size: 0.75rem;
+        padding: 5px 0 5px 20px;
     }
     .announcement-footer {
-        padding: 12px 20px 16px;
+        padding: 10px 18px 14px;
+    }
+    .announcement-date {
+        font-size: 0.73rem;
     }
     .announcement-ack-btn {
-        padding: 5px 16px;
-        font-size: 0.85rem;
+        padding: 4px 14px;
+        font-size: 0.78rem;
     }
 }
 
@@ -222,9 +239,15 @@
         border-radius: 6px;
     }
     .announcement-header {
-        padding: 14px 16px 6px;
+        padding: 12px 14px 4px;
     }
     .announcement-body {
-        padding: 14px 16px 10px;
+        padding: 12px 14px 8px;
+    }
+    .focus-content {
+        font-size: 0.78rem;
+    }
+    .updates-list li {
+        font-size: 0.73rem;
     }
 }
