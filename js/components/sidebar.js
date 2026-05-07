@@ -1,15 +1,3 @@
-// 确保 Utils 存在（检查，不重复声明）
-if (typeof Utils === 'undefined') {
-    console.warn('Utils 未加载，请检查 utils.js 顺序');
-    window.Utils = {
-        escapeHtml: function(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = String(text);
-            return div.innerHTML;
-        }
-    };
-}
 
 /**
  * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域紧凑对称 + 星聚笔记按钮）
