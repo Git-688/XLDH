@@ -72,16 +72,7 @@ class Navbar {
             });
         }
 
-        // ========== 反馈按钮（使用 Waline 实例 toggle） ==========
-        const fbBtn = document.getElementById('floatingFeedbackBtn');
-        if (fbBtn) {
-            fbBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.closeAllModalsExcept(['feedback']);
-                if (window.walineFeedback) window.walineFeedback.toggle();
-            });
-        }
+        // 反馈按钮事件已移除（floatingFeedbackBtn 不再需要）
 
         // ========== 投稿按钮 ==========
         const submitBtn = document.getElementById('floatingSubmitBtn');
@@ -118,10 +109,8 @@ class Navbar {
     handleFeatureToggle(featureKey, toggleFn) {
         const isOpen = this.isFeatureOpen(featureKey);
         if (isOpen) {
-            // 功能已打开 → 直接关闭
             toggleFn();
         } else {
-            // 功能未打开 → 先关闭其他所有，然后打开目标
             this.closeAllModalsExcept([featureKey]);
             requestAnimationFrame(() => {
                 toggleFn();
