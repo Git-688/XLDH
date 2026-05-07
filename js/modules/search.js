@@ -37,14 +37,21 @@ class NewSearchModule {
         this.bindEvents();
     }
 
+    // ========== 事件绑定（核心修复） ==========
     bindEvents() {
+        // 模态框背景点击关闭
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.hide();
         });
+
+        // ESC 关闭
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isOpen) this.hide();
+            if (e.key === 'Escape' && this.isOpen) {
+                this.hide();
+            }
         });
 
+        // 搜索引擎切换按钮
         if (this.triggerBtn) {
             this.triggerBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -52,6 +59,7 @@ class NewSearchModule {
             });
         }
 
+        // 全局点击关闭下拉
         document.addEventListener('click', (e) => {
             if (this.dropdown && !this.dropdown.contains(e.target) &&
                 e.target !== this.triggerBtn && !this.triggerBtn.contains(e.target)) {
@@ -59,6 +67,7 @@ class NewSearchModule {
             }
         });
 
+        // 搜索引擎下拉选择
         if (this.dropdown) {
             this.dropdown.addEventListener('click', (e) => {
                 const item = e.target.closest('.engine-dropdown-item');
@@ -69,6 +78,7 @@ class NewSearchModule {
             });
         }
 
+        // 清除历史
         if (this.clearHistoryBtn) {
             this.clearHistoryBtn.addEventListener('click', () => {
                 this.history = [];
@@ -76,8 +86,33 @@ class NewSearchModule {
                 this.renderHistory();
             });
         }
+
+        // ===== 【修复】输入框事件绑定 =====
+        if (this.input) {
+            // 回车搜索
+            this.input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.submitSearch();
+                }
+            });
+
+            // 输入联想
+            this.input.addEventListener('input', () => {
+                this.showSuggestions();
+            });
+        }
+
+        // ===== 【修复】提交按钮绑定 =====
+        const submitBtn = document.querySelector('.search-submit-btn');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', () => {
+                this.submitSearch();
+            });
+        }
     }
 
+    // ========== 显示/隐藏 ==========
     toggle() {
         this.isOpen ? this.hide() : this.show();
     }
@@ -108,6 +143,7 @@ class NewSearchModule {
         if (window.app) window.app.unregisterModal(this);
     }
 
+    // ========== 搜索引擎 ==========
     renderDropdown() {
         if (!this.dropdown) return;
         this.dropdown.innerHTML = '';
@@ -141,6 +177,7 @@ class NewSearchModule {
         if (this.engineIcon && eng) this.engineIcon.className = eng.icon;
     }
 
+    // ========== 搜索提交 ==========
     submitSearch() {
         const query = this.input.value.trim();
         if (!query) { window.toast.show('请输入搜索内容', 'warning'); return; }
@@ -150,28 +187,17 @@ class NewSearchModule {
         this.hide();
     }
 
-    handleSearch(event) {
-        if (event.key === 'Enter') this.submitSearch();
+    addHistory(query) {
+        this.history = this.history.filter(h => h !== query);
+        this.history.unshift(query);
+        if (this.history.length > this.maxHistory) this.history = this.history.slice(0, this.maxHistory);
+        this.saveSetting('searchHistory2', this.history);
     }
 
-    // 使用 Worker 代理的联想词接口
+    // ========== 搜索建议（联想） ==========
     async fetchBaiduSuggestions(query) {
         const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
         const url = `${apiBase}/search/suggest?q=${encodeURIComponent(query)}`;
-        try {
-            const resp = await fetch(url);
-            if (!resp.ok) return [];
-            const data = await resp.json();
-            return data.code === 200 && Array.isArray(data.data) ? data.data : [];
-        } catch {
-            return [];
-        }
-    }
-
-    // 新增：相关搜索内容（备用）
-    async fetchRelatedSearches(query) {
-        const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
-        const url = `${apiBase}/search/related?q=${encodeURIComponent(query)}`;
         try {
             const resp = await fetch(url);
             if (!resp.ok) return [];
@@ -217,13 +243,7 @@ class NewSearchModule {
         }
     }
 
-    addHistory(query) {
-        this.history = this.history.filter(h => h !== query);
-        this.history.unshift(query);
-        if (this.history.length > this.maxHistory) this.history = this.history.slice(0, this.maxHistory);
-        this.saveSetting('searchHistory2', this.history);
-    }
-
+    // ========== 历史记录 ==========
     renderHistory() {
         if (!this.historyList) return;
         if (this.history.length === 0) {
@@ -234,7 +254,7 @@ class NewSearchModule {
         this.history.forEach(query => {
             const item = document.createElement('div');
             item.className = 'history-item';
-            item.innerHTML = `<span class="history-text">${query}</span><i class="fas fa-times delete-history"></i>`;
+            item.innerHTML = `<span class="history-text">${this.escapeHtml(query)}</span><i class="fas fa-times delete-history"></i>`;
             item.querySelector('.history-text').addEventListener('click', () => {
                 this.input.value = query;
                 this.submitSearch();
@@ -253,6 +273,13 @@ class NewSearchModule {
         this.renderHistory();
     }
 
+    // ========== 工具方法 ==========
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     loadSetting(key, def) {
         try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : def; } catch { return def; }
     }
@@ -261,6 +288,7 @@ class NewSearchModule {
     }
 }
 
+// 初始化
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.newSearchModule) new NewSearchModule();
 });
