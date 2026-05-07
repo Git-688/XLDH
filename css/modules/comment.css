@@ -1,6 +1,4 @@
 /* ========== 评论模态框样式（独立模块） ========== */
-/* 复用通用亚克力风格，作用域限定 #commentModal */
-
 #commentModal {
     position: fixed;
     top: 0;
