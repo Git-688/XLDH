@@ -6,7 +6,6 @@ class NewSearchModule {
             { key: 'baidu',   label: '百度',   url: 'https://www.baidu.com/s?wd=', icon: 'fas fa-search' },
             { key: 'google',  label: '谷歌',   url: 'https://www.google.com/search?q=', icon: 'fab fa-google' },
             { key: '360',     label: '360',    url: 'https://www.so.com/s?q=', icon: 'fas fa-shield-alt' },
-            // 【修复1】抖音搜索URL改为正确的搜索接口
             { key: 'douyin',  label: '抖音',   url: 'https://www.douyin.com/search/', icon: 'fas fa-music' },
             { key: 'all',     label: '全网',   url: 'https://api.pearktrue.cn/api/universalsearch/', icon: 'fas fa-globe' }
         ];
@@ -38,16 +37,12 @@ class NewSearchModule {
         this.bindEvents();
     }
 
-    // ========== 事件绑定 ==========
     bindEvents() {
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.hide();
         });
-
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isOpen) {
-                this.hide();
-            }
+            if (e.key === 'Escape' && this.isOpen) this.hide();
         });
 
         if (this.triggerBtn) {
@@ -81,30 +76,11 @@ class NewSearchModule {
                 this.renderHistory();
             });
         }
-
-        // 输入框事件
-        if (this.input) {
-            this.input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    this.submitSearch();
-                }
-            });
-            this.input.addEventListener('input', () => {
-                this.showSuggestions();
-            });
-        }
-
-        // 提交按钮
-        const submitBtn = document.querySelector('.search-submit-btn');
-        if (submitBtn) {
-            submitBtn.addEventListener('click', () => {
-                this.submitSearch();
-            });
-        }
     }
 
-    toggle() { this.isOpen ? this.hide() : this.show(); }
+    toggle() {
+        this.isOpen ? this.hide() : this.show();
+    }
 
     show() {
         if (!this.modal || this.isOpen) return;
@@ -148,6 +124,7 @@ class NewSearchModule {
         if (!this.dropdown) return;
         this.dropdown.classList.contains('active') ? this.closeDropdown() : this.openDropdown();
     }
+
     openDropdown() { if (this.dropdown) this.dropdown.classList.add('active'); }
     closeDropdown() { if (this.dropdown) this.dropdown.classList.remove('active'); }
 
@@ -168,25 +145,16 @@ class NewSearchModule {
         const query = this.input.value.trim();
         if (!query) { window.toast.show('请输入搜索内容', 'warning'); return; }
         const eng = this.engines.find(e => e.key === this.currentEngine) || this.engines[0];
-
-        // 【修复1】抖音搜索URL需要额外参数才能正确搜索
-        let searchUrl = eng.url + encodeURIComponent(query);
-        if (eng.key === 'douyin') {
-            searchUrl += '?type=general'; // 添加类型参数避免跳首页
-        }
-        window.open(searchUrl, '_blank');
+        window.open(eng.url + encodeURIComponent(query), '_blank');
         this.addHistory(query);
         this.hide();
     }
 
-    addHistory(query) {
-        this.history = this.history.filter(h => h !== query);
-        this.history.unshift(query);
-        if (this.history.length > this.maxHistory) this.history = this.history.slice(0, this.maxHistory);
-        this.saveSetting('searchHistory2', this.history);
+    handleSearch(event) {
+        if (event.key === 'Enter') this.submitSearch();
     }
 
-    // ========== 搜索建议 ==========
+    // ---------- 新增接口调用 ----------
     async fetchBaiduSuggestions(query) {
         const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
         const url = `${apiBase}/search/suggest?q=${encodeURIComponent(query)}`;
@@ -195,53 +163,101 @@ class NewSearchModule {
             if (!resp.ok) return [];
             const data = await resp.json();
             return data.code === 200 && Array.isArray(data.data) ? data.data : [];
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
 
+    async fetchRelatedSearches(query) {
+        const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
+        const url = `${apiBase}/search/related?q=${encodeURIComponent(query)}`;
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) return [];
+            const data = await resp.json();
+            return data.code === 200 && Array.isArray(data.data) ? data.data : [];
+        } catch { return []; }
+    }
+
+    // ---------- 核心改动：并发获取联想词 + 相关搜索，并合并渲染 ----------
     showSuggestions() {
         const q = this.input.value.trim();
         if (!q) { this.clearSuggestions(); return; }
         clearTimeout(this.suggestTimer);
-        // 【修复3】防抖延迟从300ms提高到500ms，减少请求频率
         this.suggestTimer = setTimeout(async () => {
-            const words = await this.fetchBaiduSuggestions(q);
-            // 防止输入已清空后过期响应仍更新UI
-            if (this.input.value.trim() !== q) return;
-            this.renderSuggestions(words);
-        }, 500);
+            // 并发请求两个接口
+            const [words, related] = await Promise.all([
+                this.fetchBaiduSuggestions(q),
+                this.fetchRelatedSearches(q)
+            ]);
+            this.renderAllSuggestions(words, related);
+        }, 300);
     }
 
-    renderSuggestions(words) {
+    // 统一渲染联想词和相关搜索
+    renderAllSuggestions(words, related) {
         if (!this.suggestionsContainer) return;
-        if (!words || words.length === 0) { this.clearSuggestions(); return; }
-        this.suggestionsContainer.innerHTML = '';
-        words.forEach(w => {
-            const el = document.createElement('div');
-            el.className = 'suggestion-item';
-            el.textContent = w;
-            el.addEventListener('click', () => {
-                this.input.value = w;
+
+        // 两条数据都为空时清空并隐藏
+        if ((!words || words.length === 0) && (!related || related.length === 0)) {
+            this.clearSuggestions();
+            return;
+        }
+
+        let html = '';
+
+        // 1. 联想词部分
+        if (words && words.length > 0) {
+            html += words.map(w =>
+                `<div class="suggestion-item" data-type="suggest">${this.escapeHtml(w)}</div>`
+            ).join('');
+        }
+
+        // 2. 相关搜索部分（如果存在）
+        if (related && related.length > 0) {
+            html += '<div class="suggestion-divider">— 相关搜索 —</div>';
+            html += related.map(r =>
+                `<div class="suggestion-item related-item" data-type="related">${this.escapeHtml(r)}</div>`
+            ).join('');
+        }
+
+        this.suggestionsContainer.innerHTML = html;
+        this.suggestionsContainer.classList.add('active');
+
+        // 绑定点击事件：点击任意一个词都填入搜索框并搜索
+        const items = this.suggestionsContainer.querySelectorAll('.suggestion-item');
+        items.forEach(item => {
+            item.addEventListener('click', () => {
+                this.input.value = item.textContent;
                 this.clearSuggestions();
                 this.submitSearch();
             });
-            this.suggestionsContainer.appendChild(el);
         });
-        this.suggestionsContainer.classList.add('active');
     }
 
-    // 【修复6】清空建议时同时取消未执行的定时器，并检查是否已清空
     clearSuggestions() {
-        clearTimeout(this.suggestTimer);
-        this.suggestTimer = null;
         if (this.suggestionsContainer) {
             this.suggestionsContainer.innerHTML = '';
             this.suggestionsContainer.classList.remove('active');
         }
     }
 
-    // ========== 历史记录 ==========
+    // 轻量转义（防止 XSS）
+    escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    // ---------- 历史记录管理 ----------
+    addHistory(query) {
+        this.history = this.history.filter(h => h !== query);
+        this.history.unshift(query);
+        if (this.history.length > this.maxHistory) this.history = this.history.slice(0, this.maxHistory);
+        this.saveSetting('searchHistory2', this.history);
+    }
+
     renderHistory() {
         if (!this.historyList) return;
         if (this.history.length === 0) {
@@ -252,7 +268,7 @@ class NewSearchModule {
         this.history.forEach(query => {
             const item = document.createElement('div');
             item.className = 'history-item';
-            item.innerHTML = `<span class="history-text">${this.escapeHtml(query)}</span><i class="fas fa-times delete-history"></i>`;
+            item.innerHTML = `<span class="history-text">${query}</span><i class="fas fa-times delete-history"></i>`;
             item.querySelector('.history-text').addEventListener('click', () => {
                 this.input.value = query;
                 this.submitSearch();
@@ -271,14 +287,6 @@ class NewSearchModule {
         this.renderHistory();
     }
 
-    // ========== 工具方法 ==========
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    // 已内置try-catch，禁用localStorage时不会报错
     loadSetting(key, def) {
         try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : def; } catch { return def; }
     }
