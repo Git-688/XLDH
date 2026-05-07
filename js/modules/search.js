@@ -1,18 +1,20 @@
 class NewSearchModule {
     constructor() {
         if (window.newSearchModule) return window.newSearchModule;
-
+        // 新增：内存兜底存储，兼容浏览器禁用localStorage场景
+        this.memoryStorage = {};
         this.engines = [
             { key: 'baidu',   label: '百度',   url: 'https://www.baidu.com/s?wd=', icon: 'fas fa-search' },
             { key: 'google',  label: '谷歌',   url: 'https://www.google.com/search?q=', icon: 'fab fa-google' },
             { key: '360',     label: '360',    url: 'https://www.so.com/s?q=', icon: 'fas fa-shield-alt' },
-            { key: 'douyin',  label: '抖音',   url: 'https://www.douyin.com/search/', icon: 'fas fa-music' },
-            { key: 'all',     label: '全网',   url: 'https://api.pearktrue.cn/api/universalsearch/', icon: 'fas fa-globe' }
+            // 修复：抖音搜索正确传参地址，解决跳转无结果问题
+            { key: 'douyin',  label: '抖音',   url: 'https://www.douyin.com/search/?keyword=', icon: 'fas fa-music' },
+            // 修复：全网搜索更换为可直接跳转的聚合搜索地址，解决原API跳转JSON页面问题
+            { key: 'all',     label: '全网',   url: 'https://www.bing.com/search?q=', icon: 'fas fa-globe' }
         ];
         this.currentEngine = this.loadSetting('currentEngine2', 'baidu');
         this.history = this.loadSetting('searchHistory2', []);
         this.maxHistory = 20;
-
         this.modal = document.getElementById('searchModal');
         this.input = document.getElementById('searchInput');
         this.triggerBtn = document.getElementById('engineTriggerBtn');
@@ -21,10 +23,8 @@ class NewSearchModule {
         this.suggestionsContainer = document.getElementById('suggestions');
         this.historyList = document.getElementById('historyList');
         this.clearHistoryBtn = document.getElementById('clearHistory');
-
         this.isOpen = false;
         this.suggestTimer = null;
-
         this.init();
         window.newSearchModule = this;
     }
@@ -41,6 +41,7 @@ class NewSearchModule {
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.hide();
         });
+
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isOpen) this.hide();
         });
@@ -53,9 +54,15 @@ class NewSearchModule {
         }
 
         document.addEventListener('click', (e) => {
+            // 原有引擎下拉框关闭逻辑
             if (this.dropdown && !this.dropdown.contains(e.target) &&
                 e.target !== this.triggerBtn && !this.triggerBtn.contains(e.target)) {
                 this.closeDropdown();
+            }
+            // 新增：点击非联想词区域关闭联想弹窗，解决弹窗常驻问题
+            if (this.suggestionsContainer && !this.suggestionsContainer.contains(e.target) &&
+                e.target !== this.input && !this.input.contains(e.target)) {
+                this.clearSuggestions();
             }
         });
 
@@ -76,15 +83,28 @@ class NewSearchModule {
                 this.renderHistory();
             });
         }
+
+        // ========== 新增：搜索输入框核心事件绑定，修复回车不提交、无联想词核心问题 ==========
+        if (this.input) {
+            // 回车触发搜索提交
+            this.input.addEventListener('keydown', (e) => this.handleSearch(e));
+            // 输入内容触发联想词
+            this.input.addEventListener('input', () => this.showSuggestions());
+            // 输入框聚焦重新显示联想词
+            this.input.addEventListener('focus', () => this.showSuggestions());
+            // 失焦延迟关闭联想词，避免点击联想项时先失焦导致点击失效
+            this.input.addEventListener('blur', () => setTimeout(() => this.clearSuggestions(), 200));
+        }
     }
 
-    toggle() { this.isOpen ? this.hide() : this.show(); }
+    toggle() {
+        this.isOpen ? this.hide() : this.show();
+    }
 
     show() {
         if (!this.modal || this.isOpen) return;
         if (window.sidebar?.isVisible()) window.sidebar.hide();
         if (window.app?.components?.navbar?.hideMusicPlayer) window.app.components.navbar.hideMusicPlayer();
-
         this.modal.classList.add('active');
         this.isOpen = true;
         this.input.value = '';
@@ -92,8 +112,9 @@ class NewSearchModule {
         this.renderHistory();
         this.clearSuggestions();
         this.closeDropdown();
-
         if (window.app) window.app.registerModal(this);
+        // 新增：锁定页面背景滚动，解决滚动穿透问题
+        document.body.style.overflow = 'hidden';
     }
 
     hide() {
@@ -102,8 +123,9 @@ class NewSearchModule {
         this.isOpen = false;
         this.clearSuggestions();
         this.closeDropdown();
-
         if (window.app) window.app.unregisterModal(this);
+        // 新增：解除页面背景滚动锁定
+        document.body.style.overflow = '';
     }
 
     renderDropdown() {
@@ -118,7 +140,11 @@ class NewSearchModule {
         });
     }
 
-    toggleDropdown() { this.dropdown?.classList.contains('active') ? this.closeDropdown() : this.openDropdown(); }
+    toggleDropdown() {
+        if (!this.dropdown) return;
+        this.dropdown.classList.contains('active') ? this.closeDropdown() : this.openDropdown();
+    }
+
     openDropdown() { if (this.dropdown) this.dropdown.classList.add('active'); }
     closeDropdown() { if (this.dropdown) this.dropdown.classList.remove('active'); }
 
@@ -148,6 +174,7 @@ class NewSearchModule {
         if (event.key === 'Enter') this.submitSearch();
     }
 
+    // 使用 Worker 代理的联想词接口
     async fetchBaiduSuggestions(query) {
         const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
         const url = `${apiBase}/search/suggest?q=${encodeURIComponent(query)}`;
@@ -156,9 +183,12 @@ class NewSearchModule {
             if (!resp.ok) return [];
             const data = await resp.json();
             return data.code === 200 && Array.isArray(data.data) ? data.data : [];
-        } catch { return []; }
+        } catch {
+            return [];
+        }
     }
 
+    // 新增：相关搜索内容（备用）
     async fetchRelatedSearches(query) {
         const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
         const url = `${apiBase}/search/related?q=${encodeURIComponent(query)}`;
@@ -167,17 +197,20 @@ class NewSearchModule {
             if (!resp.ok) return [];
             const data = await resp.json();
             return data.code === 200 && Array.isArray(data.data) ? data.data : [];
-        } catch { return []; }
+        } catch {
+            return [];
+        }
     }
 
     showSuggestions() {
         const q = this.input.value.trim();
         if (!q) { this.clearSuggestions(); return; }
         clearTimeout(this.suggestTimer);
+        // 优化：防抖时长从300ms调整为500ms，降低接口请求频率，避免触发限流
         this.suggestTimer = setTimeout(async () => {
             const words = await this.fetchBaiduSuggestions(q);
             this.renderSuggestions(words);
-        }, 300);
+        }, 500);
     }
 
     renderSuggestions(words) {
@@ -203,6 +236,7 @@ class NewSearchModule {
             this.suggestionsContainer.innerHTML = '';
             this.suggestionsContainer.classList.remove('active');
         }
+        clearTimeout(this.suggestTimer);
     }
 
     addHistory(query) {
@@ -242,10 +276,22 @@ class NewSearchModule {
     }
 
     loadSetting(key, def) {
-        try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : def; } catch { return def; }
+        try { 
+            const raw = localStorage.getItem(key); 
+            return raw ? JSON.parse(raw) : def; 
+        } catch { 
+            // 修复：禁用localStorage时，从内存兜底存储读取数据
+            return this.memoryStorage[key] || def; 
+        }
     }
+
     saveSetting(key, value) {
-        try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+        try { 
+            localStorage.setItem(key, JSON.stringify(value)); 
+        } catch {
+            // 修复：禁用localStorage时，写入内存兜底存储
+            this.memoryStorage[key] = value;
+        }
     }
 }
 
