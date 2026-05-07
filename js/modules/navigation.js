@@ -1,6 +1,7 @@
 /**
  * 优化分类导航系统（基于后端 Worker + D1）
  * 包含：缓存容错、后台静默更新、图标协议修复、安全转义降级、事件绑定修复
+ * CSP修复：移除图片 onerror 内联事件，改用 class="js-img-fallback" 统一回退
  */
 class OptimizedNavigation {
     constructor() {
@@ -332,15 +333,13 @@ class OptimizedNavigation {
         card.rel = 'noopener noreferrer';
         card.title = `${site.title}\n${site.description || ''}`;
 
-        // 图标处理：自动升级 http -> https，并加入 onerror 回退
+        // ===== CSP修复：图标处理，移除 onerror 内联事件，改用 class 标记 =====
         let iconHtml = '<i class="fas fa-link"></i>';
         if (site.icon) {
             const rawIcon = site.icon.trim();
-            if (rawIcon.startsWith('http://')) {
-                const secureUrl = rawIcon.replace('http://', 'https://');
-                iconHtml = `<img src="${this._escapeHtml(secureUrl)}" alt="" loading="lazy" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-link\'></i>'">`;
-            } else if (rawIcon.startsWith('https://') || rawIcon.startsWith('./') || rawIcon.includes('assets/') || /\.(png|jpg|jpeg|ico|svg)/i.test(rawIcon)) {
-                iconHtml = `<img src="${this._escapeHtml(rawIcon)}" alt="" loading="lazy" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-link\'></i>'">`;
+            if (rawIcon.startsWith('http://') || rawIcon.startsWith('https://') || rawIcon.startsWith('./') || rawIcon.includes('assets/') || /\.(png|jpg|jpeg|ico|svg)/i.test(rawIcon)) {
+                // 图片类型：添加回退标记，交由全局错误捕获器处理
+                iconHtml = `<img src="${this._escapeHtml(rawIcon)}" alt="" loading="lazy" class="js-img-fallback" data-fallback-type="icon">`;
             } else if (rawIcon.startsWith('fas ') || rawIcon.startsWith('fab ')) {
                 iconHtml = `<i class="${rawIcon}"></i>`;
             } else {
