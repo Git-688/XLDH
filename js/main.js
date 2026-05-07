@@ -1,5 +1,5 @@
 /**
- * 星聚导航主应用程序（CSP修复版）
+ * 星聚导航主应用程序（CSP修复版 + 音乐播放器按需加载）
  */
 class App {
     constructor() {
@@ -141,6 +141,54 @@ class App {
                 }
             }
         }, true); // 捕获阶段，因为图片error不冒泡
+    }
+
+    // ========== 动态加载音乐播放器 ==========
+    async loadMusicPlayer() {
+        // 如果已经加载过，直接跳过
+        if (window.musicPlayer) return;
+
+        // 待加载的资源列表（按顺序）
+        const resources = [
+            { type: 'css', url: './css/xfyy1/music-player.css' },
+            { type: 'js',  url: './js/xfyy/cache-manager.js' },
+            { type: 'js',  url: './js/xfyy/lyric-parser.js' },
+            { type: 'js',  url: './data/local-music-data.js' },
+            { type: 'js',  url: './js/xfyy/plugin-manager.js' },
+            { type: 'js',  url: './js/xfyy/music-player.js' },
+            { type: 'js',  url: './js/xfyy/music-main.js' }
+        ];
+
+        const loadResource = (type, url) => {
+            return new Promise((resolve, reject) => {
+                if (type === 'css') {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = url;
+                    link.onload = resolve;
+                    link.onerror = reject;
+                    document.head.appendChild(link);
+                } else {
+                    const script = document.createElement('script');
+                    script.src = url;
+                    script.async = false; // 保持顺序执行
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.body.appendChild(script);
+                }
+            });
+        };
+
+        try {
+            for (const res of resources) {
+                await loadResource(res.type, res.url);
+            }
+            // 等待一小段时间确保初始化完成（music-main 内部会 new MusicPlayer）
+            await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+            console.error('加载音乐播放器失败:', error);
+            this.showToast('音乐播放器加载失败', 'error');
+        }
     }
 
     // ========== 应用初始化 ==========
@@ -296,7 +344,7 @@ class App {
         window.addEventListener('unhandledrejection', handleError);
     }
 
-    // ========== 其它方法（与前相同，无变化） ==========
+    // ========== 其它方法 ==========
     initStorage() {
         if (typeof Storage === 'undefined') {
             console.error('浏览器不支持localStorage');
