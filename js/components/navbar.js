@@ -72,14 +72,14 @@ class Navbar {
             });
         }
 
-        // ========== 反馈按钮 ==========
+        // ========== 反馈按钮（使用 Waline 实例 toggle） ==========
         const fbBtn = document.getElementById('floatingFeedbackBtn');
         if (fbBtn) {
             fbBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 this.closeAllModalsExcept(['feedback']);
-                if (typeof window.openFeedbackModal === 'function') window.openFeedbackModal();
+                if (window.walineFeedback) window.walineFeedback.toggle();
             });
         }
 
