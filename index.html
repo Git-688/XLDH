@@ -34,10 +34,7 @@
     <link rel="stylesheet" href="./css/modules/search.css">
     <link rel="stylesheet" href="./css/modules/weather.css">
     <link rel="stylesheet" href="./css/modules/about.css">
-    <!-- ★ Waline 评论样式 -->
-    <link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css">
-    <!-- ★ 反馈模块独立样式 -->
-    <link rel="stylesheet" href="./css/modules/feedback.css">
+    <!-- ★ 评论样式已移除 -->
     <link rel="stylesheet" href="./css/modules/navigation.css">
     <link rel="stylesheet" href="./css/modules/wallpaper.css">
     <link rel="stylesheet" href="./css/modules/greeting.css">
@@ -197,8 +194,6 @@
         }
 
         /* 悬浮按钮颜色 */
-        .floating-btn.feedback-btn { color: #8b5cf6; }
-        .floating-btn.feedback-btn:hover { color: #7c3aed; }
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
 
@@ -396,7 +391,6 @@
     </footer>
     <div class="floating-buttons">
         <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
-        <button class="floating-btn feedback-btn" id="floatingFeedbackBtn" aria-label="用户反馈"><i class="fas fa-comment"></i></button>
         <button class="floating-btn submit-btn" id="floatingSubmitBtn" aria-label="网站投稿"><i class="fas fa-paper-plane"></i></button>
         <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
     </div>
@@ -460,9 +454,7 @@
                 <button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎">
                     <i id="engineIcon" class="fas fa-search"></i>
                 </button>
-                <!-- 【修复】移除内联事件 onkeydown、oninput -->
                 <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off">
-                <!-- 【修复】移除内联事件 onclick -->
                 <button class="search-submit-btn">搜索</button>
             </div>
             <div class="engine-dropdown" id="engineDropdown"></div>
@@ -478,17 +470,7 @@
     </div>
     <div class="engine-tooltip" id="engineTooltip"></div>
 </main>
-<div id="feedbackModal" class="feedback-modal" style="display: none;">
-    <div class="feedback-modal-content">
-        <div class="feedback-modal-header">
-            <h3><i class="fas fa-comment-dots"></i> 用户反馈</h3>
-            <button class="feedback-modal-close">&times;</button>
-        </div>
-        <div class="feedback-modal-body">
-            <div id="waline-feedback"></div>
-        </div>
-    </div>
-</div>
+<!-- 反馈模态框已移除 -->
 <div id="notebookModal" class="feedback-modal" style="display: none;">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
@@ -503,7 +485,7 @@
     </div>
 </div>
 
-<!-- ========== 基础库（同步加载，顺序保证） ========== -->
+<!-- ========== 基础库（同步加载） ========== -->
 <script src="./js/utils.js"></script>
 <script src="./js/toast.js"></script>
 <script src="./js/storage.js"></script>
@@ -529,8 +511,7 @@
 <!-- ========== 应用主入口 ========== -->
 <script src="./js/main.js"></script>
 
-<!-- ========== 异步第三方库 ========== -->
-<script src="./js/modules/feedback.js"></script>
+<!-- ========== 评论系统已移除 ========== -->
 
 <!-- ========== 音乐播放器子系统 ========== -->
 <script src="./js/xfyy/utils.js"></script>
