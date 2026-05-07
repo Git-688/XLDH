@@ -47,9 +47,9 @@ class App {
             }
             items.sort((a, b) => a.numid - b.numid);
             const html = items.map(item => {
-                const title = this.escapeHtml((item.title || '').trim());
-                const time = this.escapeHtml(item.time || '--');
-                const words = this.escapeHtml((item.words || '').trim()).replace(/\n/g, '<br>');
+                const title = Utils.escapeHtml((item.title || '').trim());
+                const time = Utils.escapeHtml(item.time || '--');
+                const words = Utils.escapeHtml((item.words || '').trim()).replace(/\n/g, '<br>');
                 const numid = item.numid;
                 return `
                     <div class="notebook-item">
@@ -65,7 +65,7 @@ class App {
             listEl.innerHTML = html;
         } catch (error) {
             console.error('加载星聚笔记失败:', error);
-            listEl.innerHTML = `<div class="error">加载失败：${this.escapeHtml(error.message)}<br><small>可尝试刷新页面</small></div>`;
+            listEl.innerHTML = `<div class="error">加载失败：${Utils.escapeHtml(error.message)}<br><small>可尝试刷新页面</small></div>`;
         }
     }
 
@@ -155,27 +155,10 @@ class App {
         this.setupGlobalEvents();
         this.initNotebookModalEvents();
         this.initFloatingButtonsEffect();
-        // CSP修复：将Service Worker注册移至此处
-        this.registerServiceWorker();
         this.isInitialized = true;
 
         window.showNotebookModal = this.showNotebookModal.bind(this);
         window.hideNotebookModal = this.hideNotebookModal.bind(this);
-    }
-
-    // CSP修复：注册Service Worker
-    registerServiceWorker() {
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('Service Worker 注册成功，范围:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.error('Service Worker 注册失败:', error);
-                    });
-            });
-        }
     }
 
     // 悬浮按钮滚动半透明效果
@@ -409,12 +392,6 @@ class App {
 
     showToast(message, type = 'info') {
         window.toast.show(message, type);
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     getVisitStats() {
