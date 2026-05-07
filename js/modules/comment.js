@@ -1,18 +1,22 @@
 /**
- * 评论模块 - Waline 集成 (V3 API 适配版)
- * 采用 Waline Client V3 的 init 初始化方式，非动态加载
+ * 评论模块 - Waline 集成（生产就绪版）
+ * 特点：
+ * - 延迟初始化（首次打开模态框时才实例化 Waline）
+ * - 锁定 Waline 版本 3.0.0-alpha.8
+ * - 固定评论路径防止数据错乱
+ * - 销毁实例避免内存泄漏
+ * - 完整错误处理
  */
 class CommentModal {
     constructor() {
         this.walineInstance = null;
+        this.initialized = false;      // 标记是否已初始化
         this.modal = document.getElementById('commentModal');
         if (!this.modal) {
             console.error('评论模态框未找到');
             return;
         }
         this._bindButton();
-        // 确保 DOM 容器存在后，再进行 Waline 初始化
-        this._initWaline();
     }
 
     _bindButton() {
@@ -20,7 +24,6 @@ class CommentModal {
         if (btn) {
             btn.addEventListener('click', () => this.show());
         }
-        // 关闭按钮
         const closeBtn = this.modal.querySelector('.feedback-modal-close');
         if (closeBtn) closeBtn.addEventListener('click', () => this.hide());
         this.modal.addEventListener('click', (e) => {
@@ -29,14 +32,18 @@ class CommentModal {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.modal.classList.contains('active')) this.hide();
         });
+        // 页面卸载时销毁实例
+        window.addEventListener('beforeunload', () => this.destroy());
     }
 
+    // 仅当首次打开模态框时初始化，避免容器隐藏时尺寸异常
     _initWaline() {
+        if (this.initialized) return;
         if (typeof Waline === 'undefined') {
-            console.error('Waline 未加载，请检查脚本引入');
+            console.error('Waline 脚本未加载，请检查 CDN');
+            window.toast?.show('评论系统加载失败，请刷新页面', 'error');
             return;
         }
-        // 关键修复：Waline V3 使用 Waline.init() 而非 new Waline.init()
         try {
             this.walineInstance = Waline.init({
                 el: '#waline-comment',
@@ -45,17 +52,24 @@ class CommentModal {
                 meta: ['nick', 'mail', 'link'],
                 requiredMeta: ['nick'],
                 pageSize: 10,
+                // 固定评论路径，避免因动态 query 参数导致数据错乱
+                path: window.location.pathname,
             });
+            this.initialized = true;
+            console.log('Waline 初始化成功');
         } catch (error) {
             console.error('Waline 初始化失败:', error);
-            window.toast?.show('评论系统初始化失败，请稍后刷新重试', 'error');
+            window.toast?.show('评论系统初始化失败，请稍后再试', 'error');
         }
     }
 
     show() {
-        if (!this.modal || !this.walineInstance) {
-            window.toast?.show('评论系统正在加载中，请稍后再试', 'warning');
-            return;
+        if (!this.modal) return;
+        // 首次打开时初始化
+        if (!this.initialized) {
+            this._initWaline();
+            // 如果初始化失败，直接返回不打开模态框
+            if (!this.initialized) return;
         }
         this.modal.classList.add('active');
     }
@@ -63,9 +77,19 @@ class CommentModal {
     hide() {
         this.modal?.classList.remove('active');
     }
+
+    // 销毁 Waline 实例，释放内存
+    destroy() {
+        if (this.walineInstance && typeof this.walineInstance.destroy === 'function') {
+            this.walineInstance.destroy();
+            this.walineInstance = null;
+            this.initialized = false;
+            console.log('Waline 实例已销毁');
+        }
+    }
 }
 
-// 页面加载完初始化
+// 页面加载完成后实例化 CommentModal，但不初始化 Waline
 document.addEventListener('DOMContentLoaded', () => {
     window.commentModal = new CommentModal();
 });
