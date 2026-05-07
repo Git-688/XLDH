@@ -1,5 +1,5 @@
 /**
- * 星聚导航主应用程序（Waline 评论系统独立模块版本）
+ * 星聚导航主应用程序（CSP修复版）
  */
 class App {
     constructor() {
@@ -107,10 +107,47 @@ class App {
         }
     }
 
+    // ========== 全局图片错误捕获（CSP修复） ==========
+    initImageFallbackHandler() {
+        document.addEventListener('error', (e) => {
+            const img = e.target;
+            if (img.tagName !== 'IMG' || !img.classList.contains('js-img-fallback')) return;
+            e.preventDefault();
+            const fbType = img.dataset.fallbackType;
+            const parent = img.parentElement;
+            
+            // 防止重复触发
+            img.classList.remove('js-img-fallback');
+            
+            if (fbType === 'hideAndShowIcon') {
+                img.style.display = 'none';
+                if (parent && !parent.querySelector('.js-fallback-icon')) {
+                    const iconClass = img.dataset.fallbackIconClass || 'fas fa-rocket';
+                    const icon = document.createElement('i');
+                    icon.className = `${iconClass} js-fallback-icon`;
+                    parent.appendChild(icon);
+                }
+            } else if (fbType === 'defaultAvatar') {
+                const defaultSvg = img.dataset.defaultSvg || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
+                img.src = defaultSvg;
+                // 如果默认头像也加载失败，不再处理
+            } else if (fbType === 'icon') {
+                // 导航图标的回退：显示默认图标
+                if (!parent.querySelector('i.fa-link')) {
+                    img.style.display = 'none';
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-link';
+                    parent.appendChild(icon);
+                }
+            }
+        }, true); // 捕获阶段，因为图片error不冒泡
+    }
+
     // ========== 应用初始化 ==========
     init() {
         if (this.isInitialized) return;
         this.setupErrorHandling();      // 必须最先注册
+        this.initImageFallbackHandler(); // CSP修复：注册全局图片回退
         this.initStorage();
         this.initCoreComponents();
         this.initModules();
@@ -118,10 +155,27 @@ class App {
         this.setupGlobalEvents();
         this.initNotebookModalEvents();
         this.initFloatingButtonsEffect();
+        // CSP修复：将Service Worker注册移至此处
+        this.registerServiceWorker();
         this.isInitialized = true;
 
         window.showNotebookModal = this.showNotebookModal.bind(this);
         window.hideNotebookModal = this.hideNotebookModal.bind(this);
+    }
+
+    // CSP修复：注册Service Worker
+    registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker 注册成功，范围:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('Service Worker 注册失败:', error);
+                    });
+            });
+        }
     }
 
     // 悬浮按钮滚动半透明效果
@@ -247,10 +301,10 @@ class App {
 
         const handleError = (event) => {
             const msg = event.message || (event.error && event.error.message) || '';
-            if (shouldIgnore(msg)) return;                      // 忽略无效内容
+            if (shouldIgnore(msg)) return;
             const error = event.error || event.reason;
             const errorMessage = error?.message || msg || '未知错误';
-            if (shouldIgnore(errorMessage)) return;             // 二次检查
+            if (shouldIgnore(errorMessage)) return;
             console.error('应用错误:', errorMessage);
             if (!document.hidden) this.showToast('页面遇到问题，建议刷新页面', 'error');
         };
