@@ -8,11 +8,11 @@
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
 
-    <!-- ✅ 修复音乐播放问题：增加 media-src 允许外部音频 -->
+    <!-- ✅ CSP 已放行 jsdelivr 域名，用于 Waline 脚本和样式 -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com https://unpkg.com https://*.ccwu.cc;
-        style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com;
+        script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com https://unpkg.com https://*.ccwu.cc https://cdn.jsdelivr.net;
+        style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net;
         img-src * data:;
         media-src *;
         connect-src *;
@@ -34,8 +34,8 @@
     <link rel="stylesheet" href="./css/modules/search.css">
     <link rel="stylesheet" href="./css/modules/weather.css">
     <link rel="stylesheet" href="./css/modules/about.css">
-    <!-- ★ Waline 评论样式 -->
-    <link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css">
+    <!-- ★ Waline 评论样式，统一使用 jsdelivr CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3/dist/waline.css">
     <!-- ★ 反馈模块独立样式 -->
     <link rel="stylesheet" href="./css/modules/feedback.css">
     <link rel="stylesheet" href="./css/modules/navigation.css">
@@ -431,7 +431,7 @@
                 <div class="progress-bar" id="progress-bar"><div class="progress-bg"></div><div class="progress" id="progress"></div><div class="progress-handle" id="progress-handle"></div></div>
                 <div class="time-display"><span id="current-time" class="time-text">00:00</span><span id="duration" class="time-text">00:00</span></div>
             </div>
-            <div class="progress-actions"><div class="speed-control"><div class="speed-selector"><select id="speed-select"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></div></div></div>
+            <div class="speed-control"><div class="speed-selector"><select id="speed-select"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></div></div>
         </div>
         <div class="lyrics-section"><div class="lyrics-container" id="lyrics-container"><div class="lyrics-line"></div><div class="lyrics-line active"></div><div class="lyrics-line"></div></div></div>
         <div class="bottom-section">
@@ -460,10 +460,8 @@
                 <button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎">
                     <i id="engineIcon" class="fas fa-search"></i>
                 </button>
-                <!-- 【修复】移除内联事件 onkeydown、oninput -->
-                <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off">
-                <!-- 【修复】移除内联事件 onclick -->
-                <button class="search-submit-btn">搜索</button>
+                <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." onkeydown="window.newSearchModule.handleSearch(event)" oninput="window.newSearchModule.showSuggestions()" autocomplete="off">
+                <button class="search-submit-btn" onclick="window.newSearchModule.submitSearch()">搜索</button>
             </div>
             <div class="engine-dropdown" id="engineDropdown"></div>
             <div class="suggestions" id="suggestions"></div>
