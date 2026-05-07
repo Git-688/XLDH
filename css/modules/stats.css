@@ -1,4 +1,4 @@
-/* ====== 超紧凑响应式页脚样式 (布局优化版) ====== */
+/* ====== 超紧凑响应式页脚样式 (运行时间UI优化版) ====== */
 .footer-compact-container {
     width: 100%;
     max-width: 1200px;
@@ -183,7 +183,7 @@
     color: var(--primary-color);
 }
 
-/* 增强心跳动画 */
+/* 增强心跳动画（仅用于运行时间图标） */
 .heartbeat-enhanced {
     animation: heartbeat-enhanced 1.2s ease-in-out infinite;
     transform-origin: center;
@@ -246,8 +246,59 @@
     color: var(--primary-color);
 }
 
+/* ========== 运行时间专属UI优化 ========== */
+#uptime {
+    /* 亮色模式下的渐变文字 */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.5px;
+    /* 微弱的呼吸光效 */
+    animation: uptime-glow 3s ease-in-out infinite;
+}
+
+/* 运行时间卡片右上角加一点装饰 - 仅对运行时间卡片有效 */
+.stat-card:first-child {
+    position: relative;
+    overflow: hidden;
+}
+.stat-card:first-child::after {
+    content: "";
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 40px;
+    height: 40px;
+    background: radial-gradient(circle, rgba(102, 126, 234, 0.25), transparent 70%);
+    border-radius: 50%;
+    z-index: 0;
+}
+
+@keyframes uptime-glow {
+    0%, 100% { filter: drop-shadow(0 0 0px rgba(102, 126, 234, 0)); }
+    50% { filter: drop-shadow(0 0 4px rgba(102, 126, 234, 0.3)); }
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+    #uptime {
+        /* 暗色模式下回到纯色，避免渐变文字看不清 */
+        background: none;
+        -webkit-text-fill-color: #a78bfa;
+        background-clip: unset;
+        color: #a78bfa;
+        animation: none; /* 去掉闪烁 */
+    }
+    .stat-card:first-child::after {
+        background: radial-gradient(circle, rgba(167, 139, 250, 0.2), transparent 70%);
+    }
+    #uptime {
+        text-shadow: 0 0 6px rgba(167, 139, 250, 0.4);
+    }
+}
+
 /* ====== 响应式细节优化 ====== */
-/* 移动端 (≤767px) 卡片内容微调 */
 @media (max-width: 767px) {
     .stat-number {
         font-size: 13px;
