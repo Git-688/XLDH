@@ -460,8 +460,10 @@
                 <button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎">
                     <i id="engineIcon" class="fas fa-search"></i>
                 </button>
-                <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." onkeydown="window.newSearchModule.handleSearch(event)" oninput="window.newSearchModule.showSuggestions()" autocomplete="off">
-                <button class="search-submit-btn" onclick="window.newSearchModule.submitSearch()">搜索</button>
+                <!-- 【修复】移除内联事件 onkeydown、oninput -->
+                <input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off">
+                <!-- 【修复】移除内联事件 onclick -->
+                <button class="search-submit-btn">搜索</button>
             </div>
             <div class="engine-dropdown" id="engineDropdown"></div>
             <div class="suggestions" id="suggestions"></div>
