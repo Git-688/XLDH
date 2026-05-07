@@ -1,4 +1,4 @@
-
+// 确保 Utils 存在（已由 utils.js 提供，不重复定义）
 
 /**
  * 关于网站模块 - 包含收款模态框（移动端按钮缩小一半）
@@ -240,7 +240,7 @@ class AboutModule {
     }
 
     showDonateModal() {
-        // 创建收款模态框，与原始代码完全相同
+        // 创建收款模态框，z-index 提升为 10002，避免反馈遮挡
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
         donateModal.style.cssText = `
@@ -254,7 +254,7 @@ class AboutModule {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 10001;
+            z-index: 10002;
             opacity: 0;
             transition: opacity 0.3s ease;
             padding: 16px;
