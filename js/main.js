@@ -1,5 +1,5 @@
 /**
- * 星聚导航主应用程序（CSP修复版 + 音乐播放器按需加载）
+ * 星聚导航主应用程序（CSP修复版 + 音乐播放器按需加载优化）
  */
 class App {
     constructor() {
@@ -9,6 +9,7 @@ class App {
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.notebookModalHideRef = null;
+        this._musicPlayerLoading = null; // 防止重复加载
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -130,9 +131,7 @@ class App {
             } else if (fbType === 'defaultAvatar') {
                 const defaultSvg = img.dataset.defaultSvg || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
                 img.src = defaultSvg;
-                // 如果默认头像也加载失败，不再处理
             } else if (fbType === 'icon') {
-                // 导航图标的回退：显示默认图标
                 if (!parent.querySelector('i.fa-link')) {
                     img.style.display = 'none';
                     const icon = document.createElement('i');
@@ -140,15 +139,25 @@ class App {
                     parent.appendChild(icon);
                 }
             }
-        }, true); // 捕获阶段，因为图片error不冒泡
+        }, true);
     }
 
     // ========== 动态加载音乐播放器 ==========
     async loadMusicPlayer() {
-        // 如果已经加载过，直接跳过
+        // 如果已经加载过实例，直接跳过
         if (window.musicPlayer) return;
 
-        // 待加载的资源列表（按顺序）
+        // 如果正在加载中，返回相同 Promise 防止重复
+        if (this._musicPlayerLoading) return this._musicPlayerLoading;
+        this._musicPlayerLoading = this._doLoadMusicPlayer();
+        try {
+            await this._musicPlayerLoading;
+        } finally {
+            this._musicPlayerLoading = null;
+        }
+    }
+
+    async _doLoadMusicPlayer() {
         const resources = [
             { type: 'css', url: './css/xfyy1/music-player.css' },
             { type: 'js',  url: './js/xfyy/cache-manager.js' },
@@ -171,7 +180,7 @@ class App {
                 } else {
                     const script = document.createElement('script');
                     script.src = url;
-                    script.async = false; // 保持顺序执行
+                    script.async = false;
                     script.onload = resolve;
                     script.onerror = reject;
                     document.body.appendChild(script);
@@ -183,19 +192,34 @@ class App {
             for (const res of resources) {
                 await loadResource(res.type, res.url);
             }
-            // 等待一小段时间确保初始化完成（music-main 内部会 new MusicPlayer）
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // 等待 window.musicPlayer 实例创建，最多等 5 秒
+            await new Promise((resolve, reject) => {
+                const start = Date.now();
+                const check = () => {
+                    if (window.musicPlayer) {
+                        resolve();
+                    } else if (Date.now() - start > 5000) {
+                        reject(new Error('MusicPlayer 初始化超时'));
+                    } else {
+                        setTimeout(check, 50);
+                    }
+                };
+                check();
+            });
+            // 短暂延迟确保 DOM 完全就绪
+            await new Promise(resolve => setTimeout(resolve, 150));
         } catch (error) {
             console.error('加载音乐播放器失败:', error);
             this.showToast('音乐播放器加载失败', 'error');
+            throw error;
         }
     }
 
     // ========== 应用初始化 ==========
     init() {
         if (this.isInitialized) return;
-        this.setupErrorHandling();      // 必须最先注册
-        this.initImageFallbackHandler(); // CSP修复：注册全局图片回退
+        this.setupErrorHandling();
+        this.initImageFallbackHandler();
         this.initStorage();
         this.initCoreComponents();
         this.initModules();
@@ -209,7 +233,6 @@ class App {
         window.hideNotebookModal = this.hideNotebookModal.bind(this);
     }
 
-    // 悬浮按钮滚动半透明效果
     initFloatingButtonsEffect() {
         let scrollTimer;
         const floatingBtns = document.querySelector('.floating-buttons');
@@ -248,15 +271,13 @@ class App {
             const initPromises = [];
 
             if (typeof SearchModule !== 'undefined') {
-                try {
-                    if (!window.searchModule || !(window.searchModule instanceof SearchModule)) {
-                        this.modules.search = new SearchModule();
-                        window.searchModule = this.modules.search;
-                        initPromises.push(this.modules.search.init?.());
-                    } else {
-                        this.modules.search = window.searchModule;
-                    }
-                } catch (error) { console.error('搜索模块初始化失败:', error); }
+                if (!window.searchModule || !(window.searchModule instanceof SearchModule)) {
+                    this.modules.search = new SearchModule();
+                    window.searchModule = this.modules.search;
+                    initPromises.push(this.modules.search.init?.());
+                } else {
+                    this.modules.search = window.searchModule;
+                }
             }
 
             if (typeof WallpaperModule !== 'undefined') {
@@ -306,7 +327,6 @@ class App {
             Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {
                 console.log('所有模块初始化完成');
             });
-
         } catch (error) {
             console.error('模块初始化失败:', error);
             this.showToast('部分模块初始化失败', 'warning');
@@ -323,7 +343,6 @@ class App {
         }
     }
 
-    // ========== 彻底过滤噪音错误的全局处理器 ==========
     setupErrorHandling() {
         const shouldIgnore = (message) => {
             const m = String(message || '');
@@ -344,7 +363,6 @@ class App {
         window.addEventListener('unhandledrejection', handleError);
     }
 
-    // ========== 其它方法 ==========
     initStorage() {
         if (typeof Storage === 'undefined') {
             console.error('浏览器不支持localStorage');
@@ -435,7 +453,6 @@ class App {
         if (this.components.navbar?.hideMusicPlayer) this.components.navbar.hideMusicPlayer();
         if (this.modules.search?.isModalOpen && this.modules.search.hide) this.modules.search.hide();
         this.hideNotebookModal();
-        if (window.walineFeedback?.isVisible) window.walineFeedback.hide();
     }
 
     showToast(message, type = 'info') {
