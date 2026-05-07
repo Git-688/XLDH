@@ -72,17 +72,6 @@ class Navbar {
             });
         }
 
-        // ========== 反馈按钮（使用 Waline 实例 toggle） ==========
-        const fbBtn = document.getElementById('floatingFeedbackBtn');
-        if (fbBtn) {
-            fbBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.closeAllModalsExcept(['feedback']);
-                if (window.walineFeedback) window.walineFeedback.toggle();
-            });
-        }
-
         // ========== 投稿按钮 ==========
         const submitBtn = document.getElementById('floatingSubmitBtn');
         if (submitBtn) {
