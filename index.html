@@ -40,6 +40,8 @@
     <link rel="stylesheet" href="./css/modules/compact-tags.css">
     <link rel="stylesheet" href="./css/responsive.css">
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
+    <!-- 评论模块样式 -->
+    <link rel="stylesheet" href="./css/modules/comment.css">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
@@ -489,6 +491,19 @@
     </div>
 </div>
 
+<!-- 评论模态框（静态写入） -->
+<div class="feedback-modal" id="commentModal">
+    <div class="feedback-modal-content" style="max-width: 700px;">
+        <div class="feedback-modal-header">
+            <h3><i class="fas fa-comments"></i> 评论</h3>
+            <button class="feedback-modal-close">&times;</button>
+        </div>
+        <div class="feedback-modal-body" id="commentBody">
+            <div id="waline-comment"></div>
+        </div>
+    </div>
+</div>
+
 <!-- ========== 基础库（同步加载） ========== -->
 <script src="./js/utils.js"></script>
 <script src="./js/toast.js"></script>
@@ -524,7 +539,9 @@
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
 
-<!-- ========== 评论模块（按需加载 Waline，样式独立） ========== -->
+<!-- Waline 评论系统（页面加载时即引入） -->
+<script src="https://unpkg.com/@waline/client@3/dist/waline.js"></script>
+<!-- 评论模块初始化 -->
 <script src="./js/modules/comment.js"></script>
 </body>
 </html>
