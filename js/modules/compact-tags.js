@@ -1,15 +1,3 @@
-// 确保 Utils 存在（检查，不重复声明）
-if (typeof Utils === 'undefined') {
-    console.warn('Utils 未加载，请检查 utils.js 顺序');
-    window.Utils = {
-        escapeHtml: function(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = String(text);
-            return div.innerHTML;
-        }
-    };
-}
 
 // compact-tags.js - 彩虹浅色标签模块（完整列表版，使用 Utils.escapeHtml）
 class CompactTagsModule {
