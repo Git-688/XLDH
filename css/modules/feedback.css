@@ -32,7 +32,7 @@
     background: transparent;
 }
 
-/* 暗色模式适配 */
+/* 深色模式适配 Waline 内部组件 */
 @media (prefers-color-scheme: dark) {
     #feedbackModal .feedback-modal-content {
         background: rgba(30, 30, 30, 0.75);
@@ -48,5 +48,34 @@
     }
     #feedbackModal .feedback-modal-close:hover {
         background: rgba(255, 255, 255, 0.2); color: #e2e8f0;
+    }
+
+    /* 强制 Waline 组件半透明亚克力效果 */
+    .waline-wrapper,
+    .waline-container,
+    .wl-panel,
+    .wl-card,
+    .wl-comment,
+    .wl-editor,
+    .wl-header {
+        background-color: rgba(35, 35, 35, 0.75) !important;
+        backdrop-filter: blur(20px) saturate(150%);
+        -webkit-backdrop-filter: blur(20px) saturate(150%);
+    }
+
+    .wl-comment-item,
+    .wl-reply-form,
+    .wl-input,
+    .wl-textarea {
+        background: rgba(40,40,40,0.6) !important;
+        color: #ddd !important;
+        border-color: rgba(255,255,255,0.15) !important;
+    }
+
+    .wl-btn,
+    .wl-action-btn,
+    .wl-like-btn,
+    .wl-reply-btn {
+        color: #ccc !important;
     }
 }
