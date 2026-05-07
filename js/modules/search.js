@@ -37,13 +37,16 @@ class NewSearchModule {
     }
 
     bindEvents() {
+        // 点击模态框背景关闭
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.hide();
         });
+        // ESC 关闭
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isOpen) this.hide();
         });
 
+        // 搜索引擎切换按钮
         if (this.triggerBtn) {
             this.triggerBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -51,13 +54,7 @@ class NewSearchModule {
             });
         }
 
-        document.addEventListener('click', (e) => {
-            if (this.dropdown && !this.dropdown.contains(e.target) &&
-                e.target !== this.triggerBtn && !this.triggerBtn.contains(e.target)) {
-                this.closeDropdown();
-            }
-        });
-
+        // 搜索引擎下拉菜单
         if (this.dropdown) {
             this.dropdown.addEventListener('click', (e) => {
                 const item = e.target.closest('.engine-dropdown-item');
@@ -68,6 +65,26 @@ class NewSearchModule {
             });
         }
 
+        // ===== 修复：绑定搜索按钮点击事件 =====
+        const submitBtn = this.modal.querySelector('.search-submit-btn');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.submitSearch();
+            });
+        }
+
+        // ===== 修复：绑定输入框回车事件 =====
+        if (this.input) {
+            this.input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.submitSearch();
+                }
+            });
+        }
+
+        // 清除历史记录
         if (this.clearHistoryBtn) {
             this.clearHistoryBtn.addEventListener('click', () => {
                 this.history = [];
@@ -75,6 +92,14 @@ class NewSearchModule {
                 this.renderHistory();
             });
         }
+
+        // 全局点击关闭下拉菜单
+        document.addEventListener('click', (e) => {
+            if (this.dropdown && !this.dropdown.contains(e.target) &&
+                e.target !== this.triggerBtn && !this.triggerBtn.contains(e.target)) {
+                this.closeDropdown();
+            }
+        });
     }
 
     toggle() { this.isOpen ? this.hide() : this.show(); }
@@ -141,10 +166,6 @@ class NewSearchModule {
         window.open(eng.url + encodeURIComponent(query), '_blank');
         this.addHistory(query);
         this.hide();
-    }
-
-    handleSearch(event) {
-        if (event.key === 'Enter') this.submitSearch();
     }
 
     async fetchBaiduSuggestions(query) {
