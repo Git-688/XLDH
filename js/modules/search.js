@@ -78,9 +78,7 @@ class NewSearchModule {
         }
     }
 
-    toggle() {
-        this.isOpen ? this.hide() : this.show();
-    }
+    toggle() { this.isOpen ? this.hide() : this.show(); }
 
     show() {
         if (!this.modal || this.isOpen) return;
@@ -120,11 +118,7 @@ class NewSearchModule {
         });
     }
 
-    toggleDropdown() {
-        if (!this.dropdown) return;
-        this.dropdown.classList.contains('active') ? this.closeDropdown() : this.openDropdown();
-    }
-
+    toggleDropdown() { this.dropdown?.classList.contains('active') ? this.closeDropdown() : this.openDropdown(); }
     openDropdown() { if (this.dropdown) this.dropdown.classList.add('active'); }
     closeDropdown() { if (this.dropdown) this.dropdown.classList.remove('active'); }
 
@@ -154,7 +148,6 @@ class NewSearchModule {
         if (event.key === 'Enter') this.submitSearch();
     }
 
-    // 使用 Worker 代理的联想词接口
     async fetchBaiduSuggestions(query) {
         const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
         const url = `${apiBase}/search/suggest?q=${encodeURIComponent(query)}`;
@@ -163,12 +156,9 @@ class NewSearchModule {
             if (!resp.ok) return [];
             const data = await resp.json();
             return data.code === 200 && Array.isArray(data.data) ? data.data : [];
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
 
-    // 新增：相关搜索内容（备用）
     async fetchRelatedSearches(query) {
         const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
         const url = `${apiBase}/search/related?q=${encodeURIComponent(query)}`;
@@ -177,9 +167,7 @@ class NewSearchModule {
             if (!resp.ok) return [];
             const data = await resp.json();
             return data.code === 200 && Array.isArray(data.data) ? data.data : [];
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
 
     showSuggestions() {
