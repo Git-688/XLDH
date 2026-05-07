@@ -65,7 +65,7 @@ class NewSearchModule {
             });
         }
 
-        // ===== 修复：绑定搜索按钮点击事件 =====
+        // 搜索提交按钮
         const submitBtn = this.modal.querySelector('.search-submit-btn');
         if (submitBtn) {
             submitBtn.addEventListener('click', (e) => {
@@ -74,13 +74,18 @@ class NewSearchModule {
             });
         }
 
-        // ===== 修复：绑定输入框回车事件 =====
+        // 输入框事件：回车提交 + 输入联想
         if (this.input) {
+            // 回车提交
             this.input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     this.submitSearch();
                 }
+            });
+            // 输入时显示联想词（内部已做防抖）
+            this.input.addEventListener('input', () => {
+                this.showSuggestions();
             });
         }
 
