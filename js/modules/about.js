@@ -1,15 +1,4 @@
-// 确保 Utils 存在（检查，不重复声明）
-if (typeof Utils === 'undefined') {
-    console.warn('Utils 未加载，请检查 utils.js 顺序');
-    window.Utils = {
-        escapeHtml: function(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = String(text);
-            return div.innerHTML;
-        }
-    };
-}
+
 
 /**
  * 关于网站模块 - 包含收款模态框（移动端按钮缩小一半）
