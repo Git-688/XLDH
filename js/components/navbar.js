@@ -2,6 +2,7 @@ class Navbar {
     constructor() {
         if (window.navbar && window.navbar instanceof Navbar) return window.navbar;
         this.announcements = [];
+        this._musicInitialized = false; // 标记音乐播放器是否已初始化
         this.init();
         window.navbar = this;
     }
@@ -29,16 +30,28 @@ class Navbar {
             });
         }
 
-        // ========== 音乐按钮（按需加载） ==========
+        // ========== 音乐按钮（按需加载，首次直接显示） ==========
         const musicBtn = document.getElementById('musicBtn');
         if (musicBtn) {
             musicBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                // 加载音乐播放器（若未加载），然后再切换显示
-                window.app.loadMusicPlayer().then(() => {
-                    this.handleFeatureToggle('music', () => this.toggleMusicPlayer());
-                });
+
+                // 如果播放器还未初始化，先按需加载
+                if (!this._musicInitialized) {
+                    window.app.loadMusicPlayer()
+                        .then(() => {
+                            this._musicInitialized = true;
+                            // 加载成功后直接显示播放器
+                            this.closeAllModalsExcept(['music']);
+                            this.showMusicPlayer();
+                        })
+                        .catch(() => {});
+                    return;
+                }
+
+                // 已初始化，正常切换
+                this.handleFeatureToggle('music', () => this.toggleMusicPlayer());
             });
         }
 
@@ -64,7 +77,7 @@ class Navbar {
             });
         }
 
-        // ========== 天气按钮（不参与切换组，单独处理） ==========
+        // ========== 天气按钮 ==========
         const weatherBtn = document.getElementById('weatherBtn');
         if (weatherBtn) {
             weatherBtn.addEventListener('click', (e) => {
@@ -110,10 +123,8 @@ class Navbar {
     handleFeatureToggle(featureKey, toggleFn) {
         const isOpen = this.isFeatureOpen(featureKey);
         if (isOpen) {
-            // 功能已打开 → 直接关闭
             toggleFn();
         } else {
-            // 功能未打开 → 先关闭其他所有，然后打开目标
             this.closeAllModalsExcept([featureKey]);
             requestAnimationFrame(() => {
                 toggleFn();
@@ -242,7 +253,6 @@ class Navbar {
     }
 
     destroy() {
-        document.removeEventListener('click', this.closeAllModalsExcept);
         window.removeEventListener('scroll', this.handleScroll);
     }
 }
