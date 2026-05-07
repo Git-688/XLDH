@@ -1,6 +1,5 @@
 /**
  * Waline 评论系统 - 独立反馈模块
- * 动态加载 Waline，简洁初始化，自带模态框管理
  */
 class WalineFeedback {
     constructor() {
@@ -10,18 +9,17 @@ class WalineFeedback {
         this.walineContainer = document.getElementById('waline-feedback');
         this.isVisible = false;
         this.walineInstance = null;
-        this._loaded = false;       // 脚本是否已加载
-        this._initialized = false;  // 实例是否已创建
-        this._openPending = false;  // 是否有待处理的初始化请求
+        this._loaded = false;
+        this._initialized = false;
+        this._openPending = false;
+        this._loadingIndicator = null;
 
         this._initModalEvents();
         this._loadWalineScript();
     }
 
-    // ========== 模态框基础事件 ==========
     _initModalEvents() {
         if (!this.modal) return;
-
         this.closeBtn?.addEventListener('click', () => this.hide());
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.hide();
@@ -29,21 +27,58 @@ class WalineFeedback {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isVisible) this.hide();
         });
-        this.triggerBtn?.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.toggle();
-        });
+        // 移除 triggerBtn 绑定，统一由 navbar 处理（避免冲突）
+        // 下面用 toggle 对外提供方法
     }
 
-    // ========== 动态加载 Waline 脚本 ==========
+    toggle() {
+        this.isVisible ? this.hide() : this.open();
+    }
+
+    open() {
+        if (this.isVisible || !this.modal) return;
+        this.isVisible = true;
+        this.modal.style.display = 'flex';
+        requestAnimationFrame(() => {
+            this.modal.classList.add('active');
+        });
+
+        if (window.app && typeof window.app.registerModal === 'function') {
+            window.app.registerModal({ hide: this.hide.bind(this) });
+        }
+
+        // 显示加载提示
+        if (!this._initialized) {
+            this._showLoading();
+        }
+        this._initWaline();
+    }
+
+    hide() {
+        if (!this.isVisible || !this.modal) return;
+        this.modal.classList.remove('active');
+        setTimeout(() => {
+            this.modal.style.display = 'none';
+        }, 300);
+        this.isVisible = false;
+
+        if (window.app && typeof window.app.unregisterModal === 'function') {
+            window.app.unregisterModal({ hide: this.hide.bind(this) });
+        }
+    }
+
+    _showLoading() {
+        if (this.walineContainer) {
+            this.walineContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">加载评论中...</div>';
+        }
+    }
+
     _loadWalineScript() {
         if (typeof Waline !== 'undefined') {
             this._loaded = true;
             this._tryInitIfPending();
             return;
         }
-
         const existing = document.querySelector('script[src*="@waline/client"]');
         if (existing) {
             existing.addEventListener('load', () => {
@@ -52,17 +87,14 @@ class WalineFeedback {
             });
             return;
         }
-
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/@waline/client@v3/dist/waline.js';
         script.async = true;
         script.onload = () => {
             this._loaded = true;
-            console.log('✅ Waline 脚本动态加载成功');
             this._tryInitIfPending();
         };
         script.onerror = () => {
-            console.error('❌ Waline 脚本加载失败');
             if (this.walineContainer) {
                 this.walineContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">评论系统加载失败，请刷新页面重试</div>';
             }
@@ -70,20 +102,14 @@ class WalineFeedback {
         document.head.appendChild(script);
     }
 
-    _tryInitIfPending() {
-        if (this._openPending) {
-            this._initWaline();
-            this._openPending = false;
-        }
-    }
-
-    // ========== Waline 初始化 ==========
     _initWaline() {
-        if (!this.walineContainer || this._initialized) return;
-        if (!this._loaded || typeof Waline === 'undefined') {
-            this._openPending = true;
+        if (!this._loaded || this._initialized) {
+            if (!this._loaded) {
+                this._openPending = true;
+            }
             return;
         }
+        if (!this.walineContainer) return;
 
         this.walineContainer.innerHTML = '';
         try {
@@ -103,7 +129,7 @@ class WalineFeedback {
                 search: false,
             });
             this._initialized = true;
-            console.log('✅ Waline 评论初始化完成');
+            this._openPending = false;
         } catch (err) {
             console.error('Waline 初始化失败:', err);
             if (this.walineContainer) {
@@ -112,41 +138,11 @@ class WalineFeedback {
         }
     }
 
-    // ========== 显示/隐藏控制 ==========
-    open() {
-        if (this.isVisible || !this.modal) return;
-
-        this.modal.style.display = 'flex';
-        requestAnimationFrame(() => {
-            this.modal.classList.add('active');
-        });
-        this.isVisible = true;
-
-        // 注册到全局 App
-        if (window.app && typeof window.app.registerModal === 'function') {
-            window.app.registerModal({ hide: this.hide.bind(this) });
+    _tryInitIfPending() {
+        if (this._openPending && this._loaded && !this._initialized) {
+            this._initWaline();
+            this._openPending = false;
         }
-
-        // 初始化 Waline（如果尚未完成）
-        this._initWaline();
-    }
-
-    hide() {
-        if (!this.isVisible || !this.modal) return;
-
-        this.modal.classList.remove('active');
-        setTimeout(() => {
-            this.modal.style.display = 'none';
-        }, 300);
-        this.isVisible = false;
-
-        if (window.app && typeof window.app.unregisterModal === 'function') {
-            window.app.unregisterModal({ hide: this.hide.bind(this) });
-        }
-    }
-
-    toggle() {
-        this.isVisible ? this.hide() : this.open();
     }
 
     destroy() {
