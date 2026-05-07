@@ -1,6 +1,5 @@
-
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版（上下等距留白 + 底部按钮区域紧凑对称 + 星聚笔记按钮）
+ * 侧边栏组件 - 悬浮毛玻璃优化版（CSP修复：移除内联onerror）
  */
 class CompactSidebar {
     constructor() {
@@ -198,7 +197,7 @@ class CompactSidebar {
                         <form class="profile-form" id="profileForm">
                             <div class="qq-avatar-section">
                                 <div class="qq-avatar-preview">
-                                    <img id="qqAvatarPreview" src="" alt="QQ头像预览" loading="lazy" decoding="async">
+                                    <img id="qqAvatarPreview" src="" alt="QQ头像预览" loading="lazy" decoding="async" class="js-img-fallback" data-fallback-type="defaultAvatar" data-default-svg="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=">
                                 </div>
                                 <div class="qq-avatar-input-group">
                                     <input type="text" class="form-input qq-avatar-input" id="qqNumber" 
@@ -273,7 +272,7 @@ class CompactSidebar {
             qqAvatarStatus.className = 'qq-avatar-status';
             
             if (!qqNumber) {
-                qqAvatarPreview.src = this.getDefaultAvatarSVG();
+                this.applyDefaultAvatarToElement(qqAvatarPreview);
                 return;
             }
             if (!/^[1-9][0-9]{4,11}$/.test(qqNumber)) {
@@ -288,6 +287,7 @@ class CompactSidebar {
             
             if (avatarUrl) {
                 qqAvatarPreview.src = avatarUrl;
+                this.ensureFallbackAttr(qqAvatarPreview);
                 qqAvatarPreview.setAttribute('loading', 'lazy');
                 qqAvatarPreview.setAttribute('decoding', 'async');
                 qqAvatarStatus.textContent = '头像获取成功';
@@ -300,6 +300,7 @@ class CompactSidebar {
                 const sidebarAvatar = document.getElementById('sidebarWallpaperAvatar');
                 if (sidebarAvatar) {
                     sidebarAvatar.src = avatarUrl;
+                    this.ensureFallbackAttr(sidebarAvatar);
                     sidebarAvatar.setAttribute('loading', 'lazy');
                     sidebarAvatar.setAttribute('decoding', 'async');
                 }
@@ -315,6 +316,22 @@ class CompactSidebar {
                 qqAvatarStatus.className = 'qq-avatar-status error';
             }
         }
+    }
+
+    // 确保图片元素具有回退属性
+    ensureFallbackAttr(imgEl) {
+        if (!imgEl) return;
+        imgEl.classList.add('js-img-fallback');
+        imgEl.dataset.fallbackType = 'defaultAvatar';
+        imgEl.dataset.defaultSvg = this.getDefaultAvatarSVG();
+    }
+
+    // 将默认头像应用到指定元素
+    applyDefaultAvatarToElement(imgEl) {
+        if (!imgEl) return;
+        const svg = this.getDefaultAvatarSVG();
+        imgEl.src = svg;
+        this.ensureFallbackAttr(imgEl);
     }
 
     async getQQAvatar(qqNumber) {
@@ -378,6 +395,7 @@ class CompactSidebar {
             if (qqNumberInput) qqNumberInput.value = '';
             if (qqAvatarPreview) {
                 qqAvatarPreview.src = userConfig.avatar || this.getDefaultAvatarSVG();
+                this.ensureFallbackAttr(qqAvatarPreview);
                 qqAvatarPreview.setAttribute('loading', 'lazy');
                 qqAvatarPreview.setAttribute('decoding', 'async');
             }
@@ -701,6 +719,7 @@ class CompactSidebar {
             if (wallpaperAvatar) {
                 if (userConfig.avatar) {
                     wallpaperAvatar.src = userConfig.avatar;
+                    this.ensureFallbackAttr(wallpaperAvatar);
                     wallpaperAvatar.setAttribute('loading', 'lazy');
                     wallpaperAvatar.setAttribute('decoding', 'async');
                     wallpaperAvatar.style.display = 'block';
@@ -831,27 +850,25 @@ class CompactSidebar {
     async loadRandomAvatar() {
         try {
             const avatarUrl = await this.getAvatar();
-            if (avatarUrl) {
-                const wallpaperAvatar = document.getElementById('sidebarWallpaperAvatar');
-                if (wallpaperAvatar) {
-                    wallpaperAvatar.src = avatarUrl;
-                    wallpaperAvatar.setAttribute('loading', 'lazy');
-                    wallpaperAvatar.setAttribute('decoding', 'async');
-                    wallpaperAvatar.style.display = 'block';
-                    const userConfig = Storage.get('userConfig') || {};
-                    userConfig.avatar = avatarUrl;
-                    Storage.set('userConfig', userConfig);
-                }
+            const wallpaperAvatar = document.getElementById('sidebarWallpaperAvatar');
+            if (avatarUrl && wallpaperAvatar) {
+                wallpaperAvatar.src = avatarUrl;
+                this.ensureFallbackAttr(wallpaperAvatar);
+                wallpaperAvatar.setAttribute('loading', 'lazy');
+                wallpaperAvatar.setAttribute('decoding', 'async');
+                wallpaperAvatar.style.display = 'block';
+                const userConfig = Storage.get('userConfig') || {};
+                userConfig.avatar = avatarUrl;
+                Storage.set('userConfig', userConfig);
             } else {
-                this.setDefaultAvatar();
+                this.applyDefaultAvatarToElement(wallpaperAvatar);
             }
         } catch (error) {
             console.error('加载随机头像失败:', error);
-            this.setDefaultAvatar();
+            this.applyDefaultAvatarToElement(document.getElementById('sidebarWallpaperAvatar'));
         }
     }
 
-    // 修改后的 getAvatar 方法：失败时返回 null，触发默认头像
     async getAvatar() {
         try {
             const randomId = Math.floor(Math.random() * 1000);
@@ -860,18 +877,6 @@ class CompactSidebar {
         } catch (error) {
             console.warn('远程获取头像失败，使用本地生成头像');
             return null;
-        }
-    }
-
-    setDefaultAvatar() {
-        const wallpaperAvatar = document.getElementById('sidebarWallpaperAvatar');
-        if (wallpaperAvatar) {
-            const defaultAvatar = this.getDefaultAvatarSVG();
-            wallpaperAvatar.src = defaultAvatar;
-            wallpaperAvatar.style.display = 'block';
-            const userConfig = Storage.get('userConfig') || {};
-            userConfig.avatar = defaultAvatar;
-            Storage.set('userConfig', userConfig);
         }
     }
 
@@ -930,7 +935,7 @@ class CompactSidebar {
     }
 }
 
-// 单例初始化，与原始文件一致
+// 单例初始化
 if (!window.sidebarInitialized) {
     window.sidebarInitialized = true;
     
