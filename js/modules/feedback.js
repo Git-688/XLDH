@@ -1,5 +1,5 @@
 /**
- * Waline 评论系统 - 独立反馈模块
+ * Waline 评论系统 - 独立反馈模块（修复版）
  */
 class WalineFeedback {
     constructor() {
@@ -12,7 +12,6 @@ class WalineFeedback {
         this._loaded = false;
         this._initialized = false;
         this._openPending = false;
-        this._loadingIndicator = null;
 
         this._initModalEvents();
         this._loadWalineScript();
@@ -27,8 +26,6 @@ class WalineFeedback {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isVisible) this.hide();
         });
-        // 移除 triggerBtn 绑定，统一由 navbar 处理（避免冲突）
-        // 下面用 toggle 对外提供方法
     }
 
     toggle() {
@@ -47,7 +44,6 @@ class WalineFeedback {
             window.app.registerModal({ hide: this.hide.bind(this) });
         }
 
-        // 显示加载提示
         if (!this._initialized) {
             this._showLoading();
         }
@@ -69,47 +65,62 @@ class WalineFeedback {
 
     _showLoading() {
         if (this.walineContainer) {
-            this.walineContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">加载评论中...</div>';
+            this.walineContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">评论系统加载中...</div>';
         }
     }
 
     _loadWalineScript() {
+        // 如果已加载过 Waline，直接标记
         if (typeof Waline !== 'undefined') {
             this._loaded = true;
             this._tryInitIfPending();
             return;
         }
+
+        // 避免重复添加
         const existing = document.querySelector('script[src*="@waline/client"]');
         if (existing) {
             existing.addEventListener('load', () => {
                 this._loaded = true;
                 this._tryInitIfPending();
             });
+            existing.addEventListener('error', () => {
+                this._showLoadError();
+            });
             return;
         }
+
         const script = document.createElement('script');
-        script.src = 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+        // 使用 jsdelivr CDN，更稳定
+        script.src = 'https://cdn.jsdelivr.net/npm/@waline/client@3/dist/waline.js';
         script.async = true;
         script.onload = () => {
             this._loaded = true;
+            console.log('✅ Waline 脚本加载成功');
             this._tryInitIfPending();
         };
         script.onerror = () => {
-            if (this.walineContainer) {
-                this.walineContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">评论系统加载失败，请刷新页面重试</div>';
-            }
+            console.error('❌ Waline 脚本加载失败');
+            this._showLoadError();
         };
         document.head.appendChild(script);
     }
 
     _initWaline() {
-        if (!this._loaded || this._initialized) {
-            if (!this._loaded) {
-                this._openPending = true;
-            }
+        // 如果还没加载完，暂时挂起，等加载完再初始化
+        if (!this._loaded) {
+            this._openPending = true;
             return;
         }
+        // 已经初始化过就不重复了
+        if (this._initialized) return;
         if (!this.walineContainer) return;
+
+        // 再次确认 Waline 是否存在，防止异步加载后仍未定义
+        if (typeof Waline === 'undefined') {
+            this._showLoadError();
+            return;
+        }
 
         this.walineContainer.innerHTML = '';
         try {
@@ -130,12 +141,33 @@ class WalineFeedback {
             });
             this._initialized = true;
             this._openPending = false;
+            console.log('✅ Waline 评论初始化完成');
         } catch (err) {
             console.error('Waline 初始化失败:', err);
-            if (this.walineContainer) {
-                this.walineContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary)">评论初始化失败，请刷新重试</div>';
-            }
+            this._showLoadError();
         }
+    }
+
+    _showLoadError() {
+        if (this.walineContainer) {
+            this.walineContainer.innerHTML = `
+                <div style="text-align:center;padding:20px;color:var(--text-secondary)">
+                    <p>评论系统加载失败</p>
+                    <button onclick="window.walineFeedback._retry();" style="margin-top:8px;padding:4px 16px;border:1px solid #999;border-radius:4px;background:#fff;cursor:pointer;">重新加载</button>
+                </div>`;
+        }
+    }
+
+    _retry() {
+        this._loaded = false;
+        this._initialized = false;
+        this._showLoading();
+        // 移除旧的脚本标签再重新加载
+        const oldScript = document.querySelector('script[src*="@waline/client"]');
+        if (oldScript) oldScript.remove();
+        this._loadWalineScript();
+        // 立即尝试初始化，如果脚本还在加载则会挂起
+        this._initWaline();
     }
 
     _tryInitIfPending() {
