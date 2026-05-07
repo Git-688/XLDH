@@ -53,9 +53,10 @@ class WalineFeedback {
     hide() {
         if (!this.isVisible || !this.modal) return;
         this.modal.classList.remove('active');
+        // 动画时长 250ms 与 CSS 一致
         setTimeout(() => {
             this.modal.style.display = 'none';
-        }, 300);
+        }, 250);
         this.isVisible = false;
 
         if (window.app && typeof window.app.unregisterModal === 'function') {
@@ -70,14 +71,12 @@ class WalineFeedback {
     }
 
     _loadWalineScript() {
-        // 如果已加载过 Waline，直接标记
         if (typeof Waline !== 'undefined') {
             this._loaded = true;
             this._tryInitIfPending();
             return;
         }
 
-        // 避免重复添加
         const existing = document.querySelector('script[src*="@waline/client"]');
         if (existing) {
             existing.addEventListener('load', () => {
@@ -91,7 +90,7 @@ class WalineFeedback {
         }
 
         const script = document.createElement('script');
-        // 使用 jsdelivr CDN，更稳定
+        // 使用 jsdelivr CDN，与 CSS 统一
         script.src = 'https://cdn.jsdelivr.net/npm/@waline/client@3/dist/waline.js';
         script.async = true;
         script.onload = () => {
@@ -107,16 +106,13 @@ class WalineFeedback {
     }
 
     _initWaline() {
-        // 如果还没加载完，暂时挂起，等加载完再初始化
         if (!this._loaded) {
             this._openPending = true;
             return;
         }
-        // 已经初始化过就不重复了
         if (this._initialized) return;
         if (!this.walineContainer) return;
 
-        // 再次确认 Waline 是否存在，防止异步加载后仍未定义
         if (typeof Waline === 'undefined') {
             this._showLoadError();
             return;
@@ -162,11 +158,9 @@ class WalineFeedback {
         this._loaded = false;
         this._initialized = false;
         this._showLoading();
-        // 移除旧的脚本标签再重新加载
         const oldScript = document.querySelector('script[src*="@waline/client"]');
         if (oldScript) oldScript.remove();
         this._loadWalineScript();
-        // 立即尝试初始化，如果脚本还在加载则会挂起
         this._initWaline();
     }
 
@@ -187,7 +181,6 @@ class WalineFeedback {
     }
 }
 
-// 单例初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.walineFeedback = new WalineFeedback();
