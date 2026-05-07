@@ -4,20 +4,20 @@ const WORKER_URL = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
 // 心跳定时器句柄
 let heartbeatInterval = null;
 
-// 格式化运行时间（毫秒 -> 字符串）
+// 格式化运行时间（毫秒 -> 字符串，不显示秒）
 function formatUptime(ms) {
     if (ms < 0) return "刚刚上线";
     const seconds = Math.floor(ms / 1000);
     const days = Math.floor(seconds / 86400);
     const hours = Math.floor((seconds % 86400) / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
     let parts = [];
     if (days > 0) parts.push(`${days}天`);
     if (hours > 0) parts.push(`${hours}时`);
     if (minutes > 0) parts.push(`${minutes}分`);
-    if (secs > 0) parts.push(`${secs}秒`);
-    return parts.join(" ") || "0秒";
+    // 确保至少显示 "0分"
+    if (parts.length === 0) parts.push("0分");
+    return parts.join(" ");
 }
 
 // 更新运行时间显示
