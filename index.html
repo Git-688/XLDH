@@ -41,7 +41,8 @@
     <link rel="stylesheet" href="./css/modules/stats.css">
     <link rel="stylesheet" href="./css/modules/compact-tags.css">
     <link rel="stylesheet" href="./css/responsive.css">
-    <link rel="stylesheet" href="./css/xfyy1/music-player.css">
+
+    <!-- 音乐播放器样式改为按需加载，已移除 <link rel="stylesheet" href="./css/xfyy1/music-player.css"> -->
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
@@ -512,17 +513,6 @@
 <!-- ========== 应用主入口 ========== -->
 <script src="./js/main.js"></script>
 
-<!-- ========== 评论系统已移除 ========== -->
-
-<!-- ========== 音乐播放器子系统 ========== -->
-<script src="./js/xfyy/utils.js"></script>
-<script src="./js/xfyy/cache-manager.js"></script>
-<script src="./js/xfyy/lyric-parser.js"></script>
-<script src="./data/local-music-data.js"></script>
-<script src="./js/xfyy/plugin-manager.js"></script>
-<script src="./js/xfyy/music-player.js"></script>
-<script src="./js/xfyy/music-main.js"></script>
-
-<!-- CSP修复：移除内联 Service Worker 注册，已移至 main.js -->
+<!-- 音乐播放器资源已改为按需加载，见 main.js 中的 loadMusicPlayer() -->
 </body>
 </html>
