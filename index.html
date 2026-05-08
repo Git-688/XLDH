@@ -56,7 +56,7 @@
         .floating-btn.comment-btn { color: #f59e0b; }
         .floating-btn.comment-btn:hover { color: #d97706; }
 
-        /* ================= 笔记模态框 ================= */
+        /* ================= 笔记模态框（留白与公告统一） ================= */
         #notebookModal {
             position: fixed;
             top: 0;
@@ -104,11 +104,12 @@
             transform: scale(1) translateY(0);
             opacity: 1;
         }
+        /* 头部留白与公告一致 */
         #notebookModal .feedback-modal-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 18px 24px 10px;
+            padding: 16px 20px 8px;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             color: #1e293b;
             flex-shrink: 0;
@@ -134,13 +135,23 @@
             cursor: pointer; transition: background 0.2s;
         }
         #notebookModal .feedback-modal-close:hover { background: rgba(0, 0, 0, 0.05); color: #334155; }
+        /* 内容区留白与公告一致（公告 body: 16px 20px 12px） */
         #notebookModal .feedback-modal-body {
-            padding: 0; overflow-y: auto; flex: 1;
-            background: transparent; -webkit-overflow-scrolling: touch;
+            padding: 16px 20px 12px;
+            overflow-y: auto;
+            flex: 1;
+            background: transparent;
+            -webkit-overflow-scrolling: touch;
         }
         #notebookModal .feedback-modal-body::-webkit-scrollbar { display: none; }
 
-        .notebook-list { padding: 16px; margin: 0; display: flex; flex-direction: column; gap: 10px; box-sizing: border-box; }
+        .notebook-list {
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
         .notebook-item {
             background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
             border-radius: 8px; padding: 10px 14px; border: 1px solid rgba(0, 0, 0, 0.06); transition: all 0.2s ease;
@@ -178,9 +189,15 @@
             #notebookModal.active .feedback-modal-content {
                 transform: translateY(0);
             }
-            #notebookModal .feedback-modal-header { padding: 12px 16px; }
-            #notebookModal .feedback-modal-body { padding: 12px 14px; }
-            #notebookModal .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
+            #notebookModal .feedback-modal-header {
+                padding: 14px 18px 6px;
+            }
+            #notebookModal .feedback-modal-body {
+                padding: 14px 18px 10px;
+            }
+            #notebookModal .feedback-modal-close {
+                width: 36px; height: 36px; font-size: 22px;
+            }
             .notebook-item { padding: 10px 12px; }
             .notebook-title { font-size: 14px; }
             .notebook-content { font-size: 11px; }
@@ -195,6 +212,7 @@
             .notebook-id { background: rgba(50, 50, 50, 0.8); }
             .notebook-content { background: rgba(30, 30, 30, 0.6); }
         }
+
         .notebook-list .loading, .notebook-list .empty, .notebook-list .error {
             text-align: center; padding: 20px 20px; color: var(--text-secondary); font-size: 12px;
         }
