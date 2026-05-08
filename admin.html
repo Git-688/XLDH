@@ -105,7 +105,7 @@
             display:flex;flex-direction:column;
             min-width:200px;
         }
-        .site-list,.rank-list,.feedback-list{
+        .site-list,.rank-list,.feedback-list,.submissions-list{
             overflow-y:auto;max-height:calc(100vh - 260px);overflow-x:hidden;
             flex:1;
         }
@@ -290,6 +290,7 @@
             <div class="tab-btn active" data-tab="manage">数据管理</div>
             <div class="tab-btn" data-tab="rank">点击排行</div>
             <div class="tab-btn" data-tab="feedback">用户反馈</div>
+            <div class="tab-btn" data-tab="submissions">待审核</div>
         </div>
 
         <div id="manageTab" class="tab-panel">
@@ -332,6 +333,14 @@
                 <span class="badge badge-blue">用户提交的失效链接（修复后12小时自动清除）</span>
             </div>
             <div class="feedback-list" id="feedbackList"></div>
+        </div>
+
+        <div id="submissionsTab" class="tab-panel hidden">
+            <div class="flex-row" style="margin-bottom:10px">
+                <button class="primary sm" id="refreshSubmissionsBtn">刷新列表</button>
+                <span class="badge badge-blue">用户投稿的网站，审核后可加入导航</span>
+            </div>
+            <div class="submissions-list" id="submissionsList"></div>
         </div>
     </div>
 </div>
