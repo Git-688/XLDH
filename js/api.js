@@ -1,6 +1,7 @@
 /**
  * API数据管理
  * 简化版本，移除所有备用方案
+ * 修改：去除必应壁纸标题中的“必应壁纸 · ”前缀
  */
 class API {
     static CONFIG = {
@@ -70,7 +71,7 @@ class API {
         }
     }
 
-    // 获取必应每日壁纸（使用bing.biturl.top API）
+    // 获取必应每日壁纸（使用bing.biturl.top API），去除标题前缀
     static async getBingWallpaper() {
         try {
             const controller = new AbortController();
@@ -93,9 +94,13 @@ class API {
                 throw new Error('API返回数据格式不正确');
             }
             
+            // 去除“必应壁纸 · ”前缀
+            let title = data.copyright || '必应每日壁纸';
+            title = title.replace(/^必应壁纸\s*·\s*/i, '').trim() || '星聚导航';
+            
             return {
                 url: this.sanitizeUrl(data.url),
-                title: this.escapeHtml(data.copyright || '必应每日壁纸'),
+                title: this.escapeHtml(title),
                 copyright: this.escapeHtml(data.copyright || ''),
                 time: new Date().toISOString().split('T')[0],
                 success: true
