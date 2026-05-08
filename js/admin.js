@@ -349,6 +349,7 @@
                 document.getElementById(`${tab}Tab`).classList.remove('hidden');
                 if (tab === 'rank') loadRanking();
                 if (tab === 'feedback') loadFeedback();
+                if (tab === 'submissions') loadSubmissions();
             });
         });
 
@@ -361,6 +362,7 @@
         document.getElementById('logBtn').addEventListener('click', showLogs);
         document.getElementById('sortRankBtn').addEventListener('click', loadRanking);
         document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
+        document.getElementById('refreshSubmissionsBtn').addEventListener('click', loadSubmissions);
         document.getElementById('refreshNavBtn').addEventListener('click', refreshNavigation);
         document.getElementById('closeLogBtn').addEventListener('click', closeLogModal);
         document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
@@ -591,6 +593,73 @@
     async function refreshNavigation() {
         try { await apiFetch('/admin/refresh-navigation', { method:'POST' }); showToast('缓存已刷新', 'success'); }
         catch { showToast('刷新失败', 'error'); }
+    }
+
+    // ========== 投稿审核 ==========
+    async function loadSubmissions() {
+        const list = document.getElementById('submissionsList');
+        list.innerHTML = '<div class="empty">加载中...</div>';
+        try {
+            const data = await apiFetch('/admin/submissions');
+            if (!data.length) {
+                list.innerHTML = '<div class="empty">暂无待审核网站</div>';
+                return;
+            }
+            list.innerHTML = data.map(item => `
+                <div class="link-item">
+                    <div class="link-info">
+                        <strong>${escapeHtml(item.title)}</strong>
+                        <div style="font-size:10px;color:#999">
+                            ${escapeHtml(item.url)}
+                        </div>
+                        <div style="font-size:10px;color:#999">
+                            分类：${escapeHtml(item.category||'未分类')} | 
+                            图标：${escapeHtml(item.icon||'无')} | 
+                            IP：${escapeHtml(item.submitter_ip)}
+                        </div>
+                        <div style="font-size:10px;color:#999">
+                            ${escapeHtml(item.description||'无描述')}
+                        </div>
+                        <div style="font-size:10px;color:#999">
+                            提交时间：${new Date(item.submit_time).toLocaleString()}
+                        </div>
+                    </div>
+                    <div class="link-actions">
+                        <button class="sm primary" data-action="approveSubmission" data-id="${item.id}">通过</button>
+                        <button class="sm danger" data-action="rejectSubmission" data-id="${item.id}">拒绝</button>
+                    </div>
+                </div>
+            `).join('');
+
+            list.querySelectorAll('[data-action="approveSubmission"]').forEach(btn => {
+                btn.addEventListener('click', () => approveSubmission(btn.dataset.id));
+            });
+            list.querySelectorAll('[data-action="rejectSubmission"]').forEach(btn => {
+                btn.addEventListener('click', () => rejectSubmission(btn.dataset.id));
+            });
+        } catch (e) {
+            list.innerHTML = '<div class="empty">加载失败</div>';
+        }
+    }
+
+    async function approveSubmission(id) {
+        if (!confirm('确认通过该投稿？将通过后的网站加入导航。')) return;
+        try {
+            await apiFetch(`/admin/submissions/${id}/approve`, { method:'POST' });
+            showToast('已通过并收录', 'success');
+            loadSubmissions();
+            await loadAllData();
+            await apiFetch('/admin/refresh-navigation', { method:'POST' });
+        } catch { showToast('操作失败', 'error'); }
+    }
+
+    async function rejectSubmission(id) {
+        if (!confirm('拒绝该投稿？')) return;
+        try {
+            await apiFetch(`/admin/submissions/${id}`, { method:'DELETE' });
+            showToast('已拒绝', 'success');
+            loadSubmissions();
+        } catch { showToast('操作失败', 'error'); }
     }
 
     window.getFavicon = function(url) {
