@@ -1,5 +1,6 @@
 /**
- * 星聚导航主应用程序（CSP修复版，音乐播放器还原为初始加载）
+ * 星聚导航主应用程序（最终版）
+ * 完整功能：笔记、搜索、天气、音乐、评论等
  */
 class App {
     constructor() {
@@ -19,7 +20,7 @@ class App {
         }
     }
 
-    // 加载星聚笔记数据（通过 Worker 缓存接口）
+    // 加载星聚笔记数据
     async loadNotebookData() {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
@@ -107,7 +108,7 @@ class App {
         }
     }
 
-    // ========== 全局图片错误捕获（CSP修复） ==========
+    // 全局图片错误捕获（CSP修复）
     initImageFallbackHandler() {
         document.addEventListener('error', (e) => {
             const img = e.target;
@@ -116,6 +117,7 @@ class App {
             const fbType = img.dataset.fallbackType;
             const parent = img.parentElement;
             
+            // 防止重复触发
             img.classList.remove('js-img-fallback');
             
             if (fbType === 'hideAndShowIcon') {
@@ -137,10 +139,10 @@ class App {
                     parent.appendChild(icon);
                 }
             }
-        }, true);
+        }, true); // 捕获阶段，因为图片error不冒泡
     }
 
-    // ========== 应用初始化 ==========
+    // 应用初始化
     init() {
         if (this.isInitialized) return;
         this.setupErrorHandling();
@@ -154,10 +156,12 @@ class App {
         this.initFloatingButtonsEffect();
         this.isInitialized = true;
 
+        // 挂载全局便捷方法
         window.showNotebookModal = this.showNotebookModal.bind(this);
         window.hideNotebookModal = this.hideNotebookModal.bind(this);
     }
 
+    // 悬浮按钮滚动半透明效果
     initFloatingButtonsEffect() {
         let scrollTimer;
         const floatingBtns = document.querySelector('.floating-buttons');
@@ -195,14 +199,14 @@ class App {
         try {
             const initPromises = [];
 
-            if (typeof SearchModule !== 'undefined') {
-                if (!window.searchModule || !(window.searchModule instanceof SearchModule)) {
-                    this.modules.search = new SearchModule();
-                    window.searchModule = this.modules.search;
-                    initPromises.push(this.modules.search.init?.());
+            if (typeof NewSearchModule !== 'undefined') {
+                if (!window.newSearchModule) {
+                    this.modules.search = new NewSearchModule();
+                    window.newSearchModule = this.modules.search;
                 } else {
-                    this.modules.search = window.searchModule;
+                    this.modules.search = window.newSearchModule;
                 }
+                initPromises.push(this.modules.search.init?.());
             }
 
             if (typeof WallpaperModule !== 'undefined') {
@@ -244,14 +248,17 @@ class App {
                 if (!window.aboutModule) {
                     this.modules.about = new AboutModule();
                     window.aboutModule = this.modules.about;
+                    this.modules.about.init(); // AboutModule 需要手动初始化
                 } else {
                     this.modules.about = window.aboutModule;
                 }
             }
 
+            // 等待所有模块初始化完成（静默失败）
             Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {
                 console.log('所有模块初始化完成');
             });
+
         } catch (error) {
             console.error('模块初始化失败:', error);
             this.showToast('部分模块初始化失败', 'warning');
@@ -268,6 +275,7 @@ class App {
         }
     }
 
+    // 全局错误处理
     setupErrorHandling() {
         const shouldIgnore = (message) => {
             const m = String(message || '');
@@ -378,6 +386,7 @@ class App {
         if (this.components.navbar?.hideMusicPlayer) this.components.navbar.hideMusicPlayer();
         if (this.modules.search?.isModalOpen && this.modules.search.hide) this.modules.search.hide();
         this.hideNotebookModal();
+        if (window.walineFeedback?.isVisible) window.walineFeedback.hide();
     }
 
     showToast(message, type = 'info') {
@@ -560,10 +569,12 @@ class App {
     }
 }
 
+// 单例启动
 if (!window.app) {
     window.app = new App();
 }
 
+// 如果尚未启动，再次尝试
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
         if (window.app && !window.app.isInitialized) {
