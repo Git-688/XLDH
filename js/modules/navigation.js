@@ -2,7 +2,7 @@
  * 优化分类导航系统（基于后端 Worker + D1）
  * 包含：缓存容错、后台静默更新、去重请求、全站搜索
  * CSP修复：移除图片 onerror 内联事件
- * 修复：搜索框位置调整到标题/统计下方，且初始化报错问题
+ * 修复：补充 startBackgroundUpdates 方法，调整搜索框插入逻辑
  */
 class OptimizedNavigation {
     constructor() {
@@ -18,13 +18,12 @@ class OptimizedNavigation {
         this.updateTimer = null;
         this.UPDATE_INTERVAL = 5 * 60 * 1000;
         this.quietUpdate = true;
-        this.pendingNavRequest = null;            // 去重请求
+        this.pendingNavRequest = null;
 
-        // 搜索相关
-        this.allSitesFlat = [];                   // 扁平化的所有网站列表
-        this.searchInput = null;                  // 搜索框元素
-        this.isSearching = false;                 // 是否处于搜索模式
-        this.searchTimer = null;                  // 防抖定时器
+        this.allSitesFlat = [];
+        this.searchInput = null;
+        this.isSearching = false;
+        this.searchTimer = null;
     }
 
     /* ==================== 安全工具 ==================== */
@@ -52,10 +51,10 @@ class OptimizedNavigation {
         if (this.isInitialized) return;
         this.showSkeleton();
         this.bindEvents();
-        this.createSearchBox();                  // 添加搜索框（位置已修正）
+        this.createSearchBox();
         try {
             await this.loadNavigationData();
-            this.buildFlatSiteList();            // 构建扁平网站列表
+            this.buildFlatSiteList();
             this.calculateStats();
             this.renderNavigation();
             const firstCategory = this.getFirstCategory();
@@ -81,12 +80,24 @@ class OptimizedNavigation {
         }
     }
 
-    /* ==================== 搜索框创建（修正位置） ==================== */
+    /* ==================== 后台静默更新 ==================== */
+    startBackgroundUpdates() {
+        if (this.updateTimer) clearInterval(this.updateTimer);
+        this.updateTimer = setInterval(() => {
+            this.fetchLatestFromAPI(true);
+        }, this.UPDATE_INTERVAL);
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                this.fetchLatestFromAPI(true);
+            }
+        });
+    }
+
+    /* ==================== 搜索框创建 ==================== */
     createSearchBox() {
         const navHeader = document.querySelector('.navigation-header');
         if (!navHeader) return;
-
-        // 避免重复创建
         if (navHeader.querySelector('.nav-search-box')) return;
 
         const container = document.createElement('div');
@@ -102,28 +113,21 @@ class OptimizedNavigation {
             <span class="search-result-hint" id="navSearchHint" style="display:none;"></span>
         `;
 
-        // ★ 直接追加到 navigation-header 末尾，不依赖 header-content 内部元素
         navHeader.appendChild(container);
 
         this.searchInput = container.querySelector('#navSearchInput');
         const clearBtn = container.querySelector('#navSearchClearBtn');
 
-        // 输入事件（防抖）
         this.searchInput.addEventListener('input', () => {
             const query = this.searchInput.value.trim();
             clearBtn.style.display = query ? 'flex' : 'none';
-
             clearTimeout(this.searchTimer);
             this.searchTimer = setTimeout(() => {
-                if (query) {
-                    this.performSearch(query);
-                } else {
-                    this.clearSearch();
-                }
+                if (query) this.performSearch(query);
+                else this.clearSearch();
             }, 300);
         });
 
-        // 清除按钮
         clearBtn.addEventListener('click', () => {
             this.searchInput.value = '';
             clearBtn.style.display = 'none';
@@ -131,7 +135,6 @@ class OptimizedNavigation {
             this.searchInput.focus();
         });
 
-        // 快捷键：Ctrl+K 聚焦搜索框
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
@@ -140,76 +143,47 @@ class OptimizedNavigation {
         });
     }
 
-    /* 构建扁平网站列表，供搜索使用 */
     buildFlatSiteList() {
         this.allSitesFlat = [];
         if (!this.navigationData?.categories) return;
         for (const [catName, subCats] of Object.entries(this.navigationData.categories)) {
             for (const [subName, sites] of Object.entries(subCats)) {
                 sites.forEach(site => {
-                    this.allSitesFlat.push({
-                        ...site,
-                        category: catName,
-                        subcategory: subName
-                    });
+                    this.allSitesFlat.push({ ...site, category: catName, subcategory: subName });
                 });
             }
         }
     }
 
-    /* 执行搜索 */
     performSearch(query) {
         if (!this.allSitesFlat.length) return;
         this.isSearching = true;
-
         const keyword = query.toLowerCase();
         const results = this.allSitesFlat.filter(site =>
             (site.title && site.title.toLowerCase().includes(keyword)) ||
             (site.description && site.description.toLowerCase().includes(keyword)) ||
             (site.url && site.url.toLowerCase().includes(keyword))
         );
-
-        // 展示搜索结果
         const container = document.getElementById('level3Content');
         if (!container) return;
         container.innerHTML = '';
-
         if (results.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon"><i class="fas fa-search"></i></div>
-                    <h3 class="empty-title">未找到相关链接</h3>
-                    <p class="empty-subtitle">试试其他关键词</p>
-                </div>`;
+            container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-search"></i></div><h3 class="empty-title">未找到相关链接</h3><p class="empty-subtitle">试试其他关键词</p></div>`;
         } else {
-            results.forEach((site, idx) => {
-                const card = this.createSiteCard(site, idx);
-                container.appendChild(card);
-            });
+            results.forEach((site, idx) => container.appendChild(this.createSiteCard(site, idx)));
         }
-
-        // 更新提示
         const hint = document.getElementById('navSearchHint');
-        if (hint) {
-            hint.style.display = 'block';
-            hint.textContent = `找到 ${results.length} 个结果`;
-        }
-
-        // 清空一级/二级高亮（不选中任何分类）
+        if (hint) { hint.style.display = 'block'; hint.textContent = `找到 ${results.length} 个结果`; }
         document.querySelectorAll('.level1-btn, .level2-btn').forEach(b => b.classList.remove('active'));
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
     }
 
-    /* 清除搜索，恢复原视图 */
     clearSearch() {
         if (!this.isSearching) return;
         this.isSearching = false;
-
         const hint = document.getElementById('navSearchHint');
         if (hint) hint.style.display = 'none';
-
-        // 恢复之前选中的分类/子分类，或默认第一个
         if (this.selectedLevel1 && this.navigationData?.categories?.[this.selectedLevel1]) {
             this.selectLevel1(this.selectedLevel1, false);
         } else {
@@ -218,7 +192,7 @@ class OptimizedNavigation {
         }
     }
 
-    /* ==================== 数据加载与缓存（含去重） ==================== */
+    /* ==================== 数据加载与缓存 ==================== */
     async loadNavigationData(retryCount = 0) {
         try {
             const data = await this.loadFromAPI(retryCount);
@@ -239,7 +213,6 @@ class OptimizedNavigation {
 
     async loadFromAPI(retryCount = 0) {
         if (this.pendingNavRequest) return this.pendingNavRequest;
-
         const apiUrl = `https://api.xjdh688.ccwu.cc/navigation?_=${Date.now()}`;
         this.pendingNavRequest = (async () => {
             try {
@@ -264,9 +237,7 @@ class OptimizedNavigation {
     }
 
     saveCache(data) {
-        try {
-            sessionStorage.setItem(this.cacheKey, JSON.stringify({ data, timestamp: Date.now() }));
-        } catch (e) {}
+        try { sessionStorage.setItem(this.cacheKey, JSON.stringify({ data, timestamp: Date.now() })); } catch (e) {}
     }
 
     loadCache() {
@@ -291,29 +262,25 @@ class OptimizedNavigation {
             if (oldStr === newStr) return;
             this.navigationData = latest;
             this.saveCache(latest);
-            this.buildFlatSiteList();          // 更新扁平列表
+            this.buildFlatSiteList();
             this.calculateStats();
-            if (!silent && this.quietUpdate) {
-                window.toast.show('导航数据已自动更新', 'info');
-            }
+            if (!silent && this.quietUpdate) window.toast.show('导航数据已自动更新', 'info');
             if (!this.isSearching) {
                 if (!this.selectedLevel1 || latest.categories.hasOwnProperty(this.selectedLevel1)) {
                     this.renderAll();
                 }
             }
-            console.log('🔄 后台静默更新完成');
         } catch (e) {
             console.warn('后台更新失败:', e.message);
         }
     }
 
-    /* ==================== 统计与渲染 ==================== */
     calculateStats() {
         if (this.navigationData?.categories) {
             let total = 0, invalid = 0;
-            for (const category in this.navigationData.categories) {
-                for (const sub in this.navigationData.categories[category]) {
-                    const sites = this.navigationData.categories[category][sub];
+            for (const cat in this.navigationData.categories) {
+                for (const sub in this.navigationData.categories[cat]) {
+                    const sites = this.navigationData.categories[cat][sub];
                     total += sites.length;
                     invalid += sites.filter(s => s.valid === false).length;
                 }
@@ -334,17 +301,11 @@ class OptimizedNavigation {
 
     renderAll() {
         this.renderNavigation();
-        if (this.selectedLevel1) {
-            this.selectLevel1(this.selectedLevel1, false);
-        } else if (this.getFirstCategory()) {
-            this.selectLevel1(this.getFirstCategory(), false);
-        }
+        if (this.selectedLevel1) this.selectLevel1(this.selectedLevel1, false);
+        else if (this.getFirstCategory()) this.selectLevel1(this.getFirstCategory(), false);
     }
 
-    renderNavigation() {
-        this.renderLevel1();
-        this.renderEmptyState();
-    }
+    renderNavigation() { this.renderLevel1(); this.renderEmptyState(); }
 
     renderLevel1() {
         const container = document.getElementById('level1Nav');
@@ -376,8 +337,7 @@ class OptimizedNavigation {
             btn.className = `level2-btn ${idx === 0 ? 'active' : ''}`;
             btn.dataset.level2 = subName;
             btn.title = subName;
-            btn.innerHTML = `<span class="level2-btn-text">${this._escapeHtml(subName)}</span>
-                ${sites.length ? `<span class="level2-btn-count">${sites.length}</span>` : ''}`;
+            btn.innerHTML = `<span class="level2-btn-text">${this._escapeHtml(subName)}</span>${sites.length ? `<span class="level2-btn-count">${sites.length}</span>` : ''}`;
             container.appendChild(btn);
         });
     }
@@ -398,7 +358,6 @@ class OptimizedNavigation {
         card.target = '_blank';
         card.rel = 'noopener noreferrer';
         card.title = `${site.title}\n${site.description || ''}`;
-
         let iconHtml = '<i class="fas fa-link"></i>';
         if (site.icon) {
             const raw = site.icon.trim();
@@ -410,7 +369,6 @@ class OptimizedNavigation {
                 iconHtml = `<span>${this._escapeHtml(raw)}</span>`;
             }
         }
-
         const views = site.views || 0;
         const formattedViews = this._formatViews(views);
 
@@ -418,13 +376,8 @@ class OptimizedNavigation {
             <div class="card-top">
                 <div class="icon-container">${iconHtml}</div>
                 <div class="card-top-right">
-                    <button class="report-dead-link-btn" data-url="${this._escapeHtml(site.url)}" data-title="${this._escapeHtml(site.title)}" title="报告死链">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </button>
-                    <div class="views-container">
-                        <i class="fas fa-eye views-icon"></i>
-                        <span class="view-count" data-views="${views}">${formattedViews}</span>
-                    </div>
+                    <button class="report-dead-link-btn" data-url="${this._escapeHtml(site.url)}" data-title="${this._escapeHtml(site.title)}" title="报告死链"><i class="fas fa-exclamation-triangle"></i></button>
+                    <div class="views-container"><i class="fas fa-eye views-icon"></i><span class="view-count" data-views="${views}">${formattedViews}</span></div>
                 </div>
             </div>
             <div class="divider-line"></div>
@@ -438,11 +391,7 @@ class OptimizedNavigation {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
             if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
-            fetch('https://api.xjdh688.ccwu.cc/click', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: site.url, title: site.title })
-            }).catch(() => {});
+            fetch('https://api.xjdh688.ccwu.cc/click', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: site.url, title: site.title }) }).catch(() => {});
             const viewEl = card.querySelector('.view-count');
             if (viewEl) {
                 let cur = parseInt(viewEl.dataset.views) || 0;
@@ -452,49 +401,31 @@ class OptimizedNavigation {
                 viewEl.classList.add('increasing');
                 setTimeout(() => viewEl.classList.remove('increasing'), 300);
             }
-            setTimeout(() => {
-                this.isNavigationClick = false;
-                if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
-            }, 100);
+            setTimeout(() => { this.isNavigationClick = false; if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false; }, 100);
         });
 
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             reportBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const url = reportBtn.dataset.url;
-                const title = reportBtn.dataset.title;
+                e.preventDefault(); e.stopPropagation();
                 try {
-                    const res = await fetch('https://api.xjdh688.ccwu.cc/report-dead-link', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url, title })
-                    });
+                    const res = await fetch('https://api.xjdh688.ccwu.cc/report-dead-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: reportBtn.dataset.url, title: reportBtn.dataset.title }) });
                     window.toast.show(res.ok ? '已收到反馈' : '反馈失败', res.ok ? 'success' : 'error');
-                } catch {
-                    window.toast.show('网络错误', 'error');
-                }
+                } catch { window.toast.show('网络错误', 'error'); }
             });
         }
         return card;
     }
 
-    /* ==================== 事件绑定（含搜索模式拦截） ==================== */
     bindEvents() {
         document.addEventListener('click', (e) => {
-            // 搜索模式下不响应分类切换
             if (this.isSearching) return;
-
             const level1Btn = e.target.closest('.level1-btn');
             if (level1Btn) {
                 this.isNavigationClick = true;
                 if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
                 this.selectLevel1(level1Btn.dataset.level1, true);
-                setTimeout(() => {
-                    this.isNavigationClick = false;
-                    if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
-                }, 100);
+                setTimeout(() => { this.isNavigationClick = false; if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false; }, 100);
                 return;
             }
             const level2Btn = e.target.closest('.level2-btn');
@@ -502,10 +433,7 @@ class OptimizedNavigation {
                 this.isNavigationClick = true;
                 if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
                 this.selectLevel2(level2Btn.dataset.level2, true);
-                setTimeout(() => {
-                    this.isNavigationClick = false;
-                    if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
-                }, 100);
+                setTimeout(() => { this.isNavigationClick = false; if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false; }, 100);
                 return;
             }
         });
@@ -534,58 +462,31 @@ class OptimizedNavigation {
         setTimeout(() => { this.isNavigationClick = false; }, 100);
     }
 
-    getFirstCategory() {
-        return this.navigationData?.categories ? Object.keys(this.navigationData.categories)[0] : null;
-    }
+    getFirstCategory() { return this.navigationData?.categories ? Object.keys(this.navigationData.categories)[0] : null; }
+    getFirstSubCategory(level1) { const subs = this.navigationData?.categories?.[level1]; return subs ? Object.keys(subs)[0] : null; }
 
-    getFirstSubCategory(level1) {
-        const subs = this.navigationData?.categories?.[level1];
-        return subs ? Object.keys(subs)[0] : null;
-    }
-
-    showSkeleton() {
-        const container = document.getElementById('level3Content');
-        if (container) container.innerHTML = this.generateSkeletonHTML();
-    }
+    showSkeleton() { const container = document.getElementById('level3Content'); if (container) container.innerHTML = this.generateSkeletonHTML(); }
 
     generateSkeletonHTML() {
         let html = '';
         for (let i = 0; i < this.skeletonCount; i++) {
-            html += `<div class="site-card skeleton-card">
-                <div class="card-top"><div class="icon-container skeleton-icon"></div><div class="card-top-right"><div class="skeleton-btn"></div><div class="views-container"><div class="skeleton-views"></div></div></div></div>
-                <div class="divider-line skeleton-divider"></div>
-                <div class="card-bottom"><div class="site-title skeleton-title"></div><div class="site-description skeleton-description"></div></div>
-            </div>`;
+            html += `<div class="site-card skeleton-card"><div class="card-top"><div class="icon-container skeleton-icon"></div><div class="card-top-right"><div class="skeleton-btn"></div><div class="views-container"><div class="skeleton-views"></div></div></div></div><div class="divider-line skeleton-divider"></div><div class="card-bottom"><div class="site-title skeleton-title"></div><div class="site-description skeleton-description"></div></div></div>`;
         }
         return html;
     }
 
     renderEmptyState() {
         const container = document.getElementById('level3Content');
-        if (container) {
-            container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-compass"></i></div><h3 class="empty-title">选择一个分类开始探索</h3><p class="empty-subtitle">点击左侧分类查看详细内容</p></div>`;
-        }
+        if (container) container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-compass"></i></div><h3 class="empty-title">选择一个分类开始探索</h3><p class="empty-subtitle">点击左侧分类查看详细内容</p></div>`;
     }
 
     showError() {
         const container = document.getElementById('level3Content');
-        if (container) {
-            container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">导航数据加载失败</h3><p class="empty-subtitle">请检查网络或稍后重试</p></div>`;
-        }
+        if (container) container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">导航数据加载失败</h3><p class="empty-subtitle">请检查网络或稍后重试</p></div>`;
     }
 
-    refresh() {
-        this.selectedLevel1 = null;
-        this.selectedLevel2 = null;
-        this.showSkeleton();
-        this.init();
-    }
-
-    destroy() {
-        if (this.updateTimer) clearInterval(this.updateTimer);
-    }
+    refresh() { this.selectedLevel1 = null; this.selectedLevel2 = null; this.showSkeleton(); this.init(); }
+    destroy() { if (this.updateTimer) clearInterval(this.updateTimer); }
 }
 
-window.getOptimizedNavigation = function() {
-    return window.optimizedNavigation;
-};
+window.getOptimizedNavigation = function() { return window.optimizedNavigation; };
