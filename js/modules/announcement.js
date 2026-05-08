@@ -64,7 +64,7 @@ class AnnouncementModule {
         return [{
             id: 'static_announcement',
             title: '系统公告',
-            focus: '本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台。',
+            focus: '本站为纯前端静态资源导航站，不存储文件、不收集隐私、轻量服务器后台。',
             updates: [
                 '全新界面设计-更加现代化和美观的视觉体验',
                 '音乐播放器-支持多平台音乐搜索和播放',
