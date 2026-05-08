@@ -1,23 +1,21 @@
 /* 
  * 优化分类导航样式
  * 文件位置：./css/modules/navigation.css
- * 完整文件：保留原有全部样式，并新增搜索框样式（搜索框位于标题下方）
+ * 完整文件：原有全部样式 + 搜索框位于标题/统计下方
  */
 
-/* ====================== 搜索框样式（新增，位于标题下方） ====================== */
+/* ====================== 搜索框样式（修正位置） ====================== */
 .nav-search-box {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;                     /* 独占一行 */
-    margin: 8px 0 0 0;              /* 与上方标题保持间距 */
+    display: block;               /* 独占一行 */
+    width: 100%;
+    margin-top: 10px;             /* 与上方标题/统计保持间距 */
 }
 
 .search-input-wrapper {
     position: relative;
-    flex: 1;
     display: flex;
     align-items: center;
+    width: 100%;
 }
 
 .search-input-wrapper .search-icon-prefix {
@@ -73,12 +71,14 @@
     color: var(--text-secondary);
     white-space: nowrap;
     padding-right: 8px;
+    display: inline-block;
+    margin-top: 4px;
 }
 
-/* 移动端搜索框微调 */
+/* 移动端微调 */
 @media (max-width: 768px) {
     .nav-search-box {
-        margin-top: 6px;
+        margin-top: 8px;
     }
     .search-input-wrapper input {
         height: 32px;
@@ -97,7 +97,7 @@
     }
 }
 
-/* ====================== 原有导航样式（完整保留） ====================== */
+/* ====================== 原有导航样式（完整保留，不动任何布局） ====================== */
 
 /* 导航主容器 */
 .navigation-section {
@@ -148,11 +148,12 @@
     }
 }
 
-/* ====================== 头部（调整后支持换行） ====================== */
+/* ====================== 头部 ====================== */
 .navigation-header {
     margin-bottom: 12px;
     display: flex;
-    align-items: center;
+    flex-direction: column;       /* 改为纵向排列，让 title/stats 在一行，搜索框在下一行 */
+    align-items: flex-start;
     position: relative;
     padding-left: 8px;
 }
@@ -161,22 +162,20 @@
     content: '';
     position: absolute;
     left: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 8px;                     /* 调整位置，避免与搜索框重叠 */
     width: 2px;
     height: 12px;
     background: var(--primary-color);
     border-radius: 2px;
 }
 
-/* 修改点：header-content 允许换行 */
 .header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
     gap: 12px;
-    flex-wrap: wrap;                /* 允许换行，使搜索框可在下方 */
+    flex-wrap: nowrap;            /* 标题和统计坚决不换行 */
 }
 
 .nav-header-left {
@@ -750,14 +749,24 @@
 }
 
 @keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 /* 卡片淡入动画 */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .site-card {
@@ -777,88 +786,312 @@
 }
 
 /* ====================== 响应式设计 ====================== */
-/* 桌面端 */
+
+/* 桌面端 ≥1024px */
 @media (min-width: 1024px) {
-    .navigation-section { padding: 0 0 calc(var(--section-margin-md) * 0.5) 0; }
-    .navigation-section .container { max-width: 1600px; }
-    .navigation-body { height: auto; }
-    .navigation-left { width: 140px; }
-    .navigation-middle { width: 160px; }
-    .level1-nav, .level2-nav { flex-direction: column; overflow-x: visible; overflow-y: auto; }
-    .level1-btn, .level2-btn { flex: 1 1 auto; min-width: 0; padding: 12px 8px; white-space: nowrap; overflow: visible; text-overflow: clip; }
-    .level3-content { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 12px; grid-auto-rows: minmax(115px, auto); }
-    .site-card { min-height: 115px; }
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-md) * 0.5) 0;
+    }
+    .navigation-section .container {
+        max-width: 1600px;
+    }
+    .navigation-body {
+        height: auto;
+    }
+    .navigation-left {
+        width: 140px;
+    }
+    .navigation-middle {
+        width: 160px;
+    }
+    .level1-nav, .level2-nav {
+        flex-direction: column;
+        overflow-x: visible;
+        overflow-y: auto;
+    }
+    .level1-btn, .level2-btn {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 12px 8px;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+    }
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+        padding: 12px;
+        grid-auto-rows: minmax(115px, auto);
+    }
+    .site-card {
+        min-height: 115px;
+    }
 }
 
-/* 平板 */
+/* 平板端 768px-1023px */
 @media (min-width: 768px) and (max-width: 1023px) {
-    .navigation-section { padding: 0 0 calc(var(--section-margin-sm) * 0.5) 0; }
-    .navigation-body { flex-direction: column; }
-    .navigation-left, .navigation-middle { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); overflow: visible; }
-    .level1-nav, .level2-nav { flex-direction: row; height: auto; padding: 0; overflow-x: auto; white-space: nowrap; }
-    .level1-btn, .level2-btn { flex: 1 0 auto; min-width: 0; padding: 0 14px; border-bottom: none; border-right: 1px solid var(--border-color); height: 46px; min-height: 46px; font-size: 13px; white-space: nowrap; overflow: visible; text-overflow: clip; }
-    .level2-btn-count { font-size: 10px; padding: 1px 4px; min-width: 16px; }
-    .level3-content { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 10px; grid-auto-rows: minmax(105px, auto); }
-    .site-card { padding: 10px 8px 6px; min-height: 105px; }
-    .card-top { height: 34px; margin-bottom: 8px; }
-    .icon-container { width: 34px; height: 34px; }
-    .icon-container i { font-size: 18px; }
-    .icon-container span { font-size: 18px; }
-    .views-icon { font-size: 11px; }
-    .view-count { font-size: 14px; }
-    .divider-line { margin: 0 0 5px 0; }
-    .site-title { font-size: 13px; min-height: 16px; }
-    .site-description { font-size: 11px; min-height: 27px; max-height: 27px; }
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-sm) * 0.5) 0;
+    }
+    .navigation-body {
+        flex-direction: column;
+    }
+    .navigation-left, .navigation-middle {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        overflow: visible;
+    }
+    .level1-nav, .level2-nav {
+        flex-direction: row;
+        height: auto;
+        padding: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+    }
+    .level1-btn, .level2-btn {
+        flex: 1 0 auto;
+        min-width: 0;
+        padding: 0 14px;
+        border-bottom: none;
+        border-right: 1px solid var(--border-color);
+        height: 46px;
+        min-height: 46px;
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+    }
+    .level2-btn-count {
+        font-size: 10px;
+        padding: 1px 4px;
+        min-width: 16px;
+    }
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+        padding: 10px;
+        grid-auto-rows: minmax(105px, auto);
+    }
+    .site-card {
+        padding: 10px 8px 6px;
+        min-height: 105px;
+    }
+    .card-top {
+        height: 34px;
+        margin-bottom: 8px;
+    }
+    .icon-container {
+        width: 34px;
+        height: 34px;
+    }
+    .icon-container i {
+        font-size: 18px;
+    }
+    .icon-container span {
+        font-size: 18px;
+    }
+    .views-icon {
+        font-size: 11px;
+    }
+    .view-count {
+        font-size: 14px;
+    }
+    .divider-line {
+        margin: 0 0 5px 0;
+    }
+    .site-title {
+        font-size: 13px;
+        min-height: 16px;
+    }
+    .site-description {
+        font-size: 11px;
+        min-height: 27px;
+        max-height: 27px;
+    }
 }
 
-/* 移动端 */
+/* 移动端 ≤768px */
 @media (max-width: 768px) {
-    .navigation-section { padding: 0 0 calc(var(--section-margin-xs) * 0.5) 0; }
-    .header-content { flex-wrap: wrap; gap: 8px; }
-    .navigation-title { font-size: 15px; }
-    .navigation-stats { flex: 1; justify-content: flex-end; min-width: 0; overflow: hidden; }
-    .stat-item { font-size: 11px; }
-    .stat-number { font-size: 13px; }
-    .stat-label { font-size: 11px; }
-    .navigation-body { flex-direction: column; }
-    .navigation-left, .navigation-middle { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); overflow: visible; }
-    .level1-nav, .level2-nav { flex-direction: row; height: auto; padding: 0; overflow-x: auto; white-space: nowrap; }
-    .level1-btn, .level2-btn { flex: 1 0 auto; min-width: 0; padding: 0 12px; border-bottom: none; border-right: 1px solid var(--border-color); height: 40px; min-height: 40px; font-size: 12px; white-space: nowrap; overflow: visible; text-overflow: clip; }
-    .level2-btn-count { font-size: 9px; padding: 0 3px; min-width: 14px; }
-    .level3-content { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; padding: 8px; grid-auto-rows: minmax(100px, auto); }
-    .site-card { padding: 8px 6px 4px; min-height: 100px; border-radius: 6px; }
-    .card-top { height: 30px; margin-bottom: 6px; }
-    .icon-container { width: 30px; height: 30px; }
-    .icon-container i { font-size: 16px; }
-    .icon-container span { font-size: 16px; }
-    .views-icon { font-size: 10px; }
-    .view-count { font-size: 13px; }
-    .divider-line { margin: 0 0 4px 0; }
-    .card-bottom { gap: 2px; }
-    .site-title { font-size: 12px; min-height: 15px; }
-    .site-description { font-size: 10px; min-height: 25px; max-height: 25px; }
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-xs) * 0.5) 0;
+    }
+    .header-content {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .navigation-title {
+        font-size: 15px;
+    }
+    .navigation-stats {
+        flex: 1;
+        justify-content: flex-end;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .stat-item {
+        font-size: 11px;
+    }
+    .stat-number {
+        font-size: 13px;
+    }
+    .stat-label {
+        font-size: 11px;
+    }
+    .navigation-body {
+        flex-direction: column;
+    }
+    .navigation-left, .navigation-middle {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        overflow: visible;
+    }
+    .level1-nav, .level2-nav {
+        flex-direction: row;
+        height: auto;
+        padding: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+    }
+    .level1-btn, .level2-btn {
+        flex: 1 0 auto;
+        min-width: 0;
+        padding: 0 12px;
+        border-bottom: none;
+        border-right: 1px solid var(--border-color);
+        height: 40px;
+        min-height: 40px;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+    }
+    .level2-btn-count {
+        font-size: 9px;
+        padding: 0 3px;
+        min-width: 14px;
+    }
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 6px;
+        padding: 8px;
+        grid-auto-rows: minmax(100px, auto);
+    }
+    .site-card {
+        padding: 8px 6px 4px;
+        min-height: 100px;
+        border-radius: 6px;
+    }
+    .card-top {
+        height: 30px;
+        margin-bottom: 6px;
+    }
+    .icon-container {
+        width: 30px;
+        height: 30px;
+    }
+    .icon-container i {
+        font-size: 16px;
+    }
+    .icon-container span {
+        font-size: 16px;
+    }
+    .views-icon {
+        font-size: 10px;
+    }
+    .view-count {
+        font-size: 13px;
+    }
+    .divider-line {
+        margin: 0 0 4px 0;
+    }
+    .card-bottom {
+        gap: 2px;
+    }
+    .site-title {
+        font-size: 12px;
+        min-height: 15px;
+    }
+    .site-description {
+        font-size: 10px;
+        min-height: 25px;
+        max-height: 25px;
+    }
 }
 
-/* 极窄屏 */
+/* 极窄屏 ≤480px */
 @media (max-width: 480px) {
-    .navigation-section { padding: 0 0 calc(var(--section-margin-xs) * 0.4) 0; }
-    .navigation-title { font-size: 14px; }
-    .stat-item { font-size: 10px; }
-    .stat-number { font-size: 12px; }
-    .stat-label { font-size: 10px; }
-    .navigation-stats { gap: 4px; }
-    .level1-btn, .level2-btn { padding: 0 10px; height: 36px; min-height: 36px; font-size: 11px; }
-    .level3-content { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 4px; padding: 6px; grid-auto-rows: minmax(90px, auto); }
-    .site-card { padding: 6px 4px 3px; min-height: 90px; }
-    .card-top { height: 28px; margin-bottom: 4px; }
-    .icon-container { width: 28px; height: 28px; }
-    .icon-container i { font-size: 14px; }
-    .icon-container span { font-size: 14px; }
-    .views-icon { font-size: 9px; }
-    .view-count { font-size: 12px; }
-    .divider-line { margin: 0 0 3px 0; }
-    .site-title { font-size: 11px; min-height: 14px; }
-    .site-description { font-size: 9px; min-height: 22px; max-height: 22px; }
+    .navigation-section {
+        padding: 0 0 calc(var(--section-margin-xs) * 0.4) 0;
+    }
+    .navigation-title {
+        font-size: 14px;
+    }
+    .stat-item {
+        font-size: 10px;
+    }
+    .stat-number {
+        font-size: 12px;
+    }
+    .stat-label {
+        font-size: 10px;
+    }
+    .navigation-stats {
+        gap: 4px;
+    }
+    .level1-btn, .level2-btn {
+        padding: 0 10px;
+        height: 36px;
+        min-height: 36px;
+        font-size: 11px;
+    }
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+        gap: 4px;
+        padding: 6px;
+        grid-auto-rows: minmax(90px, auto);
+    }
+    .site-card {
+        padding: 6px 4px 3px;
+        min-height: 90px;
+    }
+    .card-top {
+        height: 28px;
+        margin-bottom: 4px;
+    }
+    .icon-container {
+        width: 28px;
+        height: 28px;
+    }
+    .icon-container i {
+        font-size: 14px;
+    }
+    .icon-container span {
+        font-size: 14px;
+    }
+    .views-icon {
+        font-size: 9px;
+    }
+    .view-count {
+        font-size: 12px;
+    }
+    .divider-line {
+        margin: 0 0 3px 0;
+    }
+    .site-title {
+        font-size: 11px;
+        min-height: 14px;
+    }
+    .site-description {
+        font-size: 9px;
+        min-height: 22px;
+        max-height: 22px;
+    }
 }
 
 /* 暗色模式 */
@@ -867,19 +1100,57 @@
         background: var(--bg-card);
         border-color: var(--border-color);
     }
-    .level1-btn, .level2-btn { border-color: var(--border-color); }
-    .level1-btn:hover, .level2-btn:hover { background: rgba(67, 97, 238, 0.1); }
-    .level1-btn.active { color: var(--nav-level1-active); }
-    .level2-btn.active { color: var(--nav-level2-active); }
-    .level2-btn.active .level2-btn-count { background: var(--nav-level2-active); color: #1a1a1a; }
-    .site-card { background: var(--bg-card); border-color: var(--border-color); }
-    .site-card:hover { border-color: var(--nav-level1-active); }
-    .icon-container { color: var(--nav-level1-active); border-color: var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-    .icon-container i { color: var(--nav-level1-active); }
-    .divider-line { background: repeating-linear-gradient(to right, transparent, transparent 2px, #888 2px, #888 4px); }
-    .view-count { color: var(--nav-level1-active) !important; }
-    .views-icon { color: var(--nav-level1-active); }
-    .skeleton-icon, .skeleton-btn, .skeleton-views, .skeleton-title, .skeleton-description {
+    .level1-btn, .level2-btn {
+        border-color: var(--border-color);
+    }
+    .level1-btn:hover, .level2-btn:hover {
+        background: rgba(67, 97, 238, 0.1);
+    }
+    .level1-btn.active {
+        color: var(--nav-level1-active);
+    }
+    .level2-btn.active {
+        color: var(--nav-level2-active);
+    }
+    .level2-btn.active .level2-btn-count {
+        background: var(--nav-level2-active);
+        color: #1a1a1a;
+    }
+    .site-card {
+        background: var(--bg-card);
+        border-color: var(--border-color);
+    }
+    .site-card:hover {
+        border-color: var(--nav-level1-active);
+    }
+    .icon-container {
+        color: var(--nav-level1-active);
+        border-color: var(--border-color);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .icon-container i {
+        color: var(--nav-level1-active);
+    }
+    .divider-line {
+        background: repeating-linear-gradient(
+            to right,
+            transparent,
+            transparent 2px,
+            #888 2px,
+            #888 4px
+        );
+    }
+    .view-count {
+        color: var(--nav-level1-active) !important;
+    }
+    .views-icon {
+        color: var(--nav-level1-active);
+    }
+    .skeleton-icon,
+    .skeleton-btn,
+    .skeleton-views,
+    .skeleton-title,
+    .skeleton-description {
         background: linear-gradient(90deg, #3a3a3a 25%, #4a4a4a 50%, #3a3a3a 75%);
         background-size: 200% 100%;
     }
