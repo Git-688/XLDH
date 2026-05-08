@@ -83,6 +83,10 @@ class SubmitModule {
         
         // 表单提交
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        
+        // 标题或网址变化时更新提交按钮状态
+        this.titleInput.addEventListener('input', () => this.updateSubmitButton());
+        this.urlInput.addEventListener('input', () => this.updateSubmitButton());
     }
     
     async fetchSiteInfo() {
