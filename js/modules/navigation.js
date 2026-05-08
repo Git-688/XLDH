@@ -2,6 +2,7 @@
  * 优化分类导航系统（基于后端 Worker + D1）
  * 包含：缓存容错、后台静默更新、图标协议修复、安全转义降级、事件绑定修复
  * CSP修复：移除图片 onerror 内联事件，改用 class="js-img-fallback" 统一回退
+ * 修改：添加 pendingNavRequest 避免重复 API 请求
  */
 class OptimizedNavigation {
     constructor() {
@@ -28,6 +29,9 @@ class OptimizedNavigation {
         this.UPDATE_INTERVAL = 5 * 60 * 1000;
         // 是否允许静默更新 toast 提示
         this.quietUpdate = true;
+
+        // ★ 请求去重：缓存正在进行的导航请求 Promise
+        this.pendingNavRequest = null;
     }
 
     // ==================== 安全工具方法（兼容 Utils 未加载） ====================
@@ -155,22 +159,34 @@ class OptimizedNavigation {
     }
 
     async loadFromAPI(retryCount = 0) {
-        const apiUrl = `https://api.xjdh688.ccwu.cc/navigation?_=${Date.now()}`;
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
-            const response = await fetch(apiUrl, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return await response.json();
-        } catch (error) {
-            if (retryCount < 3) {
-                const delay = Math.pow(2, retryCount) * 1000;
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return this.loadFromAPI(retryCount + 1);
-            }
-            throw new Error('无法加载导航数据，请检查网络');
+        // ★ 请求去重：如果已有进行中的请求，直接返回它的结果
+        if (this.pendingNavRequest) {
+            return this.pendingNavRequest;
         }
+
+        const apiUrl = `https://api.xjdh688.ccwu.cc/navigation?_=${Date.now()}`;
+        this.pendingNavRequest = (async () => {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+                const response = await fetch(apiUrl, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                if (retryCount < 3) {
+                    const delay = Math.pow(2, retryCount) * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return this.loadFromAPI(retryCount + 1);
+                }
+                throw new Error('无法加载导航数据，请检查网络');
+            } finally {
+                // 请求完成后清除缓存，以便下次可以重新发起新请求
+                this.pendingNavRequest = null;
+            }
+        })();
+
+        return this.pendingNavRequest;
     }
 
     saveCache(data) {
