@@ -104,7 +104,6 @@
             transform: scale(1) translateY(0);
             opacity: 1;
         }
-        /* 头部留白与公告一致 */
         #notebookModal .feedback-modal-header {
             display: flex;
             align-items: center;
@@ -135,7 +134,6 @@
             cursor: pointer; transition: background 0.2s;
         }
         #notebookModal .feedback-modal-close:hover { background: rgba(0, 0, 0, 0.05); color: #334155; }
-        /* 内容区留白与公告一致（公告 body: 16px 20px 12px） */
         #notebookModal .feedback-modal-body {
             padding: 16px 20px 12px;
             overflow-y: auto;
@@ -217,6 +215,137 @@
             text-align: center; padding: 20px 20px; color: var(--text-secondary); font-size: 12px;
         }
         .notebook-list .error { color: var(--error-color); }
+
+        /* ================= 网站投稿模态框样式 ================= */
+        #submitModal .feedback-modal-body {
+            padding: 16px 20px 20px;
+        }
+        #submitModal .form-row {
+            margin-bottom: 14px;
+        }
+        #submitModal .form-row label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        #submitModal .required-star {
+            color: var(--error-color);
+        }
+        #submitModal .form-row input,
+        #submitModal .form-row select,
+        #submitModal .form-row textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border 0.2s;
+            font-family: inherit;
+        }
+        #submitModal .form-row input:focus,
+        #submitModal .form-row select:focus,
+        #submitModal .form-row textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67,97,238,0.08);
+        }
+        .submit-form-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border-color);
+        }
+        .submit-cancel-btn {
+            padding: 8px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .submit-cancel-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        .submit-save-btn {
+            padding: 8px 24px;
+            border: none;
+            border-radius: 6px;
+            background: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .submit-save-btn:hover:not(:disabled) {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+        }
+        .submit-save-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .fetch-info-btn,
+        .check-url-btn {
+            padding: 8px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 12px;
+            white-space: nowrap;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .fetch-info-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: rgba(67,97,238,0.05);
+        }
+        .check-url-btn:hover {
+            border-color: var(--success-color);
+            color: var(--success-color);
+            background: rgba(16,185,129,0.05);
+        }
+        .fetch-info-btn:disabled,
+        .check-url-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .url-check-result {
+            margin-top: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .url-check-result.safe {
+            background: rgba(16,185,129,0.1);
+            color: #059669;
+            border: 1px solid rgba(16,185,129,0.2);
+        }
+        .url-check-result.unsafe {
+            background: rgba(239,68,68,0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239,68,68,0.2);
+        }
+        .url-check-result.checking {
+            background: rgba(245,158,11,0.1);
+            color: #d97706;
+            border: 1px solid rgba(245,158,11,0.2);
+        }
     </style>
 </head>
 <body>
@@ -448,6 +577,63 @@
     </div>
 </div>
 
+<!-- 网站投稿模态框 -->
+<div id="submitModal" class="feedback-modal">
+    <div class="feedback-modal-content">
+        <div class="feedback-modal-header">
+            <h3><i class="fas fa-paper-plane"></i> 网站投稿</h3>
+            <button class="feedback-modal-close">&times;</button>
+        </div>
+        <div class="feedback-modal-body">
+            <form id="submitSiteForm">
+                <div class="form-row">
+                    <label>网站链接 <span class="required-star">*</span></label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="url" id="submitUrl" placeholder="https://example.com" required style="flex:1;">
+                        <button type="button" id="fetchSiteInfoBtn" class="fetch-info-btn" title="自动获取信息">
+                            <i class="fas fa-magic"></i> 获取信息
+                        </button>
+                        <button type="button" id="checkUrlBtn" class="check-url-btn" title="链接安全检测">
+                            <i class="fas fa-shield-alt"></i> 安全检测
+                        </button>
+                    </div>
+                    <div id="urlCheckResult" class="url-check-result" style="display:none;"></div>
+                </div>
+                
+                <div class="form-row">
+                    <label>网站名称 <span class="required-star">*</span></label>
+                    <input type="text" id="submitTitle" placeholder="例如：星聚导航" required>
+                </div>
+                
+                <div class="form-row">
+                    <label>网站图标</label>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <input type="text" id="submitIcon" placeholder="自动获取或手动输入图标URL" style="flex:1;">
+                        <img id="submitIconPreview" src="" style="width:32px;height:32px;border-radius:6px;display:none;" alt="图标预览">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <label>所属分类</label>
+                    <select id="submitCategory">
+                        <option value="">请选择（可选）</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <label>简短描述</label>
+                    <textarea id="submitDesc" rows="2" placeholder="介绍一下这个网站..."></textarea>
+                </div>
+                
+                <div class="submit-form-buttons">
+                    <button type="button" class="submit-cancel-btn">取消</button>
+                    <button type="submit" class="submit-save-btn" id="submitSaveBtn" disabled>提交投稿</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script src="./js/utils.js"></script>
 <script src="./js/toast.js"></script>
 <script src="./js/storage.js"></script>
@@ -473,5 +659,6 @@
 <script src="./js/xfyy/music-main.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.umd.js"></script>
 <script src="./js/modules/comment.js"></script>
+<script src="./js/modules/submit.js"></script>
 </body>
 </html>
