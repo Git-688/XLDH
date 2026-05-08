@@ -34,7 +34,6 @@
 
     <!-- 评论模块独立样式 -->
     <link rel="stylesheet" href="./css/modules/comment.css">
-    <!-- Waline 官方 CSS（锁定版本） -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.css">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
@@ -48,7 +47,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
 
     <link rel="preload" href="./js/main.js" as="script">
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
@@ -316,8 +314,8 @@
             <div class="tab-content" id="local-content"><div class="content-container"><div class="playlist-container" id="local-playlist-container"><div class="loading">加载本地歌曲中...</div></div></div></div>
         </div>
     </div>
-    <!-- 修复：audio 标签必须正确闭合，这里使用自闭合格式 -->
-    <audio id="audio-element" preload="metadata" />
+    <!-- 音频播放器自闭合，确保DOM完整 -->
+    <audio id="audio-element" preload="metadata" style="display:none;"></audio>
     <div class="search-modal" id="searchModal">
         <div class="modal-content">
             <div class="search-bar">
@@ -353,7 +351,6 @@
         </div>
     </div>
 </div>
-
 <!-- 评论模态框 -->
 <div id="commentModal">
     <div class="feedback-modal-content">
@@ -400,9 +397,8 @@
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
 
-<!-- Waline 核心库 -->
+<!-- Waline 评论核心库 -->
 <script src="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.umd.js"></script>
-<!-- 评论模块初始化 -->
 <script src="./js/modules/comment.js"></script>
 </body>
 </html>
