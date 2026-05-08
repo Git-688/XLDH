@@ -32,7 +32,7 @@
     <link rel="stylesheet" href="./css/responsive.css">
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
 
-    <!-- 评论模块独立样式 -->
+    <!-- 评论模块独立样式（已移除遮罩） -->
     <link rel="stylesheet" href="./css/modules/comment.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.css">
 
@@ -57,7 +57,13 @@
         .floating-btn.comment-btn { color: #f59e0b; }
         .floating-btn.comment-btn:hover { color: #d97706; }
 
-        #notebookModal { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+        /* 笔记模态框强制居中（修复移动端贴底问题） */
+        #notebookModal {
+            background: transparent;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            align-items: center !important;
+        }
         #notebookModal .feedback-modal-content {
             background: rgba(255, 255, 255, 0.65);
             backdrop-filter: blur(24px) saturate(125%);
@@ -314,7 +320,7 @@
             <div class="tab-content" id="local-content"><div class="content-container"><div class="playlist-container" id="local-playlist-container"><div class="loading">加载本地歌曲中...</div></div></div></div>
         </div>
     </div>
-    <!-- 音频播放器自闭合，确保DOM完整 -->
+    <!-- 音频播放器正确闭合 -->
     <audio id="audio-element" preload="metadata" style="display:none;"></audio>
     <div class="search-modal" id="searchModal">
         <div class="modal-content">
@@ -338,6 +344,8 @@
     </div>
     <div class="engine-tooltip" id="engineTooltip"></div>
 </main>
+
+<!-- 星聚笔记模态框 -->
 <div id="notebookModal" class="feedback-modal" style="display: none;">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
@@ -351,7 +359,8 @@
         </div>
     </div>
 </div>
-<!-- 评论模态框 -->
+
+<!-- 评论模态框（无遮罩，ID 与 comment.js 一致） -->
 <div id="commentModal">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
@@ -397,8 +406,9 @@
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
 
-<!-- Waline 评论核心库 -->
+<!-- Waline 核心库 -->
 <script src="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.umd.js"></script>
+<!-- 评论模块（修复关闭按钮） -->
 <script src="./js/modules/comment.js"></script>
 </body>
 </html>
