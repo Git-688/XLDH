@@ -1483,3 +1483,166 @@ select {
 .toast-close:hover {
     color: #666;
 }
+
+/* ==================== 网站投稿模态框样式 ==================== */
+
+#submitModal .feedback-modal-body {
+    padding: 16px 20px 20px;
+}
+
+#submitModal .form-row {
+    margin-bottom: 14px;
+}
+
+#submitModal .form-row label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+#submitModal .required-star {
+    color: var(--error-color);
+}
+
+#submitModal .form-row input,
+#submitModal .form-row select,
+#submitModal .form-row textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 13px;
+    outline: none;
+    transition: border 0.2s;
+    font-family: inherit;
+}
+
+#submitModal .form-row input:focus,
+#submitModal .form-row select:focus,
+#submitModal .form-row textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(67,97,238,0.08);
+}
+
+/* 提交按钮区域 */
+.submit-form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color);
+}
+
+.submit-cancel-btn {
+    padding: 8px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.submit-cancel-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.submit-save-btn {
+    padding: 8px 24px;
+    border: none;
+    border-radius: 6px;
+    background: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.submit-save-btn:hover:not(:disabled) {
+    background: var(--secondary-color);
+    transform: translateY(-1px);
+}
+
+.submit-save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 获取信息和检测按钮 */
+.fetch-info-btn,
+.check-url-btn {
+    padding: 8px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fetch-info-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: rgba(67,97,238,0.05);
+}
+
+.check-url-btn:hover {
+    border-color: var(--success-color);
+    color: var(--success-color);
+    background: rgba(16,185,129,0.05);
+}
+
+.fetch-info-btn:disabled,
+.check-url-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 检测结果提示 */
+.url-check-result {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.url-check-result.safe {
+    background: rgba(16,185,129,0.1);
+    color: #059669;
+    border: 1px solid rgba(16,185,129,0.2);
+}
+
+.url-check-result.unsafe {
+    background: rgba(239,68,68,0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239,68,68,0.2);
+}
+
+.url-check-result.checking {
+    background: rgba(245,158,11,0.1);
+    color: #d97706;
+    border: 1px solid rgba(245,158,11,0.2);
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .fetch-info-btn,
+    .check-url-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+}
