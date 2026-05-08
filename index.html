@@ -57,12 +57,32 @@
         .floating-btn.comment-btn { color: #f59e0b; }
         .floating-btn.comment-btn:hover { color: #d97706; }
 
-        /* 笔记模态框强制居中（修复移动端贴底问题） */
+        /* ================= 笔记模态框 (固定定位，全屏居中) ================= */
         #notebookModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
             background: transparent;
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
-            align-items: center !important;
+            z-index: 10002;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+        #notebookModal.active {
+            display: flex !important;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
         }
         #notebookModal .feedback-modal-content {
             background: rgba(255, 255, 255, 0.65);
@@ -72,8 +92,18 @@
             border-radius: 8px;
             overflow: hidden;
             max-height: 75vh;
+            max-width: 600px;
+            width: 100%;
             display: flex;
             flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        #notebookModal.active .feedback-modal-content {
+            transform: scale(1);
+            opacity: 1;
         }
         #notebookModal .feedback-modal-header {
             background: transparent;
@@ -320,7 +350,6 @@
             <div class="tab-content" id="local-content"><div class="content-container"><div class="playlist-container" id="local-playlist-container"><div class="loading">加载本地歌曲中...</div></div></div></div>
         </div>
     </div>
-    <!-- 音频播放器正确闭合 -->
     <audio id="audio-element" preload="metadata" style="display:none;"></audio>
     <div class="search-modal" id="searchModal">
         <div class="modal-content">
@@ -345,8 +374,8 @@
     <div class="engine-tooltip" id="engineTooltip"></div>
 </main>
 
-<!-- 星聚笔记模态框 -->
-<div id="notebookModal" class="feedback-modal" style="display: none;">
+<!-- 星聚笔记模态框（固定定位，全屏居中） -->
+<div id="notebookModal" class="feedback-modal">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
             <h3><i class="fas fa-pen-fancy"></i> 星聚笔记</h3>
@@ -360,12 +389,12 @@
     </div>
 </div>
 
-<!-- 评论模态框（无遮罩，ID 与 comment.js 一致） -->
+<!-- 评论模态框（无遮罩） -->
 <div id="commentModal">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
             <h3><i class="fas fa-comments"></i> 网友评论</h3>
-            <button class="feedback-modal-close" aria-label="关闭评论">&times;</button>
+            <button class="feedback-modal-close">&times;</button>
         </div>
         <div class="feedback-modal-body">
             <div id="waline-comment"></div>
@@ -408,7 +437,7 @@
 
 <!-- Waline 核心库 -->
 <script src="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.umd.js"></script>
-<!-- 评论模块（修复关闭按钮） -->
+<!-- 评论模块（关闭按钮修复版） -->
 <script src="./js/modules/comment.js"></script>
 </body>
 </html>
