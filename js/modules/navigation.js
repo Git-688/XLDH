@@ -2,6 +2,7 @@
  * 优化分类导航系统（基于后端 Worker + D1）
  * 包含：缓存容错、后台静默更新、去重请求、全站搜索
  * CSP修复：移除图片 onerror 内联事件
+ * 修复：搜索框位置调整到标题/统计下方，且初始化报错问题
  */
 class OptimizedNavigation {
     constructor() {
@@ -51,7 +52,7 @@ class OptimizedNavigation {
         if (this.isInitialized) return;
         this.showSkeleton();
         this.bindEvents();
-        this.createSearchBox();                  // 添加搜索框
+        this.createSearchBox();                  // 添加搜索框（位置已修正）
         try {
             await this.loadNavigationData();
             this.buildFlatSiteList();            // 构建扁平网站列表
@@ -80,13 +81,13 @@ class OptimizedNavigation {
         }
     }
 
-    /* ==================== 搜索框创建 ==================== */
+    /* ==================== 搜索框创建（修正位置） ==================== */
     createSearchBox() {
-        const header = document.querySelector('.navigation-header');
-        if (!header) return;
+        const navHeader = document.querySelector('.navigation-header');
+        if (!navHeader) return;
 
         // 避免重复创建
-        if (header.querySelector('.nav-search-box')) return;
+        if (navHeader.querySelector('.nav-search-box')) return;
 
         const container = document.createElement('div');
         container.className = 'nav-search-box';
@@ -101,17 +102,11 @@ class OptimizedNavigation {
             <span class="search-result-hint" id="navSearchHint" style="display:none;"></span>
         `;
 
-        // 插入到 header-content 右侧，stats 之前
-        const headerContent = header.querySelector('.header-content');
-        if (headerContent) {
-            headerContent.insertBefore(container, headerContent.querySelector('.navigation-stats'));
-        } else {
-            header.appendChild(container);
-        }
+        // ★ 直接追加到 navigation-header 末尾，不依赖 header-content 内部元素
+        navHeader.appendChild(container);
 
         this.searchInput = container.querySelector('#navSearchInput');
         const clearBtn = container.querySelector('#navSearchClearBtn');
-        const hintEl = container.querySelector('#navSearchHint');
 
         // 输入事件（防抖）
         this.searchInput.addEventListener('input', () => {
