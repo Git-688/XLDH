@@ -7,15 +7,21 @@
     <meta name="description" content="星聚导航是一个现代化的个人导航网站，提供便捷的上网导航体验和各种实用工具">
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
-
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com https://unpkg.com https://*.ccwu.cc https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src *; font-src 'self' https://cdnjs.cloudflare.com; frame-ancestors 'none';">
-
+    <!-- 优化后的CSP策略，完整放行Waline相关资源与域名 -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com https://unpkg.com https://*.ccwu.cc https://*.vercel.app;
+        style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com;
+        img-src * data:;
+        media-src *;
+        connect-src * https://*.ccwu.cc https://*.vercel.app;
+        font-src 'self' https://cdnjs.cloudflare.com;
+        frame-ancestors 'none';
+    ">
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
-
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
-
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
@@ -31,161 +37,27 @@
     <link rel="stylesheet" href="./css/modules/compact-tags.css">
     <link rel="stylesheet" href="./css/responsive.css">
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
+    <!-- 评论模块独立样式 优先引入 -->
     <link rel="stylesheet" href="./css/modules/comment.css">
-
+    <!-- Waline官方默认样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/@waline/client@3/dist/waline.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/regular.min.css">
-
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-
     <link rel="preload" href="./js/main.js" as="script">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
-
     <style>
-        .feedback-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10001;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.25s cubic-bezier(0.2, 0.9, 0.3, 1),
-                        visibility 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
-            padding: 12px;
-            box-sizing: border-box;
-        }
-        .feedback-modal.active {
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-        }
-        .feedback-modal-content {
-            background: var(--bg-card, #ffffff);
-            border-radius: 18px;
-            width: 100%;
-            max-width: 600px;
-            max-height: 75vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12),
-                        0 6px 12px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(0, 0, 0, 0.04);
-            transform: scale(0.95) translateY(8px);
-            opacity: 0;
-            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1),
-                        opacity 0.25s ease;
-            pointer-events: auto;
-        }
-        .feedback-modal.active .feedback-modal-content {
-            transform: scale(1) translateY(0);
-            opacity: 1;
-        }
-        .feedback-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            border-bottom: 1px solid var(--border-color, #f0f0f0);
-            background: var(--bg-card, #ffffff);
-            flex-shrink: 0;
-        }
-        .feedback-modal-header h3 {
-            margin: 0;
-            font-size: 1.2rem;
-            font-weight: 500;
-            color: var(--text-primary);
-            letter-spacing: 0.2px;
-        }
-        .feedback-modal-header h3 i {
-            margin-right: 6px;
-            color: var(--primary-color);
-            font-size: 1.1rem;
-        }
-        .feedback-modal-close {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            line-height: 1;
-            padding: 4px;
-            border-radius: 6px;
-            transition: all 0.15s;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .feedback-modal-close:hover {
-            background: rgba(0, 0, 0, 0.04);
-            color: var(--text-primary);
-        }
-        .feedback-modal-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 14px 16px;
-            background: var(--bg-card, #ffffff);
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-        .feedback-modal-body::-webkit-scrollbar { display: none; }
-        @media (max-width: 600px) {
-            .feedback-modal {
-                padding: var(--container-padding-xs, 16px);
-                align-items: flex-end;
-            }
-            .feedback-modal-content {
-                max-width: 100%;
-                height: 90%;
-                max-height: 90%;
-                border-radius: 20px 20px 12px 12px;
-                transform: translateY(100%);
-                opacity: 1;
-                transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
-                box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.1);
-                margin-bottom: 0;
-            }
-            .feedback-modal.active .feedback-modal-content {
-                transform: translateY(0);
-            }
-            .feedback-modal-header { padding: 8px 14px; }
-            .feedback-modal-header h3 { font-size: 1.2rem; }
-            .feedback-modal-body { padding: 12px 14px; -webkit-overflow-scrolling: touch; }
-            .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
-        }
-        @media (min-width: 601px) {
-            .feedback-modal-header { padding: 10px 16px; }
-            .feedback-modal-header h3 { font-size: 1.25rem; }
-            .feedback-modal-body { padding: 16px 20px; }
-        }
-        @media (prefers-color-scheme: dark) {
-            .feedback-modal-content { background: #2a2a2a; border-color: #3e3e3e; }
-            .feedback-modal-header { background: #2a2a2a; border-bottom-color: #3e3e3e; }
-            .feedback-modal-body { background: #2a2a2a; }
-            .feedback-modal-close:hover { background: rgba(255, 255, 255, 0.08); }
-        }
-
+        /* 仅保留非评论模块的原有样式，评论相关样式已完全分离到comment.css */
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
         .floating-btn.comment-btn { color: #f59e0b; }
         .floating-btn.comment-btn:hover { color: #d97706; }
-
         #notebookModal { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
         #notebookModal .feedback-modal-content {
             background: rgba(255, 255, 255, 0.65);
@@ -228,7 +100,6 @@
             background: transparent; -webkit-overflow-scrolling: touch;
         }
         #notebookModal .feedback-modal-body::-webkit-scrollbar { display: none; }
-
         .notebook-list { padding: 16px; margin: 0; display: flex; flex-direction: column; gap: 10px; box-sizing: border-box; }
         .notebook-item {
             background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
@@ -443,7 +314,7 @@
             <div class="tab-content" id="local-content"><div class="content-container"><div class="playlist-container" id="local-playlist-container"><div class="loading">加载本地歌曲中...</div></div></div></div>
         </div>
     </div>
-    <audio id="audio-element" preload="metadata"></audio>
+    <audio id="audio-element" preload="metadata">
     <div class="search-modal" id="searchModal">
         <div class="modal-content">
             <div class="search-bar">
@@ -466,7 +337,6 @@
     </div>
     <div class="engine-tooltip" id="engineTooltip"></div>
 </main>
-
 <div id="notebookModal" class="feedback-modal" style="display: none;">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
@@ -480,32 +350,28 @@
         </div>
     </div>
 </div>
-
-<!-- 评论模态框 -->
-<div class="feedback-modal" id="commentModal">
-    <div class="feedback-modal-content" style="max-width: 700px;">
+<!-- 评论模态框 标准化DOM结构，与模块化CSS/JS完全匹配 -->
+<div id="commentModal">
+    <div class="feedback-modal-content">
         <div class="feedback-modal-header">
-            <h3><i class="fas fa-comments"></i> 评论</h3>
-            <button class="feedback-modal-close">&times;</button>
+            <h3><i class="fas fa-comments"></i> 网友评论</h3>
+            <button class="feedback-modal-close" aria-label="关闭评论">&times;</button>
         </div>
-        <div class="feedback-modal-body" id="commentBody">
+        <div class="feedback-modal-body">
+            <!-- Waline挂载容器，ID与JS配置严格一致 -->
             <div id="waline-comment"></div>
         </div>
     </div>
 </div>
-
 <!-- ========== 基础库（同步加载） ========== -->
 <script src="./js/utils.js"></script>
 <script src="./js/toast.js"></script>
 <script src="./js/storage.js"></script>
-
 <!-- ========== API 与数据层 ========== -->
 <script src="./js/api.js"></script>
-
 <!-- ========== 核心 UI 组件 ========== -->
 <script src="./js/components/navbar.js"></script>
 <script src="./js/components/sidebar.js"></script>
-
 <!-- ========== 业务模块 ========== -->
 <script src="./js/modules/announcement.js"></script>
 <script src="./js/modules/search.js"></script>
@@ -516,10 +382,8 @@
 <script src="./js/modules/greeting.js"></script>
 <script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
-
 <!-- ========== 应用主入口 ========== -->
 <script src="./js/main.js"></script>
-
 <!-- ========== 音乐播放器子系统 ========== -->
 <script src="./js/xfyy/utils.js"></script>
 <script src="./js/xfyy/cache-manager.js"></script>
@@ -528,10 +392,9 @@
 <script src="./js/xfyy/plugin-manager.js"></script>
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
-
-<!-- Waline 评论系统（稳定 CDN 锁定版本） -->
-<script src="https://cdn.jsdelivr.net/npm/@waline/client@3.0.0-alpha.8/dist/waline.js"></script>
-<!-- 评论模块初始化 -->
+<!-- Waline 评论系统核心CDN（必须在comment.js之前引入） -->
+<script src="https://unpkg.com/@waline/client@3/dist/waline.js"></script>
+<!-- 评论模块独立JS（最后引入，确保DOM和依赖已完全加载） -->
 <script src="./js/modules/comment.js"></script>
 </body>
 </html>
