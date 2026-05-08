@@ -18,18 +18,21 @@ class Navbar {
     }
 
     bindEvents() {
-        // ========== 搜索按钮 ==========
+        // ========== 搜索按钮（增加存在性保护） ==========
         const searchBtn = document.getElementById('searchBtn');
         if (searchBtn) {
-            searchBtn.replaceWith(searchBtn.cloneNode(true));
-            document.getElementById('searchBtn').addEventListener('click', (e) => {
+            searchBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.handleFeatureToggle('search', () => window.newSearchModule.toggle());
+                if (window.newSearchModule && typeof window.newSearchModule.toggle === 'function') {
+                    this.handleFeatureToggle('search', () => window.newSearchModule.toggle());
+                } else {
+                    console.warn('搜索模块未初始化');
+                }
             });
         }
 
-        // ========== 音乐按钮（原始切换） ==========
+        // ========== 音乐按钮 ==========
         const musicBtn = document.getElementById('musicBtn');
         if (musicBtn) {
             musicBtn.addEventListener('click', (e) => {
@@ -42,8 +45,7 @@ class Navbar {
         // ========== 公告按钮 ==========
         const annBtn = document.getElementById('announcementBtn');
         if (annBtn) {
-            annBtn.replaceWith(annBtn.cloneNode(true));
-            document.getElementById('announcementBtn').addEventListener('click', (e) => {
+            annBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 this.handleFeatureToggle('announcement', () => window.announcementModule?.toggleModal());
@@ -53,15 +55,14 @@ class Navbar {
         // ========== 汉堡菜单（侧边栏） ==========
         const menuBtn = document.getElementById('menuBtn');
         if (menuBtn) {
-            menuBtn.replaceWith(menuBtn.cloneNode(true));
-            document.getElementById('menuBtn').addEventListener('click', (e) => {
+            menuBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 this.handleFeatureToggle('sidebar', () => window.sidebar?.toggle?.());
             });
         }
 
-        // ========== 天气按钮 ==========
+        // ========== 天气按钮（不参与切换组，单独处理） ==========
         const weatherBtn = document.getElementById('weatherBtn');
         if (weatherBtn) {
             weatherBtn.addEventListener('click', (e) => {
