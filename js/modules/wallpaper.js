@@ -1,12 +1,11 @@
 /**
- * 轮播图模块 - 无缝循环 + 标题与圆点同行 + 动态分辨率 + 去前缀
- * @class CarouselModule
+ * 轮播图模块 - 无缝循环 + 标题与圆点同行 + 去前缀（保留动态分辨率接口）
  */
 class CarouselModule {
     constructor() {
-        this.currentIndex = 1;          // 实际从第一张开始（索引1）
-        this.slides = [];               // 存放原始图片数据
-        this.clonedSlides = [];         // 包含首尾克隆的数组
+        this.currentIndex = 1;
+        this.slides = [];
+        this.clonedSlides = [];
         this.autoplayTimer = null;
         this.track = null;
         this.dotsContainer = null;
@@ -16,16 +15,14 @@ class CarouselModule {
         this.init();
     }
 
-    // 根据窗口宽度返回合适的分辨率
+    // 预留动态分辨率方法，当前返回 1920 以保证稳定
     getResolutionForWidth() {
-        const w = window.innerWidth;
-        if (w <= 768) return 768;
-        if (w <= 1366) return 1366;
+        // 若需要按屏幕加载不同尺寸，可在此调整返回值（需确认 API 支持）
+        // 推荐值：1920, 1366, 768
         return 1920;
     }
 
     async init() {
-        // 获取7天壁纸，使用动态分辨率
         const days = 7;
         const bingImages = [];
         const resolution = this.getResolutionForWidth();
@@ -38,8 +35,11 @@ class CarouselModule {
                     const data = await response.json();
                     if (data.url) {
                         // 去掉“必应壁纸 · ”前缀
-                        let title = data.copyright ? data.copyright : `必应壁纸 · ${i === 0 ? '今日' : i + '天前'}`;
-                        title = title.replace(/^必应壁纸\s*·\s*/i, '').trim() || '星聚导航';
+                        let title = data.copyright ? data.copyright : '';
+                        title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
+                        if (!title) {
+                            title = i === 0 ? '今日壁纸' : `${i}天前壁纸`;
+                        }
                         bingImages.push({
                             url: data.url,
                             title: title
@@ -57,7 +57,6 @@ class CarouselModule {
 
         this.slides = bingImages;
 
-        // 构建克隆数组： [最后一张, ...原始, 第一张]
         if (this.slides.length > 1) {
             this.clonedSlides = [
                 { ...this.slides[this.slides.length - 1], clone: 'last' },
@@ -65,7 +64,6 @@ class CarouselModule {
                 { ...this.slides[0], clone: 'first' }
             ];
         } else {
-            // 只有一张时无需克隆
             this.clonedSlides = [...this.slides];
         }
 
@@ -79,7 +77,7 @@ class CarouselModule {
 
         this.renderSlides();
         this.renderDots();
-        this.goToSlide(1, false);   // 显示第一张原始图
+        this.goToSlide(1, false);
         this.bindEvents();
         this.startAutoplay();
     }
@@ -105,14 +103,12 @@ class CarouselModule {
     renderDots() {
         if (!this.dotsContainer) return;
         this.dotsContainer.innerHTML = '';
-        // 只为原始图片生成圆点（索引映射：原始在 clonedSlides 中从1开始到 length-2）
         this.slides.forEach((_, index) => {
             const dot = document.createElement('span');
             dot.className = 'carousel-dot';
-            dot.setAttribute('data-index', index); // 原始索引
+            dot.setAttribute('data-index', index);
             dot.addEventListener('click', () => {
-                const realIndex = index; // 对应 clonedSlides 中的 realIndex = index + 1
-                this.goToSlide(realIndex + 1, true);
+                this.goToSlide(index + 1, true);
                 this.resetAutoplay();
             });
             this.dotsContainer.appendChild(dot);
@@ -126,20 +122,17 @@ class CarouselModule {
 
         this.isTransitioning = true;
 
-        // 更新圆点（映射回原始索引）
         let realIndex = clonedIndex;
-        if (clonedIndex === 0) realIndex = this.slides.length - 1;          // 克隆的最后一张
-        else if (clonedIndex === total - 1) realIndex = 0;                // 克隆的第一张
+        if (clonedIndex === 0) realIndex = this.slides.length - 1;
+        else if (clonedIndex === total - 1) realIndex = 0;
         else realIndex = clonedIndex - 1;
 
         const dots = this.dotsContainer ? this.dotsContainer.querySelectorAll('.carousel-dot') : [];
         dots.forEach((dot, i) => dot.classList.toggle('active', i === realIndex));
 
-        // 更新标题
         const title = this.clonedSlides[clonedIndex].title || '';
         if (this.infoTitle) this.infoTitle.textContent = title;
 
-        // 移动轨道
         if (this.track) {
             this.track.style.transition = animate ? 'transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.2)' : 'none';
             this.track.style.transform = `translateX(-${clonedIndex * 100}%)`;
@@ -147,16 +140,13 @@ class CarouselModule {
 
         this.currentIndex = clonedIndex;
 
-        // 动画结束后，如果处于克隆幻灯片，则瞬间跳转到真实幻灯片
         setTimeout(() => {
             this.isTransitioning = false;
             if (clonedIndex === 0) {
-                // 跳转到真实的最后一张（索引 = slides.length）
                 this.track.style.transition = 'none';
                 this.track.style.transform = `translateX(-${this.slides.length * 100}%)`;
-                this.currentIndex = this.slides.length; // clonedSlides 中的索引为 slides.length
+                this.currentIndex = this.slides.length;
             } else if (clonedIndex === total - 1) {
-                // 跳转到真实的第一张（索引 = 1）
                 this.track.style.transition = 'none';
                 this.track.style.transform = `translateX(-100%)`;
                 this.currentIndex = 1;
@@ -206,7 +196,6 @@ class CarouselModule {
                 this.resetAutoplay();
             });
         }
-        // 触摸滑动
         if (this.track) {
             let startX = 0, startY = 0;
             this.track.addEventListener('touchstart', (e) => {
