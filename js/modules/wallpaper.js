@@ -1,5 +1,5 @@
 /**
- * 轮播图模块 - 无缝循环 + 标题与圆点同行
+ * 轮播图模块 - 无缝循环 + 标题与圆点同行 + 动态分辨率 + 去前缀
  * @class CarouselModule
  */
 class CarouselModule {
@@ -16,20 +16,33 @@ class CarouselModule {
         this.init();
     }
 
+    // 根据窗口宽度返回合适的分辨率
+    getResolutionForWidth() {
+        const w = window.innerWidth;
+        if (w <= 768) return 768;
+        if (w <= 1366) return 1366;
+        return 1920;
+    }
+
     async init() {
-        // 获取7天壁纸
+        // 获取7天壁纸，使用动态分辨率
         const days = 7;
         const bingImages = [];
+        const resolution = this.getResolutionForWidth();
+
         for (let i = 0; i < days; i++) {
             try {
-                const url = `https://bing.biturl.top/?resolution=1920&format=json&index=${i}`;
+                const url = `https://bing.biturl.top/?resolution=${resolution}&format=json&index=${i}`;
                 const response = await fetch(url);
                 if (response.ok) {
                     const data = await response.json();
                     if (data.url) {
+                        // 去掉“必应壁纸 · ”前缀
+                        let title = data.copyright ? data.copyright : `必应壁纸 · ${i === 0 ? '今日' : i + '天前'}`;
+                        title = title.replace(/^必应壁纸\s*·\s*/i, '').trim() || '星聚导航';
                         bingImages.push({
                             url: data.url,
-                            title: data.copyright ? `必应壁纸 · ${data.copyright}` : `必应壁纸 · ${i === 0 ? '今日' : i + '天前'}`
+                            title: title
                         });
                     }
                 }
