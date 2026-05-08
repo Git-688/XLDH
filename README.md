@@ -78,7 +78,6 @@ XLDH/
 │   ├── storage.js             # localStorage 封装
 │   ├── api.js                 # 对外部 API 的封装（壁纸、一言等）
 │   ├── toast.js               # Toast 提示管理器
-│   ├── sw.js                  # Service Worker
 │   │
 │   ├── components/            # 核心 UI 组件
 │   │   ├── navbar.js          # 导航栏（App 管理，不挂全局）
