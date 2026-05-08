@@ -1,11 +1,11 @@
 /**
  * 评论模块 - Waline V3 独立模块化版
- * CSS/JS完全分离，配置集中管理，无全局变量冲突
+ * 新增加载兜底、重试机制、完善错误处理
  */
 class CommentModule {
   // 所有可修改配置集中管理，后续维护仅需改这里
   static CONFIG = {
-    // 替换为你自己的Waline服务端地址（第一步获取的serverURL）
+    // 替换为你自己的Waline服务端地址
     serverURL: 'https://yy688.ccwu.cc',
     // DOM元素配置，与HTML结构一一对应
     el: '#waline-comment',
@@ -13,6 +13,9 @@ class CommentModule {
     openBtnId: 'commentBtn',
     closeBtnSelector: '.feedback-modal-close',
     activeClass: 'active',
+    // 加载重试配置
+    maxRetryTimes: 5,
+    retryInterval: 500,
     // Waline核心配置
     walineOptions: {
       dark: 'auto',
@@ -29,11 +32,12 @@ class CommentModule {
     this.modal = null;
     this.openBtn = null;
     this.closeBtn = null;
+    this.retryCount = 0;
 
     // 初始化流程
     this._initDOM();
     this._bindEvents();
-    this._initWaline();
+    this._waitForWalineLoad();
   }
 
   /**
@@ -88,20 +92,44 @@ class CommentModule {
   }
 
   /**
+   * 等待Waline加载完成，带重试机制
+   * @private
+   */
+  _waitForWalineLoad() {
+    const { maxRetryTimes, retryInterval } = CommentModule.CONFIG;
+
+    // 检查Waline是否已加载
+    if (typeof Waline !== 'undefined') {
+      console.log('[评论模块] Waline加载完成，开始初始化');
+      this._initWaline();
+      return;
+    }
+
+    // 重试次数未到上限，继续等待
+    if (this.retryCount < maxRetryTimes) {
+      this.retryCount++;
+      console.log(`[评论模块] Waline未加载，第${this.retryCount}次重试`);
+      setTimeout(() => this._waitForWalineLoad(), retryInterval);
+      return;
+    }
+
+    // 重试次数耗尽，加载失败
+    const errorMsg = '评论系统加载失败，请检查网络后刷新页面重试';
+    console.error(`[评论模块] Waline加载失败，已重试${maxRetryTimes}次`);
+    window.toast?.show?.(errorMsg, 'error');
+  }
+
+  /**
    * Waline V3 初始化
    * @private
    */
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
 
-    // 依赖校验
-    if (typeof Waline === 'undefined') {
-      console.error('[评论模块] Waline未加载，请检查CDN引入');
-      window.toast?.show?.('评论系统加载失败，请刷新重试', 'error');
-      return;
-    }
+    // 挂载容器校验
     if (!document.querySelector(el)) {
       console.error(`[评论模块] Waline挂载容器${el}未找到`);
+      window.toast?.show?.('评论系统挂载容器不存在', 'error');
       return;
     }
 
