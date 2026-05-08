@@ -32,7 +32,6 @@
     <link rel="stylesheet" href="./css/responsive.css">
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
 
-    <!-- 评论模块独立样式（已移除遮罩） -->
     <link rel="stylesheet" href="./css/modules/comment.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.css">
 
@@ -57,7 +56,7 @@
         .floating-btn.comment-btn { color: #f59e0b; }
         .floating-btn.comment-btn:hover { color: #d97706; }
 
-        /* ================= 笔记模态框 (固定定位，全屏居中) ================= */
+        /* ================= 笔记模态框 ================= */
         #notebookModal {
             position: fixed;
             top: 0;
@@ -75,7 +74,7 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.25s ease, visibility 0.25s ease;
-            padding: 12px var(--container-padding-xs, 16px);
+            padding: 12px;
             box-sizing: border-box;
         }
         #notebookModal.active {
@@ -97,18 +96,20 @@
             display: flex;
             flex-direction: column;
             box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-            transform: scale(0.95);
+            transform: scale(0.95) translateY(8px);
             opacity: 0;
             transition: transform 0.3s ease, opacity 0.3s ease;
         }
         #notebookModal.active .feedback-modal-content {
-            transform: scale(1);
+            transform: scale(1) translateY(0);
             opacity: 1;
         }
         #notebookModal .feedback-modal-header {
-            background: transparent;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             padding: 18px 24px 10px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             color: #1e293b;
             flex-shrink: 0;
         }
@@ -116,6 +117,9 @@
             font-size: 1.05rem;
             font-weight: 600;
             color: inherit;
+            display: flex;
+            align-items: center;
+            margin: 0;
         }
         #notebookModal .feedback-modal-header h3 i {
             color: #4361ee;
@@ -154,6 +158,34 @@
             background: rgba(255, 255, 255, 0.4); padding: 10px 12px; border-radius: 6px;
             backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 1px solid rgba(0, 0, 0, 0.03);
         }
+
+        @media (max-width: 768px) {
+            #notebookModal {
+                padding: 12px var(--container-padding-xs, 16px);
+                align-items: flex-end;
+            }
+            #notebookModal .feedback-modal-content {
+                max-width: 100%;
+                height: 90%;
+                max-height: 90%;
+                border-radius: 20px 20px 12px 12px;
+                transform: translateY(100%);
+                opacity: 1;
+                transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+                box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.1);
+                margin-bottom: 0;
+            }
+            #notebookModal.active .feedback-modal-content {
+                transform: translateY(0);
+            }
+            #notebookModal .feedback-modal-header { padding: 12px 16px; }
+            #notebookModal .feedback-modal-body { padding: 12px 14px; }
+            #notebookModal .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
+            .notebook-item { padding: 10px 12px; }
+            .notebook-title { font-size: 14px; }
+            .notebook-content { font-size: 11px; }
+        }
+
         @media (prefers-color-scheme: dark) {
             #notebookModal .feedback-modal-content { background: rgba(30, 30, 30, 0.75); border-color: rgba(255, 255, 255, 0.15); }
             #notebookModal .feedback-modal-header { border-bottom-color: rgba(255, 255, 255, 0.06); color: #f1f5f9; }
@@ -167,8 +199,6 @@
             text-align: center; padding: 20px 20px; color: var(--text-secondary); font-size: 12px;
         }
         .notebook-list .error { color: var(--error-color); }
-        @media (max-width: 768px) { .notebook-item { padding: 10px 12px; } .notebook-title { font-size: 14px; } .notebook-content { font-size: 11px; } }
-        @media (max-width: 480px) { .notebook-item { padding: 8px 10px; } }
     </style>
 </head>
 <body>
@@ -374,7 +404,6 @@
     <div class="engine-tooltip" id="engineTooltip"></div>
 </main>
 
-<!-- 星聚笔记模态框（固定定位，全屏居中） -->
 <div id="notebookModal" class="feedback-modal">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
@@ -389,7 +418,6 @@
     </div>
 </div>
 
-<!-- 评论模态框（无遮罩） -->
 <div id="commentModal">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
@@ -402,17 +430,12 @@
     </div>
 </div>
 
-<!-- ========== 基础库 ========== -->
 <script src="./js/utils.js"></script>
 <script src="./js/toast.js"></script>
 <script src="./js/storage.js"></script>
 <script src="./js/api.js"></script>
-
-<!-- ========== 核心 UI 组件 ========== -->
 <script src="./js/components/navbar.js"></script>
 <script src="./js/components/sidebar.js"></script>
-
-<!-- ========== 业务模块 ========== -->
 <script src="./js/modules/announcement.js"></script>
 <script src="./js/modules/search.js"></script>
 <script src="./js/modules/weather.js"></script>
@@ -422,11 +445,7 @@
 <script src="./js/modules/greeting.js"></script>
 <script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
-
-<!-- ========== 应用主入口 ========== -->
 <script src="./js/main.js"></script>
-
-<!-- ========== 音乐播放器 ========== -->
 <script src="./js/xfyy/utils.js"></script>
 <script src="./js/xfyy/cache-manager.js"></script>
 <script src="./js/xfyy/lyric-parser.js"></script>
@@ -434,10 +453,7 @@
 <script src="./js/xfyy/plugin-manager.js"></script>
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
-
-<!-- Waline 核心库 -->
 <script src="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.umd.js"></script>
-<!-- 评论模块（关闭按钮修复版） -->
 <script src="./js/modules/comment.js"></script>
 </body>
 </html>
