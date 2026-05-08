@@ -1,21 +1,17 @@
-/* ========== 评论模态框样式 - 完全独立模块 ========== */
-/* 全局可配置变量 - 修改仅需改这里，无需动下方代码 */
+/* ========== 评论模态框样式 - 无遮罩透明版 ========== */
 :root {
   --comment-modal-z-index: 10001;
   --comment-modal-radius: 18px;
   --comment-modal-animation-duration: 0.3s;
 }
 
-/* 模态框根容器 - 所有样式均在此作用域内，无全局污染 */
 #commentModal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.25);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+  background: transparent;          /* 关键：无遮罩 */
   pointer-events: none;
   display: flex;
   align-items: center;
@@ -30,14 +26,12 @@
   box-sizing: border-box;
 }
 
-/* 模态框激活状态 */
 #commentModal.active {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
 }
 
-/* 模态框内容容器 */
 #commentModal .feedback-modal-content {
   background: var(--bg-card, #ffffff);
   border-radius: var(--comment-modal-radius);
@@ -59,13 +53,11 @@
   pointer-events: auto;
 }
 
-/* 激活状态内容入场动画 */
 #commentModal.active .feedback-modal-content {
   transform: scale(1) translateY(0);
   opacity: 1;
 }
 
-/* 模态框头部 */
 #commentModal .feedback-modal-header {
   display: flex;
   justify-content: space-between;
@@ -89,7 +81,6 @@
   font-size: 1.05rem;
 }
 
-/* 关闭按钮 */
 #commentModal .feedback-modal-close {
   background: none;
   border: none;
@@ -113,7 +104,6 @@
   color: var(--text-primary, #111111);
 }
 
-/* 模态框主体 - Waline挂载容器 */
 #commentModal .feedback-modal-body {
   flex: 1;
   overflow-y: auto;
@@ -127,7 +117,7 @@
   display: none; 
 }
 
-/* ========== Waline主题适配 - 与网站全局变量打通 ========== */
+/* Waline 主题适配 */
 #waline-comment {
   --waline-font-size: 0.95rem;
   --waline-theme-color: var(--primary-color, #4361ee);
@@ -139,7 +129,7 @@
   --waline-text-color-light: var(--text-secondary, #666666);
 }
 
-/* ========== 移动端响应式适配 ========== */
+/* 移动端适配 */
 @media (max-width: 600px) {
   #commentModal {
     padding: var(--container-padding-xs, 16px);
@@ -186,7 +176,7 @@
   }
 }
 
-/* ========== 暗色模式自动适配 ========== */
+/* 暗色模式 */
 @media (prefers-color-scheme: dark) {
   #commentModal .feedback-modal-content { 
     background: var(--bg-card, #2a2a2a); 
