@@ -1,6 +1,6 @@
 /**
  * 评论模块 - Waline V3 独立模块化版
- * 新增加载兜底、重试机制、完善错误处理
+ * 适配UMD格式，同步加载逻辑，精准错误处理
  */
 class CommentModule {
   // 所有可修改配置集中管理，后续维护仅需改这里
@@ -13,9 +13,6 @@ class CommentModule {
     openBtnId: 'commentBtn',
     closeBtnSelector: '.feedback-modal-close',
     activeClass: 'active',
-    // 加载重试配置
-    maxRetryTimes: 5,
-    retryInterval: 500,
     // Waline核心配置
     walineOptions: {
       dark: 'auto',
@@ -32,12 +29,11 @@ class CommentModule {
     this.modal = null;
     this.openBtn = null;
     this.closeBtn = null;
-    this.retryCount = 0;
 
     // 初始化流程
     this._initDOM();
     this._bindEvents();
-    this._waitForWalineLoad();
+    this._initWaline();
   }
 
   /**
@@ -92,39 +88,19 @@ class CommentModule {
   }
 
   /**
-   * 等待Waline加载完成，带重试机制
-   * @private
-   */
-  _waitForWalineLoad() {
-    const { maxRetryTimes, retryInterval } = CommentModule.CONFIG;
-
-    // 检查Waline是否已加载
-    if (typeof Waline !== 'undefined') {
-      console.log('[评论模块] Waline加载完成，开始初始化');
-      this._initWaline();
-      return;
-    }
-
-    // 重试次数未到上限，继续等待
-    if (this.retryCount < maxRetryTimes) {
-      this.retryCount++;
-      console.log(`[评论模块] Waline未加载，第${this.retryCount}次重试`);
-      setTimeout(() => this._waitForWalineLoad(), retryInterval);
-      return;
-    }
-
-    // 重试次数耗尽，加载失败
-    const errorMsg = '评论系统加载失败，请检查网络后刷新页面重试';
-    console.error(`[评论模块] Waline加载失败，已重试${maxRetryTimes}次`);
-    window.toast?.show?.(errorMsg, 'error');
-  }
-
-  /**
    * Waline V3 初始化
    * @private
    */
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
+
+    // 核心校验：Waline是否挂载到全局
+    if (typeof Waline === 'undefined') {
+      const errorMsg = 'Waline核心文件加载失败，请检查网络连接或CDN地址';
+      console.error(`[评论模块] ${errorMsg}`, window.Waline);
+      window.toast?.show?.(errorMsg, 'error');
+      return;
+    }
 
     // 挂载容器校验
     if (!document.querySelector(el)) {
@@ -140,7 +116,7 @@ class CommentModule {
         serverURL,
         ...walineOptions,
       });
-      console.log('[评论模块] Waline初始化成功');
+      console.log('[评论模块] Waline初始化成功', this.walineInstance);
     } catch (error) {
       console.error('[评论模块] Waline初始化失败:', error);
       window.toast?.show?.('评论系统初始化失败，请稍后重试', 'error');
@@ -159,7 +135,7 @@ class CommentModule {
       return;
     }
     if (!this.walineInstance) {
-      window.toast?.show?.('评论系统加载中，请稍后再试', 'warning');
+      window.toast?.show?.('评论系统加载异常，请刷新页面重试', 'warning');
       return;
     }
 
