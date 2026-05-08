@@ -18,7 +18,7 @@ class Navbar {
     }
 
     bindEvents() {
-        // ========== 搜索按钮（增加存在性保护） ==========
+        // ========== 搜索按钮 ==========
         const searchBtn = document.getElementById('searchBtn');
         if (searchBtn) {
             searchBtn.addEventListener('click', (e) => {
@@ -73,14 +73,14 @@ class Navbar {
             });
         }
 
-        // ========== 投稿按钮 ==========
+        // ========== 投稿按钮：弹出投稿窗口 ==========
         const submitBtn = document.getElementById('floatingSubmitBtn');
         if (submitBtn) {
             submitBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 this.closeAllModalsExcept(['submit']);
-                window.open('https://f.wps.cn/g/TI3Gxbe1/', '_blank');
+                document.getElementById('submitModal').classList.add('active');
             });
         }
 
@@ -104,7 +104,7 @@ class Navbar {
         if (btt) btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
-    // ---------- 核心：统一处理四大功能的切换 ----------
+    // ---------- 统一处理四大功能的切换 ----------
     handleFeatureToggle(featureKey, toggleFn) {
         const isOpen = this.isFeatureOpen(featureKey);
         if (isOpen) {
@@ -149,6 +149,7 @@ class Navbar {
             if (!keep.includes('weather')) window.app?.modules?.weather?.hide?.();
             if (!keep.includes('about')) window.aboutModule?.hide?.();
             if (!keep.includes('notebook')) window.app?.hideNotebookModal?.();
+            if (!keep.includes('submit')) document.getElementById('submitModal')?.classList.remove('active');
         } catch (e) {
             console.error('关闭模态框失败:', e);
         }
