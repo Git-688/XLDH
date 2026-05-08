@@ -1,8 +1,7 @@
 /**
  * 优化分类导航系统（基于后端 Worker + D1）
  * 包含：缓存容错、后台静默更新、去重请求、全站搜索
- * CSP修复：移除图片 onerror 内联事件
- * 修复：补充 startBackgroundUpdates 方法，调整搜索框插入逻辑
+ * 搜索结果右侧显示，搜索框自动缩短
  */
 class OptimizedNavigation {
     constructor() {
@@ -26,11 +25,8 @@ class OptimizedNavigation {
         this.searchTimer = null;
     }
 
-    /* ==================== 安全工具 ==================== */
     _escapeHtml(str) {
-        if (typeof Utils !== 'undefined' && typeof Utils.escapeHtml === 'function') {
-            return Utils.escapeHtml(str);
-        }
+        if (typeof Utils !== 'undefined' && typeof Utils.escapeHtml === 'function') return Utils.escapeHtml(str);
         if (!str) return '';
         return String(str).replace(/[&<>"']/g, m => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -38,15 +34,12 @@ class OptimizedNavigation {
     }
 
     _formatViews(views) {
-        if (typeof Utils !== 'undefined' && typeof Utils.formatViews === 'function') {
-            return Utils.formatViews(views);
-        }
+        if (typeof Utils !== 'undefined' && typeof Utils.formatViews === 'function') return Utils.formatViews(views);
         if (views >= 1000000) return `${(views / 1000000).toFixed(1).replace('.0', '')}M`;
         if (views >= 1000) return `${(views / 1000).toFixed(1).replace('.0', '')}K`;
         return String(views);
     }
 
-    /* ==================== 初始化 ==================== */
     async init() {
         if (this.isInitialized) return;
         this.showSkeleton();
@@ -80,21 +73,14 @@ class OptimizedNavigation {
         }
     }
 
-    /* ==================== 后台静默更新 ==================== */
     startBackgroundUpdates() {
         if (this.updateTimer) clearInterval(this.updateTimer);
-        this.updateTimer = setInterval(() => {
-            this.fetchLatestFromAPI(true);
-        }, this.UPDATE_INTERVAL);
-
+        this.updateTimer = setInterval(() => this.fetchLatestFromAPI(true), this.UPDATE_INTERVAL);
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                this.fetchLatestFromAPI(true);
-            }
+            if (!document.hidden) this.fetchLatestFromAPI(true);
         });
     }
 
-    /* ==================== 搜索框创建 ==================== */
     createSearchBox() {
         const navHeader = document.querySelector('.navigation-header');
         if (!navHeader) return;
@@ -110,13 +96,14 @@ class OptimizedNavigation {
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <span class="search-result-hint" id="navSearchHint" style="display:none;"></span>
+            <span class="search-result-hint" id="navSearchHint"></span>
         `;
 
         navHeader.appendChild(container);
 
         this.searchInput = container.querySelector('#navSearchInput');
         const clearBtn = container.querySelector('#navSearchClearBtn');
+        const hint = document.getElementById('navSearchHint');
 
         this.searchInput.addEventListener('input', () => {
             const query = this.searchInput.value.trim();
@@ -172,8 +159,14 @@ class OptimizedNavigation {
         } else {
             results.forEach((site, idx) => container.appendChild(this.createSiteCard(site, idx)));
         }
+
+        // 右侧结果显示
         const hint = document.getElementById('navSearchHint');
-        if (hint) { hint.style.display = 'block'; hint.textContent = `找到 ${results.length} 个结果`; }
+        if (hint) {
+            hint.style.display = 'block';
+            hint.textContent = `${results.length} 个结果`;
+        }
+
         document.querySelectorAll('.level1-btn, .level2-btn').forEach(b => b.classList.remove('active'));
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
@@ -183,7 +176,10 @@ class OptimizedNavigation {
         if (!this.isSearching) return;
         this.isSearching = false;
         const hint = document.getElementById('navSearchHint');
-        if (hint) hint.style.display = 'none';
+        if (hint) {
+            hint.style.display = 'none';
+            hint.textContent = '';
+        }
         if (this.selectedLevel1 && this.navigationData?.categories?.[this.selectedLevel1]) {
             this.selectLevel1(this.selectedLevel1, false);
         } else {
@@ -192,7 +188,6 @@ class OptimizedNavigation {
         }
     }
 
-    /* ==================== 数据加载与缓存 ==================== */
     async loadNavigationData(retryCount = 0) {
         try {
             const data = await this.loadFromAPI(retryCount);
@@ -202,7 +197,6 @@ class OptimizedNavigation {
         } catch (error) {
             const cached = this.loadCache();
             if (cached) {
-                console.warn('⚠️ 使用本地缓存的导航数据');
                 this.navigationData = cached;
                 window.toast.show('数据更新失败，展示近期缓存', 'warning');
             } else {
@@ -266,13 +260,9 @@ class OptimizedNavigation {
             this.calculateStats();
             if (!silent && this.quietUpdate) window.toast.show('导航数据已自动更新', 'info');
             if (!this.isSearching) {
-                if (!this.selectedLevel1 || latest.categories.hasOwnProperty(this.selectedLevel1)) {
-                    this.renderAll();
-                }
+                if (!this.selectedLevel1 || latest.categories.hasOwnProperty(this.selectedLevel1)) this.renderAll();
             }
-        } catch (e) {
-            console.warn('后台更新失败:', e.message);
-        }
+        } catch (e) { console.warn('后台更新失败:', e.message); }
     }
 
     calculateStats() {
@@ -466,7 +456,6 @@ class OptimizedNavigation {
     getFirstSubCategory(level1) { const subs = this.navigationData?.categories?.[level1]; return subs ? Object.keys(subs)[0] : null; }
 
     showSkeleton() { const container = document.getElementById('level3Content'); if (container) container.innerHTML = this.generateSkeletonHTML(); }
-
     generateSkeletonHTML() {
         let html = '';
         for (let i = 0; i < this.skeletonCount; i++) {
