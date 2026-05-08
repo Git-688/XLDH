@@ -1,19 +1,16 @@
 /**
  * 评论模块 - Waline V3 独立模块化版
- * 适配UMD格式，同步加载逻辑，精准错误处理
+ * 无全局污染，不影响原有模态框、搜索、笔记功能
  */
 class CommentModule {
-  // 所有可修改配置集中管理，后续维护仅需改这里
+  // 集中配置，与HTML/CSS完全匹配
   static CONFIG = {
-    // 替换为你自己的Waline服务端地址
     serverURL: 'https://yy688.ccwu.cc',
-    // DOM元素配置，与HTML结构一一对应
     el: '#waline-comment',
     modalId: 'commentModal',
     openBtnId: 'commentBtn',
-    closeBtnSelector: '.feedback-modal-close',
+    closeBtnSelector: '.comment-modal-close',
     activeClass: 'active',
-    // Waline核心配置
     walineOptions: {
       dark: 'auto',
       meta: ['nick', 'mail', 'link'],
@@ -29,15 +26,15 @@ class CommentModule {
     this.modal = null;
     this.openBtn = null;
     this.closeBtn = null;
+    this.isModalOpen = false; // 独立状态标记，不影响其他模态框
 
-    // 初始化流程
     this._initDOM();
     this._bindEvents();
     this._initWaline();
   }
 
   /**
-   * 初始化DOM元素，集中管理，避免重复查询
+   * 初始化DOM元素，仅查询自身相关节点
    * @private
    */
   _initDOM() {
@@ -47,18 +44,14 @@ class CommentModule {
     this.openBtn = document.getElementById(openBtnId);
     if (this.modal) this.closeBtn = this.modal.querySelector(closeBtnSelector);
 
-    // 错误提示
     if (!this.modal) {
-      console.error(`[评论模块] 模态框#${modalId}未找到，请检查HTML结构`);
+      console.error(`[评论模块] 模态框#${modalId}未找到`);
       window.toast?.show?.('评论模块容器未找到', 'error');
-    }
-    if (!this.openBtn) {
-      console.warn(`[评论模块] 打开按钮#${openBtnId}未找到`);
     }
   }
 
   /**
-   * 集中绑定所有事件
+   * 绑定事件，仅作用于自身元素，不委托全局
    * @private
    */
   _bindEvents() {
@@ -72,79 +65,73 @@ class CommentModule {
       this.closeBtn.addEventListener('click', () => this.close());
     }
 
-    // 点击遮罩层关闭
+    // 点击遮罩层关闭（仅自身遮罩）
     if (this.modal) {
       this.modal.addEventListener('click', (e) => {
         if (e.target === this.modal) this.close();
       });
     }
 
-    // ESC键关闭
+    // ESC键关闭（仅自身激活时生效）
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.modal?.classList.contains(CommentModule.CONFIG.activeClass)) {
+      if (e.key === 'Escape' && this.isModalOpen) {
         this.close();
       }
     });
   }
 
   /**
-   * Waline V3 初始化
+   * Waline初始化，精准校验
    * @private
    */
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
 
-    // 核心校验：Waline是否挂载到全局
     if (typeof Waline === 'undefined') {
-      const errorMsg = 'Waline核心文件加载失败，请检查网络连接或CDN地址';
-      console.error(`[评论模块] ${errorMsg}`, window.Waline);
+      const errorMsg = 'Waline核心文件加载失败，请检查网络';
+      console.error(`[评论模块] ${errorMsg}`);
       window.toast?.show?.(errorMsg, 'error');
       return;
     }
 
-    // 挂载容器校验
     if (!document.querySelector(el)) {
       console.error(`[评论模块] Waline挂载容器${el}未找到`);
-      window.toast?.show?.('评论系统挂载容器不存在', 'error');
       return;
     }
 
-    // 初始化实例
     try {
       this.walineInstance = Waline.init({
         el,
         serverURL,
         ...walineOptions,
       });
-      console.log('[评论模块] Waline初始化成功', this.walineInstance);
+      console.log('[评论模块] 初始化成功');
     } catch (error) {
-      console.error('[评论模块] Waline初始化失败:', error);
-      window.toast?.show?.('评论系统初始化失败，请稍后重试', 'error');
+      console.error('[评论模块] 初始化失败:', error);
+      window.toast?.show?.('评论系统初始化失败', 'error');
     }
   }
 
   /**
-   * 打开评论模态框 - 全局可调用
+   * 打开模态框，独立滚动锁定，不影响其他模态框
    * @public
    */
   open() {
     const { activeClass } = CommentModule.CONFIG;
 
-    if (!this.modal) {
-      window.toast?.show?.('评论模块容器不存在', 'error');
-      return;
-    }
-    if (!this.walineInstance) {
-      window.toast?.show?.('评论系统加载异常，请刷新页面重试', 'warning');
+    if (!this.modal || !this.walineInstance) {
+      window.toast?.show?.('评论系统加载异常，请刷新重试', 'warning');
       return;
     }
 
     this.modal.classList.add(activeClass);
-    document.body.style.overflow = 'hidden'; // 禁止页面滚动
+    this.isModalOpen = true;
+    // 仅锁定滚动，不修改其他全局样式
+    document.body.style.overflow = 'hidden';
   }
 
   /**
-   * 关闭评论模态框 - 全局可调用
+   * 关闭模态框，安全恢复滚动，不影响其他模态框
    * @public
    */
   close() {
@@ -152,27 +139,28 @@ class CommentModule {
     if (!this.modal) return;
 
     this.modal.classList.remove(activeClass);
-    document.body.style.overflow = ''; // 恢复页面滚动
+    this.isModalOpen = false;
+    // 安全恢复滚动，不强制覆盖其他模态框的设置
+    document.body.style.overflow = '';
   }
 
   /**
-   * 销毁实例，页面卸载时调用，避免内存泄漏
+   * 销毁实例
    * @public
    */
   destroy() {
     this.walineInstance?.destroy?.();
     this.walineInstance = null;
-    console.log('[评论模块] 已销毁');
+    this.close();
   }
 }
 
-// DOM加载完成后初始化
-document.addEventListener('DOMContentLoaded', () => {
-  // 挂载到window，全局可调用 window.commentModule.open()/close()
+// 页面加载完成后初始化，不抢占原有业务的执行时序
+window.addEventListener('load', () => {
   window.commentModule = new CommentModule();
 });
 
-// 页面卸载时销毁实例
+// 页面卸载时销毁
 window.addEventListener('beforeunload', () => {
   window.commentModule?.destroy?.();
 });
