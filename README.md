@@ -21,13 +21,13 @@
 - 🧾 **常用标签**：60s快讯、图片工具、热搜等 40+ 快捷入口
 - 🎣 **趣味木鱼**：功德/幸运/财富/健康，敲击有特效和音效
 - 📝 **星聚笔记**：云存储的便签（API 驱动）
-- 💬 **Twikoo 评论系统**：净网支持 LaTeX
+- 💬 **Waline 评论系统**：净网支持 LaTeX
 - 📱 **响应式设计**：适配桌面、平板、手机
 
 ## 🌐 在线体验
 
 主站：`https://xjdh688.ccwu.cc`  
-后台管理：`https://xjdh688.ccwu.cc/admin.html`（需授权）  
+后台管理：`https://xjdh688.ccwu.cc/admin.html`（暂不开放）  
 图床：`https://tc688.ccwu.cc`（Cloudflare Images + Hugging Face）  
 影视：`https://ys688.ccwu.cc`（MoonTVPlus）
 
@@ -67,6 +67,7 @@ XLDH/
 │       ├── wallpaper.css
 │       ├── greeting.css
 │       ├── stats.css
+│       ├── comment.css
 │       ├── compact-tags.css
 │       ├── weather.css
 │       ├── announcement.css
@@ -92,6 +93,7 @@ XLDH/
 │   │   ├── wallpaper.js       # 壁纸轮播
 │   │   ├── greeting.js        # 问候语与木鱼
 │   │   ├── stats.js           # 页脚访问统计
+│   │   ├── comment.js       # 评论系统
 │   │   └── compact-tags.js    # 常用工具标签
 │   │
 │   └── xfyy/                  # 音乐播放器子系统
