@@ -7,12 +7,16 @@
     <meta name="description" content="星聚导航是一个现代化的个人导航网站，提供便捷的上网导航体验和各种实用工具">
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
-    <!-- 修复：CSP规则改为单行，避免换行导致浏览器解析失败拦截资源 -->
+
+    <!-- CSP 规则：确保所有使用的 CDN 域名均已加入 -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.ccwu.cc https://*.vercel.app; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc https://*.vercel.app; font-src 'self' https://cdnjs.cloudflare.com; frame-ancestors 'none';">
+
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
+
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
@@ -28,28 +32,38 @@
     <link rel="stylesheet" href="./css/modules/compact-tags.css">
     <link rel="stylesheet" href="./css/responsive.css">
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
-    <!-- 评论模块独立样式 优先引入 -->
+
+    <!-- 评论模块独立样式 -->
     <link rel="stylesheet" href="./css/modules/comment.css">
-    <!-- 修复：Waline固定稳定版CSS，与JS版本一致 -->
+    <!-- Waline 官方 CSS（锁定版本） -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.css">
+
+    <!-- Font Awesome 图标 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/regular.min.css">
+
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+
     <link rel="preload" href="./js/main.js" as="script">
+
+    <!-- KaTeX 数学公式 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
+
     <style>
-        /* 仅保留非评论模块的原有样式，评论相关样式已完全分离到comment.css */
+        /* 悬浮按钮颜色 */
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
         .floating-btn.comment-btn { color: #f59e0b; }
         .floating-btn.comment-btn:hover { color: #d97706; }
+
+        /* 笔记模态框样式 */
         #notebookModal { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
         #notebookModal .feedback-modal-content {
             background: rgba(255, 255, 255, 0.65);
@@ -92,6 +106,7 @@
             background: transparent; -webkit-overflow-scrolling: touch;
         }
         #notebookModal .feedback-modal-body::-webkit-scrollbar { display: none; }
+
         .notebook-list { padding: 16px; margin: 0; display: flex; flex-direction: column; gap: 10px; box-sizing: border-box; }
         .notebook-item {
             background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
@@ -128,6 +143,7 @@
     </style>
 </head>
 <body>
+<!-- ================= 导航栏 ================= -->
 <nav class="navbar" id="navbar">
     <div class="nav-container">
         <div class="nav-brand">
@@ -147,6 +163,8 @@
         </div>
     </div>
 </nav>
+
+<!-- ================= 侧边栏 ================= -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-wallpaper" id="sidebarWallpaper">
         <div class="sidebar-wallpaper-overlay"></div>
@@ -176,7 +194,9 @@
         </div>
     </div>
 </aside>
+
 <main class="main-content">
+    <!-- ================= 壁纸轮播 ================= -->
     <section class="wallpaper-section">
         <div class="container">
             <div class="wallpaper-container" id="wallpaperCarousel">
@@ -187,6 +207,8 @@
             </div>
         </div>
     </section>
+
+    <!-- ================= 问候区 ================= -->
     <section class="greeting-section">
         <div class="greeting-container">
             <div class="greeting-main-card">
@@ -207,12 +229,16 @@
             <a href="./pages/others/sq.html" class="bookmark-btn" aria-label="我的书签" target="_blank"><i class="fas fa-bookmark"></i><span>我的书签</span></a>
         </div>
     </section>
+
+    <!-- ================= 常用标签 ================= -->
     <section class="minimal-tags-section">
         <div class="container">
             <div class="tags-header"><h2 class="tags-title">常用标签</h2><span class="tags-subtitle-right">使用不了就是API失效了待换❗️</span></div>
             <div class="tags-grid" id="tagsGrid"><div class="tags-loading" id="tagsLoading"><div class="loading-spinner"></div></div></div>
         </div>
     </section>
+
+    <!-- ================= 分类导航 ================= -->
     <section class="navigation-section">
         <div class="container">
             <div class="navigation-header">
@@ -233,6 +259,8 @@
             </div>
         </div>
     </section>
+
+    <!-- ================= 页脚统计 ================= -->
     <footer class="footer">
         <div class="footer-compact-container">
             <div class="footer-disclaimer-card">
@@ -247,12 +275,16 @@
             </div>
         </div>
     </footer>
+
+    <!-- ================= 悬浮按钮组 ================= -->
     <div class="floating-buttons">
         <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
         <button class="floating-btn comment-btn" id="commentBtn" aria-label="评论"><i class="fas fa-comments"></i></button>
         <button class="floating-btn submit-btn" id="floatingSubmitBtn" aria-label="网站投稿"><i class="fas fa-paper-plane"></i></button>
         <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
     </div>
+
+    <!-- ================= 音乐播放器 ================= -->
     <div class="music-player" id="musicPlayer">
         <div class="player-top">
             <div class="cover-section">
@@ -306,8 +338,11 @@
             <div class="tab-content" id="local-content"><div class="content-container"><div class="playlist-container" id="local-playlist-container"><div class="loading">加载本地歌曲中...</div></div></div></div>
         </div>
     </div>
-    <!-- 修复：彻底闭合audio标签，避免DOM解析异常 -->
-    <audio id="audio-element" preload="metadata">
+
+    <!-- 注意：audio 标签必须自闭合或正确闭合，这里采用自闭合方式 -->
+    <audio id="audio-element" preload="metadata" />
+
+    <!-- ================= 搜索模态框 ================= -->
     <div class="search-modal" id="searchModal">
         <div class="modal-content">
             <div class="search-bar">
@@ -330,6 +365,8 @@
     </div>
     <div class="engine-tooltip" id="engineTooltip"></div>
 </main>
+
+<!-- ================= 星聚笔记模态框 ================= -->
 <div id="notebookModal" class="feedback-modal" style="display: none;">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
@@ -343,7 +380,8 @@
         </div>
     </div>
 </div>
-<!-- 评论模态框 标准化DOM结构，与模块化CSS/JS完全匹配 -->
+
+<!-- ================= 评论模态框 ================= -->
 <div id="commentModal">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
@@ -351,20 +389,23 @@
             <button class="feedback-modal-close" aria-label="关闭评论">&times;</button>
         </div>
         <div class="feedback-modal-body">
-            <!-- Waline挂载容器，ID与JS配置严格一致 -->
             <div id="waline-comment"></div>
         </div>
     </div>
 </div>
+
 <!-- ========== 基础库（同步加载） ========== -->
 <script src="./js/utils.js"></script>
 <script src="./js/toast.js"></script>
 <script src="./js/storage.js"></script>
+
 <!-- ========== API 与数据层 ========== -->
 <script src="./js/api.js"></script>
+
 <!-- ========== 核心 UI 组件 ========== -->
 <script src="./js/components/navbar.js"></script>
 <script src="./js/components/sidebar.js"></script>
+
 <!-- ========== 业务模块 ========== -->
 <script src="./js/modules/announcement.js"></script>
 <script src="./js/modules/search.js"></script>
@@ -375,8 +416,10 @@
 <script src="./js/modules/greeting.js"></script>
 <script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
+
 <!-- ========== 应用主入口 ========== -->
 <script src="./js/main.js"></script>
+
 <!-- ========== 音乐播放器子系统 ========== -->
 <script src="./js/xfyy/utils.js"></script>
 <script src="./js/xfyy/cache-manager.js"></script>
@@ -385,9 +428,10 @@
 <script src="./js/xfyy/plugin-manager.js"></script>
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
-<!-- 修复：Waline固定稳定版UMD格式JS，会自动挂载window.Waline，无defer/async强制同步加载 -->
+
+<!-- Waline 核心库（UMD 格式，同步加载） -->
 <script src="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.umd.js"></script>
-<!-- 评论模块独立JS（必须放在Waline之后，确保执行时Waline已存在） -->
+<!-- 评论模块初始化（必须在 Waline 之后） -->
 <script src="./js/modules/comment.js"></script>
 </body>
 </html>
