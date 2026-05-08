@@ -1,95 +1,174 @@
 /**
- * 评论模块 - Waline 集成（生产就绪版）
- * 特点：
- * - 延迟初始化（首次打开模态框时才实例化 Waline）
- * - 锁定 Waline 版本 3.0.0-alpha.8
- * - 固定评论路径防止数据错乱
- * - 销毁实例避免内存泄漏
- * - 完整错误处理
+ * 评论模块 - Waline V3 独立模块化版
+ * CSS/JS完全分离，配置集中管理，无全局变量冲突
  */
-class CommentModal {
-    constructor() {
-        this.walineInstance = null;
-        this.initialized = false;      // 标记是否已初始化
-        this.modal = document.getElementById('commentModal');
-        if (!this.modal) {
-            console.error('评论模态框未找到');
-            return;
-        }
-        this._bindButton();
+class CommentModule {
+  // 所有可修改配置集中管理，后续维护仅需改这里
+  static CONFIG = {
+    // 替换为你自己的Waline服务端地址（第一步获取的serverURL）
+    serverURL: 'https://yy688.ccwu.cc',
+    // DOM元素配置，与HTML结构一一对应
+    el: '#waline-comment',
+    modalId: 'commentModal',
+    openBtnId: 'commentBtn',
+    closeBtnSelector: '.feedback-modal-close',
+    activeClass: 'active',
+    // Waline核心配置
+    walineOptions: {
+      dark: 'auto',
+      meta: ['nick', 'mail', 'link'],
+      requiredMeta: ['nick'],
+      pageSize: 10,
+      login: 'enable',
+      copyright: false,
+    }
+  };
+
+  constructor() {
+    this.walineInstance = null;
+    this.modal = null;
+    this.openBtn = null;
+    this.closeBtn = null;
+
+    // 初始化流程
+    this._initDOM();
+    this._bindEvents();
+    this._initWaline();
+  }
+
+  /**
+   * 初始化DOM元素，集中管理，避免重复查询
+   * @private
+   */
+  _initDOM() {
+    const { modalId, openBtnId, closeBtnSelector } = CommentModule.CONFIG;
+    
+    this.modal = document.getElementById(modalId);
+    this.openBtn = document.getElementById(openBtnId);
+    if (this.modal) this.closeBtn = this.modal.querySelector(closeBtnSelector);
+
+    // 错误提示
+    if (!this.modal) {
+      console.error(`[评论模块] 模态框#${modalId}未找到，请检查HTML结构`);
+      window.toast?.show?.('评论模块容器未找到', 'error');
+    }
+    if (!this.openBtn) {
+      console.warn(`[评论模块] 打开按钮#${openBtnId}未找到`);
+    }
+  }
+
+  /**
+   * 集中绑定所有事件
+   * @private
+   */
+  _bindEvents() {
+    // 打开按钮
+    if (this.openBtn) {
+      this.openBtn.addEventListener('click', () => this.open());
     }
 
-    _bindButton() {
-        const btn = document.getElementById('commentBtn');
-        if (btn) {
-            btn.addEventListener('click', () => this.show());
-        }
-        const closeBtn = this.modal.querySelector('.feedback-modal-close');
-        if (closeBtn) closeBtn.addEventListener('click', () => this.hide());
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) this.hide();
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.modal.classList.contains('active')) this.hide();
-        });
-        // 页面卸载时销毁实例
-        window.addEventListener('beforeunload', () => this.destroy());
+    // 关闭按钮
+    if (this.closeBtn) {
+      this.closeBtn.addEventListener('click', () => this.close());
     }
 
-    // 仅当首次打开模态框时初始化，避免容器隐藏时尺寸异常
-    _initWaline() {
-        if (this.initialized) return;
-        if (typeof Waline === 'undefined') {
-            console.error('Waline 脚本未加载，请检查 CDN');
-            window.toast?.show('评论系统加载失败，请刷新页面', 'error');
-            return;
-        }
-        try {
-            this.walineInstance = Waline.init({
-                el: '#waline-comment',
-                serverURL: 'https://yy688.ccwu.cc',
-                dark: 'auto',
-                meta: ['nick', 'mail', 'link'],
-                requiredMeta: ['nick'],
-                pageSize: 10,
-                // 固定评论路径，避免因动态 query 参数导致数据错乱
-                path: window.location.pathname,
-            });
-            this.initialized = true;
-            console.log('Waline 初始化成功');
-        } catch (error) {
-            console.error('Waline 初始化失败:', error);
-            window.toast?.show('评论系统初始化失败，请稍后再试', 'error');
-        }
+    // 点击遮罩层关闭
+    if (this.modal) {
+      this.modal.addEventListener('click', (e) => {
+        if (e.target === this.modal) this.close();
+      });
     }
 
-    show() {
-        if (!this.modal) return;
-        // 首次打开时初始化
-        if (!this.initialized) {
-            this._initWaline();
-            // 如果初始化失败，直接返回不打开模态框
-            if (!this.initialized) return;
-        }
-        this.modal.classList.add('active');
+    // ESC键关闭
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.modal?.classList.contains(CommentModule.CONFIG.activeClass)) {
+        this.close();
+      }
+    });
+  }
+
+  /**
+   * Waline V3 初始化
+   * @private
+   */
+  _initWaline() {
+    const { el, serverURL, walineOptions } = CommentModule.CONFIG;
+
+    // 依赖校验
+    if (typeof Waline === 'undefined') {
+      console.error('[评论模块] Waline未加载，请检查CDN引入');
+      window.toast?.show?.('评论系统加载失败，请刷新重试', 'error');
+      return;
+    }
+    if (!document.querySelector(el)) {
+      console.error(`[评论模块] Waline挂载容器${el}未找到`);
+      return;
     }
 
-    hide() {
-        this.modal?.classList.remove('active');
+    // 初始化实例
+    try {
+      this.walineInstance = Waline.init({
+        el,
+        serverURL,
+        ...walineOptions,
+      });
+      console.log('[评论模块] Waline初始化成功');
+    } catch (error) {
+      console.error('[评论模块] Waline初始化失败:', error);
+      window.toast?.show?.('评论系统初始化失败，请稍后重试', 'error');
+    }
+  }
+
+  /**
+   * 打开评论模态框 - 全局可调用
+   * @public
+   */
+  open() {
+    const { activeClass } = CommentModule.CONFIG;
+
+    if (!this.modal) {
+      window.toast?.show?.('评论模块容器不存在', 'error');
+      return;
+    }
+    if (!this.walineInstance) {
+      window.toast?.show?.('评论系统加载中，请稍后再试', 'warning');
+      return;
     }
 
-    // 销毁 Waline 实例，释放内存
-    destroy() {
-        if (this.walineInstance && typeof this.walineInstance.destroy === 'function') {
-            this.walineInstance.destroy();
-            this.walineInstance = null;
-            this.initialized = false;
-            console.log('Waline 实例已销毁');
-        }
-    }
+    this.modal.classList.add(activeClass);
+    document.body.style.overflow = 'hidden'; // 禁止页面滚动
+  }
+
+  /**
+   * 关闭评论模态框 - 全局可调用
+   * @public
+   */
+  close() {
+    const { activeClass } = CommentModule.CONFIG;
+    if (!this.modal) return;
+
+    this.modal.classList.remove(activeClass);
+    document.body.style.overflow = ''; // 恢复页面滚动
+  }
+
+  /**
+   * 销毁实例，页面卸载时调用，避免内存泄漏
+   * @public
+   */
+  destroy() {
+    this.walineInstance?.destroy?.();
+    this.walineInstance = null;
+    console.log('[评论模块] 已销毁');
+  }
 }
 
-// 页面加载完成后实例化 CommentModal，但不初始化 Waline
+// DOM加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
-    window.commentModal = new CommentModal();
+  // 挂载到window，全局可调用 window.commentModule.open()/close()
+  window.commentModule = new CommentModule();
+});
+
+// 页面卸载时销毁实例
+window.addEventListener('beforeunload', () => {
+  window.commentModule?.destroy?.();
 });
