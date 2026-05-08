@@ -1,12 +1,14 @@
 /* 
  * 优化分类导航样式
  * 文件位置：./css/modules/navigation.css
- * 完整文件：原有全部样式 + 搜索框位于标题/统计下方 + 竖线仅装饰标题行
+ * 搜索框左右边距统一 + 搜索结果右侧显示
  */
 
 /* ====================== 搜索框样式 ====================== */
 .nav-search-box {
-    display: block;
+    display: flex;                /* 横向排列 */
+    align-items: center;
+    gap: 12px;
     width: 100%;
     margin-top: 10px;
 }
@@ -15,7 +17,8 @@
     position: relative;
     display: flex;
     align-items: center;
-    width: 100%;
+    flex: 1 1 auto;              /* 自动伸缩，当结果出现时自动缩短 */
+    min-width: 120px;
 }
 
 .search-input-wrapper .search-icon-prefix {
@@ -63,24 +66,48 @@
 
 .search-clear-btn:hover { background: rgba(0, 0, 0, 0.08); color: var(--text-primary); }
 
+/* 搜索结果提示，位于搜索框右侧 */
 .search-result-hint {
-    font-size: 11px;
-    color: var(--text-secondary);
+    flex: 0 0 auto;
     white-space: nowrap;
-    padding-right: 8px;
-    display: inline-block;
-    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    padding: 4px 12px;
+    border-radius: 6px;
+    display: none;               /* 默认隐藏，搜索时显示 */
 }
 
+/* 移动端适配 */
 @media (max-width: 768px) {
-    .nav-search-box { margin-top: 8px; }
-    .search-input-wrapper input { height: 32px; font-size: 13px; padding: 4px 28px 4px 30px; }
-    .search-icon-prefix { left: 10px; font-size: 12px; }
-    .search-clear-btn { width: 20px; height: 20px; right: 6px; font-size: 11px; }
+    .nav-search-box {
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .search-input-wrapper input {
+        height: 32px;
+        font-size: 13px;
+        padding: 4px 28px 4px 30px;
+    }
+    .search-icon-prefix {
+        left: 10px;
+        font-size: 12px;
+    }
+    .search-clear-btn {
+        width: 20px;
+        height: 20px;
+        right: 6px;
+        font-size: 11px;
+    }
+    .search-result-hint {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
 }
 
 /* ====================== 原有导航样式（完整保留） ====================== */
 
+/* 导航主容器 */
 .navigation-section { padding: 0 0 calc(var(--section-margin-xs) * 0.5) 0; width: 100%; }
 .navigation-section .container { padding: 0 var(--container-padding-xs); width: 100%; max-width: 1200px; margin: 0 auto; }
 
@@ -89,17 +116,13 @@
 @media (min-width: 992px) { .navigation-section .container { padding: 0 var(--container-padding-lg); } .navigation-section { padding: 0 0 calc(var(--section-margin-md) * 0.5) 0; } }
 @media (min-width: 1200px) { .navigation-section .container { padding: 0 var(--container-padding-xl); } .navigation-section { padding: 0 0 calc(var(--section-margin-md) * 0.5) 0; } }
 
-/* 头部 —— 竖线仅装饰标题行 */
+/* 头部 —— 竖线仅装饰标题行，左右 padding 统一 */
 .navigation-header {
     margin-bottom: 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    position: relative;
-    padding-left: 13px;
+    padding: 0;                 /* 移除左 padding，由内部元素控制 */
 }
 
-/* 竖线装饰仅针对 header-content 行 */
+/* 标题行 */
 .header-content {
     position: relative;
     display: flex;
@@ -107,13 +130,14 @@
     align-items: center;
     width: 100%;
     gap: 12px;
-    flex-wrap: nowrap;
+    padding-left: 18px;          /* 为竖线留出空间，保持与之前的视觉一致 */
+    padding-right: 0;
 }
 
 .header-content::before {
     content: '';
     position: absolute;
-    left: -13px;
+    left: 0;
     top: 50%;
     transform: translateY(-50%);
     width: 2px;
@@ -229,6 +253,7 @@
     .view-count { color: var(--nav-level1-active) !important; }
     .views-icon { color: var(--nav-level1-active); }
     .skeleton-icon, .skeleton-btn, .skeleton-views, .skeleton-title, .skeleton-description { background: linear-gradient(90deg, #3a3a3a 25%, #4a4a4a 50%, #3a3a3a 75%); background-size: 200% 100%; }
+    .search-result-hint { background: var(--bg-card); }
 }
 
 /* 死链按钮 */
