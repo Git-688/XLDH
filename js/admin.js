@@ -10,6 +10,7 @@
     let failCount = parseInt(sessionStorage.getItem('login_fail_count') || '0', 10);
     let lockUntil = parseInt(sessionStorage.getItem('login_lock_until') || '0', 10);
     let modalAction = null;
+    let currentSubmissionId = null;  // 当前查看的投稿ID
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -25,14 +26,11 @@
         toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300);
     }
 
-    // 仅允许 http: 和 https: 协议
     function checkUrl(url) {
         try {
             const u = new URL(url);
             return ['http:', 'https:'].includes(u.protocol);
-        } catch {
-            return false;
-        }
+        } catch { return false; }
     }
 
     function getStoredToken() {
@@ -75,9 +73,8 @@
     function updateLockMessage() {
         const el = document.getElementById('loginLockMessage');
         if (!el) return;
-        if (Date.now() < lockUntil) {
-            el.textContent = `登录锁定中，剩余 ${Math.ceil((lockUntil - Date.now()) / 60000)} 分钟`;
-        } else el.textContent = '';
+        if (Date.now() < lockUntil) el.textContent = `登录锁定中，剩余 ${Math.ceil((lockUntil - Date.now()) / 60000)} 分钟`;
+        else el.textContent = '';
     }
 
     function checkLock() {
@@ -110,9 +107,7 @@
 
         const buttonsContainer = document.getElementById('modalButtons');
         let html = '';
-        if (showDelete && deleteCb) {
-            html += `<div class="modal-buttons-left"><button class="danger" id="modalDeleteBtn">删除</button></div>`;
-        }
+        if (showDelete && deleteCb) html += `<div class="modal-buttons-left"><button class="danger" id="modalDeleteBtn">删除</button></div>`;
         html += `<button class="secondary" id="modalCancelBtn">取消</button>
                  <button class="primary" id="modalSubmit">确认</button>`;
         buttonsContainer.innerHTML = html;
@@ -121,12 +116,9 @@
         document.getElementById('modalSubmit').addEventListener('click', handleModalSubmit);
         if (showDelete && deleteCb) {
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
-                if (confirm('确定删除？此操作不可恢复！')) {
-                    try { await deleteCb(); closeModal(); } catch (e) { showToast('删除失败', 'error'); }
-                }
+                if (confirm('确定删除？此操作不可恢复！')) { try { await deleteCb(); closeModal(); } catch (e) { showToast('删除失败', 'error'); } }
             });
         }
-
         document.getElementById('modal').classList.add('show');
     }
 
@@ -143,9 +135,7 @@
         modalAction = null;
     }
 
-    function closeLogModal() {
-        document.getElementById('logModal').classList.remove('show');
-    }
+    function closeLogModal() { document.getElementById('logModal').classList.remove('show'); }
 
     function addLog(text) {
         const logs = JSON.parse(sessionStorage.getItem('operation_logs') || '[]');
@@ -269,9 +259,7 @@
     }
 
     function renderCatBar() {
-        if (!categories.length) {
-            document.getElementById('catBar').innerHTML = '<div class="empty">暂无分类</div>'; return;
-        }
+        if (!categories.length) { document.getElementById('catBar').innerHTML = '<div class="empty">暂无分类</div>'; return; }
         document.getElementById('catBar').innerHTML = categories.map(c => `
             <div class="cat-item ${c.id===currentCat?'active':''}" data-cid="${c.id}">
                 <span>${escapeHtml(c.name)}</span>
@@ -298,12 +286,8 @@
         if (!list.length) { document.getElementById('siteList').innerHTML = '<div class="empty">暂无链接</div>'; return; }
         document.getElementById('siteList').innerHTML = list.map(s => `
             <div class="link-item">
-                <div class="link-info">
-                    <div><strong>${escapeHtml(s.title)}</strong></div>
-                </div>
-                <div class="link-actions">
-                    <button class="primary" data-action="editSite" data-id="${s.id}">编辑</button>
-                </div>
+                <div class="link-info"><div><strong>${escapeHtml(s.title)}</strong></div></div>
+                <div class="link-actions"><button class="primary" data-action="editSite" data-id="${s.id}">编辑</button></div>
             </div>
         `).join('');
     }
@@ -312,9 +296,7 @@
         document.getElementById('catBar').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
             if (btn && btn.dataset.action === 'modifyCat') {
-                const id = parseInt(btn.dataset.id);
-                const name = btn.dataset.name;
-                handleModifyCategory(id, name);
+                handleModifyCategory(parseInt(btn.dataset.id), btn.dataset.name);
                 return;
             }
             const item = e.target.closest('.cat-item');
@@ -324,9 +306,7 @@
         document.getElementById('subList').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
             if (btn && btn.dataset.action === 'modifySub') {
-                const id = parseInt(btn.dataset.id);
-                const name = btn.dataset.name;
-                handleModifySub(id, name);
+                handleModifySub(parseInt(btn.dataset.id), btn.dataset.name);
                 return;
             }
             const item = e.target.closest('.sub-item');
@@ -336,8 +316,7 @@
         document.getElementById('siteList').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
-            const id = parseInt(btn.dataset.id);
-            if (btn.dataset.action === 'editSite') handleEditSite(id);
+            if (btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
         });
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -369,9 +348,14 @@
 
         document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
         document.getElementById('logModal').addEventListener('click', e => { if (e.target === document.getElementById('logModal')) closeLogModal(); });
+
+        // 投稿详情弹窗关闭
+        const detailModal = document.getElementById('submissionDetailModal');
+        if (detailModal) {
+            detailModal.addEventListener('click', e => { if (e.target === detailModal) detailModal.classList.remove('show'); });
+        }
     }
 
-    // ========== 合并后的操作 ==========
     function handleModifyCategory(id, currentName) {
         openModal('修改分类',
             `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
@@ -382,10 +366,7 @@
                 addLog(`修改分类：${currentName} → ${name}`); showToast('修改成功'); await loadAllData();
             },
             true,
-            async () => {
-                await apiFetch(`/admin/categories/${id}`, { method:'DELETE' });
-                addLog(`删除分类 ${id}`); showToast('分类已删除'); await loadAllData();
-            }
+            async () => { await apiFetch(`/admin/categories/${id}`, { method:'DELETE' }); addLog(`删除分类 ${id}`); showToast('分类已删除'); await loadAllData(); }
         );
     }
 
@@ -399,10 +380,7 @@
                 addLog(`修改子分类：${currentName} → ${name}`); showToast('修改成功'); await loadAllData();
             },
             true,
-            async () => {
-                await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' });
-                addLog(`删除子分类 ${id}`); showToast('子分类已删除'); await loadAllData();
-            }
+            async () => { await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); addLog(`删除子分类 ${id}`); showToast('子分类已删除'); await loadAllData(); }
         );
     }
 
@@ -427,10 +405,7 @@
                 addLog(`编辑链接：${site.title}`); showToast('修改成功'); await loadAllData();
             },
             true,
-            async () => {
-                await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
-                addLog(`删除链接 ${id}`); showToast('删除成功'); await loadAllData();
-            }
+            async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); addLog(`删除链接 ${id}`); showToast('删除成功'); await loadAllData(); }
         );
         setTimeout(() => {
             const fetchBtn = document.getElementById('fetchInfoBtn');
@@ -601,66 +576,97 @@
         list.innerHTML = '<div class="empty">加载中...</div>';
         try {
             const data = await apiFetch('/admin/submissions');
-            if (!data.length) {
-                list.innerHTML = '<div class="empty">暂无待审核网站</div>';
-                return;
-            }
+            if (!data.length) { list.innerHTML = '<div class="empty">暂无待审核网站</div>'; return; }
             list.innerHTML = data.map(item => `
-                <div class="link-item">
-                    <div class="link-info">
-                        <strong>${escapeHtml(item.title)}</strong>
-                        <div style="font-size:10px;color:#999">
-                            ${escapeHtml(item.url)}
-                        </div>
-                        <div style="font-size:10px;color:#999">
-                            分类：${escapeHtml(item.category||'未分类')} | 
-                            图标：${escapeHtml(item.icon||'无')} | 
-                            IP：${escapeHtml(item.submitter_ip)}
-                        </div>
-                        <div style="font-size:10px;color:#999">
-                            ${escapeHtml(item.description||'无描述')}
-                        </div>
-                        <div style="font-size:10px;color:#999">
-                            提交时间：${new Date(item.submit_time).toLocaleString()}
-                        </div>
-                    </div>
-                    <div class="link-actions">
-                        <button class="sm primary" data-action="approveSubmission" data-id="${item.id}">通过</button>
-                        <button class="sm danger" data-action="rejectSubmission" data-id="${item.id}">拒绝</button>
-                    </div>
+                <div class="link-item" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span><strong>${escapeHtml(item.title)}</strong></span>
+                    <button class="sm primary" data-action="viewSubmission" data-id="${item.id}">查看</button>
                 </div>
             `).join('');
-
-            list.querySelectorAll('[data-action="approveSubmission"]').forEach(btn => {
-                btn.addEventListener('click', () => approveSubmission(btn.dataset.id));
+            list.querySelectorAll('[data-action="viewSubmission"]').forEach(btn => {
+                btn.addEventListener('click', () => openSubmissionDetail(btn.dataset.id));
             });
-            list.querySelectorAll('[data-action="rejectSubmission"]').forEach(btn => {
-                btn.addEventListener('click', () => rejectSubmission(btn.dataset.id));
-            });
-        } catch (e) {
-            list.innerHTML = '<div class="empty">加载失败</div>';
-        }
+        } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    async function approveSubmission(id) {
-        if (!confirm('确认通过该投稿？将通过后的网站加入导航。')) return;
+    async function openSubmissionDetail(id) {
+        currentSubmissionId = id;
         try {
-            await apiFetch(`/admin/submissions/${id}/approve`, { method:'POST' });
+            const data = await apiFetch('/admin/submissions');
+            const item = data.find(s => s.id == id);
+            if (!item) { showToast('未找到该投稿', 'error'); return; }
+            
+            const content = document.getElementById('submissionDetailContent');
+            content.innerHTML = `
+                <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:12px;">
+                    <div><strong>标题：</strong></div><div>${escapeHtml(item.title)}</div>
+                    <div><strong>网址：</strong></div><div>${escapeHtml(item.url)}</div>
+                    <div><strong>图标：</strong></div><div>${escapeHtml(item.icon||'无')}</div>
+                    <div><strong>描述：</strong></div><div>${escapeHtml(item.description||'无')}</div>
+                    <div><strong>提交者IP：</strong></div><div>${escapeHtml(item.submitter_ip)}</div>
+                    <div><strong>提交时间：</strong></div><div>${new Date(item.submit_time).toLocaleString()}</div>
+                    <div><strong>安全检测：</strong></div><div style="color:${(item.vt_result||'').includes('安全')?'#059669':'#d97706'}">${escapeHtml(item.vt_result||'未检测')}</div>
+                </div>
+            `;
+            
+            const catSelect = document.getElementById('detailCatSelect');
+            const subSelect = document.getElementById('detailSubSelect');
+            catSelect.innerHTML = '<option value="">选择一级分类</option>';
+            subSelect.innerHTML = '<option value="">选择二级分类</option>';
+            document.getElementById('detailDisplayOrder').value = 0;
+            
+            (categories.length ? categories : await apiFetch('/admin/categories')).forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name;
+                catSelect.appendChild(opt);
+            });
+            
+            catSelect.onchange = async () => {
+                const catId = catSelect.value;
+                subSelect.innerHTML = '<option value="">选择二级分类</option>';
+                if (!catId) return;
+                const subs = await apiFetch(`/admin/subcategories?category_id=${catId}`);
+                subs.forEach(sub => {
+                    const opt = document.createElement('option');
+                    opt.value = sub.id;
+                    opt.textContent = sub.name;
+                    subSelect.appendChild(opt);
+                });
+            };
+            
+            document.getElementById('submissionDetailModal').classList.add('show');
+        } catch (e) { showToast('加载详情失败', 'error'); }
+    }
+
+    document.getElementById('detailApproveBtn').addEventListener('click', async () => {
+        const subId = document.getElementById('detailSubSelect').value;
+        const displayOrder = document.getElementById('detailDisplayOrder').value || 0;
+        if (!subId) { showToast('请选择二级分类', 'error'); return; }
+        if (!currentSubmissionId) return;
+        try {
+            await apiFetch(`/admin/submissions/${currentSubmissionId}/approve`, {
+                method:'POST',
+                body: JSON.stringify({ subcategory_id: parseInt(subId), display_order: parseInt(displayOrder) })
+            });
             showToast('已通过并收录', 'success');
+            document.getElementById('submissionDetailModal').classList.remove('show');
             loadSubmissions();
             await loadAllData();
             await apiFetch('/admin/refresh-navigation', { method:'POST' });
         } catch { showToast('操作失败', 'error'); }
-    }
+    });
 
-    async function rejectSubmission(id) {
+    document.getElementById('detailRejectBtn').addEventListener('click', async () => {
+        if (!currentSubmissionId) return;
         if (!confirm('拒绝该投稿？')) return;
         try {
-            await apiFetch(`/admin/submissions/${id}`, { method:'DELETE' });
+            await apiFetch(`/admin/submissions/${currentSubmissionId}`, { method:'DELETE' });
             showToast('已拒绝', 'success');
+            document.getElementById('submissionDetailModal').classList.remove('show');
             loadSubmissions();
         } catch { showToast('操作失败', 'error'); }
-    }
+    });
 
     window.getFavicon = function(url) {
         try { return `https://api.71xk.com/api/favicon?url=${new URL(url).hostname}`; } catch { return 'fas fa-link'; }
