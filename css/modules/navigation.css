@@ -2,14 +2,14 @@
  * 优化分类导航样式
  * 文件位置：./css/modules/navigation.css
  * 完整文件：原有全部样式 + 搜索框位于标题/统计下方 + 竖线仅装饰标题行
- * 本次修改：标题单行省略、描述两行省略、眼睛图标加大
+ * 本次修改：标题单行省略（JS控制悬停滚动）、描述两行完整显示、眼睛图标加大
  */
 
 /* ====================== 搜索框样式 ====================== */
 .nav-search-box {
-    display: block;               /* 独占一行 */
+    display: block;
     width: 100%;
-    margin-top: 10px;             /* 与上方标题/统计保持间距 */
+    margin-top: 10px;
 }
 
 .search-input-wrapper {
@@ -163,7 +163,7 @@
 .level2-btn.active .level2-btn-count { background: var(--nav-level2-active); color: white; font-weight: 700; box-shadow: 0 2px 4px rgba(var(--nav-level2-active), 0.3); }
 
 .navigation-right { flex: 1; min-width: 0; background: var(--bg-card); padding: 0; position: relative; }
-.level3-content { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 12px; box-sizing: border-box; grid-auto-rows: minmax(115px, auto); }
+.level3-content { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 12px; box-sizing: border-box; grid-auto-rows: minmax(120px, auto); } /* 卡片最小高度增加到 120px */
 
 /* ====================== 网站卡片 ====================== */
 .site-card {
@@ -179,11 +179,10 @@
     flex-direction: column;
     position: relative;
     overflow: hidden;
-    min-height: 115px;
+    min-height: 120px;               /* 与 grid-auto-rows 保持一致 */
     text-align: center;
     box-sizing: border-box;
 }
-
 .site-card:hover {
     transform: translateY(-2px);
     border-color: var(--primary-color);
@@ -222,7 +221,6 @@
 .icon-container img { border-radius: 6px; }
 .icon-container i { font-size: 20px; display: flex; align-items: center; justify-content: center; color: var(--primary-color); }
 .icon-container span { font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; }
-
 .site-card:hover .icon-container { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); border-color: var(--primary-color); }
 
 .views-container {
@@ -237,7 +235,7 @@
 /* 眼睛图标增大 */
 .views-icon {
     color: var(--primary-color);
-    font-size: 16px;      /* 原12px → 16px */
+    font-size: 16px;      /* 12px -> 16px */
     opacity: 0.9;
 }
 
@@ -265,43 +263,44 @@
 .card-bottom {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
     text-align: center;
     flex: 1;
     justify-content: flex-start;
-    min-height: 40px;
     overflow: hidden;
     padding-top: 1px;
 }
 
-/* 标题：单行，溢出省略 */
+/* 标题：单行，溢出省略（非悬停时） */
 .site-title {
     font-size: 14px;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
     line-height: 1.25;
-    white-space: nowrap;          /* 强制一行 */
+    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;      /* 省略号 */
+    text-overflow: ellipsis;
     width: 100%;
+    position: relative;
 }
 
-/* 描述：两行，溢出省略 */
+/* 悬停时标题滚动由 JS 动态处理，这里不预先定义动画 */
+
+/* 描述：两行，完整显示不裁切 */
 .site-description {
     font-size: 12px;
     color: var(--text-secondary);
-    line-height: 1.25;
+    line-height: 1.45;            /* 增加行高，让两行高度约为 34.8px */
     margin: 0;
     display: -webkit-box;
-    -webkit-line-clamp: 2;        /* 固定两行 */
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
     opacity: 0.9;
     width: 100%;
-    min-height: 30px;
-    max-height: 30px;             /* 两行高度限制 */
+    /* 移除 max-height / min-height，让 clamp 自然截断 */
 }
 
 /* 空状态 */
@@ -344,10 +343,82 @@
 @keyframes pulseView { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
 /* 响应式设计 */
-@media (min-width: 1024px) { .navigation-section { padding: 0 0 calc(var(--section-margin-md) * 0.5) 0; } .navigation-section .container { max-width: 1600px; } .navigation-body { height: auto; } .navigation-left { width: 140px; } .navigation-middle { width: 160px; } .level1-nav, .level2-nav { flex-direction: column; overflow-x: visible; overflow-y: auto; } .level1-btn, .level2-btn { flex: 1 1 auto; min-width: 0; padding: 12px 8px; white-space: nowrap; overflow: visible; text-overflow: clip; } .level3-content { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 12px; grid-auto-rows: minmax(115px, auto); } .site-card { min-height: 115px; } }
-@media (min-width: 768px) and (max-width: 1023px) { .navigation-section { padding: 0 0 calc(var(--section-margin-sm) * 0.5) 0; } .navigation-body { flex-direction: column; } .navigation-left, .navigation-middle { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); overflow: visible; } .level1-nav, .level2-nav { flex-direction: row; height: auto; padding: 0; overflow-x: auto; white-space: nowrap; } .level1-btn, .level2-btn { flex: 1 0 auto; min-width: 0; padding: 0 14px; border-bottom: none; border-right: 1px solid var(--border-color); height: 46px; min-height: 46px; font-size: 13px; white-space: nowrap; overflow: visible; text-overflow: clip; } .level2-btn-count { font-size: 10px; padding: 1px 4px; min-width: 16px; } .level3-content { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 10px; grid-auto-rows: minmax(105px, auto); } .site-card { padding: 10px 8px 6px; min-height: 105px; } .card-top { height: 34px; margin-bottom: 8px; } .icon-container { width: 34px; height: 34px; } .icon-container i { font-size: 18px; } .icon-container span { font-size: 18px; } .views-icon { font-size: 14px; } .view-count { font-size: 14px; } .divider-line { margin: 0 0 5px 0; } .site-title { font-size: 13px; } .site-description { font-size: 11px; min-height: 27px; max-height: 27px; } }
-@media (max-width: 768px) { .navigation-section { padding: 0 0 calc(var(--section-margin-xs) * 0.5) 0; } .header-content { flex-wrap: wrap; gap: 8px; } .navigation-title { font-size: 15px; } .navigation-stats { flex: 1; justify-content: flex-end; min-width: 0; overflow: hidden; } .stat-item { font-size: 11px; } .stat-number { font-size: 13px; } .stat-label { font-size: 11px; } .navigation-body { flex-direction: column; } .navigation-left, .navigation-middle { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); overflow: visible; } .level1-nav, .level2-nav { flex-direction: row; height: auto; padding: 0; overflow-x: auto; white-space: nowrap; } .level1-btn, .level2-btn { flex: 1 0 auto; min-width: 0; padding: 0 12px; border-bottom: none; border-right: 1px solid var(--border-color); height: 40px; min-height: 40px; font-size: 12px; white-space: nowrap; overflow: visible; text-overflow: clip; } .level2-btn-count { font-size: 9px; padding: 0 3px; min-width: 14px; } .level3-content { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; padding: 8px; grid-auto-rows: minmax(100px, auto); } .site-card { padding: 8px 6px 4px; min-height: 100px; border-radius: 6px; } .card-top { height: 30px; margin-bottom: 6px; } .icon-container { width: 30px; height: 30px; } .icon-container i { font-size: 16px; } .icon-container span { font-size: 16px; } .views-icon { font-size: 13px; } .view-count { font-size: 13px; } .divider-line { margin: 0 0 4px 0; } .card-bottom { gap: 2px; } .site-title { font-size: 12px; } .site-description { font-size: 10px; min-height: 25px; max-height: 25px; } }
-@media (max-width: 480px) { .navigation-section { padding: 0 0 calc(var(--section-margin-xs) * 0.4) 0; } .navigation-title { font-size: 14px; } .stat-item { font-size: 10px; } .stat-number { font-size: 12px; } .stat-label { font-size: 10px; } .navigation-stats { gap: 4px; } .level1-btn, .level2-btn { padding: 0 10px; height: 36px; min-height: 36px; font-size: 11px; } .level3-content { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 4px; padding: 6px; grid-auto-rows: minmax(90px, auto); } .site-card { padding: 6px 4px 3px; min-height: 90px; } .card-top { height: 28px; margin-bottom: 4px; } .icon-container { width: 28px; height: 28px; } .icon-container i { font-size: 14px; } .icon-container span { font-size: 14px; } .views-icon { font-size: 12px; } .view-count { font-size: 12px; } .divider-line { margin: 0 0 3px 0; } .site-title { font-size: 11px; } .site-description { font-size: 9px; min-height: 22px; max-height: 22px; } }
+@media (min-width: 1024px) {
+    .navigation-section { padding: 0 0 calc(var(--section-margin-md) * 0.5) 0; }
+    .navigation-section .container { max-width: 1600px; }
+    .navigation-body { height: auto; }
+    .navigation-left { width: 140px; }
+    .navigation-middle { width: 160px; }
+    .level1-nav, .level2-nav { flex-direction: column; overflow-x: visible; overflow-y: auto; }
+    .level1-btn, .level2-btn { flex: 1 1 auto; min-width: 0; padding: 12px 8px; white-space: nowrap; overflow: visible; text-overflow: clip; }
+    .level3-content { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 12px; grid-auto-rows: minmax(120px, auto); }
+    .site-card { min-height: 120px; }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+    .navigation-section { padding: 0 0 calc(var(--section-margin-sm) * 0.5) 0; }
+    .navigation-body { flex-direction: column; }
+    .navigation-left, .navigation-middle { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); overflow: visible; }
+    .level1-nav, .level2-nav { flex-direction: row; height: auto; padding: 0; overflow-x: auto; white-space: nowrap; }
+    .level1-btn, .level2-btn { flex: 1 0 auto; min-width: 0; padding: 0 14px; border-bottom: none; border-right: 1px solid var(--border-color); height: 46px; min-height: 46px; font-size: 13px; white-space: nowrap; overflow: visible; text-overflow: clip; }
+    .level2-btn-count { font-size: 10px; padding: 1px 4px; min-width: 16px; }
+    .level3-content { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 10px; grid-auto-rows: minmax(110px, auto); }
+    .site-card { padding: 10px 8px 6px; min-height: 110px; }
+    .card-top { height: 34px; margin-bottom: 8px; }
+    .icon-container { width: 34px; height: 34px; }
+    .icon-container i { font-size: 18px; }
+    .icon-container span { font-size: 18px; }
+    .views-icon { font-size: 14px; }
+    .view-count { font-size: 14px; }
+    .divider-line { margin: 0 0 5px 0; }
+    .site-title { font-size: 13px; }
+    .site-description { font-size: 11px; }
+}
+@media (max-width: 768px) {
+    .navigation-section { padding: 0 0 calc(var(--section-margin-xs) * 0.5) 0; }
+    .header-content { flex-wrap: wrap; gap: 8px; }
+    .navigation-title { font-size: 15px; }
+    .navigation-stats { flex: 1; justify-content: flex-end; min-width: 0; overflow: hidden; }
+    .stat-item { font-size: 11px; }
+    .stat-number { font-size: 13px; }
+    .stat-label { font-size: 11px; }
+    .navigation-body { flex-direction: column; }
+    .navigation-left, .navigation-middle { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); overflow: visible; }
+    .level1-nav, .level2-nav { flex-direction: row; height: auto; padding: 0; overflow-x: auto; white-space: nowrap; }
+    .level1-btn, .level2-btn { flex: 1 0 auto; min-width: 0; padding: 0 12px; border-bottom: none; border-right: 1px solid var(--border-color); height: 40px; min-height: 40px; font-size: 12px; white-space: nowrap; overflow: visible; text-overflow: clip; }
+    .level2-btn-count { font-size: 9px; padding: 0 3px; min-width: 14px; }
+    .level3-content { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; padding: 8px; grid-auto-rows: minmax(100px, auto); }
+    .site-card { padding: 8px 6px 4px; min-height: 100px; border-radius: 6px; }
+    .card-top { height: 30px; margin-bottom: 6px; }
+    .icon-container { width: 30px; height: 30px; }
+    .icon-container i { font-size: 16px; }
+    .icon-container span { font-size: 16px; }
+    .views-icon { font-size: 13px; }
+    .view-count { font-size: 13px; }
+    .divider-line { margin: 0 0 4px 0; }
+    .card-bottom { gap: 2px; }
+    .site-title { font-size: 12px; }
+    .site-description { font-size: 10px; }
+}
+@media (max-width: 480px) {
+    .navigation-section { padding: 0 0 calc(var(--section-margin-xs) * 0.4) 0; }
+    .navigation-title { font-size: 14px; }
+    .stat-item { font-size: 10px; }
+    .stat-number { font-size: 12px; }
+    .stat-label { font-size: 10px; }
+    .navigation-stats { gap: 4px; }
+    .level1-btn, .level2-btn { padding: 0 10px; height: 36px; min-height: 36px; font-size: 11px; }
+    .level3-content { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 4px; padding: 6px; grid-auto-rows: minmax(90px, auto); }
+    .site-card { padding: 6px 4px 3px; min-height: 90px; }
+    .card-top { height: 28px; margin-bottom: 4px; }
+    .icon-container { width: 28px; height: 28px; }
+    .icon-container i { font-size: 14px; }
+    .icon-container span { font-size: 14px; }
+    .views-icon { font-size: 12px; }
+    .view-count { font-size: 12px; }
+    .divider-line { margin: 0 0 3px 0; }
+    .site-title { font-size: 11px; }
+    .site-description { font-size: 9px; }
+}
 
 /* 暗色模式 */
 @media (prefers-color-scheme: dark) {
