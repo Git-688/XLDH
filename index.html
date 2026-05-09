@@ -168,7 +168,7 @@
             backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 1px solid rgba(0, 0, 0, 0.03);
         }
 
-        /* ================= 网站投稿模态框（修复定位） ================= */
+        /* ================= 网站投稿模态框 ================= */
         #submitModal {
             position: fixed;
             top: 0;
@@ -267,7 +267,6 @@
             color: var(--error-color);
         }
         #submitModal .form-row input,
-        #submitModal .form-row select,
         #submitModal .form-row textarea {
             width: 100%;
             padding: 8px 10px;
@@ -280,8 +279,12 @@
             transition: border 0.2s;
             font-family: inherit;
         }
+        #submitModal .form-row textarea {
+            min-height: 40px;
+            overflow-y: hidden;
+            resize: none;
+        }
         #submitModal .form-row input:focus,
-        #submitModal .form-row select:focus,
         #submitModal .form-row textarea:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(67,97,238,0.08);
@@ -714,15 +717,8 @@
                 </div>
                 
                 <div class="form-row">
-                    <label>所属分类</label>
-                    <select id="submitCategory">
-                        <option value="">请选择（可选）</option>
-                    </select>
-                </div>
-                
-                <div class="form-row">
                     <label>简短描述</label>
-                    <textarea id="submitDesc" rows="2" placeholder="介绍一下这个网站..."></textarea>
+                    <textarea id="submitDesc" rows="1" placeholder="介绍一下这个网站..."></textarea>
                 </div>
                 
                 <div class="submit-form-buttons">
