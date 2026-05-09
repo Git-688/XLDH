@@ -143,13 +143,7 @@
         }
         #notebookModal .feedback-modal-body::-webkit-scrollbar { display: none; }
 
-        .notebook-list {
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+        .notebook-list { padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
         .notebook-item {
             background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
             border-radius: 8px; padding: 10px 14px; border: 1px solid rgba(0, 0, 0, 0.06); transition: all 0.2s ease;
@@ -168,7 +162,7 @@
             backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 1px solid rgba(0, 0, 0, 0.03);
         }
 
-        /* ================= 网站投稿模态框（高度优化） ================= */
+        /* ================= 网站投稿模态框 ================= */
         #submitModal {
             position: fixed;
             top: 0;
@@ -200,7 +194,7 @@
             border: 1px solid rgba(255, 255, 255, 0.4);
             border-radius: 8px;
             overflow: hidden;
-            max-height: 60vh;          /* 缩小高度 */
+            max-height: 60vh;
             max-width: 520px;
             width: 100%;
             display: flex;
@@ -218,7 +212,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 20px 6px;      /* 减少头部内边距 */
+            padding: 12px 20px 6px;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             color: #1e293b;
             flex-shrink: 0;
@@ -245,7 +239,7 @@
         }
         #submitModal .feedback-modal-close:hover { background: rgba(0, 0, 0, 0.05); color: #334155; }
         #submitModal .feedback-modal-body {
-            padding: 10px 20px 12px;     /* 减少 body 内边距 */
+            padding: 10px 20px 12px;
             overflow-y: auto;
             flex: 1;
             background: transparent;
@@ -253,19 +247,9 @@
         }
         #submitModal .feedback-modal-body::-webkit-scrollbar { display: none; }
 
-        #submitModal .form-row {
-            margin-bottom: 10px;         /* 减少行间距 */
-        }
-        #submitModal .form-row label {
-            display: block;
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 3px;
-            font-weight: 500;
-        }
-        #submitModal .required-star {
-            color: var(--error-color);
-        }
+        #submitModal .form-row { margin-bottom: 10px; }
+        #submitModal .form-row label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 3px; font-weight: 500; }
+        #submitModal .required-star { color: var(--error-color); }
         #submitModal .form-row input,
         #submitModal .form-row textarea {
             width: 100%;
@@ -292,10 +276,21 @@
         .submit-form-buttons {
             display: flex;
             justify-content: flex-end;
+            align-items: center;
             gap: 8px;
             margin-top: 12px;
             padding-top: 10px;
             border-top: 1px solid var(--border-color);
+        }
+        .submit-safe-hint {
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: rgba(245,158,11,0.1);
+            border-radius: 4px;
+            padding: 4px 8px;
+            white-space: nowrap;
+            margin-right: auto;
+            display: none; /* 默认隐藏，检测时显示 */
         }
         .submit-cancel-btn {
             padding: 8px 20px;
@@ -307,10 +302,7 @@
             font-size: 13px;
             transition: all 0.2s;
         }
-        .submit-cancel-btn:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
+        .submit-cancel-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
         .submit-save-btn {
             padding: 8px 24px;
             border: none;
@@ -322,14 +314,8 @@
             font-weight: 500;
             transition: all 0.2s;
         }
-        .submit-save-btn:hover:not(:disabled) {
-            background: var(--secondary-color);
-            transform: translateY(-1px);
-        }
-        .submit-save-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .submit-save-btn:hover:not(:disabled) { background: var(--secondary-color); transform: translateY(-1px); }
+        .submit-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .fetch-info-btn,
         .check-url-btn {
             padding: 8px 14px;
@@ -345,21 +331,9 @@
             align-items: center;
             gap: 4px;
         }
-        .fetch-info-btn:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-            background: rgba(67,97,238,0.05);
-        }
-        .check-url-btn:hover {
-            border-color: var(--success-color);
-            color: var(--success-color);
-            background: rgba(16,185,129,0.05);
-        }
-        .fetch-info-btn:disabled,
-        .check-url-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+        .fetch-info-btn:hover { border-color: var(--primary-color); color: var(--primary-color); background: rgba(67,97,238,0.05); }
+        .check-url-btn:hover { border-color: var(--success-color); color: var(--success-color); background: rgba(16,185,129,0.05); }
+        .fetch-info-btn:disabled, .check-url-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .url-check-result {
             margin-top: 8px;
             padding: 8px 12px;
@@ -367,42 +341,15 @@
             font-size: 12px;
             line-height: 1.4;
         }
-        .url-check-result.safe {
-            background: rgba(16,185,129,0.1);
-            color: #059669;
-            border: 1px solid rgba(16,185,129,0.2);
-        }
-        .url-check-result.unsafe {
-            background: rgba(239,68,68,0.1);
-            color: #dc2626;
-            border: 1px solid rgba(239,68,68,0.2);
-        }
-        .url-check-result.checking {
-            background: rgba(245,158,11,0.1);
-            color: #d97706;
-            border: 1px solid rgba(245,158,11,0.2);
-        }
+        .url-check-result.safe { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
+        .url-check-result.unsafe { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
+        .url-check-result.checking { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
 
         /* 移动端适配 */
         @media (max-width: 768px) {
-            #notebookModal {
-                padding: 12px var(--container-padding-xs, 16px);
-                align-items: flex-end;
-            }
-            #notebookModal .feedback-modal-content {
-                max-width: 100%;
-                height: 90%;
-                max-height: 90%;
-                border-radius: 20px 20px 12px 12px;
-                transform: translateY(100%);
-                opacity: 1;
-                transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
-                box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.1);
-                margin-bottom: 0;
-            }
-            #notebookModal.active .feedback-modal-content {
-                transform: translateY(0);
-            }
+            #notebookModal { padding: 12px var(--container-padding-xs, 16px); align-items: flex-end; }
+            #notebookModal .feedback-modal-content { max-width: 100%; height: 90%; max-height: 90%; border-radius: 20px 20px 12px 12px; transform: translateY(100%); opacity: 1; transition: transform 0.35s cubic-bezier(0.2,0.9,0.3,1); box-shadow: 0 -8px 25px rgba(0,0,0,0.1); margin-bottom: 0; }
+            #notebookModal.active .feedback-modal-content { transform: translateY(0); }
             #notebookModal .feedback-modal-header { padding: 14px 18px 6px; }
             #notebookModal .feedback-modal-body { padding: 14px 18px 10px; }
             #notebookModal .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
@@ -410,21 +357,8 @@
             .notebook-title { font-size: 14px; }
             .notebook-content { font-size: 11px; }
 
-            #submitModal {
-                padding: 12px var(--container-padding-xs, 16px);
-                align-items: flex-end;
-            }
-            #submitModal .feedback-modal-content {
-                max-width: 100%;
-                height: auto;
-                max-height: 70vh;
-                border-radius: 20px 20px 12px 12px;
-                transform: translateY(100%);
-                opacity: 1;
-                transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
-                box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.1);
-                margin-bottom: 0;
-            }
+            #submitModal { padding: 12px var(--container-padding-xs, 16px); align-items: flex-end; }
+            #submitModal .feedback-modal-content { max-width: 100%; height: auto; max-height: 70vh; border-radius: 20px 20px 12px 12px; transform: translateY(100%); opacity: 1; transition: transform 0.35s cubic-bezier(0.2,0.9,0.3,1); box-shadow: 0 -8px 25px rgba(0,0,0,0.1); margin-bottom: 0; }
             #submitModal.active .feedback-modal-content { transform: translateY(0); }
             #submitModal .feedback-modal-header { padding: 12px 18px 4px; }
             #submitModal .feedback-modal-body { padding: 8px 18px 10px; }
@@ -678,9 +612,6 @@
                         <button type="button" id="fetchSiteInfoBtn" class="fetch-info-btn" title="自动获取信息">
                             <i class="fas fa-magic"></i> 获取信息
                         </button>
-                        <button type="button" id="checkUrlBtn" class="check-url-btn" title="链接安全检测">
-                            <i class="fas fa-shield-alt"></i> 安全检测
-                        </button>
                     </div>
                     <div id="urlCheckResult" class="url-check-result" style="display:none;"></div>
                 </div>
@@ -704,6 +635,7 @@
                 </div>
                 
                 <div class="submit-form-buttons">
+                    <span class="submit-safe-hint">安全检测中，请耐心等待！</span>
                     <button type="button" class="submit-cancel-btn">取消</button>
                     <button type="submit" class="submit-save-btn" id="submitSaveBtn" disabled>提交投稿</button>
                 </div>
