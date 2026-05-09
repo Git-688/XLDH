@@ -293,7 +293,7 @@
             display: none;
         }
         .submit-cancel-btn {
-            padding: 8px 20px;
+            padding: 6px 12px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             background: var(--bg-card);
@@ -301,10 +301,11 @@
             cursor: pointer;
             font-size: 13px;
             transition: all 0.2s;
+            white-space: nowrap;
         }
         .submit-cancel-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
         .submit-save-btn {
-            padding: 8px 24px;
+            padding: 6px 16px;
             border: none;
             border-radius: 6px;
             background: var(--primary-color);
@@ -313,6 +314,7 @@
             font-size: 13px;
             font-weight: 500;
             transition: all 0.2s;
+            white-space: nowrap;
         }
         .submit-save-btn:hover:not(:disabled) { background: var(--secondary-color); transform: translateY(-1px); }
         .submit-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -635,7 +637,7 @@
                 </div>
                 
                 <div class="submit-form-buttons">
-                    <span class="submit-safe-hint">安全检测中，请耐心等待！</span>
+                    <span class="submit-safe-hint">安全检测，请耐心等待！</span>
                     <button type="button" class="submit-cancel-btn">取消</button>
                     <button type="submit" class="submit-save-btn" id="submitSaveBtn" disabled>提交投稿</button>
                 </div>
