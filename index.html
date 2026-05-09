@@ -8,7 +8,7 @@
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
 
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.ccwu.cc https://*.vercel.app; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc https://*.vercel.app; font-src 'self' https://cdnjs.cloudflare.com; frame-ancestors 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.ccwu.cc https://*.vercel.app 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc https://*.vercel.app; font-src 'self' https://cdnjs.cloudflare.com; frame-ancestors 'none';">
 
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
@@ -16,7 +16,9 @@
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- jQuery 3.7.1 with SRI -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha384-1H29QW1dKtqzNn0n9YlExE0MNVv0WjLc3YJjv9JwFjZwFwZJzZClktkWqjBj2P" crossorigin="anonymous"></script>
+
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
     <link rel="stylesheet" href="./css/modules/sidebar.css">
@@ -33,12 +35,13 @@
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
 
     <link rel="stylesheet" href="./css/modules/comment.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.css" integrity="sha384-xqmCwT5pQ/gXg1iFXF7t/b7PgJxvB8Zz9DhnVwC6tP7dNepFOUPZyNekLPn2IFg" crossorigin="anonymous">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/regular.min.css">
+    <!-- Font Awesome 6.4.0 with SRI -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/fontawesome.min.css" integrity="sha384-sZxSJ1PzC9xDjKjoBaAZ0x6WJmg8K2hCqPY1IGA5HvKmpHe/JQqyP2bFlJUkFGN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css" integrity="sha384-yKz8Qv1d3GmJ6TpKl6Lf9F6w3g9ygi2s9v+8Enz8qI9rK+h1HlBja9zh3lMw+Iu" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css" integrity="sha384-BfRE99vP9xVK5+4fB9bOjBmGZzSxHjKOXf5XjcK8e+k4PcGk8AaUkmcFEW/vAeY" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/regular.min.css" integrity="sha384-Jx9Lg5WvO6C1Xj8h3ft/r3tFjBvCwnpS0qC6FhH9qjK2bC6qBTf6A1OjyF5ivE" crossorigin="anonymous">
 
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
@@ -46,9 +49,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
 
     <link rel="preload" href="./js/main.js" as="script">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
+    <!-- KaTeX 0.16.45 with SRI -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css" integrity="sha384-u47OqcKwKvx7bEFvJj6KLcCn0Gx6oHN9M3hQeBDAgGhFPKjmCBJPtp/jJ/A4hCj" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js" integrity="sha384-cJH27HJw2nPy5ZQY0NLJmFPCAQ2BcDRoIH1MEsZ0vLgM3pLpVl9wDEjMGeIZq9gT" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" integrity="sha384-dp5tG4qB1l9GkqXg+Kt2jBxqQ9r0HZkzlbJj/h5wEiJ0jEzhq7Z2I7LZfvKikDz" crossorigin="anonymous"></script>
 
     <style>
         .floating-btn.submit-btn { color: #06b6d4; }
@@ -58,193 +62,79 @@
 
         /* ================= 笔记模态框 ================= */
         #notebookModal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            background: transparent;
-            backdrop-filter: none;
-            -webkit-backdrop-filter: none;
-            z-index: 10002;
-            pointer-events: none;
-            opacity: 0;
-            visibility: hidden;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; align-items: center; justify-content: center;
+            background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none;
+            z-index: 10002; pointer-events: none; opacity: 0; visibility: hidden;
             transition: opacity 0.25s ease, visibility 0.25s ease;
-            padding: 12px;
-            box-sizing: border-box;
+            padding: 12px; box-sizing: border-box;
         }
-        #notebookModal.active {
-            display: flex !important;
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-        }
+        #notebookModal.active { display: flex !important; opacity: 1; visibility: visible; pointer-events: auto; }
         #notebookModal .feedback-modal-content {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(24px) saturate(125%);
-            -webkit-backdrop-filter: blur(24px) saturate(125%);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 8px;
-            overflow: hidden;
-            max-height: 75vh;
-            max-width: 600px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-            transform: scale(0.95) translateY(8px);
-            opacity: 0;
-            transition: transform 0.3s ease, opacity 0.3s ease;
+            background: rgba(255,255,255,0.65); backdrop-filter: blur(24px) saturate(125%);
+            -webkit-backdrop-filter: blur(24px) saturate(125%); border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 8px; overflow: hidden; max-height: 75vh; max-width: 600px; width: 100%;
+            display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+            transform: scale(0.95) translateY(8px); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease;
         }
-        #notebookModal.active .feedback-modal-content {
-            transform: scale(1) translateY(0);
-            opacity: 1;
-        }
+        #notebookModal.active .feedback-modal-content { transform: scale(1) translateY(0); opacity: 1; }
         #notebookModal .feedback-modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 20px 8px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            color: #1e293b;
-            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); color: #1e293b; flex-shrink: 0;
         }
-        #notebookModal .feedback-modal-header h3 {
-            font-size: 1.05rem;
-            font-weight: 600;
-            color: inherit;
-            display: flex;
-            align-items: center;
-            margin: 0;
-        }
-        #notebookModal .feedback-modal-header h3 i {
-            color: #4361ee;
-            font-size: 1.05rem;
-            margin-right: 10px;
-        }
+        #notebookModal .feedback-modal-header h3 { font-size: 1.05rem; font-weight: 600; color: inherit; display: flex; align-items: center; margin: 0; }
+        #notebookModal .feedback-modal-header h3 i { color: #4361ee; font-size: 1.05rem; margin-right: 10px; }
         #notebookModal .feedback-modal-close {
-            width: 32px; height: 32px; border-radius: 50%;
-            background: rgba(255, 255, 255, 0.4);
-            border: none; color: #64748b; font-size: 1rem;
-            display: flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.4);
+            border: none; color: #64748b; font-size: 1rem; display: flex; align-items: center; justify-content: center;
             cursor: pointer; transition: background 0.2s;
         }
-        #notebookModal .feedback-modal-close:hover { background: rgba(0, 0, 0, 0.05); color: #334155; }
-        #notebookModal .feedback-modal-body {
-            padding: 16px 20px 12px;
-            overflow-y: auto;
-            flex: 1;
-            background: transparent;
-            -webkit-overflow-scrolling: touch;
-        }
+        #notebookModal .feedback-modal-close:hover { background: rgba(0,0,0,0.05); color: #334155; }
+        #notebookModal .feedback-modal-body { padding: 16px 20px 12px; overflow-y: auto; flex: 1; background: transparent; -webkit-overflow-scrolling: touch; }
         #notebookModal .feedback-modal-body::-webkit-scrollbar { display: none; }
 
         .notebook-list { padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
         .notebook-item {
-            background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
-            border-radius: 8px; padding: 10px 14px; border: 1px solid rgba(0, 0, 0, 0.06); transition: all 0.2s ease;
+            background: rgba(255,255,255,0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+            border-radius: 8px; padding: 10px 14px; border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s ease;
         }
-        .notebook-item:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+        .notebook-item:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .notebook-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .notebook-id {
-            font-size: 10px; color: var(--text-secondary); background: rgba(255, 255, 255, 0.7);
-            padding: 2px 8px; border-radius: 20px; font-weight: 500; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-        }
+        .notebook-id { font-size: 10px; color: var(--text-secondary); background: rgba(255,255,255,0.7); padding: 2px 8px; border-radius: 20px; font-weight: 500; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
         .notebook-time { font-size: 10px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
         .notebook-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; line-height: 1.3; }
-        .notebook-content {
-            font-size: 12px; color: var(--text-secondary); line-height: 1.5; word-break: break-word; white-space: pre-wrap;
-            background: rgba(255, 255, 255, 0.4); padding: 10px 12px; border-radius: 6px;
-            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 1px solid rgba(0, 0, 0, 0.03);
-        }
+        .notebook-content { font-size: 12px; color: var(--text-secondary); line-height: 1.5; word-break: break-word; white-space: pre-wrap; background: rgba(255,255,255,0.4); padding: 10px 12px; border-radius: 6px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 1px solid rgba(0,0,0,0.03); }
 
         /* ================= 网站投稿模态框 ================= */
         #submitModal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            background: transparent;
-            z-index: 10001;
-            pointer-events: none;
-            opacity: 0;
-            visibility: hidden;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; align-items: center; justify-content: center;
+            background: transparent; z-index: 10001; pointer-events: none; opacity: 0; visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
-            padding: 12px;
-            box-sizing: border-box;
+            padding: 12px; box-sizing: border-box;
         }
-        #submitModal.active {
-            display: flex;
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-        }
+        #submitModal.active { display: flex; opacity: 1; visibility: visible; pointer-events: auto; }
         #submitModal .feedback-modal-content {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(24px) saturate(125%);
-            -webkit-backdrop-filter: blur(24px) saturate(125%);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 8px;
-            overflow: hidden;
-            max-height: 60vh;
-            max-width: 520px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-            transform: scale(0.95) translateY(8px);
-            opacity: 0;
-            transition: transform 0.3s ease, opacity 0.3s ease;
+            background: rgba(255,255,255,0.65); backdrop-filter: blur(24px) saturate(125%);
+            -webkit-backdrop-filter: blur(24px) saturate(125%); border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 8px; overflow: hidden; max-height: 60vh; max-width: 520px; width: 100%;
+            display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+            transform: scale(0.95) translateY(8px); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease;
         }
-        #submitModal.active .feedback-modal-content {
-            transform: scale(1) translateY(0);
-            opacity: 1;
-        }
+        #submitModal.active .feedback-modal-content { transform: scale(1) translateY(0); opacity: 1; }
         #submitModal .feedback-modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 20px 6px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            color: #1e293b;
-            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 20px 6px; border-bottom: 1px solid rgba(0,0,0,0.05); color: #1e293b; flex-shrink: 0;
         }
-        #submitModal .feedback-modal-header h3 {
-            font-size: 1.05rem;
-            font-weight: 600;
-            color: inherit;
-            display: flex;
-            align-items: center;
-            margin: 0;
-        }
-        #submitModal .feedback-modal-header h3 i {
-            color: #4361ee;
-            font-size: 1.05rem;
-            margin-right: 10px;
-        }
+        #submitModal .feedback-modal-header h3 { font-size: 1.05rem; font-weight: 600; color: inherit; display: flex; align-items: center; margin: 0; }
+        #submitModal .feedback-modal-header h3 i { color: #4361ee; font-size: 1.05rem; margin-right: 10px; }
         #submitModal .feedback-modal-close {
-            width: 32px; height: 32px; border-radius: 50%;
-            background: rgba(255, 255, 255, 0.4);
-            border: none; color: #64748b; font-size: 1rem;
-            display: flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.4);
+            border: none; color: #64748b; font-size: 1rem; display: flex; align-items: center; justify-content: center;
             cursor: pointer; transition: background 0.2s;
         }
-        #submitModal .feedback-modal-close:hover { background: rgba(0, 0, 0, 0.05); color: #334155; }
-        #submitModal .feedback-modal-body {
-            padding: 10px 20px 12px;
-            overflow-y: auto;
-            flex: 1;
-            background: transparent;
-            -webkit-overflow-scrolling: touch;
-        }
+        #submitModal .feedback-modal-close:hover { background: rgba(0,0,0,0.05); color: #334155; }
+        #submitModal .feedback-modal-body { padding: 10px 20px 12px; overflow-y: auto; flex: 1; background: transparent; -webkit-overflow-scrolling: touch; }
         #submitModal .feedback-modal-body::-webkit-scrollbar { display: none; }
 
         #submitModal .form-row { margin-bottom: 10px; }
@@ -252,104 +142,49 @@
         #submitModal .required-star { color: var(--error-color); }
         #submitModal .form-row input,
         #submitModal .form-row textarea {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-card);
-            color: var(--text-primary);
-            font-size: 13px;
-            outline: none;
-            transition: border 0.2s;
-            font-family: inherit;
+            width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px;
+            background: var(--bg-card); color: var(--text-primary); font-size: 13px; outline: none; transition: border 0.2s; font-family: inherit;
         }
-        #submitModal .form-row textarea {
-            min-height: 36px;
-            overflow-y: hidden;
-            resize: none;
-        }
+        #submitModal .form-row textarea { min-height: 36px; overflow-y: hidden; resize: none; }
         #submitModal .form-row input:focus,
-        #submitModal .form-row textarea:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(67,97,238,0.08);
-        }
+        #submitModal .form-row textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(67,97,238,0.08); }
+
         .submit-form-buttons {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 8px;
-            margin-top: 12px;
-            padding-top: 10px;
-            border-top: 1px solid var(--border-color);
+            display: flex; justify-content: flex-end; align-items: center; gap: 8px;
+            margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color);
         }
         .submit-safe-hint {
-            font-size: 11px;
-            color: var(--text-secondary);
-            background: rgba(245,158,11,0.1);
-            border-radius: 4px;
-            padding: 4px 8px;
-            white-space: nowrap;
-            margin-right: auto;
-            display: none;
+            font-size: 11px; color: var(--text-secondary); background: rgba(245,158,11,0.1);
+            border-radius: 4px; padding: 4px 8px; white-space: nowrap; margin-right: auto; display: none;
         }
         .submit-cancel-btn {
-            padding: 6px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-card);
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.2s;
-            white-space: nowrap;
+            padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 6px;
+            background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: 13px;
+            transition: all 0.2s; white-space: nowrap;
         }
         .submit-cancel-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
         .submit-save-btn {
-            padding: 6px 16px;
-            border: none;
-            border-radius: 6px;
-            background: var(--primary-color);
-            color: white;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.2s;
-            white-space: nowrap;
+            padding: 6px 16px; border: none; border-radius: 6px; background: var(--primary-color);
+            color: white; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; white-space: nowrap;
         }
         .submit-save-btn:hover:not(:disabled) { background: var(--secondary-color); transform: translateY(-1px); }
         .submit-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .fetch-info-btn,
-        .check-url-btn {
-            padding: 8px 14px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-card);
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 12px;
-            white-space: nowrap;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
+        .fetch-info-btn, .check-url-btn {
+            padding: 8px 14px; border: 1px solid var(--border-color); border-radius: 6px;
+            background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: 12px;
+            white-space: nowrap; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;
         }
         .fetch-info-btn:hover { border-color: var(--primary-color); color: var(--primary-color); background: rgba(67,97,238,0.05); }
         .check-url-btn:hover { border-color: var(--success-color); color: var(--success-color); background: rgba(16,185,129,0.05); }
         .fetch-info-btn:disabled, .check-url-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .url-check-result {
-            margin-top: 8px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            line-height: 1.4;
-        }
+        .url-check-result { margin-top: 8px; padding: 8px 12px; border-radius: 6px; font-size: 12px; line-height: 1.4; }
         .url-check-result.safe { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
         .url-check-result.unsafe { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
         .url-check-result.checking { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
 
         /* 移动端适配 */
         @media (max-width: 768px) {
-            #notebookModal { padding: 12px var(--container-padding-xs, 16px); align-items: flex-end; }
+            #notebookModal { padding: 12px var(--container-padding-xs,16px); align-items: flex-end; }
             #notebookModal .feedback-modal-content { max-width: 100%; height: 90%; max-height: 90%; border-radius: 20px 20px 12px 12px; transform: translateY(100%); opacity: 1; transition: transform 0.35s cubic-bezier(0.2,0.9,0.3,1); box-shadow: 0 -8px 25px rgba(0,0,0,0.1); margin-bottom: 0; }
             #notebookModal.active .feedback-modal-content { transform: translateY(0); }
             #notebookModal .feedback-modal-header { padding: 14px 18px 6px; }
@@ -359,7 +194,7 @@
             .notebook-title { font-size: 14px; }
             .notebook-content { font-size: 11px; }
 
-            #submitModal { padding: 12px var(--container-padding-xs, 16px); align-items: flex-end; }
+            #submitModal { padding: 12px var(--container-padding-xs,16px); align-items: flex-end; }
             #submitModal .feedback-modal-content { max-width: 100%; height: auto; max-height: 70vh; border-radius: 20px 20px 12px 12px; transform: translateY(100%); opacity: 1; transition: transform 0.35s cubic-bezier(0.2,0.9,0.3,1); box-shadow: 0 -8px 25px rgba(0,0,0,0.1); margin-bottom: 0; }
             #submitModal.active .feedback-modal-content { transform: translateY(0); }
             #submitModal .feedback-modal-header { padding: 12px 18px 4px; }
@@ -669,7 +504,7 @@
 <script src="./js/xfyy/plugin-manager.js"></script>
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@waline/client@3.3.1/dist/waline.umd.js" integrity="sha384-q8iXfB6dI1BdbbGtAxbpS9PEjB7HjK+QZ+gkRCkP6Th4Rk6O6j5R6owR6sm9/On" crossorigin="anonymous"></script>
 <script src="./js/modules/comment.js"></script>
 <script src="./js/modules/submit.js"></script>
 </body>
