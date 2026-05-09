@@ -41,8 +41,9 @@
         }
         .header{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:20px;flex-direction:column}
         .flex-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-        .tab-btn{padding:7px 14px;border-radius:7px;background:#f1f5f9;color:#64748b;cursor:pointer;font-size:12px;white-space:nowrap}
+        .tab-btn{padding:7px 14px;border-radius:7px;background:#f1f5f9;color:#64748b;cursor:pointer;font-size:12px;white-space:nowrap;transition:all 0.2s}
         .tab-btn.active{background:#3b82f6;color:#fff}
+        .tab-btn:hover{background:#e2e8f0}
 
         .cat-bar{
             width:100%;padding:10px 14px;background:#f8fafc;border-radius:10px;
@@ -205,13 +206,15 @@
             box-shadow:0 1px 2px rgba(0,0,0,0.04);
         }
 
-        /* 自定义下拉选择器 */
+        /* 自定义下拉选择器（优化 z-index，不遮挡内容） */
         .custom-select {
             position: relative;
             width: 160px;
             font-size: 12px;
             user-select: none;
+            z-index: 1;
         }
+        .custom-select.open { z-index: 100; }
         .custom-select-trigger {
             display: flex;
             align-items: center;
@@ -224,9 +227,7 @@
             cursor: pointer;
             transition: border 0.2s;
         }
-        .custom-select-trigger:hover {
-            border-color: #3b82f6;
-        }
+        .custom-select-trigger:hover { border-color: #3b82f6; }
         .custom-select-trigger::after {
             content: '';
             width: 0;
@@ -236,9 +237,7 @@
             border-top: 5px solid #64748b;
             transition: transform 0.2s;
         }
-        .custom-select.open .custom-select-trigger::after {
-            transform: rotate(180deg);
-        }
+        .custom-select.open .custom-select-trigger::after { transform: rotate(180deg); }
         .custom-select-dropdown {
             position: absolute;
             top: 100%;
@@ -270,15 +269,12 @@
             color: #2f3542;
             transition: background 0.15s;
         }
-        .custom-select-option:hover {
-            background: #f1f5f9;
-            color: #3b82f6;
-        }
-        .custom-select-option.selected {
-            background: #e0f2fe;
-            color: #0369a1;
-            font-weight: 500;
-        }
+        .custom-select-option:hover { background: #f1f5f9; color: #3b82f6; }
+        .custom-select-option.selected { background: #e0f2fe; color: #0369a1; font-weight: 500; }
+
+        /* 响应式保持等宽 */
+        @media (max-width:768px){ .sidebar, .main-content { min-width:0; } }
+        @media (max-width:480px){ .sidebar, .main-content { padding:8px; } }
     </style>
 </head>
 <body>
