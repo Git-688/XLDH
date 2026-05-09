@@ -1,6 +1,6 @@
 /**
  * 网站投稿模块
- * 功能：动态加载分类、自动获取网站信息、链接安全检测
+ * 功能：自动获取网站信息、链接安全检测（移除分类选择，描述自适应高度）
  */
 class SubmitModule {
     constructor() {
@@ -9,7 +9,6 @@ class SubmitModule {
         this.urlInput = document.getElementById('submitUrl');
         this.titleInput = document.getElementById('submitTitle');
         this.iconInput = document.getElementById('submitIcon');
-        this.categorySelect = document.getElementById('submitCategory');
         this.descInput = document.getElementById('submitDesc');
         this.iconPreview = document.getElementById('submitIconPreview');
         this.fetchInfoBtn = document.getElementById('fetchSiteInfoBtn');
@@ -20,32 +19,13 @@ class SubmitModule {
         this.apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
         this.urlChecked = false;
         this.urlSafe = false;
-        this.isFetching = false;
-        this.isChecking = false;
+        this.vtResultText = ''; // 安全检测结果文本
         
         this.init();
     }
     
     init() {
-        this.loadCategories();
         this.bindEvents();
-    }
-    
-    async loadCategories() {
-        try {
-            const res = await fetch(`${this.apiBase}/get-categories`);
-            const data = await res.json();
-            if (Array.isArray(data) && data.length > 0) {
-                data.forEach(cat => {
-                    const opt = document.createElement('option');
-                    opt.value = cat.name;
-                    opt.textContent = cat.name;
-                    this.categorySelect.appendChild(opt);
-                });
-            }
-        } catch (e) {
-            console.warn('加载分类列表失败:', e);
-        }
     }
     
     bindEvents() {
@@ -73,6 +53,7 @@ class SubmitModule {
             if (this.urlChecked) {
                 this.urlChecked = false;
                 this.urlSafe = false;
+                this.vtResultText = '';
                 this.urlCheckResult.style.display = 'none';
                 this.updateSubmitButton();
             }
@@ -81,12 +62,18 @@ class SubmitModule {
         // 图标输入后更新预览
         this.iconInput.addEventListener('input', () => this.updateIconPreview());
         
-        // 表单提交
-        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
-        
         // 标题或网址变化时更新提交按钮状态
         this.titleInput.addEventListener('input', () => this.updateSubmitButton());
         this.urlInput.addEventListener('input', () => this.updateSubmitButton());
+        
+        // 描述自适应高度
+        this.descInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+        
+        // 表单提交
+        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
     }
     
     async fetchSiteInfo() {
@@ -152,6 +139,7 @@ class SubmitModule {
             
             this.urlChecked = true;
             this.urlSafe = data.safe;
+            this.vtResultText = data.msg || '';
             
             if (data.safe) {
                 this.urlCheckResult.className = 'url-check-result safe';
@@ -221,9 +209,9 @@ class SubmitModule {
                 body: JSON.stringify({
                     title,
                     url: safeUrl,
-                    category: this.categorySelect.value,
                     description: this.descInput.value.trim(),
-                    icon: this.iconInput.value.trim()
+                    icon: this.iconInput.value.trim(),
+                    vt_result: this.vtResultText
                 })
             });
             
@@ -268,11 +256,13 @@ class SubmitModule {
         this.form.reset();
         this.urlChecked = false;
         this.urlSafe = false;
+        this.vtResultText = '';
         this.urlCheckResult.style.display = 'none';
         this.urlCheckResult.className = 'url-check-result';
         this.iconPreview.src = '';
         this.iconPreview.style.display = 'none';
         this.submitSaveBtn.disabled = true;
+        this.descInput.style.height = 'auto';
     }
 }
 
