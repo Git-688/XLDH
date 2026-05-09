@@ -103,11 +103,7 @@
             overflow-y:auto;max-height:calc(100vh - 260px);overflow-x:hidden;flex:1;
         }
 
-        .site-list .link-item {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 8px;
-        }
+        .site-list .link-item { flex-direction: column; align-items: stretch; gap: 8px; }
         .site-list .link-item .link-info { min-width: unset; width: 100%; }
         .site-list .link-item .link-actions { width: 100%; }
         .site-list .link-item .link-actions button { width: 100%; height: 30px; }
@@ -203,15 +199,86 @@
         .fetch-info-btn { background: #10b981; color: #fff; padding: 6px 12px; font-size: 11px; margin-left: 6px; white-space: nowrap; }
         .fetch-info-btn:hover { background: #059669; }
 
-        /* 待审核列表样式 */
         .submissions-list .link-item {
             display:flex; justify-content:space-between; align-items:center;
             padding:8px 12px; background:#fff; border-radius:6px; margin-bottom:4px;
             box-shadow:0 1px 2px rgba(0,0,0,0.04);
         }
 
-        @media (max-width:768px){ .sidebar, .main-content { min-width:0; } }
-        @media (max-width:480px){ .sidebar, .main-content { padding:8px; } }
+        /* 自定义下拉选择器 */
+        .custom-select {
+            position: relative;
+            width: 160px;
+            font-size: 12px;
+            user-select: none;
+        }
+        .custom-select-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            background: #fff;
+            color: #2f3542;
+            cursor: pointer;
+            transition: border 0.2s;
+        }
+        .custom-select-trigger:hover {
+            border-color: #3b82f6;
+        }
+        .custom-select-trigger::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 5px solid #64748b;
+            transition: transform 0.2s;
+        }
+        .custom-select.open .custom-select-trigger::after {
+            transform: rotate(180deg);
+        }
+        .custom-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            margin-top: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-4px);
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            scrollbar-width: none;
+        }
+        .custom-select-dropdown::-webkit-scrollbar { display: none; }
+        .custom-select.open .custom-select-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .custom-select-option {
+            padding: 8px 10px;
+            cursor: pointer;
+            color: #2f3542;
+            transition: background 0.15s;
+        }
+        .custom-select-option:hover {
+            background: #f1f5f9;
+            color: #3b82f6;
+        }
+        .custom-select-option.selected {
+            background: #e0f2fe;
+            color: #0369a1;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -319,12 +386,14 @@
         <div id="submissionDetailContent"></div>
         <div class="modal-buttons" style="justify-content:flex-start;flex-wrap:wrap;gap:8px;">
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                <select id="detailCatSelect" style="width:auto;min-width:120px;">
-                    <option value="">选择一级分类</option>
-                </select>
-                <select id="detailSubSelect" style="width:auto;min-width:120px;">
-                    <option value="">选择二级分类</option>
-                </select>
+                <div id="detailCatSelectWrapper" class="custom-select">
+                    <div class="custom-select-trigger">选择一级分类</div>
+                    <div class="custom-select-dropdown"></div>
+                </div>
+                <div id="detailSubSelectWrapper" class="custom-select">
+                    <div class="custom-select-trigger">选择二级分类</div>
+                    <div class="custom-select-dropdown"></div>
+                </div>
                 <input type="number" id="detailDisplayOrder" placeholder="排序" style="width:80px;" value="0">
             </div>
             <div style="display:flex;gap:8px;margin-left:auto;">
