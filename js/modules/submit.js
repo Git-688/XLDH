@@ -26,68 +26,36 @@ class SubmitModule {
         this.init();
     }
 
-    init() {
-        this.bindEvents();
-    }
+    init() { this.bindEvents(); }
 
     bindEvents() {
         const closeBtn = this.modal.querySelector('.feedback-modal-close');
         const cancelBtn = this.modal.querySelector('.submit-cancel-btn');
-        const closeModal = () => {
-            this.modal.classList.remove('active');
-            this.resetForm();
-        };
-
+        const closeModal = () => { this.modal.classList.remove('active'); this.resetForm(); };
         closeBtn?.addEventListener('click', closeModal);
         cancelBtn?.addEventListener('click', closeModal);
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) closeModal();
-        });
+        this.modal.addEventListener('click', e => { if (e.target === this.modal) closeModal(); });
 
         this.fetchInfoBtn.addEventListener('click', () => this.fetchSiteInfoAndCheck());
 
         this.urlInput.addEventListener('input', () => {
-            this.isSafe = false;
-            this.canSubmit = false;
-            this.alreadySubmitted = false;
-            this.resultLabel = '';
-            this.riskLevel = '';
-            this.urlCheckResult.style.display = 'none';
-            this.urlCheckResult.className = 'url-check-result';
-            this.updateSubmitButton();
+            this.isSafe = false; this.canSubmit = false; this.alreadySubmitted = false; this.resultLabel = ''; this.riskLevel = '';
+            this.urlCheckResult.style.display = 'none'; this.urlCheckResult.className = 'url-check-result'; this.updateSubmitButton();
         });
-
         this.iconInput.addEventListener('input', () => this.updateIconPreview());
         this.titleInput.addEventListener('input', () => this.updateSubmitButton());
         this.urlInput.addEventListener('input', () => this.updateSubmitButton());
-
-        this.descInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = this.scrollHeight + 'px';
-        });
-
-        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        this.descInput.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'; });
+        this.form.addEventListener('submit', e => this.handleSubmit(e));
     }
 
     async fetchSiteInfoAndCheck() {
         const url = this.urlInput.value.trim();
-        if (!url) {
-            window.toast.show('请先输入网址', 'warning');
-            return;
-        }
-        if (!this.isValidUrl(url)) {
-            window.toast.show('请输入正确的网址（以 http:// 或 https:// 开头）', 'warning');
-            return;
-        }
+        if (!url || !this.isValidUrl(url)) { window.toast.show('请输入正确的网址', 'warning'); return; }
 
-        // 显示等待提示
-        if (this.waitingHint) {
-            this.waitingHint.style.display = 'inline';
-        }
-
+        if (this.waitingHint) this.waitingHint.style.display = 'inline';
         this.fetchInfoBtn.disabled = true;
         this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检测中...';
-
         this.urlCheckResult.style.display = 'block';
         this.urlCheckResult.className = 'url-check-result checking';
         this.urlCheckResult.textContent = '正在获取信息并安全检测，请耐心等待...';
@@ -95,17 +63,12 @@ class SubmitModule {
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
             const res = await fetch(`${this.apiBase}/fetch-site-info`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: safeUrl })
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: safeUrl })
             });
             const data = await res.json();
 
             if (data.title) this.titleInput.value = data.title;
-            if (data.icon) {
-                this.iconInput.value = data.icon;
-                this.updateIconPreview();
-            }
+            if (data.icon) { this.iconInput.value = data.icon; this.updateIconPreview(); }
             if (data.description) this.descInput.value = data.description;
 
             this.isSafe = data.safe;
@@ -124,20 +87,13 @@ class SubmitModule {
                 this.urlCheckResult.className = data.safe ? 'url-check-result safe' : 'url-check-result checking';
                 this.urlCheckResult.textContent = data.label || (data.safe ? '安全，可提交' : '可疑，可提交');
             }
-
             this.updateSubmitButton();
         } catch (e) {
             this.urlCheckResult.className = 'url-check-result checking';
             this.urlCheckResult.textContent = '检测暂时不可用，可以跳过检测直接提交';
-            this.canSubmit = true;
-            this.isSafe = true;
-            this.alreadySubmitted = false;
-            this.updateSubmitButton();
+            this.canSubmit = true; this.isSafe = true; this.alreadySubmitted = false; this.updateSubmitButton();
         } finally {
-            // 隐藏等待提示
-            if (this.waitingHint) {
-                this.waitingHint.style.display = 'none';
-            }
+            if (this.waitingHint) this.waitingHint.style.display = 'none';
             this.fetchInfoBtn.disabled = false;
             this.fetchInfoBtn.innerHTML = '<i class="fas fa-magic"></i> 获取信息';
         }
@@ -148,116 +104,53 @@ class SubmitModule {
         const url = this.urlInput.value.trim();
         const isFormFilled = title && url && this.isValidUrl(url);
         const canSubmit = isFormFilled && this.canSubmit && !this.alreadySubmitted;
-
         this.submitSaveBtn.disabled = !canSubmit;
-
-        if (isFormFilled && !canSubmit) {
-            this.submitSaveBtn.title = this.alreadySubmitted ? '该网站已收录' : '请先通过安全检测';
-        } else {
-            this.submitSaveBtn.title = '';
-        }
     }
 
     async handleSubmit(e) {
         e.preventDefault();
-
         const title = this.titleInput.value.trim();
         const url = this.urlInput.value.trim();
-
-        if (!title || !url) {
-            window.toast.show('请填写网站名称和链接', 'warning');
-            return;
-        }
-
-        if (!this.isValidUrl(url)) {
-            window.toast.show('请输入正确的网址', 'warning');
-            return;
-        }
-
-        if (this.alreadySubmitted) {
-            window.toast.show('该网站已收录，无法重复提交', 'error');
-            return;
-        }
-
-        if (!this.canSubmit) {
-            window.toast.show('该链接未通过安全检测，无法提交', 'error');
-            return;
-        }
+        if (!title || !url) { window.toast.show('请填写网站名称和链接', 'warning'); return; }
+        if (!this.isValidUrl(url)) { window.toast.show('请输入正确的网址', 'warning'); return; }
+        if (this.alreadySubmitted) { window.toast.show('该网站已收录', 'error'); return; }
+        if (!this.canSubmit) { window.toast.show('该链接未通过安全检测，无法提交', 'error'); return; }
 
         this.submitSaveBtn.disabled = true;
         this.submitSaveBtn.textContent = '提交中...';
-
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
             const res = await fetch(`${this.apiBase}/submit-site`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title,
-                    url: safeUrl,
-                    description: this.descInput.value.trim(),
-                    icon: this.iconInput.value.trim(),
-                    vt_result: this.resultLabel
-                })
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, url: safeUrl, description: this.descInput.value.trim(), icon: this.iconInput.value.trim(), vt_result: this.resultLabel })
             });
-
             if (res.ok) {
-                window.toast.show('感谢投稿！管理员审核后将收录', 'success');
-                this.modal.classList.remove('active');
-                this.resetForm();
+                window.toast.show('感谢投稿！', 'success');
+                this.modal.classList.remove('active'); this.resetForm();
             } else {
-                const data = await res.json().catch(() => ({}));
-                window.toast.show(data.error || '提交失败，请稍后再试', 'error');
+                const err = await res.json().catch(()=>({}));
+                window.toast.show(err.error || '提交失败', 'error');
             }
-        } catch (err) {
-            window.toast.show('网络错误，请稍后再试', 'error');
-        } finally {
-            this.submitSaveBtn.disabled = false;
-            this.submitSaveBtn.textContent = '提交投稿';
-        }
+        } catch { window.toast.show('网络错误', 'error'); }
+        finally { this.submitSaveBtn.disabled = false; this.submitSaveBtn.textContent = '提交投稿'; }
     }
 
-    isValidUrl(url) {
-        if (!url) return false;
-        try {
-            const u = new URL(url.startsWith('http') ? url : `https://${url}`);
-            return ['http:', 'https:'].includes(u.protocol);
-        } catch {
-            return false;
-        }
-    }
-
+    isValidUrl(url) { try { return ['http:','https:'].includes(new URL(url.startsWith('http')?url:`https://${url}`).protocol); } catch { return false; } }
     updateIconPreview() {
         const iconUrl = this.iconInput.value.trim();
-        if (iconUrl && (iconUrl.startsWith('http') || iconUrl.startsWith('https'))) {
-            this.iconPreview.src = iconUrl;
-            this.iconPreview.style.display = 'block';
-        } else {
-            this.iconPreview.src = '';
-            this.iconPreview.style.display = 'none';
-        }
+        if (iconUrl && (iconUrl.startsWith('http')||iconUrl.startsWith('https'))) {
+            this.iconPreview.src = iconUrl; this.iconPreview.style.display = 'block';
+        } else { this.iconPreview.style.display = 'none'; }
     }
-
     resetForm() {
         this.form.reset();
-        this.canSubmit = false;
-        this.isSafe = false;
-        this.alreadySubmitted = false;
-        this.resultLabel = '';
-        this.riskLevel = '';
-        this.urlCheckResult.style.display = 'none';
-        this.urlCheckResult.className = 'url-check-result';
-        this.iconPreview.src = '';
+        this.canSubmit = false; this.isSafe = false; this.alreadySubmitted = false; this.resultLabel = ''; this.riskLevel = '';
+        this.urlCheckResult.style.display = 'none'; this.urlCheckResult.className = 'url-check-result';
         this.iconPreview.style.display = 'none';
         this.submitSaveBtn.disabled = true;
         this.descInput.style.height = 'auto';
-        if (this.waitingHint) {
-            this.waitingHint.style.display = 'none';
-        }
+        if (this.waitingHint) this.waitingHint.style.display = 'none';
     }
 }
 
-// 初始化
-document.addEventListener('DOMContentLoaded', () => {
-    window.submitModule = new SubmitModule();
-});
+document.addEventListener('DOMContentLoaded', () => { window.submitModule = new SubmitModule(); });
