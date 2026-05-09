@@ -40,7 +40,6 @@
                     ${opt.label}
                 </div>
             `).join('');
-            // 绑定点击事件
             this.dropdown.querySelectorAll('.custom-select-option').forEach(optEl => {
                 optEl.addEventListener('click', () => {
                     this.select(optEl.dataset.value, optEl.textContent);
@@ -55,7 +54,6 @@
                 el.classList.toggle('selected', el.dataset.value === value);
             });
             this.close();
-            // 触发 change 事件
             this.wrapper.dispatchEvent(new CustomEvent('change', { detail: { value } }));
         }
 
@@ -105,10 +103,7 @@
     }
 
     function checkUrl(url) {
-        try {
-            const u = new URL(url);
-            return ['http:', 'https:'].includes(u.protocol);
-        } catch { return false; }
+        try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; }
     }
 
     function getStoredToken() {
@@ -208,11 +203,7 @@
         finally { btn.disabled = false; btn.textContent = '确认'; }
     }
 
-    function closeModal() {
-        document.getElementById('modal').classList.remove('show');
-        modalAction = null;
-    }
-
+    function closeModal() { document.getElementById('modal').classList.remove('show'); modalAction = null; }
     function closeLogModal() { document.getElementById('logModal').classList.remove('show'); }
 
     function addLog(text) {
@@ -478,6 +469,7 @@
         });
     }
 
+    // ========== CRUD 操作 ==========
     function handleModifyCategory(id, currentName) {
         openModal('修改分类',
             `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
@@ -719,7 +711,6 @@
             if (!item) { showToast('未找到该投稿', 'error'); return; }
             
             const content = document.getElementById('submissionDetailContent');
-            // 调整标题，标签右对齐，内容左对齐，居中显示
             content.innerHTML = `
                 <div style="max-width:400px;margin:0 auto;">
                     <div style="display:flex;justify-content:center;margin-bottom:10px;">
@@ -737,7 +728,6 @@
                 </div>
             `;
             
-            // 重置下拉框
             const catOptions = (categories.length ? categories : await apiFetch('/admin/categories')).map(c => ({ value: c.id, label: c.name }));
             catSelect.setOptions(catOptions);
             catSelect.setPlaceholder();
