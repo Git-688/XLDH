@@ -1,6 +1,6 @@
 /**
  * 网站投稿模块
- * 功能：自动获取网站信息、链接安全检测（移除分类选择，描述自适应高度）
+ * 功能：自动获取网站信息 + 安全检测 + 重复收录检查
  */
 class SubmitModule {
     constructor() {
@@ -12,14 +12,22 @@ class SubmitModule {
         this.descInput = document.getElementById('submitDesc');
         this.iconPreview = document.getElementById('submitIconPreview');
         this.fetchInfoBtn = document.getElementById('fetchSiteInfoBtn');
-        this.checkUrlBtn = document.getElementById('checkUrlBtn');
+        this.checkUrlBtn = document.getElementById('checkUrlBtn'); // 保留但隐藏，不再单独使用
         this.submitSaveBtn = document.getElementById('submitSaveBtn');
         this.urlCheckResult = document.getElementById('urlCheckResult');
         
         this.apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
-        this.urlChecked = false;
-        this.urlSafe = false;
-        this.vtResultText = ''; // 安全检测结果文本
+        this.isSafe = false;
+        this.canSubmit = false;
+        this.alreadySubmitted = false;
+        this.resultLabel = '';
+        this.riskLevel = '';
+        this.isFetching = false;
+        
+        // 隐藏安全检测按钮（功能合并到获取信息）
+        if (this.checkUrlBtn) {
+            this.checkUrlBtn.style.display = 'none';
+        }
         
         this.init();
     }
@@ -29,7 +37,6 @@ class SubmitModule {
     }
     
     bindEvents() {
-        // 关闭按钮
         const closeBtn = this.modal.querySelector('.feedback-modal-close');
         const cancelBtn = this.modal.querySelector('.submit-cancel-btn');
         const closeModal = () => {
@@ -42,41 +49,33 @@ class SubmitModule {
             if (e.target === this.modal) closeModal();
         });
         
-        // 自动获取信息按钮
-        this.fetchInfoBtn.addEventListener('click', () => this.fetchSiteInfo());
+        // “获取信息”按钮：同时执行信息获取、安全检测、收录检查
+        this.fetchInfoBtn.addEventListener('click', () => this.fetchSiteInfoAndCheck());
         
-        // 安全检测按钮
-        this.checkUrlBtn.addEventListener('click', () => this.checkUrl());
-        
-        // 网址输入后检测结果失效
         this.urlInput.addEventListener('input', () => {
-            if (this.urlChecked) {
-                this.urlChecked = false;
-                this.urlSafe = false;
-                this.vtResultText = '';
-                this.urlCheckResult.style.display = 'none';
-                this.updateSubmitButton();
-            }
+            // 重置检测状态
+            this.isSafe = false;
+            this.canSubmit = false;
+            this.alreadySubmitted = false;
+            this.resultLabel = '';
+            this.riskLevel = '';
+            this.urlCheckResult.style.display = 'none';
+            this.urlCheckResult.className = 'url-check-result';
+            this.updateSubmitButton();
         });
         
-        // 图标输入后更新预览
         this.iconInput.addEventListener('input', () => this.updateIconPreview());
-        
-        // 标题或网址变化时更新提交按钮状态
         this.titleInput.addEventListener('input', () => this.updateSubmitButton());
         this.urlInput.addEventListener('input', () => this.updateSubmitButton());
-        
-        // 描述自适应高度
         this.descInput.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = this.scrollHeight + 'px';
         });
         
-        // 表单提交
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
     }
     
-    async fetchSiteInfo() {
+    async fetchSiteInfoAndCheck() {
         const url = this.urlInput.value.trim();
         if (!url) {
             window.toast.show('请先输入网址', 'warning');
@@ -88,13 +87,22 @@ class SubmitModule {
         }
         
         this.fetchInfoBtn.disabled = true;
-        this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 获取中...';
+        this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检测中...';
+        this.urlCheckResult.style.display = 'block';
+        this.urlCheckResult.className = 'url-check-result checking';
+        this.urlCheckResult.textContent = '正在获取信息并检测安全性，请稍候...';
         
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
-            const res = await fetch(`${this.apiBase}/fetch-site-info?url=${encodeURIComponent(safeUrl)}`);
+            // 调用后端综合接口
+            const res = await fetch(`${this.apiBase}/fetch-site-info`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: safeUrl })
+            });
             const data = await res.json();
             
+            // 填充网站信息
             if (data.title) this.titleInput.value = data.title;
             if (data.icon) {
                 this.iconInput.value = data.icon;
@@ -102,63 +110,40 @@ class SubmitModule {
             }
             if (data.description) this.descInput.value = data.description;
             
-            if (data.title) {
-                window.toast.show('信息获取成功', 'success');
-            } else {
-                window.toast.show('未能获取到信息，请手动填写', 'warning');
-            }
-        } catch (e) {
-            window.toast.show('获取信息失败，请检查网络', 'error');
-        } finally {
-            this.fetchInfoBtn.disabled = false;
-            this.fetchInfoBtn.innerHTML = '<i class="fas fa-magic"></i> 获取信息';
-        }
-    }
-    
-    async checkUrl() {
-        const url = this.urlInput.value.trim();
-        if (!url) {
-            window.toast.show('请先输入网址', 'warning');
-            return;
-        }
-        if (!this.isValidUrl(url)) {
-            window.toast.show('请输入正确的网址（以 http:// 或 https:// 开头）', 'warning');
-            return;
-        }
-        
-        this.checkUrlBtn.disabled = true;
-        this.checkUrlBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检测中...';
-        this.urlCheckResult.style.display = 'block';
-        this.urlCheckResult.className = 'url-check-result checking';
-        this.urlCheckResult.textContent = '正在检测链接安全性，请稍候...';
-        
-        try {
-            const safeUrl = url.startsWith('http') ? url : `https://${url}`;
-            const res = await fetch(`${this.apiBase}/check-url?url=${encodeURIComponent(safeUrl)}`);
-            const data = await res.json();
+            // 处理安全检测和收录状态
+            this.isSafe = data.safe;
+            this.canSubmit = data.canSubmit;
+            this.alreadySubmitted = data.alreadySubmitted;
+            this.resultLabel = data.label || '';
+            this.riskLevel = data.riskLevel || '';
             
-            this.urlChecked = true;
-            this.urlSafe = data.safe;
-            this.vtResultText = data.msg || '';
-            
-            if (data.safe) {
-                this.urlCheckResult.className = 'url-check-result safe';
-                this.urlCheckResult.textContent = data.msg;
-            } else {
+            // 显示结果
+            if (data.alreadySubmitted) {
                 this.urlCheckResult.className = 'url-check-result unsafe';
-                this.urlCheckResult.textContent = data.msg;
+                this.urlCheckResult.textContent = data.label || '该网站已收录，无需重复提交';
+            } else if (!data.canSubmit) {
+                this.urlCheckResult.className = 'url-check-result unsafe';
+                this.urlCheckResult.textContent = data.label || '该链接存在安全风险，禁止提交';
+            } else {
+                if (data.safe) {
+                    this.urlCheckResult.className = 'url-check-result safe';
+                } else {
+                    this.urlCheckResult.className = 'url-check-result checking';
+                }
+                this.urlCheckResult.textContent = data.label || (data.safe ? '安全，可提交' : '可疑，可提交');
             }
             
             this.updateSubmitButton();
         } catch (e) {
             this.urlCheckResult.className = 'url-check-result checking';
             this.urlCheckResult.textContent = '检测暂时不可用，可以跳过检测直接提交';
-            this.urlChecked = true;
-            this.urlSafe = true; // 检测失败时允许提交
+            this.canSubmit = true;
+            this.isSafe = true;
+            this.alreadySubmitted = false;
             this.updateSubmitButton();
         } finally {
-            this.checkUrlBtn.disabled = false;
-            this.checkUrlBtn.innerHTML = '<i class="fas fa-shield-alt"></i> 安全检测';
+            this.fetchInfoBtn.disabled = false;
+            this.fetchInfoBtn.innerHTML = '<i class="fas fa-magic"></i> 获取信息';
         }
     }
     
@@ -166,12 +151,11 @@ class SubmitModule {
         const title = this.titleInput.value.trim();
         const url = this.urlInput.value.trim();
         const isFormFilled = title && url && this.isValidUrl(url);
-        const isSafetyPassed = !this.urlChecked || this.urlSafe;
-        
-        this.submitSaveBtn.disabled = !(isFormFilled && isSafetyPassed);
-        
-        if (isFormFilled && !isSafetyPassed) {
-            this.submitSaveBtn.title = '请先通过安全检测';
+        // 必须通过安全检测且未被收录才可提交
+        const canSubmit = isFormFilled && this.canSubmit && !this.alreadySubmitted;
+        this.submitSaveBtn.disabled = !canSubmit;
+        if (!canSubmit && isFormFilled) {
+            this.submitSaveBtn.title = this.alreadySubmitted ? '该网站已收录' : '请先通过安全检测';
         } else {
             this.submitSaveBtn.title = '';
         }
@@ -187,13 +171,15 @@ class SubmitModule {
             window.toast.show('请填写网站名称和链接', 'warning');
             return;
         }
-        
         if (!this.isValidUrl(url)) {
             window.toast.show('请输入正确的网址', 'warning');
             return;
         }
-        
-        if (this.urlChecked && !this.urlSafe) {
+        if (this.alreadySubmitted) {
+            window.toast.show('该网站已收录，无法重复提交', 'error');
+            return;
+        }
+        if (!this.canSubmit) {
             window.toast.show('该链接未通过安全检测，无法提交', 'error');
             return;
         }
@@ -211,7 +197,7 @@ class SubmitModule {
                     url: safeUrl,
                     description: this.descInput.value.trim(),
                     icon: this.iconInput.value.trim(),
-                    vt_result: this.vtResultText
+                    vt_result: this.resultLabel  // 保存检测结果摘要
                 })
             });
             
@@ -236,9 +222,7 @@ class SubmitModule {
         try {
             const u = new URL(url.startsWith('http') ? url : `https://${url}`);
             return ['http:', 'https:'].includes(u.protocol);
-        } catch {
-            return false;
-        }
+        } catch { return false; }
     }
     
     updateIconPreview() {
@@ -254,9 +238,11 @@ class SubmitModule {
     
     resetForm() {
         this.form.reset();
-        this.urlChecked = false;
-        this.urlSafe = false;
-        this.vtResultText = '';
+        this.canSubmit = false;
+        this.isSafe = false;
+        this.alreadySubmitted = false;
+        this.resultLabel = '';
+        this.riskLevel = '';
         this.urlCheckResult.style.display = 'none';
         this.urlCheckResult.className = 'url-check-result';
         this.iconPreview.src = '';
@@ -266,7 +252,6 @@ class SubmitModule {
     }
 }
 
-// 初始化
 document.addEventListener('DOMContentLoaded', () => {
     window.submitModule = new SubmitModule();
 });
