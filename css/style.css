@@ -29,29 +29,29 @@
     --z-modal: 1000;
     --z-music-player: 10000;
     
-    /* 统一容器边距变量 - 5个级别 */
+    /* 统一容器边距变量 */
     --container-padding-xs: 16px;
     --container-padding-sm: 20px;
     --container-padding-md: 24px;
     --container-padding-lg: 28px;
     --container-padding-xl: 32px;
     
-    /* 统一模块外边距变量 - 5个级别 */
+    /* 统一模块外边距变量 */
     --section-margin-xs: 16px;
     --section-margin-sm: 20px;
     --section-margin-md: 24px;
     --section-margin-lg: 28px;
     --section-margin-xl: 32px;
 
-    /* 新增：导航激活色 */
+    /* 导航激活色 */
     --nav-level1-active: #5dade2;
     --nav-level2-active: #ff7043;
 
-    /* 新增：统计数字颜色 */
+    /* 统计数字颜色 */
     --stat-site-color: #81c784;
     --stat-invalid-color: #e57373;
 
-    /* 新增：卡片悬停渐变起点 */
+    /* 卡片悬停渐变 */
     --card-hover-bg-start: rgba(67, 97, 238, 0.02);
     --card-hover-bg-end: rgba(67, 97, 238, 0.05);
 
@@ -1410,7 +1410,7 @@ select {
     width: 100%;
     padding: 8px 10px;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 8px;  /* 统一圆角 */
     background: var(--bg-card);
     color: var(--text-primary);
     font-size: 13px;
@@ -1438,7 +1438,7 @@ select {
 .submit-cancel-btn {
     padding: 8px 20px;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 8px;
     background: var(--bg-card);
     color: var(--text-secondary);
     cursor: pointer;
@@ -1454,7 +1454,7 @@ select {
 .submit-save-btn {
     padding: 8px 24px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     background: var(--primary-color);
     color: white;
     cursor: pointer;
@@ -1477,7 +1477,7 @@ select {
 .check-url-btn {
     padding: 8px 14px;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 8px;
     background: var(--bg-card);
     color: var(--text-secondary);
     cursor: pointer;
@@ -1510,7 +1510,7 @@ select {
 .url-check-result {
     margin-top: 8px;
     padding: 8px 12px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 12px;
     line-height: 1.4;
 }
@@ -1593,7 +1593,7 @@ select {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px 8px;
+    padding: 12px 16px 8px;  /* 缩小左右内边距 */
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     color: #1e293b;
     flex-shrink: 0;
@@ -1605,6 +1605,10 @@ select {
     display: flex;
     align-items: center;
     margin: 0;
+}
+
+.feedback-modal-header h3 i {
+    margin-right: 8px;  /* 图标与标题间距 */
 }
 
 .feedback-modal-close {
@@ -1627,7 +1631,7 @@ select {
 }
 
 .feedback-modal-body {
-    padding: 16px 20px;
+    padding: 12px 14px;  /* 上下12px 左右14px，统一紧凑 */
     overflow-y: auto;
     flex: 1;
     background: transparent;
@@ -1635,6 +1639,7 @@ select {
 }
 .feedback-modal-body::-webkit-scrollbar { display: none; }
 
+/* 移动端底部弹出样式 */
 @media (max-width: 768px) {
     .feedback-modal {
         padding: 12px var(--container-padding-xs, 16px);
@@ -1651,7 +1656,7 @@ select {
     .feedback-modal.active .feedback-modal-content {
         transform: translateY(0);
     }
-    .feedback-modal-header { padding: 14px 18px 6px; }
-    .feedback-modal-body { padding: 14px 18px 10px; }
+    .feedback-modal-header { padding: 14px 16px 6px; }
+    .feedback-modal-body { padding: 12px 14px; }  /* 移动端同样紧凑 */
     .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
 }
