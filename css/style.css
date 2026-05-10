@@ -96,14 +96,14 @@
 
 html {
     scroll-behavior: smooth;
-    font-size: 16px;                     /* 设置基准字体大小，便于 rem 计算 */
+    font-size: 16px;
     -webkit-overflow-scrolling: touch;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
     font-size: 13px;
-    line-height: 1.6;                    /* 增加行高，提升可读性 */
+    line-height: 1.6;
     color: var(--text-primary);
     background-color: var(--bg-primary);
     overflow-x: hidden;
@@ -112,7 +112,6 @@ body {
     text-rendering: optimizeLegibility;
 }
 
-/* 标题字重与间距优化 */
 h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
     line-height: 1.3;
@@ -120,12 +119,10 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 0.5em;
 }
 
-/* 段落间距 */
 p {
     margin-bottom: 1em;
 }
 
-/* 等宽数字优化 */
 .stat-number,
 .view-count,
 .time-text {
@@ -211,7 +208,7 @@ p {
     min-height: calc(100vh - 120px);
 }
 
-/* 容器样式 - 使用统一变量 */
+/* 容器样式 */
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -224,7 +221,6 @@ p {
     padding: 0 var(--container-padding-xs);
 }
 
-/* 响应式调整容器边距 */
 @media (min-width: 576px) {
     .container,
     .container-fluid {
@@ -253,7 +249,7 @@ p {
     }
 }
 
-/* 浮动按钮 - 统一大小和位置 */
+/* 浮动按钮 */
 .floating-buttons {
     position: fixed;
     bottom: 24px;
@@ -284,7 +280,6 @@ p {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* 返回顶部按钮 - 红色图标，白色背景，初始隐藏 */
 .back-to-top {
     color: var(--error-color);
     opacity: 0;
@@ -299,15 +294,10 @@ p {
     visibility: visible;
 }
 
-.back-to-top.visible:hover {
-    transform: none;
-}
-
 .back-to-top:hover {
     color: #ff3333;
 }
 
-/* 刷新按钮 - 绿色图标，白色背景（现为日记功能，图标保留） */
 .refresh-btn {
     color: #10b981;
 }
@@ -316,7 +306,6 @@ p {
     color: #059669;
 }
 
-/* 活动按钮 - 橙色图标，白色背景 */
 .activity-btn {
     color: #ff6b35;
 }
@@ -325,7 +314,6 @@ p {
     color: #ff5733;
 }
 
-/* 天气按钮 - 蓝色图标，白色背景 */
 .weather-btn {
     color: var(--primary-color);
 }
@@ -334,7 +322,6 @@ p {
     color: #3a56d6;
 }
 
-/* 新增悬浮按钮颜色 - 用于互换后的按钮 */
 .floating-btn.submit-btn {
     color: #06b6d4;
 }
@@ -342,7 +329,6 @@ p {
     color: #0891b2;
 }
 
-/* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
     .floating-btn {
         background: #2d2d2d;
@@ -396,7 +382,6 @@ p {
     }
 }
 
-/* 移动端适配 */
 @media (max-width: 768px) {
     .floating-buttons {
         bottom: 16px;
@@ -411,7 +396,6 @@ p {
     }
 }
 
-/* 超小屏幕适配 */
 @media (max-width: 480px) {
     .floating-buttons {
         bottom: 12px;
@@ -424,46 +408,6 @@ p {
         height: 40px;
         font-size: 16px;
     }
-}
-
-/* ====== 防闪烁优化样式 ====== */
-#uptime, #visitCount {
-    font-variant-numeric: tabular-nums;
-    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
-    will-change: contents;
-    backface-visibility: hidden;
-    transform: translateZ(0);
-    transition: opacity 0.1s ease;
-    opacity: 1;
-}
-
-#uptime.updating, #visitCount.updating {
-    opacity: 0.9;
-}
-
-/* 页脚统计数字优化 */
-.stat-number {
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--text-primary);
-    font-family: 'SF Mono', 'Roboto Mono', Consolas, monospace;
-    line-height: 1.1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: transform 0.2s ease;
-}
-
-.stat-number:active {
-    transform: scale(0.98);
-}
-
-/* 时间显示防闪烁优化 */
-#currentTime, #currentDate, #greeting {
-    font-variant-numeric: tabular-nums;
-    will-change: contents;
-    backface-visibility: hidden;
-    transform: translateZ(0);
 }
 
 /* 工具类 */
@@ -606,7 +550,6 @@ p {
     pointer-events: auto;
 }
 
-/* 防止事件穿透 */
 .navigation-body * {
     pointer-events: auto;
 }
@@ -615,8 +558,7 @@ p {
     cursor: pointer !important;
 }
 
-/* ====== 新增：优化动画性能 ====== */
-/* 为频繁更新的元素添加硬件加速 */
+/* 优化动画性能 */
 .performance-optimized {
     will-change: transform, opacity;
     backface-visibility: hidden;
@@ -624,55 +566,46 @@ p {
     -webkit-font-smoothing: subpixel-antialiased;
 }
 
-/* 减少重绘的区域 */
 .static-content {
     will-change: auto;
     transform: none;
 }
 
-/* 固定定位元素优化 */
 .fixed-element {
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
 }
 
-/* 防闪烁过渡效果 */
 .no-flicker {
     -webkit-transform-style: preserve-3d;
     -webkit-backface-visibility: hidden;
     -webkit-perspective: 1000;
 }
 
-/* 优化图片渲染 */
 img {
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
 }
 
-/* 优化列表渲染 */
 ul, ol {
     contain: content;
 }
 
-/* 优化卡片渲染 */
 .card, .stat-card, .site-card {
     contain: layout style paint;
 }
 
-/* 优化图标渲染 */
 .icon, i {
     display: inline-block;
     vertical-align: middle;
 }
 
-/* 优化按钮渲染 */
 button, .btn, .nav-btn {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     user-select: none;
 }
 
-/* 优化输入框渲染 */
 input, textarea {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -680,39 +613,33 @@ input, textarea {
     outline: none;
 }
 
-/* 优化选择框渲染 */
 select {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
 }
 
-/* 优化滚动容器 */
 .scroll-container {
     -webkit-overflow-scrolling: touch;
     overflow-scrolling: touch;
 }
 
-/* 优化flex容器 */
 .flex-container {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
 }
 
-/* 优化grid容器 */
 .grid-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
 }
 
-/* 优化过渡效果 */
 .transition-optimized {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 优化阴影效果 */
 .shadow-optimized {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: box-shadow 0.3s ease;
@@ -722,7 +649,6 @@ select {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* 优化边框效果 */
 .border-optimized {
     border: 1px solid var(--border-color);
     transition: border-color 0.3s ease;
@@ -732,7 +658,6 @@ select {
     border-color: var(--primary-color);
 }
 
-/* 优化背景效果 */
 .bg-optimized {
     background: var(--bg-card);
     transition: background-color 0.3s ease;
@@ -742,7 +667,6 @@ select {
     background: var(--bg-secondary);
 }
 
-/* 优化文本效果 */
 .text-optimized {
     color: var(--text-primary);
     transition: color 0.3s ease;
@@ -752,7 +676,6 @@ select {
     color: var(--primary-color);
 }
 
-/* 优化图标效果 */
 .icon-optimized {
     color: var(--text-secondary);
     transition: color 0.3s ease, transform 0.3s ease;
@@ -763,7 +686,6 @@ select {
     transform: scale(1.1);
 }
 
-/* 优化按钮效果 */
 .btn-optimized {
     background: var(--primary-color);
     color: white;
@@ -798,7 +720,6 @@ select {
     box-shadow: none;
 }
 
-/* 优化输入框效果 */
 .input-optimized {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -821,7 +742,6 @@ select {
     opacity: 0.7;
 }
 
-/* 优化选择框效果 */
 .select-optimized {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -846,7 +766,6 @@ select {
     color: var(--text-primary);
 }
 
-/* 优化文本区域效果 */
 .textarea-optimized {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -872,7 +791,6 @@ select {
     opacity: 0.7;
 }
 
-/* 优化卡片效果 */
 .card-optimized {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -888,7 +806,6 @@ select {
     transform: translateY(-2px);
 }
 
-/* 优化列表效果 */
 .list-optimized {
     list-style: none;
     padding: 0;
@@ -910,7 +827,6 @@ select {
     padding-left: 0.5rem;
 }
 
-/* 优化表格效果 */
 .table-optimized {
     width: 100%;
     border-collapse: collapse;
@@ -938,7 +854,6 @@ select {
     border-bottom: none;
 }
 
-/* 优化模态框效果 */
 .modal-optimized {
     position: fixed;
     top: 0;
@@ -977,7 +892,6 @@ select {
     transform: translateY(0);
 }
 
-/* 优化加载效果 */
 .loading-optimized {
     display: flex;
     align-items: center;
@@ -994,7 +908,6 @@ select {
     animation: spin 1s linear infinite;
 }
 
-/* 优化空状态效果 */
 .empty-optimized {
     display: flex;
     flex-direction: column;
@@ -1022,7 +935,6 @@ select {
     opacity: 0.7;
 }
 
-/* 优化错误状态效果 */
 .error-optimized {
     display: flex;
     flex-direction: column;
@@ -1049,7 +961,6 @@ select {
     opacity: 0.7;
 }
 
-/* 优化成功状态效果 */
 .success-optimized {
     display: flex;
     flex-direction: column;
@@ -1076,7 +987,6 @@ select {
     opacity: 0.7;
 }
 
-/* 优化警告状态效果 */
 .warning-optimized {
     display: flex;
     flex-direction: column;
@@ -1103,7 +1013,6 @@ select {
     opacity: 0.7;
 }
 
-/* 优化信息状态效果 */
 .info-optimized {
     display: flex;
     flex-direction: column;
@@ -1130,7 +1039,6 @@ select {
     opacity: 0.7;
 }
 
-/* 响应式优化 */
 @media (max-width: 767px) {
     .mobile-optimized {
         font-size: 0.875rem;
@@ -1241,7 +1149,6 @@ select {
     }
 }
 
-/* 打印优化 */
 @media print {
     .print-hidden {
         display: none !important;
@@ -1272,7 +1179,6 @@ select {
     }
 }
 
-/* 无障碍优化 */
 .a11y-focus:focus {
     outline: 3px solid var(--primary-color);
     outline-offset: 2px;
@@ -1298,7 +1204,6 @@ select {
     white-space: normal;
 }
 
-/* 性能优化类 */
 .perf-no-animation * {
     animation: none !important;
     transition: none !important;
@@ -1332,7 +1237,6 @@ select {
     backdrop-filter: none !important;
 }
 
-/* 极简模式 */
 .minimal-mode {
     --shadow: none;
     --shadow-lg: none;
@@ -1369,7 +1273,6 @@ select {
     border: 1px solid var(--border-color);
 }
 
-/* 高性能模式 */
 .high-performance-mode {
     image-rendering: pixelated;
     -webkit-font-smoothing: none;
@@ -1391,7 +1294,6 @@ select {
     text-shadow: none !important;
 }
 
-/* 省电模式 */
 .power-save-mode {
     --primary-color: #666666;
     --secondary-color: #555555;
@@ -1411,7 +1313,7 @@ select {
     animation: none !important;
 }
 
-/* Toast 管理器容器 - 唯一 Toast 样式 */
+/* Toast 管理器容器 */
 .toast-manager-container {
     position: fixed;
     top: 20px;
@@ -1423,7 +1325,6 @@ select {
     pointer-events: none;
 }
 
-/* 单个 Toast 项 */
 .toast-item {
     background: white;
     border-radius: 8px;
@@ -1457,7 +1358,6 @@ select {
     font-size: 18px;
 }
 
-/* 类型颜色 */
 .toast-info { border-left-color: #3498db; }
 .toast-success { border-left-color: var(--success-color); }
 .toast-warning { border-left-color: var(--warning-color); }
@@ -1468,7 +1368,6 @@ select {
 .toast-warning i { color: var(--warning-color); }
 .toast-error i { color: var(--error-color); }
 
-/* 关闭按钮 */
 .toast-close {
     background: none;
     border: none;
@@ -1484,8 +1383,7 @@ select {
     color: #666;
 }
 
-/* ==================== 网站投稿模态框样式 ==================== */
-
+/* 站点投稿表单 */
 #submitModal .feedback-modal-body {
     padding: 16px 20px 20px;
 }
@@ -1528,7 +1426,6 @@ select {
     box-shadow: 0 0 0 3px rgba(67,97,238,0.08);
 }
 
-/* 提交按钮区域 */
 .submit-form-buttons {
     display: flex;
     justify-content: flex-end;
@@ -1576,7 +1473,6 @@ select {
     cursor: not-allowed;
 }
 
-/* 获取信息和检测按钮 */
 .fetch-info-btn,
 .check-url-btn {
     padding: 8px 14px;
@@ -1611,7 +1507,6 @@ select {
     cursor: not-allowed;
 }
 
-/* 检测结果提示 */
 .url-check-result {
     margin-top: 8px;
     padding: 8px 12px;
@@ -1638,11 +1533,125 @@ select {
     border: 1px solid rgba(245,158,11,0.2);
 }
 
-/* 响应式 */
 @media (max-width: 768px) {
     .fetch-info-btn,
     .check-url-btn {
         padding: 6px 10px;
         font-size: 11px;
     }
+}
+
+/* ========== 统一反馈模态框 ========== */
+.feedback-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: 10002;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.feedback-modal.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.feedback-modal-content {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(24px) saturate(125%);
+    -webkit-backdrop-filter: blur(24px) saturate(125%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.95) translateY(8px);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    overflow: hidden;
+}
+
+.feedback-modal.active .feedback-modal-content {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+.feedback-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    color: #1e293b;
+    flex-shrink: 0;
+}
+
+.feedback-modal-header h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.feedback-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    border: none;
+    color: #64748b;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.feedback-modal-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #334155;
+}
+
+.feedback-modal-body {
+    padding: 16px 20px;
+    overflow-y: auto;
+    flex: 1;
+    background: transparent;
+    -webkit-overflow-scrolling: touch;
+}
+.feedback-modal-body::-webkit-scrollbar { display: none; }
+
+@media (max-width: 768px) {
+    .feedback-modal {
+        padding: 12px var(--container-padding-xs, 16px);
+        align-items: flex-end;
+    }
+    .feedback-modal-content {
+        max-width: 100%;
+        border-radius: 20px 20px 12px 12px;
+        transform: translateY(100%);
+        opacity: 1;
+        transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+        box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.1);
+    }
+    .feedback-modal.active .feedback-modal-content {
+        transform: translateY(0);
+    }
+    .feedback-modal-header { padding: 14px 18px 6px; }
+    .feedback-modal-body { padding: 14px 18px 10px; }
+    .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
 }
