@@ -1,5 +1,6 @@
 /**
  * 侧边栏组件 - 悬浮毛玻璃优化版（CSP修复：移除内联onerror）
+ * 修改：头像默认使用站点 Logo
  */
 class CompactSidebar {
     constructor() {
@@ -80,6 +81,9 @@ class CompactSidebar {
         };
         this.navbarHeight = 60;
         this.minSidebarHeight = 400;
+
+        // 默认头像路径
+        this.defaultAvatar = './assets/logo.png';
     }
 
     calcSidebarPosition() {
@@ -272,7 +276,7 @@ class CompactSidebar {
             qqAvatarStatus.className = 'qq-avatar-status';
             
             if (!qqNumber) {
-                this.applyDefaultAvatarToElement(qqAvatarPreview);
+                qqAvatarPreview.src = this.defaultAvatar;
                 return;
             }
             if (!/^[1-9][0-9]{4,11}$/.test(qqNumber)) {
@@ -318,7 +322,6 @@ class CompactSidebar {
         }
     }
 
-    // 确保图片元素具有回退属性
     ensureFallbackAttr(imgEl) {
         if (!imgEl) return;
         imgEl.classList.add('js-img-fallback');
@@ -326,12 +329,8 @@ class CompactSidebar {
         imgEl.dataset.defaultSvg = this.getDefaultAvatarSVG();
     }
 
-    // 将默认头像应用到指定元素
-    applyDefaultAvatarToElement(imgEl) {
-        if (!imgEl) return;
-        const svg = this.getDefaultAvatarSVG();
-        imgEl.src = svg;
-        this.ensureFallbackAttr(imgEl);
+    getDefaultAvatarSVG() {
+        return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
     }
 
     async getQQAvatar(qqNumber) {
@@ -343,10 +342,6 @@ class CompactSidebar {
             console.error('获取QQ头像失败:', error);
             return null;
         }
-    }
-
-    getDefaultAvatarSVG() {
-        return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
     }
 
     saveProfileSettings() {
@@ -365,8 +360,11 @@ class CompactSidebar {
             userConfig.nickname = nickname || userConfig.nickname || '访客用户';
             userConfig.signature = signature || userConfig.signature || '探索无限可能';
             
-            if (qqAvatar && !qqAvatar.includes('data:image/svg+xml')) {
+            if (qqAvatar && !qqAvatar.includes('data:image/svg+xml') && qqAvatar !== this.defaultAvatar) {
                 userConfig.avatar = qqAvatar;
+            } else {
+                // 如果选择了默认头像，则清除自定义头像
+                userConfig.avatar = '';
             }
             Storage.set('userConfig', userConfig);
             this.loadWallpaperUserInfo();
@@ -394,7 +392,7 @@ class CompactSidebar {
             if (signatureInput) signatureInput.value = userConfig.signature || '';
             if (qqNumberInput) qqNumberInput.value = '';
             if (qqAvatarPreview) {
-                qqAvatarPreview.src = userConfig.avatar || this.getDefaultAvatarSVG();
+                qqAvatarPreview.src = userConfig.avatar || this.defaultAvatar;
                 this.ensureFallbackAttr(qqAvatarPreview);
                 qqAvatarPreview.setAttribute('loading', 'lazy');
                 qqAvatarPreview.setAttribute('decoding', 'async');
@@ -717,14 +715,16 @@ class CompactSidebar {
             if (wallpaperSignature) wallpaperSignature.textContent = userConfig.signature || '探索无限可能';
             
             if (wallpaperAvatar) {
-                if (userConfig.avatar) {
+                if (userConfig.avatar && userConfig.avatar !== '') {
                     wallpaperAvatar.src = userConfig.avatar;
                     this.ensureFallbackAttr(wallpaperAvatar);
                     wallpaperAvatar.setAttribute('loading', 'lazy');
                     wallpaperAvatar.setAttribute('decoding', 'async');
                     wallpaperAvatar.style.display = 'block';
                 } else {
-                    await this.loadRandomAvatar();
+                    // 使用默认 Logo 头像
+                    wallpaperAvatar.src = this.defaultAvatar;
+                    wallpaperAvatar.style.display = 'block';
                 }
             }
             
@@ -844,39 +844,6 @@ class CompactSidebar {
             }
             sidebarWallpaper.style.backgroundImage = 'none';
             sidebarWallpaper.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-        }
-    }
-
-    async loadRandomAvatar() {
-        try {
-            const avatarUrl = await this.getAvatar();
-            const wallpaperAvatar = document.getElementById('sidebarWallpaperAvatar');
-            if (avatarUrl && wallpaperAvatar) {
-                wallpaperAvatar.src = avatarUrl;
-                this.ensureFallbackAttr(wallpaperAvatar);
-                wallpaperAvatar.setAttribute('loading', 'lazy');
-                wallpaperAvatar.setAttribute('decoding', 'async');
-                wallpaperAvatar.style.display = 'block';
-                const userConfig = Storage.get('userConfig') || {};
-                userConfig.avatar = avatarUrl;
-                Storage.set('userConfig', userConfig);
-            } else {
-                this.applyDefaultAvatarToElement(wallpaperAvatar);
-            }
-        } catch (error) {
-            console.error('加载随机头像失败:', error);
-            this.applyDefaultAvatarToElement(document.getElementById('sidebarWallpaperAvatar'));
-        }
-    }
-
-    async getAvatar() {
-        try {
-            const randomId = Math.floor(Math.random() * 1000);
-            const response = await fetch(`https://api.multiavatar.com/${randomId}.png`);
-            return response.ok ? response.url : null;
-        } catch (error) {
-            console.warn('远程获取头像失败，使用本地生成头像');
-            return null;
         }
     }
 
