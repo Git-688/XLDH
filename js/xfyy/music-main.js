@@ -18,7 +18,6 @@ function tryInitMusicPlayer(retry = 0) {
     try {
         musicPlayer = new MusicPlayer();
         window.musicPlayer = musicPlayer;
-        console.log('悬浮音乐播放器初始化成功');
 
         if (typeof Utils !== 'undefined' && typeof Utils.isMobile === 'function' && Utils.isMobile()) {
             document.body.classList.add('mobile-device');
@@ -33,16 +32,23 @@ function tryInitMusicPlayer(retry = 0) {
     }
 }
 
-function initMusicPlayerControl() {
-    const el = document.getElementById('musicPlayer');
-    if (!el) {
-        console.error('音乐播放器元素未找到');
-        return;
+// 清理冗余的 initMusicPlayerControl 函数，直接内联隐藏操作
+function initWhenReady() {
+    const playerEl = document.getElementById('musicPlayer');
+    if (playerEl) {
+        playerEl.style.display = 'none';
     }
-    el.style.display = 'none';
+    tryInitMusicPlayer();
 }
 
-// ========== 静默所有噪音错误 ==========
+// 根据文档状态决定初始化时机
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initWhenReady);
+} else {
+    initWhenReady();
+}
+
+// ========== 静默所有无关紧要的错误 ==========
 function setupGlobalErrorHandling() {
     const shouldIgnore = (message) => {
         const m = String(message || '');
@@ -62,35 +68,20 @@ function setupGlobalErrorHandling() {
         console.error('未处理的Promise拒绝:', reason);
     });
 }
+setupGlobalErrorHandling();   // 尽早接管错误处理
 
-// ===== 关键修复：根据文档状态决定如何初始化 =====
-function initWhenReady() {
-    initMusicPlayerControl();
-    tryInitMusicPlayer();
-}
-
-if (document.readyState === 'loading') {
-    // 页面尚未完全加载，等待 DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', initWhenReady);
-} else {
-    // 页面已加载（动态添加脚本的情况），直接执行
-    initWhenReady();
-}
-
-setupGlobalErrorHandling();   // 立即执行，尽早接管
-
-// 对外暴露的控制方法（与原先一致）
+// 对外暴露的控制方法
 window.toggleMusicPlayer = () => window.app?.components?.navbar?.toggleMusicPlayer();
 window.showMusicPlayer = () => window.app?.components?.navbar?.showMusicPlayer();
 window.hideMusicPlayer = () => window.app?.components?.navbar?.hideMusicPlayer();
 
 window.cleanupMusicPlayer = () => {
     musicPlayer?.cleanup?.();
-    console.log('音乐播放器资源已清理');
 };
 
 window.addEventListener('beforeunload', () => window.cleanupMusicPlayer());
 
+// 键盘快捷键
 document.addEventListener('keydown', (e) => {
     if (!musicPlayer) return;
     if (e.code === 'Space' && !e.target.matches('input, textarea, select')) {
@@ -111,11 +102,10 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// 页面隐藏时释放动画帧
 document.addEventListener('visibilitychange', () => {
     if (musicPlayer && document.hidden && musicPlayer.updateAnimationFrame) {
         cancelAnimationFrame(musicPlayer.updateAnimationFrame);
         musicPlayer.updateAnimationFrame = null;
     }
 });
-
-console.log('music-main.js 加载完成');
