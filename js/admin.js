@@ -521,6 +521,7 @@
             true,
             async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); addLog(`删除链接 ${id}`); showToast('删除成功'); await loadAllData(); }
         );
+        // 确保按钮已渲染后绑定事件
         setTimeout(() => {
             const fetchBtn = document.getElementById('fetchInfoBtn');
             if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
