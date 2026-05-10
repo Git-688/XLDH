@@ -292,7 +292,6 @@ class GreetingModule {
             const lastUpdateDate = new Date(lastUpdate.getFullYear(), lastUpdate.getMonth(), lastUpdate.getDate());
             
             if (today > lastUpdateDate) {
-                console.log('检测到节日已过，清除缓存');
                 localStorage.removeItem('holidayDataCache');
                 this.currentHoliday = null;
             }
@@ -350,7 +349,6 @@ class GreetingModule {
         const timeUntilMidnight = tomorrow.getTime() - now.getTime();
         
         this.holidayRefreshTimer = setTimeout(async () => {
-            console.log('节日结束，自动刷新数据');
             localStorage.removeItem('holidayDataCache');
             await this.setupHolidayCountdown();
             
@@ -465,7 +463,7 @@ class GreetingModule {
                     const btn = document.querySelector(`.fish-btn[data-type="${type}"]`);
                     if (btn) {
                         this.showFishEffect(btn);
-                        this.createWoodenFishSound(); // 使用自制音效
+                        this.createWoodenFishSound();
                     }
                 }
             }
@@ -480,7 +478,6 @@ class GreetingModule {
         
         const type = e.currentTarget.dataset.type;
         
-        // 播放自制木鱼音效
         this.createWoodenFishSound();
         
         this.incrementFishCount(type, 1);
@@ -612,7 +609,6 @@ class GreetingModule {
                 const lastUpdateDate = new Date(lastUpdate.getFullYear(), lastUpdate.getMonth(), lastUpdate.getDate());
                 
                 if (today > lastUpdateDate) {
-                    console.log('检测到节日已过，重新获取数据');
                     localStorage.removeItem('holidayDataCache');
                     await this.setupHolidayCountdown();
                     return;
