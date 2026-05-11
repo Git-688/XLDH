@@ -1,9 +1,7 @@
 /**
  * 插件管理器 - 支持多个音乐API源
- * 仅保留网易云、QQ音乐、抖音热歌榜、本地音乐
- * 修复 QQ 音乐搜索不返回结果的问题（改为返回空数组，并禁用搜索入口）
+ * 保留网易云、QQ音乐、汽水音乐、本地音乐
  */
-
 class PluginManager {
     constructor(cacheManager) {
         this.cacheManager = cacheManager || new CacheManager();
@@ -13,7 +11,7 @@ class PluginManager {
     }
 
     initializePlugins() {
-        // 网易云音乐插件（增加备用 API 与降级）
+        // 网易云音乐插件（保持不变）
         this.registerPlugin('netease', {
             name: '网易云音乐',
             version: '2.1.0',
@@ -86,11 +84,11 @@ class PluginManager {
             }
         });
 
-        // QQ音乐插件（增加热歌榜获取失败时的降级处理）
+        // QQ音乐插件（保持不变）
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '2.3.0',
-            description: '云智热歌榜 + Meting解析，支持直接播放+自动获取歌曲封面',
+            description: '云智热歌榜 + Meting解析',
 
             _getSongInfoBySongmid: async function(songmid) {
                 const cacheKey = `qq_song_info_${songmid}`;
@@ -164,47 +162,154 @@ class PluginManager {
                     return validSongs;
                 } catch (error) {
                     console.error('QQ音乐热歌榜加载失败:', error);
-                    // 尝试返回空，并给出持久化提示
-                    if (typeof window !== 'undefined' && !sessionStorage.getItem('qq_fallback_hint')) {
-                        sessionStorage.setItem('qq_fallback_hint', '1');
-                        // toast 在 plugin 内无法直接调用，由上层处理
-                    }
                     return [];
                 }
             },
 
             search: async (keyword, count = 20) => {
-                // QQ音乐搜索暂不可用，返回空数组
                 return [];
             }
         });
 
-        // 抖音热歌榜插件（原migu）
-        this.registerPlugin('migu', {
-            name: '抖音热歌榜',
+        // ================== 汽水音乐插件（完整适配 API 响应格式） ==================
+        this.registerPlugin('qishui', {
+            name: '汽水音乐',
             version: '1.1.0',
-            description: '基于抖音热歌榜API (可配置)',
-            getPlaylist: async (playlistId) => {
+            description: '基于 suol.cc API，支持搜索和多个排行榜',
+            baseUrl: 'https://api.suol.cc/v1/music_qs.php',
+            mToken: '961D28A9C59C411C49C75FA3E9FAF24C',
+
+            // 排行榜列表
+            playlists: [
+                { id: 'hot', name: '热歌榜' },
+                { id: 'new', name: '新歌榜' },
+                { id: 'up',  name: '飙升榜' }
+            ],
+
+            _fetchApi: async function(action, params = {}) {
+                const url = new URL(this.baseUrl);
+                url.searchParams.set('action', action);
+                url.searchParams.set('m_token', this.mToken);
+                Object.entries(params).forEach(([k, v]) => {
+                    if (v !== undefined && v !== null && v !== '') {
+                        url.searchParams.set(k, v);
+                    }
+                });
+                
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 8000);
                 try {
-                    const response = await fetch('https://api.injahow.cn/meting/?type=playlist&id=2809513713', { signal: controller.signal });
+                    const response = await fetch(url.toString(), { signal: controller.signal });
                     clearTimeout(timeoutId);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
-                    return this.formatDouyinResponse(data);
+                    return await response.json();
                 } catch (error) {
                     clearTimeout(timeoutId);
-                    console.error('抖音热歌榜请求失败:', error);
+                    throw error;
+                }
+            },
+
+            // 获取排行榜歌曲列表
+            getPlaylist: async function(playlistId) {
+                const id = playlistId || 'hot';
+                const cacheKey = `qishui_playlist_${id}`;
+                const cached = this.cacheManager?.get(cacheKey);
+                if (cached) return cached;
+
+                try {
+                    const result = await this._fetchApi('rank', { keyword: id });
+                    if (result.code !== 200) throw new Error(result.msg || '请求失败');
+
+                    let songs = [];
+
+                    // 兼容两种返回格式：data.list 数组 或 data 本身就是数组
+                    if (result.data) {
+                        if (Array.isArray(result.data.list)) {
+                            songs = result.data.list.map(item => this._mapSongItem(item));
+                        } else if (Array.isArray(result.data)) {
+                            songs = result.data.map(item => this._mapSongItem(item));
+                        }
+                    }
+
+                    this.cacheManager?.set(cacheKey, songs, 30 * 60 * 1000);
+                    return songs;
+                } catch (error) {
+                    console.error('汽水音乐排行榜加载失败:', error);
                     return [];
                 }
             },
-            search: async (keyword) => {
-                return [];
+
+            // 搜索
+            search: async function(keyword) {
+                if (!keyword) return [];
+                const cacheKey = `qishui_search_${keyword}`;
+                const cached = this.cacheManager?.get(cacheKey);
+                if (cached) return cached;
+
+                try {
+                    const result = await this._fetchApi('search', { keyword });
+                    if (result.code !== 200) return [];
+
+                    let songs = [];
+                    if (result.data) {
+                        if (Array.isArray(result.data.list)) {
+                            songs = result.data.list.map(item => this._mapSongItem(item));
+                        } else if (Array.isArray(result.data)) {
+                            songs = result.data.map(item => this._mapSongItem(item));
+                        }
+                    }
+
+                    this.cacheManager?.set(cacheKey, songs, 10 * 60 * 1000);
+                    return songs;
+                } catch (error) {
+                    console.error('汽水音乐搜索失败:', error);
+                    return [];
+                }
+            },
+
+            // 将 API 返回的歌曲对象映射为统一格式
+            _mapSongItem: function(item) {
+                return {
+                    id: item.id || '',
+                    title: item.name || '未知歌曲',
+                    artist: item.artists || '未知歌手',
+                    cover: item.pic || '',
+                    album: item.album || '',
+                    duration: item.duration || 0,
+                    src: '',                    // 播放时动态解析
+                    lrc: '',
+                    isOnline: true,
+                    source: 'qishui',
+                    _needResolve: true,
+                };
+            },
+
+            // 获取歌曲播放链接
+            _getSongUrl: async function(songId, level = 'standard') {
+                const cacheKey = `qishui_song_${songId}_${level}`;
+                const cached = this.cacheManager?.get(cacheKey);
+                if (cached) return cached;
+
+                try {
+                    const result = await this._fetchApi('song', { id: songId, level });
+                    if (result.code === 200 && result.data) {
+                        const resolved = {
+                            url: result.data.url || '',
+                            lyric: result.data.lyric_lrc || '',
+                            pic: result.data.pic || '',
+                            quality: result.data.quality || '',
+                        };
+                        this.cacheManager?.set(cacheKey, resolved, 60 * 60 * 1000);
+                        return resolved;
+                    }
+                } catch (e) {
+                    console.warn(`汽水音乐歌曲${songId}解析失败:`, e.message);
+                }
+                return { url: '', lyric: '', pic: '' };
             }
         });
         
-        // 本地音乐插件
+        // 本地音乐插件（保持不变）
         this.registerPlugin('local', {
             name: '本地音乐',
             version: '1.0.0',
@@ -228,34 +333,6 @@ class PluginManager {
             lrc: song.lrc,
             isOnline: true,
             source: source
-        };
-    }
-
-    formatDouyinResponse(data) {
-        if (!data) return [];
-        try {
-            if (data.code === 200 && data.data && Array.isArray(data.data)) {
-                return data.data.map(song => this.formatDouyinSong(song)).filter(song => song.src);
-            }
-            if (Array.isArray(data)) {
-                return data.map(song => this.formatDouyinSong(song)).filter(song => song.src);
-            }
-        } catch (error) {
-            console.error('解析抖音响应失败:', error);
-        }
-        return [];
-    }
-
-    formatDouyinSong(songData) {
-        return {
-            id: songData.id || songData.hash || Utils.generateId(),
-            title: songData.title || songData.name || songData.songname || '未知歌曲',
-            artist: songData.author || songData.artist || songData.singer || '未知歌手',
-            src: songData.url || songData.play_url || songData.audio_url,
-            cover: songData.pic || songData.cover || songData.album_cover,
-            lrc: songData.lrc || songData.lyric,
-            isOnline: true,
-            source: 'migu'
         };
     }
 
