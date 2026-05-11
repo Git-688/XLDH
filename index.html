@@ -8,7 +8,8 @@
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
 
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc https://*.vercel.app 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc https://*.vercel.app; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
+    <!-- CSP 仅保留生产必需域名 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
 
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
@@ -74,13 +75,8 @@
         #commentModal .feedback-modal-content { max-height: 75vh; max-width: 700px; }
         #commentModal .feedback-modal-header h3 i { color: #f59e0b; }
 
-        #submitModal .feedback-modal-content {
-            max-height: 90vh;
-            max-width: 520px;
-        }
-        #submitModal .feedback-modal-body {
-            overflow-y: auto;            /* 内容过长时模态框内部滚动 */
-        }
+        #submitModal .feedback-modal-content { max-height: 90vh; max-width: 520px; }
+        #submitModal .feedback-modal-body { overflow-y: auto; }
         #submitModal .feedback-modal-header h3 i { color: #4361ee; }
 
         #submitModal .form-row { margin-bottom: 10px; }
