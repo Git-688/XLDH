@@ -1,7 +1,7 @@
 <div align="center">
   <img src="./assets/logo.png" alt="星聚导航 Logo" width="100">
   <h1>⭐️ 星聚导航</h1>
-  <p>极简高效的现代个人导航页，一站直达主流工具与资源</p>
+  <p>极简高效的现代个人导航页，一站直达主流工具与资源。该项目是基于免费公开的（Git项目、API、轻量数据库）基础上建设的♻️</p>
 
   ![GitHub Repo stars](https://img.shields.io/github/stars/Git-688/XLDH?style=social)
   ![GitHub forks](https://img.shields.io/github/forks/Git-688/XLDH?style=social)
