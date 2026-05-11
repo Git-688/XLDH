@@ -1,8 +1,8 @@
 /* 
  * 优化分类导航样式
  * 文件位置：./css/modules/navigation.css
- * 完整文件：原有全部样式 + 搜索框位于标题/统计下方 + 竖线仅装饰标题行
  * 本次修改：标题单行省略（JS控制悬停滚动）、描述两行完整显示、眼睛图标加大
+ * 性能优化：level3-content 增加 content-visibility
  */
 
 /* ====================== 搜索框样式 ====================== */
@@ -163,7 +163,17 @@
 .level2-btn.active .level2-btn-count { background: var(--nav-level2-active); color: white; font-weight: 700; box-shadow: 0 2px 4px rgba(var(--nav-level2-active), 0.3); }
 
 .navigation-right { flex: 1; min-width: 0; background: var(--bg-card); padding: 0; position: relative; }
-.level3-content { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 12px; box-sizing: border-box; grid-auto-rows: minmax(120px, auto); } /* 卡片最小高度增加到 120px */
+.level3-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    padding: 12px;
+    box-sizing: border-box;
+    grid-auto-rows: minmax(120px, auto);
+    /* 性能优化：屏幕外卡片延迟渲染 */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 120px;
+}
 
 /* ====================== 网站卡片 ====================== */
 .site-card {
@@ -172,16 +182,17 @@
     border-radius: 8px;
     padding: 12px 10px 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     text-decoration: none;
     color: inherit;
     display: flex;
     flex-direction: column;
     position: relative;
     overflow: hidden;
-    min-height: 120px;               /* 与 grid-auto-rows 保持一致 */
+    min-height: 120px;
     text-align: center;
     box-sizing: border-box;
+    contain: layout style paint;
 }
 .site-card:hover {
     transform: translateY(-2px);
@@ -209,7 +220,7 @@
     color: var(--primary-color);
     font-size: 16px;
     flex-shrink: 0;
-    transition: all 0.3s ease;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     border: 1px solid rgba(0, 0, 0, 0.1);
@@ -232,10 +243,9 @@
     height: 100%;
 }
 
-/* 眼睛图标增大 */
 .views-icon {
     color: var(--primary-color);
-    font-size: 16px;      /* 12px -> 16px */
+    font-size: 16px;
     opacity: 0.9;
 }
 
@@ -271,7 +281,6 @@
     padding-top: 1px;
 }
 
-/* 标题：单行，溢出省略（非悬停时） */
 .site-title {
     font-size: 14px;
     font-weight: 700;
@@ -285,13 +294,10 @@
     position: relative;
 }
 
-/* 悬停时标题滚动由 JS 动态处理，这里不预先定义动画 */
-
-/* 描述：两行，完整显示不裁切 */
 .site-description {
     font-size: 12px;
     color: var(--text-secondary);
-    line-height: 1.45;            /* 增加行高，让两行高度约为 34.8px */
+    line-height: 1.45;
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -300,7 +306,6 @@
     text-overflow: ellipsis;
     opacity: 0.9;
     width: 100%;
-    /* 移除 max-height / min-height，让 clamp 自然截断 */
 }
 
 /* 空状态 */
