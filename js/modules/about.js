@@ -342,7 +342,7 @@ class AboutModule {
                 <div style="display: flex; gap: 12px; padding: 16px 16px 0; min-width: 0;">
                     <div class="donate-card-wrapper">
                         <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0;">感谢支持</h3>
-                        <p style="font-size: 10px; color: #64748b; margin: 0 0 12px 0;">您的支持是我持续更新的动力</p>
+                        <p style="font-size: 10px; color: #64748b; margin: 0 0 12px 0;">您的支持，是更新的动力！</p>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;">
                             <button class="donate-method-btn-left" data-type="qq" style="color: #6BC5FF; border-color: #6BC5FF;">
                                 <i class="fab fa-qq"></i>
