@@ -135,7 +135,9 @@ XLDH/
 
 项目通过 window.APP_CONFIG 注入配置，例如 API 域名。可在 index.html 的 <script> 中设置：
 
-```javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
+```
+javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
+```
 
 内容安全策略 (CSP)
 
