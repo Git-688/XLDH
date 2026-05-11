@@ -32,3 +32,19 @@
     --waline-text-color-light: var(--text-secondary, #aaaaaa);
   }
 }
+
+/* 统一 Waline 内部间距，使其与笔记列表视觉一致 */
+#waline-comment .wl-panel {
+  padding: 0;
+}
+#waline-comment .wl-header,
+#waline-comment .wl-comment-item {
+  margin-bottom: 12px;
+}
+#waline-comment .wl-comment-item .wl-content {
+  font-size: 13px;
+  line-height: 1.6;
+}
+#waline-comment .wl-input-group {
+  margin-bottom: 10px;
+}
