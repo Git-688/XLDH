@@ -85,11 +85,11 @@
 
         /* ================= 网站投稿模态框特异性 ================= */
         #submitModal .feedback-modal-content {
-            max-height: 80vh;          /* 放宽限制，允许随内容自动扩展 */
+            max-height: 80vh;
             max-width: 520px;
         }
         #submitModal .feedback-modal-body {
-            overflow-y: auto;          /* 当描述框高度超出模态框时内部滚动 */
+            overflow-y: auto;
         }
         #submitModal .feedback-modal-header h3 i { color: #4361ee; }
 
@@ -142,7 +142,7 @@
         @media (max-width: 768px) {
             #notebookModal .feedback-modal-content { height: 90%; max-height: 90%; }
             #commentModal .feedback-modal-content { height: 90%; max-height: 90%; }
-            #submitModal .feedback-modal-content { max-height: 85vh; } /* 移动端稍放宽 */
+            #submitModal .feedback-modal-content { max-height: 85vh; }
             .notebook-item { padding: 8px 10px; }
             .notebook-title { font-size: 14px; }
             .notebook-content { font-size: 11px; }
@@ -314,7 +314,7 @@
             <div class="bottom-tabs">
                 <button class="tab-btn active" data-tab="netease">网易云音乐</button>
                 <button class="tab-btn" data-tab="qq">QQ音乐</button>
-                <button class="tab-btn" data-tab="migu">抖音热歌榜</button>
+                <button class="tab-btn" data-tab="qishui">汽水音乐</button>
                 <button class="tab-btn" data-tab="local">本地音乐</button>
             </div>
             <div class="tab-content active" id="netease-content">
@@ -325,7 +325,10 @@
                 <div class="playlist-header"><div class="playlist-selector"><select id="qq-playlist-select"><option value="7512357727">热歌榜</option><option value="7712337727">新歌榜</option><option value="7612347727">原创榜</option></select></div></div>
                 <div class="content-container"><div class="playlist-container" id="qq-playlist-container"><div class="loading">加载中...</div></div><div class="search-container" id="qq-search-container" style="display: none;"><div class="search-header"><div class="search-input-group"><input type="text" id="qq-search-input" placeholder="搜索歌曲、歌手..."></div></div><div class="search-results" id="qq-search-results"><div class="loading">输入关键词搜索</div></div></div></div>
             </div>
-            <div class="tab-content" id="migu-content"><div class="content-container"><div class="playlist-container" id="migu-playlist-container"><div class="loading">加载抖音热歌榜中...</div></div></div></div>
+            <div class="tab-content" id="qishui-content">
+                <div class="playlist-header"><div class="playlist-selector"><select id="qishui-playlist-select"><option value="hot">热歌榜</option><option value="new">新歌榜</option><option value="up">飙升榜</option></select></div></div>
+                <div class="content-container"><div class="playlist-container" id="qishui-playlist-container"><div class="loading">加载汽水音乐热歌榜中...</div></div><div class="search-container" id="qishui-search-container" style="display: none;"><div class="search-header"><div class="search-input-group"><input type="text" id="qishui-search-input" placeholder="搜索歌曲、歌手..."></div></div><div class="search-results" id="qishui-search-results"><div class="loading">输入关键词搜索</div></div></div></div>
+            </div>
             <div class="tab-content" id="local-content"><div class="content-container"><div class="playlist-container" id="local-playlist-container"><div class="loading">加载本地歌曲中...</div></div></div></div>
         </div>
     </div>
