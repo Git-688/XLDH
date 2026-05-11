@@ -521,7 +521,6 @@
             true,
             async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); addLog(`删除链接 ${id}`); showToast('删除成功'); await loadAllData(); }
         );
-        // 确保按钮已渲染后绑定事件
         setTimeout(() => {
             const fetchBtn = document.getElementById('fetchInfoBtn');
             if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
@@ -559,7 +558,7 @@
         if (!currentSub) { showToast('请先选择子分类', 'error'); return; }
         openModal('新增链接',
             `<div class="form-row"><label>标题</label><input id="mTitle"></div>
-             <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" oninput="document.getElementById('mIcon').value=window.getFavicon(this.value)"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
+             <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
              <div class="form-row"><label>图标</label><input id="mIcon" value="fas fa-link"></div>
              <div class="form-row"><label>描述</label><input id="mDesc"></div>
              <div class="form-row"><label>排序</label><input type="number" id="mSort" value="0"></div>`,
@@ -741,10 +740,6 @@
             document.getElementById('submissionDetailModal').classList.add('show');
         } catch (e) { showToast('加载详情失败', 'error'); }
     }
-
-    window.getFavicon = function(url) {
-        try { return `https://api.71xk.com/api/favicon?url=${new URL(url).hostname}`; } catch { return 'fas fa-link'; }
-    };
 
     const storedToken = getStoredToken();
     if (storedToken) {
