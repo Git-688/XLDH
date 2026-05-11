@@ -1,6 +1,7 @@
 /**
  * 网站投稿模块
  * 功能：自动获取网站信息 + 安全检测 + 重复收录检查
+ * 优化：自动获取描述后立即调整文本框高度，确保完整显示
  */
 class SubmitModule {
     constructor() {
@@ -45,8 +46,20 @@ class SubmitModule {
         this.iconInput.addEventListener('input', () => this.updateIconPreview());
         this.titleInput.addEventListener('input', () => this.updateSubmitButton());
         this.urlInput.addEventListener('input', () => this.updateSubmitButton());
-        this.descInput.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'; });
+
+        // 描述框自适应高度
+        this.descInput.addEventListener('input', () => {
+            this.autoResizeDesc();
+            this.updateSubmitButton();
+        });
+
         this.form.addEventListener('submit', e => this.handleSubmit(e));
+    }
+
+    // 自动调整描述框高度
+    autoResizeDesc() {
+        this.descInput.style.height = 'auto';
+        this.descInput.style.height = this.descInput.scrollHeight + 'px';
     }
 
     async fetchSiteInfoAndCheck() {
@@ -69,7 +82,11 @@ class SubmitModule {
 
             if (data.title) this.titleInput.value = data.title;
             if (data.icon) { this.iconInput.value = data.icon; this.updateIconPreview(); }
-            if (data.description) this.descInput.value = data.description;
+            if (data.description) {
+                this.descInput.value = data.description;
+                // 自动调整高度以显示完整描述
+                this.autoResizeDesc();
+            }
 
             this.isSafe = data.safe;
             this.canSubmit = data.canSubmit;
@@ -148,6 +165,7 @@ class SubmitModule {
         this.urlCheckResult.style.display = 'none'; this.urlCheckResult.className = 'url-check-result';
         this.iconPreview.style.display = 'none';
         this.submitSaveBtn.disabled = true;
+        // 重置描述框高度
         this.descInput.style.height = 'auto';
         if (this.waitingHint) this.waitingHint.style.display = 'none';
     }
