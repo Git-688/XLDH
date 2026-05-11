@@ -1660,3 +1660,21 @@ select {
     .feedback-modal-body { padding: 12px 14px; }  /* 移动端同样紧凑 */
     .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
 }
+/* ========== 渲染性能优化补充 ========== */
+
+/* 对大量重复卡片容器启用 content-visibility（全局可用） */
+.content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 120px;
+}
+
+/* 优化动画元素 */
+.animate-transform-only {
+    transition-property: transform;
+}
+
+/* 减少亚克力效果的 blur 开销（在非必要元素上降低模糊度） */
+.reduce-blur {
+    backdrop-filter: blur(8px) saturate(100%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(100%) !important;
+}
