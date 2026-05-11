@@ -11,7 +11,7 @@ class PluginManager {
     }
 
     initializePlugins() {
-        // ================== 网易云音乐插件 ==================
+        // 网易云音乐插件
         this.registerPlugin('netease', {
             name: '网易云音乐',
             version: '2.1.0',
@@ -84,7 +84,7 @@ class PluginManager {
             }
         });
 
-        // ================== QQ音乐插件 ==================
+        // QQ音乐插件
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '2.3.0',
@@ -171,22 +171,20 @@ class PluginManager {
             }
         });
 
-        // ================== 汽水音乐插件（完整修复版） ==================
+        // 汽水音乐插件（修复播放问题）
         this.registerPlugin('qishui', {
             name: '汽水音乐',
-            version: '1.2.0',
+            version: '1.2.1',
             description: '基于 suol.cc API，支持搜索和排行榜切换',
             baseUrl: 'https://api.suol.cc/v1/music_qs.php',
             mToken: '961D28A9C59C411C49C75FA3E9FAF24C',
 
-            // 排行榜关键词映射（下拉框 value -> API keyword 参数）
             rankKeywordMap: {
                 'hot': '热歌榜',
                 'new': '新歌榜',
                 'up':  '飙升榜'
             },
 
-            // 通用请求封装
             _fetchApi: async function(action, params = {}) {
                 const url = new URL(this.baseUrl);
                 url.searchParams.set('action', action);
@@ -210,7 +208,23 @@ class PluginManager {
                 }
             },
 
-            // 获取排行榜歌曲列表
+            // 统一歌曲对象转换（确保 id 和 pic）
+            _mapSongItem: function(item) {
+                return {
+                    id: item.id || item.songid || '',
+                    title: item.name || '未知歌曲',
+                    artist: item.artists || '未知歌手',
+                    cover: item.pic || '',            // 统一使用 pic
+                    album: item.album || '',
+                    duration: item.duration || 0,
+                    src: '',
+                    lrc: '',
+                    isOnline: true,
+                    source: 'qishui',
+                    _needResolve: true,
+                };
+            },
+
             getPlaylist: async function(playlistId) {
                 const keyword = this.rankKeywordMap[playlistId] || '热歌榜';
                 const cacheKey = `qishui_rank_${playlistId}`;
@@ -218,26 +232,12 @@ class PluginManager {
                 if (cached) return cached;
 
                 try {
-                    // action=rank，keyword 为中文排行榜名称
                     const result = await this._fetchApi('rank', { keyword });
                     if (result.code !== 200) throw new Error(result.msg || '请求失败');
 
                     let songs = [];
                     if (Array.isArray(result.data)) {
-                        // data 直接是歌曲数组
-                        songs = result.data.map(item => ({
-                            id: item.id || '',
-                            title: item.name || '未知歌曲',
-                            artist: item.artists || '未知歌手',
-                            cover: item.pic || '',
-                            album: item.album || '',
-                            duration: item.duration || 0,
-                            src: '',                    // rank 不返回 url，播放时动态解析
-                            lrc: '',
-                            isOnline: true,
-                            source: 'qishui',
-                            _needResolve: true,         // 标记需要调用 song 接口获取播放链接
-                        }));
+                        songs = result.data.map(item => this._mapSongItem(item));
                     }
 
                     this.cacheManager?.set(cacheKey, songs, 30 * 60 * 1000);
@@ -248,7 +248,6 @@ class PluginManager {
                 }
             },
 
-            // 搜索
             search: async function(keyword) {
                 if (!keyword) return [];
                 const cacheKey = `qishui_search_${keyword}`;
@@ -260,21 +259,8 @@ class PluginManager {
                     if (result.code !== 200) return [];
 
                     let songs = [];
-                    // search 返回 data.songs 数组
                     if (result.data && Array.isArray(result.data.songs)) {
-                        songs = result.data.songs.map(item => ({
-                            id: item.id || '',
-                            title: item.name || '未知歌曲',
-                            artist: item.artists || '未知歌手',
-                            cover: item.cover || '',       // 注意：search 用 cover 字段！
-                            album: item.album || '',
-                            duration: item.duration || 0,
-                            src: '',
-                            lrc: '',
-                            isOnline: true,
-                            source: 'qishui',
-                            _needResolve: true,
-                        }));
+                        songs = result.data.songs.map(item => this._mapSongItem(item));
                     }
 
                     this.cacheManager?.set(cacheKey, songs, 10 * 60 * 1000);
@@ -285,8 +271,9 @@ class PluginManager {
                 }
             },
 
-            // 获取歌曲播放链接 + 歌词（供播放器调用）
             _getSongUrl: async function(songId, level = 'standard') {
+                if (!songId) return { url: '', lyric: '', pic: '' };
+
                 const cacheKey = `qishui_song_${songId}_${level}`;
                 const cached = this.cacheManager?.get(cacheKey);
                 if (cached) return cached;
@@ -309,7 +296,7 @@ class PluginManager {
             }
         });
         
-        // ================== 本地音乐插件 ==================
+        // 本地音乐插件
         this.registerPlugin('local', {
             name: '本地音乐',
             version: '1.0.0',
