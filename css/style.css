@@ -1410,7 +1410,7 @@ select {
     width: 100%;
     padding: 8px 10px;
     border: 1px solid var(--border-color);
-    border-radius: 8px;  /* 统一圆角 */
+    border-radius: 8px;
     background: var(--bg-card);
     color: var(--text-primary);
     font-size: 13px;
@@ -1593,7 +1593,7 @@ select {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px 8px;  /* 缩小左右内边距 */
+    padding: 12px 16px 8px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     color: #1e293b;
     flex-shrink: 0;
@@ -1608,7 +1608,7 @@ select {
 }
 
 .feedback-modal-header h3 i {
-    margin-right: 8px;  /* 图标与标题间距 */
+    margin: 0 8px;  /* 左右留白相等 */
 }
 
 .feedback-modal-close {
@@ -1631,7 +1631,7 @@ select {
 }
 
 .feedback-modal-body {
-    padding: 12px 14px;  /* 上下12px 左右14px，统一紧凑 */
+    padding: 12px 14px;
     overflow-y: auto;
     flex: 1;
     background: transparent;
@@ -1639,7 +1639,7 @@ select {
 }
 .feedback-modal-body::-webkit-scrollbar { display: none; }
 
-/* 移动端底部弹出样式 */
+/* 移动端底部弹出样式（圆角统一 8px） */
 @media (max-width: 768px) {
     .feedback-modal {
         padding: 12px var(--container-padding-xs, 16px);
@@ -1647,7 +1647,7 @@ select {
     }
     .feedback-modal-content {
         max-width: 100%;
-        border-radius: 20px 20px 12px 12px;
+        border-radius: 8px;          /* 与logo一致 */
         transform: translateY(100%);
         opacity: 1;
         transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
@@ -1657,9 +1657,10 @@ select {
         transform: translateY(0);
     }
     .feedback-modal-header { padding: 14px 16px 6px; }
-    .feedback-modal-body { padding: 12px 14px; }  /* 移动端同样紧凑 */
+    .feedback-modal-body { padding: 12px 14px; }
     .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
 }
+
 /* ========== 渲染性能优化补充 ========== */
 
 /* 对大量重复卡片容器启用 content-visibility（全局可用） */
@@ -1673,7 +1674,7 @@ select {
     transition-property: transform;
 }
 
-/* 减少亚克力效果的 blur 开销（在非必要元素上降低模糊度） */
+/* 减少亚克力效果的 blur 开销 */
 .reduce-blur {
     backdrop-filter: blur(8px) saturate(100%) !important;
     -webkit-backdrop-filter: blur(8px) saturate(100%) !important;
