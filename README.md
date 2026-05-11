@@ -14,15 +14,17 @@
 ## ✨ 特性
 
 - 🧭 **三级导航**：分类 > 子分类 > 网站卡片，清晰直达
-- 🔍 **多引擎搜索**：百度、谷歌、360、抖音、全网聚合
+- 🔍 **多引擎搜索**：百度、谷歌、360、抖音，支持搜索建议
 - 🖼️ **每日必应壁纸** + 风景轮播
-- 🎵 **内置音乐播放器**：网易云、QQ、抖音热歌榜、本地音乐
+- 🎵 **内置音乐播放器**：网易云、QQ音乐、汽水音乐、本地音乐，支持搜索与排行榜切换
 - ☁️ **天气卡片**：自动定位、未来预报
 - 🧾 **常用标签**：60s快讯、图片工具、热搜等 40+ 快捷入口
 - 🎣 **趣味木鱼**：功德/幸运/财富/健康，敲击有特效和音效
 - 📝 **星聚笔记**：云存储的便签（API 驱动）
-- 💬 **Waline 评论系统**：净网支持 LaTeX
+- 💬 **Waline 评论系统**：支持 LaTeX
 - 📱 **响应式设计**：适配桌面、平板、手机
+- 🔒 **安全检测**：网站投稿时自动执行 Google Safe Browsing + VirusTotal 双重检测
+- ⚡ **性能优化**：Workers 缓存优先、非阻塞写入；前端资源 CDN 统一、渲染延迟加载
 
 ## 🌐 在线体验
 
@@ -30,7 +32,6 @@
 后台管理：`https://xjdh688.ccwu.cc/admin.html`（暂不开放）  
 图床：`https://tc688.ccwu.cc`（Cloudflare Images + Hugging Face）  
 影视：`https://ys688.ccwu.cc`（MoonTVPlus）
-
 
 ## 🚀 快速部署
 
@@ -42,6 +43,18 @@
    - 设置环境变量：`ADMIN_TOKEN`、`ALLOWED_ORIGINS` 等
 4. 将 `admin.html` 作为管理后台访问并开始添加导航内容
 5. 修改 `worker.js` 中的 `CACHE_TTL` 和域名配置以适应你的需求
+
+### 环境变量
+
+| 变量名 | 说明 |
+|--------|------|
+| `ADMIN_TOKEN` | 后台管理 Token |
+| `ADMIN_IP_WHITELIST` | IP 白名单（可选，逗号分隔） |
+| `ALLOWED_ORIGINS` | 允许的前端域名（逗号分隔） |
+| `APIHZ_ID` | APIHz 用户 ID（笔记/搜索代理） |
+| `APIHZ_KEY` | APIHz 密钥 |
+| `VT_API_KEY` | VirusTotal API 密钥 |
+| `SAFE_BROWSING_KEY` | Google Safe Browsing API 密钥 |
 
 ## 📁 目录结构
 ```
