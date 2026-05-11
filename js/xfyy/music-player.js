@@ -399,8 +399,8 @@ class MusicPlayer {
         apis.forEach(api => {
             const elements = this.apiElements[api];
             if (!elements) return;
-            // 搜索功能：本地音乐不支持搜索；QQ音乐搜索暂不可用 (我们仍保留输入框但事件可以绑定，插件内返回空)
-            if (api === 'local') return; // 本地音乐始终不能搜索
+            // 本地音乐不支持搜索，跳过事件绑定
+            if (api === 'local') return;
             if (elements.playlistSelect) {
                 elements.playlistSelect.addEventListener('change', () => this.loadApiPlaylist(api));
             }
@@ -605,6 +605,7 @@ class MusicPlayer {
     }
 
     toggleSearchMode(apiId) {
+        // 本地音乐和QQ音乐不支持搜索
         if (apiId === 'local' || apiId === 'qq') {
             window.toast.show('该功能不支持搜索', 'info');
             return;
