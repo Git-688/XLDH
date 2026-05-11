@@ -45,7 +45,7 @@
     user-select: none;
 }
 
-/* 幻灯片轨道 */
+/* 幻灯片轨道 —— 性能优化：transition 仅限 transform */
 .carousel-track {
     display: flex;
     width: 100%;
@@ -81,7 +81,7 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: background 0.3s ease, color 0.3s ease;
     z-index: 10;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
@@ -138,7 +138,7 @@
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.5);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, background 0.3s ease;
 }
 
 .carousel-dot.active {
