@@ -281,9 +281,9 @@ class MusicPlayer {
         this.isVolumeSliderVisible = false;
 
         this.hasNotifiedLocal = false;
-        this.hasNotifiedMigu = false;
+        this.hasNotifiedQishui = false;
 
-        const apis = ['netease', 'qq', 'migu', 'local'];
+        const apis = ['netease', 'qq', 'qishui', 'local'];
         apis.forEach(api => this.isSearchMode.set(api, false));
     }
 
@@ -329,7 +329,7 @@ class MusicPlayer {
     }
 
     initializeApiElements() {
-        const apis = ['netease', 'qq', 'migu', 'local'];
+        const apis = ['netease', 'qq', 'qishui', 'local'];
         this.apiElements = {};
 
         apis.forEach(api => {
@@ -395,11 +395,12 @@ class MusicPlayer {
     }
 
     bindApiEvents() {
-        const apis = ['netease', 'qq', 'migu', 'local'];
+        const apis = ['netease', 'qq', 'qishui', 'local'];
         apis.forEach(api => {
             const elements = this.apiElements[api];
             if (!elements) return;
-            if (api === 'local' || api === 'migu' || api === 'qq') return; // 只允许netease搜索
+            // 搜索功能：本地音乐不支持搜索；QQ音乐搜索暂不可用 (我们仍保留输入框但事件可以绑定，插件内返回空)
+            if (api === 'local') return; // 本地音乐始终不能搜索
             if (elements.playlistSelect) {
                 elements.playlistSelect.addEventListener('change', () => this.loadApiPlaylist(api));
             }
@@ -604,7 +605,7 @@ class MusicPlayer {
     }
 
     toggleSearchMode(apiId) {
-        if (apiId === 'migu' || apiId === 'local' || apiId === 'qq') {
+        if (apiId === 'local' || apiId === 'qq') {
             window.toast.show('该功能不支持搜索', 'info');
             return;
         }
@@ -675,11 +676,12 @@ class MusicPlayer {
                     window.toast.show(`已加载 ${playlist.length} 首本地歌曲`, 'info');
                     this.hasNotifiedLocal = true;
                 }
-            } else if (apiId === 'migu') {
-                playlist = await this.pluginManager.getPlaylist(apiId, 'hot');
-                if (playlist.length > 0 && !this.hasNotifiedMigu) {
-                    window.toast.show(`已加载 ${playlist.length} 首抖音热歌`, 'info');
-                    this.hasNotifiedMigu = true;
+            } else if (apiId === 'qishui') {
+                const playlistId = elements.playlistSelect ? elements.playlistSelect.value : 'hot';
+                playlist = await this.pluginManager.getPlaylist(apiId, playlistId);
+                if (playlist.length > 0 && !this.hasNotifiedQishui) {
+                    window.toast.show(`已加载 ${playlist.length} 首汽水音乐`, 'info');
+                    this.hasNotifiedQishui = true;
                 }
             } else {
                 const playlistId = elements.playlistSelect ? elements.playlistSelect.value : '3778678';
@@ -715,7 +717,7 @@ class MusicPlayer {
     }
 
     async searchApi(apiId) {
-        if (apiId === 'migu' || apiId === 'local' || apiId === 'qq') {
+        if (apiId === 'local' || apiId === 'qq') {
             return;
         }
         const elements = this.apiElements[apiId];
@@ -860,7 +862,7 @@ class MusicPlayer {
     }
 
     clearAllActiveIndicators() {
-        const apis = ['netease', 'qq', 'migu', 'local'];
+        const apis = ['netease', 'qq', 'qishui', 'local'];
         apis.forEach(api => {
             const elements = this.apiElements[api];
             if (elements && elements.playlistContainer) {
@@ -876,7 +878,25 @@ class MusicPlayer {
         if (index < 0 || index >= currentPlaylist.length) return;
         this.currentIndex = index;
         this.currentPlaylist = currentPlaylist;
-        const song = currentPlaylist[index];
+        let song = currentPlaylist[index];
+
+        // 汽水音乐动态解析播放链接
+        if (song._needResolve) {
+            const plugin = this.pluginManager.getPlugin('qishui');
+            if (plugin && plugin._getSongUrl) {
+                try {
+                    const resolved = await plugin._getSongUrl(song.id, 'standard');
+                    if (resolved.url) {
+                        song.src = resolved.url;
+                        song.lrc = resolved.lyric || song.lrc;
+                        song.cover = song.cover || resolved.pic || '';
+                    }
+                } catch (e) {
+                    console.warn('汽水音乐解析失败:', e.message);
+                }
+            }
+        }
+
         this.isLoading = true;
         this.elements.playBtn.disabled = true;
         try {
@@ -1212,7 +1232,7 @@ class MusicPlayer {
         const apiNames = {
             'netease': '网易云音乐',
             'qq': 'QQ音乐',
-            'migu': '抖音热歌榜',
+            'qishui': '汽水音乐',
             'local': '本地音乐'
         };
         return apiNames[apiId] || apiId;
@@ -1241,7 +1261,7 @@ class MusicPlayer {
             this.cacheManager.cleanup();
         }
         this.hasNotifiedLocal = false;
-        this.hasNotifiedMigu = false;
+        this.hasNotifiedQishui = false;
         if (window.musicPlayer === this) {
             window.musicPlayer = null;
         }
@@ -1251,7 +1271,7 @@ class MusicPlayer {
         console.log('音乐播放器资源已清理');
     }
 
-    // ========== 本地存储读写方法（已修复） ==========
+    // ========== 本地存储读写方法 ==========
     saveVolume(volume) {
         try {
             localStorage.setItem('musicPlayer_volume', volume.toString());
