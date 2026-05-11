@@ -85,8 +85,11 @@
 
         /* ================= 网站投稿模态框特异性 ================= */
         #submitModal .feedback-modal-content {
-            max-height: 60vh;
+            max-height: 80vh;          /* 放宽限制，允许随内容自动扩展 */
             max-width: 520px;
+        }
+        #submitModal .feedback-modal-body {
+            overflow-y: auto;          /* 当描述框高度超出模态框时内部滚动 */
         }
         #submitModal .feedback-modal-header h3 i { color: #4361ee; }
 
@@ -139,6 +142,7 @@
         @media (max-width: 768px) {
             #notebookModal .feedback-modal-content { height: 90%; max-height: 90%; }
             #commentModal .feedback-modal-content { height: 90%; max-height: 90%; }
+            #submitModal .feedback-modal-content { max-height: 85vh; } /* 移动端稍放宽 */
             .notebook-item { padding: 8px 10px; }
             .notebook-title { font-size: 14px; }
             .notebook-content { font-size: 11px; }
