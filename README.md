@@ -7,7 +7,7 @@
   ![GitHub forks](https://img.shields.io/github/forks/Git-688/XLDH?style=social)
   ![Website](https://img.shields.io/website?url=https%3A%2F%2Fxjdh688.ccwu.cc&label=网站状态)
   ![License](https://img.shields.io/github/license/Git-688/XLDH)
-  ！[![群](https://img.shields.io/badge/%E4%BC%81%E9%B9%85%E7%BE%A4-187780263-ff69b4)](https://qun.qq.com/universal-share/share?ac=1&authKey=%2BP3qVBuKJpn3kIn5jBnlVFWx7S3Z%2Be0sD4KKmK4KTqqqQYjD8uQoNyhFMYRx3EXO&busi_data=eyJncm91cENvZGUiOiIxODc3ODAyNjMiLCJ0b2tlbiI6IlBkYzZ3TGlCK0ZLTWdyWEZLNExwOVZodHVycFRhT1A0L2swWUgxNDZrZ0c1WTFXL29jcVhJWk9uMWcwbnVPK3MiLCJ1aW4iOiIxNTk1MTI2NTM0In0%3D&data=b2ypnWVy3QPJUZq7msse4tlsICKy2GqgCLKOnfNwgdSHGsUxqHTfLoQmkwpQ2q61yXoOfKJsGRJ9DnG5cad8dA&svctype=4&tempid=h5_group_info)
+  [![群](https://img.shields.io/badge/%E4%BC%81%E9%B9%85%E7%BE%A4-187780263-6BC5FF)](https://qun.qq.com/universal-share/share?ac=1&authKey=%2BP3qVBuKJpn3kIn5jBnlVFWx7S3Z%2Be0sD4KKmK4KTqqqQYjD8uQoNyhFMYRx3EXO&busi_data=eyJncm91cENvZGUiOiIxODc3ODAyNjMiLCJ0b2tlbiI6IlBkYzZ3TGlCK0ZLTWdyWEZLNExwOVZodHVycFRhT1A0L2swWUgxNDZrZ0c1WTFXL29jcVhJWk9uMWcwbnVPK3MiLCJ1aW4iOiIxNTk1MTI2NTM0In0%3D&data=b2ypnWVy3QPJUZq7msse4tlsICKy2GqgCLKOnfNwgdSHGsUxqHTfLoQmkwpQ2q61yXoOfKJsGRJ9DnG5cad8dA&svctype=4&tempid=h5_group_info)
 </div>
 
 ---
