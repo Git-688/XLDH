@@ -171,7 +171,7 @@ class PluginManager {
             }
         });
 
-        // 汽水音乐插件（修复播放问题）
+        // 汽水音乐插件
         this.registerPlugin('qishui', {
             name: '汽水音乐',
             version: '1.2.1',
@@ -208,13 +208,12 @@ class PluginManager {
                 }
             },
 
-            // 统一歌曲对象转换（确保 id 和 pic）
             _mapSongItem: function(item) {
                 return {
                     id: item.id || item.songid || '',
                     title: item.name || '未知歌曲',
                     artist: item.artists || '未知歌手',
-                    cover: item.pic || '',            // 统一使用 pic
+                    cover: item.pic || '',
                     album: item.album || '',
                     duration: item.duration || 0,
                     src: '',
