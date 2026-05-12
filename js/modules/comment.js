@@ -1,6 +1,6 @@
 /**
- * 评论模块 - Waline V3 修复版（关闭按钮事件委托）
- * 现已添加多套表情包支持
+ * 评论模块 - Waline V3 修复版
+ * 包含微博表情及自定义表情支持
  */
 class CommentModule {
   static CONFIG = {
@@ -16,21 +16,15 @@ class CommentModule {
       pageSize: 10,
       login: 'enable',
       copyright: false,
-      // 多套表情包
+      // 表情包配置
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
         'https://unpkg.com/@waline/emojis@1.4.0/qq',
-
-'https://cdn.jsdelivr.net/gh/ybyqw/emojis@1.0.0/douyin',
-
-'https://cdn.jsdelivr.net/gh/ybyqw/emojis@1.0.0/douyin-gif',
-
-'https://cdn.jsdelivr.net/gh/ybyqw/emojis@1.0.0/douyin-face-gif',
-
-'https://cdn.jsdelivr.net/gh/walinejs/emojis@1.4.0/bmoji-gif',
         'https://unpkg.com/@waline/emojis@1.4.0/tieba',
         'https://unpkg.com/@waline/emojis@1.4.0/weibo',
         'https://unpkg.com/@waline/emojis@1.4.0/alus',
+        // 在这里添加你自定义的抖音表情包链接
+        // 'https://你的-emoji-链接/抖音表情/',
       ],
     }
   };
