@@ -12,13 +12,12 @@ class CommentModule {
     activeClass: 'active',
     walineOptions: {
       dark: 'auto',
-      meta: ['nick', 'mail', 'link', 'ua'],   // ✅ 显示浏览器/系统标识
+      meta: ['nick', 'mail', 'link', 'ua', 'region'],  
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
-      noCopyright: false,   // ✅ 显示版权
-      noRss: false,         // ✅ 显示订阅链接
-      disableRegion: false, // ✅ 显示 IP 属地
+      noCopyright: false,
+      noRss: false,
 
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
@@ -81,7 +80,7 @@ class CommentModule {
         }
       },
 
-      // 五字社区等级标签（需服务端 LEVELS 环境变量，如 0,5,15,30,60,100）
+      // 五字社区等级标签
       locale: {
         level0: '初来乍到',
         level1: '偶尔光临',
@@ -138,7 +137,7 @@ class CommentModule {
     }
   }
 
-  // ===== 自动搜索 =====
+  // 自动搜索
   _watchSearchPanel() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
