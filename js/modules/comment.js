@@ -1,7 +1,7 @@
 /**
  * 评论模块 - Waline V3 修复版
  * 集成 QQ 表情搜索 + 自动搜索 (防抖 500ms)
- * 已移除版权信息和订阅链接
+ * 已开启订阅链接，并配置等级标签名称
  */
 class CommentModule {
   static CONFIG = {
@@ -16,9 +16,9 @@ class CommentModule {
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
-      copyright: false, // 即使设为 true，下面 noCopyright 仍会隐藏
-      noCopyright: false,   // 隐藏 “Powered by Waline”
-      // noRss: false,         // 隐藏订阅链接
+      // 隐藏版权信息
+      noCopyright: true,
+      // 已开启订阅链接（不再设置 noRss: true）
 
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
@@ -30,12 +30,10 @@ class CommentModule {
 
       // 自定义表情搜索 (QQ 表情包 API)
       search: {
-        // 默认推荐
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
             .then(res => res.json())
             .then(json => {
-              // 该 API 成功时 code 为 1
               if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
                 return json.data.map(item => ({
                   src: item.url,
@@ -47,7 +45,6 @@ class CommentModule {
             })
             .catch(() => []);
         },
-        // 关键词搜索
         search(word) {
           return fetch(
             `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`
@@ -65,7 +62,6 @@ class CommentModule {
             })
             .catch(() => []);
         },
-        // 加载更多（分页）
         more(word, pageNumber) {
           return fetch(
             `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`
@@ -83,6 +79,16 @@ class CommentModule {
             })
             .catch(() => []);
         }
+      },
+
+      // ✅ 等级标签名称配置（需配合服务端 LEVELS 环境变量，默认阈值建议：0,5,15,30,60,100）
+      locale: {
+        level0: '残魂·窥墟影',
+        level1: '幽影·寻禁典',
+        level2: '冥守·藏古籍',
+        level3: '虚渡·传秘录',
+        level4: '渊主·掌万秘',
+        level5: '寂尊·御鸿蒙'
       }
     }
   };
@@ -132,10 +138,9 @@ class CommentModule {
     } catch (error) { console.error('[评论] Waline 初始化失败:', error); }
   }
 
-  // 监听搜索面板，绑定输入自动搜索
+  // 观察搜索面板，绑定自动搜索
   _watchSearchPanel() {
     if (this.searchObserver) this.searchObserver.disconnect();
-
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
 
@@ -152,35 +157,26 @@ class CommentModule {
         }
       }
     });
-
     this.searchObserver.observe(container, { childList: true, subtree: true });
   }
 
   _bindAutoSearch(panel) {
     const input = panel.querySelector('input');
     const btn = panel.querySelector('button');
-
-    if (!input || !btn) {
-      console.warn('[自动搜索] 未找到输入框或按钮');
-      return;
-    }
-
+    if (!input || !btn) return;
     if (input.dataset.autoSearchBound === 'true') return;
     input.dataset.autoSearchBound = 'true';
 
     const trigger = () => {
       clearTimeout(this.searchInputTimer);
       const word = input.value.trim();
-      if (word) {
-        btn.click();
-      }
+      if (word) btn.click();
     };
 
     input.addEventListener('input', () => {
       clearTimeout(this.searchInputTimer);
       this.searchInputTimer = setTimeout(trigger, 500);
     });
-
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         clearTimeout(this.searchInputTimer);
