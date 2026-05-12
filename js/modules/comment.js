@@ -20,7 +20,14 @@ class CommentModule {
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
         'https://unpkg.com/@waline/emojis@1.4.0/qq',
+
 'https://cdn.jsdelivr.net/gh/ybyqw/emojis@1.0.0/douyin',
+
+'https://cdn.jsdelivr.net/gh/ybyqw/emojis@1.0.0/douyin-gif',
+
+'https://cdn.jsdelivr.net/gh/ybyqw/emojis@1.0.0/douyin-face-gif',
+
+'https://cdn.jsdelivr.net/gh/walinejs/emojis@1.4.0/bmoji-gif',
         'https://unpkg.com/@waline/emojis@1.4.0/tieba',
         'https://unpkg.com/@waline/emojis@1.4.0/weibo',
         'https://unpkg.com/@waline/emojis@1.4.0/alus',
