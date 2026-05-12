@@ -15,6 +15,23 @@
   --waline-text-color-light: var(--text-secondary, #666666);
 }
 
+/* 移除发布框卡片的所有边框、阴影和内外间距 */
+#waline-comment .wl-panel {
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 0 16px 0 !important;  /* 仅保留与下方列表的间距，可根据需要改为0 */
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+/* 微调评论条目样式（可选） */
+#waline-comment .wl-comment-item {
+  border: none !important;
+  padding: 10px 0 !important;
+  margin: 0 !important;
+}
+
 /* 移动端适配 */
 @media (max-width: 600px) {
   #waline-comment {
@@ -47,21 +64,4 @@
 }
 #waline-comment .wl-input-group {
   margin-bottom: 10px;
-}
-
-/* 评论模态框内容区域紧贴顶部，并添加分割线 */
-#commentModal .feedback-modal-body {
-  padding: 0;                    /* 完全去除内边距 */
-  border-top: 1px solid var(--waline-border-color, #ddd); /* 头部下方分割线 */
-}
-
-/* 确保 Waline 内部面板无多余顶部间距 */
-#waline-comment .wl-panel {
-  padding-top: 0;
-  margin-top: 0;
-}
-
-/* 可选：处理标题/排序栏的上边距 */
-#waline-comment .wl-header {
-  margin-top: 0;
 }
