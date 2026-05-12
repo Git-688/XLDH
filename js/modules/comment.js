@@ -1,5 +1,6 @@
 /**
  * 评论模块 - Waline V3 修复版（关闭按钮事件委托）
+ * 现已添加多套表情包支持
  */
 class CommentModule {
   static CONFIG = {
@@ -15,6 +16,14 @@ class CommentModule {
       pageSize: 10,
       login: 'enable',
       copyright: false,
+      // 多套表情包
+      emoji: [
+        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
+        'https://unpkg.com/@waline/emojis@1.4.0/qq',
+        'https://unpkg.com/@waline/emojis@1.4.0/tieba',
+        'https://unpkg.com/@waline/emojis@1.4.0/weibo',
+        'https://unpkg.com/@waline/emojis@1.4.0/alus',
+      ],
     }
   };
 
