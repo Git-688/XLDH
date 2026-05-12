@@ -1,6 +1,7 @@
 /**
- * 评论模块 - Waline V3 修复版
- * 已集成 QQ 表情搜索 API，并实现输入后自动搜索（防抖 500ms）
+ * 评论模块 - Waline V3 修复版（关闭按钮事件委托）
+ * 集成 QQ 表情搜索 API + 输入自动搜索（防抖500ms）
+ * 已恢复显示 “Powered by Waline” 和订阅链接
  */
 class CommentModule {
   static CONFIG = {
@@ -16,8 +17,9 @@ class CommentModule {
       pageSize: 10,
       login: 'enable',
       copyright: false,
-      noCopyright: true,
-      noRss: true,
+      // ⚠️ 已移除 noCopyright 和 noRss，让版权和订阅显示
+      // noCopyright: true,
+      // noRss: true,
 
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
@@ -89,13 +91,13 @@ class CommentModule {
     this.walineInstance = null;
     this.modal = null;
     this.openBtn = null;
-    this.searchInputTimer = null;   // 防抖定时器
-    this.searchObserver = null;     // 监听搜索面板的观察者
+    this.searchInputTimer = null;
+    this.searchObserver = null;
 
     this._initDOM();
     this._bindEvents();
     this._initWaline();
-    this._watchSearchPanel();       // 启动自动搜索监听
+    this._watchSearchPanel();
   }
 
   _initDOM() {
@@ -130,37 +132,32 @@ class CommentModule {
     } catch (error) { console.error('[评论] Waline 初始化失败:', error); }
   }
 
-  // 观察搜索面板的出现，并给输入框绑定自动搜索
+  // 观察搜索面板，绑定自动搜索
   _watchSearchPanel() {
-    // 如果已经有一个观察者，先断开
     if (this.searchObserver) this.searchObserver.disconnect();
 
     this.searchObserver = new MutationObserver((mutations) => {
       mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
           if (node.nodeType === 1 && (node.matches?.('.wl-search') || node.querySelector?.('.wl-search'))) {
-            // 搜索面板已插入 DOM，绑定输入事件
-            const searchPanel = node.matches('.wl-search') ? node : node.querySelector('.wl-search');
-            if (searchPanel) this._bindSearchInput(searchPanel);
+            const panel = node.matches('.wl-search') ? node : node.querySelector('.wl-search');
+            if (panel) this._bindSearchInput(panel);
           }
         });
       });
     });
 
-    // 观察评论容器下所有子节点的增加
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (container) {
       this.searchObserver.observe(container, { childList: true, subtree: true });
     }
   }
 
-  // 在搜索面板中找到输入框，绑定 input 事件
   _bindSearchInput(searchPanel) {
     const input = searchPanel.querySelector('input');
-    const searchBtn = searchPanel.querySelector('button'); // 通常是搜索按钮
+    const searchBtn = searchPanel.querySelector('button');
     if (!input || !searchBtn) return;
 
-    // 防止重复绑定
     if (input.dataset.autoSearchBound === 'true') return;
     input.dataset.autoSearchBound = 'true';
 
@@ -168,18 +165,15 @@ class CommentModule {
       clearTimeout(this.searchInputTimer);
       const word = input.value.trim();
       if (word) {
-        // 模拟点击搜索按钮，让 Waline 内部调用我们提供的 search 函数
         searchBtn.click();
       }
     };
 
-    // 防抖 500ms 后自动搜索
     input.addEventListener('input', () => {
       clearTimeout(this.searchInputTimer);
       this.searchInputTimer = setTimeout(triggerSearch, 500);
     });
 
-    // 按回车立即搜索
     input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         clearTimeout(this.searchInputTimer);
@@ -202,7 +196,6 @@ class CommentModule {
   }
 
   destroy() {
-    // 清理定时器和观察者
     clearTimeout(this.searchInputTimer);
     if (this.searchObserver) this.searchObserver.disconnect();
     this.walineInstance?.destroy?.();
