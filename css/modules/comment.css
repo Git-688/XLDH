@@ -1,9 +1,8 @@
-/* ========== 评论模块特化样式 ========== */
+/* ========== 评论模块特化样式 - 最终版 ========== */
 :root {
   --waline-theme-color: var(--primary-color, #4361ee);
 }
 
-/* Waline 容器定制 */
 #waline-comment {
   --waline-font-size: 0.95rem;
   --waline-theme-color: var(--primary-color, #4361ee);
@@ -15,27 +14,24 @@
   --waline-text-color-light: var(--text-secondary, #666666);
 }
 
-/* ---------- 发布框大卡片：去边框、无间距、紧贴模态框 ---------- */
+/* 发布框去卡片化，紧贴模态框 */
 #waline-comment .wl-panel {
   border: none !important;
   box-shadow: none !important;
   border-radius: 0 !important;
   background: transparent !important;
-
   padding: 0 !important;
   margin: 0 !important;
-
-  /* 抵消模态框 body 的左右内边距（12px），让卡片左右边缘紧贴模态框边框 */
   margin-left: -12px;
   margin-right: -12px;
 }
 
-/* 移除内容区顶部留白 */
+/* 去除内容区顶部留白 */
 #commentModal .feedback-modal-body {
   padding-top: 0 !important;
 }
 
-/* 其他元素间距归零（去除 Waline 默认内部间距） */
+/* 其他元素间距归零 */
 #waline-comment .wl-header,
 #waline-comment .wl-comment-item,
 #waline-comment .wl-comment-item .wl-content,
@@ -44,20 +40,18 @@
   padding: 0 !important;
 }
 
-/* 移动端适配 */
+/* 移动端 */
 @media (max-width: 600px) {
-  #waline-comment {
-    --waline-font-size: 0.9rem;
-  }
+  #waline-comment { --waline-font-size: 0.9rem; }
 }
 
 /* 暗色模式 */
 @media (prefers-color-scheme: dark) {
   #waline-comment {
-    --waline-bgcolor: var(--bg-card, #2a2a2a);
-    --waline-bgcolor-light: var(--bg-light, #3a3a3a);
-    --waline-border-color: var(--border-color, #3e3e3e);
-    --waline-text-color: var(--text-primary, #f1f1f1);
-    --waline-text-color-light: var(--text-secondary, #aaaaaa);
+    --waline-bgcolor: #2a2a2a;
+    --waline-bgcolor-light: #3a3a3a;
+    --waline-border-color: #3e3e3e;
+    --waline-text-color: #f1f1f1;
+    --waline-text-color-light: #aaaaaa;
   }
 }
