@@ -1,7 +1,7 @@
 /**
  * 评论模块 - Waline V3 修复版
  * 集成 QQ 表情搜索 + 自动搜索 (防抖 500ms)
- * 已开启订阅链接，并优化等级标签显示
+ * 显示归属地、浏览器、订阅链接 + 五字社区等级标签
  */
 class CommentModule {
   static CONFIG = {
@@ -12,14 +12,13 @@ class CommentModule {
     activeClass: 'active',
     walineOptions: {
       dark: 'auto',
-      meta: ['nick', 'mail', 'link'],
+      meta: ['nick', 'mail', 'link', 'ua'],
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
-      // ✅ 改为 false 以显示版权和订阅链接
       noCopyright: false,
-      // ✅ 显式允许显示 RSS 订阅链接
       noRss: false,
+      disableRegion: false,
 
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
@@ -31,7 +30,6 @@ class CommentModule {
 
       // 自定义表情搜索 (QQ 表情包 API)
       search: {
-        // 默认推荐
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
             .then(res => res.json())
@@ -47,7 +45,6 @@ class CommentModule {
             })
             .catch(() => []);
         },
-        // 关键词搜索
         search(word) {
           return fetch(
             `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`
@@ -65,7 +62,6 @@ class CommentModule {
             })
             .catch(() => []);
         },
-        // 加载更多（分页）
         more(word, pageNumber) {
           return fetch(
             `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`
@@ -85,14 +81,14 @@ class CommentModule {
         }
       },
 
-      // ✅ 等级标签配置（需服务端配置 LEVELS 环境变量）
+      // 五字社区等级标签（需服务端 LEVELS 环境变量，如 0,5,15,30,60,100）
       locale: {
-        level0: '残魂·窥墟影',
-        level1: '幽影·寻禁典',
-        level2: '冥守·藏古籍',
-        level3: '虚渡·传秘录',
-        level4: '渊主·掌万秘',
-        level5: '寂尊·御鸿蒙'
+        level0: '初来乍到',
+        level1: '偶尔光临',
+        level2: '常驻居民',
+        level3: '核心会员',
+        level4: '论坛元老',
+        level5: '至尊传说'
       }
     }
   };
@@ -142,7 +138,6 @@ class CommentModule {
     } catch (error) { console.error('[评论] Waline 初始化失败:', error); }
   }
 
-  // 观察搜索面板，绑定自动搜索
   _watchSearchPanel() {
     if (this.searchObserver) this.searchObserver.disconnect();
     const container = document.querySelector(CommentModule.CONFIG.el);
