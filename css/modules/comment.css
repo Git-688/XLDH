@@ -3,6 +3,7 @@
   --waline-theme-color: var(--primary-color, #4361ee);
 }
 
+/* Waline 容器定制 */
 #waline-comment {
   --waline-font-size: 0.95rem;
   --waline-theme-color: var(--primary-color, #4361ee);
@@ -20,12 +21,13 @@
   box-shadow: none !important;
   border-radius: 0 !important;
   background: transparent !important;
+
   padding: 0 !important;
   margin: 0 !important;
+
+  /* 抵消模态框 body 的左右内边距（12px），让卡片左右边缘紧贴模态框边框 */
   margin-left: -12px;
   margin-right: -12px;
-  padding-left: 0;
-  padding-right: 0;
 }
 
 /* 移除内容区顶部留白 */
@@ -33,39 +35,13 @@
   padding-top: 0 !important;
 }
 
-/* 其他元素间距归零 */
+/* 其他元素间距归零（去除 Waline 默认内部间距） */
 #waline-comment .wl-header,
 #waline-comment .wl-comment-item,
 #waline-comment .wl-comment-item .wl-content,
 #waline-comment .wl-input-group {
   margin: 0 !important;
   padding: 0 !important;
-}
-
-/* ---------- 强制显示版权和订阅 ---------- */
-#waline-comment .wl-power {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  margin: 12px 0 4px 0 !important;
-  font-size: 12px !important;
-  text-align: center;
-  color: var(--waline-text-color-light);
-}
-
-#waline-comment .wl-rss {
-  display: flex !important;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 8px !important;
-  font-size: 12px !important;
-}
-
-/* 确保底部可见 */
-#commentModal .feedback-modal-body {
-  overflow-y: auto !important;
-  max-height: 70vh !important;
-  padding-bottom: 24px !important;
 }
 
 /* 移动端适配 */
