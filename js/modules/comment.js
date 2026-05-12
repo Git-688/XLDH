@@ -1,7 +1,7 @@
 /**
  * 评论模块 - Waline V3 修复版
  * 集成 QQ 表情搜索 + 自动搜索 (防抖 500ms)
- * 已开启订阅链接，并配置等级标签名称
+ * 已开启订阅链接，并优化等级标签显示
  */
 class CommentModule {
   static CONFIG = {
@@ -16,9 +16,10 @@ class CommentModule {
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
-      // 隐藏版权信息
-      noCopyright: true,
-      // 已开启订阅链接（不再设置 noRss: true）
+      // ✅ 改为 false 以显示版权和订阅链接
+      noCopyright: false,
+      // ✅ 显式允许显示 RSS 订阅链接
+      noRss: false,
 
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
@@ -30,6 +31,7 @@ class CommentModule {
 
       // 自定义表情搜索 (QQ 表情包 API)
       search: {
+        // 默认推荐
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
             .then(res => res.json())
@@ -45,6 +47,7 @@ class CommentModule {
             })
             .catch(() => []);
         },
+        // 关键词搜索
         search(word) {
           return fetch(
             `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`
@@ -62,6 +65,7 @@ class CommentModule {
             })
             .catch(() => []);
         },
+        // 加载更多（分页）
         more(word, pageNumber) {
           return fetch(
             `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`
@@ -81,7 +85,7 @@ class CommentModule {
         }
       },
 
-      // ✅ 等级标签名称配置（需配合服务端 LEVELS 环境变量，默认阈值建议：0,5,15,30,60,100）
+      // ✅ 等级标签配置（需服务端配置 LEVELS 环境变量）
       locale: {
         level0: '残魂·窥墟影',
         level1: '幽影·寻禁典',
