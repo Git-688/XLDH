@@ -19,6 +19,7 @@ class CommentModule {
       noCopyright: false,   // ✅ 显示版权
       noRss: false,         // ✅ 显示订阅链接
       disableRegion: false, // ✅ 显示 IP 属地
+
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
         'https://unpkg.com/@waline/emojis@1.4.0/qq',
