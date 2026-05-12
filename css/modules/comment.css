@@ -15,6 +15,11 @@
   --waline-text-color-light: var(--text-secondary, #666666);
 }
 
+/* ---------- 移除评论模态框内容区顶部内边距 ---------- */
+#commentModal .feedback-modal-body {
+  padding-top: 0 !important;
+}
+
 /* ---------- 发布框大卡片：去边框、无间距、紧贴模态框 ---------- */
 #waline-comment .wl-panel {
   border: none !important;
