@@ -1,7 +1,7 @@
 /**
  * 评论模块 - Waline V3 修复版
  * 集成 QQ 表情搜索 + 自动搜索 (防抖 500ms)
- * 修复：API code=1 时也处理数据；显示版权及订阅链接
+ * 已移除版权信息和订阅链接
  */
 class CommentModule {
   static CONFIG = {
@@ -16,11 +16,9 @@ class CommentModule {
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
-      // ⚠️ 关键修复：copyright 设为 true 才会显示 Powered by Waline
-      copyright: true,
-      // 不再隐藏版权和订阅
-      // noCopyright: true,
-      // noRss: true,
+      copyright: true, // 即使设为 true，下面 noCopyright 仍会隐藏
+      noCopyright: true,   // 隐藏 “Powered by Waline”
+      noRss: true,         // 隐藏订阅链接
 
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
@@ -37,7 +35,7 @@ class CommentModule {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
             .then(res => res.json())
             .then(json => {
-              // 该 API 成功时 code 为 1，而不是 200
+              // 该 API 成功时 code 为 1
               if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
                 return json.data.map(item => ({
                   src: item.url,
@@ -51,14 +49,11 @@ class CommentModule {
         },
         // 关键词搜索
         search(word) {
-          console.log('[表情搜索] 关键词:', word);
           return fetch(
             `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`
           )
             .then(res => res.json())
             .then(json => {
-              console.log('[表情搜索] API 返回:', json);
-              // 兼容 code=1 和 code=200
               if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
                 return json.data.map(item => ({
                   src: item.url,
@@ -68,10 +63,7 @@ class CommentModule {
               }
               return [];
             })
-            .catch(err => {
-              console.error('[表情搜索] 请求失败:', err);
-              return [];
-            });
+            .catch(() => []);
         },
         // 加载更多（分页）
         more(word, pageNumber) {
@@ -180,7 +172,6 @@ class CommentModule {
       clearTimeout(this.searchInputTimer);
       const word = input.value.trim();
       if (word) {
-        console.log('[自动搜索] 触发搜索:', word);
         btn.click();
       }
     };
