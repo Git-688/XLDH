@@ -1,6 +1,6 @@
 /**
  * 评论模块 - Waline V3 修复版
- * 已集成 QQ 表情包搜索 API (oiapi.net)
+ * 已集成 QQ 表情搜索 API，并实现输入后自动搜索（防抖 500ms）
  */
 class CommentModule {
   static CONFIG = {
@@ -27,18 +27,18 @@ class CommentModule {
         'https://unpkg.com/@waline/emojis@1.4.0/alus',
       ],
 
-      // 自定义表情搜索 (替换 Giphy)
+      // 自定义表情搜索 (QQ 表情包 API)
       search: {
-        // 打开搜索框时默认展示（随机热门）
+        // 默认推荐
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
             .then(res => res.json())
             .then(json => {
               if (json.code === 200 && Array.isArray(json.data)) {
                 return json.data.map(item => ({
-                  src: item.url,       // 图片地址
-                  title: item.id || '', // 可选，用作 alt
-                  preview: item.url    // 缩略图（这里直接用原图）
+                  src: item.url,
+                  title: item.id || '',
+                  preview: item.url
                 }));
               }
               return [];
@@ -65,7 +65,6 @@ class CommentModule {
         },
         // 加载更多（分页）
         more(word, pageNumber) {
-          // pageNumber 从 1 开始，对应 API 的 page 参数
           return fetch(
             `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`
           )
@@ -90,9 +89,13 @@ class CommentModule {
     this.walineInstance = null;
     this.modal = null;
     this.openBtn = null;
+    this.searchInputTimer = null;   // 防抖定时器
+    this.searchObserver = null;     // 监听搜索面板的观察者
+
     this._initDOM();
     this._bindEvents();
     this._initWaline();
+    this._watchSearchPanel();       // 启动自动搜索监听
   }
 
   _initDOM() {
@@ -127,6 +130,64 @@ class CommentModule {
     } catch (error) { console.error('[评论] Waline 初始化失败:', error); }
   }
 
+  // 观察搜索面板的出现，并给输入框绑定自动搜索
+  _watchSearchPanel() {
+    // 如果已经有一个观察者，先断开
+    if (this.searchObserver) this.searchObserver.disconnect();
+
+    this.searchObserver = new MutationObserver((mutations) => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeType === 1 && (node.matches?.('.wl-search') || node.querySelector?.('.wl-search'))) {
+            // 搜索面板已插入 DOM，绑定输入事件
+            const searchPanel = node.matches('.wl-search') ? node : node.querySelector('.wl-search');
+            if (searchPanel) this._bindSearchInput(searchPanel);
+          }
+        });
+      });
+    });
+
+    // 观察评论容器下所有子节点的增加
+    const container = document.querySelector(CommentModule.CONFIG.el);
+    if (container) {
+      this.searchObserver.observe(container, { childList: true, subtree: true });
+    }
+  }
+
+  // 在搜索面板中找到输入框，绑定 input 事件
+  _bindSearchInput(searchPanel) {
+    const input = searchPanel.querySelector('input');
+    const searchBtn = searchPanel.querySelector('button'); // 通常是搜索按钮
+    if (!input || !searchBtn) return;
+
+    // 防止重复绑定
+    if (input.dataset.autoSearchBound === 'true') return;
+    input.dataset.autoSearchBound = 'true';
+
+    const triggerSearch = () => {
+      clearTimeout(this.searchInputTimer);
+      const word = input.value.trim();
+      if (word) {
+        // 模拟点击搜索按钮，让 Waline 内部调用我们提供的 search 函数
+        searchBtn.click();
+      }
+    };
+
+    // 防抖 500ms 后自动搜索
+    input.addEventListener('input', () => {
+      clearTimeout(this.searchInputTimer);
+      this.searchInputTimer = setTimeout(triggerSearch, 500);
+    });
+
+    // 按回车立即搜索
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        clearTimeout(this.searchInputTimer);
+        triggerSearch();
+      }
+    });
+  }
+
   open() {
     if (!this.modal) return;
     if (!this.walineInstance) { this._initWaline(); if (!this.walineInstance) return; }
@@ -141,8 +202,12 @@ class CommentModule {
   }
 
   destroy() {
+    // 清理定时器和观察者
+    clearTimeout(this.searchInputTimer);
+    if (this.searchObserver) this.searchObserver.disconnect();
     this.walineInstance?.destroy?.();
     this.walineInstance = null;
+    console.log('[评论] 实例已销毁');
   }
 }
 
