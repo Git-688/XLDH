@@ -12,14 +12,13 @@ class CommentModule {
     activeClass: 'active',
     walineOptions: {
       dark: 'auto',
-      meta: ['nick', 'mail', 'link', 'ua'],   // ✅ 显示浏览器/系统标识
+      
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
       noCopyright: false,   // ✅ 显示版权
       noRss: false,         // ✅ 显示订阅链接
-      disableRegion: false, // ✅ 显示 IP 属地
-
+      
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
         'https://unpkg.com/@waline/emojis@1.4.0/qq',
