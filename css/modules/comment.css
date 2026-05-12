@@ -3,7 +3,6 @@
   --waline-theme-color: var(--primary-color, #4361ee);
 }
 
-/* Waline 容器定制 */
 #waline-comment {
   --waline-font-size: 0.95rem;
   --waline-theme-color: var(--primary-color, #4361ee);
@@ -13,6 +12,37 @@
   --waline-border-color: var(--border-color, #f0f0f0);
   --waline-text-color: var(--text-primary, #111111);
   --waline-text-color-light: var(--text-secondary, #666666);
+
+  /* 移除 Waline 最外层容器的内边距，让内部自己控制 */
+  padding: 0;
+}
+
+/* 发布区域：紧贴内容区，无边框，无内边距 */
+#waline-comment .wl-editor,
+#waline-comment .wl-input-group {
+  margin: 0 !important;          /* 清除外边距 */
+  padding: 0 !important;         /* 清除内边距 */
+  border: none !important;       /* 移除所有边框 */
+  border-bottom: 1px solid var(--waline-border-color) !important; /* 下分割线 */
+  box-shadow: none !important;   /* 移除可能的阴影 */
+  background: transparent !important;
+}
+
+/* 评论列表保留原有的宽松间距 */
+#waline-comment .wl-comment-list {
+  padding: 10px 12px;   /* 上下10px，左右12px，可根据视觉微调 */
+}
+
+/* 保持评论条目间隔不变 */
+#waline-comment .wl-header,
+#waline-comment .wl-comment-item {
+  margin-bottom: 12px;
+}
+
+/* 微调内容字体大小 */
+#waline-comment .wl-comment-item .wl-content {
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 /* 移动端适配 */
@@ -31,20 +61,4 @@
     --waline-text-color: var(--text-primary, #f1f1f1);
     --waline-text-color-light: var(--text-secondary, #aaaaaa);
   }
-}
-
-/* 统一 Waline 内部间距，使其与笔记列表视觉一致 */
-#waline-comment .wl-panel {
-  padding: 0;
-}
-#waline-comment .wl-header,
-#waline-comment .wl-comment-item {
-  margin-bottom: 12px;
-}
-#waline-comment .wl-comment-item .wl-content {
-  font-size: 13px;
-  line-height: 1.6;
-}
-#waline-comment .wl-input-group {
-  margin-bottom: 10px;
 }
