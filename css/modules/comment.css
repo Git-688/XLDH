@@ -48,3 +48,20 @@
 #waline-comment .wl-input-group {
   margin-bottom: 10px;
 }
+
+/* 评论模态框内容区域紧贴顶部，并添加分割线 */
+#commentModal .feedback-modal-body {
+  padding: 0;                    /* 完全去除内边距 */
+  border-top: 1px solid var(--waline-border-color, #ddd); /* 头部下方分割线 */
+}
+
+/* 确保 Waline 内部面板无多余顶部间距 */
+#waline-comment .wl-panel {
+  padding-top: 0;
+  margin-top: 0;
+}
+
+/* 可选：处理标题/排序栏的上边距 */
+#waline-comment .wl-header {
+  margin-top: 0;
+}
