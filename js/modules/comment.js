@@ -1,7 +1,6 @@
 /**
- * 评论模块 - 星聚导航最终版
- * 功能：QQ表情搜索 + 输入自动搜索(防抖500ms)
- * 显示：订阅链接、版权、归属地、设备信息、五字社区等级
+ * 评论模块 - 最终可用版
+ * 功能：订阅/版权/归属地/设备/等级/QQ表情/自动搜索
  */
 class CommentModule {
   static CONFIG = {
@@ -12,13 +11,13 @@ class CommentModule {
     activeClass: 'active',
     walineOptions: {
       dark: 'auto',
-      meta: ['nick', 'mail', 'link', 'ua'],   // ✅ 显示浏览器/系统标识
+      meta: ['nick', 'mail', 'link', 'ua'],
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
-      noCopyright: false,   // ✅ 显示版权
-      noRss: false,         // ✅ 显示订阅链接
-      disableRegion: false, // ✅ 显示 IP 属地
+      noCopyright: false,
+      noRss: false,
+      disableRegion: false,
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
         'https://unpkg.com/@waline/emojis@1.4.0/qq',
@@ -26,61 +25,41 @@ class CommentModule {
         'https://unpkg.com/@waline/emojis@1.4.0/weibo',
         'https://unpkg.com/@waline/emojis@1.4.0/alus',
       ],
-
-      // 自定义表情搜索 (QQ 表情包 API)
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
             .then(r => r.json())
             .then(json => {
-              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({
-                  src: item.url,
-                  title: item.id || '',
-                  preview: item.url
-                }));
+              if (Array.isArray(json.data)) {
+                return json.data.map(item => ({ src: item.url, title: item.id, preview: item.url }));
               }
               return [];
             })
             .catch(() => []);
         },
         search(word) {
-          return fetch(
-            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`
-          )
+          return fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`)
             .then(r => r.json())
             .then(json => {
-              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({
-                  src: item.url,
-                  title: item.id || word,
-                  preview: item.url
-                }));
+              if (Array.isArray(json.data)) {
+                return json.data.map(item => ({ src: item.url, title: item.id, preview: item.url }));
               }
               return [];
             })
             .catch(() => []);
         },
-        more(word, pageNumber) {
-          return fetch(
-            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`
-          )
+        more(word, page) {
+          return fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${page}&limit=40`)
             .then(r => r.json())
             .then(json => {
-              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({
-                  src: item.url,
-                  title: item.id || word,
-                  preview: item.url
-                }));
+              if (Array.isArray(json.data)) {
+                return json.data.map(item => ({ src: item.url, title: item.id, preview: item.url }));
               }
               return [];
             })
             .catch(() => []);
         }
       },
-
-      // 五字社区等级标签（需服务端 LEVELS 环境变量，如 0,5,15,30,60,100）
       locale: {
         level0: '初来乍到',
         level1: '偶尔光临',
@@ -98,7 +77,6 @@ class CommentModule {
     this.openBtn = null;
     this.searchTimer = null;
     this.searchObserver = null;
-
     this._initDOM();
     this._bindEvents();
     this._initWaline();
@@ -106,48 +84,44 @@ class CommentModule {
   }
 
   _initDOM() {
-    const { modalId, openBtnId } = CommentModule.CONFIG;
-    this.modal = document.getElementById(modalId);
-    this.openBtn = document.getElementById(openBtnId);
+    this.modal = document.getElementById(CommentModule.CONFIG.modalId);
+    this.openBtn = document.getElementById(CommentModule.CONFIG.openBtnId);
+    if (!this.modal) console.error('[评论] 模态框未找到');
+    if (!this.openBtn) console.error('[评论] 按钮未找到');
   }
 
   _bindEvents() {
-    if (this.openBtn) this.openBtn.addEventListener('click', () => this.open());
+    if (this.openBtn) {
+      this.openBtn.addEventListener('click', () => this.open());
+    }
     if (this.modal) {
       this.modal.addEventListener('click', e => {
-        if (e.target.closest('.feedback-modal-close')) { this.close(); return; }
-        if (e.target === this.modal) this.close();
+        if (e.target.closest('.feedback-modal-close') || e.target === this.modal) this.close();
       });
     }
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && this.modal?.classList.contains(CommentModule.CONFIG.activeClass))
-        this.close();
+      if (e.key === 'Escape' && this.modal?.classList.contains('active')) this.close();
     });
   }
 
   _initWaline() {
-    const { el, serverURL, walineOptions } = CommentModule.CONFIG;
     if (typeof Waline === 'undefined') return;
-    const container = document.querySelector(el);
-    if (!container) return;
+    const c = document.querySelector(CommentModule.CONFIG.el);
+    if (!c) return;
     try {
-      this.instance = Waline.init({ el, serverURL, ...walineOptions });
-    } catch (err) {
-      console.error('[评论] 初始化失败', err);
-    }
+      this.instance = Waline.init({ el: CommentModule.CONFIG.el, serverURL: CommentModule.CONFIG.serverURL, ...CommentModule.CONFIG.walineOptions });
+    } catch (e) { console.error(e); }
   }
 
-  // ===== 自动搜索 =====
   _watchSearchPanel() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
-
     this.searchObserver = new MutationObserver(mutations => {
-      for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) {
+      for (const m of mutations) {
+        for (const node of m.addedNodes) {
           if (node.nodeType === 1) {
-            const panel = node.matches('.wl-search') ? node : node.querySelector('.wl-search');
-            if (panel) { this._bindAutoSearch(panel); return; }
+            const p = node.matches('.wl-search') ? node : node.querySelector('.wl-search');
+            if (p) { this._bindAutoSearch(p); return; }
           }
         }
       }
@@ -156,35 +130,25 @@ class CommentModule {
   }
 
   _bindAutoSearch(panel) {
-    const input = panel.querySelector('input');
+    const inp = panel.querySelector('input');
     const btn = panel.querySelector('button');
-    if (!input || !btn || input.dataset.auto === 'true') return;
-    input.dataset.auto = 'true';
-
-    const trigger = () => {
-      clearTimeout(this.searchTimer);
-      if (input.value.trim()) btn.click();
-    };
-
-    input.addEventListener('input', () => {
-      clearTimeout(this.searchTimer);
-      this.searchTimer = setTimeout(trigger, 500);
-    });
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { clearTimeout(this.searchTimer); trigger(); }
-    });
+    if (!inp || !btn || inp.dataset.auto === 'true') return;
+    inp.dataset.auto = 'true';
+    const go = () => { clearTimeout(this.searchTimer); if (inp.value.trim()) btn.click(); };
+    inp.addEventListener('input', () => { clearTimeout(this.searchTimer); this.searchTimer = setTimeout(go, 500); });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
   }
 
   open() {
     if (!this.modal) return;
-    if (!this.instance) { this._initWaline(); if (!this.instance) return; }
-    this.modal.classList.add(CommentModule.CONFIG.activeClass);
+    if (!this.instance) this._initWaline();
+    this.modal.classList.add('active');
     document.body.style.overflow = 'hidden';
   }
 
   close() {
     if (!this.modal) return;
-    this.modal.classList.remove(CommentModule.CONFIG.activeClass);
+    this.modal.classList.remove('active');
     document.body.style.overflow = '';
   }
 
@@ -196,9 +160,5 @@ class CommentModule {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  window.commentModule = new CommentModule();
-});
-window.addEventListener('beforeunload', () => {
-  window.commentModule?.destroy?.();
-});
+document.addEventListener('DOMContentLoaded', () => window.commentModule = new CommentModule());
+window.addEventListener('beforeunload', () => window.commentModule?.destroy?.());
