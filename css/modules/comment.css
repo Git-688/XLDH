@@ -15,36 +15,30 @@
   --waline-text-color-light: var(--text-secondary, #666666);
 }
 
-/* ---------- 发布框大卡片：去边框、无间距、下边分割线 ---------- */
+/* ---------- 发布框大卡片：去边框、无间距、紧贴模态框 ---------- */
 #waline-comment .wl-panel {
-  border: none !important;          /* 移除边框 */
-  box-shadow: none !important;      /* 移除阴影 */
-  border-radius: 0 !important;      /* 移除圆角 */
-  background: transparent !important; /* 背景透明 */
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
 
-  padding: 0 !important;            /* 上下左右内边距归零 */
-  margin: 0 !important;             /* 外边距归零 */
+  padding: 0 !important;
+  margin: 0 !important;
 
-  /* 大卡片下边分割线 */
-  border-bottom: 1px solid var(--waline-border-color);
-
-  /* 抵消模态框 body 的左右内边距，让卡片左右紧贴边框 */
+  /* 抵消模态框 body 的左右内边距，让卡片左右边缘紧贴模态框边框 */
   margin-left: -12px;
   margin-right: -12px;
   padding-left: 0;
   padding-right: 0;
 }
 
-/*
- * 注意：以上负边距值 (-12px) 基于全局样式 .feedback-modal-body 的 padding: 10px 12px。
- * 如果你的实际内边距不同，请相应调整数值。
- */
-
-/* ---------- 评论头部（排序栏）上方分割线 ---------- */
-#waline-comment .wl-header {
-  border-top: 1px solid var(--waline-border-color);
-  padding-top: 10px;                /* 分割线与文字之间的间距 */
-  margin-top: 0;
+/* ---------- 其他元素间距归零 ---------- */
+#waline-comment .wl-header,
+#waline-comment .wl-comment-item,
+#waline-comment .wl-comment-item .wl-content,
+#waline-comment .wl-input-group {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* ---------- 移动端适配 ---------- */
