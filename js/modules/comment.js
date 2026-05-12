@@ -1,7 +1,7 @@
 /**
- * 评论模块 - Waline V3 修复版
- * 集成 QQ 表情搜索 + 自动搜索 (防抖 500ms)
- * 显示归属地、浏览器、订阅链接 + 五字社区等级标签
+ * 评论模块 - 星聚导航最终版
+ * 功能：QQ表情搜索 + 输入自动搜索(防抖500ms)
+ * 显示：订阅链接、版权、归属地、设备信息、五字社区等级
  */
 class CommentModule {
   static CONFIG = {
@@ -12,13 +12,13 @@ class CommentModule {
     activeClass: 'active',
     walineOptions: {
       dark: 'auto',
-      meta: ['nick', 'mail', 'link', 'ua'],
+      meta: ['nick', 'mail', 'link', 'ua'],   // ✅ 显示浏览器/系统标识
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
-      noCopyright: false,
-      noRss: false,
-      disableRegion: false,
+      noCopyright: false,   // ✅ 显示版权
+      noRss: false,         // ✅ 显示订阅链接
+      disableRegion: false, // ✅ 显示 IP 属地
 
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
@@ -32,7 +32,7 @@ class CommentModule {
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
-            .then(res => res.json())
+            .then(r => r.json())
             .then(json => {
               if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
                 return json.data.map(item => ({
@@ -49,7 +49,7 @@ class CommentModule {
           return fetch(
             `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`
           )
-            .then(res => res.json())
+            .then(r => r.json())
             .then(json => {
               if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
                 return json.data.map(item => ({
@@ -66,7 +66,7 @@ class CommentModule {
           return fetch(
             `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`
           )
-            .then(res => res.json())
+            .then(r => r.json())
             .then(json => {
               if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
                 return json.data.map(item => ({
@@ -94,10 +94,10 @@ class CommentModule {
   };
 
   constructor() {
-    this.walineInstance = null;
+    this.instance = null;
     this.modal = null;
     this.openBtn = null;
-    this.searchInputTimer = null;
+    this.searchTimer = null;
     this.searchObserver = null;
 
     this._initDOM();
@@ -110,18 +110,17 @@ class CommentModule {
     const { modalId, openBtnId } = CommentModule.CONFIG;
     this.modal = document.getElementById(modalId);
     this.openBtn = document.getElementById(openBtnId);
-    if (!this.modal) console.error('[评论] 模态框未找到');
   }
 
   _bindEvents() {
     if (this.openBtn) this.openBtn.addEventListener('click', () => this.open());
     if (this.modal) {
-      this.modal.addEventListener('click', (e) => {
+      this.modal.addEventListener('click', e => {
         if (e.target.closest('.feedback-modal-close')) { this.close(); return; }
         if (e.target === this.modal) this.close();
       });
     }
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && this.modal?.classList.contains(CommentModule.CONFIG.activeClass))
         this.close();
     });
@@ -129,29 +128,27 @@ class CommentModule {
 
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
-    if (typeof Waline === 'undefined') { console.error('[评论] Waline 脚本未加载'); return; }
+    if (typeof Waline === 'undefined') return;
     const container = document.querySelector(el);
-    if (!container) { console.error('[评论] 挂载容器未找到'); return; }
+    if (!container) return;
     try {
-      this.walineInstance = Waline.init({ el, serverURL, ...walineOptions });
-      console.log('[评论] Waline 初始化成功');
-    } catch (error) { console.error('[评论] Waline 初始化失败:', error); }
+      this.instance = Waline.init({ el, serverURL, ...walineOptions });
+    } catch (err) {
+      console.error('[评论] 初始化失败', err);
+    }
   }
 
+  // ===== 自动搜索 =====
   _watchSearchPanel() {
-    if (this.searchObserver) this.searchObserver.disconnect();
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
 
-    this.searchObserver = new MutationObserver((mutations) => {
+    this.searchObserver = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (node.nodeType === 1) {
             const panel = node.matches('.wl-search') ? node : node.querySelector('.wl-search');
-            if (panel) {
-              this._bindAutoSearch(panel);
-              return;
-            }
+            if (panel) { this._bindAutoSearch(panel); return; }
           }
         }
       }
@@ -162,31 +159,26 @@ class CommentModule {
   _bindAutoSearch(panel) {
     const input = panel.querySelector('input');
     const btn = panel.querySelector('button');
-    if (!input || !btn) return;
-    if (input.dataset.autoSearchBound === 'true') return;
-    input.dataset.autoSearchBound = 'true';
+    if (!input || !btn || input.dataset.auto === 'true') return;
+    input.dataset.auto = 'true';
 
     const trigger = () => {
-      clearTimeout(this.searchInputTimer);
-      const word = input.value.trim();
-      if (word) btn.click();
+      clearTimeout(this.searchTimer);
+      if (input.value.trim()) btn.click();
     };
 
     input.addEventListener('input', () => {
-      clearTimeout(this.searchInputTimer);
-      this.searchInputTimer = setTimeout(trigger, 500);
+      clearTimeout(this.searchTimer);
+      this.searchTimer = setTimeout(trigger, 500);
     });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        clearTimeout(this.searchInputTimer);
-        trigger();
-      }
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { clearTimeout(this.searchTimer); trigger(); }
     });
   }
 
   open() {
     if (!this.modal) return;
-    if (!this.walineInstance) { this._initWaline(); if (!this.walineInstance) return; }
+    if (!this.instance) { this._initWaline(); if (!this.instance) return; }
     this.modal.classList.add(CommentModule.CONFIG.activeClass);
     document.body.style.overflow = 'hidden';
   }
@@ -198,18 +190,16 @@ class CommentModule {
   }
 
   destroy() {
-    clearTimeout(this.searchInputTimer);
-    if (this.searchObserver) this.searchObserver.disconnect();
-    this.walineInstance?.destroy?.();
-    this.walineInstance = null;
+    clearTimeout(this.searchTimer);
+    this.searchObserver?.disconnect();
+    this.instance?.destroy?.();
+    this.instance = null;
   }
 }
 
-// 启动
 document.addEventListener('DOMContentLoaded', () => {
   window.commentModule = new CommentModule();
 });
-
 window.addEventListener('beforeunload', () => {
   window.commentModule?.destroy?.();
 });
