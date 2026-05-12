@@ -25,11 +25,23 @@
   background: transparent !important;
 }
 
-/* 微调评论条目样式（可选） */
+/* 评论列表容器：添加间距 + 顶部分割线 */
+#waline-comment .wl-cards {
+  padding: 16px;                      /* 上下左右间距，可按需调整 */
+  border-top: 1px solid var(--waline-border-color, #e0e0e0);  /* 顶部分割线 */
+  margin-top: 0;
+}
+
+/* 微调评论条目内部样式（可选） */
 #waline-comment .wl-comment-item {
   border: none !important;
   padding: 10px 0 !important;
   margin: 0 !important;
+}
+
+#waline-comment .wl-comment-item .wl-content {
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 /* 移动端适配 */
@@ -48,20 +60,4 @@
     --waline-text-color: var(--text-primary, #f1f1f1);
     --waline-text-color-light: var(--text-secondary, #aaaaaa);
   }
-}
-
-/* 统一 Waline 内部间距，使其与笔记列表视觉一致 */
-#waline-comment .wl-panel {
-  padding: 0;
-}
-#waline-comment .wl-header,
-#waline-comment .wl-comment-item {
-  margin-bottom: 12px;
-}
-#waline-comment .wl-comment-item .wl-content {
-  font-size: 13px;
-  line-height: 1.6;
-}
-#waline-comment .wl-input-group {
-  margin-bottom: 10px;
 }
