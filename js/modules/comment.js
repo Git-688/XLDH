@@ -1,6 +1,6 @@
 /**
- * 评论模块 - Waline V3 修复版（关闭按钮事件委托）
- * 已隐藏 "Powered by Waline" 和订阅链接，并配置多套官方表情包
+ * 评论模块 - Waline V3 修复版
+ * 已集成 QQ 表情包搜索 API (oiapi.net)
  */
 class CommentModule {
   static CONFIG = {
@@ -16,13 +16,9 @@ class CommentModule {
       pageSize: 10,
       login: 'enable',
       copyright: false,
-
-      // ✅ 隐藏版权信息 "Powered by Waline"
       noCopyright: true,
-      // ✅ 隐藏订阅链接
       noRss: true,
 
-      // 多套表情包（仅保留官方稳定版本）
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
         'https://unpkg.com/@waline/emojis@1.4.0/qq',
@@ -30,6 +26,63 @@ class CommentModule {
         'https://unpkg.com/@waline/emojis@1.4.0/weibo',
         'https://unpkg.com/@waline/emojis@1.4.0/alus',
       ],
+
+      // 自定义表情搜索 (替换 Giphy)
+      search: {
+        // 打开搜索框时默认展示（随机热门）
+        default() {
+          return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
+            .then(res => res.json())
+            .then(json => {
+              if (json.code === 200 && Array.isArray(json.data)) {
+                return json.data.map(item => ({
+                  src: item.url,       // 图片地址
+                  title: item.id || '', // 可选，用作 alt
+                  preview: item.url    // 缩略图（这里直接用原图）
+                }));
+              }
+              return [];
+            })
+            .catch(() => []);
+        },
+        // 关键词搜索
+        search(word) {
+          return fetch(
+            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`
+          )
+            .then(res => res.json())
+            .then(json => {
+              if (json.code === 200 && Array.isArray(json.data)) {
+                return json.data.map(item => ({
+                  src: item.url,
+                  title: item.id || word,
+                  preview: item.url
+                }));
+              }
+              return [];
+            })
+            .catch(() => []);
+        },
+        // 加载更多（分页）
+        more(word, pageNumber) {
+          // pageNumber 从 1 开始，对应 API 的 page 参数
+          return fetch(
+            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`
+          )
+            .then(res => res.json())
+            .then(json => {
+              if (json.code === 200 && Array.isArray(json.data)) {
+                return json.data.map(item => ({
+                  src: item.url,
+                  title: item.id || word,
+                  preview: item.url
+                }));
+              }
+              return [];
+            })
+            .catch(() => []);
+        }
+      }
     }
   };
 
@@ -37,7 +90,6 @@ class CommentModule {
     this.walineInstance = null;
     this.modal = null;
     this.openBtn = null;
-
     this._initDOM();
     this._bindEvents();
     this._initWaline();
@@ -47,73 +99,37 @@ class CommentModule {
     const { modalId, openBtnId } = CommentModule.CONFIG;
     this.modal = document.getElementById(modalId);
     this.openBtn = document.getElementById(openBtnId);
-    if (!this.modal) {
-      console.error('[评论] 模态框未找到');
-    }
+    if (!this.modal) console.error('[评论] 模态框未找到');
   }
 
   _bindEvents() {
-    // 打开按钮
-    if (this.openBtn) {
-      this.openBtn.addEventListener('click', () => this.open());
-    }
-
-    // 通过事件委托处理关闭按钮和背景点击
+    if (this.openBtn) this.openBtn.addEventListener('click', () => this.open());
     if (this.modal) {
       this.modal.addEventListener('click', (e) => {
-        // 点击关闭按钮（包括内部任何子元素）
-        if (e.target.closest('.feedback-modal-close')) {
-          this.close();
-          return;
-        }
-        // 点击背景（透明，但仍可关闭）
-        if (e.target === this.modal) {
-          this.close();
-        }
+        if (e.target.closest('.feedback-modal-close')) { this.close(); return; }
+        if (e.target === this.modal) this.close();
       });
     }
-
-    // ESC 关闭
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.modal?.classList.contains(CommentModule.CONFIG.activeClass)) {
+      if (e.key === 'Escape' && this.modal?.classList.contains(CommentModule.CONFIG.activeClass))
         this.close();
-      }
     });
   }
 
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
-
-    if (typeof Waline === 'undefined') {
-      console.error('[评论] Waline 脚本未加载');
-      return;
-    }
-
+    if (typeof Waline === 'undefined') { console.error('[评论] Waline 脚本未加载'); return; }
     const container = document.querySelector(el);
-    if (!container) {
-      console.error('[评论] 挂载容器未找到');
-      return;
-    }
-
+    if (!container) { console.error('[评论] 挂载容器未找到'); return; }
     try {
-      this.walineInstance = Waline.init({
-        el,
-        serverURL,
-        ...walineOptions,
-      });
+      this.walineInstance = Waline.init({ el, serverURL, ...walineOptions });
       console.log('[评论] Waline 初始化成功');
-    } catch (error) {
-      console.error('[评论] Waline 初始化失败:', error);
-    }
+    } catch (error) { console.error('[评论] Waline 初始化失败:', error); }
   }
 
   open() {
     if (!this.modal) return;
-    if (!this.walineInstance) {
-      console.warn('[评论] 实例未初始化，重新初始化...');
-      this._initWaline();
-      if (!this.walineInstance) return;
-    }
+    if (!this.walineInstance) { this._initWaline(); if (!this.walineInstance) return; }
     this.modal.classList.add(CommentModule.CONFIG.activeClass);
     document.body.style.overflow = 'hidden';
   }
@@ -127,15 +143,9 @@ class CommentModule {
   destroy() {
     this.walineInstance?.destroy?.();
     this.walineInstance = null;
-    console.log('[评论] 实例已销毁');
   }
 }
 
 // 启动
-document.addEventListener('DOMContentLoaded', () => {
-  window.commentModule = new CommentModule();
-});
-
-window.addEventListener('beforeunload', () => {
-  window.commentModule?.destroy?.();
-});
+document.addEventListener('DOMContentLoaded', () => window.commentModule = new CommentModule());
+window.addEventListener('beforeunload', () => window.commentModule?.destroy?.());
