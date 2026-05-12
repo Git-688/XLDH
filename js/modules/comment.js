@@ -16,9 +16,9 @@ class CommentModule {
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
-      copyright: true, // 即使设为 true，下面 noCopyright 仍会隐藏
-      noCopyright: true,   // 隐藏 “Powered by Waline”
-      noRss: true,         // 隐藏订阅链接
+      copyright: false, // 即使设为 true，下面 noCopyright 仍会隐藏
+      noCopyright: false,   // 隐藏 “Powered by Waline”
+      noRss: false,         // 隐藏订阅链接
 
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
