@@ -48,15 +48,3 @@
 #waline-comment .wl-input-group {
   margin-bottom: 10px;
 }
-
-/* ========== 发布区域贴合模态框：无间距、无边框、顶部分割 ========== */
-#waline-comment .wl-enter,
-#waline-comment .wl-editor {
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    border-radius: 0 !important;
-    border-top: 1px solid var(--waline-border-color, #e5e7eb) !important;
-}
-
-/* 评论列表的间距保持不变（无需额外操作） */
