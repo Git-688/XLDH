@@ -3,7 +3,6 @@
   --waline-theme-color: var(--primary-color, #4361ee);
 }
 
-/* Waline 容器定制 */
 #waline-comment {
   --waline-font-size: 0.95rem;
   --waline-theme-color: var(--primary-color, #4361ee);
@@ -13,6 +12,60 @@
   --waline-border-color: var(--border-color, #f0f0f0);
   --waline-text-color: var(--text-primary, #111111);
   --waline-text-color-light: var(--text-secondary, #666666);
+}
+
+/* ---------- 发布框大卡片：去边框、无间距、紧贴模态框 ---------- */
+#waline-comment .wl-panel {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  margin-left: -12px;
+  margin-right: -12px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* 移除内容区顶部留白 */
+#commentModal .feedback-modal-body {
+  padding-top: 0 !important;
+}
+
+/* 其他元素间距归零 */
+#waline-comment .wl-header,
+#waline-comment .wl-comment-item,
+#waline-comment .wl-comment-item .wl-content,
+#waline-comment .wl-input-group {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ---------- 强制显示版权和订阅 ---------- */
+#waline-comment .wl-power {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin: 12px 0 4px 0 !important;
+  font-size: 12px !important;
+  text-align: center;
+  color: var(--waline-text-color-light);
+}
+
+#waline-comment .wl-rss {
+  display: flex !important;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px !important;
+  font-size: 12px !important;
+}
+
+/* 确保底部可见 */
+#commentModal .feedback-modal-body {
+  overflow-y: auto !important;
+  max-height: 70vh !important;
+  padding-bottom: 24px !important;
 }
 
 /* 移动端适配 */
@@ -31,20 +84,4 @@
     --waline-text-color: var(--text-primary, #f1f1f1);
     --waline-text-color-light: var(--text-secondary, #aaaaaa);
   }
-}
-
-/* 统一 Waline 内部间距，使其与笔记列表视觉一致 */
-#waline-comment .wl-panel {
-  padding: 0;
-}
-#waline-comment .wl-header,
-#waline-comment .wl-comment-item {
-  margin-bottom: 12px;
-}
-#waline-comment .wl-comment-item .wl-content {
-  font-size: 13px;
-  line-height: 1.6;
-}
-#waline-comment .wl-input-group {
-  margin-bottom: 10px;
 }
