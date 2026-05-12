@@ -1,6 +1,7 @@
 /**
  * 评论模块 - Waline V3 修复版
- * 集成 QQ 表情搜索 + 自动搜索
+ * 集成 QQ 表情搜索 + 自动搜索 (防抖 500ms)
+ * 修复：API code=1 时也处理数据；显示版权及订阅链接
  */
 class CommentModule {
   static CONFIG = {
@@ -15,15 +16,29 @@ class CommentModule {
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
-      copyright: false,
-      // 显式声明 search，不禁止（默认启用）
+      // ⚠️ 关键修复：copyright 设为 true 才会显示 Powered by Waline
+      copyright: true,
+      // 不再隐藏版权和订阅
+      // noCopyright: true,
+      // noRss: true,
+
+      emoji: [
+        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
+        'https://unpkg.com/@waline/emojis@1.4.0/qq',
+        'https://unpkg.com/@waline/emojis@1.4.0/tieba',
+        'https://unpkg.com/@waline/emojis@1.4.0/weibo',
+        'https://unpkg.com/@waline/emojis@1.4.0/alus',
+      ],
+
+      // 自定义表情搜索 (QQ 表情包 API)
       search: {
         // 默认推荐
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
             .then(res => res.json())
             .then(json => {
-              if (json.code === 200 && Array.isArray(json.data)) {
+              // 该 API 成功时 code 为 1，而不是 200
+              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
                 return json.data.map(item => ({
                   src: item.url,
                   title: item.id || '',
@@ -37,11 +52,14 @@ class CommentModule {
         // 关键词搜索
         search(word) {
           console.log('[表情搜索] 关键词:', word);
-          return fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`)
+          return fetch(
+            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`
+          )
             .then(res => res.json())
             .then(json => {
               console.log('[表情搜索] API 返回:', json);
-              if (json.code === 200 && Array.isArray(json.data)) {
+              // 兼容 code=1 和 code=200
+              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
                 return json.data.map(item => ({
                   src: item.url,
                   title: item.id || word,
@@ -55,12 +73,14 @@ class CommentModule {
               return [];
             });
         },
-        // 加载更多
+        // 加载更多（分页）
         more(word, pageNumber) {
-          return fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`)
+          return fetch(
+            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`
+          )
             .then(res => res.json())
             .then(json => {
-              if (json.code === 200 && Array.isArray(json.data)) {
+              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
                 return json.data.map(item => ({
                   src: item.url,
                   title: item.id || word,
@@ -71,14 +91,7 @@ class CommentModule {
             })
             .catch(() => []);
         }
-      },
-      emoji: [
-        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
-        'https://unpkg.com/@waline/emojis@1.4.0/qq',
-        'https://unpkg.com/@waline/emojis@1.4.0/tieba',
-        'https://unpkg.com/@waline/emojis@1.4.0/weibo',
-        'https://unpkg.com/@waline/emojis@1.4.0/alus',
-      ],
+      }
     }
   };
 
@@ -138,11 +151,10 @@ class CommentModule {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (node.nodeType === 1) {
-            // 搜索面板通常有 .wl-search 类
             const panel = node.matches('.wl-search') ? node : node.querySelector('.wl-search');
             if (panel) {
               this._bindAutoSearch(panel);
-              return; // 只绑定一次
+              return;
             }
           }
         }
@@ -154,15 +166,13 @@ class CommentModule {
 
   _bindAutoSearch(panel) {
     const input = panel.querySelector('input');
-    // 通用的搜索按钮：可能是 .wl-search-btn 或者直接是 button
     const btn = panel.querySelector('button');
 
     if (!input || !btn) {
-      console.warn('[自动搜索] 未找到输入框或按钮，面板:', panel);
+      console.warn('[自动搜索] 未找到输入框或按钮');
       return;
     }
 
-    // 防止重复绑定
     if (input.dataset.autoSearchBound === 'true') return;
     input.dataset.autoSearchBound = 'true';
 
