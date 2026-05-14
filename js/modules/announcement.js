@@ -68,9 +68,9 @@ class AnnouncementModule {
             updates: [
                 '全新界面设计-更加现代化和美观的视觉体验',
                 '音乐播放器-支持多平台音乐搜索和播放',
-                '个性化设置-可自定义书签',
+                '星聚影视-影视、音乐、漫画、小说',
                 '更多实用工具-新增多个日常使用的小工具',
-                '性能优化-更快的加载速度和响应时间',
+                '清除缓存-可以加载更新内容！！！',
             ],
             time: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }),
             read: false
