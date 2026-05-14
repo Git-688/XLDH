@@ -1,7 +1,7 @@
 <div align="center">
   <img src="./assets/logo.png" alt="星聚导航 Logo" width="100">
   <h1>⭐️ 星聚导航</h1>
-  <p>一款极简高效的现代个人导航页，该项目是基于免费公开的（Git项目、API、轻量数据库）基础上建设的。Fork后可以根据自己的意向进行修改/优化/配置等等。</p>
+  <p>基于免费公开的（Git项目、API、轻量数据库）基础上所建设的一款极简高效的现代个人导航页</p>
 
   ![GitHub Repo stars](https://img.shields.io/github/stars/Git-688/XLDH?style=social)
   ![GitHub forks](https://img.shields.io/github/forks/Git-688/XLDH?style=social)
@@ -29,10 +29,8 @@
 
 ## 🌐 在线体验
 
-主站：`https://xjdh688.ccwu.cc`  
-后台管理：`https://xjdh688.ccwu.cc/admin.html`（暂不开放）  
-图床：`https://tc688.ccwu.cc`（Cloudflare Images + Hugging Face）  
-影视：`https://ys688.ccwu.cc`（MoonTVPlus）
+✅️星聚导航：`https://xjdh688.ccwu.cc`  
+✅️星聚图床：`https://tc688.ccwu.cc`（ImgBed） ✅️星聚影视：`https://ys688.ccwu.cc`（MoonTVPlus）
 
 ## 🚀 快速部署
 
