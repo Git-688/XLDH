@@ -30,7 +30,8 @@
 ## 🌐 在线体验
 
 ✅️星聚导航：`https://xjdh688.ccwu.cc`  
-✅️星聚图床：`https://tc688.ccwu.cc`（ImgBed） ✅️星聚影视：`https://ys688.ccwu.cc`（MoonTVPlus）
+✅️星聚图床：`https://tc688.ccwu.cc`
+✅️星聚影视：`https://ys688.ccwu.cc`
 
 ## 🚀 快速部署
 
