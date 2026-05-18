@@ -1,7 +1,7 @@
 <div align="center">
   <img src="./assets/logo.png" alt="星聚导航 Logo" width="100">
   <h1>⭐️ 星聚导航</h1>
-  <p>基于免费公开的（Git项目、API、轻量数据库）基础上所建设的一款极简高效的现代个人导航页</p>
+  <p>星聚导航是基于免费公开的（Git项目、API、轻量数据库）基础上所建设的一款极简高效的现代个人导航页</p>
 
   ![GitHub Repo stars](https://img.shields.io/github/stars/Git-688/XLDH?style=social)
   ![GitHub forks](https://img.shields.io/github/forks/Git-688/XLDH?style=social)
@@ -131,7 +131,7 @@ XLDH/
 · 可查看点击排行、死链反馈并处理
 · 备份导出为 JSON，操作日志留存
 
-环境变量
+## 🧩 环境变量
 
 项目通过 window.APP_CONFIG 注入配置，例如 API 域名。可在 index.html 的 <script> 中设置：
 
