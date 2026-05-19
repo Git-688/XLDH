@@ -1,7 +1,6 @@
 /**
  * 优化分类导航系统（基于后端 Worker + D1）
  * 包含：缓存容错、后台静默更新、去重请求、全站搜索
- * 修复：补充 startBackgroundUpdates 方法，解决“网络异常”误报
  */
 class OptimizedNavigation {
     constructor() {
@@ -23,6 +22,9 @@ class OptimizedNavigation {
         this.searchInput = null;
         this.isSearching = false;
         this.searchTimer = null;
+        
+        // API 基础地址
+        this.apiBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     }
 
     _escapeHtml(str) {
@@ -51,7 +53,7 @@ class OptimizedNavigation {
             const firstCategory = this.getFirstCategory();
             if (firstCategory) this.selectLevel1(firstCategory, false);
             this.isInitialized = true;
-            this.startBackgroundUpdates();         // ✅ 现在方法已定义
+            this.startBackgroundUpdates();
         } catch (error) {
             console.error('导航初始化失败:', error);
             const cached = this.loadCache();
@@ -64,14 +66,13 @@ class OptimizedNavigation {
                 if (firstCategory) this.selectLevel1(firstCategory, false);
                 window.toast.show('网络异常，已加载本地缓存数据', 'warning');
                 this.isInitialized = true;
-                this.startBackgroundUpdates();     // ✅ 缓存态也启动后台更新
+                this.startBackgroundUpdates();
             } else {
                 this.showError();
             }
         }
     }
 
-    /* ==================== 后台静默更新 ==================== */
     startBackgroundUpdates() {
         if (this.updateTimer) clearInterval(this.updateTimer);
         this.updateTimer = setInterval(() => this.fetchLatestFromAPI(true), this.UPDATE_INTERVAL);
@@ -193,7 +194,7 @@ class OptimizedNavigation {
 
     async loadFromAPI(retryCount = 0) {
         if (this.pendingNavRequest) return this.pendingNavRequest;
-        const apiUrl = `https://api.xjdh688.ccwu.cc/navigation?_=${Date.now()}`;
+        const apiUrl = `${this.apiBase}/navigation?_=${Date.now()}`;
         this.pendingNavRequest = (async () => {
             try {
                 const controller = new AbortController();
@@ -227,7 +228,7 @@ class OptimizedNavigation {
 
     async fetchLatestFromAPI(silent = false) {
         try {
-            const apiUrl = `https://api.xjdh688.ccwu.cc/navigation?_=${Date.now()}`;
+            const apiUrl = `${this.apiBase}/navigation?_=${Date.now()}`;
             const response = await fetch(apiUrl);
             if (!response.ok) return;
             const latest = await response.json();
@@ -356,7 +357,7 @@ class OptimizedNavigation {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
             if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
-            fetch('https://api.xjdh688.ccwu.cc/click', {
+            fetch(`${this.apiBase}/click`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: site.url, title: site.title })
             }).catch(() => {});
@@ -377,7 +378,7 @@ class OptimizedNavigation {
             reportBtn.addEventListener('click', async (e) => {
                 e.preventDefault(); e.stopPropagation();
                 try {
-                    const res = await fetch('https://api.xjdh688.ccwu.cc/report-dead-link', {
+                    const res = await fetch(`${this.apiBase}/report-dead-link`, {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url: reportBtn.dataset.url, title: reportBtn.dataset.title })
                     });
