@@ -17,6 +17,7 @@
     <meta http-equiv="X-Frame-Options" content="DENY">
 
     <style>
+        /* ========== 基础样式（保持不变） ========== */
         *{margin:0;padding:0;box-sizing:border-box}
         html{scroll-behavior:smooth}
         body{
@@ -206,85 +207,155 @@
             box-shadow:0 1px 2px rgba(0,0,0,0.04);
         }
 
-        /* ========== 优化后的投稿详情模态框样式 ========== */
-        .submission-detail-grid {
-            display: grid;
-            grid-template-columns: 100px 1fr;
-            gap: 10px 12px;
-            font-size: 13px;
-            margin-bottom: 20px;
-            background: #f8fafc;
-            padding: 12px;
-            border-radius: 8px;
+        /* ========== 优化后的投稿详情模态框样式（不影响其他） ========== */
+        #submissionDetailModal .modal-body {
+            max-width: 680px;
+            padding: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
-        .submission-detail-grid .label {
+        #submissionDetailModal .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e9ecef;
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        #submissionDetailModal .modal-header h3 {
+            font-size: 16px;
             font-weight: 600;
-            color: #475569;
-            text-align: right;
+            color: #1e293b;
+            margin: 0;
         }
-        .submission-detail-grid .value {
+        #submissionDetailModal .modal-header button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #94a3b8;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        #submissionDetailModal .modal-header button:hover {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        #submissionDetailModal .modal-content {
+            padding: 20px;
+        }
+        /* 信息卡片 */
+        .info-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+        .info-label {
+            width: 90px;
+            flex-shrink: 0;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .info-value {
+            flex: 1;
             color: #1e293b;
             word-break: break-all;
         }
-        .submission-detail-grid .value a {
+        .info-value a {
             color: #3b82f6;
             text-decoration: none;
         }
-        .submission-status-approved { color: #10b981; font-weight: 600; }
-        .submission-status-rejected { color: #ef4444; font-weight: 600; }
-        .submission-status-pending { color: #f59e0b; font-weight: 600; }
-        .submission-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 10px;
+        .info-value a:hover {
+            text-decoration: underline;
         }
-        .approve-section, .reject-section {
-            background: #f1f5f9;
-            padding: 12px;
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .status-approved { background: #dcfce7; color: #15803d; }
+        .status-rejected { background: #fee2e2; color: #b91c1c; }
+        .status-pending { background: #fef3c7; color: #b45309; }
+        .security-result {
+            font-size: 12px;
+            color: #475569;
+            background: #fff;
+            padding: 6px 10px;
             border-radius: 8px;
+            margin-top: 4px;
         }
-        .approve-section h4, .reject-section h4 {
-            font-size: 13px;
-            margin-bottom: 10px;
+        /* 操作区域 */
+        .action-section {
+            margin-top: 8px;
+        }
+        .action-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .action-card h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
             display: flex;
             align-items: center;
             gap: 6px;
+            color: #1e293b;
         }
         .inline-select-group {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
-        .inline-select-group select {
+        .inline-select-group select,
+        .inline-select-group input {
             flex: 1;
             min-width: 120px;
         }
-        .reject-section textarea {
+        .action-card textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-bottom: 12px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        .action-card button {
             width: 100%;
             padding: 8px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            font-size: 12px;
-            margin-bottom: 10px;
-            resize: vertical;
+            font-size: 13px;
         }
-        .action-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 10px;
-        }
+        .btn-approve { background: #10b981; color: #fff; }
+        .btn-approve:hover { background: #059669; }
+        .btn-reject { background: #ef4444; color: #fff; }
+        .btn-reject:hover { background: #dc2626; }
         @media (max-width: 600px) {
-            .submission-detail-grid {
-                grid-template-columns: 1fr;
-                gap: 6px;
-            }
-            .submission-detail-grid .label {
-                text-align: left;
-                margin-bottom: -4px;
-            }
+            #submissionDetailModal .modal-body { max-width: calc(100vw - 24px); }
+            .info-row { flex-direction: column; margin-bottom: 10px; }
+            .info-label { width: 100%; margin-bottom: 2px; }
         }
     </style>
 </head>
@@ -386,13 +457,15 @@
     </div>
 </div>
 
-<!-- 优化后的投稿详情模态框 -->
+<!-- 优化后的投稿详情模态框（独立样式，不影响其他） -->
 <div class="modal" id="submissionDetailModal">
-    <div class="modal-body" style="max-width: 700px;">
-        <div class="modal-title">投稿详情</div>
-        <div id="submissionDetailContent"></div>
-        <div class="action-buttons">
-            <button class="secondary" id="closeDetailModalBtn">关闭</button>
+    <div class="modal-body">
+        <div class="modal-header">
+            <h3>📝 投稿详情</h3>
+            <button id="closeDetailModalBtn" aria-label="关闭">&times;</button>
+        </div>
+        <div class="modal-content" id="submissionDetailContent">
+            <!-- 动态内容 -->
         </div>
     </div>
 </div>
