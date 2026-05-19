@@ -17,7 +17,7 @@
     <meta http-equiv="X-Frame-Options" content="DENY">
 
     <style>
-        /* ========== 基础样式（保持不变） ========== */
+        /* ========== 基础样式 ========== */
         *{margin:0;padding:0;box-sizing:border-box}
         html{scroll-behavior:smooth}
         body{
@@ -105,10 +105,48 @@
             overflow-y:auto;max-height:calc(100vh - 260px);overflow-x:hidden;flex:1;
         }
 
-        .site-list .link-item { flex-direction: column; align-items: stretch; gap: 8px; }
-        .site-list .link-item .link-info { min-width: unset; width: 100%; }
-        .site-list .link-item .link-actions { width: 100%; }
-        .site-list .link-item .link-actions button { width: 100%; height: 30px; }
+        /* 修复链接列表样式：确保条目完整显示，不溢出 */
+        .site-list .link-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px;
+            background: #fff;
+            border-radius: 7px;
+            margin-bottom: 7px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .site-list .link-info {
+            flex: 1;
+            min-width: 120px;
+            word-break: break-word;
+        }
+        .site-list .link-actions {
+            display: flex;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+        .site-list .link-actions button {
+            white-space: nowrap;
+        }
+
+        /* 其余列表样式保持 */
+        .rank-list .link-item,
+        .feedback-list .link-item,
+        .submissions-list .link-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px;
+            background: #fff;
+            border-radius: 7px;
+            margin-bottom: 7px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
 
         input,select{
             padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;
@@ -139,15 +177,6 @@
         .badge-green{background:#dcfce7;color:#16a34a}
         .badge-red{background:#fee2e2;color:#dc2626}
         .badge-blue{background:#e0f2fe;color:#0369a1}
-
-        .link-item{
-            padding:10px;border-radius:7px;background:#fff;margin-bottom:7px;
-            display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:7px;
-            box-shadow:0 1px 3px rgba(0,0,0,0.05);word-break:break-all;
-        }
-        .link-info{flex:1;min-width:150px;overflow:hidden}
-        .link-info .link-url{display:none;}
-        .link-actions{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0}
 
         #addSubBtn, #addSiteBtn {
             width: 100%;height: 38px;font-size: 12px;
@@ -201,13 +230,7 @@
         .fetch-info-btn { background: #10b981; color: #fff; padding: 6px 12px; font-size: 11px; margin-left: 6px; white-space: nowrap; }
         .fetch-info-btn:hover { background: #059669; }
 
-        .submissions-list .link-item {
-            display:flex; justify-content:space-between; align-items:center;
-            padding:8px 12px; background:#fff; border-radius:6px; margin-bottom:4px;
-            box-shadow:0 1px 2px rgba(0,0,0,0.04);
-        }
-
-        /* ========== 优化后的投稿详情模态框样式（不影响其他） ========== */
+        /* ========== 投稿详情模态框样式（不影响其他） ========== */
         #submissionDetailModal .modal-body {
             max-width: 680px;
             padding: 0;
@@ -249,7 +272,6 @@
         #submissionDetailModal .modal-content {
             padding: 20px;
         }
-        /* 信息卡片 */
         .info-card {
             background: #f8fafc;
             border-radius: 12px;
@@ -293,18 +315,6 @@
         .status-approved { background: #dcfce7; color: #15803d; }
         .status-rejected { background: #fee2e2; color: #b91c1c; }
         .status-pending { background: #fef3c7; color: #b45309; }
-        .security-result {
-            font-size: 12px;
-            color: #475569;
-            background: #fff;
-            padding: 6px 10px;
-            border-radius: 8px;
-            margin-top: 4px;
-        }
-        /* 操作区域 */
-        .action-section {
-            margin-top: 8px;
-        }
         .action-card {
             background: #fff;
             border: 1px solid #e9ecef;
@@ -457,7 +467,7 @@
     </div>
 </div>
 
-<!-- 优化后的投稿详情模态框（独立样式，不影响其他） -->
+<!-- 优化后的投稿详情模态框 -->
 <div class="modal" id="submissionDetailModal">
     <div class="modal-body">
         <div class="modal-header">
