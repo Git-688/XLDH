@@ -1,5 +1,5 @@
 /**
- * 网站投稿模块（支持异步安全检测 + 状态查询）
+ * 网站投稿模块（支持异步安全检测 + 我的投稿列表）
  */
 class SubmitModule {
     constructor() {
@@ -21,136 +21,156 @@ class SubmitModule {
         this.alreadySubmitted = false;
         this.resultLabel = '';
         this.riskLevel = '';
-        this.lastSubmissionId = localStorage.getItem('last_submission_id');
 
         this.init();
     }
 
-    init() { 
-        this.bindEvents(); 
-        this.createStatusPanel();
-        if (this.lastSubmissionId) this.checkSubmissionStatus(this.lastSubmissionId, false);
+    init() {
+        this.bindEvents();
+        this.createMySubmissionsPanel();
     }
 
-    createStatusPanel() {
+    // ==================== 我的投稿列表 ====================
+    createMySubmissionsPanel() {
         if (!this.modal) return;
         const body = this.modal.querySelector('.feedback-modal-body');
         if (!body) return;
-        if (document.getElementById('submissionStatusPanel')) return;
-        
+        if (document.getElementById('mySubmissionsPanel')) return;
+
         const panel = document.createElement('div');
-        panel.id = 'submissionStatusPanel';
+        panel.id = 'mySubmissionsPanel';
         panel.style.cssText = `
-            margin-top: 15px;
-            padding: 10px;
+            margin-top: 20px;
+            padding: 12px;
             background: rgba(0,0,0,0.03);
             border-radius: 8px;
             font-size: 12px;
             border-top: 1px solid var(--border-color);
         `;
         panel.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <span><i class="fas fa-clipboard-list"></i> 投稿状态</span>
-                <button id="checkSubmissionStatusBtn" class="submit-cancel-btn" style="padding: 4px 10px; font-size: 11px;">查询最新投稿</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span><i class="fas fa-history"></i> 我的投稿 (<span id="submissionTotalCount">0</span>)</span>
+                <button id="refreshSubmissionsBtn" class="submit-cancel-btn" style="padding: 4px 10px; font-size: 11px;">刷新</button>
             </div>
-            <div id="submissionStatusContent" style="color: var(--text-secondary);">
-                暂无投稿记录
+            <div id="submissionsList" style="max-height: 300px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
+                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">暂无投稿记录</div>
             </div>
         `;
+        // 隐藏滚动条
+        const style = document.createElement('style');
+        style.textContent = '#submissionsList::-webkit-scrollbar { display: none; }';
+        panel.appendChild(style);
         body.appendChild(panel);
-        
-        this.statusContainer = document.getElementById('submissionStatusContent');
-        const checkBtn = document.getElementById('checkSubmissionStatusBtn');
-        if (checkBtn) {
-            checkBtn.addEventListener('click', () => this.checkLatestSubmission());
-        }
-    }
 
-    async checkLatestSubmission() {
-        if (!this.lastSubmissionId) {
-            this.updateStatusDisplay(null, '暂无投稿记录，请先投稿');
-            return;
-        }
-        await this.checkSubmissionStatus(this.lastSubmissionId, true);
-    }
+        this.submissionsListContainer = document.getElementById('submissionsList');
+        this.submissionTotalSpan = document.getElementById('submissionTotalCount');
+        const refreshBtn = document.getElementById('refreshSubmissionsBtn');
+        if (refreshBtn) refreshBtn.addEventListener('click', () => this.loadMySubmissions());
 
-    async checkSubmissionStatus(submissionId, showToastOnError = true) {
-        if (!submissionId) return;
-        try {
-            const res = await fetch(`${this.apiBase}/submission-status?id=${submissionId}`);
-            if (!res.ok) {
-                if (res.status === 404) {
-                    this.updateStatusDisplay(null, '投稿记录不存在，可能已被删除');
-                } else {
-                    this.updateStatusDisplay(null, '查询失败，请稍后重试');
+        // 每次打开模态框时自动刷新列表
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    if (this.modal.classList.contains('active')) {
+                        this.loadMySubmissions();
+                    }
                 }
-                return;
-            }
+            });
+        });
+        observer.observe(this.modal, { attributes: true });
+    }
+
+    async loadMySubmissions() {
+        if (!this.submissionsListContainer) return;
+        this.submissionsListContainer.innerHTML = '<div style="text-align: center; padding: 20px;">加载中...</div>';
+        try {
+            const res = await fetch(`${this.apiBase}/my-submissions`, {
+                headers: { 'X-Device-Id': this.getDeviceId() }
+            });
+            if (!res.ok) throw new Error('加载失败');
             const data = await res.json();
-            this.updateStatusDisplay(data);
+            if (this.submissionTotalSpan) {
+                this.submissionTotalSpan.textContent = data.totalCount || 0;
+            }
+            this.renderSubmissionList(data.list || []);
         } catch (err) {
             console.error(err);
-            if (showToastOnError) window.toast.show('查询状态失败', 'error');
-            this.updateStatusDisplay(null, '网络错误，无法查询');
+            this.submissionsListContainer.innerHTML = '<div style="text-align: center; color: var(--error-color); padding: 20px;">加载失败，请重试</div>';
         }
     }
 
-    updateStatusDisplay(data, errorMsg = null) {
-        if (!this.statusContainer) return;
-        if (errorMsg) {
-            this.statusContainer.innerHTML = `<span style="color: var(--warning-color);">${this.escapeHtml(errorMsg)}</span>`;
+    renderSubmissionList(list) {
+        if (!list.length) {
+            this.submissionsListContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">暂无投稿记录</div>';
             return;
         }
-        if (!data) {
-            this.statusContainer.innerHTML = '<span>无投稿记录</span>';
-            return;
-        }
-        
-        let statusText = '', statusColor = '';
-        switch (data.status) {
-            case 'pending':
-                statusText = '审核中';
-                statusColor = '#f59e0b';
-                break;
-            case 'approved':
-                statusText = '已通过 ✓';
-                statusColor = '#10b981';
-                break;
-            case 'rejected':
-                statusText = '未通过 ✗';
-                statusColor = '#ef4444';
-                break;
-            default:
-                statusText = data.status;
-                statusColor = '#64748b';
-        }
-        
-        const submitDate = new Date(data.submitTime).toLocaleString();
-        const resultText = data.result || '暂无检测结果';
-        
-        this.statusContainer.innerHTML = `
-            <div style="margin-bottom: 4px;"><strong>${this.escapeHtml(data.title)}</strong></div>
-            <div>状态：<span style="color: ${statusColor};">${statusText}</span></div>
-            <div>检测结果：${this.escapeHtml(resultText)}</div>
-            <div style="font-size: 11px; margin-top: 4px;">提交时间：${submitDate}</div>
-            ${data.status === 'approved' ? '<div style="color: #10b981; margin-top: 4px;">✅ 该网站已被收录，感谢您的贡献！</div>' : ''}
-            ${data.status === 'rejected' ? '<div style="color: #ef4444; margin-top: 4px;">❌ 该网站未通过安全检测或人工审核</div>' : ''}
-        `;
+        const html = list.map(item => {
+            const submitDate = new Date(item.submit_time).toLocaleString();
+            const safeTitle = this.escapeHtml(item.title);
+            const safeResult = this.escapeHtml(item.vt_result || '暂无');
+
+            let statusHtml = '';
+            if (item.status === 'approved') {
+                let categoryPath = '';
+                if (item.category_name && item.subcategory_name) {
+                    categoryPath = `${this.escapeHtml(item.category_name)} → ${this.escapeHtml(item.subcategory_name)}`;
+                } else {
+                    categoryPath = '已收录';
+                }
+                statusHtml = `<span style="color: #10b981;">✅ 已收录到 ${categoryPath}</span>`;
+            } else if (item.status === 'rejected') {
+                const reason = this.escapeHtml(item.reject_reason || '未提供原因');
+                statusHtml = `<span style="color: #ef4444;">❌ 拒绝原因：${reason}</span>`;
+            } else {
+                statusHtml = `<span style="color: #f59e0b;">⏳ 待审核</span>`;
+            }
+
+            return `
+                <div style="padding: 10px; border-bottom: 1px solid var(--border-color);">
+                    <div><strong>${safeTitle}</strong></div>
+                    <div>状态：${statusHtml}</div>
+                    <div>安全检测：${safeResult}</div>
+                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">${submitDate}</div>
+                </div>
+            `;
+        }).join('');
+        this.submissionsListContainer.innerHTML = html;
     }
 
+    getDeviceId() {
+        let deviceId = localStorage.getItem('device_id');
+        if (!deviceId) {
+            deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('device_id', deviceId);
+        }
+        return deviceId;
+    }
+
+    // ==================== 原有投稿功能 ====================
     bindEvents() {
         const closeBtn = this.modal.querySelector('.feedback-modal-close');
         const cancelBtn = this.modal.querySelector('.submit-cancel-btn');
-        const closeModal = () => { this.modal.classList.remove('active'); this.resetForm(); };
+        const closeModal = () => {
+            this.modal.classList.remove('active');
+            this.resetForm();
+        };
         closeBtn?.addEventListener('click', closeModal);
         cancelBtn?.addEventListener('click', closeModal);
-        this.modal.addEventListener('click', e => { if (e.target === this.modal) closeModal(); });
+        this.modal.addEventListener('click', e => {
+            if (e.target === this.modal) closeModal();
+        });
 
         this.fetchInfoBtn.addEventListener('click', () => this.fetchSiteInfoAndCheck());
 
         this.urlInput.addEventListener('input', () => {
-            this.isSafe = false; this.canSubmit = false; this.alreadySubmitted = false; this.resultLabel = ''; this.riskLevel = '';
-            this.urlCheckResult.style.display = 'none'; this.urlCheckResult.className = 'url-check-result'; this.updateSubmitButton();
+            this.isSafe = false;
+            this.canSubmit = false;
+            this.alreadySubmitted = false;
+            this.resultLabel = '';
+            this.riskLevel = '';
+            this.urlCheckResult.style.display = 'none';
+            this.urlCheckResult.className = 'url-check-result';
+            this.updateSubmitButton();
         });
         this.iconInput.addEventListener('input', () => this.updateIconPreview());
         this.titleInput.addEventListener('input', () => this.updateSubmitButton());
@@ -171,7 +191,10 @@ class SubmitModule {
 
     async fetchSiteInfoAndCheck() {
         const url = this.urlInput.value.trim();
-        if (!url || !this.isValidUrl(url)) { window.toast.show('请输入正确的网址', 'warning'); return; }
+        if (!url || !this.isValidUrl(url)) {
+            window.toast.show('请输入正确的网址', 'warning');
+            return;
+        }
 
         if (this.waitingHint) this.waitingHint.style.display = 'inline';
         this.fetchInfoBtn.disabled = true;
@@ -183,12 +206,17 @@ class SubmitModule {
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
             const res = await fetch(`${this.apiBase}/fetch-site-info`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: safeUrl })
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: safeUrl })
             });
             const data = await res.json();
 
             if (data.title) this.titleInput.value = data.title;
-            if (data.icon) { this.iconInput.value = data.icon; this.updateIconPreview(); }
+            if (data.icon) {
+                this.iconInput.value = data.icon;
+                this.updateIconPreview();
+            }
             if (data.description) {
                 this.descInput.value = data.description;
                 this.autoResizeDesc();
@@ -215,9 +243,13 @@ class SubmitModule {
             }
             this.updateSubmitButton();
         } catch (e) {
+            console.error(e);
             this.urlCheckResult.className = 'url-check-result checking';
             this.urlCheckResult.textContent = '获取信息失败，可以跳过检测直接提交';
-            this.canSubmit = true; this.isSafe = true; this.alreadySubmitted = false; this.updateSubmitButton();
+            this.canSubmit = true;
+            this.isSafe = true;
+            this.alreadySubmitted = false;
+            this.updateSubmitButton();
         } finally {
             if (this.waitingHint) this.waitingHint.style.display = 'none';
             this.fetchInfoBtn.disabled = false;
@@ -237,26 +269,40 @@ class SubmitModule {
         e.preventDefault();
         const title = this.titleInput.value.trim();
         const url = this.urlInput.value.trim();
-        if (!title || !url) { window.toast.show('请填写网站名称和链接', 'warning'); return; }
-        if (!this.isValidUrl(url)) { window.toast.show('请输入正确的网址', 'warning'); return; }
-        if (this.alreadySubmitted) { window.toast.show('该网站已收录', 'error'); return; }
-        if (!this.canSubmit) { window.toast.show('该链接未通过基础检测，无法提交', 'error'); return; }
+        if (!title || !url) {
+            window.toast.show('请填写网站名称和链接', 'warning');
+            return;
+        }
+        if (!this.isValidUrl(url)) {
+            window.toast.show('请输入正确的网址', 'warning');
+            return;
+        }
+        if (this.alreadySubmitted) {
+            window.toast.show('该网站已收录', 'error');
+            return;
+        }
+        if (!this.canSubmit) {
+            window.toast.show('该链接未通过基础检测，无法提交', 'error');
+            return;
+        }
 
         this.submitSaveBtn.disabled = true;
         this.submitSaveBtn.textContent = '提交中...';
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
             const res = await fetch(`${this.apiBase}/submit-site`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, url: safeUrl, description: this.descInput.value.trim(), icon: this.iconInput.value.trim(), vt_result: this.resultLabel })
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title,
+                    url: safeUrl,
+                    description: this.descInput.value.trim(),
+                    icon: this.iconInput.value.trim(),
+                    vt_result: this.resultLabel
+                })
             });
             if (res.ok) {
                 const data = await res.json();
-                if (data.submissionId) {
-                    this.lastSubmissionId = data.submissionId;
-                    localStorage.setItem('last_submission_id', data.submissionId);
-                    if (this.statusContainer) this.checkSubmissionStatus(data.submissionId, false);
-                }
                 if (data.asyncCheck) {
                     window.toast.show('投稿已提交！安全检测将在后台进行，通过后自动收录', 'success');
                 } else {
@@ -264,30 +310,48 @@ class SubmitModule {
                 }
                 this.modal.classList.remove('active');
                 this.resetForm();
+                // 投稿成功后刷新列表
+                setTimeout(() => this.loadMySubmissions(), 500);
             } else {
-                const err = await res.json().catch(()=>({}));
+                const err = await res.json().catch(() => ({}));
                 window.toast.show(err.error || '提交失败', 'error');
             }
-        } catch { window.toast.show('网络错误', 'error'); }
-        finally { this.submitSaveBtn.disabled = false; this.submitSaveBtn.textContent = '提交投稿'; }
+        } catch {
+            window.toast.show('网络错误', 'error');
+        } finally {
+            this.submitSaveBtn.disabled = false;
+            this.submitSaveBtn.textContent = '提交投稿';
+        }
     }
 
-    isValidUrl(url) { 
-        try { return ['http:','https:'].includes(new URL(url.startsWith('http')?url:`https://${url}`).protocol); } 
-        catch { return false; } 
+    isValidUrl(url) {
+        try {
+            const testUrl = url.startsWith('http') ? url : `https://${url}`;
+            return ['http:', 'https:'].includes(new URL(testUrl).protocol);
+        } catch {
+            return false;
+        }
     }
 
     updateIconPreview() {
         const iconUrl = this.iconInput.value.trim();
-        if (iconUrl && (iconUrl.startsWith('http')||iconUrl.startsWith('https'))) {
-            this.iconPreview.src = iconUrl; this.iconPreview.style.display = 'block';
-        } else { this.iconPreview.style.display = 'none'; }
+        if (iconUrl && (iconUrl.startsWith('http') || iconUrl.startsWith('https'))) {
+            this.iconPreview.src = iconUrl;
+            this.iconPreview.style.display = 'block';
+        } else {
+            this.iconPreview.style.display = 'none';
+        }
     }
 
     resetForm() {
         this.form.reset();
-        this.canSubmit = false; this.isSafe = false; this.alreadySubmitted = false; this.resultLabel = ''; this.riskLevel = '';
-        this.urlCheckResult.style.display = 'none'; this.urlCheckResult.className = 'url-check-result';
+        this.canSubmit = false;
+        this.isSafe = false;
+        this.alreadySubmitted = false;
+        this.resultLabel = '';
+        this.riskLevel = '';
+        this.urlCheckResult.style.display = 'none';
+        this.urlCheckResult.className = 'url-check-result';
         this.iconPreview.style.display = 'none';
         this.submitSaveBtn.disabled = true;
         this.descInput.style.height = 'auto';
@@ -296,13 +360,15 @@ class SubmitModule {
 
     escapeHtml(str) {
         if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => { window.submitModule = new SubmitModule(); });
+document.addEventListener('DOMContentLoaded', () => {
+    window.submitModule = new SubmitModule();
+});
