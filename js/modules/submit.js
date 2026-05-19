@@ -1,6 +1,6 @@
 /**
  * 网站投稿模块（支持异步安全检测 + 我的投稿列表）
- * 修复：投稿时发送 X-Device-Id 头，确保 device_id 一致
+ * 功能：列表独立滚动 + 滚动条隐藏
  */
 class SubmitModule {
     constructor() {
@@ -31,12 +31,16 @@ class SubmitModule {
         this.createMySubmissionsPanel();
     }
 
-    // ==================== 我的投稿列表 ====================
+    // ==================== 我的投稿列表（独立滚动，隐藏滚动条） ====================
     createMySubmissionsPanel() {
         if (!this.modal) return;
         const body = this.modal.querySelector('.feedback-modal-body');
         if (!body) return;
         if (document.getElementById('mySubmissionsPanel')) return;
+
+        // 让模态框主体不滚动，滚动交给内部列表容器
+        body.style.overflowY = 'hidden';
+        body.style.paddingBottom = '0';
 
         const panel = document.createElement('div');
         panel.id = 'mySubmissionsPanel';
@@ -47,19 +51,25 @@ class SubmitModule {
             border-radius: 8px;
             font-size: 12px;
             border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
         `;
         panel.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span><i class="fas fa-history"></i> 我的投稿 (<span id="submissionTotalCount">0</span>)</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0;">
+                <span><i class="fas fa-history"></i> 投稿列表 (<span id="submissionTotalCount">0</span>)</span>
                 <button id="refreshSubmissionsBtn" class="submit-cancel-btn" style="padding: 4px 10px; font-size: 11px;">刷新</button>
             </div>
-            <div id="submissionsList" style="max-height: 300px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
+            <div id="submissionsList" style="max-height: 280px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
                 <div style="text-align: center; color: var(--text-secondary); padding: 20px;">暂无投稿记录</div>
             </div>
         `;
-        // 隐藏滚动条
+        // 彻底隐藏滚动条（兼容 Chrome/Safari/Firefox/Edge）
         const style = document.createElement('style');
-        style.textContent = '#submissionsList::-webkit-scrollbar { display: none; }';
+        style.textContent = `
+            #submissionsList::-webkit-scrollbar {
+                display: none;
+            }
+        `;
         panel.appendChild(style);
         body.appendChild(panel);
 
@@ -130,7 +140,7 @@ class SubmitModule {
                 <div style="padding: 10px; border-bottom: 1px solid var(--border-color);">
                     <div><strong>${safeTitle}</strong></div>
                     <div>状态：${statusHtml}</div>
-                    <div>安全检测：${safeResult}</div>
+                    <div>检测：${safeResult}</div>
                     <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">${submitDate}</div>
                 </div>
             `;
@@ -234,7 +244,7 @@ class SubmitModule {
                 this.urlCheckResult.textContent = data.label || '该网站已收录，无需重复提交';
             } else if (data.asyncCheck) {
                 this.urlCheckResult.className = 'url-check-result safe';
-                this.urlCheckResult.textContent = data.label || '信息获取成功，提交后后台将进行安全检测';
+                this.urlCheckResult.textContent = data.label || '信息获取成功，提交后后台将进行人工检测';
             } else if (!data.canSubmit) {
                 this.urlCheckResult.className = 'url-check-result unsafe';
                 this.urlCheckResult.textContent = data.label || '该链接存在安全风险，禁止提交';
@@ -291,12 +301,12 @@ class SubmitModule {
         this.submitSaveBtn.textContent = '提交中...';
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
-            const deviceId = this.getDeviceId();  // 获取持久化设备ID
+            const deviceId = this.getDeviceId();
             const res = await fetch(`${this.apiBase}/submit-site`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Device-Id': deviceId   // 🔧 关键修复：投稿时发送设备ID
+                    'X-Device-Id': deviceId
                 },
                 body: JSON.stringify({
                     title,
@@ -315,7 +325,6 @@ class SubmitModule {
                 }
                 this.modal.classList.remove('active');
                 this.resetForm();
-                // 投稿成功后刷新列表
                 setTimeout(() => this.loadMySubmissions(), 500);
             } else {
                 const err = await res.json().catch(() => ({}));
