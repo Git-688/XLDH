@@ -8,6 +8,16 @@
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
 
+    <!-- 全局配置 - 放在所有脚本之前 -->
+    <script>
+        window.APP_CONFIG = {
+            // 后端 API 地址（Worker 部署地址）
+            API_BASE: 'https://api.xjdh688.ccwu.cc',
+            // Waline 评论服务地址
+            WALINE_SERVER: 'https://yy688.ccwu.cc'
+        };
+    </script>
+
     <!-- CSP 仅保留生产必需域名 -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
 
