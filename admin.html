@@ -206,7 +206,6 @@
             box-shadow:0 1px 2px rgba(0,0,0,0.04);
         }
 
-        /* 自定义下拉选择器 */
         .custom-select {
             position: relative;
             width: 160px;
@@ -272,7 +271,6 @@
         .custom-select-option:hover { background: #f1f5f9; color: #3b82f6; }
         .custom-select-option.selected { background: #e0f2fe; color: #0369a1; font-weight: 500; }
 
-        /* 响应式 */
         @media (max-width:768px){ .sidebar, .main-content { min-width:0; } }
         @media (max-width:480px){ .sidebar, .main-content { padding:8px; } }
     </style>
@@ -375,7 +373,7 @@
     </div>
 </div>
 
-<!-- 投稿详情弹窗 -->
+<!-- 投稿详情弹窗（用于审核） -->
 <div class="modal" id="submissionDetailModal">
     <div class="modal-body" style="max-width:600px">
         <div class="modal-title">投稿详情</div>
@@ -392,6 +390,10 @@
                 </div>
                 <input type="number" id="detailDisplayOrder" placeholder="排序" style="width:80px;" value="0">
             </div>
+            <div id="rejectReasonContainer" style="display: none; width: 100%; margin-top: 10px;">
+                <label>拒绝原因：</label>
+                <input type="text" id="rejectReasonInput" placeholder="请输入拒绝原因" style="width: 100%;">
+            </div>
             <div style="display:flex;gap:8px;margin-left:auto;">
                 <button class="danger" id="detailRejectBtn">拒绝</button>
                 <button class="primary" id="detailApproveBtn">通过并收录</button>
@@ -401,5 +403,127 @@
 </div>
 
 <script src="./js/admin.js"></script>
+<script>
+    // 增强审核弹窗的拒绝功能，使其支持拒绝原因
+    // 等待 admin.js 加载完成后，覆盖原有的拒绝按钮行为
+    (function() {
+        // 存储当前打开的 submission id
+        let currentSubmissionId = null;
+        
+        // 等待 DOM 和 admin.js 加载完成
+        function waitForAdmin() {
+            if (typeof window.apiFetch === 'undefined' && typeof window.showToast === 'undefined') {
+                setTimeout(waitForAdmin, 100);
+                return;
+            }
+            initEnhancements();
+        }
+        
+        function initEnhancements() {
+            const detailModal = document.getElementById('submissionDetailModal');
+            const rejectBtn = document.getElementById('detailRejectBtn');
+            const approveBtn = document.getElementById('detailApproveBtn');
+            const rejectReasonContainer = document.getElementById('rejectReasonContainer');
+            const rejectReasonInput = document.getElementById('rejectReasonInput');
+            
+            if (!detailModal || !rejectBtn) return;
+            
+            // 监听模态框打开事件（通过观察样式变化）
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        if (detailModal.classList.contains('show')) {
+                            // 模态框打开时，重置拒绝原因输入框状态
+                            if (rejectReasonContainer) rejectReasonContainer.style.display = 'none';
+                            if (rejectReasonInput) rejectReasonInput.value = '';
+                        }
+                    }
+                });
+            });
+            observer.observe(detailModal, { attributes: true });
+            
+            // 替换原有的拒绝按钮行为
+            rejectBtn.replaceWith(rejectBtn.cloneNode(true));
+            const newRejectBtn = document.getElementById('detailRejectBtn');
+            if (newRejectBtn) {
+                newRejectBtn.addEventListener('click', function() {
+                    // 显示拒绝原因输入框
+                    if (rejectReasonContainer) rejectReasonContainer.style.display = 'block';
+                    // 聚焦输入框
+                    if (rejectReasonInput) rejectReasonInput.focus();
+                    // 临时改变按钮文字和样式
+                    const originalText = newRejectBtn.innerHTML;
+                    newRejectBtn.innerHTML = '确认拒绝';
+                    newRejectBtn.style.background = '#ef4444';
+                    
+                    // 移除原有点击事件，避免重复绑定
+                    const confirmReject = async function() {
+                        const reason = rejectReasonInput ? rejectReasonInput.value.trim() : '';
+                        if (!reason) {
+                            window.showToast('请填写拒绝原因', 'error');
+                            return;
+                        }
+                        // 获取当前投稿ID（从 admin.js 全局变量或从 DOM 获取）
+                        // admin.js 中有一个全局变量 currentSubmissionId，但可能未暴露。我们尝试从模块中获取。
+                        // 如果无法获取，则从模态框的 data 属性获取
+                        let submissionId = window._currentSubmissionId || detailModal.getAttribute('data-submission-id');
+                        if (!submissionId) {
+                            // 尝试从页面中提取（通常在打开详情时由 admin.js 设置）
+                            const idElement = document.querySelector('#submissionDetailContent [data-submission-id]');
+                            if (idElement) submissionId = idElement.getAttribute('data-submission-id');
+                        }
+                        if (!submissionId) {
+                            window.showToast('无法获取投稿ID', 'error');
+                            return;
+                        }
+                        try {
+                            const res = await fetch(`${window.API_BASE || (window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc')}/admin/submissions/${submissionId}/reject`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${window.adminToken || ''}`
+                                },
+                                body: JSON.stringify({ reason: reason })
+                            });
+                            if (res.ok) {
+                                window.showToast('已拒绝', 'success');
+                                detailModal.classList.remove('show');
+                                // 刷新待审核列表
+                                if (window.loadSubmissions) window.loadSubmissions();
+                            } else {
+                                const err = await res.json();
+                                window.showToast(err.error || '拒绝失败', 'error');
+                            }
+                        } catch (err) {
+                            window.showToast('网络错误', 'error');
+                        } finally {
+                            // 恢复按钮
+                            newRejectBtn.innerHTML = originalText;
+                            newRejectBtn.style.background = '';
+                            if (rejectReasonContainer) rejectReasonContainer.style.display = 'none';
+                            newRejectBtn.removeEventListener('click', confirmReject);
+                            newRejectBtn.addEventListener('click', arguments.callee);
+                        }
+                    };
+                    newRejectBtn.removeEventListener('click', confirmReject);
+                    newRejectBtn.addEventListener('click', confirmReject);
+                });
+            }
+            
+            // 通过按钮保持不变，但为了确保它使用最新的 API 调用，可以保留原有逻辑
+            // 原有 admin.js 中通过 detailApproveBtn 的 click 事件已经调用 /admin/submissions/:id/approve
+            // 所以不需要修改
+        }
+        
+        // 暴露一个方法让 admin.js 在打开详情时设置当前 submissionId
+        window.setCurrentSubmissionId = function(id) {
+            window._currentSubmissionId = id;
+            const detailModal = document.getElementById('submissionDetailModal');
+            if (detailModal) detailModal.setAttribute('data-submission-id', id);
+        };
+        
+        waitForAdmin();
+    })();
+</script>
 </body>
 </html>
