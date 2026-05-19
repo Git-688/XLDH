@@ -1,6 +1,6 @@
 /**
  * 网站投稿模块（支持异步安全检测 + 我的投稿列表）
- * 功能：列表独立滚动 + 滚动条隐藏
+ * 功能：列表独立滚动（隐藏滚动条）、投稿时发送设备ID、获取信息失败toast提示、清缓存后友好提示
  */
 class SubmitModule {
     constructor() {
@@ -31,7 +31,7 @@ class SubmitModule {
         this.createMySubmissionsPanel();
     }
 
-    // ==================== 我的投稿列表（独立滚动，隐藏滚动条） ====================
+    // ==================== 我的投稿列表（独立滚动，隐藏滚动条，防滚动穿透） ====================
     createMySubmissionsPanel() {
         if (!this.modal) return;
         const body = this.modal.querySelector('.feedback-modal-body');
@@ -56,14 +56,14 @@ class SubmitModule {
         `;
         panel.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0;">
-                <span><i class="fas fa-history"></i> 投稿列表 (<span id="submissionTotalCount">0</span>)</span>
+                <span><i class="fas fa-history"></i> 我的投稿 (<span id="submissionTotalCount">0</span>)</span>
                 <button id="refreshSubmissionsBtn" class="submit-cancel-btn" style="padding: 4px 10px; font-size: 11px;">刷新</button>
             </div>
-            <div id="submissionsList" style="max-height: 280px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
+            <div id="submissionsList" style="max-height: 280px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; touch-action: pan-y; overscroll-behavior: contain;">
                 <div style="text-align: center; color: var(--text-secondary); padding: 20px;">暂无投稿记录</div>
             </div>
         `;
-        // 彻底隐藏滚动条（兼容 Chrome/Safari/Firefox/Edge）
+        // 彻底隐藏滚动条
         const style = document.createElement('style');
         style.textContent = `
             #submissionsList::-webkit-scrollbar {
@@ -77,6 +77,19 @@ class SubmitModule {
         this.submissionTotalSpan = document.getElementById('submissionTotalCount');
         const refreshBtn = document.getElementById('refreshSubmissionsBtn');
         if (refreshBtn) refreshBtn.addEventListener('click', () => this.loadMySubmissions());
+
+        // 防止滚动穿透：模态框打开时锁定 body 滚动
+        const modalElem = this.modal;
+        const disableBodyScroll = () => { document.body.style.overflow = 'hidden'; };
+        const enableBodyScroll = () => { document.body.style.overflow = ''; };
+        const observerForModal = new MutationObserver(() => {
+            if (modalElem.classList.contains('active')) {
+                disableBodyScroll();
+            } else {
+                enableBodyScroll();
+            }
+        });
+        observerForModal.observe(modalElem, { attributes: true });
 
         // 每次打开模态框时自动刷新列表
         const observer = new MutationObserver((mutations) => {
@@ -112,7 +125,7 @@ class SubmitModule {
 
     renderSubmissionList(list) {
         if (!list.length) {
-            this.submissionsListContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">暂无投稿记录</div>';
+            this.submissionsListContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">暂无投稿记录<br><span style="font-size: 11px;">如果您之前投过稿，清除浏览器缓存后无法找回，但新投稿会正常显示。</span></div>';
             return;
         }
         const html = list.map(item => {
@@ -140,7 +153,7 @@ class SubmitModule {
                 <div style="padding: 10px; border-bottom: 1px solid var(--border-color);">
                     <div><strong>${safeTitle}</strong></div>
                     <div>状态：${statusHtml}</div>
-                    <div>检测：${safeResult}</div>
+                    <div>安全检测：${safeResult}</div>
                     <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">${submitDate}</div>
                 </div>
             `;
@@ -244,7 +257,7 @@ class SubmitModule {
                 this.urlCheckResult.textContent = data.label || '该网站已收录，无需重复提交';
             } else if (data.asyncCheck) {
                 this.urlCheckResult.className = 'url-check-result safe';
-                this.urlCheckResult.textContent = data.label || '信息获取成功，提交后后台将进行人工检测';
+                this.urlCheckResult.textContent = data.label || '信息获取成功，提交后后台将进行安全检测';
             } else if (!data.canSubmit) {
                 this.urlCheckResult.className = 'url-check-result unsafe';
                 this.urlCheckResult.textContent = data.label || '该链接存在安全风险，禁止提交';
@@ -256,7 +269,8 @@ class SubmitModule {
         } catch (e) {
             console.error(e);
             this.urlCheckResult.className = 'url-check-result checking';
-            this.urlCheckResult.textContent = '获取信息失败，可以跳过检测直接提交';
+            this.urlCheckResult.textContent = '获取信息失败，请手动填写';
+            window.toast.show('自动获取网站信息失败，请手动填写标题和图标', 'warning');
             this.canSubmit = true;
             this.isSafe = true;
             this.alreadySubmitted = false;
