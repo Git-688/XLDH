@@ -285,7 +285,7 @@
         `).join('');
     }
 
-    // ========== 优化后的投稿详情模态框 ==========
+    // ========== 优化后的投稿详情模态框（现代简约风格） ==========
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -296,31 +296,56 @@
             const item = data.find(s => s.id == id);
             if (!item) { showToast('未找到该投稿', 'error'); return; }
             
-            // 构建详情内容
+            // 状态样式
             let statusClass = '', statusText = '';
-            if (item.status === 'approved') { statusClass = 'submission-status-approved'; statusText = '已通过'; }
-            else if (item.status === 'rejected') { statusClass = 'submission-status-rejected'; statusText = '已拒绝'; }
-            else { statusClass = 'submission-status-pending'; statusText = '待审核'; }
+            if (item.status === 'approved') { statusClass = 'status-approved'; statusText = '已通过'; }
+            else if (item.status === 'rejected') { statusClass = 'status-rejected'; statusText = '已拒绝'; }
+            else { statusClass = 'status-pending'; statusText = '待审核'; }
             
-            const vtResultColor = (item.vt_result || '').includes('安全') ? '#10b981' : '#ef4444';
-            
-            const iconPreview = item.icon && (item.icon.startsWith('http') || item.icon.startsWith('https')) 
-                ? `<img src="${escapeHtml(item.icon)}" style="width:24px;height:24px;vertical-align:middle;border-radius:4px;">` 
+            const vtColor = (item.vt_result || '').includes('安全') ? '#10b981' : '#ef4444';
+            const iconPreview = item.icon && (item.icon.startsWith('http') || item.icon.startsWith('https'))
+                ? `<img src="${escapeHtml(item.icon)}" style="width:20px;height:20px;vertical-align:middle;border-radius:4px;">`
                 : `<i class="${escapeHtml(item.icon || 'fas fa-link')}"></i>`;
             
             contentDiv.innerHTML = `
-                <div class="submission-detail-grid">
-                    <div class="label">标题：</div><div class="value">${escapeHtml(item.title)} ${iconPreview}</div>
-                    <div class="label">网址：</div><div class="value"><a href="${escapeHtml(item.url)}" target="_blank">${escapeHtml(item.url)}</a></div>
-                    <div class="label">图标：</div><div class="value">${escapeHtml(item.icon || '无')}</div>
-                    <div class="label">描述：</div><div class="value">${escapeHtml(item.description || '无')}</div>
-                    <div class="label">提交者IP：</div><div class="value">${escapeHtml(item.submitter_ip)}</div>
-                    <div class="label">提交时间：</div><div class="value">${new Date(item.submit_time).toLocaleString()}</div>
-                    <div class="label">安全检测：</div><div class="value" style="color:${vtResultColor}">${escapeHtml(item.vt_result || '未检测')}</div>
-                    <div class="label">状态：</div><div class="value ${statusClass}">${statusText}</div>
+                <div class="info-card">
+                    <div class="info-row">
+                        <div class="info-label">标题</div>
+                        <div class="info-value">${escapeHtml(item.title)} ${iconPreview}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">网址</div>
+                        <div class="info-value"><a href="${escapeHtml(item.url)}" target="_blank">${escapeHtml(item.url)}</a></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">图标</div>
+                        <div class="info-value">${escapeHtml(item.icon || '无')}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">描述</div>
+                        <div class="info-value">${escapeHtml(item.description || '无')}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">提交者</div>
+                        <div class="info-value">${escapeHtml(item.submitter_ip)}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">提交时间</div>
+                        <div class="info-value">${new Date(item.submit_time).toLocaleString()}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">安全检测</div>
+                        <div class="info-value">
+                            <span style="color:${vtColor}">${escapeHtml(item.vt_result || '未检测')}</span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">状态</div>
+                        <div class="info-value"><span class="status-badge ${statusClass}">${statusText}</span></div>
+                    </div>
                 </div>
-                <div class="submission-actions">
-                    <div class="approve-section">
+                <div class="action-section">
+                    <div class="action-card">
                         <h4><i class="fas fa-check-circle"></i> 通过收录</h4>
                         <div class="inline-select-group">
                             <select id="approveCatSelect">
@@ -332,17 +357,17 @@
                             </select>
                             <input type="number" id="approveOrder" placeholder="排序" value="0" style="width:80px;">
                         </div>
-                        <button class="primary" id="doApproveBtn">✓ 通过并收录</button>
+                        <button class="btn-approve" id="doApproveBtn">✓ 通过并收录</button>
                     </div>
-                    <div class="reject-section">
+                    <div class="action-card">
                         <h4><i class="fas fa-ban"></i> 拒绝投稿</h4>
                         <textarea id="rejectReason" rows="2" placeholder="请输入拒绝原因..."></textarea>
-                        <button class="danger" id="doRejectBtn">✗ 拒绝</button>
+                        <button class="btn-reject" id="doRejectBtn">✗ 拒绝</button>
                     </div>
                 </div>
             `;
             
-            // 绑定一级分类联动
+            // 一级分类联动
             const catSelect = document.getElementById('approveCatSelect');
             const subSelect = document.getElementById('approveSubSelect');
             catSelect.addEventListener('change', async (e) => {
@@ -406,19 +431,17 @@
         }
     }
 
-    // 关闭详情模态框的按钮
+    // 关闭详情模态框
     document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => {
         document.getElementById('submissionDetailModal').classList.remove('show');
     });
-    // 点击模态框背景关闭
     document.getElementById('submissionDetailModal')?.addEventListener('click', (e) => {
         if (e.target === document.getElementById('submissionDetailModal')) {
             e.target.classList.remove('show');
         }
     });
 
-    // ========== 其余原有函数（保持不变） ==========
-    // 处理修改分类、子分类、链接等
+    // ========== 其余管理函数 ==========
     function handleModifyCategory(id, currentName) {
         openModal('修改分类',
             `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
