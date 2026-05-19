@@ -11,6 +11,10 @@
     let lockUntil = parseInt(sessionStorage.getItem('login_lock_until') || '0', 10);
     let modalAction = null;
     let currentSubmissionId = null;
+    
+    // 拒绝原因输入框相关状态
+    let isRejectMode = false;
+    let pendingRejectSubmissionId = null;
 
     // ========== 自定义下拉选择器类 ==========
     class CustomSelect {
@@ -85,7 +89,6 @@
         }
     }
 
-    // 全局实例
     let catSelect = null, subSelect = null;
 
     function escapeHtml(str) {
@@ -361,115 +364,112 @@
         `).join('');
     }
 
-    function setupEventDelegation() {
-        document.getElementById('catBar').addEventListener('click', e => {
-            const btn = e.target.closest('[data-action]');
-            if (btn && btn.dataset.action === 'modifyCat') {
-                handleModifyCategory(parseInt(btn.dataset.id), btn.dataset.name);
-                return;
-            }
-            const item = e.target.closest('.cat-item');
-            if (item) selectCat(parseInt(item.dataset.cid));
-        });
-
-        document.getElementById('subList').addEventListener('click', e => {
-            const btn = e.target.closest('[data-action]');
-            if (btn && btn.dataset.action === 'modifySub') {
-                handleModifySub(parseInt(btn.dataset.id), btn.dataset.name);
-                return;
-            }
-            const item = e.target.closest('.sub-item');
-            if (item) selectSub(parseInt(item.dataset.sid));
-        });
-
-        document.getElementById('siteList').addEventListener('click', e => {
-            const btn = e.target.closest('[data-action]');
-            if (!btn) return;
-            if (btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
-        });
-
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-                btn.classList.add('active');
-                const tab = btn.dataset.tab;
-                document.getElementById(`${tab}Tab`).classList.remove('hidden');
-                if (tab === 'rank') loadRanking();
-                if (tab === 'feedback') loadFeedback();
-                if (tab === 'submissions') loadSubmissions();
-            });
-        });
-
-        document.getElementById('loginBtn').addEventListener('click', login);
-        document.getElementById('logoutBtn').addEventListener('click', logout);
-        document.getElementById('addCategoryBtn').addEventListener('click', handleAddCategory);
-        document.getElementById('addSubBtn').addEventListener('click', handleAddSub);
-        document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
-        document.getElementById('exportBtn').addEventListener('click', exportData);
-        document.getElementById('logBtn').addEventListener('click', showLogs);
-        document.getElementById('sortRankBtn').addEventListener('click', loadRanking);
-        document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
-        document.getElementById('refreshSubmissionsBtn').addEventListener('click', loadSubmissions);
-        document.getElementById('refreshNavBtn').addEventListener('click', refreshNavigation);
-        document.getElementById('closeLogBtn').addEventListener('click', closeLogModal);
-        document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
-
-        document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
-        document.getElementById('logModal').addEventListener('click', e => { if (e.target === document.getElementById('logModal')) closeLogModal(); });
-
-        // 投稿详情弹窗关闭
-        const detailModal = document.getElementById('submissionDetailModal');
-        if (detailModal) {
-            detailModal.addEventListener('click', e => { if (e.target === detailModal) detailModal.classList.remove('show'); });
-        }
-
-        // 初始化自定义下拉
-        catSelect = new CustomSelect(document.getElementById('detailCatSelectWrapper'), [], '选择一级分类');
-        subSelect = new CustomSelect(document.getElementById('detailSubSelectWrapper'), [], '选择二级分类');
-
-        catSelect.wrapper.addEventListener('change', async (e) => {
-            const catId = e.detail.value;
-            subSelect.setPlaceholder();
+    // ========== 投稿审核（支持拒绝原因） ==========
+    async function openSubmissionDetail(id) {
+        currentSubmissionId = id;
+        // 重置拒绝模式状态
+        isRejectMode = false;
+        pendingRejectSubmissionId = null;
+        // 隐藏拒绝原因输入区域（如果存在）
+        const rejectReasonContainer = document.getElementById('rejectReasonContainer');
+        if (rejectReasonContainer) rejectReasonContainer.style.display = 'none';
+        const rejectReasonInput = document.getElementById('rejectReasonInput');
+        if (rejectReasonInput) rejectReasonInput.value = '';
+        
+        try {
+            const data = await apiFetch('/admin/submissions');
+            const item = data.find(s => s.id == id);
+            if (!item) { showToast('未找到该投稿', 'error'); return; }
+            
+            const content = document.getElementById('submissionDetailContent');
+            content.innerHTML = `
+                <div style="max-width:400px;margin:0 auto;">
+                    <div style="display:flex;justify-content:center;margin-bottom:10px;">
+                        <span style="font-weight:600;font-size:14px;text-align:center;">${escapeHtml(item.title)}</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:80px 1fr;gap:6px 12px;font-size:12px;align-items:center;">
+                        <div style="text-align:right;font-weight:500;color:#64748b;">标&emsp;&emsp;题：</div><div>${escapeHtml(item.title)}</div>
+                        <div style="text-align:right;font-weight:500;color:#64748b;">网&emsp;&emsp;址：</div><div>${escapeHtml(item.url)}</div>
+                        <div style="text-align:right;font-weight:500;color:#64748b;">图&emsp;&emsp;标：</div><div>${escapeHtml(item.icon||'无')}</div>
+                        <div style="text-align:right;font-weight:500;color:#64748b;">描&emsp;&emsp;述：</div><div>${escapeHtml(item.description||'无')}</div>
+                        <div style="text-align:right;font-weight:500;color:#64748b;">提交者IP：</div><div>${escapeHtml(item.submitter_ip)}</div>
+                        <div style="text-align:right;font-weight:500;color:#64748b;">提交时间：</div><div>${new Date(item.submit_time).toLocaleString()}</div>
+                        <div style="text-align:right;font-weight:500;color:#64748b;">安全检测：</div><div style="color:${(item.vt_result||'').includes('安全')?'#059669':'#d97706'}">${escapeHtml(item.vt_result||'未检测')}</div>
+                    </div>
+                </div>
+            `;
+            
+            const catOptions = (categories.length ? categories : await apiFetch('/admin/categories')).map(c => ({ value: c.id, label: c.name }));
+            catSelect.setOptions(catOptions);
+            catSelect.setPlaceholder();
+            catSelect.value = '';
             subSelect.setOptions([]);
-            if (!catId) return;
-            try {
-                const subs = await apiFetch(`/admin/subcategories?category_id=${catId}`);
-                subSelect.setOptions(subs.map(sub => ({ value: sub.id, label: sub.name })));
-            } catch { showToast('加载子分类失败', 'error'); }
-        });
-
-        document.getElementById('detailApproveBtn').addEventListener('click', async () => {
-            const subId = subSelect.value;
-            const displayOrder = document.getElementById('detailDisplayOrder').value || 0;
-            if (!subId) { showToast('请选择二级分类', 'error'); return; }
-            if (!currentSubmissionId) return;
-            try {
-                await apiFetch(`/admin/submissions/${currentSubmissionId}/approve`, {
-                    method:'POST',
-                    body: JSON.stringify({ subcategory_id: parseInt(subId), display_order: parseInt(displayOrder) })
-                });
-                showToast('已通过并收录', 'success');
-                document.getElementById('submissionDetailModal').classList.remove('show');
-                loadSubmissions();
-                await loadAllData();
-                await apiFetch('/admin/refresh-navigation', { method:'POST' });
-            } catch { showToast('操作失败', 'error'); }
-        });
-
-        document.getElementById('detailRejectBtn').addEventListener('click', async () => {
-            if (!currentSubmissionId) return;
-            if (!confirm('拒绝该投稿？')) return;
-            try {
-                await apiFetch(`/admin/submissions/${currentSubmissionId}`, { method:'DELETE' });
-                showToast('已拒绝', 'success');
-                document.getElementById('submissionDetailModal').classList.remove('show');
-                loadSubmissions();
-            } catch { showToast('操作失败', 'error'); }
-        });
+            subSelect.setPlaceholder();
+            subSelect.value = '';
+            document.getElementById('detailDisplayOrder').value = 0;
+            
+            document.getElementById('submissionDetailModal').classList.add('show');
+        } catch (e) { showToast('加载详情失败', 'error'); }
     }
 
-    // ========== CRUD 操作 ==========
+    // 处理通过收录
+    async function handleApproveSubmission(submissionId, subcategoryId, displayOrder) {
+        try {
+            await apiFetch(`/admin/submissions/${submissionId}/approve`, {
+                method:'POST',
+                body: JSON.stringify({ subcategory_id: parseInt(subcategoryId), display_order: parseInt(displayOrder) })
+            });
+            showToast('已通过并收录', 'success');
+            document.getElementById('submissionDetailModal').classList.remove('show');
+            await loadSubmissions();
+            await loadAllData();
+            await apiFetch('/admin/refresh-navigation', { method:'POST' });
+        } catch (err) {
+            showToast('操作失败', 'error');
+        }
+    }
+
+    // 处理拒绝（带原因）
+    async function handleRejectSubmission(submissionId, reason) {
+        if (!reason.trim()) {
+            showToast('请填写拒绝原因', 'error');
+            return false;
+        }
+        try {
+            await apiFetch(`/admin/submissions/${submissionId}/reject`, {
+                method:'POST',
+                body: JSON.stringify({ reason: reason.trim() })
+            });
+            showToast('已拒绝', 'success');
+            document.getElementById('submissionDetailModal').classList.remove('show');
+            await loadSubmissions();
+            return true;
+        } catch (err) {
+            showToast('操作失败', 'error');
+            return false;
+        }
+    }
+
+    // 刷新待审核列表
+    async function loadSubmissions() {
+        const list = document.getElementById('submissionsList');
+        list.innerHTML = '<div class="empty">加载中...</div>';
+        try {
+            const data = await apiFetch('/admin/submissions');
+            if (!data.length) { list.innerHTML = '<div class="empty">暂无待审核网站</div>'; return; }
+            list.innerHTML = data.map(item => `
+                <div class="link-item" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span><strong>${escapeHtml(item.title)}</strong></span>
+                    <button class="sm primary" data-action="viewSubmission" data-id="${item.id}">查看</button>
+                </div>
+            `).join('');
+            list.querySelectorAll('[data-action="viewSubmission"]').forEach(btn => {
+                btn.addEventListener('click', () => openSubmissionDetail(btn.dataset.id));
+            });
+        } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
+    }
+
+    // ========== 原有 CRUD 操作 ==========
     function handleModifyCategory(id, currentName) {
         openModal('修改分类',
             `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
@@ -684,63 +684,128 @@
         catch { showToast('刷新失败', 'error'); }
     }
 
-    // ========== 投稿审核 ==========
-    async function loadSubmissions() {
-        const list = document.getElementById('submissionsList');
-        list.innerHTML = '<div class="empty">加载中...</div>';
-        try {
-            const data = await apiFetch('/admin/submissions');
-            if (!data.length) { list.innerHTML = '<div class="empty">暂无待审核网站</div>'; return; }
-            list.innerHTML = data.map(item => `
-                <div class="link-item" style="display:flex;justify-content:space-between;align-items:center;">
-                    <span><strong>${escapeHtml(item.title)}</strong></span>
-                    <button class="sm primary" data-action="viewSubmission" data-id="${item.id}">查看</button>
-                </div>
-            `).join('');
-            list.querySelectorAll('[data-action="viewSubmission"]').forEach(btn => {
-                btn.addEventListener('click', () => openSubmissionDetail(btn.dataset.id));
+    function setupEventDelegation() {
+        document.getElementById('catBar').addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (btn && btn.dataset.action === 'modifyCat') {
+                handleModifyCategory(parseInt(btn.dataset.id), btn.dataset.name);
+                return;
+            }
+            const item = e.target.closest('.cat-item');
+            if (item) selectCat(parseInt(item.dataset.cid));
+        });
+
+        document.getElementById('subList').addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (btn && btn.dataset.action === 'modifySub') {
+                handleModifySub(parseInt(btn.dataset.id), btn.dataset.name);
+                return;
+            }
+            const item = e.target.closest('.sub-item');
+            if (item) selectSub(parseInt(item.dataset.sid));
+        });
+
+        document.getElementById('siteList').addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            if (btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+                btn.classList.add('active');
+                const tab = btn.dataset.tab;
+                document.getElementById(`${tab}Tab`).classList.remove('hidden');
+                if (tab === 'rank') loadRanking();
+                if (tab === 'feedback') loadFeedback();
+                if (tab === 'submissions') loadSubmissions();
             });
-        } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
-    }
+        });
 
-    async function openSubmissionDetail(id) {
-        currentSubmissionId = id;
-        try {
-            const data = await apiFetch('/admin/submissions');
-            const item = data.find(s => s.id == id);
-            if (!item) { showToast('未找到该投稿', 'error'); return; }
-            
-            const content = document.getElementById('submissionDetailContent');
-            content.innerHTML = `
-                <div style="max-width:400px;margin:0 auto;">
-                    <div style="display:flex;justify-content:center;margin-bottom:10px;">
-                        <span style="font-weight:600;font-size:14px;text-align:center;">${escapeHtml(item.title)}</span>
-                    </div>
-                    <div style="display:grid;grid-template-columns:80px 1fr;gap:6px 12px;font-size:12px;align-items:center;">
-                        <div style="text-align:right;font-weight:500;color:#64748b;">标&emsp;&emsp;题：</div><div>${escapeHtml(item.title)}</div>
-                        <div style="text-align:right;font-weight:500;color:#64748b;">网&emsp;&emsp;址：</div><div>${escapeHtml(item.url)}</div>
-                        <div style="text-align:right;font-weight:500;color:#64748b;">图&emsp;&emsp;标：</div><div>${escapeHtml(item.icon||'无')}</div>
-                        <div style="text-align:right;font-weight:500;color:#64748b;">描&emsp;&emsp;述：</div><div>${escapeHtml(item.description||'无')}</div>
-                        <div style="text-align:right;font-weight:500;color:#64748b;">提交者IP：</div><div>${escapeHtml(item.submitter_ip)}</div>
-                        <div style="text-align:right;font-weight:500;color:#64748b;">提交时间：</div><div>${new Date(item.submit_time).toLocaleString()}</div>
-                        <div style="text-align:right;font-weight:500;color:#64748b;">安全检测：</div><div style="color:${(item.vt_result||'').includes('安全')?'#059669':'#d97706'}">${escapeHtml(item.vt_result||'未检测')}</div>
-                    </div>
-                </div>
-            `;
-            
-            const catOptions = (categories.length ? categories : await apiFetch('/admin/categories')).map(c => ({ value: c.id, label: c.name }));
-            catSelect.setOptions(catOptions);
-            catSelect.setPlaceholder();
-            catSelect.value = '';
-            subSelect.setOptions([]);
+        document.getElementById('loginBtn').addEventListener('click', login);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('addCategoryBtn').addEventListener('click', handleAddCategory);
+        document.getElementById('addSubBtn').addEventListener('click', handleAddSub);
+        document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
+        document.getElementById('exportBtn').addEventListener('click', exportData);
+        document.getElementById('logBtn').addEventListener('click', showLogs);
+        document.getElementById('sortRankBtn').addEventListener('click', loadRanking);
+        document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
+        document.getElementById('refreshSubmissionsBtn').addEventListener('click', loadSubmissions);
+        document.getElementById('refreshNavBtn').addEventListener('click', refreshNavigation);
+        document.getElementById('closeLogBtn').addEventListener('click', closeLogModal);
+        document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+
+        document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+        document.getElementById('logModal').addEventListener('click', e => { if (e.target === document.getElementById('logModal')) closeLogModal(); });
+
+        // 投稿详情弹窗事件（通过/拒绝）
+        const detailModal = document.getElementById('submissionDetailModal');
+        if (detailModal) {
+            detailModal.addEventListener('click', e => { if (e.target === detailModal) detailModal.classList.remove('show'); });
+        }
+
+        // 初始化自定义下拉
+        catSelect = new CustomSelect(document.getElementById('detailCatSelectWrapper'), [], '选择一级分类');
+        subSelect = new CustomSelect(document.getElementById('detailSubSelectWrapper'), [], '选择二级分类');
+
+        catSelect.wrapper.addEventListener('change', async (e) => {
+            const catId = e.detail.value;
             subSelect.setPlaceholder();
-            subSelect.value = '';
-            document.getElementById('detailDisplayOrder').value = 0;
-            
-            document.getElementById('submissionDetailModal').classList.add('show');
-        } catch (e) { showToast('加载详情失败', 'error'); }
+            subSelect.setOptions([]);
+            if (!catId) return;
+            try {
+                const subs = await apiFetch(`/admin/subcategories?category_id=${catId}`);
+                subSelect.setOptions(subs.map(sub => ({ value: sub.id, label: sub.name })));
+            } catch { showToast('加载子分类失败', 'error'); }
+        });
+
+        // 通过按钮
+        document.getElementById('detailApproveBtn').addEventListener('click', async () => {
+            const subId = subSelect.value;
+            const displayOrder = document.getElementById('detailDisplayOrder').value || 0;
+            if (!subId) { showToast('请选择二级分类', 'error'); return; }
+            if (!currentSubmissionId) return;
+            await handleApproveSubmission(currentSubmissionId, subId, displayOrder);
+        });
+
+        // 拒绝按钮（支持拒绝原因输入）
+        const rejectBtn = document.getElementById('detailRejectBtn');
+        const rejectReasonContainer = document.getElementById('rejectReasonContainer');
+        const rejectReasonInput = document.getElementById('rejectReasonInput');
+        
+        if (rejectBtn) {
+            rejectBtn.addEventListener('click', async () => {
+                if (!currentSubmissionId) return;
+                // 如果未处于拒绝模式，显示输入框，并改变按钮文字
+                if (!isRejectMode) {
+                    if (rejectReasonContainer) rejectReasonContainer.style.display = 'block';
+                    if (rejectReasonInput) rejectReasonInput.focus();
+                    rejectBtn.textContent = '确认拒绝';
+                    rejectBtn.style.background = '#dc2626';
+                    isRejectMode = true;
+                    pendingRejectSubmissionId = currentSubmissionId;
+                } else {
+                    // 已处于拒绝模式，执行拒绝操作
+                    const reason = rejectReasonInput ? rejectReasonInput.value.trim() : '';
+                    const success = await handleRejectSubmission(currentSubmissionId, reason);
+                    if (success) {
+                        // 重置状态
+                        isRejectMode = false;
+                        pendingRejectSubmissionId = null;
+                        if (rejectReasonContainer) rejectReasonContainer.style.display = 'none';
+                        if (rejectReasonInput) rejectReasonInput.value = '';
+                        rejectBtn.textContent = '拒绝';
+                        rejectBtn.style.background = '';
+                    }
+                }
+            });
+        }
     }
 
+    // 初始化
     const storedToken = getStoredToken();
     if (storedToken) {
         token = storedToken;
