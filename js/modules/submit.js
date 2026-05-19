@@ -1,6 +1,5 @@
 /**
- * 网站投稿模块（支持异步安全检测）
- * 功能：自动获取网站信息 + 异步安全检测 + 重复收录检查
+ * 网站投稿模块（支持异步安全检测 + 状态查询）
  */
 class SubmitModule {
     constructor() {
@@ -22,11 +21,122 @@ class SubmitModule {
         this.alreadySubmitted = false;
         this.resultLabel = '';
         this.riskLevel = '';
+        this.lastSubmissionId = localStorage.getItem('last_submission_id');
 
         this.init();
     }
 
-    init() { this.bindEvents(); }
+    init() { 
+        this.bindEvents(); 
+        this.createStatusPanel();
+        if (this.lastSubmissionId) this.checkSubmissionStatus(this.lastSubmissionId, false);
+    }
+
+    createStatusPanel() {
+        if (!this.modal) return;
+        const body = this.modal.querySelector('.feedback-modal-body');
+        if (!body) return;
+        if (document.getElementById('submissionStatusPanel')) return;
+        
+        const panel = document.createElement('div');
+        panel.id = 'submissionStatusPanel';
+        panel.style.cssText = `
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0,0,0,0.03);
+            border-radius: 8px;
+            font-size: 12px;
+            border-top: 1px solid var(--border-color);
+        `;
+        panel.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span><i class="fas fa-clipboard-list"></i> 投稿状态</span>
+                <button id="checkSubmissionStatusBtn" class="submit-cancel-btn" style="padding: 4px 10px; font-size: 11px;">查询最新投稿</button>
+            </div>
+            <div id="submissionStatusContent" style="color: var(--text-secondary);">
+                暂无投稿记录
+            </div>
+        `;
+        body.appendChild(panel);
+        
+        this.statusContainer = document.getElementById('submissionStatusContent');
+        const checkBtn = document.getElementById('checkSubmissionStatusBtn');
+        if (checkBtn) {
+            checkBtn.addEventListener('click', () => this.checkLatestSubmission());
+        }
+    }
+
+    async checkLatestSubmission() {
+        if (!this.lastSubmissionId) {
+            this.updateStatusDisplay(null, '暂无投稿记录，请先投稿');
+            return;
+        }
+        await this.checkSubmissionStatus(this.lastSubmissionId, true);
+    }
+
+    async checkSubmissionStatus(submissionId, showToastOnError = true) {
+        if (!submissionId) return;
+        try {
+            const res = await fetch(`${this.apiBase}/submission-status?id=${submissionId}`);
+            if (!res.ok) {
+                if (res.status === 404) {
+                    this.updateStatusDisplay(null, '投稿记录不存在，可能已被删除');
+                } else {
+                    this.updateStatusDisplay(null, '查询失败，请稍后重试');
+                }
+                return;
+            }
+            const data = await res.json();
+            this.updateStatusDisplay(data);
+        } catch (err) {
+            console.error(err);
+            if (showToastOnError) window.toast.show('查询状态失败', 'error');
+            this.updateStatusDisplay(null, '网络错误，无法查询');
+        }
+    }
+
+    updateStatusDisplay(data, errorMsg = null) {
+        if (!this.statusContainer) return;
+        if (errorMsg) {
+            this.statusContainer.innerHTML = `<span style="color: var(--warning-color);">${this.escapeHtml(errorMsg)}</span>`;
+            return;
+        }
+        if (!data) {
+            this.statusContainer.innerHTML = '<span>无投稿记录</span>';
+            return;
+        }
+        
+        let statusText = '', statusColor = '';
+        switch (data.status) {
+            case 'pending':
+                statusText = '审核中';
+                statusColor = '#f59e0b';
+                break;
+            case 'approved':
+                statusText = '已通过 ✓';
+                statusColor = '#10b981';
+                break;
+            case 'rejected':
+                statusText = '未通过 ✗';
+                statusColor = '#ef4444';
+                break;
+            default:
+                statusText = data.status;
+                statusColor = '#64748b';
+        }
+        
+        const submitDate = new Date(data.submitTime).toLocaleString();
+        const resultText = data.result || '暂无检测结果';
+        
+        this.statusContainer.innerHTML = `
+            <div style="margin-bottom: 4px;"><strong>${this.escapeHtml(data.title)}</strong></div>
+            <div>状态：<span style="color: ${statusColor};">${statusText}</span></div>
+            <div>检测结果：${this.escapeHtml(resultText)}</div>
+            <div style="font-size: 11px; margin-top: 4px;">提交时间：${submitDate}</div>
+            ${data.status === 'approved' ? '<div style="color: #10b981; margin-top: 4px;">✅ 该网站已被收录，感谢您的贡献！</div>' : ''}
+            ${data.status === 'rejected' ? '<div style="color: #ef4444; margin-top: 4px;">❌ 该网站未通过安全检测或人工审核</div>' : ''}
+        `;
+    }
 
     bindEvents() {
         const closeBtn = this.modal.querySelector('.feedback-modal-close');
@@ -142,6 +252,11 @@ class SubmitModule {
             });
             if (res.ok) {
                 const data = await res.json();
+                if (data.submissionId) {
+                    this.lastSubmissionId = data.submissionId;
+                    localStorage.setItem('last_submission_id', data.submissionId);
+                    if (this.statusContainer) this.checkSubmissionStatus(data.submissionId, false);
+                }
                 if (data.asyncCheck) {
                     window.toast.show('投稿已提交！安全检测将在后台进行，通过后自动收录', 'success');
                 } else {
@@ -157,13 +272,18 @@ class SubmitModule {
         finally { this.submitSaveBtn.disabled = false; this.submitSaveBtn.textContent = '提交投稿'; }
     }
 
-    isValidUrl(url) { try { return ['http:','https:'].includes(new URL(url.startsWith('http')?url:`https://${url}`).protocol); } catch { return false; } }
+    isValidUrl(url) { 
+        try { return ['http:','https:'].includes(new URL(url.startsWith('http')?url:`https://${url}`).protocol); } 
+        catch { return false; } 
+    }
+
     updateIconPreview() {
         const iconUrl = this.iconInput.value.trim();
         if (iconUrl && (iconUrl.startsWith('http')||iconUrl.startsWith('https'))) {
             this.iconPreview.src = iconUrl; this.iconPreview.style.display = 'block';
         } else { this.iconPreview.style.display = 'none'; }
     }
+
     resetForm() {
         this.form.reset();
         this.canSubmit = false; this.isSafe = false; this.alreadySubmitted = false; this.resultLabel = ''; this.riskLevel = '';
@@ -172,6 +292,16 @@ class SubmitModule {
         this.submitSaveBtn.disabled = true;
         this.descInput.style.height = 'auto';
         if (this.waitingHint) this.waitingHint.style.display = 'none';
+    }
+
+    escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
     }
 }
 
