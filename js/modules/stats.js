@@ -1,10 +1,18 @@
 // 统计接口域名（从配置读取）
 const WORKER_URL = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
 
-// 心跳定时器句柄
+// 获取或生成本地设备唯一ID（持久化）
+function getDeviceId() {
+    let deviceId = localStorage.getItem('device_id');
+    if (!deviceId) {
+        deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('device_id', deviceId);
+    }
+    return deviceId;
+}
+
 let heartbeatInterval = null;
 
-// 格式化运行时间（毫秒 -> 字符串，不显示秒）
 function formatUptime(ms) {
     if (ms < 0) return "刚刚上线";
     const seconds = Math.floor(ms / 1000);
@@ -15,12 +23,10 @@ function formatUptime(ms) {
     if (days > 0) parts.push(`${days}天`);
     if (hours > 0) parts.push(`${hours}时`);
     if (minutes > 0) parts.push(`${minutes}分`);
-    // 确保至少显示 "0分"
     if (parts.length === 0) parts.push("0分");
     return parts.join(" ");
 }
 
-// 更新运行时间显示
 function updateUptimeDisplay(startTimeMs) {
     if (!startTimeMs) return;
     const nowMs = Date.now() + 8 * 3600 * 1000;
@@ -29,7 +35,6 @@ function updateUptimeDisplay(startTimeMs) {
     $('#uptime').text(formatted);
 }
 
-// 从服务器获取运行时间起始点
 async function fetchUptimeStart() {
     try {
         const res = await fetch(`${WORKER_URL}/uptime`);
@@ -44,19 +49,21 @@ async function fetchUptimeStart() {
     }
 }
 
-// 记录访问 / 心跳
-async function postToWorker(endpoint) {
+async function postToWorker(endpoint, extraData = {}) {
     try {
         await fetch(`${WORKER_URL}${endpoint}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Device-Id': getDeviceId()
+            },
+            body: JSON.stringify(extraData)
         });
     } catch (e) {
         console.error('请求失败:', e);
     }
 }
 
-// 刷新页面数字（在线、今日、统计）
 async function refreshStats() {
     try {
         const res = await fetch(`${WORKER_URL}/stats`);
@@ -70,7 +77,6 @@ async function refreshStats() {
     }
 }
 
-// 页面可见性变化时控制心跳
 function handleVisibilityChange() {
     if (document.hidden) {
         if (heartbeatInterval) {
@@ -80,26 +86,18 @@ function handleVisibilityChange() {
     } else {
         if (!heartbeatInterval) {
             postToWorker('/heartbeat');
-            heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 900000); // 15分钟
+            heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 900000);
         }
     }
 }
 
-// 初始化统计模块
 $(document).ready(function() {
-    // 发送访问记录
     postToWorker('/visit');
-    // 发送首次心跳
     postToWorker('/heartbeat');
-    // 启动心跳定时器（15分钟间隔）
     heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 900000);
-    // 监听页面可见性变化
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
-    // 刷新统计数据
     refreshStats();
     fetchUptimeStart();
-
-    // 1分钟刷新一次统计数据
     setInterval(refreshStats, 60000);
 });
