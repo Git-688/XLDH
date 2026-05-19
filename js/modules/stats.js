@@ -71,7 +71,8 @@ async function refreshStats() {
         const data = await res.json();
         $('#onlineCount').text(data.online);
         $('#todayCount').text(data.today_uv);
-        $('#totalCount').text(data.total_uv);
+        // 修改：显示历史总浏览量 (total_pv)
+        $('#totalCount').text(data.total_pv);
     } catch (e) {
         console.error('获取统计失败:', e);
     }
