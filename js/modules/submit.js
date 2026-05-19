@@ -1,5 +1,5 @@
 /**
- * 网站投稿模块（支持异步安全检测 + 我的投稿列表无限制 + 拒绝后修改一次）
+ * 网站投稿模块（支持异步安全检测 + 我的投稿列表 + 拒绝后修改一次）
  */
 class SubmitModule {
     constructor() {
@@ -21,7 +21,7 @@ class SubmitModule {
         this.alreadySubmitted = false;
         this.resultLabel = '';
         this.riskLevel = '';
-        this.editingRejectedId = null;   // 正在编辑的被拒绝投稿ID
+        this.editingRejectedId = null;
 
         this.init();
     }
@@ -96,15 +96,15 @@ class SubmitModule {
             const res = await fetch(`${this.apiBase}/my-submissions`, {
                 headers: { 'X-Device-Id': this.getDeviceId() }
             });
-            if (!res.ok) throw new Error('加载失败');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             if (this.submissionTotalSpan) {
                 this.submissionTotalSpan.textContent = data.totalCount || 0;
             }
             this.renderSubmissionList(data.list || []);
         } catch (err) {
-            console.error(err);
-            this.submissionsListContainer.innerHTML = '<div style="text-align: center; color: var(--error-color); padding: 20px;">加载失败，请重试</div>';
+            console.error('加载投稿列表失败:', err);
+            this.submissionsListContainer.innerHTML = `<div style="text-align: center; color: var(--error-color); padding: 20px;">加载失败：${err.message}</div>`;
         }
     }
 
@@ -113,44 +113,49 @@ class SubmitModule {
             this.submissionsListContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">暂无投稿记录<br><span style="font-size: 11px;">如果您之前投过稿，清除浏览器缓存后无法找回，但新投稿会正常显示。</span></div>';
             return;
         }
-        const html = list.map(item => {
-            const submitDate = new Date(item.submit_time).toLocaleString();
-            const safeTitle = this.escapeHtml(item.title);
-            const safeResult = this.escapeHtml(item.vt_result || '暂无');
+        let html = '';
+        for (const item of list) {
+            try {
+                const submitDate = new Date(item.submit_time).toLocaleString();
+                const safeTitle = this.escapeHtml(item.title || '无标题');
+                const safeResult = this.escapeHtml(item.vt_result || '暂无');
 
-            let statusHtml = '';
-            let actionHtml = '';
-            if (item.status === 'approved') {
-                let categoryPath = '';
-                if (item.category_name && item.subcategory_name) {
-                    categoryPath = `${this.escapeHtml(item.category_name)} → ${this.escapeHtml(item.subcategory_name)}`;
+                let statusHtml = '';
+                let actionHtml = '';
+                if (item.status === 'approved') {
+                    let categoryPath = '';
+                    if (item.category_name && item.subcategory_name) {
+                        categoryPath = `${this.escapeHtml(item.category_name)} → ${this.escapeHtml(item.subcategory_name)}`;
+                    } else {
+                        categoryPath = '已收录';
+                    }
+                    statusHtml = `<span style="color: #10b981;">✅ 已收录到 ${categoryPath}</span>`;
+                } else if (item.status === 'rejected') {
+                    const reason = this.escapeHtml(item.reject_reason || '未提供原因');
+                    statusHtml = `<span style="color: #ef4444;">❌ 拒绝原因：${reason}</span>`;
+                    // 如果 modify_count < 1，显示“修改”按钮
+                    const modifyCount = item.modify_count || 0;
+                    if (modifyCount < 1) {
+                        actionHtml = `<button class="edit-rejected-btn" data-id="${item.id}" data-title="${safeTitle}" data-url="${this.escapeHtml(item.url)}" data-desc="${this.escapeHtml(item.description || '')}" data-icon="${this.escapeHtml(item.icon || '')}" style="margin-left: 10px; padding: 2px 8px; font-size: 11px; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer;">修改</button>`;
+                    } else {
+                        statusHtml += `<span style="margin-left: 8px; font-size: 11px; color: #999;">(已修改过，不可再次修改)</span>`;
+                    }
                 } else {
-                    categoryPath = '已收录';
+                    statusHtml = `<span style="color: #f59e0b;">⏳ 待审核</span>`;
                 }
-                statusHtml = `<span style="color: #10b981;">✅ 已收录到 ${categoryPath}</span>`;
-                // 已通过不可修改，不显示操作按钮
-            } else if (item.status === 'rejected') {
-                const reason = this.escapeHtml(item.reject_reason || '未提供原因');
-                statusHtml = `<span style="color: #ef4444;">❌ 拒绝原因：${reason}</span>`;
-                // 如果 modify_count < 1，显示“修改”按钮
-                if (item.modify_count < 1) {
-                    actionHtml = `<button class="edit-rejected-btn" data-id="${item.id}" data-title="${safeTitle}" data-url="${this.escapeHtml(item.url)}" data-desc="${this.escapeHtml(item.description || '')}" data-icon="${this.escapeHtml(item.icon || '')}" style="margin-left: 10px; padding: 2px 8px; font-size: 11px; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer;">修改</button>`;
-                } else {
-                    statusHtml += `<span style="margin-left: 8px; font-size: 11px; color: #999;">(已修改过，不可再次修改)</span>`;
-                }
-            } else {
-                statusHtml = `<span style="color: #f59e0b;">⏳ 待审核</span>`;
+
+                html += `
+                    <div style="padding: 10px; border-bottom: 1px solid var(--border-color);" data-id="${item.id}">
+                        <div><strong>${safeTitle}</strong> ${actionHtml}</div>
+                        <div>状态：${statusHtml}</div>
+                        <div>安全检测：${safeResult}</div>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">${submitDate}</div>
+                    </div>
+                `;
+            } catch (err) {
+                console.error('渲染单条投稿失败:', item, err);
             }
-
-            return `
-                <div style="padding: 10px; border-bottom: 1px solid var(--border-color);" data-id="${item.id}">
-                    <div><strong>${safeTitle}</strong> ${actionHtml}</div>
-                    <div>状态：${statusHtml}</div>
-                    <div>安全检测：${safeResult}</div>
-                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">${submitDate}</div>
-                </div>
-            `;
-        }).join('');
+        }
         this.submissionsListContainer.innerHTML = html;
 
         // 绑定修改按钮事件
@@ -176,10 +181,8 @@ class SubmitModule {
             this.iconInput.value = icon;
             this.updateIconPreview();
         }
-        // 可选：滚动到表单并高亮
         this.titleInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
         window.toast.show('请修改网站信息后重新提交（仅可修改一次）', 'info');
-        // 确保提交按钮可用（用户必须手动点击“获取信息”或直接提交）
         this.canSubmit = true;
         this.alreadySubmitted = false;
         this.updateSubmitButton();
@@ -194,7 +197,7 @@ class SubmitModule {
         return deviceId;
     }
 
-    // ==================== 原有投稿功能（修正提交时携带设备ID和处理修改） ====================
+    // ==================== 原有投稿功能 ====================
     bindEvents() {
         const closeBtn = this.modal.querySelector('.feedback-modal-close');
         const cancelBtn = this.modal.querySelector('.submit-cancel-btn');
@@ -348,7 +351,6 @@ class SubmitModule {
                 icon: this.iconInput.value.trim(),
                 vt_result: this.resultLabel
             };
-            // 如果是修改被拒绝的投稿，带上 submissionId
             if (this.editingRejectedId) {
                 payload.submissionId = this.editingRejectedId;
             }
