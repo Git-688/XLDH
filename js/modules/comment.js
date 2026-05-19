@@ -5,7 +5,7 @@
  */
 class CommentModule {
   static CONFIG = {
-    serverURL: 'https://yy688.ccwu.cc',
+    serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
     el: '#waline-comment',
     modalId: 'commentModal',
     openBtnId: 'commentBtn',
