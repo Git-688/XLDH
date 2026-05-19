@@ -16,7 +16,7 @@ class SubmitModule {
         this.urlCheckResult = document.getElementById('urlCheckResult');
         this.waitingHint = this.modal.querySelector('.submit-safe-hint');
 
-        this.apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
+        this.apiBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
         this.isSafe = false;
         this.canSubmit = false;
         this.alreadySubmitted = false;
