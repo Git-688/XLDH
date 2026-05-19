@@ -1,5 +1,6 @@
 /**
  * 网站投稿模块（支持异步安全检测 + 我的投稿列表）
+ * 修复：投稿时发送 X-Device-Id 头，确保 device_id 一致
  */
 class SubmitModule {
     constructor() {
@@ -290,9 +291,13 @@ class SubmitModule {
         this.submitSaveBtn.textContent = '提交中...';
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
+            const deviceId = this.getDeviceId();  // 获取持久化设备ID
             const res = await fetch(`${this.apiBase}/submit-site`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Device-Id': deviceId   // 🔧 关键修复：投稿时发送设备ID
+                },
                 body: JSON.stringify({
                     title,
                     url: safeUrl,
@@ -316,7 +321,8 @@ class SubmitModule {
                 const err = await res.json().catch(() => ({}));
                 window.toast.show(err.error || '提交失败', 'error');
             }
-        } catch {
+        } catch (err) {
+            console.error(err);
             window.toast.show('网络错误', 'error');
         } finally {
             this.submitSaveBtn.disabled = false;
