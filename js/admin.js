@@ -89,7 +89,6 @@
         if (refreshTimer) clearTimeout(refreshTimer);
     }
 
-    // ---------- 登录失败本地记录（辅助显示）----------
     function updateLockMessage() {
         const el = document.getElementById('loginLockMessage');
         if (!el) return;
@@ -98,21 +97,20 @@
     }
 
     function checkLock() {
-        if (Date.now() < lockUntil) { updateLockMessage(); showToast('登录失败过多，请稍后再试', 'error'); return false; }
+        if (Date.now() < lockUntil) { updateLockMessage(); showToast('登录失败过多，锁定10分钟', 'error'); return false; }
         if (failCount >= MAX_FAIL_COUNT) {
             lockUntil = Date.now() + LOCK_DURATION_MS;
             sessionStorage.setItem('login_lock_until', lockUntil + '');
             sessionStorage.setItem('login_fail_count', failCount + '');
             updateLockMessage();
-            showToast('失败次数过多，锁定10分钟', 'error');
+            showToast('失败5次，锁定10分钟', 'error');
             return false;
         }
         return true;
     }
 
     function recordLoginFailure() {
-        failCount++;
-        sessionStorage.setItem('login_fail_count', failCount + '');
+        failCount++; sessionStorage.setItem('login_fail_count', failCount + '');
         if (failCount >= MAX_FAIL_COUNT) {
             lockUntil = Date.now() + LOCK_DURATION_MS;
             sessionStorage.setItem('login_lock_until', lockUntil + '');
@@ -121,12 +119,10 @@
     }
 
     function resetLoginFailure() {
-        failCount = 0;
-        lockUntil = 0;
+        failCount = 0; lockUntil = 0;
         sessionStorage.removeItem('login_fail_count');
         sessionStorage.removeItem('login_lock_until');
-        const el = document.getElementById('loginLockMessage');
-        if (el) el.textContent = '';
+        document.getElementById('loginLockMessage').textContent = '';
     }
 
     // ---------- 模态框 ----------
@@ -215,7 +211,6 @@
         return res.json();
     }
 
-    // 获取网站信息（辅助）
     async function fetchSiteInfo(urlInputId, titleInputId, iconInputId, descInputId) {
         const urlInput = document.getElementById(urlInputId);
         const titleInput = document.getElementById(titleInputId);
@@ -405,7 +400,22 @@
         `).join('');
     }
 
-    // ---------- 投稿详情模态框 ----------
+    // ---------- 投稿详情模态框（增加编辑功能）----------
+    async function editSubmission(id, newTitle, newDesc, newIcon) {
+        try {
+            await apiFetch(`/admin/submissions/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ title: newTitle, description: newDesc, icon: newIcon })
+            });
+            showToast('投稿已更新', 'success');
+            await loadSubmissions(); // 刷新列表
+            return true;
+        } catch (err) {
+            showToast('更新失败', 'error');
+            return false;
+        }
+    }
+
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -436,7 +446,8 @@
                 ? `<img src="${escapeHtml(item.icon)}" style="width:20px;height:20px;vertical-align:middle;border-radius:4px;">`
                 : `<i class="${escapeHtml(item.icon || 'fas fa-link')}"></i>`;
 
-            contentDiv.innerHTML = `
+            // 基本信息卡片
+            let html = `
                 <div class="info-card">
                     <div class="info-row">
                         <div class="info-label">标题</div>
@@ -473,6 +484,32 @@
                         <div class="info-value"><span class="status-badge ${statusClass}">${statusText}</span></div>
                     </div>
                 </div>
+            `;
+
+            // 编辑卡片（仅 pending 状态）
+            if (item.status === 'pending') {
+                html += `
+                    <div class="action-card" id="editSubmissionCard">
+                        <h4><i class="fas fa-edit"></i> 编辑投稿内容</h4>
+                        <div class="form-row">
+                            <label>标题 <span style="color:red;">*</span></label>
+                            <input type="text" id="editTitle" value="${escapeHtml(item.title)}" style="width:100%;">
+                        </div>
+                        <div class="form-row">
+                            <label>描述</label>
+                            <textarea id="editDesc" rows="2" style="width:100%;">${escapeHtml(item.description || '')}</textarea>
+                        </div>
+                        <div class="form-row">
+                            <label>图标URL</label>
+                            <input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" style="width:100%;">
+                        </div>
+                        <button class="primary" id="saveEditBtn" style="margin-top:8px;">保存修改</button>
+                    </div>
+                `;
+            }
+
+            // 操作卡片（通过/拒绝）
+            html += `
                 <div class="action-section">
                     <div class="action-card">
                         <h4><i class="fas fa-check-circle"></i> 通过收录</h4>
@@ -496,6 +533,28 @@
                 </div>
             `;
 
+            contentDiv.innerHTML = html;
+
+            // 绑定编辑保存事件
+            if (item.status === 'pending') {
+                const saveBtn = document.getElementById('saveEditBtn');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', async () => {
+                        const newTitle = document.getElementById('editTitle').value.trim();
+                        if (!newTitle) {
+                            showToast('标题不能为空', 'error');
+                            return;
+                        }
+                        const newDesc = document.getElementById('editDesc').value.trim();
+                        const newIcon = document.getElementById('editIcon').value.trim();
+                        await editSubmission(item.id, newTitle, newDesc, newIcon);
+                        // 刷新详情
+                        openSubmissionDetail(id);
+                    });
+                }
+            }
+
+            // 分类联动
             const catSelect = document.getElementById('approveCatSelect');
             const subSelect = document.getElementById('approveSubSelect');
             catSelect.addEventListener('change', async (e) => {
@@ -516,6 +575,7 @@
                 }
             });
 
+            // 通过按钮
             document.getElementById('doApproveBtn').onclick = async () => {
                 const subId = subSelect.value;
                 const displayOrder = document.getElementById('approveOrder').value || 0;
@@ -538,6 +598,7 @@
                 }
             };
 
+            // 拒绝按钮
             document.getElementById('doRejectBtn').onclick = async () => {
                 const reason = document.getElementById('rejectReason').value.trim();
                 if (!reason) {
@@ -816,7 +877,7 @@
             if (groups.older.length) html += `<div class="feedback-date-group"><h4>📅 更早</h4>${renderItems(groups.older)}</div>`;
             list.innerHTML = html;
 
-            // 重新绑定事件（使用事件委托已在 setupEventDelegation 中实现，但此处为了独立刷新也可直接绑定）
+            // 重新绑定事件
             list.querySelectorAll('[data-action="markDone"]').forEach(btn => {
                 btn.removeEventListener('click', markDoneHandler);
                 btn.addEventListener('click', markDoneHandler);
@@ -846,8 +907,6 @@
         const btn = e.currentTarget;
         const reportId = parseInt(btn.dataset.reportid);
         const siteId = parseInt(btn.dataset.siteid);
-        const oldUrl = btn.dataset.url;
-        const oldTitle = btn.dataset.title;
         if (!siteId) {
             showToast('未找到网站记录', 'error');
             return;
@@ -935,7 +994,7 @@
         }
     }
 
-    // ---------- 事件委托（主要绑定）----------
+    // ---------- 事件委托 ----------
     function setupEventDelegation() {
         document.getElementById('catBar').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
