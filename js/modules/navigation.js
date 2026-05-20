@@ -1,6 +1,7 @@
 /**
  * 优化分类导航系统（基于后端 Worker + D1）
  * 包含：缓存容错、后台静默更新、去重请求、全站搜索
+ * 修复：移动端搜索时自动滚动输入框到可视区
  */
 class OptimizedNavigation {
     constructor() {
@@ -23,7 +24,6 @@ class OptimizedNavigation {
         this.isSearching = false;
         this.searchTimer = null;
         
-        // API 基础地址
         this.apiBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     }
 
@@ -107,6 +107,14 @@ class OptimizedNavigation {
             clearBtn.style.display = query ? 'flex' : 'none';
             clearTimeout(this.searchTimer);
             this.searchTimer = setTimeout(() => query ? this.performSearch(query) : this.clearSearch(), 300);
+        });
+
+        // ========== 移动端优化：焦点时自动滚动到可视区 ==========
+        this.searchInput.addEventListener('focus', () => {
+            // 延迟执行确保键盘弹起后再滚动
+            setTimeout(() => {
+                this.searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
         });
 
         clearBtn.addEventListener('click', () => {
