@@ -1,5 +1,5 @@
 /**
- * 网站投稿模块（精简版：仅投稿表单，无我的投稿列表）
+ * 网站投稿模块（精简版：仅投稿表单，安全检测修复）
  */
 class SubmitModule {
     constructor() {
@@ -99,6 +99,7 @@ class SubmitModule {
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
             const res = await fetch(`${this.apiBase}/check-url?url=${encodeURIComponent(safeUrl)}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
 
             if (data.title) this.titleInput.value = data.title;
@@ -129,12 +130,13 @@ class SubmitModule {
             }
             this.updateSubmitButton();
         } catch (e) {
-            console.error(e);
-            this.urlCheckResult.className = 'url-check-result checking';
-            this.urlCheckResult.textContent = '检测失败，请手动填写';
-            window.toast.show('检测失败，请手动填写信息', 'warning');
-            this.canSubmit = true;
-            this.isSafe = true;
+            console.error('检测失败:', e);
+            this.urlCheckResult.className = 'url-check-result unsafe';
+            this.urlCheckResult.textContent = '检测服务异常，请稍后重试或手动填写';
+            window.toast.show('检测失败，无法自动获取信息，请手动填写', 'error');
+            // 修复：检测失败时禁止提交，不再强制设为 true
+            this.canSubmit = false;
+            this.isSafe = false;
             this.alreadySubmitted = false;
             this.updateSubmitButton();
         } finally {
