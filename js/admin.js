@@ -285,7 +285,7 @@
         `).join('');
     }
 
-    // ========== 优化后的投稿详情模态框（现代简约风格） ==========
+    // 投稿详情模态框（保持不变）
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -296,7 +296,6 @@
             const item = data.find(s => s.id == id);
             if (!item) { showToast('未找到该投稿', 'error'); return; }
             
-            // 状态样式
             let statusClass = '', statusText = '';
             if (item.status === 'approved') { statusClass = 'status-approved'; statusText = '已通过'; }
             else if (item.status === 'rejected') { statusClass = 'status-rejected'; statusText = '已拒绝'; }
@@ -367,7 +366,6 @@
                 </div>
             `;
             
-            // 一级分类联动
             const catSelect = document.getElementById('approveCatSelect');
             const subSelect = document.getElementById('approveSubSelect');
             catSelect.addEventListener('change', async (e) => {
@@ -388,7 +386,6 @@
                 }
             });
             
-            // 通过按钮
             document.getElementById('doApproveBtn').onclick = async () => {
                 const subId = subSelect.value;
                 const displayOrder = document.getElementById('approveOrder').value || 0;
@@ -408,7 +405,6 @@
                 }
             };
             
-            // 拒绝按钮
             document.getElementById('doRejectBtn').onclick = async () => {
                 const reason = document.getElementById('rejectReason').value.trim();
                 if (!reason) { showToast('请填写拒绝原因', 'error'); return; }
@@ -441,7 +437,7 @@
         }
     });
 
-    // ========== 其余管理函数 ==========
+    // 修改分类、子分类、站点等函数（保持不变）
     function handleModifyCategory(id, currentName) {
         openModal('修改分类',
             `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
@@ -567,6 +563,7 @@
         } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
+    // 修复：死链反馈处理后自动刷新列表
     async function loadFeedback() {
         const list = document.getElementById('feedbackList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -597,27 +594,35 @@
             if (groups.older.length) html += `<div class="feedback-date-group"><h4>📅 更早</h4>${renderItems(groups.older)}</div>`;
             list.innerHTML = html;
 
-            list.addEventListener('click', e => {
-                const btn = e.target.closest('[data-action]');
-                if (!btn) return;
-                const reportId = parseInt(btn.dataset.reportid);
-                if (btn.dataset.action === 'markDone') markFeedbackDone(reportId);
-                else if (btn.dataset.action === 'replaceLink') {
-                    const siteId = parseInt(btn.dataset.siteid);
-                    const url = btn.dataset.url;
-                    const title = btn.dataset.title;
-                    replaceLink(reportId, siteId, url, title);
-                }
+            // 重新绑定事件（使用事件委托避免重复绑定）
+            list.querySelectorAll('[data-action="markDone"]').forEach(btn => {
+                btn.removeEventListener('click', markDoneHandler);
+                btn.addEventListener('click', markDoneHandler);
+            });
+            list.querySelectorAll('[data-action="replaceLink"]').forEach(btn => {
+                btn.removeEventListener('click', replaceLinkHandler);
+                btn.addEventListener('click', replaceLinkHandler);
             });
         } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    async function markFeedbackDone(reportId) {
-        try { await apiFetch(`/admin/report-status/${reportId}`, { method:'PUT', body: JSON.stringify({ status:'done' }) }); showToast('已标记处理', 'success'); loadFeedback(); }
-        catch { showToast('操作失败', 'error'); }
+    // 独立的事件处理函数，方便移除和重新绑定
+    async function markDoneHandler(e) {
+        const btn = e.currentTarget;
+        const reportId = parseInt(btn.dataset.reportid);
+        try {
+            await apiFetch(`/admin/report-status/${reportId}`, { method:'PUT', body: JSON.stringify({ status:'done' }) });
+            showToast('已标记处理', 'success');
+            await loadFeedback();  // 刷新列表
+        } catch { showToast('操作失败', 'error'); }
     }
 
-    async function replaceLink(reportId, siteId, oldUrl, oldTitle) {
+    async function replaceLinkHandler(e) {
+        const btn = e.currentTarget;
+        const reportId = parseInt(btn.dataset.reportid);
+        const siteId = parseInt(btn.dataset.siteid);
+        const oldUrl = btn.dataset.url;
+        const oldTitle = btn.dataset.title;
         if (!siteId) { showToast('未找到网站记录', 'error'); return; }
         const site = sites.find(s => s.id === siteId);
         if (!site) { showToast('未找到网站记录', 'error'); return; }
@@ -635,9 +640,10 @@
                     reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value
                 })});
                 showToast('链接已更新', 'success');
-                loadFeedback();
-                await loadAllData();
+                await loadFeedback();   // 刷新反馈列表
+                await loadAllData();    // 刷新站点数据
                 await apiFetch('/admin/refresh-navigation', { method:'POST' });
+                closeModal();
             }
         );
     }
