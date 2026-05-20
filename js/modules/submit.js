@@ -1,5 +1,6 @@
 /**
  * 网站投稿模块（支持异步安全检测 + 我的投稿列表 + 拒绝后修改一次）
+ * 修复：投稿后自动关闭模态框并刷新列表
  */
 class SubmitModule {
     constructor() {
@@ -38,7 +39,6 @@ class SubmitModule {
         if (!body) return;
         if (document.getElementById('mySubmissionsPanel')) return;
 
-        // 模态框主体不滚动
         body.style.overflowY = 'hidden';
         body.style.paddingBottom = '0';
 
@@ -63,7 +63,6 @@ class SubmitModule {
                 <div style="text-align: center; color: var(--text-secondary); padding: 20px;">暂无投稿记录</div>
             </div>
         `;
-        // 隐藏滚动条
         const style = document.createElement('style');
         style.textContent = `#submissionsList::-webkit-scrollbar { display: none; }`;
         panel.appendChild(style);
@@ -74,7 +73,6 @@ class SubmitModule {
         const refreshBtn = document.getElementById('refreshSubmissionsBtn');
         if (refreshBtn) refreshBtn.addEventListener('click', () => this.loadMySubmissions());
 
-        // 防止滚动穿透：模态框打开时锁定 body 滚动
         const modalElem = this.modal;
         const disableBodyScroll = () => { document.body.style.overflow = 'hidden'; };
         const enableBodyScroll = () => { document.body.style.overflow = ''; };
@@ -133,7 +131,6 @@ class SubmitModule {
                 } else if (item.status === 'rejected') {
                     const reason = this.escapeHtml(item.reject_reason || '未提供原因');
                     statusHtml = `<span style="color: #ef4444;">❌ 拒绝原因：${reason}</span>`;
-                    // 如果 modify_count < 1，显示“修改”按钮
                     const modifyCount = item.modify_count || 0;
                     if (modifyCount < 1) {
                         actionHtml = `<button class="edit-rejected-btn" data-id="${item.id}" data-title="${safeTitle}" data-url="${this.escapeHtml(item.url)}" data-desc="${this.escapeHtml(item.description || '')}" data-icon="${this.escapeHtml(item.icon || '')}" style="margin-left: 10px; padding: 2px 8px; font-size: 11px; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer;">修改</button>`;
@@ -158,7 +155,6 @@ class SubmitModule {
         }
         this.submissionsListContainer.innerHTML = html;
 
-        // 绑定修改按钮事件
         document.querySelectorAll('.edit-rejected-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -227,7 +223,6 @@ class SubmitModule {
         this.iconInput.addEventListener('input', () => this.updateIconPreview());
         this.titleInput.addEventListener('input', () => this.updateSubmitButton());
         this.urlInput.addEventListener('input', () => this.updateSubmitButton());
-
         this.descInput.addEventListener('input', () => {
             this.autoResizeDesc();
             this.updateSubmitButton();
@@ -369,17 +364,20 @@ class SubmitModule {
                 } else {
                     window.toast.show('感谢投稿！', 'success');
                 }
+                // ========== 修复点：立即关闭模态框并刷新列表 ==========
                 this.modal.classList.remove('active');
                 this.resetForm();
                 this.editingRejectedId = null;
-                setTimeout(() => this.loadMySubmissions(), 500);
+                // 立即刷新我的投稿列表（不延迟，确保数据最新）
+                await this.loadMySubmissions();
             } else {
                 const err = await res.json().catch(() => ({}));
                 window.toast.show(err.error || '提交失败', 'error');
+                // 提交失败时不清空表单，保持模态框打开
             }
         } catch (err) {
             console.error(err);
-            window.toast.show('网络错误', 'error');
+            window.toast.show('网络错误，请稍后重试', 'error');
         } finally {
             this.submitSaveBtn.disabled = false;
             this.submitSaveBtn.textContent = '提交投稿';
