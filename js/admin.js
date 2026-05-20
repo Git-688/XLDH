@@ -31,7 +31,7 @@
         try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; }
     }
 
-    // ---------- Session Token 管理 ----------
+    // Session Token 管理
     function getStoredToken() {
         let tk = sessionStorage.getItem('admin_session_token');
         if (tk) {
@@ -52,7 +52,7 @@
 
     function scheduleTokenRefresh(expiresInSeconds) {
         if (refreshTimer) clearTimeout(refreshTimer);
-        const refreshTime = (expiresInSeconds - 600) * 1000; // 提前10分钟刷新
+        const refreshTime = (expiresInSeconds - 600) * 1000;
         if (refreshTime > 0) {
             refreshTimer = setTimeout(() => {
                 refreshSessionToken();
@@ -125,7 +125,7 @@
         document.getElementById('loginLockMessage').textContent = '';
     }
 
-    // ---------- 模态框 ----------
+    // 模态框
     function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null) {
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalForm').innerHTML = formHtml;
@@ -194,7 +194,7 @@
         document.getElementById('logModal').classList.add('show');
     }
 
-    // ---------- API 封装（自动携带 Session Token）----------
+    // API 封装
     async function apiFetch(endpoint, opt = {}) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
         if (token) headers.Authorization = `Bearer ${token}`;
@@ -250,7 +250,7 @@
         }
     }
 
-    // ---------- 登录 / 退出 ----------
+    // 登录/退出
     async function login() {
         if (!checkLock()) return;
         const val = document.getElementById('tokenInput').value.trim();
@@ -311,7 +311,7 @@
         showToast('已退出');
     }
 
-    // ---------- 数据加载与渲染 ----------
+    // 数据加载与渲染
     async function loadAllData() {
         try {
             const [catData, subData, siteData] = await Promise.all([
@@ -400,7 +400,7 @@
         `).join('');
     }
 
-    // ---------- 投稿详情模态框（增加编辑功能）----------
+    // 投稿详情模态框（包含编辑功能）
     async function editSubmission(id, newTitle, newDesc, newIcon) {
         try {
             await apiFetch(`/admin/submissions/${id}`, {
@@ -408,7 +408,7 @@
                 body: JSON.stringify({ title: newTitle, description: newDesc, icon: newIcon })
             });
             showToast('投稿已更新', 'success');
-            await loadSubmissions(); // 刷新列表
+            await loadSubmissions();
             return true;
         } catch (err) {
             showToast('更新失败', 'error');
@@ -446,7 +446,6 @@
                 ? `<img src="${escapeHtml(item.icon)}" style="width:20px;height:20px;vertical-align:middle;border-radius:4px;">`
                 : `<i class="${escapeHtml(item.icon || 'fas fa-link')}"></i>`;
 
-            // 基本信息卡片
             let html = `
                 <div class="info-card">
                     <div class="info-row">
@@ -486,7 +485,6 @@
                 </div>
             `;
 
-            // 编辑卡片（仅 pending 状态）
             if (item.status === 'pending') {
                 html += `
                     <div class="action-card" id="editSubmissionCard">
@@ -508,7 +506,6 @@
                 `;
             }
 
-            // 操作卡片（通过/拒绝）
             html += `
                 <div class="action-section">
                     <div class="action-card">
@@ -535,7 +532,6 @@
 
             contentDiv.innerHTML = html;
 
-            // 绑定编辑保存事件
             if (item.status === 'pending') {
                 const saveBtn = document.getElementById('saveEditBtn');
                 if (saveBtn) {
@@ -548,13 +544,11 @@
                         const newDesc = document.getElementById('editDesc').value.trim();
                         const newIcon = document.getElementById('editIcon').value.trim();
                         await editSubmission(item.id, newTitle, newDesc, newIcon);
-                        // 刷新详情
                         openSubmissionDetail(id);
                     });
                 }
             }
 
-            // 分类联动
             const catSelect = document.getElementById('approveCatSelect');
             const subSelect = document.getElementById('approveSubSelect');
             catSelect.addEventListener('change', async (e) => {
@@ -575,7 +569,6 @@
                 }
             });
 
-            // 通过按钮
             document.getElementById('doApproveBtn').onclick = async () => {
                 const subId = subSelect.value;
                 const displayOrder = document.getElementById('approveOrder').value || 0;
@@ -598,7 +591,6 @@
                 }
             };
 
-            // 拒绝按钮
             document.getElementById('doRejectBtn').onclick = async () => {
                 const reason = document.getElementById('rejectReason').value.trim();
                 if (!reason) {
@@ -624,7 +616,6 @@
         }
     }
 
-    // 关闭详情模态框
     document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => {
         document.getElementById('submissionDetailModal').classList.remove('show');
     });
@@ -634,7 +625,7 @@
         }
     });
 
-    // ---------- 管理操作 ----------
+    // 管理操作
     function handleModifyCategory(id, currentName) {
         openModal('修改分类',
             `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
@@ -841,6 +832,7 @@
         }
     }
 
+    // 死链反馈相关函数
     async function loadFeedback() {
         const list = document.getElementById('feedbackList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -877,7 +869,6 @@
             if (groups.older.length) html += `<div class="feedback-date-group"><h4>📅 更早</h4>${renderItems(groups.older)}</div>`;
             list.innerHTML = html;
 
-            // 重新绑定事件
             list.querySelectorAll('[data-action="markDone"]').forEach(btn => {
                 btn.removeEventListener('click', markDoneHandler);
                 btn.addEventListener('click', markDoneHandler);
@@ -994,7 +985,7 @@
         }
     }
 
-    // ---------- 事件委托 ----------
+    // 事件委托
     function setupEventDelegation() {
         document.getElementById('catBar').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
@@ -1053,7 +1044,7 @@
         document.getElementById('logModal').addEventListener('click', e => { if (e.target === document.getElementById('logModal')) closeLogModal(); });
     }
 
-    // ---------- 初始化 ----------
+    // 初始化
     const storedToken = getStoredToken();
     if (storedToken) {
         token = storedToken;
