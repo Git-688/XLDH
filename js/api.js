@@ -1,7 +1,6 @@
 /**
  * API数据管理
- * 简化版本，移除所有备用方案
- * 修改：去除必应壁纸标题中的“必应壁纸 · ”前缀
+ * 修改：必应壁纸直接使用官方接口，无备用源
  */
 class API {
     static CONFIG = {
@@ -23,7 +22,6 @@ class API {
                 return '每一天都是新的开始，充满无限可能。';
             }
             
-            // 直接获取纯文本响应
             const text = await response.text();
             
             return this.escapeHtml(text || '每一天都是新的开始，充满无限可能。');
@@ -71,38 +69,39 @@ class API {
         }
     }
 
-    // 获取必应每日壁纸（使用bing.biturl.top API），去除标题前缀
+    // 获取必应每日壁纸（直接使用官方接口）
     static async getBingWallpaper() {
+        const officialUrl = 'https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN';
+        
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), this.CONFIG.API_TIMEOUT);
             
-            // 使用 bing.biturl.top API
-            const response = await fetch('https://bing.biturl.top/?resolution=1920&format=json', {
-                signal: controller.signal
-            });
-            
+            const response = await fetch(officialUrl, { signal: controller.signal });
             clearTimeout(timeoutId);
             
             if (!response.ok) {
-                throw new Error('API 请求失败');
+                throw new Error(`HTTP ${response.status}`);
             }
             
             const data = await response.json();
             
-            if (!data.url) {
+            if (!data.images || !data.images.length || !data.images[0].url) {
                 throw new Error('API返回数据格式不正确');
             }
             
-            // 去除“必应壁纸 · ”前缀
-            let title = data.copyright || '必应每日壁纸';
-            title = title.replace(/^必应壁纸\s*·\s*/i, '').trim() || '星聚导航';
+            const img = data.images[0];
+            const imageUrl = 'https://cn.bing.com' + img.url;
+            let title = img.copyright || '必应每日壁纸';
+            // 去除“必应壁纸 · ”前缀（如果有）
+            title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
+            if (!title) title = '星聚导航';
             
             return {
-                url: this.sanitizeUrl(data.url),
+                url: this.sanitizeUrl(imageUrl),
                 title: this.escapeHtml(title),
-                copyright: this.escapeHtml(data.copyright || ''),
-                time: new Date().toISOString().split('T')[0],
+                copyright: this.escapeHtml(img.copyright || ''),
+                time: img.startdate || new Date().toISOString().split('T')[0],
                 success: true
             };
         } catch (error) {
@@ -122,7 +121,7 @@ class API {
         return await this.getBingWallpaper();
     }
 
-    // 获取风景壁纸（从第二个wallpaper.js中移入）
+    // 获取风景壁纸（保持原有，或可删除；如需官方风景API请自行替换）
     static async getSceneryWallpaper() {
         try {
             const timestamp = new Date().getTime();
