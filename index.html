@@ -3,57 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>星聚导航 - 您的个人导航中心 | 网址导航 实用工具 音乐播放器 天气查询</title>
-    <meta name="description" content="星聚导航是一个现代化的个人导航网站，提供便捷的上网导航体验、多引擎搜索、音乐播放、天气查询、实用工具集等功能。收录大量优质网站资源，每日更新。">
-    <meta name="keywords" content="导航,工具,书签,资源,星聚导航,网址大全,实用工具,音乐播放器,天气查询,在线工具">
+    <title>星聚导航 - 您的个人导航中心</title>
+    <meta name="description" content="星聚导航是一个现代化的个人导航网站，提供便捷的上网导航体验和各种实用工具">
+    <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
-    <meta name="robots" content="index, follow">
 
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "星聚导航",
-        "url": "https://xjdh688.ccwu.cc",
-        "description": "星聚导航是一个现代化的个人导航网站，提供便捷的上网导航体验和各种实用工具",
-        "potentialAction": {
-            "@type": "SearchAction",
-            "target": {
-                "@type": "EntryPoint",
-                "urlTemplate": "https://xjdh688.ccwu.cc/?s={search_term_string}"
-            },
-            "query-input": "required name=search_term_string"
-        }
-    }
-    </script>
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-            {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "首页",
-                "item": "https://xjdh688.ccwu.cc"
-            },
-            {
-                "@type": "ListItem",
-                "position": 2,
-                "name": "分类导航",
-                "item": "https://xjdh688.ccwu.cc/#navigation"
-            }
-        ]
-    }
-    </script>
-
+    <!-- 全局配置 - 放在所有脚本之前 -->
     <script>
         window.APP_CONFIG = {
+            // 后端 API 地址（Worker 部署地址）
             API_BASE: 'https://api.xjdh688.ccwu.cc',
+            // Waline 评论服务地址
             WALINE_SERVER: 'https://yy688.ccwu.cc'
         };
     </script>
 
+    <!-- CSP 仅保留生产必需域名 -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
 
     <meta name="theme-color" content="#4361ee">
@@ -61,7 +26,6 @@
 
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
-    <link rel="canonical" href="https://xjdh688.ccwu.cc">
 
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 
@@ -79,8 +43,10 @@
     <link rel="stylesheet" href="./css/modules/compact-tags.css">
     <link rel="stylesheet" href="./css/responsive.css">
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
+
     <link rel="stylesheet" href="./css/modules/comment.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.css">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
@@ -178,8 +144,6 @@
             .fetch-info-btn, .check-url-btn { padding: 6px 10px; font-size: 11px; }
         }
     </style>
-    <!--百度专属验证-->
-    <meta name="baidu-site-verification" content="codeva-aKF5BcHB9C" />
 </head>
 <body>
 <nav class="navbar" id="navbar">
@@ -471,10 +435,12 @@
                     </div>
                     <div id="urlCheckResult" class="url-check-result" style="display:none;"></div>
                 </div>
+                
                 <div class="form-row">
                     <label>网站名称 <span class="required-star">*</span></label>
                     <input type="text" id="submitTitle" placeholder="例如：星聚导航" required>
                 </div>
+                
                 <div class="form-row">
                     <label>网站图标</label>
                     <div style="display:flex;align-items:center;gap:10px;">
@@ -482,10 +448,12 @@
                         <img id="submitIconPreview" src="" style="width:32px;height:32px;border-radius:6px;display:none;" alt="图标预览">
                     </div>
                 </div>
+                
                 <div class="form-row">
                     <label>简短描述</label>
                     <textarea id="submitDesc" rows="2" placeholder="介绍一下这个网站..."></textarea>
                 </div>
+                
                 <div class="submit-form-buttons">
                     <span class="submit-safe-hint">安全检测中，请耐心等待！</span>
                     <button type="button" class="submit-cancel-btn">取消</button>
