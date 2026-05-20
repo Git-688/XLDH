@@ -75,7 +75,7 @@
             flex:1 1 50%;
             background:#f8fafc;border-radius:10px;
             padding:12px;display:flex;flex-direction:column;gap:0;
-            min-width:0; /* 防止溢出 */
+            min-width:0;
             overflow-x:hidden;
         }
         .sub-list{
@@ -388,15 +388,14 @@
         .btn-reject { background: #ef4444; color: #fff; }
         .btn-reject:hover { background: #dc2626; }
 
-        /* ========== 响应式布局（移动端左右并排按钮） ========== */
+        /* ========== 移动端适配：+子分类 和 +添加链接 左右并排 ========== */
         @media (max-width: 768px) {
-            /* 保持左右布局，使两个按钮在同一行 */
             .content-layout {
-                flex-direction: row;
+                flex-direction: row !important;
                 flex-wrap: wrap;
             }
             .sidebar, .main-content {
-                flex: 1 1 calc(50% - 5px);
+                flex: 1 1 calc(50% - 5px) !important;
                 min-width: 0;
             }
             .sub-list, .site-list, .rank-list, .feedback-list, .submissions-list {
@@ -427,7 +426,6 @@
             #submissionDetailModal .modal-body {
                 max-width: calc(100vw - 24px);
             }
-            /* 确保右侧列表的按钮不换行溢出 */
             .site-list .link-actions {
                 flex-wrap: wrap;
             }
@@ -450,7 +448,6 @@
                 height: 38px;
                 font-size: 10px;
             }
-            /* 窄屏下让两个按钮各占一行？不，保持左右并排但宽度稍微调整 */
             .sidebar, .main-content {
                 flex: 1 1 calc(50% - 4px);
             }
