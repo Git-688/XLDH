@@ -19,7 +19,7 @@ class SubmitModule {
         this.canSubmit = false;
         this.alreadySubmitted = false;
         this.editingRejectedId = null;
-        this.totalSubmissions = 0;  // 累计投稿数
+        this.totalSubmissions = 0;
 
         this.init();
     }
@@ -27,12 +27,11 @@ class SubmitModule {
     init() {
         this.bindEvents();
         if (this.descInput) this.descInput.maxLength = 200;
-        // 监听模态框打开事件，每次打开时刷新统计
+        // 监听模态框显示，获取累计投稿数
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) return;
-            // 当模态框显示时（通过 MutationObserver 或直接在此处，但最简单是在 open 时调用）
         });
-        // 使用 MutationObserver 监听模态框 active 状态，打开时更新统计
+        // 使用 MutationObserver 监听模态框 active 状态
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class') {
