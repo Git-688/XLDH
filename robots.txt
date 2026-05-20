@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://xjdh688.ccwu.cc/sitemap.xml
