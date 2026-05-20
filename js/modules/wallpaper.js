@@ -1,5 +1,5 @@
 /**
- * 轮播图模块 - 无缝循环 + 标题与圆点同行 + 去前缀（保留动态分辨率接口）
+ * 轮播图模块 - 无缝循环 + 标题与圆点同行 + 去前缀 + 图片加载失败降级
  */
 class CarouselModule {
     constructor() {
@@ -17,8 +17,6 @@ class CarouselModule {
 
     // 预留动态分辨率方法，当前返回 1920 以保证稳定
     getResolutionForWidth() {
-        // 若需要按屏幕加载不同尺寸，可在此调整返回值（需确认 API 支持）
-        // 推荐值：1920, 1366, 768
         return 1920;
     }
 
@@ -34,7 +32,6 @@ class CarouselModule {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.url) {
-                        // 去掉“必应壁纸 · ”前缀
                         let title = data.copyright ? data.copyright : '';
                         title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
                         if (!title) {
@@ -88,14 +85,26 @@ class CarouselModule {
         this.clonedSlides.forEach((slide, index) => {
             const div = document.createElement('div');
             div.className = 'carousel-slide';
-            div.style.backgroundImage = `url('${slide.url}')`;
+            // 设置默认背景色（渐变），防止图片加载失败时空白
+            div.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            div.style.backgroundSize = 'cover';
+            div.style.backgroundPosition = 'center';
+            if (slide.url) {
+                // 创建图片对象预加载，加载成功后再设置背景图
+                const img = new Image();
+                img.onload = () => {
+                    div.style.backgroundImage = `url('${slide.url}')`;
+                    div.style.background = `url('${slide.url}') center/cover no-repeat`;
+                };
+                img.onerror = () => {
+                    console.warn(`图片加载失败，使用渐变背景: ${slide.url}`);
+                    // 保留默认渐变背景，不做额外处理
+                };
+                img.src = slide.url;
+            } else {
+                // 无图片时已设置渐变背景
+            }
             div.setAttribute('data-index', index);
-            const img = new Image();
-            img.onerror = () => {
-                div.style.backgroundImage = 'none';
-                div.style.backgroundColor = 'rgba(102,126,234,0.3)';
-            };
-            img.src = slide.url;
             this.track.appendChild(div);
         });
     }
