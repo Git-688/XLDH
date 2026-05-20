@@ -64,6 +64,21 @@ async function postToWorker(endpoint, extraData = {}) {
     }
 }
 
+// 发送离线信号（页面关闭时）
+function sendOfflineSignal() {
+    const deviceId = getDeviceId();
+    if (navigator.sendBeacon) {
+        navigator.sendBeacon(`${WORKER_URL}/offline`, JSON.stringify({ deviceId }));
+    } else {
+        fetch(`${WORKER_URL}/offline`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId }),
+            keepalive: true
+        }).catch(() => {});
+    }
+}
+
 async function refreshStats() {
     try {
         const res = await fetch(`${WORKER_URL}/stats`);
@@ -71,7 +86,6 @@ async function refreshStats() {
         const data = await res.json();
         $('#onlineCount').text(data.online);
         $('#todayCount').text(data.today_uv);
-        // 修改：显示历史总浏览量 (total_pv)
         $('#totalCount').text(data.total_pv);
     } catch (e) {
         console.error('获取统计失败:', e);
@@ -87,7 +101,7 @@ function handleVisibilityChange() {
     } else {
         if (!heartbeatInterval) {
             postToWorker('/heartbeat');
-            heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 900000);
+            heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 30000);
         }
     }
 }
@@ -95,8 +109,15 @@ function handleVisibilityChange() {
 $(document).ready(function() {
     postToWorker('/visit');
     postToWorker('/heartbeat');
-    heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 900000);
+    heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 30000);
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    window.addEventListener('beforeunload', () => {
+        sendOfflineSignal();
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+        }
+    });
     
     refreshStats();
     fetchUptimeStart();
