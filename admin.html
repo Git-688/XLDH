@@ -22,18 +22,26 @@
         html, body {
             overflow-x: hidden;
             max-width: 100%;
+            height: 100%;
         }
         html{scroll-behavior:smooth}
         body{
             font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
             background:#f7f8fa;font-size:12px;color:#2f3542;
-            -webkit-font-smoothing:antialiased;padding:10px;
+            -webkit-font-smoothing:antialiased;
             overflow-x: hidden;
+            padding: 0 10px 0 10px;  /* 仅保留上下左右边距，底部不留额外空白 */
         }
         ::-webkit-scrollbar{display:none}
         *{-ms-overflow-style:none;scrollbar-width:none}
 
-        .container{max-width:1200px;margin:0 auto;width:100%;overflow-x:hidden}
+        .container{
+            max-width:1200px;
+            margin:0 auto;
+            width:100%;
+            overflow-x:hidden;
+            min-height: auto;
+        }
 
         .header-card{
             background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;
@@ -43,6 +51,7 @@
             background:#fff;border-radius:10px;padding:14px;
             box-shadow:0 2px 8px rgba(0,0,0,0.05);border:1px solid #f1f3f5;
             overflow-x:hidden;
+            margin-bottom: 0;   /* 去除底部边距 */
         }
         .header{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:20px;flex-direction:column}
         .flex-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -81,7 +90,8 @@
         .sub-list{
             display:flex;flex-direction:column;gap:8px;
             overflow-y:auto;
-            max-height:calc(100vh - 280px);
+            /* 动态高度 - 减少底部留白 */
+            max-height: calc(100vh - 210px);
             margin-top:12px;
             overflow-x:hidden;
         }
@@ -111,12 +121,12 @@
         }
         .site-list,.rank-list,.feedback-list,.submissions-list{
             overflow-y:auto;
-            max-height:calc(100vh - 260px);
+            max-height: calc(100vh - 210px);
             overflow-x:hidden;
             flex:1;
         }
 
-        /* 统一按钮样式：+子分类 和 +添加链接 */
+        /* 统一按钮样式 */
         #addSubBtn, #addSiteBtn {
             width: 100%;
             height: 44px;
@@ -136,7 +146,7 @@
             background: #2563eb;
         }
 
-        /* 修复链接列表样式：确保条目完整显示，不溢出 */
+        /* 修复链接列表样式 */
         .site-list .link-item {
             display: flex;
             justify-content: space-between;
@@ -255,7 +265,7 @@
         .fetch-info-btn { background: #10b981; color: #fff; padding: 6px 12px; font-size: 11px; margin-left: 6px; white-space: nowrap; }
         .fetch-info-btn:hover { background: #059669; }
 
-        /* 投稿详情模态框样式 */
+        /* 投稿详情模态框 */
         #submissionDetailModal .modal-body {
             max-width: 680px;
             padding: 0;
@@ -388,7 +398,7 @@
         .btn-reject { background: #ef4444; color: #fff; }
         .btn-reject:hover { background: #dc2626; }
 
-        /* ========== 移动端适配：+子分类 和 +添加链接 左右并排 ========== */
+        /* ========== 移动端适配：左右并排 + 底部留白优化 ========== */
         @media (max-width: 768px) {
             .content-layout {
                 flex-direction: row !important;
@@ -399,7 +409,7 @@
                 min-width: 0;
             }
             .sub-list, .site-list, .rank-list, .feedback-list, .submissions-list {
-                max-height: 300px;
+                max-height: calc(100vh - 200px) !important;
             }
             .cat-bar {
                 overflow-x: auto;
@@ -433,7 +443,7 @@
 
         @media (max-width: 480px) {
             body {
-                padding: 6px;
+                padding: 0 6px 0 6px;
             }
             .main-card {
                 padding: 10px;
@@ -450,6 +460,9 @@
             }
             .sidebar, .main-content {
                 flex: 1 1 calc(50% - 4px);
+            }
+            .sub-list, .site-list, .rank-list, .feedback-list, .submissions-list {
+                max-height: calc(100vh - 180px) !important;
             }
         }
 
