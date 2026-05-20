@@ -1,5 +1,5 @@
 /**
- * 网站投稿模块（精简版：仅投稿表单，安全检测修复）
+ * 网站投稿模块（精简版：仅投稿表单，安全检测修复 + 增强错误处理）
  */
 class SubmitModule {
     constructor() {
@@ -99,7 +99,15 @@ class SubmitModule {
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
             const res = await fetch(`${this.apiBase}/check-url?url=${encodeURIComponent(safeUrl)}`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            // 检查 HTTP 状态码
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            // 确保响应是 JSON
+            const contentType = res.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('服务器返回了非 JSON 格式，请联系管理员');
+            }
             const data = await res.json();
 
             if (data.title) this.titleInput.value = data.title;
@@ -131,10 +139,16 @@ class SubmitModule {
             this.updateSubmitButton();
         } catch (e) {
             console.error('检测失败:', e);
+            let errorMsg = '检测服务异常，请稍后重试或手动填写';
+            if (e.message && e.message.includes('非 JSON')) {
+                errorMsg = '服务器响应异常，请稍后重试';
+            } else if (e.message && e.message.includes('HTTP')) {
+                errorMsg = `服务器错误 (${e.message})，请稍后重试`;
+            }
             this.urlCheckResult.className = 'url-check-result unsafe';
-            this.urlCheckResult.textContent = '检测服务异常，请稍后重试或手动填写';
-            window.toast.show('检测失败，无法自动获取信息，请手动填写', 'error');
-            // 修复：检测失败时禁止提交，不再强制设为 true
+            this.urlCheckResult.textContent = errorMsg;
+            window.toast.show(errorMsg, 'error');
+            // 检测失败时禁止提交
             this.canSubmit = false;
             this.isSafe = false;
             this.alreadySubmitted = false;
