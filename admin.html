@@ -19,6 +19,10 @@
     <style>
         /* ========== 基础样式 ========== */
         *{margin:0;padding:0;box-sizing:border-box}
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+        }
         html{scroll-behavior:smooth}
         body{
             font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
@@ -71,11 +75,15 @@
             flex:1 1 50%;
             background:#f8fafc;border-radius:10px;
             padding:12px;display:flex;flex-direction:column;gap:0;
-            min-width:200px;
+            min-width:0; /* 防止溢出 */
+            overflow-x:hidden;
         }
         .sub-list{
             display:flex;flex-direction:column;gap:8px;
-            overflow-y:auto;max-height:calc(100vh - 280px);margin-top:12px;
+            overflow-y:auto;
+            max-height:calc(100vh - 280px);
+            margin-top:12px;
+            overflow-x:hidden;
         }
         .sub-item{
             padding:10px 12px;border-radius:7px;background:#fff;
@@ -99,10 +107,33 @@
             flex:1 1 50%;
             background:#f8fafc;border-radius:10px;padding:12px;
             overflow-x:hidden;display:flex;flex-direction:column;
-            min-width:200px;
+            min-width:0; /* 防止溢出 */
         }
         .site-list,.rank-list,.feedback-list,.submissions-list{
-            overflow-y:auto;max-height:calc(100vh - 260px);overflow-x:hidden;flex:1;
+            overflow-y:auto;
+            max-height:calc(100vh - 260px);
+            overflow-x:hidden;
+            flex:1;
+        }
+
+        /* 统一按钮样式：+子分类 和 +添加链接 */
+        #addSubBtn, #addSiteBtn {
+            width: 100%;
+            height: 44px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            border-radius: 7px;
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+        }
+        #addSubBtn:hover, #addSiteBtn:hover {
+            background: #2563eb;
         }
 
         /* 修复链接列表样式：确保条目完整显示，不溢出 */
@@ -117,6 +148,7 @@
             border-radius: 7px;
             margin-bottom: 7px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            word-break: break-word;
         }
         .site-list .link-info {
             flex: 1;
@@ -132,7 +164,6 @@
             white-space: nowrap;
         }
 
-        /* 其余列表样式保持 */
         .rank-list .link-item,
         .feedback-list .link-item,
         .submissions-list .link-item {
@@ -146,6 +177,7 @@
             border-radius: 7px;
             margin-bottom: 7px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            word-break: break-word;
         }
 
         input,select{
@@ -177,13 +209,6 @@
         .badge-green{background:#dcfce7;color:#16a34a}
         .badge-red{background:#fee2e2;color:#dc2626}
         .badge-blue{background:#e0f2fe;color:#0369a1}
-
-        #addSubBtn, #addSiteBtn {
-            width: 100%;height: 38px;font-size: 12px;
-            background: #3b82f6;color: #fff;border-radius: 7px;border: none;
-            cursor: pointer;display: flex;align-items: center;justify-content: center;
-            font-weight: 500;margin-bottom: 8px;
-        }
 
         .modal{
             position:fixed;inset:0;background:rgba(0,0,0,0.25);
@@ -230,7 +255,7 @@
         .fetch-info-btn { background: #10b981; color: #fff; padding: 6px 12px; font-size: 11px; margin-left: 6px; white-space: nowrap; }
         .fetch-info-btn:hover { background: #059669; }
 
-        /* ========== 投稿详情模态框样式（不影响其他） ========== */
+        /* 投稿详情模态框样式（保持不变） */
         #submissionDetailModal .modal-body {
             max-width: 680px;
             padding: 0;
@@ -362,10 +387,69 @@
         .btn-approve:hover { background: #059669; }
         .btn-reject { background: #ef4444; color: #fff; }
         .btn-reject:hover { background: #dc2626; }
-        @media (max-width: 600px) {
-            #submissionDetailModal .modal-body { max-width: calc(100vw - 24px); }
-            .info-row { flex-direction: column; margin-bottom: 10px; }
-            .info-label { width: 100%; margin-bottom: 2px; }
+
+        /* ========== 响应式布局（移动端适配） ========== */
+        @media (max-width: 768px) {
+            .content-layout {
+                flex-direction: column;
+            }
+            .sidebar, .main-content {
+                width: 100%;
+                min-width: 0;
+            }
+            .sub-list, .site-list, .rank-list, .feedback-list, .submissions-list {
+                max-height: 300px; /* 移动端合适高度 */
+            }
+            .cat-bar {
+                overflow-x: auto;
+            }
+            .header .flex-row {
+                flex-wrap: wrap;
+            }
+            #addSubBtn, #addSiteBtn {
+                height: 40px;
+            }
+            .modal-body {
+                max-width: 95%;
+                padding: 14px;
+            }
+            .info-row {
+                flex-direction: column;
+            }
+            .info-label {
+                width: 100%;
+                margin-bottom: 4px;
+            }
+            #submissionDetailModal .modal-body {
+                max-width: calc(100vw - 24px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 6px;
+            }
+            .main-card {
+                padding: 10px;
+            }
+            .cat-item {
+                padding: 6px 12px;
+            }
+            .sub-item, .site-list .link-item {
+                padding: 8px;
+            }
+            #addSubBtn, #addSiteBtn {
+                height: 38px;
+                font-size: 11px;
+            }
+        }
+
+        /* 确保长文本换行 */
+        .link-info strong {
+            word-break: break-word;
+        }
+        .sub-list, .site-list {
+            overflow-x: hidden;
         }
     </style>
 </head>
@@ -467,7 +551,7 @@
     </div>
 </div>
 
-<!-- 优化后的投稿详情模态框 -->
+<!-- 投稿详情模态框 -->
 <div class="modal" id="submissionDetailModal">
     <div class="modal-body">
         <div class="modal-header">
