@@ -1,6 +1,5 @@
 /**
- * 网站投稿模块（支持异步安全检测 + 我的投稿列表 + 拒绝后修改一次）
- * 修复：投稿后自动关闭模态框并刷新列表
+ * 网站投稿模块（改进版：安全检测前置 + 每日限制 + 筛选 + 审核时间提示）
  */
 class SubmitModule {
     constructor() {
@@ -24,16 +23,21 @@ class SubmitModule {
         this.riskLevel = '';
         this.editingRejectedId = null;
 
+        // 筛选状态
+        this.currentFilter = 'all'; // all, pending, approved, rejected
+
         this.init();
     }
 
     init() {
         this.bindEvents();
         this.createMySubmissionsPanel();
+        // 限制描述长度
+        if (this.descInput) this.descInput.maxLength = 200;
     }
 
-    // ==================== 我的投稿列表（无限制，独立滚动） ====================
     createMySubmissionsPanel() {
+        // 原有逻辑，增加筛选按钮区域
         if (!this.modal) return;
         const body = this.modal.querySelector('.feedback-modal-body');
         if (!body) return;
@@ -59,7 +63,13 @@ class SubmitModule {
                 <span><i class="fas fa-history"></i> 我的投稿 (<span id="submissionTotalCount">0</span>)</span>
                 <button id="refreshSubmissionsBtn" class="submit-cancel-btn" style="padding: 4px 10px; font-size: 11px;">刷新</button>
             </div>
-            <div id="submissionsList" style="max-height: 280px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; touch-action: pan-y; overscroll-behavior: contain;">
+            <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+                <button class="filter-btn" data-filter="all" style="padding: 4px 10px; background: #3b82f6; color: white; border: none; border-radius: 4px;">全部</button>
+                <button class="filter-btn" data-filter="pending" style="padding: 4px 10px; background: #e2e8f0; color: #475569; border: none; border-radius: 4px;">待审核</button>
+                <button class="filter-btn" data-filter="approved" style="padding: 4px 10px; background: #e2e8f0; color: #475569; border: none; border-radius: 4px;">已通过</button>
+                <button class="filter-btn" data-filter="rejected" style="padding: 4px 10px; background: #e2e8f0; color: #475569; border: none; border-radius: 4px;">已拒绝</button>
+            </div>
+            <div id="submissionsList" style="max-height: 280px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
                 <div style="text-align: center; color: var(--text-secondary); padding: 20px;">暂无投稿记录</div>
             </div>
         `;
@@ -73,6 +83,25 @@ class SubmitModule {
         const refreshBtn = document.getElementById('refreshSubmissionsBtn');
         if (refreshBtn) refreshBtn.addEventListener('click', () => this.loadMySubmissions());
 
+        // 筛选按钮事件
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.currentFilter = btn.dataset.filter;
+                // 更新按钮样式
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    if (b.dataset.filter === this.currentFilter) {
+                        b.style.background = '#3b82f6';
+                        b.style.color = 'white';
+                    } else {
+                        b.style.background = '#e2e8f0';
+                        b.style.color = '#475569';
+                    }
+                });
+                this.renderSubmissionList(this.submissionsData || []);
+            });
+        });
+
+        // 模态框打开时加载数据
         const modalElem = this.modal;
         const disableBodyScroll = () => { document.body.style.overflow = 'hidden'; };
         const enableBodyScroll = () => { document.body.style.overflow = ''; };
@@ -96,10 +125,11 @@ class SubmitModule {
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
+            this.submissionsData = data.list || [];
             if (this.submissionTotalSpan) {
                 this.submissionTotalSpan.textContent = data.totalCount || 0;
             }
-            this.renderSubmissionList(data.list || []);
+            this.renderSubmissionList(this.submissionsData);
         } catch (err) {
             console.error('加载投稿列表失败:', err);
             this.submissionsListContainer.innerHTML = `<div style="text-align: center; color: var(--error-color); padding: 20px;">加载失败：${err.message}</div>`;
@@ -108,11 +138,20 @@ class SubmitModule {
 
     renderSubmissionList(list) {
         if (!list.length) {
-            this.submissionsListContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">暂无投稿记录<br><span style="font-size: 11px;">如果您之前投过稿，清除浏览器缓存后无法找回，但新投稿会正常显示。</span></div>';
+            this.submissionsListContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">暂无投稿记录</div>';
+            return;
+        }
+        // 前端筛选
+        let filtered = list;
+        if (this.currentFilter !== 'all') {
+            filtered = list.filter(item => item.status === this.currentFilter);
+        }
+        if (filtered.length === 0) {
+            this.submissionsListContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">没有符合条件的记录</div>';
             return;
         }
         let html = '';
-        for (const item of list) {
+        for (const item of filtered) {
             try {
                 const submitDate = new Date(item.submit_time).toLocaleString();
                 const safeTitle = this.escapeHtml(item.title || '无标题');
@@ -193,7 +232,6 @@ class SubmitModule {
         return deviceId;
     }
 
-    // ==================== 原有投稿功能 ====================
     bindEvents() {
         const closeBtn = this.modal.querySelector('.feedback-modal-close');
         const cancelBtn = this.modal.querySelector('.submit-cancel-btn');
@@ -245,18 +283,15 @@ class SubmitModule {
 
         if (this.waitingHint) this.waitingHint.style.display = 'inline';
         this.fetchInfoBtn.disabled = true;
-        this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 获取中...';
+        this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检测中...';
         this.urlCheckResult.style.display = 'block';
         this.urlCheckResult.className = 'url-check-result checking';
-        this.urlCheckResult.textContent = '正在获取网站信息...';
+        this.urlCheckResult.textContent = '正在检测网站安全性和获取信息...';
 
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
-            const res = await fetch(`${this.apiBase}/fetch-site-info`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: safeUrl })
-            });
+            // 调用 /check-url 接口（同时返回安全检测和元数据）
+            const res = await fetch(`${this.apiBase}/check-url?url=${encodeURIComponent(safeUrl)}`);
             const data = await res.json();
 
             if (data.title) this.titleInput.value = data.title;
@@ -265,7 +300,7 @@ class SubmitModule {
                 this.updateIconPreview();
             }
             if (data.description) {
-                this.descInput.value = data.description;
+                this.descInput.value = data.description.slice(0, 200);
                 this.autoResizeDesc();
             }
 
@@ -278,22 +313,19 @@ class SubmitModule {
             if (data.alreadySubmitted) {
                 this.urlCheckResult.className = 'url-check-result unsafe';
                 this.urlCheckResult.textContent = data.label || '该网站已收录，无法提交';
-            } else if (data.asyncCheck) {
-                this.urlCheckResult.className = 'url-check-result safe';
-                this.urlCheckResult.textContent = data.label || '信息获取成功，提交后后台将进行安全检测';
             } else if (!data.canSubmit) {
                 this.urlCheckResult.className = 'url-check-result unsafe';
                 this.urlCheckResult.textContent = data.label || '该链接存在安全风险，禁止提交';
             } else {
-                this.urlCheckResult.className = data.safe ? 'url-check-result safe' : 'url-check-result checking';
-                this.urlCheckResult.textContent = data.label || (data.safe ? '安全，可提交' : '可疑，可提交');
+                this.urlCheckResult.className = data.safe ? 'url-check-result safe' : 'url-check-result unsafe';
+                this.urlCheckResult.textContent = data.label || (data.safe ? '安全，可提交' : '存在安全风险，仍可提交');
             }
             this.updateSubmitButton();
         } catch (e) {
             console.error(e);
             this.urlCheckResult.className = 'url-check-result checking';
-            this.urlCheckResult.textContent = '获取信息失败，请手动填写';
-            window.toast.show('自动获取网站信息失败，请手动填写标题和图标', 'warning');
+            this.urlCheckResult.textContent = '检测失败，请手动填写';
+            window.toast.show('检测失败，请手动填写信息', 'warning');
             this.canSubmit = true;
             this.isSafe = true;
             this.alreadySubmitted = false;
@@ -301,7 +333,7 @@ class SubmitModule {
         } finally {
             if (this.waitingHint) this.waitingHint.style.display = 'none';
             this.fetchInfoBtn.disabled = false;
-            this.fetchInfoBtn.innerHTML = '<i class="fas fa-magic"></i> 获取信息';
+            this.fetchInfoBtn.innerHTML = '<i class="fas fa-magic"></i> 检测并获取信息';
         }
     }
 
@@ -330,7 +362,7 @@ class SubmitModule {
             return;
         }
         if (!this.canSubmit) {
-            window.toast.show('该链接未通过基础检测，无法提交', 'error');
+            window.toast.show('该链接未通过安全检测，无法提交', 'error');
             return;
         }
 
@@ -359,21 +391,14 @@ class SubmitModule {
             });
             if (res.ok) {
                 const data = await res.json();
-                if (data.asyncCheck) {
-                    window.toast.show(this.editingRejectedId ? '修改已提交！安全检测将在后台进行，通过后自动收录' : '投稿已提交！安全检测将在后台进行，通过后自动收录', 'success');
-                } else {
-                    window.toast.show('感谢投稿！', 'success');
-                }
-                // ========== 修复点：立即关闭模态框并刷新列表 ==========
+                window.toast.show('投稿已提交！通常1-2个工作日内审核，请耐心等待。', 'success');
                 this.modal.classList.remove('active');
                 this.resetForm();
                 this.editingRejectedId = null;
-                // 立即刷新我的投稿列表（不延迟，确保数据最新）
                 await this.loadMySubmissions();
             } else {
                 const err = await res.json().catch(() => ({}));
                 window.toast.show(err.error || '提交失败', 'error');
-                // 提交失败时不清空表单，保持模态框打开
             }
         } catch (err) {
             console.error(err);
@@ -416,6 +441,8 @@ class SubmitModule {
         this.submitSaveBtn.disabled = true;
         this.descInput.style.height = 'auto';
         if (this.waitingHint) this.waitingHint.style.display = 'none';
+        this.currentFilter = 'all';
+        // 重置筛选按钮样式（下次打开时恢复）
     }
 
     escapeHtml(str) {
