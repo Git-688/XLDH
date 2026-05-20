@@ -1,5 +1,5 @@
 /**
- * 网站投稿模块（精简版：仅投稿表单，无投稿列表）
+ * 网站投稿模块（精简版：仅投稿表单，显示累计投稿数）
  */
 class SubmitModule {
     constructor() {
@@ -19,6 +19,7 @@ class SubmitModule {
         this.canSubmit = false;
         this.alreadySubmitted = false;
         this.editingRejectedId = null;
+        this.totalSubmissions = 0;  // 累计投稿数
 
         this.init();
     }
@@ -26,6 +27,54 @@ class SubmitModule {
     init() {
         this.bindEvents();
         if (this.descInput) this.descInput.maxLength = 200;
+        // 监听模态框打开事件，每次打开时刷新统计
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) return;
+            // 当模态框显示时（通过 MutationObserver 或直接在此处，但最简单是在 open 时调用）
+        });
+        // 使用 MutationObserver 监听模态框 active 状态，打开时更新统计
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    if (this.modal.classList.contains('active')) {
+                        this.fetchSubmissionStats();
+                    }
+                }
+            });
+        });
+        observer.observe(this.modal, { attributes: true });
+
+        // 在标题右侧添加累计数显示元素
+        const header = this.modal.querySelector('.feedback-modal-header');
+        if (header) {
+            const h3 = header.querySelector('h3');
+            if (h3 && !header.querySelector('.submission-stats-badge')) {
+                const badge = document.createElement('span');
+                badge.className = 'submission-stats-badge';
+                badge.style.cssText = 'margin-left: 12px; font-size: 12px; background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 20px; font-weight: normal;';
+                badge.textContent = '已投稿 0 次';
+                h3.appendChild(badge);
+                this.statsBadge = badge;
+            }
+        }
+    }
+
+    // 获取累计投稿数
+    async fetchSubmissionStats() {
+        try {
+            const res = await fetch(`${this.apiBase}/submission-stats`, {
+                headers: { 'X-Device-Id': this.getDeviceId() }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                this.totalSubmissions = data.totalCount || 0;
+                if (this.statsBadge) {
+                    this.statsBadge.textContent = `已投稿 ${this.totalSubmissions} 次`;
+                }
+            }
+        } catch (err) {
+            console.error('获取投稿统计失败:', err);
+        }
     }
 
     getDeviceId() {
@@ -203,6 +252,8 @@ class SubmitModule {
                 this.modal.classList.remove('active');
                 this.resetForm();
                 this.editingRejectedId = null;
+                // 投稿成功后刷新累计数
+                await this.fetchSubmissionStats();
             } else {
                 const err = await res.json().catch(() => ({}));
                 window.toast.show(err.error || '提交失败', 'error');
