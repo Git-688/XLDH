@@ -107,7 +107,7 @@
             flex:1 1 50%;
             background:#f8fafc;border-radius:10px;padding:12px;
             overflow-x:hidden;display:flex;flex-direction:column;
-            min-width:0; /* 防止溢出 */
+            min-width:0;
         }
         .site-list,.rank-list,.feedback-list,.submissions-list{
             overflow-y:auto;
@@ -255,7 +255,7 @@
         .fetch-info-btn { background: #10b981; color: #fff; padding: 6px 12px; font-size: 11px; margin-left: 6px; white-space: nowrap; }
         .fetch-info-btn:hover { background: #059669; }
 
-        /* 投稿详情模态框样式（保持不变） */
+        /* 投稿详情模态框样式 */
         #submissionDetailModal .modal-body {
             max-width: 680px;
             padding: 0;
@@ -388,17 +388,19 @@
         .btn-reject { background: #ef4444; color: #fff; }
         .btn-reject:hover { background: #dc2626; }
 
-        /* ========== 响应式布局（移动端适配） ========== */
+        /* ========== 响应式布局（移动端左右并排按钮） ========== */
         @media (max-width: 768px) {
+            /* 保持左右布局，使两个按钮在同一行 */
             .content-layout {
-                flex-direction: column;
+                flex-direction: row;
+                flex-wrap: wrap;
             }
             .sidebar, .main-content {
-                width: 100%;
+                flex: 1 1 calc(50% - 5px);
                 min-width: 0;
             }
             .sub-list, .site-list, .rank-list, .feedback-list, .submissions-list {
-                max-height: 300px; /* 移动端合适高度 */
+                max-height: 300px;
             }
             .cat-bar {
                 overflow-x: auto;
@@ -408,6 +410,8 @@
             }
             #addSubBtn, #addSiteBtn {
                 height: 40px;
+                font-size: 11px;
+                margin-bottom: 6px;
             }
             .modal-body {
                 max-width: 95%;
@@ -422,6 +426,10 @@
             }
             #submissionDetailModal .modal-body {
                 max-width: calc(100vw - 24px);
+            }
+            /* 确保右侧列表的按钮不换行溢出 */
+            .site-list .link-actions {
+                flex-wrap: wrap;
             }
         }
 
@@ -440,7 +448,11 @@
             }
             #addSubBtn, #addSiteBtn {
                 height: 38px;
-                font-size: 11px;
+                font-size: 10px;
+            }
+            /* 窄屏下让两个按钮各占一行？不，保持左右并排但宽度稍微调整 */
+            .sidebar, .main-content {
+                flex: 1 1 calc(50% - 4px);
             }
         }
 
