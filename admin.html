@@ -17,13 +17,14 @@
     <meta http-equiv="X-Frame-Options" content="DENY">
 
     <style>
+        /* ========== 基础重置 ========== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        /* 整个页面固定高度，禁止滚动 */
+        /* 固定高度，禁止页面滚动 */
         html, body {
             height: 100%;
             overflow: hidden;
@@ -39,8 +40,10 @@
             padding: 10px;
         }
 
-        /* 隐藏滚动条（可选） */
-        ::-webkit-scrollbar { display: none; }
+        /* 隐藏滚动条（保持功能） */
+        ::-webkit-scrollbar {
+            display: none;
+        }
         * {
             -ms-overflow-style: none;
             scrollbar-width: none;
@@ -104,6 +107,9 @@
             background: #3b82f6;
             color: #fff;
         }
+        .tab-btn:hover {
+            background: #e2e8f0;
+        }
 
         /* 分类栏：固定 */
         .cat-bar {
@@ -146,6 +152,16 @@
             padding: 3px 8px;
             border-radius: 4px;
             color: #475569;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .cat-item .rename-text-btn:hover {
+            background: #cbd5e1;
+            color: #1e293b;
+        }
+        .cat-item.active .rename-text-btn {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
         }
 
         /* 内容区域：flex 行布局，占满剩余高度 */
@@ -172,7 +188,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            min-width: 0;   /* 防止内容溢出 */
+            min-width: 0;
         }
         /* 右侧面板 */
         .main-content {
@@ -199,6 +215,9 @@
             cursor: pointer;
             font-weight: 500;
             flex-shrink: 0;
+        }
+        #addSubBtn:hover, #addSiteBtn:hover {
+            background: #2563eb;
         }
 
         /* 列表容器：flex 列，占满剩余高度，可滚动 */
@@ -229,6 +248,30 @@
             background: #e0f2fe;
             color: #0369a1;
         }
+        .sub-item span {
+            font-weight: 500;
+        }
+        .sub-item .rename-text-btn {
+            width: 100%;
+            text-align: center;
+            background: #e2e8f0;
+            border: none;
+            cursor: pointer;
+            font-size: 11px;
+            padding: 5px 8px;
+            border-radius: 4px;
+            color: #475569;
+            transition: all 0.2s;
+            font-weight: 500;
+            margin-top: 2px;
+            height: 30px;
+            line-height: 1.2;
+        }
+        .sub-item .rename-text-btn:hover {
+            background: #cbd5e1;
+            color: #1e293b;
+        }
+
         .link-item {
             display: flex;
             justify-content: space-between;
@@ -245,31 +288,396 @@
             gap: 5px;
             flex-shrink: 0;
         }
+        .link-actions button {
+            white-space: nowrap;
+        }
 
-        /* 其他共用样式省略（保持原有功能） */
+        /* 通用表单样式 */
         input, select {
             padding: 7px 10px;
             border: 1px solid #e2e8f0;
             border-radius: 7px;
             font-size: 12px;
             width: 100%;
+            background: #fff;
+            outline: none;
+            transition: all .2s;
         }
+        input:focus, select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+        .form-row {
+            margin-bottom: 12px;
+        }
+        .form-row label {
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 4px;
+            display: block;
+        }
+
         button {
             border: none;
             border-radius: 7px;
             padding: 6px 10px;
             font-size: 12px;
             cursor: pointer;
+            transition: all .2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
         }
-        button.primary { background: #3b82f6; color: #fff; }
-        button.danger { background: #ef4444; color: #fff; }
-        .modal { /* 模态框样式保持不变 */ }
-        .toast { /* 样式保持不变 */ }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        button.primary {
+            background: #3b82f6;
+            color: #fff;
+        }
+        button.primary:hover {
+            background: #2563eb;
+        }
+        button.danger {
+            background: #ef4444;
+            color: #fff;
+        }
+        button.danger:hover {
+            background: #dc2626;
+        }
+        button.secondary {
+            background: #64748b;
+            color: #fff;
+        }
+        button.secondary:hover {
+            background: #475569;
+        }
+        button.text {
+            background: transparent;
+            color: #64748b;
+            padding: 4px 7px;
+            font-size: 11px;
+        }
+        button.text:hover {
+            color: #3b82f6;
+        }
+        button.sm {
+            padding: 4px 7px;
+            font-size: 11px;
+        }
+
+        .search-box {
+            max-width: 220px;
+        }
+        .badge {
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-size: 10px;
+        }
+        .badge-green {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        .badge-red {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .badge-blue {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        /* 模态框 */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99;
+            opacity: 0;
+            visibility: hidden;
+            transition: all .2s;
+            padding: 12px;
+        }
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-body {
+            background: #fff;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 460px;
+            padding: 18px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .modal-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1e293b;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+        .modal-buttons-left {
+            display: flex;
+            gap: 8px;
+            margin-right: auto;
+        }
+
+        /* Toast 提示 */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translate(-50%, 12px);
+            padding: 8px 16px;
+            border-radius: 7px;
+            font-size: 12px;
+            color: #fff;
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all .25s ease;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            white-space: nowrap;
+        }
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, 0);
+        }
+        .toast.success {
+            background: #10b981;
+        }
+        .toast.error {
+            background: #ef4444;
+        }
+        .toast.warn {
+            background: #f59e0b;
+        }
+
+        .log-item {
+            padding: 7px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 11px;
+        }
+        .empty {
+            text-align: center;
+            padding: 18px;
+            color: #94a3b8;
+            font-size: 11px;
+        }
+        .hidden {
+            display: none;
+        }
+        
+        .feedback-date-group {
+            margin-bottom: 20px;
+        }
+        .feedback-date-group h4 {
+            font-size: 13px;
+            margin: 10px 0 8px 0;
+            padding-left: 4px;
+            border-left: 3px solid #3b82f6;
+            color: #1e293b;
+        }
+
+        .remember-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .remember-checkbox input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        .remember-checkbox label {
+            font-size: 11px;
+            color: #64748b;
+            cursor: pointer;
+        }
+
+        .lock-message {
+            color: #ef4444;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .fetch-info-btn {
+            background: #10b981;
+            color: #fff;
+            padding: 6px 12px;
+            font-size: 11px;
+            margin-left: 6px;
+            white-space: nowrap;
+        }
+        .fetch-info-btn:hover {
+            background: #059669;
+        }
+
+        /* 投稿详情模态框 */
+        #submissionDetailModal .modal-body {
+            max-width: 680px;
+            padding: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        #submissionDetailModal .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e9ecef;
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        #submissionDetailModal .modal-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+        #submissionDetailModal .modal-header button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #94a3b8;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        #submissionDetailModal .modal-header button:hover {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        #submissionDetailModal .modal-content {
+            padding: 20px;
+        }
+        .info-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+        .info-label {
+            width: 90px;
+            flex-shrink: 0;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .info-value {
+            flex: 1;
+            color: #1e293b;
+            word-break: break-all;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .status-approved {
+            background: #dcfce7;
+            color: #15803d;
+        }
+        .status-rejected {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        .status-pending {
+            background: #fef3c7;
+            color: #b45309;
+        }
+        .action-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .action-card h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #1e293b;
+        }
+        .inline-select-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .inline-select-group select,
+        .inline-select-group input {
+            flex: 1;
+            min-width: 120px;
+        }
+        .action-card textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-bottom: 12px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        .action-card button {
+            width: 100%;
+            padding: 8px;
+            font-size: 13px;
+        }
+        .btn-approve {
+            background: #10b981;
+            color: #fff;
+        }
+        .btn-approve:hover {
+            background: #059669;
+        }
+        .btn-reject {
+            background: #ef4444;
+            color: #fff;
+        }
+        .btn-reject:hover {
+            background: #dc2626;
+        }
 
         /* 移动端：左右并排，列表依然可滚动 */
         @media (max-width: 768px) {
             .content-layout {
                 flex-direction: row !important;
+                flex-wrap: nowrap;
             }
             .sidebar, .main-content {
                 flex: 1 1 calc(50% - 5px) !important;
@@ -278,14 +686,66 @@
             #addSubBtn, #addSiteBtn {
                 height: 40px;
                 font-size: 11px;
+                margin-bottom: 6px;
             }
+            .modal-body {
+                max-width: 95%;
+                padding: 14px;
+            }
+            .info-row {
+                flex-direction: column;
+            }
+            .info-label {
+                width: 100%;
+                margin-bottom: 4px;
+            }
+            #submissionDetailModal .modal-body {
+                max-width: calc(100vw - 24px);
+            }
+            .site-list .link-actions {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 6px;
+            }
+            .main-card {
+                padding: 10px;
+            }
+            .cat-item {
+                padding: 6px 12px;
+            }
+            .sub-item, .site-list .link-item {
+                padding: 8px;
+            }
+            #addSubBtn, #addSiteBtn {
+                height: 38px;
+                font-size: 10px;
+            }
+            .sidebar, .main-content {
+                flex: 1 1 calc(50% - 4px);
+            }
+        }
+
+        /* 辅助 */
+        .link-info strong {
+            word-break: break-word;
+        }
+        .sub-list, .site-list {
+            overflow-x: hidden;
+        }
+        .text {
+            background: transparent;
+            color: #64748b;
         }
     </style>
 </head>
 <body>
 <div class="toast" id="toast"></div>
 
-<!-- 模态框（同上，略） -->
+<!-- 通用模态框 -->
 <div class="modal" id="modal">
     <div class="modal-body">
         <div class="modal-title" id="modalTitle"></div>
@@ -314,7 +774,7 @@
                 </div>
                 <div class="remember-checkbox">
                     <input type="checkbox" id="rememberToken">
-                    <label for="rememberToken">记住密码</label>
+                    <label for="rememberToken">记住密码（1小时有效，⚠️ 仅受信任设备）</label>
                 </div>
                 <div id="loginLockMessage" class="lock-message"></div>
             </div>
@@ -364,7 +824,7 @@
         <div id="feedbackTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px;">
                 <button class="primary sm" id="refreshFeedbackBtn">刷新列表</button>
-                <span class="badge badge-blue">用户提交的失效链接</span>
+                <span class="badge badge-blue">用户提交的失效链接（修复后12小时自动清除）</span>
             </div>
             <div class="feedback-list" id="feedbackList"></div>
         </div>
@@ -372,20 +832,23 @@
         <div id="submissionsTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px;">
                 <button class="primary sm" id="refreshSubmissionsBtn">刷新列表</button>
-                <span class="badge badge-blue">用户投稿的网站</span>
+                <span class="badge badge-blue">用户投稿的网站，审核后可加入导航</span>
             </div>
             <div class="submissions-list" id="submissionsList"></div>
         </div>
     </div>
 </div>
 
+<!-- 投稿详情模态框 -->
 <div class="modal" id="submissionDetailModal">
     <div class="modal-body">
         <div class="modal-header">
             <h3>📝 投稿详情</h3>
-            <button id="closeDetailModalBtn">&times;</button>
+            <button id="closeDetailModalBtn" aria-label="关闭">&times;</button>
         </div>
-        <div class="modal-content" id="submissionDetailContent"></div>
+        <div class="modal-content" id="submissionDetailContent">
+            <!-- 动态内容 -->
+        </div>
     </div>
 </div>
 
