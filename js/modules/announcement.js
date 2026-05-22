@@ -1,5 +1,5 @@
 /**
- * 简约公告模块 - 清爽现代版
+ * 简约公告模块 - 清爽现代版（XSS 防护加固）
  * @class AnnouncementModule
  */
 class AnnouncementModule {
@@ -14,7 +14,6 @@ class AnnouncementModule {
         this.init();
     }
 
-    // 内嵌 escapeHtml 方法，避免依赖 Utils
     escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
@@ -263,7 +262,7 @@ class AnnouncementModule {
     }
 }
 
-// 等待 DOM 加载完成后再初始化，确保依赖项已就绪
+// 等待 DOM 加载完成后再初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.announcementModule = new AnnouncementModule();
