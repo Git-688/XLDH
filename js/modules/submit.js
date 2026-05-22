@@ -1,5 +1,6 @@
 /**
- * 网站投稿模块（仅投稿表单，显示累计投稿数，修复显示0的问题）
+ * 网站投稿模块（完整版）
+ * 功能：投稿表单、自动获取网站信息、安全检测提示、累计投稿数显示（支持降级）
  */
 class SubmitModule {
     constructor() {
@@ -19,6 +20,7 @@ class SubmitModule {
         this.canSubmit = false;
         this.alreadySubmitted = false;
         this.editingRejectedId = null;
+        this.statsBadge = null;      // 累计投稿徽章元素
 
         this.init();
     }
@@ -26,17 +28,16 @@ class SubmitModule {
     init() {
         this.bindEvents();
         if (this.descInput) this.descInput.maxLength = 200;
-        // 监听模态框打开，更新累计数并确保徽章存在
+        // 监听模态框打开，刷新累计数并确保徽章存在
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) return;
         });
-        // 使用 MutationObserver 监听模态框 active 状态
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class') {
                     if (this.modal.classList.contains('active')) {
-                        this.ensureStatsBadge();   // 确保徽章存在
-                        this.fetchSubmissionStats(); // 刷新累计数
+                        this.ensureStatsBadge();      // 确保徽章存在
+                        this.fetchSubmissionStats();   // 刷新累计数
                     }
                 }
             });
@@ -58,10 +59,10 @@ class SubmitModule {
             badge.textContent = '已投稿 0 次';
             h3.appendChild(badge);
         }
-        this.statsBadge = badge; // 更新引用
+        this.statsBadge = badge;
     }
 
-    // 获取累计投稿数并更新徽章
+    // 获取累计投稿数（优先后端，失败时降级本地）
     async fetchSubmissionStats() {
         this.ensureStatsBadge(); // 确保徽章存在
         try {
@@ -74,10 +75,34 @@ class SubmitModule {
                 if (this.statsBadge) {
                     this.statsBadge.textContent = `已投稿 ${total} 次`;
                 }
+                // 同步本地计数（用于降级）
+                localStorage.setItem('submission_total', total);
+            } else {
+                // 后端失败，使用本地存储计数
+                const localTotal = this.getLocalSubmissionCount();
+                if (this.statsBadge) {
+                    this.statsBadge.textContent = `已投稿 ${localTotal} 次`;
+                }
             }
         } catch (err) {
             console.error('获取投稿统计失败:', err);
+            const localTotal = this.getLocalSubmissionCount();
+            if (this.statsBadge) {
+                this.statsBadge.textContent = `已投稿 ${localTotal} 次`;
+            }
         }
+    }
+
+    getLocalSubmissionCount() {
+        const count = parseInt(localStorage.getItem('submission_total') || '0', 10);
+        return isNaN(count) ? 0 : count;
+    }
+
+    incrementLocalSubmissionCount() {
+        let count = this.getLocalSubmissionCount();
+        count++;
+        localStorage.setItem('submission_total', count);
+        return count;
     }
 
     getDeviceId() {
@@ -252,11 +277,12 @@ class SubmitModule {
                 } else {
                     window.toast.show('感谢投稿！', 'success');
                 }
+                // 投稿成功，增加本地计数并刷新徽章
+                this.incrementLocalSubmissionCount();
+                await this.fetchSubmissionStats();  // 重新获取最新计数（后端优先）
                 this.modal.classList.remove('active');
                 this.resetForm();
                 this.editingRejectedId = null;
-                // 投稿成功后刷新累计数
-                await this.fetchSubmissionStats();
             } else {
                 const err = await res.json().catch(() => ({}));
                 window.toast.show(err.error || '提交失败', 'error');
