@@ -280,6 +280,11 @@ class SubmitModule {
                 // 投稿成功，增加本地计数并刷新徽章
                 this.incrementLocalSubmissionCount();
                 await this.fetchSubmissionStats();  // 重新获取最新计数（后端优先）
+                // 强制立即显示更新后的数字
+                if (this.statsBadge) {
+                    const newTotal = this.getLocalSubmissionCount();
+                    this.statsBadge.textContent = `已投稿 ${newTotal} 次`;
+                }
                 this.modal.classList.remove('active');
                 this.resetForm();
                 this.editingRejectedId = null;
