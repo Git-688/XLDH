@@ -192,11 +192,22 @@ class OptimizedNavigation {
         this.isSearching = false;
         const hint = document.getElementById('navSearchHint');
         if (hint) hint.style.display = 'none';
+        
+        // 确保有有效的分类
         if (this.selectedLevel1 && this.navigationData?.categories?.[this.selectedLevel1]) {
             this.selectLevel1(this.selectedLevel1, false);
         } else {
             const firstCat = this.getFirstCategory();
-            if (firstCat) this.selectLevel1(firstCat, false);
+            if (firstCat) {
+                this.selectedLevel1 = firstCat;
+                this.selectLevel1(firstCat, false);
+            } else {
+                // 无数据时重新加载
+                this.loadNavigationData().then(() => {
+                    const newFirst = this.getFirstCategory();
+                    if (newFirst) this.selectLevel1(newFirst, false);
+                });
+            }
         }
     }
 
