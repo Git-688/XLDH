@@ -285,7 +285,7 @@
         `).join('');
     }
 
-    // ========== 投稿详情模态框（移除拒绝原因输入框） ==========
+    // ========== 投稿详情模态框（直接可编辑标题、描述、图标，无独立编辑卡片） ==========
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -306,11 +306,24 @@
                 ? `<img src="${escapeHtml(item.icon)}" style="width:20px;height:20px;vertical-align:middle;border-radius:4px;">`
                 : `<i class="${escapeHtml(item.icon || 'fas fa-link')}"></i>`;
             
+            // 如果是待审核状态，标题、描述、图标变为可编辑输入框；否则为纯文本
+            const isPending = (item.status === 'pending');
+            const titleHtml = isPending
+                ? `<input type="text" id="editTitle" value="${escapeHtml(item.title)}" style="width:100%;" />`
+                : escapeHtml(item.title);
+            const descHtml = isPending
+                ? `<textarea id="editDesc" rows="2" style="width:100%;">${escapeHtml(item.description || '')}</textarea>`
+                : escapeHtml(item.description || '无');
+            const iconHtml = isPending
+                ? `<input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" style="width:100%;" />`
+                : (item.icon ? escapeHtml(item.icon) : '无');
+            
+            // 构建信息卡片（可编辑字段）
             let html = `
                 <div class="info-card">
                     <div class="info-row">
                         <div class="info-label">标题</div>
-                        <div class="info-value">${escapeHtml(item.title)} ${iconPreview}</div>
+                        <div class="info-value">${titleHtml}</div>
                     </div>
                     <div class="info-row">
                         <div class="info-label">网址</div>
@@ -318,11 +331,11 @@
                     </div>
                     <div class="info-row">
                         <div class="info-label">图标</div>
-                        <div class="info-value">${escapeHtml(item.icon || '无')}</div>
+                        <div class="info-value">${iconHtml} ${!isPending && item.icon ? `<div style="margin-top:4px;">${iconPreview}</div>` : ''}</div>
                     </div>
                     <div class="info-row">
                         <div class="info-label">描述</div>
-                        <div class="info-value">${escapeHtml(item.description || '无')}</div>
+                        <div class="info-value">${descHtml}</div>
                     </div>
                     <div class="info-row">
                         <div class="info-label">提交者</div>
@@ -345,29 +358,16 @@
                 </div>
             `;
             
-            // 如果投稿为待审核，增加编辑卡片
-            if (item.status === 'pending') {
+            // 如果是待审核状态，增加保存修改按钮
+            if (isPending) {
                 html += `
-                    <div class="action-card" id="editSubmissionCard">
-                        <h4><i class="fas fa-edit"></i> 编辑投稿内容</h4>
-                        <div class="form-row">
-                            <label>标题 <span style="color:red;">*</span></label>
-                            <input type="text" id="editTitle" value="${escapeHtml(item.title)}" style="width:100%;">
-                        </div>
-                        <div class="form-row">
-                            <label>描述</label>
-                            <textarea id="editDesc" rows="2" style="width:100%;">${escapeHtml(item.description || '')}</textarea>
-                        </div>
-                        <div class="form-row">
-                            <label>图标URL</label>
-                            <input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" style="width:100%;">
-                        </div>
-                        <button class="primary" id="saveEditBtn" style="margin-top:8px;">保存修改</button>
+                    <div class="action-card" style="margin-top:8px;">
+                        <button class="primary" id="saveEditBtn">💾 保存修改</button>
                     </div>
                 `;
             }
             
-            // 操作卡片（通过收录 + 拒绝，拒绝不再需要填写原因）
+            // 操作卡片（通过收录 + 拒绝）
             html += `
                 <div class="action-section">
                     <div class="action-card">
@@ -393,8 +393,8 @@
             
             contentDiv.innerHTML = html;
             
-            // 编辑保存事件
-            if (item.status === 'pending') {
+            // 保存修改按钮事件（仅待审核）
+            if (isPending) {
                 const saveBtn = document.getElementById('saveEditBtn');
                 if (saveBtn) {
                     saveBtn.addEventListener('click', async () => {
@@ -406,6 +406,7 @@
                         const newDesc = document.getElementById('editDesc').value.trim();
                         const newIcon = document.getElementById('editIcon').value.trim();
                         await editSubmission(item.id, newTitle, newDesc, newIcon);
+                        // 刷新详情
                         openSubmissionDetail(id);
                     });
                 }
@@ -452,13 +453,13 @@
                 }
             };
             
-            // 拒绝按钮（不再需要输入原因）
+            // 拒绝按钮（直接拒绝，无原因）
             document.getElementById('doRejectBtn').onclick = async () => {
                 if (!confirm('确定要拒绝该投稿吗？')) return;
                 try {
                     await apiFetch(`/admin/submissions/${id}/reject`, {
                         method: 'POST',
-                        body: JSON.stringify({ reason: '' }) // 传递空字符串或 null，Worker 中可忽略
+                        body: JSON.stringify({ reason: '' })
                     });
                     showToast('已拒绝', 'success');
                     detailModal.classList.remove('show');
@@ -474,7 +475,7 @@
         }
     }
 
-    // 编辑投稿函数（供编辑卡片使用）
+    // 编辑投稿函数（供保存修改使用）
     async function editSubmission(id, newTitle, newDesc, newIcon) {
         try {
             await apiFetch(`/admin/submissions/${id}`, {
