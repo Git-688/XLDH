@@ -14,6 +14,62 @@
     let currentSubmissionId = null;
     let refreshTimer = null;
 
+    // 注入全局样式（标题省略等）
+    function injectGlobalStyles() {
+        if (!document.getElementById('admin-global-styles')) {
+            const style = document.createElement('style');
+            style.id = 'admin-global-styles';
+            style.textContent = `
+                .submission-title-truncate {
+                    display: inline-block;
+                    max-width: 300px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    vertical-align: middle;
+                }
+                @media (max-width: 768px) {
+                    .submission-title-truncate { max-width: 180px; }
+                }
+                @media (max-width: 480px) {
+                    .submission-title-truncate { max-width: 120px; }
+                }
+                /* 统一表单控件样式 */
+                .form-input {
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    background: #fff;
+                    transition: all 0.2s;
+                    box-sizing: border-box;
+                }
+                .form-input:focus {
+                    border-color: #3b82f6;
+                    outline: none;
+                    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+                }
+                textarea.form-input {
+                    resize: vertical;
+                    font-family: inherit;
+                }
+                .inline-select-group {
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                    margin-bottom: 12px;
+                }
+                .inline-select-group select,
+                .inline-select-group input {
+                    flex: 1;
+                    min-width: 100px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -407,7 +463,6 @@
             const titleHtml = isPending
                 ? `<input type="text" id="editTitle" value="${escapeHtml(item.title)}" class="form-input" style="width:100%;" />`
                 : escapeHtml(item.title);
-            // 描述框添加 class="form-input" 统一样式
             const descHtml = isPending
                 ? `<textarea id="editDesc" rows="2" class="form-input" style="width:100%; resize: vertical;">${escapeHtml(item.description || '')}</textarea>`
                 : `<div style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(item.description || '无')}</div>`;
@@ -739,6 +794,7 @@
         catch { showToast('刷新失败', 'error'); }
     }
 
+    // ========== 待审核列表（标题过长省略） ==========
     async function loadSubmissions() {
         const list = document.getElementById('submissionsList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -747,7 +803,7 @@
             if (!data.length) { list.innerHTML = '<div class="empty">暂无待审核网站</div>'; return; }
             list.innerHTML = data.map(item => `
                 <div class="link-item" style="display:flex;justify-content:space-between;align-items:center;">
-                    <span><strong>${escapeHtml(item.title)}</strong></span>
+                    <span><strong class="submission-title-truncate" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</strong></span>
                     <button class="sm primary" data-action="viewSubmission" data-id="${item.id}">查看</button>
                 </div>
             `).join('');
@@ -817,6 +873,8 @@
         }
     }
 
+    // 初始化：注入样式、恢复登录状态等
+    injectGlobalStyles();
     const storedToken = getStoredToken();
     if (storedToken) {
         token = storedToken;
