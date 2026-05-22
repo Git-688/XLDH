@@ -1,7 +1,6 @@
 /**
  * 优化分类导航系统（基于后端 Worker + D1）
- * 包含：缓存容错、后台静默更新、去重请求、全站搜索
- * 修复：移动端搜索时自动滚动输入框到可视区
+ * 修复移动端搜索输入框自动滚动优化、清除按钮样式、搜索结果高亮等
  */
 class OptimizedNavigation {
     constructor() {
@@ -91,7 +90,7 @@ class OptimizedNavigation {
             <div class="search-input-wrapper">
                 <i class="fas fa-search search-icon-prefix"></i>
                 <input type="text" id="navSearchInput" placeholder="搜索本站链接..." autocomplete="off">
-                <button class="search-clear-btn" id="navSearchClearBtn" style="display:none;" aria-label="清除搜索">
+                <button class="search-clear-btn" id="navSearchClearBtn" aria-label="清除搜索">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -109,12 +108,17 @@ class OptimizedNavigation {
             this.searchTimer = setTimeout(() => query ? this.performSearch(query) : this.clearSearch(), 300);
         });
 
-        // ========== 移动端优化：焦点时自动滚动到可视区 ==========
+        // 移动端优化：仅在输入框完全不可见时才滚动，避免频繁干扰
         this.searchInput.addEventListener('focus', () => {
-            // 延迟执行确保键盘弹起后再滚动
-            setTimeout(() => {
-                this.searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300);
+            if (window.innerWidth <= 768) {
+                const rect = this.searchInput.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                if (rect.bottom > viewportHeight - 100 || rect.top < 60) {
+                    setTimeout(() => {
+                        this.searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 200);
+                }
+            }
         });
 
         clearBtn.addEventListener('click', () => {
@@ -156,13 +160,27 @@ class OptimizedNavigation {
 
         const container = document.getElementById('level3Content');
         if (!container) return;
-        container.innerHTML = results.length === 0
-            ? `<div class="empty-state"><div class="empty-icon"><i class="fas fa-search"></i></div><h3 class="empty-title">未找到相关链接</h3><p class="empty-subtitle">试试其他关键词</p></div>`
-            : '';
-        results.forEach((site, idx) => container.appendChild(this.createSiteCard(site, idx)));
+        
+        // 使用 DocumentFragment 批量插入，提高性能
+        const fragment = document.createDocumentFragment();
+        if (results.length === 0) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'empty-state';
+            emptyDiv.innerHTML = `<div class="empty-icon"><i class="fas fa-search"></i></div><h3 class="empty-title">未找到相关链接</h3><p class="empty-subtitle">试试其他关键词</p>`;
+            fragment.appendChild(emptyDiv);
+        } else {
+            results.forEach((site, idx) => {
+                fragment.appendChild(this.createSiteCard(site, idx));
+            });
+        }
+        container.innerHTML = '';
+        container.appendChild(fragment);
 
         const hint = document.getElementById('navSearchHint');
-        if (hint) { hint.style.display = 'block'; hint.textContent = `找到 ${results.length} 个结果`; }
+        if (hint) {
+            hint.style.display = 'block';
+            hint.textContent = `找到 ${results.length} 个结果`;
+        }
 
         document.querySelectorAll('.level1-btn, .level2-btn').forEach(b => b.classList.remove('active'));
         this.selectedLevel1 = null;
@@ -315,7 +333,11 @@ class OptimizedNavigation {
         const sites = this.navigationData.categories[level1][level2];
         container.innerHTML = '';
         if (!sites.length) { this.renderEmptyState(); return; }
-        sites.forEach((site, idx) => container.appendChild(this.createSiteCard(site, idx)));
+        const fragment = document.createDocumentFragment();
+        sites.forEach((site, idx) => {
+            fragment.appendChild(this.createSiteCard(site, idx));
+        });
+        container.appendChild(fragment);
     }
 
     createSiteCard(site, index) {
