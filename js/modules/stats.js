@@ -13,23 +13,20 @@ function getDeviceId() {
 
 let heartbeatInterval = null;
 
+// 修改后的运行时间格式化函数：仅保留天数，移除时、分、秒
 function formatUptime(ms) {
     if (ms < 0) return "刚刚上线";
-    const seconds = Math.floor(ms / 1000);
-    const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    let parts = [];
-    if (days > 0) parts.push(`${days}天`);
-    if (hours > 0) parts.push(`${hours}时`);
-    if (minutes > 0) parts.push(`${minutes}分`);
-    if (parts.length === 0) parts.push("0分");
-    return parts.join(" ");
+    const days = Math.floor(ms / (24 * 3600 * 1000));
+    if (days > 0) {
+        return `${days}天`;
+    } else {
+        return "不足1天";
+    }
 }
 
 function updateUptimeDisplay(startTimeMs) {
     if (!startTimeMs) return;
-    const nowMs = Date.now() + 8 * 3600 * 1000;
+    const nowMs = Date.now() + 8 * 3600 * 1000; // UTC+8
     const uptimeMs = nowMs - startTimeMs;
     const formatted = formatUptime(uptimeMs);
     $('#uptime').text(formatted);
