@@ -1,7 +1,21 @@
-// 确保 Utils 存在（已由 utils.js 提供，不重复定义）
+// 确保 Utils 存在（已由 utils.js 提供）
+if (typeof Utils === 'undefined') {
+    window.Utils = {
+        escapeHtml: function(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                if (m === '"') return '&quot;';
+                return '&#39;';
+            });
+        }
+    };
+}
 
 /**
- * 关于网站模块 - 包含收款模态框（移动端按钮缩小一半）
+ * 关于网站模块 - 包含收款模态框（移动端按钮缩小适配）
  * @class AboutModule
  */
 class AboutModule {
@@ -240,7 +254,7 @@ class AboutModule {
     }
 
     showDonateModal() {
-        // 创建收款模态框，z-index 提升为 10002，避免反馈遮挡
+        // 创建收款模态框，z-index 提升为 10002
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
         donateModal.style.cssText = `
@@ -501,9 +515,7 @@ class AboutModule {
         buttons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const type = btn.dataset.type;
-
                 setActive(btn);
-
                 contents.forEach(content => {
                     if (content.dataset.type === type) {
                         content.style.display = 'flex';
