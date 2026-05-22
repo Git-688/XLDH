@@ -343,7 +343,6 @@ class MusicPlayer {
         });
     }
 
-    // 本地存储方法（统一使用 Storage 类）
     saveVolume(volume) {
         Storage.setItem('musicPlayer.volume', volume);
     }
@@ -444,7 +443,6 @@ class MusicPlayer {
         });
     }
 
-    // 歌词系统
     async loadLyrics(song) {
         this.lyricsData = [];
         this.currentLyricIndex = -1;
@@ -509,7 +507,7 @@ class MusicPlayer {
         }
     }
 
-    // 播放控制
+    // 播放控制（修复移动端自动播放）
     togglePlay() {
         if (this.isHandlingNavigationClick) return;
         if (this.waitingForUserGesture) {
@@ -532,18 +530,24 @@ class MusicPlayer {
         if (!this.audio.src && this.currentPlaylist.length > 0) {
             this.loadSong(0, this.currentPlaylist);
         }
-        this.audio.play().then(() => {
-            this.isPlaying = true;
-            this.updatePlayButton();
-            this.savePlayState(true);
-            document.querySelector('.album-cover').classList.add('playing');
-            this.updateActiveSongInList();
-        }).catch(error => {
-            console.error('播放失败:', error);
-            if (!this.isHandlingNavigationClick) {
-                this.handlePlaybackError(error);
-            }
-        });
+        const playPromise = this.audio.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                this.isPlaying = true;
+                this.updatePlayButton();
+                this.savePlayState(true);
+                document.querySelector('.album-cover').classList.add('playing');
+                this.updateActiveSongInList();
+            }).catch(error => {
+                console.error('播放失败:', error);
+                if (error.name === 'NotAllowedError') {
+                    this.waitingForUserGesture = true;
+                    window.toast.show('请点击页面任意位置后播放', 'info');
+                } else if (!this.isHandlingNavigationClick) {
+                    this.handlePlaybackError(error);
+                }
+            });
+        }
     }
 
     pause() {
@@ -679,7 +683,6 @@ class MusicPlayer {
         }
     }
 
-    // 歌单加载
     async switchApiTab(apiId) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -997,7 +1000,6 @@ class MusicPlayer {
         }
     }
 
-    // 下载功能
     async downloadCurrentSong() {
         if (!this.currentPlaylist[this.currentIndex]) {
             window.toast.show('没有可下载的歌曲', 'warning');
@@ -1076,7 +1078,6 @@ class MusicPlayer {
         }
     }
 
-    // 进度条
     updateProgress() {
         if (this.isDraggingProgress || this.updateAnimationFrame) return;
         this.updateAnimationFrame = requestAnimationFrame(() => {
