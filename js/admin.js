@@ -373,13 +373,12 @@
         `).join('');
     }
 
-    // ================== 投稿详情模态框（修复关闭问题） ==================
+    // ================== 投稿详情模态框 ==================
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
         const contentDiv = document.getElementById('submissionDetailContent');
         
-        // 确保模态框关闭事件正确绑定（每次打开前先移除旧监听，避免重复）
         const removeModalListeners = () => {
             const newCloseBtn = detailModal.querySelector('#closeDetailModalBtn');
             if (newCloseBtn) {
@@ -387,7 +386,6 @@
                 newCloseBtn.parentNode.replaceChild(newClone, newCloseBtn);
                 newClone.onclick = () => detailModal.classList.remove('show');
             }
-            // 遮罩层点击关闭
             detailModal.onclick = (e) => {
                 if (e.target === detailModal) detailModal.classList.remove('show');
             };
@@ -407,13 +405,14 @@
                 : `<i class="${escapeHtml(item.icon || 'fas fa-link')}"></i>`;
             const isPending = (item.status === 'pending');
             const titleHtml = isPending
-                ? `<input type="text" id="editTitle" value="${escapeHtml(item.title)}" style="width:100%;" />`
+                ? `<input type="text" id="editTitle" value="${escapeHtml(item.title)}" class="form-input" style="width:100%;" />`
                 : escapeHtml(item.title);
+            // 描述框添加 class="form-input" 统一样式
             const descHtml = isPending
-                ? `<textarea id="editDesc" rows="2" style="width:100%; resize: vertical;">${escapeHtml(item.description || '')}</textarea>`
+                ? `<textarea id="editDesc" rows="2" class="form-input" style="width:100%; resize: vertical;">${escapeHtml(item.description || '')}</textarea>`
                 : `<div style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(item.description || '无')}</div>`;
             const iconHtml = isPending
-                ? `<input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" style="width:100%;" />`
+                ? `<input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" class="form-input" style="width:100%;" />`
                 : (item.icon ? escapeHtml(item.icon) : '无');
             
             let html = `
@@ -435,9 +434,9 @@
                 <div class="action-section">
                     <div class="action-card"><h4><i class="fas fa-check-circle"></i> 通过收录</h4>
                         <div class="inline-select-group">
-                            <select id="approveCatSelect"><option value="">选择一级分类</option>${categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')}</select>
-                            <select id="approveSubSelect" disabled><option value="">先选择一级分类</option></select>
-                            <input type="number" id="approveOrder" placeholder="排序" value="0" style="width:80px;">
+                            <select id="approveCatSelect" class="form-input"><option value="">选择一级分类</option>${categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')}</select>
+                            <select id="approveSubSelect" class="form-input" disabled><option value="">先选择一级分类</option></select>
+                            <input type="number" id="approveOrder" placeholder="排序" value="0" class="form-input" style="width:80px;">
                         </div>
                         <button class="btn-approve" id="doApproveBtn">✓ 通过并收录</button>
                     </div>
@@ -448,7 +447,6 @@
             `;
             contentDiv.innerHTML = html;
             
-            // 描述框自适应
             if (isPending) {
                 const descTextarea = document.getElementById('editDesc');
                 if (descTextarea) {
@@ -466,7 +464,6 @@
                 }
             }
             
-            // 分类联动
             const catSelect = document.getElementById('approveCatSelect');
             const subSelect = document.getElementById('approveSubSelect');
             catSelect.addEventListener('change', async (e) => {
@@ -502,7 +499,6 @@
                 } catch (err) { showToast('操作失败', 'error'); }
             };
             
-            // 重新绑定关闭事件
             removeModalListeners();
             detailModal.classList.add('show');
         } catch (err) { showToast('加载详情失败', 'error'); }
@@ -517,9 +513,8 @@
         } catch (err) { showToast('更新失败', 'error'); return false; }
     }
 
-    // 管理操作（分类、子分类、链接等）
     function handleModifyCategory(id, currentName) {
-        openModal('修改分类', `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
+        openModal('修改分类', `<div class="form-row"><label>名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>`,
             async () => {
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
@@ -531,7 +526,7 @@
     }
 
     function handleModifySub(id, currentName) {
-        openModal('修改子分类', `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
+        openModal('修改子分类', `<div class="form-row"><label>名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>`,
             async () => {
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
@@ -546,11 +541,11 @@
         const site = sites.find(s => s.id === id);
         if (!site) return;
         openModal('编辑链接',
-            `<div class="form-row"><label>标题</label><input id="mTitle" value="${escapeHtml(site.title)}"></div>
-             <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" value="${escapeHtml(site.url)}"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
-             <div class="form-row"><label>图标</label><input id="mIcon" value="${escapeHtml(site.icon||'fas fa-link')}"></div>
-             <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" style="width:100%;">${escapeHtml(site.description||'')}</textarea></div>
-             <div class="form-row"><label>排序</label><input type="number" id="mSort" value="${site.display_order}"></div>`,
+            `<div class="form-row"><label>标题</label><input id="mTitle" class="form-input" value="${escapeHtml(site.title)}"></div>
+             <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" class="form-input" value="${escapeHtml(site.url)}"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
+             <div class="form-row"><label>图标</label><input id="mIcon" class="form-input" value="${escapeHtml(site.icon||'fas fa-link')}"></div>
+             <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%;">${escapeHtml(site.description||'')}</textarea></div>
+             <div class="form-row"><label>排序</label><input type="number" id="mSort" class="form-input" value="${site.display_order}"></div>`,
             async () => {
                 const title = document.getElementById('mTitle').value.trim();
                 const url = document.getElementById('mUrl').value.trim();
@@ -577,8 +572,8 @@
 
     function handleAddCategory() {
         openModal('新增一级分类',
-            `<div class="form-row"><label>名称</label><input id="mName"></div>
-             <div class="form-row"><label>排序</label><input type="number" id="mSort" value="${categories.length}"></div>`,
+            `<div class="form-row"><label>名称</label><input id="mName" class="form-input"></div>
+             <div class="form-row"><label>排序</label><input type="number" id="mSort" class="form-input" value="${categories.length}"></div>`,
             async () => {
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
@@ -591,8 +586,8 @@
     function handleAddSub() {
         if (!currentCat) { showToast('请先选择一级分类', 'error'); return; }
         openModal('新增子分类',
-            `<div class="form-row"><label>名称</label><input id="mName"></div>
-             <div class="form-row"><label>排序</label><input type="number" id="mSort" value="0"></div>`,
+            `<div class="form-row"><label>名称</label><input id="mName" class="form-input"></div>
+             <div class="form-row"><label>排序</label><input type="number" id="mSort" class="form-input" value="0"></div>`,
             async () => {
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
@@ -605,11 +600,11 @@
     function handleAddSite() {
         if (!currentSub) { showToast('请先选择子分类', 'error'); return; }
         openModal('新增链接',
-            `<div class="form-row"><label>标题</label><input id="mTitle"></div>
-             <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
-             <div class="form-row"><label>图标</label><input id="mIcon" value="fas fa-link"></div>
-             <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" style="width:100%;"></textarea></div>
-             <div class="form-row"><label>排序</label><input type="number" id="mSort" value="0"></div>`,
+            `<div class="form-row"><label>标题</label><input id="mTitle" class="form-input"></div>
+             <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" class="form-input"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
+             <div class="form-row"><label>图标</label><input id="mIcon" class="form-input" value="fas fa-link"></div>
+             <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%;"></textarea></div>
+             <div class="form-row"><label>排序</label><input type="number" id="mSort" class="form-input" value="0"></div>`,
             async () => {
                 const title = document.getElementById('mTitle').value.trim();
                 const url = document.getElementById('mUrl').value.trim();
@@ -700,10 +695,10 @@
         const site = sites.find(s => s.id === siteId);
         if (!site) { showToast('未找到网站记录', 'error'); return; }
         openModal('更换链接',
-            `<div class="form-row"><label>标题</label><input id="mTitle" value="${escapeHtml(site.title)}"></div>
-             <div class="form-row"><label>网址</label><input id="mUrl" value="${escapeHtml(site.url)}"></div>
-             <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" style="width:100%;">${escapeHtml(site.description||'')}</textarea></div>
-             <div class="form-row"><label>图标</label><input id="mIcon" value="${escapeHtml(site.icon||'fas fa-link')}"></div>`,
+            `<div class="form-row"><label>标题</label><input id="mTitle" class="form-input" value="${escapeHtml(site.title)}"></div>
+             <div class="form-row"><label>网址</label><input id="mUrl" class="form-input" value="${escapeHtml(site.url)}"></div>
+             <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%;">${escapeHtml(site.description||'')}</textarea></div>
+             <div class="form-row"><label>图标</label><input id="mIcon" class="form-input" value="${escapeHtml(site.icon||'fas fa-link')}"></div>`,
             async () => {
                 const newTitle = document.getElementById('mTitle').value.trim();
                 const newUrl = document.getElementById('mUrl').value.trim();
@@ -814,7 +809,6 @@
         document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
         document.getElementById('logModal').addEventListener('click', e => { if (e.target === document.getElementById('logModal')) closeLogModal(); });
         
-        // 提前绑定投稿详情模态框的关闭事件（确保页面加载后就能关闭）
         const detailModal = document.getElementById('submissionDetailModal');
         if (detailModal) {
             const closeBtn = detailModal.querySelector('#closeDetailModalBtn');
@@ -823,7 +817,6 @@
         }
     }
 
-    // 初始化
     const storedToken = getStoredToken();
     if (storedToken) {
         token = storedToken;
