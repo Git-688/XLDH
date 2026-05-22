@@ -32,7 +32,6 @@
         try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; }
     }
 
-    // 文本域自动调整高度
     function autoResizeTextarea(textarea) {
         if (!textarea) return;
         textarea.style.height = 'auto';
@@ -374,11 +373,26 @@
         `).join('');
     }
 
-    // 投稿详情模态框（拒绝无原因 + 描述框自适应）
+    // ================== 投稿详情模态框（修复关闭问题） ==================
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
         const contentDiv = document.getElementById('submissionDetailContent');
+        
+        // 确保模态框关闭事件正确绑定（每次打开前先移除旧监听，避免重复）
+        const removeModalListeners = () => {
+            const newCloseBtn = detailModal.querySelector('#closeDetailModalBtn');
+            if (newCloseBtn) {
+                const newClone = newCloseBtn.cloneNode(true);
+                newCloseBtn.parentNode.replaceChild(newClone, newCloseBtn);
+                newClone.onclick = () => detailModal.classList.remove('show');
+            }
+            // 遮罩层点击关闭
+            detailModal.onclick = (e) => {
+                if (e.target === detailModal) detailModal.classList.remove('show');
+            };
+        };
+        
         try {
             const data = await apiFetch('/admin/submissions');
             const item = data.find(s => s.id == id);
@@ -395,7 +409,6 @@
             const titleHtml = isPending
                 ? `<input type="text" id="editTitle" value="${escapeHtml(item.title)}" style="width:100%;" />`
                 : escapeHtml(item.title);
-            // 描述区域：如果是待审核，使用 textarea 并自适应高度；否则直接显示完整文本（不截断）
             const descHtml = isPending
                 ? `<textarea id="editDesc" rows="2" style="width:100%; resize: vertical;">${escapeHtml(item.description || '')}</textarea>`
                 : `<div style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(item.description || '无')}</div>`;
@@ -435,7 +448,7 @@
             `;
             contentDiv.innerHTML = html;
             
-            // 描述框自适应高度（仅待审核且为 textarea）
+            // 描述框自适应
             if (isPending) {
                 const descTextarea = document.getElementById('editDesc');
                 if (descTextarea) {
@@ -453,6 +466,7 @@
                 }
             }
             
+            // 分类联动
             const catSelect = document.getElementById('approveCatSelect');
             const subSelect = document.getElementById('approveSubSelect');
             catSelect.addEventListener('change', async (e) => {
@@ -478,7 +492,6 @@
                     await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 } catch (err) { showToast('操作失败', 'error'); }
             };
-            // 拒绝按钮：直接拒绝，无需原因
             document.getElementById('doRejectBtn').onclick = async () => {
                 if (!confirm('确定要拒绝该投稿吗？拒绝后用户可修改后再次提交。')) return;
                 try {
@@ -488,6 +501,9 @@
                     await loadSubmissions();
                 } catch (err) { showToast('操作失败', 'error'); }
             };
+            
+            // 重新绑定关闭事件
+            removeModalListeners();
             detailModal.classList.add('show');
         } catch (err) { showToast('加载详情失败', 'error'); }
     }
@@ -501,7 +517,31 @@
         } catch (err) { showToast('更新失败', 'error'); return false; }
     }
 
-    // 编辑网站链接模态框中描述框自适应
+    // 管理操作（分类、子分类、链接等）
+    function handleModifyCategory(id, currentName) {
+        openModal('修改分类', `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
+            async () => {
+                const name = document.getElementById('mName').value.trim();
+                if (!name) { showToast('名称不能为空', 'error'); return; }
+                await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
+                addLog(`修改分类：${currentName} → ${name}`); showToast('修改成功'); await loadAllData();
+            }, true,
+            async () => { await apiFetch(`/admin/categories/${id}`, { method:'DELETE' }); addLog(`删除分类 ${id}`); showToast('分类已删除'); await loadAllData(); }
+        );
+    }
+
+    function handleModifySub(id, currentName) {
+        openModal('修改子分类', `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
+            async () => {
+                const name = document.getElementById('mName').value.trim();
+                if (!name) { showToast('名称不能为空', 'error'); return; }
+                await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
+                addLog(`修改子分类：${currentName} → ${name}`); showToast('修改成功'); await loadAllData();
+            }, true,
+            async () => { await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); addLog(`删除子分类 ${id}`); showToast('子分类已删除'); await loadAllData(); }
+        );
+    }
+
     async function handleEditSite(id) {
         const site = sites.find(s => s.id === id);
         if (!site) return;
@@ -533,31 +573,6 @@
             const fetchBtn = document.getElementById('fetchInfoBtn');
             if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
         }, 50);
-    }
-
-    // 其余管理函数（分类、子分类、添加等）保持不变，仅增加描述框自动调整
-    function handleModifyCategory(id, currentName) {
-        openModal('修改分类', `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
-            async () => {
-                const name = document.getElementById('mName').value.trim();
-                if (!name) { showToast('名称不能为空', 'error'); return; }
-                await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
-                addLog(`修改分类：${currentName} → ${name}`); showToast('修改成功'); await loadAllData();
-            }, true,
-            async () => { await apiFetch(`/admin/categories/${id}`, { method:'DELETE' }); addLog(`删除分类 ${id}`); showToast('分类已删除'); await loadAllData(); }
-        );
-    }
-
-    function handleModifySub(id, currentName) {
-        openModal('修改子分类', `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
-            async () => {
-                const name = document.getElementById('mName').value.trim();
-                if (!name) { showToast('名称不能为空', 'error'); return; }
-                await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
-                addLog(`修改子分类：${currentName} → ${name}`); showToast('修改成功'); await loadAllData();
-            }, true,
-            async () => { await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); addLog(`删除子分类 ${id}`); showToast('子分类已删除'); await loadAllData(); }
-        );
     }
 
     function handleAddCategory() {
@@ -798,6 +813,14 @@
         document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
         document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
         document.getElementById('logModal').addEventListener('click', e => { if (e.target === document.getElementById('logModal')) closeLogModal(); });
+        
+        // 提前绑定投稿详情模态框的关闭事件（确保页面加载后就能关闭）
+        const detailModal = document.getElementById('submissionDetailModal');
+        if (detailModal) {
+            const closeBtn = detailModal.querySelector('#closeDetailModalBtn');
+            if (closeBtn) closeBtn.onclick = () => detailModal.classList.remove('show');
+            detailModal.onclick = (e) => { if (e.target === detailModal) detailModal.classList.remove('show'); };
+        }
     }
 
     // 初始化
