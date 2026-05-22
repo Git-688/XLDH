@@ -512,6 +512,11 @@ class MusicPlayer {
         if (this.isHandlingNavigationClick) return;
         if (this.waitingForUserGesture) {
             this.waitingForUserGesture = false;
+            // 如果有音频源且之前是播放状态，尝试播放
+            if (this.audio.src && this.isPlaying) {
+                this.play();
+                return;
+            }
         }
         if (!this.audio.src && this.currentPlaylist.length > 0) {
             this.loadSong(0, this.currentPlaylist);
