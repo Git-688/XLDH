@@ -1,5 +1,7 @@
 /**
  * 轮播图模块 - 基于官方必应 API，支持多日壁纸、预加载和降级
+ * 修复：必应API跨域问题（使用JSONP替代fetch）
+ * 增强：图片重试加载、响应式分辨率、触摸滑动优化、窗口大小适配
  */
 class CarouselModule {
     constructor() {
@@ -17,11 +19,12 @@ class CarouselModule {
         this.preloadCache = new Set();   // 已预加载的 URL
         this.maxRetries = 2;             // 每张图片最大重试次数
         this.fallbackColor = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        this.currentResolution = this.getResolutionForWidth(); // 当前屏幕分辨率
 
         this.init();
     }
 
-    // 获取适合当前屏幕的图片分辨率（1920 足够，节省流量）
+    // 获取适合当前屏幕的图片分辨率
     getResolutionForWidth() {
         const width = window.innerWidth;
         if (width <= 768) return 768;
@@ -40,8 +43,7 @@ class CarouselModule {
                 if (imgData && imgData.url) {
                     wallpapers.push(imgData);
                 } else {
-                    // 如果某一天获取失败，跳过（不中断）
-                    console.warn(`第 ${i} 天壁纸获取失败，使用占位`);
+                    console.warn(`第 ${i} 天壁纸获取失败，跳过`);
                 }
             } catch (err) {
                 console.warn(`获取第 ${i} 天壁纸异常:`, err);
@@ -49,7 +51,6 @@ class CarouselModule {
         }
 
         if (wallpapers.length === 0) {
-            // 完全失败时使用内置默认图片（项目 logo 或其他）
             console.error('所有必应壁纸获取失败，使用默认渐变');
             this.slides = [{ url: '', title: '星聚导航', isDefault: true }];
         } else {
@@ -81,46 +82,68 @@ class CarouselModule {
 
         this.renderSlides();
         this.renderDots();
-        this.preloadAdjacentImages(1);      // 预加载相邻图片
-        this.goToSlide(1, false);           // 显示第一张原始壁纸（索引1）
+        this.preloadAdjacentImages(1);
+        this.goToSlide(1, false);
         this.bindEvents();
         this.startAutoplay();
     }
 
     /**
-     * 获取必应壁纸（idx=0 为今日，1 为昨日，依此类推）
+     * 获取必应壁纸（使用JSONP解决跨域问题）
      * @param {number} offset 偏移量，0=今日
      * @returns {Promise<{url: string, title: string}>}
      */
-    async fetchBingWallpaper(offset = 0) {
-        const resolution = this.getResolutionForWidth();
-        // 官方 API 无需代理，但注意跨域问题（图片资源允许跨域）
-        const apiUrl = `https://cn.bing.com/HPImageArchive.aspx?format=js&idx=${offset}&n=1&mkt=zh-CN`;
-        
-        const response = await fetch(apiUrl, { cache: 'no-cache' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        
-        if (!data.images || !data.images.length) {
-            throw new Error('返回数据为空');
-        }
-        
-        const img = data.images[0];
-        // 必应返回的 url 是相对路径，需要拼接完整域名，并替换分辨率
-        let imgUrl = 'https://cn.bing.com' + img.url;
-        // 替换为指定分辨率（默认为 1920x1080）
-        imgUrl = imgUrl.replace(/&pid=.*/, '');  // 去除可能的多余参数
-        // 可尝试添加分辨率参数，但多数图片本身已是高分辨率
-        
-        let title = img.copyright || '必应每日壁纸';
-        // 去除 "必应壁纸 · " 前缀
-        title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
-        if (!title) title = offset === 0 ? '今日壁纸' : `${offset}天前壁纸`;
-        
-        return { url: imgUrl, title };
+    fetchBingWallpaper(offset = 0) {
+        return new Promise((resolve, reject) => {
+            const resolution = this.currentResolution;
+            const callbackName = `bingWallpaperCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+            
+            // 必应API支持JSONP，通过callback参数实现
+            const apiUrl = `https://cn.bing.com/HPImageArchive.aspx?format=js&idx=${offset}&n=1&mkt=zh-CN&callback=${callbackName}`;
+            
+            // 创建script标签
+            const script = document.createElement('script');
+            script.src = apiUrl;
+            script.async = true;
+            
+            // 定义全局回调函数
+            window[callbackName] = (data) => {
+                try {
+                    if (!data.images || !data.images.length) {
+                        reject(new Error('返回数据为空'));
+                        return;
+                    }
+                    
+                    const img = data.images[0];
+                    // 构建完整图片URL并替换为指定分辨率
+                    let imgUrl = `https://cn.bing.com${img.urlbase}_${resolution}x1080.jpg`;
+                    
+                    let title = img.copyright || '必应每日壁纸';
+                    title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
+                    if (!title) title = offset === 0 ? '今日壁纸' : `${offset}天前壁纸`;
+                    
+                    resolve({ url: imgUrl, title });
+                } catch (err) {
+                    reject(err);
+                } finally {
+                    // 清理全局函数和script标签
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                }
+            };
+            
+            // 处理加载失败
+            script.onerror = () => {
+                delete window[callbackName];
+                document.body.removeChild(script);
+                reject(new Error('API请求失败'));
+            };
+            
+            document.body.appendChild(script);
+        });
     }
 
-    // 渲染所有幻灯片（DOM 操作）
+    // 渲染所有幻灯片（带图片重试加载）
     renderSlides() {
         if (!this.track) return;
         this.track.innerHTML = '';
@@ -128,33 +151,42 @@ class CarouselModule {
         this.clonedSlides.forEach((slide, index) => {
             const slideDiv = document.createElement('div');
             slideDiv.className = 'carousel-slide';
-            // 先设置渐变背景，等图片加载成功后再替换
             slideDiv.style.background = this.fallbackColor;
             slideDiv.style.backgroundSize = 'cover';
             slideDiv.style.backgroundPosition = 'center';
             slideDiv.setAttribute('data-index', index);
             
-            // 如果有图片 URL 且不是默认占位，则尝试加载图片
             if (slide.url && !slide.isDefault) {
-                const img = new Image();
-                img.crossOrigin = 'Anonymous';   // 解决跨域问题（可选）
-                img.referrerPolicy = 'no-referrer'; // 避免防盗链
-                
-                img.onload = () => {
-                    // 图片加载成功，替换背景
-                    slideDiv.style.backgroundImage = `url('${slide.url}')`;
-                    slideDiv.style.backgroundSize = 'cover';
-                    slideDiv.style.backgroundPosition = 'center';
-                };
-                img.onerror = () => {
-                    console.warn(`壁纸加载失败: ${slide.url}`);
-                    // 保留渐变背景
-                };
-                img.src = slide.url;
+                this.loadImageWithRetry(slide.url, slideDiv, 0);
             }
             
             this.track.appendChild(slideDiv);
         });
+    }
+
+    // 带重试机制的图片加载
+    loadImageWithRetry(url, slideDiv, retryCount) {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.referrerPolicy = 'no-referrer';
+        
+        img.onload = () => {
+            slideDiv.style.backgroundImage = `url('${url}')`;
+            this.preloadCache.add(url);
+        };
+        
+        img.onerror = () => {
+            if (retryCount < this.maxRetries) {
+                console.warn(`壁纸加载失败，重试 ${retryCount + 1}/${this.maxRetries}: ${url}`);
+                setTimeout(() => {
+                    this.loadImageWithRetry(url, slideDiv, retryCount + 1);
+                }, 1000 * (retryCount + 1)); // 指数退避
+            } else {
+                console.error(`壁纸最终加载失败: ${url}`);
+            }
+        };
+        
+        img.src = url;
     }
 
     // 渲染圆点指示器
@@ -200,7 +232,7 @@ class CarouselModule {
         
         this.isTransitioning = true;
         
-        // 计算真实的原始索引（用于高亮圆点）
+        // 计算真实的原始索引
         let realIndex = clonedIndex;
         if (clonedIndex === 0) realIndex = this.slides.length - 1;
         else if (clonedIndex === total - 1) realIndex = 0;
@@ -218,23 +250,21 @@ class CarouselModule {
         
         // 执行滑动
         if (this.track) {
-            this.track.style.transition = animate ? 'transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.2)' : 'none';
+            this.track.style.transition = animate ? 'transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)' : 'none';
             this.track.style.transform = `translateX(-${clonedIndex * 100}%)`;
         }
         
         this.currentIndex = clonedIndex;
         this.preloadAdjacentImages(clonedIndex);
         
-        // 无缝循环处理：当滑动到克隆的第一张或最后一张时，瞬间跳回真实边界
+        // 无缝循环处理
         setTimeout(() => {
             this.isTransitioning = false;
             if (clonedIndex === 0) {
-                // 从克隆的最后一张跳到真实最后一张
                 this.track.style.transition = 'none';
                 this.track.style.transform = `translateX(-${this.slides.length * 100}%)`;
                 this.currentIndex = this.slides.length;
             } else if (clonedIndex === total - 1) {
-                // 从克隆的第一张跳到真实第一张
                 this.track.style.transition = 'none';
                 this.track.style.transform = `translateX(-100%)`;
                 this.currentIndex = 1;
@@ -285,20 +315,36 @@ class CarouselModule {
             });
         }
         
-        // 触摸滑动支持（移动端）
+        // 优化触摸滑动支持（增加touchmove防止误触）
         if (this.track) {
-            let startX = 0, startY = 0;
+            let startX = 0, startY = 0, isDragging = false;
+            
             this.track.addEventListener('touchstart', (e) => {
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
+                isDragging = true;
                 this.stopAutoplay();
-            });
+            }, { passive: true });
+            
+            this.track.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                const diffX = e.touches[0].clientX - startX;
+                const diffY = e.touches[0].clientY - startY;
+                
+                // 垂直滑动超过一定距离，判定为页面滚动，取消轮播滑动
+                if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 30) {
+                    isDragging = false;
+                }
+            }, { passive: true });
+            
             this.track.addEventListener('touchend', (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                
                 const endX = e.changedTouches[0].clientX;
-                const endY = e.changedTouches[0].clientY;
                 const diffX = endX - startX;
-                const diffY = endY - startY;
-                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+                
+                if (Math.abs(diffX) > 40) {
                     if (diffX > 0) this.prev();
                     else this.next();
                 }
@@ -306,24 +352,47 @@ class CarouselModule {
             });
         }
         
-        // 鼠标悬停时停止自动播放，离开后恢复
+        // 鼠标悬停时停止自动播放
         const container = document.getElementById('wallpaperCarousel');
         if (container) {
             container.addEventListener('mouseenter', () => this.stopAutoplay());
             container.addEventListener('mouseleave', () => this.startAutoplay());
         }
         
-        // 页面可见性变化时恢复自动播放
+        // 页面可见性变化时控制自动播放
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && this.autoplayTimer === null) {
-                this.startAutoplay();
-            } else if (document.hidden && this.autoplayTimer) {
+            if (document.hidden) {
                 this.stopAutoplay();
+            } else {
+                this.startAutoplay();
             }
         });
+        
+        // 窗口大小变化时重新加载合适分辨率的壁纸
+        window.addEventListener('resize', this.debounce(() => {
+            const newResolution = this.getResolutionForWidth();
+            if (newResolution !== this.currentResolution) {
+                this.currentResolution = newResolution;
+                this.preloadCache.clear(); // 清空缓存，重新加载高分辨率图片
+                this.refresh();
+            }
+        }, 300));
     }
 
-    // 手动刷新（例如重新获取壁纸）
+    // 防抖函数
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // 手动刷新
     async refresh() {
         this.stopAutoplay();
         await this.init();
