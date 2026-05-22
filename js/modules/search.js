@@ -1,5 +1,5 @@
 /**
- * 搜索模块 - Waline 修复兼容版
+ * 搜索模块 - 修复版（CSP 兼容，XSS 防护）
  * 默认直接实例化，无需等待 DOMContentLoaded
  */
 class NewSearchModule {
@@ -33,7 +33,6 @@ class NewSearchModule {
             this.updateTriggerIcon();
             this.bindEvents();
 
-            // 绑定输入事件
             if (this.input) {
                 this.input.addEventListener('input', () => this.showSuggestions());
                 this.input.addEventListener('keydown', (e) => {
@@ -41,7 +40,6 @@ class NewSearchModule {
                 });
             }
 
-            // 搜索按钮
             const searchSubmit = this.modal.querySelector('.search-submit-btn');
             if (searchSubmit) searchSubmit.addEventListener('click', () => this.submitSearch());
 
@@ -49,7 +47,6 @@ class NewSearchModule {
         }
     }
 
-    // 工具方法
     loadSetting(key, def) {
         try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : def; } catch { return def; }
     }
@@ -57,11 +54,18 @@ class NewSearchModule {
         try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
     }
 
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     renderDropdown() {
         if (!this.dropdown) return;
         this.dropdown.innerHTML = this.engines.map(eng =>
             `<div class="engine-dropdown-item${eng.key === this.currentEngine ? ' active' : ''}" data-key="${eng.key}">
-                <i class="${eng.icon}"></i> ${eng.label}
+                <i class="${eng.icon}"></i> ${this.escapeHtml(eng.label)}
             </div>`
         ).join('');
     }
@@ -74,7 +78,7 @@ class NewSearchModule {
         }
         this.historyList.innerHTML = this.history.map(q =>
             `<div class="history-item">
-                <span class="history-text">${q}</span>
+                <span class="history-text">${this.escapeHtml(q)}</span>
                 <i class="fas fa-times delete-history"></i>
             </div>`
         ).join('');
@@ -131,7 +135,6 @@ class NewSearchModule {
 
     show() {
         if (!this.modal || this.isOpen) return;
-        // 关闭可能冲突的 modal
         if (window.sidebar?.isVisible()) window.sidebar.hide();
         this.modal.classList.add('active');
         this.isOpen = true;
@@ -174,7 +177,10 @@ class NewSearchModule {
     async fetchSuggestions(type, query) {
         const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
         try {
-            const resp = await fetch(`${apiBase}/search/${type}?q=${encodeURIComponent(query)}`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const resp = await fetch(`${apiBase}/search/${type}?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
             if (!resp.ok) return [];
             const data = await resp.json();
             return data.code === 200 && Array.isArray(data.data) ? data.data : [];
@@ -221,16 +227,9 @@ class NewSearchModule {
             this.suggestionsContainer.classList.remove('active');
         }
     }
-
-    escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
 }
 
-// 直接创建实例（若 DOM 已就绪）
+// 直接创建实例
 if (document.readyState !== 'loading') {
     new NewSearchModule();
 } else {
