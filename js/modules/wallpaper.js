@@ -1,5 +1,5 @@
 /**
- * 轮播图模块 - 使用稳定的第三方代理（bing.biturl.top）
+ * 轮播图模块 - 无缝循环 + 标题与圆点同行 + 去前缀 + 图片加载失败降级
  */
 class CarouselModule {
     constructor() {
@@ -15,6 +15,7 @@ class CarouselModule {
         this.init();
     }
 
+    // 预留动态分辨率方法，当前返回 1920 以保证稳定
     getResolutionForWidth() {
         return 1920;
     }
@@ -33,8 +34,13 @@ class CarouselModule {
                     if (data.url) {
                         let title = data.copyright ? data.copyright : '';
                         title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
-                        if (!title) title = i === 0 ? '今日壁纸' : `${i}天前壁纸`;
-                        bingImages.push({ url: data.url, title: title });
+                        if (!title) {
+                            title = i === 0 ? '今日壁纸' : `${i}天前壁纸`;
+                        }
+                        bingImages.push({
+                            url: data.url,
+                            title: title
+                        });
                     }
                 }
             } catch (e) {
@@ -47,6 +53,7 @@ class CarouselModule {
         }
 
         this.slides = bingImages;
+
         if (this.slides.length > 1) {
             this.clonedSlides = [
                 { ...this.slides[this.slides.length - 1], clone: 'last' },
@@ -78,17 +85,24 @@ class CarouselModule {
         this.clonedSlides.forEach((slide, index) => {
             const div = document.createElement('div');
             div.className = 'carousel-slide';
+            // 设置默认背景色（渐变），防止图片加载失败时空白
             div.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             div.style.backgroundSize = 'cover';
             div.style.backgroundPosition = 'center';
             if (slide.url) {
+                // 创建图片对象预加载，加载成功后再设置背景图
                 const img = new Image();
                 img.onload = () => {
                     div.style.backgroundImage = `url('${slide.url}')`;
                     div.style.background = `url('${slide.url}') center/cover no-repeat`;
                 };
-                img.onerror = () => console.warn(`图片加载失败: ${slide.url}`);
+                img.onerror = () => {
+                    console.warn(`图片加载失败，使用渐变背景: ${slide.url}`);
+                    // 保留默认渐变背景，不做额外处理
+                };
                 img.src = slide.url;
+            } else {
+                // 无图片时已设置渐变背景
             }
             div.setAttribute('data-index', index);
             this.track.appendChild(div);
@@ -116,6 +130,7 @@ class CarouselModule {
         if (clonedIndex < 0 || clonedIndex >= total) return;
 
         this.isTransitioning = true;
+
         let realIndex = clonedIndex;
         if (clonedIndex === 0) realIndex = this.slides.length - 1;
         else if (clonedIndex === total - 1) realIndex = 0;
