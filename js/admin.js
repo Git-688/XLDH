@@ -32,7 +32,13 @@
         try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; }
     }
 
-    // 存储 sessionToken（不是明文ADMIN_TOKEN）
+    // 文本域自动调整高度
+    function autoResizeTextarea(textarea) {
+        if (!textarea) return;
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
     function getStoredToken() {
         let tk = sessionStorage.getItem('admin_token');
         if (tk) {
@@ -243,7 +249,6 @@
         finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
     }
 
-    // ========== 修复登录逻辑 ==========
     async function login() {
         if (!checkLock()) return;
         const rawToken = document.getElementById('tokenInput').value.trim();
@@ -252,7 +257,6 @@
         btn.disabled = true;
         btn.textContent = '登录中…';
         try {
-            // 1. 调用登录接口，使用明文 ADMIN_TOKEN 换取 sessionToken
             const loginRes = await fetch(`${API_BASE}/admin/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -264,14 +268,11 @@
             }
             const loginData = await loginRes.json();
             const sessionToken = loginData.sessionToken;
-            // 2. 保存 sessionToken
             token = sessionToken;
             resetLoginFailure();
             const remember = document.getElementById('rememberToken').checked;
             saveToken(sessionToken, remember);
-            // 3. 验证 session（可选，但用于确认）
             await apiFetch('/admin/categories');
-            // 显示管理界面
             document.getElementById('tokenInput').style.display = 'none';
             document.getElementById('loginBtn').classList.add('hidden');
             document.getElementById('logoutBtn').classList.remove('hidden');
@@ -373,7 +374,7 @@
         `).join('');
     }
 
-    // 投稿详情模态框（省略，与之前相同）
+    // 投稿详情模态框（拒绝无原因 + 描述框自适应）
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -391,22 +392,32 @@
                 ? `<img src="${escapeHtml(item.icon)}" style="width:20px;height:20px;vertical-align:middle;border-radius:4px;">`
                 : `<i class="${escapeHtml(item.icon || 'fas fa-link')}"></i>`;
             const isPending = (item.status === 'pending');
-            const titleHtml = isPending ? `<input type="text" id="editTitle" value="${escapeHtml(item.title)}" style="width:100%;" />` : escapeHtml(item.title);
-            const descHtml = isPending ? `<textarea id="editDesc" rows="2" style="width:100%;">${escapeHtml(item.description || '')}</textarea>` : escapeHtml(item.description || '无');
-            const iconHtml = isPending ? `<input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" style="width:100%;" />` : (item.icon ? escapeHtml(item.icon) : '无');
+            const titleHtml = isPending
+                ? `<input type="text" id="editTitle" value="${escapeHtml(item.title)}" style="width:100%;" />`
+                : escapeHtml(item.title);
+            // 描述区域：如果是待审核，使用 textarea 并自适应高度；否则直接显示完整文本（不截断）
+            const descHtml = isPending
+                ? `<textarea id="editDesc" rows="2" style="width:100%; resize: vertical;">${escapeHtml(item.description || '')}</textarea>`
+                : `<div style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(item.description || '无')}</div>`;
+            const iconHtml = isPending
+                ? `<input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" style="width:100%;" />`
+                : (item.icon ? escapeHtml(item.icon) : '无');
+            
             let html = `
                 <div class="info-card">
                     <div class="info-row"><div class="info-label">标题</div><div class="info-value">${titleHtml}</div></div>
                     <div class="info-row"><div class="info-label">网址</div><div class="info-value"><a href="${escapeHtml(item.url)}" target="_blank">${escapeHtml(item.url)}</a></div></div>
                     <div class="info-row"><div class="info-label">图标</div><div class="info-value">${iconHtml} ${!isPending && item.icon ? `<div style="margin-top:4px;">${iconPreview}</div>` : ''}</div></div>
-                    <div class="info-row"><div class="info-label">描述</div><div class="info-value">${descHtml}</div></div>
+                    <div class="info-row"><div class="info-label">描述</div><div class="info-value" style="max-width:100%;">${descHtml}</div></div>
                     <div class="info-row"><div class="info-label">提交者</div><div class="info-value">${escapeHtml(item.submitter_ip)}</div></div>
                     <div class="info-row"><div class="info-label">提交时间</div><div class="info-value">${new Date(item.submit_time).toLocaleString()}</div></div>
                     <div class="info-row"><div class="info-label">安全检测</div><div class="info-value"><span style="color:${vtColor}">${escapeHtml(item.vt_result || '未检测')}</span></div></div>
                     <div class="info-row"><div class="info-label">状态</div><div class="info-value"><span class="status-badge ${statusClass}">${statusText}</span></div></div>
                 </div>
             `;
-            if (isPending) html += `<div class="action-card" style="margin-top:8px;"><button class="primary" id="saveEditBtn">💾 保存修改</button></div>`;
+            if (isPending) {
+                html += `<div class="action-card" style="margin-top:8px;"><button class="primary" id="saveEditBtn">💾 保存修改</button></div>`;
+            }
             html += `
                 <div class="action-section">
                     <div class="action-card"><h4><i class="fas fa-check-circle"></i> 通过收录</h4>
@@ -418,19 +429,30 @@
                         <button class="btn-approve" id="doApproveBtn">✓ 通过并收录</button>
                     </div>
                     <div class="action-card"><h4><i class="fas fa-ban"></i> 拒绝投稿</h4>
-                        <button class="btn-reject" id="doRejectBtn">✗ 拒绝</button>
+                        <button class="btn-reject" id="doRejectBtn">✗ 拒绝（不收录）</button>
                     </div>
                 </div>
             `;
             contentDiv.innerHTML = html;
+            
+            // 描述框自适应高度（仅待审核且为 textarea）
             if (isPending) {
-                document.getElementById('saveEditBtn')?.addEventListener('click', async () => {
-                    const newTitle = document.getElementById('editTitle').value.trim();
-                    if (!newTitle) { showToast('标题不能为空', 'error'); return; }
-                    await editSubmission(item.id, newTitle, document.getElementById('editDesc').value.trim(), document.getElementById('editIcon').value.trim());
-                    openSubmissionDetail(id);
-                });
+                const descTextarea = document.getElementById('editDesc');
+                if (descTextarea) {
+                    autoResizeTextarea(descTextarea);
+                    descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
+                }
+                const saveBtn = document.getElementById('saveEditBtn');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', async () => {
+                        const newTitle = document.getElementById('editTitle').value.trim();
+                        if (!newTitle) { showToast('标题不能为空', 'error'); return; }
+                        await editSubmission(item.id, newTitle, document.getElementById('editDesc').value.trim(), document.getElementById('editIcon').value.trim());
+                        openSubmissionDetail(id);
+                    });
+                }
             }
+            
             const catSelect = document.getElementById('approveCatSelect');
             const subSelect = document.getElementById('approveSubSelect');
             catSelect.addEventListener('change', async (e) => {
@@ -456,8 +478,9 @@
                     await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 } catch (err) { showToast('操作失败', 'error'); }
             };
+            // 拒绝按钮：直接拒绝，无需原因
             document.getElementById('doRejectBtn').onclick = async () => {
-                if (!confirm('确定要拒绝该投稿吗？')) return;
+                if (!confirm('确定要拒绝该投稿吗？拒绝后用户可修改后再次提交。')) return;
                 try {
                     await apiFetch(`/admin/submissions/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason: '' }) });
                     showToast('已拒绝', 'success');
@@ -478,10 +501,41 @@
         } catch (err) { showToast('更新失败', 'error'); return false; }
     }
 
-    document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => { document.getElementById('submissionDetailModal').classList.remove('show'); });
-    document.getElementById('submissionDetailModal')?.addEventListener('click', (e) => { if (e.target === document.getElementById('submissionDetailModal')) e.target.classList.remove('show'); });
+    // 编辑网站链接模态框中描述框自适应
+    async function handleEditSite(id) {
+        const site = sites.find(s => s.id === id);
+        if (!site) return;
+        openModal('编辑链接',
+            `<div class="form-row"><label>标题</label><input id="mTitle" value="${escapeHtml(site.title)}"></div>
+             <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" value="${escapeHtml(site.url)}"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
+             <div class="form-row"><label>图标</label><input id="mIcon" value="${escapeHtml(site.icon||'fas fa-link')}"></div>
+             <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" style="width:100%;">${escapeHtml(site.description||'')}</textarea></div>
+             <div class="form-row"><label>排序</label><input type="number" id="mSort" value="${site.display_order}"></div>`,
+            async () => {
+                const title = document.getElementById('mTitle').value.trim();
+                const url = document.getElementById('mUrl').value.trim();
+                if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
+                if (!checkUrl(url)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
+                await apiFetch(`/admin/sites/${id}`, { method:'PUT', body: JSON.stringify({
+                    title, url, description: document.getElementById('mDesc').value,
+                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
+                })});
+                addLog(`编辑链接：${site.title}`); showToast('修改成功'); await loadAllData();
+            }, true,
+            async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); addLog(`删除链接 ${id}`); showToast('删除成功'); await loadAllData(); }
+        );
+        setTimeout(() => {
+            const descTextarea = document.getElementById('mDesc');
+            if (descTextarea) {
+                autoResizeTextarea(descTextarea);
+                descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
+            }
+            const fetchBtn = document.getElementById('fetchInfoBtn');
+            if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
+        }, 50);
+    }
 
-    // 管理操作
+    // 其余管理函数（分类、子分类、添加等）保持不变，仅增加描述框自动调整
     function handleModifyCategory(id, currentName) {
         openModal('修改分类', `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
             async () => {
@@ -504,34 +558,6 @@
             }, true,
             async () => { await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); addLog(`删除子分类 ${id}`); showToast('子分类已删除'); await loadAllData(); }
         );
-    }
-
-    async function handleEditSite(id) {
-        const site = sites.find(s => s.id === id);
-        if (!site) return;
-        openModal('编辑链接',
-            `<div class="form-row"><label>标题</label><input id="mTitle" value="${escapeHtml(site.title)}"></div>
-             <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" value="${escapeHtml(site.url)}"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
-             <div class="form-row"><label>图标</label><input id="mIcon" value="${escapeHtml(site.icon||'fas fa-link')}"></div>
-             <div class="form-row"><label>描述</label><input id="mDesc" value="${escapeHtml(site.description||'')}"></div>
-             <div class="form-row"><label>排序</label><input type="number" id="mSort" value="${site.display_order}"></div>`,
-            async () => {
-                const title = document.getElementById('mTitle').value.trim();
-                const url = document.getElementById('mUrl').value.trim();
-                if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
-                if (!checkUrl(url)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
-                await apiFetch(`/admin/sites/${id}`, { method:'PUT', body: JSON.stringify({
-                    title, url, description: document.getElementById('mDesc').value,
-                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
-                })});
-                addLog(`编辑链接：${site.title}`); showToast('修改成功'); await loadAllData();
-            }, true,
-            async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); addLog(`删除链接 ${id}`); showToast('删除成功'); await loadAllData(); }
-        );
-        setTimeout(() => {
-            const fetchBtn = document.getElementById('fetchInfoBtn');
-            if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
-        }, 50);
     }
 
     function handleAddCategory() {
@@ -567,7 +593,7 @@
             `<div class="form-row"><label>标题</label><input id="mTitle"></div>
              <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
              <div class="form-row"><label>图标</label><input id="mIcon" value="fas fa-link"></div>
-             <div class="form-row"><label>描述</label><input id="mDesc"></div>
+             <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" style="width:100%;"></textarea></div>
              <div class="form-row"><label>排序</label><input type="number" id="mSort" value="0"></div>`,
             async () => {
                 const title = document.getElementById('mTitle').value.trim();
@@ -582,6 +608,11 @@
             }
         );
         setTimeout(() => {
+            const descTextarea = document.getElementById('mDesc');
+            if (descTextarea) {
+                autoResizeTextarea(descTextarea);
+                descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
+            }
             const fetchBtn = document.getElementById('fetchInfoBtn');
             if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
         }, 50);
@@ -656,7 +687,7 @@
         openModal('更换链接',
             `<div class="form-row"><label>标题</label><input id="mTitle" value="${escapeHtml(site.title)}"></div>
              <div class="form-row"><label>网址</label><input id="mUrl" value="${escapeHtml(site.url)}"></div>
-             <div class="form-row"><label>描述</label><input id="mDesc" value="${escapeHtml(site.description||'')}"></div>
+             <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" style="width:100%;">${escapeHtml(site.description||'')}</textarea></div>
              <div class="form-row"><label>图标</label><input id="mIcon" value="${escapeHtml(site.icon||'fas fa-link')}"></div>`,
             async () => {
                 const newTitle = document.getElementById('mTitle').value.trim();
@@ -674,6 +705,13 @@
                 closeModal();
             }
         );
+        setTimeout(() => {
+            const descTextarea = document.getElementById('mDesc');
+            if (descTextarea) {
+                autoResizeTextarea(descTextarea);
+                descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
+            }
+        }, 50);
     }
 
     function exportData() {
