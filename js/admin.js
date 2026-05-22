@@ -3,7 +3,7 @@
     const TOKEN_EXPIRE_HOURS = 1;
     const MAX_FAIL_COUNT = 5;
     const LOCK_DURATION_MS = 10 * 60 * 1000;
-    const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000; // 过期前5分钟自动刷新
+    const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
 
     let token = '';
     let categories = [], subcategories = [], sites = [];
@@ -12,7 +12,7 @@
     let lockUntil = parseInt(sessionStorage.getItem('login_lock_until') || '0', 10);
     let modalAction = null;
     let currentSubmissionId = null;
-    let refreshTimer = null;  // session 续期间隔
+    let refreshTimer = null;
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -32,6 +32,7 @@
         try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; }
     }
 
+    // 存储 sessionToken（不是明文ADMIN_TOKEN）
     function getStoredToken() {
         let tk = sessionStorage.getItem('admin_token');
         if (tk) {
@@ -67,7 +68,6 @@
             localStorage.removeItem('admin_token_saved');
             localStorage.removeItem('admin_saved_time');
         }
-        // 启动 session 自动续期
         startSessionRefresh();
     }
 
@@ -93,7 +93,7 @@
             if (res.ok) {
                 const data = await res.json();
                 token = data.sessionToken;
-                saveToken(token, false); // 不改变 remember 状态，但更新 session 存储
+                saveToken(token, false);
                 showToast('会话已续期', 'success');
                 return true;
             } else if (res.status === 401) {
@@ -243,19 +243,35 @@
         finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
     }
 
+    // ========== 修复登录逻辑 ==========
     async function login() {
         if (!checkLock()) return;
-        const val = document.getElementById('tokenInput').value.trim();
-        if (!val) { showToast('请输入Token', 'error'); return; }
+        const rawToken = document.getElementById('tokenInput').value.trim();
+        if (!rawToken) { showToast('请输入Token', 'error'); return; }
         const btn = document.getElementById('loginBtn');
         btn.disabled = true;
         btn.textContent = '登录中…';
-        token = val;
         try {
-            await apiFetch('/admin/categories');
+            // 1. 调用登录接口，使用明文 ADMIN_TOKEN 换取 sessionToken
+            const loginRes = await fetch(`${API_BASE}/admin/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: rawToken })
+            });
+            if (!loginRes.ok) {
+                const errData = await loginRes.json().catch(() => ({}));
+                throw new Error(errData.error || '登录失败');
+            }
+            const loginData = await loginRes.json();
+            const sessionToken = loginData.sessionToken;
+            // 2. 保存 sessionToken
+            token = sessionToken;
             resetLoginFailure();
             const remember = document.getElementById('rememberToken').checked;
-            saveToken(val, remember);
+            saveToken(sessionToken, remember);
+            // 3. 验证 session（可选，但用于确认）
+            await apiFetch('/admin/categories');
+            // 显示管理界面
             document.getElementById('tokenInput').style.display = 'none';
             document.getElementById('loginBtn').classList.add('hidden');
             document.getElementById('logoutBtn').classList.remove('hidden');
@@ -267,7 +283,7 @@
         } catch (e) {
             token = '';
             recordLoginFailure();
-            showToast(e.message === 'Unauthorized' ? 'Token无效' : '登录失败', 'error');
+            showToast(e.message === 'Unauthorized' ? 'Token无效' : e.message || '登录失败', 'error');
         } finally { btn.disabled = false; btn.textContent = '登录'; }
     }
 
@@ -357,7 +373,7 @@
         `).join('');
     }
 
-    // 投稿详情模态框（略，与原逻辑相同，但所有动态 HTML 已使用 escapeHtml）
+    // 投稿详情模态框（省略，与之前相同）
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -375,15 +391,9 @@
                 ? `<img src="${escapeHtml(item.icon)}" style="width:20px;height:20px;vertical-align:middle;border-radius:4px;">`
                 : `<i class="${escapeHtml(item.icon || 'fas fa-link')}"></i>`;
             const isPending = (item.status === 'pending');
-            const titleHtml = isPending
-                ? `<input type="text" id="editTitle" value="${escapeHtml(item.title)}" style="width:100%;" />`
-                : escapeHtml(item.title);
-            const descHtml = isPending
-                ? `<textarea id="editDesc" rows="2" style="width:100%;">${escapeHtml(item.description || '')}</textarea>`
-                : escapeHtml(item.description || '无');
-            const iconHtml = isPending
-                ? `<input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" style="width:100%;" />`
-                : (item.icon ? escapeHtml(item.icon) : '无');
+            const titleHtml = isPending ? `<input type="text" id="editTitle" value="${escapeHtml(item.title)}" style="width:100%;" />` : escapeHtml(item.title);
+            const descHtml = isPending ? `<textarea id="editDesc" rows="2" style="width:100%;">${escapeHtml(item.description || '')}</textarea>` : escapeHtml(item.description || '无');
+            const iconHtml = isPending ? `<input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" style="width:100%;" />` : (item.icon ? escapeHtml(item.icon) : '无');
             let html = `
                 <div class="info-card">
                     <div class="info-row"><div class="info-label">标题</div><div class="info-value">${titleHtml}</div></div>
@@ -396,13 +406,10 @@
                     <div class="info-row"><div class="info-label">状态</div><div class="info-value"><span class="status-badge ${statusClass}">${statusText}</span></div></div>
                 </div>
             `;
-            if (isPending) {
-                html += `<div class="action-card" style="margin-top:8px;"><button class="primary" id="saveEditBtn">💾 保存修改</button></div>`;
-            }
+            if (isPending) html += `<div class="action-card" style="margin-top:8px;"><button class="primary" id="saveEditBtn">💾 保存修改</button></div>`;
             html += `
                 <div class="action-section">
-                    <div class="action-card">
-                        <h4><i class="fas fa-check-circle"></i> 通过收录</h4>
+                    <div class="action-card"><h4><i class="fas fa-check-circle"></i> 通过收录</h4>
                         <div class="inline-select-group">
                             <select id="approveCatSelect"><option value="">选择一级分类</option>${categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')}</select>
                             <select id="approveSubSelect" disabled><option value="">先选择一级分类</option></select>
@@ -410,8 +417,7 @@
                         </div>
                         <button class="btn-approve" id="doApproveBtn">✓ 通过并收录</button>
                     </div>
-                    <div class="action-card">
-                        <h4><i class="fas fa-ban"></i> 拒绝投稿</h4>
+                    <div class="action-card"><h4><i class="fas fa-ban"></i> 拒绝投稿</h4>
                         <button class="btn-reject" id="doRejectBtn">✗ 拒绝</button>
                     </div>
                 </div>
@@ -475,7 +481,7 @@
     document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => { document.getElementById('submissionDetailModal').classList.remove('show'); });
     document.getElementById('submissionDetailModal')?.addEventListener('click', (e) => { if (e.target === document.getElementById('submissionDetailModal')) e.target.classList.remove('show'); });
 
-    // 管理操作（略，与原逻辑相同，均已使用 escapeHtml）
+    // 管理操作
     function handleModifyCategory(id, currentName) {
         openModal('修改分类', `<div class="form-row"><label>名称</label><input id="mName" value="${escapeHtml(currentName)}"></div>`,
             async () => {
