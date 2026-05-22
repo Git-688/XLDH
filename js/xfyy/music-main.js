@@ -31,11 +31,10 @@ function tryInitMusicPlayer(retry = 0) {
                         if (musicPlayer.audio && musicPlayer.audio.src && musicPlayer.isPlaying) {
                             musicPlayer.play().catch(e => console.warn('自动播放失败:', e));
                         }
-                        // 移除事件监听
-                        document.removeEventListener('click', resumePlayback);
-                        document.removeEventListener('touchstart', resumePlayback);
-                        document.removeEventListener('keydown', resumePlayback);
                     }
+                    document.removeEventListener('click', resumePlayback);
+                    document.removeEventListener('touchstart', resumePlayback);
+                    document.removeEventListener('keydown', resumePlayback);
                 };
                 document.addEventListener('click', resumePlayback);
                 document.addEventListener('touchstart', resumePlayback);
