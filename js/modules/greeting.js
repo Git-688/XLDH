@@ -1,4 +1,4 @@
-// 问候区模块 - 优化效果和显示（自制木鱼音效）
+// 问候区模块 - 优化效果和显示（自制木鱼音效，复用 AudioContext）
 class GreetingModule {
     constructor() {
         this.initialized = false;
@@ -6,7 +6,7 @@ class GreetingModule {
         this.holidayRefreshTimer = null;
         this.holidayCheckTimer = null;
         this.currentHoliday = null;
-        // 音频上下文（懒初始化）
+        // 音频上下文复用
         this.audioCtx = null;
         this.init();
     }
@@ -25,34 +25,59 @@ class GreetingModule {
         this.initialized = true;
     }
 
-    // ===== 自制木鱼音效（Web Audio API） =====
-    createWoodenFishSound() {
-        try {
-            if (!this.audioCtx) {
+    // ===== 复用 Web Audio 上下文，避免重复创建 =====
+    ensureAudioContext() {
+        if (!this.audioCtx) {
+            try {
                 this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                // 初始挂起，等待用户首次交互后恢复
+                if (this.audioCtx.state === 'running') {
+                    // 无需额外操作
+                } else {
+                    this.audioCtx.suspend();
+                    // 绑定用户首次点击恢复上下文（可选）
+                    const resumeCtx = () => {
+                        if (this.audioCtx && this.audioCtx.state === 'suspended') {
+                            this.audioCtx.resume();
+                        }
+                        document.removeEventListener('click', resumeCtx);
+                        document.removeEventListener('touchstart', resumeCtx);
+                    };
+                    document.addEventListener('click', resumeCtx);
+                    document.addEventListener('touchstart', resumeCtx);
+                }
+            } catch (e) {
+                // 降级：不支持 Web Audio
             }
-            const ctx = this.audioCtx;
+        }
+        return this.audioCtx;
+    }
+
+    // 改进的木鱼音效：复用已有上下文，每次点击创建新振荡器但复用上下文
+    playWoodenFishSound() {
+        const ctx = this.ensureAudioContext();
+        if (!ctx) return;
+        
+        try {
             const now = ctx.currentTime;
-            
-            // 创建两个振荡器模拟木鱼敲击的“笃”声
-            const osc1 = ctx.createOscillator();
-            const osc2 = ctx.createOscillator();
             const gainNode = ctx.createGain();
-            
-            osc1.type = 'sine';
-            osc1.frequency.setValueAtTime(800, now);
-            osc1.frequency.exponentialRampToValueAtTime(400, now + 0.02);
-            
-            osc2.type = 'triangle';
-            osc2.frequency.setValueAtTime(1200, now);
-            osc2.frequency.exponentialRampToValueAtTime(600, now + 0.03);
-            
+            gainNode.connect(ctx.destination);
             gainNode.gain.setValueAtTime(0.3, now);
             gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
             
+            // 主振荡器（较高频率）
+            const osc1 = ctx.createOscillator();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(800, now);
+            osc1.frequency.exponentialRampToValueAtTime(400, now + 0.02);
             osc1.connect(gainNode);
+            
+            // 次振荡器（较低频率，增加厚度）
+            const osc2 = ctx.createOscillator();
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(1200, now);
+            osc2.frequency.exponentialRampToValueAtTime(600, now + 0.03);
             osc2.connect(gainNode);
-            gainNode.connect(ctx.destination);
             
             osc1.start(now);
             osc2.start(now);
@@ -463,7 +488,7 @@ class GreetingModule {
                     const btn = document.querySelector(`.fish-btn[data-type="${type}"]`);
                     if (btn) {
                         this.showFishEffect(btn);
-                        this.createWoodenFishSound();
+                        this.playWoodenFishSound();
                     }
                 }
             }
@@ -478,7 +503,7 @@ class GreetingModule {
         
         const type = e.currentTarget.dataset.type;
         
-        this.createWoodenFishSound();
+        this.playWoodenFishSound();
         
         this.incrementFishCount(type, 1);
         this.showFishEffect(e.currentTarget);
@@ -732,7 +757,10 @@ class GreetingModule {
         if (this.holidayCheckTimer) {
             clearInterval(this.holidayCheckTimer);
         }
-        
+        if (this.audioCtx) {
+            this.audioCtx.close().catch(() => {});
+            this.audioCtx = null;
+        }
         this.initialized = false;
         this.eventBound = false;
     }
