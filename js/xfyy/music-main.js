@@ -1,8 +1,10 @@
 /**
  * 音乐播放器主入口文件 - 适配星聚导航
- * 已支持按需动态加载（不依赖 DOMContentLoaded 二次触发）
+ * 修复移动端自动播放策略：等待用户首次交互后才允许播放
  */
 let musicPlayer = null;
+let pendingPlay = false;      // 标记是否有待播放的歌曲
+let interactionHandler = null;
 
 function tryInitMusicPlayer(retry = 0) {
     if (typeof MusicPlayer === 'undefined') {
@@ -21,6 +23,24 @@ function tryInitMusicPlayer(retry = 0) {
 
         if (typeof Utils !== 'undefined' && typeof Utils.isMobile === 'function' && Utils.isMobile()) {
             document.body.classList.add('mobile-device');
+            // 移动端：监听首次用户交互，解除 AudioContext 挂起并尝试播放待播歌曲
+            if (musicPlayer && musicPlayer.waitingForUserGesture) {
+                const resumePlayback = () => {
+                    if (musicPlayer && musicPlayer.waitingForUserGesture) {
+                        musicPlayer.waitingForUserGesture = false;
+                        if (musicPlayer.audio && musicPlayer.audio.src && musicPlayer.isPlaying) {
+                            musicPlayer.play().catch(e => console.warn('自动播放失败:', e));
+                        }
+                        // 移除事件监听
+                        document.removeEventListener('click', resumePlayback);
+                        document.removeEventListener('touchstart', resumePlayback);
+                        document.removeEventListener('keydown', resumePlayback);
+                    }
+                };
+                document.addEventListener('click', resumePlayback);
+                document.addEventListener('touchstart', resumePlayback);
+                document.addEventListener('keydown', resumePlayback);
+            }
         }
 
         setTimeout(() => {
@@ -32,7 +52,6 @@ function tryInitMusicPlayer(retry = 0) {
     }
 }
 
-// 清理冗余的 initMusicPlayerControl 函数，直接内联隐藏操作
 function initWhenReady() {
     const playerEl = document.getElementById('musicPlayer');
     if (playerEl) {
@@ -41,26 +60,23 @@ function initWhenReady() {
     tryInitMusicPlayer();
 }
 
-// 根据文档状态决定初始化时机
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initWhenReady);
 } else {
     initWhenReady();
 }
 
-// ========== 静默所有无关紧要的错误 ==========
+// 全局错误处理（静默无关紧要的错误）
 function setupGlobalErrorHandling() {
     const shouldIgnore = (message) => {
         const m = String(message || '');
         return m === 'Script error.' || m === 'null' || m === 'undefined' || m.trim() === '';
     };
-
     window.addEventListener('error', (event) => {
         const msg = event.message || (event.error && event.error.message) || '';
         if (shouldIgnore(msg)) return;
         console.error('全局错误:', event.error);
     });
-
     window.addEventListener('unhandledrejection', (event) => {
         const reason = event.reason;
         const msg = reason?.message || String(reason);
@@ -68,17 +84,12 @@ function setupGlobalErrorHandling() {
         console.error('未处理的Promise拒绝:', reason);
     });
 }
-setupGlobalErrorHandling();   // 尽早接管错误处理
+setupGlobalErrorHandling();
 
-// 对外暴露的控制方法
 window.toggleMusicPlayer = () => window.app?.components?.navbar?.toggleMusicPlayer();
 window.showMusicPlayer = () => window.app?.components?.navbar?.showMusicPlayer();
 window.hideMusicPlayer = () => window.app?.components?.navbar?.hideMusicPlayer();
-
-window.cleanupMusicPlayer = () => {
-    musicPlayer?.cleanup?.();
-};
-
+window.cleanupMusicPlayer = () => musicPlayer?.cleanup?.();
 window.addEventListener('beforeunload', () => window.cleanupMusicPlayer());
 
 // 键盘快捷键
