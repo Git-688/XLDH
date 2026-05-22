@@ -1,5 +1,5 @@
 /**
- * 轮播图模块 - 无缝循环 + 预加载优化
+ * 轮播图模块 - 使用必应官方 API，增加预加载和降级
  */
 class CarouselModule {
     constructor() {
@@ -12,36 +12,52 @@ class CarouselModule {
         this.infoTitle = null;
         this.isTransitioning = false;
         this.autoPlayInterval = 5000;
-        this.preloadCache = new Set(); // 预加载缓存
+        this.preloadCache = new Set();
         this.init();
     }
 
-    getResolutionForWidth() {
-        return 1920;
+    // 获取必应壁纸（官方接口）
+    async fetchBingWallpaper(index = 0) {
+        const url = `https://cn.bing.com/HPImageArchive.aspx?format=js&idx=${index}&n=1&mkt=zh-CN`;
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (!data.images || !data.images.length) throw new Error('No images');
+            const img = data.images[0];
+            const imageUrl = 'https://cn.bing.com' + img.url;
+            let title = img.copyright || '';
+            title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
+            if (!title) title = index === 0 ? '今日壁纸' : `${index}天前壁纸`;
+            return { url: imageUrl, title: title };
+        } catch (error) {
+            console.warn(`获取第${index}天壁纸失败:`, error);
+            return null;
+        }
     }
 
     async init() {
         const days = 7;
         const bingImages = [];
-        const resolution = this.getResolutionForWidth();
-
+        // 并行获取最近7天壁纸
+        const promises = [];
         for (let i = 0; i < days; i++) {
-            try {
-                const url = `https://bing.biturl.top/?resolution=${resolution}&format=json&index=${i}`;
-                const response = await fetch(url);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.url) {
-                        let title = data.copyright ? data.copyright : '';
-                        title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
-                        if (!title) title = i === 0 ? '今日壁纸' : `${i}天前壁纸`;
-                        bingImages.push({ url: data.url, title: title });
-                    }
-                }
-            } catch (e) { console.warn(`获取第${i}天壁纸失败`); }
+            promises.push(this.fetchBingWallpaper(i));
+        }
+        const results = await Promise.all(promises);
+        for (const img of results) {
+            if (img && img.url) {
+                bingImages.push(img);
+            }
         }
 
-        if (bingImages.length === 0) bingImages.push({ url: '', title: '星聚导航' });
+        if (bingImages.length === 0) {
+            // 完全失败时使用默认本地图片或渐变
+            bingImages.push({ url: '', title: '星聚导航' });
+        }
 
         this.slides = bingImages;
         if (this.slides.length > 1) {
@@ -64,14 +80,13 @@ class CarouselModule {
 
         this.renderSlides();
         this.renderDots();
-        this.preloadAdjacentImages(1); // 预加载相邻图片
+        this.preloadAdjacentImages(1);
         this.goToSlide(1, false);
         this.bindEvents();
         this.startAutoplay();
     }
 
     preloadAdjacentImages(currentCloneIndex) {
-        // 预加载前一张和后一张的原始图片（非克隆）
         const total = this.clonedSlides.length;
         const prevClone = (currentCloneIndex - 1 + total) % total;
         const nextClone = (currentCloneIndex + 1) % total;
@@ -81,6 +96,7 @@ class CarouselModule {
             if (slide.url && !this.preloadCache.has(slide.url)) {
                 const img = new Image();
                 img.onload = () => this.preloadCache.add(slide.url);
+                img.onerror = () => console.warn('预加载失败:', slide.url);
                 img.src = slide.url;
             }
         });
@@ -92,6 +108,7 @@ class CarouselModule {
         this.clonedSlides.forEach((slide, index) => {
             const div = document.createElement('div');
             div.className = 'carousel-slide';
+            // 默认渐变背景
             div.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             div.style.backgroundSize = 'cover';
             div.style.backgroundPosition = 'center';
@@ -101,7 +118,10 @@ class CarouselModule {
                     div.style.backgroundImage = `url('${slide.url}')`;
                     div.style.background = `url('${slide.url}') center/cover no-repeat`;
                 };
-                img.onerror = () => console.warn(`图片加载失败: ${slide.url}`);
+                img.onerror = () => {
+                    console.warn(`图片加载失败: ${slide.url}`);
+                    // 保留渐变背景
+                };
                 img.src = slide.url;
             }
             div.setAttribute('data-index', index);
@@ -147,7 +167,7 @@ class CarouselModule {
         }
 
         this.currentIndex = clonedIndex;
-        this.preloadAdjacentImages(clonedIndex); // 切换时预加载相邻图片
+        this.preloadAdjacentImages(clonedIndex);
 
         setTimeout(() => {
             this.isTransitioning = false;
@@ -181,7 +201,10 @@ class CarouselModule {
     }
 
     stopAutoplay() {
-        if (this.autoplayTimer) { clearInterval(this.autoplayTimer); this.autoplayTimer = null; }
+        if (this.autoplayTimer) {
+            clearInterval(this.autoplayTimer);
+            this.autoplayTimer = null;
+        }
     }
 
     resetAutoplay() {
@@ -190,8 +213,18 @@ class CarouselModule {
     }
 
     bindEvents() {
-        if (this.arrowLeft) this.arrowLeft.addEventListener('click', () => { this.prev(); this.resetAutoplay(); });
-        if (this.arrowRight) this.arrowRight.addEventListener('click', () => { this.next(); this.resetAutoplay(); });
+        if (this.arrowLeft) {
+            this.arrowLeft.addEventListener('click', () => {
+                this.prev();
+                this.resetAutoplay();
+            });
+        }
+        if (this.arrowRight) {
+            this.arrowRight.addEventListener('click', () => {
+                this.next();
+                this.resetAutoplay();
+            });
+        }
         if (this.track) {
             let startX = 0, startY = 0;
             this.track.addEventListener('touchstart', (e) => {
@@ -226,5 +259,7 @@ class CarouselModule {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!window.carouselModule) window.carouselModule = new CarouselModule();
+    if (!window.carouselModule) {
+        window.carouselModule = new CarouselModule();
+    }
 });
