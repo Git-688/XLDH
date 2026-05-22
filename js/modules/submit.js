@@ -1,5 +1,5 @@
 /**
- * 网站投稿模块（精简版：仅投稿表单，显示累计投稿数）
+ * 网站投稿模块（仅投稿表单，显示累计投稿数，修复显示0的问题）
  */
 class SubmitModule {
     constructor() {
@@ -19,7 +19,6 @@ class SubmitModule {
         this.canSubmit = false;
         this.alreadySubmitted = false;
         this.editingRejectedId = null;
-        this.totalSubmissions = 0;
 
         this.init();
     }
@@ -27,7 +26,7 @@ class SubmitModule {
     init() {
         this.bindEvents();
         if (this.descInput) this.descInput.maxLength = 200;
-        // 监听模态框显示，获取累计投稿数
+        // 监听模态框打开，更新累计数并确保徽章存在
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) return;
         });
@@ -36,39 +35,44 @@ class SubmitModule {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class') {
                     if (this.modal.classList.contains('active')) {
-                        this.fetchSubmissionStats();
+                        this.ensureStatsBadge();   // 确保徽章存在
+                        this.fetchSubmissionStats(); // 刷新累计数
                     }
                 }
             });
         });
         observer.observe(this.modal, { attributes: true });
-
-        // 在标题右侧添加累计数显示元素
-        const header = this.modal.querySelector('.feedback-modal-header');
-        if (header) {
-            const h3 = header.querySelector('h3');
-            if (h3 && !header.querySelector('.submission-stats-badge')) {
-                const badge = document.createElement('span');
-                badge.className = 'submission-stats-badge';
-                badge.style.cssText = 'margin-left: 12px; font-size: 12px; background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 20px; font-weight: normal;';
-                badge.textContent = '已投稿 0 次';
-                h3.appendChild(badge);
-                this.statsBadge = badge;
-            }
-        }
     }
 
-    // 获取累计投稿数
+    // 确保标题右侧有累计数徽章（如果不存在则创建）
+    ensureStatsBadge() {
+        const header = this.modal.querySelector('.feedback-modal-header');
+        if (!header) return;
+        const h3 = header.querySelector('h3');
+        if (!h3) return;
+        let badge = header.querySelector('.submission-stats-badge');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'submission-stats-badge';
+            badge.style.cssText = 'margin-left: 12px; font-size: 12px; background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 20px; font-weight: normal;';
+            badge.textContent = '已投稿 0 次';
+            h3.appendChild(badge);
+        }
+        this.statsBadge = badge; // 更新引用
+    }
+
+    // 获取累计投稿数并更新徽章
     async fetchSubmissionStats() {
+        this.ensureStatsBadge(); // 确保徽章存在
         try {
             const res = await fetch(`${this.apiBase}/submission-stats`, {
                 headers: { 'X-Device-Id': this.getDeviceId() }
             });
             if (res.ok) {
                 const data = await res.json();
-                this.totalSubmissions = data.totalCount || 0;
+                const total = data.totalCount || 0;
                 if (this.statsBadge) {
-                    this.statsBadge.textContent = `已投稿 ${this.totalSubmissions} 次`;
+                    this.statsBadge.textContent = `已投稿 ${total} 次`;
                 }
             }
         } catch (err) {
