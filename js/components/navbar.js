@@ -6,6 +6,13 @@ class Navbar {
         window.navbar = this;
     }
 
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     init() {
         try {
             this.bindEvents();
@@ -18,7 +25,6 @@ class Navbar {
     }
 
     bindEvents() {
-        // ========== 搜索按钮 ==========
         const searchBtn = document.getElementById('searchBtn');
         if (searchBtn) {
             searchBtn.addEventListener('click', (e) => {
@@ -26,13 +32,10 @@ class Navbar {
                 e.stopPropagation();
                 if (window.newSearchModule && typeof window.newSearchModule.toggle === 'function') {
                     this.handleFeatureToggle('search', () => window.newSearchModule.toggle());
-                } else {
-                    console.warn('搜索模块未初始化');
                 }
             });
         }
 
-        // ========== 音乐按钮 ==========
         const musicBtn = document.getElementById('musicBtn');
         if (musicBtn) {
             musicBtn.addEventListener('click', (e) => {
@@ -42,7 +45,6 @@ class Navbar {
             });
         }
 
-        // ========== 公告按钮 ==========
         const annBtn = document.getElementById('announcementBtn');
         if (annBtn) {
             annBtn.addEventListener('click', (e) => {
@@ -52,7 +54,6 @@ class Navbar {
             });
         }
 
-        // ========== 汉堡菜单（侧边栏） ==========
         const menuBtn = document.getElementById('menuBtn');
         if (menuBtn) {
             menuBtn.addEventListener('click', (e) => {
@@ -62,7 +63,6 @@ class Navbar {
             });
         }
 
-        // ========== 天气按钮（不参与切换组，单独处理） ==========
         const weatherBtn = document.getElementById('weatherBtn');
         if (weatherBtn) {
             weatherBtn.addEventListener('click', (e) => {
@@ -73,7 +73,6 @@ class Navbar {
             });
         }
 
-        // ========== 投稿按钮：弹出投稿窗口 ==========
         const submitBtn = document.getElementById('floatingSubmitBtn');
         if (submitBtn) {
             submitBtn.addEventListener('click', (e) => {
@@ -84,7 +83,6 @@ class Navbar {
             });
         }
 
-        // 全局点击关闭音乐播放器
         document.addEventListener('click', (e) => {
             const mp = document.getElementById('musicPlayer');
             const mb = document.getElementById('musicBtn');
@@ -93,7 +91,6 @@ class Navbar {
             }
         });
 
-        // ESC 关闭所有
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') this.closeAllModalsExcept([]);
         });
@@ -104,7 +101,6 @@ class Navbar {
         if (btt) btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
-    // ---------- 统一处理四大功能的切换 ----------
     handleFeatureToggle(featureKey, toggleFn) {
         const isOpen = this.isFeatureOpen(featureKey);
         if (isOpen) {
@@ -117,45 +113,29 @@ class Navbar {
         }
     }
 
-    // ---------- 检测功能是否打开 ----------
     isFeatureOpen(key) {
         switch (key) {
-            case 'search':
-                return window.newSearchModule?.isOpen === true;
-            case 'music':
-                return document.getElementById('musicPlayer')?.classList.contains('show') === true;
-            case 'announcement':
-                return window.announcementModule?.isVisible === true;
-            case 'sidebar':
-                return window.sidebar?.isVisible?.() === true;
-            default:
-                return false;
+            case 'search': return window.newSearchModule?.isOpen === true;
+            case 'music': return document.getElementById('musicPlayer')?.classList.contains('show') === true;
+            case 'announcement': return window.announcementModule?.isVisible === true;
+            case 'sidebar': return window.sidebar?.isVisible?.() === true;
+            default: return false;
         }
     }
 
-    // ---------- 关闭除 keep 之外的所有模态框 ----------
     closeAllModalsExcept(keep = []) {
         try {
             if (!keep.includes('music')) this.hideMusicPlayer();
-            if (!keep.includes('search') && window.newSearchModule?.isOpen) {
-                window.newSearchModule.hide();
-            }
-            if (!keep.includes('sidebar') && window.sidebar?.isVisible?.()) {
-                window.sidebar.hide();
-            }
-            if (!keep.includes('announcement') && window.announcementModule?.isVisible) {
-                window.announcementModule.hide();
-            }
+            if (!keep.includes('search') && window.newSearchModule?.isOpen) window.newSearchModule.hide();
+            if (!keep.includes('sidebar') && window.sidebar?.isVisible?.()) window.sidebar.hide();
+            if (!keep.includes('announcement') && window.announcementModule?.isVisible) window.announcementModule.hide();
             if (!keep.includes('weather')) window.app?.modules?.weather?.hide?.();
             if (!keep.includes('about')) window.aboutModule?.hide?.();
             if (!keep.includes('notebook')) window.app?.hideNotebookModal?.();
             if (!keep.includes('submit')) document.getElementById('submitModal')?.classList.remove('active');
-        } catch (e) {
-            console.error('关闭模态框失败:', e);
-        }
+        } catch (e) { console.error('关闭模态框失败:', e); }
     }
 
-    // ---------- 音乐播放器独立控制 ----------
     toggleMusicPlayer() {
         const mp = document.getElementById('musicPlayer');
         const mb = document.getElementById('musicBtn');
