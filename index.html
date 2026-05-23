@@ -11,15 +11,13 @@
     <!-- 全局配置 - 放在所有脚本之前 -->
     <script>
         window.APP_CONFIG = {
-            // 后端 API 地址（Worker 部署地址）
             API_BASE: 'https://api.xjdh688.ccwu.cc',
-            // Waline 评论服务地址
             WALINE_SERVER: 'https://yy688.ccwu.cc'
         };
     </script>
 
-    <!-- CSP 加固版：移除 unsafe-eval，限制 connect-src 为必要域名（添加 bing.biturl.top） -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://api.pearapi.ai https://*.bing.com https://api.kuleu.com https://api.injahow.cn https://api.i-meto.com https://yunzhiapi.cn https://api.suol.cc https://bing.biturl.top; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
+    <!-- CSP 最终版：包含天气 API 和表情包 API -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://api.pearapi.ai https://*.bing.com https://api.kuleu.com https://api.injahow.cn https://api.i-meto.com https://yunzhiapi.cn https://api.suol.cc https://bing.biturl.top https://www.cunyuapi.top https://oiapi.net; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
 
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
