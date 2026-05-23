@@ -23,11 +23,9 @@ class CommentModule {
                 'https://unpkg.com/@waline/emojis@1.4.0/weibo',
                 'https://unpkg.com/@waline/emojis@1.4.0/alus',
             ],
-            // 增强表情搜索：超时 + 缓存
             search: {
                 _cache: new Map(),
-                _cacheTTL: 30 * 60 * 1000, // 30分钟
-
+                _cacheTTL: 30 * 60 * 1000,
                 default() {
                     return this._fetchWithCache('default', () => 
                         fetch('https://oiapi.net/api/EmoticonPack?limit=20', { signal: AbortSignal.timeout(5000) })
@@ -87,7 +85,6 @@ class CommentModule {
                     }
                     return fetcher().then(data => {
                         this._cache.set(key, { data, timestamp: now });
-                        // 限制缓存大小，避免内存溢出
                         if (this._cache.size > 100) {
                             const oldest = [...this._cache.keys()][0];
                             this._cache.delete(oldest);
@@ -113,7 +110,6 @@ class CommentModule {
         this.openBtn = null;
         this.searchTimer = null;
         this.searchObserver = null;
-
         this._initDOM();
         this._bindEvents();
         this._initWaline();
@@ -155,7 +151,6 @@ class CommentModule {
     _watchSearchPanel() {
         const container = document.querySelector(CommentModule.CONFIG.el);
         if (!container) return;
-
         this.searchObserver = new MutationObserver(mutations => {
             for (const mutation of mutations) {
                 for (const node of mutation.addedNodes) {
@@ -174,12 +169,10 @@ class CommentModule {
         const btn = panel.querySelector('button');
         if (!input || !btn || input.dataset.auto === 'true') return;
         input.dataset.auto = 'true';
-
         const trigger = () => {
             clearTimeout(this.searchTimer);
             if (input.value.trim()) btn.click();
         };
-
         input.addEventListener('input', () => {
             clearTimeout(this.searchTimer);
             this.searchTimer = setTimeout(trigger, 500);
