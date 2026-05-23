@@ -18,8 +18,17 @@
         };
     </script>
 
-    <!-- CSP 仅保留生产必需域名 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
+    <!-- CSP 严格策略 - 移除 unsafe-eval，收紧域名白名单 -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.umd.js https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js 'unsafe-inline';
+        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.css https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css;
+        img-src * data:;
+        media-src *;
+        connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://api.pearapi.ai https://bing.biturl.top https://api.kuleu.com https://www.cunyuapi.top https://api.suol.cc https://api.injahow.cn https://api.i-meto.com https://yunzhiapi.cn https://oiapi.net https://cn.bing.com;
+        font-src 'self' https://cdn.jsdelivr.net;
+        frame-ancestors 'none';
+    ">
 
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
@@ -47,10 +56,7 @@
     <link rel="stylesheet" href="./css/modules/comment.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.css">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/regular.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
 
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
