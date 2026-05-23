@@ -13,15 +13,15 @@
         window.APP_CONFIG = {
             // 后端 API 地址（Worker 部署地址）
             API_BASE: 'https://api.xjdh688.ccwu.cc',
-            // Waline 评论服务地址（如未配置或使用默认，将提示不可用）
+            // Waline 评论服务地址
             WALINE_SERVER: 'https://yy688.ccwu.cc'
         };
     </script>
 
-    <!-- CSP 严格策略 - 修正拼写错误，添加本地开发环境 -->
+    <!-- CSP 严格策略 - 移除 unsafe-eval，收紧域名白名单，允许 Waline CDN 和 API -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js 'unsafe-inline' http://localhost:3000;
+        script-src 'self' https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.umd.js https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js 'unsafe-inline' http://localhost:3000;
         style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.css https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css;
         img-src * data:;
         media-src *;
