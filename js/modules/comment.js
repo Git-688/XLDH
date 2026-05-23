@@ -1,6 +1,6 @@
 /**
  * 评论模块 - 星聚导航
- * 延迟加载 Waline，避免页面加载时发起 fetch 请求导致错误
+ * 动态加载 Waline，正确处理用户配置的 WALINE_SERVER
  */
 class CommentModule {
   static CONFIG = {
@@ -75,7 +75,6 @@ class CommentModule {
     this.loadingWaline = false;
     this._initDOM();
     this._bindEvents();
-    // 不自动初始化 Waline，首次点击评论按钮时才加载
   }
 
   _initDOM() {
@@ -104,8 +103,8 @@ class CommentModule {
     if (this.loadingWaline) return false;
 
     const serverURL = CommentModule.CONFIG.serverURL;
-    if (!serverURL || serverURL === 'https://yy688.ccwu.cc') {
-      console.warn('[评论] Waline 服务未配置或使用默认地址，请检查 APP_CONFIG.WALINE_SERVER');
+    if (!serverURL) {
+      console.warn('[评论] WALINE_SERVER 未配置');
       const container = document.querySelector(CommentModule.CONFIG.el);
       if (container) container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">评论服务未配置，请联系管理员</div>';
       return false;
@@ -114,14 +113,22 @@ class CommentModule {
     this.loadingWaline = true;
     // 如果 Waline 库尚未加载，动态加载它
     if (typeof Waline === 'undefined') {
-      await new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.umd.js';
-        script.crossOrigin = 'anonymous';
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-      });
+      try {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.umd.js';
+          script.crossOrigin = 'anonymous';
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      } catch (err) {
+        console.error('[评论] 加载 Waline 库失败', err);
+        this.loadingWaline = false;
+        const container = document.querySelector(CommentModule.CONFIG.el);
+        if (container) container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">评论库加载失败</div>';
+        return false;
+      }
     }
 
     try {
@@ -135,7 +142,7 @@ class CommentModule {
       console.error('[评论] 初始化失败', err);
       this.loadingWaline = false;
       const container = document.querySelector(CommentModule.CONFIG.el);
-      if (container) container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">评论服务加载失败</div>';
+      if (container) container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">评论服务加载失败，请稍后重试</div>';
       return false;
     }
   }
