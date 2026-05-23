@@ -1,5 +1,5 @@
 /**
- * 评论模块 - 星聚导航最终版（修复表情搜索超时、增加缓存）
+ * 评论模块 - 星聚导航最终版（修复表情搜索超时、增加缓存、修复oiapi.net fetch错误）
  */
 class CommentModule {
     static CONFIG = {
@@ -26,69 +26,94 @@ class CommentModule {
             search: {
                 _cache: new Map(),
                 _cacheTTL: 30 * 60 * 1000,
-                default() {
-                    return this._fetchWithCache('default', () => 
-                        fetch('https://oiapi.net/api/EmoticonPack?limit=20', { signal: AbortSignal.timeout(5000) })
-                            .then(r => r.json())
-                            .then(json => {
-                                if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                                    return json.data.map(item => ({
-                                        src: item.url,
-                                        title: item.id || '',
-                                        preview: item.url
-                                    }));
-                                }
-                                return [];
-                            })
-                            .catch(() => [])
-                    );
+                
+                // 修复：添加完整错误捕获、缩短超时、强制CORS模式
+                async default() {
+                    try {
+                        const response = await fetch('https://oiapi.net/api/EmoticonPack?limit=20', {
+                            signal: AbortSignal.timeout(3000),
+                            mode: 'cors',
+                            credentials: 'omit'
+                        });
+                        
+                        if (!response.ok) return [];
+                        
+                        const json = await response.json();
+                        
+                        // 严格校验API返回格式，过滤无效数据
+                        if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
+                            return json.data
+                                .filter(item => item.url && item.id)
+                                .map(item => ({
+                                    src: item.url,
+                                    title: item.id || '',
+                                    preview: item.url
+                                }));
+                        }
+                        return [];
+                    } catch (e) {
+                        console.warn('[评论模块] 默认表情包加载失败:', e);
+                        return []; // 失败时返回空数组，不阻塞Waline初始化
+                    }
                 },
-                search(word) {
-                    return this._fetchWithCache(`search_${word}`, () =>
-                        fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`, { signal: AbortSignal.timeout(5000) })
-                            .then(r => r.json())
-                            .then(json => {
-                                if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                                    return json.data.map(item => ({
-                                        src: item.url,
-                                        title: item.id || word,
-                                        preview: item.url
-                                    }));
-                                }
-                                return [];
-                            })
-                            .catch(() => [])
-                    );
+                
+                // 修复：添加完整错误捕获、缩短超时、强制CORS模式
+                async search(word) {
+                    if (!word || !word.trim()) return [];
+                    
+                    try {
+                        const response = await fetch(
+                            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`,
+                            { 
+                                signal: AbortSignal.timeout(3000),
+                                mode: 'cors',
+                                credentials: 'omit'
+                            }
+                        );
+                        
+                        if (!response.ok) return [];
+                        
+                        const json = await response.json();
+                        
+                        if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
+                            return json.data
+                                .filter(item => item.url)
+                                .map(item => ({
+                                    src: item.url,
+                                    title: item.id || word,
+                                    preview: item.url
+                                }));
+                        }
+                        return [];
+                    } catch (e) {
+                        console.warn('[评论模块] 表情包搜索失败:', e);
+                        return [];
+                    }
                 },
+                
+                // 修复：oiapi.net不支持分页，直接返回空数组避免无效请求
                 more(word, pageNumber) {
-                    return this._fetchWithCache(`more_${word}_${pageNumber}`, () =>
-                        fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`, { signal: AbortSignal.timeout(5000) })
-                            .then(r => r.json())
-                            .then(json => {
-                                if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                                    return json.data.map(item => ({
-                                        src: item.url,
-                                        title: item.id || word,
-                                        preview: item.url
-                                    }));
-                                }
-                                return [];
-                            })
-                            .catch(() => [])
-                    );
+                    return Promise.resolve([]);
                 },
+                
+                // 保留原有缓存机制，优化缓存大小限制
                 _fetchWithCache(key, fetcher) {
                     const now = Date.now();
                     const cached = this._cache.get(key);
+                    
                     if (cached && (now - cached.timestamp) < this._cacheTTL) {
                         return Promise.resolve(cached.data);
                     }
+                    
                     return fetcher().then(data => {
                         this._cache.set(key, { data, timestamp: now });
-                        if (this._cache.size > 100) {
+                        
+                        // 优化：缓存上限从100调整为50，减少内存占用
+                        if (this._cache.size > 50) {
                             const oldest = [...this._cache.keys()][0];
                             this._cache.delete(oldest);
                         }
+                        
                         return data;
                     });
                 }
@@ -103,7 +128,7 @@ class CommentModule {
             }
         }
     };
-
+    
     constructor() {
         this.instance = null;
         this.modal = null;
@@ -115,13 +140,13 @@ class CommentModule {
         this._initWaline();
         this._watchSearchPanel();
     }
-
+    
     _initDOM() {
         const { modalId, openBtnId } = CommentModule.CONFIG;
         this.modal = document.getElementById(modalId);
         this.openBtn = document.getElementById(openBtnId);
     }
-
+    
     _bindEvents() {
         if (this.openBtn) this.openBtn.addEventListener('click', () => this.open());
         if (this.modal) {
@@ -135,7 +160,7 @@ class CommentModule {
                 this.close();
         });
     }
-
+    
     _initWaline() {
         const { el, serverURL, walineOptions } = CommentModule.CONFIG;
         if (typeof Waline === 'undefined') return;
@@ -147,7 +172,7 @@ class CommentModule {
             console.error('[评论] 初始化失败', err);
         }
     }
-
+    
     _watchSearchPanel() {
         const container = document.querySelector(CommentModule.CONFIG.el);
         if (!container) return;
@@ -163,7 +188,7 @@ class CommentModule {
         });
         this.searchObserver.observe(container, { childList: true, subtree: true });
     }
-
+    
     _bindAutoSearch(panel) {
         const input = panel.querySelector('input');
         const btn = panel.querySelector('button');
@@ -181,20 +206,20 @@ class CommentModule {
             if (e.key === 'Enter') { clearTimeout(this.searchTimer); trigger(); }
         });
     }
-
+    
     open() {
         if (!this.modal) return;
         if (!this.instance) { this._initWaline(); if (!this.instance) return; }
         this.modal.classList.add(CommentModule.CONFIG.activeClass);
         document.body.style.overflow = 'hidden';
     }
-
+    
     close() {
         if (!this.modal) return;
         this.modal.classList.remove(CommentModule.CONFIG.activeClass);
         document.body.style.overflow = '';
     }
-
+    
     destroy() {
         clearTimeout(this.searchTimer);
         this.searchObserver?.disconnect();
@@ -206,6 +231,7 @@ class CommentModule {
 document.addEventListener('DOMContentLoaded', () => {
     window.commentModule = new CommentModule();
 });
+
 window.addEventListener('beforeunload', () => {
     window.commentModule?.destroy?.();
 });
