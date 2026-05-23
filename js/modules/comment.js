@@ -1,5 +1,5 @@
 /**
- * 评论模块 - 星聚导航最终版（修复网络请求错误，增加 fetch 错误捕获）
+ * 评论模块 - 最终修复版
  */
 class CommentModule {
     static CONFIG = {
@@ -13,105 +13,16 @@ class CommentModule {
             meta: ['nick', 'mail', 'link', 'ua', 'region'],
             requiredMeta: ['nick'],
             pageSize: 10,
-            login: 'enable',
+            login: 'disable',        // 改为 disable 避免强制登录
             noCopyright: false,
             noRss: false,
-            emoji: [
+            emoji: [                 // 仍可配置，但即使加载失败也不影响
                 'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
                 'https://unpkg.com/@waline/emojis@1.4.0/qq',
                 'https://unpkg.com/@waline/emojis@1.4.0/tieba',
                 'https://unpkg.com/@waline/emojis@1.4.0/weibo',
                 'https://unpkg.com/@waline/emojis@1.4.0/alus',
             ],
-            search: {
-                _cache: new Map(),
-                _cacheTTL: 30 * 60 * 1000,
-
-                async default() {
-                    try {
-                        const response = await fetch('https://oiapi.net/api/EmoticonPack?limit=20', {
-                            signal: AbortSignal.timeout(3000),
-                            mode: 'cors',
-                            credentials: 'omit'
-                        });
-
-                        if (!response.ok) return [];
-
-                        const json = await response.json();
-
-                        if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                            return json.data
-                                .filter(item => item.url && item.id)
-                                .map(item => ({
-                                    src: item.url,
-                                    title: item.id || '',
-                                    preview: item.url
-                                }));
-                        }
-                        return [];
-                    } catch (e) {
-                        console.warn('[评论模块] 默认表情包加载失败:', e);
-                        return [];
-                    }
-                },
-
-                async search(word) {
-                    if (!word || !word.trim()) return [];
-
-                    try {
-                        const response = await fetch(
-                            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`,
-                            {
-                                signal: AbortSignal.timeout(3000),
-                                mode: 'cors',
-                                credentials: 'omit'
-                            }
-                        );
-
-                        if (!response.ok) return [];
-
-                        const json = await response.json();
-
-                        if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                            return json.data
-                                .filter(item => item.url)
-                                .map(item => ({
-                                    src: item.url,
-                                    title: item.id || word,
-                                    preview: item.url
-                                }));
-                        }
-                        return [];
-                    } catch (e) {
-                        console.warn('[评论模块] 表情包搜索失败:', e);
-                        return [];
-                    }
-                },
-
-                more(word, pageNumber) {
-                    return Promise.resolve([]);
-                },
-
-                _fetchWithCache(key, fetcher) {
-                    const now = Date.now();
-                    const cached = this._cache.get(key);
-
-                    if (cached && (now - cached.timestamp) < this._cacheTTL) {
-                        return Promise.resolve(cached.data);
-                    }
-
-                    return fetcher().then(data => {
-                        this._cache.set(key, { data, timestamp: now });
-
-                        if (this._cache.size > 50) {
-                            const oldest = [...this._cache.keys()][0];
-                            this._cache.delete(oldest);
-                        }
-
-                        return data;
-                    });
-                }
-            },
             locale: {
                 level0: '初来乍到',
                 level1: '偶尔光临',
@@ -129,40 +40,21 @@ class CommentModule {
         this.openBtn = null;
         this.searchTimer = null;
         this.searchObserver = null;
-        this._blockWalineInternalFetch(); // 拦截 Waline 内部无效请求并捕获网络错误
+        this._patchFetchError();   // 只捕获网络错误，不拦截表情包
         this._initDOM();
         this._bindEvents();
         this._initWaline();
         this._watchSearchPanel();
     }
 
-    // 关键修复：拦截 Waline 内部硬编码的表情包 API 请求，并捕获网络错误
-    _blockWalineInternalFetch() {
+    // 仅捕获 fetch 错误，不返回假数据（让 Waline 自己处理）
+    _patchFetchError() {
         const originalFetch = window.fetch;
-
         window.fetch = function (input, init) {
-            // 拦截 Waline 所有内部表情包 API 请求
-            if (typeof input === 'string' && (
-                input.includes('emojis.waline.js.org') ||
-                input.includes('api.github.com/emojis') ||
-                input.includes('waline-emoji')
-            )) {
-                console.debug('[评论模块] 已拦截 Waline 内部无效表情包请求:', input);
-                // 返回一个空的成功响应，彻底消除错误
-                return Promise.resolve(new Response(JSON.stringify([]), {
-                    status: 200,
-                    headers: { 'Content-Type': 'application/json' }
-                }));
-            }
-
-            // 正常转发其他所有请求，并捕获网络错误
             return originalFetch.apply(this, arguments).catch(err => {
                 console.warn('[评论模块] 网络请求失败:', input, err);
-                // 返回一个空的成功响应，避免 Waline 抛出未捕获异常
-                return new Response(JSON.stringify({ code: -1, msg: 'Network error' }), {
-                    status: 200,
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                // 为了不打断 Waline 流程，返回一个空响应（但保留状态码）
+                return new Response(null, { status: 500, statusText: 'Network Error' });
             });
         };
     }
@@ -198,7 +90,7 @@ class CommentModule {
         try {
             this.instance = Waline.init({ el, serverURL, ...walineOptions });
         } catch (err) {
-            console.error('[评论] 初始化失败', err);
+            console.error('[评论] Waline 初始化失败:', err);
             if (container) {
                 container.innerHTML = '<div class="comment-error">评论系统暂时不可用，请稍后再试。</div>';
             }
@@ -213,10 +105,7 @@ class CommentModule {
                 for (const node of mutation.addedNodes) {
                     if (node.nodeType === 1) {
                         const panel = node.matches('.wl-search') ? node : node.querySelector('.wl-search');
-                        if (panel) {
-                            this._bindAutoSearch(panel);
-                            return;
-                        }
+                        if (panel) this._bindAutoSearch(panel);
                     }
                 }
             }
@@ -269,7 +158,6 @@ class CommentModule {
     }
 }
 
-// 自动初始化
 document.addEventListener('DOMContentLoaded', () => {
     window.commentModule = new CommentModule();
 });
