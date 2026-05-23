@@ -18,8 +18,8 @@
         };
     </script>
 
-    <!-- CSP 仅保留生产必需域名 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
+    <!-- CSP 加固版：移除 unsafe-eval，限制 connect-src 为必要域名（添加 bing.biturl.top） -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://api.pearapi.ai https://*.bing.com https://api.kuleu.com https://api.injahow.cn https://api.i-meto.com https://yunzhiapi.cn https://api.suol.cc https://bing.biturl.top; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
 
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
