@@ -1,5 +1,5 @@
 /**
- * 轮播图模块 - 无缝循环 + 标题与圆点同行 + 去前缀（保留动态分辨率接口）
+ * 轮播图模块 - 无缝循环 + 预加载优化
  */
 class CarouselModule {
     constructor() {
@@ -12,13 +12,11 @@ class CarouselModule {
         this.infoTitle = null;
         this.isTransitioning = false;
         this.autoPlayInterval = 5000;
+        this.preloadCache = new Set(); // 预加载缓存
         this.init();
     }
 
-    // 预留动态分辨率方法，当前返回 1920 以保证稳定
     getResolutionForWidth() {
-        // 若需要按屏幕加载不同尺寸，可在此调整返回值（需确认 API 支持）
-        // 推荐值：1920, 1366, 768
         return 1920;
     }
 
@@ -34,29 +32,18 @@ class CarouselModule {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.url) {
-                        // 去掉“必应壁纸 · ”前缀
                         let title = data.copyright ? data.copyright : '';
                         title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
-                        if (!title) {
-                            title = i === 0 ? '今日壁纸' : `${i}天前壁纸`;
-                        }
-                        bingImages.push({
-                            url: data.url,
-                            title: title
-                        });
+                        if (!title) title = i === 0 ? '今日壁纸' : `${i}天前壁纸`;
+                        bingImages.push({ url: data.url, title: title });
                     }
                 }
-            } catch (e) {
-                console.warn(`获取第${i}天壁纸失败`);
-            }
+            } catch (e) { console.warn(`获取第${i}天壁纸失败`); }
         }
 
-        if (bingImages.length === 0) {
-            bingImages.push({ url: '', title: '星聚导航' });
-        }
+        if (bingImages.length === 0) bingImages.push({ url: '', title: '星聚导航' });
 
         this.slides = bingImages;
-
         if (this.slides.length > 1) {
             this.clonedSlides = [
                 { ...this.slides[this.slides.length - 1], clone: 'last' },
@@ -77,9 +64,26 @@ class CarouselModule {
 
         this.renderSlides();
         this.renderDots();
+        this.preloadAdjacentImages(1); // 预加载相邻图片
         this.goToSlide(1, false);
         this.bindEvents();
         this.startAutoplay();
+    }
+
+    preloadAdjacentImages(currentCloneIndex) {
+        // 预加载前一张和后一张的原始图片（非克隆）
+        const total = this.clonedSlides.length;
+        const prevClone = (currentCloneIndex - 1 + total) % total;
+        const nextClone = (currentCloneIndex + 1) % total;
+        const indices = [prevClone, nextClone];
+        indices.forEach(idx => {
+            const slide = this.clonedSlides[idx];
+            if (slide.url && !this.preloadCache.has(slide.url)) {
+                const img = new Image();
+                img.onload = () => this.preloadCache.add(slide.url);
+                img.src = slide.url;
+            }
+        });
     }
 
     renderSlides() {
@@ -88,14 +92,19 @@ class CarouselModule {
         this.clonedSlides.forEach((slide, index) => {
             const div = document.createElement('div');
             div.className = 'carousel-slide';
-            div.style.backgroundImage = `url('${slide.url}')`;
+            div.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            div.style.backgroundSize = 'cover';
+            div.style.backgroundPosition = 'center';
+            if (slide.url) {
+                const img = new Image();
+                img.onload = () => {
+                    div.style.backgroundImage = `url('${slide.url}')`;
+                    div.style.background = `url('${slide.url}') center/cover no-repeat`;
+                };
+                img.onerror = () => console.warn(`图片加载失败: ${slide.url}`);
+                img.src = slide.url;
+            }
             div.setAttribute('data-index', index);
-            const img = new Image();
-            img.onerror = () => {
-                div.style.backgroundImage = 'none';
-                div.style.backgroundColor = 'rgba(102,126,234,0.3)';
-            };
-            img.src = slide.url;
             this.track.appendChild(div);
         });
     }
@@ -121,7 +130,6 @@ class CarouselModule {
         if (clonedIndex < 0 || clonedIndex >= total) return;
 
         this.isTransitioning = true;
-
         let realIndex = clonedIndex;
         if (clonedIndex === 0) realIndex = this.slides.length - 1;
         else if (clonedIndex === total - 1) realIndex = 0;
@@ -139,6 +147,7 @@ class CarouselModule {
         }
 
         this.currentIndex = clonedIndex;
+        this.preloadAdjacentImages(clonedIndex); // 切换时预加载相邻图片
 
         setTimeout(() => {
             this.isTransitioning = false;
@@ -172,10 +181,7 @@ class CarouselModule {
     }
 
     stopAutoplay() {
-        if (this.autoplayTimer) {
-            clearInterval(this.autoplayTimer);
-            this.autoplayTimer = null;
-        }
+        if (this.autoplayTimer) { clearInterval(this.autoplayTimer); this.autoplayTimer = null; }
     }
 
     resetAutoplay() {
@@ -184,18 +190,8 @@ class CarouselModule {
     }
 
     bindEvents() {
-        if (this.arrowLeft) {
-            this.arrowLeft.addEventListener('click', () => {
-                this.prev();
-                this.resetAutoplay();
-            });
-        }
-        if (this.arrowRight) {
-            this.arrowRight.addEventListener('click', () => {
-                this.next();
-                this.resetAutoplay();
-            });
-        }
+        if (this.arrowLeft) this.arrowLeft.addEventListener('click', () => { this.prev(); this.resetAutoplay(); });
+        if (this.arrowRight) this.arrowRight.addEventListener('click', () => { this.next(); this.resetAutoplay(); });
         if (this.track) {
             let startX = 0, startY = 0;
             this.track.addEventListener('touchstart', (e) => {
@@ -230,7 +226,5 @@ class CarouselModule {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!window.carouselModule) {
-        window.carouselModule = new CarouselModule();
-    }
+    if (!window.carouselModule) window.carouselModule = new CarouselModule();
 });
