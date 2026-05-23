@@ -11,13 +11,15 @@
     <!-- 全局配置 - 放在所有脚本之前 -->
     <script>
         window.APP_CONFIG = {
+            // 后端 API 地址（Worker 部署地址）
             API_BASE: 'https://api.xjdh688.ccwu.cc',
+            // Waline 评论服务地址
             WALINE_SERVER: 'https://yy688.ccwu.cc'
         };
     </script>
 
-    <!-- CSP 最终版：包含天气 API 和表情包 API -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://api.pearapi.ai https://*.bing.com https://api.kuleu.com https://api.injahow.cn https://api.i-meto.com https://yunzhiapi.cn https://api.suol.cc https://bing.biturl.top https://www.cunyuapi.top https://oiapi.net; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
+    <!-- CSP 加固版：移除 unsafe-eval，限制 connect-src 为必要域名 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://api.pearapi.ai https://*.bing.com https://api.kuleu.com https://api.injahow.cn https://api.i-meto.com https://yunzhiapi.cn https://api.suol.cc; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
 
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
@@ -25,7 +27,7 @@
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
 
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
@@ -43,21 +45,21 @@
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
 
     <link rel="stylesheet" href="./css/modules/comment.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.css">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/regular.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/regular.min.css">
 
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://fonts.googleapis.com">
 
     <link rel="preload" href="./js/main.js" as="script">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css" crossorigin="anonymous">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
     <style>
         .floating-btn.submit-btn { color: #06b6d4; }
@@ -485,28 +487,8 @@
 <script src="./js/xfyy/plugin-manager.js"></script>
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.umd.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.umd.js"></script>
 <script src="./js/modules/comment.js"></script>
 <script src="./js/modules/submit.js"></script>
-
-<!-- 全局错误过滤：隐藏无意义的 Script error. 消息 -->
-<script>
-    (function() {
-        // 过滤来自匿名脚本的 Script error.
-        window.addEventListener('error', function(e) {
-            if (e.message === 'Script error.' && !e.filename) {
-                e.preventDefault();
-                return false;
-            }
-        });
-        // 过滤未处理的 Promise 拒绝中的匿名错误
-        window.addEventListener('unhandledrejection', function(e) {
-            if (e.reason && e.reason.message === 'Script error.') {
-                e.preventDefault();
-                return false;
-            }
-        });
-    })();
-</script>
 </body>
 </html>
