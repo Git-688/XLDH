@@ -1,25 +1,22 @@
 /**
- * 评论模块 - 星聚导航最终版
- * 功能：QQ表情搜索 + 输入自动搜索(防抖500ms)
- * 显示：订阅链接、版权、归属地、设备信息、五字社区等级
- * 修改：本地开发时（localhost）不初始化 Waline，避免跨域错误
+ * 评论模块 - 星聚导航
+ * 延迟加载 Waline，避免页面加载时发起 fetch 请求导致错误
  */
 class CommentModule {
   static CONFIG = {
-    serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
+    serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || '',
     el: '#waline-comment',
     modalId: 'commentModal',
     openBtnId: 'commentBtn',
     activeClass: 'active',
     walineOptions: {
       dark: 'auto',
-      meta: ['nick', 'mail', 'link', 'ua', 'region'],  
+      meta: ['nick', 'mail', 'link', 'ua', 'region'],
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
       noCopyright: false,
       noRss: false,
-
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
         'https://unpkg.com/@waline/emojis@1.4.0/qq',
@@ -27,68 +24,44 @@ class CommentModule {
         'https://unpkg.com/@waline/emojis@1.4.0/weibo',
         'https://unpkg.com/@waline/emojis@1.4.0/alus',
       ],
-
-      // 自定义表情搜索 (QQ 表情包 API)
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
             .then(r => r.json())
             .then(json => {
               if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({
-                  src: item.url,
-                  title: item.id || '',
-                  preview: item.url
-                }));
+                return json.data.map(item => ({ src: item.url, title: item.id || '', preview: item.url }));
               }
               return [];
             })
             .catch(() => []);
         },
         search(word) {
-          return fetch(
-            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`
-          )
+          return fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`)
             .then(r => r.json())
             .then(json => {
               if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({
-                  src: item.url,
-                  title: item.id || word,
-                  preview: item.url
-                }));
+                return json.data.map(item => ({ src: item.url, title: item.id || word, preview: item.url }));
               }
               return [];
             })
             .catch(() => []);
         },
         more(word, pageNumber) {
-          return fetch(
-            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`
-          )
+          return fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`)
             .then(r => r.json())
             .then(json => {
               if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({
-                  src: item.url,
-                  title: item.id || word,
-                  preview: item.url
-                }));
+                return json.data.map(item => ({ src: item.url, title: item.id || word, preview: item.url }));
               }
               return [];
             })
             .catch(() => []);
         }
       },
-
-      // 五字社区等级标签
       locale: {
-        level0: '初来乍到',
-        level1: '偶尔光临',
-        level2: '常驻居民',
-        level3: '核心会员',
-        level4: '论坛元老',
-        level5: '至尊传说'
+        level0: '初来乍到', level1: '偶尔光临', level2: '常驻居民',
+        level3: '核心会员', level4: '论坛元老', level5: '至尊传说'
       }
     }
   };
@@ -99,11 +72,10 @@ class CommentModule {
     this.openBtn = null;
     this.searchTimer = null;
     this.searchObserver = null;
-
+    this.loadingWaline = false;
     this._initDOM();
     this._bindEvents();
-    this._initWaline();
-    this._watchSearchPanel();
+    // 不自动初始化 Waline，首次点击评论按钮时才加载
   }
 
   _initDOM() {
@@ -126,75 +98,55 @@ class CommentModule {
     });
   }
 
-  _initWaline() {
-    // 如果是本地开发环境（localhost 或 127.0.0.1），则不初始化 Waline，避免跨域错误
-    const hostname = window.location.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      console.warn('[评论] 本地开发环境，跳过 Waline 初始化');
+  // 动态加载 Waline 库并初始化
+  async _loadWaline() {
+    if (this.instance) return true;
+    if (this.loadingWaline) return false;
+
+    const serverURL = CommentModule.CONFIG.serverURL;
+    if (!serverURL || serverURL === 'https://yy688.ccwu.cc') {
+      console.warn('[评论] Waline 服务未配置或使用默认地址，请检查 APP_CONFIG.WALINE_SERVER');
       const container = document.querySelector(CommentModule.CONFIG.el);
-      if (container) {
-        container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">评论功能在本地调试时已禁用，线上正常使用</div>';
-      }
-      return;
+      if (container) container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">评论服务未配置，请联系管理员</div>';
+      return false;
     }
 
-    const { el, serverURL, walineOptions } = CommentModule.CONFIG;
+    this.loadingWaline = true;
+    // 如果 Waline 库尚未加载，动态加载它
     if (typeof Waline === 'undefined') {
-      console.warn('[评论] Waline 库未加载');
-      return;
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.umd.js';
+        script.crossOrigin = 'anonymous';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
     }
-    const container = document.querySelector(el);
-    if (!container) return;
+
     try {
-      this.instance = Waline.init({ el, serverURL, ...walineOptions });
+      const { el, serverURL: url, walineOptions } = CommentModule.CONFIG;
+      const container = document.querySelector(el);
+      if (!container) return false;
+      this.instance = Waline.init({ el, serverURL: url, ...walineOptions });
+      this.loadingWaline = false;
+      return true;
     } catch (err) {
       console.error('[评论] 初始化失败', err);
+      this.loadingWaline = false;
+      const container = document.querySelector(CommentModule.CONFIG.el);
+      if (container) container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">评论服务加载失败</div>';
+      return false;
     }
   }
 
-  // 自动搜索
-  _watchSearchPanel() {
-    const container = document.querySelector(CommentModule.CONFIG.el);
-    if (!container) return;
-
-    this.searchObserver = new MutationObserver(mutations => {
-      for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) {
-          if (node.nodeType === 1) {
-            const panel = node.matches('.wl-search') ? node : node.querySelector('.wl-search');
-            if (panel) { this._bindAutoSearch(panel); return; }
-          }
-        }
-      }
-    });
-    this.searchObserver.observe(container, { childList: true, subtree: true });
-  }
-
-  _bindAutoSearch(panel) {
-    const input = panel.querySelector('input');
-    const btn = panel.querySelector('button');
-    if (!input || !btn || input.dataset.auto === 'true') return;
-    input.dataset.auto = 'true';
-
-    const trigger = () => {
-      clearTimeout(this.searchTimer);
-      if (input.value.trim()) btn.click();
-    };
-
-    input.addEventListener('input', () => {
-      clearTimeout(this.searchTimer);
-      this.searchTimer = setTimeout(trigger, 500);
-    });
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { clearTimeout(this.searchTimer); trigger(); }
-    });
-  }
-
-  open() {
+  async open() {
     if (!this.modal) return;
-    if (!this.instance && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      // 如果不是本地且未初始化，尝试重新初始化
-      this._initWaline();
+    // 如果还没有初始化，尝试加载 Waline
+    if (!this.instance && !this.loadingWaline) {
+      const container = document.querySelector(CommentModule.CONFIG.el);
+      if (container) container.innerHTML = '<div class="loading">加载评论中...</div>';
+      await this._loadWaline();
     }
     this.modal.classList.add(CommentModule.CONFIG.activeClass);
     document.body.style.overflow = 'hidden';
