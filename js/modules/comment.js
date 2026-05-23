@@ -1,10 +1,10 @@
 /**
- * 评论模块 - 星聚导航
- * 动态加载 Waline，正确处理用户配置的 WALINE_SERVER
+ * Waline 评论模块 - 支持动态加载、错误重试、CORS 提示
  */
 class CommentModule {
   static CONFIG = {
-    serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || '',
+    // 从全局配置读取 Waline 服务地址
+    serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
     el: '#waline-comment',
     modalId: 'commentModal',
     openBtnId: 'commentBtn',
@@ -70,90 +70,139 @@ class CommentModule {
     this.instance = null;
     this.modal = null;
     this.openBtn = null;
-    this.searchTimer = null;
-    this.searchObserver = null;
-    this.loadingWaline = false;
+    this.isInitializing = false;
+    this.initAttempts = 0;
+    this.maxAttempts = 3;
     this._initDOM();
     this._bindEvents();
+    // 预加载 Waline 库（但不初始化，等待用户点击）
+    this._preloadWalineLibrary();
   }
 
   _initDOM() {
-    const { modalId, openBtnId } = CommentModule.CONFIG;
-    this.modal = document.getElementById(modalId);
-    this.openBtn = document.getElementById(openBtnId);
+    this.modal = document.getElementById(CommentModule.CONFIG.modalId);
+    this.openBtn = document.getElementById(CommentModule.CONFIG.openBtnId);
   }
 
   _bindEvents() {
-    if (this.openBtn) this.openBtn.addEventListener('click', () => this.open());
+    if (this.openBtn) {
+      this.openBtn.addEventListener('click', () => this.open());
+    }
     if (this.modal) {
-      this.modal.addEventListener('click', e => {
-        if (e.target.closest('.feedback-modal-close')) { this.close(); return; }
+      this.modal.addEventListener('click', (e) => {
+        if (e.target.closest('.feedback-modal-close')) {
+          this.close();
+          return;
+        }
         if (e.target === this.modal) this.close();
       });
     }
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && this.modal?.classList.contains(CommentModule.CONFIG.activeClass))
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.modal?.classList.contains(CommentModule.CONFIG.activeClass)) {
         this.close();
+      }
     });
   }
 
-  // 动态加载 Waline 库并初始化
-  async _loadWaline() {
+  // 预先加载 Waline 库（不阻塞页面）
+  _preloadWalineLibrary() {
+    if (typeof Waline !== 'undefined') return;
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.umd.js';
+    script.crossOrigin = 'anonymous';
+    script.async = true;
+    document.head.appendChild(script);
+  }
+
+  async _ensureWalineReady() {
+    if (typeof Waline !== 'undefined') return true;
+    // 等待库加载完成
+    return new Promise((resolve) => {
+      const checkInterval = setInterval(() => {
+        if (typeof Waline !== 'undefined') {
+          clearInterval(checkInterval);
+          resolve(true);
+        }
+      }, 100);
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        resolve(false);
+      }, 5000);
+    });
+  }
+
+  async _initWaline() {
     if (this.instance) return true;
-    if (this.loadingWaline) return false;
+    if (this.isInitializing) return false;
 
-    const serverURL = CommentModule.CONFIG.serverURL;
-    if (!serverURL) {
-      console.warn('[评论] WALINE_SERVER 未配置');
-      const container = document.querySelector(CommentModule.CONFIG.el);
-      if (container) container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">评论服务未配置，请联系管理员</div>';
-      return false;
-    }
-
-    this.loadingWaline = true;
-    // 如果 Waline 库尚未加载，动态加载它
-    if (typeof Waline === 'undefined') {
-      try {
-        await new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.umd.js';
-          script.crossOrigin = 'anonymous';
-          script.onload = resolve;
-          script.onerror = reject;
-          document.head.appendChild(script);
-        });
-      } catch (err) {
-        console.error('[评论] 加载 Waline 库失败', err);
-        this.loadingWaline = false;
-        const container = document.querySelector(CommentModule.CONFIG.el);
-        if (container) container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">评论库加载失败</div>';
-        return false;
-      }
-    }
+    this.isInitializing = true;
+    // 显示加载中
+    const container = document.querySelector(CommentModule.CONFIG.el);
+    if (container) container.innerHTML = '<div class="loading">加载评论组件...</div>';
 
     try {
-      const { el, serverURL: url, walineOptions } = CommentModule.CONFIG;
-      const container = document.querySelector(el);
-      if (!container) return false;
-      this.instance = Waline.init({ el, serverURL: url, ...walineOptions });
-      this.loadingWaline = false;
+      const libReady = await this._ensureWalineReady();
+      if (!libReady) throw new Error('Waline 库加载超时');
+
+      const { el, serverURL, walineOptions } = CommentModule.CONFIG;
+      const containerElem = document.querySelector(el);
+      if (!containerElem) throw new Error('评论容器不存在');
+
+      // 测试服务是否可访问（可选，用于提前提示）
+      const testUrl = `${serverURL}/api/comment?path=${encodeURIComponent(window.location.pathname)}&page=1&pageSize=1`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const testRes = await fetch(testUrl, { signal: controller.signal }).catch(() => null);
+      clearTimeout(timeoutId);
+      if (!testRes || !testRes.ok) {
+        console.warn('Waline 服务似乎不可用，请检查服务器状态');
+        containerElem.innerHTML = `
+          <div style="padding:20px;text-align:center;color:#999;">
+            <i class="fas fa-exclamation-triangle"></i> 评论服务暂时不可用<br>
+            <small>请联系管理员检查 Waline 服务</small>
+          </div>
+        `;
+        this.isInitializing = false;
+        return false;
+      }
+
+      // 初始化 Waline
+      this.instance = Waline.init({
+        el,
+        serverURL,
+        ...walineOptions
+      });
+      this.isInitializing = false;
+      this.initAttempts = 0;
       return true;
     } catch (err) {
-      console.error('[评论] 初始化失败', err);
-      this.loadingWaline = false;
+      console.error('Waline 初始化失败:', err);
+      this.isInitializing = false;
+      this.initAttempts++;
       const container = document.querySelector(CommentModule.CONFIG.el);
-      if (container) container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">评论服务加载失败，请稍后重试</div>';
+      if (container) {
+        let errorMsg = '评论加载失败';
+        if (err.message.includes('CORS')) errorMsg = '跨域错误：请检查 Waline 服务端 CORS 配置';
+        else if (err.message.includes('超时')) errorMsg = '服务连接超时，请稍后重试';
+        else errorMsg = err.message || '未知错误';
+        container.innerHTML = `
+          <div style="padding:20px;text-align:center;color:#e74c3c;">
+            <i class="fas fa-times-circle"></i> ${errorMsg}<br>
+            <button id="waline-retry-btn" class="waline-retry-btn" style="margin-top:12px;padding:6px 12px;border:none;border-radius:4px;background:#4361ee;color:#fff;cursor:pointer;">重试</button>
+          </div>
+        `;
+        const retryBtn = container.querySelector('#waline-retry-btn');
+        if (retryBtn) retryBtn.onclick = () => this._initWaline();
+      }
       return false;
     }
   }
 
   async open() {
     if (!this.modal) return;
-    // 如果还没有初始化，尝试加载 Waline
-    if (!this.instance && !this.loadingWaline) {
-      const container = document.querySelector(CommentModule.CONFIG.el);
-      if (container) container.innerHTML = '<div class="loading">加载评论中...</div>';
-      await this._loadWaline();
+    // 如果未初始化，尝试初始化
+    if (!this.instance && !this.isInitializing) {
+      await this._initWaline();
     }
     this.modal.classList.add(CommentModule.CONFIG.activeClass);
     document.body.style.overflow = 'hidden';
@@ -166,16 +215,18 @@ class CommentModule {
   }
 
   destroy() {
-    clearTimeout(this.searchTimer);
-    this.searchObserver?.disconnect();
-    this.instance?.destroy?.();
+    if (this.instance && typeof this.instance.destroy === 'function') {
+      this.instance.destroy();
+    }
     this.instance = null;
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// 启动模块
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    window.commentModule = new CommentModule();
+  });
+} else {
   window.commentModule = new CommentModule();
-});
-window.addEventListener('beforeunload', () => {
-  window.commentModule?.destroy?.();
-});
+}
