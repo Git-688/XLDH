@@ -18,17 +18,8 @@
         };
     </script>
 
-    <!-- CSP 严格策略 - 移除 unsafe-eval，收紧域名白名单，允许 Waline CDN 和 API -->
-    <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self';
-        script-src 'self' https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.umd.js https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js 'unsafe-inline' http://localhost:3000;
-        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.css https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css;
-        img-src * data:;
-        media-src *;
-        connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://api.pearapi.ai https://bing.biturl.top https://api.kuleu.com https://www.cunyuapi.top https://api.suol.cc https://api.injahow.cn https://api.i-meto.com https://yunzhiapi.cn https://oiapi.net https://cn.bing.com http://localhost:3000;
-        font-src 'self' https://cdn.jsdelivr.net;
-        frame-ancestors 'none';
-    ">
+    <!-- CSP 仅保留生产必需域名 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
 
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
@@ -36,7 +27,7 @@
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
 
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
@@ -56,7 +47,10 @@
     <link rel="stylesheet" href="./css/modules/comment.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.css">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/regular.min.css">
 
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -64,8 +58,8 @@
 
     <link rel="preload" href="./js/main.js" as="script">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
     <style>
         .floating-btn.submit-btn { color: #06b6d4; }
@@ -493,7 +487,7 @@
 <script src="./js/xfyy/plugin-manager.js"></script>
 <script src="./js/xfyy/music-player.js"></script>
 <script src="./js/xfyy/music-main.js"></script>
-<!-- Waline 脚本已移除，改为 comment.js 动态加载 -->
+<script src="https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.umd.js"></script>
 <script src="./js/modules/comment.js"></script>
 <script src="./js/modules/submit.js"></script>
 </body>
