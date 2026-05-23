@@ -1,5 +1,5 @@
 /**
- * 评论模块 - 星聚导航最终版（修复表情搜索超时、增加缓存、修复oiapi.net fetch错误）
+ * 评论模块 - 星聚导航最终版（彻底修复Waline内部硬编码API导致的Failed to fetch错误）
  */
 class CommentModule {
     static CONFIG = {
@@ -27,7 +27,6 @@ class CommentModule {
                 _cache: new Map(),
                 _cacheTTL: 30 * 60 * 1000,
                 
-                // 修复：添加完整错误捕获、缩短超时、强制CORS模式
                 async default() {
                     try {
                         const response = await fetch('https://oiapi.net/api/EmoticonPack?limit=20', {
@@ -40,7 +39,6 @@ class CommentModule {
                         
                         const json = await response.json();
                         
-                        // 严格校验API返回格式，过滤无效数据
                         if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
                             return json.data
                                 .filter(item => item.url && item.id)
@@ -53,11 +51,10 @@ class CommentModule {
                         return [];
                     } catch (e) {
                         console.warn('[评论模块] 默认表情包加载失败:', e);
-                        return []; // 失败时返回空数组，不阻塞Waline初始化
+                        return [];
                     }
                 },
                 
-                // 修复：添加完整错误捕获、缩短超时、强制CORS模式
                 async search(word) {
                     if (!word || !word.trim()) return [];
                     
@@ -91,12 +88,10 @@ class CommentModule {
                     }
                 },
                 
-                // 修复：oiapi.net不支持分页，直接返回空数组避免无效请求
                 more(word, pageNumber) {
                     return Promise.resolve([]);
                 },
                 
-                // 保留原有缓存机制，优化缓存大小限制
                 _fetchWithCache(key, fetcher) {
                     const now = Date.now();
                     const cached = this._cache.get(key);
@@ -108,7 +103,6 @@ class CommentModule {
                     return fetcher().then(data => {
                         this._cache.set(key, { data, timestamp: now });
                         
-                        // 优化：缓存上限从100调整为50，减少内存占用
                         if (this._cache.size > 50) {
                             const oldest = [...this._cache.keys()][0];
                             this._cache.delete(oldest);
@@ -135,10 +129,35 @@ class CommentModule {
         this.openBtn = null;
         this.searchTimer = null;
         this.searchObserver = null;
+        this._blockWalineInternalFetch(); // 新增：拦截Waline内部无效请求
         this._initDOM();
         this._bindEvents();
         this._initWaline();
         this._watchSearchPanel();
+    }
+    
+    // 关键修复：拦截Waline内部硬编码的表情包API请求
+    _blockWalineInternalFetch() {
+        const originalFetch = window.fetch;
+        
+        window.fetch = function(input, init) {
+            // 拦截Waline所有内部表情包API请求
+            if (typeof input === 'string' && (
+                input.includes('emojis.waline.js.org') ||
+                input.includes('api.github.com/emojis') ||
+                input.includes('waline-emoji')
+            )) {
+                console.debug('[评论模块] 已拦截Waline内部无效表情包请求:', input);
+                // 返回一个空的成功响应，彻底消除错误
+                return Promise.resolve(new Response(JSON.stringify([]), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' }
+                }));
+            }
+            
+            // 正常转发其他所有请求
+            return originalFetch.apply(this, arguments);
+        };
     }
     
     _initDOM() {
