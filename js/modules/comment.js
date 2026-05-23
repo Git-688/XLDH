@@ -2,6 +2,7 @@
  * 评论模块 - 星聚导航最终版
  * 功能：QQ表情搜索 + 输入自动搜索(防抖500ms)
  * 显示：订阅链接、版权、归属地、设备信息、五字社区等级
+ * 修改：本地开发时（localhost）不初始化 Waline，避免跨域错误
  */
 class CommentModule {
   static CONFIG = {
@@ -126,8 +127,22 @@ class CommentModule {
   }
 
   _initWaline() {
+    // 如果是本地开发环境（localhost 或 127.0.0.1），则不初始化 Waline，避免跨域错误
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      console.warn('[评论] 本地开发环境，跳过 Waline 初始化');
+      const container = document.querySelector(CommentModule.CONFIG.el);
+      if (container) {
+        container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;">评论功能在本地调试时已禁用，线上正常使用</div>';
+      }
+      return;
+    }
+
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
-    if (typeof Waline === 'undefined') return;
+    if (typeof Waline === 'undefined') {
+      console.warn('[评论] Waline 库未加载');
+      return;
+    }
     const container = document.querySelector(el);
     if (!container) return;
     try {
@@ -177,7 +192,10 @@ class CommentModule {
 
   open() {
     if (!this.modal) return;
-    if (!this.instance) { this._initWaline(); if (!this.instance) return; }
+    if (!this.instance && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      // 如果不是本地且未初始化，尝试重新初始化
+      this._initWaline();
+    }
     this.modal.classList.add(CommentModule.CONFIG.activeClass);
     document.body.style.overflow = 'hidden';
   }
