@@ -1,5 +1,5 @@
 /**
- * 全局错误处理管理器（过滤无意义错误）
+ * 全局错误处理管理器（过滤第三方脚本错误）
  */
 class ErrorHandler {
     constructor() {
@@ -79,6 +79,12 @@ class ErrorHandler {
             this.reportToServer(errorInfo);
             return;
         }
+        // 忽略 cloudflare insights 脚本加载失败
+        if (errorInfo.type === 'resource' && errorInfo.tag === 'SCRIPT' && 
+            (errorInfo.src && errorInfo.src.includes('cloudflareinsights.com'))) {
+            this.reportToServer(errorInfo);
+            return;
+        }
 
         if (this.errors.length >= this.maxErrors) {
             this.errors.shift();
@@ -92,6 +98,8 @@ class ErrorHandler {
     showUserFriendlyMessage(errorInfo) {
         if (errorInfo.message === 'Script error.' || errorInfo.message === 'Script error') return;
         if (errorInfo.type === 'resource' && errorInfo.tag === 'IMG') return;
+        if (errorInfo.type === 'resource' && errorInfo.tag === 'SCRIPT' && 
+            (errorInfo.src && errorInfo.src.includes('cloudflareinsights.com'))) return;
 
         if (window._lastErrorTime && Date.now() - window._lastErrorTime < 5000) return;
         window._lastErrorTime = Date.now();
