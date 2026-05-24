@@ -1,6 +1,6 @@
 /**
- * 网站投稿模块（完整版）
- * 功能：投稿表单、自动获取网站信息、安全检测提示、累计投稿数显示（支持降级）
+ * 网站投稿模块（最终版）
+ * 功能：投稿表单、自动获取网站信息、安全检测提示、累计投稿数显示（使用 Worker 返回的 totalSubmits）
  */
 class SubmitModule {
     constructor() {
@@ -28,16 +28,13 @@ class SubmitModule {
     init() {
         this.bindEvents();
         if (this.descInput) this.descInput.maxLength = 200;
-        // 监听模态框打开，刷新累计数并确保徽章存在
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) return;
-        });
+        // 监听模态框打开，确保徽章存在并刷新计数（使用本地存储）
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class') {
                     if (this.modal.classList.contains('active')) {
-                        this.ensureStatsBadge();      // 确保徽章存在
-                        this.fetchSubmissionStats();   // 刷新累计数
+                        this.ensureStatsBadge();
+                        this.updateLocalStatsDisplay();
                     }
                 }
             });
@@ -45,7 +42,7 @@ class SubmitModule {
         observer.observe(this.modal, { attributes: true });
     }
 
-    // 确保标题右侧有累计数徽章（如果不存在则创建）
+    // 确保标题右侧有累计数徽章
     ensureStatsBadge() {
         const header = this.modal.querySelector('.feedback-modal-header');
         if (!header) return;
@@ -62,34 +59,11 @@ class SubmitModule {
         this.statsBadge = badge;
     }
 
-    // 获取累计投稿数（优先后端，失败时降级本地）
-    async fetchSubmissionStats() {
-        this.ensureStatsBadge(); // 确保徽章存在
-        try {
-            const res = await fetch(`${this.apiBase}/submission-stats`, {
-                headers: { 'X-Device-Id': this.getDeviceId() }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                const total = data.totalCount || 0;
-                if (this.statsBadge) {
-                    this.statsBadge.textContent = `已投稿 ${total} 次`;
-                }
-                // 同步本地计数（用于降级）
-                localStorage.setItem('submission_total', total);
-            } else {
-                // 后端失败，使用本地存储计数
-                const localTotal = this.getLocalSubmissionCount();
-                if (this.statsBadge) {
-                    this.statsBadge.textContent = `已投稿 ${localTotal} 次`;
-                }
-            }
-        } catch (err) {
-            console.error('获取投稿统计失败:', err);
-            const localTotal = this.getLocalSubmissionCount();
-            if (this.statsBadge) {
-                this.statsBadge.textContent = `已投稿 ${localTotal} 次`;
-            }
+    // 更新本地显示的累计投稿数
+    updateLocalStatsDisplay() {
+        const total = this.getLocalSubmissionCount();
+        if (this.statsBadge) {
+            this.statsBadge.textContent = `已投稿 ${total} 次`;
         }
     }
 
@@ -102,6 +76,7 @@ class SubmitModule {
         let count = this.getLocalSubmissionCount();
         count++;
         localStorage.setItem('submission_total', count);
+        this.updateLocalStatsDisplay();
         return count;
     }
 
@@ -192,10 +167,7 @@ class SubmitModule {
 
             if (data.alreadySubmitted) {
                 this.urlCheckResult.className = 'url-check-result unsafe';
-                this.urlCheckResult.textContent = data.label || '该网站已收录，无法提交';
-            } else if (data.asyncCheck) {
-                this.urlCheckResult.className = 'url-check-result safe';
-                this.urlCheckResult.textContent = data.label || '信息获取成功，提交后后台将进行安全检测';
+                this.urlCheckResult.textContent = data.label || '该网站已收录或已在审核中，无法提交';
             } else if (!data.canSubmit) {
                 this.urlCheckResult.className = 'url-check-result unsafe';
                 this.urlCheckResult.textContent = data.label || '该链接存在安全风险，禁止提交';
@@ -240,7 +212,7 @@ class SubmitModule {
             return;
         }
         if (this.alreadySubmitted) {
-            window.toast.show('该网站已收录，无法再次提交', 'error');
+            window.toast.show('该网站已收录或已在审核中，无法再次提交', 'error');
             return;
         }
         if (!this.canSubmit) {
@@ -259,9 +231,6 @@ class SubmitModule {
                 description: this.descInput.value.trim(),
                 icon: this.iconInput.value.trim()
             };
-            if (this.editingRejectedId) {
-                payload.submissionId = this.editingRejectedId;
-            }
             const res = await fetch(`${this.apiBase}/submit-site`, {
                 method: 'POST',
                 headers: {
@@ -272,22 +241,11 @@ class SubmitModule {
             });
             if (res.ok) {
                 const data = await res.json();
-                if (data.asyncCheck) {
-                    window.toast.show(this.editingRejectedId ? '修改已提交！安全检测将在后台进行，通过后自动收录' : '投稿已提交！安全检测将在后台进行，通过后自动收录', 'success');
-                } else {
-                    window.toast.show('感谢投稿！', 'success');
-                }
-                // 投稿成功，增加本地计数并刷新徽章
+                window.toast.show('投稿已提交！安全检测将在后台进行，通过后自动收录', 'success');
+                // 投稿成功，增加本地计数
                 this.incrementLocalSubmissionCount();
-                await this.fetchSubmissionStats();  // 重新获取最新计数（后端优先）
-                // 强制立即显示更新后的数字
-                if (this.statsBadge) {
-                    const newTotal = this.getLocalSubmissionCount();
-                    this.statsBadge.textContent = `已投稿 ${newTotal} 次`;
-                }
                 this.modal.classList.remove('active');
                 this.resetForm();
-                this.editingRejectedId = null;
             } else {
                 const err = await res.json().catch(() => ({}));
                 window.toast.show(err.error || '提交失败', 'error');
