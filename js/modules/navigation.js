@@ -1,6 +1,6 @@
 /**
  * 优化分类导航系统（基于后端 Worker + D1）
- * 移除 api.71xk.com 依赖，图标加载失败时自动使用字体图标
+ * 图标服务使用 APIHz 接口返回的 ico 字段，且自带 onerror fallback
  */
 class OptimizedNavigation {
     constructor() {
@@ -342,7 +342,7 @@ class OptimizedNavigation {
         let iconHtml = '<i class="fas fa-link"></i>';
         if (site.icon) {
             const raw = site.icon.trim();
-            // 如果是 URL 开头的图标，添加 onerror 自动 fallback 为字体图标，避免外部服务
+            // 如果图标 URL 以 http 开头（包括 APIHz 返回的 ico），添加 onerror fallback
             if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('./') || /\.(png|jpg|jpeg|ico|svg)/i.test(raw)) {
                 iconHtml = `<img src="${this._escapeHtml(raw)}" alt="" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fas fa-link\\'></i>';">`;
             } else if (raw.startsWith('fas ') || raw.startsWith('fab ')) {
