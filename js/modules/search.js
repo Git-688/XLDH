@@ -1,6 +1,6 @@
 /**
  * 搜索模块 - 修复版（CSP 兼容，XSS 防护）
- * 默认直接实例化，无需等待 DOMContentLoaded
+ * 依赖 Utils.escapeHtml, Utils.debounce
  */
 class NewSearchModule {
     constructor() {
@@ -54,18 +54,11 @@ class NewSearchModule {
         try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
     }
 
-    escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     renderDropdown() {
         if (!this.dropdown) return;
         this.dropdown.innerHTML = this.engines.map(eng =>
             `<div class="engine-dropdown-item${eng.key === this.currentEngine ? ' active' : ''}" data-key="${eng.key}">
-                <i class="${eng.icon}"></i> ${this.escapeHtml(eng.label)}
+                <i class="${eng.icon}"></i> ${Utils.escapeHtml(eng.label)}
             </div>`
         ).join('');
     }
@@ -78,7 +71,7 @@ class NewSearchModule {
         }
         this.historyList.innerHTML = this.history.map(q =>
             `<div class="history-item">
-                <span class="history-text">${this.escapeHtml(q)}</span>
+                <span class="history-text">${Utils.escapeHtml(q)}</span>
                 <i class="fas fa-times delete-history"></i>
             </div>`
         ).join('');
@@ -204,11 +197,11 @@ class NewSearchModule {
         if (!this.suggestionsContainer) return;
         let html = '';
         if (words && words.length > 0) {
-            html += words.map(w => `<div class="suggestion-item">${this.escapeHtml(w)}</div>`).join('');
+            html += words.map(w => `<div class="suggestion-item">${Utils.escapeHtml(w)}</div>`).join('');
         }
         if (related && related.length > 0) {
             html += '<div style="text-align:center;color:var(--text-secondary);font-size:11px;padding:10px 0 6px;letter-spacing:1px;opacity:0.8;">— 相关搜索 —</div>';
-            html += related.map(r => `<div class="suggestion-item related-item">${this.escapeHtml(r)}</div>`).join('');
+            html += related.map(r => `<div class="suggestion-item related-item">${Utils.escapeHtml(r)}</div>`).join('');
         }
         this.suggestionsContainer.innerHTML = html;
         this.suggestionsContainer.classList.add('active');
