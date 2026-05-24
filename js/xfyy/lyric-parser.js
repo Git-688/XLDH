@@ -1,5 +1,6 @@
 /**
  * 歌词解析器 - 精简版，仅支持 LRC，增强容错
+ * 使用 Utils.formatTime（如果需要）
  */
 
 class LyricParser {
@@ -30,8 +31,7 @@ class LyricParser {
                 const seconds = parseInt(match[2]);
                 let milliseconds = 0;
                 if (match[3]) {
-                    // 兼容1位、2位和3位毫秒表示
-                    const msRaw = match[3].padEnd(3, '0'); // 补齐到3位
+                    const msRaw = match[3].padEnd(3, '0');
                     milliseconds = parseInt(msRaw);
                 }
                 const time = minutes * 60 + seconds + milliseconds / 1000;
