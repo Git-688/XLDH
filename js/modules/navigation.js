@@ -1,7 +1,6 @@
 /**
  * 优化分类导航系统（基于后端 Worker + D1）
- * 修复移动端搜索输入框自动滚动优化、清除按钮样式、搜索结果高亮等
- * 新增：死链报告按钮防重复、已失效卡片隐藏报告按钮、图片图标 fallback
+ * 移除 api.71xk.com 依赖，图标加载失败时自动使用字体图标
  */
 class OptimizedNavigation {
     constructor() {
@@ -9,7 +8,6 @@ class OptimizedNavigation {
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
         this.isInitialized = false;
-        
         this.stats = { totalCategories: 0, totalWebsites: 0, invalidCount: 0 };
         this.isNavigationClick = false;
         this.skeletonCount = 6;
@@ -18,12 +16,10 @@ class OptimizedNavigation {
         this.UPDATE_INTERVAL = 5 * 60 * 1000;
         this.quietUpdate = true;
         this.pendingNavRequest = null;
-
         this.allSitesFlat = [];
         this.searchInput = null;
         this.isSearching = false;
         this.searchTimer = null;
-        
         this.apiBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     }
 
@@ -84,7 +80,6 @@ class OptimizedNavigation {
     createSearchBox() {
         const navHeader = document.querySelector('.navigation-header');
         if (!navHeader || navHeader.querySelector('.nav-search-box')) return;
-
         const container = document.createElement('div');
         container.className = 'nav-search-box';
         container.innerHTML = `
@@ -97,37 +92,30 @@ class OptimizedNavigation {
             </div>
             <span class="search-result-hint" id="navSearchHint" style="display:none;"></span>
         `;
-
         navHeader.appendChild(container);
         this.searchInput = container.querySelector('#navSearchInput');
         const clearBtn = container.querySelector('#navSearchClearBtn');
-
         this.searchInput.addEventListener('input', () => {
             const query = this.searchInput.value.trim();
             clearBtn.style.display = query ? 'flex' : 'none';
             clearTimeout(this.searchTimer);
             this.searchTimer = setTimeout(() => query ? this.performSearch(query) : this.clearSearch(), 300);
         });
-
         this.searchInput.addEventListener('focus', () => {
             if (window.innerWidth <= 768) {
                 const rect = this.searchInput.getBoundingClientRect();
                 const viewportHeight = window.innerHeight;
                 if (rect.bottom > viewportHeight - 100 || rect.top < 60) {
-                    setTimeout(() => {
-                        this.searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 200);
+                    setTimeout(() => this.searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200);
                 }
             }
         });
-
         clearBtn.addEventListener('click', () => {
             this.searchInput.value = '';
             clearBtn.style.display = 'none';
             this.clearSearch();
             this.searchInput.focus();
         });
-
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
@@ -157,10 +145,8 @@ class OptimizedNavigation {
             (site.description && site.description.toLowerCase().includes(keyword)) ||
             (site.url && site.url.toLowerCase().includes(keyword))
         );
-
         const container = document.getElementById('level3Content');
         if (!container) return;
-        
         const fragment = document.createDocumentFragment();
         if (results.length === 0) {
             const emptyDiv = document.createElement('div');
@@ -174,13 +160,11 @@ class OptimizedNavigation {
         }
         container.innerHTML = '';
         container.appendChild(fragment);
-
         const hint = document.getElementById('navSearchHint');
         if (hint) {
             hint.style.display = 'block';
             hint.textContent = `找到 ${results.length} 个结果`;
         }
-
         document.querySelectorAll('.level1-btn, .level2-btn').forEach(b => b.classList.remove('active'));
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
@@ -191,7 +175,6 @@ class OptimizedNavigation {
         this.isSearching = false;
         const hint = document.getElementById('navSearchHint');
         if (hint) hint.style.display = 'none';
-        
         if (this.selectedLevel1 && this.navigationData?.categories?.[this.selectedLevel1]) {
             this.selectLevel1(this.selectedLevel1, false);
         } else {
@@ -348,7 +331,6 @@ class OptimizedNavigation {
         container.appendChild(fragment);
     }
 
-    // ========== 修改点：图片图标添加 onerror fallback ==========
     createSiteCard(site, index) {
         const card = document.createElement('a');
         card.className = `site-card ${site.valid === false ? 'invalid' : ''}`;
@@ -360,9 +342,9 @@ class OptimizedNavigation {
         let iconHtml = '<i class="fas fa-link"></i>';
         if (site.icon) {
             const raw = site.icon.trim();
+            // 如果是 URL 开头的图标，添加 onerror 自动 fallback 为字体图标，避免外部服务
             if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('./') || /\.(png|jpg|jpeg|ico|svg)/i.test(raw)) {
-                // 添加 onerror 处理，加载失败时替换为字体图标
-                iconHtml = `<img src="${this._escapeHtml(raw)}" alt="" loading="lazy" class="js-img-fallback" data-fallback-type="icon" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\'fas fa-link\'></i>';">`;
+                iconHtml = `<img src="${this._escapeHtml(raw)}" alt="" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fas fa-link\\'></i>';">`;
             } else if (raw.startsWith('fas ') || raw.startsWith('fab ')) {
                 iconHtml = `<i class="${raw}"></i>`;
             } else {
@@ -393,7 +375,6 @@ class OptimizedNavigation {
             </div>
         `;
 
-        // 卡片点击统计
         card.addEventListener('click', (e) => {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
@@ -414,15 +395,13 @@ class OptimizedNavigation {
             setTimeout(() => { this.isNavigationClick = false; if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false; }, 100);
         });
 
-        // 报告死链按钮逻辑（防重复 + 无效卡片隐藏）
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
                 reportBtn.style.display = 'none';
             } else {
                 reportBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+                    e.preventDefault(); e.stopPropagation();
                     if (reportBtn.disabled) return;
                     reportBtn.disabled = true;
                     reportBtn.style.opacity = '0.5';
