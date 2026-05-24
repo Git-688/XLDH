@@ -1,7 +1,7 @@
 /**
  * 优化分类导航系统（基于后端 Worker + D1）
  * 修复移动端搜索输入框自动滚动优化、清除按钮样式、搜索结果高亮等
- * 新增：死链报告按钮防重复、已失效卡片隐藏报告按钮
+ * 新增：死链报告按钮防重复、已失效卡片隐藏报告按钮、图片图标 fallback
  */
 class OptimizedNavigation {
     constructor() {
@@ -348,7 +348,7 @@ class OptimizedNavigation {
         container.appendChild(fragment);
     }
 
-    // ========== 修改点：createSiteCard 中的报告按钮防重复 + 无效卡片隐藏按钮 ==========
+    // ========== 修改点：图片图标添加 onerror fallback ==========
     createSiteCard(site, index) {
         const card = document.createElement('a');
         card.className = `site-card ${site.valid === false ? 'invalid' : ''}`;
@@ -361,7 +361,8 @@ class OptimizedNavigation {
         if (site.icon) {
             const raw = site.icon.trim();
             if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('./') || /\.(png|jpg|jpeg|ico|svg)/i.test(raw)) {
-                iconHtml = `<img src="${this._escapeHtml(raw)}" alt="" loading="lazy" class="js-img-fallback" data-fallback-type="icon">`;
+                // 添加 onerror 处理，加载失败时替换为字体图标
+                iconHtml = `<img src="${this._escapeHtml(raw)}" alt="" loading="lazy" class="js-img-fallback" data-fallback-type="icon" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\'fas fa-link\'></i>';">`;
             } else if (raw.startsWith('fas ') || raw.startsWith('fab ')) {
                 iconHtml = `<i class="${raw}"></i>`;
             } else {
@@ -416,14 +417,12 @@ class OptimizedNavigation {
         // 报告死链按钮逻辑（防重复 + 无效卡片隐藏）
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
-            // 如果网站已经无效（valid === false），则隐藏报告按钮
             if (site.valid === false) {
                 reportBtn.style.display = 'none';
             } else {
                 reportBtn.addEventListener('click', async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    // 防止重复点击
                     if (reportBtn.disabled) return;
                     reportBtn.disabled = true;
                     reportBtn.style.opacity = '0.5';
@@ -436,7 +435,6 @@ class OptimizedNavigation {
                         });
                         if (res.ok) {
                             window.toast.show('已反馈，管理员将处理', 'success');
-                            // 可选：立即隐藏按钮，卡片样式改为 invalid
                             reportBtn.style.display = 'none';
                             card.classList.add('invalid');
                         } else {
