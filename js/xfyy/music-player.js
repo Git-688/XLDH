@@ -237,7 +237,7 @@ class MusicPlayer {
         this.maxConsecutiveErrors = 3;
         this.maxErrorShown = false;
 
-        this.waitingForUserGesture = false;  // 移动端等待用户手势
+        this.waitingForUserGesture = false;
     }
 
     initCoverObserver() {
@@ -343,33 +343,17 @@ class MusicPlayer {
         });
     }
 
-    saveVolume(volume) {
-        Storage.setItem('musicPlayer.volume', volume);
-    }
-    loadVolume() {
-        return Storage.getItem('musicPlayer.volume', 0.5);
-    }
+    saveVolume(volume) { Storage.setItem('musicPlayer.volume', volume); }
+    loadVolume() { return Storage.getItem('musicPlayer.volume', 0.5); }
 
-    savePlaybackSpeed(speed) {
-        Storage.setItem('musicPlayer.playbackSpeed', speed);
-    }
-    loadPlaybackSpeed() {
-        return Storage.getItem('musicPlayer.playbackSpeed', 1.0);
-    }
+    savePlaybackSpeed(speed) { Storage.setItem('musicPlayer.playbackSpeed', speed); }
+    loadPlaybackSpeed() { return Storage.getItem('musicPlayer.playbackSpeed', 1.0); }
 
-    savePlayMode(mode) {
-        Storage.setItem('musicPlayer.playMode', mode);
-    }
-    loadPlayMode() {
-        return Storage.getItem('musicPlayer.playMode', 0);
-    }
+    savePlayMode(mode) { Storage.setItem('musicPlayer.playMode', mode); }
+    loadPlayMode() { return Storage.getItem('musicPlayer.playMode', 0); }
 
-    savePlayState(isPlaying) {
-        Storage.setItem('musicPlayer.playState', isPlaying);
-    }
-    loadPlayState() {
-        return Storage.getItem('musicPlayer.playState', false);
-    }
+    savePlayState(isPlaying) { Storage.setItem('musicPlayer.playState', isPlaying); }
+    loadPlayState() { return Storage.getItem('musicPlayer.playState', false); }
 
     bindEvents() {
         this.elements.playBtn.addEventListener('click', () => this.togglePlay());
@@ -507,12 +491,10 @@ class MusicPlayer {
         }
     }
 
-    // 播放控制（修复移动端自动播放）
     togglePlay() {
         if (this.isHandlingNavigationClick) return;
         if (this.waitingForUserGesture) {
             this.waitingForUserGesture = false;
-            // 如果有音频源且之前是播放状态，尝试播放
             if (this.audio.src && this.isPlaying) {
                 this.play();
                 return;
@@ -777,7 +759,7 @@ class MusicPlayer {
             const results = await this.pluginManager.search(apiId, keyword);
             this.renderSearchResults(apiId, results);
             if (results.length === 0) {
-                window.toast.show(`未找到与"${keyword}"相关的歌曲`, 'info');
+                window.toast.show(`未找到与"${Utils.escapeHtml(keyword)}"相关的歌曲`, 'info');
             }
         } catch (error) {
             console.error(`搜索失败:`, error);
@@ -1271,7 +1253,6 @@ class MusicPlayer {
         }, 100);
         this.hasInitialized = true;
 
-        // 移动端：如果上次是播放状态，先暂停，等待用户手势
         if (this.isPlaying) {
             this.isPlaying = false;
             this.savePlayState(false);
