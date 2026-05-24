@@ -1,5 +1,5 @@
 /**
- * 全局错误处理管理器（修复版：兼容 toast 未加载情况）
+ * 全局错误处理管理器（过滤无意义错误）
  */
 class ErrorHandler {
     constructor() {
@@ -69,6 +69,17 @@ class ErrorHandler {
     }
 
     handleError(errorInfo) {
+        // 忽略无意义的 Script error.（跨域限制）
+        if (errorInfo.message === 'Script error.' || errorInfo.message === 'Script error') {
+            this.reportToServer(errorInfo);
+            return;
+        }
+        // 忽略图片资源加载错误（用户不关心）
+        if (errorInfo.type === 'resource' && errorInfo.tag === 'IMG') {
+            this.reportToServer(errorInfo);
+            return;
+        }
+
         if (this.errors.length >= this.maxErrors) {
             this.errors.shift();
         }
@@ -79,23 +90,24 @@ class ErrorHandler {
     }
 
     showUserFriendlyMessage(errorInfo) {
+        if (errorInfo.message === 'Script error.' || errorInfo.message === 'Script error') return;
+        if (errorInfo.type === 'resource' && errorInfo.tag === 'IMG') return;
+
         if (window._lastErrorTime && Date.now() - window._lastErrorTime < 5000) return;
         window._lastErrorTime = Date.now();
 
         let userMessage = '页面遇到一些小问题，请尝试刷新。';
-        if (errorInfo.type === 'resource') {
-            userMessage = `加载资源失败: ${errorInfo.src}`;
+        if (errorInfo.type === 'resource' && errorInfo.tag === 'SCRIPT') {
+            userMessage = `加载脚本失败: ${errorInfo.src}`;
         } else if (errorInfo.message && errorInfo.message.includes('NetworkError')) {
             userMessage = '网络连接异常，请检查网络后重试。';
         } else if (errorInfo.message && errorInfo.message.includes('Failed to fetch')) {
             userMessage = '请求后端服务失败，请稍后重试。';
         }
 
-        // 安全调用 toast
         if (window.toast && typeof window.toast.show === 'function') {
             window.toast.show(userMessage, 'error', 5000);
         } else {
-            // 降级方案：控制台警告，不打扰用户（避免 alert）
             console.warn('[ErrorHandler] toast not available, message:', userMessage);
         }
     }
