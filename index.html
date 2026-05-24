@@ -464,7 +464,6 @@
     </div>
 </div>
 
-<!-- 静态加载的核心模块（非音乐播放器和评论） -->
 <script src="./js/utils.js"></script>
 <script src="./js/toast.js"></script>
 <script src="./js/error-handler.js"></script>
@@ -482,79 +481,15 @@
 <script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
 <script src="./js/main.js"></script>
-
-<!-- 动态加载音乐播放器和评论系统的脚本 -->
-<script>
-// 动态加载脚本的辅助函数
-function loadScript(src) {
-    return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) {
-            resolve();
-            return;
-        }
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-    });
-}
-
-// 加载音乐播放器所需的所有模块
-async function loadMusicPlayer() {
-    await loadScript('./js/xfyy/cache-manager.js');
-    await loadScript('./js/xfyy/lyric-parser.js');
-    await loadScript('./data/local-music-data.js');
-    await loadScript('./js/xfyy/plugin-manager.js');
-    await loadScript('./js/xfyy/music-player.js');
-    await loadScript('./js/xfyy/music-main.js');
-    // 音乐播放器会在 music-main.js 中自动初始化
-}
-
-// 加载评论系统
-async function loadComment() {
-    await loadScript('https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.umd.js');
-    await loadScript('./js/modules/comment.js');
-}
-
-// 为音乐按钮绑定动态加载（只绑定一次）
-const musicBtn = document.getElementById('musicBtn');
-if (musicBtn && !musicBtn.dataset.dynamicLoaded) {
-    musicBtn.addEventListener('click', () => {
-        if (!window.musicPlayerLoaded) {
-            loadMusicPlayer().then(() => {
-                window.musicPlayerLoaded = true;
-                // 加载完成后，如果有需要可以再次触发点击来显示播放器
-                if (window.app?.components?.navbar) {
-                    window.app.components.navbar.toggleMusicPlayer();
-                }
-            }).catch(err => console.error('音乐播放器加载失败:', err));
-        }
-    }, { once: true });
-    musicBtn.dataset.dynamicLoaded = 'true';
-}
-
-// 为评论按钮绑定动态加载
-const commentBtn = document.getElementById('commentBtn');
-if (commentBtn && !commentBtn.dataset.dynamicLoaded) {
-    commentBtn.addEventListener('click', () => {
-        if (!window.commentLoaded) {
-            loadComment().then(() => {
-                window.commentLoaded = true;
-                // 加载完成后显示评论模态框
-                if (window.commentModule && typeof window.commentModule.open === 'function') {
-                    window.commentModule.open();
-                }
-            }).catch(err => console.error('评论系统加载失败:', err));
-        } else {
-            // 已加载过，直接打开
-            if (window.commentModule && typeof window.commentModule.open === 'function') {
-                window.commentModule.open();
-            }
-        }
-    }, { once: true });
-    commentBtn.dataset.dynamicLoaded = 'true';
-}
-</script>
+<script src="./js/xfyy/utils.js"></script>
+<script src="./js/xfyy/cache-manager.js"></script>
+<script src="./js/xfyy/lyric-parser.js"></script>
+<script src="./data/local-music-data.js"></script>
+<script src="./js/xfyy/plugin-manager.js"></script>
+<script src="./js/xfyy/music-player.js"></script>
+<script src="./js/xfyy/music-main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@waline/client/dist/waline.umd.js"></script>
+<script src="./js/modules/comment.js"></script>
+<script src="./js/modules/submit.js"></script>
 </body>
 </html>
