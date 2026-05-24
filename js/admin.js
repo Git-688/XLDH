@@ -14,7 +14,7 @@
     let currentSubmissionId = null;
     let refreshTimer = null;
 
-    // 注入全局样式（标题省略等）
+    // 注入全局样式
     function injectGlobalStyles() {
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
@@ -34,7 +34,6 @@
                 @media (max-width: 480px) {
                     .submission-title-truncate { max-width: 120px; }
                 }
-                /* 统一表单控件样式 */
                 .form-input {
                     width: 100%;
                     padding: 8px 12px;
@@ -429,7 +428,7 @@
         `).join('');
     }
 
-    // ================== 投稿详情模态框 ==================
+    // ================== 投稿详情模态框（简化版）==================
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -451,40 +450,22 @@
             const data = await apiFetch('/admin/submissions');
             const item = data.find(s => s.id == id);
             if (!item) { showToast('未找到该投稿', 'error'); return; }
-            let statusClass = '', statusText = '';
-            if (item.status === 'approved') { statusClass = 'status-approved'; statusText = '已通过'; }
-            else if (item.status === 'rejected') { statusClass = 'status-rejected'; statusText = '已拒绝'; }
-            else { statusClass = 'status-pending'; statusText = '待审核'; }
             const vtColor = (item.vt_result || '').includes('安全') ? '#10b981' : '#ef4444';
             const iconPreview = item.icon && (item.icon.startsWith('http') || item.icon.startsWith('https'))
                 ? `<img src="${escapeHtml(item.icon)}" style="width:20px;height:20px;vertical-align:middle;border-radius:4px;">`
                 : `<i class="${escapeHtml(item.icon || 'fas fa-link')}"></i>`;
-            const isPending = (item.status === 'pending');
-            const titleHtml = isPending
-                ? `<input type="text" id="editTitle" value="${escapeHtml(item.title)}" class="form-input" style="width:100%;" />`
-                : escapeHtml(item.title);
-            const descHtml = isPending
-                ? `<textarea id="editDesc" rows="2" class="form-input" style="width:100%; resize: vertical;">${escapeHtml(item.description || '')}</textarea>`
-                : `<div style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(item.description || '无')}</div>`;
-            const iconHtml = isPending
-                ? `<input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" class="form-input" style="width:100%;" />`
-                : (item.icon ? escapeHtml(item.icon) : '无');
             
             let html = `
                 <div class="info-card">
-                    <div class="info-row"><div class="info-label">标题</div><div class="info-value">${titleHtml}</div></div>
+                    <div class="info-row"><div class="info-label">标题</div><div class="info-value">${escapeHtml(item.title)}</div></div>
                     <div class="info-row"><div class="info-label">网址</div><div class="info-value"><a href="${escapeHtml(item.url)}" target="_blank">${escapeHtml(item.url)}</a></div></div>
-                    <div class="info-row"><div class="info-label">图标</div><div class="info-value">${iconHtml} ${!isPending && item.icon ? `<div style="margin-top:4px;">${iconPreview}</div>` : ''}</div></div>
-                    <div class="info-row"><div class="info-label">描述</div><div class="info-value" style="max-width:100%;">${descHtml}</div></div>
+                    <div class="info-row"><div class="info-label">图标</div><div class="info-value">${item.icon ? iconPreview : '无'}</div></div>
+                    <div class="info-row"><div class="info-label">描述</div><div class="info-value" style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(item.description || '无')}</div></div>
                     <div class="info-row"><div class="info-label">提交者</div><div class="info-value">${escapeHtml(item.submitter_ip)}</div></div>
                     <div class="info-row"><div class="info-label">提交时间</div><div class="info-value">${new Date(item.submit_time).toLocaleString()}</div></div>
                     <div class="info-row"><div class="info-label">安全检测</div><div class="info-value"><span style="color:${vtColor}">${escapeHtml(item.vt_result || '未检测')}</span></div></div>
-                    <div class="info-row"><div class="info-label">状态</div><div class="info-value"><span class="status-badge ${statusClass}">${statusText}</span></div></div>
                 </div>
             `;
-            if (isPending) {
-                html += `<div class="action-card" style="margin-top:8px;"><button class="primary" id="saveEditBtn">💾 保存修改</button></div>`;
-            }
             html += `
                 <div class="action-section">
                     <div class="action-card"><h4><i class="fas fa-check-circle"></i> 通过收录</h4>
@@ -496,28 +477,11 @@
                         <button class="btn-approve" id="doApproveBtn">✓ 通过并收录</button>
                     </div>
                     <div class="action-card"><h4><i class="fas fa-ban"></i> 拒绝投稿</h4>
-                        <button class="btn-reject" id="doRejectBtn">✗ 拒绝（不收录）</button>
+                        <button class="btn-reject" id="doRejectBtn">✗ 拒绝（删除投稿）</button>
                     </div>
                 </div>
             `;
             contentDiv.innerHTML = html;
-            
-            if (isPending) {
-                const descTextarea = document.getElementById('editDesc');
-                if (descTextarea) {
-                    autoResizeTextarea(descTextarea);
-                    descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
-                }
-                const saveBtn = document.getElementById('saveEditBtn');
-                if (saveBtn) {
-                    saveBtn.addEventListener('click', async () => {
-                        const newTitle = document.getElementById('editTitle').value.trim();
-                        if (!newTitle) { showToast('标题不能为空', 'error'); return; }
-                        await editSubmission(item.id, newTitle, document.getElementById('editDesc').value.trim(), document.getElementById('editIcon').value.trim());
-                        openSubmissionDetail(id);
-                    });
-                }
-            }
             
             const catSelect = document.getElementById('approveCatSelect');
             const subSelect = document.getElementById('approveSubSelect');
@@ -544,11 +508,12 @@
                     await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 } catch (err) { showToast('操作失败', 'error'); }
             };
+            // 拒绝投稿改为 DELETE 请求
             document.getElementById('doRejectBtn').onclick = async () => {
-                if (!confirm('确定要拒绝该投稿吗？拒绝后用户可修改后再次提交。')) return;
+                if (!confirm('确定要拒绝该投稿吗？拒绝后将永久删除，用户不可修改')) return;
                 try {
-                    await apiFetch(`/admin/submissions/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason: '' }) });
-                    showToast('已拒绝', 'success');
+                    await apiFetch(`/admin/submissions/${id}`, { method: 'DELETE' });
+                    showToast('已拒绝并删除', 'success');
                     detailModal.classList.remove('show');
                     await loadSubmissions();
                 } catch (err) { showToast('操作失败', 'error'); }
@@ -557,15 +522,6 @@
             removeModalListeners();
             detailModal.classList.add('show');
         } catch (err) { showToast('加载详情失败', 'error'); }
-    }
-
-    async function editSubmission(id, newTitle, newDesc, newIcon) {
-        try {
-            await apiFetch(`/admin/submissions/${id}`, { method: 'PUT', body: JSON.stringify({ title: newTitle, description: newDesc, icon: newIcon }) });
-            showToast('投稿已更新', 'success');
-            await loadSubmissions();
-            return true;
-        } catch (err) { showToast('更新失败', 'error'); return false; }
     }
 
     function handleModifyCategory(id, currentName) {
@@ -794,7 +750,6 @@
         catch { showToast('刷新失败', 'error'); }
     }
 
-    // ========== 待审核列表（标题过长省略） ==========
     async function loadSubmissions() {
         const list = document.getElementById('submissionsList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -873,7 +828,6 @@
         }
     }
 
-    // 初始化：注入样式、恢复登录状态等
     injectGlobalStyles();
     const storedToken = getStoredToken();
     if (storedToken) {
