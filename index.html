@@ -18,8 +18,8 @@
         };
     </script>
 
-    <!-- CSP 仅保留生产必需域名 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
+    <!-- CSP 安全策略：移除了 unsafe-eval，仅保留自身和必要域名 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
 
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
@@ -420,7 +420,6 @@
 <div id="submitModal" class="feedback-modal">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
-            <!-- 修改点：添加剩余次数显示 -->
             <h3><i class="fas fa-paper-plane"></i> 网站投稿 <span class="submit-remaining-count" style="font-size:12px;margin-left:10px;">今日剩余 6 次</span></h3>
             <button class="feedback-modal-close">&times;</button>
         </div>
@@ -467,7 +466,7 @@
 
 <script src="./js/utils.js"></script>
 <script src="./js/toast.js"></script>
-<script src="./js/error-handler.js.js"></script>
+<script src="./js/error-handler.js"></script>
 <script src="./js/storage.js"></script>
 <script src="./js/api.js"></script>
 <script src="./js/components/navbar.js"></script>
