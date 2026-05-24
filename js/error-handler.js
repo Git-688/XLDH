@@ -6,7 +6,9 @@ class ErrorHandler {
     constructor() {
         this.errors = [];
         this.maxErrors = 50;
-        this.reportUrl = null; // 可设置为后端日志接口，例如 `${API_BASE}/log`
+        // 后端日志接口（可选，需要 Worker 支持 /log 端点）
+        this.reportUrl = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) ? 
+                         `${window.APP_CONFIG.API_BASE}/log` : null;
         this.init();
     }
 
@@ -23,8 +25,6 @@ class ErrorHandler {
                 stack: error?.stack,
                 timestamp: Date.now()
             });
-            // 可选：阻止默认控制台输出（不推荐，只是静默）
-            // return true;
         });
 
         // 捕获 Promise 未处理 rejection
@@ -38,7 +38,7 @@ class ErrorHandler {
             });
         });
 
-        // 捕获资源加载错误（图片、脚本等）
+        // 捕获资源加载错误（图片、脚本、样式）
         window.addEventListener('error', (event) => {
             const target = event.target;
             if (target && (target.tagName === 'IMG' || target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
@@ -88,18 +88,18 @@ class ErrorHandler {
         }
         this.errors.push(errorInfo);
 
-        // 输出到控制台（生产环境可关闭）
+        // 输出到控制台（生产环境可保留）
         console.error('[ErrorHandler]', errorInfo);
 
         // 显示用户友好的提示（避免频繁弹窗）
         this.showUserFriendlyMessage(errorInfo);
 
-        // 上报到服务器（可选）
+        // 上报到服务器
         this.reportToServer(errorInfo);
     }
 
     showUserFriendlyMessage(errorInfo) {
-        // 避免短时间内弹出过多提示
+        // 避免短时间内弹出过多提示（5秒内最多一次）
         if (window._lastErrorTime && Date.now() - window._lastErrorTime < 5000) {
             return;
         }
@@ -110,8 +110,10 @@ class ErrorHandler {
             userMessage = `加载资源失败: ${errorInfo.src}`;
         } else if (errorInfo.message && errorInfo.message.includes('NetworkError')) {
             userMessage = '网络连接异常，请检查网络后重试。';
+        } else if (errorInfo.message && errorInfo.message.includes('Failed to fetch')) {
+            userMessage = '请求后端服务失败，请稍后重试。';
         }
-        // 使用现有的 toast 提示
+
         if (window.toast && typeof window.toast.show === 'function') {
             window.toast.show(userMessage, 'error', 5000);
         } else {
@@ -120,13 +122,8 @@ class ErrorHandler {
     }
 
     async reportToServer(errorInfo) {
-        if (!this.reportUrl) {
-            // 如果未配置上报地址，可忽略；生产环境可设为 Worker 的 /log 接口
-            // this.reportUrl = (window.APP_CONFIG?.API_BASE || '') + '/log';
-            return;
-        }
+        if (!this.reportUrl) return;
         try {
-            // 避免上报阻塞主线程，使用 sendBeacon 或 fetch keepalive
             const payload = JSON.stringify(errorInfo);
             if (navigator.sendBeacon) {
                 navigator.sendBeacon(this.reportUrl, payload);
@@ -138,7 +135,9 @@ class ErrorHandler {
                     keepalive: true
                 }).catch(() => {});
             }
-        } catch (e) {}
+        } catch (e) {
+            // 静默失败
+        }
     }
 
     /**
