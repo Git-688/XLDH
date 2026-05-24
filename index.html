@@ -18,8 +18,8 @@
         };
     </script>
 
-    <!-- CSP 安全策略：移除了 unsafe-eval，仅保留自身和必要域名 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
+    <!-- CSP 安全策略：已添加 cloudflareinsights.com 域名 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc https://static.cloudflareinsights.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
 
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
@@ -481,6 +481,7 @@
 <script src="./js/modules/stats.js"></script>
 <script src="./js/modules/compact-tags.js"></script>
 <script src="./js/main.js"></script>
+<!-- 已移除 <script src="./js/xfyy/utils.js"></script> -->
 <script src="./js/xfyy/cache-manager.js"></script>
 <script src="./js/xfyy/lyric-parser.js"></script>
 <script src="./data/local-music-data.js"></script>
