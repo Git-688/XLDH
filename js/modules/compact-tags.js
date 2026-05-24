@@ -1,8 +1,6 @@
-
-// compact-tags.js - 彩虹浅色标签模块（完整列表版，使用 Utils.escapeHtml）
+// compact-tags.js - 彩虹浅色标签模块（使用 Utils.escapeHtml）
 class CompactTagsModule {
     constructor() {
-        // 最终标签列表：保留的原标签 + 新添加标签，按名称拼音排序
         this.tags = [
             { name: '60s快讯', icon: 'fas fa-newspaper', link: 'pages/tools/60s快讯.html' },
             { name: '本草药材', icon: 'fas fa-leaf', link: 'pages/tools/本草药材.html' },
@@ -54,9 +52,7 @@ class CompactTagsModule {
     renderTags() {
         const grid = document.getElementById('tagsGrid');
         if (!grid) return;
-
         grid.innerHTML = this.tags.map((tag, index) => {
-            // 彩虹七色循环
             const colorNum = (index % 7) + 1;
             const colorClass = `tag-color-${colorNum}`;
             const safeName = Utils.escapeHtml(tag.name);
@@ -76,14 +72,10 @@ class CompactTagsModule {
     bindEvents() {
         const grid = document.getElementById('tagsGrid');
         if (!grid) return;
-
         grid.addEventListener('click', (e) => {
             const tag = e.target.closest('.minimal-tag');
-            if (tag) {
-                this.handleTagClick(tag);
-            }
+            if (tag) this.handleTagClick(tag);
         });
-
         grid.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 const tag = e.target.closest('.minimal-tag');
@@ -96,22 +88,16 @@ class CompactTagsModule {
     }
 
     handleTagClick(tag) {
-        document.querySelectorAll('.minimal-tag.active').forEach(t => {
-            t.classList.remove('active');
-        });
+        document.querySelectorAll('.minimal-tag.active').forEach(t => t.classList.remove('active'));
         tag.classList.add('active');
         tag.style.transform = 'scale(0.98)';
-        setTimeout(() => {
-            tag.style.transform = '';
-        }, 120);
+        setTimeout(() => { tag.style.transform = ''; }, 120);
     }
 }
 
-// 初始化模块
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.compactTagsModule) {
         window.compactTagsModule = new CompactTagsModule();
     }
 });
-
 window.CompactTagsModule = CompactTagsModule;
