@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 按需加载站点版
+ * 优化分类导航系统 - 按需加载站点版（死链按钮优化）
  * 功能：三级导航、搜索、死链报告、自动更新、按需加载站点、图片懒加载
  */
 class OptimizedNavigation {
@@ -258,13 +258,21 @@ class OptimizedNavigation {
             setTimeout(() => { this.isNavigationClick = false; if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false; }, 100);
         });
 
+        // ========== 死链报告按钮优化：无效卡片按钮置灰并显示提示，不隐藏 ==========
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
-                reportBtn.style.display = 'none';
+                // 无效卡片：按钮置灰，不可点击，添加提示
+                reportBtn.disabled = true;
+                reportBtn.style.opacity = '0.5';
+                reportBtn.style.cursor = 'not-allowed';
+                reportBtn.title = '该链接已报告，等待管理员处理';
+                const icon = reportBtn.querySelector('i');
+                if (icon) icon.style.color = '#999';
             } else {
                 reportBtn.addEventListener('click', async (e) => {
-                    e.preventDefault(); e.stopPropagation();
+                    e.preventDefault();
+                    e.stopPropagation();
                     if (reportBtn.disabled) return;
                     reportBtn.disabled = true;
                     reportBtn.style.opacity = '0.5';
@@ -277,7 +285,12 @@ class OptimizedNavigation {
                         });
                         if (res.ok) {
                             window.toast.show('已反馈，管理员将处理', 'success');
-                            reportBtn.style.display = 'none';
+                            // 报告成功后，将按钮改为失效状态（不隐藏）
+                            reportBtn.disabled = true;
+                            reportBtn.title = '已报告，等待处理';
+                            reportBtn.style.opacity = '0.5';
+                            const icon = reportBtn.querySelector('i');
+                            if (icon) icon.style.color = '#999';
                             card.classList.add('invalid');
                         } else {
                             const err = await res.json().catch(() => ({}));
