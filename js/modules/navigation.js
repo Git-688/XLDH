@@ -1,6 +1,7 @@
 /**
  * 优化分类导航系统（基于后端 Worker + D1）
  * 修复移动端搜索输入框自动滚动优化、清除按钮样式、搜索结果高亮等
+ * 新增：死链报告按钮防重复、已失效卡片隐藏报告按钮
  */
 class OptimizedNavigation {
     constructor() {
@@ -108,7 +109,6 @@ class OptimizedNavigation {
             this.searchTimer = setTimeout(() => query ? this.performSearch(query) : this.clearSearch(), 300);
         });
 
-        // 移动端优化：仅在输入框完全不可见时才滚动，避免频繁干扰
         this.searchInput.addEventListener('focus', () => {
             if (window.innerWidth <= 768) {
                 const rect = this.searchInput.getBoundingClientRect();
@@ -161,7 +161,6 @@ class OptimizedNavigation {
         const container = document.getElementById('level3Content');
         if (!container) return;
         
-        // 使用 DocumentFragment 批量插入，提高性能
         const fragment = document.createDocumentFragment();
         if (results.length === 0) {
             const emptyDiv = document.createElement('div');
@@ -193,7 +192,6 @@ class OptimizedNavigation {
         const hint = document.getElementById('navSearchHint');
         if (hint) hint.style.display = 'none';
         
-        // 确保有有效的分类
         if (this.selectedLevel1 && this.navigationData?.categories?.[this.selectedLevel1]) {
             this.selectLevel1(this.selectedLevel1, false);
         } else {
@@ -202,7 +200,6 @@ class OptimizedNavigation {
                 this.selectedLevel1 = firstCat;
                 this.selectLevel1(firstCat, false);
             } else {
-                // 无数据时重新加载
                 this.loadNavigationData().then(() => {
                     const newFirst = this.getFirstCategory();
                     if (newFirst) this.selectLevel1(newFirst, false);
@@ -351,6 +348,7 @@ class OptimizedNavigation {
         container.appendChild(fragment);
     }
 
+    // ========== 修改点：createSiteCard 中的报告按钮防重复 + 无效卡片隐藏按钮 ==========
     createSiteCard(site, index) {
         const card = document.createElement('a');
         card.className = `site-card ${site.valid === false ? 'invalid' : ''}`;
@@ -394,6 +392,7 @@ class OptimizedNavigation {
             </div>
         `;
 
+        // 卡片点击统计
         card.addEventListener('click', (e) => {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
@@ -414,18 +413,47 @@ class OptimizedNavigation {
             setTimeout(() => { this.isNavigationClick = false; if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false; }, 100);
         });
 
+        // 报告死链按钮逻辑（防重复 + 无效卡片隐藏）
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
-            reportBtn.addEventListener('click', async (e) => {
-                e.preventDefault(); e.stopPropagation();
-                try {
-                    const res = await fetch(`${this.apiBase}/report-dead-link`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url: reportBtn.dataset.url, title: reportBtn.dataset.title })
-                    });
-                    window.toast.show(res.ok ? '已收到反馈' : '反馈失败', res.ok ? 'success' : 'error');
-                } catch { window.toast.show('网络错误', 'error'); }
-            });
+            // 如果网站已经无效（valid === false），则隐藏报告按钮
+            if (site.valid === false) {
+                reportBtn.style.display = 'none';
+            } else {
+                reportBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // 防止重复点击
+                    if (reportBtn.disabled) return;
+                    reportBtn.disabled = true;
+                    reportBtn.style.opacity = '0.5';
+                    reportBtn.style.cursor = 'not-allowed';
+                    try {
+                        const res = await fetch(`${this.apiBase}/report-dead-link`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: reportBtn.dataset.url, title: reportBtn.dataset.title })
+                        });
+                        if (res.ok) {
+                            window.toast.show('已反馈，管理员将处理', 'success');
+                            // 可选：立即隐藏按钮，卡片样式改为 invalid
+                            reportBtn.style.display = 'none';
+                            card.classList.add('invalid');
+                        } else {
+                            const err = await res.json().catch(() => ({}));
+                            window.toast.show(err.error || '反馈失败', 'error');
+                            reportBtn.disabled = false;
+                            reportBtn.style.opacity = '';
+                            reportBtn.style.cursor = '';
+                        }
+                    } catch {
+                        window.toast.show('网络错误', 'error');
+                        reportBtn.disabled = false;
+                        reportBtn.style.opacity = '';
+                        reportBtn.style.cursor = '';
+                    }
+                });
+            }
         }
         return card;
     }
