@@ -1,11 +1,11 @@
 /**
- * 优化分类导航系统 - 按需加载站点版（死链按钮优化）
- * 功能：三级导航、搜索、死链报告、自动更新、按需加载站点、图片懒加载
+ * 优化分类导航系统 - 拼音搜索版
+ * 功能：三级导航、搜索（支持拼音/首字母）、死链报告、自动更新、按需加载站点、图片懒加载
  */
 class OptimizedNavigation {
     constructor() {
-        this.structure = null;           // 分类结构（无站点）
-        this.siteCache = new Map();      // 站点缓存 key: subcategory_id, value: sites[]
+        this.structure = null;
+        this.siteCache = new Map();
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
         this.isInitialized = false;
@@ -20,7 +20,46 @@ class OptimizedNavigation {
         this.isSearching = false;
         this.searchInput = null;
         this.searchTimer = null;
-        this.allSitesFlat = [];           // 用于搜索的全量站点（从 /navigation 获取）
+        this.allSitesFlat = [];
+        this.pinyinReady = false;
+        this.initPinyin();
+    }
+
+    // 加载拼音库（pinyin-pro）
+    initPinyin() {
+        if (window.pinyin) {
+            this.pinyinReady = true;
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/pinyin-pro@3.19.6/dist/index.js';
+        script.onload = () => {
+            this.pinyinReady = true;
+            console.log('拼音库加载完成');
+            // 如果搜索框已有内容，重新执行搜索
+            if (this.searchInput && this.searchInput.value.trim()) {
+                this.performSearch(this.searchInput.value.trim());
+            }
+        };
+        script.onerror = () => {
+            console.warn('拼音库加载失败，将使用普通搜索');
+            this.pinyinReady = false;
+        };
+        document.head.appendChild(script);
+    }
+
+    // 将文本转换为拼音（全拼）和首字母
+    getPinyinInfo(text) {
+        if (!this.pinyinReady || !window.pinyin) {
+            return { full: text.toLowerCase(), initial: text.toLowerCase() };
+        }
+        try {
+            const full = window.pinyin.pinyin(text, { toneType: 'none', type: 'array' }).join('').toLowerCase();
+            const initial = window.pinyin.pinyin(text, { pattern: 'first', toneType: 'none' }).toLowerCase();
+            return { full, initial };
+        } catch (e) {
+            return { full: text.toLowerCase(), initial: text.toLowerCase() };
+        }
     }
 
     _escapeHtml(str) {
@@ -68,7 +107,7 @@ class OptimizedNavigation {
         this.createSearchBox();
         try {
             await this.loadNavigationStructure();
-            await this.loadAllSitesForSearch(); // 预加载所有站点用于搜索
+            await this.loadAllSitesForSearch();
             this.calculateStats();
             this.renderNavigation();
             const firstCategory = this.getFirstCategory();
@@ -96,7 +135,18 @@ class OptimizedNavigation {
             for (const [catName, subCats] of Object.entries(data.categories)) {
                 for (const [subName, sites] of Object.entries(subCats)) {
                     for (const site of sites) {
-                        this.allSitesFlat.push({ ...site, category: catName, subcategory: subName });
+                        // 预处理拼音信息，提高搜索速度
+                        const titlePinyin = this.getPinyinInfo(site.title || '');
+                        const descPinyin = this.getPinyinInfo(site.description || '');
+                        this.allSitesFlat.push({
+                            ...site,
+                            category: catName,
+                            subcategory: subName,
+                            titlePinyinFull: titlePinyin.full,
+                            titlePinyinInitial: titlePinyin.initial,
+                            descPinyinFull: descPinyin.full,
+                            descPinyinInitial: descPinyin.initial
+                        });
                     }
                 }
             }
@@ -120,7 +170,6 @@ class OptimizedNavigation {
     calculateStats() {
         const catCount = this.structure ? Object.keys(this.structure).length : 0;
         this.stats.totalCategories = catCount;
-        // 网站总数和无效数暂不计算（可后续从缓存累加）
         this.updateStatsDisplay();
     }
 
@@ -180,7 +229,6 @@ class OptimizedNavigation {
             });
             container.appendChild(fragment);
             this.observeLazyImages(container);
-            // 更新计数显示
             const btn = document.querySelector(`.level2-btn[data-level2="${subcategoryId}"]`);
             if (btn) {
                 const countSpan = btn.querySelector('.level2-btn-count');
@@ -258,11 +306,9 @@ class OptimizedNavigation {
             setTimeout(() => { this.isNavigationClick = false; if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false; }, 100);
         });
 
-        // ========== 死链报告按钮优化：无效卡片按钮置灰并显示提示，不隐藏 ==========
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
-                // 无效卡片：按钮置灰，不可点击，添加提示
                 reportBtn.disabled = true;
                 reportBtn.style.opacity = '0.5';
                 reportBtn.style.cursor = 'not-allowed';
@@ -271,8 +317,7 @@ class OptimizedNavigation {
                 if (icon) icon.style.color = '#999';
             } else {
                 reportBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+                    e.preventDefault(); e.stopPropagation();
                     if (reportBtn.disabled) return;
                     reportBtn.disabled = true;
                     reportBtn.style.opacity = '0.5';
@@ -285,7 +330,6 @@ class OptimizedNavigation {
                         });
                         if (res.ok) {
                             window.toast.show('已反馈，管理员将处理', 'success');
-                            // 报告成功后，将按钮改为失效状态（不隐藏）
                             reportBtn.disabled = true;
                             reportBtn.title = '已报告，等待处理';
                             reportBtn.style.opacity = '0.5';
@@ -319,7 +363,7 @@ class OptimizedNavigation {
         container.innerHTML = `
             <div class="search-input-wrapper">
                 <i class="fas fa-search search-icon-prefix"></i>
-                <input type="text" id="navSearchInput" placeholder="搜索本站链接..." autocomplete="off">
+                <input type="text" id="navSearchInput" placeholder="搜索本站链接（支持拼音/首字母）..." autocomplete="off">
                 <button class="search-clear-btn" id="navSearchClearBtn" aria-label="清除搜索">
                     <i class="fas fa-times"></i>
                 </button>
@@ -352,12 +396,24 @@ class OptimizedNavigation {
     performSearch(query) {
         if (!this.allSitesFlat.length) return;
         this.isSearching = true;
-        const keyword = query.toLowerCase();
-        const results = this.allSitesFlat.filter(site =>
-            (site.title && site.title.toLowerCase().includes(keyword)) ||
-            (site.description && site.description.toLowerCase().includes(keyword)) ||
-            (site.url && site.url.toLowerCase().includes(keyword))
-        );
+        const keyword = query.toLowerCase().trim();
+        if (!keyword) {
+            this.clearSearch();
+            return;
+        }
+        const results = this.allSitesFlat.filter(site => {
+            // 原有匹配：标题、描述、URL
+            if (site.title && site.title.toLowerCase().includes(keyword)) return true;
+            if (site.description && site.description.toLowerCase().includes(keyword)) return true;
+            if (site.url && site.url.toLowerCase().includes(keyword)) return true;
+            // 拼音全拼匹配
+            if (site.titlePinyinFull && site.titlePinyinFull.includes(keyword)) return true;
+            if (site.descPinyinFull && site.descPinyinFull.includes(keyword)) return true;
+            // 拼音首字母匹配
+            if (site.titlePinyinInitial && site.titlePinyinInitial.includes(keyword)) return true;
+            if (site.descPinyinInitial && site.descPinyinInitial.includes(keyword)) return true;
+            return false;
+        });
         const container = document.getElementById('level3Content');
         if (!container) return;
         const fragment = document.createDocumentFragment();
@@ -377,7 +433,7 @@ class OptimizedNavigation {
         const hint = document.getElementById('navSearchHint');
         if (hint) {
             hint.style.display = 'block';
-            hint.textContent = `找到 ${results.length} 个结果`;
+            hint.textContent = `找到 ${results.length} 个结果（支持拼音/首字母）`;
         }
         document.querySelectorAll('.level1-btn, .level2-btn').forEach(b => b.classList.remove('active'));
         this.selectedLevel1 = null;
