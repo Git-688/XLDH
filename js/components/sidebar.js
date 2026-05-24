@@ -1,6 +1,6 @@
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版（完整修复版：使用 Utils.escapeHtml）
- * 修改：头像默认使用站点 Logo，所有动态内容使用 Utils.escapeHtml
+ * 侧边栏组件 - 悬浮毛玻璃优化版（完整修复版：使用 Utils.escapeHtml + 头像懒加载）
+ * 修改：头像默认使用站点 Logo，所有动态内容使用 Utils.escapeHtml，头像懒加载
  */
 class CompactSidebar {
     constructor() {
@@ -85,6 +85,7 @@ class CompactSidebar {
         this.defaultAvatar = './assets/logo.png';
     }
 
+    // 计算侧边栏位置（保持不变）
     calcSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
@@ -159,6 +160,33 @@ class CompactSidebar {
         }, { passive: true });
     }
 
+    // ========== 头像懒加载 ==========
+    observeLazyAvatar(img) {
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const target = entry.target;
+                        const src = target.getAttribute('data-src');
+                        if (src) {
+                            target.src = src;
+                            target.removeAttribute('data-src');
+                        }
+                        observer.unobserve(target);
+                    }
+                });
+            });
+            observer.observe(img);
+        } else {
+            // 降级：直接加载
+            if (img.getAttribute('data-src')) {
+                img.src = img.getAttribute('data-src');
+                img.removeAttribute('data-src');
+            }
+        }
+    }
+
+    // ========== 初始化 ==========
     async init() {
         if (this.isInitialized) return;
         try {
@@ -188,6 +216,7 @@ class CompactSidebar {
         }
     }
 
+    // ========== 个人资料模态框 ==========
     createProfileModal() {
         if (document.getElementById('profileModal')) return;
         try {
@@ -302,10 +331,9 @@ class CompactSidebar {
                 
                 const sidebarAvatar = document.getElementById('sidebarWallpaperAvatar');
                 if (sidebarAvatar) {
-                    sidebarAvatar.src = avatarUrl;
-                    this.ensureFallbackAttr(sidebarAvatar);
-                    sidebarAvatar.setAttribute('loading', 'lazy');
-                    sidebarAvatar.setAttribute('decoding', 'async');
+                    sidebarAvatar.setAttribute('data-src', avatarUrl);
+                    sidebarAvatar.classList.add('lazy-avatar');
+                    this.observeLazyAvatar(sidebarAvatar);
                 }
             } else {
                 qqAvatarStatus.textContent = '获取头像失败';
@@ -402,6 +430,7 @@ class CompactSidebar {
         }
     }
 
+    // ========== 侧边栏状态 ==========
     loadExpandedState() {
         try {
             const savedState = Storage.get('sidebar_categories_state');
@@ -714,14 +743,12 @@ class CompactSidebar {
             
             if (wallpaperAvatar) {
                 if (userConfig.avatar && userConfig.avatar !== '') {
-                    wallpaperAvatar.src = userConfig.avatar;
-                    this.ensureFallbackAttr(wallpaperAvatar);
-                    wallpaperAvatar.setAttribute('loading', 'lazy');
-                    wallpaperAvatar.setAttribute('decoding', 'async');
-                    wallpaperAvatar.style.display = 'block';
+                    // 懒加载头像
+                    wallpaperAvatar.setAttribute('data-src', userConfig.avatar);
+                    wallpaperAvatar.classList.add('lazy-avatar');
+                    this.observeLazyAvatar(wallpaperAvatar);
                 } else {
                     wallpaperAvatar.src = this.defaultAvatar;
-                    wallpaperAvatar.style.display = 'block';
                 }
             }
             
