@@ -1,6 +1,6 @@
 /**
- * 网站投稿模块（最终版）
- * 功能：投稿表单、自动获取网站信息、安全检测提示、累计投稿数显示（使用 Worker 返回的 totalSubmits）
+ * 网站投稿模块（前端体验优化版）
+ * 功能：投稿表单、自动获取网站信息、累计投稿数显示、每日剩余次数提示
  */
 class SubmitModule {
     constructor() {
@@ -20,7 +20,8 @@ class SubmitModule {
         this.canSubmit = false;
         this.alreadySubmitted = false;
         this.editingRejectedId = null;
-        this.statsBadge = null;      // 累计投稿徽章元素
+        this.statsBadge = null;
+        this.dailyLimit = 6; // 与 Worker 保持一致
 
         this.init();
     }
@@ -28,21 +29,24 @@ class SubmitModule {
     init() {
         this.bindEvents();
         if (this.descInput) this.descInput.maxLength = 200;
-        // 监听模态框打开，确保徽章存在并刷新计数（使用本地存储）
+        // 监听模态框打开，刷新显示
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class') {
                     if (this.modal.classList.contains('active')) {
                         this.ensureStatsBadge();
                         this.updateLocalStatsDisplay();
+                        this.updateRemainingCount();
                     }
                 }
             });
         });
         observer.observe(this.modal, { attributes: true });
+        // 每天零点重置今日计数
+        this.checkAndResetDailyCount();
+        setInterval(() => this.checkAndResetDailyCount(), 60000);
     }
 
-    // 确保标题右侧有累计数徽章
     ensureStatsBadge() {
         const header = this.modal.querySelector('.feedback-modal-header');
         if (!header) return;
@@ -59,11 +63,36 @@ class SubmitModule {
         this.statsBadge = badge;
     }
 
-    // 更新本地显示的累计投稿数
     updateLocalStatsDisplay() {
         const total = this.getLocalSubmissionCount();
         if (this.statsBadge) {
             this.statsBadge.textContent = `已投稿 ${total} 次`;
+        }
+    }
+
+    updateRemainingCount() {
+        const todayKey = `submit_count_${new Date().toISOString().slice(0, 10)}`;
+        let todayCount = parseInt(localStorage.getItem(todayKey) || '0', 10);
+        const remaining = Math.max(0, this.dailyLimit - todayCount);
+        const remainingSpan = document.querySelector('.submit-remaining-count');
+        if (remainingSpan) {
+            remainingSpan.textContent = `今日剩余 ${remaining} 次`;
+            if (remaining <= 0) {
+                remainingSpan.style.color = '#ef4444';
+            } else {
+                remainingSpan.style.color = '';
+            }
+        }
+    }
+
+    checkAndResetDailyCount() {
+        const todayKey = `submit_count_${new Date().toISOString().slice(0, 10)}`;
+        const storedDate = localStorage.getItem('submit_date');
+        const today = new Date().toISOString().slice(0, 10);
+        if (storedDate !== today) {
+            localStorage.setItem('submit_date', today);
+            localStorage.setItem(todayKey, '0');
+            this.updateRemainingCount();
         }
     }
 
@@ -73,11 +102,15 @@ class SubmitModule {
     }
 
     incrementLocalSubmissionCount() {
+        const todayKey = `submit_count_${new Date().toISOString().slice(0, 10)}`;
+        let todayCount = parseInt(localStorage.getItem(todayKey) || '0', 10);
+        todayCount++;
+        localStorage.setItem(todayKey, todayCount);
         let count = this.getLocalSubmissionCount();
         count++;
         localStorage.setItem('submission_total', count);
         this.updateLocalStatsDisplay();
-        return count;
+        this.updateRemainingCount();
     }
 
     getDeviceId() {
@@ -201,6 +234,15 @@ class SubmitModule {
 
     async handleSubmit(e) {
         e.preventDefault();
+
+        // 前端检查每日剩余次数
+        const todayKey = `submit_count_${new Date().toISOString().slice(0, 10)}`;
+        let todayCount = parseInt(localStorage.getItem(todayKey) || '0', 10);
+        if (todayCount >= this.dailyLimit) {
+            window.toast.show(`今日投稿已达上限（${this.dailyLimit}次），请明天再试`, 'warning');
+            return;
+        }
+
         const title = this.titleInput.value.trim();
         const url = this.urlInput.value.trim();
         if (!title || !url) {
@@ -242,7 +284,6 @@ class SubmitModule {
             if (res.ok) {
                 const data = await res.json();
                 window.toast.show('投稿已提交！安全检测将在后台进行，通过后自动收录', 'success');
-                // 投稿成功，增加本地计数
                 this.incrementLocalSubmissionCount();
                 this.modal.classList.remove('active');
                 this.resetForm();
