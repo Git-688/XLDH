@@ -1,4 +1,4 @@
-// 确保 Utils 存在（已由 utils.js 提供）
+// 确保 Utils 存在
 if (typeof Utils === 'undefined') {
     window.Utils = {
         escapeHtml: function(str) {
@@ -14,10 +14,6 @@ if (typeof Utils === 'undefined') {
     };
 }
 
-/**
- * 关于网站模块 - 包含收款模态框（移动端按钮缩小适配）
- * @class AboutModule
- */
 class AboutModule {
     constructor() {
         this.modalElement = null;
@@ -35,7 +31,6 @@ class AboutModule {
             '星河赴', '屿安岁静', '风禾叙', '晚叙·雪', '严一', '星落指尖', '雾里寻星', '하늘길',
             '月见山青', '云间藏月', '梦渡星河', '星眠序', '风吻麦', '雾屿栖鹤', '凪风·夏', '晚舟归港'
         ];
-        
         this.qrCodes = {
             qq: './assets/images/qq.png',
             wechat: './assets/images/wx.png',
@@ -44,22 +39,15 @@ class AboutModule {
     }
 
     init() {
-        if (this.isInitialized) {
-            return Promise.resolve();
-        }
-        
+        if (this.isInitialized) return Promise.resolve();
         this.isInitialized = true;
         this.createModal();
         this.bindGlobalEvents();
-        
         return Promise.resolve();
     }
 
     createModal() {
-        if (this.modalElement) {
-            this.modalElement.remove();
-        }
-
+        if (this.modalElement) this.modalElement.remove();
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'about-modal';
         this.modalElement.innerHTML = this.renderModal();
@@ -77,7 +65,6 @@ class AboutModule {
             opacity: 0;
             transition: opacity 0.3s ease;
         `;
-
         document.body.appendChild(this.modalElement);
         this.bindModalEvents();
     }
@@ -118,7 +105,6 @@ class AboutModule {
                         </div>
                     </div>
                 </div>
-                
                 <div class="about-main-content">
                     <div class="about-cards">
                         <div class="about-card">
@@ -141,7 +127,6 @@ class AboutModule {
                         </div>
                     </div>
                 </div>
-                
                 <div class="about-footer">
                     <div class="about-action-buttons">
                         <div class="about-social-buttons">
@@ -162,9 +147,7 @@ class AboutModule {
                                 <span class="tooltip-text">私密空间</span>
                             </button>
                         </div>
-                        <button class="about-close-btn" id="aboutCloseBtn">
-                             关闭
-                        </button>
+                        <button class="about-close-btn" id="aboutCloseBtn">关闭</button>
                     </div>
                 </div>
             </div>
@@ -173,13 +156,9 @@ class AboutModule {
 
     bindModalEvents() {
         if (!this.modalElement) return;
-
         this.modalElement.addEventListener('click', (e) => {
-            if (e.target === this.modalElement) {
-                this.hide();
-            }
+            if (e.target === this.modalElement) this.hide();
         });
-
         document.addEventListener('keydown', this.handleKeydown.bind(this));
         this.bindButtonEvents();
         this.preloadImages();
@@ -196,12 +175,9 @@ class AboutModule {
             }
         };
         wallpaperImg.src = this.wallpaperUrl;
-        
         const logoImg = new Image();
         logoImg.onload = () => {};
-        logoImg.onerror = () => {
-            console.warn('Logo图片加载失败:', this.logoUrl);
-        };
+        logoImg.onerror = () => { console.warn('Logo图片加载失败:', this.logoUrl); };
         logoImg.src = this.logoUrl;
     }
 
@@ -212,49 +188,36 @@ class AboutModule {
                 window.open('https://yunzhiapi.cn/API/QQtzmp.php?token=XIZhAXKnSQcH&qq=1595126534', '_blank');
             });
         }
-
         const wechatBtn = document.getElementById('aboutWechatBtn');
         if (wechatBtn) {
             wechatBtn.addEventListener('click', (e) => {
                 const btn = e.currentTarget;
                 const originalHTML = btn.innerHTML;
                 btn.innerHTML = '<span>微信号: example</span>';
-                setTimeout(() => {
-                    btn.innerHTML = originalHTML;
-                }, 3000);
+                setTimeout(() => { btn.innerHTML = originalHTML; }, 3000);
             });
         }
-
         const donateBtn = document.getElementById('aboutDonateBtn');
         if (donateBtn) {
             donateBtn.addEventListener('click', () => {
                 this.hide();
-                setTimeout(() => {
-                    this.showDonateModal();
-                }, 300);
+                setTimeout(() => { this.showDonateModal(); }, 300);
             });
         }
-
         const privateSpaceBtn = document.getElementById('aboutPrivateSpaceBtn');
         if (privateSpaceBtn) {
             privateSpaceBtn.addEventListener('click', () => {
                 this.hide();
-                setTimeout(() => {
-                    window.location.href = './pages/others/smkj.html';
-                }, 300);
+                setTimeout(() => { window.location.href = './pages/others/smkj.html'; }, 300);
             });
         }
-
         const closeBtn = document.getElementById('aboutCloseBtn');
         if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                this.hide();
-            });
+            closeBtn.addEventListener('click', () => { this.hide(); });
         }
     }
 
     showDonateModal() {
-        // 创建收款模态框，z-index 提升为 10002
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
         donateModal.style.cssText = `
@@ -402,13 +365,7 @@ class AboutModule {
                         border-radius: 12px;
                         padding: 10px 12px;
                     ">
-                        <h4 style="
-                            font-size: 11px;
-                            color: #1e293b;
-                            margin: 0 0 8px 0;
-                            font-weight: 600;
-                            text-align: center;
-                        ">支持者名单</h4>
+                        <h4 style="font-size: 11px; color: #1e293b; margin: 0 0 8px 0; font-weight: 600; text-align: center;">支持者名单</h4>
                         <div class="supporters-list-scroll" style="
                             max-height: 70px;
                             overflow-y: auto;
@@ -419,15 +376,7 @@ class AboutModule {
                             scrollbar-width: none;
                             -ms-overflow-style: none;
                         ">
-                            ${this.supporters.map(name => `<span style="
-                                background: rgba(255,255,255,0.7);
-                                color: #1e293b;
-                                padding: 2px 5px;
-                                border-radius: 4px;
-                                font-size: 10px;
-                                text-align: center;
-                                white-space: nowrap;
-                            ">${Utils.escapeHtml(name)}</span>`).join('')}
+                            ${this.supporters.map(name => `<span style="background: rgba(255,255,255,0.7); color: #1e293b; padding: 2px 5px; border-radius: 4px; font-size: 10px; text-align: center; white-space: nowrap;">${Utils.escapeHtml(name)}</span>`).join('')}
                         </div>
                     </div>
                 </div>
@@ -454,13 +403,11 @@ class AboutModule {
         `;
 
         document.body.appendChild(donateModal);
-
         setTimeout(() => {
             donateModal.style.opacity = '1';
             const content = donateModal.querySelector('.donate-modal-content');
             content.style.transform = 'scale(1)';
         }, 10);
-
         this.bindNewDonateEvents(donateModal);
     }
 
@@ -471,20 +418,11 @@ class AboutModule {
             const content = donateModal.querySelector('.donate-modal-content');
             content.style.transform = 'scale(0.8)';
             setTimeout(() => {
-                if (donateModal.parentNode) {
-                    donateModal.parentNode.removeChild(donateModal);
-                }
+                if (donateModal.parentNode) donateModal.parentNode.removeChild(donateModal);
             }, 300);
         };
-
         closeBtn.addEventListener('click', hideDonateModal);
-
-        donateModal.addEventListener('click', (e) => {
-            if (e.target === donateModal) {
-                hideDonateModal();
-            }
-        });
-
+        donateModal.addEventListener('click', (e) => { if (e.target === donateModal) hideDonateModal(); });
         const handleKeydown = (e) => {
             if (e.key === 'Escape') {
                 hideDonateModal();
@@ -492,10 +430,8 @@ class AboutModule {
             }
         };
         document.addEventListener('keydown', handleKeydown);
-
         const buttons = donateModal.querySelectorAll('.donate-method-btn-left');
         const contents = donateModal.querySelectorAll('.qrcode-content');
-
         const setActive = (activeBtn) => {
             buttons.forEach(b => {
                 b.classList.remove('active');
@@ -506,12 +442,8 @@ class AboutModule {
             activeBtn.style.background = activeColor;
             activeBtn.style.borderColor = 'transparent';
         };
-
         const defaultBtn = donateModal.querySelector('.donate-method-btn-left[data-type="qq"]');
-        if (defaultBtn) {
-            setActive(defaultBtn);
-        }
-
+        if (defaultBtn) setActive(defaultBtn);
         buttons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const type = btn.dataset.type;
@@ -530,73 +462,45 @@ class AboutModule {
     }
 
     handleKeydown(e) {
-        if (e.key === 'Escape' && this.isShowing) {
-            this.hide();
-        }
+        if (e.key === 'Escape' && this.isShowing) this.hide();
     }
 
     bindGlobalEvents() {
         const aboutBtn = document.getElementById('aboutBtn');
-        if (aboutBtn) {
-            aboutBtn.addEventListener('click', () => {
-                this.show();
-            });
-        }
+        if (aboutBtn) aboutBtn.addEventListener('click', () => this.show());
     }
 
     show() {
-        if (!this.modalElement) {
-            this.createModal();
-        }
-
+        if (!this.modalElement) this.createModal();
         if (this.isShowing) return;
-
-        if (window.sidebar && window.sidebar.isVisible()) {
-            window.sidebar.hide();
-        }
-
+        if (window.sidebar && window.sidebar.isVisible()) window.sidebar.hide();
         this.isShowing = true;
         this.modalElement.style.display = 'flex';
-        
         this.modalElement.offsetHeight;
-        
         setTimeout(() => {
             this.modalElement.style.opacity = '1';
             const content = this.modalElement.querySelector('.about-modal-content');
             content.style.transform = 'scale(1)';
         }, 10);
-
-        if (window.app) {
-            window.app.registerModal(this);
-        }
+        if (window.app) window.app.registerModal(this);
     }
 
     hide() {
         if (!this.isShowing || !this.modalElement) return;
-
         this.modalElement.style.opacity = '0';
         const content = this.modalElement.querySelector('.about-modal-content');
         content.style.transform = 'scale(0.8)';
-        
         setTimeout(() => {
             this.modalElement.style.display = 'none';
             this.isShowing = false;
-            
-            if (window.app) {
-                window.app.unregisterModal(this);
-            }
+            if (window.app) window.app.unregisterModal(this);
         }, 300);
     }
 
     destroy() {
         this.hide();
-        
         document.removeEventListener('keydown', this.handleKeydown.bind(this));
-        
-        if (this.modalElement && this.modalElement.parentNode) {
-            this.modalElement.parentNode.removeChild(this.modalElement);
-        }
-        
+        if (this.modalElement && this.modalElement.parentNode) this.modalElement.parentNode.removeChild(this.modalElement);
         this.modalElement = null;
         this.isShowing = false;
         this.isInitialized = false;
@@ -616,19 +520,9 @@ class AboutModule {
         };
     }
 
-    setWallpaper(url) {
-        this.wallpaperUrl = url;
-        this.refresh();
-    }
-
-    setLogo(url) {
-        this.logoUrl = url;
-        this.refresh();
-    }
-
-    setQrCodes(codes) {
-        this.qrCodes = {...this.qrCodes, ...codes};
-    }
+    setWallpaper(url) { this.wallpaperUrl = url; this.refresh(); }
+    setLogo(url) { this.logoUrl = url; this.refresh(); }
+    setQrCodes(codes) { this.qrCodes = { ...this.qrCodes, ...codes }; }
 
     refresh() {
         if (this.modalElement) {
