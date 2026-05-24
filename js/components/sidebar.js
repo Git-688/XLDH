@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版（完整修复：XSS防护、头像fallback、无内联事件）
+ * 侧边栏组件 - 悬浮毛玻璃优化版（完整修复版：使用 Utils.escapeHtml）
  * 修改：头像默认使用站点 Logo，所有动态内容使用 Utils.escapeHtml
  */
 class CompactSidebar {
@@ -82,23 +82,7 @@ class CompactSidebar {
         this.navbarHeight = 60;
         this.minSidebarHeight = 400;
 
-        // 默认头像路径（站点 Logo）
         this.defaultAvatar = './assets/logo.png';
-    }
-
-    // 公共转义方法（如果没有 Utils，则提供备用）
-    escapeHtml(str) {
-        if (typeof Utils !== 'undefined' && typeof Utils.escapeHtml === 'function') {
-            return Utils.escapeHtml(str);
-        }
-        if (!str) return '';
-        return String(str).replace(/[&<>"']/g, m => {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            if (m === '"') return '&quot;';
-            return '&#39;';
-        });
     }
 
     calcSidebarPosition() {
@@ -452,13 +436,13 @@ class CompactSidebar {
             const categoriesContainer = sidebar.querySelector('.sidebar-categories');
             if (categoriesContainer) {
                 categoriesContainer.innerHTML = this.categories.map(category => `
-                    <div class="category-group ${category.expanded ? 'expanded' : ''}" data-category="${this.escapeHtml(category.name)}">
+                    <div class="category-group ${category.expanded ? 'expanded' : ''}" data-category="${Utils.escapeHtml(category.name)}">
                         <div class="category-group-header">
                             <div class="category-group-name">
                                 <div class="category-group-icon">
                                     <i class="${category.icon}"></i>
                                 </div>
-                                <span>${this.escapeHtml(category.name)}</span>
+                                <span>${Utils.escapeHtml(category.name)}</span>
                             </div>
                             <button class="category-toggle" aria-label="${category.expanded ? '收起' : '展开'}">
                                 <i class="fas fa-chevron-down"></i>
@@ -470,8 +454,8 @@ class CompactSidebar {
                                     <div class="category-icon">
                                         <i class="${item.icon}"></i>
                                     </div>
-                                    <div class="category-label">${this.escapeHtml(item.label)}</div>
-                                    ${item.badge ? `<div class="category-badge">${this.escapeHtml(item.badge)}</div>` : ''}
+                                    <div class="category-label">${Utils.escapeHtml(item.label)}</div>
+                                    ${item.badge ? `<div class="category-badge">${Utils.escapeHtml(item.badge)}</div>` : ''}
                                 </button>
                             `).join('')}
                         </div>
