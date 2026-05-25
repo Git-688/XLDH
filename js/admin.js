@@ -95,10 +95,7 @@
                 }
                 .custom-select-trigger.open .custom-select-arrow { transform: rotate(180deg); }
                 .custom-select-dropdown {
-                    position: absolute;
-                    top: calc(100% + 4px);
-                    left: 0;
-                    right: 0;
+                    position: fixed;
                     background: #fff;
                     border: 1px solid #e2e8f0;
                     border-radius: 8px;
@@ -160,7 +157,7 @@
         }
     }
 
-    // 自定义选择器类
+    // 自定义选择器类（支持固定定位，解决模态框内滚动问题）
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -239,7 +236,7 @@
             this.dropdown.classList.add('open');
             this.positionDropdown();
             this.handleOutsideClick = (e) => {
-                if (!this.wrapper.contains(e.target)) this.close();
+                if (!this.wrapper.contains(e.target) && !this.dropdown.contains(e.target)) this.close();
             };
             setTimeout(() => document.addEventListener('click', this.handleOutsideClick), 0);
         }
@@ -256,6 +253,7 @@
             const viewportHeight = window.innerHeight;
             let top = rect.bottom + 4;
             if (top + dropdownHeight > viewportHeight - 10) top = rect.top - dropdownHeight - 4;
+            this.dropdown.style.position = 'fixed';
             this.dropdown.style.top = `${top}px`;
             this.dropdown.style.left = `${rect.left}px`;
             this.dropdown.style.width = `${rect.width}px`;
@@ -629,25 +627,43 @@
         `).join('');
     }
 
-    // 投稿详情模态框（支持编辑标题、图标、描述，并通过收录时传递拼音）
+    // 投稿详情模态框（支持编辑、拼音传递、自定义下拉选择器，修复实例销毁和定位）
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
         const contentDiv = document.getElementById('submissionDetailContent');
+
+        // 关闭之前模态框时清理旧实例（如果模态框已打开过）
+        const cleanupSelectors = () => {
+            if (customSelects.cat) { customSelects.cat.destroy(); delete customSelects.cat; }
+            if (customSelects.sub) { customSelects.sub.destroy(); delete customSelects.sub; }
+        };
+        cleanupSelectors();
+
         const removeModalListeners = () => {
             const newCloseBtn = detailModal.querySelector('#closeDetailModalBtn');
             if (newCloseBtn) {
                 const newClone = newCloseBtn.cloneNode(true);
                 newCloseBtn.parentNode.replaceChild(newClone, newCloseBtn);
-                newClone.onclick = () => detailModal.classList.remove('show');
+                newClone.onclick = () => {
+                    cleanupSelectors();
+                    detailModal.classList.remove('show');
+                };
             }
-            detailModal.onclick = (e) => { if (e.target === detailModal) detailModal.classList.remove('show'); };
+            detailModal.onclick = (e) => {
+                if (e.target === detailModal) {
+                    cleanupSelectors();
+                    detailModal.classList.remove('show');
+                }
+            };
         };
+
         try {
             const data = await apiFetch('/admin/submissions');
             const item = data.find(s => s.id == id);
             if (!item) { showToast('未找到该投稿', 'error'); return; }
             const vtColor = (item.vt_result || '').includes('安全') ? '#10b981' : '#ef4444';
+
             let html = `
                 <div class="info-card">
                     <div class="info-row"><div class="info-label">标题</div><div class="info-value"><input type="text" id="editTitle" value="${escapeHtml(item.title)}" class="form-input" style="width:100%;" /></div></div>
@@ -678,11 +694,13 @@
                 </div>
             `;
             contentDiv.innerHTML = html;
+
             const descTextarea = document.getElementById('editDesc');
             if (descTextarea) {
                 autoResizeTextarea(descTextarea);
                 descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
             }
+
             const saveBtn = document.getElementById('saveEditBtn');
             if (saveBtn) {
                 saveBtn.addEventListener('click', async () => {
@@ -693,7 +711,8 @@
                     showToast('修改已保存', 'success');
                 });
             }
-            // 一级分类下拉（自定义）
+
+            // 一级分类下拉
             const catSelect = document.createElement('select');
             catSelect.id = 'approveCatSelect';
             catSelect.innerHTML = '<option value="">选择一级分类</option>' + categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
@@ -701,14 +720,15 @@
             catWrapper.innerHTML = '';
             catWrapper.appendChild(catSelect);
             let catCustomSelect = new CustomSelect(catSelect, async (value) => {
+                // 清空并重建子分类下拉
                 const subWrapper = document.getElementById('approveSubSelectWrapper');
                 subWrapper.innerHTML = '';
-                const subSelect = document.createElement('select');
-                subSelect.id = 'approveSubSelect';
-                subSelect.innerHTML = '<option value="">先选择一级分类</option>';
-                subWrapper.appendChild(subSelect);
+                const newSubSelect = document.createElement('select');
+                newSubSelect.id = 'approveSubSelect';
+                newSubSelect.innerHTML = '<option value="">先选择一级分类</option>';
+                subWrapper.appendChild(newSubSelect);
                 if (customSelects.sub) customSelects.sub.destroy();
-                customSelects.sub = new CustomSelect(subSelect);
+                customSelects.sub = new CustomSelect(newSubSelect);
                 if (value) {
                     try {
                         const subsData = await apiFetch(`/admin/subcategories?category_id=${value}`);
@@ -721,15 +741,18 @@
                 }
             });
             customSelects.cat = catCustomSelect;
+
+            // 子分类下拉（初始为空）
             const subWrapper = document.getElementById('approveSubSelectWrapper');
+            subWrapper.innerHTML = '';
             const subSelect = document.createElement('select');
             subSelect.id = 'approveSubSelect';
             subSelect.innerHTML = '<option value="">先选择一级分类</option>';
-            subWrapper.innerHTML = '';
             subWrapper.appendChild(subSelect);
             let subCustomSelect = new CustomSelect(subSelect);
             customSelects.sub = subCustomSelect;
-            // 通过收录（计算拼音）
+
+            // 通过收录按钮（含拼音计算）
             document.getElementById('doApproveBtn').onclick = async () => {
                 const catId = catSelect.value;
                 const subId = subSelect.value;
@@ -742,35 +765,39 @@
                     const fullTitle = window.pinyin.pinyin(title, { toneType: 'none', type: 'array' }).join('');
                     const fullDesc = window.pinyin.pinyin(desc, { toneType: 'none', type: 'array' }).join('');
                     pinyinFull = (fullTitle + fullDesc).toLowerCase();
-                    pinyinInitial = (window.pinyin.pinyin(title, { pattern: 'first', toneType: 'none' }) + 
+                    pinyinInitial = (window.pinyin.pinyin(title, { pattern: 'first', toneType: 'none' }) +
                                     window.pinyin.pinyin(desc, { pattern: 'first', toneType: 'none' })).toLowerCase();
                 }
                 try {
-                    await apiFetch(`/admin/submissions/${id}/approve`, { 
-                        method: 'POST', 
-                        body: JSON.stringify({ 
-                            subcategory_id: parseInt(subId), 
+                    await apiFetch(`/admin/submissions/${id}/approve`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            subcategory_id: parseInt(subId),
                             display_order: parseInt(displayOrder),
                             pinyin_full: pinyinFull,
                             pinyin_initial: pinyinInitial
-                        }) 
+                        })
                     });
                     showToast('已通过并收录', 'success');
                     detailModal.classList.remove('show');
+                    cleanupSelectors();
                     await loadSubmissions();
                     await loadAllData();
                     await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 } catch (err) { showToast('操作失败', 'error'); }
             };
+
             document.getElementById('doRejectBtn').onclick = async () => {
                 if (!confirm('确定要拒绝该投稿吗？拒绝后将永久删除，用户不可修改')) return;
                 try {
                     await apiFetch(`/admin/submissions/${id}`, { method: 'DELETE' });
                     showToast('已拒绝并删除', 'success');
                     detailModal.classList.remove('show');
+                    cleanupSelectors();
                     await loadSubmissions();
                 } catch (err) { showToast('操作失败', 'error'); }
             };
+
             removeModalListeners();
             detailModal.classList.add('show');
         } catch (err) { showToast('加载详情失败', 'error'); }
@@ -826,7 +853,7 @@
                     const fullTitle = window.pinyin.pinyin(title, { toneType: 'none', type: 'array' }).join('');
                     const fullDesc = window.pinyin.pinyin(document.getElementById('mDesc').value, { toneType: 'none', type: 'array' }).join('');
                     pinyinFull = (fullTitle + fullDesc).toLowerCase();
-                    pinyinInitial = (window.pinyin.pinyin(title, { pattern: 'first', toneType: 'none' }) + 
+                    pinyinInitial = (window.pinyin.pinyin(title, { pattern: 'first', toneType: 'none' }) +
                                     window.pinyin.pinyin(document.getElementById('mDesc').value, { pattern: 'first', toneType: 'none' })).toLowerCase();
                 }
                 await apiFetch(`/admin/sites/${id}`, { method:'PUT', body: JSON.stringify({
@@ -894,7 +921,7 @@
                     const fullTitle = window.pinyin.pinyin(title, { toneType: 'none', type: 'array' }).join('');
                     const fullDesc = window.pinyin.pinyin(document.getElementById('mDesc').value, { toneType: 'none', type: 'array' }).join('');
                     pinyinFull = (fullTitle + fullDesc).toLowerCase();
-                    pinyinInitial = (window.pinyin.pinyin(title, { pattern: 'first', toneType: 'none' }) + 
+                    pinyinInitial = (window.pinyin.pinyin(title, { pattern: 'first', toneType: 'none' }) +
                                     window.pinyin.pinyin(document.getElementById('mDesc').value, { pattern: 'first', toneType: 'none' })).toLowerCase();
                 }
                 await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
@@ -997,7 +1024,7 @@
                     const fullTitle = window.pinyin.pinyin(newTitle, { toneType: 'none', type: 'array' }).join('');
                     const fullDesc = window.pinyin.pinyin(document.getElementById('mDesc').value, { toneType: 'none', type: 'array' }).join('');
                     pinyinFull = (fullTitle + fullDesc).toLowerCase();
-                    pinyinInitial = (window.pinyin.pinyin(newTitle, { pattern: 'first', toneType: 'none' }) + 
+                    pinyinInitial = (window.pinyin.pinyin(newTitle, { pattern: 'first', toneType: 'none' }) +
                                     window.pinyin.pinyin(document.getElementById('mDesc').value, { pattern: 'first', toneType: 'none' })).toLowerCase();
                 }
                 await apiFetch('/admin/replace-link', {
@@ -1108,8 +1135,18 @@
         const detailModal = document.getElementById('submissionDetailModal');
         if (detailModal) {
             const closeBtn = detailModal.querySelector('#closeDetailModalBtn');
-            if (closeBtn) closeBtn.onclick = () => detailModal.classList.remove('show');
-            detailModal.onclick = (e) => { if (e.target === detailModal) detailModal.classList.remove('show'); };
+            if (closeBtn) closeBtn.onclick = () => {
+                if (customSelects.cat) { customSelects.cat.destroy(); delete customSelects.cat; }
+                if (customSelects.sub) { customSelects.sub.destroy(); delete customSelects.sub; }
+                detailModal.classList.remove('show');
+            };
+            detailModal.onclick = (e) => {
+                if (e.target === detailModal) {
+                    if (customSelects.cat) { customSelects.cat.destroy(); delete customSelects.cat; }
+                    if (customSelects.sub) { customSelects.sub.destroy(); delete customSelects.sub; }
+                    detailModal.classList.remove('show');
+                }
+            };
         }
     }
 
