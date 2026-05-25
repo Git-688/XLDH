@@ -13,11 +13,9 @@
     let modalAction = null;
     let currentSubmissionId = null;
     let refreshTimer = null;
-
-    // 全局存储自定义选择器实例
     let customSelects = {};
 
-    // 注入全局样式（包含自定义选择器样式）
+    // 注入全局样式（含自定义选择器）
     function injectGlobalStyles() {
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
@@ -31,12 +29,8 @@
                     white-space: nowrap;
                     vertical-align: middle;
                 }
-                @media (max-width: 768px) {
-                    .submission-title-truncate { max-width: 180px; }
-                }
-                @media (max-width: 480px) {
-                    .submission-title-truncate { max-width: 120px; }
-                }
+                @media (max-width: 768px) { .submission-title-truncate { max-width: 180px; } }
+                @media (max-width: 480px) { .submission-title-truncate { max-width: 120px; } }
                 .form-input {
                     width: 100%;
                     padding: 8px 12px;
@@ -62,7 +56,6 @@
                     flex-wrap: wrap;
                     margin-bottom: 12px;
                 }
-                /* ========== 自定义下拉选择器 ========== */
                 .custom-select-wrapper {
                     position: relative;
                     flex: 1;
@@ -82,9 +75,7 @@
                     transition: all 0.2s;
                     gap: 8px;
                 }
-                .custom-select-trigger:hover {
-                    border-color: #3b82f6;
-                }
+                .custom-select-trigger:hover { border-color: #3b82f6; }
                 .custom-select-trigger.open {
                     border-color: #3b82f6;
                     box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
@@ -102,9 +93,7 @@
                     background-size: contain;
                     transition: transform 0.2s;
                 }
-                .custom-select-trigger.open .custom-select-arrow {
-                    transform: rotate(180deg);
-                }
+                .custom-select-trigger.open .custom-select-arrow { transform: rotate(180deg); }
                 .custom-select-dropdown {
                     position: absolute;
                     top: calc(100% + 4px);
@@ -123,9 +112,7 @@
                     transition: all 0.2s ease;
                     scrollbar-width: none;
                 }
-                .custom-select-dropdown::-webkit-scrollbar {
-                    display: none;
-                }
+                .custom-select-dropdown::-webkit-scrollbar { display: none; }
                 .custom-select-dropdown.open {
                     opacity: 1;
                     visibility: visible;
@@ -138,9 +125,7 @@
                     cursor: pointer;
                     transition: background 0.15s;
                 }
-                .custom-select-option:hover {
-                    background: #f1f5f9;
-                }
+                .custom-select-option:hover { background: #f1f5f9; }
                 .custom-select-option.selected {
                     background: #e0f2fe;
                     color: #0369a1;
@@ -159,9 +144,7 @@
                     .custom-select-option {
                         color: #e2e8f0;
                     }
-                    .custom-select-option:hover {
-                        background: #334155;
-                    }
+                    .custom-select-option:hover { background: #334155; }
                     .custom-select-option.selected {
                         background: #0f172a;
                         color: #38bdf8;
@@ -177,7 +160,7 @@
         }
     }
 
-    // 自定义下拉选择器类
+    // 自定义选择器类
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -190,39 +173,26 @@
             this.isOpen = false;
             this.init();
         }
-
         init() {
             this.select.style.display = 'none';
             this.wrapper = document.createElement('div');
             this.wrapper.className = 'custom-select-wrapper';
-            
             this.trigger = document.createElement('div');
             this.trigger.className = 'custom-select-trigger';
-            this.trigger.innerHTML = `
-                <span class="custom-select-value">${this.getSelectedText()}</span>
-                <span class="custom-select-arrow"></span>
-            `;
-            
+            this.trigger.innerHTML = `<span class="custom-select-value">${this.getSelectedText()}</span><span class="custom-select-arrow"></span>`;
             this.dropdown = document.createElement('div');
             this.dropdown.className = 'custom-select-dropdown';
-            
             this.wrapper.appendChild(this.trigger);
             this.wrapper.appendChild(this.dropdown);
             this.select.parentNode.insertBefore(this.wrapper, this.select.nextSibling);
-            
             this.populateOptions();
             this.bindEvents();
-            
-            this.select.addEventListener('change', () => {
-                this.setValue(this.select.value);
-            });
+            this.select.addEventListener('change', () => this.setValue(this.select.value));
         }
-
         getSelectedText() {
             const option = this.select.options[this.select.selectedIndex];
             return option ? option.textContent : '';
         }
-
         populateOptions() {
             this.dropdown.innerHTML = '';
             this.options = [];
@@ -243,7 +213,6 @@
                 this.options.push(div);
             }
         }
-
         selectOption(index) {
             if (index === this.select.selectedIndex) return;
             this.select.selectedIndex = index;
@@ -255,7 +224,6 @@
             const changeEvent = new Event('change', { bubbles: true });
             this.select.dispatchEvent(changeEvent);
         }
-
         setValue(value) {
             for (let i = 0; i < this.select.options.length; i++) {
                 if (this.select.options[i].value == value) {
@@ -264,7 +232,6 @@
                 }
             }
         }
-
         open() {
             if (this.isOpen) return;
             this.isOpen = true;
@@ -276,30 +243,23 @@
             };
             setTimeout(() => document.addEventListener('click', this.handleOutsideClick), 0);
         }
-
         close() {
             if (!this.isOpen) return;
             this.isOpen = false;
             this.trigger.classList.remove('open');
             this.dropdown.classList.remove('open');
-            if (this.handleOutsideClick) {
-                document.removeEventListener('click', this.handleOutsideClick);
-            }
+            if (this.handleOutsideClick) document.removeEventListener('click', this.handleOutsideClick);
         }
-
         positionDropdown() {
             const rect = this.trigger.getBoundingClientRect();
             const dropdownHeight = this.dropdown.offsetHeight;
             const viewportHeight = window.innerHeight;
             let top = rect.bottom + 4;
-            if (top + dropdownHeight > viewportHeight - 10) {
-                top = rect.top - dropdownHeight - 4;
-            }
+            if (top + dropdownHeight > viewportHeight - 10) top = rect.top - dropdownHeight - 4;
             this.dropdown.style.top = `${top}px`;
             this.dropdown.style.left = `${rect.left}px`;
             this.dropdown.style.width = `${rect.width}px`;
         }
-
         bindEvents() {
             this.trigger.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -308,13 +268,11 @@
             window.addEventListener('resize', () => { if (this.isOpen) this.positionDropdown(); });
             window.addEventListener('scroll', () => { if (this.isOpen) this.positionDropdown(); }, true);
         }
-
         refresh() {
             this.populateOptions();
             const valueSpan = this.trigger.querySelector('.custom-select-value');
             if (valueSpan) valueSpan.textContent = this.getSelectedText();
         }
-
         destroy() {
             this.close();
             this.wrapper.remove();
@@ -390,10 +348,7 @@
         localStorage.removeItem('admin_remember');
         localStorage.removeItem('admin_token_saved');
         localStorage.removeItem('admin_saved_time');
-        if (refreshTimer) {
-            clearTimeout(refreshTimer);
-            refreshTimer = null;
-        }
+        if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
     }
 
     async function refreshSession() {
@@ -413,9 +368,7 @@
                 logout();
                 return false;
             }
-        } catch (e) {
-            console.warn('刷新 session 失败:', e);
-        }
+        } catch (e) { console.warn('刷新 session 失败:', e); }
         return false;
     }
 
@@ -425,9 +378,7 @@
         const now = Date.now();
         const delay = expires - now - SESSION_REFRESH_BEFORE_MS;
         if (delay > 0 && delay < 3600000) {
-            refreshTimer = setTimeout(() => {
-                refreshSession().then(() => startSessionRefresh());
-            }, delay);
+            refreshTimer = setTimeout(() => { refreshSession().then(() => startSessionRefresh()); }, delay);
         } else if (delay <= 0) {
             refreshSession().then(() => startSessionRefresh());
         }
@@ -475,14 +426,11 @@
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalForm').innerHTML = formHtml;
         modalAction = submitCb;
-
         const buttonsContainer = document.getElementById('modalButtons');
         let html = '';
         if (showDelete && deleteCb) html += `<div class="modal-buttons-left"><button class="danger" id="modalDeleteBtn">删除</button></div>`;
-        html += `<button class="secondary" id="modalCancelBtn">取消</button>
-                 <button class="primary" id="modalSubmit">确认</button>`;
+        html += `<button class="secondary" id="modalCancelBtn">取消</button><button class="primary" id="modalSubmit">确认</button>`;
         buttonsContainer.innerHTML = html;
-
         document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
         document.getElementById('modalSubmit').addEventListener('click', handleModalSubmit);
         if (showDelete && deleteCb) {
@@ -681,12 +629,11 @@
         `).join('');
     }
 
-    // ========== 投稿详情模态框（支持编辑标题、图标、描述）==========
+    // 投稿详情模态框（支持编辑标题、图标、描述，并通过收录时传递拼音）
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
         const contentDiv = document.getElementById('submissionDetailContent');
-        
         const removeModalListeners = () => {
             const newCloseBtn = detailModal.querySelector('#closeDetailModalBtn');
             if (newCloseBtn) {
@@ -694,17 +641,13 @@
                 newCloseBtn.parentNode.replaceChild(newClone, newCloseBtn);
                 newClone.onclick = () => detailModal.classList.remove('show');
             }
-            detailModal.onclick = (e) => {
-                if (e.target === detailModal) detailModal.classList.remove('show');
-            };
+            detailModal.onclick = (e) => { if (e.target === detailModal) detailModal.classList.remove('show'); };
         };
-        
         try {
             const data = await apiFetch('/admin/submissions');
             const item = data.find(s => s.id == id);
             if (!item) { showToast('未找到该投稿', 'error'); return; }
             const vtColor = (item.vt_result || '').includes('安全') ? '#10b981' : '#ef4444';
-            
             let html = `
                 <div class="info-card">
                     <div class="info-row"><div class="info-label">标题</div><div class="info-value"><input type="text" id="editTitle" value="${escapeHtml(item.title)}" class="form-input" style="width:100%;" /></div></div>
@@ -735,13 +678,11 @@
                 </div>
             `;
             contentDiv.innerHTML = html;
-            
             const descTextarea = document.getElementById('editDesc');
             if (descTextarea) {
                 autoResizeTextarea(descTextarea);
                 descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
             }
-            
             const saveBtn = document.getElementById('saveEditBtn');
             if (saveBtn) {
                 saveBtn.addEventListener('click', async () => {
@@ -752,7 +693,6 @@
                     showToast('修改已保存', 'success');
                 });
             }
-            
             // 一级分类下拉（自定义）
             const catSelect = document.createElement('select');
             catSelect.id = 'approveCatSelect';
@@ -781,7 +721,6 @@
                 }
             });
             customSelects.cat = catCustomSelect;
-            
             const subWrapper = document.getElementById('approveSubSelectWrapper');
             const subSelect = document.createElement('select');
             subSelect.id = 'approveSubSelect';
@@ -790,14 +729,32 @@
             subWrapper.appendChild(subSelect);
             let subCustomSelect = new CustomSelect(subSelect);
             customSelects.sub = subCustomSelect;
-            
+            // 通过收录（计算拼音）
             document.getElementById('doApproveBtn').onclick = async () => {
                 const catId = catSelect.value;
                 const subId = subSelect.value;
                 if (!catId || !subId) { showToast('请选择一级分类和二级分类', 'error'); return; }
                 const displayOrder = document.getElementById('approveOrder').value || 0;
+                const title = document.getElementById('editTitle').value;
+                const desc = document.getElementById('editDesc').value;
+                let pinyinFull = '', pinyinInitial = '';
+                if (window.pinyin && typeof window.pinyin.pinyin === 'function') {
+                    const fullTitle = window.pinyin.pinyin(title, { toneType: 'none', type: 'array' }).join('');
+                    const fullDesc = window.pinyin.pinyin(desc, { toneType: 'none', type: 'array' }).join('');
+                    pinyinFull = (fullTitle + fullDesc).toLowerCase();
+                    pinyinInitial = (window.pinyin.pinyin(title, { pattern: 'first', toneType: 'none' }) + 
+                                    window.pinyin.pinyin(desc, { pattern: 'first', toneType: 'none' })).toLowerCase();
+                }
                 try {
-                    await apiFetch(`/admin/submissions/${id}/approve`, { method: 'POST', body: JSON.stringify({ subcategory_id: parseInt(subId), display_order: parseInt(displayOrder) }) });
+                    await apiFetch(`/admin/submissions/${id}/approve`, { 
+                        method: 'POST', 
+                        body: JSON.stringify({ 
+                            subcategory_id: parseInt(subId), 
+                            display_order: parseInt(displayOrder),
+                            pinyin_full: pinyinFull,
+                            pinyin_initial: pinyinInitial
+                        }) 
+                    });
                     showToast('已通过并收录', 'success');
                     detailModal.classList.remove('show');
                     await loadSubmissions();
@@ -805,7 +762,6 @@
                     await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 } catch (err) { showToast('操作失败', 'error'); }
             };
-            
             document.getElementById('doRejectBtn').onclick = async () => {
                 if (!confirm('确定要拒绝该投稿吗？拒绝后将永久删除，用户不可修改')) return;
                 try {
@@ -815,7 +771,6 @@
                     await loadSubmissions();
                 } catch (err) { showToast('操作失败', 'error'); }
             };
-            
             removeModalListeners();
             detailModal.classList.add('show');
         } catch (err) { showToast('加载详情失败', 'error'); }
@@ -866,9 +821,18 @@
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
                 if (!checkUrl(url)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
+                let pinyinFull = '', pinyinInitial = '';
+                if (window.pinyin && typeof window.pinyin.pinyin === 'function') {
+                    const fullTitle = window.pinyin.pinyin(title, { toneType: 'none', type: 'array' }).join('');
+                    const fullDesc = window.pinyin.pinyin(document.getElementById('mDesc').value, { toneType: 'none', type: 'array' }).join('');
+                    pinyinFull = (fullTitle + fullDesc).toLowerCase();
+                    pinyinInitial = (window.pinyin.pinyin(title, { pattern: 'first', toneType: 'none' }) + 
+                                    window.pinyin.pinyin(document.getElementById('mDesc').value, { pattern: 'first', toneType: 'none' })).toLowerCase();
+                }
                 await apiFetch(`/admin/sites/${id}`, { method:'PUT', body: JSON.stringify({
                     title, url, description: document.getElementById('mDesc').value,
-                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
+                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value,
+                    pinyin_full: pinyinFull, pinyin_initial: pinyinInitial
                 })});
                 addLog(`编辑链接：${site.title}`); showToast('修改成功'); await loadAllData();
             }, true,
@@ -925,9 +889,18 @@
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
                 if (!checkUrl(url)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
+                let pinyinFull = '', pinyinInitial = '';
+                if (window.pinyin && typeof window.pinyin.pinyin === 'function') {
+                    const fullTitle = window.pinyin.pinyin(title, { toneType: 'none', type: 'array' }).join('');
+                    const fullDesc = window.pinyin.pinyin(document.getElementById('mDesc').value, { toneType: 'none', type: 'array' }).join('');
+                    pinyinFull = (fullTitle + fullDesc).toLowerCase();
+                    pinyinInitial = (window.pinyin.pinyin(title, { pattern: 'first', toneType: 'none' }) + 
+                                    window.pinyin.pinyin(document.getElementById('mDesc').value, { pattern: 'first', toneType: 'none' })).toLowerCase();
+                }
                 await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
                     subcategory_id: currentSub, title, url, description: document.getElementById('mDesc').value,
-                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
+                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value,
+                    pinyin_full: pinyinFull, pinyin_initial: pinyinInitial
                 })});
                 addLog(`新增链接：${title}`); showToast('添加成功'); await loadAllData();
             }
@@ -1019,9 +992,18 @@
                 const newUrl = document.getElementById('mUrl').value.trim();
                 if (!newTitle || !newUrl) { showToast('标题和网址不能为空', 'error'); return; }
                 if (!checkUrl(newUrl)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
+                let pinyinFull = '', pinyinInitial = '';
+                if (window.pinyin && typeof window.pinyin.pinyin === 'function') {
+                    const fullTitle = window.pinyin.pinyin(newTitle, { toneType: 'none', type: 'array' }).join('');
+                    const fullDesc = window.pinyin.pinyin(document.getElementById('mDesc').value, { toneType: 'none', type: 'array' }).join('');
+                    pinyinFull = (fullTitle + fullDesc).toLowerCase();
+                    pinyinInitial = (window.pinyin.pinyin(newTitle, { pattern: 'first', toneType: 'none' }) + 
+                                    window.pinyin.pinyin(document.getElementById('mDesc').value, { pattern: 'first', toneType: 'none' })).toLowerCase();
+                }
                 await apiFetch('/admin/replace-link', {
                     method: 'POST',
-                    body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value })
+                    body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value,
+                        pinyin_full: pinyinFull, pinyin_initial: pinyinInitial })
                 });
                 showToast('链接已更新', 'success');
                 await loadFeedback();
@@ -1123,7 +1105,6 @@
         document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
         document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
         document.getElementById('logModal').addEventListener('click', e => { if (e.target === document.getElementById('logModal')) closeLogModal(); });
-        
         const detailModal = document.getElementById('submissionDetailModal');
         if (detailModal) {
             const closeBtn = detailModal.querySelector('#closeDetailModalBtn');
