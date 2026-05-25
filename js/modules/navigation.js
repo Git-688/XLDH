@@ -1,11 +1,11 @@
 /**
- * 优化分类导航系统 - 拼音搜索版
- * 功能：三级导航、搜索（支持拼音/首字母）、死链报告、自动更新、按需加载站点、图片懒加载
+ * 优化分类导航系统 - 拼音搜索版（调用 /search 接口）
+ * 功能：三级导航、搜索（后端拼音搜索）、死链报告、自动更新、按需加载站点、图片懒加载
  */
 class OptimizedNavigation {
     constructor() {
-        this.structure = null;
-        this.siteCache = new Map();
+        this.structure = null;           // 分类结构（无站点）
+        this.siteCache = new Map();      // 站点缓存 key: subcategory_id, value: sites[]
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
         this.isInitialized = false;
@@ -20,46 +20,6 @@ class OptimizedNavigation {
         this.isSearching = false;
         this.searchInput = null;
         this.searchTimer = null;
-        this.allSitesFlat = [];
-        this.pinyinReady = false;
-        this.initPinyin();
-    }
-
-    // 加载拼音库（pinyin-pro）
-    initPinyin() {
-        if (window.pinyin) {
-            this.pinyinReady = true;
-            return;
-        }
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/pinyin-pro@3.19.6/dist/index.js';
-        script.onload = () => {
-            this.pinyinReady = true;
-            console.log('拼音库加载完成');
-            // 如果搜索框已有内容，重新执行搜索
-            if (this.searchInput && this.searchInput.value.trim()) {
-                this.performSearch(this.searchInput.value.trim());
-            }
-        };
-        script.onerror = () => {
-            console.warn('拼音库加载失败，将使用普通搜索');
-            this.pinyinReady = false;
-        };
-        document.head.appendChild(script);
-    }
-
-    // 将文本转换为拼音（全拼）和首字母
-    getPinyinInfo(text) {
-        if (!this.pinyinReady || !window.pinyin) {
-            return { full: text.toLowerCase(), initial: text.toLowerCase() };
-        }
-        try {
-            const full = window.pinyin.pinyin(text, { toneType: 'none', type: 'array' }).join('').toLowerCase();
-            const initial = window.pinyin.pinyin(text, { pattern: 'first', toneType: 'none' }).toLowerCase();
-            return { full, initial };
-        } catch (e) {
-            return { full: text.toLowerCase(), initial: text.toLowerCase() };
-        }
     }
 
     _escapeHtml(str) {
@@ -107,7 +67,6 @@ class OptimizedNavigation {
         this.createSearchBox();
         try {
             await this.loadNavigationStructure();
-            await this.loadAllSitesForSearch();
             this.calculateStats();
             this.renderNavigation();
             const firstCategory = this.getFirstCategory();
@@ -124,36 +83,6 @@ class OptimizedNavigation {
         const response = await fetch(`${this.apiBase}/navigation/structure`);
         if (!response.ok) throw new Error('Failed to load navigation structure');
         this.structure = await response.json();
-    }
-
-    async loadAllSitesForSearch() {
-        try {
-            const response = await fetch(`${this.apiBase}/navigation`);
-            if (!response.ok) throw new Error('Failed to load full navigation');
-            const data = await response.json();
-            this.allSitesFlat = [];
-            for (const [catName, subCats] of Object.entries(data.categories)) {
-                for (const [subName, sites] of Object.entries(subCats)) {
-                    for (const site of sites) {
-                        // 预处理拼音信息，提高搜索速度
-                        const titlePinyin = this.getPinyinInfo(site.title || '');
-                        const descPinyin = this.getPinyinInfo(site.description || '');
-                        this.allSitesFlat.push({
-                            ...site,
-                            category: catName,
-                            subcategory: subName,
-                            titlePinyinFull: titlePinyin.full,
-                            titlePinyinInitial: titlePinyin.initial,
-                            descPinyinFull: descPinyin.full,
-                            descPinyinInitial: descPinyin.initial
-                        });
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn('加载全量导航用于搜索失败，搜索功能可能受限');
-            this.allSitesFlat = [];
-        }
     }
 
     async loadSites(subcategoryId) {
@@ -229,6 +158,7 @@ class OptimizedNavigation {
             });
             container.appendChild(fragment);
             this.observeLazyImages(container);
+            // 更新计数显示
             const btn = document.querySelector(`.level2-btn[data-level2="${subcategoryId}"]`);
             if (btn) {
                 const countSpan = btn.querySelector('.level2-btn-count');
@@ -393,51 +323,49 @@ class OptimizedNavigation {
         });
     }
 
-    performSearch(query) {
-        if (!this.allSitesFlat.length) return;
+    async performSearch(query) {
+        if (!query.trim()) return;
         this.isSearching = true;
-        const keyword = query.toLowerCase().trim();
-        if (!keyword) {
-            this.clearSearch();
-            return;
-        }
-        const results = this.allSitesFlat.filter(site => {
-            // 原有匹配：标题、描述、URL
-            if (site.title && site.title.toLowerCase().includes(keyword)) return true;
-            if (site.description && site.description.toLowerCase().includes(keyword)) return true;
-            if (site.url && site.url.toLowerCase().includes(keyword)) return true;
-            // 拼音全拼匹配
-            if (site.titlePinyinFull && site.titlePinyinFull.includes(keyword)) return true;
-            if (site.descPinyinFull && site.descPinyinFull.includes(keyword)) return true;
-            // 拼音首字母匹配
-            if (site.titlePinyinInitial && site.titlePinyinInitial.includes(keyword)) return true;
-            if (site.descPinyinInitial && site.descPinyinInitial.includes(keyword)) return true;
-            return false;
-        });
         const container = document.getElementById('level3Content');
         if (!container) return;
-        const fragment = document.createDocumentFragment();
-        if (results.length === 0) {
-            const emptyDiv = document.createElement('div');
-            emptyDiv.className = 'empty-state';
-            emptyDiv.innerHTML = `<div class="empty-icon"><i class="fas fa-search"></i></div><h3 class="empty-title">未找到相关链接</h3><p class="empty-subtitle">试试其他关键词</p>`;
-            fragment.appendChild(emptyDiv);
-        } else {
-            results.forEach((site, idx) => {
-                fragment.appendChild(this.createSiteCard(site, idx));
-            });
+        this.showSkeleton();
+        try {
+            // 构建请求 URL
+            let searchUrl = `${this.apiBase}/search?q=${encodeURIComponent(query)}`;
+            // 如果拼音库已加载，计算拼音参数
+            if (window.pinyin && typeof window.pinyin.pinyin === 'function') {
+                const fullPinyin = window.pinyin.pinyin(query, { toneType: 'none', type: 'array' }).join('').toLowerCase();
+                const initialPinyin = window.pinyin.pinyin(query, { pattern: 'first', toneType: 'none' }).toLowerCase();
+                searchUrl += `&pinyin_full=${encodeURIComponent(fullPinyin)}&pinyin_initial=${encodeURIComponent(initialPinyin)}`;
+            }
+            const response = await fetch(searchUrl);
+            if (!response.ok) throw new Error('搜索失败');
+            const results = await response.json();
+            container.innerHTML = '';
+            if (results.length === 0) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'empty-state';
+                emptyDiv.innerHTML = `<div class="empty-icon"><i class="fas fa-search"></i></div><h3 class="empty-title">未找到相关链接</h3><p class="empty-subtitle">试试其他关键词</p>`;
+                container.appendChild(emptyDiv);
+            } else {
+                const fragment = document.createDocumentFragment();
+                results.forEach((site, idx) => {
+                    fragment.appendChild(this.createSiteCard(site, idx));
+                });
+                container.appendChild(fragment);
+                this.observeLazyImages(container);
+            }
+            const hint = document.getElementById('navSearchHint');
+            if (hint) {
+                hint.style.display = 'block';
+                hint.textContent = `找到 ${results.length} 个结果（支持拼音/首字母）`;
+            }
+        } catch (e) {
+            console.error(e);
+            container.innerHTML = '<div class="empty-state">搜索失败，请重试</div>';
+        } finally {
+            this.isSearching = false;
         }
-        container.innerHTML = '';
-        container.appendChild(fragment);
-        this.observeLazyImages(container);
-        const hint = document.getElementById('navSearchHint');
-        if (hint) {
-            hint.style.display = 'block';
-            hint.textContent = `找到 ${results.length} 个结果（支持拼音/首字母）`;
-        }
-        document.querySelectorAll('.level1-btn, .level2-btn').forEach(b => b.classList.remove('active'));
-        this.selectedLevel1 = null;
-        this.selectedLevel2 = null;
     }
 
     clearSearch() {
