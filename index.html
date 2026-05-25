@@ -11,15 +11,13 @@
     <!-- 全局配置 - 放在所有脚本之前 -->
     <script>
         window.APP_CONFIG = {
-            // 后端 API 地址（Worker 部署地址）
             API_BASE: 'https://api.xjdh688.ccwu.cc',
-            // Waline 评论服务地址
             WALINE_SERVER: 'https://yy688.ccwu.cc'
         };
     </script>
 
-    <!-- CSP 安全策略：已添加 cloudflareinsights.com 域名 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc https://static.cloudflareinsights.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
+    <!-- CSP 安全策略：已添加 cloudflareinsights.com 和 unpkg.com -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src * https://*.ccwu.cc; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';">
 
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
