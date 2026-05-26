@@ -5,6 +5,11 @@
     const LOCK_DURATION_MS = 10 * 60 * 1000;
     const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
 
+    // 日志存储配置
+    const LOG_STORAGE_KEY = 'admin_operation_logs';
+    const MAX_LOG_COUNT = 100;
+    const LOG_RETENTION_DAYS = 7;
+
     let token = '';
     let categories = [], subcategories = [], sites = [];
     let currentCat = null, currentSub = null;
@@ -14,6 +19,71 @@
     let currentSubmissionId = null;
     let refreshTimer = null;
     let customSelects = {};
+
+    // ========== 日志管理（localStorage 持久化） ==========
+    function getLogs() {
+        try {
+            const logsRaw = localStorage.getItem(LOG_STORAGE_KEY);
+            const logs = logsRaw ? JSON.parse(logsRaw) : [];
+            // 清理过期日志（超过7天）
+            const now = Date.now();
+            const filtered = logs.filter(log => (now - log.timestamp) < LOG_RETENTION_DAYS * 24 * 3600 * 1000);
+            if (filtered.length !== logs.length) {
+                localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(filtered));
+            }
+            return filtered;
+        } catch {
+            return [];
+        }
+    }
+
+    function saveLogs(logs) {
+        try {
+            // 限制最大条数
+            if (logs.length > MAX_LOG_COUNT) {
+                logs = logs.slice(0, MAX_LOG_COUNT);
+            }
+            localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs));
+        } catch (e) {
+            console.error('保存日志失败:', e);
+        }
+    }
+
+    function addLog(text) {
+        const logs = getLogs();
+        logs.unshift({
+            id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+            time: new Date().toLocaleString(),
+            timestamp: Date.now(),
+            text: text
+        });
+        saveLogs(logs);
+    }
+
+    function clearLogs() {
+        localStorage.removeItem(LOG_STORAGE_KEY);
+        showToast('日志已清空', 'success');
+    }
+
+    function showLogs() {
+        const logs = getLogs();
+        const logListHtml = logs.length
+            ? logs.map(l => `<div class="log-item"><span>${escapeHtml(l.time)}</span> ${escapeHtml(l.text)}</div>`).join('')
+            : '<div class="empty">暂无记录</div>';
+        document.getElementById('logList').innerHTML = logListHtml;
+        const modal = document.getElementById('logModal');
+        modal.classList.add('show');
+        // 添加清空按钮
+        const clearBtn = document.getElementById('clearLogsBtn');
+        if (clearBtn) {
+            clearBtn.onclick = () => {
+                if (confirm('确定要清空所有操作日志吗？')) {
+                    clearLogs();
+                    showLogs(); // 刷新显示
+                }
+            };
+        }
+    }
 
     // 注入全局样式（含自定义选择器）
     function injectGlobalStyles() {
@@ -151,6 +221,16 @@
                         border-color: #334155;
                         color: #e2e8f0;
                     }
+                }
+                .log-item {
+                    padding: 7px;
+                    border-bottom: 1px solid #f1f5f9;
+                    font-size: 11px;
+                }
+                .modal-buttons-left {
+                    display: flex;
+                    gap: 8px;
+                    margin-right: auto;
                 }
             `;
             document.head.appendChild(style);
@@ -452,21 +532,6 @@
     function closeModal() { document.getElementById('modal').classList.remove('show'); modalAction = null; }
     function closeLogModal() { document.getElementById('logModal').classList.remove('show'); }
 
-    function addLog(text) {
-        const logs = JSON.parse(sessionStorage.getItem('operation_logs') || '[]');
-        logs.unshift({ time: new Date().toLocaleString(), text });
-        if (logs.length > 50) logs.splice(50);
-        sessionStorage.setItem('operation_logs', JSON.stringify(logs));
-    }
-
-    function showLogs() {
-        const logs = JSON.parse(sessionStorage.getItem('operation_logs') || '[]');
-        document.getElementById('logList').innerHTML = logs.length
-            ? logs.map(l => `<div class="log-item"><span>${escapeHtml(l.time)}</span> ${escapeHtml(l.text)}</div>`).join('')
-            : '<div class="empty">暂无记录</div>';
-        document.getElementById('logModal').classList.add('show');
-    }
-
     async function apiFetch(endpoint, opt = {}) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
         if (token) headers.Authorization = `Bearer ${token}`;
@@ -627,7 +692,7 @@
         `).join('');
     }
 
-    // 投稿详情模态框（无拼音）
+    // 投稿详情模态框（支持编辑、自定义下拉选择器，修复实例销毁和定位）
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -740,6 +805,7 @@
             });
             customSelects.cat = catCustomSelect;
 
+            // 子分类下拉
             const subWrapper = document.getElementById('approveSubSelectWrapper');
             subWrapper.innerHTML = '';
             const subSelect = document.createElement('select');
@@ -749,7 +815,7 @@
             let subCustomSelect = new CustomSelect(subSelect);
             customSelects.sub = subCustomSelect;
 
-            // 通过收录按钮（无拼音）
+            // 通过收录按钮
             document.getElementById('doApproveBtn').onclick = async () => {
                 const catId = catSelect.value;
                 const subId = subSelect.value;
