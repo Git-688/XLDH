@@ -1,8 +1,18 @@
 /**
  * 天气模块 - 简化卡片式设计（支持手动选择城市并持久化）
+ * 使用配置化 API 地址和统一错误处理
  * @class WeatherModule
  */
 class WeatherModule {
+    // 静态配置：API 地址
+    static CONFIG = {
+        WEATHER_API: 'https://www.cunyuapi.top/weather',
+        GEO_API: 'https://api.pearapi.ai/api/map/',
+        get API_BASE() {
+            return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
+        }
+    };
+
     constructor() {
         this.currentCity = '北京';
         this.weatherData = null;
@@ -13,13 +23,12 @@ class WeatherModule {
         this.isLocationRequested = false;
         this.initialized = false;
         this.isLoading = false;
-        this.useAutoLocation = false;      // 是否使用自动定位（若用户手动选择过则为 false）
-        this.manualCity = null;            // 手动选择的城市
+        this.useAutoLocation = false;
+        this.manualCity = null;
         this.escHandler = null;
         this.showModalBound = this.showModal.bind(this);
     }
 
-    // 内置 HTML 转义方法
     _escapeHtml(text) {
         if (!text) return '';
         return String(text)
@@ -35,12 +44,11 @@ class WeatherModule {
         console.log('天气模块开始初始化...');
         this.bindGlobalEvents();
         this.startAutoRefresh();
-        await this.loadSavedCity();      // 先加载保存的城市（手动或自动）
+        await this.loadSavedCity();
         this.initialized = true;
         console.log('天气模块初始化完成');
     }
 
-    // 加载保存的城市设置（优先手动选择）
     loadSavedCity() {
         try {
             const useAuto = localStorage.getItem('weather_use_auto_location') === 'true';
@@ -52,14 +60,12 @@ class WeatherModule {
                 console.log('使用手动选择的城市:', manual);
                 return;
             }
-            // 否则尝试自动定位
             this.useAutoLocation = true;
             const savedAutoCity = localStorage.getItem('weather_city');
             if (savedAutoCity) {
                 this.currentCity = savedAutoCity;
                 console.log('使用上次自动定位的城市:', savedAutoCity);
             } else {
-                // 没有保存过任何城市，稍后尝试定位
                 console.log('无保存城市，将尝试自动定位');
             }
         } catch (e) {
@@ -74,7 +80,7 @@ class WeatherModule {
                 localStorage.setItem('weather_use_auto_location', 'false');
                 this.manualCity = city;
                 this.useAutoLocation = false;
-                localStorage.removeItem('weather_city'); // 清除自动定位城市
+                localStorage.removeItem('weather_city');
             } else {
                 localStorage.setItem('weather_city', city);
                 localStorage.setItem('weather_use_auto_location', 'true');
@@ -92,12 +98,10 @@ class WeatherModule {
         if (!navigator.geolocation) {
             console.log('浏览器不支持地理定位');
             if (!this.currentCity || this.currentCity === '北京') {
-                // 没有城市则弹窗选择
                 setTimeout(() => this.showCityPrompt(), 500);
             }
             return;
         }
-
         try {
             this.useAutoLocation = true;
             await this.getCurrentPosition();
@@ -133,7 +137,7 @@ class WeatherModule {
                     try {
                         const city = await this.reverseGeocode(latitude, longitude);
                         if (city) {
-                            this.saveCity(city, false); // 保存为自动定位城市
+                            this.saveCity(city, false);
                             if (window.app && window.app.showToast) {
                                 window.app.showToast(`已定位到: ${city}`, 'success');
                             }
@@ -165,10 +169,9 @@ class WeatherModule {
     }
 
     async reverseGeocode(latitude, longitude) {
-        const url = `https://api.pearapi.ai/api/map/?lat=${latitude}&lng=${longitude}`;
+        const url = `${WeatherModule.CONFIG.GEO_API}?lat=${latitude}&lng=${longitude}`;
         try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const response = await Utils.safeFetch(url, { timeout: 5000 });
             const data = await response.json();
             if (data.code === 200 && data.data) {
                 const address = data.data.address || '';
@@ -177,7 +180,7 @@ class WeatherModule {
             }
             return null;
         } catch (error) {
-            console.error('逆地理编码请求失败:', error);
+            Utils.handleApiError(error, '逆地理编码失败', false);
             return null;
         }
     }
@@ -214,11 +217,15 @@ class WeatherModule {
     }
 
     async fetchWeatherData(city) {
-        const url = `https://www.cunyuapi.top/weather?city=${encodeURIComponent(city)}`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        return this.parseWeatherData(data);
+        const url = `${WeatherModule.CONFIG.WEATHER_API}?city=${encodeURIComponent(city)}`;
+        try {
+            const response = await Utils.safeFetch(url, { timeout: 8000 });
+            const data = await response.json();
+            return this.parseWeatherData(data);
+        } catch (error) {
+            Utils.handleApiError(error, '获取天气数据失败');
+            throw error;
+        }
     }
 
     parseWeatherData(data) {
@@ -572,14 +579,12 @@ class WeatherModule {
                 alert('请输入城市名称');
                 return;
             }
-            // 规范化：如果输入不带"市"，尝试添加（可选）
             if (!newCity.endsWith('市') && !newCity.endsWith('县') && newCity.length <= 3) {
                 newCity = newCity + '市';
             }
             confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 切换中...';
             confirmBtn.disabled = true;
             try {
-                // 手动切换：保存为手动城市
                 this.saveCity(newCity, true);
                 await this.loadWeatherData();
                 this.updateModalContent();
@@ -727,7 +732,6 @@ class WeatherModule {
     setCity(city, isManual = false) {
         this.saveCity(city, isManual);
         this.weatherData = null;
-        // 如果模态框正在显示，刷新内容
         if (this.isShowing) {
             this.loadWeatherData().then(() => this.updateModalContent());
         }
