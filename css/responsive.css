@@ -66,7 +66,7 @@
     width: 6px; 
 }
 .categories-container::-webkit-scrollbar-track { 
-    background: var(--bg-secondary); 
+    background: var(--bg-secondary, #f8f9fa); 
     border-radius: 3px; 
 }
 .categories-container::-webkit-scrollbar-thumb { 
@@ -131,7 +131,7 @@
 /* ========== 5. 深色模式适配（仅侧滑栏滚动条，不影响全局） ========== */
 @media (prefers-color-scheme: dark) {
     .categories-container::-webkit-scrollbar-track { 
-        background: var(--bg-secondary); 
+        background: var(--bg-secondary, #1e1e1e); 
     }
     .categories-container::-webkit-scrollbar-thumb { 
         background: #4a4a4a; 
