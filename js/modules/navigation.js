@@ -1,7 +1,7 @@
 /**
  * 优化分类导航系统 - 拼音搜索版（调用 /search 接口）
  * 功能：三级导航、搜索（后端拼音搜索）、死链报告、自动更新、按需加载站点、图片懒加载
- * 修复：分类网址总数显示、子分类站点数量显示
+ * 优化：按需加载子分类站点数量（仅在点击一级分类时加载），避免初始并发请求过多
  */
 class OptimizedNavigation {
     constructor() {
@@ -21,6 +21,8 @@ class OptimizedNavigation {
         this.isSearching = false;
         this.searchInput = null;
         this.searchTimer = null;
+        // 记录已加载过站点数量的一级分类，避免重复加载
+        this.loadedLevel1Set = new Set();
     }
 
     _escapeHtml(str) {
@@ -68,11 +70,14 @@ class OptimizedNavigation {
         this.createSearchBox();
         try {
             await this.loadNavigationStructure();
-            await this.preloadSubcategoryCounts();  // 预加载所有子分类站点数量并更新总计数
-            this.calculateStats();
+            this.calculateStats();          // 仅设置分类数，总站点数暂为0
             this.renderNavigation();
             const firstCategory = this.getFirstCategory();
-            if (firstCategory) this.selectLevel1(firstCategory, false);
+            if (firstCategory) {
+                // 首次加载时，自动加载第一个一级分类下的子分类站点数量
+                await this.loadSubcategoryCountsForLevel1(firstCategory);
+                this.selectLevel1(firstCategory, false);
+            }
             this.isInitialized = true;
             this.startBackgroundUpdates();
         } catch (error) {
@@ -99,43 +104,58 @@ class OptimizedNavigation {
     }
 
     /**
-     * 预加载所有子分类的站点数量，并累加总站点数
+     * 加载指定一级分类下所有子分类的站点数量（按需，限制并发）
+     * @param {string} level1 一级分类名称
      */
-    async preloadSubcategoryCounts() {
-        if (!this.structure) return;
-        let totalValidSites = 0;
-        const promises = [];
-        const subcategoryCounts = new Map(); // subcategory_id -> count
+    async loadSubcategoryCountsForLevel1(level1) {
+        if (!this.structure?.[level1]) return;
+        // 避免重复加载同一一级分类下的子分类数量
+        if (this.loadedLevel1Set.has(level1)) return;
 
-        // 遍历所有一级分类下的子分类
-        for (const catName in this.structure) {
-            const subcategories = this.structure[catName].subcategories;
-            for (const sub of subcategories) {
-                const subId = sub.id;
-                const promise = this.loadSites(subId).then(sites => {
-                    const validCount = sites.filter(s => s.valid !== false).length;
-                    subcategoryCounts.set(subId, validCount);
-                    totalValidSites += validCount;
-                    // 更新对应二级分类按钮上的计数显示
-                    this.updateSubcategoryCountDisplay(subId, validCount);
-                }).catch(err => {
-                    console.warn(`加载子分类 ${subId} 站点失败:`, err);
-                    subcategoryCounts.set(subId, 0);
-                });
-                promises.push(promise);
-            }
+        const subcategories = this.structure[level1].subcategories;
+        let totalValidSites = 0;
+
+        // 限制并发数，避免瞬间大量请求
+        const concurrency = 5;
+        const chunks = [];
+        for (let i = 0; i < subcategories.length; i += concurrency) {
+            chunks.push(subcategories.slice(i, i + concurrency));
         }
 
-        await Promise.all(promises);
-        this.stats.totalWebsites = totalValidSites;
-        this.stats.invalidCount = 0; // 暂不统计无效链接总数，可后续从站点数据中计算
+        for (const chunk of chunks) {
+            const promises = chunk.map(async (sub) => {
+                const subId = sub.id;
+                const sites = await this.loadSites(subId);
+                const validCount = sites.filter(s => s.valid !== false).length;
+                this.updateSubcategoryCountDisplay(subId, validCount);
+                return validCount;
+            });
+            const counts = await Promise.all(promises);
+            totalValidSites += counts.reduce((sum, c) => sum + c, 0);
+        }
+
+        this.loadedLevel1Set.add(level1);
+
+        // 更新全局站点总数（从缓存重新计算）
+        await this.recalculateTotalWebsites();
+    }
+
+    /**
+     * 重新计算全局有效站点总数（基于 siteCache）
+     */
+    async recalculateTotalWebsites() {
+        let total = 0;
+        for (const sites of this.siteCache.values()) {
+            total += sites.filter(s => s.valid !== false).length;
+        }
+        this.stats.totalWebsites = total;
         this.updateStatsDisplay();
     }
 
     /**
-     * 更新指定二级分类按钮上的数量显示
+     * 更新指定二级分类按钮上的数量显示（带重试机制）
      */
-    updateSubcategoryCountDisplay(subcategoryId, count) {
+    updateSubcategoryCountDisplay(subcategoryId, count, retry = 0) {
         const btn = document.querySelector(`.level2-btn[data-level2="${subcategoryId}"]`);
         if (btn) {
             let countSpan = btn.querySelector('.level2-btn-count');
@@ -146,13 +166,15 @@ class OptimizedNavigation {
             }
             countSpan.textContent = count;
             countSpan.style.display = 'inline-block';
+        } else if (retry < 5) {
+            // 如果按钮还未渲染，延迟重试
+            setTimeout(() => this.updateSubcategoryCountDisplay(subcategoryId, count, retry + 1), 100);
         }
     }
 
     calculateStats() {
         const catCount = this.structure ? Object.keys(this.structure).length : 0;
         this.stats.totalCategories = catCount;
-        // totalWebsites 已经在 preloadSubcategoryCounts 中计算，这里不再覆盖
         this.updateStatsDisplay();
     }
 
@@ -453,16 +475,22 @@ class OptimizedNavigation {
         });
     }
 
-    selectLevel1(level1, isUserClick = false) {
+    async selectLevel1(level1, isUserClick = false) {
         if (this.selectedLevel1 === level1) return;
         this.isNavigationClick = true;
         document.querySelectorAll('.level1-btn').forEach(b => b.classList.toggle('active', b.dataset.level1 === level1));
         this.selectedLevel1 = level1;
         this.renderLevel2(level1);
         this.showSkeleton();
+
+        // 按需加载该一级分类下子分类的站点数量（如果尚未加载过）
+        if (!this.loadedLevel1Set.has(level1)) {
+            await this.loadSubcategoryCountsForLevel1(level1);
+        }
+
         const firstSub = this.getFirstSubCategory(level1);
         if (firstSub) {
-            this.selectLevel2(firstSub.id, firstSub.name, isUserClick);
+            await this.selectLevel2(firstSub.id, firstSub.name, isUserClick);
         } else {
             this.renderEmptyState();
         }
@@ -541,6 +569,7 @@ class OptimizedNavigation {
         this.siteCache.clear();
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
+        this.loadedLevel1Set.clear();
         this.showSkeleton();
         this.init();
     }
