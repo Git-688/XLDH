@@ -87,13 +87,14 @@ class GreetingModule {
 
     async loadHolidayData() {
         try {
-            const response = await fetch('https://api.pearapi.ai/api/countdownday/');
+            const response = await Utils.safeFetch('https://api.pearapi.ai/api/countdownday/', { timeout: 5000 });
             const data = await response.json();
             if (data.code === 200 && data.data && data.data.length > 0) {
                 return data.data;
             }
             return this.getDefaultHolidays();
-        } catch {
+        } catch (error) {
+            Utils.handleApiError(error, '获取节日数据失败', false);
             return this.getDefaultHolidays();
         }
     }
