@@ -222,6 +222,7 @@ class MusicPlayer {
         this.updateAnimationFrame = null;
         this.lastTimeUpdate = 0;
 
+        // 封面懒加载观察器
         this.coverObserver = null;
         this.initCoverObserver();
 
@@ -241,22 +242,36 @@ class MusicPlayer {
     }
 
     initCoverObserver() {
-        this.coverObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    const dataSrc = img.dataset.src;
-                    if (dataSrc) {
-                        img.src = dataSrc;
+        if ('IntersectionObserver' in window) {
+            this.coverObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        const dataSrc = img.dataset.src;
+                        if (dataSrc && !img.src) {
+                            img.src = dataSrc;
+                            img.removeAttribute('data-src');
+                        }
+                        this.coverObserver.unobserve(img);
+                    }
+                });
+            }, {
+                rootMargin: '200px',
+                threshold: 0.01
+            });
+        } else {
+            // 降级：立即加载
+            this.coverObserver = {
+                observe: (img) => {
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
                         img.removeAttribute('data-src');
                     }
-                    this.coverObserver.unobserve(img);
-                }
-            });
-        }, {
-            rootMargin: '100px',
-            threshold: 0.01
-        });
+                },
+                unobserve: () => {},
+                disconnect: () => {}
+            };
+        }
     }
 
     initializeProperties() {
@@ -799,7 +814,7 @@ class MusicPlayer {
         songItems.forEach((item, index) => {
             if (index < 5) return;
             const coverImg = item.querySelector('img[data-src]');
-            if (coverImg) {
+            if (coverImg && this.coverObserver) {
                 this.coverObserver.observe(coverImg);
             }
         });
@@ -814,7 +829,7 @@ class MusicPlayer {
         }
         const coverUrl = song.cover || '';
         const coverHtml = coverUrl
-            ? `<img class="song-cover" data-src="${Utils.escapeHtml(coverUrl)}" alt="" loading="lazy" style="display:none;">`
+            ? `<img class="song-cover" data-src="${Utils.escapeHtml(coverUrl)}" alt="" loading="lazy">`
             : '';
         songItem.innerHTML = `
             ${coverHtml}
@@ -829,6 +844,9 @@ class MusicPlayer {
                 img.src = coverUrl;
                 img.removeAttribute('data-src');
             }
+        } else if (coverUrl && this.coverObserver) {
+            const img = songItem.querySelector('.song-cover');
+            if (img) this.coverObserver.observe(img);
         }
         songItem.addEventListener('click', () => {
             this.loadSong(index, playlist);
@@ -977,7 +995,14 @@ class MusicPlayer {
         }
         const coverUrl = song.cover || '/assets/logo.png';
         if (this.elements.coverImg) {
-            this.elements.coverImg.src = coverUrl;
+            // 懒加载封面：使用 data-src，交给 observer
+            this.elements.coverImg.setAttribute('data-src', coverUrl);
+            this.elements.coverImg.classList.add('lazy-cover');
+            if (this.coverObserver) {
+                this.coverObserver.observe(this.elements.coverImg);
+            } else {
+                this.elements.coverImg.src = coverUrl;
+            }
             this.elements.coverImg.style.display = 'block';
             const placeholder = document.querySelector('.cover-placeholder');
             if (placeholder) placeholder.style.display = 'none';
@@ -1238,8 +1263,9 @@ class MusicPlayer {
         this.updatePlayButton();
         const defaultLogo = '/assets/logo.png';
         if (this.elements.coverImg) {
-            this.elements.coverImg.src = defaultLogo;
-            this.elements.coverImg.style.display = 'block';
+            // 初始占位，不设置真实 src，等待首次 updateSongInfo 时懒加载
+            this.elements.coverImg.setAttribute('data-src', defaultLogo);
+            this.elements.coverImg.src = defaultLogo; // 先显示默认图，后续懒加载会替换
             const placeholder = document.querySelector('.cover-placeholder');
             if (placeholder) placeholder.style.display = 'none';
             this.elements.coverImg.onerror = () => {
@@ -1294,13 +1320,13 @@ class MusicPlayer {
         if (this.cacheManager) {
             this.cacheManager.cleanup();
         }
+        if (this.coverObserver) {
+            this.coverObserver.disconnect();
+        }
         this.hasNotifiedLocal = false;
         this.hasNotifiedQishui = false;
         if (window.musicPlayer === this) {
             window.musicPlayer = null;
-        }
-        if (this.coverObserver) {
-            this.coverObserver.disconnect();
         }
         console.log('音乐播放器资源已清理');
     }
