@@ -116,5 +116,77 @@
         return null;
     };
 
+    // ========== 统一错误处理 ==========
+    /**
+     * 统一处理 API 请求错误
+     * @param {Error} error - 错误对象
+     * @param {string} defaultMessage - 默认提示信息
+     * @param {boolean} showToast - 是否显示 toast 提示
+     */
+    Utils.handleApiError = function(error, defaultMessage = '操作失败，请稍后重试', showToast = true) {
+        console.error('[API Error]', error);
+        let message = defaultMessage;
+        if (error && error.message) {
+            if (error.message.includes('fetch') || error.message.includes('network')) {
+                message = '网络连接异常，请检查网络后重试';
+            } else if (error.message.includes('timeout')) {
+                message = '请求超时，请稍后重试';
+            } else if (error.message.includes('401') || error.message.includes('403')) {
+                message = '权限不足，请重新登录';
+            } else {
+                message = error.message;
+            }
+        }
+        if (showToast && window.toast && typeof window.toast.show === 'function') {
+            window.toast.show(message, 'error');
+        }
+        // 可选：将错误上报到服务器
+        const apiBase = window.APP_CONFIG?.API_BASE || '';
+        if (apiBase) {
+            fetch(`${apiBase}/log`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'api_error',
+                    message: message,
+                    stack: error?.stack,
+                    url: window.location.href,
+                    timestamp: Date.now()
+                }),
+                keepalive: true
+            }).catch(() => {});
+        }
+    };
+
+    // 包装 fetch 请求，自动处理超时和网络错误
+    Utils.safeFetch = async function(url, options = {}) {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), options.timeout || 15000);
+            const response = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (!response.ok) {
+                const errorText = await response.text().catch(() => '');
+                throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 100)}`);
+            }
+            return response;
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                throw new Error('请求超时');
+            }
+            throw error;
+        }
+    };
+
+    // 获取后端 API 基础地址（统一入口）
+    Utils.getApiBase = function() {
+        return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
+    };
+
+    // 获取 Waline 评论服务器地址
+    Utils.getWalineServer = function() {
+        return (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc';
+    };
+
     window.Utils = Utils;
 })(window);
