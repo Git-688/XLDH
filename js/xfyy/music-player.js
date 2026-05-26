@@ -214,17 +214,13 @@ function initCustomSelects() {
 // ==================== 主播放器类 ====================
 class MusicPlayer {
     static CONFIG = {
-        // 网易云音乐 API
         NETEASE_API_PRIMARY: 'https://api.injahow.cn/meting/',
         NETEASE_API_FALLBACK: 'https://api.i-meto.com/meting/api',
-        // QQ音乐 API
         QQ_HOT_API: 'https://yunzhiapi.cn/API/qqrgbd.php',
         QQ_SONG_INFO_API: 'https://api.i-meto.com/meting/api',
         QQ_TOKEN: 'XIZhAXKnSQcH',
-        // 汽水音乐 API
         QISHUI_API: 'https://api.suol.cc/v1/music_qs.php',
         QISHUI_TOKEN: '961D28A9C59C411C49C75FA3E9FAF24C',
-        // 本地存储键名
         STORAGE_PREFIX: 'music_player_'
     };
 
@@ -253,6 +249,26 @@ class MusicPlayer {
         this.maxErrorShown = false;
 
         this.waitingForUserGesture = false;
+        this.userGestureResolver = null;
+        this.userGesturePromise = null;
+    }
+
+    // 等待用户交互（移动端自动播放策略）
+    waitForUserGesture() {
+        if (this.userGesturePromise) return this.userGesturePromise;
+        this.userGesturePromise = new Promise((resolve) => {
+            const handleInteraction = () => {
+                document.removeEventListener('click', handleInteraction);
+                document.removeEventListener('touchstart', handleInteraction);
+                document.removeEventListener('keydown', handleInteraction);
+                this.waitingForUserGesture = false;
+                resolve();
+            };
+            document.addEventListener('click', handleInteraction);
+            document.addEventListener('touchstart', handleInteraction);
+            document.addEventListener('keydown', handleInteraction);
+        });
+        return this.userGesturePromise;
     }
 
     initCoverObserver() {
@@ -522,11 +538,11 @@ class MusicPlayer {
     togglePlay() {
         if (this.isHandlingNavigationClick) return;
         if (this.waitingForUserGesture) {
-            this.waitingForUserGesture = false;
-            if (this.audio.src && this.isPlaying) {
-                this.play();
-                return;
-            }
+            // 等待用户手势，然后尝试播放
+            this.waitForUserGesture().then(() => {
+                this.togglePlay();
+            });
+            return;
         }
         if (!this.audio.src && this.currentPlaylist.length > 0) {
             this.loadSong(0, this.currentPlaylist);
@@ -538,9 +554,9 @@ class MusicPlayer {
         }
     }
 
-    play() {
+    async play() {
         if (this.waitingForUserGesture) {
-            this.waitingForUserGesture = false;
+            await this.waitForUserGesture();
         }
         if (!this.audio.src && this.currentPlaylist.length > 0) {
             this.loadSong(0, this.currentPlaylist);
@@ -557,7 +573,7 @@ class MusicPlayer {
                 console.error('播放失败:', error);
                 if (error.name === 'NotAllowedError') {
                     this.waitingForUserGesture = true;
-                    window.toast.show('请点击页面任意位置后播放', 'info');
+                    window.toast.show('请在页面任意位置点击后再次播放', 'info');
                 } else if (!this.isHandlingNavigationClick) {
                     this.handlePlaybackError(error);
                 }
@@ -1295,6 +1311,11 @@ class MusicPlayer {
             this.updatePlayButton();
             window.toast.show('点击播放按钮开始音乐', 'info');
         }
+
+        // 移动端：监听首次用户交互，解除等待标志
+        this.waitForUserGesture().then(() => {
+            console.log('用户已交互，解除自动播放限制');
+        });
     }
 
     getApiName(apiId) {
@@ -1331,6 +1352,9 @@ class MusicPlayer {
         }
         if (this.coverObserver) {
             this.coverObserver.disconnect();
+        }
+        if (this.userGestureResolver) {
+            // 清理，避免内存泄漏
         }
         this.hasNotifiedLocal = false;
         this.hasNotifiedQishui = false;
