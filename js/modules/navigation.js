@@ -1,10 +1,10 @@
 /**
- * 优化分类导航系统 - 分页加载版（解决长列表卡顿 + 图片懒加载）
+ * 优化分类导航系统 - 分页加载版（解决长列表卡顿 + 死链报告实时更新）
  */
 class OptimizedNavigation {
     constructor() {
         this.structure = null;
-        this.siteCache = new Map();          // 完整站点缓存 key: subcategory_id, value: sites[]
+        this.siteCache = new Map();
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
         this.isInitialized = false;
@@ -13,30 +13,26 @@ class OptimizedNavigation {
         this.skeletonCount = 6;
         this.updateTimer = null;
         this.UPDATE_INTERVAL = 5 * 60 * 1000;
-        this.apiBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
+        this.apiBase = Utils.getApiBase();
         this.imgObserver = null;
         this.isSearching = false;
         this.searchInput = null;
         this.searchTimer = null;
         this.loadedLevel1Set = new Set();
 
-        // 分页相关
         this.currentPage = 1;
-        this.pageSize = 30;           // 每页30个站点
+        this.pageSize = 30;
         this.isLoadingMore = false;
         this.hasMore = true;
-        this.currentSites = [];        // 当前子分类的完整站点列表
+        this.currentSites = [];
         this.scrollListener = null;
     }
 
     _escapeHtml(str) {
-        if (typeof Utils !== 'undefined' && typeof Utils.escapeHtml === 'function') return Utils.escapeHtml(str);
-        if (!str) return '';
-        return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+        return Utils.escapeHtml(str);
     }
 
     _formatViews(views) {
-        if (typeof Utils !== 'undefined' && typeof Utils.formatViews === 'function') return Utils.formatViews(views);
         if (views >= 1000000) return `${(views / 1000000).toFixed(1).replace('.0', '')}M`;
         if (views >= 1000) return `${(views / 1000).toFixed(1).replace('.0', '')}K`;
         return String(views);
@@ -90,7 +86,7 @@ class OptimizedNavigation {
     }
 
     async loadNavigationStructure() {
-        const response = await fetch(`${this.apiBase}/navigation/structure`);
+        const response = await Utils.safeFetch(`${this.apiBase}/navigation/structure`);
         if (!response.ok) throw new Error('Failed to load navigation structure');
         this.structure = await response.json();
     }
@@ -99,7 +95,7 @@ class OptimizedNavigation {
         if (this.siteCache.has(subcategoryId)) {
             return this.siteCache.get(subcategoryId);
         }
-        const response = await fetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
+        const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
         if (!response.ok) throw new Error('Failed to load sites');
         const sites = await response.json();
         this.siteCache.set(subcategoryId, sites);
@@ -169,6 +165,13 @@ class OptimizedNavigation {
         if (el2) el2.textContent = this.stats.invalidCount || '0';
     }
 
+    updateInvalidCount(increment) {
+        if (!this.stats.invalidCount) this.stats.invalidCount = 0;
+        this.stats.invalidCount += increment;
+        const invalidEl = document.getElementById('invalidCount');
+        if (invalidEl) invalidEl.textContent = this.stats.invalidCount;
+    }
+
     renderNavigation() {
         this.renderLevel1();
         this.renderEmptyState();
@@ -208,15 +211,12 @@ class OptimizedNavigation {
         }
     }
 
-    // 分页渲染核心：只渲染当前页的站点，并绑定滚动加载更多
     async renderLevel3(level1, subcategoryId) {
         const container = document.getElementById('level3Content');
         if (!container) return;
-        // 重置分页状态
         this.currentPage = 1;
         this.hasMore = true;
         this.isLoadingMore = false;
-        // 获取完整站点列表（从缓存或网络）
         this.currentSites = await this.loadSites(subcategoryId);
         if (!this.currentSites.length) {
             this.renderEmptyState();
@@ -224,9 +224,7 @@ class OptimizedNavigation {
         }
         this.renderSitesPage();
         this.observeLazyImages(container);
-        // 绑定滚动加载更多
         this.bindScrollLoadMore();
-        // 更新计数
         this.updateSubcategoryCountDisplay(subcategoryId, this.currentSites.filter(s => s.valid !== false).length);
     }
 
@@ -237,14 +235,12 @@ class OptimizedNavigation {
         const end = start + this.pageSize;
         const pageSites = this.currentSites.slice(start, end);
         if (this.currentPage === 1) {
-            // 第一页：完全替换内容
             container.innerHTML = '';
             const fragment = document.createDocumentFragment();
             pageSites.forEach((site, idx) => {
                 fragment.appendChild(this.createSiteCard(site, idx));
             });
             container.appendChild(fragment);
-            // 添加加载指示器（占位元素）
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'scroll-loading-trigger';
             loadingDiv.style.textAlign = 'center';
@@ -253,7 +249,6 @@ class OptimizedNavigation {
             loadingDiv.innerHTML = '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载更多...</span>';
             container.appendChild(loadingDiv);
         } else {
-            // 后续页：追加卡片，移除旧加载指示器并重新添加
             const loadingDiv = container.querySelector('#scroll-loading-trigger');
             if (loadingDiv) loadingDiv.remove();
             const fragment = document.createDocumentFragment();
@@ -261,7 +256,6 @@ class OptimizedNavigation {
                 fragment.appendChild(this.createSiteCard(site, idx));
             });
             container.appendChild(fragment);
-            // 重新添加加载指示器
             const newLoadingDiv = document.createElement('div');
             newLoadingDiv.id = 'scroll-loading-trigger';
             newLoadingDiv.style.textAlign = 'center';
@@ -270,7 +264,6 @@ class OptimizedNavigation {
             newLoadingDiv.innerHTML = '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载更多...</span>';
             container.appendChild(newLoadingDiv);
         }
-        // 检查是否还有更多
         if (end >= this.currentSites.length) {
             this.hasMore = false;
             const loadingDiv = container.querySelector('#scroll-loading-trigger');
@@ -294,7 +287,6 @@ class OptimizedNavigation {
                 this.loadMore();
             }
         };
-        // 移除旧的监听器，避免重复绑定
         if (this.scrollListener) {
             window.removeEventListener('scroll', this.scrollListener);
             container.removeEventListener('scroll', this.scrollListener);
@@ -311,7 +303,6 @@ class OptimizedNavigation {
         if (loadingDiv) {
             loadingDiv.innerHTML = '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载中...</span>';
         }
-        // 延迟一下，避免快速滚动时频繁触发
         await new Promise(r => setTimeout(r, 200));
         this.currentPage++;
         const start = (this.currentPage - 1) * this.pageSize;
@@ -325,7 +316,6 @@ class OptimizedNavigation {
         }
         this.renderSitesPage();
         this.isLoadingMore = false;
-        // 重新观察新添加的图片
         const container = document.getElementById('level3Content');
         if (container) this.observeLazyImages(container);
     }
@@ -342,7 +332,6 @@ class OptimizedNavigation {
         if (site.icon) {
             const raw = site.icon.trim();
             if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('./') || /\.(png|jpg|jpeg|ico|svg)/i.test(raw)) {
-                // 懒加载：使用 data-src
                 iconHtml = `<img data-src="${this._escapeHtml(raw)}" alt="" loading="lazy" class="lazy-icon" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fas fa-link\\'></i>';">`;
             } else if (raw.startsWith('fas ') || raw.startsWith('fab ')) {
                 iconHtml = `<i class="${raw}"></i>`;
@@ -378,7 +367,7 @@ class OptimizedNavigation {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
             if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
-            fetch(`${this.apiBase}/click`, {
+            Utils.safeFetch(`${this.apiBase}/click`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: site.url, title: site.title })
             }).catch(() => {});
@@ -411,19 +400,21 @@ class OptimizedNavigation {
                     reportBtn.style.opacity = '0.5';
                     reportBtn.style.cursor = 'not-allowed';
                     try {
-                        const res = await fetch(`${this.apiBase}/report-dead-link`, {
+                        const res = await Utils.safeFetch(`${this.apiBase}/report-dead-link`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ url: reportBtn.dataset.url, title: reportBtn.dataset.title })
                         });
                         if (res.ok) {
                             window.toast.show('已反馈，管理员将处理', 'success');
+                            // 实时更新卡片状态
+                            card.classList.add('invalid');
                             reportBtn.disabled = true;
                             reportBtn.title = '已报告，等待处理';
-                            reportBtn.style.opacity = '0.5';
                             const icon = reportBtn.querySelector('i');
                             if (icon) icon.style.color = '#999';
-                            card.classList.add('invalid');
+                            // 更新无效链接计数
+                            this.updateInvalidCount(1);
                         } else {
                             const err = await res.json().catch(() => ({}));
                             window.toast.show(err.error || '反馈失败', 'error');
@@ -489,8 +480,7 @@ class OptimizedNavigation {
         this.showSkeleton();
         try {
             const searchUrl = `${this.apiBase}/search?q=${encodeURIComponent(query)}`;
-            const response = await fetch(searchUrl);
-            if (!response.ok) throw new Error('搜索失败');
+            const response = await Utils.safeFetch(searchUrl);
             const results = await response.json();
             container.innerHTML = '';
             if (results.length === 0) {
