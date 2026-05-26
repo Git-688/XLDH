@@ -1,6 +1,5 @@
 /**
- * 网站投稿模块（同步安全检测版 + 显示全局投稿总数）
- * 功能：投稿表单、自动获取网站信息（可选）、同步安全检测、每日剩余次数提示、显示全局累计投稿数
+ * 网站投稿模块（同步安全检测版 + 全局投稿总数缓存）
  */
 class SubmitModule {
     constructor() {
@@ -17,9 +16,14 @@ class SubmitModule {
         this.waitingHint = this.modal ? this.modal.querySelector('.submit-safe-hint') : null;
 
         this.apiBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
-        this.dailyLimit = 6; // 与 Worker 保持一致
+        this.dailyLimit = 6;
         this.statsBadge = null;
         this.submitting = false;
+
+        // 缓存全局总数
+        this.cachedTotalCount = null;
+        this.cachedTotalCountTime = 0;
+        this.cacheTTL = 60000; // 60秒
 
         this.init();
     }
@@ -42,19 +46,17 @@ class SubmitModule {
         this.bindEvents();
         if (this.descInput) this.descInput.maxLength = 200;
 
-        // 监听模态框打开，刷新显示
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class' && this.modal.classList.contains('active')) {
                     this.ensureStatsBadge();
                     this.updateRemainingCount();
-                    this.loadGlobalTotalCount(); // 加载全局投稿总数
+                    this.loadGlobalTotalCount();
                 }
             });
         });
         observer.observe(this.modal, { attributes: true });
 
-        // 每天零点重置今日计数
         this.checkAndResetDailyCount();
         setInterval(() => this.checkAndResetDailyCount(), 60000);
     }
@@ -75,14 +77,22 @@ class SubmitModule {
         this.statsBadge = badge;
     }
 
-    // 从后端获取全局投稿总数
     async loadGlobalTotalCount() {
         if (!this.statsBadge) return;
+
+        const now = Date.now();
+        if (this.cachedTotalCount !== null && (now - this.cachedTotalCountTime) < this.cacheTTL) {
+            this.statsBadge.textContent = `总投稿 ${this.cachedTotalCount} 次`;
+            return;
+        }
+
         try {
             const res = await fetch(`${this.apiBase}/global-submission-count`);
             if (!res.ok) throw new Error('获取失败');
             const data = await res.json();
             const total = data.total || 0;
+            this.cachedTotalCount = total;
+            this.cachedTotalCountTime = now;
             this.statsBadge.textContent = `总投稿 ${total} 次`;
         } catch (err) {
             console.error('获取全局投稿总数失败:', err);
@@ -116,7 +126,6 @@ class SubmitModule {
         }
     }
 
-    // 投稿成功后增加本地每日计数（不增加累计总数显示，因为下次打开模态框会重新从后端获取）
     incrementDailyCount() {
         const todayKey = `submit_count_${new Date().toISOString().slice(0, 10)}`;
         let todayCount = parseInt(localStorage.getItem(todayKey) || '0', 10);
@@ -242,7 +251,6 @@ class SubmitModule {
         e.preventDefault();
         if (this.submitting) return;
 
-        // 前端检查每日剩余次数（后端也会检查，这里仅做友好提示）
         const todayKey = `submit_count_${new Date().toISOString().slice(0, 10)}`;
         let todayCount = parseInt(localStorage.getItem(todayKey) || '0', 10);
         if (todayCount >= this.dailyLimit) {
@@ -289,8 +297,12 @@ class SubmitModule {
 
             if (res.ok) {
                 window.toast.show('投稿成功！已通过安全检测，等待管理员审核', 'success');
-                this.incrementDailyCount();   // 增加本地每日计数
-                // 投稿成功后，下次打开模态框会重新获取全局总数，这里不更新显示
+                this.incrementDailyCount();
+                // 更新全局总数缓存（加1）
+                if (this.cachedTotalCount !== null) {
+                    this.cachedTotalCount++;
+                    this.cachedTotalCountTime = Date.now();
+                }
                 this.modal.classList.remove('active');
                 this.resetForm();
             } else {
