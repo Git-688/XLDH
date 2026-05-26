@@ -12,7 +12,64 @@ class CompactSidebar {
         }
         
         this.categories = [
-            // ... 原有分类结构保持不变（因篇幅省略，实际部署时保留完整）
+            {
+                name: '常用工具',
+                icon: 'fas fa-tools',
+                expanded: true,
+                items: [
+                    { icon: 'fas fa-mobile-alt', label: '手机软件', badge: null, action: 'link', link: './pages/chl/手机软件.html' },
+                    { icon: 'fas fa-desktop', label: '电脑软件', badge: null, action: 'link', link: './pages/chl/电脑软件.html' },
+                    { icon: 'fas fa-film', label: '电影大全', badge: null, action: 'link', link: './pages/chl/影视推荐.html' },
+                    { icon: 'fas fa-images', label: '共享图片', badge: null, action: 'link', link: './pages/chl/共享图片链接.html' }
+                ]
+            },
+            {
+                name: '网盘工具',
+                icon: 'fas fa-cloud',
+                expanded: false,
+                items: [
+                    { icon: 'fas fa-cloud-upload-alt', label: '夸克网盘', badge: null, action: 'link', link: './pages/chl/夸克网盘.html' },
+                    { icon: 'fas fa-hdd', label: '123云盘', badge: null, action: 'link', link: './pages/chl/123云盘.html' },
+                    { icon: 'fas fa-cloud', label: '天翼云盘', badge: null, action: 'link', link: './pages/chl/天翼云盘.html' },
+                    { icon: 'fas fa-box', label: '115生活', badge: null, action: 'link', link: './pages/chl/115生活.html' },
+                    { icon: 'fas fa-database', label: '阿里云盘', badge: null, action: 'link', link: './pages/chl/阿里云盘.html' },
+                    { icon: 'fas fa-sim-card', label: '移动网盘', badge: null, action: 'link', link: './pages/chl/移动网盘.html' },
+                    { icon: 'fab fa-baidu', label: '百度网盘', badge: null, action: 'link', link: './pages/chl/百度网盘.html' },
+                    { icon: 'fas fa-server', label: '城通网盘', badge: null, action: 'link', link: './pages/chl/城通网盘.html' },
+                    { icon: 'fas fa-file-archive', label: '蓝奏云', badge: null, action: 'link', link: './pages/chl/蓝奏云链接.html' }
+                ]
+            },
+            {
+                name: '学习资源',
+                icon: 'fas fa-graduation-cap',
+                expanded: false,
+                items: [
+                    { icon: 'fas fa-child', label: '小学阶段', badge: null, action: 'link', link: './pages/chl/小学阶段.html' },
+                    { icon: 'fas fa-school', label: '初中阶段', badge: null, action: 'link', link: './pages/chl/初中阶段.html' },
+                    { icon: 'fas fa-university', label: '高中阶段', badge: null, action: 'link', link: './pages/chl/高中阶段.html' },
+                    { icon: 'fas fa-user-graduate', label: '大学生活', badge: null, action: 'link', link: './pages/chl/大学生活.html' },
+                    { icon: 'fas fa-briefcase', label: '社会实践', badge: null, action: 'link', link: './pages/chl/社会实践.html' }
+                ]
+            },
+            {
+                name: '自制小工具',
+                icon: 'fas fa-cogs',
+                expanded: false,
+                items: [
+                    { icon: 'fas fa-scroll', label: '手持弹幕', badge: null, action: 'link', link: './pages/chl/手持弹幕.html' },
+                    { icon: 'fas fa-gift', label: '幸运大转盘', badge: null, action: 'link', link: './pages/chl/幸运大转盘.html' },
+                    { icon: 'fas fa-clipboard-list', label: '记分牌', badge: null, action: 'link', link: './pages/chl/记分牌.html' },
+                    { icon: 'fas fa-clock', label: '时间屏幕', badge: null, action: 'link', link: './pages/chl/时间屏幕.html' }
+                ]
+            },
+            {
+                name: '其他',
+                icon: 'fas fa-ellipsis-h',
+                expanded: false,
+                items: [
+                    { icon: 'fas fa-fire', label: '烟花模拟器', badge: null, action: 'link', link: './pages/chl/烟花模拟器.html' }
+                ]
+            }
         ];
         
         this.isInitialized = false;
@@ -28,9 +85,10 @@ class CompactSidebar {
         this.originalBodyOverflow = '';
         this.originalBodyPosition = '';
         this.originalBodyTop = '';
+        this.savedScrollTop = 0;
     }
 
-    // 计算侧边栏位置（保持不变）
+    // 计算侧边栏位置
     calcSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
@@ -169,7 +227,6 @@ class CompactSidebar {
         document.body.style.position = 'fixed';
         document.body.style.top = `-${scrollTop}px`;
         document.body.style.width = '100%';
-        // 保存滚动位置以便恢复
         this.savedScrollTop = scrollTop;
     }
 
@@ -621,7 +678,7 @@ class CompactSidebar {
                 this.calcSidebarPosition();
                 sidebar.classList.add('active');
                 document.body.classList.add('sidebar-open');
-                // 锁定 body 滚动（移动端）
+                // 移动端禁用 body 滚动
                 if (window.innerWidth < 768) {
                     this.disableBodyScroll();
                 }
@@ -652,7 +709,7 @@ class CompactSidebar {
             if (sidebar) {
                 sidebar.classList.remove('active');
                 document.body.classList.remove('sidebar-open');
-                // 恢复 body 滚动（移动端）
+                // 移动端恢复 body 滚动
                 if (window.innerWidth < 768) {
                     this.enableBodyScroll();
                 }
