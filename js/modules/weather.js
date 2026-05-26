@@ -1,15 +1,13 @@
 /**
  * 天气模块 - 简化卡片式设计（支持手动选择城市并持久化）
  * 使用配置化 API 地址和统一错误处理
- * @class WeatherModule
  */
 class WeatherModule {
-    // 静态配置：API 地址
     static CONFIG = {
         WEATHER_API: 'https://www.cunyuapi.top/weather',
         GEO_API: 'https://api.pearapi.ai/api/map/',
         get API_BASE() {
-            return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
+            return Utils.getApiBase();
         }
     };
 
@@ -30,13 +28,7 @@ class WeatherModule {
     }
 
     _escapeHtml(text) {
-        if (!text) return '';
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
+        return Utils.escapeHtml(text);
     }
 
     async init() {
@@ -65,8 +57,6 @@ class WeatherModule {
             if (savedAutoCity) {
                 this.currentCity = savedAutoCity;
                 console.log('使用上次自动定位的城市:', savedAutoCity);
-            } else {
-                console.log('无保存城市，将尝试自动定位');
             }
         } catch (e) {
             console.error('加载城市设置失败:', e);
