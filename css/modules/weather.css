@@ -14,7 +14,7 @@
     z-index: 10000;
     opacity: 0;
     transition: opacity 0.2s ease;
-    padding: 20px; /* 桌面端上下左右 20px */
+    padding: 20px;
     box-sizing: border-box;
     pointer-events: auto;
 }
@@ -33,10 +33,9 @@
     opacity: 0;
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
                 opacity 0.3s ease;
-    /* 移除 max-height 限制，高度由内容决定 */
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* 防止圆角溢出，但子元素无滚动 */
+    overflow: hidden;
 }
 
 /* 头部 */
@@ -119,7 +118,6 @@
 
 /* 内容区域 - 移除滚动，完整显示 */
 .weather-body {
-    /* 关键修改：不设 overflow-y: auto，默认 visible，内容完全展示 */
     overflow: visible;
     flex: 1;
     padding: 0;
@@ -589,7 +587,6 @@
 /* ==================== 移动端适配：与主页容器边距一致 ==================== */
 @media (max-width: 768px) {
     .weather-modal-card {
-        /* 左右间距使用主页统一的容器填充变量 */
         padding: 20px var(--container-padding-xs, 16px);
     }
     .city-prompt-modal {
@@ -623,7 +620,6 @@
         color: #1890ff;
     }
 
-    /* 文字颜色调整 */
     .weather-title span:first-child,
     .weather-desc,
     .weather-detail .detail-value,
@@ -691,7 +687,6 @@
         background: var(--primary-color, #4361ee);
     }
 
-    /* 图标颜色 */
     .weather-icon,
     .detail-icon,
     .forecast-day-icon,
