@@ -1,6 +1,5 @@
 /**
- * 网站投稿模块（同步安全检测版 + 全局投稿总数缓存）
- * 统一使用 Utils.safeFetch 和 Utils.handleApiError
+ * 网站投稿模块（同步安全检测版 + 全局投稿总数缓存 + 后端同步每日限制）
  */
 class SubmitModule {
     constructor() {
@@ -17,7 +16,7 @@ class SubmitModule {
         this.waitingHint = this.modal ? this.modal.querySelector('.submit-safe-hint') : null;
 
         this.apiBase = Utils.getApiBase();
-        this.dailyLimit = 6;
+        this.dailyLimit = 6; // 与 Worker 保持一致
         this.statsBadge = null;
         this.submitting = false;
 
@@ -25,6 +24,9 @@ class SubmitModule {
         this.cachedTotalCount = null;
         this.cachedTotalCountTime = 0;
         this.cacheTTL = 60000; // 60秒
+
+        // 今日已投稿次数（从后端获取）
+        this.todayCount = 0;
 
         this.init();
     }
@@ -45,15 +47,12 @@ class SubmitModule {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class' && this.modal.classList.contains('active')) {
                     this.ensureStatsBadge();
-                    this.updateRemainingCount();
                     this.loadGlobalTotalCount();
+                    this.loadTodayCount(); // 每次打开模态框时刷新今日次数
                 }
             });
         });
         observer.observe(this.modal, { attributes: true });
-
-        this.checkAndResetDailyCount();
-        setInterval(() => this.checkAndResetDailyCount(), 60000);
     }
 
     ensureStatsBadge() {
@@ -94,10 +93,25 @@ class SubmitModule {
         }
     }
 
+    // 从后端获取今日已投稿次数
+    async loadTodayCount() {
+        try {
+            const deviceId = this.getDeviceId();
+            const response = await Utils.safeFetch(`${this.apiBase}/user/today-submission-count`, {
+                headers: { 'X-Device-Id': deviceId }
+            });
+            const data = await response.json();
+            this.todayCount = data.count || 0;
+            this.updateRemainingCount();
+        } catch (error) {
+            Utils.handleApiError(error, '获取今日投稿次数失败', false);
+            this.todayCount = 0;
+            this.updateRemainingCount();
+        }
+    }
+
     updateRemainingCount() {
-        const todayKey = `submit_count_${new Date().toISOString().slice(0, 10)}`;
-        let todayCount = parseInt(localStorage.getItem(todayKey) || '0', 10);
-        const remaining = Math.max(0, this.dailyLimit - todayCount);
+        const remaining = Math.max(0, this.dailyLimit - this.todayCount);
         const remainingSpan = document.querySelector('.submit-remaining-count');
         if (remainingSpan) {
             remainingSpan.textContent = `今日剩余 ${remaining} 次`;
@@ -107,25 +121,6 @@ class SubmitModule {
                 remainingSpan.style.color = '';
             }
         }
-    }
-
-    checkAndResetDailyCount() {
-        const todayKey = `submit_count_${new Date().toISOString().slice(0, 10)}`;
-        const storedDate = localStorage.getItem('submit_date');
-        const today = new Date().toISOString().slice(0, 10);
-        if (storedDate !== today) {
-            localStorage.setItem('submit_date', today);
-            localStorage.setItem(todayKey, '0');
-            this.updateRemainingCount();
-        }
-    }
-
-    incrementDailyCount() {
-        const todayKey = `submit_count_${new Date().toISOString().slice(0, 10)}`;
-        let todayCount = parseInt(localStorage.getItem(todayKey) || '0', 10);
-        todayCount++;
-        localStorage.setItem(todayKey, todayCount);
-        this.updateRemainingCount();
     }
 
     getDeviceId() {
@@ -231,6 +226,9 @@ class SubmitModule {
             const url = this.urlInput.value.trim();
             enable = !!(title && url && Utils.isValidUrl(url));
         }
+        // 额外检查今日剩余次数
+        const remaining = this.dailyLimit - this.todayCount;
+        if (remaining <= 0) enable = false;
         this.submitSaveBtn.disabled = !enable || this.submitting;
     }
 
@@ -238,9 +236,9 @@ class SubmitModule {
         e.preventDefault();
         if (this.submitting) return;
 
-        const todayKey = `submit_count_${new Date().toISOString().slice(0, 10)}`;
-        let todayCount = parseInt(localStorage.getItem(todayKey) || '0', 10);
-        if (todayCount >= this.dailyLimit) {
+        // 前端检查今日剩余次数（后端也会检查）
+        const remaining = this.dailyLimit - this.todayCount;
+        if (remaining <= 0) {
             window.toast.show(`今日投稿已达上限（${this.dailyLimit}次），请明天再试`, 'warning');
             return;
         }
@@ -283,7 +281,10 @@ class SubmitModule {
 
             if (response.ok) {
                 window.toast.show('投稿成功！已通过安全检测，等待管理员审核', 'success');
-                this.incrementDailyCount();
+                // 投稿成功后，本地增加今日计数（减少一次请求）
+                this.todayCount++;
+                this.updateRemainingCount();
+                // 更新全局总数缓存（加1）
                 if (this.cachedTotalCount !== null) {
                     this.cachedTotalCount++;
                     this.cachedTotalCountTime = Date.now();
@@ -333,6 +334,7 @@ class SubmitModule {
         if (this.descInput) this.descInput.style.height = 'auto';
         if (this.waitingHint) this.waitingHint.style.display = 'none';
         this.submitting = false;
+        // 不清空 todayCount，因为可能还有剩余次数
     }
 }
 
