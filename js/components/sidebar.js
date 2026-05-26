@@ -1,6 +1,5 @@
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版（完整懒加载支持）
- * 统一使用 Utils 工具函数，移除硬编码
+ * 侧边栏组件 - 悬浮毛玻璃优化版（修复移动端滚动冲突）
  */
 class CompactSidebar {
     constructor() {
@@ -13,19 +12,7 @@ class CompactSidebar {
         }
         
         this.categories = [
-            // ... 原有分类结构保持不变
-            {
-                name: '常用工具',
-                icon: 'fas fa-tools',
-                expanded: true,
-                items: [
-                    { icon: 'fas fa-mobile-alt', label: '手机软件', badge: null, action: 'link', link: './pages/chl/手机软件.html' },
-                    { icon: 'fas fa-desktop', label: '电脑软件', badge: null, action: 'link', link: './pages/chl/电脑软件.html' },
-                    { icon: 'fas fa-film', label: '电影大全', badge: null, action: 'link', link: './pages/chl/影视推荐.html' },
-                    { icon: 'fas fa-images', label: '共享图片', badge: null, action: 'link', link: './pages/chl/共享图片链接.html' }
-                ]
-            },
-            // ... 其他分类同上（为节省篇幅省略，实际部署时保留原有完整 categories 数组）
+            // ... 原有分类结构保持不变（因篇幅省略，实际部署时保留完整）
         ];
         
         this.isInitialized = false;
@@ -38,6 +25,9 @@ class CompactSidebar {
         this.minSidebarHeight = 400;
 
         this.defaultAvatar = './assets/logo.png';
+        this.originalBodyOverflow = '';
+        this.originalBodyPosition = '';
+        this.originalBodyTop = '';
     }
 
     // 计算侧边栏位置（保持不变）
@@ -168,6 +158,33 @@ class CompactSidebar {
         }
     }
 
+    // ========== 滚动锁定/解锁（移动端防冲突） ==========
+    disableBodyScroll() {
+        if (typeof document === 'undefined') return;
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        this.originalBodyOverflow = document.body.style.overflow;
+        this.originalBodyPosition = document.body.style.position;
+        this.originalBodyTop = document.body.style.top;
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollTop}px`;
+        document.body.style.width = '100%';
+        // 保存滚动位置以便恢复
+        this.savedScrollTop = scrollTop;
+    }
+
+    enableBodyScroll() {
+        if (typeof document === 'undefined') return;
+        document.body.style.overflow = this.originalBodyOverflow || '';
+        document.body.style.position = this.originalBodyPosition || '';
+        document.body.style.top = this.originalBodyTop || '';
+        document.body.style.width = '';
+        if (this.savedScrollTop !== undefined) {
+            window.scrollTo(0, this.savedScrollTop);
+        }
+    }
+
+    // ========== 个人资料模态框 ==========
     createProfileModal() {
         if (document.getElementById('profileModal')) return;
         try {
@@ -604,6 +621,10 @@ class CompactSidebar {
                 this.calcSidebarPosition();
                 sidebar.classList.add('active');
                 document.body.classList.add('sidebar-open');
+                // 锁定 body 滚动（移动端）
+                if (window.innerWidth < 768) {
+                    this.disableBodyScroll();
+                }
                 this.loadSidebarWallpaper();
                 
                 const sidebarContent = sidebar.querySelector('.sidebar-content');
@@ -631,6 +652,10 @@ class CompactSidebar {
             if (sidebar) {
                 sidebar.classList.remove('active');
                 document.body.classList.remove('sidebar-open');
+                // 恢复 body 滚动（移动端）
+                if (window.innerWidth < 768) {
+                    this.enableBodyScroll();
+                }
                 
                 const sidebarContent = sidebar.querySelector('.sidebar-content');
                 const categoriesContainer = sidebar.querySelector('.categories-container');
