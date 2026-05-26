@@ -1,7 +1,6 @@
 /**
- * 优化分类导航系统 - 拼音搜索版（调用 /search 接口）
- * 功能：三级导航、搜索（后端拼音搜索）、死链报告、自动更新、按需加载站点、图片懒加载
- * 优化：按需加载子分类站点数量（仅在点击一级分类时加载），避免初始并发请求过多
+ * 优化分类导航系统 - 无拼音版
+ * 功能：三级导航、搜索（后端模糊匹配）、死链报告、自动更新、按需加载站点、图片懒加载
  */
 class OptimizedNavigation {
     constructor() {
@@ -70,7 +69,7 @@ class OptimizedNavigation {
         this.createSearchBox();
         try {
             await this.loadNavigationStructure();
-            this.calculateStats();          // 仅设置分类数，总站点数暂为0
+            this.calculateStats();
             this.renderNavigation();
             const firstCategory = this.getFirstCategory();
             if (firstCategory) {
@@ -109,7 +108,6 @@ class OptimizedNavigation {
      */
     async loadSubcategoryCountsForLevel1(level1) {
         if (!this.structure?.[level1]) return;
-        // 避免重复加载同一一级分类下的子分类数量
         if (this.loadedLevel1Set.has(level1)) return;
 
         const subcategories = this.structure[level1].subcategories;
@@ -135,7 +133,6 @@ class OptimizedNavigation {
         }
 
         this.loadedLevel1Set.add(level1);
-
         // 更新全局站点总数（从缓存重新计算）
         await this.recalculateTotalWebsites();
     }
@@ -167,7 +164,6 @@ class OptimizedNavigation {
             countSpan.textContent = count;
             countSpan.style.display = 'inline-block';
         } else if (retry < 5) {
-            // 如果按钮还未渲染，延迟重试
             setTimeout(() => this.updateSubcategoryCountDisplay(subcategoryId, count, retry + 1), 100);
         }
     }
@@ -371,7 +367,7 @@ class OptimizedNavigation {
         container.innerHTML = `
             <div class="search-input-wrapper">
                 <i class="fas fa-search search-icon-prefix"></i>
-                <input type="text" id="navSearchInput" placeholder="搜索本站链接（支持拼音/首字母）..." autocomplete="off">
+                <input type="text" id="navSearchInput" placeholder="搜索本站链接..." autocomplete="off">
                 <button class="search-clear-btn" id="navSearchClearBtn" aria-label="清除搜索">
                     <i class="fas fa-times"></i>
                 </button>
@@ -408,12 +404,7 @@ class OptimizedNavigation {
         if (!container) return;
         this.showSkeleton();
         try {
-            let searchUrl = `${this.apiBase}/search?q=${encodeURIComponent(query)}`;
-            if (window.pinyin && typeof window.pinyin.pinyin === 'function') {
-                const fullPinyin = window.pinyin.pinyin(query, { toneType: 'none', type: 'array' }).join('').toLowerCase();
-                const initialPinyin = window.pinyin.pinyin(query, { pattern: 'first', toneType: 'none' }).toLowerCase();
-                searchUrl += `&pinyin_full=${encodeURIComponent(fullPinyin)}&pinyin_initial=${encodeURIComponent(initialPinyin)}`;
-            }
+            const searchUrl = `${this.apiBase}/search?q=${encodeURIComponent(query)}`;
             const response = await fetch(searchUrl);
             if (!response.ok) throw new Error('搜索失败');
             const results = await response.json();
@@ -434,7 +425,7 @@ class OptimizedNavigation {
             const hint = document.getElementById('navSearchHint');
             if (hint) {
                 hint.style.display = 'block';
-                hint.textContent = `找到 ${results.length} 个结果（支持拼音/首字母）`;
+                hint.textContent = `找到 ${results.length} 个结果`;
             }
         } catch (e) {
             console.error(e);
