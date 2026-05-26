@@ -1,6 +1,7 @@
 /**
  * 优化分类导航系统 - 拼音搜索版（调用 /search 接口）
  * 功能：三级导航、搜索（后端拼音搜索）、死链报告、自动更新、按需加载站点、图片懒加载
+ * 修复：分类网址总数显示、子分类站点数量显示
  */
 class OptimizedNavigation {
     constructor() {
@@ -67,6 +68,7 @@ class OptimizedNavigation {
         this.createSearchBox();
         try {
             await this.loadNavigationStructure();
+            await this.preloadSubcategoryCounts();  // 预加载所有子分类站点数量并更新总计数
             this.calculateStats();
             this.renderNavigation();
             const firstCategory = this.getFirstCategory();
@@ -96,16 +98,68 @@ class OptimizedNavigation {
         return sites;
     }
 
+    /**
+     * 预加载所有子分类的站点数量，并累加总站点数
+     */
+    async preloadSubcategoryCounts() {
+        if (!this.structure) return;
+        let totalValidSites = 0;
+        const promises = [];
+        const subcategoryCounts = new Map(); // subcategory_id -> count
+
+        // 遍历所有一级分类下的子分类
+        for (const catName in this.structure) {
+            const subcategories = this.structure[catName].subcategories;
+            for (const sub of subcategories) {
+                const subId = sub.id;
+                const promise = this.loadSites(subId).then(sites => {
+                    const validCount = sites.filter(s => s.valid !== false).length;
+                    subcategoryCounts.set(subId, validCount);
+                    totalValidSites += validCount;
+                    // 更新对应二级分类按钮上的计数显示
+                    this.updateSubcategoryCountDisplay(subId, validCount);
+                }).catch(err => {
+                    console.warn(`加载子分类 ${subId} 站点失败:`, err);
+                    subcategoryCounts.set(subId, 0);
+                });
+                promises.push(promise);
+            }
+        }
+
+        await Promise.all(promises);
+        this.stats.totalWebsites = totalValidSites;
+        this.stats.invalidCount = 0; // 暂不统计无效链接总数，可后续从站点数据中计算
+        this.updateStatsDisplay();
+    }
+
+    /**
+     * 更新指定二级分类按钮上的数量显示
+     */
+    updateSubcategoryCountDisplay(subcategoryId, count) {
+        const btn = document.querySelector(`.level2-btn[data-level2="${subcategoryId}"]`);
+        if (btn) {
+            let countSpan = btn.querySelector('.level2-btn-count');
+            if (!countSpan) {
+                countSpan = document.createElement('span');
+                countSpan.className = 'level2-btn-count';
+                btn.appendChild(countSpan);
+            }
+            countSpan.textContent = count;
+            countSpan.style.display = 'inline-block';
+        }
+    }
+
     calculateStats() {
         const catCount = this.structure ? Object.keys(this.structure).length : 0;
         this.stats.totalCategories = catCount;
+        // totalWebsites 已经在 preloadSubcategoryCounts 中计算，这里不再覆盖
         this.updateStatsDisplay();
     }
 
     updateStatsDisplay() {
         const el1 = document.getElementById('siteCount');
         const el2 = document.getElementById('invalidCount');
-        if (el1) el1.textContent = `${this.stats.totalWebsites || '?'}+`;
+        if (el1) el1.textContent = `${this.stats.totalWebsites || 0}+`;
         if (el2) el2.textContent = this.stats.invalidCount || '0';
     }
 
@@ -139,6 +193,15 @@ class OptimizedNavigation {
                 <span class="level2-btn-count" style="display:none;">0</span>
             </button>`
         ).join('');
+
+        // 如果缓存中已有该子分类的站点数量，立即更新显示
+        for (const sub of subCats) {
+            const cached = this.siteCache.get(sub.id);
+            if (cached) {
+                const validCount = cached.filter(s => s.valid !== false).length;
+                this.updateSubcategoryCountDisplay(sub.id, validCount);
+            }
+        }
     }
 
     async renderLevel3(level1, subcategoryId) {
@@ -158,15 +221,8 @@ class OptimizedNavigation {
             });
             container.appendChild(fragment);
             this.observeLazyImages(container);
-            // 更新计数显示
-            const btn = document.querySelector(`.level2-btn[data-level2="${subcategoryId}"]`);
-            if (btn) {
-                const countSpan = btn.querySelector('.level2-btn-count');
-                if (countSpan) {
-                    countSpan.textContent = sites.length;
-                    countSpan.style.display = 'inline-block';
-                }
-            }
+            // 更新计数显示（确保与缓存一致）
+            this.updateSubcategoryCountDisplay(subcategoryId, sites.filter(s => s.valid !== false).length);
         } catch (error) {
             console.error('加载站点失败:', error);
             container.innerHTML = '<div class="empty-state">加载失败，请重试</div>';
@@ -330,9 +386,7 @@ class OptimizedNavigation {
         if (!container) return;
         this.showSkeleton();
         try {
-            // 构建请求 URL
             let searchUrl = `${this.apiBase}/search?q=${encodeURIComponent(query)}`;
-            // 如果拼音库已加载，计算拼音参数
             if (window.pinyin && typeof window.pinyin.pinyin === 'function') {
                 const fullPinyin = window.pinyin.pinyin(query, { toneType: 'none', type: 'array' }).join('').toLowerCase();
                 const initialPinyin = window.pinyin.pinyin(query, { pattern: 'first', toneType: 'none' }).toLowerCase();
