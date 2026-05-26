@@ -1,6 +1,6 @@
 /**
- * 网站投稿模块（同步安全检测版）
- * 功能：投稿表单、自动获取网站信息（可选）、同步安全检测、每日剩余次数提示
+ * 网站投稿模块（同步安全检测版 + 显示全局投稿总数）
+ * 功能：投稿表单、自动获取网站信息（可选）、同步安全检测、每日剩余次数提示、显示全局累计投稿数
  */
 class SubmitModule {
     constructor() {
@@ -24,7 +24,6 @@ class SubmitModule {
         this.init();
     }
 
-    // 简单的 HTML 转义
     escapeHtml(str) {
         if (!str) return '';
         return String(str)
@@ -48,8 +47,8 @@ class SubmitModule {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class' && this.modal.classList.contains('active')) {
                     this.ensureStatsBadge();
-                    this.updateLocalStatsDisplay();
                     this.updateRemainingCount();
+                    this.loadGlobalTotalCount(); // 加载全局投稿总数
                 }
             });
         });
@@ -70,16 +69,24 @@ class SubmitModule {
             badge = document.createElement('span');
             badge.className = 'submission-stats-badge';
             badge.style.cssText = 'margin-left: 12px; font-size: 12px; background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 20px; font-weight: normal;';
-            badge.textContent = '已投稿 0 次';
+            badge.textContent = '加载中...';
             h3.appendChild(badge);
         }
         this.statsBadge = badge;
     }
 
-    updateLocalStatsDisplay() {
-        const total = this.getLocalSubmissionCount();
-        if (this.statsBadge) {
-            this.statsBadge.textContent = `已投稿 ${total} 次`;
+    // 从后端获取全局投稿总数
+    async loadGlobalTotalCount() {
+        if (!this.statsBadge) return;
+        try {
+            const res = await fetch(`${this.apiBase}/global-submission-count`);
+            if (!res.ok) throw new Error('获取失败');
+            const data = await res.json();
+            const total = data.total || 0;
+            this.statsBadge.textContent = `总投稿 ${total} 次`;
+        } catch (err) {
+            console.error('获取全局投稿总数失败:', err);
+            this.statsBadge.textContent = '总投稿 ? 次';
         }
     }
 
@@ -109,20 +116,12 @@ class SubmitModule {
         }
     }
 
-    getLocalSubmissionCount() {
-        const count = parseInt(localStorage.getItem('submission_total') || '0', 10);
-        return isNaN(count) ? 0 : count;
-    }
-
-    incrementLocalSubmissionCount() {
+    // 投稿成功后增加本地每日计数（不增加累计总数显示，因为下次打开模态框会重新从后端获取）
+    incrementDailyCount() {
         const todayKey = `submit_count_${new Date().toISOString().slice(0, 10)}`;
         let todayCount = parseInt(localStorage.getItem(todayKey) || '0', 10);
         todayCount++;
         localStorage.setItem(todayKey, todayCount);
-        let count = this.getLocalSubmissionCount();
-        count++;
-        localStorage.setItem('submission_total', count);
-        this.updateLocalStatsDisplay();
         this.updateRemainingCount();
     }
 
@@ -231,7 +230,6 @@ class SubmitModule {
     }
 
     updateSubmitButton(enable = null) {
-        // 如果没有显式传入 enable，则根据表单是否填写完整来判断
         if (enable === null) {
             const title = this.titleInput.value.trim();
             const url = this.urlInput.value.trim();
@@ -263,7 +261,6 @@ class SubmitModule {
             return;
         }
 
-        // 确保 URL 带协议
         const safeUrl = url.startsWith('http') ? url : `https://${url}`;
         const deviceId = this.getDeviceId();
         const payload = {
@@ -292,23 +289,22 @@ class SubmitModule {
 
             if (res.ok) {
                 window.toast.show('投稿成功！已通过安全检测，等待管理员审核', 'success');
-                this.incrementLocalSubmissionCount();
+                this.incrementDailyCount();   // 增加本地每日计数
+                // 投稿成功后，下次打开模态框会重新获取全局总数，这里不更新显示
                 this.modal.classList.remove('active');
                 this.resetForm();
             } else {
-                // 处理安全检测不通过或其他错误
                 let errorMsg = data.error || '提交失败';
                 if (data.details && data.details.label) {
                     errorMsg = data.details.label;
                 }
                 window.toast.show(errorMsg, 'error');
-                // 显示详细错误信息在结果区域
                 if (this.urlCheckResult && data.details && data.details.label) {
                     this.urlCheckResult.style.display = 'block';
                     this.urlCheckResult.className = 'url-check-result unsafe';
                     this.urlCheckResult.textContent = data.details.label;
                 }
-                this.updateSubmitButton(true); // 重新启用按钮（但不清空表单）
+                this.updateSubmitButton(true);
             }
         } catch (err) {
             console.error(err);
@@ -353,7 +349,6 @@ class SubmitModule {
     }
 }
 
-// 页面加载后初始化
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.submitModule) {
         window.submitModule = new SubmitModule();
