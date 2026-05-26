@@ -1,11 +1,10 @@
 /**
- * 优化分类导航系统 - 无拼音版
- * 功能：三级导航、搜索（后端模糊匹配）、死链报告、自动更新、按需加载站点、图片懒加载
+ * 优化分类导航系统 - 分页加载版（解决长列表卡顿 + 图片懒加载）
  */
 class OptimizedNavigation {
     constructor() {
-        this.structure = null;           // 分类结构（无站点）
-        this.siteCache = new Map();      // 站点缓存 key: subcategory_id, value: sites[]
+        this.structure = null;
+        this.siteCache = new Map();          // 完整站点缓存 key: subcategory_id, value: sites[]
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
         this.isInitialized = false;
@@ -14,14 +13,20 @@ class OptimizedNavigation {
         this.skeletonCount = 6;
         this.updateTimer = null;
         this.UPDATE_INTERVAL = 5 * 60 * 1000;
-        this.quietUpdate = true;
         this.apiBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
         this.imgObserver = null;
         this.isSearching = false;
         this.searchInput = null;
         this.searchTimer = null;
-        // 记录已加载过站点数量的一级分类，避免重复加载
         this.loadedLevel1Set = new Set();
+
+        // 分页相关
+        this.currentPage = 1;
+        this.pageSize = 30;           // 每页30个站点
+        this.isLoadingMore = false;
+        this.hasMore = true;
+        this.currentSites = [];        // 当前子分类的完整站点列表
+        this.scrollListener = null;
     }
 
     _escapeHtml(str) {
@@ -73,7 +78,6 @@ class OptimizedNavigation {
             this.renderNavigation();
             const firstCategory = this.getFirstCategory();
             if (firstCategory) {
-                // 首次加载时，自动加载第一个一级分类下的子分类站点数量
                 await this.loadSubcategoryCountsForLevel1(firstCategory);
                 this.selectLevel1(firstCategory, false);
             }
@@ -102,24 +106,16 @@ class OptimizedNavigation {
         return sites;
     }
 
-    /**
-     * 加载指定一级分类下所有子分类的站点数量（按需，限制并发）
-     * @param {string} level1 一级分类名称
-     */
     async loadSubcategoryCountsForLevel1(level1) {
         if (!this.structure?.[level1]) return;
         if (this.loadedLevel1Set.has(level1)) return;
-
         const subcategories = this.structure[level1].subcategories;
         let totalValidSites = 0;
-
-        // 限制并发数，避免瞬间大量请求
         const concurrency = 5;
         const chunks = [];
         for (let i = 0; i < subcategories.length; i += concurrency) {
             chunks.push(subcategories.slice(i, i + concurrency));
         }
-
         for (const chunk of chunks) {
             const promises = chunk.map(async (sub) => {
                 const subId = sub.id;
@@ -131,15 +127,10 @@ class OptimizedNavigation {
             const counts = await Promise.all(promises);
             totalValidSites += counts.reduce((sum, c) => sum + c, 0);
         }
-
         this.loadedLevel1Set.add(level1);
-        // 更新全局站点总数（从缓存重新计算）
         await this.recalculateTotalWebsites();
     }
 
-    /**
-     * 重新计算全局有效站点总数（基于 siteCache）
-     */
     async recalculateTotalWebsites() {
         let total = 0;
         for (const sites of this.siteCache.values()) {
@@ -149,9 +140,6 @@ class OptimizedNavigation {
         this.updateStatsDisplay();
     }
 
-    /**
-     * 更新指定二级分类按钮上的数量显示（带重试机制）
-     */
     updateSubcategoryCountDisplay(subcategoryId, count, retry = 0) {
         const btn = document.querySelector(`.level2-btn[data-level2="${subcategoryId}"]`);
         if (btn) {
@@ -211,8 +199,6 @@ class OptimizedNavigation {
                 <span class="level2-btn-count" style="display:none;">0</span>
             </button>`
         ).join('');
-
-        // 如果缓存中已有该子分类的站点数量，立即更新显示
         for (const sub of subCats) {
             const cached = this.siteCache.get(sub.id);
             if (cached) {
@@ -222,29 +208,126 @@ class OptimizedNavigation {
         }
     }
 
+    // 分页渲染核心：只渲染当前页的站点，并绑定滚动加载更多
     async renderLevel3(level1, subcategoryId) {
         const container = document.getElementById('level3Content');
         if (!container) return;
-        this.showSkeleton();
-        try {
-            const sites = await this.loadSites(subcategoryId);
+        // 重置分页状态
+        this.currentPage = 1;
+        this.hasMore = true;
+        this.isLoadingMore = false;
+        // 获取完整站点列表（从缓存或网络）
+        this.currentSites = await this.loadSites(subcategoryId);
+        if (!this.currentSites.length) {
+            this.renderEmptyState();
+            return;
+        }
+        this.renderSitesPage();
+        this.observeLazyImages(container);
+        // 绑定滚动加载更多
+        this.bindScrollLoadMore();
+        // 更新计数
+        this.updateSubcategoryCountDisplay(subcategoryId, this.currentSites.filter(s => s.valid !== false).length);
+    }
+
+    renderSitesPage() {
+        const container = document.getElementById('level3Content');
+        if (!container) return;
+        const start = (this.currentPage - 1) * this.pageSize;
+        const end = start + this.pageSize;
+        const pageSites = this.currentSites.slice(start, end);
+        if (this.currentPage === 1) {
+            // 第一页：完全替换内容
             container.innerHTML = '';
-            if (!sites.length) {
-                this.renderEmptyState();
-                return;
-            }
             const fragment = document.createDocumentFragment();
-            sites.forEach((site, idx) => {
+            pageSites.forEach((site, idx) => {
                 fragment.appendChild(this.createSiteCard(site, idx));
             });
             container.appendChild(fragment);
-            this.observeLazyImages(container);
-            // 更新计数显示（确保与缓存一致）
-            this.updateSubcategoryCountDisplay(subcategoryId, sites.filter(s => s.valid !== false).length);
-        } catch (error) {
-            console.error('加载站点失败:', error);
-            container.innerHTML = '<div class="empty-state">加载失败，请重试</div>';
+            // 添加加载指示器（占位元素）
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'scroll-loading-trigger';
+            loadingDiv.style.textAlign = 'center';
+            loadingDiv.style.padding = '10px';
+            loadingDiv.style.display = this.hasMore ? 'block' : 'none';
+            loadingDiv.innerHTML = '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载更多...</span>';
+            container.appendChild(loadingDiv);
+        } else {
+            // 后续页：追加卡片，移除旧加载指示器并重新添加
+            const loadingDiv = container.querySelector('#scroll-loading-trigger');
+            if (loadingDiv) loadingDiv.remove();
+            const fragment = document.createDocumentFragment();
+            pageSites.forEach((site, idx) => {
+                fragment.appendChild(this.createSiteCard(site, idx));
+            });
+            container.appendChild(fragment);
+            // 重新添加加载指示器
+            const newLoadingDiv = document.createElement('div');
+            newLoadingDiv.id = 'scroll-loading-trigger';
+            newLoadingDiv.style.textAlign = 'center';
+            newLoadingDiv.style.padding = '10px';
+            newLoadingDiv.style.display = this.hasMore ? 'block' : 'none';
+            newLoadingDiv.innerHTML = '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载更多...</span>';
+            container.appendChild(newLoadingDiv);
         }
+        // 检查是否还有更多
+        if (end >= this.currentSites.length) {
+            this.hasMore = false;
+            const loadingDiv = container.querySelector('#scroll-loading-trigger');
+            if (loadingDiv) {
+                loadingDiv.innerHTML = '<span style="color:var(--text-secondary);">—— 已经到底了 ——</span>';
+                loadingDiv.style.display = 'block';
+            }
+        }
+    }
+
+    bindScrollLoadMore() {
+        const container = document.getElementById('level3Content');
+        if (!container) return;
+        const scrollHandler = () => {
+            if (this.isLoadingMore || !this.hasMore) return;
+            const loadingDiv = container.querySelector('#scroll-loading-trigger');
+            if (!loadingDiv) return;
+            const rect = loadingDiv.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            if (rect.top <= windowHeight + 100) {
+                this.loadMore();
+            }
+        };
+        // 移除旧的监听器，避免重复绑定
+        if (this.scrollListener) {
+            window.removeEventListener('scroll', this.scrollListener);
+            container.removeEventListener('scroll', this.scrollListener);
+        }
+        this.scrollListener = scrollHandler;
+        window.addEventListener('scroll', this.scrollListener);
+        container.addEventListener('scroll', this.scrollListener);
+    }
+
+    async loadMore() {
+        if (this.isLoadingMore || !this.hasMore) return;
+        this.isLoadingMore = true;
+        const loadingDiv = document.getElementById('scroll-loading-trigger');
+        if (loadingDiv) {
+            loadingDiv.innerHTML = '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载中...</span>';
+        }
+        // 延迟一下，避免快速滚动时频繁触发
+        await new Promise(r => setTimeout(r, 200));
+        this.currentPage++;
+        const start = (this.currentPage - 1) * this.pageSize;
+        if (start >= this.currentSites.length) {
+            this.hasMore = false;
+            if (loadingDiv) {
+                loadingDiv.innerHTML = '<span style="color:var(--text-secondary);">—— 已经到底了 ——</span>';
+            }
+            this.isLoadingMore = false;
+            return;
+        }
+        this.renderSitesPage();
+        this.isLoadingMore = false;
+        // 重新观察新添加的图片
+        const container = document.getElementById('level3Content');
+        if (container) this.observeLazyImages(container);
     }
 
     createSiteCard(site, index) {
@@ -259,6 +342,7 @@ class OptimizedNavigation {
         if (site.icon) {
             const raw = site.icon.trim();
             if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('./') || /\.(png|jpg|jpeg|ico|svg)/i.test(raw)) {
+                // 懒加载：使用 data-src
                 iconHtml = `<img data-src="${this._escapeHtml(raw)}" alt="" loading="lazy" class="lazy-icon" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fas fa-link\\'></i>';">`;
             } else if (raw.startsWith('fas ') || raw.startsWith('fab ')) {
                 iconHtml = `<i class="${raw}"></i>`;
@@ -474,7 +558,6 @@ class OptimizedNavigation {
         this.renderLevel2(level1);
         this.showSkeleton();
 
-        // 按需加载该一级分类下子分类的站点数量（如果尚未加载过）
         if (!this.loadedLevel1Set.has(level1)) {
             await this.loadSubcategoryCountsForLevel1(level1);
         }
@@ -568,6 +651,11 @@ class OptimizedNavigation {
     destroy() {
         if (this.updateTimer) clearInterval(this.updateTimer);
         if (this.imgObserver) this.imgObserver.disconnect();
+        if (this.scrollListener) {
+            window.removeEventListener('scroll', this.scrollListener);
+            const container = document.getElementById('level3Content');
+            if (container) container.removeEventListener('scroll', this.scrollListener);
+        }
     }
 }
 
