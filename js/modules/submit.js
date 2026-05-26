@@ -1,5 +1,5 @@
 /**
- * 网站投稿模块（同步安全检测版 + 全局投稿总数缓存 + 后端同步每日限制）
+ * 网站投稿模块（同步安全检测版 + 全局投稿总数缓存 + 实时更新）
  */
 class SubmitModule {
     constructor() {
@@ -16,7 +16,7 @@ class SubmitModule {
         this.waitingHint = this.modal ? this.modal.querySelector('.submit-safe-hint') : null;
 
         this.apiBase = Utils.getApiBase();
-        this.dailyLimit = 6; // 与 Worker 保持一致
+        this.dailyLimit = 6;
         this.statsBadge = null;
         this.submitting = false;
 
@@ -48,7 +48,7 @@ class SubmitModule {
                 if (mutation.attributeName === 'class' && this.modal.classList.contains('active')) {
                     this.ensureStatsBadge();
                     this.loadGlobalTotalCount();
-                    this.loadTodayCount(); // 每次打开模态框时刷新今日次数
+                    this.loadTodayCount();
                 }
             });
         });
@@ -93,7 +93,18 @@ class SubmitModule {
         }
     }
 
-    // 从后端获取今日已投稿次数
+    // 手动更新全局总数（投稿成功后调用）
+    updateGlobalTotalCountIncrement() {
+        if (this.cachedTotalCount !== null) {
+            this.cachedTotalCount++;
+            this.cachedTotalCountTime = Date.now();
+            this.statsBadge.textContent = `总投稿 ${this.cachedTotalCount} 次`;
+        } else {
+            // 如果缓存为空，则重新获取
+            this.loadGlobalTotalCount();
+        }
+    }
+
     async loadTodayCount() {
         try {
             const deviceId = this.getDeviceId();
@@ -226,7 +237,6 @@ class SubmitModule {
             const url = this.urlInput.value.trim();
             enable = !!(title && url && Utils.isValidUrl(url));
         }
-        // 额外检查今日剩余次数
         const remaining = this.dailyLimit - this.todayCount;
         if (remaining <= 0) enable = false;
         this.submitSaveBtn.disabled = !enable || this.submitting;
@@ -236,7 +246,6 @@ class SubmitModule {
         e.preventDefault();
         if (this.submitting) return;
 
-        // 前端检查今日剩余次数（后端也会检查）
         const remaining = this.dailyLimit - this.todayCount;
         if (remaining <= 0) {
             window.toast.show(`今日投稿已达上限（${this.dailyLimit}次），请明天再试`, 'warning');
@@ -281,14 +290,11 @@ class SubmitModule {
 
             if (response.ok) {
                 window.toast.show('投稿成功！已通过安全检测，等待管理员审核', 'success');
-                // 投稿成功后，本地增加今日计数（减少一次请求）
+                // 更新本地今日计数
                 this.todayCount++;
                 this.updateRemainingCount();
-                // 更新全局总数缓存（加1）
-                if (this.cachedTotalCount !== null) {
-                    this.cachedTotalCount++;
-                    this.cachedTotalCountTime = Date.now();
-                }
+                // 更新全局总数（缓存+显示）—— 即使模态框保持打开，也会立即刷新
+                this.updateGlobalTotalCountIncrement();
                 this.modal.classList.remove('active');
                 this.resetForm();
             } else {
@@ -334,7 +340,6 @@ class SubmitModule {
         if (this.descInput) this.descInput.style.height = 'auto';
         if (this.waitingHint) this.waitingHint.style.display = 'none';
         this.submitting = false;
-        // 不清空 todayCount，因为可能还有剩余次数
     }
 }
 
