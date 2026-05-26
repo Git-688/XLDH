@@ -171,7 +171,7 @@ class AboutModule {
             const bgElement = this.modalElement.querySelector('.about-header-bg');
             if (bgElement) {
                 bgElement.style.backgroundImage = 'none';
-                bgElement.style.backgroundColor = 'var(--primary-color)';
+                bgElement.style.backgroundColor = 'var(--primary-color, #4361ee)';
             }
         };
         wallpaperImg.src = this.wallpaperUrl;
