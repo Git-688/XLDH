@@ -1,6 +1,6 @@
 /**
- * 网站投稿模块（前端体验优化版）
- * 功能：投稿表单、自动获取网站信息、累计投稿数显示、每日剩余次数提示
+ * 网站投稿模块（同步安全检测版）
+ * 功能：投稿表单、自动获取网站信息（可选）、同步安全检测、每日剩余次数提示
  */
 class SubmitModule {
     constructor() {
@@ -14,34 +14,47 @@ class SubmitModule {
         this.fetchInfoBtn = document.getElementById('fetchSiteInfoBtn');
         this.submitSaveBtn = document.getElementById('submitSaveBtn');
         this.urlCheckResult = document.getElementById('urlCheckResult');
-        this.waitingHint = this.modal.querySelector('.submit-safe-hint');
+        this.waitingHint = this.modal ? this.modal.querySelector('.submit-safe-hint') : null;
 
         this.apiBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
-        this.canSubmit = false;
-        this.alreadySubmitted = false;
-        this.editingRejectedId = null;
-        this.statsBadge = null;
         this.dailyLimit = 6; // 与 Worker 保持一致
+        this.statsBadge = null;
+        this.submitting = false;
 
         this.init();
     }
 
+    // 简单的 HTML 转义
+    escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     init() {
+        if (!this.modal) {
+            console.error('投稿模态框不存在');
+            return;
+        }
         this.bindEvents();
         if (this.descInput) this.descInput.maxLength = 200;
+
         // 监听模态框打开，刷新显示
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
-                if (mutation.attributeName === 'class') {
-                    if (this.modal.classList.contains('active')) {
-                        this.ensureStatsBadge();
-                        this.updateLocalStatsDisplay();
-                        this.updateRemainingCount();
-                    }
+                if (mutation.attributeName === 'class' && this.modal.classList.contains('active')) {
+                    this.ensureStatsBadge();
+                    this.updateLocalStatsDisplay();
+                    this.updateRemainingCount();
                 }
             });
         });
         observer.observe(this.modal, { attributes: true });
+
         // 每天零点重置今日计数
         this.checkAndResetDailyCount();
         setInterval(() => this.checkAndResetDailyCount(), 60000);
@@ -128,35 +141,31 @@ class SubmitModule {
         const closeModal = () => {
             this.modal.classList.remove('active');
             this.resetForm();
-            this.editingRejectedId = null;
         };
         closeBtn?.addEventListener('click', closeModal);
         cancelBtn?.addEventListener('click', closeModal);
-        this.modal.addEventListener('click', e => {
+        this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) closeModal();
         });
 
         this.fetchInfoBtn.addEventListener('click', () => this.fetchSiteInfo());
 
         this.urlInput.addEventListener('input', () => {
-            this.canSubmit = false;
-            this.alreadySubmitted = false;
             this.urlCheckResult.style.display = 'none';
-            this.urlCheckResult.className = 'url-check-result';
             this.updateSubmitButton();
         });
         this.iconInput.addEventListener('input', () => this.updateIconPreview());
         this.titleInput.addEventListener('input', () => this.updateSubmitButton());
-        this.urlInput.addEventListener('input', () => this.updateSubmitButton());
         this.descInput.addEventListener('input', () => {
             this.autoResizeDesc();
             this.updateSubmitButton();
         });
 
-        this.form.addEventListener('submit', e => this.handleSubmit(e));
+        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
     }
 
     autoResizeDesc() {
+        if (!this.descInput) return;
         this.descInput.style.height = 'auto';
         this.descInput.style.height = this.descInput.scrollHeight + 'px';
     }
@@ -195,28 +204,25 @@ class SubmitModule {
                 this.autoResizeDesc();
             }
 
-            this.canSubmit = data.canSubmit !== false;
-            this.alreadySubmitted = data.alreadySubmitted === true;
-
             if (data.alreadySubmitted) {
                 this.urlCheckResult.className = 'url-check-result unsafe';
                 this.urlCheckResult.textContent = data.label || '该网站已收录或已在审核中，无法提交';
-            } else if (!data.canSubmit) {
+                this.updateSubmitButton(false);
+            } else if (data.canSubmit === false) {
                 this.urlCheckResult.className = 'url-check-result unsafe';
                 this.urlCheckResult.textContent = data.label || '该链接存在安全风险，禁止提交';
+                this.updateSubmitButton(false);
             } else {
-                this.urlCheckResult.className = data.safe ? 'url-check-result safe' : 'url-check-result checking';
-                this.urlCheckResult.textContent = data.label || (data.safe ? '安全，可提交' : '可疑，可提交');
+                this.urlCheckResult.className = 'url-check-result safe';
+                this.urlCheckResult.textContent = data.label || '信息获取成功，可提交';
+                this.updateSubmitButton(true);
             }
-            this.updateSubmitButton();
         } catch (e) {
             console.error('获取信息失败:', e);
             this.urlCheckResult.className = 'url-check-result checking';
             this.urlCheckResult.textContent = '获取信息失败，请手动填写';
             window.toast.show('自动获取网站信息失败，请手动填写标题和图标', 'warning');
-            this.canSubmit = true;
-            this.alreadySubmitted = false;
-            this.updateSubmitButton();
+            this.updateSubmitButton(true);
         } finally {
             if (this.waitingHint) this.waitingHint.style.display = 'none';
             this.fetchInfoBtn.disabled = false;
@@ -224,18 +230,21 @@ class SubmitModule {
         }
     }
 
-    updateSubmitButton() {
-        const title = this.titleInput.value.trim();
-        const url = this.urlInput.value.trim();
-        const isFormFilled = title && url && this.isValidUrl(url);
-        const canSubmit = isFormFilled && this.canSubmit && !this.alreadySubmitted;
-        this.submitSaveBtn.disabled = !canSubmit;
+    updateSubmitButton(enable = null) {
+        // 如果没有显式传入 enable，则根据表单是否填写完整来判断
+        if (enable === null) {
+            const title = this.titleInput.value.trim();
+            const url = this.urlInput.value.trim();
+            enable = !!(title && url && this.isValidUrl(url));
+        }
+        this.submitSaveBtn.disabled = !enable || this.submitting;
     }
 
     async handleSubmit(e) {
         e.preventDefault();
+        if (this.submitting) return;
 
-        // 前端检查每日剩余次数
+        // 前端检查每日剩余次数（后端也会检查，这里仅做友好提示）
         const todayKey = `submit_count_${new Date().toISOString().slice(0, 10)}`;
         let todayCount = parseInt(localStorage.getItem(todayKey) || '0', 10);
         if (todayCount >= this.dailyLimit) {
@@ -243,8 +252,8 @@ class SubmitModule {
             return;
         }
 
-        const title = this.titleInput.value.trim();
-        const url = this.urlInput.value.trim();
+        let title = this.titleInput.value.trim();
+        let url = this.urlInput.value.trim();
         if (!title || !url) {
             window.toast.show('请填写网站名称和链接', 'warning');
             return;
@@ -253,26 +262,23 @@ class SubmitModule {
             window.toast.show('请输入正确的网址', 'warning');
             return;
         }
-        if (this.alreadySubmitted) {
-            window.toast.show('该网站已收录或已在审核中，无法再次提交', 'error');
-            return;
-        }
-        if (!this.canSubmit) {
-            window.toast.show('该链接未通过基础检测，无法提交', 'error');
-            return;
-        }
 
+        // 确保 URL 带协议
+        const safeUrl = url.startsWith('http') ? url : `https://${url}`;
+        const deviceId = this.getDeviceId();
+        const payload = {
+            title: title,
+            url: safeUrl,
+            description: this.descInput.value.trim(),
+            icon: this.iconInput.value.trim()
+        };
+
+        this.submitting = true;
         this.submitSaveBtn.disabled = true;
-        this.submitSaveBtn.textContent = '提交中...';
+        this.submitSaveBtn.textContent = '安全检测中...';
+        if (this.waitingHint) this.waitingHint.style.display = 'inline';
+
         try {
-            const safeUrl = url.startsWith('http') ? url : `https://${url}`;
-            const deviceId = this.getDeviceId();
-            const payload = {
-                title,
-                url: safeUrl,
-                description: this.descInput.value.trim(),
-                icon: this.iconInput.value.trim()
-            };
             const res = await fetch(`${this.apiBase}/submit-site`, {
                 method: 'POST',
                 headers: {
@@ -281,22 +287,38 @@ class SubmitModule {
                 },
                 body: JSON.stringify(payload)
             });
+
+            const data = await res.json().catch(() => ({}));
+
             if (res.ok) {
-                const data = await res.json();
-                window.toast.show('投稿已提交！安全检测将在后台进行，通过后自动收录', 'success');
+                window.toast.show('投稿成功！已通过安全检测，等待管理员审核', 'success');
                 this.incrementLocalSubmissionCount();
                 this.modal.classList.remove('active');
                 this.resetForm();
             } else {
-                const err = await res.json().catch(() => ({}));
-                window.toast.show(err.error || '提交失败', 'error');
+                // 处理安全检测不通过或其他错误
+                let errorMsg = data.error || '提交失败';
+                if (data.details && data.details.label) {
+                    errorMsg = data.details.label;
+                }
+                window.toast.show(errorMsg, 'error');
+                // 显示详细错误信息在结果区域
+                if (this.urlCheckResult && data.details && data.details.label) {
+                    this.urlCheckResult.style.display = 'block';
+                    this.urlCheckResult.className = 'url-check-result unsafe';
+                    this.urlCheckResult.textContent = data.details.label;
+                }
+                this.updateSubmitButton(true); // 重新启用按钮（但不清空表单）
             }
         } catch (err) {
             console.error(err);
             window.toast.show('网络错误，请稍后重试', 'error');
+            this.updateSubmitButton(true);
         } finally {
+            this.submitting = false;
             this.submitSaveBtn.disabled = false;
             this.submitSaveBtn.textContent = '提交投稿';
+            if (this.waitingHint) this.waitingHint.style.display = 'none';
         }
     }
 
@@ -321,27 +343,19 @@ class SubmitModule {
 
     resetForm() {
         this.form.reset();
-        this.canSubmit = false;
-        this.alreadySubmitted = false;
         this.urlCheckResult.style.display = 'none';
         this.urlCheckResult.className = 'url-check-result';
         this.iconPreview.style.display = 'none';
         this.submitSaveBtn.disabled = true;
-        this.descInput.style.height = 'auto';
+        if (this.descInput) this.descInput.style.height = 'auto';
         if (this.waitingHint) this.waitingHint.style.display = 'none';
-    }
-
-    escapeHtml(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
+        this.submitting = false;
     }
 }
 
+// 页面加载后初始化
 document.addEventListener('DOMContentLoaded', () => {
-    window.submitModule = new SubmitModule();
+    if (!window.submitModule) {
+        window.submitModule = new SubmitModule();
+    }
 });
