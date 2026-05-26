@@ -627,13 +627,12 @@
         `).join('');
     }
 
-    // 投稿详情模态框（支持编辑、拼音传递、自定义下拉选择器，修复实例销毁和定位）
+    // 投稿详情模态框（无拼音）
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
         const contentDiv = document.getElementById('submissionDetailContent');
 
-        // 关闭之前模态框时清理旧实例（如果模态框已打开过）
         const cleanupSelectors = () => {
             if (customSelects.cat) { customSelects.cat.destroy(); delete customSelects.cat; }
             if (customSelects.sub) { customSelects.sub.destroy(); delete customSelects.sub; }
@@ -720,7 +719,6 @@
             catWrapper.innerHTML = '';
             catWrapper.appendChild(catSelect);
             let catCustomSelect = new CustomSelect(catSelect, async (value) => {
-                // 清空并重建子分类下拉
                 const subWrapper = document.getElementById('approveSubSelectWrapper');
                 subWrapper.innerHTML = '';
                 const newSubSelect = document.createElement('select');
@@ -742,7 +740,6 @@
             });
             customSelects.cat = catCustomSelect;
 
-            // 子分类下拉（初始为空）
             const subWrapper = document.getElementById('approveSubSelectWrapper');
             subWrapper.innerHTML = '';
             const subSelect = document.createElement('select');
@@ -752,30 +749,18 @@
             let subCustomSelect = new CustomSelect(subSelect);
             customSelects.sub = subCustomSelect;
 
-            // 通过收录按钮（含拼音计算）
+            // 通过收录按钮（无拼音）
             document.getElementById('doApproveBtn').onclick = async () => {
                 const catId = catSelect.value;
                 const subId = subSelect.value;
                 if (!catId || !subId) { showToast('请选择一级分类和二级分类', 'error'); return; }
                 const displayOrder = document.getElementById('approveOrder').value || 0;
-                const title = document.getElementById('editTitle').value;
-                const desc = document.getElementById('editDesc').value;
-                let pinyinFull = '', pinyinInitial = '';
-                if (window.pinyin && typeof window.pinyin.pinyin === 'function') {
-                    const fullTitle = window.pinyin.pinyin(title, { toneType: 'none', type: 'array' }).join('');
-                    const fullDesc = window.pinyin.pinyin(desc, { toneType: 'none', type: 'array' }).join('');
-                    pinyinFull = (fullTitle + fullDesc).toLowerCase();
-                    pinyinInitial = (window.pinyin.pinyin(title, { pattern: 'first', toneType: 'none' }) +
-                                    window.pinyin.pinyin(desc, { pattern: 'first', toneType: 'none' })).toLowerCase();
-                }
                 try {
                     await apiFetch(`/admin/submissions/${id}/approve`, {
                         method: 'POST',
                         body: JSON.stringify({
                             subcategory_id: parseInt(subId),
-                            display_order: parseInt(displayOrder),
-                            pinyin_full: pinyinFull,
-                            pinyin_initial: pinyinInitial
+                            display_order: parseInt(displayOrder)
                         })
                     });
                     showToast('已通过并收录', 'success');
@@ -848,18 +833,9 @@
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
                 if (!checkUrl(url)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
-                let pinyinFull = '', pinyinInitial = '';
-                if (window.pinyin && typeof window.pinyin.pinyin === 'function') {
-                    const fullTitle = window.pinyin.pinyin(title, { toneType: 'none', type: 'array' }).join('');
-                    const fullDesc = window.pinyin.pinyin(document.getElementById('mDesc').value, { toneType: 'none', type: 'array' }).join('');
-                    pinyinFull = (fullTitle + fullDesc).toLowerCase();
-                    pinyinInitial = (window.pinyin.pinyin(title, { pattern: 'first', toneType: 'none' }) +
-                                    window.pinyin.pinyin(document.getElementById('mDesc').value, { pattern: 'first', toneType: 'none' })).toLowerCase();
-                }
                 await apiFetch(`/admin/sites/${id}`, { method:'PUT', body: JSON.stringify({
                     title, url, description: document.getElementById('mDesc').value,
-                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value,
-                    pinyin_full: pinyinFull, pinyin_initial: pinyinInitial
+                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
                 addLog(`编辑链接：${site.title}`); showToast('修改成功'); await loadAllData();
             }, true,
@@ -916,18 +892,9 @@
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
                 if (!checkUrl(url)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
-                let pinyinFull = '', pinyinInitial = '';
-                if (window.pinyin && typeof window.pinyin.pinyin === 'function') {
-                    const fullTitle = window.pinyin.pinyin(title, { toneType: 'none', type: 'array' }).join('');
-                    const fullDesc = window.pinyin.pinyin(document.getElementById('mDesc').value, { toneType: 'none', type: 'array' }).join('');
-                    pinyinFull = (fullTitle + fullDesc).toLowerCase();
-                    pinyinInitial = (window.pinyin.pinyin(title, { pattern: 'first', toneType: 'none' }) +
-                                    window.pinyin.pinyin(document.getElementById('mDesc').value, { pattern: 'first', toneType: 'none' })).toLowerCase();
-                }
                 await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
                     subcategory_id: currentSub, title, url, description: document.getElementById('mDesc').value,
-                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value,
-                    pinyin_full: pinyinFull, pinyin_initial: pinyinInitial
+                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
                 addLog(`新增链接：${title}`); showToast('添加成功'); await loadAllData();
             }
@@ -1019,18 +986,9 @@
                 const newUrl = document.getElementById('mUrl').value.trim();
                 if (!newTitle || !newUrl) { showToast('标题和网址不能为空', 'error'); return; }
                 if (!checkUrl(newUrl)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
-                let pinyinFull = '', pinyinInitial = '';
-                if (window.pinyin && typeof window.pinyin.pinyin === 'function') {
-                    const fullTitle = window.pinyin.pinyin(newTitle, { toneType: 'none', type: 'array' }).join('');
-                    const fullDesc = window.pinyin.pinyin(document.getElementById('mDesc').value, { toneType: 'none', type: 'array' }).join('');
-                    pinyinFull = (fullTitle + fullDesc).toLowerCase();
-                    pinyinInitial = (window.pinyin.pinyin(newTitle, { pattern: 'first', toneType: 'none' }) +
-                                    window.pinyin.pinyin(document.getElementById('mDesc').value, { pattern: 'first', toneType: 'none' })).toLowerCase();
-                }
                 await apiFetch('/admin/replace-link', {
                     method: 'POST',
-                    body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value,
-                        pinyin_full: pinyinFull, pinyin_initial: pinyinInitial })
+                    body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value })
                 });
                 showToast('链接已更新', 'success');
                 await loadFeedback();
