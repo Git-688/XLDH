@@ -173,3 +173,20 @@
         max-width: 340px;
     }
 }
+
+/* ========== 9. 移动端侧边栏打开时彻底禁用 body 滚动（与 sidebar.js 配合） ========== */
+@media (max-width: 768px) {
+    body.sidebar-open {
+        overflow: hidden !important;
+        position: fixed !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+    
+    .sidebar.active {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        height: 100% !important;
+        max-height: none !important;
+    }
+}
