@@ -1,6 +1,6 @@
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版（完整修复版：使用 Utils.escapeHtml + 头像懒加载）
- * 修改：头像默认使用站点 Logo，所有动态内容使用 Utils.escapeHtml，头像懒加载
+ * 侧边栏组件 - 悬浮毛玻璃优化版（完整懒加载支持）
+ * 修改：头像懒加载使用 IntersectionObserver，所有动态内容使用 Utils.escapeHtml
  */
 class CompactSidebar {
     constructor() {
@@ -160,7 +160,7 @@ class CompactSidebar {
         }, { passive: true });
     }
 
-    // ========== 头像懒加载 ==========
+    // ========== 头像懒加载（IntersectionObserver） ==========
     observeLazyAvatar(img) {
         if ('IntersectionObserver' in window) {
             const observer = new IntersectionObserver((entries) => {
