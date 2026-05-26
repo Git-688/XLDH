@@ -3,35 +3,30 @@
     position: fixed;
     left: -300px;
     width: 280px;
-    /* 亚克力效果 */
-    background: var(--acrylic-bg);
-    backdrop-filter: var(--acrylic-blur);
-    -webkit-backdrop-filter: var(--acrylic-blur);
-    border: var(--acrylic-border);
-    box-shadow: var(--acrylic-shadow);
+    background: var(--acrylic-bg, rgba(255,255,255,0.6));
+    backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
+    -webkit-backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
+    border: var(--acrylic-border, 1px solid rgba(255,255,255,0.5));
+    box-shadow: var(--acrylic-shadow, 0 8px 32px rgba(0,0,0,0.08));
     z-index: 999;
-    /* 圆角与 logo 统一 */
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
-    /* 禁止用户选中优化 */
     user-select: none !important;
     -webkit-user-select: none !important;
     -moz-user-select: none !important;
     -ms-user-select: none !important;
 }
 
-/* 侧滑栏展开状态 - 左边距对齐主页容器 */
 .sidebar.active {
-    left: var(--container-padding-xs);      /* <576px：16px */
+    left: var(--container-padding-xs, 16px);
     transform: translateX(0);
     visibility: visible;
     pointer-events: auto;
 }
 
-/* 侧滑栏壁纸区域 - 宽度100%适配、完整显示不裁切 */
 .sidebar-wallpaper {
     position: relative;
     width: 100%;
@@ -180,7 +175,7 @@
 .daily-quote-card p {
     font-size: 12px;
     line-height: 1.4;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #6c757d);
     margin: 0;
     text-align: justify;
     word-wrap: break-word;
@@ -229,7 +224,7 @@
 .category-group-name {
     font-size: 13px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-primary, #2b2d42);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -242,7 +237,7 @@
     align-items: center;
     justify-content: center;
     font-size: 12px;
-    color: var(--primary-color);
+    color: var(--primary-color, #4361ee);
 }
 
 .category-toggle {
@@ -250,7 +245,7 @@
     height: 20px;
     border: none;
     background: none;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #6c757d);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -261,7 +256,7 @@
 
 .category-toggle:hover {
     background: rgba(67, 97, 238, 0.1);
-    color: var(--primary-color);
+    color: var(--primary-color, #4361ee);
     border-radius: 4px;
 }
 
@@ -287,12 +282,12 @@
     cursor: pointer;
     border-radius: 6px;
     transition: all 0.2s ease;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #6c757d);
 }
 
 .category-item:hover {
     background: rgba(67, 97, 238, 0.08);
-    color: var(--primary-color);
+    color: var(--primary-color, #4361ee);
 }
 
 .category-item:active { background: rgba(67, 97, 238, 0.12); }
@@ -318,7 +313,7 @@
 }
 
 .category-badge {
-    background: var(--error-color);
+    background: var(--error-color, #ef4444);
     color: white;
     font-size: 9px;
     padding: 1px 4px;
@@ -349,7 +344,7 @@
     -webkit-backdrop-filter: blur(10px);
     border-radius: 8px;
     font-size: 12px;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #6c757d);
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
@@ -362,8 +357,8 @@
 
 .footer-btn:hover {
     background: rgba(67, 97, 238, 0.08);
-    border-color: var(--primary-color);
-    color: var(--primary-color);
+    border-color: var(--primary-color, #4361ee);
+    color: var(--primary-color, #4361ee);
     box-shadow: 0 4px 10px rgba(67, 97, 238, 0.15);
     transform: translateY(-2px);
 }
@@ -386,14 +381,14 @@
 }
 
 .footer-btn:nth-child(1)::before { background: #8b5cf6; }
-.footer-btn:nth-child(2)::before { background: var(--accent-color); }
+.footer-btn:nth-child(2)::before { background: var(--accent-color, #7209b7); }
 .footer-btn:nth-child(3)::before { background: #f72585; }
 .footer-btn:nth-child(4)::before { background: #4cc9f0; }
 
 .footer-btn i { font-size: 13px; }
 
 .footer-btn:nth-child(1) i { color: #8b5cf6; }
-.footer-btn:nth-child(2) i { color: var(--accent-color); }
+.footer-btn:nth-child(2) i { color: var(--accent-color, #7209b7); }
 .footer-btn:nth-child(3) i { color: #f72585; }
 .footer-btn:nth-child(4) i { color: #4cc9f0; }
 
@@ -404,9 +399,9 @@
     text-align: center;
     transition: all 0.3s ease;
 }
-.qq-avatar-status.loading { color: var(--primary-color); }
-.qq-avatar-status.success { color: var(--success-color); }
-.qq-avatar-status.error { color: var(--error-color); }
+.qq-avatar-status.loading { color: var(--primary-color, #4361ee); }
+.qq-avatar-status.success { color: var(--success-color, #10b981); }
+.qq-avatar-status.error { color: var(--error-color, #ef4444); }
 
 /* ========== 个人资料设置模态框（小型化 + 亚克力 + 无黑色遮罩） ========== */
 .profile-modal {
@@ -458,7 +453,7 @@
 .form-label {
     font-size: 12px;
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--text-primary, #2b2d42);
 }
 
 .form-input {
@@ -473,7 +468,7 @@
 
 .form-input:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--primary-color, #4361ee);
     box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
 }
 
@@ -513,7 +508,7 @@
 .profile-save-btn {
     flex: 1;
     padding: 10px 0;
-    background: var(--primary-color);
+    background: var(--primary-color, #4361ee);
     color: white;
     border: none;
     border-radius: 6px;
@@ -524,7 +519,7 @@
 }
 
 .profile-save-btn:hover {
-    background: var(--secondary-color);
+    background: var(--secondary-color, #3a0ca3);
     transform: translateY(-1px);
 }
 
@@ -532,7 +527,7 @@
     flex: 1;
     padding: 10px 0;
     background: rgba(0, 0, 0, 0.05);
-    color: var(--text-secondary);
+    color: var(--text-secondary, #6c757d);
     border: none;
     border-radius: 6px;
     font-size: 13px;
@@ -543,26 +538,22 @@
 
 .profile-cancel-btn:hover {
     background: rgba(0, 0, 0, 0.1);
-    color: var(--text-primary);
+    color: var(--text-primary, #2b2d42);
 }
 
 /* ===================== 响应式边距对齐主页容器 ===================== */
-/* 移动端优先（<576px）已在默认 .sidebar.active 中使用 --container-padding-xs */
-
-/* >= 576px */
 @media (min-width: 576px) {
     .sidebar.active {
-        left: var(--container-padding-sm);      /* 20px */
+        left: var(--container-padding-sm, 20px);
     }
 }
 
-/* >= 768px */
 @media (min-width: 768px) {
     .sidebar {
-        width: 260px;                     /* 保留原有宽度调整 */
+        width: 260px;
     }
     .sidebar.active {
-        left: var(--container-padding-md);      /* 24px */
+        left: var(--container-padding-md, 24px);
     }
     .sidebar-wallpaper { aspect-ratio: 16/9; }
     .sidebar-wallpaper-user-info {
@@ -582,33 +573,29 @@
     .profile-modal-content { max-width: 300px; max-height: 65vh; }
 }
 
-/* >= 992px */
 @media (min-width: 992px) {
     .sidebar.active {
-        left: var(--container-padding-lg);      /* 28px */
+        left: var(--container-padding-lg, 28px);
     }
 }
 
-/* >= 1200px */
 @media (min-width: 1200px) {
     .sidebar {
         width: 300px;
     }
     .sidebar.active {
-        left: var(--container-padding-xl);      /* 32px */
+        left: var(--container-padding-xl, 32px);
     }
     .sidebar-wallpaper { aspect-ratio: 16/9; }
     .sidebar-wallpaper-nickname { font-size: 20px; }
     .sidebar-wallpaper-avatar { width: 72px; height: 72px; }
 }
 
-/* 超小屏保留原有宽度调整，left 保持与基础一致（仍为 xs） */
 @media (max-width: 575px) {
     .sidebar {
         width: 240px;
         left: -260px;
     }
-    /* 注意：left 已有默认值，此处不再重复设置 */
     .sidebar-wallpaper { aspect-ratio: 16/9; border-radius: 8px 8px 0 0; }
     .sidebar-wallpaper-user-info {
         left: 10px;
@@ -623,7 +610,6 @@
     .profile-modal-content { max-width: 280px; max-height: 60vh; padding: 16px; }
 }
 
-/* 横屏小高度 */
 @media (max-height: 500px) and (orientation: landscape) {
     .sidebar-wallpaper { aspect-ratio: 21/9; }
     .sidebar-wallpaper-user-info { left: 12px; bottom: 12px; }
@@ -632,10 +618,9 @@
     .sidebar-wallpaper-signature { font-size: 10px; }
 }
 
-/* 超大屏 */
 @media (min-width: 1920px) {
     .sidebar { width: 320px; }
-    .sidebar.active { left: var(--container-padding-xl); } /* 32px */
+    .sidebar.active { left: var(--container-padding-xl, 32px); }
     .sidebar-wallpaper { aspect-ratio: 16/9; }
     .sidebar-wallpaper-user-info { left: 20px; bottom: 20px; gap: 20px; }
     .sidebar-wallpaper-avatar { width: 80px; height: 80px; }
@@ -643,13 +628,11 @@
     .sidebar-wallpaper-signature { font-size: 14px; }
 }
 
-/* 安全区域支持 */
 @supports (padding: max(0px)) {
     .sidebar { padding-bottom: env(safe-area-inset-bottom); }
     .sidebar-footer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
 }
 
-/* iOS Safari 特定修复 */
 @supports (-webkit-touch-callout: none) {
     .sidebar {
         height: -webkit-fill-available;
@@ -661,8 +644,8 @@
         -webkit-user-select: none !important;
     }
     .sidebar {
-        -webkit-backdrop-filter: var(--acrylic-blur);
-        backdrop-filter: var(--acrylic-blur);
+        -webkit-backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
+        backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
     }
     .category-group, .footer-btn {
         -webkit-backdrop-filter: blur(10px);
@@ -670,12 +653,11 @@
     }
 }
 
-/* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
     .sidebar {
-        background: var(--acrylic-bg);
-        border-color: var(--acrylic-border);
-        box-shadow: var(--acrylic-shadow);
+        background: var(--acrylic-bg, rgba(30,30,30,0.7));
+        border-color: var(--acrylic-border, rgba(255,255,255,0.15));
+        box-shadow: var(--acrylic-shadow, 0 8px 32px rgba(0,0,0,0.3));
     }
     .sidebar-wallpaper-overlay {
         background: linear-gradient(
@@ -696,18 +678,18 @@
     .footer-btn {
         background: rgba(45, 45, 45, 0.6);
         border-color: rgba(255, 255, 255, 0.06);
-        color: var(--text-secondary);
+        color: var(--text-secondary, #adb5bd);
     }
     .footer-btn:hover {
         background: rgba(67, 97, 238, 0.12);
-        color: var(--primary-color);
+        color: var(--primary-color, #4361ee);
     }
     .daily-quote-card {
         background: rgba(67, 97, 238, 0.08);
         border-color: rgba(67, 97, 238, 0.15);
     }
     .footer-btn:nth-child(1) i { color: #a78bfa; }
-    .footer-btn:nth-child(2) i { color: var(--accent-color); }
+    .footer-btn:nth-child(2) i { color: var(--accent-color, #7209b7); }
     .footer-btn:nth-child(3) i { color: #f72585; }
     .footer-btn:nth-child(4) i { color: #4895ef; }
     .profile-modal-content {
@@ -720,23 +702,22 @@
         color: white;
     }
     .form-input:focus {
-        border-color: var(--primary-color);
+        border-color: var(--primary-color, #4361ee);
         box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
     }
     .qq-avatar-section {
         background: rgba(67, 97, 238, 0.1);
         border-color: rgba(67, 97, 238, 0.2);
     }
-    .profile-cancel-btn { background: rgba(255, 255, 255, 0.1); color: var(--text-secondary); }
+    .profile-cancel-btn { background: rgba(255, 255, 255, 0.1); color: var(--text-secondary, #adb5bd); }
     .profile-cancel-btn:hover { background: rgba(255, 255, 255, 0.2); color: white; }
-    .qq-avatar-status.loading { color: var(--primary-color); }
-    .qq-avatar-status.success { color: var(--success-color); }
-    .qq-avatar-status.error { color: var(--error-color); }
-    .category-item { color: var(--text-secondary); }
-    .category-item:hover { color: var(--primary-color); }
+    .qq-avatar-status.loading { color: var(--primary-color, #4361ee); }
+    .qq-avatar-status.success { color: var(--success-color, #10b981); }
+    .qq-avatar-status.error { color: var(--error-color, #ef4444); }
+    .category-item { color: var(--text-secondary, #adb5bd); }
+    .category-item:hover { color: var(--primary-color, #4361ee); }
 }
 
-/* 壁纸淡入动画 */
 @keyframes wallpaperFadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -746,7 +727,6 @@
     animation: wallpaperFadeIn 0.5s ease-in-out;
 }
 
-/* 减少动画模式适配 */
 @media (prefers-reduced-motion: reduce) {
     .sidebar,
     .category-group-header,
@@ -761,7 +741,6 @@
     }
 }
 
-/* 侧滑栏滚动控制 */
 .sidebar.active ~ .main-content {
     pointer-events: auto;
     overflow: auto;
