@@ -25,7 +25,6 @@
         try {
             const logsRaw = localStorage.getItem(LOG_STORAGE_KEY);
             const logs = logsRaw ? JSON.parse(logsRaw) : [];
-            // 清理过期日志（超过7天）
             const now = Date.now();
             const filtered = logs.filter(log => (now - log.timestamp) < LOG_RETENTION_DAYS * 24 * 3600 * 1000);
             if (filtered.length !== logs.length) {
@@ -39,7 +38,6 @@
 
     function saveLogs(logs) {
         try {
-            // 限制最大条数
             if (logs.length > MAX_LOG_COUNT) {
                 logs = logs.slice(0, MAX_LOG_COUNT);
             }
@@ -73,19 +71,18 @@
         document.getElementById('logList').innerHTML = logListHtml;
         const modal = document.getElementById('logModal');
         modal.classList.add('show');
-        // 添加清空按钮
         const clearBtn = document.getElementById('clearLogsBtn');
         if (clearBtn) {
             clearBtn.onclick = () => {
                 if (confirm('确定要清空所有操作日志吗？')) {
                     clearLogs();
-                    showLogs(); // 刷新显示
+                    showLogs();
                 }
             };
         }
     }
 
-    // 注入全局样式（含自定义选择器）
+    // 注入全局样式
     function injectGlobalStyles() {
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
@@ -237,7 +234,7 @@
         }
     }
 
-    // 自定义选择器类（支持固定定位，解决模态框内滚动问题）
+    // 自定义选择器类
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -692,7 +689,6 @@
         `).join('');
     }
 
-    // 投稿详情模态框（支持编辑、自定义下拉选择器，修复实例销毁和定位）
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -805,7 +801,6 @@
             });
             customSelects.cat = catCustomSelect;
 
-            // 子分类下拉
             const subWrapper = document.getElementById('approveSubSelectWrapper');
             subWrapper.innerHTML = '';
             const subSelect = document.createElement('select');
@@ -815,7 +810,6 @@
             let subCustomSelect = new CustomSelect(subSelect);
             customSelects.sub = subCustomSelect;
 
-            // 通过收录按钮
             document.getElementById('doApproveBtn').onclick = async () => {
                 const catId = catSelect.value;
                 const subId = subSelect.value;
