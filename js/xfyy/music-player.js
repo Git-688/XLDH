@@ -213,6 +213,21 @@ function initCustomSelects() {
 
 // ==================== 主播放器类 ====================
 class MusicPlayer {
+    static CONFIG = {
+        // 网易云音乐 API
+        NETEASE_API_PRIMARY: 'https://api.injahow.cn/meting/',
+        NETEASE_API_FALLBACK: 'https://api.i-meto.com/meting/api',
+        // QQ音乐 API
+        QQ_HOT_API: 'https://yunzhiapi.cn/API/qqrgbd.php',
+        QQ_SONG_INFO_API: 'https://api.i-meto.com/meting/api',
+        QQ_TOKEN: 'XIZhAXKnSQcH',
+        // 汽水音乐 API
+        QISHUI_API: 'https://api.suol.cc/v1/music_qs.php',
+        QISHUI_TOKEN: '961D28A9C59C411C49C75FA3E9FAF24C',
+        // 本地存储键名
+        STORAGE_PREFIX: 'music_player_'
+    };
+
     constructor() {
         this.audio = document.getElementById('audio-element');
         this.cacheManager = new CacheManager();
@@ -222,7 +237,6 @@ class MusicPlayer {
         this.updateAnimationFrame = null;
         this.lastTimeUpdate = 0;
 
-        // 封面懒加载观察器
         this.coverObserver = null;
         this.initCoverObserver();
 
@@ -260,7 +274,6 @@ class MusicPlayer {
                 threshold: 0.01
             });
         } else {
-            // 降级：立即加载
             this.coverObserver = {
                 observe: (img) => {
                     if (img.dataset.src) {
@@ -456,12 +469,12 @@ class MusicPlayer {
         if (!song.lrc) return;
 
         try {
-            const response = await fetch(song.lrc);
+            const response = await Utils.safeFetch(song.lrc, { timeout: 5000 });
             const text = await response.text();
             this.lyricParser.parseLrc(text);
             this.lyricsData = this.lyricParser.lyrics;
         } catch (error) {
-            console.error('加载歌词失败:', error);
+            Utils.handleApiError(error, '加载歌词失败', false);
         }
     }
 
@@ -739,12 +752,12 @@ class MusicPlayer {
 
             this.renderPlaylist(apiId, playlist);
         } catch (error) {
-            console.error(`加载 ${apiId} 歌单失败:`, error);
+            Utils.handleApiError(error, `加载 ${apiId} 歌单失败`, true);
             if (elements.playlistContainer) {
                 elements.playlistContainer.innerHTML = `
                     <div class="error-message">
                         <p>加载失败: ${Utils.escapeHtml(error.message)}</p>
-                        <button class="retry-btn" onclick="musicPlayer.loadApiPlaylist('${apiId}')">重试</button>
+                        <button class="retry-btn" onclick="if(window.musicPlayer) window.musicPlayer.loadApiPlaylist('${apiId}')">重试</button>
                     </div>
                 `;
             }
@@ -777,11 +790,10 @@ class MusicPlayer {
                 window.toast.show(`未找到与"${Utils.escapeHtml(keyword)}"相关的歌曲`, 'info');
             }
         } catch (error) {
-            console.error(`搜索失败:`, error);
+            Utils.handleApiError(error, '搜索失败', true);
             if (elements.searchResults) {
                 elements.searchResults.innerHTML = `<div class="error-message"><p>搜索失败: ${Utils.escapeHtml(error.message)}</p></div>`;
             }
-            window.toast.show('搜索失败', 'error');
         }
     }
 
@@ -995,7 +1007,6 @@ class MusicPlayer {
         }
         const coverUrl = song.cover || '/assets/logo.png';
         if (this.elements.coverImg) {
-            // 懒加载封面：使用 data-src，交给 observer
             this.elements.coverImg.setAttribute('data-src', coverUrl);
             this.elements.coverImg.classList.add('lazy-cover');
             if (this.coverObserver) {
@@ -1025,7 +1036,7 @@ class MusicPlayer {
         try {
             window.toast.show(`开始下载: ${song.title}`, 'info');
             progressElement = this.createDownloadProgress();
-            const response = await fetch(song.src);
+            const response = await Utils.safeFetch(song.src, { timeout: 30000 });
             if (!response.ok) throw new Error('下载请求失败');
             const contentLength = response.headers.get('content-length');
             const total = parseInt(contentLength, 10);
@@ -1055,9 +1066,8 @@ class MusicPlayer {
             progressElement.remove();
             window.toast.show(`下载完成: ${song.title}`, 'info');
         } catch (error) {
-            console.error('下载失败:', error);
+            Utils.handleApiError(error, `下载失败: ${song.title}`, true);
             if (progressElement) progressElement.remove();
-            window.toast.show(`下载失败: ${song.title}`, 'error');
         }
     }
 
@@ -1263,9 +1273,8 @@ class MusicPlayer {
         this.updatePlayButton();
         const defaultLogo = '/assets/logo.png';
         if (this.elements.coverImg) {
-            // 初始占位，不设置真实 src，等待首次 updateSongInfo 时懒加载
             this.elements.coverImg.setAttribute('data-src', defaultLogo);
-            this.elements.coverImg.src = defaultLogo; // 先显示默认图，后续懒加载会替换
+            this.elements.coverImg.src = defaultLogo;
             const placeholder = document.querySelector('.cover-placeholder');
             if (placeholder) placeholder.style.display = 'none';
             this.elements.coverImg.onerror = () => {
