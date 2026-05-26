@@ -1,34 +1,34 @@
 /* 轮播图容器 */
 .wallpaper-section {
-    padding: var(--section-margin-sm) 0 0 !important;
+    padding: var(--section-margin-sm, 20px) 0 0 !important;
     position: relative;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
 }
 
 .wallpaper-section .container {
-    padding-left: var(--container-padding-xs) !important;
-    padding-right: var(--container-padding-xs) !important;
+    padding-left: var(--container-padding-xs, 16px) !important;
+    padding-right: var(--container-padding-xs, 16px) !important;
     max-width: 1200px !important;
     width: 100% !important;
     margin: 0 auto !important;
 }
 
 @media (min-width: 576px) {
-    .wallpaper-section .container { padding-left: var(--container-padding-sm) !important; padding-right: var(--container-padding-sm) !important; }
-    .wallpaper-section { padding: var(--section-margin-md) 0 0 !important; }
+    .wallpaper-section .container { padding-left: var(--container-padding-sm, 20px) !important; padding-right: var(--container-padding-sm, 20px) !important; }
+    .wallpaper-section { padding: var(--section-margin-md, 24px) 0 0 !important; }
 }
 @media (min-width: 768px) {
-    .wallpaper-section .container { padding-left: var(--container-padding-md) !important; padding-right: var(--container-padding-md) !important; }
-    .wallpaper-section { padding: var(--section-margin-md) 0 0 !important; }
+    .wallpaper-section .container { padding-left: var(--container-padding-md, 24px) !important; padding-right: var(--container-padding-md, 24px) !important; }
+    .wallpaper-section { padding: var(--section-margin-md, 24px) 0 0 !important; }
 }
 @media (min-width: 992px) {
-    .wallpaper-section .container { padding-left: var(--container-padding-lg) !important; padding-right: var(--container-padding-lg) !important; }
-    .wallpaper-section { padding: var(--section-margin-lg) 0 0 !important; }
+    .wallpaper-section .container { padding-left: var(--container-padding-lg, 28px) !important; padding-right: var(--container-padding-lg, 28px) !important; }
+    .wallpaper-section { padding: var(--section-margin-lg, 28px) 0 0 !important; }
 }
 @media (min-width: 1200px) {
-    .wallpaper-section .container { padding-left: var(--container-padding-xl) !important; padding-right: var(--container-padding-xl) !important; }
-    .wallpaper-section { padding: var(--section-margin-lg) 0 0 !important; }
+    .wallpaper-section .container { padding-left: var(--container-padding-xl, 32px) !important; padding-right: var(--container-padding-xl, 32px) !important; }
+    .wallpaper-section { padding: var(--section-margin-lg, 28px) 0 0 !important; }
 }
 
 /* 轮播主容器 */
@@ -41,7 +41,7 @@
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     margin: 0 !important;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    background: linear-gradient(135deg, var(--primary-color, #4361ee) 0%, var(--accent-color, #7209b7) 100%);
     user-select: none;
 }
 
@@ -121,7 +121,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: calc(100% - 80px); /* 为圆点留出空间 */
+    max-width: calc(100% - 80px);
     line-height: 1.3;
 }
 
@@ -149,7 +149,7 @@
 
 /* 移动端适配 */
 @media (max-width: 768px) {
-    .wallpaper-section { padding: var(--section-margin-sm) 0 0 !important; }
+    .wallpaper-section { padding: var(--section-margin-sm, 20px) 0 0 !important; }
     .wallpaper-container {
         height: 26vh;
         min-height: 130px;
@@ -172,7 +172,7 @@
 }
 
 @media (max-width: 480px) {
-    .wallpaper-section { padding: var(--section-margin-xs) 0 0 !important; }
+    .wallpaper-section { padding: var(--section-margin-xs, 16px) 0 0 !important; }
     .wallpaper-container {
         height: 26vh;
         min-height: 130px;
@@ -189,7 +189,7 @@
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
     .wallpaper-container {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+        background: linear-gradient(135deg, var(--primary-color, #4361ee) 0%, var(--accent-color, #7209b7) 100%);
     }
     .carousel-arrow {
         background: rgba(0, 0, 0, 0.3);
