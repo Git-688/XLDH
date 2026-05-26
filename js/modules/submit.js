@@ -1,6 +1,6 @@
 /**
  * 网站投稿模块（同步安全检测版 + 全局投稿总数缓存）
- * 功能：投稿表单、自动获取网站信息（可选）、同步安全检测、每日剩余次数提示、显示全局累计投稿数
+ * 统一使用 Utils.safeFetch 和 Utils.handleApiError
  */
 class SubmitModule {
     constructor() {
@@ -16,7 +16,7 @@ class SubmitModule {
         this.urlCheckResult = document.getElementById('urlCheckResult');
         this.waitingHint = this.modal ? this.modal.querySelector('.submit-safe-hint') : null;
 
-        this.apiBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
+        this.apiBase = Utils.getApiBase();
         this.dailyLimit = 6;
         this.statsBadge = null;
         this.submitting = false;
@@ -30,13 +30,7 @@ class SubmitModule {
     }
 
     escapeHtml(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
+        return Utils.escapeHtml(str);
     }
 
     init() {
@@ -88,15 +82,14 @@ class SubmitModule {
         }
 
         try {
-            const res = await fetch(`${this.apiBase}/global-submission-count`);
-            if (!res.ok) throw new Error('获取失败');
-            const data = await res.json();
+            const response = await Utils.safeFetch(`${this.apiBase}/global-submission-count`, { timeout: 5000 });
+            const data = await response.json();
             const total = data.total || 0;
             this.cachedTotalCount = total;
             this.cachedTotalCountTime = now;
             this.statsBadge.textContent = `总投稿 ${total} 次`;
-        } catch (err) {
-            console.error('获取全局投稿总数失败:', err);
+        } catch (error) {
+            Utils.handleApiError(error, '获取投稿总数失败', false);
             this.statsBadge.textContent = '总投稿 ? 次';
         }
     }
@@ -136,12 +129,7 @@ class SubmitModule {
     }
 
     getDeviceId() {
-        let deviceId = localStorage.getItem('device_id');
-        if (!deviceId) {
-            deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
-            localStorage.setItem('device_id', deviceId);
-        }
-        return deviceId;
+        return Utils.getDeviceId();
     }
 
     bindEvents() {
@@ -181,7 +169,7 @@ class SubmitModule {
 
     async fetchSiteInfo() {
         const url = this.urlInput.value.trim();
-        if (!url || !this.isValidUrl(url)) {
+        if (!url || !Utils.isValidUrl(url)) {
             window.toast.show('请输入正确的网址', 'warning');
             return;
         }
@@ -195,13 +183,12 @@ class SubmitModule {
 
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
-            const res = await fetch(`${this.apiBase}/fetch-site-info`, {
+            const response = await Utils.safeFetch(`${this.apiBase}/fetch-site-info`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: safeUrl })
             });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
+            const data = await response.json();
 
             if (data.title) this.titleInput.value = data.title;
             if (data.icon) {
@@ -226,11 +213,10 @@ class SubmitModule {
                 this.urlCheckResult.textContent = data.label || '信息获取成功，可提交';
                 this.updateSubmitButton(true);
             }
-        } catch (e) {
-            console.error('获取信息失败:', e);
+        } catch (error) {
+            Utils.handleApiError(error, '获取网站信息失败', true);
             this.urlCheckResult.className = 'url-check-result checking';
             this.urlCheckResult.textContent = '获取信息失败，请手动填写';
-            window.toast.show('自动获取网站信息失败，请手动填写标题和图标', 'warning');
             this.updateSubmitButton(true);
         } finally {
             if (this.waitingHint) this.waitingHint.style.display = 'none';
@@ -243,7 +229,7 @@ class SubmitModule {
         if (enable === null) {
             const title = this.titleInput.value.trim();
             const url = this.urlInput.value.trim();
-            enable = !!(title && url && this.isValidUrl(url));
+            enable = !!(title && url && Utils.isValidUrl(url));
         }
         this.submitSaveBtn.disabled = !enable || this.submitting;
     }
@@ -265,7 +251,7 @@ class SubmitModule {
             window.toast.show('请填写网站名称和链接', 'warning');
             return;
         }
-        if (!this.isValidUrl(url)) {
+        if (!Utils.isValidUrl(url)) {
             window.toast.show('请输入正确的网址', 'warning');
             return;
         }
@@ -285,7 +271,7 @@ class SubmitModule {
         if (this.waitingHint) this.waitingHint.style.display = 'inline';
 
         try {
-            const res = await fetch(`${this.apiBase}/submit-site`, {
+            const response = await Utils.safeFetch(`${this.apiBase}/submit-site`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -293,13 +279,11 @@ class SubmitModule {
                 },
                 body: JSON.stringify(payload)
             });
+            const data = await response.json();
 
-            const data = await res.json().catch(() => ({}));
-
-            if (res.ok) {
+            if (response.ok) {
                 window.toast.show('投稿成功！已通过安全检测，等待管理员审核', 'success');
                 this.incrementDailyCount();
-                // 更新全局总数缓存（加1）
                 if (this.cachedTotalCount !== null) {
                     this.cachedTotalCount++;
                     this.cachedTotalCountTime = Date.now();
@@ -319,24 +303,14 @@ class SubmitModule {
                 }
                 this.updateSubmitButton(true);
             }
-        } catch (err) {
-            console.error(err);
-            window.toast.show('网络错误，请稍后重试', 'error');
+        } catch (error) {
+            Utils.handleApiError(error, '提交失败，请重试', true);
             this.updateSubmitButton(true);
         } finally {
             this.submitting = false;
             this.submitSaveBtn.disabled = false;
             this.submitSaveBtn.textContent = '提交投稿';
             if (this.waitingHint) this.waitingHint.style.display = 'none';
-        }
-    }
-
-    isValidUrl(url) {
-        try {
-            const testUrl = url.startsWith('http') ? url : `https://${url}`;
-            return ['http:', 'https:'].includes(new URL(testUrl).protocol);
-        } catch {
-            return false;
         }
     }
 
