@@ -1,5 +1,6 @@
 /**
  * 侧边栏组件 - 悬浮毛玻璃优化版（壁纸改为必应每日壁纸）
+ * 修复移动端底部被工具栏遮挡的问题：使用 top + bottom 定位，预留安全区域
  */
 class CompactSidebar {
     constructor() {
@@ -91,7 +92,7 @@ class CompactSidebar {
         this.cachedWallpaperDate = null;
     }
 
-    // 获取安全区域底部高度
+    // 获取安全区域底部高度（单位 px）
     getSafeBottom() {
         let safeBottom = 0;
         if (window.innerWidth < 768) {
@@ -101,11 +102,15 @@ class CompactSidebar {
             const computedPadding = getComputedStyle(div).paddingBottom;
             safeBottom = parseFloat(computedPadding) || 0;
             document.body.removeChild(div);
-            if (safeBottom < 10) safeBottom = 34;
+            // 针对 iOS 设备，如果获取不到（某些浏览器），给一个合理的默认值 34px
+            if (safeBottom === 0 && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                safeBottom = 34;
+            }
         }
         return safeBottom;
     }
 
+    // 计算侧边栏的位置：基于 top + bottom 定位，避免底部被工具栏遮挡
     calcSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
@@ -114,36 +119,29 @@ class CompactSidebar {
         const actualNavbarHeight = navbar ? navbar.offsetHeight : this.navbarHeight;
         this.navbarHeight = actualNavbarHeight;
 
-        const viewportHeight = window.innerHeight;
         const isMobile = window.innerWidth < 768;
-        
-        const gapConfig = isMobile ? this.gapConfig.mobile : this.gapConfig.desktop;
         const safeBottom = this.getSafeBottom();
         
-        const maxAvailableHeight = viewportHeight - this.navbarHeight - 2 * gapConfig.min - safeBottom;
-        let sidebarHeight = Math.min(maxAvailableHeight, Math.max(this.minSidebarHeight, viewportHeight * 0.9 - safeBottom));
-        
-        const totalMargin = viewportHeight - this.navbarHeight - sidebarHeight - safeBottom;
-        const margin = totalMargin / 2;
-        
-        sidebar.style.top = `${this.navbarHeight + margin}px`;
-        sidebar.style.height = `${sidebarHeight}px`;
-        sidebar.style.bottom = 'auto';
-        sidebar.style.maxHeight = 'none';
+        // 设置顶部距离导航栏下方 12px（可根据设计调整）
+        const topOffset = 12;
+        sidebar.style.top = `${this.navbarHeight + topOffset}px`;
+        // 底部直接预留安全区域距离
+        sidebar.style.bottom = `${safeBottom}px`;
+        // 高度自动，由 top/bottom 决定
+        sidebar.style.height = 'auto';
+        // 可选：限制最大高度，防止内容溢出
+        sidebar.style.maxHeight = `calc(100vh - ${this.navbarHeight + topOffset}px - ${safeBottom}px)`;
+        sidebar.style.overflowY = 'auto';
 
-        const footer = sidebar.querySelector('.sidebar-footer');
-        if (footer) {
-            const basePadding = Math.max(8, Math.floor(margin * 0.4));
-            const targetPadding = Math.min(basePadding, 16);
-            footer.style.paddingTop = `${targetPadding}px`;
-            footer.style.paddingBottom = `max(${targetPadding}px, env(safe-area-inset-bottom))`;
-            footer.style.marginTop = '0';
-            footer.style.marginBottom = '0';
-            footer.style.display = 'flex';
-            footer.style.alignItems = 'center';
-            footer.style.gap = '6px';
+        // 同时调整内部滚动容器（如果需要）
+        const categoriesContainer = sidebar.querySelector('.categories-container');
+        if (categoriesContainer) {
+            categoriesContainer.style.maxHeight = 'none';
+            categoriesContainer.style.flex = '1';
+            categoriesContainer.style.overflowY = 'auto';
         }
 
+        // 调整壁纸区域尺寸
         this.adjustWallpaperSize();
     }
 
@@ -233,14 +231,12 @@ class CompactSidebar {
         if (!sidebarWallpaper) return;
 
         const today = new Date().toISOString().slice(0, 10);
-        // 检查缓存是否有效（同一天）
         if (this.cachedWallpaperUrl && this.cachedWallpaperDate === today) {
             this.setWallpaperBackground(this.cachedWallpaperUrl);
             return;
         }
 
         try {
-            // 使用官方必应接口
             const response = await Utils.safeFetch('https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN', { timeout: 8000 });
             const data = await response.json();
             if (data.images && data.images.length && data.images[0].url) {
@@ -253,7 +249,6 @@ class CompactSidebar {
             }
         } catch (error) {
             console.error('获取必应壁纸失败:', error);
-            // 降级：使用默认渐变背景
             this.setFallbackBackground();
         }
     }
@@ -261,15 +256,12 @@ class CompactSidebar {
     setWallpaperBackground(url) {
         const sidebarWallpaper = document.getElementById('sidebarWallpaper');
         if (!sidebarWallpaper) return;
-        // 清除可能存在的视频元素
         const existingVideo = sidebarWallpaper.querySelector('video');
         if (existingVideo) existingVideo.remove();
-        // 设置背景图片
         sidebarWallpaper.style.backgroundImage = `url('${url}')`;
         sidebarWallpaper.style.backgroundSize = 'cover';
         sidebarWallpaper.style.backgroundPosition = 'center';
         sidebarWallpaper.style.backgroundRepeat = 'no-repeat';
-        // 确保 overlay 存在
         const overlay = sidebarWallpaper.querySelector('.sidebar-wallpaper-overlay');
         if (overlay) overlay.style.zIndex = '1';
         const userInfo = sidebarWallpaper.querySelector('.sidebar-wallpaper-user-info');
