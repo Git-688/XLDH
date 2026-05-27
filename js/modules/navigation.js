@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（解决长列表卡顿 + 死链报告实时更新）
+ * 优化分类导航系统 - 分页加载版（解决长列表卡顿 + 死链报告实时更新 + 图片懒加载）
  */
 class OptimizedNavigation {
     constructor() {
@@ -20,6 +20,7 @@ class OptimizedNavigation {
         this.searchTimer = null;
         this.loadedLevel1Set = new Set();
 
+        // 分页相关
         this.currentPage = 1;
         this.pageSize = 30;
         this.isLoadingMore = false;
@@ -332,7 +333,9 @@ class OptimizedNavigation {
         if (site.icon) {
             const raw = site.icon.trim();
             if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('./') || /\.(png|jpg|jpeg|ico|svg)/i.test(raw)) {
-                iconHtml = `<img data-src="${this._escapeHtml(raw)}" alt="" loading="lazy" class="lazy-icon" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fas fa-link\\'></i>';">`;
+                // 懒加载图标，并设置 onerror 降级（如果 Yandex 图标也失败则显示默认图标）
+                iconHtml = `<img data-src="${this._escapeHtml(raw)}" alt="" loading="lazy" class="lazy-icon" 
+                            onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fas fa-link\\'></i>';">`;
             } else if (raw.startsWith('fas ') || raw.startsWith('fab ')) {
                 iconHtml = `<i class="${raw}"></i>`;
             } else {
@@ -413,7 +416,6 @@ class OptimizedNavigation {
                             reportBtn.title = '已报告，等待处理';
                             const icon = reportBtn.querySelector('i');
                             if (icon) icon.style.color = '#999';
-                            // 更新无效链接计数
                             this.updateInvalidCount(1);
                         } else {
                             const err = await res.json().catch(() => ({}));
