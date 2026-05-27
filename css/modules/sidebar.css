@@ -1,8 +1,9 @@
-/* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角 + transform动画 + Flex布局 */
+/* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角 + left过渡 + 动态位置 */
 .sidebar {
     position: fixed;
-    left: 0;                    /* 由 transform 控制偏移 */
+    left: -100%;                 /* 初始隐藏 */
     top: 0;
+    bottom: auto;
     width: 280px;
     background: var(--acrylic-bg);
     backdrop-filter: var(--acrylic-blur);
@@ -12,16 +13,18 @@
     z-index: 999;
     border-radius: 8px;
     overflow: hidden;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     user-select: none;
     -webkit-user-select: none;
-    transform: translateX(-100%);
 }
 
 .sidebar.active {
-    transform: translateX(0);
+    left: var(--sidebar-left, 20px);      /* JS 动态设置 */
+    top: var(--sidebar-top, 60px);        /* JS 动态设置 */
+    bottom: var(--sidebar-bottom, auto);  /* JS 动态设置 */
+    height: calc(100vh - var(--sidebar-top, 60px) - var(--sidebar-bottom, 0px));
     visibility: visible;
     pointer-events: auto;
 }
@@ -461,7 +464,7 @@
     color: var(--text-primary);
 }
 
-/* 响应式边距 */
+/* 响应式宽度 */
 @media (min-width: 576px) { .sidebar { width: 260px; } }
 @media (min-width: 768px) { .sidebar { width: 280px; } }
 @media (min-width: 992px) { .sidebar { width: 300px; } }
