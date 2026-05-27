@@ -1,11 +1,8 @@
 /* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角统一 + 个人资料模态框小型化 + 左边距对齐主页 */
-/* 修复移动端底部被工具栏遮挡：使用 top + bottom 定位，预留安全区域 */
-
 .sidebar {
     position: fixed;
     left: -300px;
     width: 280px;
-    /* 由 JS 动态设置 top 和 bottom，不再硬编码高度 */
     background: var(--acrylic-bg, rgba(255,255,255,0.6));
     backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
     -webkit-backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
@@ -21,7 +18,7 @@
     -webkit-user-select: none !important;
     -moz-user-select: none !important;
     -ms-user-select: none !important;
-    padding-bottom: env(safe-area-inset-bottom); /* 全局安全区域适配 */
+    /* 注意：高度和位置由 JS 动态设置，此处不设固定 height 和 top/bottom */
 }
 
 .sidebar.active {
@@ -29,9 +26,9 @@
     transform: translateX(0);
     visibility: visible;
     pointer-events: auto;
-    /* bottom 已在 JS 中动态设置，这里确保底边距 */
 }
 
+/* 壁纸区域 - 背景图片由 JS 设置 */
 .sidebar-wallpaper {
     position: relative;
     width: 100%;
@@ -40,10 +37,11 @@
     background: transparent;
     overflow: hidden;
     flex-shrink: 0;
-    background-size: contain;
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     border-radius: 8px 8px 0 0;
+    transition: background-image 0.3s ease;
 }
 
 .sidebar-wallpaper-user-info {
@@ -113,31 +111,6 @@
     text-overflow: ellipsis;
 }
 
-.sidebar-wallpaper video,
-.sidebar-wallpaper img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    z-index: 0;
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: none !important;
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -moz-user-select: none !important;
-    -ms-user-select: none !important;
-    -webkit-touch-callout: none !important;
-    -webkit-tap-highlight-color: transparent !important;
-    touch-action: none !important;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-}
-
 .sidebar-wallpaper-overlay {
     position: absolute;
     top: 0;
@@ -155,6 +128,7 @@
     border-radius: inherit;
 }
 
+/* 侧边栏内容区域 */
 .sidebar-content {
     flex: 1;
     display: flex;
@@ -191,7 +165,7 @@
     flex: 1;
     overflow-y: auto;
     padding: 0 15px 15px;
-    padding-bottom: max(15px, env(safe-area-inset-bottom)); /* 安全区域适配 */
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -339,7 +313,8 @@
     gap: 8px;
     flex-shrink: 0;
     border-radius: 0 0 8px 8px;
-    padding-bottom: max(12px, env(safe-area-inset-bottom)); /* 安全区域适配 */
+    /* 底部内边距动态调整，最小 12px，同时适配安全区域 */
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
 
 .footer-btn {
@@ -636,8 +611,8 @@
 }
 
 @supports (padding: max(0px)) {
-    .sidebar { padding-bottom: env(safe-area-inset-bottom); }
     .sidebar-footer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+    .categories-container { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
 }
 
 @supports (-webkit-touch-callout: none) {
@@ -729,8 +704,7 @@
     from { opacity: 0; }
     to { opacity: 1; }
 }
-.sidebar-wallpaper video,
-.sidebar-wallpaper img {
+.sidebar-wallpaper {
     animation: wallpaperFadeIn 0.5s ease-in-out;
 }
 
@@ -741,8 +715,7 @@
     .footer-btn,
     .category-toggle,
     .category-items,
-    .sidebar-wallpaper video,
-    .sidebar-wallpaper img {
+    .sidebar-wallpaper {
         transition: none;
         animation: none;
     }
