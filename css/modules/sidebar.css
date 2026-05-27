@@ -1,8 +1,11 @@
 /* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角统一 + 个人资料模态框小型化 + 左边距对齐主页 */
+/* 修复移动端底部被工具栏遮挡：使用 top + bottom 定位，预留安全区域 */
+
 .sidebar {
     position: fixed;
     left: -300px;
     width: 280px;
+    /* 由 JS 动态设置 top 和 bottom，不再硬编码高度 */
     background: var(--acrylic-bg, rgba(255,255,255,0.6));
     backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
     -webkit-backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
@@ -18,7 +21,7 @@
     -webkit-user-select: none !important;
     -moz-user-select: none !important;
     -ms-user-select: none !important;
-    padding-bottom: env(safe-area-inset-bottom); /* 安全区域适配 */
+    padding-bottom: env(safe-area-inset-bottom); /* 全局安全区域适配 */
 }
 
 .sidebar.active {
@@ -26,6 +29,7 @@
     transform: translateX(0);
     visibility: visible;
     pointer-events: auto;
+    /* bottom 已在 JS 中动态设置，这里确保底边距 */
 }
 
 .sidebar-wallpaper {
