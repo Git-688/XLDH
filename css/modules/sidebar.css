@@ -1,9 +1,11 @@
-/* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角 + left过渡 + 动态位置 */
+/* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角 + transform动画 + Flex布局
+   定位由 JS 动态计算 top/left/bottom/maxHeight，CSS 负责视觉和内部滚动 */
+
+/* ========== 侧滑栏主容器 ========== */
 .sidebar {
     position: fixed;
-    left: -100%;                 /* 初始隐藏 */
-    top: 0;
-    bottom: auto;
+    left: 0;                    /* 基准位置，实际 left 由 JS 动态设置 */
+    top: 0;                     /* 基准位置，实际 top 由 JS 动态设置 */
     width: 280px;
     background: var(--acrylic-bg);
     backdrop-filter: var(--acrylic-blur);
@@ -13,23 +15,25 @@
     z-index: 999;
     border-radius: 8px;
     overflow: hidden;
-    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
     display: flex;
     flex-direction: column;
     user-select: none;
     -webkit-user-select: none;
+    transform: translateX(-100%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .sidebar.active {
-    left: var(--sidebar-left, 20px);      /* JS 动态设置 */
-    top: var(--sidebar-top, 60px);        /* JS 动态设置 */
-    bottom: var(--sidebar-bottom, auto);  /* JS 动态设置 */
-    height: calc(100vh - var(--sidebar-top, 60px) - var(--sidebar-bottom, 0px));
+    transform: translateX(0);
+    opacity: 1;
     visibility: visible;
     pointer-events: auto;
 }
 
-/* 侧滑栏壁纸区域 */
+/* ========== 侧滑栏壁纸区域 ========== */
 .sidebar-wallpaper {
     position: relative;
     width: 100%;
@@ -72,10 +76,12 @@
     z-index: 21;
     pointer-events: auto !important;
 }
+
 .sidebar-wallpaper-avatar:hover {
     transform: scale(1.05);
     border-color: rgba(255, 255, 255, 0.5);
 }
+
 .sidebar-wallpaper-avatar img {
     width: 100%;
     height: 100%;
@@ -83,6 +89,7 @@
     display: block;
     pointer-events: none;
 }
+
 .sidebar-wallpaper-user-text {
     flex: 1;
     min-width: 0;
@@ -90,6 +97,7 @@
     z-index: 20;
     pointer-events: none;
 }
+
 .sidebar-wallpaper-nickname {
     font-size: 18px;
     font-weight: 700;
@@ -98,6 +106,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
 .sidebar-wallpaper-signature {
     font-size: 12px;
     opacity: 0.95;
@@ -105,6 +114,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
 .sidebar-wallpaper video,
 .sidebar-wallpaper img {
     position: absolute;
@@ -117,6 +127,7 @@
     display: block !important;
     pointer-events: none !important;
 }
+
 .sidebar-wallpaper-overlay {
     position: absolute;
     top: 0;
@@ -134,7 +145,7 @@
     border-radius: inherit;
 }
 
-/* 主体内容区域 - Flex 布局 */
+/* ========== 主体内容区域 - Flex 布局 ========== */
 .sidebar-content {
     flex: 1;
     display: flex;
@@ -144,6 +155,7 @@
     border-radius: 0 0 8px 8px;
 }
 
+/* 每日一言卡片 */
 .daily-quote-card {
     margin: 12px 15px;
     padding: 12px 15px;
@@ -152,30 +164,41 @@
     border-radius: 10px;
     flex-shrink: 0;
 }
+
 .daily-quote-card p {
     font-size: 12px;
     line-height: 1.4;
     color: var(--text-secondary);
     margin: 0;
     text-align: justify;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
+/* 分类容器 - 内部滚动 */
 .categories-container {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 0 15px 15px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    overscroll-behavior: contain;
 }
-.categories-container::-webkit-scrollbar { display: none; }
 
+.categories-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* 分类列表 */
 .sidebar-categories {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
+/* 单个分类组 */
 .category-group {
     background: rgba(255, 255, 255, 0.5);
     border: 1px solid rgba(0, 0, 0, 0.06);
@@ -185,6 +208,7 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }
+
 .category-group-header {
     padding: 10px 12px;
     background: rgba(0, 0, 0, 0.02);
@@ -194,10 +218,13 @@
     justify-content: space-between;
     cursor: pointer;
     transition: all 0.2s ease;
+    user-select: none;
 }
+
 .category-group-header:hover {
     background: rgba(67, 97, 238, 0.06);
 }
+
 .category-group-name {
     font-size: 13px;
     font-weight: 600;
@@ -206,6 +233,7 @@
     align-items: center;
     gap: 8px;
 }
+
 .category-group-icon {
     width: 20px;
     height: 20px;
@@ -215,6 +243,7 @@
     font-size: 12px;
     color: var(--primary-color);
 }
+
 .category-toggle {
     width: 20px;
     height: 20px;
@@ -228,23 +257,29 @@
     transition: transform 0.2s ease;
     font-size: 10px;
 }
+
 .category-toggle:hover {
     background: rgba(67, 97, 238, 0.1);
     color: var(--primary-color);
     border-radius: 4px;
 }
+
 .category-group.expanded .category-toggle {
     transform: rotate(180deg);
 }
+
 .category-items {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease;
     background: rgba(0, 0, 0, 0.01);
 }
+
 .category-group.expanded .category-items {
     max-height: 500px;
 }
+
+/* 分类项按钮 */
 .category-item {
     display: flex;
     align-items: center;
@@ -258,10 +293,16 @@
     transition: all 0.2s ease;
     color: var(--text-secondary);
 }
+
 .category-item:hover {
     background: rgba(67, 97, 238, 0.08);
     color: var(--primary-color);
 }
+
+.category-item:active {
+    background: rgba(67, 97, 238, 0.12);
+}
+
 .category-icon {
     width: 16px;
     height: 16px;
@@ -269,8 +310,10 @@
     align-items: center;
     justify-content: center;
     font-size: 11px;
+    color: inherit;
     flex-shrink: 0;
 }
+
 .category-label {
     flex: 1;
     white-space: nowrap;
@@ -279,6 +322,7 @@
     text-align: left;
     font-size: 13px;
 }
+
 .category-badge {
     background: var(--error-color);
     color: white;
@@ -288,9 +332,10 @@
     min-width: 16px;
     text-align: center;
     flex-shrink: 0;
+    font-weight: 500;
 }
 
-/* 底部按钮 */
+/* ========== 底部按钮区域 ========== */
 .sidebar-footer {
     padding: 12px 15px;
     background: rgba(0, 0, 0, 0.02);
@@ -300,6 +345,7 @@
     flex-shrink: 0;
     border-radius: 0 0 8px 8px;
 }
+
 .footer-btn {
     flex: 1;
     padding: 10px 4px;
@@ -318,12 +364,19 @@
     min-height: 36px;
     position: relative;
 }
+
 .footer-btn:hover {
     background: rgba(67, 97, 238, 0.08);
     border-color: var(--primary-color);
     color: var(--primary-color);
     transform: translateY(-2px);
 }
+
+.footer-btn:active {
+    transform: translateY(0);
+}
+
+/* 底部按钮左侧装饰条 */
 .footer-btn::before {
     content: '';
     position: absolute;
@@ -335,17 +388,64 @@
     border-radius: 3px;
     opacity: 0.6;
 }
-.footer-btn:nth-child(1)::before { background: #8b5cf6; }
-.footer-btn:nth-child(2)::before { background: var(--accent-color); }
-.footer-btn:nth-child(3)::before { background: #f72585; }
-.footer-btn:nth-child(4)::before { background: #4cc9f0; }
-.footer-btn i { font-size: 13px; }
-.footer-btn:nth-child(1) i { color: #8b5cf6; }
-.footer-btn:nth-child(2) i { color: var(--accent-color); }
-.footer-btn:nth-child(3) i { color: #f72585; }
-.footer-btn:nth-child(4) i { color: #4cc9f0; }
 
-/* ========== 个人资料模态框（增加背景遮罩） ========== */
+.footer-btn:nth-child(1)::before {
+    background: #8b5cf6;
+}
+
+.footer-btn:nth-child(2)::before {
+    background: var(--accent-color);
+}
+
+.footer-btn:nth-child(3)::before {
+    background: #f72585;
+}
+
+.footer-btn:nth-child(4)::before {
+    background: #4cc9f0;
+}
+
+.footer-btn i {
+    font-size: 13px;
+}
+
+.footer-btn:nth-child(1) i {
+    color: #8b5cf6;
+}
+
+.footer-btn:nth-child(2) i {
+    color: var(--accent-color);
+}
+
+.footer-btn:nth-child(3) i {
+    color: #f72585;
+}
+
+.footer-btn:nth-child(4) i {
+    color: #4cc9f0;
+}
+
+/* ========== QQ头像状态样式 ========== */
+.qq-avatar-status {
+    font-size: 11px;
+    margin-top: 4px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.qq-avatar-status.loading {
+    color: var(--primary-color);
+}
+
+.qq-avatar-status.success {
+    color: var(--success-color);
+}
+
+.qq-avatar-status.error {
+    color: var(--error-color);
+}
+
+/* ========== 个人资料设置模态框 ========== */
 .profile-modal {
     position: fixed;
     top: 0;
@@ -364,11 +464,13 @@
     transition: all 0.3s ease;
     pointer-events: none;
 }
+
 .profile-modal.active {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
 }
+
 .profile-modal-content {
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(30px) saturate(180%);
@@ -384,13 +486,33 @@
     transition: transform 0.3s ease;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
 }
+
 .profile-modal.active .profile-modal-content {
     transform: translateY(0);
 }
-.profile-modal-close { display: none; }
-.profile-form { display: flex; flex-direction: column; gap: 12px; }
-.form-group { display: flex; flex-direction: column; gap: 4px; }
-.form-label { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+
+.profile-modal-close {
+    display: none;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
 .form-input {
     padding: 8px 10px;
     border: 1px solid rgba(0, 0, 0, 0.1);
@@ -399,17 +521,21 @@
     transition: all 0.2s ease;
     background: rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
 }
+
 .form-input:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
 }
+
 .form-textarea {
     resize: vertical;
     min-height: 60px;
     font-family: inherit;
 }
+
 .qq-avatar-section {
     display: flex;
     align-items: center;
@@ -419,6 +545,7 @@
     border-radius: 8px;
     border: 1px solid rgba(67, 97, 238, 0.1);
 }
+
 .qq-avatar-preview {
     width: 48px;
     height: 48px;
@@ -427,10 +554,34 @@
     border: 2px solid rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
 }
-.qq-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
-.qq-avatar-input-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-.qq-avatar-input { width: 100%; }
-.profile-modal-actions { display: flex; gap: 10px; margin-top: 8px; }
+
+.qq-avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.qq-avatar-input-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.qq-avatar-input {
+    width: 100%;
+}
+
+.get-qq-avatar-btn {
+    display: none;
+}
+
+.profile-modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
 .profile-save-btn {
     flex: 1;
     padding: 10px 0;
@@ -443,10 +594,12 @@
     cursor: pointer;
     transition: all 0.2s ease;
 }
+
 .profile-save-btn:hover {
     background: var(--secondary-color);
     transform: translateY(-1px);
 }
+
 .profile-cancel-btn {
     flex: 1;
     padding: 10px 0;
@@ -459,39 +612,203 @@
     cursor: pointer;
     transition: all 0.2s ease;
 }
+
 .profile-cancel-btn:hover {
     background: rgba(0, 0, 0, 0.1);
     color: var(--text-primary);
 }
 
-/* 响应式宽度 */
-@media (min-width: 576px) { .sidebar { width: 260px; } }
-@media (min-width: 768px) { .sidebar { width: 280px; } }
-@media (min-width: 992px) { .sidebar { width: 300px; } }
-@media (max-width: 575px) { .sidebar { width: 240px; } }
+/* ========== 响应式宽度适配 ========== */
+@media (min-width: 576px) {
+    .sidebar {
+        width: 260px;
+    }
+}
 
-/* 深色模式适配 */
+@media (min-width: 768px) {
+    .sidebar {
+        width: 280px;
+    }
+}
+
+@media (min-width: 992px) {
+    .sidebar {
+        width: 300px;
+    }
+}
+
+@media (max-width: 575px) {
+    .sidebar {
+        width: 240px;
+    }
+}
+
+/* ========== 超大屏 ========== */
+@media (min-width: 1920px) {
+    .sidebar {
+        width: 320px;
+    }
+}
+
+/* ========== 移动端侧滑栏滚动控制（配合 responsive.css 使用） ========== */
+@media (max-width: 768px) {
+    .sidebar.active {
+        touch-action: pan-y;
+    }
+    .sidebar.active .categories-container {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+    }
+}
+
+/* ========== 深色模式适配 ========== */
 @media (prefers-color-scheme: dark) {
     .sidebar {
         background: var(--acrylic-bg);
         border-color: var(--acrylic-border);
         box-shadow: var(--acrylic-shadow);
     }
-    .category-group { background: rgba(45,45,45,0.5); border-color: rgba(255,255,255,0.06); }
-    .category-group-header { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.04); }
-    .footer-btn { background: rgba(45,45,45,0.6); border-color: rgba(255,255,255,0.06); color: var(--text-secondary); }
-    .footer-btn:hover { background: rgba(67,97,238,0.12); color: var(--primary-color); }
-    .daily-quote-card { background: rgba(67,97,238,0.08); border-color: rgba(67,97,238,0.15); }
-    .profile-modal-content { background: rgba(30,30,30,0.75); border-color: rgba(255,255,255,0.15); }
-    .form-input { background: rgba(40,40,40,0.6); border-color: rgba(255,255,255,0.1); color: white; }
-    .profile-cancel-btn { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
+    
+    .sidebar-wallpaper-overlay {
+        background: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0.25) 0%,
+            rgba(0, 0, 0, 0.15) 50%,
+            rgba(0, 0, 0, 0.4) 100%
+        );
+    }
+    
+    .category-group {
+        background: rgba(45, 45, 45, 0.5);
+        border-color: rgba(255, 255, 255, 0.06);
+    }
+    
+    .category-group-header {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.04);
+    }
+    
+    .footer-btn {
+        background: rgba(45, 45, 45, 0.6);
+        border-color: rgba(255, 255, 255, 0.06);
+        color: var(--text-secondary);
+    }
+    
+    .footer-btn:hover {
+        background: rgba(67, 97, 238, 0.12);
+        color: var(--primary-color);
+    }
+    
+    .footer-btn:nth-child(1) i {
+        color: #a78bfa;
+    }
+    
+    .footer-btn:nth-child(2) i {
+        color: var(--accent-color);
+    }
+    
+    .footer-btn:nth-child(3) i {
+        color: #f72585;
+    }
+    
+    .footer-btn:nth-child(4) i {
+        color: #4895ef;
+    }
+    
+    .daily-quote-card {
+        background: rgba(67, 97, 238, 0.08);
+        border-color: rgba(67, 97, 238, 0.15);
+    }
+    
+    .profile-modal-content {
+        background: rgba(30, 30, 30, 0.75);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    .form-input {
+        background: rgba(40, 40, 40, 0.6);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+    
+    .form-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+    
+    .qq-avatar-section {
+        background: rgba(67, 97, 238, 0.1);
+        border-color: rgba(67, 97, 238, 0.2);
+    }
+    
+    .profile-cancel-btn {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-secondary);
+    }
+    
+    .profile-cancel-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+    
+    .category-item {
+        color: var(--text-secondary);
+    }
+    
+    .category-item:hover {
+        color: var(--primary-color);
+    }
 }
 
-/* 减少动画 */
+/* ========== 减少动画模式 ========== */
 @media (prefers-reduced-motion: reduce) {
-    .sidebar, .category-group-header, .category-item, .footer-btn,
-    .category-toggle, .category-items, .sidebar-wallpaper video {
+    .sidebar,
+    .category-group-header,
+    .category-item,
+    .footer-btn,
+    .category-toggle,
+    .category-items,
+    .sidebar-wallpaper video,
+    .sidebar-wallpaper img {
         transition: none;
         animation: none;
+    }
+}
+
+/* ========== 壁纸淡入动画 ========== */
+@keyframes wallpaperFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.sidebar-wallpaper video,
+.sidebar-wallpaper img {
+    animation: wallpaperFadeIn 0.5s ease-in-out;
+}
+
+/* ========== 侧滑栏与主页交互控制 ========== */
+.sidebar.active ~ .main-content {
+    pointer-events: auto;
+    overflow: auto;
+    position: static;
+    width: 100%;
+    height: auto;
+}
+
+.sidebar.active .categories-container,
+.sidebar.active .sidebar-content {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ========== 横屏小高度适配 ========== */
+@media (max-height: 600px) and (orientation: landscape) {
+    .sidebar-wallpaper {
+        aspect-ratio: 21/9;
     }
 }
