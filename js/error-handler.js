@@ -30,12 +30,20 @@ class ErrorHandler {
         // 忽略资源加载错误中的特定域名（例如 favicon 服务）
         if (errorInfo.type === 'resource' && errorInfo.tag === 'IMG') {
             const src = errorInfo.src || '';
-            // 忽略 yandex favicon 服务、本地根域名等常见无效图片
-            if (src.includes('favicon.yandex.net') || src === window.location.origin || src === window.location.origin + '/') {
+            // 忽略 yandex favicon 服务
+            if (src.includes('favicon.yandex.net')) {
                 return true;
             }
             // 忽略 71xk 图标 API（已不稳定）
             if (src.includes('api.71xk.com')) {
+                return true;
+            }
+            // 忽略根域名作为图片地址（去掉尾部斜杠比较）
+            let origin = window.location.origin;
+            if (origin.endsWith('/')) origin = origin.slice(0, -1);
+            let cleanSrc = src;
+            if (cleanSrc.endsWith('/')) cleanSrc = cleanSrc.slice(0, -1);
+            if (cleanSrc === origin) {
                 return true;
             }
         }
