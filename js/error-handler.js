@@ -25,6 +25,27 @@ class ErrorHandler {
         return str;
     }
 
+    // 判断是否应该忽略某个错误（避免控制台刷屏）
+    shouldIgnore(errorInfo) {
+        // 忽略资源加载错误中的特定域名（例如 favicon 服务）
+        if (errorInfo.type === 'resource' && errorInfo.tag === 'IMG') {
+            const src = errorInfo.src || '';
+            // 忽略 yandex favicon 服务、本地根域名等常见无效图片
+            if (src.includes('favicon.yandex.net') || src === window.location.origin || src === window.location.origin + '/') {
+                return true;
+            }
+            // 忽略 71xk 图标 API（已不稳定）
+            if (src.includes('api.71xk.com')) {
+                return true;
+            }
+        }
+        // 忽略跨域脚本错误（Script error.）
+        if (errorInfo.type === 'error' && errorInfo.message === 'Script error.') {
+            return true;
+        }
+        return false;
+    }
+
     init() {
         // 捕获 JavaScript 运行时错误
         window.addEventListener('error', (event) => {
@@ -97,6 +118,10 @@ class ErrorHandler {
 
     // 统一错误处理
     handleError(errorInfo) {
+        // 检查是否应该忽略
+        if (this.shouldIgnore(errorInfo)) {
+            return;
+        }
         // 限制内存中存储的错误数量
         if (this.errors.length >= this.maxErrors) {
             this.errors.shift();
@@ -116,7 +141,7 @@ class ErrorHandler {
         if (window._lastErrorTime && Date.now() - window._lastErrorTime < 5000) return;
         window._lastErrorTime = Date.now();
 
-        let userMessage = '页面遇到一些小问题，请尝试刷新。';
+        let userMessage = '';
         if (errorInfo.type === 'resource' && errorInfo.tag === 'SCRIPT') {
             userMessage = '加载脚本失败，请检查网络后重试。';
         } else if (errorInfo.message && errorInfo.message.includes('NetworkError')) {
@@ -125,6 +150,9 @@ class ErrorHandler {
             userMessage = '请求后端服务失败，请稍后重试。';
         } else if (errorInfo.type === 'unhandledrejection') {
             userMessage = '操作未能完成，请重试。';
+        } else {
+            // 对于其他错误，不显示任何 toast（避免骚扰用户）
+            return;
         }
 
         if (window.toast && typeof window.toast.show === 'function') {
