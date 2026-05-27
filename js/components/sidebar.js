@@ -1,6 +1,5 @@
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版（完整修复版：使用 Utils.escapeHtml + 头像懒加载）
- * 修改：头像默认使用站点 Logo，所有动态内容使用 Utils.escapeHtml，头像懒加载
+ * 侧边栏组件 - 修复底部遮挡（最终完整版）
  */
 class CompactSidebar {
     constructor() {
@@ -85,45 +84,16 @@ class CompactSidebar {
         this.defaultAvatar = './assets/logo.png';
     }
 
-    // 计算侧边栏位置（保持不变）
+    // 只更新 left 值，不再修改 top/height
     calcSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
-
-        const navbar = document.querySelector('.navbar');
-        const actualNavbarHeight = navbar ? navbar.offsetHeight : this.navbarHeight;
-        this.navbarHeight = actualNavbarHeight;
-
-        const viewportHeight = window.innerHeight;
-        const isMobile = window.innerWidth < 768;
-        
-        const gapConfig = isMobile ? this.gapConfig.mobile : this.gapConfig.desktop;
-        
-        const maxAvailableHeight = viewportHeight - this.navbarHeight - 2 * gapConfig.min;
-        let sidebarHeight = Math.min(maxAvailableHeight, Math.max(this.minSidebarHeight, viewportHeight * 0.9));
-        
-        const totalMargin = viewportHeight - this.navbarHeight - sidebarHeight;
-        const margin = totalMargin / 2;
-        
-        sidebar.style.top = `${this.navbarHeight + margin}px`;
-        sidebar.style.height = `${sidebarHeight}px`;
-        sidebar.style.bottom = 'auto';
-        sidebar.style.maxHeight = 'none';
-
-        const footer = sidebar.querySelector('.sidebar-footer');
-        if (footer) {
-            const basePadding = Math.max(8, Math.floor(margin * 0.4));
-            const targetPadding = Math.min(basePadding, 16);
-            
-            footer.style.paddingTop = `${targetPadding}px`;
-            footer.style.paddingBottom = `max(${targetPadding}px, env(safe-area-inset-bottom))`;
-            footer.style.marginTop = '0';
-            footer.style.marginBottom = '0';
-            footer.style.display = 'flex';
-            footer.style.alignItems = 'center';
-            footer.style.gap = '6px';
+        const container = document.querySelector('.container');
+        if (container) {
+            const containerStyle = getComputedStyle(container);
+            const paddingLeft = containerStyle.paddingLeft;
+            sidebar.style.left = sidebar.classList.contains('active') ? paddingLeft : '-300px';
         }
-
         this.adjustWallpaperSize();
     }
 
@@ -150,17 +120,19 @@ class CompactSidebar {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
                 this.calcSidebarPosition();
+                this.adjustWallpaperSize();
             }, 100);
         }, { passive: true });
 
         window.addEventListener('orientationchange', () => {
             setTimeout(() => {
                 this.calcSidebarPosition();
+                this.adjustWallpaperSize();
             }, 200);
         }, { passive: true });
     }
 
-    // ========== 头像懒加载 ==========
+    // 头像懒加载
     observeLazyAvatar(img) {
         if ('IntersectionObserver' in window) {
             const observer = new IntersectionObserver((entries) => {
@@ -178,7 +150,6 @@ class CompactSidebar {
             });
             observer.observe(img);
         } else {
-            // 降级：直接加载
             if (img.getAttribute('data-src')) {
                 img.src = img.getAttribute('data-src');
                 img.removeAttribute('data-src');
@@ -186,7 +157,6 @@ class CompactSidebar {
         }
     }
 
-    // ========== 初始化 ==========
     async init() {
         if (this.isInitialized) return;
         try {
@@ -216,7 +186,6 @@ class CompactSidebar {
         }
     }
 
-    // ========== 个人资料模态框 ==========
     createProfileModal() {
         if (document.getElementById('profileModal')) return;
         try {
@@ -430,7 +399,6 @@ class CompactSidebar {
         }
     }
 
-    // ========== 侧边栏状态 ==========
     loadExpandedState() {
         try {
             const savedState = Storage.get('sidebar_categories_state');
@@ -743,7 +711,6 @@ class CompactSidebar {
             
             if (wallpaperAvatar) {
                 if (userConfig.avatar && userConfig.avatar !== '') {
-                    // 懒加载头像
                     wallpaperAvatar.setAttribute('data-src', userConfig.avatar);
                     wallpaperAvatar.classList.add('lazy-avatar');
                     this.observeLazyAvatar(wallpaperAvatar);
