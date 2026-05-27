@@ -330,7 +330,10 @@ class OptimizedNavigation {
         card.title = `${site.title}\n${site.description || ''}`;
 
         let iconHtml = '<i class="fas fa-link"></i>';
-        if (site.icon && site.icon.trim() && site.icon !== window.location.origin && !site.icon.includes(window.location.hostname)) {
+        // 更严格的图标有效性判断：存在、非空字符串、不是当前域名、不包含当前主机名
+        const origin = window.location.origin;
+        const hostname = window.location.hostname;
+        if (site.icon && site.icon.trim() && site.icon !== origin && !site.icon.includes(hostname) && site.icon !== '/' && site.icon !== '') {
             const raw = site.icon.trim();
             if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('./') || /\.(png|jpg|jpeg|ico|svg)/i.test(raw)) {
                 // 懒加载图标，并设置 onerror 降级
