@@ -1,8 +1,8 @@
 /**
- * 侧边栏组件 - 毛玻璃效果（优化版）
- * 修复：滚动位置保持、动态对齐壁纸顶部、左右边距自适应、底部等距
+ * 侧边栏组件 - 毛玻璃效果（动态定位版）
+ * 顶部与导航栏底部对齐，左右间距与主页容器一致，底部留相同间距
+ * 内部滚动，不影响主页滚动，展开/收起动画平滑无错位
  */
-
 class CompactSidebar {
     constructor() {
         if (!document.getElementById('sidebar')) return;
@@ -77,13 +77,75 @@ class CompactSidebar {
         this.lastVideoDate = null;
         this.savedScrollY = 0;
         this.modalRegistered = false;
-        this.resizeObserver = null;
+
         this.defaultAvatar = './assets/logo.png';
-        this.sidebarElement = null;
+        this.resizeObserver = null;
     }
 
     getDefaultAvatarSVG() {
         return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
+    }
+
+    // 动态计算侧滑栏位置
+    updatePosition() {
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar) return;
+
+        // 获取导航栏高度
+        const navbar = document.querySelector('.navbar');
+        const navbarHeight = navbar ? navbar.offsetHeight : 60;
+
+        // 获取主页容器内边距（左/右）
+        const container = document.querySelector('.wallpaper-section .container') || document.querySelector('.container');
+        let paddingLeft = 16; // 默认值
+        if (container) {
+            const computedStyle = getComputedStyle(container);
+            paddingLeft = parseFloat(computedStyle.paddingLeft) || 16;
+        }
+
+        // 设置侧滑栏位置
+        sidebar.style.top = `${navbarHeight}px`;
+        sidebar.style.left = `${paddingLeft}px`;
+        sidebar.style.bottom = `${paddingLeft}px`;
+
+        // 计算最大高度
+        const maxHeight = window.innerHeight - navbarHeight - paddingLeft;
+        sidebar.style.maxHeight = `${maxHeight}px`;
+
+        // 调整壁纸区域尺寸（保持比例）
+        this.adjustWallpaperSize();
+    }
+
+    // 调整壁纸区域
+    adjustWallpaperSize() {
+        const sidebar = document.getElementById('sidebar');
+        const wallpaper = document.getElementById('sidebarWallpaper');
+        if (!sidebar || !wallpaper) return;
+        const sidebarWidth = sidebar.offsetWidth;
+        wallpaper.style.width = `${sidebarWidth}px`;
+        wallpaper.style.maxWidth = '100%';
+        if (this.currentVideo) {
+            this.currentVideo.style.width = '100%';
+            this.currentVideo.style.height = '100%';
+            this.currentVideo.style.objectFit = 'contain';
+        }
+    }
+
+    // 监听窗口变化重新定位
+    bindResizeListener() {
+        const handleResize = () => {
+            this.updatePosition();
+        };
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.updatePosition(), 100);
+        });
+        // 使用 ResizeObserver 监听容器变化（可选）
+        if (window.ResizeObserver) {
+            this.resizeObserver = new ResizeObserver(() => this.updatePosition());
+            const container = document.querySelector('.wallpaper-section .container');
+            if (container) this.resizeObserver.observe(container);
+        }
     }
 
     async init() {
@@ -93,8 +155,8 @@ class CompactSidebar {
                 await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
             }
 
-            this.sidebarElement = document.getElementById('sidebar');
-            if (!this.sidebarElement) return;
+            this.updatePosition();
+            this.bindResizeListener();
 
             this.loadExpandedState();
             this.render();
@@ -103,7 +165,6 @@ class CompactSidebar {
             await this.loadDailyQuote();
             await this.loadWallpaperUserInfo();
             this.createProfileModal();
-            this.initResizeObserver();
             this.isInitialized = true;
             window.sidebar = this;
         } catch (error) {
@@ -112,63 +173,8 @@ class CompactSidebar {
         }
     }
 
-    // 动态计算侧滑栏位置（顶部对齐壁纸，左右边距一致，底部等距）
-    updatePosition() {
-        if (!this.sidebarElement) return;
-
-        // 获取壁纸容器相对于视口顶部的距离
-        const wallpaper = document.querySelector('.wallpaper-container');
-        const container = document.querySelector('.container');
-        const navbar = document.querySelector('.navbar');
-        
-        let top = 0;
-        if (wallpaper) {
-            const rect = wallpaper.getBoundingClientRect();
-            top = rect.top;
-        } else {
-            // 降级：navbar 高度 + 16px
-            const navbarHeight = navbar ? navbar.offsetHeight : 60;
-            top = navbarHeight + 16;
-        }
-
-        // 获取容器左侧内边距（px）
-        let left = 20; // 默认
-        if (container) {
-            const computed = getComputedStyle(container);
-            left = parseFloat(computed.paddingLeft);
-            if (isNaN(left)) left = 20;
-        }
-
-        const bottom = left; // 底部间距与左侧相同
-
-        // 设置 CSS 变量
-        this.sidebarElement.style.setProperty('--sidebar-top', `${top}px`);
-        this.sidebarElement.style.setProperty('--sidebar-left', `${left}px`);
-        this.sidebarElement.style.setProperty('--sidebar-bottom', `${bottom}px`);
-        this.sidebarElement.style.height = `calc(100vh - ${top}px - ${bottom}px)`;
-    }
-
-    initResizeObserver() {
-        if (window.ResizeObserver) {
-            this.resizeObserver = new ResizeObserver(() => {
-                if (this.isVisible()) {
-                    this.updatePosition();
-                }
-            });
-            const container = document.querySelector('.container');
-            if (container) this.resizeObserver.observe(container);
-            window.addEventListener('resize', () => {
-                if (this.isVisible()) this.updatePosition();
-            });
-        } else {
-            window.addEventListener('resize', () => {
-                if (this.isVisible()) this.updatePosition();
-            });
-        }
-    }
-
     render() {
-        const sidebar = this.sidebarElement;
+        const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
         const categoriesContainer = sidebar.querySelector('.sidebar-categories');
         if (categoriesContainer) {
@@ -202,7 +208,7 @@ class CompactSidebar {
     }
 
     bindEvents() {
-        const sidebar = this.sidebarElement;
+        const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
 
         sidebar.addEventListener('click', (e) => {
@@ -224,7 +230,7 @@ class CompactSidebar {
         });
 
         document.addEventListener('click', (e) => {
-            if (this.isVisible() && !sidebar.contains(e.target) && !document.getElementById('menuBtn')?.contains(e.target)) {
+            if (sidebar.classList.contains('active') && !sidebar.contains(e.target) && !document.getElementById('menuBtn')?.contains(e.target)) {
                 this.hide();
             }
         });
@@ -305,18 +311,19 @@ class CompactSidebar {
         }
     }
 
+    // 显示侧滑栏（保存滚动位置）
     show() {
-        if (!this.sidebarElement || this.isVisible()) return;
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar || this.isVisible()) return;
 
-        // 保存当前滚动位置
         this.savedScrollY = window.scrollY;
         document.body.classList.add('sidebar-open');
         document.body.style.top = `-${this.savedScrollY}px`;
 
-        // 动态计算位置（顶部对齐壁纸，左右边距一致，底部等距）
+        // 重新计算位置（确保最新）
         this.updatePosition();
 
-        this.sidebarElement.classList.add('active');
+        sidebar.classList.add('active');
         if (window.app && !this.modalRegistered) {
             window.app.registerModal(this);
             this.modalRegistered = true;
@@ -327,9 +334,10 @@ class CompactSidebar {
     }
 
     hide() {
-        if (!this.sidebarElement || !this.isVisible()) return;
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar || !this.isVisible()) return;
 
-        this.sidebarElement.classList.remove('active');
+        sidebar.classList.remove('active');
         document.body.classList.remove('sidebar-open');
         document.body.style.top = '';
         window.scrollTo(0, this.savedScrollY);
@@ -349,9 +357,11 @@ class CompactSidebar {
     }
 
     isVisible() {
-        return this.sidebarElement ? this.sidebarElement.classList.contains('active') : false;
+        const sidebar = document.getElementById('sidebar');
+        return sidebar ? sidebar.classList.contains('active') : false;
     }
 
+    // 壁纸相关（缓存视频）
     async loadSidebarWallpaper() {
         const dayOfWeek = new Date().getDay();
         const mediaInfo = this.getLocalWallpaper(dayOfWeek);
@@ -386,11 +396,9 @@ class CompactSidebar {
     async setVideoWallpaper(videoUrl) {
         const sidebarWallpaper = document.getElementById('sidebarWallpaper');
         if (!sidebarWallpaper) return;
-
         if (this.currentVideo && this.currentVideo.parentNode) {
             this.currentVideo.remove();
         }
-
         try {
             const video = document.createElement('video');
             video.src = videoUrl;
@@ -441,20 +449,7 @@ class CompactSidebar {
         }
     }
 
-    adjustWallpaperSize() {
-        const sidebar = this.sidebarElement;
-        const wallpaper = document.getElementById('sidebarWallpaper');
-        if (!sidebar || !wallpaper) return;
-        const sidebarWidth = sidebar.offsetWidth;
-        wallpaper.style.width = `${sidebarWidth}px`;
-        wallpaper.style.maxWidth = '100%';
-        if (this.currentVideo) {
-            this.currentVideo.style.width = '100%';
-            this.currentVideo.style.height = '100%';
-            this.currentVideo.style.objectFit = 'contain';
-        }
-    }
-
+    // 用户信息
     async loadWallpaperUserInfo() {
         try {
             const userConfig = Storage.get('userConfig') || {};
@@ -519,6 +514,7 @@ class CompactSidebar {
         }
     }
 
+    // 个人资料模态框
     createProfileModal() {
         if (document.getElementById('profileModal')) return;
         const modalHTML = `
@@ -664,7 +660,7 @@ class CompactSidebar {
     }
 }
 
-// 单例初始化
+// 自动初始化
 if (!window.sidebarInitialized) {
     window.sidebarInitialized = true;
     const initSidebar = async () => {
