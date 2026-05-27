@@ -1,7 +1,6 @@
 /**
- * 侧边栏组件 - 毛玻璃效果（动态定位版）
- * 顶部与导航栏底部对齐，左右间距与主页容器一致，底部留相同间距
- * 内部滚动，不影响主页滚动，展开/收起动画平滑无错位
+ * 侧边栏组件 - 毛玻璃效果（最终优化版）
+ * 功能：动态定位（顶部对齐壁纸区、左右边距一致）、底部留白、主页滚动锁定、无错位动画
  */
 class CompactSidebar {
     constructor() {
@@ -77,75 +76,13 @@ class CompactSidebar {
         this.lastVideoDate = null;
         this.savedScrollY = 0;
         this.modalRegistered = false;
+        this.resizeObserver = null;
 
         this.defaultAvatar = './assets/logo.png';
-        this.resizeObserver = null;
     }
 
     getDefaultAvatarSVG() {
         return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
-    }
-
-    // 动态计算侧滑栏位置
-    updatePosition() {
-        const sidebar = document.getElementById('sidebar');
-        if (!sidebar) return;
-
-        // 获取导航栏高度
-        const navbar = document.querySelector('.navbar');
-        const navbarHeight = navbar ? navbar.offsetHeight : 60;
-
-        // 获取主页容器内边距（左/右）
-        const container = document.querySelector('.wallpaper-section .container') || document.querySelector('.container');
-        let paddingLeft = 16; // 默认值
-        if (container) {
-            const computedStyle = getComputedStyle(container);
-            paddingLeft = parseFloat(computedStyle.paddingLeft) || 16;
-        }
-
-        // 设置侧滑栏位置
-        sidebar.style.top = `${navbarHeight}px`;
-        sidebar.style.left = `${paddingLeft}px`;
-        sidebar.style.bottom = `${paddingLeft}px`;
-
-        // 计算最大高度
-        const maxHeight = window.innerHeight - navbarHeight - paddingLeft;
-        sidebar.style.maxHeight = `${maxHeight}px`;
-
-        // 调整壁纸区域尺寸（保持比例）
-        this.adjustWallpaperSize();
-    }
-
-    // 调整壁纸区域
-    adjustWallpaperSize() {
-        const sidebar = document.getElementById('sidebar');
-        const wallpaper = document.getElementById('sidebarWallpaper');
-        if (!sidebar || !wallpaper) return;
-        const sidebarWidth = sidebar.offsetWidth;
-        wallpaper.style.width = `${sidebarWidth}px`;
-        wallpaper.style.maxWidth = '100%';
-        if (this.currentVideo) {
-            this.currentVideo.style.width = '100%';
-            this.currentVideo.style.height = '100%';
-            this.currentVideo.style.objectFit = 'contain';
-        }
-    }
-
-    // 监听窗口变化重新定位
-    bindResizeListener() {
-        const handleResize = () => {
-            this.updatePosition();
-        };
-        window.addEventListener('resize', handleResize);
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => this.updatePosition(), 100);
-        });
-        // 使用 ResizeObserver 监听容器变化（可选）
-        if (window.ResizeObserver) {
-            this.resizeObserver = new ResizeObserver(() => this.updatePosition());
-            const container = document.querySelector('.wallpaper-section .container');
-            if (container) this.resizeObserver.observe(container);
-        }
     }
 
     async init() {
@@ -155,9 +92,6 @@ class CompactSidebar {
                 await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
             }
 
-            this.updatePosition();
-            this.bindResizeListener();
-
             this.loadExpandedState();
             this.render();
             this.bindEvents();
@@ -165,12 +99,63 @@ class CompactSidebar {
             await this.loadDailyQuote();
             await this.loadWallpaperUserInfo();
             this.createProfileModal();
+
+            // 监听窗口 resize，重新计算侧滑栏位置
+            this.resizeObserver = new ResizeObserver(() => this.updatePositionAndHeight());
+            const container = document.querySelector('.container');
+            if (container) this.resizeObserver.observe(container);
+            window.addEventListener('resize', () => this.updatePositionAndHeight());
+
             this.isInitialized = true;
             window.sidebar = this;
         } catch (error) {
             console.error('侧滑栏初始化失败:', error);
             window.toast?.show('侧滑栏初始化失败', 'error');
         }
+    }
+
+    // 更新侧滑栏的 top、left、bottom、max-height
+    updatePositionAndHeight() {
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar) return;
+
+        // 1. 获取壁纸区域的顶部位置（相对于视口）
+        const wallpaperSection = document.querySelector('.wallpaper-section');
+        let topPosition = 0;
+        if (wallpaperSection) {
+            const rect = wallpaperSection.getBoundingClientRect();
+            topPosition = rect.top;
+        } else {
+            // 降级：导航栏高度 + 外边距
+            const navbar = document.querySelector('.navbar');
+            const navbarHeight = navbar ? navbar.offsetHeight : 60;
+            topPosition = navbarHeight + 16; // 默认 16px 上边距
+        }
+
+        // 2. 获取主页容器的左边距（与 .container 的 padding-left 一致）
+        const container = document.querySelector('.container');
+        let leftMargin = 16; // 默认移动端边距
+        if (container) {
+            const style = getComputedStyle(container);
+            const paddingLeft = parseFloat(style.paddingLeft);
+            if (!isNaN(paddingLeft)) leftMargin = paddingLeft;
+        }
+
+        // 3. 底部留白 = 左边距相同
+        const bottomMargin = leftMargin;
+
+        // 4. 计算最大高度：视口高度 - 顶部位置 - 底部留白
+        const viewportHeight = window.innerHeight;
+        let maxHeight = viewportHeight - topPosition - bottomMargin;
+        if (maxHeight < 200) maxHeight = 200; // 最小高度
+
+        // 应用样式
+        sidebar.style.top = `${topPosition}px`;
+        sidebar.style.left = `${leftMargin}px`;
+        sidebar.style.bottom = `${bottomMargin}px`;
+        sidebar.style.maxHeight = `${maxHeight}px`;
+        // 确保侧滑栏高度自适应内容，不超过 maxHeight
+        sidebar.style.height = 'auto';
     }
 
     render() {
@@ -311,17 +296,18 @@ class CompactSidebar {
         }
     }
 
-    // 显示侧滑栏（保存滚动位置）
+    // ========== 显示/隐藏（保留滚动位置 + 动态更新定位） ==========
     show() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar || this.isVisible()) return;
 
+        // 更新定位和高度（确保最新）
+        this.updatePositionAndHeight();
+
+        // 保存当前滚动位置
         this.savedScrollY = window.scrollY;
         document.body.classList.add('sidebar-open');
         document.body.style.top = `-${this.savedScrollY}px`;
-
-        // 重新计算位置（确保最新）
-        this.updatePosition();
 
         sidebar.classList.add('active');
         if (window.app && !this.modalRegistered) {
@@ -361,7 +347,7 @@ class CompactSidebar {
         return sidebar ? sidebar.classList.contains('active') : false;
     }
 
-    // 壁纸相关（缓存视频）
+    // ========== 壁纸相关 ==========
     async loadSidebarWallpaper() {
         const dayOfWeek = new Date().getDay();
         const mediaInfo = this.getLocalWallpaper(dayOfWeek);
@@ -420,17 +406,14 @@ class CompactSidebar {
             video.setAttribute('muted', 'true');
             video.setAttribute('loop', 'true');
             video.setAttribute('playsinline', 'true');
-
             video.onerror = () => this.setFallbackBackground();
             sidebarWallpaper.appendChild(video);
             this.currentVideo = video;
             this.videoCache = video;
-
             const overlay = sidebarWallpaper.querySelector('.sidebar-wallpaper-overlay');
             if (overlay) overlay.style.zIndex = '1';
             const userInfo = sidebarWallpaper.querySelector('.sidebar-wallpaper-user-info');
             if (userInfo) userInfo.style.zIndex = '2';
-
             try {
                 await video.play();
             } catch (e) {
@@ -449,7 +432,21 @@ class CompactSidebar {
         }
     }
 
-    // 用户信息
+    adjustWallpaperSize() {
+        const sidebar = document.getElementById('sidebar');
+        const wallpaper = document.getElementById('sidebarWallpaper');
+        if (!sidebar || !wallpaper) return;
+        const sidebarWidth = sidebar.offsetWidth;
+        wallpaper.style.width = `${sidebarWidth}px`;
+        wallpaper.style.maxWidth = '100%';
+        if (this.currentVideo) {
+            this.currentVideo.style.width = '100%';
+            this.currentVideo.style.height = '100%';
+            this.currentVideo.style.objectFit = 'contain';
+        }
+    }
+
+    // ========== 用户信息 ==========
     async loadWallpaperUserInfo() {
         try {
             const userConfig = Storage.get('userConfig') || {};
@@ -514,7 +511,7 @@ class CompactSidebar {
         }
     }
 
-    // 个人资料模态框
+    // ========== 个人资料模态框 ==========
     createProfileModal() {
         if (document.getElementById('profileModal')) return;
         const modalHTML = `
@@ -558,10 +555,7 @@ class CompactSidebar {
         const form = document.getElementById('profileForm');
         const qqInput = document.getElementById('qqNumber');
         if (!profileModal) return;
-
-        const closeModal = () => {
-            profileModal.classList.remove('active');
-        };
+        const closeModal = () => { profileModal.classList.remove('active'); };
         closeBtn?.addEventListener('click', closeModal);
         cancelBtn?.addEventListener('click', closeModal);
         profileModal.addEventListener('click', (e) => {
@@ -657,10 +651,11 @@ class CompactSidebar {
         if (this.currentVideo) this.currentVideo.pause();
         if (window.app && this.modalRegistered) window.app.unregisterModal(this);
         if (this.resizeObserver) this.resizeObserver.disconnect();
+        window.removeEventListener('resize', this.updatePositionAndHeight);
     }
 }
 
-// 自动初始化
+// 自动初始化（单例）
 if (!window.sidebarInitialized) {
     window.sidebarInitialized = true;
     const initSidebar = async () => {
