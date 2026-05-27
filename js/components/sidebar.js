@@ -1,5 +1,6 @@
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版（壁纸改为必应每日图片）
+ * 侧边栏组件 - 悬浮毛玻璃优化版（完整修复版：使用 Utils.escapeHtml + 头像懒加载）
+ * 修改：头像默认使用站点 Logo，所有动态内容使用 Utils.escapeHtml，头像懒加载
  */
 class CompactSidebar {
     constructor() {
@@ -73,6 +74,7 @@ class CompactSidebar {
         ];
         
         this.isInitialized = false;
+        this.currentVideo = null;
         this.gapConfig = {
             desktop: { min: 24, max: 60 },
             mobile: { min: 16, max: 40 }
@@ -81,31 +83,9 @@ class CompactSidebar {
         this.minSidebarHeight = 400;
 
         this.defaultAvatar = './assets/logo.png';
-        this.originalBodyOverflow = '';
-        this.originalBodyPosition = '';
-        this.originalBodyTop = '';
-        this.savedScrollTop = 0;
-        
-        // 壁纸缓存
-        this.cachedWallpaperUrl = null;
-        this.cachedWallpaperDate = null;
     }
 
-    // 获取安全区域底部高度
-    getSafeBottom() {
-        let safeBottom = 0;
-        if (window.innerWidth < 768) {
-            const div = document.createElement('div');
-            div.style.cssText = 'position: fixed; bottom: 0; left: 0; width: 1px; height: 1px; padding-bottom: env(safe-area-inset-bottom); pointer-events: none;';
-            document.body.appendChild(div);
-            const computedPadding = getComputedStyle(div).paddingBottom;
-            safeBottom = parseFloat(computedPadding) || 0;
-            document.body.removeChild(div);
-            if (safeBottom < 10) safeBottom = 34;
-        }
-        return safeBottom;
-    }
-
+    // 计算侧边栏位置（保持不变）
     calcSidebarPosition() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
@@ -118,12 +98,11 @@ class CompactSidebar {
         const isMobile = window.innerWidth < 768;
         
         const gapConfig = isMobile ? this.gapConfig.mobile : this.gapConfig.desktop;
-        const safeBottom = this.getSafeBottom();
         
-        const maxAvailableHeight = viewportHeight - this.navbarHeight - 2 * gapConfig.min - safeBottom;
-        let sidebarHeight = Math.min(maxAvailableHeight, Math.max(this.minSidebarHeight, viewportHeight * 0.9 - safeBottom));
+        const maxAvailableHeight = viewportHeight - this.navbarHeight - 2 * gapConfig.min;
+        let sidebarHeight = Math.min(maxAvailableHeight, Math.max(this.minSidebarHeight, viewportHeight * 0.9));
         
-        const totalMargin = viewportHeight - this.navbarHeight - sidebarHeight - safeBottom;
+        const totalMargin = viewportHeight - this.navbarHeight - sidebarHeight;
         const margin = totalMargin / 2;
         
         sidebar.style.top = `${this.navbarHeight + margin}px`;
@@ -135,6 +114,7 @@ class CompactSidebar {
         if (footer) {
             const basePadding = Math.max(8, Math.floor(margin * 0.4));
             const targetPadding = Math.min(basePadding, 16);
+            
             footer.style.paddingTop = `${targetPadding}px`;
             footer.style.paddingBottom = `max(${targetPadding}px, env(safe-area-inset-bottom))`;
             footer.style.marginTop = '0';
@@ -155,6 +135,13 @@ class CompactSidebar {
         const sidebarWidth = sidebar.offsetWidth;
         wallpaper.style.width = `${sidebarWidth}px`;
         wallpaper.style.maxWidth = '100%';
+
+        const mediaEl = wallpaper.querySelector('video, img');
+        if (mediaEl) {
+            mediaEl.style.width = '100%';
+            mediaEl.style.height = '100%';
+            mediaEl.style.objectFit = 'contain';
+        }
     }
 
     handleResize() {
@@ -173,6 +160,7 @@ class CompactSidebar {
         }, { passive: true });
     }
 
+    // ========== 头像懒加载 ==========
     observeLazyAvatar(img) {
         if ('IntersectionObserver' in window) {
             const observer = new IntersectionObserver((entries) => {
@@ -190,6 +178,7 @@ class CompactSidebar {
             });
             observer.observe(img);
         } else {
+            // 降级：直接加载
             if (img.getAttribute('data-src')) {
                 img.src = img.getAttribute('data-src');
                 img.removeAttribute('data-src');
@@ -197,6 +186,7 @@ class CompactSidebar {
         }
     }
 
+    // ========== 初始化 ==========
     async init() {
         if (this.isInitialized) return;
         try {
@@ -213,7 +203,6 @@ class CompactSidebar {
             await this.loadUserData();
             await this.loadDailyQuote();
             await this.loadWallpaperUserInfo();
-            await this.loadBingWallpaper(); // 加载必应壁纸
             this.createProfileModal();
             
             this.isInitialized = true;
@@ -227,87 +216,7 @@ class CompactSidebar {
         }
     }
 
-    // 获取必应每日壁纸（自动缓存，每日更新）
-    async loadBingWallpaper() {
-        const sidebarWallpaper = document.getElementById('sidebarWallpaper');
-        if (!sidebarWallpaper) return;
-
-        const today = new Date().toISOString().slice(0, 10);
-        if (this.cachedWallpaperUrl && this.cachedWallpaperDate === today) {
-            this.setWallpaperBackground(this.cachedWallpaperUrl);
-            return;
-        }
-
-        try {
-            const response = await Utils.safeFetch('https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN', { timeout: 8000 });
-            const data = await response.json();
-            if (data.images && data.images.length && data.images[0].url) {
-                const imageUrl = 'https://cn.bing.com' + data.images[0].url;
-                this.cachedWallpaperUrl = imageUrl;
-                this.cachedWallpaperDate = today;
-                this.setWallpaperBackground(imageUrl);
-            } else {
-                throw new Error('无效的壁纸数据');
-            }
-        } catch (error) {
-            console.error('获取必应壁纸失败:', error);
-            // 降级：使用默认渐变背景
-            this.setFallbackBackground();
-        }
-    }
-
-    setWallpaperBackground(url) {
-        const sidebarWallpaper = document.getElementById('sidebarWallpaper');
-        if (!sidebarWallpaper) return;
-        // 清除可能存在的视频元素
-        const existingVideo = sidebarWallpaper.querySelector('video');
-        if (existingVideo) existingVideo.remove();
-        // 设置背景图片
-        sidebarWallpaper.style.backgroundImage = `url('${url}')`;
-        sidebarWallpaper.style.backgroundSize = 'cover';
-        sidebarWallpaper.style.backgroundPosition = 'center';
-        sidebarWallpaper.style.backgroundRepeat = 'no-repeat';
-        // 确保 overlay 和用户信息层正确
-        const overlay = sidebarWallpaper.querySelector('.sidebar-wallpaper-overlay');
-        if (overlay) overlay.style.zIndex = '1';
-        const userInfo = sidebarWallpaper.querySelector('.sidebar-wallpaper-user-info');
-        if (userInfo) userInfo.style.zIndex = '2';
-    }
-
-    setFallbackBackground() {
-        const sidebarWallpaper = document.getElementById('sidebarWallpaper');
-        if (sidebarWallpaper) {
-            const existingVideo = sidebarWallpaper.querySelector('video');
-            if (existingVideo) existingVideo.remove();
-            sidebarWallpaper.style.backgroundImage = 'none';
-            sidebarWallpaper.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-        }
-    }
-
-    disableBodyScroll() {
-        if (typeof document === 'undefined') return;
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        this.originalBodyOverflow = document.body.style.overflow;
-        this.originalBodyPosition = document.body.style.position;
-        this.originalBodyTop = document.body.style.top;
-        document.body.style.overflow = 'hidden';
-        document.body.style.position = 'fixed';
-        document.body.style.top = `-${scrollTop}px`;
-        document.body.style.width = '100%';
-        this.savedScrollTop = scrollTop;
-    }
-
-    enableBodyScroll() {
-        if (typeof document === 'undefined') return;
-        document.body.style.overflow = this.originalBodyOverflow || '';
-        document.body.style.position = this.originalBodyPosition || '';
-        document.body.style.top = this.originalBodyTop || '';
-        document.body.style.width = '';
-        if (this.savedScrollTop !== undefined) {
-            window.scrollTo(0, this.savedScrollTop);
-        }
-    }
-
+    // ========== 个人资料模态框 ==========
     createProfileModal() {
         if (document.getElementById('profileModal')) return;
         try {
@@ -453,10 +362,11 @@ class CompactSidebar {
 
     async getQQAvatar(qqNumber) {
         try {
-            const response = await Utils.safeFetch(`https://api.kuleu.com/api/qqimg?qq=${qqNumber}`, { timeout: 5000 });
+            const response = await fetch(`https://api.kuleu.com/api/qqimg?qq=${qqNumber}`);
+            if (!response.ok) throw new Error('获取QQ头像失败');
             return response.url;
         } catch (error) {
-            Utils.handleApiError(error, '获取QQ头像失败', false);
+            console.error('获取QQ头像失败:', error);
             return null;
         }
     }
@@ -520,6 +430,7 @@ class CompactSidebar {
         }
     }
 
+    // ========== 侧边栏状态 ==========
     loadExpandedState() {
         try {
             const savedState = Storage.get('sidebar_categories_state');
@@ -744,13 +655,7 @@ class CompactSidebar {
                 this.calcSidebarPosition();
                 sidebar.classList.add('active');
                 document.body.classList.add('sidebar-open');
-                if (window.innerWidth < 768) {
-                    this.disableBodyScroll();
-                }
-                // 每次打开侧边栏时检查壁纸是否需要更新（跨日更新）
-                if (this.cachedWallpaperDate !== new Date().toISOString().slice(0, 10)) {
-                    this.loadBingWallpaper();
-                }
+                this.loadSidebarWallpaper();
                 
                 const sidebarContent = sidebar.querySelector('.sidebar-content');
                 const categoriesContainer = sidebar.querySelector('.categories-container');
@@ -777,9 +682,6 @@ class CompactSidebar {
             if (sidebar) {
                 sidebar.classList.remove('active');
                 document.body.classList.remove('sidebar-open');
-                if (window.innerWidth < 768) {
-                    this.enableBodyScroll();
-                }
                 
                 const sidebarContent = sidebar.querySelector('.sidebar-content');
                 const categoriesContainer = sidebar.querySelector('.categories-container');
@@ -793,6 +695,8 @@ class CompactSidebar {
                     categoriesContainer.style.overflowX = '';
                 }
             }
+            
+            if (this.currentVideo) this.currentVideo.pause();
         } catch (error) {
             console.error('隐藏侧边栏失败:', error);
         }
@@ -839,6 +743,7 @@ class CompactSidebar {
             
             if (wallpaperAvatar) {
                 if (userConfig.avatar && userConfig.avatar !== '') {
+                    // 懒加载头像
                     wallpaperAvatar.setAttribute('data-src', userConfig.avatar);
                     wallpaperAvatar.classList.add('lazy-avatar');
                     this.observeLazyAvatar(wallpaperAvatar);
@@ -846,8 +751,123 @@ class CompactSidebar {
                     wallpaperAvatar.src = this.defaultAvatar;
                 }
             }
+            
+            await this.loadSidebarWallpaper();
         } catch (error) {
             console.error('加载壁纸用户信息失败:', error);
+        }
+    }
+
+    async loadSidebarWallpaper() {
+        try {
+            const dayOfWeek = new Date().getDay();
+            const mediaInfo = this.getLocalWallpaper(dayOfWeek);
+            const sidebarWallpaper = document.getElementById('sidebarWallpaper');
+            
+            if (sidebarWallpaper && mediaInfo) {
+                if (mediaInfo.type === 'video') {
+                    await this.setVideoWallpaper(mediaInfo.url);
+                } else {
+                    this.setFallbackBackground();
+                }
+            } else {
+                this.setFallbackBackground();
+            }
+        } catch (error) {
+            console.error('加载侧边栏壁纸失败:', error);
+            this.setFallbackBackground();
+        }
+    }
+
+    getLocalWallpaper(dayOfWeek) {
+        const videoWallpapers = {
+            0: { type: 'video', url: './assets/wallpapers/sunday.mp4' },
+            1: { type: 'video', url: './assets/wallpapers/monday.mp4' },
+            2: { type: 'video', url: './assets/wallpapers/tuesday.mp4' },
+            3: { type: 'video', url: './assets/wallpapers/wednesday.mp4' },
+            4: { type: 'video', url: './assets/wallpapers/thursday.mp4' },
+            5: { type: 'video', url: './assets/wallpapers/friday.mp4' },
+            6: { type: 'video', url: './assets/wallpapers/saturday.mp4' }
+        };
+        return videoWallpapers[dayOfWeek] || { type: 'video', url: './assets/wallpapers/monday.mp4' };
+    }
+
+    async setVideoWallpaper(videoUrl) {
+        const sidebarWallpaper = document.getElementById('sidebarWallpaper');
+        if (!sidebarWallpaper) return;
+        
+        sidebarWallpaper.style.backgroundImage = 'none';
+        sidebarWallpaper.style.background = 'transparent';
+        
+        const existingVideo = sidebarWallpaper.querySelector('video');
+        if (existingVideo) {
+            existingVideo.remove();
+            this.currentVideo = null;
+        }
+        
+        try {
+            const video = document.createElement('video');
+            video.src = videoUrl;
+            video.autoplay = true;
+            video.muted = true;
+            video.loop = true;
+            video.playsInline = true;
+            video.preload = "auto";
+            
+            video.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                z-index: 0;
+            `;
+            
+            video.setAttribute('autoplay', 'true');
+            video.setAttribute('muted', 'true');
+            video.setAttribute('loop', 'true');
+            video.setAttribute('playsinline', 'true');
+            video.setAttribute('preload', 'auto');
+            
+            video.onerror = () => {
+                console.warn('视频加载失败，使用备用背景');
+                this.setFallbackBackground();
+            };
+            
+            sidebarWallpaper.appendChild(video);
+            this.currentVideo = video;
+            
+            const overlay = sidebarWallpaper.querySelector('.sidebar-wallpaper-overlay');
+            if (overlay) overlay.style.zIndex = '1';
+            
+            const userInfo = sidebarWallpaper.querySelector('.sidebar-wallpaper-user-info');
+            if (userInfo) userInfo.style.zIndex = '2';
+            
+            video.onloadedmetadata = () => this.adjustWallpaperSize();
+
+            try {
+                await video.play();
+            } catch (error) {
+                console.warn('视频自动播放失败，使用备用背景');
+                this.setFallbackBackground();
+            }
+        } catch (error) {
+            console.error('设置视频壁纸失败:', error);
+            this.setFallbackBackground();
+        }
+    }
+
+    setFallbackBackground() {
+        const sidebarWallpaper = document.getElementById('sidebarWallpaper');
+        if (sidebarWallpaper) {
+            const existingVideo = sidebarWallpaper.querySelector('video');
+            if (existingVideo) {
+                existingVideo.remove();
+                this.currentVideo = null;
+            }
+            sidebarWallpaper.style.backgroundImage = 'none';
+            sidebarWallpaper.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
         }
     }
 
@@ -883,17 +903,22 @@ class CompactSidebar {
 
     async getDailyQuote() {
         try {
-            const response = await Utils.safeFetch('https://api.kuleu.com/api/yiyan', { timeout: 5000 });
+            const response = await fetch('https://api.kuleu.com/api/yiyan');
+            if (!response.ok) return '每一天都是新的开始，充满无限可能。';
             const text = await response.text();
             return text || '每一天都是新的开始，充满无限可能。';
         } catch (error) {
-            Utils.handleApiError(error, '获取每日一言失败', false);
+            console.error('获取每日一言失败:', error);
             return '每一天都是新的开始，充满无限可能。';
         }
     }
 
     destroy() {
         try {
+            if (this.currentVideo) {
+                this.currentVideo.pause();
+                this.currentVideo = null;
+            }
             this.isInitialized = false;
         } catch (error) {
             console.error('销毁侧边栏失败:', error);
