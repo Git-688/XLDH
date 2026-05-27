@@ -10,7 +10,6 @@
 /* ========== 1. 侧滑栏独立滚动控制（不影响主页面滚动） ========== */
 .sidebar.active { 
     pointer-events: auto; 
-    transform: translateX(0); 
     visibility: visible; 
 }
 .sidebar.active ~ .main-content {
