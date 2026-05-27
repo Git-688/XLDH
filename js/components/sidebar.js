@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 悬浮毛玻璃优化版（必应每日壁纸）
+ * 侧边栏组件 - 悬浮毛玻璃优化版（壁纸改为必应每日图片）
  */
 class CompactSidebar {
     constructor() {
@@ -213,7 +213,7 @@ class CompactSidebar {
             await this.loadUserData();
             await this.loadDailyQuote();
             await this.loadWallpaperUserInfo();
-            await this.loadBingWallpaper(); // 必应壁纸
+            await this.loadBingWallpaper(); // 加载必应壁纸
             this.createProfileModal();
             
             this.isInitialized = true;
@@ -227,7 +227,7 @@ class CompactSidebar {
         }
     }
 
-    // 获取必应每日壁纸（静态图片，每日更新）
+    // 获取必应每日壁纸（自动缓存，每日更新）
     async loadBingWallpaper() {
         const sidebarWallpaper = document.getElementById('sidebarWallpaper');
         if (!sidebarWallpaper) return;
@@ -239,10 +239,9 @@ class CompactSidebar {
         }
 
         try {
-            const response = await fetch('https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN');
-            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const response = await Utils.safeFetch('https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN', { timeout: 8000 });
             const data = await response.json();
-            if (data.images && data.images[0] && data.images[0].url) {
+            if (data.images && data.images.length && data.images[0].url) {
                 const imageUrl = 'https://cn.bing.com' + data.images[0].url;
                 this.cachedWallpaperUrl = imageUrl;
                 this.cachedWallpaperDate = today;
@@ -252,6 +251,7 @@ class CompactSidebar {
             }
         } catch (error) {
             console.error('获取必应壁纸失败:', error);
+            // 降级：使用默认渐变背景
             this.setFallbackBackground();
         }
     }
@@ -267,7 +267,7 @@ class CompactSidebar {
         sidebarWallpaper.style.backgroundSize = 'cover';
         sidebarWallpaper.style.backgroundPosition = 'center';
         sidebarWallpaper.style.backgroundRepeat = 'no-repeat';
-        // 确保遮罩层和用户信息可见
+        // 确保 overlay 和用户信息层正确
         const overlay = sidebarWallpaper.querySelector('.sidebar-wallpaper-overlay');
         if (overlay) overlay.style.zIndex = '1';
         const userInfo = sidebarWallpaper.querySelector('.sidebar-wallpaper-user-info');
@@ -747,7 +747,7 @@ class CompactSidebar {
                 if (window.innerWidth < 768) {
                     this.disableBodyScroll();
                 }
-                // 每次打开时，如果壁纸缓存过期，重新加载
+                // 每次打开侧边栏时检查壁纸是否需要更新（跨日更新）
                 if (this.cachedWallpaperDate !== new Date().toISOString().slice(0, 10)) {
                     this.loadBingWallpaper();
                 }
