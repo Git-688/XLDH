@@ -330,10 +330,10 @@ class OptimizedNavigation {
         card.title = `${site.title}\n${site.description || ''}`;
 
         let iconHtml = '<i class="fas fa-link"></i>';
-        if (site.icon) {
+        if (site.icon && site.icon.trim() && site.icon !== window.location.origin && !site.icon.includes(window.location.hostname)) {
             const raw = site.icon.trim();
             if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('./') || /\.(png|jpg|jpeg|ico|svg)/i.test(raw)) {
-                // 懒加载图标，并设置 onerror 降级（如果 Yandex 图标也失败则显示默认图标）
+                // 懒加载图标，并设置 onerror 降级
                 iconHtml = `<img data-src="${this._escapeHtml(raw)}" alt="" loading="lazy" class="lazy-icon" 
                             onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fas fa-link\\'></i>';">`;
             } else if (raw.startsWith('fas ') || raw.startsWith('fab ')) {
@@ -410,7 +410,6 @@ class OptimizedNavigation {
                         });
                         if (res.ok) {
                             window.toast.show('已反馈，管理员将处理', 'success');
-                            // 实时更新卡片状态
                             card.classList.add('invalid');
                             reportBtn.disabled = true;
                             reportBtn.title = '已报告，等待处理';
