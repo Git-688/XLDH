@@ -104,28 +104,45 @@ class CompactSidebar {
     if (!sidebar) return;
     const categoriesContainer = sidebar.querySelector('.sidebar-categories');
     if (categoriesContainer) {
-      categoriesContainer.innerHTML = this.categories.map(category => `
-        <div class="category-group ${category.expanded ? 'expanded' : ''}" data-category="${this.escapeHtml(category.name)}">
-          <div class="category-group-header">
-            <div class="category-group-name">
-              <div class="category-group-icon"><i class="${category.icon}"></i></div>
-              <span>${this.escapeHtml(category.name)}</span>
-            </div>
-            <button class="category-toggle" aria-label="${category.expanded ? '收起' : '展开'}">
-              <i class="fas fa-chevron-down"></i>
+      let html = '';
+      for (let i = 0; i < this.categories.length; i++) {
+        const category = this.categories[i];
+        const expandedClass = category.expanded ? 'expanded' : '';
+        const categoryName = this.escapeHtml(category.name);
+        let itemsHtml = '';
+        for (let j = 0; j < category.items.length; j++) {
+          const item = category.items[j];
+          const action = item.action || '';
+          const link = item.link || '';
+          const icon = item.icon;
+          const label = this.escapeHtml(item.label);
+          const badgeHtml = item.badge ? `<div class="category-badge">${this.escapeHtml(item.badge)}</div>` : '';
+          itemsHtml += `
+            <button class="category-item" data-action="${action}" data-link="${link}">
+              <div class="category-icon"><i class="${icon}"></i></div>
+              <div class="category-label">${label}</div>
+              ${badgeHtml}
             </button>
-          </div>
-          <div class="category-items">
-            ${category.items.map(item => `
-              <button class="category-item" data-action="${item.action || ''}" data-link="${item.link || ''}">
-                <div class="category-icon"><i class="${item.icon}"></i></div>
-                <div class="category-label">${this.escapeHtml(item.label)}</div>
-                ${item.badge ? `<div class="category-badge">${this.escapeHtml(item.badge)}</div>` : ''}
+          `;
+        }
+        html += `
+          <div class="category-group ${expandedClass}" data-category="${categoryName}">
+            <div class="category-group-header">
+              <div class="category-group-name">
+                <div class="category-group-icon"><i class="${category.icon}"></i></div>
+                <span>${categoryName}</span>
+              </div>
+              <button class="category-toggle" aria-label="${category.expanded ? '收起' : '展开'}">
+                <i class="fas fa-chevron-down"></i>
               </button>
-            `).join('')}
+            </div>
+            <div class="category-items">
+              ${itemsHtml}
+            </div>
           </div>
-        </div>
-      `).join(''));
+        `;
+      }
+      categoriesContainer.innerHTML = html;
     }
 
     const footer = sidebar.querySelector('.sidebar-footer');
@@ -140,20 +157,22 @@ class CompactSidebar {
   }
 
   syncExpandedHeights() {
-    document.querySelectorAll('.category-group.expanded .category-items').forEach(container => {
-      if (container.style.maxHeight && container.style.maxHeight !== 'none') return;
+    const expandedGroups = document.querySelectorAll('.category-group.expanded .category-items');
+    for (let i = 0; i < expandedGroups.length; i++) {
+      const container = expandedGroups[i];
+      if (container.style.maxHeight && container.style.maxHeight !== 'none') continue;
       container.style.maxHeight = 'none';
       const fullHeight = container.scrollHeight + 'px';
       container.style.maxHeight = fullHeight;
       const group = container.closest('.category-group');
-      const onTransitionEnd = () => {
+      const onTransitionEnd = function() {
         if (group && group.classList.contains('expanded')) {
           container.style.maxHeight = 'none';
         }
         container.removeEventListener('transitionend', onTransitionEnd);
       };
       container.addEventListener('transitionend', onTransitionEnd, { once: true });
-    });
+    }
   }
 
   bindEvents() {
@@ -183,7 +202,7 @@ class CompactSidebar {
       const menuBtn = document.getElementById('menuBtn');
       if (sidebarEl && sidebarEl.classList.contains('active') &&
           !sidebarEl.contains(e.target) &&
-          !menuBtn?.contains(e.target)) {
+          !(menuBtn && menuBtn.contains(e.target))) {
         this.hide();
       }
     });
@@ -196,7 +215,13 @@ class CompactSidebar {
   toggleCategory(categoryGroup) {
     if (!categoryGroup) return;
     const categoryName = categoryGroup.dataset.category;
-    const category = this.categories.find(cat => cat.name === categoryName);
+    let category = null;
+    for (let i = 0; i < this.categories.length; i++) {
+      if (this.categories[i].name === categoryName) {
+        category = this.categories[i];
+        break;
+      }
+    }
     if (!category) return;
 
     const itemsContainer = categoryGroup.querySelector('.category-items');
@@ -211,11 +236,12 @@ class CompactSidebar {
       itemsContainer.style.maxHeight = 'none';
       const fullHeight = itemsContainer.scrollHeight + 'px';
       itemsContainer.style.maxHeight = '0';
+      // 强制重绘
       void itemsContainer.offsetHeight;
       itemsContainer.style.maxHeight = fullHeight;
       category.expanded = true;
 
-      const onTransitionEnd = () => {
+      const onTransitionEnd = function() {
         if (category.expanded) {
           itemsContainer.style.maxHeight = 'none';
         }
@@ -368,14 +394,15 @@ class CompactSidebar {
   observeLazyAvatar(img) {
     if ('IntersectionObserver' in window) {
       const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
+        for (let i = 0; i < entries.length; i++) {
+          const entry = entries[i];
           if (entry.isIntersecting) {
             const target = entry.target;
             const src = target.getAttribute('data-src');
             if (src) target.src = src;
             observer.unobserve(target);
           }
-        });
+        }
       });
       observer.observe(img);
     } else if (img.getAttribute('data-src')) {
@@ -452,16 +479,16 @@ class CompactSidebar {
     const qqInput = document.getElementById('qqNumber');
     if (!profileModal) return;
     const closeModal = () => { profileModal.classList.remove('active'); };
-    closeBtn?.addEventListener('click', closeModal);
-    cancelBtn?.addEventListener('click', closeModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
     profileModal.addEventListener('click', (e) => {
       if (e.target === profileModal) closeModal();
     });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && profileModal.classList.contains('active')) closeModal();
     });
-    qqInput?.addEventListener('input', () => this.autoGetQQAvatar());
-    form?.addEventListener('submit', (e) => {
+    if (qqInput) qqInput.addEventListener('input', () => this.autoGetQQAvatar());
+    if (form) form.addEventListener('submit', (e) => {
       e.preventDefault();
       this.saveProfileSettings();
     });
