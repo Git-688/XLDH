@@ -4,7 +4,7 @@
  */
 class CompactSidebar {
     constructor() {
-        if (!document.getElementById('sidebar')) return;
+        // 移除容器检查，允许动态创建
         if (window.sidebar && window.sidebar instanceof CompactSidebar) {
             return window.sidebar;
         }
@@ -58,6 +58,16 @@ class CompactSidebar {
 
     async init() {
         if (this.isInitialized) return;
+        
+        // 确保侧滑栏容器存在，如果不存在则动态创建
+        let sidebar = document.getElementById('sidebar');
+        if (!sidebar) {
+            sidebar = document.createElement('aside');
+            sidebar.id = 'sidebar';
+            sidebar.className = 'sidebar';
+            document.body.appendChild(sidebar);
+        }
+        
         try {
             if (document.readyState === 'loading') {
                 await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
