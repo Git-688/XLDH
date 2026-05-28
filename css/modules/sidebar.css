@@ -2,7 +2,7 @@
 .sidebar {
     position: fixed;
     left: var(--container-padding-xs, 16px);
-    top: auto;
+    top: auto;                     /* 由 JS 动态计算 */
     width: 280px;
     background: var(--acrylic-bg);
     backdrop-filter: var(--acrylic-blur);
@@ -18,7 +18,7 @@
     user-select: none;
     -webkit-user-select: none;
     transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
-    max-height: none;
+    max-height: none;              /* 由 JS 动态设置 */
 }
 
 .sidebar.active {
@@ -27,6 +27,7 @@
     pointer-events: auto;
 }
 
+/* 侧滑栏壁纸区域 */
 .sidebar-wallpaper {
     position: relative;
     width: 100%;
@@ -131,6 +132,7 @@
     border-radius: inherit;
 }
 
+/* 主体内容区域 - Flex 布局 */
 .sidebar-content {
     flex: 1;
     display: flex;
@@ -288,6 +290,7 @@
     flex-shrink: 0;
 }
 
+/* 底部按钮区域 */
 .sidebar-footer {
     padding: 12px 15px;
     background: rgba(0, 0, 0, 0.02);
