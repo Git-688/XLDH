@@ -1,5 +1,5 @@
 /**
- * 搜索模块 - 修复版（CSP 兼容，XSS 防护）
+ * 搜索模块 - 修复版（CSP 兼容，XSS 防护，兼容侧滑栏）
  * 依赖 Utils.escapeHtml, Utils.debounce
  */
 class NewSearchModule {
@@ -128,7 +128,10 @@ class NewSearchModule {
 
     show() {
         if (!this.modal || this.isOpen) return;
-        if (window.sidebar?.isVisible()) window.sidebar.hide();
+        // 安全关闭侧滑栏（兼容方法存在性检查）
+        if (window.sidebar && typeof window.sidebar.isVisible === 'function' && window.sidebar.isVisible()) {
+            window.sidebar.hide();
+        }
         this.modal.classList.add('active');
         this.isOpen = true;
         this.input.value = '';
