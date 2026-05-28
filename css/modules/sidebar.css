@@ -1,5 +1,5 @@
 /* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角 + transform动画 + Flex布局 */
-/* 关键修复：使用 top 和 bottom 属性自动撑满高度，底部永不遮挡 */
+/* 修复：使用 top 和 bottom 属性自动撑满高度，底部永不遮挡 */
 .sidebar {
     position: fixed;
     left: var(--container-padding-xs, 16px);
@@ -20,7 +20,6 @@
     user-select: none;
     -webkit-user-select: none;
     transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
-    /* 移除 max-height，改为 top/bottom 控制 */
 }
 
 .sidebar.active {
@@ -29,7 +28,7 @@
     pointer-events: auto;
 }
 
-/* 壁纸区域保持不变（与之前相同） */
+/* 壁纸区域 - 用于必应图片背景 */
 .sidebar-wallpaper {
     position: relative;
     width: 100%;
@@ -38,7 +37,7 @@
     background: transparent;
     overflow: hidden;
     flex-shrink: 0;
-    background-size: contain;
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     border-radius: 8px 8px 0 0;
@@ -105,14 +104,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.sidebar-wallpaper video,
-.sidebar-wallpaper img {
+/* 必应壁纸图片样式 */
+.sidebar-wallpaper .sidebar-bing-img {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
     z-index: 0;
     display: block !important;
     pointer-events: none !important;
@@ -238,6 +237,7 @@
 .category-group.expanded .category-toggle {
     transform: rotate(180deg);
 }
+/* 纯 CSS 实现展开动画 */
 .category-items {
     max-height: 0;
     overflow: hidden;
@@ -600,7 +600,7 @@
     .footer-btn,
     .category-toggle,
     .category-items,
-    .sidebar-wallpaper video {
+    .sidebar-wallpaper img {
         transition: none;
         animation: none;
     }
