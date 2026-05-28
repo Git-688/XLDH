@@ -2,6 +2,7 @@
  * 侧边栏组件 - 悬浮卡片式，独立滚动，无遮罩，点击外部关闭
  * 修复：展开/收起动画一致（动态高度过渡）
  * 底部按钮仅图标，彩色
+ * 确保暴露 isVisible 等方法
  */
 class CompactSidebar {
   constructor() {
@@ -71,13 +72,12 @@ class CompactSidebar {
       await this.loadWallpaperUserInfo();
       await this.loadSidebarWallpaper();
       this.createProfileModal();
-      // 初始化后同步已展开分组的高度
       this.syncExpandedHeights();
       this.isInitialized = true;
       window.sidebar = this;
     } catch (error) {
       console.error('侧滑栏初始化失败:', error);
-      window.toast?.show('侧滑栏初始化失败', 'error');
+      if (window.toast && window.toast.show) window.toast.show('侧滑栏初始化失败', 'error');
     }
   }
 
@@ -129,7 +129,6 @@ class CompactSidebar {
       `).join(''));
     }
 
-    // 渲染底部按钮（仅图标，带 data-action）
     const footer = sidebar.querySelector('.sidebar-footer');
     if (footer) {
       footer.innerHTML = `
@@ -162,7 +161,6 @@ class CompactSidebar {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
 
-    // 点击侧滑栏内部事件
     sidebar.addEventListener('click', (e) => {
       const categoryHeader = e.target.closest('.category-group-header');
       const categoryItem = e.target.closest('.category-item');
@@ -181,7 +179,6 @@ class CompactSidebar {
       }
     });
 
-    // 点击侧滑栏外部关闭（排除菜单按钮）
     document.addEventListener('click', (e) => {
       const sidebarEl = document.getElementById('sidebar');
       const menuBtn = document.getElementById('menuBtn');
@@ -192,7 +189,6 @@ class CompactSidebar {
       }
     });
 
-    // ESC 键关闭
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.isVisible()) this.hide();
     });
@@ -208,17 +204,15 @@ class CompactSidebar {
     if (!itemsContainer) return;
 
     if (category.expanded) {
-      // 收起
       itemsContainer.style.maxHeight = null;
       category.expanded = false;
       categoryGroup.classList.remove('expanded');
     } else {
-      // 展开
       categoryGroup.classList.add('expanded');
       itemsContainer.style.maxHeight = 'none';
       const fullHeight = itemsContainer.scrollHeight + 'px';
       itemsContainer.style.maxHeight = '0';
-      void itemsContainer.offsetHeight; // 强制重绘
+      void itemsContainer.offsetHeight;
       itemsContainer.style.maxHeight = fullHeight;
       category.expanded = true;
 
@@ -245,10 +239,14 @@ class CompactSidebar {
         if (window.newSearchModule) window.newSearchModule.show();
         break;
       case 'music':
-        window.app?.components?.navbar?.toggleMusicPlayer();
+        if (window.app && window.app.components && window.app.components.navbar) {
+          window.app.components.navbar.toggleMusicPlayer();
+        }
         break;
       case 'weather':
-        window.app?.modules?.weather?.showModal();
+        if (window.app && window.app.modules && window.app.modules.weather) {
+          window.app.modules.weather.showModal();
+        }
         break;
       default: break;
     }
@@ -258,20 +256,19 @@ class CompactSidebar {
     const action = btn.dataset.action;
     switch (action) {
       case 'notebook':
-        window.showNotebookModal?.();
+        if (window.showNotebookModal) window.showNotebookModal();
         break;
       case 'gift':
         window.open('./pages/tools/羊毛福利.html', '_blank');
         break;
       case 'about':
-        window.aboutModule?.show();
+        if (window.aboutModule && window.aboutModule.show) window.aboutModule.show();
         break;
       case 'qq':
         window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
         break;
       default: break;
     }
-    // 点击后关闭侧滑栏（可选）
     this.hide();
   }
 
@@ -516,7 +513,7 @@ class CompactSidebar {
     this.loadWallpaperUserInfo();
     const modal = document.getElementById('profileModal');
     if (modal) modal.classList.remove('active');
-    window.toast?.show('个人信息保存成功', 'success');
+    if (window.toast && window.toast.show) window.toast.show('个人信息保存成功', 'success');
   }
 
   openProfileModal() {
