@@ -1,6 +1,6 @@
 /* ================================================
    responsive.css 响应式适配文件
-   最终修复：移动端侧滑栏打开时 body 滚动锁定且不影响侧滑栏内部滚动
+   修复：移动端侧滑栏打开时不丢失滚动位置，底部自适应
    ================================================ */
 
 /* ========== 1. 侧滑栏独立滚动控制 ========== */
@@ -50,7 +50,7 @@
     /* 修复：侧滑栏打开时禁用 body 滚动，但保留滚动位置 */
     body.sidebar-open {
         overflow: hidden !important;
-        position: fixed !important;
+        position: relative !important;
         width: 100% !important;
         height: 100% !important;
         top: 0 !important;
@@ -174,11 +174,11 @@
     }
 }
 
-/* ========== 9. 移动端侧边栏打开时彻底禁用 body 滚动 ========== */
+/* ========== 9. 移动端侧边栏打开时彻底禁用 body 滚动（配合 JS 保存滚动位置） ========== */
 @media (max-width: 768px) {
     body.sidebar-open {
         overflow: hidden !important;
-        position: fixed !important;
+        position: relative !important;
         width: 100% !important;
         height: 100% !important;
     }
@@ -187,5 +187,15 @@
         -webkit-overflow-scrolling: touch;
         height: 100% !important;
         max-height: none !important;
+    }
+}
+
+/* ========== 10. 全局响应式容器补丁（确保侧滑栏底部不溢出） ========== */
+@media (max-width: 768px) {
+    .sidebar {
+        bottom: max(8px, env(safe-area-inset-bottom));
+    }
+    .sidebar-footer {
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     }
 }
