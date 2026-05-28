@@ -1,14 +1,14 @@
-/* 侧滑栏 - 强制固定定位，圆角8px，隐藏滚动条 */
+/* 侧滑栏 - 悬浮式，圆角8px，隐藏滚动条 */
 .sidebar {
-  position: fixed !important;
-  top: 60px !important;
-  bottom: 20px !important;
-  left: 16px !important;
+  position: fixed;
+  top: 60px;                /* 导航栏下方 */
+  bottom: 20px;             /* 底部安全距离 */
+  left: 16px;
   width: 280px;
   background: var(--acrylic-bg, rgba(255,255,255,0.7));
   backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
   -webkit-backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
-  border-radius: 8px;
+  border-radius: 8px;       /* 与Logo圆角一致 */
   border: 1px solid rgba(255,255,255,0.4);
   box-shadow: 0 8px 32px rgba(0,0,0,0.12);
   z-index: 1000;
@@ -16,37 +16,37 @@
   flex-direction: column;
   transform: translateX(calc(-100% - 16px));
   transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-  overflow: hidden;
+  overflow: hidden;         /* 确保圆角裁剪 */
 }
 
 .sidebar.active {
   transform: translateX(0);
 }
 
-/* 内容区域独立滚动 - 隐藏滚动条 */
+/* 隐藏滚动条 - 保持功能 */
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 0;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  padding: 0;
+  scrollbar-width: none;    /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
 }
 .sidebar-content::-webkit-scrollbar {
-  display: none;
+  display: none;            /* Chrome/Safari/Opera */
 }
 
-/* 壁纸头部区域 */
+/* 壁纸区域 (保留原有样式，确保圆角顶部) */
 .sidebar-wallpaper {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
   background-size: cover;
   background-position: center;
-  background-repeat: no-repeat;
   border-radius: 8px 8px 0 0;
   flex-shrink: 0;
 }
 
+/* 其他原有样式保持不变 */
 .sidebar-wallpaper-overlay {
   position: absolute;
   top: 0;
@@ -130,7 +130,7 @@
   font-style: italic;
 }
 
-/* 分类容器 */
+/* 分类容器 (原样式保持不变) */
 .categories-container {
   padding: 8px 12px;
 }
@@ -239,7 +239,13 @@
   font-size: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
+  color: #5f7f9e; /* 默认颜色 */
 }
+.footer-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+/* 各按钮独立颜色 */
 .footer-btn[data-action="notebook"] { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
 .footer-btn[data-action="notebook"]:hover { background: rgba(139, 92, 246, 0.4); }
 .footer-btn[data-action="gift"] { background: rgba(249, 115, 22, 0.2); color: #f97316; }
@@ -252,9 +258,9 @@
 /* 响应式 */
 @media (max-width: 768px) {
   .sidebar {
-    top: 56px !important;
-    bottom: 12px !important;
-    left: 12px !important;
+    top: 56px;
+    bottom: 12px;
+    left: 12px;
     width: 260px;
   }
   .sidebar-wallpaper-avatar {
@@ -268,8 +274,8 @@
 }
 @media (max-width: 480px) {
   .sidebar {
-    top: 52px !important;
-    left: 8px !important;
+    top: 52px;
+    left: 8px;
     width: 240px;
   }
   .sidebar-footer {
@@ -277,6 +283,7 @@
     padding: 8px 12px;
   }
 }
+/* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
   .sidebar {
     background: rgba(30,30,30,0.8);
@@ -286,5 +293,10 @@
   .category-group,
   .footer-btn {
     background: rgba(40,40,40,0.5);
+    border-color: rgba(255,255,255,0.1);
   }
+  .footer-btn[data-action="notebook"] { background: rgba(139, 92, 246, 0.3); }
+  .footer-btn[data-action="gift"] { background: rgba(249, 115, 22, 0.3); }
+  .footer-btn[data-action="about"] { background: rgba(236, 72, 153, 0.3); }
+  .footer-btn[data-action="qq"] { background: rgba(59, 130, 246, 0.3); }
 }
