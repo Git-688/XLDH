@@ -1,8 +1,10 @@
 /* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角 + transform动画 + Flex布局 */
+/* 关键修复：使用 top 和 bottom 属性自动撑满高度，底部永不遮挡 */
 .sidebar {
     position: fixed;
     left: var(--container-padding-xs, 16px);
-    top: auto;
+    /* top 由 JS 动态设置，bottom 固定为安全区 + 额外留白 */
+    bottom: max(16px, env(safe-area-inset-bottom));
     width: 280px;
     background: var(--acrylic-bg);
     backdrop-filter: var(--acrylic-blur);
@@ -18,7 +20,7 @@
     user-select: none;
     -webkit-user-select: none;
     transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
-    max-height: none;
+    /* 移除 max-height，改为 top/bottom 控制 */
 }
 
 .sidebar.active {
@@ -27,7 +29,7 @@
     pointer-events: auto;
 }
 
-/* 侧滑栏壁纸区域 */
+/* 壁纸区域保持不变（与之前相同） */
 .sidebar-wallpaper {
     position: relative;
     width: 100%;
