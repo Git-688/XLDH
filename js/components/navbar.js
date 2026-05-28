@@ -54,13 +54,21 @@ class Navbar {
             });
         }
 
+        // 汉堡菜单：等待侧边栏就绪
         const menuBtn = document.getElementById('menuBtn');
         if (menuBtn) {
-            menuBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleFeatureToggle('sidebar', () => window.sidebar?.toggle?.());
-            });
+            const waitForSidebar = () => {
+                if (window.sidebar && typeof window.sidebar.toggle === 'function') {
+                    menuBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.handleFeatureToggle('sidebar', () => window.sidebar.toggle());
+                    });
+                } else {
+                    setTimeout(waitForSidebar, 100);
+                }
+            };
+            waitForSidebar();
         }
 
         const weatherBtn = document.getElementById('weatherBtn');
@@ -106,6 +114,7 @@ class Navbar {
         if (isOpen) {
             toggleFn();
         } else {
+            // 关闭其他模态框，但保留当前要打开的功能
             this.closeAllModalsExcept([featureKey]);
             requestAnimationFrame(() => {
                 toggleFn();
@@ -127,6 +136,7 @@ class Navbar {
         try {
             if (!keep.includes('music')) this.hideMusicPlayer();
             if (!keep.includes('search') && window.newSearchModule?.isOpen) window.newSearchModule.hide();
+            // 当 keep 包含 'sidebar' 时，不要关闭侧边栏
             if (!keep.includes('sidebar') && window.sidebar?.isVisible?.()) window.sidebar.hide();
             if (!keep.includes('announcement') && window.announcementModule?.isVisible) window.announcementModule.hide();
             if (!keep.includes('weather')) window.app?.modules?.weather?.hide?.();
