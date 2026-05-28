@@ -1,10 +1,10 @@
 /* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角 + transform动画 + Flex布局 */
-/* 修复：使用 top 和 bottom 属性自动撑满高度，底部永不遮挡 */
+/* 修复：使用 top 和 bottom 属性自动撑满高度，底部增加额外间距，高于工具栏 */
 .sidebar {
     position: fixed;
     left: var(--container-padding-xs, 16px);
-    /* top 由 JS 动态设置，bottom 固定为安全区 + 额外留白 */
-    bottom: max(16px, env(safe-area-inset-bottom));
+    /* top 由 JS 动态设置，bottom 增加额外间距，确保高于浏览器工具栏 */
+    bottom: calc(max(20px, env(safe-area-inset-bottom)) + 20px);
     width: 280px;
     background: var(--acrylic-bg);
     backdrop-filter: var(--acrylic-blur);
@@ -519,6 +519,7 @@
         left: var(--container-padding-sm, 20px);
         transform: translateX(calc(-100% - var(--container-padding-sm, 20px)));
         width: 260px;
+        bottom: calc(max(20px, env(safe-area-inset-bottom)) + 30px); /* 桌面端也可适当增加 */
     }
 }
 @media (min-width: 768px) {
@@ -526,6 +527,7 @@
         left: var(--container-padding-md, 24px);
         transform: translateX(calc(-100% - var(--container-padding-md, 24px)));
         width: 280px;
+        bottom: calc(max(20px, env(safe-area-inset-bottom)) + 30px);
     }
 }
 @media (min-width: 992px) {
@@ -533,12 +535,14 @@
         left: var(--container-padding-lg, 28px);
         transform: translateX(calc(-100% - var(--container-padding-lg, 28px)));
         width: 300px;
+        bottom: calc(max(20px, env(safe-area-inset-bottom)) + 30px);
     }
 }
 @media (min-width: 1200px) {
     .sidebar {
         left: var(--container-padding-xl, 32px);
         transform: translateX(calc(-100% - var(--container-padding-xl, 32px)));
+        bottom: calc(max(20px, env(safe-area-inset-bottom)) + 30px);
     }
 }
 @media (max-width: 575px) {
@@ -546,6 +550,7 @@
         left: var(--container-padding-xs, 16px);
         transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
         width: 240px;
+        bottom: calc(max(20px, env(safe-area-inset-bottom)) + 20px); /* 移动端保留足够空间 */
     }
 }
 
