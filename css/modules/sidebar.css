@@ -2,7 +2,7 @@
 .sidebar {
     position: fixed;
     left: var(--container-padding-xs, 16px);
-    top: auto;                     /* 由 JS 动态计算 */
+    top: auto;
     width: 280px;
     background: var(--acrylic-bg);
     backdrop-filter: var(--acrylic-blur);
@@ -18,7 +18,7 @@
     user-select: none;
     -webkit-user-select: none;
     transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
-    max-height: none;              /* 由 JS 动态设置 */
+    max-height: none;
 }
 
 .sidebar.active {
