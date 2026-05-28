@@ -1,205 +1,373 @@
-/* ================================================
-   responsive.css 响应式适配文件
-   修复：移动端侧滑栏打开时不丢失滚动位置，底部自适应
-   ================================================ */
+/* 侧滑栏 - 悬浮卡片式，固定顶部与底部，无遮罩 */
+.sidebar {
+  position: fixed;
+  top: 60px;               /* 导航栏下方 */
+  bottom: 20px;            /* 底部安全距离 */
+  left: 16px;
+  width: 280px;
+  background: var(--acrylic-bg, rgba(255,255,255,0.7));
+  backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
+  -webkit-backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(calc(-100% - 16px));
+  transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+  overflow: hidden;
+}
 
-/* ========== 1. 侧滑栏独立滚动控制 ========== */
 .sidebar.active {
-    pointer-events: auto;
-    transform: translateX(0);
-    visibility: visible;
+  transform: translateX(0);
 }
-.sidebar.active ~ .main-content {
-    pointer-events: auto;
-    overflow: auto;
-    position: static;
-    width: 100%;
-    height: auto;
-}
+
+/* 内容区域独立滚动 */
 .sidebar-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    pointer-events: auto;
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
+
+.sidebar-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.05);
+  border-radius: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 4px;
+}
+
+/* 壁纸头部区域 */
+.sidebar-wallpaper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 16px 16px 0 0;
+  flex-shrink: 0;
+  transition: background-image 0.3s ease;
+}
+
+.sidebar-wallpaper-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.2) 100%);
+  border-radius: inherit;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.sidebar-wallpaper-user-info {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  z-index: 2;
+  max-width: calc(100% - 32px);
+  pointer-events: auto;
+}
+
+.sidebar-wallpaper-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.4);
+  overflow: hidden;
+  background: rgba(0,0,0,0.2);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-wallpaper-avatar:hover {
+  transform: scale(1.05);
+}
+
+.sidebar-wallpaper-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.sidebar-wallpaper-user-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-wallpaper-nickname {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-wallpaper-signature {
+  font-size: 11px;
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 每日一言卡片 */
+.daily-quote-card {
+  margin: 12px 16px;
+  padding: 12px;
+  background: rgba(255,255,255,0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.daily-quote-card p {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-primary);
+  margin: 0;
+  text-align: center;
+  font-style: italic;
+}
+
+/* 分类容器 */
 .categories-container {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 0 12px 12px;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-}
-.sidebar.active .categories-container,
-.sidebar.active .sidebar-content {
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
+  padding: 8px 12px;
 }
 
-/* ========== 2. 移动端侧滑栏滚动专属适配（修复滚动位置丢失） ========== */
+.sidebar-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.category-group {
+  background: rgba(255,255,255,0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.3);
+  overflow: hidden;
+}
+
+.category-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.category-group-header:hover {
+  background: rgba(67,97,238,0.1);
+}
+
+.category-group-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.category-group-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  font-size: 12px;
+}
+
+.category-toggle {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+  border-radius: 6px;
+}
+
+.category-toggle:hover {
+  background: rgba(0,0,0,0.05);
+  color: var(--primary-color);
+}
+
+.category-group.expanded .category-toggle {
+  transform: rotate(180deg);
+}
+
+/* 动态高度过渡 - 修复展开收起不一致 */
+.category-items {
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 0;
+}
+
+/* 实际高度由 JS 动态设置，CSS 只负责过渡效果 */
+.category-group.expanded .category-items {
+  /* max-height 由 JS 内联样式动态控制，这里不做固定值 */
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 8px 36px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.category-item:hover {
+  background: rgba(67,97,238,0.1);
+  color: var(--primary-color);
+}
+
+.category-icon {
+  width: 16px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.category-label {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 底部按钮区域 */
+.sidebar-footer {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0,0,0,0.02);
+  border-top: 1px solid rgba(0,0,0,0.05);
+  flex-shrink: 0;
+}
+
+.footer-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 0;
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.footer-btn:hover {
+  background: rgba(67,97,238,0.1);
+  color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.footer-btn i {
+  font-size: 13px;
+}
+
+/* 响应式适配 */
 @media (max-width: 768px) {
-    .sidebar.active {
-        touch-action: pan-y;
-    }
-    .sidebar.active .categories-container {
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
-        touch-action: pan-y;
-    }
-    /* 修复：侧滑栏打开时禁用 body 滚动，但保留滚动位置 */
-    body.sidebar-open {
-        overflow: hidden !important;
-        position: fixed !important;
-        width: 100% !important;
-        height: 100% !important;
-        top: 0 !important;
-        left: 0 !important;
-    }
-    .sidebar.active ~ .main-content {
-        touch-action: pan-y;
-    }
+  .sidebar {
+    top: 56px;
+    bottom: 12px;
+    left: 12px;
+    width: 260px;
+  }
+  .sidebar-wallpaper-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  .sidebar-wallpaper-nickname {
+    font-size: 14px;
+  }
 }
 
-/* ========== 3. 侧滑栏滚动条样式 ========== */
-.categories-container::-webkit-scrollbar {
-    width: 6px;
-}
-.categories-container::-webkit-scrollbar-track {
-    background: var(--bg-secondary, #f8f9fa);
-    border-radius: 3px;
-}
-.categories-container::-webkit-scrollbar-thumb {
-    background: #dee2e6;
-    border-radius: 3px;
-    transition: background 0.2s ease;
-}
-.categories-container::-webkit-scrollbar-thumb:hover {
-    background: #adb5bd;
-}
-
-/* ========== 4. 浮动按钮响应式优化 ========== */
-@media (max-width: 768px) {
-    .floating-buttons {
-        bottom: 16px;
-        right: 16px;
-        gap: 8px;
-    }
-    .floating-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 18px;
-    }
-}
 @media (max-width: 480px) {
-    .floating-buttons {
-        bottom: 12px;
-        right: 12px;
-        gap: 6px;
-    }
-    .floating-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-    }
-}
-@media (max-width: 360px) {
-    .floating-buttons {
-        bottom: 10px;
-        right: 10px;
-        gap: 5px;
-    }
-    .floating-btn {
-        width: 38px;
-        height: 38px;
-        font-size: 15px;
-    }
-}
-@media (max-height: 500px) and (orientation: landscape) {
-    .floating-buttons {
-        bottom: 8px;
-        right: 8px;
-        gap: 5px;
-    }
-    .floating-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 14px;
-    }
+  .sidebar {
+    top: 52px;
+    bottom: 8px;
+    left: 8px;
+    width: 240px;
+  }
+  .daily-quote-card {
+    margin: 8px 12px;
+    padding: 8px;
+  }
+  .category-item {
+    padding-left: 28px;
+  }
 }
 
-/* ========== 5. 深色模式适配（仅侧滑栏滚动条） ========== */
+/* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
-    .categories-container::-webkit-scrollbar-track {
-        background: var(--bg-secondary, #1e1e1e);
-    }
-    .categories-container::-webkit-scrollbar-thumb {
-        background: #4a4a4a;
-    }
-    .categories-container::-webkit-scrollbar-thumb:hover {
-        background: #606060;
-    }
+  .sidebar {
+    background: rgba(30,30,30,0.8);
+    border-color: rgba(255,255,255,0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .daily-quote-card,
+  .category-group,
+  .footer-btn {
+    background: rgba(40,40,40,0.5);
+    border-color: rgba(255,255,255,0.1);
+  }
+  .category-group-header:hover {
+    background: rgba(67,97,238,0.2);
+  }
+  .sidebar-footer {
+    border-top-color: rgba(255,255,255,0.05);
+  }
 }
 
-/* ========== 6. 减少动画模式适配 ========== */
+/* 减少动画 */
 @media (prefers-reduced-motion: reduce) {
-    .sidebar,
-    .category-group-header,
-    .category-item,
-    .footer-btn,
-    .category-toggle,
-    .category-items,
-    .sidebar-wallpaper video,
-    .sidebar-wallpaper img,
-    .floating-btn {
-        transition: none;
-        animation: none;
-    }
-}
-
-/* ========== 7. 横屏小高度侧滑栏兜底适配 ========== */
-@media (max-height: 600px) and (orientation: landscape) {
-    .sidebar {
-        max-height: 85vh;
-    }
-    .sidebar-wallpaper {
-        aspect-ratio: 21/9;
-    }
-}
-
-/* ========== 8. 超大屏侧滑栏兜底适配 ========== */
-@media (min-width: 2560px) {
-    .sidebar {
-        max-width: 340px;
-    }
-}
-
-/* ========== 9. 移动端侧边栏打开时彻底禁用 body 滚动（配合 JS 保存滚动位置） ========== */
-@media (max-width: 768px) {
-    body.sidebar-open {
-        overflow: hidden !important;
-        position: fixed !important;
-        width: 100% !important;
-        height: 100% !important;
-    }
-    .sidebar.active {
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        height: 100% !important;
-        max-height: none !important;
-    }
-}
-
-/* ========== 10. 侧滑栏打开时主内容区域不可交互（新增优化） ========== */
-.sidebar.active ~ .main-content {
-    pointer-events: none;
-    overflow: hidden;
-}
-
-/* ========== 11. 移动端触摸优化（确保流畅滚动） ========== */
-@media (max-width: 768px) {
-    .sidebar.active .categories-container {
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
-    }
+  .sidebar,
+  .category-group-header,
+  .category-toggle,
+  .category-items,
+  .footer-btn {
+    transition: none;
+  }
 }
