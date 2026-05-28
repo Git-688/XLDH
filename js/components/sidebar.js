@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 毛玻璃效果 + 必应每日壁纸 + 动态顶部对齐（滚动同步）
+ * 侧边栏组件 - 毛玻璃效果 + 必应每日壁纸 + 动态顶部对齐（与壁纸容器顶部对齐）
  * 优化版本：性能优化、交互增强、可访问性、稳定性提升
  */
 class CompactSidebar {
@@ -123,18 +123,21 @@ class CompactSidebar {
         this.resizeObserver.observe(document.body);
     }
 
+    // 关键修改：顶部与 .wallpaper-container 顶部对齐，而非 .wallpaper-section
     updateDimensions() {
         if (this._dimensionUpdateTimer) cancelAnimationFrame(this._dimensionUpdateTimer);
         this._dimensionUpdateTimer = requestAnimationFrame(() => {
             const sidebar = document.getElementById('sidebar');
             if (!sidebar) return;
-            const wallpaperSection = document.querySelector('.wallpaper-section');
-            let topOffset = 60;
-            if (wallpaperSection) {
-                const rect = wallpaperSection.getBoundingClientRect();
+            // 获取壁纸容器（轮播图容器）的顶部位置
+            const wallpaperContainer = document.querySelector('.wallpaper-container');
+            let topOffset = 60; // 默认导航栏高度
+            if (wallpaperContainer) {
+                const rect = wallpaperContainer.getBoundingClientRect();
                 topOffset = Math.max(0, rect.top);
             }
             sidebar.style.top = `${topOffset}px`;
+            // 底部安全区处理
             const winHeight = window.innerHeight;
             const sidebarRect = sidebar.getBoundingClientRect();
             if (sidebarRect.bottom > winHeight - 16) {
@@ -242,7 +245,6 @@ class CompactSidebar {
         const touchEndY = e.changedTouches[0].clientY;
         const deltaX = touchEndX - this.touchStartX;
         const deltaY = Math.abs(touchEndY - this.touchStartY);
-        // 左滑关闭（deltaX < -50）且几乎水平
         if (deltaX < -50 && deltaY < 50) {
             this.hide();
         }
@@ -309,7 +311,6 @@ class CompactSidebar {
         sidebar.classList.add('active');
         const menuBtn = document.getElementById('menuBtn');
         if (menuBtn) menuBtn.setAttribute('aria-expanded', 'true');
-        // 将焦点移到侧滑栏内第一个可聚焦元素
         const firstFocusable = sidebar.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
         if (firstFocusable) firstFocusable.focus();
         if (window.app && !this.modalRegistered) {
