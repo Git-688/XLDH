@@ -1,10 +1,10 @@
 /* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角 + transform动画 + Flex布局 */
-/* 最终修复：底部高于浏览器工具栏，内部滚动 */
+/* 修复：底部按钮固定、滚动锁定、移动端适配 */
 .sidebar {
     position: fixed;
     left: var(--container-padding-xs, 16px);
-    /* top 由 JS 动态设置，bottom 留出安全间隙 */
-    bottom: max(20px, env(safe-area-inset-bottom));
+    /* top 由 JS 动态设置，bottom 留出安全区 */
+    bottom: max(16px, env(safe-area-inset-bottom));
     width: 280px;
     background: var(--acrylic-bg);
     backdrop-filter: var(--acrylic-blur);
@@ -16,13 +16,11 @@
     overflow: hidden;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
-    flex-direction: column;
+    flex-direction: column;   /* 垂直列布局 */
     user-select: none;
     -webkit-user-select: none;
     transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
-    /* 关键：限制最大高度，超出滚动 */
-    max-height: calc(100vh - 60px - 70px); /* 降级，JS会覆盖 */
-    overflow-y: auto;
+    /* 移除 max-height，改为 top/bottom 控制 */
 }
 
 .sidebar.active {
@@ -31,7 +29,7 @@
     pointer-events: auto;
 }
 
-/* 壁纸区域 - 用于必应图片背景 */
+/* 壁纸区域 */
 .sidebar-wallpaper {
     position: relative;
     width: 100%;
@@ -40,7 +38,7 @@
     background: transparent;
     overflow: hidden;
     flex-shrink: 0;
-    background-size: cover;
+    background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
     border-radius: 8px 8px 0 0;
@@ -107,14 +105,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-/* 必应壁纸图片样式 */
-.sidebar-wallpaper .sidebar-bing-img {
+.sidebar-wallpaper video,
+.sidebar-wallpaper img {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     z-index: 0;
     display: block !important;
     pointer-events: none !important;
@@ -136,12 +134,12 @@
     border-radius: inherit;
 }
 
-/* 主体内容区域 - Flex 布局 */
+/* 主体内容区域 - Flex 列布局 */
 .sidebar-content {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    min-height: 0;            /* 防止溢出，允许内部滚动 */
     pointer-events: auto;
     border-radius: 0 0 8px 8px;
 }
@@ -162,6 +160,7 @@
     text-align: justify;
 }
 
+/* 滚动容器占据剩余空间 */
 .categories-container {
     flex: 1;
     overflow-y: auto;
@@ -240,7 +239,6 @@
 .category-group.expanded .category-toggle {
     transform: rotate(180deg);
 }
-/* 纯 CSS 实现展开动画 */
 .category-items {
     max-height: 0;
     overflow: hidden;
@@ -295,14 +293,14 @@
     flex-shrink: 0;
 }
 
-/* 底部按钮区域 */
+/* 底部按钮区域 - 自然置于底部，不被压缩 */
 .sidebar-footer {
     padding: 12px 15px;
     background: rgba(0, 0, 0, 0.02);
     border-top: 1px solid rgba(0, 0, 0, 0.04);
     display: flex;
     gap: 8px;
-    flex-shrink: 0;
+    flex-shrink: 0;           /* 防止被压缩 */
     border-radius: 0 0 8px 8px;
 }
 .footer-btn {
@@ -522,7 +520,6 @@
         left: var(--container-padding-sm, 20px);
         transform: translateX(calc(-100% - var(--container-padding-sm, 20px)));
         width: 260px;
-        bottom: calc(max(20px, env(safe-area-inset-bottom)) + 20px);
     }
 }
 @media (min-width: 768px) {
@@ -530,7 +527,6 @@
         left: var(--container-padding-md, 24px);
         transform: translateX(calc(-100% - var(--container-padding-md, 24px)));
         width: 280px;
-        bottom: calc(max(20px, env(safe-area-inset-bottom)) + 30px);
     }
 }
 @media (min-width: 992px) {
@@ -538,14 +534,12 @@
         left: var(--container-padding-lg, 28px);
         transform: translateX(calc(-100% - var(--container-padding-lg, 28px)));
         width: 300px;
-        bottom: calc(max(20px, env(safe-area-inset-bottom)) + 30px);
     }
 }
 @media (min-width: 1200px) {
     .sidebar {
         left: var(--container-padding-xl, 32px);
         transform: translateX(calc(-100% - var(--container-padding-xl, 32px)));
-        bottom: calc(max(20px, env(safe-area-inset-bottom)) + 30px);
     }
 }
 @media (max-width: 575px) {
@@ -553,7 +547,16 @@
         left: var(--container-padding-xs, 16px);
         transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
         width: 240px;
-        bottom: calc(max(20px, env(safe-area-inset-bottom)) + 20px);
+    }
+}
+
+/* 移动端底部安全区适配 */
+@media (max-width: 768px) {
+    .sidebar {
+        bottom: max(8px, env(safe-area-inset-bottom));
+    }
+    .sidebar-footer {
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -608,13 +611,8 @@
     .footer-btn,
     .category-toggle,
     .category-items,
-    .sidebar-wallpaper img {
+    .sidebar-wallpaper video {
         transition: none;
         animation: none;
     }
-}
-
-/* 隐藏侧滑栏滚动条 */
-.sidebar::-webkit-scrollbar {
-    display: none;
 }
