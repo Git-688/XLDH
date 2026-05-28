@@ -1,8 +1,7 @@
 /**
- * 侧边栏组件 - 毛玻璃效果（最终完整版）
- * 修复：滚动位置保持、transform 动画、视频缓存、模态框互斥、动态高度计算
+ * 侧边栏组件 - 毛玻璃效果（最终优化完整版）
+ * 功能：顶部与壁纸持平、底部避开工具栏、左侧间距一致、动态高度、滚动保持、transform动画、视频缓存
  */
-
 class CompactSidebar {
     constructor() {
         if (!document.getElementById('sidebar')) return;
@@ -10,7 +9,6 @@ class CompactSidebar {
             return window.sidebar;
         }
 
-        // ==================== 侧边栏菜单数据 ====================
         this.categories = [
             {
                 name: '常用工具',
@@ -80,7 +78,10 @@ class CompactSidebar {
         this.modalRegistered = false;
         this.defaultAvatar = './assets/logo.png';
         this.resizeObserver = null;
-        this.bottomGap = 16;
+        this.topOffset = 80;
+        this.bottomSafeArea = 0;
+
+        this.updateDimensions = this.updateDimensions.bind(this);
     }
 
     getDefaultAvatarSVG() {
@@ -102,6 +103,9 @@ class CompactSidebar {
             this.createProfileModal();
             this.initResizeObserver();
             this.updateDimensions();
+            window.addEventListener('resize', this.updateDimensions);
+            window.addEventListener('orientationchange', this.updateDimensions);
+            window.addEventListener('scroll', this.updateDimensions);
             this.isInitialized = true;
             window.sidebar = this;
         } catch (error) {
@@ -111,42 +115,45 @@ class CompactSidebar {
     }
 
     initResizeObserver() {
-        if (typeof ResizeObserver === 'undefined') {
-            window.addEventListener('resize', () => this.updateDimensions());
-            return;
-        }
+        if (typeof ResizeObserver === 'undefined') return;
         const container = document.querySelector('.container');
         if (!container) return;
-        this.resizeObserver = new ResizeObserver(() => {
-            this.updateDimensions();
-        });
+        this.resizeObserver = new ResizeObserver(() => this.updateDimensions());
         this.resizeObserver.observe(container);
     }
 
     updateDimensions() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
-        const container = document.querySelector('.container');
-        if (!container) return;
-        const containerStyle = window.getComputedStyle(container);
-        const containerPaddingTop = parseFloat(containerStyle.paddingTop);
-        const containerPaddingBottom = parseFloat(containerStyle.paddingBottom);
+
+        // 1. 顶部偏移 = 导航栏高度 + 壁纸区域的上边距
         const navbarHeight = 60;
-        let wallpaperMarginTop = 0;
+        let wallpaperTop = 0;
         const wallpaperSection = document.querySelector('.wallpaper-section');
         if (wallpaperSection) {
-            const sectionStyle = window.getComputedStyle(wallpaperSection);
-            wallpaperMarginTop = parseFloat(sectionStyle.marginTop);
+            const style = window.getComputedStyle(wallpaperSection);
+            const marginTop = parseFloat(style.marginTop) || 0;
+            const paddingTop = parseFloat(style.paddingTop) || 0;
+            wallpaperTop = marginTop + paddingTop;
         }
-        const topOffset = navbarHeight + (isNaN(wallpaperMarginTop) ? 0 : wallpaperMarginTop);
-        let bottomGap = containerPaddingBottom;
-        bottomGap = Math.max(bottomGap, 16);
-        this.bottomGap = bottomGap;
-        const maxHeight = window.innerHeight - topOffset - bottomGap;
-        if (maxHeight > 0) {
-            sidebar.style.maxHeight = `${maxHeight}px`;
+        this.topOffset = navbarHeight + wallpaperTop;
+        sidebar.style.top = `${this.topOffset}px`;
+
+        // 2. 底部安全区
+        let safeBottom = 0;
+        if (window.visualViewport) {
+            const viewportHeight = window.visualViewport.height;
+            const windowHeight = window.innerHeight;
+            safeBottom = windowHeight - viewportHeight;
         }
-        sidebar.style.top = `${topOffset}px`;
+        const cssSafeBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)')) || 0;
+        this.bottomSafeArea = Math.max(safeBottom, cssSafeBottom, 0);
+
+        // 3. 最大高度
+        const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        let maxHeight = viewportHeight - this.topOffset - this.bottomSafeArea - 8;
+        if (maxHeight < 200) maxHeight = 200;
+        sidebar.style.maxHeight = `${maxHeight}px`;
     }
 
     loadExpandedState() {
@@ -624,6 +631,9 @@ class CompactSidebar {
         this.hide();
         if (this.currentVideo) this.currentVideo.pause();
         if (this.resizeObserver) this.resizeObserver.disconnect();
+        window.removeEventListener('resize', this.updateDimensions);
+        window.removeEventListener('orientationchange', this.updateDimensions);
+        window.removeEventListener('scroll', this.updateDimensions);
         if (window.app && this.modalRegistered) window.app.unregisterModal(this);
     }
 }
