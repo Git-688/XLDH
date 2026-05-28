@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 毛玻璃效果（修复 PC 端跳动 + 必应壁纸）
+ * 侧边栏组件 - 毛玻璃效果 + 底部高于浏览器工具栏（最终完整修复版）
  */
 class CompactSidebar {
     constructor() {
@@ -74,11 +74,13 @@ class CompactSidebar {
         this.modalRegistered = false;
         this.defaultAvatar = './assets/logo.png';
         this.resizeObserver = null;
-        this.bingWallpaperCache = null;     // 缓存必应壁纸 URL
+        this.bingWallpaperCache = null;
         this.bingCacheDate = null;
+        this.lastWindowHeight = window.innerHeight;
 
         this.updateDimensions = this.updateDimensions.bind(this);
         this.throttledUpdate = this.throttle(this.updateDimensions, 100);
+        this.handleWindowResize = this.handleWindowResize.bind(this);
     }
 
     throttle(fn, delay) {
@@ -111,9 +113,8 @@ class CompactSidebar {
             this.createProfileModal();
             this.initResizeObserver();
             this.updateDimensions();
-            // 加载必应壁纸（不再使用视频）
             await this.loadBingWallpaper();
-            window.addEventListener('resize', this.throttledUpdate);
+            window.addEventListener('resize', this.handleWindowResize);
             window.addEventListener('orientationchange', this.updateDimensions);
             this.isInitialized = true;
             window.sidebar = this;
@@ -134,7 +135,6 @@ class CompactSidebar {
     updateDimensions() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
-
         const navbarHeight = 60;
         let wallpaperTop = 0;
         const wallpaperSection = document.querySelector('.wallpaper-section');
@@ -146,6 +146,28 @@ class CompactSidebar {
         }
         const topOffset = navbarHeight + wallpaperTop;
         sidebar.style.top = `${topOffset}px`;
+
+        // 动态计算最大高度，确保底部留出安全空间
+        const windowHeight = window.innerHeight;
+        const safeBottom = this.isMobile() ? 70 : 40;
+        let maxHeight = windowHeight - topOffset - safeBottom;
+        if (maxHeight < 200) maxHeight = 200;
+        sidebar.style.maxHeight = `${maxHeight}px`;
+        sidebar.style.overflowY = 'auto';
+    }
+
+    handleWindowResize() {
+        const newHeight = window.innerHeight;
+        if (Math.abs(newHeight - this.lastWindowHeight) > 50) {
+            this.lastWindowHeight = newHeight;
+            this.updateDimensions();
+            if (this.isVisible()) {
+                const categoriesContainer = document.querySelector('.categories-container');
+                if (categoriesContainer) {
+                    categoriesContainer.style.maxHeight = '';
+                }
+            }
+        }
     }
 
     loadExpandedState() {
@@ -221,7 +243,6 @@ class CompactSidebar {
                 this.openProfileModal();
             }
         });
-        // 移除外部点击关闭侧滑栏（由 app 模态栈统一管理）
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isVisible()) this.hide();
         });
@@ -275,7 +296,6 @@ class CompactSidebar {
         }
     }
 
-    // 判断是否为移动端（<= 768px）
     isMobile() {
         return window.innerWidth <= 768;
     }
@@ -285,7 +305,6 @@ class CompactSidebar {
         if (!sidebar || this.isVisible()) return;
         this.updateDimensions();
 
-        // 仅在移动端锁定 body 滚动，防止页面跳动
         if (this.isMobile()) {
             this.savedScrollY = window.scrollY;
             document.body.classList.add('sidebar-open');
@@ -297,7 +316,6 @@ class CompactSidebar {
             window.app.registerModal(this);
             this.modalRegistered = true;
         }
-        // 每次打开时重新加载壁纸（确保当天壁纸最新）
         this.loadBingWallpaper();
     }
 
@@ -327,7 +345,6 @@ class CompactSidebar {
         return sidebar ? sidebar.classList.contains('active') : false;
     }
 
-    // 获取必应每日壁纸（复用原有 API 逻辑）
     async fetchBingWallpaper() {
         try {
             const response = await fetch('https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN');
@@ -348,7 +365,6 @@ class CompactSidebar {
 
     async loadBingWallpaper() {
         const today = new Date().toDateString();
-        // 如果缓存有效且是今天的图片，直接使用
         if (this.bingWallpaperCache && this.bingCacheDate === today) {
             this.setWallpaperImage(this.bingWallpaperCache);
             return;
@@ -360,7 +376,6 @@ class CompactSidebar {
             this.bingCacheDate = today;
             this.setWallpaperImage(result.url);
         } else {
-            // 降级：使用渐变背景
             const sidebarWallpaper = document.getElementById('sidebarWallpaper');
             if (sidebarWallpaper) {
                 sidebarWallpaper.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
@@ -373,8 +388,6 @@ class CompactSidebar {
     setWallpaperImage(imageUrl) {
         const sidebarWallpaper = document.getElementById('sidebarWallpaper');
         if (!sidebarWallpaper) return;
-
-        // 移除旧图片或视频元素
         const oldMedia = sidebarWallpaper.querySelector('.sidebar-bing-img, video');
         if (oldMedia) oldMedia.remove();
 
@@ -398,7 +411,6 @@ class CompactSidebar {
         };
         sidebarWallpaper.appendChild(img);
 
-        // 确保遮罩层在上层
         const overlay = sidebarWallpaper.querySelector('.sidebar-wallpaper-overlay');
         if (overlay) overlay.style.zIndex = '1';
         const userInfo = sidebarWallpaper.querySelector('.sidebar-wallpaper-user-info');
@@ -618,7 +630,7 @@ class CompactSidebar {
     destroy() {
         this.hide();
         if (this.resizeObserver) this.resizeObserver.disconnect();
-        window.removeEventListener('resize', this.throttledUpdate);
+        window.removeEventListener('resize', this.handleWindowResize);
         window.removeEventListener('orientationchange', this.updateDimensions);
         if (window.app && this.modalRegistered) window.app.unregisterModal(this);
     }
