@@ -1,6 +1,5 @@
 /**
- * 侧边栏组件 - 毛玻璃效果（最终修复：动态设置 height，确保底部可见）
- * 功能：动态计算高度，底部按钮始终可见，内部滚动正常
+ * 侧边栏组件 - 毛玻璃效果（优化版：动态高度、滚动锁定、底部安全区）
  */
 class CompactSidebar {
     constructor() {
@@ -10,64 +9,39 @@ class CompactSidebar {
         }
 
         this.categories = [
-            {
-                name: '常用工具',
-                icon: 'fas fa-tools',
-                expanded: true,
-                items: [
-                    { icon: 'fas fa-mobile-alt', label: '手机软件', badge: null, action: 'link', link: './pages/chl/手机软件.html' },
-                    { icon: 'fas fa-desktop', label: '电脑软件', badge: null, action: 'link', link: './pages/chl/电脑软件.html' },
-                    { icon: 'fas fa-film', label: '电影大全', badge: null, action: 'link', link: './pages/chl/影视推荐.html' },
-                    { icon: 'fas fa-images', label: '共享图片', badge: null, action: 'link', link: './pages/chl/共享图片链接.html' }
-                ]
-            },
-            {
-                name: '网盘工具',
-                icon: 'fas fa-cloud',
-                expanded: false,
-                items: [
-                    { icon: 'fas fa-cloud-upload-alt', label: '夸克网盘', badge: null, action: 'link', link: './pages/chl/夸克网盘.html' },
-                    { icon: 'fas fa-hdd', label: '123云盘', badge: null, action: 'link', link: './pages/chl/123云盘.html' },
-                    { icon: 'fas fa-cloud', label: '天翼云盘', badge: null, action: 'link', link: './pages/chl/天翼云盘.html' },
-                    { icon: 'fas fa-box', label: '115生活', badge: null, action: 'link', link: './pages/chl/115生活.html' },
-                    { icon: 'fas fa-database', label: '阿里云盘', badge: null, action: 'link', link: './pages/chl/阿里云盘.html' },
-                    { icon: 'fas fa-sim-card', label: '移动网盘', badge: null, action: 'link', link: './pages/chl/移动网盘.html' },
-                    { icon: 'fab fa-baidu', label: '百度网盘', badge: null, action: 'link', link: './pages/chl/百度网盘.html' },
-                    { icon: 'fas fa-server', label: '城通网盘', badge: null, action: 'link', link: './pages/chl/城通网盘.html' },
-                    { icon: 'fas fa-file-archive', label: '蓝奏云', badge: null, action: 'link', link: './pages/chl/蓝奏云链接.html' }
-                ]
-            },
-            {
-                name: '学习资源',
-                icon: 'fas fa-graduation-cap',
-                expanded: false,
-                items: [
-                    { icon: 'fas fa-child', label: '小学阶段', badge: null, action: 'link', link: './pages/chl/小学阶段.html' },
-                    { icon: 'fas fa-school', label: '初中阶段', badge: null, action: 'link', link: './pages/chl/初中阶段.html' },
-                    { icon: 'fas fa-university', label: '高中阶段', badge: null, action: 'link', link: './pages/chl/高中阶段.html' },
-                    { icon: 'fas fa-user-graduate', label: '大学生活', badge: null, action: 'link', link: './pages/chl/大学生活.html' },
-                    { icon: 'fas fa-briefcase', label: '社会实践', badge: null, action: 'link', link: './pages/chl/社会实践.html' }
-                ]
-            },
-            {
-                name: '自制小工具',
-                icon: 'fas fa-cogs',
-                expanded: false,
-                items: [
-                    { icon: 'fas fa-scroll', label: '手持弹幕', badge: null, action: 'link', link: './pages/chl/手持弹幕.html' },
-                    { icon: 'fas fa-gift', label: '幸运大转盘', badge: null, action: 'link', link: './pages/chl/幸运大转盘.html' },
-                    { icon: 'fas fa-clipboard-list', label: '记分牌', badge: null, action: 'link', link: './pages/chl/记分牌.html' },
-                    { icon: 'fas fa-clock', label: '时间屏幕', badge: null, action: 'link', link: './pages/chl/时间屏幕.html' }
-                ]
-            },
-            {
-                name: '其他',
-                icon: 'fas fa-ellipsis-h',
-                expanded: false,
-                items: [
-                    { icon: 'fas fa-fire', label: '烟花模拟器', badge: null, action: 'link', link: './pages/chl/烟花模拟器.html' }
-                ]
-            }
+            { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
+                { icon: 'fas fa-mobile-alt', label: '手机软件', action: 'link', link: './pages/chl/手机软件.html' },
+                { icon: 'fas fa-desktop', label: '电脑软件', action: 'link', link: './pages/chl/电脑软件.html' },
+                { icon: 'fas fa-film', label: '电影大全', action: 'link', link: './pages/chl/影视推荐.html' },
+                { icon: 'fas fa-images', label: '共享图片', action: 'link', link: './pages/chl/共享图片链接.html' }
+            ] },
+            { name: '网盘工具', icon: 'fas fa-cloud', expanded: false, items: [
+                { icon: 'fas fa-cloud-upload-alt', label: '夸克网盘', link: './pages/chl/夸克网盘.html' },
+                { icon: 'fas fa-hdd', label: '123云盘', link: './pages/chl/123云盘.html' },
+                { icon: 'fas fa-cloud', label: '天翼云盘', link: './pages/chl/天翼云盘.html' },
+                { icon: 'fas fa-box', label: '115生活', link: './pages/chl/115生活.html' },
+                { icon: 'fas fa-database', label: '阿里云盘', link: './pages/chl/阿里云盘.html' },
+                { icon: 'fas fa-sim-card', label: '移动网盘', link: './pages/chl/移动网盘.html' },
+                { icon: 'fab fa-baidu', label: '百度网盘', link: './pages/chl/百度网盘.html' },
+                { icon: 'fas fa-server', label: '城通网盘', link: './pages/chl/城通网盘.html' },
+                { icon: 'fas fa-file-archive', label: '蓝奏云', link: './pages/chl/蓝奏云链接.html' }
+            ] },
+            { name: '学习资源', icon: 'fas fa-graduation-cap', expanded: false, items: [
+                { icon: 'fas fa-child', label: '小学阶段', link: './pages/chl/小学阶段.html' },
+                { icon: 'fas fa-school', label: '初中阶段', link: './pages/chl/初中阶段.html' },
+                { icon: 'fas fa-university', label: '高中阶段', link: './pages/chl/高中阶段.html' },
+                { icon: 'fas fa-user-graduate', label: '大学生活', link: './pages/chl/大学生活.html' },
+                { icon: 'fas fa-briefcase', label: '社会实践', link: './pages/chl/社会实践.html' }
+            ] },
+            { name: '自制小工具', icon: 'fas fa-cogs', expanded: false, items: [
+                { icon: 'fas fa-scroll', label: '手持弹幕', link: './pages/chl/手持弹幕.html' },
+                { icon: 'fas fa-gift', label: '幸运大转盘', link: './pages/chl/幸运大转盘.html' },
+                { icon: 'fas fa-clipboard-list', label: '记分牌', link: './pages/chl/记分牌.html' },
+                { icon: 'fas fa-clock', label: '时间屏幕', link: './pages/chl/时间屏幕.html' }
+            ] },
+            { name: '其他', icon: 'fas fa-ellipsis-h', expanded: false, items: [
+                { icon: 'fas fa-fire', label: '烟花模拟器', link: './pages/chl/烟花模拟器.html' }
+            ] }
         ];
 
         this.isInitialized = false;
@@ -115,7 +89,6 @@ class CompactSidebar {
             this.updateDimensions();
             window.addEventListener('resize', this.throttledUpdate);
             window.addEventListener('orientationchange', this.updateDimensions);
-            window.addEventListener('scroll', this.throttledUpdate); // 移动端地址栏变化时重新计算
             this.isInitialized = true;
             window.sidebar = this;
         } catch (error) {
@@ -126,43 +99,31 @@ class CompactSidebar {
 
     initResizeObserver() {
         if (typeof ResizeObserver === 'undefined') return;
-        const container = document.querySelector('.container');
-        if (!container) return;
         this.resizeObserver = new ResizeObserver(() => this.throttledUpdate());
-        this.resizeObserver.observe(container);
+        this.resizeObserver.observe(document.body);
     }
 
     updateDimensions() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
 
-        // 动态获取导航栏实际高度
-        const navbar = document.querySelector('.navbar');
-        const navbarHeight = navbar ? navbar.offsetHeight : 60;
-
-        // 计算壁纸区域的上边距（margin-top + padding-top）
+        const navbarHeight = 60;
         const wallpaperSection = document.querySelector('.wallpaper-section');
         let wallpaperTop = 0;
         if (wallpaperSection) {
-            const style = window.getComputedStyle(wallpaperSection);
-            const marginTop = parseFloat(style.marginTop) || 0;
-            const paddingTop = parseFloat(style.paddingTop) || 0;
-            wallpaperTop = marginTop + paddingTop;
+            const rect = wallpaperSection.getBoundingClientRect();
+            wallpaperTop = rect.top;
         }
-        const topOffset = navbarHeight + wallpaperTop;
+        const topOffset = navbarHeight + Math.max(0, wallpaperTop);
         sidebar.style.top = `${topOffset}px`;
 
-        // 获取 CSS 中定义的 bottom 值（包括安全区）
-        const computedStyle = window.getComputedStyle(sidebar);
-        let bottomVal = parseFloat(computedStyle.bottom);
-        if (isNaN(bottomVal)) bottomVal = 16; // 默认 16px
-
-        // 计算固定高度 = 视口高度 - top - bottom
-        const viewportHeight = window.innerHeight;
-        const targetHeight = viewportHeight - topOffset - bottomVal;
-        if (targetHeight > 0) {
-            sidebar.style.height = `${targetHeight}px`;
-            sidebar.style.maxHeight = 'none'; // 清除任何 max-height 干扰
+        const winHeight = window.innerHeight;
+        const sidebarRect = sidebar.getBoundingClientRect();
+        if (sidebarRect.bottom > winHeight - 16) {
+            sidebar.style.bottom = '16px';
+            sidebar.style.top = 'auto';
+        } else {
+            sidebar.style.bottom = `max(16px, env(safe-area-inset-bottom))`;
         }
     }
 
@@ -194,9 +155,7 @@ class CompactSidebar {
                 <div class="category-group ${category.expanded ? 'expanded' : ''}" data-category="${this.escapeHtml(category.name)}">
                     <div class="category-group-header">
                         <div class="category-group-name">
-                            <div class="category-group-icon">
-                                <i class="${category.icon}"></i>
-                            </div>
+                            <div class="category-group-icon"><i class="${category.icon}"></i></div>
                             <span>${this.escapeHtml(category.name)}</span>
                         </div>
                         <button class="category-toggle" aria-label="${category.expanded ? '收起' : '展开'}">
@@ -206,9 +165,7 @@ class CompactSidebar {
                     <div class="category-items" style="max-height: ${category.expanded ? '500px' : '0'}">
                         ${category.items.map(item => `
                             <button class="category-item" data-action="${item.action || ''}" data-link="${item.link || ''}">
-                                <div class="category-icon">
-                                    <i class="${item.icon}"></i>
-                                </div>
+                                <div class="category-icon"><i class="${item.icon}"></i></div>
                                 <div class="category-label">${this.escapeHtml(item.label)}</div>
                                 ${item.badge ? `<div class="category-badge">${this.escapeHtml(item.badge)}</div>` : ''}
                             </button>
@@ -281,8 +238,7 @@ class CompactSidebar {
             case 'weather':
                 window.app?.modules?.weather?.showModal();
                 break;
-            default:
-                break;
+            default: break;
         }
     }
 
@@ -307,9 +263,7 @@ class CompactSidebar {
         this.updateDimensions();
         this.savedScrollY = window.scrollY;
         document.body.classList.add('sidebar-open');
-        document.body.style.position = 'fixed';
         document.body.style.top = `-${this.savedScrollY}px`;
-        document.body.style.width = '100%';
         sidebar.classList.add('active');
         if (window.app && !this.modalRegistered) {
             window.app.registerModal(this);
@@ -323,9 +277,7 @@ class CompactSidebar {
         if (!sidebar || !this.isVisible()) return;
         sidebar.classList.remove('active');
         document.body.classList.remove('sidebar-open');
-        document.body.style.position = '';
         document.body.style.top = '';
-        document.body.style.width = '';
         window.scrollTo(0, this.savedScrollY);
         if (window.app && this.modalRegistered) {
             window.app.unregisterModal(this);
@@ -548,9 +500,7 @@ class CompactSidebar {
         const form = document.getElementById('profileForm');
         const qqInput = document.getElementById('qqNumber');
         if (!profileModal) return;
-        const closeModal = () => {
-            profileModal.classList.remove('active');
-        };
+        const closeModal = () => { profileModal.classList.remove('active'); };
         closeBtn?.addEventListener('click', closeModal);
         cancelBtn?.addEventListener('click', closeModal);
         profileModal.addEventListener('click', (e) => {
@@ -647,7 +597,6 @@ class CompactSidebar {
         if (this.resizeObserver) this.resizeObserver.disconnect();
         window.removeEventListener('resize', this.throttledUpdate);
         window.removeEventListener('orientationchange', this.updateDimensions);
-        window.removeEventListener('scroll', this.throttledUpdate);
         if (window.app && this.modalRegistered) window.app.unregisterModal(this);
     }
 }
