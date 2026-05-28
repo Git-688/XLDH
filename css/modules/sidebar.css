@@ -1,8 +1,10 @@
-/* 侧滑栏悬浮毛玻璃优化版 - 最终版 */
+/* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角 + transform动画 + Flex布局 */
 .sidebar {
     position: fixed;
-    left: 0;                    /* 实际 left 由 JS 动态设置 */
-    top: 0;                     /* 实际 top 由 JS 动态设置 */
+    /* 左侧间距与主页容器一致（默认使用 xs 内边距） */
+    left: var(--container-padding-xs, 16px);
+    /* 顶部与壁纸区域顶部持平（导航栏60px + 壁纸顶部内边距20px = 80px） */
+    top: calc(60px + var(--section-margin-sm, 20px));
     width: 280px;
     background: var(--acrylic-bg);
     backdrop-filter: var(--acrylic-blur);
@@ -17,8 +19,10 @@
     flex-direction: column;
     user-select: none;
     -webkit-user-select: none;
-    transform: translateX(-100%);
-    /* bottom 动态由 JS 设置，用于限制高度 */
+    /* 关闭状态：向左偏移（100%宽度 + 左侧间距），完全移出视口 */
+    transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
+    /* 高度限制：视口高度 - 顶部位置 - 底部留空 */
+    max-height: calc(100vh - (60px + var(--section-margin-sm, 20px)) - 16px);
 }
 
 .sidebar.active {
@@ -462,11 +466,50 @@
     color: var(--text-primary);
 }
 
-/* 响应式宽度 */
-@media (min-width: 576px) { .sidebar { width: 260px; } }
-@media (min-width: 768px) { .sidebar { width: 280px; } }
-@media (min-width: 992px) { .sidebar { width: 300px; } }
-@media (max-width: 575px) { .sidebar { width: 240px; } }
+/* ========== 响应式调整（左侧间距、顶部位置、宽度） ========== */
+@media (min-width: 576px) {
+    .sidebar {
+        left: var(--container-padding-sm, 20px);
+        transform: translateX(calc(-100% - var(--container-padding-sm, 20px)));
+        top: calc(60px + var(--section-margin-sm, 20px));
+        max-height: calc(100vh - (60px + var(--section-margin-sm, 20px)) - 16px);
+        width: 260px;
+    }
+}
+@media (min-width: 768px) {
+    .sidebar {
+        left: var(--container-padding-md, 24px);
+        transform: translateX(calc(-100% - var(--container-padding-md, 24px)));
+        width: 280px;
+    }
+}
+@media (min-width: 992px) {
+    .sidebar {
+        left: var(--container-padding-lg, 28px);
+        transform: translateX(calc(-100% - var(--container-padding-lg, 28px)));
+        top: calc(60px + var(--section-margin-md, 24px));
+        max-height: calc(100vh - (60px + var(--section-margin-md, 24px)) - 16px);
+        width: 300px;
+    }
+}
+@media (min-width: 1200px) {
+    .sidebar {
+        left: var(--container-padding-xl, 32px);
+        transform: translateX(calc(-100% - var(--container-padding-xl, 32px)));
+        top: calc(60px + var(--section-margin-lg, 28px));
+        max-height: calc(100vh - (60px + var(--section-margin-lg, 28px)) - 16px);
+    }
+}
+/* 移动端窄屏（<576px）使用默认 xs 值，顶部使用 xs 边距 */
+@media (max-width: 575px) {
+    .sidebar {
+        left: var(--container-padding-xs, 16px);
+        transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
+        top: calc(60px + var(--section-margin-xs, 16px));
+        max-height: calc(100vh - (60px + var(--section-margin-xs, 16px)) - 12px);
+        width: 240px;
+    }
+}
 
 /* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
