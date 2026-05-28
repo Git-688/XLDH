@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 毛玻璃效果 + 必应每日壁纸 + 动态顶部对齐
+ * 侧边栏组件 - 毛玻璃效果 + 必应每日壁纸 + 动态顶部对齐（滚动同步）
  */
 class CompactSidebar {
     constructor() {
@@ -51,6 +51,7 @@ class CompactSidebar {
         this.resizeObserver = null;
         this.wallpaperCache = null;
         this.wallpaperDate = null;
+        this.scrollListener = null;
 
         this.updateDimensions = this.updateDimensions.bind(this);
         this.throttledUpdate = this.throttle(this.updateDimensions, 100);
@@ -86,6 +87,9 @@ class CompactSidebar {
             this.createProfileModal();
             this.initResizeObserver();
             this.updateDimensions();
+            // 添加滚动监听，保持顶部对齐
+            this.scrollListener = this.throttledUpdate;
+            window.addEventListener('scroll', this.scrollListener);
             window.addEventListener('resize', this.throttledUpdate);
             window.addEventListener('orientationchange', this.updateDimensions);
             await this.loadSidebarWallpaper();
@@ -301,9 +305,14 @@ class CompactSidebar {
             return this.wallpaperCache;
         }
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
             const resolution = window.innerWidth >= 1920 ? 1920 : 1366;
-            const url = `https://bing.biturl.top/?resolution=${resolution}&format=json&index=0`;
-            const response = await Utils.safeFetch(url, { timeout: 5000 });
+            const response = await fetch(`https://bing.biturl.top/?resolution=${resolution}&format=json&index=0`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             if (data.url) {
                 let imageUrl = data.url;
@@ -538,6 +547,7 @@ class CompactSidebar {
     destroy() {
         this.hide();
         if (this.resizeObserver) this.resizeObserver.disconnect();
+        window.removeEventListener('scroll', this.scrollListener);
         window.removeEventListener('resize', this.throttledUpdate);
         window.removeEventListener('orientationchange', this.updateDimensions);
         if (window.app && this.modalRegistered) window.app.unregisterModal(this);
