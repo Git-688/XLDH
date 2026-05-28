@@ -114,7 +114,6 @@ class Navbar {
         if (isOpen) {
             toggleFn();
         } else {
-            // 关闭其他模态框，但保留当前要打开的功能
             this.closeAllModalsExcept([featureKey]);
             requestAnimationFrame(() => {
                 toggleFn();
@@ -127,7 +126,7 @@ class Navbar {
             case 'search': return window.newSearchModule?.isOpen === true;
             case 'music': return document.getElementById('musicPlayer')?.classList.contains('show') === true;
             case 'announcement': return window.announcementModule?.isVisible === true;
-            case 'sidebar': return window.sidebar?.isVisible?.() === true;
+            case 'sidebar': return window.sidebar && typeof window.sidebar.isVisible === 'function' && window.sidebar.isVisible();
             default: return false;
         }
     }
@@ -136,8 +135,7 @@ class Navbar {
         try {
             if (!keep.includes('music')) this.hideMusicPlayer();
             if (!keep.includes('search') && window.newSearchModule?.isOpen) window.newSearchModule.hide();
-            // 当 keep 包含 'sidebar' 时，不要关闭侧边栏
-            if (!keep.includes('sidebar') && window.sidebar?.isVisible?.()) window.sidebar.hide();
+            if (!keep.includes('sidebar') && window.sidebar && typeof window.sidebar.isVisible === 'function' && window.sidebar.isVisible()) window.sidebar.hide();
             if (!keep.includes('announcement') && window.announcementModule?.isVisible) window.announcementModule.hide();
             if (!keep.includes('weather')) window.app?.modules?.weather?.hide?.();
             if (!keep.includes('about')) window.aboutModule?.hide?.();
