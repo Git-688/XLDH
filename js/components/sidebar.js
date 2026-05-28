@@ -1,6 +1,6 @@
 /**
- * 侧边栏组件 - 毛玻璃效果（最终优化完整版）
- * 功能：顶部与壁纸持平、底部避开工具栏、左侧间距一致、动态高度、滚动保持、transform动画、视频缓存
+ * 侧边栏组件 - 毛玻璃效果（最终修复版：底部彻底避开工具栏）
+ * 功能：顶部与壁纸持平、底部留出安全区+20px、左侧间距一致、动态高度、滚动保持
  */
 class CompactSidebar {
     constructor() {
@@ -81,6 +81,18 @@ class CompactSidebar {
         this.topOffset = 80;
 
         this.updateDimensions = this.updateDimensions.bind(this);
+        this.throttledUpdate = this.throttle(this.updateDimensions, 100);
+    }
+
+    throttle(fn, delay) {
+        let last = 0;
+        return function(...args) {
+            const now = Date.now();
+            if (now - last >= delay) {
+                last = now;
+                fn.apply(this, args);
+            }
+        };
     }
 
     getDefaultAvatarSVG() {
@@ -102,12 +114,10 @@ class CompactSidebar {
             this.createProfileModal();
             this.initResizeObserver();
             this.updateDimensions();
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', this.updateDimensions);
-                window.visualViewport.addEventListener('scroll', this.updateDimensions);
-            }
-            window.addEventListener('resize', this.updateDimensions);
+            // 监听所有可能改变视口高度的事件
+            window.addEventListener('resize', this.throttledUpdate);
             window.addEventListener('orientationchange', this.updateDimensions);
+            // 移动端键盘弹出/收起也会改变视口，但侧滑栏不应受影响，忽略键盘事件
             this.isInitialized = true;
             window.sidebar = this;
         } catch (error) {
@@ -120,7 +130,7 @@ class CompactSidebar {
         if (typeof ResizeObserver === 'undefined') return;
         const container = document.querySelector('.container');
         if (!container) return;
-        this.resizeObserver = new ResizeObserver(() => this.updateDimensions());
+        this.resizeObserver = new ResizeObserver(() => this.throttledUpdate());
         this.resizeObserver.observe(container);
     }
 
@@ -128,7 +138,7 @@ class CompactSidebar {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
 
-        // 1. 顶部偏移 = 导航栏高度 + 壁纸区域的上边距
+        // 1. 顶部偏移 = 导航栏高度 + 壁纸区域的上边距（margin-top + padding-top）
         const navbarHeight = 60;
         let wallpaperTop = 0;
         const wallpaperSection = document.querySelector('.wallpaper-section');
@@ -141,13 +151,21 @@ class CompactSidebar {
         this.topOffset = navbarHeight + wallpaperTop;
         sidebar.style.top = `${this.topOffset}px`;
 
-        // 2. 获取真实可视区域高度（避开移动端浏览器工具栏）
+        // 2. 获取页面实际可视高度（不依赖 visualViewport 的实时滚动偏移，直接使用 innerHeight）
         let viewportHeight = window.innerHeight;
-        if (window.visualViewport) {
-            viewportHeight = window.visualViewport.height;
+
+        // 3. 获取底部安全区（CSS 环境变量）
+        let safeBottom = 0;
+        const safeAreaInsetBottom = getComputedStyle(document.documentElement)
+            .getPropertyValue('env(safe-area-inset-bottom)');
+        if (safeAreaInsetBottom) {
+            safeBottom = parseFloat(safeAreaInsetBottom);
         }
-        const bottomGap = 20;
-        let maxHeight = viewportHeight - this.topOffset - bottomGap;
+        // 额外留出 30px 空隙（确保底部内容不会被工具栏遮挡）
+        const extraGap = 30;
+        let maxHeight = viewportHeight - this.topOffset - safeBottom - extraGap;
+
+        // 保底最小高度 200px
         if (maxHeight < 200) maxHeight = 200;
         sidebar.style.maxHeight = `${maxHeight}px`;
     }
@@ -627,11 +645,7 @@ class CompactSidebar {
         this.hide();
         if (this.currentVideo) this.currentVideo.pause();
         if (this.resizeObserver) this.resizeObserver.disconnect();
-        if (window.visualViewport) {
-            window.visualViewport.removeEventListener('resize', this.updateDimensions);
-            window.visualViewport.removeEventListener('scroll', this.updateDimensions);
-        }
-        window.removeEventListener('resize', this.updateDimensions);
+        window.removeEventListener('resize', this.throttledUpdate);
         window.removeEventListener('orientationchange', this.updateDimensions);
         if (window.app && this.modalRegistered) window.app.unregisterModal(this);
     }
