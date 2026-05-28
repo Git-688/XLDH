@@ -1,10 +1,8 @@
 /* 侧滑栏悬浮毛玻璃优化版 - 亚克力效果 + 8px圆角 + transform动画 + Flex布局 */
 .sidebar {
     position: fixed;
-    /* 左侧间距与主页容器一致（默认使用 xs 内边距） */
     left: var(--container-padding-xs, 16px);
-    /* 顶部与壁纸区域顶部持平（导航栏60px + 壁纸顶部内边距20px = 80px） */
-    top: calc(60px + var(--section-margin-sm, 20px));
+    top: auto;
     width: 280px;
     background: var(--acrylic-bg);
     backdrop-filter: var(--acrylic-blur);
@@ -19,10 +17,8 @@
     flex-direction: column;
     user-select: none;
     -webkit-user-select: none;
-    /* 关闭状态：向左偏移（100%宽度 + 左侧间距），完全移出视口 */
     transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
-    /* 高度限制：视口高度 - 顶部位置 - 底部留空 */
-    max-height: calc(100vh - (60px + var(--section-margin-sm, 20px)) - 16px);
+    max-height: none;
 }
 
 .sidebar.active {
@@ -31,7 +27,6 @@
     pointer-events: auto;
 }
 
-/* 侧滑栏壁纸区域 */
 .sidebar-wallpaper {
     position: relative;
     width: 100%;
@@ -136,7 +131,6 @@
     border-radius: inherit;
 }
 
-/* 主体内容区域 - Flex 布局 */
 .sidebar-content {
     flex: 1;
     display: flex;
@@ -170,7 +164,9 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
-.categories-container::-webkit-scrollbar { display: none; }
+.categories-container::-webkit-scrollbar {
+    display: none;
+}
 
 .sidebar-categories {
     display: flex;
@@ -292,7 +288,6 @@
     flex-shrink: 0;
 }
 
-/* 底部按钮 */
 .sidebar-footer {
     padding: 12px 15px;
     background: rgba(0, 0, 0, 0.02);
@@ -337,17 +332,35 @@
     border-radius: 3px;
     opacity: 0.6;
 }
-.footer-btn:nth-child(1)::before { background: #8b5cf6; }
-.footer-btn:nth-child(2)::before { background: var(--accent-color); }
-.footer-btn:nth-child(3)::before { background: #f72585; }
-.footer-btn:nth-child(4)::before { background: #4cc9f0; }
-.footer-btn i { font-size: 13px; }
-.footer-btn:nth-child(1) i { color: #8b5cf6; }
-.footer-btn:nth-child(2) i { color: var(--accent-color); }
-.footer-btn:nth-child(3) i { color: #f72585; }
-.footer-btn:nth-child(4) i { color: #4cc9f0; }
+.footer-btn:nth-child(1)::before {
+    background: #8b5cf6;
+}
+.footer-btn:nth-child(2)::before {
+    background: var(--accent-color);
+}
+.footer-btn:nth-child(3)::before {
+    background: #f72585;
+}
+.footer-btn:nth-child(4)::before {
+    background: #4cc9f0;
+}
+.footer-btn i {
+    font-size: 13px;
+}
+.footer-btn:nth-child(1) i {
+    color: #8b5cf6;
+}
+.footer-btn:nth-child(2) i {
+    color: var(--accent-color);
+}
+.footer-btn:nth-child(3) i {
+    color: #f72585;
+}
+.footer-btn:nth-child(4) i {
+    color: #4cc9f0;
+}
 
-/* ========== 个人资料模态框（增加背景遮罩） ========== */
+/* ========== 个人资料模态框 ========== */
 .profile-modal {
     position: fixed;
     top: 0;
@@ -389,10 +402,24 @@
 .profile-modal.active .profile-modal-content {
     transform: translateY(0);
 }
-.profile-modal-close { display: none; }
-.profile-form { display: flex; flex-direction: column; gap: 12px; }
-.form-group { display: flex; flex-direction: column; gap: 4px; }
-.form-label { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+.profile-modal-close {
+    display: none;
+}
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.form-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
 .form-input {
     padding: 8px 10px;
     border: 1px solid rgba(0, 0, 0, 0.1);
@@ -429,10 +456,25 @@
     border: 2px solid rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
 }
-.qq-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
-.qq-avatar-input-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-.qq-avatar-input { width: 100%; }
-.profile-modal-actions { display: flex; gap: 10px; margin-top: 8px; }
+.qq-avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.qq-avatar-input-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.qq-avatar-input {
+    width: 100%;
+}
+.profile-modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
 .profile-save-btn {
     flex: 1;
     padding: 10px 0;
@@ -466,13 +508,11 @@
     color: var(--text-primary);
 }
 
-/* ========== 响应式调整（左侧间距、顶部位置、宽度） ========== */
+/* ========== 响应式边距（左侧间距与容器一致） ========== */
 @media (min-width: 576px) {
     .sidebar {
         left: var(--container-padding-sm, 20px);
         transform: translateX(calc(-100% - var(--container-padding-sm, 20px)));
-        top: calc(60px + var(--section-margin-sm, 20px));
-        max-height: calc(100vh - (60px + var(--section-margin-sm, 20px)) - 16px);
         width: 260px;
     }
 }
@@ -487,8 +527,6 @@
     .sidebar {
         left: var(--container-padding-lg, 28px);
         transform: translateX(calc(-100% - var(--container-padding-lg, 28px)));
-        top: calc(60px + var(--section-margin-md, 24px));
-        max-height: calc(100vh - (60px + var(--section-margin-md, 24px)) - 16px);
         width: 300px;
     }
 }
@@ -496,42 +534,68 @@
     .sidebar {
         left: var(--container-padding-xl, 32px);
         transform: translateX(calc(-100% - var(--container-padding-xl, 32px)));
-        top: calc(60px + var(--section-margin-lg, 28px));
-        max-height: calc(100vh - (60px + var(--section-margin-lg, 28px)) - 16px);
     }
 }
-/* 移动端窄屏（<576px）使用默认 xs 值，顶部使用 xs 边距 */
 @media (max-width: 575px) {
     .sidebar {
         left: var(--container-padding-xs, 16px);
         transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
-        top: calc(60px + var(--section-margin-xs, 16px));
-        max-height: calc(100vh - (60px + var(--section-margin-xs, 16px)) - 12px);
         width: 240px;
     }
 }
 
-/* 深色模式适配 */
+/* ========== 深色模式适配 ========== */
 @media (prefers-color-scheme: dark) {
     .sidebar {
         background: var(--acrylic-bg);
         border-color: var(--acrylic-border);
         box-shadow: var(--acrylic-shadow);
     }
-    .category-group { background: rgba(45,45,45,0.5); border-color: rgba(255,255,255,0.06); }
-    .category-group-header { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.04); }
-    .footer-btn { background: rgba(45,45,45,0.6); border-color: rgba(255,255,255,0.06); color: var(--text-secondary); }
-    .footer-btn:hover { background: rgba(67,97,238,0.12); color: var(--primary-color); }
-    .daily-quote-card { background: rgba(67,97,238,0.08); border-color: rgba(67,97,238,0.15); }
-    .profile-modal-content { background: rgba(30,30,30,0.75); border-color: rgba(255,255,255,0.15); }
-    .form-input { background: rgba(40,40,40,0.6); border-color: rgba(255,255,255,0.1); color: white; }
-    .profile-cancel-btn { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
+    .category-group {
+        background: rgba(45, 45, 45, 0.5);
+        border-color: rgba(255, 255, 255, 0.06);
+    }
+    .category-group-header {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.04);
+    }
+    .footer-btn {
+        background: rgba(45, 45, 45, 0.6);
+        border-color: rgba(255, 255, 255, 0.06);
+        color: var(--text-secondary);
+    }
+    .footer-btn:hover {
+        background: rgba(67, 97, 238, 0.12);
+        color: var(--primary-color);
+    }
+    .daily-quote-card {
+        background: rgba(67, 97, 238, 0.08);
+        border-color: rgba(67, 97, 238, 0.15);
+    }
+    .profile-modal-content {
+        background: rgba(30, 30, 30, 0.75);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    .form-input {
+        background: rgba(40, 40, 40, 0.6);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+    .profile-cancel-btn {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-secondary);
+    }
 }
 
-/* 减少动画 */
+/* ========== 减少动画 ========== */
 @media (prefers-reduced-motion: reduce) {
-    .sidebar, .category-group-header, .category-item, .footer-btn,
-    .category-toggle, .category-items, .sidebar-wallpaper video {
+    .sidebar,
+    .category-group-header,
+    .category-item,
+    .footer-btn,
+    .category-toggle,
+    .category-items,
+    .sidebar-wallpaper video {
         transition: none;
         animation: none;
     }
