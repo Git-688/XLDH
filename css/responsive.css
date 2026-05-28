@@ -1,82 +1,197 @@
 /* ================================================
    responsive.css 响应式适配文件
-   确保侧滑栏 fixed 定位不被破坏
+   修复：移动端侧滑栏打开时不丢失滚动位置，底部自适应
+   适配新版侧滑栏（圆角8px、隐藏滚动条）
    ================================================ */
 
-/* 确保侧滑栏在移动端依然固定 */
-@media (max-width: 768px) {
-  .sidebar {
-    position: fixed !important;
-  }
-  body.sidebar-open {
-    overflow: hidden !important;
-    position: fixed !important;
-    width: 100% !important;
-    height: 100% !important;
-    top: 0 !important;
-    left: 0 !important;
-  }
-  .sidebar.active {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
+/* ========== 1. 侧滑栏独立滚动控制 ========== */
+.sidebar.active {
+    pointer-events: auto;
+    transform: translateX(0);
+    visibility: visible;
 }
-
-/* 侧滑栏打开时主内容不可交互 */
 .sidebar.active ~ .main-content {
-  pointer-events: none;
-  overflow: hidden;
+    pointer-events: auto;
+    overflow: auto;
+    position: static;
+    width: 100%;
+    height: auto;
+}
+.sidebar-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    pointer-events: auto;
+}
+.categories-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 12px 12px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+.sidebar.active .categories-container,
+.sidebar.active .sidebar-content {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
-/* 隐藏所有滚动条（保持功能） */
-.sidebar-content,
-.categories-container,
-.category-items {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.sidebar-content::-webkit-scrollbar,
-.categories-container::-webkit-scrollbar,
-.category-items::-webkit-scrollbar {
-  display: none;
-}
-
-/* 浮动按钮响应式 */
+/* ========== 2. 移动端侧滑栏滚动专属适配（修复滚动位置丢失） ========== */
 @media (max-width: 768px) {
-  .floating-buttons {
-    bottom: 16px;
-    right: 16px;
-    gap: 8px;
-  }
-  .floating-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 18px;
-  }
+    .sidebar.active {
+        touch-action: pan-y;
+    }
+    .sidebar.active .categories-container {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+    }
+    /* 修复：侧滑栏打开时禁用 body 滚动，但保留滚动位置 */
+    body.sidebar-open {
+        overflow: hidden !important;
+        position: fixed !important;
+        width: 100% !important;
+        height: 100% !important;
+        top: 0 !important;
+        left: 0 !important;
+    }
+    .sidebar.active ~ .main-content {
+        touch-action: pan-y;
+    }
+}
+
+/* ========== 3. 侧滑栏滚动条样式（已隐藏，此处保留以防备） ========== */
+.categories-container::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+.categories-container {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+/* ========== 4. 浮动按钮响应式优化 ========== */
+@media (max-width: 768px) {
+    .floating-buttons {
+        bottom: 16px;
+        right: 16px;
+        gap: 8px;
+    }
+    .floating-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+    }
 }
 @media (max-width: 480px) {
-  .floating-buttons {
-    bottom: 12px;
-    right: 12px;
-    gap: 6px;
-  }
-  .floating-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-  }
+    .floating-buttons {
+        bottom: 12px;
+        right: 12px;
+        gap: 6px;
+    }
+    .floating-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+}
+@media (max-width: 360px) {
+    .floating-buttons {
+        bottom: 10px;
+        right: 10px;
+        gap: 5px;
+    }
+    .floating-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 15px;
+    }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+    .floating-buttons {
+        bottom: 8px;
+        right: 8px;
+        gap: 5px;
+    }
+    .floating-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
 }
 
-/* 减少动画 */
+/* ========== 5. 深色模式适配（仅侧滑栏滚动条，已隐藏无影响） ========== */
+@media (prefers-color-scheme: dark) {
+    .categories-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .categories-container::-webkit-scrollbar-thumb {
+        background: transparent;
+    }
+}
+
+/* ========== 6. 减少动画模式适配 ========== */
 @media (prefers-reduced-motion: reduce) {
-  .sidebar,
-  .category-group-header,
-  .category-item,
-  .footer-btn,
-  .category-toggle,
-  .category-items,
-  .floating-btn {
-    transition: none;
-    animation: none;
-  }
+    .sidebar,
+    .category-group-header,
+    .category-item,
+    .footer-btn,
+    .category-toggle,
+    .category-items,
+    .sidebar-wallpaper video,
+    .sidebar-wallpaper img,
+    .floating-btn {
+        transition: none;
+        animation: none;
+    }
+}
+
+/* ========== 7. 横屏小高度侧滑栏兜底适配 ========== */
+@media (max-height: 600px) and (orientation: landscape) {
+    .sidebar {
+        max-height: 85vh;
+    }
+    .sidebar-wallpaper {
+        aspect-ratio: 21/9;
+    }
+}
+
+/* ========== 8. 超大屏侧滑栏兜底适配 ========== */
+@media (min-width: 2560px) {
+    .sidebar {
+        max-width: 340px;
+    }
+}
+
+/* ========== 9. 移动端侧边栏打开时彻底禁用 body 滚动（配合 JS 保存滚动位置） ========== */
+@media (max-width: 768px) {
+    body.sidebar-open {
+        overflow: hidden !important;
+        position: fixed !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+    .sidebar.active {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        height: 100% !important;
+        max-height: none !important;
+    }
+}
+
+/* ========== 10. 侧滑栏打开时主内容区域不可交互（新增优化） ========== */
+.sidebar.active ~ .main-content {
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* ========== 11. 移动端触摸优化（确保流畅滚动） ========== */
+@media (max-width: 768px) {
+    .sidebar.active .categories-container {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
 }
