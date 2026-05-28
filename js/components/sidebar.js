@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 毛玻璃效果（优化版：动态高度、滚动锁定、底部安全区）
+ * 侧边栏组件 - 毛玻璃效果 + 必应每日壁纸 + 动态顶部对齐
  */
 class CompactSidebar {
     constructor() {
@@ -45,13 +45,12 @@ class CompactSidebar {
         ];
 
         this.isInitialized = false;
-        this.currentVideo = null;
-        this.videoCache = null;
-        this.lastVideoDate = null;
         this.savedScrollY = 0;
         this.modalRegistered = false;
         this.defaultAvatar = './assets/logo.png';
         this.resizeObserver = null;
+        this.wallpaperCache = null;
+        this.wallpaperDate = null;
 
         this.updateDimensions = this.updateDimensions.bind(this);
         this.throttledUpdate = this.throttle(this.updateDimensions, 100);
@@ -89,6 +88,7 @@ class CompactSidebar {
             this.updateDimensions();
             window.addEventListener('resize', this.throttledUpdate);
             window.addEventListener('orientationchange', this.updateDimensions);
+            await this.loadSidebarWallpaper();
             this.isInitialized = true;
             window.sidebar = this;
         } catch (error) {
@@ -103,20 +103,21 @@ class CompactSidebar {
         this.resizeObserver.observe(document.body);
     }
 
+    // 动态计算顶部位置：与主页壁纸区域顶部对齐
     updateDimensions() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
 
-        const navbarHeight = 60;
+        // 获取壁纸区域相对于视口顶部的距离
         const wallpaperSection = document.querySelector('.wallpaper-section');
-        let wallpaperTop = 0;
+        let topOffset = 60; // 默认导航栏高度
         if (wallpaperSection) {
             const rect = wallpaperSection.getBoundingClientRect();
-            wallpaperTop = rect.top;
+            topOffset = rect.top;
         }
-        const topOffset = navbarHeight + Math.max(0, wallpaperTop);
-        sidebar.style.top = `${topOffset}px`;
+        sidebar.style.top = `${Math.max(0, topOffset)}px`;
 
+        // 底部安全区处理
         const winHeight = window.innerHeight;
         const sidebarRect = sidebar.getBoundingClientRect();
         if (sidebarRect.bottom > winHeight - 16) {
@@ -269,7 +270,6 @@ class CompactSidebar {
             window.app.registerModal(this);
             this.modalRegistered = true;
         }
-        this.loadSidebarWallpaper();
     }
 
     hide() {
@@ -283,7 +283,6 @@ class CompactSidebar {
             window.app.unregisterModal(this);
             this.modalRegistered = false;
         }
-        if (this.currentVideo) this.currentVideo.pause();
     }
 
     toggle() {
@@ -295,101 +294,46 @@ class CompactSidebar {
         return sidebar ? sidebar.classList.contains('active') : false;
     }
 
-    async loadSidebarWallpaper() {
-        const dayOfWeek = new Date().getDay();
-        const mediaInfo = this.getLocalWallpaper(dayOfWeek);
+    // 获取必应每日壁纸（与主页轮播图相同 API）
+    async getBingWallpaper() {
         const today = new Date().toDateString();
-        if (this.videoCache && this.lastVideoDate === today) {
-            const sidebarWallpaper = document.getElementById('sidebarWallpaper');
-            if (sidebarWallpaper && this.videoCache.parentNode !== sidebarWallpaper) {
-                const oldVideo = sidebarWallpaper.querySelector('video');
-                if (oldVideo) oldVideo.remove();
-                sidebarWallpaper.appendChild(this.videoCache);
-                this.currentVideo = this.videoCache;
-            }
-            return;
-        }
-        await this.setVideoWallpaper(mediaInfo.url);
-        this.lastVideoDate = today;
-    }
-
-    getLocalWallpaper(dayOfWeek) {
-        const videoWallpapers = {
-            0: './assets/wallpapers/sunday.mp4',
-            1: './assets/wallpapers/monday.mp4',
-            2: './assets/wallpapers/tuesday.mp4',
-            3: './assets/wallpapers/wednesday.mp4',
-            4: './assets/wallpapers/thursday.mp4',
-            5: './assets/wallpapers/friday.mp4',
-            6: './assets/wallpapers/saturday.mp4'
-        };
-        return { type: 'video', url: videoWallpapers[dayOfWeek] || './assets/wallpapers/monday.mp4' };
-    }
-
-    async setVideoWallpaper(videoUrl) {
-        const sidebarWallpaper = document.getElementById('sidebarWallpaper');
-        if (!sidebarWallpaper) return;
-        if (this.currentVideo && this.currentVideo.parentNode) {
-            this.currentVideo.remove();
+        if (this.wallpaperCache && this.wallpaperDate === today) {
+            return this.wallpaperCache;
         }
         try {
-            const video = document.createElement('video');
-            video.src = videoUrl;
-            video.autoplay = true;
-            video.muted = true;
-            video.loop = true;
-            video.playsInline = true;
-            video.preload = "auto";
-            video.style.cssText = `
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-                z-index: 0;
-            `;
-            video.setAttribute('autoplay', 'true');
-            video.setAttribute('muted', 'true');
-            video.setAttribute('loop', 'true');
-            video.setAttribute('playsinline', 'true');
-            video.onerror = () => this.setFallbackBackground();
-            sidebarWallpaper.appendChild(video);
-            this.currentVideo = video;
-            this.videoCache = video;
-            const overlay = sidebarWallpaper.querySelector('.sidebar-wallpaper-overlay');
-            if (overlay) overlay.style.zIndex = '1';
-            const userInfo = sidebarWallpaper.querySelector('.sidebar-wallpaper-user-info');
-            if (userInfo) userInfo.style.zIndex = '2';
-            try {
-                await video.play();
-            } catch (e) {
-                this.setFallbackBackground();
+            const resolution = window.innerWidth >= 1920 ? 1920 : 1366;
+            const url = `https://bing.biturl.top/?resolution=${resolution}&format=json&index=0`;
+            const response = await Utils.safeFetch(url, { timeout: 5000 });
+            const data = await response.json();
+            if (data.url) {
+                let imageUrl = data.url;
+                if (!imageUrl.startsWith('http')) {
+                    imageUrl = 'https://bing.biturl.top' + imageUrl;
+                }
+                this.wallpaperCache = imageUrl;
+                this.wallpaperDate = today;
+                return imageUrl;
             }
+            throw new Error('无效壁纸数据');
         } catch (error) {
-            this.setFallbackBackground();
+            console.error('获取必应壁纸失败:', error);
+            return null;
         }
     }
 
-    setFallbackBackground() {
+    // 设置侧滑栏壁纸为必应图片
+    async loadSidebarWallpaper() {
         const sidebarWallpaper = document.getElementById('sidebarWallpaper');
-        if (sidebarWallpaper) {
-            if (this.currentVideo) this.currentVideo.remove();
-            sidebarWallpaper.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-        }
-    }
-
-    adjustWallpaperSize() {
-        const sidebar = document.getElementById('sidebar');
-        const wallpaper = document.getElementById('sidebarWallpaper');
-        if (!sidebar || !wallpaper) return;
-        const sidebarWidth = sidebar.offsetWidth;
-        wallpaper.style.width = `${sidebarWidth}px`;
-        wallpaper.style.maxWidth = '100%';
-        if (this.currentVideo) {
-            this.currentVideo.style.width = '100%';
-            this.currentVideo.style.height = '100%';
-            this.currentVideo.style.objectFit = 'contain';
+        if (!sidebarWallpaper) return;
+        const imgUrl = await this.getBingWallpaper();
+        if (imgUrl) {
+            sidebarWallpaper.style.backgroundImage = `url(${imgUrl})`;
+            sidebarWallpaper.style.backgroundSize = 'cover';
+            sidebarWallpaper.style.backgroundPosition = 'center';
+            sidebarWallpaper.style.backgroundRepeat = 'no-repeat';
+        } else {
+            // 降级为渐变色
+            sidebarWallpaper.style.backgroundImage = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
         }
     }
 
@@ -593,7 +537,6 @@ class CompactSidebar {
 
     destroy() {
         this.hide();
-        if (this.currentVideo) this.currentVideo.pause();
         if (this.resizeObserver) this.resizeObserver.disconnect();
         window.removeEventListener('resize', this.throttledUpdate);
         window.removeEventListener('orientationchange', this.updateDimensions);
