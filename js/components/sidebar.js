@@ -79,7 +79,6 @@ class CompactSidebar {
         this.defaultAvatar = './assets/logo.png';
         this.resizeObserver = null;
         this.topOffset = 80;
-        this.bottomSafeArea = 0;
 
         this.updateDimensions = this.updateDimensions.bind(this);
     }
@@ -103,9 +102,12 @@ class CompactSidebar {
             this.createProfileModal();
             this.initResizeObserver();
             this.updateDimensions();
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', this.updateDimensions);
+                window.visualViewport.addEventListener('scroll', this.updateDimensions);
+            }
             window.addEventListener('resize', this.updateDimensions);
             window.addEventListener('orientationchange', this.updateDimensions);
-            window.addEventListener('scroll', this.updateDimensions);
             this.isInitialized = true;
             window.sidebar = this;
         } catch (error) {
@@ -139,19 +141,13 @@ class CompactSidebar {
         this.topOffset = navbarHeight + wallpaperTop;
         sidebar.style.top = `${this.topOffset}px`;
 
-        // 2. 底部安全区
-        let safeBottom = 0;
+        // 2. 获取真实可视区域高度（避开移动端浏览器工具栏）
+        let viewportHeight = window.innerHeight;
         if (window.visualViewport) {
-            const viewportHeight = window.visualViewport.height;
-            const windowHeight = window.innerHeight;
-            safeBottom = windowHeight - viewportHeight;
+            viewportHeight = window.visualViewport.height;
         }
-        const cssSafeBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)')) || 0;
-        this.bottomSafeArea = Math.max(safeBottom, cssSafeBottom, 0);
-
-        // 3. 最大高度
-        const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        let maxHeight = viewportHeight - this.topOffset - this.bottomSafeArea - 8;
+        const bottomGap = 20;
+        let maxHeight = viewportHeight - this.topOffset - bottomGap;
         if (maxHeight < 200) maxHeight = 200;
         sidebar.style.maxHeight = `${maxHeight}px`;
     }
@@ -631,9 +627,12 @@ class CompactSidebar {
         this.hide();
         if (this.currentVideo) this.currentVideo.pause();
         if (this.resizeObserver) this.resizeObserver.disconnect();
+        if (window.visualViewport) {
+            window.visualViewport.removeEventListener('resize', this.updateDimensions);
+            window.visualViewport.removeEventListener('scroll', this.updateDimensions);
+        }
         window.removeEventListener('resize', this.updateDimensions);
         window.removeEventListener('orientationchange', this.updateDimensions);
-        window.removeEventListener('scroll', this.updateDimensions);
         if (window.app && this.modalRegistered) window.app.unregisterModal(this);
     }
 }
