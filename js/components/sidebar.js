@@ -2,7 +2,6 @@
  * 侧边栏组件 - 悬浮卡片式，独立滚动，无遮罩，点击外部关闭
  * 修复：展开/收起动画一致（动态高度过渡）
  * 底部按钮仅图标，彩色
- * 确保暴露 isVisible 等方法
  */
 class CompactSidebar {
   constructor() {
