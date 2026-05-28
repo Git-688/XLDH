@@ -1,5 +1,5 @@
 /**
- * 侧边栏组件 - 悬浮卡片式，独立滚动，无定位计算
+ * 侧边栏组件 - 悬浮卡片式，独立滚动，无遮罩，点击外部关闭
  */
 class CompactSidebar {
     constructor() {
@@ -49,10 +49,8 @@ class CompactSidebar {
         this.defaultAvatar = './assets/logo.png';
         this.wallpaperCache = null;
         this.wallpaperDate = null;
-        this.mask = null;               // 遮罩层元素
     }
 
-    // 获取默认头像SVG
     getDefaultAvatarSVG() {
         return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
     }
@@ -71,7 +69,6 @@ class CompactSidebar {
             await this.loadWallpaperUserInfo();
             await this.loadSidebarWallpaper();
             this.createProfileModal();
-            this.createMask();           // 创建遮罩层
             this.isInitialized = true;
             window.sidebar = this;
         } catch (error) {
@@ -80,16 +77,6 @@ class CompactSidebar {
         }
     }
 
-    // 创建遮罩层
-    createMask() {
-        if (document.querySelector('.sidebar-mask')) return;
-        this.mask = document.createElement('div');
-        this.mask.className = 'sidebar-mask';
-        this.mask.addEventListener('click', () => this.hide());
-        document.body.appendChild(this.mask);
-    }
-
-    // 加载展开状态
     loadExpandedState() {
         try {
             const savedState = Storage.get('sidebar_categories_state');
@@ -142,6 +129,8 @@ class CompactSidebar {
     bindEvents() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
+        
+        // 点击侧滑栏内部事件
         sidebar.addEventListener('click', (e) => {
             const categoryHeader = e.target.closest('.category-group-header');
             const categoryItem = e.target.closest('.category-item');
@@ -159,7 +148,22 @@ class CompactSidebar {
                 this.openProfileModal();
             }
         });
-        // 点击页面其他区域不关闭（由遮罩层负责关闭）
+
+        // 点击侧滑栏外部关闭（排除菜单按钮）
+        document.addEventListener('click', (e) => {
+            const sidebarEl = document.getElementById('sidebar');
+            const menuBtn = document.getElementById('menuBtn');
+            if (sidebarEl && sidebarEl.classList.contains('active') && 
+                !sidebarEl.contains(e.target) && 
+                !menuBtn?.contains(e.target)) {
+                this.hide();
+            }
+        });
+
+        // ESC 键关闭
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isVisible()) this.hide();
+        });
     }
 
     toggleCategory(categoryGroup) {
@@ -213,7 +217,6 @@ class CompactSidebar {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar || this.isVisible()) return;
         sidebar.classList.add('active');
-        if (this.mask) this.mask.classList.add('active');
         if (window.app && !this.modalRegistered) {
             window.app.registerModal(this);
             this.modalRegistered = true;
@@ -224,7 +227,6 @@ class CompactSidebar {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar || !this.isVisible()) return;
         sidebar.classList.remove('active');
-        if (this.mask) this.mask.classList.remove('active');
         if (window.app && this.modalRegistered) {
             window.app.unregisterModal(this);
             this.modalRegistered = false;
@@ -240,7 +242,6 @@ class CompactSidebar {
         return sidebar ? sidebar.classList.contains('active') : false;
     }
 
-    // 获取必应每日壁纸
     async getBingWallpaper() {
         const today = new Date().toDateString();
         if (this.wallpaperCache && this.wallpaperDate === today) {
@@ -485,7 +486,6 @@ class CompactSidebar {
 
     destroy() {
         this.hide();
-        if (this.mask) this.mask.remove();
         if (window.app && this.modalRegistered) window.app.unregisterModal(this);
     }
 }
