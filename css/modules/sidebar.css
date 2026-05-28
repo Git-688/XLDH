@@ -1,4 +1,4 @@
-/* 侧滑栏 - 亚克力效果 + 动态上下间距 + 独立滚动 */
+/* 侧滑栏 - 亚克力效果 + 必应壁纸背景 + 独立滚动 */
 .sidebar {
     position: fixed;
     left: var(--container-padding-xs, 16px);
@@ -25,27 +25,19 @@
     pointer-events: auto;
 }
 
-/* 壁纸区域 - 比例稳定 */
+/* 壁纸区域 - 必应背景图 */
 .sidebar-wallpaper {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
-    background: transparent;
-    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     flex-shrink: 0;
     border-radius: 8px 8px 0 0;
+    transition: background-image 0.3s ease;
 }
-.sidebar-wallpaper video,
-.sidebar-wallpaper img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    z-index: 0;
-    pointer-events: none;
-}
+
 .sidebar-wallpaper-overlay {
     position: absolute;
     top: 0;
@@ -57,6 +49,7 @@
     pointer-events: none;
     border-radius: inherit;
 }
+
 .sidebar-wallpaper-user-info {
     position: absolute;
     left: 16px;
@@ -70,6 +63,7 @@
     max-width: calc(100% - 32px);
     pointer-events: auto !important;
 }
+
 .sidebar-wallpaper-avatar {
     width: 64px;
     height: 64px;
@@ -551,7 +545,7 @@
 /* 减少动画适配 */
 @media (prefers-reduced-motion: reduce) {
     .sidebar, .category-group-header, .category-item, .footer-btn,
-    .category-toggle, .category-items, .sidebar-wallpaper video {
+    .category-toggle, .category-items, .sidebar-wallpaper {
         transition: none;
         animation: none;
     }
