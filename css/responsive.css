@@ -1,17 +1,13 @@
 /* ================================================
    responsive.css 响应式适配文件
-   说明：仅针对侧滑栏、浮动按钮做响应式优化
-   完全不影响导航栏、搜索、音乐播放器、主内容等其他模块原有样式
-   所有样式仅做响应式断点补充，不覆盖核心模块的基础样式
-   
-   修复：移动端侧滑栏打开时不丢失滚动位置（配合 sidebar.js 中的 savedScrollY）
+   修复：移动端侧滑栏打开时不丢失滚动位置
    ================================================ */
 
-/* ========== 1. 侧滑栏独立滚动控制（不影响主页面滚动） ========== */
-.sidebar.active { 
-    pointer-events: auto; 
-    transform: translateX(0); 
-    visibility: visible; 
+/* ========== 1. 侧滑栏独立滚动控制 ========== */
+.sidebar.active {
+    pointer-events: auto;
+    transform: translateX(0);
+    visibility: visible;
 }
 .sidebar.active ~ .main-content {
     pointer-events: auto;
@@ -43,15 +39,15 @@
 
 /* ========== 2. 移动端侧滑栏滚动专属适配（修复滚动位置丢失） ========== */
 @media (max-width: 768px) {
-    .sidebar.active { 
-        touch-action: pan-y; 
+    .sidebar.active {
+        touch-action: pan-y;
     }
     .sidebar.active .categories-container {
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
         touch-action: pan-y;
     }
-    /* 修复：侧滑栏打开时禁用 body 滚动，但保留滚动位置（配合 JS 中的 top 负偏移） */
+    /* 修复：侧滑栏打开时禁用 body 滚动，但保留滚动位置 */
     body.sidebar-open {
         overflow: hidden !important;
         position: relative !important;
@@ -60,26 +56,26 @@
         top: 0 !important;
         left: 0 !important;
     }
-    .sidebar.active ~ .main-content { 
-        touch-action: pan-y; 
+    .sidebar.active ~ .main-content {
+        touch-action: pan-y;
     }
 }
 
 /* ========== 3. 侧滑栏滚动条样式（仅作用于侧滑栏） ========== */
-.categories-container::-webkit-scrollbar { 
-    width: 6px; 
+.categories-container::-webkit-scrollbar {
+    width: 6px;
 }
-.categories-container::-webkit-scrollbar-track { 
-    background: var(--bg-secondary, #f8f9fa); 
-    border-radius: 3px; 
+.categories-container::-webkit-scrollbar-track {
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 3px;
 }
-.categories-container::-webkit-scrollbar-thumb { 
-    background: #dee2e6; 
-    border-radius: 3px; 
-    transition: background 0.2s ease; 
+.categories-container::-webkit-scrollbar-thumb {
+    background: #dee2e6;
+    border-radius: 3px;
+    transition: background 0.2s ease;
 }
-.categories-container::-webkit-scrollbar-thumb:hover { 
-    background: #adb5bd; 
+.categories-container::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
 }
 
 /* ========== 4. 浮动按钮响应式优化 ========== */
@@ -134,14 +130,14 @@
 
 /* ========== 5. 深色模式适配（仅侧滑栏滚动条） ========== */
 @media (prefers-color-scheme: dark) {
-    .categories-container::-webkit-scrollbar-track { 
-        background: var(--bg-secondary, #1e1e1e); 
+    .categories-container::-webkit-scrollbar-track {
+        background: var(--bg-secondary, #1e1e1e);
     }
-    .categories-container::-webkit-scrollbar-thumb { 
-        background: #4a4a4a; 
+    .categories-container::-webkit-scrollbar-thumb {
+        background: #4a4a4a;
     }
-    .categories-container::-webkit-scrollbar-thumb:hover { 
-        background: #606060; 
+    .categories-container::-webkit-scrollbar-thumb:hover {
+        background: #606060;
     }
 }
 
@@ -186,7 +182,6 @@
         width: 100% !important;
         height: 100% !important;
     }
-    
     .sidebar.active {
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
