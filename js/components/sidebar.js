@@ -1,5 +1,6 @@
 /**
  * 侧边栏组件 - 悬浮卡片式，独立滚动，无遮罩，点击外部关闭
+ * 修复：展开/收起动画一致（动态计算实际高度）
  */
 class CompactSidebar {
     constructor() {
@@ -69,6 +70,8 @@ class CompactSidebar {
             await this.loadWallpaperUserInfo();
             await this.loadSidebarWallpaper();
             this.createProfileModal();
+            // 初始化后同步已展开分组的高度
+            this.syncExpandedHeights();
             this.isInitialized = true;
             window.sidebar = this;
         } catch (error) {
@@ -126,6 +129,26 @@ class CompactSidebar {
         }
     }
 
+    // 同步已展开分类的实际高度
+    syncExpandedHeights() {
+        document.querySelectorAll('.category-group.expanded .category-items').forEach(container => {
+            // 如果已经有内联样式且不为 'none'，跳过（避免重复设置）
+            if (container.style.maxHeight && container.style.maxHeight !== 'none') return;
+            // 临时设为 'none' 获取实际高度
+            container.style.maxHeight = 'none';
+            const fullHeight = container.scrollHeight + 'px';
+            container.style.maxHeight = fullHeight;
+            const group = container.closest('.category-group');
+            const onTransitionEnd = () => {
+                if (group && group.classList.contains('expanded')) {
+                    container.style.maxHeight = 'none';
+                }
+                container.removeEventListener('transitionend', onTransitionEnd);
+            };
+            container.addEventListener('transitionend', onTransitionEnd, { once: true });
+        });
+    }
+
     bindEvents() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
@@ -170,11 +193,38 @@ class CompactSidebar {
         if (!categoryGroup) return;
         const categoryName = categoryGroup.dataset.category;
         const category = this.categories.find(cat => cat.name === categoryName);
-        if (category) {
-            category.expanded = !category.expanded;
-            categoryGroup.classList.toggle('expanded', category.expanded);
-            this.saveExpandedState();
+        if (!category) return;
+
+        const itemsContainer = categoryGroup.querySelector('.category-items');
+        if (!itemsContainer) return;
+
+        if (category.expanded) {
+            // 收起：将 max-height 设为 null（恢复为 0），移除 expanded 类
+            itemsContainer.style.maxHeight = null;
+            category.expanded = false;
+            categoryGroup.classList.remove('expanded');
+        } else {
+            // 展开：先添加 expanded 类，临时设为 'none' 获取高度
+            categoryGroup.classList.add('expanded');
+            itemsContainer.style.maxHeight = 'none';
+            const fullHeight = itemsContainer.scrollHeight + 'px';
+            // 重置为 0 以触发过渡
+            itemsContainer.style.maxHeight = '0';
+            // 强制重绘
+            void itemsContainer.offsetHeight;
+            itemsContainer.style.maxHeight = fullHeight;
+            category.expanded = true;
+            
+            // 过渡结束后清除内联样式，避免影响下次收起
+            const onTransitionEnd = () => {
+                if (category.expanded) {
+                    itemsContainer.style.maxHeight = 'none';
+                }
+                itemsContainer.removeEventListener('transitionend', onTransitionEnd);
+            };
+            itemsContainer.addEventListener('transitionend', onTransitionEnd, { once: true });
         }
+        this.saveExpandedState();
     }
 
     handleCategoryItemClick(item) {
