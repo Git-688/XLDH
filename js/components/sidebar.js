@@ -1,6 +1,6 @@
 /**
- * 侧边栏组件 - 毛玻璃效果（最终修复底部遮挡版）
- * 功能：动态计算最大高度，确保底部按钮始终可见
+ * 侧边栏组件 - 毛玻璃效果（最终修复：动态设置 height，确保底部可见）
+ * 功能：动态计算高度，底部按钮始终可见，内部滚动正常
  */
 class CompactSidebar {
     constructor() {
@@ -115,7 +115,7 @@ class CompactSidebar {
             this.updateDimensions();
             window.addEventListener('resize', this.throttledUpdate);
             window.addEventListener('orientationchange', this.updateDimensions);
-            window.addEventListener('scroll', this.throttledUpdate); // 滚动时重新计算（处理移动端地址栏变化）
+            window.addEventListener('scroll', this.throttledUpdate); // 移动端地址栏变化时重新计算
             this.isInitialized = true;
             window.sidebar = this;
         } catch (error) {
@@ -157,11 +157,12 @@ class CompactSidebar {
         let bottomVal = parseFloat(computedStyle.bottom);
         if (isNaN(bottomVal)) bottomVal = 16; // 默认 16px
 
-        // 计算最大高度 = 视口高度 - top - bottom
+        // 计算固定高度 = 视口高度 - top - bottom
         const viewportHeight = window.innerHeight;
-        const maxHeight = viewportHeight - topOffset - bottomVal;
-        if (maxHeight > 0) {
-            sidebar.style.maxHeight = `${maxHeight}px`;
+        const targetHeight = viewportHeight - topOffset - bottomVal;
+        if (targetHeight > 0) {
+            sidebar.style.height = `${targetHeight}px`;
+            sidebar.style.maxHeight = 'none'; // 清除任何 max-height 干扰
         }
     }
 
