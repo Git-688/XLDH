@@ -1,5 +1,6 @@
 /**
- * 侧边栏组件 - 毛玻璃效果 + 底部高于浏览器工具栏（最终完整修复版）
+ * 侧边栏组件 - 毛玻璃效果（修复版）
+ * 功能：顶部与壁纸持平、底部由 CSS 自动处理、左侧间距一致、滚动保持
  */
 class CompactSidebar {
     constructor() {
@@ -70,17 +71,16 @@ class CompactSidebar {
         ];
 
         this.isInitialized = false;
+        this.currentVideo = null;
+        this.videoCache = null;
+        this.lastVideoDate = null;
         this.savedScrollY = 0;
         this.modalRegistered = false;
         this.defaultAvatar = './assets/logo.png';
         this.resizeObserver = null;
-        this.bingWallpaperCache = null;
-        this.bingCacheDate = null;
-        this.lastWindowHeight = window.innerHeight;
 
         this.updateDimensions = this.updateDimensions.bind(this);
         this.throttledUpdate = this.throttle(this.updateDimensions, 100);
-        this.handleWindowResize = this.handleWindowResize.bind(this);
     }
 
     throttle(fn, delay) {
@@ -113,8 +113,7 @@ class CompactSidebar {
             this.createProfileModal();
             this.initResizeObserver();
             this.updateDimensions();
-            await this.loadBingWallpaper();
-            window.addEventListener('resize', this.handleWindowResize);
+            window.addEventListener('resize', this.throttledUpdate);
             window.addEventListener('orientationchange', this.updateDimensions);
             this.isInitialized = true;
             window.sidebar = this;
@@ -135,9 +134,14 @@ class CompactSidebar {
     updateDimensions() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
-        const navbarHeight = 60;
-        let wallpaperTop = 0;
+
+        // 动态获取导航栏实际高度
+        const navbar = document.querySelector('.navbar');
+        const navbarHeight = navbar ? navbar.offsetHeight : 60;
+
+        // 计算壁纸区域的上边距（margin-top + padding-top）
         const wallpaperSection = document.querySelector('.wallpaper-section');
+        let wallpaperTop = 0;
         if (wallpaperSection) {
             const style = window.getComputedStyle(wallpaperSection);
             const marginTop = parseFloat(style.marginTop) || 0;
@@ -146,28 +150,6 @@ class CompactSidebar {
         }
         const topOffset = navbarHeight + wallpaperTop;
         sidebar.style.top = `${topOffset}px`;
-
-        // 动态计算最大高度，确保底部留出安全空间
-        const windowHeight = window.innerHeight;
-        const safeBottom = this.isMobile() ? 70 : 40;
-        let maxHeight = windowHeight - topOffset - safeBottom;
-        if (maxHeight < 200) maxHeight = 200;
-        sidebar.style.maxHeight = `${maxHeight}px`;
-        sidebar.style.overflowY = 'auto';
-    }
-
-    handleWindowResize() {
-        const newHeight = window.innerHeight;
-        if (Math.abs(newHeight - this.lastWindowHeight) > 50) {
-            this.lastWindowHeight = newHeight;
-            this.updateDimensions();
-            if (this.isVisible()) {
-                const categoriesContainer = document.querySelector('.categories-container');
-                if (categoriesContainer) {
-                    categoriesContainer.style.maxHeight = '';
-                }
-            }
-        }
     }
 
     loadExpandedState() {
@@ -207,7 +189,7 @@ class CompactSidebar {
                             <i class="fas fa-chevron-down"></i>
                         </button>
                     </div>
-                    <div class="category-items">
+                    <div class="category-items" style="max-height: ${category.expanded ? '500px' : '0'}">
                         ${category.items.map(item => `
                             <button class="category-item" data-action="${item.action || ''}" data-link="${item.link || ''}">
                                 <div class="category-icon">
@@ -243,6 +225,11 @@ class CompactSidebar {
                 this.openProfileModal();
             }
         });
+        document.addEventListener('click', (e) => {
+            if (sidebar.classList.contains('active') && !sidebar.contains(e.target) && !document.getElementById('menuBtn')?.contains(e.target)) {
+                this.hide();
+            }
+        });
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isVisible()) this.hide();
         });
@@ -255,6 +242,10 @@ class CompactSidebar {
         if (category) {
             category.expanded = !category.expanded;
             categoryGroup.classList.toggle('expanded', category.expanded);
+            const itemsContainer = categoryGroup.querySelector('.category-items');
+            if (itemsContainer) {
+                itemsContainer.style.maxHeight = category.expanded ? itemsContainer.scrollHeight + 'px' : '0';
+            }
             this.saveExpandedState();
         }
     }
@@ -296,44 +287,37 @@ class CompactSidebar {
         }
     }
 
-    isMobile() {
-        return window.innerWidth <= 768;
-    }
-
     show() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar || this.isVisible()) return;
         this.updateDimensions();
-
-        if (this.isMobile()) {
-            this.savedScrollY = window.scrollY;
-            document.body.classList.add('sidebar-open');
-            document.body.style.top = `-${this.savedScrollY}px`;
-        }
-
+        this.savedScrollY = window.scrollY;
+        document.body.classList.add('sidebar-open');
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${this.savedScrollY}px`;
+        document.body.style.width = '100%';
         sidebar.classList.add('active');
         if (window.app && !this.modalRegistered) {
             window.app.registerModal(this);
             this.modalRegistered = true;
         }
-        this.loadBingWallpaper();
+        this.loadSidebarWallpaper();
     }
 
     hide() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar || !this.isVisible()) return;
         sidebar.classList.remove('active');
-
-        if (this.isMobile()) {
-            document.body.classList.remove('sidebar-open');
-            document.body.style.top = '';
-            window.scrollTo(0, this.savedScrollY);
-        }
-
+        document.body.classList.remove('sidebar-open');
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, this.savedScrollY);
         if (window.app && this.modalRegistered) {
             window.app.unregisterModal(this);
             this.modalRegistered = false;
         }
+        if (this.currentVideo) this.currentVideo.pause();
     }
 
     toggle() {
@@ -345,76 +329,88 @@ class CompactSidebar {
         return sidebar ? sidebar.classList.contains('active') : false;
     }
 
-    async fetchBingWallpaper() {
-        try {
-            const response = await fetch('https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN');
-            if (!response.ok) throw new Error('Bing API 失败');
-            const data = await response.json();
-            if (!data.images || !data.images.length) throw new Error('无图片数据');
-            const img = data.images[0];
-            const imageUrl = 'https://cn.bing.com' + img.url;
-            let title = img.copyright || '必应每日壁纸';
-            title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
-            if (!title) title = '星聚导航';
-            return { url: imageUrl, title: title, success: true };
-        } catch (error) {
-            console.error('获取必应壁纸失败:', error);
-            return { url: '', title: '默认壁纸', success: false };
-        }
-    }
-
-    async loadBingWallpaper() {
+    async loadSidebarWallpaper() {
+        const dayOfWeek = new Date().getDay();
+        const mediaInfo = this.getLocalWallpaper(dayOfWeek);
         const today = new Date().toDateString();
-        if (this.bingWallpaperCache && this.bingCacheDate === today) {
-            this.setWallpaperImage(this.bingWallpaperCache);
+        if (this.videoCache && this.lastVideoDate === today) {
+            const sidebarWallpaper = document.getElementById('sidebarWallpaper');
+            if (sidebarWallpaper && this.videoCache.parentNode !== sidebarWallpaper) {
+                const oldVideo = sidebarWallpaper.querySelector('video');
+                if (oldVideo) oldVideo.remove();
+                sidebarWallpaper.appendChild(this.videoCache);
+                this.currentVideo = this.videoCache;
+            }
             return;
         }
+        await this.setVideoWallpaper(mediaInfo.url);
+        this.lastVideoDate = today;
+    }
 
-        const result = await this.fetchBingWallpaper();
-        if (result.success && result.url) {
-            this.bingWallpaperCache = result.url;
-            this.bingCacheDate = today;
-            this.setWallpaperImage(result.url);
-        } else {
-            const sidebarWallpaper = document.getElementById('sidebarWallpaper');
-            if (sidebarWallpaper) {
-                sidebarWallpaper.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-                const oldImg = sidebarWallpaper.querySelector('.sidebar-bing-img');
-                if (oldImg) oldImg.remove();
+    getLocalWallpaper(dayOfWeek) {
+        const videoWallpapers = {
+            0: './assets/wallpapers/sunday.mp4',
+            1: './assets/wallpapers/monday.mp4',
+            2: './assets/wallpapers/tuesday.mp4',
+            3: './assets/wallpapers/wednesday.mp4',
+            4: './assets/wallpapers/thursday.mp4',
+            5: './assets/wallpapers/friday.mp4',
+            6: './assets/wallpapers/saturday.mp4'
+        };
+        return { type: 'video', url: videoWallpapers[dayOfWeek] || './assets/wallpapers/monday.mp4' };
+    }
+
+    async setVideoWallpaper(videoUrl) {
+        const sidebarWallpaper = document.getElementById('sidebarWallpaper');
+        if (!sidebarWallpaper) return;
+        if (this.currentVideo && this.currentVideo.parentNode) {
+            this.currentVideo.remove();
+        }
+        try {
+            const video = document.createElement('video');
+            video.src = videoUrl;
+            video.autoplay = true;
+            video.muted = true;
+            video.loop = true;
+            video.playsInline = true;
+            video.preload = "auto";
+            video.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                z-index: 0;
+            `;
+            video.setAttribute('autoplay', 'true');
+            video.setAttribute('muted', 'true');
+            video.setAttribute('loop', 'true');
+            video.setAttribute('playsinline', 'true');
+            video.onerror = () => this.setFallbackBackground();
+            sidebarWallpaper.appendChild(video);
+            this.currentVideo = video;
+            this.videoCache = video;
+            const overlay = sidebarWallpaper.querySelector('.sidebar-wallpaper-overlay');
+            if (overlay) overlay.style.zIndex = '1';
+            const userInfo = sidebarWallpaper.querySelector('.sidebar-wallpaper-user-info');
+            if (userInfo) userInfo.style.zIndex = '2';
+            try {
+                await video.play();
+            } catch (e) {
+                this.setFallbackBackground();
             }
+        } catch (error) {
+            this.setFallbackBackground();
         }
     }
 
-    setWallpaperImage(imageUrl) {
+    setFallbackBackground() {
         const sidebarWallpaper = document.getElementById('sidebarWallpaper');
-        if (!sidebarWallpaper) return;
-        const oldMedia = sidebarWallpaper.querySelector('.sidebar-bing-img, video');
-        if (oldMedia) oldMedia.remove();
-
-        const img = document.createElement('img');
-        img.src = imageUrl;
-        img.className = 'sidebar-bing-img';
-        img.alt = '壁纸';
-        img.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 0;
-        `;
-        img.onerror = () => {
-            console.warn('必应壁纸加载失败，使用降级背景');
+        if (sidebarWallpaper) {
+            if (this.currentVideo) this.currentVideo.remove();
             sidebarWallpaper.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-            if (img.parentNode) img.remove();
-        };
-        sidebarWallpaper.appendChild(img);
-
-        const overlay = sidebarWallpaper.querySelector('.sidebar-wallpaper-overlay');
-        if (overlay) overlay.style.zIndex = '1';
-        const userInfo = sidebarWallpaper.querySelector('.sidebar-wallpaper-user-info');
-        if (userInfo) userInfo.style.zIndex = '2';
+        }
     }
 
     adjustWallpaperSize() {
@@ -424,11 +420,10 @@ class CompactSidebar {
         const sidebarWidth = sidebar.offsetWidth;
         wallpaper.style.width = `${sidebarWidth}px`;
         wallpaper.style.maxWidth = '100%';
-        const img = wallpaper.querySelector('.sidebar-bing-img');
-        if (img) {
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'cover';
+        if (this.currentVideo) {
+            this.currentVideo.style.width = '100%';
+            this.currentVideo.style.height = '100%';
+            this.currentVideo.style.objectFit = 'contain';
         }
     }
 
@@ -620,6 +615,11 @@ class CompactSidebar {
         modal.classList.add('active');
     }
 
+    hideProfileModal() {
+        const modal = document.getElementById('profileModal');
+        if (modal) modal.classList.remove('active');
+    }
+
     escapeHtml(str) {
         if (!str) return '';
         const div = document.createElement('div');
@@ -629,8 +629,9 @@ class CompactSidebar {
 
     destroy() {
         this.hide();
+        if (this.currentVideo) this.currentVideo.pause();
         if (this.resizeObserver) this.resizeObserver.disconnect();
-        window.removeEventListener('resize', this.handleWindowResize);
+        window.removeEventListener('resize', this.throttledUpdate);
         window.removeEventListener('orientationchange', this.updateDimensions);
         if (window.app && this.modalRegistered) window.app.unregisterModal(this);
     }
