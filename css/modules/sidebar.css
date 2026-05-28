@@ -20,7 +20,7 @@
     user-select: none;
     -webkit-user-select: none;
     transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
-    /* 移除 max-height，改为 top/bottom 控制 */
+    /* 移除 max-height，改为 top/bottom 控制 + JS 动态 max-height */
 }
 
 .sidebar.active {
