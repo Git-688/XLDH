@@ -1,6 +1,6 @@
 /**
- * 侧边栏组件 - 毛玻璃效果（修复版）
- * 功能：顶部与壁纸持平、底部由 CSS 自动处理、左侧间距一致、滚动保持
+ * 侧边栏组件 - 毛玻璃效果（最终修复底部遮挡版）
+ * 功能：动态计算最大高度，确保底部按钮始终可见
  */
 class CompactSidebar {
     constructor() {
@@ -115,6 +115,7 @@ class CompactSidebar {
             this.updateDimensions();
             window.addEventListener('resize', this.throttledUpdate);
             window.addEventListener('orientationchange', this.updateDimensions);
+            window.addEventListener('scroll', this.throttledUpdate); // 滚动时重新计算（处理移动端地址栏变化）
             this.isInitialized = true;
             window.sidebar = this;
         } catch (error) {
@@ -150,6 +151,18 @@ class CompactSidebar {
         }
         const topOffset = navbarHeight + wallpaperTop;
         sidebar.style.top = `${topOffset}px`;
+
+        // 获取 CSS 中定义的 bottom 值（包括安全区）
+        const computedStyle = window.getComputedStyle(sidebar);
+        let bottomVal = parseFloat(computedStyle.bottom);
+        if (isNaN(bottomVal)) bottomVal = 16; // 默认 16px
+
+        // 计算最大高度 = 视口高度 - top - bottom
+        const viewportHeight = window.innerHeight;
+        const maxHeight = viewportHeight - topOffset - bottomVal;
+        if (maxHeight > 0) {
+            sidebar.style.maxHeight = `${maxHeight}px`;
+        }
     }
 
     loadExpandedState() {
@@ -633,6 +646,7 @@ class CompactSidebar {
         if (this.resizeObserver) this.resizeObserver.disconnect();
         window.removeEventListener('resize', this.throttledUpdate);
         window.removeEventListener('orientationchange', this.updateDimensions);
+        window.removeEventListener('scroll', this.throttledUpdate);
         if (window.app && this.modalRegistered) window.app.unregisterModal(this);
     }
 }
