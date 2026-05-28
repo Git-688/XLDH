@@ -1,7 +1,6 @@
 /**
- * 侧边栏组件 - 悬浮卡片式，独立滚动，无遮罩，点击外部关闭
- * 修复：展开/收起动画一致（动态高度过渡）
- * 底部按钮仅图标，彩色
+ * 侧边栏组件 - 保留原始 HTML 结构，只更新动态内容
+ * 修复：确保壁纸区域、用户信息不丢失，定位正确
  */
 class CompactSidebar {
   constructor() {
@@ -53,10 +52,6 @@ class CompactSidebar {
     this.wallpaperDate = null;
   }
 
-  getDefaultAvatarSVG() {
-    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
-  }
-
   async init() {
     if (this.isInitialized) return;
     try {
@@ -64,7 +59,8 @@ class CompactSidebar {
         await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
       }
       this.loadExpandedState();
-      this.render();
+      this.renderCategories();      // 只渲染分类列表
+      this.renderFooter();          // 只渲染底部按钮
       this.bindEvents();
       await this.loadUserData();
       await this.loadDailyQuote();
@@ -99,61 +95,61 @@ class CompactSidebar {
     Storage.set('sidebar_categories_state', stateToSave);
   }
 
-  render() {
-    const sidebar = document.getElementById('sidebar');
-    if (!sidebar) return;
-    const categoriesContainer = sidebar.querySelector('.sidebar-categories');
-    if (categoriesContainer) {
-      let html = '';
-      for (let i = 0; i < this.categories.length; i++) {
-        const category = this.categories[i];
-        const expandedClass = category.expanded ? 'expanded' : '';
-        const categoryName = this.escapeHtml(category.name);
-        let itemsHtml = '';
-        for (let j = 0; j < category.items.length; j++) {
-          const item = category.items[j];
-          const action = item.action || '';
-          const link = item.link || '';
-          const icon = item.icon;
-          const label = this.escapeHtml(item.label);
-          const badgeHtml = item.badge ? `<div class="category-badge">${this.escapeHtml(item.badge)}</div>` : '';
-          itemsHtml += `
-            <button class="category-item" data-action="${action}" data-link="${link}">
-              <div class="category-icon"><i class="${icon}"></i></div>
-              <div class="category-label">${label}</div>
-              ${badgeHtml}
-            </button>
-          `;
-        }
-        html += `
-          <div class="category-group ${expandedClass}" data-category="${categoryName}">
-            <div class="category-group-header">
-              <div class="category-group-name">
-                <div class="category-group-icon"><i class="${category.icon}"></i></div>
-                <span>${categoryName}</span>
-              </div>
-              <button class="category-toggle" aria-label="${category.expanded ? '收起' : '展开'}">
-                <i class="fas fa-chevron-down"></i>
-              </button>
-            </div>
-            <div class="category-items">
-              ${itemsHtml}
-            </div>
-          </div>
+  // 只渲染分类列表，不破坏壁纸区域和用户信息区域
+  renderCategories() {
+    const container = document.querySelector('.sidebar-categories');
+    if (!container) return;
+    let html = '';
+    for (let i = 0; i < this.categories.length; i++) {
+      const category = this.categories[i];
+      const expandedClass = category.expanded ? 'expanded' : '';
+      const categoryName = this.escapeHtml(category.name);
+      let itemsHtml = '';
+      for (let j = 0; j < category.items.length; j++) {
+        const item = category.items[j];
+        const action = item.action || '';
+        const link = item.link || '';
+        const icon = item.icon;
+        const label = this.escapeHtml(item.label);
+        const badgeHtml = item.badge ? `<div class="category-badge">${this.escapeHtml(item.badge)}</div>` : '';
+        itemsHtml += `
+          <button class="category-item" data-action="${action}" data-link="${link}">
+            <div class="category-icon"><i class="${icon}"></i></div>
+            <div class="category-label">${label}</div>
+            ${badgeHtml}
+          </button>
         `;
       }
-      categoriesContainer.innerHTML = html;
-    }
-
-    const footer = sidebar.querySelector('.sidebar-footer');
-    if (footer) {
-      footer.innerHTML = `
-        <button class="footer-btn" data-action="notebook"><i class="fas fa-pen"></i></button>
-        <button class="footer-btn" data-action="gift"><i class="fas fa-gift"></i></button>
-        <button class="footer-btn" data-action="about"><i class="fas fa-info-circle"></i></button>
-        <button class="footer-btn" data-action="qq"><i class="fab fa-qq"></i></button>
+      html += `
+        <div class="category-group ${expandedClass}" data-category="${categoryName}">
+          <div class="category-group-header">
+            <div class="category-group-name">
+              <div class="category-group-icon"><i class="${category.icon}"></i></div>
+              <span>${categoryName}</span>
+            </div>
+            <button class="category-toggle" aria-label="${category.expanded ? '收起' : '展开'}">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </div>
+          <div class="category-items">
+            ${itemsHtml}
+          </div>
+        </div>
       `;
     }
+    container.innerHTML = html;
+  }
+
+  // 只渲染底部按钮，保留原始按钮的 data-action
+  renderFooter() {
+    const footer = document.querySelector('.sidebar-footer');
+    if (!footer) return;
+    footer.innerHTML = `
+      <button class="footer-btn" data-action="notebook"><i class="fas fa-pen"></i></button>
+      <button class="footer-btn" data-action="gift"><i class="fas fa-gift"></i></button>
+      <button class="footer-btn" data-action="about"><i class="fas fa-info-circle"></i></button>
+      <button class="footer-btn" data-action="qq"><i class="fab fa-qq"></i></button>
+    `;
   }
 
   syncExpandedHeights() {
@@ -179,6 +175,7 @@ class CompactSidebar {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
 
+    // 事件委托处理分类展开/收起、分类项点击、底部按钮点击、头像点击
     sidebar.addEventListener('click', (e) => {
       const categoryHeader = e.target.closest('.category-group-header');
       const categoryItem = e.target.closest('.category-item');
@@ -197,6 +194,7 @@ class CompactSidebar {
       }
     });
 
+    // 点击外部关闭侧滑栏
     document.addEventListener('click', (e) => {
       const sidebarEl = document.getElementById('sidebar');
       const menuBtn = document.getElementById('menuBtn');
@@ -236,7 +234,6 @@ class CompactSidebar {
       itemsContainer.style.maxHeight = 'none';
       const fullHeight = itemsContainer.scrollHeight + 'px';
       itemsContainer.style.maxHeight = '0';
-      // 强制重绘
       void itemsContainer.offsetHeight;
       itemsContainer.style.maxHeight = fullHeight;
       category.expanded = true;
