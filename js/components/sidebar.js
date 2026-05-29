@@ -1,5 +1,6 @@
 /**
- * 侧边栏组件 - 修复滚动锁定、初始化时移除多余 active 类
+ * 侧边栏组件 - 最终修复版
+ * 修复：初始化时移除残留 active 类；show 中不再重复关闭其他模态框；滚动锁定优化
  */
 class CompactSidebar {
   constructor() {
@@ -69,7 +70,7 @@ class CompactSidebar {
       this.createProfileModal();
       this.syncExpandedHeights();
 
-      // 修复：初始化时确保侧滑栏不处于激活状态
+      // 确保初始化后侧滑栏不处于激活状态
       const sidebarEl = document.getElementById('sidebar');
       if (sidebarEl) sidebarEl.classList.remove('active');
 
@@ -297,10 +298,8 @@ class CompactSidebar {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar || this.isVisible()) return;
 
-    if (window.app && window.app.closeAllModalsExcept) {
-      window.app.closeAllModalsExcept(['sidebar']);
-    }
-
+    // 注意：这里不再调用 closeAllModalsExcept，因为 navbar 已经处理过了
+    // 避免重复关闭导致状态混乱
     this.bodyScrollTop = window.scrollY;
     document.body.classList.add('sidebar-open');
     document.body.style.top = `-${this.bodyScrollTop}px`;
