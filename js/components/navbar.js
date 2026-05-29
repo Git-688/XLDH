@@ -1,3 +1,7 @@
+/**
+ * 导航栏组件 - 修复侧滑栏弹出延迟问题
+ * 修复点：handleFeatureToggle 中移除 requestAnimationFrame，改为同步调用
+ */
 class Navbar {
     constructor() {
         if (window.navbar && window.navbar instanceof Navbar) return window.navbar;
@@ -54,7 +58,6 @@ class Navbar {
             });
         }
 
-        // 汉堡菜单：等待侧边栏就绪
         const menuBtn = document.getElementById('menuBtn');
         if (menuBtn) {
             const waitForSidebar = () => {
@@ -109,15 +112,14 @@ class Navbar {
         if (btt) btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
+    // 修复核心：移除 requestAnimationFrame，同步执行，避免延迟导致的状态错误
     handleFeatureToggle(featureKey, toggleFn) {
         const isOpen = this.isFeatureOpen(featureKey);
         if (isOpen) {
             toggleFn();
         } else {
             this.closeAllModalsExcept([featureKey]);
-            requestAnimationFrame(() => {
-                toggleFn();
-            });
+            toggleFn();  // 直接同步调用，不再使用 requestAnimationFrame
         }
     }
 
