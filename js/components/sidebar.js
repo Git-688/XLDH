@@ -391,7 +391,7 @@
             } else if (screenWidth >= 768) {
                 extraOffset = 16;   // 平板（768-991px）
             } else {
-                extraOffset = 12;   // 手机（<768px）
+                extraOffset = 16;   // 手机（<768px）
             }
             
             this.sidebarEl.style.top = `${topPos + extraOffset}px`;
