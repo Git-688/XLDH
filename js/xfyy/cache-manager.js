@@ -1,95 +1,59 @@
 /**
- * 缓存管理器
+ * 缓存管理器 - 增加 LRU 清理策略
  */
-
 class CacheManager {
     constructor() {
         this.prefix = 'music_player_';
-        this.defaultTTL = 24 * 60 * 60 * 1000; // 24小时
-        this.maxSize = 4 * 1024 * 1024; // 最大缓存 4MB
+        this.defaultTTL = 24 * 60 * 60 * 1000;
+        this.maxSize = 4 * 1024 * 1024;
         this.cacheStats = this.loadStats();
-        this.activeCache = new Set(); // 记录正在使用的缓存键
+        this.activeCache = new Set();
+        this.accessOrder = []; // LRU 访问顺序
     }
 
-    /**
-     * 加载缓存统计信息
-     */
     loadStats() {
         try {
-            return JSON.parse(localStorage.getItem(this.prefix + 'cache_stats')) || {
-                hits: 0,
-                misses: 0,
-                size: 0
-            };
-        } catch {
-            return { hits: 0, misses: 0, size: 0 };
-        }
+            return JSON.parse(localStorage.getItem(this.prefix + 'cache_stats')) || { hits: 0, misses: 0, size: 0 };
+        } catch { return { hits: 0, misses: 0, size: 0 }; }
     }
 
-    /**
-     * 保存缓存统计信息
-     */
     saveStats() {
-        try {
-            localStorage.setItem(this.prefix + 'cache_stats', JSON.stringify(this.cacheStats));
-        } catch (error) {
-            console.warn('保存缓存统计失败:', error);
-        }
+        try { localStorage.setItem(this.prefix + 'cache_stats', JSON.stringify(this.cacheStats)); } catch(e) {}
     }
 
-    /**
-     * 估算当前存储总用量
-     */
     estimateTotalSize() {
         let total = 0;
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key.startsWith(this.prefix)) {
+            if (key?.startsWith(this.prefix)) {
                 const item = localStorage.getItem(key);
-                total += item ? item.length * 2 : 0; // 粗略估计 UTF-16
+                total += item ? item.length * 2 : 0;
             }
         }
         return total;
     }
 
-    /**
-     * 生成缓存键
-     */
-    generateKey(type, id) {
-        return `${this.prefix}${type}_${id}`;
-    }
+    generateKey(type, id) { return `${this.prefix}${type}_${id}`; }
 
-    /**
-     * 设置缓存并标记为活跃
-     */
     set(key, data, ttl = this.defaultTTL) {
         try {
             const storageKey = this.generateKey('data', key);
-            const cacheItem = {
-                data: data,
-                timestamp: Date.now(),
-                ttl: ttl
-            };
-            
+            const cacheItem = { data, timestamp: Date.now(), ttl };
             const serialized = JSON.stringify(cacheItem);
-            const itemSize = serialized.length * 2; // 近似字节
-
-            // 检查容量，如果超过限制则触发清理
-            if (this.estimateTotalSize() + itemSize > this.maxSize) {
-                console.warn('缓存容量接近上限，正在清理过期缓存...');
-                this.cleanup(true); // 强制清理所有过期和部分较旧缓存
-                if (this.estimateTotalSize() + itemSize > this.maxSize) {
-                    // 仍然不够，移除最旧的几个缓存
-                    this.evictOldest(5);
+            const itemSize = serialized.length * 2;
+            let totalSize = this.estimateTotalSize();
+            if (totalSize + itemSize > this.maxSize) {
+                this.cleanup(true);
+                totalSize = this.estimateTotalSize();
+                if (totalSize + itemSize > this.maxSize) {
+                    this.evictLRU(5);
                 }
             }
-
             localStorage.setItem(storageKey, serialized);
             this.activeCache.add(storageKey);
-            
+            this.updateAccessOrder(storageKey);
             this.cacheStats.size += itemSize;
             this.saveStats();
-            
             return true;
         } catch (error) {
             console.warn('缓存设置失败:', error);
@@ -97,29 +61,23 @@ class CacheManager {
         }
     }
 
-    /**
-     * 获取缓存并标记为活跃
-     */
     get(key) {
         try {
             const storageKey = this.generateKey('data', key);
             const cached = localStorage.getItem(storageKey);
-            
             if (!cached) {
                 this.cacheStats.misses++;
                 this.saveStats();
                 return null;
             }
-
             const cacheItem = JSON.parse(cached);
-            
             if (Date.now() - cacheItem.timestamp > cacheItem.ttl) {
                 this.remove(key);
                 this.cacheStats.misses++;
                 this.saveStats();
                 return null;
             }
-
+            this.updateAccessOrder(storageKey);
             this.activeCache.add(storageKey);
             this.cacheStats.hits++;
             this.saveStats();
@@ -132,137 +90,81 @@ class CacheManager {
         }
     }
 
-    /**
-     * 删除缓存
-     */
+    updateAccessOrder(storageKey) {
+        const idx = this.accessOrder.indexOf(storageKey);
+        if (idx !== -1) this.accessOrder.splice(idx, 1);
+        this.accessOrder.push(storageKey);
+    }
+
+    evictLRU(count = 5) {
+        const toRemove = this.accessOrder.splice(0, Math.min(count, this.accessOrder.length));
+        for (const key of toRemove) {
+            localStorage.removeItem(key);
+            this.activeCache.delete(key);
+            const item = localStorage.getItem(key);
+            if (item) this.cacheStats.size -= item.length * 2;
+        }
+        this.saveStats();
+    }
+
     remove(key) {
         try {
             const storageKey = this.generateKey('data', key);
             const cached = localStorage.getItem(storageKey);
-            
-            if (cached) {
-                this.cacheStats.size -= cached.length * 2;
-            }
-            
+            if (cached) this.cacheStats.size -= cached.length * 2;
             localStorage.removeItem(storageKey);
             this.activeCache.delete(storageKey);
+            const idx = this.accessOrder.indexOf(storageKey);
+            if (idx !== -1) this.accessOrder.splice(idx, 1);
             this.saveStats();
             return true;
-        } catch (error) {
-            console.warn('缓存删除失败:', error);
-            return false;
-        }
+        } catch { return false; }
     }
 
-    /**
-     * 清理过期缓存（优先清理非活跃缓存）
-     */
     cleanup(force = false) {
-        try {
-            const keysToRemove = [];
-            let totalFreed = 0;
-
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith(this.prefix + 'data_')) {
-                    try {
-                        const cached = localStorage.getItem(key);
-                        const cacheItem = JSON.parse(cached);
-                        
-                        const isExpired = Date.now() - cacheItem.timestamp > cacheItem.ttl;
-                        const isActive = this.activeCache.has(key);
-                        
-                        if ((isExpired && !isActive) || (force && isExpired)) {
-                            keysToRemove.push(key);
-                            totalFreed += cached.length * 2;
-                        }
-                    } catch {
-                        keysToRemove.push(key);
-                    }
-                }
-            }
-
-            keysToRemove.forEach(key => {
-                localStorage.removeItem(key);
-            });
-
-            if (keysToRemove.length > 0) {
-                this.cacheStats.size -= totalFreed;
-                this.saveStats();
-            }
-
-            return keysToRemove.length;
-        } catch (error) {
-            console.warn('缓存清理失败:', error);
-            return 0;
-        }
-    }
-
-    /**
-     * 移除最旧的若干缓存条目
-     */
-    evictOldest(count = 5) {
-        const entries = [];
+        const now = Date.now();
+        const toRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith(this.prefix + 'data_')) {
                 try {
-                    const cached = JSON.parse(localStorage.getItem(key));
-                    entries.push({ key, timestamp: cached.timestamp || 0 });
-                } catch {}
+                    const cached = localStorage.getItem(key);
+                    const cacheItem = JSON.parse(cached);
+                    if (now - cacheItem.timestamp > cacheItem.ttl) {
+                        toRemove.push(key);
+                        this.cacheStats.size -= cached.length * 2;
+                    }
+                } catch { toRemove.push(key); }
             }
         }
-        entries.sort((a, b) => a.timestamp - b.timestamp);
-        const toRemove = entries.slice(0, count);
-        toRemove.forEach(item => {
-            localStorage.removeItem(item.key);
-            this.activeCache.delete(item.key);
+        toRemove.forEach(key => {
+            localStorage.removeItem(key);
+            this.activeCache.delete(key);
+            const idx = this.accessOrder.indexOf(key);
+            if (idx !== -1) this.accessOrder.splice(idx, 1);
         });
+        if (toRemove.length) this.saveStats();
+        return toRemove.length;
     }
 
-    /**
-     * 清空所有缓存
-     */
     clear() {
-        try {
-            const keysToRemove = [];
-            
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith(this.prefix)) {
-                    keysToRemove.push(key);
-                }
-            }
-
-            keysToRemove.forEach(key => {
-                localStorage.removeItem(key);
-            });
-
-            this.activeCache.clear();
-            this.cacheStats = { hits: 0, misses: 0, size: 0 };
-            this.saveStats();
-            
-            return true;
-        } catch (error) {
-            console.warn('缓存清空失败:', error);
-            return false;
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key?.startsWith(this.prefix)) keys.push(key);
         }
+        keys.forEach(k => localStorage.removeItem(k));
+        this.activeCache.clear();
+        this.accessOrder = [];
+        this.cacheStats = { hits: 0, misses: 0, size: 0 };
+        this.saveStats();
+        return true;
     }
 
-    /**
-     * 获取缓存统计
-     */
     getStats() {
-        return {
-            ...this.cacheStats,
-            hitRate: this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses) || 0,
-            activeCacheCount: this.activeCache.size
-        };
+        return { ...this.cacheStats, hitRate: this.cacheStats.hits / (this.cacheStats.hits+this.cacheStats.misses) || 0, activeCacheCount: this.activeCache.size };
     }
 
-    /**
-     * 预加载资源
-     */
     preloadResource(url, type = 'audio') {
         return new Promise((resolve, reject) => {
             if (type === 'audio') {
