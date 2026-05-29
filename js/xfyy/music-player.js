@@ -829,53 +829,22 @@ class MusicPlayer {
             fragment.appendChild(songItem);
         });
         container.appendChild(fragment);
-
-        const preloadCount = Math.min(5, playlist.length);
-        for (let i = 0; i < preloadCount; i++) {
-            const song = playlist[i];
-            if (song.cover) {
-                const img = new Image();
-                img.src = song.cover;
-            }
-        }
-        const songItems = container.querySelectorAll('.song-item');
-        songItems.forEach((item, index) => {
-            if (index < 5) return;
-            const coverImg = item.querySelector('img[data-src]');
-            if (coverImg && this.coverObserver) {
-                this.coverObserver.observe(coverImg);
-            }
-        });
         this.updateActiveSongInList();
     }
 
+    // 修改：移除封面图片，只显示标题和歌手
     createSongItem(song, index, playlist) {
         const songItem = document.createElement('div');
         songItem.className = 'song-item';
         if (this.currentPlaylist === playlist && index === this.currentIndex && this.isPlaying) {
             songItem.classList.add('active');
         }
-        const coverUrl = song.cover || '';
-        const coverHtml = coverUrl
-            ? `<img class="song-cover" data-src="${Utils.escapeHtml(coverUrl)}" alt="" loading="lazy">`
-            : '';
         songItem.innerHTML = `
-            ${coverHtml}
             <div class="song-item-info">
                 <div class="song-item-title">${Utils.escapeHtml(song.title || '未知歌曲')}</div>
                 <div class="song-item-artist">${Utils.escapeHtml(song.artist || '未知歌手')}</div>
             </div>
         `;
-        if (index < 5 && coverUrl) {
-            const img = songItem.querySelector('.song-cover');
-            if (img) {
-                img.src = coverUrl;
-                img.removeAttribute('data-src');
-            }
-        } else if (coverUrl && this.coverObserver) {
-            const img = songItem.querySelector('.song-cover');
-            if (img) this.coverObserver.observe(img);
-        }
         songItem.addEventListener('click', () => {
             this.loadSong(index, playlist);
             this.play();
@@ -899,6 +868,7 @@ class MusicPlayer {
         container.appendChild(fragment);
     }
 
+    // 修改：移除搜索结果的封面图片
     createSearchSongItem(song, index, results) {
         const songItem = document.createElement('div');
         songItem.className = 'song-item';
