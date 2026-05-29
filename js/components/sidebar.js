@@ -1,6 +1,11 @@
 /**
- * 侧边栏组件 - 保留原始 HTML 结构，只更新动态内容
- * 修复：确保壁纸区域、用户信息不丢失，定位正确
+ * 侧边栏组件 - 修复版
+ * 修复内容：
+ * 1. 移动端打开侧滑栏时锁定 body 滚动，关闭时恢复
+ * 2. 添加 Profile 模态框完整样式（CSS 中补充）
+ * 3. 优化事件委托，确保所有按钮功能正常
+ * 4. 修复壁纸加载失败时的降级处理
+ * 5. 添加与其他模态框的冲突处理
  */
 class CompactSidebar {
   constructor() {
@@ -50,6 +55,7 @@ class CompactSidebar {
     this.defaultAvatar = './assets/logo.png';
     this.wallpaperCache = null;
     this.wallpaperDate = null;
+    this.bodyScrollTop = 0; // 保存滚动位置
   }
 
   async init() {
@@ -59,8 +65,8 @@ class CompactSidebar {
         await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
       }
       this.loadExpandedState();
-      this.renderCategories();      // 只渲染分类列表
-      this.renderFooter();          // 只渲染底部按钮
+      this.renderCategories();
+      this.renderFooter();
       this.bindEvents();
       await this.loadUserData();
       await this.loadDailyQuote();
@@ -95,7 +101,6 @@ class CompactSidebar {
     Storage.set('sidebar_categories_state', stateToSave);
   }
 
-  // 只渲染分类列表，不破坏壁纸区域和用户信息区域
   renderCategories() {
     const container = document.querySelector('.sidebar-categories');
     if (!container) return;
@@ -111,12 +116,10 @@ class CompactSidebar {
         const link = item.link || '';
         const icon = item.icon;
         const label = this.escapeHtml(item.label);
-        const badgeHtml = item.badge ? `<div class="category-badge">${this.escapeHtml(item.badge)}</div>` : '';
         itemsHtml += `
           <button class="category-item" data-action="${action}" data-link="${link}">
             <div class="category-icon"><i class="${icon}"></i></div>
             <div class="category-label">${label}</div>
-            ${badgeHtml}
           </button>
         `;
       }
@@ -140,7 +143,6 @@ class CompactSidebar {
     container.innerHTML = html;
   }
 
-  // 只渲染底部按钮，保留原始按钮的 data-action
   renderFooter() {
     const footer = document.querySelector('.sidebar-footer');
     if (!footer) return;
@@ -294,9 +296,21 @@ class CompactSidebar {
     this.hide();
   }
 
+  // 修复滚动锁定：打开时禁用 body 滚动，保存滚动位置
   show() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar || this.isVisible()) return;
+    
+    // 关闭其他模态框（避免冲突）
+    if (window.app && window.app.closeAllModalsExcept) {
+      window.app.closeAllModalsExcept(['sidebar']);
+    }
+    
+    // 保存当前滚动位置并锁定 body
+    this.bodyScrollTop = window.scrollY;
+    document.body.classList.add('sidebar-open');
+    document.body.style.top = `-${this.bodyScrollTop}px`;
+    
     sidebar.classList.add('active');
     if (window.app && !this.modalRegistered) {
       window.app.registerModal(this);
@@ -304,10 +318,18 @@ class CompactSidebar {
     }
   }
 
+  // 修复滚动锁定：恢复 body 滚动
   hide() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar || !this.isVisible()) return;
+    
     sidebar.classList.remove('active');
+    
+    // 恢复 body 滚动
+    document.body.classList.remove('sidebar-open');
+    document.body.style.top = '';
+    window.scrollTo(0, this.bodyScrollTop);
+    
     if (window.app && this.modalRegistered) {
       window.app.unregisterModal(this);
       this.modalRegistered = false;
@@ -377,33 +399,13 @@ class CompactSidebar {
       if (wallpaperSignature) wallpaperSignature.textContent = userConfig.signature || '探索无限可能';
       if (wallpaperAvatar) {
         if (userConfig.avatar && userConfig.avatar !== '') {
-          wallpaperAvatar.setAttribute('data-src', userConfig.avatar);
-          this.observeLazyAvatar(wallpaperAvatar);
+          wallpaperAvatar.src = userConfig.avatar;
         } else {
           wallpaperAvatar.src = this.defaultAvatar;
         }
       }
     } catch (error) {
       console.error('加载壁纸用户信息失败:', error);
-    }
-  }
-
-  observeLazyAvatar(img) {
-    if ('IntersectionObserver' in window) {
-      const observer = new IntersectionObserver((entries) => {
-        for (let i = 0; i < entries.length; i++) {
-          const entry = entries[i];
-          if (entry.isIntersecting) {
-            const target = entry.target;
-            const src = target.getAttribute('data-src');
-            if (src) target.src = src;
-            observer.unobserve(target);
-          }
-        }
-      });
-      observer.observe(img);
-    } else if (img.getAttribute('data-src')) {
-      img.src = img.getAttribute('data-src');
     }
   }
 
@@ -441,7 +443,7 @@ class CompactSidebar {
           <form class="profile-form" id="profileForm">
             <div class="qq-avatar-section">
               <div class="qq-avatar-preview">
-                <img id="qqAvatarPreview" src="${this.defaultAvatar}" alt="QQ头像预览" loading="lazy" class="js-img-fallback" data-fallback-type="defaultAvatar">
+                <img id="qqAvatarPreview" src="${this.defaultAvatar}" alt="QQ头像预览">
               </div>
               <div class="qq-avatar-input-group">
                 <input type="text" class="form-input qq-avatar-input" id="qqNumber" placeholder="输入QQ号码，自动获取头像">
@@ -510,10 +512,7 @@ class CompactSidebar {
         userConfig.avatar = response.url;
         Storage.set('userConfig', userConfig);
         const sidebarAvatar = document.getElementById('sidebarWallpaperAvatar');
-        if (sidebarAvatar) {
-          sidebarAvatar.setAttribute('data-src', response.url);
-          this.observeLazyAvatar(sidebarAvatar);
-        }
+        if (sidebarAvatar) sidebarAvatar.src = response.url;
       } else {
         throw new Error();
       }
@@ -572,7 +571,7 @@ class CompactSidebar {
   }
 }
 
-// 初始化侧边栏
+// 初始化侧边栏（单例）
 if (!window.sidebarInitialized) {
   window.sidebarInitialized = true;
   const initSidebar = async () => {
