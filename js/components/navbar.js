@@ -1,12 +1,7 @@
-/**
- * 导航栏组件 - 最终修复版
- * 修复：移除 requestAnimationFrame，确保侧滑栏立即响应；避免重复绑定事件
- */
 class Navbar {
     constructor() {
         if (window.navbar && window.navbar instanceof Navbar) return window.navbar;
         this.announcements = [];
-        this.menuBound = false;   // 防止重复绑定汉堡菜单
         this.init();
         window.navbar = this;
     }
@@ -59,23 +54,35 @@ class Navbar {
             });
         }
 
-        // 汉堡菜单：使用标志位避免重复绑定
+        // ==================== 汉堡菜单：修复点两次问题 ====================
         const menuBtn = document.getElementById('menuBtn');
-        if (menuBtn && !this.menuBound) {
-            const waitForSidebar = () => {
-                if (window.sidebar && typeof window.sidebar.toggle === 'function') {
-                    menuBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        this.handleFeatureToggle('sidebar', () => window.sidebar.toggle());
-                    });
-                    this.menuBound = true;
-                } else {
-                    setTimeout(waitForSidebar, 100);
-                }
+        if (menuBtn) {
+            // 确保侧滑栏就绪的 Promise
+            const ensureSidebarReady = () => {
+                return new Promise((resolve) => {
+                    const check = () => {
+                        if (window.sidebar && typeof window.sidebar.toggle === 'function') {
+                            // 如果侧滑栏有 isInitialized 标志，等待其为 true
+                            if (window.sidebar.isInitialized === undefined || window.sidebar.isInitialized === true) {
+                                resolve();
+                            } else {
+                                setTimeout(check, 20);
+                            }
+                        } else {
+                            setTimeout(check, 20);
+                        }
+                    };
+                    check();
+                });
             };
-            waitForSidebar();
+            menuBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                await ensureSidebarReady(); // 等待侧滑栏完全就绪
+                this.handleFeatureToggle('sidebar', () => window.sidebar.toggle());
+            });
         }
+        // =============================================================
 
         const weatherBtn = document.getElementById('weatherBtn');
         if (weatherBtn) {
@@ -115,16 +122,15 @@ class Navbar {
         if (btt) btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
-    // 核心修复：同步执行，不再使用 requestAnimationFrame
     handleFeatureToggle(featureKey, toggleFn) {
         const isOpen = this.isFeatureOpen(featureKey);
         if (isOpen) {
             toggleFn();
         } else {
-            // 先关闭其他所有模态框（确保侧滑栏的关闭操作不会与打开冲突）
             this.closeAllModalsExcept([featureKey]);
-            // 直接同步打开
-            toggleFn();
+            requestAnimationFrame(() => {
+                toggleFn();
+            });
         }
     }
 
