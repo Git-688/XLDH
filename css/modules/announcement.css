@@ -1,12 +1,11 @@
-/* 公告模态框 - 亚克力效果 + 遮罩层从导航栏下方开始 */
+/* 公告模态框 - 无遮罩层，仅亚克力卡片浮层 */
 .announcement-modal-simple {
     position: fixed;
-    top: 60px;              /* 导航栏高度，从导航栏下方开始 */
+    top: 0;
     left: 0;
     width: 100%;
-    height: calc(100% - 60px); /* 减去导航栏高度 */
-    background: rgba(0, 0, 0, 0.3);    /* 半透明遮罩 */
-    backdrop-filter: blur(2px);
+    height: 100%;
+    background: transparent;      /* 移除遮罩背景 */
     z-index: 10000;
     opacity: 0;
     visibility: hidden;
