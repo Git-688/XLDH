@@ -1,6 +1,6 @@
-// sidebar.js - 现代悬浮侧滑栏（最终完整版）
+// sidebar.js - 现代悬浮侧滑栏（固定留白版，无动态计算）
 (function() {
-    // 分类数据
+    // 分类数据（保持不变）
     const CATEGORIES_DATA = [
         { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
             { icon: 'fas fa-mobile-alt', label: '手机软件', link: './pages/chl/手机软件.html' },
@@ -37,7 +37,7 @@
         ] }
     ];
 
-    // 底部按钮配置（只有图标，独立颜色）
+    // 底部按钮配置
     const FOOTER_BUTTONS = [
         { icon: 'fas fa-pen', action: 'notebook', color: '#8b5cf6' },
         { icon: 'fas fa-gift', action: 'gift', color: '#f97316' },
@@ -63,10 +63,7 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
-            this.adjustPosition();
             this.loadWallpaperBackground();
-            window.addEventListener('scroll', () => this.adjustPosition());
-            window.addEventListener('resize', () => this.adjustPosition());
             window.sidebar = this;
         }
 
@@ -385,25 +382,6 @@
             modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         }
 
-        adjustPosition() {
-            const wallpaperSection = document.querySelector('.wallpaper-section');
-            const navbar = document.getElementById('navbar');
-            if (!wallpaperSection || !this.sidebarEl) return;
-            const navbarHeight = navbar ? navbar.offsetHeight : 60;
-            const wallpaperRect = wallpaperSection.getBoundingClientRect();
-            const topOffset = wallpaperRect.top;
-            let newTop = topOffset;
-            if (newTop < navbarHeight) newTop = navbarHeight;
-            this.sidebarEl.style.top = `${newTop}px`;
-            const windowHeight = window.innerHeight;
-            const sidebarBottom = windowHeight - newTop - this.sidebarEl.offsetHeight;
-            if (sidebarBottom < 20) {
-                this.sidebarEl.style.bottom = '20px';
-            } else {
-                this.sidebarEl.style.bottom = '20px';
-            }
-        }
-
         saveExpandedState() {
             const state = this.categories.map(cat => ({ name: cat.name, expanded: cat.expanded }));
             Storage.set('sidebar_categories_state', state);
@@ -433,12 +411,7 @@
             if (this.isOpen) return;
             this.isOpen = true;
             this.sidebarEl.classList.add('active');
-            if (this.overlay) {
-                const navbar = document.getElementById('navbar');
-                const navbarHeight = navbar ? navbar.offsetHeight : 60;
-                this.overlay.style.top = `${navbarHeight}px`;
-                this.overlay.classList.add('active');
-            }
+            if (this.overlay) this.overlay.classList.add('active');
             document.body.style.overflow = 'hidden';
             document.body.classList.add('sidebar-open');
             if (window.app && !window._sidebarModalRegistered) {
