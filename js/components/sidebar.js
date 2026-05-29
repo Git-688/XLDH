@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（个人资料模态框：无遮罩层、亚克力效果、右上角头像预览、左下角提示）
+// sidebar.js - 现代悬浮侧滑栏（个人资料：预览缩小至36px，与标题同一行）
 (function() {
     // 分类数据
     const CATEGORIES_DATA = [
@@ -288,18 +288,17 @@
             }
         }
 
-        // 个人资料模态框：无遮罩层、亚克力效果、右上角圆形头像预览、左下角提示文字
+        // 个人资料模态框：预览缩小为36px，与标题同一行
         openProfileModal() {
-            // 获取当前用户头像（优先使用已保存的，否则使用默认）
             const currentAvatar = (this.userConfig && this.userConfig.avatar) ? this.userConfig.avatar : './assets/logo.png';
             const modalHtml = `
                 <div id="profileModal" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:10002;display:flex;align-items:center;justify-content:center;">
                     <div class="profile-modal-card" style="background:var(--acrylic-bg, rgba(255,255,255,0.65));backdrop-filter:var(--acrylic-blur, blur(24px) saturate(125%));-webkit-backdrop-filter:var(--acrylic-blur, blur(24px) saturate(125%));border:var(--acrylic-border, 1px solid rgba(255,255,255,0.4));border-radius:8px;box-shadow:var(--acrylic-shadow, 0 8px 32px rgba(0,0,0,0.08));width:360px;max-width:90%;padding:0;overflow:hidden;">
-                        <div style="position:relative;padding:20px 20px 16px;border-bottom:1px solid rgba(0,0,0,0.06);">
-                            <div style="position:absolute;top:20px;right:20px;width:48px;height:48px;border-radius:50%;overflow:hidden;background:#f0f0f0;border:2px solid var(--primary-color, #4361ee);box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="position:relative;padding:20px 20px 16px;border-bottom:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:space-between;">
+                            <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-primary, #1e293b);">个人资料</h3>
+                            <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;background:#f0f0f0;border:2px solid var(--primary-color, #4361ee);box-shadow:0 2px 8px rgba(0,0,0,0.1);flex-shrink:0;">
                                 <img id="profileAvatarPreview" src="${this.escapeHtml(currentAvatar)}" alt="头像预览" style="width:100%;height:100%;object-fit:cover;">
                             </div>
-                            <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-primary, #1e293b);padding-right:60px;">个人资料</h3>
                         </div>
                         <div style="padding:16px 20px;">
                             <div style="margin-bottom:16px;">
@@ -336,14 +335,12 @@
             const cancelBtn = document.getElementById('profileCancelBtn');
             const avatarPreview = document.getElementById('profileAvatarPreview');
 
-            // 点击模态框外部（透明区域）关闭
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
                     modal.remove();
                 }
             });
 
-            // QQ号自动获取头像（同时更新右侧预览图）
             if (qqInput) {
                 qqInput.addEventListener('blur', async () => {
                     const qq = qqInput.value.trim();
@@ -357,9 +354,7 @@
                                 this.userConfig.avatar = avatarUrl;
                                 statusDiv.textContent = '头像获取成功';
                                 statusDiv.style.color = '#10b981';
-                                // 更新右侧预览
                                 if (avatarPreview) avatarPreview.src = avatarUrl;
-                                // 同时更新侧滑栏头像
                                 const sidebarAvatar = document.getElementById('sidebarAvatarImg');
                                 if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
                             };
@@ -381,7 +376,6 @@
                 });
             }
 
-            // 保存按钮
             saveBtn?.addEventListener('click', () => {
                 const newName = document.getElementById('profileNickname')?.value.trim() || '访客用户';
                 const newSig = document.getElementById('profileSignature')?.value.trim() || '探索无限可能';
@@ -395,7 +389,6 @@
                 if (window.toast) window.toast.show('个人信息已保存', 'success');
             });
 
-            // 取消按钮
             cancelBtn?.addEventListener('click', () => {
                 modal?.remove();
             });
@@ -415,7 +408,7 @@
             } else if (screenWidth >= 768) {
                 extraOffset = 16;
             } else {
-                extraOffset = 12;
+                extraOffset = 16;
             }
             
             this.sidebarEl.style.top = `${topPos + extraOffset}px`;
