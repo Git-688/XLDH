@@ -1,15 +1,9 @@
-// sidebar.js - 现代悬浮侧滑栏（动态顶部、底部安全区、必应壁纸、QQ头像获取）
+// sidebar.js - 现代悬浮侧滑栏（完全符合新版需求）
 (function() {
     // 分类数据
     const CATEGORIES_DATA = [
         { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
-            { icon: 'fas fa-mobile-alt', label: '手机软件', action: 'link', link: './pages/chl/手机软件.html' },
-            { icon: 'fas fa-desktop', label: '电脑软件', action: 'link', link: './pages/chl/电脑软件.html' },
-            { icon: 'fas fa-film', label: '电影大全', action: 'link', link: './pages/chl/影视推荐.html' },
-            { icon: 'fas fa-images', label: '共享图片', action: 'link', link: './pages/chl/共享图片链接.html' }
-        ] },
-        { name: '网盘工具', icon: 'fas fa-cloud', expanded: false, items: [
-            { icon: 'fas fa-cloud-upload-alt', label: '夸克网盘', link: './pages/chl/夸克网盘.html' },
+            { icon: 'fas fa-mobile-alt', label: '手机软件', link: './pages/chl/手机软件.html' },
             { icon: 'fas fa-desktop', label: '电脑软件', link: './pages/chl/电脑软件.html' },
             { icon: 'fas fa-film', label: '电影大全', link: './pages/chl/影视推荐.html' },
             { icon: 'fas fa-images', label: '共享图片', link: './pages/chl/共享图片链接.html' }
@@ -45,10 +39,10 @@
 
     // 底部按钮配置（只有图标，无文字）
     const FOOTER_BUTTONS = [
-        { icon: 'fas fa-pen', action: 'notebook' },
-        { icon: 'fas fa-gift', action: 'gift' },
-        { icon: 'fas fa-info-circle', action: 'about' },
-        { icon: 'fab fa-qq', action: 'qq' }
+        { icon: 'fas fa-pen', action: 'notebook', color: '#8b5cf6' },
+        { icon: 'fas fa-gift', action: 'gift', color: '#f97316' },
+        { icon: 'fas fa-info-circle', action: 'about', color: '#ec4899' },
+        { icon: 'fab fa-qq', action: 'qq', color: '#3b82f6' }
     ];
 
     class ModernSidebar {
@@ -69,22 +63,11 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
-            this.loadBingWallpaper();
-            this.setSidebarPosition();           // 动态设置 top
-            window.addEventListener('resize', () => this.setSidebarPosition());
-            window.addEventListener('orientationchange', () => this.setSidebarPosition());
+            this.adjustPosition();        // 动态计算顶部位置
+            this.loadWallpaperBackground(); // 加载必应壁纸背景
+            window.addEventListener('resize', () => this.adjustPosition());
+            window.addEventListener('scroll', () => this.adjustPosition());
             window.sidebar = this;
-        }
-
-        // 动态计算侧滑栏顶部位置（与导航栏底部对齐）
-        setSidebarPosition() {
-            const navbar = document.querySelector('.navbar');
-            let top = 60; // 默认值
-            if (navbar) {
-                const rect = navbar.getBoundingClientRect();
-                top = rect.bottom;
-            }
-            this.sidebarEl.style.top = top + 'px';
         }
 
         createOverlay() {
@@ -101,23 +84,22 @@
             this.sidebarEl.innerHTML = `
                 <div class="sidebar-wallpaper" id="sidebarWallpaper">
                     <div class="sidebar-wallpaper-overlay"></div>
-                    <div class="sidebar-user-info">
-                        <div class="user-avatar" id="sidebarAvatarBtn">
+                    <div class="sidebar-wallpaper-user-info">
+                        <div class="sidebar-wallpaper-avatar" id="sidebarAvatarBtn">
                             <img id="sidebarAvatarImg" src="./assets/logo.png" alt="头像" loading="lazy">
                         </div>
-                        <div class="user-info">
-                            <div class="user-name" id="sidebarUserName">访客用户</div>
-                            <div class="user-bio" id="sidebarUserBio">探索无限可能</div>
+                        <div class="sidebar-wallpaper-user-text">
+                            <div class="sidebar-wallpaper-nickname" id="sidebarUserName">访客用户</div>
+                            <div class="sidebar-wallpaper-signature" id="sidebarUserBio">探索无限可能</div>
                         </div>
                     </div>
                 </div>
-                <div class="daily-quote">
-                    <p class="quote-text" id="sidebarQuote">加载中...</p>
+                <div class="daily-quote-card">
+                    <p id="sidebarQuote">加载中...</p>
                 </div>
                 <div class="sidebar-categories" id="sidebarCategoriesContainer"></div>
                 <div class="sidebar-footer" id="sidebarFooter"></div>
             `;
-
             this.renderCategories();
             this.renderFooter();
             this.bindComponentEvents();
@@ -126,7 +108,6 @@
         renderCategories() {
             const container = document.getElementById('sidebarCategoriesContainer');
             if (!container) return;
-
             let html = '';
             for (let i = 0; i < this.categories.length; i++) {
                 const cat = this.categories[i];
@@ -134,10 +115,8 @@
                 let itemsHtml = '';
                 for (let j = 0; j < cat.items.length; j++) {
                     const item = cat.items[j];
-                    const linkAttr = item.link ? `data-link="${this.escapeHtml(item.link)}"` : '';
-                    const actionAttr = item.action ? `data-action="${item.action}"` : '';
                     itemsHtml += `
-                        <button class="category-item" ${linkAttr} ${actionAttr}>
+                        <button class="category-item" data-link="${this.escapeHtml(item.link)}">
                             <i class="${item.icon}"></i>
                             <span>${this.escapeHtml(item.label)}</span>
                         </button>
@@ -169,7 +148,7 @@
             let html = '';
             for (const btn of FOOTER_BUTTONS) {
                 html += `
-                    <button class="footer-btn" data-action="${btn.action}">
+                    <button class="footer-btn" data-action="${btn.action}" style="color: ${btn.color};">
                         <i class="${btn.icon}"></i>
                     </button>
                 `;
@@ -178,7 +157,6 @@
         }
 
         bindEvents() {
-            // 全局点击关闭侧滑栏
             document.addEventListener('click', (e) => {
                 if (!this.isOpen) return;
                 const menuBtn = document.getElementById('menuBtn');
@@ -190,14 +168,10 @@
                 }
             });
 
-            // ESC 关闭
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && this.isOpen) {
-                    this.hide();
-                }
+                if (e.key === 'Escape' && this.isOpen) this.hide();
             });
 
-            // 菜单按钮
             const menuBtn = document.getElementById('menuBtn');
             if (menuBtn && !menuBtn._sidebarBound) {
                 menuBtn._sidebarBound = true;
@@ -252,7 +226,7 @@
                 });
             });
 
-            // 头像点击 - 打开个人资料模态框
+            // 头像点击 - 打开个人资料（带QQ输入框）
             const avatarBtn = document.getElementById('sidebarAvatarBtn');
             if (avatarBtn) {
                 avatarBtn.addEventListener('click', (e) => {
@@ -277,35 +251,6 @@
                     window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
                     break;
                 default: break;
-            }
-        }
-
-        async loadBingWallpaper() {
-            const wallpaperDiv = document.getElementById('sidebarWallpaper');
-            if (!wallpaperDiv) return;
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
-                const resolution = window.innerWidth >= 1920 ? 1920 : 1366;
-                const response = await fetch(`https://bing.biturl.top/?resolution=${resolution}&format=json&index=0`, {
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.url) {
-                        let imageUrl = data.url;
-                        if (!imageUrl.startsWith('http')) {
-                            imageUrl = 'https://bing.biturl.top' + imageUrl;
-                        }
-                        wallpaperDiv.style.backgroundImage = `url(${imageUrl})`;
-                        return;
-                    }
-                }
-                throw new Error('壁纸获取失败');
-            } catch (error) {
-                console.warn('必应壁纸加载失败，使用默认渐变', error);
-                wallpaperDiv.style.backgroundImage = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             }
         }
 
@@ -343,118 +288,127 @@
             }
         }
 
-        openProfileModal() {
-            let modal = document.getElementById('profileModal');
-            if (modal) {
-                modal.classList.add('active');
-                this.fillProfileModalData();
-                return;
+        async loadWallpaperBackground() {
+            const wallpaperDiv = document.getElementById('sidebarWallpaper');
+            if (!wallpaperDiv) return;
+            try {
+                const response = await fetch('https://bing.biturl.top/?resolution=1366&format=json&index=0');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.url) {
+                        wallpaperDiv.style.backgroundImage = `url(${data.url})`;
+                        wallpaperDiv.style.backgroundSize = 'cover';
+                        wallpaperDiv.style.backgroundPosition = 'center';
+                    }
+                }
+            } catch (e) {
+                // 降级：使用渐变色
+                wallpaperDiv.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             }
+        }
+
+        openProfileModal() {
             const modalHtml = `
                 <div class="profile-modal" id="profileModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:10002;display:flex;align-items:center;justify-content:center;">
                     <div style="background:var(--bg-card);border-radius:20px;padding:24px;width:340px;max-width:90%;">
-                        <h3 style="margin-bottom:16px;font-size:18px;">个人资料</h3>
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-secondary);">QQ号码</label>
-                            <input type="text" id="profileQQ" placeholder="输入QQ号码自动获取头像" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;background:var(--bg-input);">
-                            <div id="qqAvatarStatus" style="font-size:11px;margin-top:4px;color:#888;"></div>
+                        <h3 style="margin-bottom:16px;">个人资料</h3>
+                        <div style="margin-bottom:12px;">
+                            <label style="display:block;font-size:12px;margin-bottom:4px;">QQ号码（自动获取头像）</label>
+                            <input type="text" id="profileQQ" placeholder="输入QQ号" value="" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
+                            <div id="qqAvatarStatus" style="font-size:11px;margin-top:4px;color:#666;"></div>
                         </div>
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-secondary);">昵称</label>
-                            <input type="text" id="profileNickname" placeholder="昵称" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;background:var(--bg-input);">
+                        <div style="margin-bottom:12px;">
+                            <label style="display:block;font-size:12px;margin-bottom:4px;">昵称</label>
+                            <input type="text" id="profileNickname" placeholder="昵称" value="${this.escapeHtml(this.userConfig?.nickname || '')}" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
                         </div>
                         <div style="margin-bottom:20px;">
-                            <label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-secondary);">个性签名</label>
-                            <input type="text" id="profileSignature" placeholder="个性签名" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;background:var(--bg-input);">
+                            <label style="display:block;font-size:12px;margin-bottom:4px;">个性签名</label>
+                            <input type="text" id="profileSignature" placeholder="个性签名" value="${this.escapeHtml(this.userConfig?.signature || '')}" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
                         </div>
                         <div style="display:flex;gap:12px;justify-content:flex-end;">
-                            <button id="profileSaveBtn" style="padding:8px 20px;background:#4361ee;color:white;border:none;border-radius:30px;cursor:pointer;">保存</button>
-                            <button id="profileCloseBtn" style="padding:8px 20px;background:#e2e8f0;border:none;border-radius:30px;cursor:pointer;">取消</button>
+                            <button id="profileSaveBtn" style="padding:8px 20px;background:#4361ee;color:white;border:none;border-radius:30px;">保存</button>
+                            <button id="profileCloseBtn" style="padding:8px 20px;background:#e2e8f0;border:none;border-radius:30px;">取消</button>
                         </div>
                     </div>
                 </div>
             `;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
-            modal = document.getElementById('profileModal');
-            this.fillProfileModalData();
-            this.bindProfileModalEvents(modal);
-        }
-
-        fillProfileModalData() {
-            const userConfig = Storage.get('userConfig') || {};
-            const nicknameInput = document.getElementById('profileNickname');
-            const signatureInput = document.getElementById('profileSignature');
-            const qqInput = document.getElementById('profileQQ');
-            if (nicknameInput) nicknameInput.value = userConfig.nickname || '';
-            if (signatureInput) signatureInput.value = userConfig.signature || '';
-            if (qqInput) qqInput.value = userConfig.qq || '';
-            const qqField = document.getElementById('profileQQ');
-            if (qqField && !qqField._bound) {
-                qqField._bound = true;
-                qqField.addEventListener('input', this.debounce(() => this.fetchQQAvatar(), 500));
-            }
-        }
-
-        debounce(func, wait) {
-            let timeout;
-            return function() {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, arguments), wait);
-            };
-        }
-
-        async fetchQQAvatar() {
+            const modal = document.getElementById('profileModal');
             const qqInput = document.getElementById('profileQQ');
             const statusDiv = document.getElementById('qqAvatarStatus');
-            if (!qqInput) return;
-            const qq = qqInput.value.trim();
-            if (!qq || !/^[1-9][0-9]{4,11}$/.test(qq)) {
-                if (statusDiv) statusDiv.textContent = '';
-                return;
-            }
-            if (statusDiv) statusDiv.textContent = '获取头像中...';
-            try {
-                const response = await fetch(`https://api.kuleu.com/api/qqimg?qq=${qq}`);
-                if (response.ok) {
-                    const avatarUrl = response.url;
-                    if (statusDiv) statusDiv.textContent = '✓ 头像获取成功';
-                    const userConfig = Storage.get('userConfig') || {};
-                    userConfig.avatar = avatarUrl;
-                    userConfig.qq = qq;
-                    Storage.set('userConfig', userConfig);
-                    const sidebarAvatar = document.getElementById('sidebarAvatarImg');
-                    if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
-                } else {
-                    if (statusDiv) statusDiv.textContent = '获取失败，请检查QQ号';
-                }
-            } catch (error) {
-                console.warn('QQ头像获取失败', error);
-                if (statusDiv) statusDiv.textContent = '网络错误，请重试';
-            }
-        }
-
-        bindProfileModalEvents(modal) {
             const saveBtn = document.getElementById('profileSaveBtn');
             const closeBtn = document.getElementById('profileCloseBtn');
-            const closeModal = () => {
-                modal.classList.remove('active');
-                setTimeout(() => modal.remove(), 300);
-            };
+
+            // QQ 号输入时自动获取头像
+            if (qqInput) {
+                qqInput.addEventListener('blur', async () => {
+                    const qq = qqInput.value.trim();
+                    if (qq && /^[1-9][0-9]{4,11}$/.test(qq)) {
+                        statusDiv.textContent = '获取头像中...';
+                        statusDiv.style.color = '#666';
+                        try {
+                            const avatarUrl = `https://api.kuleu.com/api/qqimg?qq=${qq}`;
+                            const testImg = new Image();
+                            testImg.onload = () => {
+                                this.userConfig.avatar = avatarUrl;
+                                statusDiv.textContent = '头像获取成功';
+                                statusDiv.style.color = '#10b981';
+                                const avatarImg = document.getElementById('sidebarAvatarImg');
+                                if (avatarImg) avatarImg.src = avatarUrl;
+                            };
+                            testImg.onerror = () => {
+                                statusDiv.textContent = '获取头像失败，请检查QQ号';
+                                statusDiv.style.color = '#ef4444';
+                            };
+                            testImg.src = avatarUrl;
+                        } catch (e) {
+                            statusDiv.textContent = '获取失败';
+                            statusDiv.style.color = '#ef4444';
+                        }
+                    } else if (qq) {
+                        statusDiv.textContent = 'QQ号格式不正确';
+                        statusDiv.style.color = '#ef4444';
+                    } else {
+                        statusDiv.textContent = '';
+                    }
+                });
+            }
+
+            const closeModal = () => modal?.remove();
             saveBtn?.addEventListener('click', () => {
-                const newNickname = document.getElementById('profileNickname')?.value.trim() || '访客用户';
-                const newSignature = document.getElementById('profileSignature')?.value.trim() || '探索无限可能';
-                const qq = document.getElementById('profileQQ')?.value.trim() || '';
+                const newName = document.getElementById('profileNickname')?.value.trim() || '访客用户';
+                const newSig = document.getElementById('profileSignature')?.value.trim() || '探索无限可能';
                 const userConfig = Storage.get('userConfig') || {};
-                userConfig.nickname = newNickname;
-                userConfig.signature = newSignature;
-                userConfig.qq = qq;
+                userConfig.nickname = newName;
+                userConfig.signature = newSig;
+                if (this.userConfig.avatar) userConfig.avatar = this.userConfig.avatar;
                 Storage.set('userConfig', userConfig);
                 this.loadUserData();
                 closeModal();
                 if (window.toast) window.toast.show('个人信息已保存', 'success');
             });
             closeBtn?.addEventListener('click', closeModal);
-            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+            modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        }
+
+        adjustPosition() {
+            const wallpaperSection = document.querySelector('.wallpaper-section');
+            const navbar = document.getElementById('navbar');
+            if (!wallpaperSection || !this.sidebarEl) return;
+            const navbarHeight = navbar ? navbar.offsetHeight : 60;
+            const wallpaperRect = wallpaperSection.getBoundingClientRect();
+            const topOffset = wallpaperRect.top;
+            let newTop = topOffset;
+            if (newTop < navbarHeight) newTop = navbarHeight;
+            this.sidebarEl.style.top = `${newTop}px`;
+            // 底部留白动态计算：避免遮挡（例如底部留白20px + 可能的安全区）
+            const windowHeight = window.innerHeight;
+            const sidebarBottom = windowHeight - newTop - this.sidebarEl.offsetHeight;
+            if (sidebarBottom < 20) {
+                this.sidebarEl.style.bottom = '20px';
+            } else {
+                this.sidebarEl.style.bottom = '20px';
+            }
         }
 
         saveExpandedState() {
@@ -488,6 +442,7 @@
             this.sidebarEl.classList.add('active');
             if (this.overlay) this.overlay.classList.add('active');
             document.body.style.overflow = 'hidden';
+            document.body.classList.add('sidebar-open');
             if (window.app && !window._sidebarModalRegistered) {
                 window.app.registerModal(this);
                 window._sidebarModalRegistered = true;
@@ -500,6 +455,7 @@
             this.sidebarEl.classList.remove('active');
             if (this.overlay) this.overlay.classList.remove('active');
             document.body.style.overflow = '';
+            document.body.classList.remove('sidebar-open');
         }
 
         toggle() {
@@ -516,7 +472,6 @@
         }
     }
 
-    // 等待 DOM 加载完成后初始化
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             if (!window.sidebar || !(window.sidebar instanceof ModernSidebar)) {
