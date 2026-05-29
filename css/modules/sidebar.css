@@ -1,4 +1,4 @@
-/* sidebar.css - 现代悬浮侧滑栏（固定留白版） */
+/* sidebar.css - 现代悬浮侧滑栏样式（最终优化版） */
 :root {
     --sidebar-width: 280px;
     --sidebar-mobile-width: 75vw;
@@ -11,11 +11,10 @@
     --sidebar-transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
 
-/* 侧滑栏容器 - 固定顶部留白（与主页壁纸顶部对齐） */
+/* 侧滑栏容器 - 固定位置，top 由 JS 动态设置 */
 .sidebar {
     position: fixed;
-    top: calc(60px + var(--section-margin-sm, 20px)); /* 桌面端：导航栏60px + 壁纸区域上边距20px */
-    left: var(--container-padding-sm, 20px);
+    left: var(--container-padding-xs, 16px);
     bottom: 20px;
     width: var(--sidebar-width);
     background: var(--sidebar-bg);
@@ -25,7 +24,7 @@
     border: var(--sidebar-border);
     box-shadow: var(--sidebar-shadow);
     z-index: 1001;
-    transform: translateX(calc(-100% - var(--container-padding-sm, 20px)));
+    transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
     transition: var(--sidebar-transition);
     display: flex;
     flex-direction: column;
@@ -121,7 +120,7 @@
     text-overflow: ellipsis;
 }
 
-/* 每日一言卡片 - 圆角 8px */
+/* 每日一言卡片 - 圆角8px */
 .daily-quote-card {
     margin: 12px 16px;
     padding: 10px 12px;
@@ -139,13 +138,14 @@
     font-style: italic;
 }
 
-/* 分类容器 - 隐藏滚动条 */
+/* 分类容器 - 隐藏滚动条，顶部间距为0 */
 .sidebar-categories {
     flex: 1;
     overflow-y: auto;
-    padding: 8px 12px;
+    padding: 0 12px;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    overscroll-behavior: contain;  /* 防止滚动传递到 body */
 }
 .sidebar-categories::-webkit-scrollbar {
     display: none;
@@ -153,7 +153,7 @@
     height: 0;
 }
 
-/* 分类分组 - 圆角 8px */
+/* 分类分组 - 圆角8px */
 .category-group {
     margin-bottom: 12px;
     background: rgba(255, 255, 255, 0.4);
@@ -256,9 +256,9 @@
     color: currentColor;
 }
 
-/* 底部按钮栏 - 上下间距相等，圆角 8px */
+/* 底部按钮栏 - 移除内边距 */
 .sidebar-footer {
-    padding: 12px 16px;
+    padding: 0;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: space-around;
@@ -273,7 +273,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 0;
+    padding: 12px 0;
     background: transparent;
     border: none;
     border-radius: 8px;
@@ -304,7 +304,7 @@
 .footer-btn[data-action="qq"] { color: #3b82f6; }
 .footer-btn[data-action="qq"]:hover { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
 
-/* 遮罩层 - 固定在导航栏下方 */
+/* 遮罩层 - 仅覆盖导航栏以下区域，顶部由 JS 动态设置 */
 .sidebar-overlay {
     position: fixed;
     top: 60px;
@@ -324,42 +324,37 @@
     visibility: visible;
 }
 
-/* ========== 响应式：不同屏幕下的顶部留白与左边距 ========== */
+/* 响应式：左右边距与主页一致 */
 @media (min-width: 576px) {
     .sidebar {
-        top: calc(60px + var(--section-margin-sm, 20px));
         left: var(--container-padding-sm, 20px);
         transform: translateX(calc(-100% - var(--container-padding-sm, 20px)));
     }
 }
 @media (min-width: 768px) {
     .sidebar {
-        top: calc(60px + var(--section-margin-md, 24px));
         left: var(--container-padding-md, 24px);
         transform: translateX(calc(-100% - var(--container-padding-md, 24px)));
     }
 }
 @media (min-width: 992px) {
     .sidebar {
-        top: calc(60px + var(--section-margin-lg, 28px));
         left: var(--container-padding-lg, 28px);
         transform: translateX(calc(-100% - var(--container-padding-lg, 28px)));
     }
 }
 @media (min-width: 1200px) {
     .sidebar {
-        top: calc(60px + var(--section-margin-lg, 28px));
         left: var(--container-padding-xl, 32px);
         transform: translateX(calc(-100% - var(--container-padding-xl, 32px)));
     }
 }
 
-/* 移动端宽度及顶部留白调整 */
+/* 移动端宽度调整 */
 @media (max-width: 768px) {
     .sidebar {
         width: var(--sidebar-mobile-width);
         max-width: var(--sidebar-max-mobile);
-        top: calc(60px + var(--section-margin-xs, 16px));
         left: var(--container-padding-xs, 16px);
         transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
     }
@@ -377,11 +372,11 @@
         padding: 9px 14px 9px 40px;
         font-size: 12px;
     }
+    .footer-btn {
+        padding: 10px 0;
+    }
     .footer-btn i {
         font-size: 18px;
-    }
-    .footer-btn {
-        padding: 8px 0;
     }
 }
 
