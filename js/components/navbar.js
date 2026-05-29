@@ -1,3 +1,4 @@
+// navbar.js - 导航栏模块（移除侧滑栏绑定，由新侧滑栏自行处理）
 class Navbar {
     constructor() {
         if (window.navbar && window.navbar instanceof Navbar) return window.navbar;
@@ -54,35 +55,8 @@ class Navbar {
             });
         }
 
-        // ==================== 汉堡菜单：修复点两次问题 ====================
-        const menuBtn = document.getElementById('menuBtn');
-        if (menuBtn) {
-            // 确保侧滑栏就绪的 Promise
-            const ensureSidebarReady = () => {
-                return new Promise((resolve) => {
-                    const check = () => {
-                        if (window.sidebar && typeof window.sidebar.toggle === 'function') {
-                            // 如果侧滑栏有 isInitialized 标志，等待其为 true
-                            if (window.sidebar.isInitialized === undefined || window.sidebar.isInitialized === true) {
-                                resolve();
-                            } else {
-                                setTimeout(check, 20);
-                            }
-                        } else {
-                            setTimeout(check, 20);
-                        }
-                    };
-                    check();
-                });
-            };
-            menuBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                await ensureSidebarReady(); // 等待侧滑栏完全就绪
-                this.handleFeatureToggle('sidebar', () => window.sidebar.toggle());
-            });
-        }
-        // =============================================================
+        // 注意：菜单按钮（menuBtn）的事件绑定已移除，由新侧滑栏（sidebar.js）自行处理，避免重复绑定。
+        // 新侧滑栏会在初始化时自动查找 menuBtn 并绑定 toggle 方法，无需在此处理。
 
         const weatherBtn = document.getElementById('weatherBtn');
         if (weatherBtn) {
