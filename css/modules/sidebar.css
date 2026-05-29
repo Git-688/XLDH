@@ -1,4 +1,4 @@
-/* sidebar.css - 现代悬浮侧滑栏（无遮罩层，顶部留白固定） */
+/* sidebar.css - 现代悬浮侧滑栏（顶部固定留白，无遮罩层） */
 :root {
     --sidebar-width: 280px;
     --sidebar-mobile-width: 75vw;
