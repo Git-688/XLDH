@@ -1,4 +1,4 @@
-/* sidebar.css - 现代悬浮侧滑栏样式（最终优化版） */
+/* sidebar.css - 现代悬浮侧滑栏（固定留白版） */
 :root {
     --sidebar-width: 280px;
     --sidebar-mobile-width: 75vw;
@@ -8,15 +8,14 @@
     --sidebar-blur: blur(20px);
     --sidebar-border: 1px solid rgba(255, 255, 255, 0.3);
     --sidebar-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    --sidebar-item-radius: 12px;
     --sidebar-transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
 
-/* 侧滑栏容器 */
+/* 侧滑栏容器 - 固定顶部留白（与主页壁纸顶部对齐） */
 .sidebar {
     position: fixed;
-    top: 0; /* JS 动态覆盖 */
-    left: var(--container-padding-xs, 16px);
+    top: calc(60px + var(--section-margin-sm, 20px)); /* 桌面端：导航栏60px + 壁纸区域上边距20px */
+    left: var(--container-padding-sm, 20px);
     bottom: 20px;
     width: var(--sidebar-width);
     background: var(--sidebar-bg);
@@ -26,7 +25,7 @@
     border: var(--sidebar-border);
     box-shadow: var(--sidebar-shadow);
     z-index: 1001;
-    transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
+    transform: translateX(calc(-100% - var(--container-padding-sm, 20px)));
     transition: var(--sidebar-transition);
     display: flex;
     flex-direction: column;
@@ -122,13 +121,13 @@
     text-overflow: ellipsis;
 }
 
-/* 每日一言卡片 */
+/* 每日一言卡片 - 圆角 8px */
 .daily-quote-card {
     margin: 12px 16px;
     padding: 10px 12px;
     background: rgba(255,255,255,0.4);
     backdrop-filter: blur(10px);
-    border-radius: 12px;
+    border-radius: 8px;
     border: 1px solid rgba(255,255,255,0.3);
 }
 .daily-quote-card p {
@@ -154,12 +153,12 @@
     height: 0;
 }
 
-/* 分类分组 */
+/* 分类分组 - 圆角 8px */
 .category-group {
     margin-bottom: 12px;
     background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(8px);
-    border-radius: 16px;
+    border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.3);
     overflow: hidden;
     transition: all 0.2s ease;
@@ -241,7 +240,7 @@
     color: var(--text-primary, #334155);
     transition: all 0.2s ease;
     text-align: left;
-    border-radius: 10px;
+    border-radius: 8px;
     margin: 2px 0;
 }
 
@@ -257,9 +256,9 @@
     color: currentColor;
 }
 
-/* 底部按钮栏 - 紧凑设计，等间距 */
+/* 底部按钮栏 - 上下间距相等，圆角 8px */
 .sidebar-footer {
-    padding: 10px 16px 16px;
+    padding: 12px 16px;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: space-around;
@@ -274,10 +273,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 0;
+    padding: 10px 0;
     background: transparent;
     border: none;
-    border-radius: 12px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: 20px;
@@ -305,7 +304,7 @@
 .footer-btn[data-action="qq"] { color: #3b82f6; }
 .footer-btn[data-action="qq"]:hover { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
 
-/* 遮罩层 - 仅覆盖导航栏以下区域 */
+/* 遮罩层 - 固定在导航栏下方 */
 .sidebar-overlay {
     position: fixed;
     top: 60px;
@@ -325,37 +324,42 @@
     visibility: visible;
 }
 
-/* 响应式：左右边距与主页一致 */
+/* ========== 响应式：不同屏幕下的顶部留白与左边距 ========== */
 @media (min-width: 576px) {
     .sidebar {
+        top: calc(60px + var(--section-margin-sm, 20px));
         left: var(--container-padding-sm, 20px);
         transform: translateX(calc(-100% - var(--container-padding-sm, 20px)));
     }
 }
 @media (min-width: 768px) {
     .sidebar {
+        top: calc(60px + var(--section-margin-md, 24px));
         left: var(--container-padding-md, 24px);
         transform: translateX(calc(-100% - var(--container-padding-md, 24px)));
     }
 }
 @media (min-width: 992px) {
     .sidebar {
+        top: calc(60px + var(--section-margin-lg, 28px));
         left: var(--container-padding-lg, 28px);
         transform: translateX(calc(-100% - var(--container-padding-lg, 28px)));
     }
 }
 @media (min-width: 1200px) {
     .sidebar {
+        top: calc(60px + var(--section-margin-lg, 28px));
         left: var(--container-padding-xl, 32px);
         transform: translateX(calc(-100% - var(--container-padding-xl, 32px)));
     }
 }
 
-/* 移动端宽度调整 */
+/* 移动端宽度及顶部留白调整 */
 @media (max-width: 768px) {
     .sidebar {
         width: var(--sidebar-mobile-width);
         max-width: var(--sidebar-max-mobile);
+        top: calc(60px + var(--section-margin-xs, 16px));
         left: var(--container-padding-xs, 16px);
         transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
     }
@@ -377,7 +381,7 @@
         font-size: 18px;
     }
     .footer-btn {
-        padding: 6px 0;
+        padding: 8px 0;
     }
 }
 
