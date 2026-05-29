@@ -1,6 +1,6 @@
-// sidebar.js - 现代悬浮侧滑栏（完整版）
+// sidebar.js - 现代悬浮侧滑栏（最终完整版）
 (function() {
-    // ==================== 分类数据 ====================
+    // 分类数据
     const CATEGORIES_DATA = [
         { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
             { icon: 'fas fa-mobile-alt', label: '手机软件', link: './pages/chl/手机软件.html' },
@@ -37,7 +37,7 @@
         ] }
     ];
 
-    // 底部按钮配置（仅图标，无文字）
+    // 底部按钮配置（只有图标，独立颜色）
     const FOOTER_BUTTONS = [
         { icon: 'fas fa-pen', action: 'notebook', color: '#8b5cf6' },
         { icon: 'fas fa-gift', action: 'gift', color: '#f97316' },
@@ -63,10 +63,10 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
-            this.loadWallpaperBackground(); // 加载必应壁纸背景
-            this.adjustPosition();           // 动态计算顶部位置（与壁纸顶部持平）
-            window.addEventListener('resize', () => this.adjustPosition());
+            this.adjustPosition();
+            this.loadWallpaperBackground();
             window.addEventListener('scroll', () => this.adjustPosition());
+            window.addEventListener('resize', () => this.adjustPosition());
             window.sidebar = this;
         }
 
@@ -78,8 +78,6 @@
             } else {
                 this.overlay = document.querySelector('.sidebar-overlay');
             }
-            // 点击遮罩层关闭侧滑栏
-            this.overlay.addEventListener('click', () => this.hide());
         }
 
         render() {
@@ -159,7 +157,6 @@
         }
 
         bindEvents() {
-            // 全局点击关闭侧滑栏（点击非侧滑栏区域）
             document.addEventListener('click', (e) => {
                 if (!this.isOpen) return;
                 const menuBtn = document.getElementById('menuBtn');
@@ -171,12 +168,10 @@
                 }
             });
 
-            // ESC 关闭
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && this.isOpen) this.hide();
             });
 
-            // 菜单按钮（汉堡菜单）绑定
             const menuBtn = document.getElementById('menuBtn');
             if (menuBtn && !menuBtn._sidebarBound) {
                 menuBtn._sidebarBound = true;
@@ -188,7 +183,6 @@
         }
 
         bindComponentEvents() {
-            // 分类展开/收起
             const groups = this.sidebarEl.querySelectorAll('.category-group');
             groups.forEach((group, idx) => {
                 const header = group.querySelector('.category-group-header');
@@ -207,7 +201,6 @@
                 if (header) header.addEventListener('click', clickHandler);
             });
 
-            // 分类项点击
             const categoryItems = this.sidebarEl.querySelectorAll('.category-item');
             categoryItems.forEach(item => {
                 item.addEventListener('click', (e) => {
@@ -220,7 +213,6 @@
                 });
             });
 
-            // 底部按钮点击
             const footerBtns = this.sidebarEl.querySelectorAll('.footer-btn');
             footerBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -231,7 +223,6 @@
                 });
             });
 
-            // 头像点击 - 打开个人资料（带QQ输入框）
             const avatarBtn = document.getElementById('sidebarAvatarBtn');
             if (avatarBtn) {
                 avatarBtn.addEventListener('click', (e) => {
@@ -297,34 +288,24 @@
             const wallpaperDiv = document.getElementById('sidebarWallpaper');
             if (!wallpaperDiv) return;
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
-                const response = await fetch('https://bing.biturl.top/?resolution=1366&format=json&index=0', { signal: controller.signal });
-                clearTimeout(timeoutId);
+                const response = await fetch('https://bing.biturl.top/?resolution=1366&format=json&index=0');
                 if (response.ok) {
                     const data = await response.json();
                     if (data.url) {
                         wallpaperDiv.style.backgroundImage = `url(${data.url})`;
                         wallpaperDiv.style.backgroundSize = 'cover';
                         wallpaperDiv.style.backgroundPosition = 'center';
-                        return;
                     }
                 }
-                throw new Error('壁纸获取失败');
             } catch (e) {
-                // 降级：使用渐变色
                 wallpaperDiv.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             }
         }
 
         openProfileModal() {
-            // 移除已存在的模态框
-            const existingModal = document.getElementById('profileModal');
-            if (existingModal) existingModal.remove();
-
             const modalHtml = `
                 <div class="profile-modal" id="profileModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:10002;display:flex;align-items:center;justify-content:center;">
-                    <div style="background:var(--bg-card, #fff);border-radius:20px;padding:24px;width:340px;max-width:90%;">
+                    <div style="background:var(--bg-card);border-radius:20px;padding:24px;width:340px;max-width:90%;">
                         <h3 style="margin-bottom:16px;">个人资料</h3>
                         <div style="margin-bottom:12px;">
                             <label style="display:block;font-size:12px;margin-bottom:4px;">QQ号码（自动获取头像）</label>
@@ -353,7 +334,6 @@
             const saveBtn = document.getElementById('profileSaveBtn');
             const closeBtn = document.getElementById('profileCloseBtn');
 
-            // QQ 号输入时自动获取头像
             if (qqInput) {
                 qqInput.addEventListener('blur', async () => {
                     const qq = qqInput.value.trim();
@@ -362,11 +342,8 @@
                         statusDiv.style.color = '#666';
                         try {
                             const avatarUrl = `https://api.kuleu.com/api/qqimg?qq=${qq}`;
-                            // 测试图片是否可加载
                             const testImg = new Image();
                             testImg.onload = () => {
-                                // 保存头像 URL 到临时配置
-                                if (!this.userConfig) this.userConfig = {};
                                 this.userConfig.avatar = avatarUrl;
                                 statusDiv.textContent = '头像获取成功';
                                 statusDiv.style.color = '#10b981';
@@ -391,18 +368,14 @@
                 });
             }
 
-            const closeModal = () => {
-                if (modal && modal.parentNode) modal.remove();
-            };
+            const closeModal = () => modal?.remove();
             saveBtn?.addEventListener('click', () => {
                 const newName = document.getElementById('profileNickname')?.value.trim() || '访客用户';
                 const newSig = document.getElementById('profileSignature')?.value.trim() || '探索无限可能';
                 const userConfig = Storage.get('userConfig') || {};
                 userConfig.nickname = newName;
                 userConfig.signature = newSig;
-                if (this.userConfig && this.userConfig.avatar) {
-                    userConfig.avatar = this.userConfig.avatar;
-                }
+                if (this.userConfig.avatar) userConfig.avatar = this.userConfig.avatar;
                 Storage.set('userConfig', userConfig);
                 this.loadUserData();
                 closeModal();
@@ -412,32 +385,22 @@
             modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         }
 
-        // 动态计算顶部位置（与壁纸顶部持平）
         adjustPosition() {
-            if (!this.sidebarEl) return;
             const wallpaperSection = document.querySelector('.wallpaper-section');
             const navbar = document.getElementById('navbar');
-            if (!wallpaperSection) return;
-
-            const wallpaperRect = wallpaperSection.getBoundingClientRect();
-            let targetTop = wallpaperRect.top;
-
-            // 确保不被导航栏遮挡
+            if (!wallpaperSection || !this.sidebarEl) return;
             const navbarHeight = navbar ? navbar.offsetHeight : 60;
-            if (targetTop < navbarHeight) targetTop = navbarHeight;
-
-            this.sidebarEl.style.top = `${targetTop}px`;
-
-            // 底部动态留白（避免被遮挡）
+            const wallpaperRect = wallpaperSection.getBoundingClientRect();
+            const topOffset = wallpaperRect.top;
+            let newTop = topOffset;
+            if (newTop < navbarHeight) newTop = navbarHeight;
+            this.sidebarEl.style.top = `${newTop}px`;
             const windowHeight = window.innerHeight;
-            const sidebarHeight = this.sidebarEl.offsetHeight;
-            const minBottom = 20;
-            if (targetTop + sidebarHeight > windowHeight - minBottom) {
-                this.sidebarEl.style.bottom = 'auto';
-                this.sidebarEl.style.top = `${Math.max(navbarHeight, windowHeight - sidebarHeight - minBottom)}px`;
+            const sidebarBottom = windowHeight - newTop - this.sidebarEl.offsetHeight;
+            if (sidebarBottom < 20) {
+                this.sidebarEl.style.bottom = '20px';
             } else {
-                this.sidebarEl.style.bottom = `${minBottom}px`;
-                this.sidebarEl.style.top = `${targetTop}px`;
+                this.sidebarEl.style.bottom = '20px';
             }
         }
 
@@ -470,7 +433,12 @@
             if (this.isOpen) return;
             this.isOpen = true;
             this.sidebarEl.classList.add('active');
-            if (this.overlay) this.overlay.classList.add('active');
+            if (this.overlay) {
+                const navbar = document.getElementById('navbar');
+                const navbarHeight = navbar ? navbar.offsetHeight : 60;
+                this.overlay.style.top = `${navbarHeight}px`;
+                this.overlay.classList.add('active');
+            }
             document.body.style.overflow = 'hidden';
             document.body.classList.add('sidebar-open');
             if (window.app && !window._sidebarModalRegistered) {
@@ -502,7 +470,6 @@
         }
     }
 
-    // 确保 DOM 加载完成后初始化
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             if (!window.sidebar || !(window.sidebar instanceof ModernSidebar)) {
