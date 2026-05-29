@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（固定顶部留白 + 等间距底部按钮 + 圆角8px + 关闭其他模态框 + 主页可滚动）
+// sidebar.js - 现代悬浮侧滑栏（无遮罩层，固定顶部留白）
 (function() {
     // 分类数据
     const CATEGORIES_DATA = [
@@ -48,7 +48,6 @@
     class ModernSidebar {
         constructor() {
             this.sidebarEl = document.getElementById('sidebar');
-            this.overlay = null;
             this.isOpen = false;
             this.categories = JSON.parse(JSON.stringify(CATEGORIES_DATA));
             this.userConfig = null;
@@ -57,7 +56,6 @@
 
         init() {
             if (!this.sidebarEl) return;
-            this.createOverlay();
             this.render();
             this.bindEvents();
             this.loadUserData();
@@ -67,16 +65,6 @@
             this.loadWallpaperBackground();
             window.addEventListener('resize', () => this.setFixedTop());
             window.sidebar = this;
-        }
-
-        createOverlay() {
-            if (!document.querySelector('.sidebar-overlay')) {
-                this.overlay = document.createElement('div');
-                this.overlay.className = 'sidebar-overlay';
-                document.body.appendChild(this.overlay);
-            } else {
-                this.overlay = document.querySelector('.sidebar-overlay');
-            }
         }
 
         render() {
@@ -156,13 +144,13 @@
         }
 
         bindEvents() {
+            // 点击侧滑栏外部关闭
             document.addEventListener('click', (e) => {
                 if (!this.isOpen) return;
                 const menuBtn = document.getElementById('menuBtn');
                 const isMenuBtn = menuBtn && menuBtn.contains(e.target);
                 const isSidebar = this.sidebarEl && this.sidebarEl.contains(e.target);
-                const isOverlay = this.overlay && this.overlay.contains(e.target);
-                if (!isSidebar && !isMenuBtn && (isOverlay || !e.target.closest('.sidebar'))) {
+                if (!isSidebar && !isMenuBtn) {
                     this.hide();
                 }
             });
@@ -386,6 +374,7 @@
 
         /**
          * 固定顶部留白：获取壁纸容器顶部相对于文档顶部的距离，并设置为侧滑栏的 top 值
+         * 这样侧滑栏在页面滚动时保持与壁纸顶部相同的固定留白位置。
          */
         setFixedTop() {
             const wallpaperSection = document.querySelector('.wallpaper-section');
@@ -398,36 +387,28 @@
          * 关闭所有其他模态框（搜索、公告、音乐、天气、关于、笔记、投稿等）
          */
         closeOtherModals() {
-            // 关闭搜索模态框
             if (window.newSearchModule && typeof window.newSearchModule.hide === 'function') {
                 window.newSearchModule.hide();
             }
-            // 关闭公告模态框
             if (window.announcementModule && typeof window.announcementModule.hide === 'function') {
                 window.announcementModule.hide();
             }
-            // 关闭音乐播放器
             if (window.app && window.app.components && window.app.components.navbar) {
                 window.app.components.navbar.hideMusicPlayer();
             }
-            // 关闭天气模态框
             if (window.app && window.app.modules && window.app.modules.weather && typeof window.app.modules.weather.hide === 'function') {
                 window.app.modules.weather.hide();
             }
-            // 关闭关于模态框
             if (window.aboutModule && typeof window.aboutModule.hide === 'function') {
                 window.aboutModule.hide();
             }
-            // 关闭星聚笔记模态框
             if (window.hideNotebookModal && typeof window.hideNotebookModal === 'function') {
                 window.hideNotebookModal();
             }
-            // 关闭投稿模态框
             const submitModal = document.getElementById('submitModal');
             if (submitModal && submitModal.classList.contains('active')) {
                 submitModal.classList.remove('active');
             }
-            // 关闭任何其他可能打开的模态框（如侧滑栏内的个人资料等）
             const profileModal = document.getElementById('profileModal');
             if (profileModal && profileModal.parentNode) {
                 profileModal.remove();
@@ -461,18 +442,9 @@
 
         show() {
             if (this.isOpen) return;
-            // 关闭其他所有模态框
             this.closeOtherModals();
             this.isOpen = true;
             this.sidebarEl.classList.add('active');
-            if (this.overlay) {
-                const navbar = document.getElementById('navbar');
-                const navbarHeight = navbar ? navbar.offsetHeight : 60;
-                this.overlay.style.top = `${navbarHeight}px`;
-                this.overlay.classList.add('active');
-            }
-            // 不再禁用 body 滚动，保持主页可滚动
-            // 仅添加 class 用于可能的样式挂钩，但不影响滚动
             document.body.classList.add('sidebar-open');
             if (window.app && !window._sidebarModalRegistered) {
                 window.app.registerModal(this);
@@ -484,7 +456,6 @@
             if (!this.isOpen) return;
             this.isOpen = false;
             this.sidebarEl.classList.remove('active');
-            if (this.overlay) this.overlay.classList.remove('active');
             document.body.classList.remove('sidebar-open');
         }
 
@@ -498,7 +469,6 @@
 
         destroy() {
             this.hide();
-            if (this.overlay) this.overlay.remove();
         }
     }
 
