@@ -1,6 +1,12 @@
 /**
- * 侧边栏组件 - 最终修复版
- * 修复：初始化时移除残留 active 类；show 中不再重复关闭其他模态框；滚动锁定优化
+ * 侧边栏组件 - 修复版
+ * 修复内容：
+ * 1. 移动端打开侧滑栏时锁定 body 滚动，关闭时恢复
+ * 2. 添加 Profile 模态框完整样式（CSS 中补充）
+ * 3. 优化事件委托，确保所有按钮功能正常
+ * 4. 修复壁纸加载失败时的降级处理
+ * 5. 添加与其他模态框的冲突处理
+ * 6. 增加 isInitialized 标志，供 navbar 等待
  */
 class CompactSidebar {
   constructor() {
@@ -69,13 +75,11 @@ class CompactSidebar {
       await this.loadSidebarWallpaper();
       this.createProfileModal();
       this.syncExpandedHeights();
-
-      // 确保初始化后侧滑栏不处于激活状态
-      const sidebarEl = document.getElementById('sidebar');
-      if (sidebarEl) sidebarEl.classList.remove('active');
-
       this.isInitialized = true;
-      window.sidebar = this;
+      // 将初始化标志挂载到全局实例
+      if (window.sidebar === this) {
+        window.sidebar.isInitialized = true;
+      }
     } catch (error) {
       console.error('侧滑栏初始化失败:', error);
       if (window.toast && window.toast.show) window.toast.show('侧滑栏初始化失败', 'error');
@@ -294,16 +298,19 @@ class CompactSidebar {
     this.hide();
   }
 
+  // 打开侧滑栏（锁定 body 滚动）
   show() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar || this.isVisible()) return;
-
-    // 注意：这里不再调用 closeAllModalsExcept，因为 navbar 已经处理过了
-    // 避免重复关闭导致状态混乱
+    
+    if (window.app && window.app.closeAllModalsExcept) {
+      window.app.closeAllModalsExcept(['sidebar']);
+    }
+    
     this.bodyScrollTop = window.scrollY;
     document.body.classList.add('sidebar-open');
     document.body.style.top = `-${this.bodyScrollTop}px`;
-
+    
     sidebar.classList.add('active');
     if (window.app && !this.modalRegistered) {
       window.app.registerModal(this);
@@ -311,16 +318,17 @@ class CompactSidebar {
     }
   }
 
+  // 关闭侧滑栏（恢复滚动）
   hide() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar || !this.isVisible()) return;
-
+    
     sidebar.classList.remove('active');
-
+    
     document.body.classList.remove('sidebar-open');
     document.body.style.top = '';
     window.scrollTo(0, this.bodyScrollTop);
-
+    
     if (window.app && this.modalRegistered) {
       window.app.unregisterModal(this);
       this.modalRegistered = false;
@@ -562,7 +570,7 @@ class CompactSidebar {
   }
 }
 
-// 初始化侧边栏
+// 初始化侧边栏（单例）
 if (!window.sidebarInitialized) {
   window.sidebarInitialized = true;
   const initSidebar = async () => {
