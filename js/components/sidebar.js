@@ -1,6 +1,5 @@
-// sidebar.js - 现代悬浮侧滑栏（最终版：固定顶部留白、关闭其他模态框、背景可滚动）
+// sidebar.js - 现代悬浮侧滑栏（固定顶部留白，关闭其他模态框，背景可滚动）
 (function() {
-    // 分类数据
     const CATEGORIES_DATA = [
         { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
             { icon: 'fas fa-mobile-alt', label: '手机软件', link: './pages/chl/手机软件.html' },
@@ -37,7 +36,6 @@
         ] }
     ];
 
-    // 底部按钮配置（只有图标，独立颜色）
     const FOOTER_BUTTONS = [
         { icon: 'fas fa-pen', action: 'notebook', color: '#8b5cf6' },
         { icon: 'fas fa-gift', action: 'gift', color: '#f97316' },
@@ -52,6 +50,7 @@
             this.isOpen = false;
             this.categories = JSON.parse(JSON.stringify(CATEGORIES_DATA));
             this.userConfig = null;
+            this.fixedTop = null; // 存储计算好的固定 top 值
             this.init();
         }
 
@@ -63,8 +62,13 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
+            this.calcFixedTop();      // 计算固定顶部留白
+            this.setFixedTop();       // 应用样式
             this.loadWallpaperBackground();
-            // 不再需要动态调整位置，使用 CSS 固定顶部留白
+            window.addEventListener('resize', () => {
+                this.calcFixedTop();
+                this.setFixedTop();
+            });
             window.sidebar = this;
         }
 
@@ -75,6 +79,27 @@
                 document.body.appendChild(this.overlay);
             } else {
                 this.overlay = document.querySelector('.sidebar-overlay');
+            }
+        }
+
+        calcFixedTop() {
+            const wallpaperSection = document.querySelector('.wallpaper-section');
+            const navbar = document.getElementById('navbar');
+            if (!wallpaperSection) {
+                this.fixedTop = (navbar ? navbar.offsetHeight : 60) + 20;
+                return;
+            }
+            // 获取壁纸容器顶部距离视口顶部的距离（即留白大小，不随滚动变化）
+            const rect = wallpaperSection.getBoundingClientRect();
+            const navbarHeight = navbar ? navbar.offsetHeight : 60;
+            let topVal = rect.top;
+            if (topVal < navbarHeight) topVal = navbarHeight;
+            this.fixedTop = topVal;
+        }
+
+        setFixedTop() {
+            if (this.fixedTop !== null && this.sidebarEl) {
+                this.sidebarEl.style.top = `${this.fixedTop}px`;
             }
         }
 
@@ -408,25 +433,25 @@
             });
         }
 
-        // 关闭其他所有模态框（防止冲突）
-        closeOtherModals() {
-            if (window.newSearchModule?.isOpen) window.newSearchModule.hide();
-            if (window.announcementModule?.isVisible) window.announcementModule.hide();
-            if (window.aboutModule?.isVisible) window.aboutModule.hide();
-            if (window.app?.modules?.weather?.isShowing) window.app.modules.weather.hide();
-            if (window.app?.hideNotebookModal) window.app.hideNotebookModal();
-            const submitModal = document.getElementById('submitModal');
-            if (submitModal?.classList.contains('active')) submitModal.classList.remove('active');
-            const musicPlayer = document.getElementById('musicPlayer');
-            if (musicPlayer?.classList.contains('show') && window.app?.components?.navbar) {
-                window.app.components.navbar.hideMusicPlayer();
-            }
-        }
-
         show() {
             if (this.isOpen) return;
-            // 关闭其他模态框
-            this.closeOtherModals();
+            // 关闭其他模态框（如果存在全局方法）
+            if (window.app && typeof window.app.closeAllModalsExcept === 'function') {
+                window.app.closeAllModalsExcept(['sidebar']);
+            } else {
+                // 备用关闭方法：关闭常见的模态框
+                if (window.newSearchModule?.isOpen) window.newSearchModule.hide();
+                if (window.announcementModule?.isVisible) window.announcementModule.hide();
+                if (window.aboutModule?.isVisible) window.aboutModule.hide();
+                if (window.app?.modules?.weather?.hide) window.app.modules.weather.hide();
+                if (window.app?.hideNotebookModal) window.app.hideNotebookModal();
+                const submitModal = document.getElementById('submitModal');
+                if (submitModal?.classList.contains('active')) submitModal.classList.remove('active');
+                const musicPlayer = document.getElementById('musicPlayer');
+                if (musicPlayer?.classList.contains('show') && window.app?.components?.navbar) {
+                    window.app.components.navbar.hideMusicPlayer();
+                }
+            }
             this.isOpen = true;
             this.sidebarEl.classList.add('active');
             if (this.overlay) {
@@ -435,8 +460,7 @@
                 this.overlay.style.top = `${navbarHeight}px`;
                 this.overlay.classList.add('active');
             }
-            // 注意：不锁定 body 滚动，让背景可以滚动
-            document.body.classList.add('sidebar-open');
+            // 不锁定 body 滚动，允许背景滚动
             if (window.app && !window._sidebarModalRegistered) {
                 window.app.registerModal(this);
                 window._sidebarModalRegistered = true;
@@ -448,7 +472,10 @@
             this.isOpen = false;
             this.sidebarEl.classList.remove('active');
             if (this.overlay) this.overlay.classList.remove('active');
-            document.body.classList.remove('sidebar-open');
+            if (window.app && window._sidebarModalRegistered) {
+                window.app.unregisterModal(this);
+                window._sidebarModalRegistered = false;
+            }
         }
 
         toggle() {
