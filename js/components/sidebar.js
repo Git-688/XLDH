@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（顶部必应壁纸、无搜索框、底部纯图标、QQ头像获取）
+// sidebar.js - 现代悬浮侧滑栏（动态顶部、底部安全区、必应壁纸、QQ头像获取）
 (function() {
     // 分类数据
     const CATEGORIES_DATA = [
@@ -7,6 +7,12 @@
             { icon: 'fas fa-desktop', label: '电脑软件', action: 'link', link: './pages/chl/电脑软件.html' },
             { icon: 'fas fa-film', label: '电影大全', action: 'link', link: './pages/chl/影视推荐.html' },
             { icon: 'fas fa-images', label: '共享图片', action: 'link', link: './pages/chl/共享图片链接.html' }
+        ] },
+        { name: '网盘工具', icon: 'fas fa-cloud', expanded: false, items: [
+            { icon: 'fas fa-cloud-upload-alt', label: '夸克网盘', link: './pages/chl/夸克网盘.html' },
+            { icon: 'fas fa-desktop', label: '电脑软件', link: './pages/chl/电脑软件.html' },
+            { icon: 'fas fa-film', label: '电影大全', link: './pages/chl/影视推荐.html' },
+            { icon: 'fas fa-images', label: '共享图片', link: './pages/chl/共享图片链接.html' }
         ] },
         { name: '网盘工具', icon: 'fas fa-cloud', expanded: false, items: [
             { icon: 'fas fa-cloud-upload-alt', label: '夸克网盘', link: './pages/chl/夸克网盘.html' },
@@ -63,8 +69,22 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
-            this.loadBingWallpaper(); // 加载必应壁纸背景
+            this.loadBingWallpaper();
+            this.setSidebarPosition();           // 动态设置 top
+            window.addEventListener('resize', () => this.setSidebarPosition());
+            window.addEventListener('orientationchange', () => this.setSidebarPosition());
             window.sidebar = this;
+        }
+
+        // 动态计算侧滑栏顶部位置（与导航栏底部对齐）
+        setSidebarPosition() {
+            const navbar = document.querySelector('.navbar');
+            let top = 60; // 默认值
+            if (navbar) {
+                const rect = navbar.getBoundingClientRect();
+                top = rect.bottom;
+            }
+            this.sidebarEl.style.top = top + 'px';
         }
 
         createOverlay() {
@@ -324,14 +344,12 @@
         }
 
         openProfileModal() {
-            // 创建/显示个人资料模态框（包含QQ号输入）
             let modal = document.getElementById('profileModal');
             if (modal) {
                 modal.classList.add('active');
                 this.fillProfileModalData();
                 return;
             }
-            // 动态创建模态框
             const modalHtml = `
                 <div class="profile-modal" id="profileModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:10002;display:flex;align-items:center;justify-content:center;">
                     <div style="background:var(--bg-card);border-radius:20px;padding:24px;width:340px;max-width:90%;">
@@ -370,7 +388,6 @@
             if (nicknameInput) nicknameInput.value = userConfig.nickname || '';
             if (signatureInput) signatureInput.value = userConfig.signature || '';
             if (qqInput) qqInput.value = userConfig.qq || '';
-            // 绑定QQ输入自动获取头像
             const qqField = document.getElementById('profileQQ');
             if (qqField && !qqField._bound) {
                 qqField._bound = true;
@@ -401,12 +418,10 @@
                 if (response.ok) {
                     const avatarUrl = response.url;
                     if (statusDiv) statusDiv.textContent = '✓ 头像获取成功';
-                    // 保存头像到用户配置
                     const userConfig = Storage.get('userConfig') || {};
                     userConfig.avatar = avatarUrl;
                     userConfig.qq = qq;
                     Storage.set('userConfig', userConfig);
-                    // 更新侧边栏头像显示
                     const sidebarAvatar = document.getElementById('sidebarAvatarImg');
                     if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
                 } else {
