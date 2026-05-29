@@ -1,4 +1,4 @@
-/* responsive.css - 精简版，无遮罩层相关 */
+/* responsive.css - 通用响应式适配（无遮罩层，与新版侧滑栏兼容） */
 @media (max-width: 768px) {
     .floating-buttons {
         bottom: 16px;
