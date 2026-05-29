@@ -1,252 +1,272 @@
-/* 公告模态框 - 亚克力效果 + 遮罩层从导航栏下方开始 */
-.announcement-modal-simple {
-    position: fixed;
-    top: 60px;              /* 导航栏高度，从导航栏下方开始 */
-    left: 0;
-    width: 100%;
-    height: calc(100% - 60px); /* 减去导航栏高度 */
-    background: rgba(0, 0, 0, 0.3);    /* 半透明遮罩 */
-    backdrop-filter: blur(2px);
-    z-index: 10000;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: calc(var(--container-padding-xs, 16px)) calc(var(--container-padding-xs, 16px));
-    box-sizing: border-box;
-}
+/**
+ * 简约公告模块 - 清爽现代版（XSS 防护加固）
+ * @class AnnouncementModule
+ */
+class AnnouncementModule {
+    constructor() {
+        this.announcements = [];
+        this.modalElement = null;
+        this.isVisible = false;
+        this.isInitialized = false;
+        this.currentAnnouncement = null;
+        this.resizeHandler = null;
+        this.escapeHandler = null;
+        this.init();
+    }
 
-.announcement-modal-simple.active {
-    opacity: 1;
-    visibility: visible;
-}
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
-.announcement-modal-container {
-    width: 100%;
-    max-width: 480px;
-    background: var(--acrylic-bg, rgba(255,255,255,0.65));
-    backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
-    -webkit-backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
-    border: var(--acrylic-border, 1px solid rgba(255,255,255,0.4));
-    border-radius: 8px;
-    box-shadow: var(--acrylic-shadow, 0 8px 32px rgba(0,0,0,0.08));
-    overflow: hidden;
-    transform: scale(0.85);
-    opacity: 0;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
+    init() {
+        if (this.isInitialized) return;
+        this.loadAnnouncements();
+        this.createModal();
+        this.setupGlobalEvents();
+        this.isInitialized = true;
+        window.announcementModule = this;
+    }
 
-.announcement-modal-simple.active .announcement-modal-container {
-    transform: scale(1);
-    opacity: 1;
-}
+    loadAnnouncements() {
+        const stored = Storage.get('announcements');
+        const defaultAnn = this.getDefaultAnnouncements()[0];
 
-@media (prefers-color-scheme: dark) {
-    .announcement-modal-container {
-        background: var(--acrylic-bg, rgba(30,30,30,0.7));
-        border-color: var(--acrylic-border, rgba(255,255,255,0.15));
+        if (!stored || stored.length === 0) {
+            this.announcements = this.getDefaultAnnouncements();
+            Storage.set('announcements', this.announcements);
+        } else {
+            const storedFirst = stored[0];
+            const needUpdate = this.isAnnouncementDifferent(storedFirst, defaultAnn);
+            if (needUpdate) {
+                const newAnnouncements = this.getDefaultAnnouncements();
+                Storage.set('announcements', newAnnouncements);
+                this.announcements = newAnnouncements;
+            } else {
+                this.announcements = stored;
+            }
+        }
+        this.currentAnnouncement = this.announcements[0] || {};
+    }
+
+    isAnnouncementDifferent(stored, defaultAnn) {
+        if (stored.id !== defaultAnn.id) return true;
+        if (stored.title !== defaultAnn.title) return true;
+        if (stored.focus !== defaultAnn.focus) return true;
+        if (JSON.stringify(stored.updates) !== JSON.stringify(defaultAnn.updates)) return true;
+        return false;
+    }
+
+    getDefaultAnnouncements() {
+        return [{
+            id: 'static_announcement',
+            title: '系统公告',
+            focus: '本站为纯前端静态资源导航站，不存储文件、不收集隐私、轻量服务器后台。',
+            updates: [
+                '全新界面设计-更加现代化和美观的视觉体验',
+                '音乐播放器-支持多平台音乐搜索和播放',
+                '星聚影视-影视、音乐、漫画、小说',
+                '更多实用工具-新增多个日常使用的小工具',
+                '清除缓存-可以加载更新内容！！！',
+            ],
+            time: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }),
+            read: false
+        }];
+    }
+
+    createModal() {
+        if (this.modalElement) {
+            this.modalElement.remove();
+            this.modalElement = null;
+        }
+
+        this.modalElement = document.createElement('div');
+        this.modalElement.className = 'announcement-modal-simple';
+        this.modalElement.id = 'announcementModal';
+
+        const ann = this.currentAnnouncement || {};
+        const title = this.escapeHtml(ann.title || '公告');
+        const focus = this.escapeHtml(ann.focus || '');
+        const updates = ann.updates && Array.isArray(ann.updates) ? ann.updates : [];
+        const time = this.escapeHtml(ann.time || new Date().toLocaleDateString());
+
+        this.modalElement.innerHTML = `
+            <div class="announcement-modal-container">
+                <div class="announcement-header">
+                    <div class="announcement-title">
+                        <i class="fas fa-bell" style="color: #4361ee; font-size: 1.2rem;"></i>
+                        <span>${title}</span>
+                    </div>
+                    <button class="announcement-close" id="announcementClose" aria-label="关闭">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="announcement-body">
+                    <div class="focus-section">
+                        <div class="section-label">
+                            <i class="fas fa-star" style="color: #f59e0b; font-size: 0.9rem;"></i>
+                            <span>重要提醒</span>
+                        </div>
+                        <div class="focus-content">${focus}</div>
+                    </div>
+                    <div class="updates-section">
+                        <div class="section-label">
+                            <i class="fas fa-sync-alt" style="color: #10b981; font-size: 0.9rem;"></i>
+                            <span>更新内容</span>
+                        </div>
+                        <ul class="updates-list">
+                            ${updates.map(item => `<li>${this.escapeHtml(item)}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                <div class="announcement-footer">
+                    <span class="announcement-date"><i class="far fa-calendar-alt"></i> ${time}</span>
+                    <button class="announcement-ack-btn" id="announcementAckBtn">知道了</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(this.modalElement);
+        this.bindModalEvents();
+    }
+
+    bindModalEvents() {
+        if (!this.modalElement) return;
+
+        const closeBtn = this.modalElement.querySelector('#announcementClose');
+        const ackBtn = this.modalElement.querySelector('#announcementAckBtn');
+
+        const closeHandler = () => {
+            this.markCurrentAsRead();
+            this.hide();
+        };
+
+        if (closeBtn) closeBtn.addEventListener('click', closeHandler);
+        if (ackBtn) ackBtn.addEventListener('click', closeHandler);
+
+        this.modalElement.addEventListener('click', (e) => {
+            if (e.target === this.modalElement) {
+                this.markCurrentAsRead();
+                this.hide();
+            }
+        });
+    }
+
+    setupGlobalEvents() {
+        this.escapeHandler = (e) => {
+            if (e.key === 'Escape' && this.isVisible) {
+                this.markCurrentAsRead();
+                this.hide();
+            }
+        };
+        document.addEventListener('keydown', this.escapeHandler);
+    }
+
+    markCurrentAsRead() {
+        if (!this.currentAnnouncement || this.currentAnnouncement.read) return;
+        this.currentAnnouncement.read = true;
+        const index = this.announcements.findIndex(a => a.id === this.currentAnnouncement.id);
+        if (index !== -1) {
+            this.announcements[index].read = true;
+            Storage.set('announcements', this.announcements);
+        }
+        this.updateNavbarBadge();
+    }
+
+    updateNavbarBadge() {
+        if (window.app?.components?.navbar) {
+            window.app.components.navbar.updateNotificationBadge();
+        }
+    }
+
+    getUnreadCount() {
+        return this.announcements.filter(a => !a.read).length;
+    }
+
+    showModal() {
+        if (!this.modalElement) this.createModal();
+        if (this.isVisible) return;
+
+        this.closeOtherModals();
+        this.modalElement.classList.add('active');
+        this.isVisible = true;
+
+        if (window.app) window.app.registerModal(this);
+        this.updateButtonState(true);
+    }
+
+    hide() {
+        if (!this.isVisible || !this.modalElement) return;
+
+        this.updateButtonState(false);
+        this.modalElement.classList.remove('active');
+
+        setTimeout(() => {
+            this.isVisible = false;
+            if (window.app) window.app.unregisterModal(this);
+        }, 400);
+    }
+
+    toggleModal() {
+        this.isVisible ? this.hide() : this.showModal();
+    }
+
+    closeOtherModals() {
+        if (window.sidebar?.isVisible?.()) window.sidebar.hide();
+        if (window.searchModule?.isModalOpen?.()) window.searchModule.hide();
+        const musicPlayer = document.getElementById('musicPlayer');
+        if (musicPlayer?.classList.contains('show') && window.app?.components?.navbar) {
+            window.app.components.navbar.hideMusicPlayer();
+        }
+        if (window.aboutModule?.isVisible) window.aboutModule.hide();
+        if (window.app?.modules?.weather?.hide) window.app.modules.weather.hide();
+    }
+
+    updateButtonState(active) {
+        const btn = document.getElementById('announcementBtn');
+        if (btn) btn.classList.toggle('active', active);
+    }
+
+    resetAnnouncements() {
+        this.announcements = this.getDefaultAnnouncements();
+        this.currentAnnouncement = this.announcements[0];
+        Storage.set('announcements', this.announcements);
+        this.createModal();
+    }
+
+    getAnnouncements() {
+        return this.announcements;
+    }
+
+    updateAnnouncements(newAnnouncements) {
+        if (!Array.isArray(newAnnouncements) || newAnnouncements.length === 0) return;
+        Storage.set('announcements', newAnnouncements);
+        this.loadAnnouncements();
+        this.createModal();
+        if (this.isVisible) this.showModal();
+        if (window.navbar) window.navbar.updateNotificationBadge();
+    }
+
+    destroy() {
+        this.hide();
+        if (this.escapeHandler) {
+            document.removeEventListener('keydown', this.escapeHandler);
+        }
+        if (this.modalElement?.parentNode) {
+            this.modalElement.parentNode.removeChild(this.modalElement);
+        }
+        this.modalElement = null;
+        this.isInitialized = false;
     }
 }
 
-.announcement-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px 8px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.announcement-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    font-size: 1.05rem;
-    color: var(--text-primary, #2b2d42);
-}
-
-.announcement-close {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
-    border: none;
-    color: var(--text-secondary, #6c757d);
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.announcement-close:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: var(--text-primary, #2b2d42);
-}
-
-.announcement-body {
-    padding: 16px 20px 12px;
-    display: flex;
-    flex-direction: column;
-    max-height: 350px;
-}
-
-/* 重要提醒区域 */
-.focus-section {
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 16px;
-    flex-shrink: 0;
-}
-
-.section-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-primary, #2b2d42);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.focus-content {
-    color: var(--text-primary, #2b2d42);
-    font-size: 0.85rem;
-    line-height: 1.5;
-    padding-left: 20px;
-}
-
-.updates-section {
-    flex: 1;
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    margin-bottom: 8px;
-}
-
-.updates-section::-webkit-scrollbar {
-    display: none;
-}
-
-.updates-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.updates-list li {
-    position: relative;
-    padding: 6px 0 6px 22px;
-    color: var(--text-primary, #2b2d42);
-    font-size: 0.8rem;
-    line-height: 1.5;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.updates-list li:last-child {
-    border-bottom: none;
-}
-
-.updates-list li::before {
-    content: '';
-    position: absolute;
-    left: 8px;
-    top: 12px;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--primary-color, #4361ee);
-}
-
-.announcement-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px 16px;
-    background: rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.announcement-date {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    color: var(--text-secondary, #6c757d);
-    font-size: 0.78rem;
-}
-
-.announcement-ack-btn {
-    background: var(--primary-color, #4361ee);
-    border: none;
-    color: white;
-    font-size: 0.82rem;
-    font-weight: 500;
-    padding: 5px 18px;
-    border-radius: 40px;
-    cursor: pointer;
-    transition: background 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 8px rgba(67, 97, 238, 0.2);
-}
-
-.announcement-ack-btn:hover {
-    background: #3651d4;
-    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
-}
-
-@media (max-width: 600px) {
-    .announcement-header {
-        padding: 14px 18px 6px;
-    }
-    .announcement-title {
-        font-size: 1rem;
-    }
-    .announcement-body {
-        padding: 14px 18px 10px;
-    }
-    .focus-section {
-        padding: 10px;
-    }
-    .focus-content {
-        font-size: 0.8rem;
-    }
-    .updates-list li {
-        font-size: 0.75rem;
-        padding: 5px 0 5px 20px;
-    }
-    .announcement-footer {
-        padding: 10px 18px 14px;
-    }
-    .announcement-date {
-        font-size: 0.73rem;
-    }
-    .announcement-ack-btn {
-        padding: 4px 14px;
-        font-size: 0.78rem;
-    }
-}
-
-@media (max-width: 400px) {
-    .announcement-modal-container {
-        border-radius: 6px;
-    }
-    .announcement-header {
-        padding: 12px 14px 4px;
-    }
-    .announcement-body {
-        padding: 12px 14px 8px;
-    }
-    .focus-content {
-        font-size: 0.78rem;
-    }
-    .updates-list li {
-        font-size: 0.73rem;
-    }
+// 等待 DOM 加载完成后再初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.announcementModule = new AnnouncementModule();
+    });
+} else {
+    window.announcementModule = new AnnouncementModule();
 }
