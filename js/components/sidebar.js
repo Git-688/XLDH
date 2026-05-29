@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（完整版，支持不同屏幕尺寸偏移量）
+// sidebar.js - 现代悬浮侧滑栏（个人资料模态框：无遮罩层、亚克力效果、右上角头像预览、左下角提示）
 (function() {
     // 分类数据
     const CATEGORIES_DATA = [
@@ -61,7 +61,7 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
-            this.setFixedTop();             // 固定顶部留白（根据屏幕尺寸计算偏移）
+            this.setFixedTop();
             this.loadWallpaperBackground();
             window.addEventListener('resize', () => this.setFixedTop());
             window.sidebar = this;
@@ -144,7 +144,6 @@
         }
 
         bindEvents() {
-            // 点击侧滑栏外部关闭
             document.addEventListener('click', (e) => {
                 if (!this.isOpen) return;
                 const menuBtn = document.getElementById('menuBtn');
@@ -289,27 +288,42 @@
             }
         }
 
+        // 个人资料模态框：无遮罩层、亚克力效果、右上角圆形头像预览、左下角提示文字
         openProfileModal() {
+            // 获取当前用户头像（优先使用已保存的，否则使用默认）
+            const currentAvatar = (this.userConfig && this.userConfig.avatar) ? this.userConfig.avatar : './assets/logo.png';
             const modalHtml = `
-                <div class="profile-modal" id="profileModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:10002;display:flex;align-items:center;justify-content:center;">
-                    <div style="background:var(--bg-card);border-radius:20px;padding:24px;width:340px;max-width:90%;">
-                        <h3 style="margin-bottom:16px;">个人资料</h3>
-                        <div style="margin-bottom:12px;">
-                            <label style="display:block;font-size:12px;margin-bottom:4px;">QQ号码（自动获取头像）</label>
-                            <input type="text" id="profileQQ" placeholder="输入QQ号" value="" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
-                            <div id="qqAvatarStatus" style="font-size:11px;margin-top:4px;color:#666;"></div>
+                <div id="profileModal" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:10002;display:flex;align-items:center;justify-content:center;">
+                    <div class="profile-modal-card" style="background:var(--acrylic-bg, rgba(255,255,255,0.65));backdrop-filter:var(--acrylic-blur, blur(24px) saturate(125%));-webkit-backdrop-filter:var(--acrylic-blur, blur(24px) saturate(125%));border:var(--acrylic-border, 1px solid rgba(255,255,255,0.4));border-radius:8px;box-shadow:var(--acrylic-shadow, 0 8px 32px rgba(0,0,0,0.08));width:360px;max-width:90%;padding:0;overflow:hidden;">
+                        <div style="position:relative;padding:20px 20px 16px;border-bottom:1px solid rgba(0,0,0,0.06);">
+                            <div style="position:absolute;top:20px;right:20px;width:48px;height:48px;border-radius:50%;overflow:hidden;background:#f0f0f0;border:2px solid var(--primary-color, #4361ee);box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                                <img id="profileAvatarPreview" src="${this.escapeHtml(currentAvatar)}" alt="头像预览" style="width:100%;height:100%;object-fit:cover;">
+                            </div>
+                            <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-primary, #1e293b);padding-right:60px;">个人资料</h3>
                         </div>
-                        <div style="margin-bottom:12px;">
-                            <label style="display:block;font-size:12px;margin-bottom:4px;">昵称</label>
-                            <input type="text" id="profileNickname" placeholder="昵称" value="${this.escapeHtml(this.userConfig?.nickname || '')}" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
-                        </div>
-                        <div style="margin-bottom:20px;">
-                            <label style="display:block;font-size:12px;margin-bottom:4px;">个性签名</label>
-                            <input type="text" id="profileSignature" placeholder="个性签名" value="${this.escapeHtml(this.userConfig?.signature || '')}" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
-                        </div>
-                        <div style="display:flex;gap:12px;justify-content:flex-end;">
-                            <button id="profileSaveBtn" style="padding:8px 20px;background:#4361ee;color:white;border:none;border-radius:30px;">保存</button>
-                            <button id="profileCloseBtn" style="padding:8px 20px;background:#e2e8f0;border:none;border-radius:30px;">取消</button>
+                        <div style="padding:16px 20px;">
+                            <div style="margin-bottom:16px;">
+                                <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary, #64748b);">QQ号码（自动获取头像）</label>
+                                <input type="text" id="profileQQ" placeholder="输入QQ号" value="" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.6);font-size:13px;">
+                                <div id="qqAvatarStatus" style="font-size:11px;margin-top:6px;color:#666;"></div>
+                            </div>
+                            <div style="margin-bottom:16px;">
+                                <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary, #64748b);">昵称</label>
+                                <input type="text" id="profileNickname" placeholder="昵称" value="${this.escapeHtml(this.userConfig?.nickname || '')}" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.6);font-size:13px;">
+                            </div>
+                            <div style="margin-bottom:16px;">
+                                <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary, #64748b);">个性签名</label>
+                                <input type="text" id="profileSignature" placeholder="个性签名" value="${this.escapeHtml(this.userConfig?.signature || '')}" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.6);font-size:13px;">
+                            </div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+                                <div style="font-size:11px;color:#ef4444;background:rgba(239,68,68,0.1);padding:4px 8px;border-radius:6px;">
+                                    <i class="fas fa-info-circle"></i> QQ号仅供获取头像！
+                                </div>
+                                <div style="display:flex;gap:12px;">
+                                    <button id="profileCancelBtn" style="padding:8px 20px;background:rgba(0,0,0,0.05);border:none;border-radius:30px;cursor:pointer;font-size:13px;">取消</button>
+                                    <button id="profileSaveBtn" style="padding:8px 20px;background:#4361ee;color:white;border:none;border-radius:30px;cursor:pointer;font-size:13px;">保存</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -319,8 +333,17 @@
             const qqInput = document.getElementById('profileQQ');
             const statusDiv = document.getElementById('qqAvatarStatus');
             const saveBtn = document.getElementById('profileSaveBtn');
-            const closeBtn = document.getElementById('profileCloseBtn');
+            const cancelBtn = document.getElementById('profileCancelBtn');
+            const avatarPreview = document.getElementById('profileAvatarPreview');
 
+            // 点击模态框外部（透明区域）关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+
+            // QQ号自动获取头像（同时更新右侧预览图）
             if (qqInput) {
                 qqInput.addEventListener('blur', async () => {
                     const qq = qqInput.value.trim();
@@ -334,8 +357,11 @@
                                 this.userConfig.avatar = avatarUrl;
                                 statusDiv.textContent = '头像获取成功';
                                 statusDiv.style.color = '#10b981';
-                                const avatarImg = document.getElementById('sidebarAvatarImg');
-                                if (avatarImg) avatarImg.src = avatarUrl;
+                                // 更新右侧预览
+                                if (avatarPreview) avatarPreview.src = avatarUrl;
+                                // 同时更新侧滑栏头像
+                                const sidebarAvatar = document.getElementById('sidebarAvatarImg');
+                                if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
                             };
                             testImg.onerror = () => {
                                 statusDiv.textContent = '获取头像失败，请检查QQ号';
@@ -355,7 +381,7 @@
                 });
             }
 
-            const closeModal = () => modal?.remove();
+            // 保存按钮
             saveBtn?.addEventListener('click', () => {
                 const newName = document.getElementById('profileNickname')?.value.trim() || '访客用户';
                 const newSig = document.getElementById('profileSignature')?.value.trim() || '探索无限可能';
@@ -365,41 +391,36 @@
                 if (this.userConfig.avatar) userConfig.avatar = this.userConfig.avatar;
                 Storage.set('userConfig', userConfig);
                 this.loadUserData();
-                closeModal();
+                modal?.remove();
                 if (window.toast) window.toast.show('个人信息已保存', 'success');
             });
-            closeBtn?.addEventListener('click', closeModal);
-            modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+            // 取消按钮
+            cancelBtn?.addEventListener('click', () => {
+                modal?.remove();
+            });
         }
 
-        /**
-         * 固定顶部留白：获取壁纸容器顶部相对于文档顶部的距离，并根据屏幕宽度添加额外偏移量
-         */
         setFixedTop() {
             const wallpaperSection = document.querySelector('.wallpaper-section');
             if (!wallpaperSection || !this.sidebarEl) return;
             const topPos = wallpaperSection.offsetTop;
             
-            // 根据不同屏幕宽度设置额外偏移量
             let extraOffset = 0;
             const screenWidth = window.innerWidth;
-            
             if (screenWidth >= 1200) {
-                extraOffset = 24;   // 桌面大屏（≥1200px）
+                extraOffset = 24;
             } else if (screenWidth >= 992) {
-                extraOffset = 20;   // 桌面中屏（992-1199px）
+                extraOffset = 20;
             } else if (screenWidth >= 768) {
-                extraOffset = 16;   // 平板（768-991px）
+                extraOffset = 16;
             } else {
-                extraOffset = 16;   // 手机（<768px）
+                extraOffset = 12;
             }
             
             this.sidebarEl.style.top = `${topPos + extraOffset}px`;
         }
 
-        /**
-         * 关闭所有其他模态框（搜索、公告、音乐、天气、关于、笔记、投稿等）
-         */
         closeOtherModals() {
             if (window.newSearchModule && typeof window.newSearchModule.hide === 'function') {
                 window.newSearchModule.hide();
