@@ -1,8 +1,8 @@
-/* sidebar.css - 现代悬浮侧滑栏样式（适配新版需求） */
+/* sidebar.css - 现代悬浮侧滑栏样式（最终优化版） */
 :root {
     --sidebar-width: 280px;
-    --sidebar-mobile-width: 75vw;        /* 移动端宽度缩小 */
-    --sidebar-max-mobile: 280px;         /* 移动端最大宽度 */
+    --sidebar-mobile-width: 75vw;
+    --sidebar-max-mobile: 300px;
     --sidebar-bg: rgba(255, 255, 255, 0.75);
     --sidebar-bg-dark: rgba(30, 30, 35, 0.85);
     --sidebar-blur: blur(20px);
@@ -15,7 +15,7 @@
 /* 侧滑栏容器 */
 .sidebar {
     position: fixed;
-    top: 0; /* 由 JS 动态覆盖 */
+    top: 0; /* JS 动态覆盖 */
     left: var(--container-padding-xs, 16px);
     bottom: 20px;
     width: var(--sidebar-width);
@@ -38,7 +38,7 @@
     transform: translateX(0);
 }
 
-/* 深色模式 */
+/* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
     .sidebar {
         background: var(--sidebar-bg-dark);
@@ -145,11 +145,13 @@
     flex: 1;
     overflow-y: auto;
     padding: 8px 12px;
-    scrollbar-width: none;      /* Firefox */
-    -ms-overflow-style: none;   /* IE/Edge */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 .sidebar-categories::-webkit-scrollbar {
-    display: none;              /* Chrome/Safari */
+    display: none;
+    width: 0;
+    height: 0;
 }
 
 /* 分类分组 */
@@ -255,9 +257,9 @@
     color: currentColor;
 }
 
-/* 底部按钮栏 - 仅图标，彩色 */
+/* 底部按钮栏 - 紧凑设计，等间距 */
 .sidebar-footer {
-    padding: 12px 16px 18px;
+    padding: 10px 16px 16px;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: space-around;
@@ -270,17 +272,14 @@
 .footer-btn {
     flex: 1;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0;
-    padding: 10px 0;
+    padding: 8px 0;
     background: transparent;
     border: none;
-    border-radius: 14px;
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
-    color: var(--text-secondary, #5f6c84);
     font-size: 20px;
 }
 
@@ -306,25 +305,24 @@
 .footer-btn[data-action="qq"] { color: #3b82f6; }
 .footer-btn[data-action="qq"]:hover { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
 
-/* 遮罩层 - 透明且不覆盖导航栏 */
+/* 遮罩层 - 仅覆盖导航栏以下区域 */
 .sidebar-overlay {
     position: fixed;
-    top: 0;
+    top: 60px;
     left: 0;
     right: 0;
     bottom: 0;
-    background: transparent;    /* 完全透明 */
-    z-index: 999;              /* 低于导航栏 (1000) 和侧滑栏 (1001) */
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.25s ease, visibility 0.25s;
-    pointer-events: none;      /* 默认不接收点击 */
 }
 
 .sidebar-overlay.active {
     opacity: 1;
     visibility: visible;
-    pointer-events: auto;      /* 活动时接收点击，用于关闭侧滑栏 */
 }
 
 /* 响应式：左右边距与主页一致 */
@@ -353,7 +351,7 @@
     }
 }
 
-/* 移动端宽度缩小 */
+/* 移动端宽度调整 */
 @media (max-width: 768px) {
     .sidebar {
         width: var(--sidebar-mobile-width);
@@ -377,6 +375,9 @@
     }
     .footer-btn i {
         font-size: 18px;
+    }
+    .footer-btn {
+        padding: 6px 0;
     }
 }
 
