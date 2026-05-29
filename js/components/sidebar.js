@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（顶部固定留白 20px，无遮罩层）
+// sidebar.js - 现代悬浮侧滑栏（动态适配壁纸顶部留白，无遮罩层）
 (function() {
     const CATEGORIES_DATA = [
         { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
@@ -59,16 +59,30 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
-            this.setFixedTop();          // 直接设置固定顶部位置（不再动态计算）
+            this.updatePosition();           // 初始化位置
             this.loadWallpaperBackground();
+            // 监听窗口大小变化，重新计算位置
+            window.addEventListener('resize', () => this.updatePosition());
             window.sidebar = this;
         }
 
-        setFixedTop() {
+        // 获取壁纸顶部实际留白（导航栏底部到壁纸顶部的距离）
+        getWallpaperTopMargin() {
+            const navbar = document.getElementById('navbar');
+            const wallpaperSection = document.querySelector('.wallpaper-section');
+            if (!wallpaperSection) return 0;
+            const navbarHeight = navbar ? navbar.offsetHeight : 60;
+            const wallpaperRect = wallpaperSection.getBoundingClientRect();
+            const margin = wallpaperRect.top - navbarHeight;
+            return Math.max(0, margin);
+        }
+
+        // 更新侧滑栏顶部位置
+        updatePosition() {
             const navbar = document.getElementById('navbar');
             const navbarHeight = navbar ? navbar.offsetHeight : 60;
-            const wallpaperTopMargin = 20; // 与壁纸顶部留白一致
-            const fixedTop = navbarHeight + wallpaperTopMargin;
+            const topMargin = this.getWallpaperTopMargin();
+            const fixedTop = navbarHeight + topMargin;
             this.sidebarEl.style.top = `${fixedTop}px`;
         }
 
@@ -446,6 +460,7 @@
 
         destroy() {
             this.hide();
+            window.removeEventListener('resize', this.updatePosition);
         }
     }
 
