@@ -1,9 +1,7 @@
 /* ================================================
    responsive.css - 通用响应式适配（最终版）
-   包含：浮动按钮、横屏、移动端基础适配
    ================================================ */
 
-/* ========== 1. 浮动按钮响应式优化 ========== */
 @media (max-width: 768px) {
     .floating-buttons {
         bottom: 16px;
@@ -52,16 +50,12 @@
         font-size: 14px;
     }
 }
-
-/* ========== 2. 减少动画模式适配 ========== */
 @media (prefers-reduced-motion: reduce) {
     * {
         transition: none !important;
         animation: none !important;
     }
 }
-
-/* ========== 3. 横屏小高度页面优化（通用） ========== */
 @media (max-height: 500px) and (orientation: landscape) {
     .sidebar {
         bottom: 10px;
@@ -73,8 +67,6 @@
         display: none;
     }
 }
-
-/* ========== 4. 移动端容器边距保持统一 ========== */
 @media (min-width: 576px) {
     :root {
         --container-padding-sm: 20px;
