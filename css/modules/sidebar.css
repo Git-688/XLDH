@@ -1,4 +1,4 @@
-/* sidebar.css - 现代悬浮侧滑栏样式（最终优化版） */
+/* sidebar.css - 现代悬浮侧滑栏样式（固定顶部留白 + 等间距底部按钮 + 圆角8px） */
 :root {
     --sidebar-width: 280px;
     --sidebar-mobile-width: 75vw;
@@ -11,7 +11,7 @@
     --sidebar-transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
 
-/* 侧滑栏容器 - 固定位置，top 由 JS 动态设置 */
+/* 侧滑栏容器 - 固定位置，top 由 JS 动态设置（不随滚动改变） */
 .sidebar {
     position: fixed;
     left: var(--container-padding-xs, 16px);
@@ -142,10 +142,9 @@
 .sidebar-categories {
     flex: 1;
     overflow-y: auto;
-    padding: 0 12px;
+    padding: 0 12px 8px 12px;  /* 顶部间距改为0 */
     scrollbar-width: none;
     -ms-overflow-style: none;
-    overscroll-behavior: contain;  /* 防止滚动传递到 body */
 }
 .sidebar-categories::-webkit-scrollbar {
     display: none;
@@ -256,9 +255,9 @@
     color: currentColor;
 }
 
-/* 底部按钮栏 - 移除内边距 */
+/* 底部按钮栏 - 上下间距相等 */
 .sidebar-footer {
-    padding: 0;
+    padding: 12px 16px;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: space-around;
@@ -273,7 +272,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 12px 0;
+    padding: 8px 0;
     background: transparent;
     border: none;
     border-radius: 8px;
@@ -372,11 +371,11 @@
         padding: 9px 14px 9px 40px;
         font-size: 12px;
     }
-    .footer-btn {
-        padding: 10px 0;
-    }
     .footer-btn i {
         font-size: 18px;
+    }
+    .footer-btn {
+        padding: 6px 0;
     }
 }
 
