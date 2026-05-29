@@ -1,11 +1,5 @@
 /**
- * 侧边栏组件 - 修复版
- * 修复内容：
- * 1. 移动端打开侧滑栏时锁定 body 滚动，关闭时恢复
- * 2. 添加 Profile 模态框完整样式（CSS 中补充）
- * 3. 优化事件委托，确保所有按钮功能正常
- * 4. 修复壁纸加载失败时的降级处理
- * 5. 添加与其他模态框的冲突处理
+ * 侧边栏组件 - 修复滚动锁定、初始化时移除多余 active 类
  */
 class CompactSidebar {
   constructor() {
@@ -55,7 +49,7 @@ class CompactSidebar {
     this.defaultAvatar = './assets/logo.png';
     this.wallpaperCache = null;
     this.wallpaperDate = null;
-    this.bodyScrollTop = 0; // 保存滚动位置
+    this.bodyScrollTop = 0;
   }
 
   async init() {
@@ -74,6 +68,11 @@ class CompactSidebar {
       await this.loadSidebarWallpaper();
       this.createProfileModal();
       this.syncExpandedHeights();
+
+      // 修复：初始化时确保侧滑栏不处于激活状态
+      const sidebarEl = document.getElementById('sidebar');
+      if (sidebarEl) sidebarEl.classList.remove('active');
+
       this.isInitialized = true;
       window.sidebar = this;
     } catch (error) {
@@ -177,7 +176,6 @@ class CompactSidebar {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
 
-    // 事件委托处理分类展开/收起、分类项点击、底部按钮点击、头像点击
     sidebar.addEventListener('click', (e) => {
       const categoryHeader = e.target.closest('.category-group-header');
       const categoryItem = e.target.closest('.category-item');
@@ -196,7 +194,6 @@ class CompactSidebar {
       }
     });
 
-    // 点击外部关闭侧滑栏
     document.addEventListener('click', (e) => {
       const sidebarEl = document.getElementById('sidebar');
       const menuBtn = document.getElementById('menuBtn');
@@ -296,21 +293,18 @@ class CompactSidebar {
     this.hide();
   }
 
-  // 修复滚动锁定：打开时禁用 body 滚动，保存滚动位置
   show() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar || this.isVisible()) return;
-    
-    // 关闭其他模态框（避免冲突）
+
     if (window.app && window.app.closeAllModalsExcept) {
       window.app.closeAllModalsExcept(['sidebar']);
     }
-    
-    // 保存当前滚动位置并锁定 body
+
     this.bodyScrollTop = window.scrollY;
     document.body.classList.add('sidebar-open');
     document.body.style.top = `-${this.bodyScrollTop}px`;
-    
+
     sidebar.classList.add('active');
     if (window.app && !this.modalRegistered) {
       window.app.registerModal(this);
@@ -318,18 +312,16 @@ class CompactSidebar {
     }
   }
 
-  // 修复滚动锁定：恢复 body 滚动
   hide() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar || !this.isVisible()) return;
-    
+
     sidebar.classList.remove('active');
-    
-    // 恢复 body 滚动
+
     document.body.classList.remove('sidebar-open');
     document.body.style.top = '';
     window.scrollTo(0, this.bodyScrollTop);
-    
+
     if (window.app && this.modalRegistered) {
       window.app.unregisterModal(this);
       this.modalRegistered = false;
@@ -571,7 +563,7 @@ class CompactSidebar {
   }
 }
 
-// 初始化侧边栏（单例）
+// 初始化侧边栏
 if (!window.sidebarInitialized) {
   window.sidebarInitialized = true;
   const initSidebar = async () => {
