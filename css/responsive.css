@@ -1,7 +1,7 @@
 /* ================================================
-   responsive.css - 通用响应式适配（最终版）
-   功能：浮动按钮响应、移动端容器边距、横屏优化
-   注意：不包含 body.sidebar-open 的 overflow 规则，以保证主页可滚动
+   responsive.css - 通用响应式适配（纯净版）
+   包含：浮动按钮、容器边距、横屏、移动端基础适配
+   不包含旧侧滑栏相关样式，避免冲突
    ================================================ */
 
 /* ========== 1. 浮动按钮响应式优化 ========== */
@@ -17,7 +17,6 @@
         font-size: 18px;
     }
 }
-
 @media (max-width: 480px) {
     .floating-buttons {
         bottom: 12px;
@@ -30,7 +29,6 @@
         font-size: 16px;
     }
 }
-
 @media (max-width: 360px) {
     .floating-buttons {
         bottom: 10px;
@@ -43,8 +41,6 @@
         font-size: 15px;
     }
 }
-
-/* 横屏小高度设备 */
 @media (max-height: 500px) and (orientation: landscape) {
     .floating-buttons {
         bottom: 8px;
@@ -66,72 +62,33 @@
     }
 }
 
-/* ========== 3. 全局容器边距（确保侧滑栏左边距与主页一致） ========== */
-:root {
-    --container-padding-xs: 16px;
-    --container-padding-sm: 20px;
-    --container-padding-md: 24px;
-    --container-padding-lg: 28px;
-    --container-padding-xl: 32px;
-}
-
-/* ========== 4. 移动端触摸优化（保留，但侧滑栏已独立处理） ========== */
-@media (max-width: 768px) {
-    .sidebar-categories {
-        -webkit-overflow-scrolling: touch;
+/* ========== 3. 横屏小高度页面优化 ========== */
+@media (max-height: 600px) and (orientation: landscape) {
+    .sidebar {
+        max-height: 85vh;
+    }
+    .sidebar-wallpaper {
+        aspect-ratio: 21/9;
     }
 }
 
-/* ========== 5. 横屏小高度时隐藏每日一言（侧滑栏内部处理，此处作为后备） ========== */
-@media (max-height: 500px) and (orientation: landscape) {
-    .daily-quote-card {
-        display: none;
-    }
-}
-
-/* ========== 6. 超大屏容器限制（侧滑栏最大宽度） ========== */
+/* ========== 4. 超大屏容器限制 ========== */
 @media (min-width: 2560px) {
     .sidebar {
         max-width: 340px;
     }
 }
 
-/* ========== 7. 其他通用响应式（保持原有基础） ========== */
+/* ========== 5. 移动端触摸优化 ========== */
 @media (max-width: 768px) {
-    .container,
-    .container-fluid {
-        padding: 0 var(--container-padding-xs, 16px);
+    .sidebar.active .sidebar-categories {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
     }
 }
 
-@media (min-width: 576px) {
-    .container,
-    .container-fluid {
-        padding: 0 var(--container-padding-sm, 20px);
-    }
+/* ========== 6. 侧滑栏打开时主内容区域不可交互（避免误触） ========== */
+.sidebar.active ~ .main-content {
+    pointer-events: none;
+    user-select: none;
 }
-
-@media (min-width: 768px) {
-    .container,
-    .container-fluid {
-        padding: 0 var(--container-padding-md, 24px);
-    }
-}
-
-@media (min-width: 992px) {
-    .container,
-    .container-fluid {
-        padding: 0 var(--container-padding-lg, 28px);
-    }
-}
-
-@media (min-width: 1200px) {
-    .container,
-    .container-fluid {
-        padding: 0 var(--container-padding-xl, 32px);
-    }
-}
-
-/* ========== 8. 移除旧侧滑栏相关样式（避免冲突） ========== */
-/* 注意：以下规则已移除，新版侧滑栏不再依赖这些类 */
-/* .sidebar-content, .categories-container 等旧样式不再出现 */
