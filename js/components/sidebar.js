@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（固定顶部留白，关闭其他模态框，背景可滚动）
+// sidebar.js - 现代悬浮侧滑栏（无遮罩层，顶部留白固定，不随滚动移动）
 (function() {
     const CATEGORIES_DATA = [
         { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
@@ -46,40 +46,28 @@
     class ModernSidebar {
         constructor() {
             this.sidebarEl = document.getElementById('sidebar');
-            this.overlay = null;
             this.isOpen = false;
             this.categories = JSON.parse(JSON.stringify(CATEGORIES_DATA));
             this.userConfig = null;
-            this.fixedTop = null; // 存储计算好的固定 top 值
+            this.fixedTop = null;
             this.init();
         }
 
         init() {
             if (!this.sidebarEl) return;
-            this.createOverlay();
             this.render();
             this.bindEvents();
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
-            this.calcFixedTop();      // 计算固定顶部留白
-            this.setFixedTop();       // 应用样式
+            this.calcFixedTop();
+            this.setFixedTop();
             this.loadWallpaperBackground();
             window.addEventListener('resize', () => {
                 this.calcFixedTop();
                 this.setFixedTop();
             });
             window.sidebar = this;
-        }
-
-        createOverlay() {
-            if (!document.querySelector('.sidebar-overlay')) {
-                this.overlay = document.createElement('div');
-                this.overlay.className = 'sidebar-overlay';
-                document.body.appendChild(this.overlay);
-            } else {
-                this.overlay = document.querySelector('.sidebar-overlay');
-            }
         }
 
         calcFixedTop() {
@@ -89,7 +77,6 @@
                 this.fixedTop = (navbar ? navbar.offsetHeight : 60) + 20;
                 return;
             }
-            // 获取壁纸容器顶部距离视口顶部的距离（即留白大小，不随滚动变化）
             const rect = wallpaperSection.getBoundingClientRect();
             const navbarHeight = navbar ? navbar.offsetHeight : 60;
             let topVal = rect.top;
@@ -185,8 +172,7 @@
                 const menuBtn = document.getElementById('menuBtn');
                 const isMenuBtn = menuBtn && menuBtn.contains(e.target);
                 const isSidebar = this.sidebarEl && this.sidebarEl.contains(e.target);
-                const isOverlay = this.overlay && this.overlay.contains(e.target);
-                if (!isSidebar && !isMenuBtn && (isOverlay || !e.target.closest('.sidebar'))) {
+                if (!isSidebar && !isMenuBtn) {
                     this.hide();
                 }
             });
@@ -435,11 +421,9 @@
 
         show() {
             if (this.isOpen) return;
-            // 关闭其他模态框（如果存在全局方法）
             if (window.app && typeof window.app.closeAllModalsExcept === 'function') {
                 window.app.closeAllModalsExcept(['sidebar']);
             } else {
-                // 备用关闭方法：关闭常见的模态框
                 if (window.newSearchModule?.isOpen) window.newSearchModule.hide();
                 if (window.announcementModule?.isVisible) window.announcementModule.hide();
                 if (window.aboutModule?.isVisible) window.aboutModule.hide();
@@ -454,13 +438,6 @@
             }
             this.isOpen = true;
             this.sidebarEl.classList.add('active');
-            if (this.overlay) {
-                const navbar = document.getElementById('navbar');
-                const navbarHeight = navbar ? navbar.offsetHeight : 60;
-                this.overlay.style.top = `${navbarHeight}px`;
-                this.overlay.classList.add('active');
-            }
-            // 不锁定 body 滚动，允许背景滚动
             if (window.app && !window._sidebarModalRegistered) {
                 window.app.registerModal(this);
                 window._sidebarModalRegistered = true;
@@ -471,7 +448,6 @@
             if (!this.isOpen) return;
             this.isOpen = false;
             this.sidebarEl.classList.remove('active');
-            if (this.overlay) this.overlay.classList.remove('active');
             if (window.app && window._sidebarModalRegistered) {
                 window.app.unregisterModal(this);
                 window._sidebarModalRegistered = false;
@@ -488,7 +464,6 @@
 
         destroy() {
             this.hide();
-            if (this.overlay) this.overlay.remove();
         }
     }
 
