@@ -1,11 +1,12 @@
 /**
- * 导航栏组件 - 修复侧滑栏弹出延迟问题
- * 修复点：handleFeatureToggle 中移除 requestAnimationFrame，改为同步调用
+ * 导航栏组件 - 最终修复版
+ * 修复：移除 requestAnimationFrame，确保侧滑栏立即响应；避免重复绑定事件
  */
 class Navbar {
     constructor() {
         if (window.navbar && window.navbar instanceof Navbar) return window.navbar;
         this.announcements = [];
+        this.menuBound = false;   // 防止重复绑定汉堡菜单
         this.init();
         window.navbar = this;
     }
@@ -58,8 +59,9 @@ class Navbar {
             });
         }
 
+        // 汉堡菜单：使用标志位避免重复绑定
         const menuBtn = document.getElementById('menuBtn');
-        if (menuBtn) {
+        if (menuBtn && !this.menuBound) {
             const waitForSidebar = () => {
                 if (window.sidebar && typeof window.sidebar.toggle === 'function') {
                     menuBtn.addEventListener('click', (e) => {
@@ -67,6 +69,7 @@ class Navbar {
                         e.stopPropagation();
                         this.handleFeatureToggle('sidebar', () => window.sidebar.toggle());
                     });
+                    this.menuBound = true;
                 } else {
                     setTimeout(waitForSidebar, 100);
                 }
@@ -112,14 +115,16 @@ class Navbar {
         if (btt) btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
-    // 修复核心：移除 requestAnimationFrame，同步执行，避免延迟导致的状态错误
+    // 核心修复：同步执行，不再使用 requestAnimationFrame
     handleFeatureToggle(featureKey, toggleFn) {
         const isOpen = this.isFeatureOpen(featureKey);
         if (isOpen) {
             toggleFn();
         } else {
+            // 先关闭其他所有模态框（确保侧滑栏的关闭操作不会与打开冲突）
             this.closeAllModalsExcept([featureKey]);
-            toggleFn();  // 直接同步调用，不再使用 requestAnimationFrame
+            // 直接同步打开
+            toggleFn();
         }
     }
 
