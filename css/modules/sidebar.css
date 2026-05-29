@@ -1,4 +1,4 @@
-/* sidebar.css - 现代悬浮侧滑栏样式（最终完整版，底部按钮留白一致） */
+/* sidebar.css - 现代悬浮侧滑栏样式（最终完整版，无固定 top） */
 :root {
     --sidebar-width: 280px;
     --sidebar-mobile-width: 75vw;
@@ -14,6 +14,7 @@
 /* 侧滑栏容器 - top 由 JS 动态设置（与壁纸顶部对齐） */
 .sidebar {
     position: fixed;
+    /* 不设置 top，完全由 JS 控制 */
     left: var(--container-padding-xs, 16px);
     bottom: 20px;
     width: var(--sidebar-width);
@@ -257,7 +258,7 @@
 
 /* 底部按钮栏 - 上下左右留白一致 */
 .sidebar-footer {
-    padding: 12px 16px;          /* 上下12px，左右16px，保证上下留白相等 */
+    padding: 12px 16px;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: center;
@@ -272,7 +273,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px;               /* 按钮内边距一致，图标四周留白相等 */
+    padding: 8px;
     background: transparent;
     border: none;
     border-radius: 8px;
@@ -373,7 +374,7 @@
         font-size: 12px;
     }
     .sidebar-footer {
-        padding: 10px 16px;     /* 移动端稍微减小上下留白，但仍保持一致 */
+        padding: 10px 16px;
     }
     .footer-btn {
         padding: 6px;
@@ -403,7 +404,7 @@
         font-size: 11px;
     }
     .sidebar-footer {
-        padding: 8px 16px;      /* 极小屏保持上下留白一致 */
+        padding: 8px 16px;
     }
     .footer-btn {
         padding: 5px;
