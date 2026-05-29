@@ -14,7 +14,7 @@
     border-radius: 8px;
     box-shadow: var(--acrylic-shadow, 0 8px 32px rgba(0,0,0,0.08)), 0 0 0 1px rgba(255, 255, 255, 0.5);
     width: 420px;
-    overflow: hidden;
+    overflow: hidden;  /* 保持圆角裁剪，但不影响下拉菜单（下拉菜单已挂载到 body 或使用 fixed） */
     transition: all 0.3s ease;
     z-index: 10000;
     max-height: 700px;
@@ -149,7 +149,7 @@
 .progress-handle { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; background: var(--bg-card, #ffffff); border: 2px solid var(--primary-color, #4361ee); border-radius: 50%; opacity: 0; transition: all 0.2s ease; z-index: 3; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 .progress-bar:hover .progress-handle { opacity: 1; }
 .progress-actions { display: flex; align-items: center; gap: 8px; }
-.speed-control { display: flex; align-items: center; }
+.speed-control { display: flex; align-items: center; position: relative; }
 .speed-selector { width: 65px; }
 .music-player select { display: none !important; }
 
@@ -165,7 +165,7 @@
 .custom-select-trigger.open .arrow { transform: rotate(180deg); }
 .custom-select-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* 修复下拉菜单位置错位 - 相对于容器绝对定位 */
+/* 下拉菜单样式 - 提高 z-index 保证显示在最上层 */
 .custom-select-dropdown {
     position: absolute;
     top: 100%;
@@ -195,8 +195,22 @@
 .custom-select-option:hover { background: rgba(67,97,238,0.08); color: var(--primary-color, #4361ee); }
 .custom-select-option.selected { background: rgba(67,97,238,0.12); color: var(--primary-color, #4361ee); font-weight: 500; position: relative; }
 .custom-select-option.selected::before { content: '✓'; position: absolute; right: 12px; font-size: 12px; }
-.speed-control .custom-select { width: 65px; }
-.speed-control .custom-select-trigger { padding: 4px 8px; font-size: 11px; }
+
+/* 倍速下拉列表特别处理：确保最高层级且不被裁剪 */
+.speed-control .custom-select-dropdown {
+    z-index: 100001 !important;
+    position: fixed;   /* 使用 fixed 定位，完全脱离播放器容器，避免被 overflow:hidden 裁剪 */
+    width: auto;
+    min-width: 65px;
+}
+.speed-control {
+    position: relative; /* 作为 fixed 定位的参考（left/top 基准） */
+}
+
+.speed-control .custom-select .custom-select-dropdown {
+    /* 由于 fixed 定位，top/left 需要通过 JS 动态计算，此处仅提供基础样式 */
+}
+
 .playlist-selector .custom-select { width: 100%; }
 
 /* ===== 歌词区域（单行居中、水平滚动、无滚动条） ===== */
@@ -228,7 +242,6 @@
     font-weight: 500;
     transition: opacity 0.35s ease, transform 0.35s ease;
 }
-/* 跑马灯效果已由 JS 实现，不再使用 CSS 动画 */
 
 /* ===== 底部区域（歌单、搜索等） ===== */
 .bottom-section { max-height: 500px; overflow: hidden; transition: max-height 0.3s ease; background: inherit; }
@@ -248,7 +261,6 @@
 
 .playlist-container { max-height: 380px; overflow-y: auto; }
 .loading { text-align: center; color: var(--text-secondary, #6c757d); padding: 20px; font-size: 12px; }
-/* 歌单列表项 - 无封面图片，只显示文字 */
 .song-item {
     display: flex;
     align-items: center;
