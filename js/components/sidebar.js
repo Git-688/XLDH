@@ -1,6 +1,6 @@
-// sidebar.js - 现代悬浮侧滑栏（最终修复版，顶部与壁纸对齐）
+// sidebar.js - 最终完整版（顶部对齐、关闭其他模态框、滚动隔离）
 (function() {
-    // 分类数据
+    // 分类数据（保持不变）
     const CATEGORIES_DATA = [
         { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
             { icon: 'fas fa-mobile-alt', label: '手机软件', link: './pages/chl/手机软件.html' },
@@ -37,7 +37,6 @@
         ] }
     ];
 
-    // 底部按钮配置（只有图标，独立颜色）
     const FOOTER_BUTTONS = [
         { icon: 'fas fa-pen', action: 'notebook', color: '#8b5cf6' },
         { icon: 'fas fa-gift', action: 'gift', color: '#f97316' },
@@ -63,11 +62,10 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
-            this.alignWithWallpaperTop();      // 设置侧滑栏顶部与壁纸顶部对齐
+            this.adjustPosition();
             this.loadWallpaperBackground();
-            // 监听窗口大小变化，重新对齐
-            window.addEventListener('resize', () => this.alignWithWallpaperTop());
-            window.addEventListener('scroll', () => this.alignWithWallpaperTop());
+            window.addEventListener('scroll', () => this.adjustPosition());
+            window.addEventListener('resize', () => this.adjustPosition());
             window.sidebar = this;
         }
 
@@ -386,20 +384,22 @@
             modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         }
 
-        // 核心修复：使侧滑栏顶部与壁纸顶部完全对齐（包括壁纸自身的留白间距）
-        alignWithWallpaperTop() {
+        adjustPosition() {
             const wallpaperSection = document.querySelector('.wallpaper-section');
-            if (!wallpaperSection || !this.sidebarEl) return;
-            // 获取壁纸区域相对于视口顶部的距离（已包含导航栏高度和壁纸自身 padding-top）
-            const wallpaperTop = wallpaperSection.getBoundingClientRect().top;
-            // 直接使用该值作为侧滑栏的 top，无需与导航栏高度取最大值，因为壁纸顶部必然在导航栏下方
-            this.sidebarEl.style.top = `${wallpaperTop}px`;
-
-            // 同时设置遮罩层的 top 为导航栏高度（遮罩从导航栏下方开始）
             const navbar = document.getElementById('navbar');
+            if (!wallpaperSection || !this.sidebarEl) return;
             const navbarHeight = navbar ? navbar.offsetHeight : 60;
-            if (this.overlay) {
-                this.overlay.style.top = `${navbarHeight}px`;
+            const wallpaperRect = wallpaperSection.getBoundingClientRect();
+            const topOffset = wallpaperRect.top;
+            let newTop = topOffset;
+            if (newTop < navbarHeight) newTop = navbarHeight;
+            this.sidebarEl.style.top = `${newTop}px`;
+            const windowHeight = window.innerHeight;
+            const sidebarBottom = windowHeight - newTop - this.sidebarEl.offsetHeight;
+            if (sidebarBottom < 20) {
+                this.sidebarEl.style.bottom = '20px';
+            } else {
+                this.sidebarEl.style.bottom = '20px';
             }
         }
 
@@ -428,41 +428,35 @@
             });
         }
 
-        // 关闭其他所有模态框
         closeOtherModals() {
-            // 关闭音乐播放器
-            const musicPlayer = document.getElementById('musicPlayer');
-            if (musicPlayer && musicPlayer.classList.contains('show')) {
-                if (window.app?.components?.navbar) window.app.components.navbar.hideMusicPlayer();
-            }
-            // 关闭搜索框
+            // 关闭常见的模态框（搜索、音乐、公告、天气、关于、笔记本、投稿）
             if (window.newSearchModule && window.newSearchModule.isOpen) window.newSearchModule.hide();
-            // 关闭公告
             if (window.announcementModule && window.announcementModule.isVisible) window.announcementModule.hide();
-            // 关闭天气
-            if (window.app?.modules?.weather && window.app.modules.weather.isShowing) window.app.modules.weather.hide();
-            // 关闭关于
-            if (window.aboutModule && window.aboutModule.isShowing) window.aboutModule.hide();
-            // 关闭投稿
+            if (window.aboutModule && window.aboutModule.isVisible) window.aboutModule.hide();
+            if (window.app?.modules?.weather?.isShowing) window.app.modules.weather.hide();
+            if (window.app?.hideNotebookModal) window.app.hideNotebookModal();
             const submitModal = document.getElementById('submitModal');
             if (submitModal && submitModal.classList.contains('active')) submitModal.classList.remove('active');
-            // 关闭笔记
-            const notebookModal = document.getElementById('notebookModal');
-            if (notebookModal && notebookModal.classList.contains('active')) {
-                if (window.hideNotebookModal) window.hideNotebookModal();
+            const musicPlayer = document.getElementById('musicPlayer');
+            if (musicPlayer && musicPlayer.classList.contains('show') && window.app?.components?.navbar) {
+                window.app.components.navbar.hideMusicPlayer();
             }
-            // 关闭评论
-            if (window.commentModule && window.commentModule.isVisible) window.commentModule.close();
         }
 
         show() {
             if (this.isOpen) return;
-            // 先关闭其他模态框
+            // 关闭其他模态框
             this.closeOtherModals();
             this.isOpen = true;
             this.sidebarEl.classList.add('active');
-            if (this.overlay) this.overlay.classList.add('active');
-            // 允许背景滚动，不锁定 body
+            if (this.overlay) {
+                const navbar = document.getElementById('navbar');
+                const navbarHeight = navbar ? navbar.offsetHeight : 60;
+                this.overlay.style.top = `${navbarHeight}px`;
+                this.overlay.classList.add('active');
+            }
+            // 不锁定 body 滚动，让主页可以滚动
+            document.body.classList.add('sidebar-open');
             if (window.app && !window._sidebarModalRegistered) {
                 window.app.registerModal(this);
                 window._sidebarModalRegistered = true;
@@ -474,6 +468,7 @@
             this.isOpen = false;
             this.sidebarEl.classList.remove('active');
             if (this.overlay) this.overlay.classList.remove('active');
+            document.body.classList.remove('sidebar-open');
         }
 
         toggle() {
