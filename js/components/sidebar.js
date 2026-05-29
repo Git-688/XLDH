@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（无遮罩层，固定顶部留白）
+// sidebar.js - 现代悬浮侧滑栏（顶部间距 +18px）
 (function() {
     // 分类数据
     const CATEGORIES_DATA = [
@@ -61,7 +61,7 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
-            this.setFixedTop();             // 固定顶部留白（不随滚动变化）
+            this.setFixedTop();
             this.loadWallpaperBackground();
             window.addEventListener('resize', () => this.setFixedTop());
             window.sidebar = this;
@@ -144,7 +144,6 @@
         }
 
         bindEvents() {
-            // 点击侧滑栏外部关闭
             document.addEventListener('click', (e) => {
                 if (!this.isOpen) return;
                 const menuBtn = document.getElementById('menuBtn');
@@ -374,13 +373,13 @@
 
         /**
          * 固定顶部留白：获取壁纸容器顶部相对于文档顶部的距离，并设置为侧滑栏的 top 值
-         * 这样侧滑栏在页面滚动时保持与壁纸顶部相同的固定留白位置。
+         * 同时增加 18px 间距
          */
         setFixedTop() {
             const wallpaperSection = document.querySelector('.wallpaper-section');
             if (!wallpaperSection || !this.sidebarEl) return;
             const topPos = wallpaperSection.offsetTop;
-            this.sidebarEl.style.top = `${topPos+20}px`;
+            this.sidebarEl.style.top = `${topPos + 18}px`;   // 增加 18px 间距
         }
 
         /**
