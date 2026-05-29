@@ -1,6 +1,6 @@
-// sidebar.js - 现代悬浮侧滑栏 (无依赖，独立运行)
+// sidebar.js - 现代悬浮侧滑栏（顶部必应壁纸、无搜索框、底部纯图标、QQ头像获取）
 (function() {
-    // 分类数据 (与原来保持一致)
+    // 分类数据
     const CATEGORIES_DATA = [
         { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
             { icon: 'fas fa-mobile-alt', label: '手机软件', action: 'link', link: './pages/chl/手机软件.html' },
@@ -37,12 +37,12 @@
         ] }
     ];
 
-    // 底部按钮配置
+    // 底部按钮配置（只有图标，无文字）
     const FOOTER_BUTTONS = [
-        { icon: 'fas fa-pen', label: '笔记', action: 'notebook' },
-        { icon: 'fas fa-gift', label: '福利', action: 'gift' },
-        { icon: 'fas fa-info-circle', label: '关于', action: 'about' },
-        { icon: 'fab fa-qq', label: 'QQ群', action: 'qq' }
+        { icon: 'fas fa-pen', action: 'notebook' },
+        { icon: 'fas fa-gift', action: 'gift' },
+        { icon: 'fas fa-info-circle', action: 'about' },
+        { icon: 'fab fa-qq', action: 'qq' }
     ];
 
     class ModernSidebar {
@@ -63,6 +63,7 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
+            this.loadBingWallpaper(); // 加载必应壁纸背景
             window.sidebar = this;
         }
 
@@ -78,8 +79,9 @@
 
         render() {
             this.sidebarEl.innerHTML = `
-                <div class="sidebar-header">
-                    <div class="user-profile">
+                <div class="sidebar-wallpaper" id="sidebarWallpaper">
+                    <div class="sidebar-wallpaper-overlay"></div>
+                    <div class="sidebar-user-info">
                         <div class="user-avatar" id="sidebarAvatarBtn">
                             <img id="sidebarAvatarImg" src="./assets/logo.png" alt="头像" loading="lazy">
                         </div>
@@ -88,15 +90,9 @@
                             <div class="user-bio" id="sidebarUserBio">探索无限可能</div>
                         </div>
                     </div>
-                    <div class="daily-quote">
-                        <p class="quote-text" id="sidebarQuote">加载中...</p>
-                    </div>
                 </div>
-                <div class="sidebar-search">
-                    <div class="search-input-wrapper">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="sidebarSearchInput" placeholder="搜索分类...">
-                    </div>
+                <div class="daily-quote">
+                    <p class="quote-text" id="sidebarQuote">加载中...</p>
                 </div>
                 <div class="sidebar-categories" id="sidebarCategoriesContainer"></div>
                 <div class="sidebar-footer" id="sidebarFooter"></div>
@@ -155,7 +151,6 @@
                 html += `
                     <button class="footer-btn" data-action="${btn.action}">
                         <i class="${btn.icon}"></i>
-                        <span>${btn.label}</span>
                     </button>
                 `;
             }
@@ -198,7 +193,6 @@
             const groups = this.sidebarEl.querySelectorAll('.category-group');
             groups.forEach((group, idx) => {
                 const header = group.querySelector('.category-group-header');
-                const toggleBtn = group.querySelector('.category-toggle');
                 const clickHandler = (e) => {
                     e.stopPropagation();
                     const isExpanded = group.classList.contains('expanded');
@@ -212,7 +206,6 @@
                     this.saveExpandedState();
                 };
                 if (header) header.addEventListener('click', clickHandler);
-                if (toggleBtn) toggleBtn.addEventListener('click', clickHandler);
             });
 
             // 分类项点击
@@ -221,18 +214,8 @@
                 item.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const link = item.dataset.link;
-                    const action = item.dataset.action;
                     if (link) {
                         window.open(link, '_blank');
-                        this.hide();
-                    } else if (action === 'search') {
-                        if (window.newSearchModule) window.newSearchModule.show();
-                        this.hide();
-                    } else if (action === 'music') {
-                        if (window.app?.components?.navbar) window.app.components.navbar.toggleMusicPlayer();
-                        this.hide();
-                    } else if (action === 'weather') {
-                        if (window.app?.modules?.weather) window.app.modules.weather.showModal();
                         this.hide();
                     }
                 });
@@ -249,7 +232,7 @@
                 });
             });
 
-            // 头像点击 - 打开个人资料
+            // 头像点击 - 打开个人资料模态框
             const avatarBtn = document.getElementById('sidebarAvatarBtn');
             if (avatarBtn) {
                 avatarBtn.addEventListener('click', (e) => {
@@ -257,38 +240,6 @@
                     this.openProfileModal();
                 });
             }
-
-            // 搜索过滤功能
-            const searchInput = document.getElementById('sidebarSearchInput');
-            if (searchInput) {
-                searchInput.addEventListener('input', (e) => {
-                    const keyword = e.target.value.trim().toLowerCase();
-                    this.filterCategories(keyword);
-                });
-            }
-        }
-
-        filterCategories(keyword) {
-            const groups = this.sidebarEl.querySelectorAll('.category-group');
-            if (!keyword) {
-                groups.forEach(group => group.style.display = '');
-                return;
-            }
-            groups.forEach(group => {
-                const categoryName = group.querySelector('.category-name span')?.innerText.toLowerCase() || '';
-                const items = group.querySelectorAll('.category-item');
-                let hasMatch = categoryName.includes(keyword);
-                items.forEach(item => {
-                    const label = item.querySelector('span')?.innerText.toLowerCase() || '';
-                    const matches = label.includes(keyword);
-                    item.style.display = matches ? 'flex' : 'none';
-                    if (matches) hasMatch = true;
-                });
-                group.style.display = hasMatch ? '' : 'none';
-                if (hasMatch && !group.classList.contains('expanded')) {
-                    group.classList.add('expanded');
-                }
-            });
         }
 
         handleFooterAction(action) {
@@ -306,6 +257,35 @@
                     window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
                     break;
                 default: break;
+            }
+        }
+
+        async loadBingWallpaper() {
+            const wallpaperDiv = document.getElementById('sidebarWallpaper');
+            if (!wallpaperDiv) return;
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                const resolution = window.innerWidth >= 1920 ? 1920 : 1366;
+                const response = await fetch(`https://bing.biturl.top/?resolution=${resolution}&format=json&index=0`, {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.url) {
+                        let imageUrl = data.url;
+                        if (!imageUrl.startsWith('http')) {
+                            imageUrl = 'https://bing.biturl.top' + imageUrl;
+                        }
+                        wallpaperDiv.style.backgroundImage = `url(${imageUrl})`;
+                        return;
+                    }
+                }
+                throw new Error('壁纸获取失败');
+            } catch (error) {
+                console.warn('必应壁纸加载失败，使用默认渐变', error);
+                wallpaperDiv.style.backgroundImage = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             }
         }
 
@@ -344,56 +324,122 @@
         }
 
         openProfileModal() {
-            // 复用原有的个人资料模态框
-            if (window.sidebar && typeof window.sidebar.openProfileModal === 'function') {
-                // 如果旧sidebar有方法，调用；否则创建简单弹窗
+            // 创建/显示个人资料模态框（包含QQ号输入）
+            let modal = document.getElementById('profileModal');
+            if (modal) {
+                modal.classList.add('active');
+                this.fillProfileModalData();
+                return;
             }
-            const profileModal = document.getElementById('profileModal');
-            if (profileModal) {
-                profileModal.classList.add('active');
-                const userConfig = Storage.get('userConfig') || {};
-                const nicknameInput = document.getElementById('nickname');
-                const signatureInput = document.getElementById('signature');
-                if (nicknameInput) nicknameInput.value = userConfig.nickname || '';
-                if (signatureInput) signatureInput.value = userConfig.signature || '';
-            } else {
-                // 如果不存在则动态创建简单弹窗（保持功能）
-                this.createSimpleProfileModal();
-            }
-        }
-
-        createSimpleProfileModal() {
+            // 动态创建模态框
             const modalHtml = `
                 <div class="profile-modal" id="profileModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:10002;display:flex;align-items:center;justify-content:center;">
-                    <div style="background:var(--bg-card);border-radius:20px;padding:24px;width:300px;max-width:90%;">
-                        <h3 style="margin-bottom:16px;">个人资料</h3>
-                        <input type="text" id="tempNickname" placeholder="昵称" value="${this.escapeHtml(this.userConfig?.nickname || '')}" style="width:100%;padding:10px;margin-bottom:12px;border-radius:10px;border:1px solid #ddd;">
-                        <input type="text" id="tempSignature" placeholder="个性签名" value="${this.escapeHtml(this.userConfig?.signature || '')}" style="width:100%;padding:10px;margin-bottom:20px;border-radius:10px;border:1px solid #ddd;">
+                    <div style="background:var(--bg-card);border-radius:20px;padding:24px;width:340px;max-width:90%;">
+                        <h3 style="margin-bottom:16px;font-size:18px;">个人资料</h3>
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-secondary);">QQ号码</label>
+                            <input type="text" id="profileQQ" placeholder="输入QQ号码自动获取头像" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;background:var(--bg-input);">
+                            <div id="qqAvatarStatus" style="font-size:11px;margin-top:4px;color:#888;"></div>
+                        </div>
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-secondary);">昵称</label>
+                            <input type="text" id="profileNickname" placeholder="昵称" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;background:var(--bg-input);">
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-secondary);">个性签名</label>
+                            <input type="text" id="profileSignature" placeholder="个性签名" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;background:var(--bg-input);">
+                        </div>
                         <div style="display:flex;gap:12px;justify-content:flex-end;">
-                            <button id="profileSaveBtn" style="padding:8px 20px;background:#4361ee;color:white;border:none;border-radius:30px;">保存</button>
-                            <button id="profileCloseBtn" style="padding:8px 20px;background:#e2e8f0;border:none;border-radius:30px;">取消</button>
+                            <button id="profileSaveBtn" style="padding:8px 20px;background:#4361ee;color:white;border:none;border-radius:30px;cursor:pointer;">保存</button>
+                            <button id="profileCloseBtn" style="padding:8px 20px;background:#e2e8f0;border:none;border-radius:30px;cursor:pointer;">取消</button>
                         </div>
                     </div>
                 </div>
             `;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
-            const modal = document.getElementById('profileModal');
+            modal = document.getElementById('profileModal');
+            this.fillProfileModalData();
+            this.bindProfileModalEvents(modal);
+        }
+
+        fillProfileModalData() {
+            const userConfig = Storage.get('userConfig') || {};
+            const nicknameInput = document.getElementById('profileNickname');
+            const signatureInput = document.getElementById('profileSignature');
+            const qqInput = document.getElementById('profileQQ');
+            if (nicknameInput) nicknameInput.value = userConfig.nickname || '';
+            if (signatureInput) signatureInput.value = userConfig.signature || '';
+            if (qqInput) qqInput.value = userConfig.qq || '';
+            // 绑定QQ输入自动获取头像
+            const qqField = document.getElementById('profileQQ');
+            if (qqField && !qqField._bound) {
+                qqField._bound = true;
+                qqField.addEventListener('input', this.debounce(() => this.fetchQQAvatar(), 500));
+            }
+        }
+
+        debounce(func, wait) {
+            let timeout;
+            return function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, arguments), wait);
+            };
+        }
+
+        async fetchQQAvatar() {
+            const qqInput = document.getElementById('profileQQ');
+            const statusDiv = document.getElementById('qqAvatarStatus');
+            if (!qqInput) return;
+            const qq = qqInput.value.trim();
+            if (!qq || !/^[1-9][0-9]{4,11}$/.test(qq)) {
+                if (statusDiv) statusDiv.textContent = '';
+                return;
+            }
+            if (statusDiv) statusDiv.textContent = '获取头像中...';
+            try {
+                const response = await fetch(`https://api.kuleu.com/api/qqimg?qq=${qq}`);
+                if (response.ok) {
+                    const avatarUrl = response.url;
+                    if (statusDiv) statusDiv.textContent = '✓ 头像获取成功';
+                    // 保存头像到用户配置
+                    const userConfig = Storage.get('userConfig') || {};
+                    userConfig.avatar = avatarUrl;
+                    userConfig.qq = qq;
+                    Storage.set('userConfig', userConfig);
+                    // 更新侧边栏头像显示
+                    const sidebarAvatar = document.getElementById('sidebarAvatarImg');
+                    if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
+                } else {
+                    if (statusDiv) statusDiv.textContent = '获取失败，请检查QQ号';
+                }
+            } catch (error) {
+                console.warn('QQ头像获取失败', error);
+                if (statusDiv) statusDiv.textContent = '网络错误，请重试';
+            }
+        }
+
+        bindProfileModalEvents(modal) {
             const saveBtn = document.getElementById('profileSaveBtn');
             const closeBtn = document.getElementById('profileCloseBtn');
-            const closeModal = () => modal?.remove();
+            const closeModal = () => {
+                modal.classList.remove('active');
+                setTimeout(() => modal.remove(), 300);
+            };
             saveBtn?.addEventListener('click', () => {
-                const newName = document.getElementById('tempNickname')?.value.trim() || '访客用户';
-                const newSig = document.getElementById('tempSignature')?.value.trim() || '探索无限可能';
+                const newNickname = document.getElementById('profileNickname')?.value.trim() || '访客用户';
+                const newSignature = document.getElementById('profileSignature')?.value.trim() || '探索无限可能';
+                const qq = document.getElementById('profileQQ')?.value.trim() || '';
                 const userConfig = Storage.get('userConfig') || {};
-                userConfig.nickname = newName;
-                userConfig.signature = newSig;
+                userConfig.nickname = newNickname;
+                userConfig.signature = newSignature;
+                userConfig.qq = qq;
                 Storage.set('userConfig', userConfig);
                 this.loadUserData();
                 closeModal();
                 if (window.toast) window.toast.show('个人信息已保存', 'success');
             });
             closeBtn?.addEventListener('click', closeModal);
-            modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         }
 
         saveExpandedState() {
@@ -439,12 +485,6 @@
             this.sidebarEl.classList.remove('active');
             if (this.overlay) this.overlay.classList.remove('active');
             document.body.style.overflow = '';
-            // 重置搜索过滤
-            const searchInput = document.getElementById('sidebarSearchInput');
-            if (searchInput && searchInput.value) {
-                searchInput.value = '';
-                this.filterCategories('');
-            }
         }
 
         toggle() {
