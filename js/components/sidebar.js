@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（最终完整版，顶部与壁纸平齐）
+// sidebar.js - 现代悬浮侧滑栏（最终修复版，顶部与壁纸对齐）
 (function() {
     // 分类数据
     const CATEGORIES_DATA = [
@@ -67,7 +67,6 @@
             this.loadWallpaperBackground();
             // 监听窗口大小变化，重新对齐
             window.addEventListener('resize', () => this.alignWithWallpaperTop());
-            // 监听滚动，保持对齐（如果壁纸区域有动态位移，可选，一般不需要）
             window.addEventListener('scroll', () => this.alignWithWallpaperTop());
             window.sidebar = this;
         }
@@ -387,22 +386,18 @@
             modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         }
 
-        // 核心方法：使侧滑栏顶部与壁纸顶部对齐（保留壁纸原有的顶部间距）
+        // 核心修复：使侧滑栏顶部与壁纸顶部完全对齐（包括壁纸自身的留白间距）
         alignWithWallpaperTop() {
             const wallpaperSection = document.querySelector('.wallpaper-section');
-            const navbar = document.getElementById('navbar');
             if (!wallpaperSection || !this.sidebarEl) return;
-            
-            // 获取壁纸区域相对于视口顶部的距离（即壁纸的顶部留白）
+            // 获取壁纸区域相对于视口顶部的距离（已包含导航栏高度和壁纸自身 padding-top）
             const wallpaperTop = wallpaperSection.getBoundingClientRect().top;
-            // 获取导航栏高度，确保侧滑栏不低于导航栏底部（避免向上超出）
+            // 直接使用该值作为侧滑栏的 top，无需与导航栏高度取最大值，因为壁纸顶部必然在导航栏下方
+            this.sidebarEl.style.top = `${wallpaperTop}px`;
+
+            // 同时设置遮罩层的 top 为导航栏高度（遮罩从导航栏下方开始）
+            const navbar = document.getElementById('navbar');
             const navbarHeight = navbar ? navbar.offsetHeight : 60;
-            // 取壁纸顶部位置和导航栏底部位置的较大值，防止侧滑栏跑到导航栏上方
-            let finalTop = Math.max(wallpaperTop, navbarHeight);
-            // 设置侧滑栏的 top 值
-            this.sidebarEl.style.top = `${finalTop}px`;
-            
-            // 同时设置遮罩层的 top 为导航栏高度（遮罩仅覆盖内容区，不遮挡导航栏）
             if (this.overlay) {
                 this.overlay.style.top = `${navbarHeight}px`;
             }
