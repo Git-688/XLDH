@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（最终完整版，满足所有新需求）
+// sidebar.js - 现代悬浮侧滑栏（顶部与壁纸顶部对齐）
 (function() {
     // 分类数据
     const CATEGORIES_DATA = [
@@ -63,7 +63,7 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
-            this.setFixedTopPosition();      // 设置固定顶部间距
+            this.setFixedTopPosition();      // 设置顶部与壁纸对齐
             this.loadWallpaperBackground();
             window.addEventListener('resize', () => this.setFixedTopPosition());
             window.sidebar = this;
@@ -384,11 +384,23 @@
             modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         }
 
-        // 设置固定顶部间距（与壁纸顶部对齐，自适应桌面/移动端）
+        // 设置固定顶部间距：与壁纸顶部对齐
         setFixedTopPosition() {
+            const wallpaperSection = document.querySelector('.wallpaper-section');
+            if (!wallpaperSection || !this.sidebarEl) {
+                // 降级：使用导航栏高度
+                const navbar = document.getElementById('navbar');
+                const navbarHeight = navbar ? navbar.offsetHeight : 60;
+                this.sidebarEl.style.top = navbarHeight + 'px';
+                return;
+            }
+            // 获取壁纸区域相对于视口顶部的距离
+            const wallpaperTop = wallpaperSection.getBoundingClientRect().top;
+            // 设置侧滑栏顶部与该值对齐
+            this.sidebarEl.style.top = wallpaperTop + 'px';
+            // 同时更新遮罩层的顶部为导航栏高度（确保遮罩从导航栏下方开始）
             const navbar = document.getElementById('navbar');
             const navbarHeight = navbar ? navbar.offsetHeight : 60;
-            // 设置 CSS 变量，让 .sidebar 和 .sidebar-overlay 的 top 使用此值
             document.documentElement.style.setProperty('--navbar-height', navbarHeight + 'px');
         }
 
@@ -451,7 +463,6 @@
             this.isOpen = true;
             this.sidebarEl.classList.add('active');
             if (this.overlay) this.overlay.classList.add('active');
-            // 允许背景滚动，不锁定 body
             if (window.app && !window._sidebarModalRegistered) {
                 window.app.registerModal(this);
                 window._sidebarModalRegistered = true;
