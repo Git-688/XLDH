@@ -1,4 +1,4 @@
-/* sidebar.css - 现代悬浮侧滑栏（最终优化版） */
+/* sidebar.css - 现代悬浮侧滑栏（顶部与壁纸对齐） */
 :root {
     --sidebar-width: 280px;
     --sidebar-mobile-width: 75vw;
@@ -12,10 +12,9 @@
     --sidebar-transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
 
-/* 侧滑栏容器 - 固定顶部间距（与壁纸顶部对齐） */
+/* 侧滑栏容器 - top 由 JS 动态设置，与壁纸顶部对齐 */
 .sidebar {
     position: fixed;
-    top: var(--navbar-height); /* 默认导航栏高度，移动端通过媒体查询覆盖 */
     left: var(--container-padding-xs, 16px);
     bottom: 20px;
     width: var(--sidebar-width);
@@ -306,7 +305,7 @@
 .footer-btn[data-action="qq"] { color: #3b82f6; }
 .footer-btn[data-action="qq"]:hover { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
 
-/* 遮罩层 - 仅覆盖导航栏以下区域，顶部与导航栏底部对齐 */
+/* 遮罩层 - 仅覆盖导航栏以下区域 */
 .sidebar-overlay {
     position: fixed;
     top: var(--navbar-height);
@@ -352,7 +351,7 @@
     }
 }
 
-/* 移动端导航栏高度调整 */
+/* 移动端宽度调整 */
 @media (max-width: 768px) {
     :root {
         --navbar-height: 56px;
