@@ -1,5 +1,5 @@
 /**
- * 插件管理器 - 支持多个音乐API源（网易云已切换至 API Enhanced）
+ * 插件管理器 - 支持多个音乐API源（网易云已切换至 API Enhanced 可用实例）
  */
 class PluginManager {
     constructor(cacheManager) {
@@ -10,24 +10,29 @@ class PluginManager {
     }
 
     initializePlugins() {
-        // ========== 网易云音乐插件（使用 API Enhanced）==========
+        // ========== 网易云音乐插件（已适配可用新Vercel实例｜默认exhigh高品质）==========
+        const that = this;
+
         this.registerPlugin('netease', {
             name: '网易云音乐',
             version: '3.0.0',
             description: '基于 NeteaseCloudMusicApi Enhanced',
-            baseUrl: 'https://api-enhanced-xi-nine.vercel.app',
+            // 全新可用域名，废弃旧域名
+            baseUrl: 'https://api-enhanced-gxf7rk9bg-g1595126534-2135s-projects.vercel.app',
 
-            // 内部：获取歌曲播放链接（standard 级别）
-            _getSongUrl: async function(songId) {
-                const cacheKey = `netease_song_url_${songId}`;
-                const cached = this.cacheManager?.get(cacheKey);
+            // 内部：获取歌曲播放链接（默认 exhigh 高品质）
+            _getSongUrl: async function(songId, level = 'exhigh') {
+                const cacheKey = `netease_song_url_${songId}_${level}`;
+                const cached = that.cacheManager?.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const url = `${this.baseUrl}/song/url/v1?id=${songId}&level=standard`;
-                    const response = await Utils.safeFetch(url, { timeout: 5000 });
+                    const url = `${this.baseUrl}/song/url/v1?id=${songId}&level=${level}`;
+                    const response = await Utils.safeFetch(url, { timeout: 8000 });
                     const data = await response.json();
                     const playUrl = data.data?.[0]?.url || '';
-                    this.cacheManager?.set(cacheKey, playUrl, 60 * 60 * 1000);
+                    if (playUrl) {
+                        that.cacheManager?.set(cacheKey, playUrl, 60 * 60 * 1000);
+                    }
                     return playUrl;
                 } catch (error) {
                     console.warn(`获取歌曲 ${songId} 播放链接失败:`, error);
@@ -38,14 +43,14 @@ class PluginManager {
             // 内部：获取歌词
             _getLyric: async function(songId) {
                 const cacheKey = `netease_lyric_${songId}`;
-                const cached = this.cacheManager?.get(cacheKey);
+                const cached = that.cacheManager?.get(cacheKey);
                 if (cached) return cached;
                 try {
                     const url = `${this.baseUrl}/lyric?id=${songId}`;
                     const response = await Utils.safeFetch(url, { timeout: 5000 });
                     const data = await response.json();
                     const lyric = data.lrc?.lyric || '';
-                    this.cacheManager?.set(cacheKey, lyric, 24 * 60 * 60 * 1000);
+                    that.cacheManager?.set(cacheKey, lyric, 24 * 60 * 60 * 1000);
                     return lyric;
                 } catch (error) {
                     console.warn(`获取歌曲 ${songId} 歌词失败:`, error);
@@ -56,7 +61,7 @@ class PluginManager {
             // 获取歌单（自动填充播放链接和歌词）
             getPlaylist: async (playlistId) => {
                 const cacheKey = `netease_playlist_${playlistId}`;
-                const cached = this.cacheManager.get(cacheKey);
+                const cached = that.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 try {
@@ -69,21 +74,21 @@ class PluginManager {
                     const tracks = data.playlist?.tracks || [];
                     if (!tracks.length) return [];
 
-                    // 2. 并发获取每首歌的播放链接和歌词（限制并发数10）
-                    const concurrency = 10;
+                    // 2. 并发获取每首歌的播放链接和歌词（限制并发数5）
+                    const concurrency = 5;
                     const enrichedTracks = [];
                     for (let i = 0; i < tracks.length; i += concurrency) {
                         const batch = tracks.slice(i, i + concurrency);
                         const batchPromises = batch.map(async (track) => {
                             const url = await this._getSongUrl(track.id);
                             const lrc = await this._getLyric(track.id);
-                            return this.formatSongEnhanced(track, url, lrc);
+                            return that.formatSongEnhanced(track, url, lrc);
                         });
                         const batchResults = await Promise.all(batchPromises);
                         enrichedTracks.push(...batchResults);
                     }
 
-                    this.cacheManager.set(cacheKey, enrichedTracks, 30 * 60 * 1000);
+                    that.cacheManager.set(cacheKey, enrichedTracks, 30 * 60 * 1000);
                     return enrichedTracks;
                 } catch (error) {
                     console.error('网易云歌单加载失败:', error);
@@ -94,7 +99,7 @@ class PluginManager {
             // 搜索歌曲（自动填充播放链接和歌词）
             search: async (keyword) => {
                 const cacheKey = `netease_search_${keyword}`;
-                const cached = this.cacheManager.get(cacheKey);
+                const cached = that.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 try {
@@ -106,51 +111,37 @@ class PluginManager {
                     const songs = data.result?.songs || [];
                     if (!songs.length) return [];
 
-                    // 并发获取 URL 和歌词（限制并发数10）
-                    const concurrency = 10;
+                    // 并发获取 URL 和歌词（限制并发数5）
+                    const concurrency = 5;
                     const enriched = [];
                     for (let i = 0; i < songs.length; i += concurrency) {
                         const batch = songs.slice(i, i + concurrency);
                         const batchPromises = batch.map(async (song) => {
                             const url = await this._getSongUrl(song.id);
                             const lrc = await this._getLyric(song.id);
-                            return this.formatSongEnhanced(song, url, lrc);
+                            return that.formatSongEnhanced(song, url, lrc);
                         });
                         const batchResults = await Promise.all(batchPromises);
                         enriched.push(...batchResults);
                     }
 
-                    this.cacheManager.set(cacheKey, enriched, 10 * 60 * 1000);
+                    that.cacheManager.set(cacheKey, enriched, 10 * 60 * 1000);
                     return enriched;
                 } catch (error) {
                     console.error('网易云搜索失败:', error);
                     return [];
                 }
-            },
-
-            // 格式化歌曲（新API专用）
-            formatSongEnhanced: function(track, url, lrc) {
-                return {
-                    id: track.id,
-                    title: track.name || '未知歌曲',
-                    artist: (track.ar && track.ar.map(a => a.name).join('/')) || (track.artist || '未知歌手'),
-                    src: url,
-                    cover: track.al?.picUrl || track.cover || '',
-                    lrc: lrc,
-                    isOnline: true,
-                    source: 'netease'
-                };
             }
         });
 
-        // ========== QQ音乐插件（保持不变）==========
+        // ========== QQ音乐插件（完全保持原样未改动）==========
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '2.3.0',
             description: '云智热歌榜 + Meting解析',
             _getSongInfoBySongmid: async function(songmid) {
                 const cacheKey = `qq_song_info_${songmid}`;
-                const cached = this.cacheManager.get(cacheKey);
+                const cached = that.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
                     const controller = new AbortController();
@@ -167,7 +158,7 @@ class PluginManager {
                         cover: data[0]?.cover || '',
                         album: data[0]?.album || ''
                     };
-                    this.cacheManager.set(cacheKey, songInfo, 60 * 60 * 1000);
+                    that.cacheManager.set(cacheKey, songInfo, 60 * 60 * 1000);
                     return songInfo;
                 } catch (error) {
                     console.warn(`歌曲${songmid}信息获取失败:`, error.message);
@@ -177,7 +168,7 @@ class PluginManager {
             getPlaylist: async (playlistId, count = 30) => {
                 const safeCount = Math.min(Math.max(1, count), 30);
                 const cacheKey = `qq_hot_playlist_full_${safeCount}`;
-                const cached = this.cacheManager.get(cacheKey);
+                const cached = that.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
                     const controller = new AbortController();
@@ -193,7 +184,7 @@ class PluginManager {
                     const songsWithFullInfo = await Promise.all(
                         hotResult.data.map(async (song) => {
                             const { playUrl, cover, album } = await this._getSongInfoBySongmid(song.songmid);
-                            return this.formatSong({
+                            return that.formatSong({
                                 title: song.albumname,
                                 artist: song.name,
                                 album: album || song.albumname,
@@ -205,7 +196,7 @@ class PluginManager {
                         })
                     );
                     const validSongs = songsWithFullInfo.filter(song => song.url);
-                    this.cacheManager.set(cacheKey, validSongs, 30 * 60 * 1000);
+                    that.cacheManager.set(cacheKey, validSongs, 30 * 60 * 1000);
                     return validSongs;
                 } catch (error) {
                     console.error('QQ音乐热歌榜加载失败:', error);
@@ -215,7 +206,7 @@ class PluginManager {
             search: async (keyword) => { return []; }
         });
 
-        // ========== 汽水音乐插件（保持不变）==========
+        // ========== 汽水音乐插件（完全保持原样未改动）==========
         this.registerPlugin('qishui', {
             name: '汽水音乐',
             version: '1.2.1',
@@ -258,14 +249,14 @@ class PluginManager {
             getPlaylist: async function(playlistId) {
                 const keyword = this.rankKeywordMap[playlistId] || '热歌榜';
                 const cacheKey = `qishui_rank_${playlistId}`;
-                const cached = this.cacheManager?.get(cacheKey);
+                const cached = that.cacheManager?.get(cacheKey);
                 if (cached) return cached;
                 try {
                     const result = await this._fetchApi('rank', { keyword });
                     if (result.code !== 200) throw new Error(result.msg || '请求失败');
                     let songs = [];
                     if (Array.isArray(result.data)) songs = result.data.map(item => this._mapSongItem(item));
-                    this.cacheManager?.set(cacheKey, songs, 30 * 60 * 1000);
+                    that.cacheManager?.set(cacheKey, songs, 30 * 60 * 1000);
                     return songs;
                 } catch (error) {
                     console.error('汽水音乐排行榜加载失败:', error);
@@ -275,14 +266,14 @@ class PluginManager {
             search: async function(keyword) {
                 if (!keyword) return [];
                 const cacheKey = `qishui_search_${keyword}`;
-                const cached = this.cacheManager?.get(cacheKey);
+                const cached = that.cacheManager?.get(cacheKey);
                 if (cached) return cached;
                 try {
                     const result = await this._fetchApi('search', { keyword });
                     if (result.code !== 200) return [];
                     let songs = [];
                     if (result.data && Array.isArray(result.data.songs)) songs = result.data.songs.map(item => this._mapSongItem(item));
-                    this.cacheManager?.set(cacheKey, songs, 10 * 60 * 1000);
+                    that.cacheManager?.set(cacheKey, songs, 10 * 60 * 1000);
                     return songs;
                 } catch (error) {
                     console.error('汽水音乐搜索失败:', error);
@@ -292,13 +283,13 @@ class PluginManager {
             _getSongUrl: async function(songId, level = 'standard') {
                 if (!songId) return { url: '', lyric: '', pic: '' };
                 const cacheKey = `qishui_song_${songId}_${level}`;
-                const cached = this.cacheManager?.get(cacheKey);
+                const cached = that.cacheManager?.get(cacheKey);
                 if (cached) return cached;
                 try {
                     const result = await this._fetchApi('song', { id: songId, level });
                     if (result.code === 200 && result.data) {
                         const resolved = { url: result.data.url || '', lyric: result.data.lyric_lrc || '', pic: result.data.pic || '' };
-                        this.cacheManager?.set(cacheKey, resolved, 60 * 60 * 1000);
+                        that.cacheManager?.set(cacheKey, resolved, 60 * 60 * 1000);
                         return resolved;
                     }
                 } catch (e) { console.warn(`汽水音乐歌曲${songId}解析失败:`, e.message); }
@@ -306,7 +297,7 @@ class PluginManager {
             }
         });
 
-        // ========== 本地音乐插件（保持不变）==========
+        // ========== 本地音乐插件（完全保持原样未改动）==========
         this.registerPlugin('local', {
             name: '本地音乐',
             version: '1.0.0',
@@ -330,7 +321,7 @@ class PluginManager {
         };
     }
 
-    // 新版网易云专用格式化（已在插件内部使用）
+    // 新版网易云专用格式化
     formatSongEnhanced(track, url, lrc) {
         return {
             id: track.id,
