@@ -1,9 +1,4 @@
-/* ================================================
-   responsive.css - 通用响应式适配（适配新版侧滑栏）
-   功能：浮动按钮响应式、横屏适配、减少动画、容器边距等
-   ================================================ */
-
-/* ========== 1. 浮动按钮响应式优化 ========== */
+/* responsive.css - 精简版，无遮罩层相关 */
 @media (max-width: 768px) {
     .floating-buttons {
         bottom: 16px;
@@ -52,8 +47,6 @@
         font-size: 14px;
     }
 }
-
-/* ========== 2. 横屏小高度页面侧滑栏优化 ========== */
 @media (max-height: 600px) and (orientation: landscape) {
     .sidebar {
         max-height: 85vh;
@@ -62,34 +55,24 @@
         aspect-ratio: 21/9;
     }
 }
-
-/* ========== 3. 超大屏侧滑栏宽度限制 ========== */
 @media (min-width: 2560px) {
     .sidebar {
         max-width: 340px;
     }
 }
-
-/* ========== 4. 减少动画模式（用户偏好） ========== */
 @media (prefers-reduced-motion: reduce) {
     * {
         transition: none !important;
         animation: none !important;
     }
 }
-
-/* ========== 5. 移动端触摸优化（侧滑栏内滚动） ========== */
 @media (max-width: 768px) {
     .sidebar.active .sidebar-categories {
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
     }
 }
-
-/* ========== 6. 侧滑栏打开时主内容区域不可点击（防止误触） ========== */
 .sidebar.active ~ .main-content {
     pointer-events: none;
     user-select: none;
 }
-
-/* 注意：不再锁定 body 滚动，允许主页滚动。侧滑栏内部滚动由 overflow-y: auto 控制 */
