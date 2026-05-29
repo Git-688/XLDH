@@ -1,7 +1,6 @@
 /* ================================================
-   responsive.css 响应式适配文件（完整版）
-   通用规则：浮动按钮、容器边距、横屏、移动端基础适配
-   已移除旧版侧滑栏冲突样式，适配新版悬浮侧滑栏
+   responsive.css - 通用响应式适配（适配新版侧滑栏）
+   功能：浮动按钮响应式、横屏适配、减少动画、容器边距等
    ================================================ */
 
 /* ========== 1. 浮动按钮响应式优化 ========== */
@@ -54,24 +53,7 @@
     }
 }
 
-/* ========== 2. 减少动画模式适配 ========== */
-@media (prefers-reduced-motion: reduce) {
-    * {
-        transition: none !important;
-        animation: none !important;
-    }
-    .sidebar,
-    .category-group-header,
-    .category-item,
-    .footer-btn,
-    .category-toggle,
-    .category-items {
-        transition: none;
-        animation: none;
-    }
-}
-
-/* ========== 3. 横屏小高度页面优化（针对侧滑栏） ========== */
+/* ========== 2. 横屏小高度页面侧滑栏优化 ========== */
 @media (max-height: 600px) and (orientation: landscape) {
     .sidebar {
         max-height: 85vh;
@@ -81,14 +63,22 @@
     }
 }
 
-/* ========== 4. 超大屏容器限制（可选） ========== */
+/* ========== 3. 超大屏侧滑栏宽度限制 ========== */
 @media (min-width: 2560px) {
     .sidebar {
         max-width: 340px;
     }
 }
 
-/* ========== 5. 移动端触摸优化 ========== */
+/* ========== 4. 减少动画模式（用户偏好） ========== */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* ========== 5. 移动端触摸优化（侧滑栏内滚动） ========== */
 @media (max-width: 768px) {
     .sidebar.active .sidebar-categories {
         -webkit-overflow-scrolling: touch;
@@ -96,179 +86,10 @@
     }
 }
 
-/* ========== 6. 侧滑栏与主内容区域交互（备用） ========== */
-/* 注意：不锁定 body 滚动，让背景可滚动，仅遮罩层阻止点击 */
+/* ========== 6. 侧滑栏打开时主内容区域不可点击（防止误触） ========== */
 .sidebar.active ~ .main-content {
     pointer-events: none;
     user-select: none;
 }
 
-/* ========== 7. 统一容器边距变量兼容（确保移动端左右边距一致） ========== */
-:root {
-    --container-padding-xs: 16px;
-    --container-padding-sm: 20px;
-    --container-padding-md: 24px;
-    --container-padding-lg: 28px;
-    --container-padding-xl: 32px;
-}
-
-/* 确保所有容器使用统一边距 */
-.container,
-.container-fluid,
-.nav-container,
-.greeting-container,
-.footer-compact-container {
-    padding-left: var(--container-padding-xs) !important;
-    padding-right: var(--container-padding-xs) !important;
-}
-
-@media (min-width: 576px) {
-    .container,
-    .container-fluid,
-    .nav-container,
-    .greeting-container,
-    .footer-compact-container {
-        padding-left: var(--container-padding-sm) !important;
-        padding-right: var(--container-padding-sm) !important;
-    }
-}
-@media (min-width: 768px) {
-    .container,
-    .container-fluid,
-    .nav-container,
-    .greeting-container,
-    .footer-compact-container {
-        padding-left: var(--container-padding-md) !important;
-        padding-right: var(--container-padding-md) !important;
-    }
-}
-@media (min-width: 992px) {
-    .container,
-    .container-fluid,
-    .nav-container,
-    .greeting-container,
-    .footer-compact-container {
-        padding-left: var(--container-padding-lg) !important;
-        padding-right: var(--container-padding-lg) !important;
-    }
-}
-@media (min-width: 1200px) {
-    .container,
-    .container-fluid,
-    .nav-container,
-    .greeting-container,
-    .footer-compact-container {
-        padding-left: var(--container-padding-xl) !important;
-        padding-right: var(--container-padding-xl) !important;
-    }
-}
-
-/* ========== 8. 壁纸轮播图顶部留白（与侧滑栏顶部留白保持一致） ========== */
-.wallpaper-section {
-    padding-top: 20px !important;
-}
-@media (max-width: 768px) {
-    .wallpaper-section {
-        padding-top: 16px !important;
-    }
-}
-@media (max-width: 480px) {
-    .wallpaper-section {
-        padding-top: 12px !important;
-    }
-}
-
-/* ========== 9. 确保导航栏固定高度不受影响 ========== */
-.navbar {
-    height: 60px;
-    top: 0;
-    z-index: 1000;
-}
-@media (max-width: 768px) {
-    .navbar {
-        height: 56px;
-    }
-}
-@media (max-width: 480px) {
-    .navbar {
-        height: 52px;
-    }
-}
-
-/* ========== 10. 修复侧滑栏打开时遮罩层高度（动态调整） ========== */
-.sidebar-overlay {
-    position: fixed;
-    top: 60px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(2px);
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.25s ease, visibility 0.25s;
-}
-@media (max-width: 768px) {
-    .sidebar-overlay {
-        top: 56px;
-    }
-}
-@media (max-width: 480px) {
-    .sidebar-overlay {
-        top: 52px;
-    }
-}
-.sidebar-overlay.active {
-    opacity: 1;
-    visibility: visible;
-}
-
-/* ========== 11. 底部统计卡片响应式（保持原有布局） ========== */
-@media (max-width: 767px) {
-    .footer-stats-cards {
-        grid-template-columns: repeat(2, 1fr) !important;
-    }
-}
-@media (min-width: 768px) and (max-width: 1024px) {
-    .footer-stats-cards {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-@media (min-width: 1025px) {
-    .footer-stats-cards {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-/* ========== 12. 其他通用响应式（保留原有实用类） ========== */
-@media (max-width: 767px) {
-    .mobile-optimized {
-        font-size: 0.875rem;
-    }
-    .mobile-hidden {
-        display: none !important;
-    }
-    .mobile-visible {
-        display: block !important;
-    }
-    .mobile-flex {
-        display: flex !important;
-    }
-    .mobile-flex-column {
-        flex-direction: column !important;
-    }
-}
-
-/* 打印样式 */
-@media print {
-    .print-hidden {
-        display: none !important;
-    }
-    .print-visible {
-        display: block !important;
-    }
-    .print-text-black {
-        color: black !important;
-    }
-}
+/* 注意：不再锁定 body 滚动，允许主页滚动。侧滑栏内部滚动由 overflow-y: auto 控制 */
