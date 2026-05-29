@@ -1,485 +1,416 @@
-// sidebar.js - 现代悬浮侧滑栏（顶部间距 +18px）
-(function() {
-    // 分类数据
-    const CATEGORIES_DATA = [
-        { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
-            { icon: 'fas fa-mobile-alt', label: '手机软件', link: './pages/chl/手机软件.html' },
-            { icon: 'fas fa-desktop', label: '电脑软件', link: './pages/chl/电脑软件.html' },
-            { icon: 'fas fa-film', label: '电影大全', link: './pages/chl/影视推荐.html' },
-            { icon: 'fas fa-images', label: '共享图片', link: './pages/chl/共享图片链接.html' }
-        ] },
-        { name: '网盘工具', icon: 'fas fa-cloud', expanded: false, items: [
-            { icon: 'fas fa-cloud-upload-alt', label: '夸克网盘', link: './pages/chl/夸克网盘.html' },
-            { icon: 'fas fa-hdd', label: '123云盘', link: './pages/chl/123云盘.html' },
-            { icon: 'fas fa-cloud', label: '天翼云盘', link: './pages/chl/天翼云盘.html' },
-            { icon: 'fas fa-box', label: '115生活', link: './pages/chl/115生活.html' },
-            { icon: 'fas fa-database', label: '阿里云盘', link: './pages/chl/阿里云盘.html' },
-            { icon: 'fas fa-sim-card', label: '移动网盘', link: './pages/chl/移动网盘.html' },
-            { icon: 'fab fa-baidu', label: '百度网盘', link: './pages/chl/百度网盘.html' },
-            { icon: 'fas fa-server', label: '城通网盘', link: './pages/chl/城通网盘.html' },
-            { icon: 'fas fa-file-archive', label: '蓝奏云', link: './pages/chl/蓝奏云链接.html' }
-        ] },
-        { name: '学习资源', icon: 'fas fa-graduation-cap', expanded: false, items: [
-            { icon: 'fas fa-child', label: '小学阶段', link: './pages/chl/小学阶段.html' },
-            { icon: 'fas fa-school', label: '初中阶段', link: './pages/chl/初中阶段.html' },
-            { icon: 'fas fa-university', label: '高中阶段', link: './pages/chl/高中阶段.html' },
-            { icon: 'fas fa-user-graduate', label: '大学生活', link: './pages/chl/大学生活.html' },
-            { icon: 'fas fa-briefcase', label: '社会实践', link: './pages/chl/社会实践.html' }
-        ] },
-        { name: '自制小工具', icon: 'fas fa-cogs', expanded: false, items: [
-            { icon: 'fas fa-scroll', label: '手持弹幕', link: './pages/chl/手持弹幕.html' },
-            { icon: 'fas fa-gift', label: '幸运大转盘', link: './pages/chl/幸运大转盘.html' },
-            { icon: 'fas fa-clipboard-list', label: '记分牌', link: './pages/chl/记分牌.html' },
-            { icon: 'fas fa-clock', label: '时间屏幕', link: './pages/chl/时间屏幕.html' }
-        ] },
-        { name: '其他', icon: 'fas fa-ellipsis-h', expanded: false, items: [
-            { icon: 'fas fa-fire', label: '烟花模拟器', link: './pages/chl/烟花模拟器.html' }
-        ] }
-    ];
+/* sidebar.css - 现代悬浮侧滑栏样式（宽度缩小版） */
+:root {
+    --sidebar-width: 260px;                /* 桌面端宽度缩小 */
+    --sidebar-mobile-width: 70vw;          /* 移动端宽度缩小 */
+    --sidebar-max-mobile: 280px;           /* 移动端最大宽度缩小 */
+    --sidebar-bg: rgba(255, 255, 255, 0.75);
+    --sidebar-bg-dark: rgba(30, 30, 35, 0.85);
+    --sidebar-blur: blur(20px);
+    --sidebar-border: 1px solid rgba(255, 255, 255, 0.3);
+    --sidebar-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    --sidebar-transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
 
-    // 底部按钮配置（只有图标，独立颜色）
-    const FOOTER_BUTTONS = [
-        { icon: 'fas fa-pen', action: 'notebook', color: '#8b5cf6' },
-        { icon: 'fas fa-gift', action: 'gift', color: '#f97316' },
-        { icon: 'fas fa-info-circle', action: 'about', color: '#ec4899' },
-        { icon: 'fab fa-qq', action: 'qq', color: '#3b82f6' }
-    ];
+/* 侧滑栏容器 */
+.sidebar {
+    position: fixed;
+    left: var(--container-padding-xs, 16px);
+    bottom: 20px;
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    backdrop-filter: var(--sidebar-blur);
+    -webkit-backdrop-filter: var(--sidebar-blur);
+    border-radius: 8px;
+    border: var(--sidebar-border);
+    box-shadow: var(--sidebar-shadow);
+    z-index: 1001;
+    transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
+    transition: var(--sidebar-transition);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
 
-    class ModernSidebar {
-        constructor() {
-            this.sidebarEl = document.getElementById('sidebar');
-            this.isOpen = false;
-            this.categories = JSON.parse(JSON.stringify(CATEGORIES_DATA));
-            this.userConfig = null;
-            this.init();
-        }
+.sidebar.active {
+    transform: translateX(0);
+}
 
-        init() {
-            if (!this.sidebarEl) return;
-            this.render();
-            this.bindEvents();
-            this.loadUserData();
-            this.loadDailyQuote();
-            this.loadExpandedState();
-            this.setFixedTop();
-            this.loadWallpaperBackground();
-            window.addEventListener('resize', () => this.setFixedTop());
-            window.sidebar = this;
-        }
-
-        render() {
-            this.sidebarEl.innerHTML = `
-                <div class="sidebar-wallpaper" id="sidebarWallpaper">
-                    <div class="sidebar-wallpaper-overlay"></div>
-                    <div class="sidebar-wallpaper-user-info">
-                        <div class="sidebar-wallpaper-avatar" id="sidebarAvatarBtn">
-                            <img id="sidebarAvatarImg" src="./assets/logo.png" alt="头像" loading="lazy">
-                        </div>
-                        <div class="sidebar-wallpaper-user-text">
-                            <div class="sidebar-wallpaper-nickname" id="sidebarUserName">访客用户</div>
-                            <div class="sidebar-wallpaper-signature" id="sidebarUserBio">探索无限可能</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="daily-quote-card">
-                    <p id="sidebarQuote">加载中...</p>
-                </div>
-                <div class="sidebar-categories" id="sidebarCategoriesContainer"></div>
-                <div class="sidebar-footer" id="sidebarFooter"></div>
-            `;
-            this.renderCategories();
-            this.renderFooter();
-            this.bindComponentEvents();
-        }
-
-        renderCategories() {
-            const container = document.getElementById('sidebarCategoriesContainer');
-            if (!container) return;
-            let html = '';
-            for (let i = 0; i < this.categories.length; i++) {
-                const cat = this.categories[i];
-                const expandedClass = cat.expanded ? 'expanded' : '';
-                let itemsHtml = '';
-                for (let j = 0; j < cat.items.length; j++) {
-                    const item = cat.items[j];
-                    itemsHtml += `
-                        <button class="category-item" data-link="${this.escapeHtml(item.link)}">
-                            <i class="${item.icon}"></i>
-                            <span>${this.escapeHtml(item.label)}</span>
-                        </button>
-                    `;
-                }
-                html += `
-                    <div class="category-group ${expandedClass}" data-category-index="${i}">
-                        <div class="category-group-header">
-                            <div class="category-name">
-                                <i class="${cat.icon}"></i>
-                                <span>${this.escapeHtml(cat.name)}</span>
-                            </div>
-                            <button class="category-toggle" aria-label="展开/收起">
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                        </div>
-                        <div class="category-items">
-                            ${itemsHtml}
-                        </div>
-                    </div>
-                `;
-            }
-            container.innerHTML = html;
-        }
-
-        renderFooter() {
-            const container = document.getElementById('sidebarFooter');
-            if (!container) return;
-            let html = '';
-            for (const btn of FOOTER_BUTTONS) {
-                html += `
-                    <button class="footer-btn" data-action="${btn.action}" style="color: ${btn.color};">
-                        <i class="${btn.icon}"></i>
-                    </button>
-                `;
-            }
-            container.innerHTML = html;
-        }
-
-        bindEvents() {
-            document.addEventListener('click', (e) => {
-                if (!this.isOpen) return;
-                const menuBtn = document.getElementById('menuBtn');
-                const isMenuBtn = menuBtn && menuBtn.contains(e.target);
-                const isSidebar = this.sidebarEl && this.sidebarEl.contains(e.target);
-                if (!isSidebar && !isMenuBtn) {
-                    this.hide();
-                }
-            });
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && this.isOpen) this.hide();
-            });
-
-            const menuBtn = document.getElementById('menuBtn');
-            if (menuBtn && !menuBtn._sidebarBound) {
-                menuBtn._sidebarBound = true;
-                menuBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.toggle();
-                });
-            }
-        }
-
-        bindComponentEvents() {
-            const groups = this.sidebarEl.querySelectorAll('.category-group');
-            groups.forEach((group, idx) => {
-                const header = group.querySelector('.category-group-header');
-                const clickHandler = (e) => {
-                    e.stopPropagation();
-                    const isExpanded = group.classList.contains('expanded');
-                    if (isExpanded) {
-                        group.classList.remove('expanded');
-                        this.categories[idx].expanded = false;
-                    } else {
-                        group.classList.add('expanded');
-                        this.categories[idx].expanded = true;
-                    }
-                    this.saveExpandedState();
-                };
-                if (header) header.addEventListener('click', clickHandler);
-            });
-
-            const categoryItems = this.sidebarEl.querySelectorAll('.category-item');
-            categoryItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const link = item.dataset.link;
-                    if (link) {
-                        window.open(link, '_blank');
-                        this.hide();
-                    }
-                });
-            });
-
-            const footerBtns = this.sidebarEl.querySelectorAll('.footer-btn');
-            footerBtns.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const action = btn.dataset.action;
-                    this.handleFooterAction(action);
-                    this.hide();
-                });
-            });
-
-            const avatarBtn = document.getElementById('sidebarAvatarBtn');
-            if (avatarBtn) {
-                avatarBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.openProfileModal();
-                });
-            }
-        }
-
-        handleFooterAction(action) {
-            switch (action) {
-                case 'notebook':
-                    if (window.showNotebookModal) window.showNotebookModal();
-                    break;
-                case 'gift':
-                    window.open('./pages/tools/羊毛福利.html', '_blank');
-                    break;
-                case 'about':
-                    if (window.aboutModule && window.aboutModule.show) window.aboutModule.show();
-                    break;
-                case 'qq':
-                    window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
-                    break;
-                default: break;
-            }
-        }
-
-        async loadUserData() {
-            try {
-                this.userConfig = Storage.get('userConfig') || {};
-                const userName = document.getElementById('sidebarUserName');
-                const userBio = document.getElementById('sidebarUserBio');
-                const avatarImg = document.getElementById('sidebarAvatarImg');
-                if (userName) userName.textContent = this.userConfig.nickname || '访客用户';
-                if (userBio) userBio.textContent = this.userConfig.signature || '探索无限可能';
-                if (avatarImg && this.userConfig.avatar) {
-                    avatarImg.src = this.userConfig.avatar;
-                    avatarImg.onerror = () => { avatarImg.src = './assets/logo.png'; };
-                }
-            } catch (e) { console.warn('加载用户数据失败', e); }
-        }
-
-        async loadDailyQuote() {
-            const quoteEl = document.getElementById('sidebarQuote');
-            if (!quoteEl) return;
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000);
-                const response = await fetch('https://api.kuleu.com/api/yiyan', { signal: controller.signal });
-                clearTimeout(timeoutId);
-                if (response.ok) {
-                    const text = await response.text();
-                    quoteEl.textContent = text.trim() || '每一天都是新的开始，充满无限可能。';
-                } else {
-                    quoteEl.textContent = '每一天都是新的开始，充满无限可能。';
-                }
-            } catch {
-                quoteEl.textContent = '每一天都是新的开始，充满无限可能。';
-            }
-        }
-
-        async loadWallpaperBackground() {
-            const wallpaperDiv = document.getElementById('sidebarWallpaper');
-            if (!wallpaperDiv) return;
-            try {
-                const response = await fetch('https://bing.biturl.top/?resolution=1366&format=json&index=0');
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.url) {
-                        wallpaperDiv.style.backgroundImage = `url(${data.url})`;
-                        wallpaperDiv.style.backgroundSize = 'cover';
-                        wallpaperDiv.style.backgroundPosition = 'center';
-                    }
-                }
-            } catch (e) {
-                wallpaperDiv.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-            }
-        }
-
-        openProfileModal() {
-            const modalHtml = `
-                <div class="profile-modal" id="profileModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);z-index:10002;display:flex;align-items:center;justify-content:center;">
-                    <div style="background:var(--bg-card);border-radius:20px;padding:24px;width:340px;max-width:90%;">
-                        <h3 style="margin-bottom:16px;">个人资料</h3>
-                        <div style="margin-bottom:12px;">
-                            <label style="display:block;font-size:12px;margin-bottom:4px;">QQ号码（自动获取头像）</label>
-                            <input type="text" id="profileQQ" placeholder="输入QQ号" value="" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
-                            <div id="qqAvatarStatus" style="font-size:11px;margin-top:4px;color:#666;"></div>
-                        </div>
-                        <div style="margin-bottom:12px;">
-                            <label style="display:block;font-size:12px;margin-bottom:4px;">昵称</label>
-                            <input type="text" id="profileNickname" placeholder="昵称" value="${this.escapeHtml(this.userConfig?.nickname || '')}" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
-                        </div>
-                        <div style="margin-bottom:20px;">
-                            <label style="display:block;font-size:12px;margin-bottom:4px;">个性签名</label>
-                            <input type="text" id="profileSignature" placeholder="个性签名" value="${this.escapeHtml(this.userConfig?.signature || '')}" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
-                        </div>
-                        <div style="display:flex;gap:12px;justify-content:flex-end;">
-                            <button id="profileSaveBtn" style="padding:8px 20px;background:#4361ee;color:white;border:none;border-radius:30px;">保存</button>
-                            <button id="profileCloseBtn" style="padding:8px 20px;background:#e2e8f0;border:none;border-radius:30px;">取消</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-            const modal = document.getElementById('profileModal');
-            const qqInput = document.getElementById('profileQQ');
-            const statusDiv = document.getElementById('qqAvatarStatus');
-            const saveBtn = document.getElementById('profileSaveBtn');
-            const closeBtn = document.getElementById('profileCloseBtn');
-
-            if (qqInput) {
-                qqInput.addEventListener('blur', async () => {
-                    const qq = qqInput.value.trim();
-                    if (qq && /^[1-9][0-9]{4,11}$/.test(qq)) {
-                        statusDiv.textContent = '获取头像中...';
-                        statusDiv.style.color = '#666';
-                        try {
-                            const avatarUrl = `https://api.kuleu.com/api/qqimg?qq=${qq}`;
-                            const testImg = new Image();
-                            testImg.onload = () => {
-                                this.userConfig.avatar = avatarUrl;
-                                statusDiv.textContent = '头像获取成功';
-                                statusDiv.style.color = '#10b981';
-                                const avatarImg = document.getElementById('sidebarAvatarImg');
-                                if (avatarImg) avatarImg.src = avatarUrl;
-                            };
-                            testImg.onerror = () => {
-                                statusDiv.textContent = '获取头像失败，请检查QQ号';
-                                statusDiv.style.color = '#ef4444';
-                            };
-                            testImg.src = avatarUrl;
-                        } catch (e) {
-                            statusDiv.textContent = '获取失败';
-                            statusDiv.style.color = '#ef4444';
-                        }
-                    } else if (qq) {
-                        statusDiv.textContent = 'QQ号格式不正确';
-                        statusDiv.style.color = '#ef4444';
-                    } else {
-                        statusDiv.textContent = '';
-                    }
-                });
-            }
-
-            const closeModal = () => modal?.remove();
-            saveBtn?.addEventListener('click', () => {
-                const newName = document.getElementById('profileNickname')?.value.trim() || '访客用户';
-                const newSig = document.getElementById('profileSignature')?.value.trim() || '探索无限可能';
-                const userConfig = Storage.get('userConfig') || {};
-                userConfig.nickname = newName;
-                userConfig.signature = newSig;
-                if (this.userConfig.avatar) userConfig.avatar = this.userConfig.avatar;
-                Storage.set('userConfig', userConfig);
-                this.loadUserData();
-                closeModal();
-                if (window.toast) window.toast.show('个人信息已保存', 'success');
-            });
-            closeBtn?.addEventListener('click', closeModal);
-            modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-        }
-
-        /**
-         * 固定顶部留白：获取壁纸容器顶部相对于文档顶部的距离，并设置为侧滑栏的 top 值
-         * 同时增加 18px 间距
-         */
-        setFixedTop() {
-            const wallpaperSection = document.querySelector('.wallpaper-section');
-            if (!wallpaperSection || !this.sidebarEl) return;
-            const topPos = wallpaperSection.offsetTop;
-            this.sidebarEl.style.top = `${topPos + 18}px`;   // 增加 18px 间距
-        }
-
-        /**
-         * 关闭所有其他模态框（搜索、公告、音乐、天气、关于、笔记、投稿等）
-         */
-        closeOtherModals() {
-            if (window.newSearchModule && typeof window.newSearchModule.hide === 'function') {
-                window.newSearchModule.hide();
-            }
-            if (window.announcementModule && typeof window.announcementModule.hide === 'function') {
-                window.announcementModule.hide();
-            }
-            if (window.app && window.app.components && window.app.components.navbar) {
-                window.app.components.navbar.hideMusicPlayer();
-            }
-            if (window.app && window.app.modules && window.app.modules.weather && typeof window.app.modules.weather.hide === 'function') {
-                window.app.modules.weather.hide();
-            }
-            if (window.aboutModule && typeof window.aboutModule.hide === 'function') {
-                window.aboutModule.hide();
-            }
-            if (window.hideNotebookModal && typeof window.hideNotebookModal === 'function') {
-                window.hideNotebookModal();
-            }
-            const submitModal = document.getElementById('submitModal');
-            if (submitModal && submitModal.classList.contains('active')) {
-                submitModal.classList.remove('active');
-            }
-            const profileModal = document.getElementById('profileModal');
-            if (profileModal && profileModal.parentNode) {
-                profileModal.remove();
-            }
-        }
-
-        saveExpandedState() {
-            const state = this.categories.map(cat => ({ name: cat.name, expanded: cat.expanded }));
-            Storage.set('sidebar_categories_state', state);
-        }
-
-        loadExpandedState() {
-            const saved = Storage.get('sidebar_categories_state');
-            if (saved && Array.isArray(saved)) {
-                saved.forEach(savedCat => {
-                    const cat = this.categories.find(c => c.name === savedCat.name);
-                    if (cat) cat.expanded = savedCat.expanded;
-                });
-            }
-        }
-
-        escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-
-        show() {
-            if (this.isOpen) return;
-            this.closeOtherModals();
-            this.isOpen = true;
-            this.sidebarEl.classList.add('active');
-            document.body.classList.add('sidebar-open');
-            if (window.app && !window._sidebarModalRegistered) {
-                window.app.registerModal(this);
-                window._sidebarModalRegistered = true;
-            }
-        }
-
-        hide() {
-            if (!this.isOpen) return;
-            this.isOpen = false;
-            this.sidebarEl.classList.remove('active');
-            document.body.classList.remove('sidebar-open');
-        }
-
-        toggle() {
-            this.isOpen ? this.hide() : this.show();
-        }
-
-        isVisible() {
-            return this.isOpen;
-        }
-
-        destroy() {
-            this.hide();
-        }
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    .sidebar {
+        background: var(--sidebar-bg-dark);
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
+}
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!window.sidebar || !(window.sidebar instanceof ModernSidebar)) {
-                window.sidebar = new ModernSidebar();
-            }
-        });
-    } else {
-        if (!window.sidebar || !(window.sidebar instanceof ModernSidebar)) {
-            window.sidebar = new ModernSidebar();
-        }
+/* 壁纸头部区域 */
+.sidebar-wallpaper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 8px 8px 0 0;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.sidebar-wallpaper-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.2) 100%);
+    pointer-events: none;
+}
+
+.sidebar-wallpaper-user-info {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    z-index: 2;
+    max-width: calc(100% - 28px);
+    pointer-events: auto;
+}
+
+.sidebar-wallpaper-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.4);
+    overflow: hidden;
+    background: rgba(0,0,0,0.2);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.sidebar-wallpaper-avatar:hover {
+    transform: scale(1.02);
+}
+.sidebar-wallpaper-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.sidebar-wallpaper-user-text {
+    flex: 1;
+    min-width: 0;
+}
+.sidebar-wallpaper-nickname {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sidebar-wallpaper-signature {
+    font-size: 10px;
+    opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 每日一言卡片 - 圆角8px */
+.daily-quote-card {
+    margin: 10px 14px;
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.4);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+.daily-quote-card p {
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--text-primary, #1e293b);
+    margin: 0;
+    text-align: center;
+    font-style: italic;
+}
+
+/* 分类容器 - 隐藏滚动条，顶部间距为0 */
+.sidebar-categories {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 10px 8px 10px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.sidebar-categories::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* 分类分组 - 圆角8px */
+.category-group {
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(8px);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.category-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.category-group-header:hover {
+    background: rgba(67, 97, 238, 0.08);
+}
+
+.category-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+}
+
+.category-name i {
+    width: 18px;
+    color: var(--primary-color, #4361ee);
+    font-size: 13px;
+}
+
+.category-toggle {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary, #6c757d);
+    cursor: pointer;
+    transition: transform 0.25s ease;
+    border-radius: 50%;
+}
+
+.category-toggle:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.category-group.expanded .category-toggle {
+    transform: rotate(180deg);
+}
+
+/* 分类项列表 */
+.category-items {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.category-group.expanded .category-items {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px 8px 38px;
+    width: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-primary, #334155);
+    transition: all 0.2s ease;
+    text-align: left;
+    border-radius: 8px;
+    margin: 2px 0;
+}
+
+.category-item:hover {
+    background: rgba(67, 97, 238, 0.12);
+    color: var(--primary-color, #4361ee);
+    padding-left: 42px;
+}
+
+.category-item i {
+    width: 16px;
+    font-size: 12px;
+    color: currentColor;
+}
+
+/* 底部按钮栏 - 上下间距相等 */
+.sidebar-footer {
+    padding: 10px 14px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    flex-shrink: 0;
+}
+
+.footer-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 0;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 18px;
+}
+
+.footer-btn i {
+    font-size: 18px;
+}
+
+.footer-btn:hover {
+    background: rgba(67, 97, 238, 0.1);
+    transform: translateY(-2px);
+}
+
+/* 各按钮独立颜色 */
+.footer-btn[data-action="notebook"] { color: #8b5cf6; }
+.footer-btn[data-action="notebook"]:hover { background: rgba(139, 92, 246, 0.15); color: #7c3aed; }
+
+.footer-btn[data-action="gift"] { color: #f97316; }
+.footer-btn[data-action="gift"]:hover { background: rgba(249, 115, 22, 0.15); color: #ea580c; }
+
+.footer-btn[data-action="about"] { color: #ec4899; }
+.footer-btn[data-action="about"]:hover { background: rgba(236, 72, 153, 0.15); color: #db2777; }
+
+.footer-btn[data-action="qq"] { color: #3b82f6; }
+.footer-btn[data-action="qq"]:hover { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
+
+/* 响应式：左右边距与主页一致 */
+@media (min-width: 576px) {
+    .sidebar {
+        left: var(--container-padding-sm, 20px);
+        transform: translateX(calc(-100% - var(--container-padding-sm, 20px)));
     }
-})();
+}
+@media (min-width: 768px) {
+    .sidebar {
+        left: var(--container-padding-md, 24px);
+        transform: translateX(calc(-100% - var(--container-padding-md, 24px)));
+    }
+}
+@media (min-width: 992px) {
+    .sidebar {
+        left: var(--container-padding-lg, 28px);
+        transform: translateX(calc(-100% - var(--container-padding-lg, 28px)));
+    }
+}
+@media (min-width: 1200px) {
+    .sidebar {
+        left: var(--container-padding-xl, 32px);
+        transform: translateX(calc(-100% - var(--container-padding-xl, 32px)));
+    }
+}
+
+/* 移动端宽度调整 */
+@media (max-width: 768px) {
+    .sidebar {
+        width: var(--sidebar-mobile-width);
+        max-width: var(--sidebar-max-mobile);
+        left: var(--container-padding-xs, 16px);
+        transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
+    }
+    .sidebar-wallpaper-avatar {
+        width: 38px;
+        height: 38px;
+    }
+    .sidebar-wallpaper-nickname {
+        font-size: 13px;
+    }
+    .category-name {
+        font-size: 12px;
+    }
+    .category-item {
+        padding: 7px 10px 7px 34px;
+        font-size: 11px;
+    }
+    .footer-btn i {
+        font-size: 16px;
+    }
+    .footer-btn {
+        padding: 5px 0;
+    }
+}
+
+/* 小屏手机 */
+@media (max-width: 480px) {
+    .sidebar-wallpaper-user-info {
+        left: 10px;
+        bottom: 10px;
+        gap: 6px;
+    }
+    .sidebar-wallpaper-avatar {
+        width: 32px;
+        height: 32px;
+    }
+    .daily-quote-card {
+        margin: 6px 10px;
+        padding: 6px 8px;
+    }
+    .daily-quote-card p {
+        font-size: 10px;
+    }
+    .category-group-header {
+        padding: 8px 10px;
+    }
+    .category-name {
+        gap: 6px;
+    }
+    .category-item {
+        padding: 6px 8px 6px 30px;
+    }
+}
+
+/* 横屏小高度适配 */
+@media (max-height: 500px) and (orientation: landscape) {
+    .sidebar {
+        top: 60px !important;
+        bottom: 10px;
+    }
+    .sidebar-wallpaper {
+        aspect-ratio: 21/9;
+    }
+    .daily-quote-card {
+        display: none;
+    }
+}
+
+/* 减少动画 */
+@media (prefers-reduced-motion: reduce) {
+    .sidebar,
+    .category-group-header,
+    .category-item,
+    .footer-btn,
+    .category-toggle,
+    .category-items {
+        transition: none;
+        animation: none;
+    }
+}
