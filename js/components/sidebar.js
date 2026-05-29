@@ -380,7 +380,7 @@
             const wallpaperSection = document.querySelector('.wallpaper-section');
             if (!wallpaperSection || !this.sidebarEl) return;
             const topPos = wallpaperSection.offsetTop;
-            this.sidebarEl.style.top = `${topPos}px`;
+            this.sidebarEl.style.top = `${topPos+20}px`;
         }
 
         /**
