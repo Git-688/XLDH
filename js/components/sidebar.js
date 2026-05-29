@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（顶部与壁纸顶部对齐）
+// sidebar.js - 现代悬浮侧滑栏（最终完整版，顶部与壁纸平齐）
 (function() {
     // 分类数据
     const CATEGORIES_DATA = [
@@ -63,9 +63,12 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
-            this.setFixedTopPosition();      // 设置顶部与壁纸对齐
+            this.alignWithWallpaperTop();      // 设置侧滑栏顶部与壁纸顶部对齐
             this.loadWallpaperBackground();
-            window.addEventListener('resize', () => this.setFixedTopPosition());
+            // 监听窗口大小变化，重新对齐
+            window.addEventListener('resize', () => this.alignWithWallpaperTop());
+            // 监听滚动，保持对齐（如果壁纸区域有动态位移，可选，一般不需要）
+            window.addEventListener('scroll', () => this.alignWithWallpaperTop());
             window.sidebar = this;
         }
 
@@ -384,24 +387,25 @@
             modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         }
 
-        // 设置固定顶部间距：与壁纸顶部对齐
-        setFixedTopPosition() {
+        // 核心方法：使侧滑栏顶部与壁纸顶部对齐（保留壁纸原有的顶部间距）
+        alignWithWallpaperTop() {
             const wallpaperSection = document.querySelector('.wallpaper-section');
-            if (!wallpaperSection || !this.sidebarEl) {
-                // 降级：使用导航栏高度
-                const navbar = document.getElementById('navbar');
-                const navbarHeight = navbar ? navbar.offsetHeight : 60;
-                this.sidebarEl.style.top = navbarHeight + 'px';
-                return;
-            }
-            // 获取壁纸区域相对于视口顶部的距离
-            const wallpaperTop = wallpaperSection.getBoundingClientRect().top;
-            // 设置侧滑栏顶部与该值对齐
-            this.sidebarEl.style.top = wallpaperTop + 'px';
-            // 同时更新遮罩层的顶部为导航栏高度（确保遮罩从导航栏下方开始）
             const navbar = document.getElementById('navbar');
+            if (!wallpaperSection || !this.sidebarEl) return;
+            
+            // 获取壁纸区域相对于视口顶部的距离（即壁纸的顶部留白）
+            const wallpaperTop = wallpaperSection.getBoundingClientRect().top;
+            // 获取导航栏高度，确保侧滑栏不低于导航栏底部（避免向上超出）
             const navbarHeight = navbar ? navbar.offsetHeight : 60;
-            document.documentElement.style.setProperty('--navbar-height', navbarHeight + 'px');
+            // 取壁纸顶部位置和导航栏底部位置的较大值，防止侧滑栏跑到导航栏上方
+            let finalTop = Math.max(wallpaperTop, navbarHeight);
+            // 设置侧滑栏的 top 值
+            this.sidebarEl.style.top = `${finalTop}px`;
+            
+            // 同时设置遮罩层的 top 为导航栏高度（遮罩仅覆盖内容区，不遮挡导航栏）
+            if (this.overlay) {
+                this.overlay.style.top = `${navbarHeight}px`;
+            }
         }
 
         saveExpandedState() {
@@ -463,6 +467,7 @@
             this.isOpen = true;
             this.sidebarEl.classList.add('active');
             if (this.overlay) this.overlay.classList.add('active');
+            // 允许背景滚动，不锁定 body
             if (window.app && !window._sidebarModalRegistered) {
                 window.app.registerModal(this);
                 window._sidebarModalRegistered = true;
