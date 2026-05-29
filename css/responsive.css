@@ -62,7 +62,7 @@
     }
 }
 
-/* ========== 3. 侧滑栏滚动条样式（已隐藏，此处保留以防备） ========== */
+/* ========== 3. 侧滑栏滚动条样式（隐藏） ========== */
 .categories-container::-webkit-scrollbar {
     width: 0;
     height: 0;
@@ -123,7 +123,7 @@
     }
 }
 
-/* ========== 5. 深色模式适配（仅侧滑栏滚动条，已隐藏无影响） ========== */
+/* ========== 5. 深色模式适配 ========== */
 @media (prefers-color-scheme: dark) {
     .categories-container::-webkit-scrollbar-track {
         background: transparent;
@@ -182,7 +182,7 @@
     }
 }
 
-/* ========== 10. 侧滑栏打开时主内容区域不可交互（新增优化） ========== */
+/* ========== 10. 侧滑栏打开时主内容区域不可交互 ========== */
 .sidebar.active ~ .main-content {
     pointer-events: none;
     overflow: hidden;
