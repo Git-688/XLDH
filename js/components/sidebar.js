@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（固定留白版，无动态计算）
+// sidebar.js - 现代悬浮侧滑栏（最终版：自动关闭其他模态框，滚动隔离，底部无内边距）
 (function() {
     // 分类数据（保持不变）
     const CATEGORIES_DATA = [
@@ -37,7 +37,7 @@
         ] }
     ];
 
-    // 底部按钮配置
+    // 底部按钮配置（只有图标，独立颜色）
     const FOOTER_BUTTONS = [
         { icon: 'fas fa-pen', action: 'notebook', color: '#8b5cf6' },
         { icon: 'fas fa-gift', action: 'gift', color: '#f97316' },
@@ -63,7 +63,9 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
+            this.setFixedTop();
             this.loadWallpaperBackground();
+            window.addEventListener('resize', () => this.setFixedTop());
             window.sidebar = this;
         }
 
@@ -382,6 +384,13 @@
             modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         }
 
+        setFixedTop() {
+            const wallpaperSection = document.querySelector('.wallpaper-section');
+            if (!wallpaperSection || !this.sidebarEl) return;
+            const topPos = wallpaperSection.offsetTop;
+            this.sidebarEl.style.top = `${topPos}px`;
+        }
+
         saveExpandedState() {
             const state = this.categories.map(cat => ({ name: cat.name, expanded: cat.expanded }));
             Storage.set('sidebar_categories_state', state);
@@ -407,12 +416,54 @@
             });
         }
 
+        /**
+         * 关闭所有其他模态框（搜索、公告、音乐、天气、关于等）
+         */
+        closeOtherModals() {
+            // 关闭搜索模态框
+            if (window.newSearchModule && typeof window.newSearchModule.hide === 'function') {
+                window.newSearchModule.hide();
+            }
+            // 关闭公告模态框
+            if (window.announcementModule && typeof window.announcementModule.hide === 'function') {
+                window.announcementModule.hide();
+            }
+            // 关闭音乐播放器
+            if (window.app?.components?.navbar && typeof window.app.components.navbar.hideMusicPlayer === 'function') {
+                window.app.components.navbar.hideMusicPlayer();
+            }
+            // 关闭天气模态框
+            if (window.app?.modules?.weather && typeof window.app.modules.weather.hide === 'function') {
+                window.app.modules.weather.hide();
+            }
+            // 关闭关于模态框
+            if (window.aboutModule && typeof window.aboutModule.hide === 'function') {
+                window.aboutModule.hide();
+            }
+            // 关闭投稿模态框
+            const submitModal = document.getElementById('submitModal');
+            if (submitModal && submitModal.classList.contains('active')) {
+                submitModal.classList.remove('active');
+            }
+            // 关闭笔记模态框
+            if (window.hideNotebookModal && typeof window.hideNotebookModal === 'function') {
+                window.hideNotebookModal();
+            }
+        }
+
         show() {
             if (this.isOpen) return;
+            // 关闭其他所有模态框
+            this.closeOtherModals();
             this.isOpen = true;
             this.sidebarEl.classList.add('active');
-            if (this.overlay) this.overlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
+            if (this.overlay) {
+                const navbar = document.getElementById('navbar');
+                const navbarHeight = navbar ? navbar.offsetHeight : 60;
+                this.overlay.style.top = `${navbarHeight}px`;
+                this.overlay.classList.add('active');
+            }
+            // 不再禁用 body 滚动，让主页可以滑动
             document.body.classList.add('sidebar-open');
             if (window.app && !window._sidebarModalRegistered) {
                 window.app.registerModal(this);
@@ -425,7 +476,6 @@
             this.isOpen = false;
             this.sidebarEl.classList.remove('active');
             if (this.overlay) this.overlay.classList.remove('active');
-            document.body.style.overflow = '';
             document.body.classList.remove('sidebar-open');
         }
 
