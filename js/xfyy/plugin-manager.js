@@ -66,8 +66,9 @@ class PluginManager {
                 const timeoutId = setTimeout(() => controller.abort(), 6000);
 
                 try {
+                    // 修复：使用 keyword 参数而不是 id
                     const response = await fetch(
-                        `https://api.injahow.cn/meting/?server=netease&type=search&id=${encodeURIComponent(keyword)}`,
+                        `https://api.injahow.cn/meting/?server=netease&type=search&keyword=${encodeURIComponent(keyword)}`,
                         { signal: controller.signal }
                     );
                     clearTimeout(timeoutId);
@@ -167,6 +168,7 @@ class PluginManager {
             },
 
             search: async (keyword, count = 20) => {
+                // QQ音乐搜索功能因API限制，暂不实现
                 return [];
             }
         });
