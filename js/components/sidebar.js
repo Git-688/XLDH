@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（无遮罩层，顶部留白固定，不随滚动移动）
+// sidebar.js - 现代悬浮侧滑栏（顶部固定留白 20px，无遮罩层）
 (function() {
     const CATEGORIES_DATA = [
         { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
@@ -49,7 +49,6 @@
             this.isOpen = false;
             this.categories = JSON.parse(JSON.stringify(CATEGORIES_DATA));
             this.userConfig = null;
-            this.fixedTop = null;
             this.init();
         }
 
@@ -60,34 +59,17 @@
             this.loadUserData();
             this.loadDailyQuote();
             this.loadExpandedState();
-            this.calcFixedTop();
-            this.setFixedTop();
+            this.setFixedTop();          // 直接设置固定顶部位置（不再动态计算）
             this.loadWallpaperBackground();
-            window.addEventListener('resize', () => {
-                this.calcFixedTop();
-                this.setFixedTop();
-            });
             window.sidebar = this;
         }
 
-        calcFixedTop() {
-            const wallpaperSection = document.querySelector('.wallpaper-section');
-            const navbar = document.getElementById('navbar');
-            if (!wallpaperSection) {
-                this.fixedTop = (navbar ? navbar.offsetHeight : 60) + 20;
-                return;
-            }
-            const rect = wallpaperSection.getBoundingClientRect();
-            const navbarHeight = navbar ? navbar.offsetHeight : 60;
-            let topVal = rect.top;
-            if (topVal < navbarHeight) topVal = navbarHeight;
-            this.fixedTop = topVal;
-        }
-
         setFixedTop() {
-            if (this.fixedTop !== null && this.sidebarEl) {
-                this.sidebarEl.style.top = `${this.fixedTop}px`;
-            }
+            const navbar = document.getElementById('navbar');
+            const navbarHeight = navbar ? navbar.offsetHeight : 60;
+            const wallpaperTopMargin = 20; // 与壁纸顶部留白一致
+            const fixedTop = navbarHeight + wallpaperTopMargin;
+            this.sidebarEl.style.top = `${fixedTop}px`;
         }
 
         render() {
