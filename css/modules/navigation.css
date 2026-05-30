@@ -231,13 +231,29 @@
     overflow: hidden;
     border: 1px solid rgba(0, 0, 0, 0.1);
     padding: 0;
+    /* 高清图标优化 */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: high-quality;
 }
-.icon-container img,
+.icon-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
 .icon-container i,
-.icon-container span { width: 100%; height: 100%; object-fit: cover; }
-.icon-container img { border-radius: 6px; }
-.icon-container i { font-size: 20px; display: flex; align-items: center; justify-content: center; color: var(--primary-color); }
-.icon-container span { font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+.icon-container span {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
 .site-card:hover .icon-container { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); border-color: var(--primary-color); }
 
 .views-container {
