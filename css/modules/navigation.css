@@ -1,7 +1,7 @@
 /* 
  * 优化分类导航样式
  * 文件位置：./css/modules/navigation.css
- * 本次修改：标题单行省略（JS控制悬停滚动）、描述两行完整显示、眼睛图标加大
+ * 本次修改：标题字体大小统一为15px，竖线高度统一为16px，左边距统一为8px
  * 性能优化：level3-content 增加 content-visibility
  */
 
@@ -80,7 +80,7 @@
     .search-clear-btn { width: 20px; height: 20px; right: 6px; font-size: 11px; }
 }
 
-/* ====================== 原有导航样式（完整保留） ====================== */
+/* ====================== 导航主体样式 ====================== */
 
 /* 导航主容器 */
 .navigation-section { padding: 0 0 calc(var(--section-margin-xs) * 0.5) 0; width: 100%; }
@@ -104,7 +104,7 @@
     align-items: center;
     width: 100%;
     gap: 12px;
-    padding-left: 18px;
+    padding-left: 8px;      /* 统一左边距为8px（与常用标签一致） */
     padding-right: 0;
 }
 
@@ -115,13 +115,19 @@
     top: 50%;
     transform: translateY(-50%);
     width: 2px;
-    height: 12px;
+    height: 16px;           /* 竖线高度统一为16px（与常用标签一致） */
     background: var(--primary-color);
     border-radius: 2px;
 }
 
 .nav-header-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.navigation-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0; white-space: nowrap; }
+.navigation-title {
+    font-size: 15px;        /* 字体大小统一为15px（与常用标签一致） */
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    white-space: nowrap;
+}
 .navigation-stats { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; justify-content: flex-end; white-space: nowrap; }
 .stat-item { display: flex; align-items: baseline; gap: 3px; white-space: nowrap; font-size: 12px; }
 .stat-number { font-size: 14px; font-weight: 800; color: var(--text-primary); }
