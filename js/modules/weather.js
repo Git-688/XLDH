@@ -1,5 +1,5 @@
 /**
- * 天气模块 - 简化卡片式设计（支持手动选择城市并持久化）
+ * 天气模块 - 简化卡片式设计（支持手动选择城市并持久化，一键回到自动定位）
  * 使用配置化 API 地址和统一错误处理
  */
 class WeatherModule {
@@ -410,7 +410,16 @@ class WeatherModule {
         const { weatherData } = this;
         const esc = this._escapeHtml.bind(this);
         
+        // 如果当前是手动模式，显示提示和切换按钮
+        const manualModeHint = !this.useAutoLocation ? `
+            <div class="manual-mode-hint" style="background:rgba(245,158,11,0.1); border-radius:8px; padding:8px 12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:12px; color:#d97706;"><i class="fas fa-map-marker-alt"></i> 当前为手动选择城市</span>
+                <button id="switchToAutoBtn" class="weather-action-btn" style="background:#4361ee; color:white; border:none; border-radius:6px; padding:4px 12px; font-size:11px;">📍 自动定位</button>
+            </div>
+        ` : '';
+        
         return `
+            ${manualModeHint}
             <div class="weather-current">
                 <div class="weather-city">
                     <i class="fas fa-location-dot"></i>
@@ -477,7 +486,7 @@ class WeatherModule {
             
             <div class="weather-footer">
                 <i class="fas fa-circle-info"></i>
-                点击📌可手动选择城市，点击📍可重新自动定位
+                点击📍可手动选择城市，点击📍可重新自动定位
             </div>
         `;
     }
@@ -522,7 +531,7 @@ class WeatherModule {
             <div class="city-prompt-content">
                 <div class="prompt-header">
                     <i class="fas fa-map-marker-alt"></i>
-                    <h3>手动选择城市</h3>
+                    <h3>选择城市</h3>
                 </div>
                 <div class="prompt-input-group">
                     <label>请输入城市名称</label>
@@ -537,9 +546,14 @@ class WeatherModule {
                         `).join('')}
                     </div>
                 </div>
-                <div class="prompt-actions">
-                    <button type="button" id="cancelCityBtn" class="weather-action-btn cancel-btn">取消</button>
-                    <button type="button" id="confirmCityBtn" class="weather-action-btn confirm-btn">确认切换</button>
+                <div class="prompt-actions" style="justify-content: space-between;">
+                    <button type="button" id="autoLocateBtn" class="weather-action-btn" style="background:#10b981; color:white;">
+                        <i class="fas fa-location-crosshairs"></i> 自动定位
+                    </button>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" id="cancelCityBtn" class="weather-action-btn cancel-btn">取消</button>
+                        <button type="button" id="confirmCityBtn" class="weather-action-btn confirm-btn">确认切换</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -556,11 +570,19 @@ class WeatherModule {
 
         const cancelBtn = modal.querySelector('#cancelCityBtn');
         const confirmBtn = modal.querySelector('#confirmCityBtn');
+        const autoLocateBtn = modal.querySelector('#autoLocateBtn');
         const cityInput = modal.querySelector('#cityInput');
         const quickCityBtns = modal.querySelectorAll('.hot-city-btn');
 
         quickCityBtns.forEach(btn => {
             btn.addEventListener('click', () => { cityInput.value = btn.dataset.city; });
+        });
+
+        // 自动定位按钮
+        autoLocateBtn.addEventListener('click', async () => {
+            await this.handleLocationRefresh();
+            this.hideCityPrompt(modal);
+            this.updateModalContent(); // 刷新天气内容，因为 handleLocationRefresh 已更新数据
         });
 
         confirmBtn.addEventListener('click', async () => {
@@ -624,7 +646,7 @@ class WeatherModule {
             await this.getCurrentPosition();
             await this.loadWeatherData();
             this.updateModalContent();
-            if (window.app && window.app.showToast) window.app.showToast('位置已更新', 'success');
+            if (window.app && window.app.showToast) window.app.showToast('位置已更新，已切换为自动定位', 'success');
         } catch (error) {
             console.error('定位刷新失败:', error);
             if (window.app && window.app.showToast) window.app.showToast('定位失败，请检查权限设置', 'error');
@@ -677,6 +699,14 @@ class WeatherModule {
                         manualLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> 重新定位';
                         manualLocationBtn.disabled = false;
                     }
+                });
+            }
+            // 切换到自动定位按钮
+            const switchToAutoBtn = body.querySelector('#switchToAutoBtn');
+            if (switchToAutoBtn) {
+                switchToAutoBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    await this.handleLocationRefresh();
                 });
             }
         }
