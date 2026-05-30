@@ -1,6 +1,5 @@
 /**
  * 优化分类导航系统 - 分页加载版（解决长列表卡顿 + 死链报告实时更新 + 图片懒加载）
- * 增加死链报告后隐藏按钮并显示“已报告”标记
  */
 class OptimizedNavigation {
     constructor() {
@@ -391,22 +390,25 @@ class OptimizedNavigation {
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
-                // 已经是无效链接：隐藏按钮，显示已报告标记
                 reportBtn.disabled = true;
                 reportBtn.style.display = 'none';
-                const badge = document.createElement('span');
-                badge.className = 'reported-badge';
-                badge.textContent = '已报告';
-                badge.style.cssText = 'font-size:10px;color:#999;margin-left:4px;';
-                reportBtn.parentNode.appendChild(badge);
+                // 添加“已报告”提示
+                if (!card.querySelector('.reported-msg')) {
+                    const msgSpan = document.createElement('span');
+                    msgSpan.className = 'reported-msg';
+                    msgSpan.textContent = '已报告，等待处理';
+                    msgSpan.style.fontSize = '11px';
+                    msgSpan.style.color = '#999';
+                    const container = card.querySelector('.card-top-right');
+                    if (container) container.appendChild(msgSpan);
+                }
             } else {
                 reportBtn.addEventListener('click', async (e) => {
                     e.preventDefault(); e.stopPropagation();
                     if (reportBtn.disabled) return;
                     reportBtn.disabled = true;
-                    // 显示加载图标
-                    const originalIcon = reportBtn.innerHTML;
-                    reportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    reportBtn.style.opacity = '0.5';
+                    reportBtn.style.cursor = 'not-allowed';
                     try {
                         const res = await Utils.safeFetch(`${this.apiBase}/report-dead-link`, {
                             method: 'POST',
@@ -415,24 +417,28 @@ class OptimizedNavigation {
                         });
                         if (res.ok) {
                             window.toast.show('已反馈，管理员将处理', 'success');
-                            // 隐藏按钮，显示已报告标记
-                            reportBtn.style.display = 'none';
-                            const badge = document.createElement('span');
-                            badge.className = 'reported-badge';
-                            badge.textContent = '已报告';
-                            reportBtn.parentNode.appendChild(badge);
                             card.classList.add('invalid');
+                            reportBtn.style.display = 'none';
+                            const msgSpan = document.createElement('span');
+                            msgSpan.className = 'reported-msg';
+                            msgSpan.textContent = '已报告，等待处理';
+                            msgSpan.style.fontSize = '11px';
+                            msgSpan.style.color = '#999';
+                            const container = card.querySelector('.card-top-right');
+                            if (container && !container.querySelector('.reported-msg')) container.appendChild(msgSpan);
                             this.updateInvalidCount(1);
                         } else {
                             const err = await res.json().catch(() => ({}));
                             window.toast.show(err.error || '反馈失败', 'error');
                             reportBtn.disabled = false;
-                            reportBtn.innerHTML = originalIcon;
+                            reportBtn.style.opacity = '';
+                            reportBtn.style.cursor = '';
                         }
                     } catch {
                         window.toast.show('网络错误', 'error');
                         reportBtn.disabled = false;
-                        reportBtn.innerHTML = originalIcon;
+                        reportBtn.style.opacity = '';
+                        reportBtn.style.cursor = '';
                     }
                 });
             }
