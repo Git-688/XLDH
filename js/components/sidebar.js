@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（个人资料：预览缩小至36px，与标题同一行）
+// sidebar.js - 现代悬浮侧滑栏（完整版，修复滚动位置丢失 + QQ头像HTTPS）
 (function() {
     // 分类数据
     const CATEGORIES_DATA = [
@@ -51,6 +51,7 @@
             this.isOpen = false;
             this.categories = JSON.parse(JSON.stringify(CATEGORIES_DATA));
             this.userConfig = null;
+            this._savedScrollY = 0;   // 保存关闭侧滑栏前的滚动位置
             this.init();
         }
 
@@ -288,7 +289,6 @@
             }
         }
 
-        // 个人资料模态框：预览缩小为36px，与标题同一行
         openProfileModal() {
             const currentAvatar = (this.userConfig && this.userConfig.avatar) ? this.userConfig.avatar : './assets/logo.png';
             const modalHtml = `
@@ -348,6 +348,7 @@
                         statusDiv.textContent = '获取头像中...';
                         statusDiv.style.color = '#666';
                         try {
+                            // 强制使用 HTTPS
                             const avatarUrl = `https://api.kuleu.com/api/qqimg?qq=${qq}`;
                             const testImg = new Image();
                             testImg.onload = () => {
@@ -398,49 +399,26 @@
             const wallpaperSection = document.querySelector('.wallpaper-section');
             if (!wallpaperSection || !this.sidebarEl) return;
             const topPos = wallpaperSection.offsetTop;
-            
             let extraOffset = 0;
             const screenWidth = window.innerWidth;
-            if (screenWidth >= 1200) {
-                extraOffset = 24;
-            } else if (screenWidth >= 992) {
-                extraOffset = 20;
-            } else if (screenWidth >= 768) {
-                extraOffset = 16;
-            } else {
-                extraOffset = 16;
-            }
-            
+            if (screenWidth >= 1200) extraOffset = 24;
+            else if (screenWidth >= 992) extraOffset = 20;
+            else if (screenWidth >= 768) extraOffset = 16;
+            else extraOffset = 16;
             this.sidebarEl.style.top = `${topPos + extraOffset}px`;
         }
 
         closeOtherModals() {
-            if (window.newSearchModule && typeof window.newSearchModule.hide === 'function') {
-                window.newSearchModule.hide();
-            }
-            if (window.announcementModule && typeof window.announcementModule.hide === 'function') {
-                window.announcementModule.hide();
-            }
-            if (window.app && window.app.components && window.app.components.navbar) {
-                window.app.components.navbar.hideMusicPlayer();
-            }
-            if (window.app && window.app.modules && window.app.modules.weather && typeof window.app.modules.weather.hide === 'function') {
-                window.app.modules.weather.hide();
-            }
-            if (window.aboutModule && typeof window.aboutModule.hide === 'function') {
-                window.aboutModule.hide();
-            }
-            if (window.hideNotebookModal && typeof window.hideNotebookModal === 'function') {
-                window.hideNotebookModal();
-            }
+            if (window.newSearchModule && typeof window.newSearchModule.hide === 'function') window.newSearchModule.hide();
+            if (window.announcementModule && typeof window.announcementModule.hide === 'function') window.announcementModule.hide();
+            if (window.app && window.app.components && window.app.components.navbar) window.app.components.navbar.hideMusicPlayer();
+            if (window.app && window.app.modules && window.app.modules.weather && typeof window.app.modules.weather.hide === 'function') window.app.modules.weather.hide();
+            if (window.aboutModule && typeof window.aboutModule.hide === 'function') window.aboutModule.hide();
+            if (window.hideNotebookModal && typeof window.hideNotebookModal === 'function') window.hideNotebookModal();
             const submitModal = document.getElementById('submitModal');
-            if (submitModal && submitModal.classList.contains('active')) {
-                submitModal.classList.remove('active');
-            }
+            if (submitModal && submitModal.classList.contains('active')) submitModal.classList.remove('active');
             const profileModal = document.getElementById('profileModal');
-            if (profileModal && profileModal.parentNode) {
-                profileModal.remove();
-            }
+            if (profileModal && profileModal.parentNode) profileModal.remove();
         }
 
         saveExpandedState() {
@@ -470,9 +448,12 @@
 
         show() {
             if (this.isOpen) return;
+            // 保存当前滚动位置
+            this._savedScrollY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
             this.closeOtherModals();
             this.isOpen = true;
             this.sidebarEl.classList.add('active');
+            document.body.style.overflow = 'hidden';
             document.body.classList.add('sidebar-open');
             if (window.app && !window._sidebarModalRegistered) {
                 window.app.registerModal(this);
@@ -484,7 +465,13 @@
             if (!this.isOpen) return;
             this.isOpen = false;
             this.sidebarEl.classList.remove('active');
+            document.body.style.overflow = '';
             document.body.classList.remove('sidebar-open');
+            // 恢复滚动位置（仅当保存的值有效且页面未关闭）
+            if (typeof this._savedScrollY === 'number' && this._savedScrollY !== undefined) {
+                window.scrollTo(0, this._savedScrollY);
+                this._savedScrollY = 0;
+            }
         }
 
         toggle() {
