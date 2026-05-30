@@ -1,8 +1,9 @@
-// 星聚导航 Service Worker - 缓存导航数据与静态资源
-const CACHE_NAME = 'starlink-v2';
-const NAVIGATION_CACHE_NAME = 'starlink-nav-v2';
+// 星聚导航 Service Worker - 缓存导航数据与静态资源，增强 API 响应缓存
+const CACHE_NAME = 'starlink-v3';
+const NAVIGATION_CACHE_NAME = 'starlink-nav-v3';
+const API_CACHE_NAME = 'starlink-api-v3';
 
-// 需要缓存的静态资源列表（可选，可增加 CSS/JS 等）
+// 需要缓存的静态资源列表
 const STATIC_URLS = [
     '/',
     '/index.html',
@@ -47,11 +48,20 @@ const STATIC_URLS = [
     '/data/local-music-data.js'
 ];
 
-// 需要缓存的导航 API 路径（模糊匹配）
+// 需要缓存的导航 API 路径（模糊匹配，缓存优先）
 const NAV_API_PATTERNS = [
     '/navigation/structure',
     '/navigation/sites'
 ];
+
+// 需要缓存的其他只读 API（网络优先，缓存后备，限制 TTL）
+const CACHED_API_PATTERNS = [
+    '/stats',
+    '/uptime',
+    '/global-submission-count',
+    '/notebook'
+];
+const API_CACHE_TTL = 5 * 60 * 1000; // 5 分钟
 
 // 安装事件：缓存静态资源
 self.addEventListener('install', event => {
@@ -72,7 +82,7 @@ self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keyList => {
             return Promise.all(keyList.map(key => {
-                if (key !== CACHE_NAME && key !== NAVIGATION_CACHE_NAME) {
+                if (key !== CACHE_NAME && key !== NAVIGATION_CACHE_NAME && key !== API_CACHE_NAME) {
                     console.log('删除旧缓存:', key);
                     return caches.delete(key);
                 }
@@ -82,9 +92,15 @@ self.addEventListener('activate', event => {
     self.clients.claim();
 });
 
-// 判断请求是否为导航 API（需要单独处理）
+// 判断请求是否为导航 API
 function isNavigationApiRequest(url) {
     return NAV_API_PATTERNS.some(pattern => url.pathname.includes(pattern));
+}
+
+// 判断请求是否为可缓存的只读 API
+function isCacheableApiRequest(url) {
+    if (url.method !== 'GET') return false;
+    return CACHED_API_PATTERNS.some(pattern => url.pathname.includes(pattern));
 }
 
 // 处理导航 API 请求（缓存优先 + 后台更新）
@@ -106,11 +122,51 @@ async function handleNavigationApi(request, event) {
     
     // 如果有缓存，立即返回缓存，后台更新
     if (cachedResponse) {
-        event.waitUntil(fetchPromise); // 后台更新
+        event.waitUntil(fetchPromise);
         return cachedResponse;
     }
     // 无缓存则等待网络响应
     return fetchPromise;
+}
+
+// 处理其他只读 API（网络优先，缓存后备，带 TTL 校验）
+async function handleCacheableApi(request) {
+    const cache = await caches.open(API_CACHE_NAME);
+    // 尝试网络请求
+    try {
+        const response = await fetch(request);
+        if (response && response.status === 200) {
+            // 缓存响应并记录时间戳
+            const cloned = response.clone();
+            const headers = new Headers(cloned.headers);
+            headers.set('sw-cache-timestamp', Date.now());
+            const cachedResponse = new Response(cloned.body, {
+                status: cloned.status,
+                statusText: cloned.statusText,
+                headers: headers
+            });
+            cache.put(request, cachedResponse);
+            return response;
+        }
+    } catch (err) {
+        console.warn('网络请求失败，尝试从缓存获取:', err);
+    }
+    // 网络失败，尝试从缓存获取
+    const cached = await cache.match(request);
+    if (cached) {
+        const timestamp = cached.headers.get('sw-cache-timestamp');
+        if (timestamp && (Date.now() - parseInt(timestamp) < API_CACHE_TTL)) {
+            return cached;
+        } else {
+            // 缓存过期，删除
+            cache.delete(request);
+        }
+    }
+    // 无缓存或缓存过期，返回错误响应
+    return new Response(JSON.stringify({ error: '离线状态下无法获取数据' }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+    });
 }
 
 // 处理静态资源请求（缓存优先，无缓存则网络）
@@ -129,20 +185,18 @@ async function handleStaticResource(request) {
     });
 }
 
-// 其他请求（如其他 API）使用网络优先
+// 其他请求（POST、非缓存API）使用网络优先，不缓存
 async function handleOtherRequest(request) {
     try {
         const response = await fetch(request);
-        // 对于安全检测等 POST 请求不缓存
-        if (request.method === 'GET' && response.status === 200) {
-            const cache = await caches.open(CACHE_NAME);
-            cache.put(request, response.clone());
-        }
+        // 对于 GET 请求且成功，可选择性缓存（但这里不缓存）
         return response;
     } catch (err) {
-        // 网络失败时尝试从缓存获取
-        const cached = await caches.match(request);
-        if (cached) return cached;
+        // 网络失败时尝试从缓存获取（仅限 GET）
+        if (request.method === 'GET') {
+            const cached = await caches.match(request);
+            if (cached) return cached;
+        }
         throw err;
     }
 }
@@ -159,6 +213,12 @@ self.addEventListener('fetch', event => {
         return;
     }
     
+    // 可缓存的只读 API（统计、笔记等）使用网络优先，缓存后备
+    if (isCacheableApiRequest(event.request)) {
+        event.respondWith(handleCacheableApi(event.request));
+        return;
+    }
+    
     // 静态资源（CSS/JS/HTML）使用缓存优先
     if (event.request.destination === 'document' || 
         event.request.destination === 'script' || 
@@ -167,6 +227,6 @@ self.addEventListener('fetch', event => {
         return;
     }
     
-    // 其他同源请求使用网络优先（如 /click, /report-dead-link 等）
+    // 其他同源请求（如 POST /click, /report-dead-link）使用网络优先
     event.respondWith(handleOtherRequest(event.request));
 });
