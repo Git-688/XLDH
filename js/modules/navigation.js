@@ -269,9 +269,13 @@ class OptimizedNavigation {
             this.hasMore = false;
             const loadingDiv = container.querySelector('#scroll-loading-trigger');
             if (loadingDiv) {
-                // 修改：将底部提示改为“～到·底·了～”并居中
-                loadingDiv.innerHTML = '<span style="color:var(--text-secondary);">～到·底·了～</span>';
-                loadingDiv.style.display = 'block';
+                loadingDiv.innerHTML = '～到·底·了～';
+                loadingDiv.style.display = 'flex';
+                loadingDiv.style.alignItems = 'center';
+                loadingDiv.style.justifyContent = 'center';
+                loadingDiv.style.padding = '20px 0';
+                loadingDiv.style.minHeight = '60px';
+                loadingDiv.style.color = 'var(--text-secondary)';
             }
         }
     }
@@ -304,6 +308,11 @@ class OptimizedNavigation {
         const loadingDiv = document.getElementById('scroll-loading-trigger');
         if (loadingDiv) {
             loadingDiv.innerHTML = '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载中...</span>';
+            loadingDiv.style.display = 'block';
+            loadingDiv.style.alignItems = ''; // 重置样式
+            loadingDiv.style.justifyContent = '';
+            loadingDiv.style.padding = '10px';
+            loadingDiv.style.minHeight = '';
         }
         await new Promise(r => setTimeout(r, 200));
         this.currentPage++;
@@ -311,8 +320,13 @@ class OptimizedNavigation {
         if (start >= this.currentSites.length) {
             this.hasMore = false;
             if (loadingDiv) {
-                // 修改：同样将底部提示改为“～到·底·了～”
-                loadingDiv.innerHTML = '<span style="color:var(--text-secondary);">～到·底·了～</span>';
+                loadingDiv.innerHTML = '～到·底·了～';
+                loadingDiv.style.display = 'flex';
+                loadingDiv.style.alignItems = 'center';
+                loadingDiv.style.justifyContent = 'center';
+                loadingDiv.style.padding = '20px 0';
+                loadingDiv.style.minHeight = '60px';
+                loadingDiv.style.color = 'var(--text-secondary)';
             }
             this.isLoadingMore = false;
             return;
