@@ -64,11 +64,11 @@
     color: var(--primary-color);
     font-size: 18px;
     transition: var(--transition);
-    border: 1px solid var(--border-color);
-    padding: 2px;
-    box-sizing: border-box;
+    border: 2px solid rgba(255, 255, 255, 0.4);  /* 修改为与侧滑栏头像边框一致 */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    padding: 2px;
+    box-sizing: border-box;
 }
 
 .nav-brand:hover .logo { 
@@ -182,7 +182,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-    .logo { background: var(--bg-card); border-color: var(--border-color); }
+    .logo { background: var(--bg-card); border-color: rgba(255, 255, 255, 0.4); }
     .logo i { color: var(--nav-level1-active); }
     .nav-brand:hover .logo { border-color: var(--nav-level1-active); }
     .brand-text { color: var(--text-primary); }
