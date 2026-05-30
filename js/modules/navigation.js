@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（解决长列表卡顿 + 死链报告实时更新 + 图片懒加载）
+ * 优化分类导航系统 - 分页加载版（高清图标、死链报告实时刷新、底部居中提示）
  */
 class OptimizedNavigation {
     constructor() {
@@ -37,6 +37,18 @@ class OptimizedNavigation {
         if (views >= 1000000) return `${(views / 1000000).toFixed(1).replace('.0', '')}M`;
         if (views >= 1000) return `${(views / 1000).toFixed(1).replace('.0', '')}K`;
         return String(views);
+    }
+
+    // 高清图标辅助方法
+    _getHighResFavicon(url) {
+        if (!url) return '';
+        try {
+            const urlObj = new URL(url);
+            const domain = urlObj.hostname;
+            return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+        } catch (e) {
+            return '';
+        }
     }
 
     initLazyLoadObserver() {
@@ -98,7 +110,17 @@ class OptimizedNavigation {
         }
         const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
         if (!response.ok) throw new Error('Failed to load sites');
-        const sites = await response.json();
+        let sites = await response.json();
+        // 处理图标：替换为高清图标
+        sites = sites.map(s => {
+            let finalIcon = s.icon;
+            if (!finalIcon || finalIcon === '/' || finalIcon === 'https://xjdh688.ccwu.cc' || finalIcon === 'https://xjdh688.ccwu.cc/') {
+                finalIcon = this._getHighResFavicon(s.url);
+            } else if (finalIcon && (finalIcon.includes('api.71xk.com') || finalIcon.includes('favicon') || (finalIcon.startsWith('http') && !finalIcon.includes('favicon.yandex.net') && !finalIcon.includes('google.com/s2/favicons')))) {
+                finalIcon = this._getHighResFavicon(s.url);
+            }
+            return { ...s, icon: finalIcon };
+        });
         this.siteCache.set(subcategoryId, sites);
         return sites;
     }
@@ -309,7 +331,7 @@ class OptimizedNavigation {
         if (loadingDiv) {
             loadingDiv.innerHTML = '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载中...</span>';
             loadingDiv.style.display = 'block';
-            loadingDiv.style.alignItems = ''; // 重置样式
+            loadingDiv.style.alignItems = '';
             loadingDiv.style.justifyContent = '';
             loadingDiv.style.padding = '10px';
             loadingDiv.style.minHeight = '';
@@ -348,8 +370,16 @@ class OptimizedNavigation {
         let iconHtml = '<i class="fas fa-link"></i>';
         const origin = window.location.origin;
         const hostname = window.location.hostname;
-        if (site.icon && site.icon.trim() && site.icon !== origin && !site.icon.includes(hostname) && site.icon !== '/' && site.icon !== '') {
-            const raw = site.icon.trim();
+        
+        let finalIcon = site.icon;
+        if (!finalIcon || finalIcon === '/' || finalIcon === origin || finalIcon.includes(hostname)) {
+            finalIcon = this._getHighResFavicon(site.url);
+        } else if (finalIcon && (finalIcon.includes('api.71xk.com') || finalIcon.includes('favicon') || (finalIcon.startsWith('http') && !finalIcon.includes('favicon.yandex.net') && !finalIcon.includes('google.com/s2/favicons')))) {
+            finalIcon = this._getHighResFavicon(site.url);
+        }
+        
+        if (finalIcon && finalIcon.trim() && finalIcon !== origin && !finalIcon.includes(hostname) && finalIcon !== '/' && finalIcon !== '') {
+            const raw = finalIcon.trim();
             if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('./') || /\.(png|jpg|jpeg|ico|svg)/i.test(raw)) {
                 iconHtml = `<img data-src="${this._escapeHtml(raw)}" alt="" loading="lazy" class="lazy-icon" 
                             onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fas fa-link\\'></i>';">`;
