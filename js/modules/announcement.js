@@ -1,5 +1,5 @@
 /**
- * 简约公告模块 - 清爽现代版（XSS 防护加固）
+ * 简约公告模块 - 清爽现代版（XSS 防护加固，修复 badge 不消失问题）
  * @class AnnouncementModule
  */
 class AnnouncementModule {
@@ -9,7 +9,6 @@ class AnnouncementModule {
         this.isVisible = false;
         this.isInitialized = false;
         this.currentAnnouncement = null;
-        this.resizeHandler = null;
         this.escapeHandler = null;
         this.init();
     }
@@ -26,6 +25,7 @@ class AnnouncementModule {
         this.loadAnnouncements();
         this.createModal();
         this.setupGlobalEvents();
+        this.updateNavbarBadge();   // 初始化时更新 badge
         this.isInitialized = true;
         window.announcementModule = this;
     }
@@ -48,6 +48,7 @@ class AnnouncementModule {
                 this.announcements = stored;
             }
         }
+        // 确保 read 状态与存储一致
         this.currentAnnouncement = this.announcements[0] || {};
     }
 
@@ -138,6 +139,7 @@ class AnnouncementModule {
         const closeBtn = this.modalElement.querySelector('#announcementClose');
         const ackBtn = this.modalElement.querySelector('#announcementAckBtn');
 
+        // 统一关闭处理函数，确保标记已读并更新 badge
         const closeHandler = () => {
             this.markCurrentAsRead();
             this.hide();
@@ -166,18 +168,46 @@ class AnnouncementModule {
 
     markCurrentAsRead() {
         if (!this.currentAnnouncement || this.currentAnnouncement.read) return;
+        // 修改当前公告的 read 状态
         this.currentAnnouncement.read = true;
         const index = this.announcements.findIndex(a => a.id === this.currentAnnouncement.id);
         if (index !== -1) {
             this.announcements[index].read = true;
+            // 同步存储
             Storage.set('announcements', this.announcements);
         }
+        // 更新导航栏红点
         this.updateNavbarBadge();
     }
 
     updateNavbarBadge() {
-        if (window.app?.components?.navbar) {
+        if (window.app?.components?.navbar && typeof window.app.components.navbar.updateNotificationBadge === 'function') {
             window.app.components.navbar.updateNotificationBadge();
+        } else if (window.navbar && typeof window.navbar.updateNotificationBadge === 'function') {
+            window.navbar.updateNotificationBadge();
+        } else {
+            // 降级：直接操作 DOM
+            const btn = document.getElementById('announcementBtn');
+            if (btn) {
+                const unread = this.getUnreadCount();
+                let badge = btn.querySelector('.nav-badge');
+                if (unread > 0) {
+                    if (!badge) {
+                        badge = document.createElement('div');
+                        badge.className = 'nav-badge';
+                        btn.appendChild(badge);
+                    }
+                    badge.textContent = unread > 9 ? '9+' : unread;
+                    badge.classList.add('show');
+                    btn.classList.add('has-unread');
+                } else {
+                    if (badge) {
+                        badge.classList.remove('show');
+                        setTimeout(() => badge.remove(), 300);
+                        btn.classList.remove('has-unread');
+                    }
+                }
+            }
         }
     }
 
@@ -234,6 +264,7 @@ class AnnouncementModule {
         this.currentAnnouncement = this.announcements[0];
         Storage.set('announcements', this.announcements);
         this.createModal();
+        this.updateNavbarBadge();
     }
 
     getAnnouncements() {
@@ -246,7 +277,7 @@ class AnnouncementModule {
         this.loadAnnouncements();
         this.createModal();
         if (this.isVisible) this.showModal();
-        if (window.navbar) window.navbar.updateNotificationBadge();
+        this.updateNavbarBadge();
     }
 
     destroy() {
