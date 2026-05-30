@@ -1,5 +1,5 @@
 /**
- * 插件管理器 - 网易云榜单+搜索全适配yunzhiapi
+ * 插件管理器 - 网易云榜单+搜索全适配yunzhiapi 已修复语法逗号错误
  */
 class PluginManager {
     constructor(cacheManager) {
@@ -351,7 +351,7 @@ class PluginManager {
         const plugin = this.getPlugin(apiId);
         if (!plugin || !plugin.search) return [];
         return await plugin.search(keyword);
-    },
+    }
 
     // 统一解析歌曲播放地址、歌词、封面
     async resolveSongSource(apiId, songId) {
