@@ -1,5 +1,6 @@
 /**
  * 优化分类导航系统 - 分页加载版（解决长列表卡顿 + 死链报告实时更新 + 图片懒加载）
+ * 增加死链报告后隐藏按钮并显示“已报告”标记
  */
 class OptimizedNavigation {
     constructor() {
@@ -330,13 +331,11 @@ class OptimizedNavigation {
         card.title = `${site.title}\n${site.description || ''}`;
 
         let iconHtml = '<i class="fas fa-link"></i>';
-        // 更严格的图标有效性判断：存在、非空字符串、不是当前域名、不包含当前主机名
         const origin = window.location.origin;
         const hostname = window.location.hostname;
         if (site.icon && site.icon.trim() && site.icon !== origin && !site.icon.includes(hostname) && site.icon !== '/' && site.icon !== '') {
             const raw = site.icon.trim();
             if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('./') || /\.(png|jpg|jpeg|ico|svg)/i.test(raw)) {
-                // 懒加载图标，并设置 onerror 降级
                 iconHtml = `<img data-src="${this._escapeHtml(raw)}" alt="" loading="lazy" class="lazy-icon" 
                             onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fas fa-link\\'></i>';">`;
             } else if (raw.startsWith('fas ') || raw.startsWith('fab ')) {
@@ -392,19 +391,22 @@ class OptimizedNavigation {
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
+                // 已经是无效链接：隐藏按钮，显示已报告标记
                 reportBtn.disabled = true;
-                reportBtn.style.opacity = '0.5';
-                reportBtn.style.cursor = 'not-allowed';
-                reportBtn.title = '该链接已报告，等待管理员处理';
-                const icon = reportBtn.querySelector('i');
-                if (icon) icon.style.color = '#999';
+                reportBtn.style.display = 'none';
+                const badge = document.createElement('span');
+                badge.className = 'reported-badge';
+                badge.textContent = '已报告';
+                badge.style.cssText = 'font-size:10px;color:#999;margin-left:4px;';
+                reportBtn.parentNode.appendChild(badge);
             } else {
                 reportBtn.addEventListener('click', async (e) => {
                     e.preventDefault(); e.stopPropagation();
                     if (reportBtn.disabled) return;
                     reportBtn.disabled = true;
-                    reportBtn.style.opacity = '0.5';
-                    reportBtn.style.cursor = 'not-allowed';
+                    // 显示加载图标
+                    const originalIcon = reportBtn.innerHTML;
+                    reportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                     try {
                         const res = await Utils.safeFetch(`${this.apiBase}/report-dead-link`, {
                             method: 'POST',
@@ -413,24 +415,24 @@ class OptimizedNavigation {
                         });
                         if (res.ok) {
                             window.toast.show('已反馈，管理员将处理', 'success');
+                            // 隐藏按钮，显示已报告标记
+                            reportBtn.style.display = 'none';
+                            const badge = document.createElement('span');
+                            badge.className = 'reported-badge';
+                            badge.textContent = '已报告';
+                            reportBtn.parentNode.appendChild(badge);
                             card.classList.add('invalid');
-                            reportBtn.disabled = true;
-                            reportBtn.title = '已报告，等待处理';
-                            const icon = reportBtn.querySelector('i');
-                            if (icon) icon.style.color = '#999';
                             this.updateInvalidCount(1);
                         } else {
                             const err = await res.json().catch(() => ({}));
                             window.toast.show(err.error || '反馈失败', 'error');
                             reportBtn.disabled = false;
-                            reportBtn.style.opacity = '';
-                            reportBtn.style.cursor = '';
+                            reportBtn.innerHTML = originalIcon;
                         }
                     } catch {
                         window.toast.show('网络错误', 'error');
                         reportBtn.disabled = false;
-                        reportBtn.style.opacity = '';
-                        reportBtn.style.cursor = '';
+                        reportBtn.innerHTML = originalIcon;
                     }
                 });
             }
