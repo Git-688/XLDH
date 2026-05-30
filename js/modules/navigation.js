@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（高清图标、死链报告实时刷新、父级计数更新、搜索关键词高亮）
+ * 优化分类导航系统 - 分页加载版（高清图标、死链报告实时刷新、父级计数更新、搜索关键词高亮、报告提示优化）
  */
 class OptimizedNavigation {
     constructor() {
@@ -27,6 +27,9 @@ class OptimizedNavigation {
         this.hasMore = true;
         this.currentSites = [];
         this.scrollListener = null;
+
+        // 注入报告图标样式
+        this.injectReportIconStyle();
     }
 
     _escapeHtml(str) {
@@ -56,9 +59,31 @@ class OptimizedNavigation {
         if (!keyword || !text) return this._escapeHtml(text);
         const escapedText = this._escapeHtml(text);
         const escapedKeyword = this._escapeHtml(keyword);
-        // 不区分大小写匹配
         const regex = new RegExp(`(${escapedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
         return escapedText.replace(regex, '<mark class="search-highlight">$1</mark>');
+    }
+
+    // 注入报告图标样式
+    injectReportIconStyle() {
+        if (document.getElementById('report-icon-style')) return;
+        const style = document.createElement('style');
+        style.id = 'report-icon-style';
+        style.textContent = `
+            .reported-icon {
+                font-size: 14px;
+                color: #f59e0b;
+                margin-left: 4px;
+                cursor: help;
+                vertical-align: middle;
+                display: inline-block;
+            }
+            .card-top-right {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     initLazyLoadObserver() {
@@ -136,7 +161,6 @@ class OptimizedNavigation {
 
     async loadSubcategoryCountsForLevel1(level1) {
         if (!this.structure?.[level1]) return;
-        // 强制重新加载所有子分类的计数（即使已经加载过）
         const subcategories = this.structure[level1].subcategories;
         let totalValidSites = 0;
         const concurrency = 5;
@@ -147,7 +171,7 @@ class OptimizedNavigation {
         for (const chunk of chunks) {
             const promises = chunk.map(async (sub) => {
                 const subId = sub.id;
-                const sites = await this.loadSites(subId, true); // 强制刷新
+                const sites = await this.loadSites(subId, true);
                 const validCount = sites.filter(s => s.valid !== false).length;
                 this.updateSubcategoryCountDisplay(subId, validCount);
                 return validCount;
@@ -155,7 +179,6 @@ class OptimizedNavigation {
             const counts = await Promise.all(promises);
             totalValidSites += counts.reduce((sum, c) => sum + c, 0);
         }
-        // 更新总网站数
         this.stats.totalWebsites = totalValidSites;
         this.updateStatsDisplay();
         this.loadedLevel1Set.add(level1);
@@ -316,7 +339,6 @@ class OptimizedNavigation {
     bindScrollLoadMore() {
         const container = document.getElementById('level3Content');
         if (!container) return;
-        // 先移除已有的监听器，确保只保留一个
         if (this.scrollListener) {
             window.removeEventListener('scroll', this.scrollListener);
             container.removeEventListener('scroll', this.scrollListener);
@@ -406,7 +428,6 @@ class OptimizedNavigation {
         const views = site.views || 0;
         const formattedViews = this._formatViews(views);
         
-        // 高亮处理标题和描述
         let titleHtml = this._escapeHtml(site.title);
         let descHtml = this._escapeHtml(site.description || '暂无描述');
         if (isSearchResult && keyword) {
@@ -459,14 +480,13 @@ class OptimizedNavigation {
             if (site.valid === false) {
                 reportBtn.disabled = true;
                 reportBtn.style.display = 'none';
-                if (!card.querySelector('.reported-msg')) {
-                    const msgSpan = document.createElement('span');
-                    msgSpan.className = 'reported-msg';
-                    msgSpan.textContent = '已报告，等待处理';
-                    msgSpan.style.fontSize = '11px';
-                    msgSpan.style.color = '#999';
+                // 如果还没有添加报告图标，添加一个
+                if (!card.querySelector('.reported-icon')) {
+                    const iconSpan = document.createElement('i');
+                    iconSpan.className = 'fas fa-clock reported-icon';
+                    iconSpan.title = '已报告，等待管理员处理';
                     const container = card.querySelector('.card-top-right');
-                    if (container) container.appendChild(msgSpan);
+                    if (container) container.appendChild(iconSpan);
                 }
             } else {
                 reportBtn.addEventListener('click', async (e) => {
@@ -485,7 +505,6 @@ class OptimizedNavigation {
                             window.toast.show('已反馈，管理员将处理', 'success');
                             const currentSubId = this.selectedLevel2;
                             if (currentSubId) {
-                                // 刷新当前子分类缓存和视图
                                 this.siteCache.delete(currentSubId);
                                 const freshSites = await this.loadSites(currentSubId, true);
                                 this.currentSites = freshSites;
@@ -494,20 +513,20 @@ class OptimizedNavigation {
                                 this.renderSitesPage();
                                 const validCount = freshSites.filter(s => s.valid !== false).length;
                                 this.updateSubcategoryCountDisplay(currentSubId, validCount);
-                                // 更新父级分类的总计数
                                 if (this.selectedLevel1) {
                                     await this.loadSubcategoryCountsForLevel1(this.selectedLevel1);
                                 }
                             } else {
                                 card.classList.add('invalid');
                                 reportBtn.style.display = 'none';
-                                const msgSpan = document.createElement('span');
-                                msgSpan.className = 'reported-msg';
-                                msgSpan.textContent = '已报告，等待处理';
-                                msgSpan.style.fontSize = '11px';
-                                msgSpan.style.color = '#999';
-                                const container = card.querySelector('.card-top-right');
-                                if (container && !container.querySelector('.reported-msg')) container.appendChild(msgSpan);
+                                // 替换为图标提示
+                                if (!card.querySelector('.reported-icon')) {
+                                    const iconSpan = document.createElement('i');
+                                    iconSpan.className = 'fas fa-clock reported-icon';
+                                    iconSpan.title = '已报告，等待管理员处理';
+                                    const container = card.querySelector('.card-top-right');
+                                    if (container) container.appendChild(iconSpan);
+                                }
                             }
                             this.updateInvalidCount(1);
                         } else {
@@ -643,7 +662,6 @@ class OptimizedNavigation {
         this.renderLevel2(level1);
         this.showSkeleton();
 
-        // 强制重新加载该一级分类下所有子分类的计数
         await this.loadSubcategoryCountsForLevel1(level1);
 
         const firstSub = this.getFirstSubCategory(level1);
