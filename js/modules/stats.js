@@ -13,7 +13,7 @@ function getDeviceId() {
 
 let heartbeatInterval = null;
 
-// 修改后的运行时间格式化函数：仅保留天数，移除时、分、秒
+// 运行时间格式化：仅显示天数
 function formatUptime(ms) {
     if (ms < 0) return "刚刚上线";
     const days = Math.floor(ms / (24 * 3600 * 1000));
@@ -26,7 +26,7 @@ function formatUptime(ms) {
 
 function updateUptimeDisplay(startTimeMs) {
     if (!startTimeMs) return;
-    const nowMs = Date.now() + 8 * 3600 * 1000; // UTC+8
+    const nowMs = Date.now();
     const uptimeMs = nowMs - startTimeMs;
     const formatted = formatUptime(uptimeMs);
     $('#uptime').text(formatted);
