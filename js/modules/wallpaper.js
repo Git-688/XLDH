@@ -1,6 +1,6 @@
 /**
- * 轮播图模块 - 性能优化版（延迟加载非首屏壁纸）
- * 功能：7天必应壁纸轮播、自动切换、箭头导航、标题显示、预加载相邻图片
+ * 轮播图模块 - 性能优化版（修复必应壁纸 URL 相对路径、限制预加载并发数）
+ * 功能：7天必应壁纸轮播、自动切换、箭头导航、标题显示、预加载相邻图片（限制并发）
  */
 class CarouselModule {
     constructor() {
@@ -13,13 +13,98 @@ class CarouselModule {
         this.infoTitle = null;
         this.isTransitioning = false;
         this.autoPlayInterval = 5000;
-        this.preloadCache = new Set(); // 已预加载的图片URL集合
+        this.preloadCache = new Set(); // 已预加载的图片 URL 集合
+        this.activePreloads = new Map(); // 当前正在预加载的图片 URL -> Promise 映射
+        this.maxConcurrentPreloads = 2; // 最大并发预加载数量
+        this.preloadQueue = []; // 预加载队列
         this.init();
     }
 
     getResolutionForWidth() {
-        // 可根据屏幕宽度选择分辨率（保持原逻辑）
+        // 可根据屏幕宽度选择分辨率
         return 1920;
+    }
+
+    /**
+     * 安全的图片 URL 处理（修复相对路径）
+     * @param {string} url 原始 URL
+     * @returns {string} 完整的 HTTPS URL
+     */
+    sanitizeImageUrl(url) {
+        if (!url) return '';
+        // 如果已经是完整的 http/https URL，直接返回
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        // 如果以 // 开头，补充 https:
+        if (url.startsWith('//')) {
+            return 'https:' + url;
+        }
+        // 如果是相对路径（如 /th?id=...），拼接必应基础 URL
+        if (url.startsWith('/')) {
+            return 'https://cn.bing.com' + url;
+        }
+        // 其他情况原样返回
+        return url;
+    }
+
+    /**
+     * 预加载单张图片（限制并发）
+     * @param {string} imageUrl 图片 URL
+     * @returns {Promise<boolean>} 是否加载成功
+     */
+    preloadSingleImage(imageUrl) {
+        if (!imageUrl) return Promise.resolve(false);
+        // 已缓存或正在加载中
+        if (this.preloadCache.has(imageUrl)) return Promise.resolve(true);
+        if (this.activePreloads.has(imageUrl)) return this.activePreloads.get(imageUrl);
+
+        const loadPromise = new Promise((resolve) => {
+            const img = new Image();
+            const timeoutId = setTimeout(() => {
+                img.onload = null;
+                img.onerror = null;
+                resolve(false);
+            }, 5000);
+            img.onload = () => {
+                clearTimeout(timeoutId);
+                this.preloadCache.add(imageUrl);
+                this.activePreloads.delete(imageUrl);
+                resolve(true);
+            };
+            img.onerror = () => {
+                clearTimeout(timeoutId);
+                this.activePreloads.delete(imageUrl);
+                resolve(false);
+            };
+            img.src = imageUrl;
+        });
+        this.activePreloads.set(imageUrl, loadPromise);
+        return loadPromise;
+    }
+
+    /**
+     * 预加载指定索引的图片（加入队列，控制并发）
+     * @param {number} clonedIndex 克隆数组索引
+     */
+    preloadImage(clonedIndex) {
+        const slide = this.clonedSlides[clonedIndex];
+        if (!slide || !slide.url) return;
+        const imageUrl = this.sanitizeImageUrl(slide.url);
+        if (!imageUrl || this.preloadCache.has(imageUrl)) return;
+
+        // 如果当前活跃预加载数已达到上限，加入队列
+        if (this.activePreloads.size >= this.maxConcurrentPreloads) {
+            this.preloadQueue.push(() => this.preloadSingleImage(imageUrl));
+            return;
+        }
+        this.preloadSingleImage(imageUrl).then(() => {
+            // 处理队列中的下一个预加载
+            if (this.preloadQueue.length > 0) {
+                const next = this.preloadQueue.shift();
+                next();
+            }
+        });
     }
 
     async init() {
@@ -35,10 +120,12 @@ class CarouselModule {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.url) {
+                        // 修复：将相对路径转换为完整 URL
+                        let imageUrl = this.sanitizeImageUrl(data.url);
                         let title = data.copyright ? data.copyright : '';
                         title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
                         if (!title) title = i === 0 ? '今日壁纸' : `${i}天前壁纸`;
-                        bingImages.push({ url: data.url, title: title });
+                        bingImages.push({ url: imageUrl, title: title });
                     }
                 }
             } catch (e) {
@@ -72,30 +159,12 @@ class CarouselModule {
 
         if (!this.track) return;
 
-        this.renderSlides();      // 渲染所有幻灯片（占位/预加载第一张）
-        this.renderDots();        // 渲染圆点
-        this.preloadImage(1);     // 只预加载当前显示的图片（索引1）
-        this.goToSlide(1, false); // 跳转到当前（不带动画）
+        this.renderSlides();
+        this.renderDots();
+        this.preloadImage(1); // 只预加载当前显示的图片（索引1）
+        this.goToSlide(1, false);
         this.bindEvents();
         this.startAutoplay();
-    }
-
-    /**
-     * 预加载指定索引的图片
-     * @param {number} clonedIndex 克隆数组索引
-     */
-    preloadImage(clonedIndex) {
-        const slide = this.clonedSlides[clonedIndex];
-        if (slide && slide.url && !this.preloadCache.has(slide.url)) {
-            const img = new Image();
-            img.onload = () => {
-                this.preloadCache.add(slide.url);
-            };
-            img.onerror = () => {
-                // 加载失败不影响
-            };
-            img.src = slide.url;
-        }
     }
 
     renderSlides() {
@@ -110,16 +179,19 @@ class CarouselModule {
             div.style.backgroundSize = 'cover';
             div.style.backgroundPosition = 'center';
 
-            // 仅对当前显示的图片（索引1）直接加载背景，其他先不加载（延迟加载）
-            if (index === 1 && slide.url) {
-                const img = new Image();
-                img.onload = () => {
-                    div.style.background = `url('${slide.url}') center/cover no-repeat`;
-                };
-                img.src = slide.url;
-            } else if (slide.url) {
-                // 存储 data-bg，待后续切换时加载
-                div.setAttribute('data-bg', slide.url);
+            if (slide.url) {
+                const imageUrl = this.sanitizeImageUrl(slide.url);
+                if (index === 1) {
+                    // 当前显示的图片直接加载
+                    const img = new Image();
+                    img.onload = () => {
+                        div.style.background = `url('${imageUrl}') center/cover no-repeat`;
+                    };
+                    img.src = imageUrl;
+                } else {
+                    // 存储 data-bg，待后续切换时加载
+                    div.setAttribute('data-bg', imageUrl);
+                }
             }
 
             div.setAttribute('data-index', index);
@@ -154,7 +226,7 @@ class CarouselModule {
 
         this.isTransitioning = true;
 
-        // 预加载相邻两张图片（当前索引前后）
+        // 预加载相邻两张图片（限制并发）
         const prev = (clonedIndex - 1 + total) % total;
         const next = (clonedIndex + 1) % total;
         this.preloadImage(prev);
