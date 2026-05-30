@@ -1,5 +1,5 @@
 /**
- * 插件管理器 - 网易云榜单+搜索全适配yunzhiapi 已修复语法逗号错误
+ * 插件管理器 修复rankMap作用域报错
  */
 class PluginManager {
     constructor(cacheManager) {
@@ -10,33 +10,30 @@ class PluginManager {
     }
 
     initializePlugins() {
-        // ========== 网易云音乐插件 完整版（榜单+新搜索）==========
         const that = this;
+
+        // 把排行榜常量提出来，避免this指向错乱
+        const neteaseRankMap = {
+            hot: "3778678",
+            new: "3779629",
+            up: "19723756",
+            original: "2884035",
+            electronic: "10520166",
+            usa: "2809513713",
+            korea: "115640620",
+            classic: "71385702"
+        };
+
+        // ========== 网易云音乐插件 ==========
         this.registerPlugin('netease', {
             name: '网易云音乐',
-            version: '3.2.0',
-            description: 'yunzhiapi 网易云榜单+专属搜索接口',
-            // 榜单接口
             rankApiUrl: 'https://yunzhiapi.cn/API/yyjhbd.php',
-            // 搜索接口
             searchApiUrl: 'https://yunzhiapi.cn/API/wyyyjs.php',
             token: 'XIZhAXKnSQcH',
             type: 'wy',
-            // 排行榜ID映射
-            rankMap: {
-                hot: "3778678",
-                new: "3779629",
-                up: "19723756",
-                original: "2884035",
-                electronic: "10520166",
-                usa: "2809513713",
-                korea: "115640620",
-                classic: "71385702"
-            },
 
-            // 榜单获取
             getPlaylist: async (playlistId) => {
-                const rid = this.rankMap[playlistId] || this.rankMap.hot;
+                const rid = neteaseRankMap[playlistId] || neteaseRankMap.hot;
                 const cacheKey = `wy_rank_${rid}`;
                 const cached = that.cacheManager.get(cacheKey);
                 if (cached) return cached;
@@ -45,14 +42,14 @@ class PluginManager {
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 8000);
                     const res = await fetch(
-                        `${this.rankApiUrl}?token=${this.token}&id=${rid}&type=${this.type}`,
+                        `https://yunzhiapi.cn/API/yyjhbd.php?token=XIZhAXKnSQcH&id=${rid}&type=wy`,
                         { signal: controller.signal }
                     );
                     clearTimeout(timeoutId);
 
-                    if (!res.ok) throw new Error('接口请求异常');
+                    if (!res.ok) return [];
                     const json = await res.json();
-                    if (json.code !== 1) throw new Error(json.msg || '获取榜单失败');
+                    if (json.code !== 1) return [];
 
                     const list = json.data.map(item => ({
                         id: item.songId,
@@ -69,13 +66,12 @@ class PluginManager {
 
                     that.cacheManager.set(cacheKey, list, 30 * 60 * 1000);
                     return list;
-                } catch (error) {
-                    console.error('网易云歌单加载失败:', error);
+                } catch (e) {
+                    console.error('网易云榜单加载失败', e);
                     return [];
                 }
             },
 
-            // 新搜索接口 完整版
             search: async (keyword) => {
                 if (!keyword.trim()) return [];
                 const cacheKey = `wy_search_${keyword}`;
@@ -86,16 +82,15 @@ class PluginManager {
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 8000);
                     const res = await fetch(
-                        `${this.searchApiUrl}?token=${this.token}&msg=${encodeURIComponent(keyword)}`,
+                        `https://yunzhiapi.cn/API/wyyyjs.php?token=XIZhAXKnSQcH&msg=${encodeURIComponent(keyword)}`,
                         { signal: controller.signal }
                     );
                     clearTimeout(timeoutId);
 
-                    if (!res.ok) throw new Error('搜索接口请求失败');
+                    if (!res.ok) return [];
                     const json = await res.json();
                     if (json.code !== 200 || !json.data?.list) return [];
 
-                    // 格式化统一歌曲结构
                     const list = json.data.list.map(item => ({
                         id: item.id,
                         title: item.title,
@@ -111,13 +106,12 @@ class PluginManager {
 
                     that.cacheManager.set(cacheKey, list, 10 * 60 * 1000);
                     return list;
-                } catch (error) {
-                    console.error('网易云搜索失败:', error);
+                } catch (e) {
+                    console.error('网易云搜索失败', e);
                     return [];
                 }
             },
 
-            // 按需解析播放地址+歌词
             resolveSong: async function(songId) {
                 const cacheKey = `wy_resolve_${songId}`;
                 const cached = that.cacheManager.get(cacheKey);
@@ -126,9 +120,8 @@ class PluginManager {
                 try {
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 6000);
-                    // 取第n=序号资源
                     const res = await fetch(
-                        `${this.searchApiUrl}?token=${this.token}&msg=${songId}&n=1`,
+                        `https://yunzhiapi.cn/API/wyyyjs.php?token=XIZhAXKnSQcH&msg=${songId}&n=1`,
                         { signal: controller.signal }
                     );
                     clearTimeout(timeoutId);
@@ -145,17 +138,14 @@ class PluginManager {
                     that.cacheManager.set(cacheKey, info, 60 * 60 * 1000);
                     return info;
                 } catch (e) {
-                    console.warn('网易云歌曲解析失败:', e.message);
                     return { src: '', lrc: '', cover: '' };
                 }
             }
         });
 
-        // ========== QQ音乐插件（保持不变）==========
+        // ========== QQ音乐插件 ==========
         this.registerPlugin('qq', {
             name: 'QQ音乐',
-            version: '3.0.0',
-            description: 'QQ音乐官方热歌榜',
             apiUrl: 'https://yunzhiapi.cn/API/qqrgbd.php',
             token: 'XIZhAXKnSQcH',
 
@@ -164,14 +154,7 @@ class PluginManager {
                 const cached = that.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 5000);
-                    const res = await fetch(
-                        `https://api.i-meto.com/meting/api?server=tencent&type=song&id=${songmid}`,
-                        { signal: controller.signal }
-                    );
-                    clearTimeout(timeoutId);
-                    if (!res.ok) throw new Error('请求异常');
+                    const res = await fetch(`https://api.i-meto.com/meting/api?server=tencent&type=song&id=${songmid}`);
                     const json = await res.json();
                     const info = {
                         playUrl: json[0]?.url || '',
@@ -181,7 +164,6 @@ class PluginManager {
                     that.cacheManager.set(cacheKey, info, 60 * 60 * 1000);
                     return info;
                 } catch (e) {
-                    console.warn('QQ歌曲解析失败:', e.message);
                     return { playUrl: '', cover: '', album: '' };
                 }
             },
@@ -193,28 +175,20 @@ class PluginManager {
                 if (cached) return cached;
 
                 try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000);
-                    const res = await fetch(
-                        `${this.apiUrl}?token=${this.token}&count=${safeCount}`,
-                        { signal: controller.signal }
-                    );
-                    clearTimeout(timeoutId);
-
-                    if (!res.ok) throw new Error('榜单请求失败');
+                    const res = await fetch(`https://yunzhiapi.cn/API/qqrgbd.php?token=XIZhAXKnSQcH&count=${safeCount}`);
                     const json = await res.json();
-                    if (json.code !== 1) throw new Error(json.msg || '获取榜单失败');
+                    if (json.code !== 1) return [];
 
                     const list = await Promise.all(
                         json.data.map(async item => {
-                            const { playUrl, cover, album } = await this._getSongInfoBySongmid(item.songmid);
+                            const info = await this._getSongInfoBySongmid(item.songmid);
                             return {
                                 id: item.songmid,
                                 title: item.albumname,
                                 artist: item.name,
-                                album: album || item.albumname,
-                                src: playUrl,
-                                cover: cover,
+                                album: info.album || item.albumname,
+                                src: info.playUrl,
+                                cover: info.cover,
                                 isOnline: true,
                                 source: 'qq'
                             };
@@ -224,111 +198,93 @@ class PluginManager {
                     const valid = list.filter(s => s.src);
                     that.cacheManager.set(cacheKey, valid, 30 * 60 * 1000);
                     return valid;
-                } catch (err) {
-                    console.error('QQ热歌榜加载失败:', err);
+                } catch (e) {
                     return [];
                 }
             },
 
-            search: async (keyword) => { return []; }
+            search: async () => []
         });
 
-        // ========== 汽水音乐插件（保持不变）==========
+        // ========== 汽水音乐插件 ==========
         this.registerPlugin('qishui', {
             name: '汽水音乐',
-            version: '1.2.1',
-            description: '基于 suol.cc API',
             baseUrl: 'https://api.suol.cc/v1/music_qs.php',
             mToken: '961D28A9C59C411C49C75FA3E9FAF24C',
-            rankKeywordMap: { 'hot': '热歌榜', 'new': '新歌榜', 'up': '飙升榜' },
-            _fetchApi: async function(action, params = {}) {
+            rankKeywordMap: { hot:'热歌榜',new:'新歌榜',up:'飙升榜' },
+
+            _fetchApi: async function(action, params={}) {
                 const url = new URL(this.baseUrl);
-                url.searchParams.set('action', action);
-                url.searchParams.set('m_token', this.mToken);
-                Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v); });
+                url.searchParams.set('action',action);
+                url.searchParams.set('m_token',this.mToken);
+                Object.entries(params).forEach(([k,v])=>{if(v!==undefined&&v!==null)url.searchParams.set(k,v);});
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
-                try {
-                    const response = await fetch(url.toString(), { signal: controller.signal });
+                const timeoutId = setTimeout(()=>controller.abort(),8000);
+                try{
+                    const res = await fetch(url.toString(),{signal:controller.signal});
                     clearTimeout(timeoutId);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return await response.json();
-                } catch (error) {
-                    clearTimeout(timeoutId);
-                    throw error;
-                }
+                    return await res.json();
+                }catch(e){clearTimeout(timeoutId);throw e;}
             },
+
             _mapSongItem: function(item) {
                 return {
-                    id: item.id || item.songid || '',
-                    title: item.name || '未知歌曲',
-                    artist: item.artists || '未知歌手',
-                    cover: item.pic || '',
-                    album: item.album || '',
-                    duration: item.duration || 0,
-                    src: '',
-                    lrc: '',
-                    isOnline: true,
-                    source: 'qishui',
-                    _needResolve: true,
+                    id: item.id||item.songid||'',
+                    title: item.name||'未知歌曲',
+                    artist: item.artists||'未知歌手',
+                    cover: item.pic||'',
+                    album: item.album||'',
+                    src:'',lrc:'',isOnline:true,source:'qishui',_needResolve:true
                 };
             },
+
             getPlaylist: async function(playlistId) {
-                const keyword = this.rankKeywordMap[playlistId] || '热歌榜';
+                const kw = this.rankKeywordMap[playlistId]||'热歌榜';
                 const cacheKey = `qishui_rank_${playlistId}`;
                 const cached = that.cacheManager?.get(cacheKey);
-                if (cached) return cached;
-                try {
-                    const result = await this._fetchApi('rank', { keyword });
-                    if (result.code !== 200) throw new Error(result.msg || '请求失败');
-                    let songs = [];
-                    if (Array.isArray(result.data)) songs = result.data.map(item => this._mapSongItem(item));
-                    that.cacheManager?.set(cacheKey, songs, 30 * 60 * 1000);
-                    return songs;
-                } catch (error) {
-                    console.error('汽水音乐排行榜加载失败:', error);
-                    return [];
-                }
+                if(cached) return cached;
+                try{
+                    const res = await this._fetchApi('rank',{keyword:kw});
+                    if(res.code!==200) return [];
+                    const list = Array.isArray(res.data) ? res.data.map(item=>this._mapSongItem(item)) : [];
+                    that.cacheManager?.set(cacheKey,list,30*60*1000);
+                    return list;
+                }catch(e){return [];}
             },
+
             search: async function(keyword) {
-                if (!keyword) return [];
+                if(!keyword) return [];
                 const cacheKey = `qishui_search_${keyword}`;
                 const cached = that.cacheManager?.get(cacheKey);
-                if (cached) return cached;
-                try {
-                    const result = await this._fetchApi('search', { keyword });
-                    if (result.code !== 200) return [];
-                    let songs = [];
-                    if (result.data && Array.isArray(result.data.songs)) songs = result.data.songs.map(item => this._mapSongItem(item));
-                    that.cacheManager?.set(cacheKey, songs, 10 * 60 * 1000);
-                    return songs;
-                } catch (error) {
-                    console.error('汽水音乐搜索失败:', error);
-                    return [];
-                }
+                if(cached) return cached;
+                try{
+                    const res = await this._fetchApi('search',{keyword});
+                    if(res.code!==200||!res.data?.songs) return [];
+                    const list = res.data.songs.map(item=>this._mapSongItem(item));
+                    that.cacheManager?.set(cacheKey,list,10*60*1000);
+                    return list;
+                }catch(e){return [];}
             },
-            _getSongUrl: async function(songId, level = 'standard') {
-                if (!songId) return { url: '', lyric: '', pic: '' };
-                const cacheKey = `qishui_song_${songId}_${level}`;
+
+            _getSongUrl: async function(songId) {
+                const cacheKey = `qishui_song_${songId}`;
                 const cached = that.cacheManager?.get(cacheKey);
-                if (cached) return cached;
-                try {
-                    const result = await this._fetchApi('song', { id: songId, level });
-                    if (result.code === 200 && result.data) {
-                        const resolved = { url: result.data.url || '', lyric: result.data.lyric_lrc || '', pic: result.data.pic || '' };
-                        that.cacheManager?.set(cacheKey, resolved, 60 * 60 * 1000);
-                        return resolved;
+                if(cached) return cached;
+                try{
+                    const res = await this._fetchApi('song',{id:songId});
+                    if(res.code===200&&res.data){
+                        const d = {url:res.data.url||'',lyric:res.data.lyric_lrc||'',pic:res.data.pic||''};
+                        that.cacheManager?.set(cacheKey,d,60*60*1000);
+                        return d;
                     }
-                } catch (e) { console.warn(`汽水音乐歌曲${songId}解析失败:`, e.message); }
-                return { url: '', lyric: '', pic: '' };
+                }catch(e){}
+                return {url:'',lyric:'',pic:''};
             }
         });
 
-        // ========== 本地音乐插件（保持不变）==========
+        // ========== 本地音乐 ==========
         this.registerPlugin('local', {
             name: '本地音乐',
-            version: '1.0.0',
-            description: '内置本地音乐列表',
             getPlaylist: async () => window.getLocalMusicList ? window.getLocalMusicList() : [],
             search: async () => []
         });
@@ -339,25 +295,23 @@ class PluginManager {
     }
     getPlugin(id) { return this.plugins.get(id); }
     getAllPlugins() { return Array.from(this.plugins.values()); }
-    setCurrentApi(apiId) { if (this.plugins.has(apiId)) { this.currentApi = apiId; return true; } return false; }
+    setCurrentApi(apiId) { return this.plugins.has(apiId) ? (this.currentApi=apiId,true) : false; }
     getCurrentApi() { return this.currentApi; }
 
     async getPlaylist(apiId, playlistId) {
-        const plugin = this.getPlugin(apiId);
-        if (!plugin || !plugin.getPlaylist) throw new Error(`插件 ${apiId} 不支持获取歌单`);
-        return await plugin.getPlaylist(playlistId);
+        const p = this.getPlugin(apiId);
+        if(!p||!p.getPlaylist) return [];
+        return await p.getPlaylist(playlistId);
     }
     async search(apiId, keyword) {
-        const plugin = this.getPlugin(apiId);
-        if (!plugin || !plugin.search) return [];
-        return await plugin.search(keyword);
+        const p = this.getPlugin(apiId);
+        if(!p||!p.search) return [];
+        return await p.search(keyword);
     }
-
-    // 统一解析歌曲播放地址、歌词、封面
     async resolveSongSource(apiId, songId) {
-        const plugin = this.getPlugin(apiId);
-        if (!plugin || !plugin.resolveSong) return { src: '', lrc: '', cover: '' };
-        return await plugin.resolveSong(songId);
+        const p = this.getPlugin(apiId);
+        if(!p||!p.resolveSong) return {src:'',lrc:'',cover:''};
+        return await p.resolveSong(songId);
     }
 }
 
