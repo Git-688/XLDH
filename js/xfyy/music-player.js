@@ -1,5 +1,5 @@
-// music-player.js - 完整修复版（包含问题 6,8,9,10,13,14,15,16）
-// ==================== 自定义下拉选择器组件（修复位置错位） ====================
+// music-player.js - 完整修复版（音量滑块触摸优化 + 搜索结果高亮同步）
+// ==================== 自定义下拉选择器组件 ====================
 class CustomSelect {
     constructor(selectElement) {
         this.selectElement = selectElement;
@@ -9,8 +9,6 @@ class CustomSelect {
         this.options = [];
         this.isOpen = false;
         this.value = selectElement.value;
-        this.scrollListener = null;
-        this.resizeListener = null;
         this.init();
     }
 
@@ -32,7 +30,7 @@ class CustomSelect {
         this.dropdown = document.createElement('div');
         this.dropdown.className = 'custom-select-dropdown';
         this.populateOptions();
-        this.container.appendChild(this.dropdown);  // 改为相对于容器定位
+        this.container.appendChild(this.dropdown);
 
         this.bindEvents();
         this.selectElement.addEventListener('change', () => {
@@ -90,7 +88,7 @@ class CustomSelect {
         this.selectElement.dispatchEvent(changeEvent);
     }
 
-    setValue(value) {
+    setValue(value, triggerChange = true) {
         for (let i = 0; i < this.selectElement.options.length; i++) {
             if (this.selectElement.options[i].value === value) {
                 this.selectOption(i);
@@ -102,8 +100,6 @@ class CustomSelect {
     updateDropdownPosition() {
         if (!this.isOpen) return;
         const rect = this.trigger.getBoundingClientRect();
-        const containerRect = this.container.getBoundingClientRect();
-        // 相对于容器的绝对定位
         this.dropdown.style.position = 'absolute';
         this.dropdown.style.top = `${rect.height + 4}px`;
         this.dropdown.style.left = '0';
@@ -185,9 +181,8 @@ class MusicPlayer {
     };
 
     constructor() {
-        // 修复16: 检测 Utils 依赖，提供降级函数
+        // 保证 Utils 存在
         if (!window.Utils) {
-            console.warn('Utils 未加载，使用降级函数');
             window.Utils = {
                 escapeHtml: (str) => {
                     if (!str) return '';
@@ -233,7 +228,7 @@ class MusicPlayer {
 
         this.updateAnimationFrame = null;
         this.lastTimeUpdate = 0;
-        this.dragRAF = null;          // 用于拖拽节流
+        this.dragRAF = null;
 
         this.coverObserver = null;
         this.initCoverObserver();
@@ -251,7 +246,7 @@ class MusicPlayer {
         this.userGestureResolved = false;
         this.userGesturePromise = null;
 
-        // 修复15: 统一错误边界
+        // 统一错误边界
         this.setupGlobalErrorHandler();
     }
 
@@ -273,7 +268,6 @@ class MusicPlayer {
         };
     }
 
-    // 修复1: 改进等待用户交互
     waitForUserGesture() {
         if (this.userGestureResolved) return Promise.resolve();
         if (this.userGesturePromise) return this.userGesturePromise;
@@ -401,10 +395,22 @@ class MusicPlayer {
         this.elements.nextBtn.addEventListener('click', () => this.next());
         this.elements.modeBtn.addEventListener('click', () => this.togglePlayMode());
         this.elements.volumeBtn.addEventListener('click', () => this.toggleVolumeSlider());
+        
+        // 音量滑块：同时支持 mouse 和 touch 事件，提升移动端灵敏度
         this.elements.volumeSlider.addEventListener('input', (e) => {
             this.setVolume(e.target.value / 100);
             this.saveVolume(e.target.value / 100);
         });
+        // 增加 touchmove 事件，确保移动端拖动时连续响应
+        this.elements.volumeSlider.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const value = parseInt(e.target.value, 10);
+            if (!isNaN(value)) {
+                this.setVolume(value / 100);
+                this.saveVolume(value / 100);
+            }
+        });
+        
         this.elements.speedSelect.addEventListener('change', (e) => {
             this.setPlaybackSpeed(parseFloat(e.target.value));
             this.savePlaybackSpeed(parseFloat(e.target.value));
@@ -464,7 +470,6 @@ class MusicPlayer {
         try {
             const response = await Utils.safeFetch(song.lrc, { timeout: 5000 });
             const text = await response.text();
-            // 修复6: 歌词解析毫秒精确处理 (已在 LyricParser 中修复)
             this.lyricParser.parseLrc(text);
             this.lyricsData = this.lyricParser.lyrics;
         } catch (error) {
@@ -472,7 +477,6 @@ class MusicPlayer {
         }
     }
 
-    // 修复13: 改进歌词滚动动画，使用 JS 平滑滚动（避免CSS跑马灯卡顿）
     updateLyricDisplayByTime(currentTime) {
         if (!this.lyricsData.length) return;
         let activeIndex = -1;
@@ -485,7 +489,6 @@ class MusicPlayer {
         if (this.lyricsLineEl) {
             const lyricText = this.lyricsData[activeIndex].text || '';
             this.lyricsLineEl.textContent = lyricText;
-            // 检查是否需要滚动
             const container = this.elements.lyricsContainer;
             if (container && this.lyricsLineEl.scrollWidth > container.clientWidth) {
                 if (!this.lyricsLineEl.classList.contains('overflow')) {
@@ -612,9 +615,7 @@ class MusicPlayer {
         window.toast?.show(`播放模式: ${this.getPlayModeText()}`, 'info');
     }
 
-    getPlayModeText() {
-        return ['顺序播放', '随机播放', '单曲循环'][this.playMode];
-    }
+    getPlayModeText() { return ['顺序播放', '随机播放', '单曲循环'][this.playMode]; }
 
     updateModeIcon() {
         const modeIcon = this.elements.modeBtn.querySelector('.mode-icon');
@@ -674,7 +675,6 @@ class MusicPlayer {
         }
     }
 
-    // 修复14: 切换API后更新高亮
     async switchApiTab(apiId) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -685,8 +685,7 @@ class MusicPlayer {
         this.currentApi = apiId;
         this.updateSearchToggleButton();
         await this.loadApiPlaylist(apiId);
-        // 高亮当前播放歌曲（如果存在）
-        this.updateActiveSongInList();
+        this.updateActiveSongInList(); // 切换后高亮当前播放歌曲
     }
 
     async loadApiPlaylist(apiId) {
@@ -785,6 +784,8 @@ class MusicPlayer {
         const fragment = document.createDocumentFragment();
         results.forEach((song, idx) => fragment.appendChild(this.createSearchSongItem(song, idx, results)));
         container.appendChild(fragment);
+        // 搜索结果渲染后也要高亮当前播放歌曲
+        this.updateActiveSongInSearch(apiId);
     }
 
     createSearchSongItem(song, index, results) {
@@ -805,12 +806,40 @@ class MusicPlayer {
         if (this.currentPlaylist && this.currentIndex >= 0 && this.currentIndex < items.length) {
             items[this.currentIndex].classList.add('active');
         }
+        // 同时更新搜索结果中的高亮
+        this.updateActiveSongInSearch(this.currentApi);
+    }
+
+    // 新增方法：更新搜索结果列表中的高亮
+    updateActiveSongInSearch(apiId) {
+        const el = this.apiElements[apiId];
+        if (!el || !el.searchResults) return;
+        const items = el.searchResults.querySelectorAll('.song-item');
+        // 清除所有高亮
+        items.forEach(item => item.classList.remove('active'));
+        if (this.isPlaying && this.currentPlaylist && this.currentIndex >= 0) {
+            const currentSong = this.currentPlaylist[this.currentIndex];
+            if (!currentSong) return;
+            // 在搜索结果中查找相同 id 或 title+artist 匹配的项并高亮
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const titleEl = item.querySelector('.song-item-title');
+                const artistEl = item.querySelector('.song-item-artist');
+                if (titleEl && artistEl && 
+                    titleEl.textContent === currentSong.title && 
+                    artistEl.textContent === currentSong.artist) {
+                    item.classList.add('active');
+                    break;
+                }
+            }
+        }
     }
 
     clearAllActiveIndicators() {
         ['netease', 'qq', 'qishui', 'local'].forEach(api => {
             const el = this.apiElements[api];
             if (el?.playlistContainer) el.playlistContainer.querySelectorAll('.song-item').forEach(item => item.classList.remove('active'));
+            if (el?.searchResults) el.searchResults.querySelectorAll('.song-item').forEach(item => item.classList.remove('active'));
         });
     }
 
@@ -948,7 +977,6 @@ class MusicPlayer {
         }
     }
 
-    // 修复9: 使用 requestAnimationFrame 节流拖拽更新
     updateProgress() {
         if (this.isDraggingProgress || this.updateAnimationFrame) return;
         this.updateAnimationFrame = requestAnimationFrame(() => {
@@ -1090,7 +1118,6 @@ class MusicPlayer {
         if (this.isVolumeSliderVisible) this.hideVolumeSlider();
     }
 
-    // 修复10: 完整清理资源，移除事件监听
     cleanup() {
         if (this.updateAnimationFrame) cancelAnimationFrame(this.updateAnimationFrame);
         if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
@@ -1099,7 +1126,6 @@ class MusicPlayer {
         if (this.cacheManager) this.cacheManager.cleanup();
         if (this.coverObserver) this.coverObserver.disconnect();
         if (this._cleanupErrorHandler) this._cleanupErrorHandler();
-        // 移除全局事件监听 (已在各方法中持有引用，此处再确保)
         this.hasNotifiedLocal = false;
         this.hasNotifiedQishui = false;
         if (window.musicPlayer === this) window.musicPlayer = null;
