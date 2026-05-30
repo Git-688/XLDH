@@ -98,8 +98,9 @@ function isNavigationApiRequest(url) {
 }
 
 // 判断请求是否为可缓存的只读 API
-function isCacheableApiRequest(url) {
-    if (url.method !== 'GET') return false;
+function isCacheableApiRequest(request) {
+    if (request.method !== 'GET') return false;
+    const url = new URL(request.url);
     return CACHED_API_PATTERNS.some(pattern => url.pathname.includes(pattern));
 }
 
