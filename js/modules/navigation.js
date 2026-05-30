@@ -92,8 +92,8 @@ class OptimizedNavigation {
         this.structure = await response.json();
     }
 
-    async loadSites(subcategoryId) {
-        if (this.siteCache.has(subcategoryId)) {
+    async loadSites(subcategoryId, forceRefresh = false) {
+        if (!forceRefresh && this.siteCache.has(subcategoryId)) {
             return this.siteCache.get(subcategoryId);
         }
         const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
@@ -392,7 +392,6 @@ class OptimizedNavigation {
             if (site.valid === false) {
                 reportBtn.disabled = true;
                 reportBtn.style.display = 'none';
-                // 添加“已报告”提示
                 if (!card.querySelector('.reported-msg')) {
                     const msgSpan = document.createElement('span');
                     msgSpan.className = 'reported-msg';
@@ -417,15 +416,34 @@ class OptimizedNavigation {
                         });
                         if (res.ok) {
                             window.toast.show('已反馈，管理员将处理', 'success');
-                            card.classList.add('invalid');
-                            reportBtn.style.display = 'none';
-                            const msgSpan = document.createElement('span');
-                            msgSpan.className = 'reported-msg';
-                            msgSpan.textContent = '已报告，等待处理';
-                            msgSpan.style.fontSize = '11px';
-                            msgSpan.style.color = '#999';
-                            const container = card.querySelector('.card-top-right');
-                            if (container && !container.querySelector('.reported-msg')) container.appendChild(msgSpan);
+                            // 关键修复：清除当前子分类的缓存，并重新加载数据以更新UI
+                            const currentSubId = this.selectedLevel2;
+                            if (currentSubId) {
+                                // 1. 删除缓存，强制下次重新获取
+                                this.siteCache.delete(currentSubId);
+                                // 2. 重新加载数据（forceRefresh=true）
+                                const freshSites = await this.loadSites(currentSubId, true);
+                                // 3. 更新当前显示的站点列表
+                                this.currentSites = freshSites;
+                                // 4. 重置分页并重新渲染
+                                this.currentPage = 1;
+                                this.hasMore = true;
+                                this.renderSitesPage();
+                                // 5. 更新子分类计数
+                                const validCount = freshSites.filter(s => s.valid !== false).length;
+                                this.updateSubcategoryCountDisplay(currentSubId, validCount);
+                            } else {
+                                // 降级：仅隐藏按钮
+                                card.classList.add('invalid');
+                                reportBtn.style.display = 'none';
+                                const msgSpan = document.createElement('span');
+                                msgSpan.className = 'reported-msg';
+                                msgSpan.textContent = '已报告，等待处理';
+                                msgSpan.style.fontSize = '11px';
+                                msgSpan.style.color = '#999';
+                                const container = card.querySelector('.card-top-right');
+                                if (container && !container.querySelector('.reported-msg')) container.appendChild(msgSpan);
+                            }
                             this.updateInvalidCount(1);
                         } else {
                             const err = await res.json().catch(() => ({}));
