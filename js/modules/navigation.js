@@ -269,7 +269,8 @@ class OptimizedNavigation {
             this.hasMore = false;
             const loadingDiv = container.querySelector('#scroll-loading-trigger');
             if (loadingDiv) {
-                loadingDiv.innerHTML = '<span style="color:var(--text-secondary);">—— 已经到底了 ——</span>';
+                // 修改：将底部提示改为“～到·底·了～”并居中
+                loadingDiv.innerHTML = '<span style="color:var(--text-secondary);">～到·底·了～</span>';
                 loadingDiv.style.display = 'block';
             }
         }
@@ -310,7 +311,8 @@ class OptimizedNavigation {
         if (start >= this.currentSites.length) {
             this.hasMore = false;
             if (loadingDiv) {
-                loadingDiv.innerHTML = '<span style="color:var(--text-secondary);">—— 已经到底了 ——</span>';
+                // 修改：同样将底部提示改为“～到·底·了～”
+                loadingDiv.innerHTML = '<span style="color:var(--text-secondary);">～到·底·了～</span>';
             }
             this.isLoadingMore = false;
             return;
@@ -416,24 +418,17 @@ class OptimizedNavigation {
                         });
                         if (res.ok) {
                             window.toast.show('已反馈，管理员将处理', 'success');
-                            // 关键修复：清除当前子分类的缓存，并重新加载数据以更新UI
                             const currentSubId = this.selectedLevel2;
                             if (currentSubId) {
-                                // 1. 删除缓存，强制下次重新获取
                                 this.siteCache.delete(currentSubId);
-                                // 2. 重新加载数据（forceRefresh=true）
                                 const freshSites = await this.loadSites(currentSubId, true);
-                                // 3. 更新当前显示的站点列表
                                 this.currentSites = freshSites;
-                                // 4. 重置分页并重新渲染
                                 this.currentPage = 1;
                                 this.hasMore = true;
                                 this.renderSitesPage();
-                                // 5. 更新子分类计数
                                 const validCount = freshSites.filter(s => s.valid !== false).length;
                                 this.updateSubcategoryCountDisplay(currentSubId, validCount);
                             } else {
-                                // 降级：仅隐藏按钮
                                 card.classList.add('invalid');
                                 reportBtn.style.display = 'none';
                                 const msgSpan = document.createElement('span');
