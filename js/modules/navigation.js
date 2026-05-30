@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（高清图标、死链报告实时刷新、父级计数更新、搜索关键词高亮、报告提示优化）
+ * 优化分类导航系统 - 分页加载版（高清图标、死链报告实时刷新、父级计数更新、搜索关键词高亮、简约按钮隐藏）
  */
 class OptimizedNavigation {
     constructor() {
@@ -27,9 +27,6 @@ class OptimizedNavigation {
         this.hasMore = true;
         this.currentSites = [];
         this.scrollListener = null;
-
-        // 注入报告图标样式
-        this.injectReportIconStyle();
     }
 
     _escapeHtml(str) {
@@ -61,29 +58,6 @@ class OptimizedNavigation {
         const escapedKeyword = this._escapeHtml(keyword);
         const regex = new RegExp(`(${escapedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
         return escapedText.replace(regex, '<mark class="search-highlight">$1</mark>');
-    }
-
-    // 注入报告图标样式
-    injectReportIconStyle() {
-        if (document.getElementById('report-icon-style')) return;
-        const style = document.createElement('style');
-        style.id = 'report-icon-style';
-        style.textContent = `
-            .reported-icon {
-                font-size: 14px;
-                color: #f59e0b;
-                margin-left: 4px;
-                cursor: help;
-                vertical-align: middle;
-                display: inline-block;
-            }
-            .card-top-right {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-            }
-        `;
-        document.head.appendChild(style);
     }
 
     initLazyLoadObserver() {
@@ -480,14 +454,6 @@ class OptimizedNavigation {
             if (site.valid === false) {
                 reportBtn.disabled = true;
                 reportBtn.style.display = 'none';
-                // 如果还没有添加报告图标，添加一个
-                if (!card.querySelector('.reported-icon')) {
-                    const iconSpan = document.createElement('i');
-                    iconSpan.className = 'fas fa-clock reported-icon';
-                    iconSpan.title = '已报告，等待管理员处理';
-                    const container = card.querySelector('.card-top-right');
-                    if (container) container.appendChild(iconSpan);
-                }
             } else {
                 reportBtn.addEventListener('click', async (e) => {
                     e.preventDefault(); e.stopPropagation();
@@ -519,14 +485,6 @@ class OptimizedNavigation {
                             } else {
                                 card.classList.add('invalid');
                                 reportBtn.style.display = 'none';
-                                // 替换为图标提示
-                                if (!card.querySelector('.reported-icon')) {
-                                    const iconSpan = document.createElement('i');
-                                    iconSpan.className = 'fas fa-clock reported-icon';
-                                    iconSpan.title = '已报告，等待管理员处理';
-                                    const container = card.querySelector('.card-top-right');
-                                    if (container) container.appendChild(iconSpan);
-                                }
                             }
                             this.updateInvalidCount(1);
                         } else {
