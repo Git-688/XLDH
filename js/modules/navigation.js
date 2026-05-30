@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（高清图标多分辨率降级）
+ * 优化分类导航系统 - 分页加载版（高清图标多分辨率降级，修复无效图标URL）
  */
 class OptimizedNavigation {
     constructor() {
@@ -42,13 +42,17 @@ class OptimizedNavigation {
     /**
      * 获取图标的备选 URL 列表（按分辨率从高到低）
      * @param {string} url 网站 URL
-     * @returns {string[]} 备选图标 URL 数组
+     * @returns {string[]} 备选图标 URL 数组（如果域名无效则返回空数组）
      */
     _getIconCandidates(url) {
         let domain = '';
         try {
             const urlObj = new URL(url);
             domain = urlObj.hostname;
+            // 域名有效性检查：非空、长度不小于4、包含点号（简单防止无效域名）
+            if (!domain || domain.length < 4 || !domain.includes('.')) {
+                return [];
+            }
         } catch (e) {
             return [];
         }
@@ -70,14 +74,12 @@ class OptimizedNavigation {
      */
     _createIconElement(siteUrl, existingIcon = null) {
         let candidates = this._getIconCandidates(siteUrl);
-        if (existingIcon && existingIcon.trim() && !existingIcon.includes(window.location.hostname) && existingIcon !== '/' && existingIcon !== '') {
-            // 将已有的图标插入到候选列表最前面（优先级最高）
-            candidates.unshift(existingIcon);
-        }
         if (candidates.length === 0) {
             return '<i class="fas fa-link"></i>';
         }
-        // 生成带有降级逻辑的 img 标签
+        if (existingIcon && existingIcon.trim() && !existingIcon.includes(window.location.hostname) && existingIcon !== '/' && existingIcon !== '') {
+            candidates.unshift(existingIcon);
+        }
         const candidatesJson = JSON.stringify(candidates);
         const safeCandidates = candidatesJson.replace(/"/g, '&quot;');
         return `<img class="lazy-icon" data-src="${this._escapeHtml(candidates[0])}" 
