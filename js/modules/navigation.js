@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（高清图标、死链报告实时刷新、父级计数更新、搜索关键词高亮、简约按钮隐藏）
+ * 优化分类导航系统 - 分页加载版（高清图标多分辨率降级）
  */
 class OptimizedNavigation {
     constructor() {
@@ -39,16 +39,51 @@ class OptimizedNavigation {
         return String(views);
     }
 
-    // 高清图标辅助方法
-    _getHighResFavicon(url) {
-        if (!url) return '';
+    /**
+     * 获取图标的备选 URL 列表（按分辨率从高到低）
+     * @param {string} url 网站 URL
+     * @returns {string[]} 备选图标 URL 数组
+     */
+    _getIconCandidates(url) {
+        let domain = '';
         try {
             const urlObj = new URL(url);
-            const domain = urlObj.hostname;
-            return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+            domain = urlObj.hostname;
         } catch (e) {
-            return '';
+            return [];
         }
+        // 按分辨率从高到低排列
+        return [
+            `https://icon.horse/icon/${domain}?size=256`,   // 256px（第三方）
+            `https://icon.horse/icon/${domain}?size=128`,   // 128px
+            `https://www.google.com/s2/favicons?domain=${domain}&sz=64`, // 64px
+            `https://favicon.yandex.net/favicon/${domain}`,             // 16px
+            `https://${domain}/favicon.ico`                             // 根目录
+        ];
+    }
+
+    /**
+     * 创建带多分辨率降级加载的图标元素
+     * @param {string} siteUrl 网站 URL
+     * @param {string} existingIcon 已有的图标 URL（可选）
+     * @returns {string} HTML 字符串
+     */
+    _createIconElement(siteUrl, existingIcon = null) {
+        let candidates = this._getIconCandidates(siteUrl);
+        if (existingIcon && existingIcon.trim() && !existingIcon.includes(window.location.hostname) && existingIcon !== '/' && existingIcon !== '') {
+            // 将已有的图标插入到候选列表最前面（优先级最高）
+            candidates.unshift(existingIcon);
+        }
+        if (candidates.length === 0) {
+            return '<i class="fas fa-link"></i>';
+        }
+        // 生成带有降级逻辑的 img 标签
+        const candidatesJson = JSON.stringify(candidates);
+        const safeCandidates = candidatesJson.replace(/"/g, '&quot;');
+        return `<img class="lazy-icon" data-src="${this._escapeHtml(candidates[0])}" 
+                     data-candidates='${safeCandidates}'
+                     alt="" loading="lazy"
+                     onerror="this.onerror=null; const candidates = JSON.parse(this.getAttribute('data-candidates')); const idx = candidates.indexOf(this.src); if (idx !== -1 && idx + 1 < candidates.length) { this.src = candidates[idx+1]; } else { this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>'; }">`;
     }
 
     // 关键词高亮辅助方法
@@ -120,15 +155,7 @@ class OptimizedNavigation {
         const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
         if (!response.ok) throw new Error('Failed to load sites');
         let sites = await response.json();
-        sites = sites.map(s => {
-            let finalIcon = s.icon;
-            if (!finalIcon || finalIcon === '/' || finalIcon === 'https://xjdh688.ccwu.cc' || finalIcon === 'https://xjdh688.ccwu.cc/') {
-                finalIcon = this._getHighResFavicon(s.url);
-            } else if (finalIcon && (finalIcon.includes('api.71xk.com') || finalIcon.includes('favicon') || (finalIcon.startsWith('http') && !finalIcon.includes('favicon.yandex.net') && !finalIcon.includes('google.com/s2/favicons')))) {
-                finalIcon = this._getHighResFavicon(s.url);
-            }
-            return { ...s, icon: finalIcon };
-        });
+        // 直接存储原始数据，图标在渲染时动态生成
         this.siteCache.set(subcategoryId, sites);
         return sites;
     }
@@ -377,26 +404,11 @@ class OptimizedNavigation {
         card.title = `${site.title}\n${site.description || ''}`;
 
         let iconHtml = '<i class="fas fa-link"></i>';
-        const origin = window.location.origin;
-        const hostname = window.location.hostname;
-        
-        let finalIcon = site.icon;
-        if (!finalIcon || finalIcon === '/' || finalIcon === origin || finalIcon.includes(hostname)) {
-            finalIcon = this._getHighResFavicon(site.url);
-        } else if (finalIcon && (finalIcon.includes('api.71xk.com') || finalIcon.includes('favicon') || (finalIcon.startsWith('http') && !finalIcon.includes('favicon.yandex.net') && !finalIcon.includes('google.com/s2/favicons')))) {
-            finalIcon = this._getHighResFavicon(site.url);
-        }
-        
-        if (finalIcon && finalIcon.trim() && finalIcon !== origin && !finalIcon.includes(hostname) && finalIcon !== '/' && finalIcon !== '') {
-            const raw = finalIcon.trim();
-            if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('./') || /\.(png|jpg|jpeg|ico|svg)/i.test(raw)) {
-                iconHtml = `<img data-src="${this._escapeHtml(raw)}" alt="" loading="lazy" class="lazy-icon" 
-                            onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\\'fas fa-link\\'></i>';">`;
-            } else if (raw.startsWith('fas ') || raw.startsWith('fab ')) {
-                iconHtml = `<i class="${raw}"></i>`;
-            } else {
-                iconHtml = `<span>${this._escapeHtml(raw)}</span>`;
-            }
+        // 使用多分辨率降级方法生成图标
+        if (site.icon && site.icon.trim() && !site.icon.includes(window.location.hostname) && site.icon !== '/' && site.icon !== '') {
+            iconHtml = this._createIconElement(site.url, site.icon);
+        } else {
+            iconHtml = this._createIconElement(site.url, null);
         }
 
         const views = site.views || 0;
@@ -429,6 +441,7 @@ class OptimizedNavigation {
             </div>
         `;
 
+        // 点击卡片统计
         card.addEventListener('click', (e) => {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
@@ -449,6 +462,7 @@ class OptimizedNavigation {
             setTimeout(() => { this.isNavigationClick = false; if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false; }, 100);
         });
 
+        // 死链报告按钮
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
