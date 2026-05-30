@@ -61,10 +61,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--primary-color);
+    color: var(--text-primary);  /* 移除蓝色，使用主要文字颜色 */
     font-size: 18px;
     transition: var(--transition);
-    border: 1px solid var(--border-color);  /* 恢复为原来的边框样式 */
+    border: 1px solid var(--border-color);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     padding: 2px;
@@ -76,7 +76,7 @@
     border-color: var(--primary-color);
 }
 
-.logo i { color: var(--primary-color); font-size: 18px; }
+.logo i { color: var(--text-primary); font-size: 18px; }  /* 移除蓝色 */
 .logo img { width: 100%; height: 100%; object-fit: contain; display: block; border-radius: 6px; }
 
 .brand-text-container {
@@ -183,7 +183,7 @@
 
 @media (prefers-color-scheme: dark) {
     .logo { background: var(--bg-card); border-color: var(--border-color); }
-    .logo i { color: var(--nav-level1-active); }
+    .logo i { color: var(--text-primary); }
     .nav-brand:hover .logo { border-color: var(--nav-level1-active); }
     .brand-text { color: var(--text-primary); }
     .brand-subtitle { color: var(--text-secondary); }
