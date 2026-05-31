@@ -1,5 +1,5 @@
 /**
- * 网站投稿模块（同步安全检测版 + 全局投稿总数缓存 + 实时更新）
+ * 网站投稿模块（强制安全检测后才能提交）
  */
 class SubmitModule {
     constructor() {
@@ -19,14 +19,13 @@ class SubmitModule {
         this.dailyLimit = 6;
         this.statsBadge = null;
         this.submitting = false;
-
-        // 缓存全局总数
         this.cachedTotalCount = null;
         this.cachedTotalCountTime = 0;
-        this.cacheTTL = 60000; // 60秒
-
-        // 今日已投稿次数（从后端获取）
+        this.cacheTTL = 60000;
         this.todayCount = 0;
+
+        // 新增：安全检测是否已通过（必须为 true 才能提交）
+        this.securityPassed = false;
 
         this.init();
     }
@@ -49,6 +48,8 @@ class SubmitModule {
                     this.ensureStatsBadge();
                     this.loadGlobalTotalCount();
                     this.loadTodayCount();
+                    // 每次打开模态框时重置安全检测状态
+                    this.resetSecurityCheck();
                 }
             });
         });
@@ -73,13 +74,11 @@ class SubmitModule {
 
     async loadGlobalTotalCount() {
         if (!this.statsBadge) return;
-
         const now = Date.now();
         if (this.cachedTotalCount !== null && (now - this.cachedTotalCountTime) < this.cacheTTL) {
             this.statsBadge.textContent = `总投稿 ${this.cachedTotalCount} 次`;
             return;
         }
-
         try {
             const response = await Utils.safeFetch(`${this.apiBase}/global-submission-count`, { timeout: 5000 });
             const data = await response.json();
@@ -93,14 +92,12 @@ class SubmitModule {
         }
     }
 
-    // 手动更新全局总数（投稿成功后调用）
     updateGlobalTotalCountIncrement() {
         if (this.cachedTotalCount !== null) {
             this.cachedTotalCount++;
             this.cachedTotalCountTime = Date.now();
             this.statsBadge.textContent = `总投稿 ${this.cachedTotalCount} 次`;
         } else {
-            // 如果缓存为空，则重新获取
             this.loadGlobalTotalCount();
         }
     }
@@ -126,11 +123,8 @@ class SubmitModule {
         const remainingSpan = document.querySelector('.submit-remaining-count');
         if (remainingSpan) {
             remainingSpan.textContent = `今日剩余 ${remaining} 次`;
-            if (remaining <= 0) {
-                remainingSpan.style.color = '#ef4444';
-            } else {
-                remainingSpan.style.color = '';
-            }
+            if (remaining <= 0) remainingSpan.style.color = '#ef4444';
+            else remainingSpan.style.color = '';
         }
     }
 
@@ -153,8 +147,9 @@ class SubmitModule {
 
         this.fetchInfoBtn.addEventListener('click', () => this.fetchSiteInfo());
 
+        // 监听网址输入，当用户修改网址时，重置安全检测状态
         this.urlInput.addEventListener('input', () => {
-            this.urlCheckResult.style.display = 'none';
+            this.resetSecurityCheck();
             this.updateSubmitButton();
         });
         this.iconInput.addEventListener('input', () => this.updateIconPreview());
@@ -165,6 +160,15 @@ class SubmitModule {
         });
 
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+    }
+
+    resetSecurityCheck() {
+        this.securityPassed = false;
+        this.urlCheckResult.style.display = 'none';
+        this.urlCheckResult.className = 'url-check-result';
+        this.urlCheckResult.textContent = '';
+        if (this.waitingHint) this.waitingHint.style.display = 'none';
+        // 清空可能残留的检测提示
     }
 
     autoResizeDesc() {
@@ -185,7 +189,7 @@ class SubmitModule {
         this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 获取中...';
         this.urlCheckResult.style.display = 'block';
         this.urlCheckResult.className = 'url-check-result checking';
-        this.urlCheckResult.textContent = '正在获取网站信息...';
+        this.urlCheckResult.textContent = '正在获取网站信息并进行安全检测...';
 
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
@@ -209,21 +213,23 @@ class SubmitModule {
             if (data.alreadySubmitted) {
                 this.urlCheckResult.className = 'url-check-result unsafe';
                 this.urlCheckResult.textContent = data.label || '该网站已收录或已在审核中，无法提交';
-                this.updateSubmitButton(false);
+                this.securityPassed = false;
             } else if (data.canSubmit === false) {
                 this.urlCheckResult.className = 'url-check-result unsafe';
                 this.urlCheckResult.textContent = data.label || '该链接存在安全风险，禁止提交';
-                this.updateSubmitButton(false);
+                this.securityPassed = false;
             } else {
                 this.urlCheckResult.className = 'url-check-result safe';
-                this.urlCheckResult.textContent = data.label || '信息获取成功，可提交';
-                this.updateSubmitButton(true);
+                this.urlCheckResult.textContent = data.label || '安全检测通过，可提交';
+                this.securityPassed = true;   // 关键：安全检测通过才允许提交
             }
+            this.updateSubmitButton();
         } catch (error) {
             Utils.handleApiError(error, '获取网站信息失败', true);
             this.urlCheckResult.className = 'url-check-result checking';
-            this.urlCheckResult.textContent = '获取信息失败，请手动填写';
-            this.updateSubmitButton(true);
+            this.urlCheckResult.textContent = '获取信息失败，请手动填写并重试';
+            this.securityPassed = false;
+            this.updateSubmitButton();
         } finally {
             if (this.waitingHint) this.waitingHint.style.display = 'none';
             this.fetchInfoBtn.disabled = false;
@@ -231,14 +237,13 @@ class SubmitModule {
         }
     }
 
-    updateSubmitButton(enable = null) {
-        if (enable === null) {
-            const title = this.titleInput.value.trim();
-            const url = this.urlInput.value.trim();
-            enable = !!(title && url && Utils.isValidUrl(url));
-        }
+    updateSubmitButton() {
+        const title = this.titleInput.value.trim();
+        const url = this.urlInput.value.trim();
+        const urlValid = Utils.isValidUrl(url);
         const remaining = this.dailyLimit - this.todayCount;
-        if (remaining <= 0) enable = false;
+        // 必须满足：标题非空、网址有效、安全检测已通过、今日未超限
+        const enable = !!(title && urlValid && this.securityPassed && remaining > 0);
         this.submitSaveBtn.disabled = !enable || this.submitting;
     }
 
@@ -249,6 +254,12 @@ class SubmitModule {
         const remaining = this.dailyLimit - this.todayCount;
         if (remaining <= 0) {
             window.toast.show(`今日投稿已达上限（${this.dailyLimit}次），请明天再试`, 'warning');
+            return;
+        }
+
+        // 再次确认安全检测已通过
+        if (!this.securityPassed) {
+            window.toast.show('请先点击“获取信息”完成安全检测', 'warning');
             return;
         }
 
@@ -274,7 +285,7 @@ class SubmitModule {
 
         this.submitting = true;
         this.submitSaveBtn.disabled = true;
-        this.submitSaveBtn.textContent = '安全检测中...';
+        this.submitSaveBtn.textContent = '提交中...';
         if (this.waitingHint) this.waitingHint.style.display = 'inline';
 
         try {
@@ -290,10 +301,8 @@ class SubmitModule {
 
             if (response.ok) {
                 window.toast.show('投稿成功！已通过安全检测，等待管理员审核', 'success');
-                // 更新本地今日计数
                 this.todayCount++;
                 this.updateRemainingCount();
-                // 更新全局总数（缓存+显示）—— 即使模态框保持打开，也会立即刷新
                 this.updateGlobalTotalCountIncrement();
                 this.modal.classList.remove('active');
                 this.resetForm();
@@ -307,12 +316,12 @@ class SubmitModule {
                     this.urlCheckResult.style.display = 'block';
                     this.urlCheckResult.className = 'url-check-result unsafe';
                     this.urlCheckResult.textContent = data.details.label;
+                    this.securityPassed = false;
+                    this.updateSubmitButton();
                 }
-                this.updateSubmitButton(true);
             }
         } catch (error) {
             Utils.handleApiError(error, '提交失败，请重试', true);
-            this.updateSubmitButton(true);
         } finally {
             this.submitting = false;
             this.submitSaveBtn.disabled = false;
@@ -333,13 +342,12 @@ class SubmitModule {
 
     resetForm() {
         this.form.reset();
-        this.urlCheckResult.style.display = 'none';
-        this.urlCheckResult.className = 'url-check-result';
+        this.resetSecurityCheck();
         this.iconPreview.style.display = 'none';
         this.submitSaveBtn.disabled = true;
         if (this.descInput) this.descInput.style.height = 'auto';
-        if (this.waitingHint) this.waitingHint.style.display = 'none';
         this.submitting = false;
+        this.securityPassed = false;
     }
 }
 
