@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（彻底修复无效图标URL）
+ * 优化分类导航系统 - 分页加载版（彻底移除无效图标URL）
  */
 class OptimizedNavigation {
     constructor() {
@@ -68,6 +68,23 @@ class OptimizedNavigation {
     }
 
     /**
+     * 检查给定的图标 URL 是否有效（图片格式，且不含非法字符）
+     * @param {string} url
+     * @returns {boolean}
+     */
+    _isValidIconUrl(url) {
+        if (!url || typeof url !== 'string') return false;
+        const trimmed = url.trim();
+        // 必须以 http:// 或 https:// 开头
+        if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) return false;
+        // 扩展名必须是常见图片格式（可选查询参数）
+        if (!/\.(png|jpg|jpeg|ico|svg|webp)(\?.*)?$/i.test(trimmed)) return false;
+        // 确保 URL 不包含非 ASCII 字符（如表情符号）
+        if (/[^\x00-\x7F]/.test(trimmed)) return false;
+        return true;
+    }
+
+    /**
      * 创建带多分辨率降级加载的图标元素
      * @param {string} siteUrl 网站 URL
      * @param {string} existingIcon 已有的图标 URL（可选）
@@ -75,10 +92,8 @@ class OptimizedNavigation {
      */
     _createIconElement(siteUrl, existingIcon = null) {
         let candidates = this._getIconCandidates(siteUrl);
-        // 严格校验 existingIcon：必须是有效的图片 URL（http/https 开头且常见图片扩展名）
-        if (existingIcon && existingIcon.trim() && 
-            (existingIcon.startsWith('http://') || existingIcon.startsWith('https://')) &&
-            /\.(png|jpg|jpeg|ico|svg|webp)$/i.test(existingIcon)) {
+        // 严格校验 existingIcon：必须是有效的图片 URL
+        if (existingIcon && this._isValidIconUrl(existingIcon)) {
             candidates.unshift(existingIcon);
         }
         if (candidates.length === 0) {
@@ -161,7 +176,6 @@ class OptimizedNavigation {
         const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
         if (!response.ok) throw new Error('Failed to load sites');
         let sites = await response.json();
-        // 直接存储原始数据，图标在渲染时动态生成
         this.siteCache.set(subcategoryId, sites);
         return sites;
     }
@@ -409,13 +423,8 @@ class OptimizedNavigation {
         card.rel = 'noopener noreferrer';
         card.title = `${site.title}\n${site.description || ''}`;
 
-        let iconHtml = '<i class="fas fa-link"></i>';
-        // 使用多分辨率降级方法生成图标
-        if (site.icon && site.icon.trim() && !site.icon.includes(window.location.hostname) && site.icon !== '/' && site.icon !== '') {
-            iconHtml = this._createIconElement(site.url, site.icon);
-        } else {
-            iconHtml = this._createIconElement(site.url, null);
-        }
+        // 完全通过 _createIconElement 生成图标，不再单独处理 site.icon
+        const iconHtml = this._createIconElement(site.url, site.icon);
 
         const views = site.views || 0;
         const formattedViews = this._formatViews(views);
