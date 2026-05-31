@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，含操作日志查看、各项管理功能）
+// admin.js - 星聚导航后台管理（完整版，已移除标记已处理功能）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -43,9 +43,7 @@
                 logs = logs.slice(0, MAX_LOG_COUNT);
             }
             localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs));
-        } catch (e) {
-            console.error('保存日志失败:', e);
-        }
+        } catch (e) {}
     }
 
     function addLog(text) {
@@ -230,7 +228,6 @@
                     gap: 8px;
                     margin-right: auto;
                 }
-                /* 操作日志列表样式 */
                 .logs-list .log-item {
                     padding: 12px;
                     border-bottom: 1px solid #e2e8f0;
@@ -1014,7 +1011,6 @@
                     <div class="link-info"><strong>${escapeHtml(item.title||'无标题')}</strong><div class="link-url" style="display:none;">${escapeHtml(item.url)}</div><div style="font-size:10px;color:#999">来自 ${escapeHtml(item.reporter_ip)} 于 ${new Date(item.report_time).toLocaleString()}</div></div>
                     <div class="link-actions">
                         <button class="sm primary" data-action="replaceLink" data-reportid="${item.id}" data-siteid="${item.site_id||0}" data-url="${escapeHtml(item.url)}" data-title="${escapeHtml(item.title||'')}">更换链接</button>
-                        <button class="sm primary" data-action="markDone" data-reportid="${item.id}">标记已处理</button>
                     </div>
                 </div>
             `).join('');
@@ -1022,19 +1018,8 @@
             if (groups.yesterday.length) html += `<div class="feedback-date-group"><h4>📅 昨天</h4>${renderItems(groups.yesterday)}</div>`;
             if (groups.older.length) html += `<div class="feedback-date-group"><h4>📅 更早</h4>${renderItems(groups.older)}</div>`;
             list.innerHTML = html;
-            list.querySelectorAll('[data-action="markDone"]').forEach(btn => btn.addEventListener('click', markDoneHandler));
             list.querySelectorAll('[data-action="replaceLink"]').forEach(btn => btn.addEventListener('click', replaceLinkHandler));
         } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
-    }
-
-    async function markDoneHandler(e) {
-        const btn = e.currentTarget;
-        const reportId = parseInt(btn.dataset.reportid);
-        try {
-            await apiFetch(`/admin/report-status/${reportId}`, { method: 'PUT', body: JSON.stringify({ status: 'done' }) });
-            showToast('已标记处理', 'success');
-            await loadFeedback();
-        } catch { showToast('操作失败', 'error'); }
     }
 
     async function replaceLinkHandler(e) {
@@ -1053,7 +1038,7 @@
                 const newTitle = document.getElementById('mTitle').value.trim();
                 const newUrl = document.getElementById('mUrl').value.trim();
                 if (!newTitle || !newUrl) { showToast('标题和网址不能为空', 'error'); return; }
-                if (!checkUrl(newUrl)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
+                if (!checkUrl(newUrl)) { showToast('网址格式错误', 'error'); return; }
                 await apiFetch('/admin/replace-link', {
                     method: 'POST',
                     body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value })
@@ -1107,7 +1092,6 @@
         } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    // ========== 新增：操作日志从后端获取 ==========
     async function loadAdminLogs() {
         const container = document.getElementById('logsList');
         if (!container) return;
@@ -1197,7 +1181,6 @@
                 }
             };
         }
-        // 刷新操作日志按钮
         const refreshLogsBtn = document.getElementById('refreshLogsBtn');
         if (refreshLogsBtn) refreshLogsBtn.addEventListener('click', loadAdminLogs);
     }
