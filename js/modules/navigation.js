@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（添加页面可见时自动刷新当前子分类）
+ * 优化分类导航系统 - 分页加载版（自动刷新当前子分类，后台收录后立即更新）
  */
 class OptimizedNavigation {
     constructor() {
@@ -26,6 +26,10 @@ class OptimizedNavigation {
         this.hasMore = true;
         this.currentSites = [];
         this.scrollListener = null;
+
+        // 自动刷新定时器（后台收录后前端自动更新）
+        this.autoRefreshTimer = null;
+        this.autoRefreshInterval = 30000; // 30秒
     }
 
     _escapeHtml(str) { return Utils.escapeHtml(str); }
@@ -35,6 +39,7 @@ class OptimizedNavigation {
         return String(views);
     }
 
+    // 高清图标辅助方法
     _getIconCandidates(url) {
         let domain = '';
         try {
@@ -50,7 +55,6 @@ class OptimizedNavigation {
             `https://${domain}/favicon.ico`
         ];
     }
-
     _isValidIconUrl(url) {
         if (!url || typeof url !== 'string') return false;
         const trimmed = url.trim();
@@ -59,7 +63,6 @@ class OptimizedNavigation {
         if (/[^\x00-\x7F]/.test(trimmed)) return false;
         return true;
     }
-
     _createIconElement(siteUrl, existingIcon = null) {
         let candidates = this._getIconCandidates(siteUrl);
         if (existingIcon && this._isValidIconUrl(existingIcon)) candidates.unshift(existingIcon);
@@ -71,7 +74,6 @@ class OptimizedNavigation {
                      alt="" loading="lazy"
                      onerror="this.onerror=null; const candidates = JSON.parse(this.getAttribute('data-candidates')); const idx = candidates.indexOf(this.src); if (idx !== -1 && idx + 1 < candidates.length) { this.src = candidates[idx+1]; } else { this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>'; }">`;
     }
-
     _highlightText(text, keyword) {
         if (!keyword || !text) return this._escapeHtml(text);
         const escapedText = this._escapeHtml(text);
@@ -94,7 +96,6 @@ class OptimizedNavigation {
             }, { rootMargin: '200px' });
         }
     }
-
     observeLazyImages(container) {
         if (!this.imgObserver) return;
         const imgs = container.querySelectorAll('img[data-src]');
@@ -118,22 +119,37 @@ class OptimizedNavigation {
             }
             this.isInitialized = true;
             this.startBackgroundUpdates();
-            // 页面可见性变化时刷新当前子分类
+            // 页面可见性变化时刷新
             document.addEventListener('visibilitychange', () => {
                 if (!document.hidden && this.selectedLevel2) {
                     this.refreshCurrentSubcategory();
                 }
             });
+            // 启动自动刷新定时器（后台收录后自动更新）
+            this.startAutoRefresh();
         } catch(error) {
             console.error('导航初始化失败:', error);
             this.showError();
         }
     }
 
+    // 启动自动刷新当前子分类
+    startAutoRefresh() {
+        if (this.autoRefreshTimer) clearInterval(this.autoRefreshTimer);
+        this.autoRefreshTimer = setInterval(() => {
+            // 仅当页面可见、未处于搜索模式、且有选中的子分类时才刷新
+            if (!document.hidden && !this.isSearching && this.selectedLevel2) {
+                this.refreshCurrentSubcategory();
+            }
+        }, this.autoRefreshInterval);
+    }
+
     // 刷新当前子分类（清除缓存并重新加载）
     async refreshCurrentSubcategory() {
         if (!this.selectedLevel2) return;
+        // 清除该子分类的缓存
         this.siteCache.delete(this.selectedLevel2);
+        // 重新加载当前子分类的数据
         await this.renderLevel3(this.selectedLevel1, this.selectedLevel2);
     }
 
@@ -201,14 +217,12 @@ class OptimizedNavigation {
         this.stats.totalCategories = catCount;
         this.updateStatsDisplay();
     }
-
     updateStatsDisplay() {
         const el1 = document.getElementById('siteCount');
         const el2 = document.getElementById('invalidCount');
         if (el1) el1.textContent = `${this.stats.totalWebsites || 0}+`;
         if (el2) el2.textContent = this.stats.invalidCount || '0';
     }
-
     updateInvalidCount(increment) {
         if (!this.stats.invalidCount) this.stats.invalidCount = 0;
         this.stats.invalidCount += increment;
@@ -394,8 +408,7 @@ class OptimizedNavigation {
             this.isNavigationClick = true;
             if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
             Utils.safeFetch(`${this.apiBase}/click`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: site.id, url: site.url })
             }).catch(()=>{});
             const viewEl = card.querySelector('.view-count');
@@ -430,7 +443,6 @@ class OptimizedNavigation {
                         });
                         if (res.ok) {
                             window.toast.show('已反馈，管理员将处理', 'success');
-                            // 立即隐藏按钮
                             reportBtn.style.display = 'none';
                             const currentSubId = this.selectedLevel2;
                             if (currentSubId) {
@@ -574,6 +586,11 @@ class OptimizedNavigation {
         document.querySelectorAll('.level2-btn').forEach(b => b.classList.toggle('active', b.dataset.level2 == subcategoryId));
         this.selectedLevel2 = subcategoryId;
         await this.renderLevel3(this.selectedLevel1, subcategoryId);
+        // 重置自动刷新定时器（每次切换子分类后重新计时）
+        if (this.autoRefreshTimer) {
+            clearInterval(this.autoRefreshTimer);
+            this.startAutoRefresh();
+        }
         setTimeout(()=>{ this.isNavigationClick = false; },100);
     }
 
@@ -625,6 +642,7 @@ class OptimizedNavigation {
     }
     destroy() {
         if (this.updateTimer) clearInterval(this.updateTimer);
+        if (this.autoRefreshTimer) clearInterval(this.autoRefreshTimer);
         if (this.imgObserver) this.imgObserver.disconnect();
         if (this.scrollListener) {
             window.removeEventListener('scroll', this.scrollListener);
