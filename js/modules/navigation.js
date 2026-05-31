@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（高清图标多分辨率降级，修复无效图标URL）
+ * 优化分类导航系统 - 分页加载版（彻底修复无效图标URL）
  */
 class OptimizedNavigation {
     constructor() {
@@ -41,16 +41,17 @@ class OptimizedNavigation {
 
     /**
      * 获取图标的备选 URL 列表（按分辨率从高到低）
+     * 仅当域名合法（只含字母数字点横线，且长度≥4，包含点）时才生成
      * @param {string} url 网站 URL
-     * @returns {string[]} 备选图标 URL 数组（如果域名无效则返回空数组）
+     * @returns {string[]} 备选图标 URL 数组
      */
     _getIconCandidates(url) {
         let domain = '';
         try {
             const urlObj = new URL(url);
             domain = urlObj.hostname;
-            // 域名有效性检查：非空、长度不小于4、包含点号（简单防止无效域名）
-            if (!domain || domain.length < 4 || !domain.includes('.')) {
+            // 严格验证域名：只允许字母、数字、点、横线，且长度≥4，必须包含点
+            if (!domain || domain.length < 4 || !domain.includes('.') || !/^[a-zA-Z0-9.-]+$/.test(domain)) {
                 return [];
             }
         } catch (e) {
@@ -58,11 +59,11 @@ class OptimizedNavigation {
         }
         // 按分辨率从高到低排列
         return [
-            `https://icon.horse/icon/${domain}?size=256`,   // 256px（第三方）
-            `https://icon.horse/icon/${domain}?size=128`,   // 128px
-            `https://www.google.com/s2/favicons?domain=${domain}&sz=64`, // 64px
-            `https://favicon.yandex.net/favicon/${domain}`,             // 16px
-            `https://${domain}/favicon.ico`                             // 根目录
+            `https://icon.horse/icon/${domain}?size=256`,
+            `https://icon.horse/icon/${domain}?size=128`,
+            `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
+            `https://favicon.yandex.net/favicon/${domain}`,
+            `https://${domain}/favicon.ico`
         ];
     }
 
@@ -74,11 +75,14 @@ class OptimizedNavigation {
      */
     _createIconElement(siteUrl, existingIcon = null) {
         let candidates = this._getIconCandidates(siteUrl);
+        // 严格校验 existingIcon：必须是有效的图片 URL（http/https 开头且常见图片扩展名）
+        if (existingIcon && existingIcon.trim() && 
+            (existingIcon.startsWith('http://') || existingIcon.startsWith('https://')) &&
+            /\.(png|jpg|jpeg|ico|svg|webp)$/i.test(existingIcon)) {
+            candidates.unshift(existingIcon);
+        }
         if (candidates.length === 0) {
             return '<i class="fas fa-link"></i>';
-        }
-        if (existingIcon && existingIcon.trim() && !existingIcon.includes(window.location.hostname) && existingIcon !== '/' && existingIcon !== '') {
-            candidates.unshift(existingIcon);
         }
         const candidatesJson = JSON.stringify(candidates);
         const safeCandidates = candidatesJson.replace(/"/g, '&quot;');
