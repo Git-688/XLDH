@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（完整功能：高清图标、死链报告、点击计数、搜索高亮等）
+ * 优化分类导航系统 - 完整版（死链报告按钮隐藏修复）
  */
 class OptimizedNavigation {
     constructor() {
@@ -20,7 +20,6 @@ class OptimizedNavigation {
         this.searchTimer = null;
         this.loadedLevel1Set = new Set();
 
-        // 分页相关
         this.currentPage = 1;
         this.pageSize = 30;
         this.isLoadingMore = false;
@@ -29,35 +28,20 @@ class OptimizedNavigation {
         this.scrollListener = null;
     }
 
-    _escapeHtml(str) {
-        return Utils.escapeHtml(str);
-    }
-
+    _escapeHtml(str) { return Utils.escapeHtml(str); }
     _formatViews(views) {
-        if (views >= 1000000) return `${(views / 1000000).toFixed(1).replace('.0', '')}M`;
-        if (views >= 1000) return `${(views / 1000).toFixed(1).replace('.0', '')}K`;
+        if (views >= 1000000) return `${(views/1000000).toFixed(1).replace('.0','')}M`;
+        if (views >= 1000) return `${(views/1000).toFixed(1).replace('.0','')}K`;
         return String(views);
     }
 
-    /**
-     * 获取图标的备选 URL 列表（按分辨率从高到低）
-     * 仅当域名合法（只含字母数字点横线，且长度≥4，包含点）时才生成
-     * @param {string} url 网站 URL
-     * @returns {string[]} 备选图标 URL 数组
-     */
     _getIconCandidates(url) {
         let domain = '';
         try {
             const urlObj = new URL(url);
             domain = urlObj.hostname;
-            // 严格验证域名：只允许字母、数字、点、横线，且长度≥4，必须包含点
-            if (!domain || domain.length < 4 || !domain.includes('.') || !/^[a-zA-Z0-9.-]+$/.test(domain)) {
-                return [];
-            }
-        } catch (e) {
-            return [];
-        }
-        // 按分辨率从高到低排列
+            if (!domain || domain.length < 4 || !domain.includes('.') || !/^[a-zA-Z0-9.-]+$/.test(domain)) return [];
+        } catch(e) { return []; }
         return [
             `https://icon.horse/icon/${domain}?size=256`,
             `https://icon.horse/icon/${domain}?size=128`,
@@ -67,11 +51,6 @@ class OptimizedNavigation {
         ];
     }
 
-    /**
-     * 检查给定的图标 URL 是否有效（图片格式，且不含非法字符）
-     * @param {string} url
-     * @returns {boolean}
-     */
     _isValidIconUrl(url) {
         if (!url || typeof url !== 'string') return false;
         const trimmed = url.trim();
@@ -81,20 +60,10 @@ class OptimizedNavigation {
         return true;
     }
 
-    /**
-     * 创建带多分辨率降级加载的图标元素
-     * @param {string} siteUrl 网站 URL
-     * @param {string} existingIcon 已有的图标 URL（可选）
-     * @returns {string} HTML 字符串
-     */
     _createIconElement(siteUrl, existingIcon = null) {
         let candidates = this._getIconCandidates(siteUrl);
-        if (existingIcon && this._isValidIconUrl(existingIcon)) {
-            candidates.unshift(existingIcon);
-        }
-        if (candidates.length === 0) {
-            return '<i class="fas fa-link"></i>';
-        }
+        if (existingIcon && this._isValidIconUrl(existingIcon)) candidates.unshift(existingIcon);
+        if (candidates.length === 0) return '<i class="fas fa-link"></i>';
         const candidatesJson = JSON.stringify(candidates);
         const safeCandidates = candidatesJson.replace(/"/g, '&quot;');
         return `<img class="lazy-icon" data-src="${this._escapeHtml(candidates[0])}" 
@@ -103,13 +72,12 @@ class OptimizedNavigation {
                      onerror="this.onerror=null; const candidates = JSON.parse(this.getAttribute('data-candidates')); const idx = candidates.indexOf(this.src); if (idx !== -1 && idx + 1 < candidates.length) { this.src = candidates[idx+1]; } else { this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>'; }">`;
     }
 
-    // 关键词高亮辅助方法
     _highlightText(text, keyword) {
         if (!keyword || !text) return this._escapeHtml(text);
         const escapedText = this._escapeHtml(text);
         const escapedKeyword = this._escapeHtml(keyword);
-        const regex = new RegExp(`(${escapedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-        return escapedText.replace(regex, '<mark class="search-highlight">$1</mark>');
+        const regex = new RegExp(`(${escapedKeyword.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi');
+        return escapedText.replace(regex,'<mark class="search-highlight">$1</mark>');
     }
 
     initLazyLoadObserver() {
@@ -119,10 +87,7 @@ class OptimizedNavigation {
                     if (entry.isIntersecting) {
                         const img = entry.target;
                         const src = img.dataset.src;
-                        if (src) {
-                            img.src = src;
-                            img.removeAttribute('data-src');
-                        }
+                        if (src) { img.src = src; img.removeAttribute('data-src'); }
                         this.imgObserver.unobserve(img);
                     }
                 });
@@ -153,7 +118,7 @@ class OptimizedNavigation {
             }
             this.isInitialized = true;
             this.startBackgroundUpdates();
-        } catch (error) {
+        } catch(error) {
             console.error('导航初始化失败:', error);
             this.showError();
         }
@@ -166,12 +131,10 @@ class OptimizedNavigation {
     }
 
     async loadSites(subcategoryId, forceRefresh = false) {
-        if (!forceRefresh && this.siteCache.has(subcategoryId)) {
-            return this.siteCache.get(subcategoryId);
-        }
+        if (!forceRefresh && this.siteCache.has(subcategoryId)) return this.siteCache.get(subcategoryId);
         const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
         if (!response.ok) throw new Error('Failed to load sites');
-        let sites = await response.json();
+        const sites = await response.json();
         this.siteCache.set(subcategoryId, sites);
         return sites;
     }
@@ -182,9 +145,7 @@ class OptimizedNavigation {
         let totalValidSites = 0;
         const concurrency = 5;
         const chunks = [];
-        for (let i = 0; i < subcategories.length; i += concurrency) {
-            chunks.push(subcategories.slice(i, i + concurrency));
-        }
+        for (let i=0; i<subcategories.length; i+=concurrency) chunks.push(subcategories.slice(i,i+concurrency));
         for (const chunk of chunks) {
             const promises = chunk.map(async (sub) => {
                 const subId = sub.id;
@@ -194,7 +155,7 @@ class OptimizedNavigation {
                 return validCount;
             });
             const counts = await Promise.all(promises);
-            totalValidSites += counts.reduce((sum, c) => sum + c, 0);
+            totalValidSites += counts.reduce((s,c)=>s+c,0);
         }
         this.stats.totalWebsites = totalValidSites;
         this.updateStatsDisplay();
@@ -203,14 +164,12 @@ class OptimizedNavigation {
 
     async recalculateTotalWebsites() {
         let total = 0;
-        for (const sites of this.siteCache.values()) {
-            total += sites.filter(s => s.valid !== false).length;
-        }
+        for (const sites of this.siteCache.values()) total += sites.filter(s=>s.valid!==false).length;
         this.stats.totalWebsites = total;
         this.updateStatsDisplay();
     }
 
-    updateSubcategoryCountDisplay(subcategoryId, count, retry = 0) {
+    updateSubcategoryCountDisplay(subcategoryId, count, retry=0) {
         const btn = document.querySelector(`.level2-btn[data-level2="${subcategoryId}"]`);
         if (btn) {
             let countSpan = btn.querySelector('.level2-btn-count');
@@ -221,9 +180,7 @@ class OptimizedNavigation {
             }
             countSpan.textContent = count;
             countSpan.style.display = 'inline-block';
-        } else if (retry < 5) {
-            setTimeout(() => this.updateSubcategoryCountDisplay(subcategoryId, count, retry + 1), 100);
-        }
+        } else if (retry < 5) setTimeout(() => this.updateSubcategoryCountDisplay(subcategoryId,count,retry+1),100);
     }
 
     calculateStats() {
@@ -246,45 +203,24 @@ class OptimizedNavigation {
         if (invalidEl) invalidEl.textContent = this.stats.invalidCount;
     }
 
-    renderNavigation() {
-        this.renderLevel1();
-        this.renderEmptyState();
-    }
-
+    renderNavigation() { this.renderLevel1(); this.renderEmptyState(); }
     renderLevel1() {
         const container = document.getElementById('level1Nav');
         if (!container || !this.structure) return;
         const categories = Object.keys(this.structure);
-        container.innerHTML = categories.map((cat, idx) =>
-            `<button class="level1-btn ${idx === 0 ? 'active' : ''}" data-level1="${cat}" title="${this.structure[cat].description || ''}">
-                <span class="level1-btn-text">${this._escapeHtml(cat)}</span>
-            </button>`
-        ).join('');
+        container.innerHTML = categories.map((cat,idx) => `<button class="level1-btn ${idx===0?'active':''}" data-level1="${cat}" title="${this.structure[cat].description||''}"><span class="level1-btn-text">${this._escapeHtml(cat)}</span></button>`).join('');
     }
-
     renderLevel2(level1) {
         const container = document.getElementById('level2Nav');
         if (!container || !this.structure?.[level1]) return;
         const subCats = this.structure[level1].subcategories;
-        if (!subCats.length) {
-            container.innerHTML = '<div style="padding:16px;color:var(--text-secondary);font-size:11px;text-align:center;">暂无子分类</div>';
-            return;
-        }
-        container.innerHTML = subCats.map((sub, idx) =>
-            `<button class="level2-btn ${idx === 0 ? 'active' : ''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}" title="${this._escapeHtml(sub.name)}">
-                <span class="level2-btn-text">${this._escapeHtml(sub.name)}</span>
-                <span class="level2-btn-count" style="display:none;">0</span>
-            </button>`
-        ).join('');
+        if (!subCats.length) { container.innerHTML = '<div style="padding:16px;color:var(--text-secondary);font-size:11px;text-align:center;">暂无子分类</div>'; return; }
+        container.innerHTML = subCats.map((sub,idx) => `<button class="level2-btn ${idx===0?'active':''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}" title="${this._escapeHtml(sub.name)}"><span class="level2-btn-text">${this._escapeHtml(sub.name)}</span><span class="level2-btn-count" style="display:none;">0</span></button>`).join('');
         for (const sub of subCats) {
             const cached = this.siteCache.get(sub.id);
-            if (cached) {
-                const validCount = cached.filter(s => s.valid !== false).length;
-                this.updateSubcategoryCountDisplay(sub.id, validCount);
-            }
+            if (cached) this.updateSubcategoryCountDisplay(sub.id, cached.filter(s=>s.valid!==false).length);
         }
     }
-
     async renderLevel3(level1, subcategoryId) {
         const container = document.getElementById('level3Content');
         if (!container) return;
@@ -292,28 +228,22 @@ class OptimizedNavigation {
         this.hasMore = true;
         this.isLoadingMore = false;
         this.currentSites = await this.loadSites(subcategoryId);
-        if (!this.currentSites.length) {
-            this.renderEmptyState();
-            return;
-        }
+        if (!this.currentSites.length) { this.renderEmptyState(); return; }
         this.renderSitesPage();
         this.observeLazyImages(container);
         this.bindScrollLoadMore();
-        this.updateSubcategoryCountDisplay(subcategoryId, this.currentSites.filter(s => s.valid !== false).length);
+        this.updateSubcategoryCountDisplay(subcategoryId, this.currentSites.filter(s=>s.valid!==false).length);
     }
-
     renderSitesPage() {
         const container = document.getElementById('level3Content');
         if (!container) return;
-        const start = (this.currentPage - 1) * this.pageSize;
-        const end = start + this.pageSize;
-        const pageSites = this.currentSites.slice(start, end);
+        const start = (this.currentPage-1)*this.pageSize;
+        const end = start+this.pageSize;
+        const pageSites = this.currentSites.slice(start,end);
         if (this.currentPage === 1) {
             container.innerHTML = '';
             const fragment = document.createDocumentFragment();
-            pageSites.forEach((site, idx) => {
-                fragment.appendChild(this.createSiteCard(site, idx, false, ''));
-            });
+            pageSites.forEach((site,idx)=>fragment.appendChild(this.createSiteCard(site,idx,false,'')));
             container.appendChild(fragment);
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'scroll-loading-trigger';
@@ -326,9 +256,7 @@ class OptimizedNavigation {
             const loadingDiv = container.querySelector('#scroll-loading-trigger');
             if (loadingDiv) loadingDiv.remove();
             const fragment = document.createDocumentFragment();
-            pageSites.forEach((site, idx) => {
-                fragment.appendChild(this.createSiteCard(site, idx, false, ''));
-            });
+            pageSites.forEach((site,idx)=>fragment.appendChild(this.createSiteCard(site,idx,false,'')));
             container.appendChild(fragment);
             const newLoadingDiv = document.createElement('div');
             newLoadingDiv.id = 'scroll-loading-trigger';
@@ -367,9 +295,7 @@ class OptimizedNavigation {
             if (!loadingDiv) return;
             const rect = loadingDiv.getBoundingClientRect();
             const windowHeight = window.innerHeight;
-            if (rect.top <= windowHeight + 100) {
-                this.loadMore();
-            }
+            if (rect.top <= windowHeight + 100) this.loadMore();
         };
         this.scrollListener = scrollHandler;
         window.addEventListener('scroll', this.scrollListener);
@@ -388,9 +314,9 @@ class OptimizedNavigation {
             loadingDiv.style.padding = '10px';
             loadingDiv.style.minHeight = '';
         }
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r=>setTimeout(r,200));
         this.currentPage++;
-        const start = (this.currentPage - 1) * this.pageSize;
+        const start = (this.currentPage-1)*this.pageSize;
         if (start >= this.currentSites.length) {
             this.hasMore = false;
             if (loadingDiv) {
@@ -419,9 +345,7 @@ class OptimizedNavigation {
         card.rel = 'noopener noreferrer';
         card.title = `${site.title}\n${site.description || ''}`;
 
-        // 完全通过 _createIconElement 生成图标
         const iconHtml = this._createIconElement(site.url, site.icon);
-
         const views = site.views || 0;
         const formattedViews = this._formatViews(views);
 
@@ -452,16 +376,16 @@ class OptimizedNavigation {
             </div>
         `;
 
-        // 点击卡片统计（发送 id 和 url，确保后端可靠更新）
+        // 点击卡片统计
         card.addEventListener('click', (e) => {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
             if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
-            // 发送网站 ID 和 URL（向后兼容）
             Utils.safeFetch(`${this.apiBase}/click`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: site.id, url: site.url })
-            }).catch(() => {});
+            }).catch(()=>{});
             const viewEl = card.querySelector('.view-count');
             if (viewEl) {
                 let cur = parseInt(viewEl.dataset.views) || 0;
@@ -469,12 +393,11 @@ class OptimizedNavigation {
                 viewEl.dataset.views = cur;
                 viewEl.textContent = this._formatViews(cur);
                 viewEl.classList.add('increasing');
-                setTimeout(() => viewEl.classList.remove('increasing'), 300);
+                setTimeout(()=>viewEl.classList.remove('increasing'),300);
             }
-            setTimeout(() => { this.isNavigationClick = false; if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false; }, 100);
+            setTimeout(()=>{ this.isNavigationClick = false; if(window.musicPlayer) window.musicPlayer.isHandlingNavigationClick=false; },100);
         });
 
-        // 死链报告按钮
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
@@ -495,8 +418,11 @@ class OptimizedNavigation {
                         });
                         if (res.ok) {
                             window.toast.show('已反馈，管理员将处理', 'success');
+                            // 立即隐藏按钮
+                            reportBtn.style.display = 'none';
                             const currentSubId = this.selectedLevel2;
                             if (currentSubId) {
+                                // 清除缓存并重新加载当前子分类数据
                                 this.siteCache.delete(currentSubId);
                                 const freshSites = await this.loadSites(currentSubId, true);
                                 this.currentSites = freshSites;
@@ -510,11 +436,10 @@ class OptimizedNavigation {
                                 }
                             } else {
                                 card.classList.add('invalid');
-                                reportBtn.style.display = 'none';
                             }
                             this.updateInvalidCount(1);
                         } else {
-                            const err = await res.json().catch(() => ({}));
+                            const err = await res.json().catch(()=>({}));
                             window.toast.show(err.error || '反馈失败', 'error');
                             reportBtn.disabled = false;
                             reportBtn.style.opacity = '';
@@ -541,9 +466,7 @@ class OptimizedNavigation {
             <div class="search-input-wrapper">
                 <i class="fas fa-search search-icon-prefix"></i>
                 <input type="text" id="navSearchInput" placeholder="搜索本站链接..." autocomplete="off">
-                <button class="search-clear-btn" id="navSearchClearBtn" aria-label="清除搜索">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button class="search-clear-btn" id="navSearchClearBtn" aria-label="清除搜索"><i class="fas fa-times"></i></button>
             </div>
             <span class="search-result-hint" id="navSearchHint" style="display:none;"></span>
         `;
@@ -563,10 +486,7 @@ class OptimizedNavigation {
             this.searchInput.focus();
         });
         document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                this.searchInput?.focus();
-            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); this.searchInput?.focus(); }
         });
     }
 
@@ -588,23 +508,16 @@ class OptimizedNavigation {
                 container.appendChild(emptyDiv);
             } else {
                 const fragment = document.createDocumentFragment();
-                results.forEach((site, idx) => {
-                    fragment.appendChild(this.createSiteCard(site, idx, true, query));
-                });
+                results.forEach((site, idx) => fragment.appendChild(this.createSiteCard(site, idx, true, query)));
                 container.appendChild(fragment);
                 this.observeLazyImages(container);
             }
             const hint = document.getElementById('navSearchHint');
-            if (hint) {
-                hint.style.display = 'block';
-                hint.textContent = `找到 ${results.length} 个结果，关键词已高亮`;
-            }
-        } catch (e) {
+            if (hint) { hint.style.display = 'block'; hint.textContent = `找到 ${results.length} 个结果，关键词已高亮`; }
+        } catch(e) {
             console.error(e);
             container.innerHTML = '<div class="empty-state">搜索失败，请重试</div>';
-        } finally {
-            this.isSearching = false;
-        }
+        } finally { this.isSearching = false; }
     }
 
     clearSearch() {
@@ -612,19 +525,11 @@ class OptimizedNavigation {
         this.isSearching = false;
         const hint = document.getElementById('navSearchHint');
         if (hint) hint.style.display = 'none';
-        if (this.selectedLevel1 && this.structure?.[this.selectedLevel1]) {
-            this.selectLevel1(this.selectedLevel1, false);
-        } else {
+        if (this.selectedLevel1 && this.structure?.[this.selectedLevel1]) this.selectLevel1(this.selectedLevel1, false);
+        else {
             const firstCat = this.getFirstCategory();
-            if (firstCat) {
-                this.selectedLevel1 = firstCat;
-                this.selectLevel1(firstCat, false);
-            } else {
-                this.loadNavigationStructure().then(() => {
-                    const newFirst = this.getFirstCategory();
-                    if (newFirst) this.selectLevel1(newFirst, false);
-                });
-            }
+            if (firstCat) { this.selectedLevel1 = firstCat; this.selectLevel1(firstCat, false); }
+            else this.loadNavigationStructure().then(()=>{ const newFirst=this.getFirstCategory(); if(newFirst) this.selectLevel1(newFirst,false); });
         }
     }
 
@@ -645,16 +550,11 @@ class OptimizedNavigation {
         this.selectedLevel1 = level1;
         this.renderLevel2(level1);
         this.showSkeleton();
-
         await this.loadSubcategoryCountsForLevel1(level1);
-
         const firstSub = this.getFirstSubCategory(level1);
-        if (firstSub) {
-            await this.selectLevel2(firstSub.id, firstSub.name, isUserClick);
-        } else {
-            this.renderEmptyState();
-        }
-        setTimeout(() => { this.isNavigationClick = false; }, 100);
+        if (firstSub) await this.selectLevel2(firstSub.id, firstSub.name, isUserClick);
+        else this.renderEmptyState();
+        setTimeout(()=>{ this.isNavigationClick = false; },100);
     }
 
     async selectLevel2(subcategoryId, subName, isUserClick = false) {
@@ -663,67 +563,46 @@ class OptimizedNavigation {
         document.querySelectorAll('.level2-btn').forEach(b => b.classList.toggle('active', b.dataset.level2 == subcategoryId));
         this.selectedLevel2 = subcategoryId;
         await this.renderLevel3(this.selectedLevel1, subcategoryId);
-        setTimeout(() => { this.isNavigationClick = false; }, 100);
+        setTimeout(()=>{ this.isNavigationClick = false; },100);
     }
 
-    getFirstCategory() {
-        return this.structure ? Object.keys(this.structure)[0] : null;
-    }
-    getFirstSubCategory(level1) {
-        return this.structure?.[level1]?.subcategories[0] || null;
-    }
+    getFirstCategory() { return this.structure ? Object.keys(this.structure)[0] : null; }
+    getFirstSubCategory(level1) { return this.structure?.[level1]?.subcategories[0] || null; }
 
     showSkeleton() {
         const container = document.getElementById('level3Content');
         if (container) container.innerHTML = this.generateSkeletonHTML();
     }
-
     generateSkeletonHTML() {
-        return Array(this.skeletonCount).fill(`
-            <div class="site-card skeleton-card">
-                <div class="card-top"><div class="icon-container skeleton-icon"></div><div class="card-top-right"><div class="skeleton-btn"></div><div class="views-container"><div class="skeleton-views"></div></div></div></div>
-                <div class="divider-line skeleton-divider"></div>
-                <div class="card-bottom"><div class="site-title skeleton-title"></div><div class="site-description skeleton-description"></div></div>
-            </div>
-        `).join('');
+        return Array(this.skeletonCount).fill(`<div class="site-card skeleton-card"><div class="card-top"><div class="icon-container skeleton-icon"></div><div class="card-top-right"><div class="skeleton-btn"></div><div class="views-container"><div class="skeleton-views"></div></div></div></div><div class="divider-line skeleton-divider"></div><div class="card-bottom"><div class="site-title skeleton-title"></div><div class="site-description skeleton-description"></div></div></div>`).join('');
     }
-
     renderEmptyState() {
         const container = document.getElementById('level3Content');
         if (container) container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-compass"></i></div><h3 class="empty-title">选择一个分类开始探索</h3><p class="empty-subtitle">点击左侧分类查看详细内容</p></div>`;
     }
-
     showError() {
         const container = document.getElementById('level3Content');
         if (container) container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">导航数据加载失败</h3><p class="empty-subtitle">请检查网络或稍后重试</p></div>`;
     }
-
     startBackgroundUpdates() {
         if (this.updateTimer) clearInterval(this.updateTimer);
-        this.updateTimer = setInterval(() => this.refreshStructure(), this.UPDATE_INTERVAL);
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) this.refreshStructure();
-        });
+        this.updateTimer = setInterval(()=>this.refreshStructure(), this.UPDATE_INTERVAL);
+        document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) this.refreshStructure(); });
     }
-
     async refreshStructure() {
         try {
-            const newStructure = await fetch(`${this.apiBase}/navigation/structure`).then(r => r.json());
+            const newStructure = await fetch(`${this.apiBase}/navigation/structure`).then(r=>r.json());
             if (JSON.stringify(newStructure) !== JSON.stringify(this.structure)) {
                 this.structure = newStructure;
                 this.renderNavigation();
                 if (this.selectedLevel1 && this.structure[this.selectedLevel1]) {
                     this.renderLevel2(this.selectedLevel1);
                     const currentSub = document.querySelector('.level2-btn.active');
-                    if (currentSub) {
-                        const subId = currentSub.dataset.level2;
-                        await this.renderLevel3(this.selectedLevel1, subId);
-                    }
+                    if (currentSub) await this.renderLevel3(this.selectedLevel1, currentSub.dataset.level2);
                 }
             }
-        } catch (e) { console.warn('后台更新失败:', e); }
+        } catch(e) { console.warn('后台更新失败:',e); }
     }
-
     refresh() {
         this.structure = null;
         this.siteCache.clear();
@@ -733,7 +612,6 @@ class OptimizedNavigation {
         this.showSkeleton();
         this.init();
     }
-
     destroy() {
         if (this.updateTimer) clearInterval(this.updateTimer);
         if (this.imgObserver) this.imgObserver.disconnect();
