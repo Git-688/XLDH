@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（彻底移除无效图标URL）
+ * 优化分类导航系统 - 分页加载版（完整功能：高清图标、死链报告、点击计数、搜索高亮等）
  */
 class OptimizedNavigation {
     constructor() {
@@ -75,11 +75,8 @@ class OptimizedNavigation {
     _isValidIconUrl(url) {
         if (!url || typeof url !== 'string') return false;
         const trimmed = url.trim();
-        // 必须以 http:// 或 https:// 开头
         if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) return false;
-        // 扩展名必须是常见图片格式（可选查询参数）
         if (!/\.(png|jpg|jpeg|ico|svg|webp)(\?.*)?$/i.test(trimmed)) return false;
-        // 确保 URL 不包含非 ASCII 字符（如表情符号）
         if (/[^\x00-\x7F]/.test(trimmed)) return false;
         return true;
     }
@@ -92,7 +89,6 @@ class OptimizedNavigation {
      */
     _createIconElement(siteUrl, existingIcon = null) {
         let candidates = this._getIconCandidates(siteUrl);
-        // 严格校验 existingIcon：必须是有效的图片 URL
         if (existingIcon && this._isValidIconUrl(existingIcon)) {
             candidates.unshift(existingIcon);
         }
@@ -423,12 +419,12 @@ class OptimizedNavigation {
         card.rel = 'noopener noreferrer';
         card.title = `${site.title}\n${site.description || ''}`;
 
-        // 完全通过 _createIconElement 生成图标，不再单独处理 site.icon
+        // 完全通过 _createIconElement 生成图标
         const iconHtml = this._createIconElement(site.url, site.icon);
 
         const views = site.views || 0;
         const formattedViews = this._formatViews(views);
-        
+
         let titleHtml = this._escapeHtml(site.title);
         let descHtml = this._escapeHtml(site.description || '暂无描述');
         if (isSearchResult && keyword) {
@@ -456,14 +452,15 @@ class OptimizedNavigation {
             </div>
         `;
 
-        // 点击卡片统计
+        // 点击卡片统计（发送 id 和 url，确保后端可靠更新）
         card.addEventListener('click', (e) => {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
             if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
+            // 发送网站 ID 和 URL（向后兼容）
             Utils.safeFetch(`${this.apiBase}/click`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: site.url, title: site.title })
+                body: JSON.stringify({ id: site.id, url: site.url })
             }).catch(() => {});
             const viewEl = card.querySelector('.view-count');
             if (viewEl) {
