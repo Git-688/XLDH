@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，已移除标记已处理功能）
+// admin.js - 星聚导航后台管理（完整版，已移除标记已处理）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -6,7 +6,6 @@
     const LOCK_DURATION_MS = 10 * 60 * 1000;
     const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
 
-    // 日志存储配置
     const LOG_STORAGE_KEY = 'admin_operation_logs';
     const MAX_LOG_COUNT = 100;
     const LOG_RETENTION_DAYS = 7;
@@ -21,217 +20,75 @@
     let refreshTimer = null;
     let customSelects = {};
 
-    // ========== 日志管理（localStorage 持久化） ==========
+    // 日志管理
     function getLogs() {
         try {
             const logsRaw = localStorage.getItem(LOG_STORAGE_KEY);
             const logs = logsRaw ? JSON.parse(logsRaw) : [];
             const now = Date.now();
             const filtered = logs.filter(log => (now - log.timestamp) < LOG_RETENTION_DAYS * 24 * 3600 * 1000);
-            if (filtered.length !== logs.length) {
-                localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(filtered));
-            }
+            if (filtered.length !== logs.length) localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(filtered));
             return filtered;
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
-
     function saveLogs(logs) {
         try {
-            if (logs.length > MAX_LOG_COUNT) {
-                logs = logs.slice(0, MAX_LOG_COUNT);
-            }
+            if (logs.length > MAX_LOG_COUNT) logs = logs.slice(0, MAX_LOG_COUNT);
             localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs));
         } catch (e) {}
     }
-
     function addLog(text) {
         const logs = getLogs();
-        logs.unshift({
-            id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-            time: new Date().toLocaleString(),
-            timestamp: Date.now(),
-            text: text
-        });
+        logs.unshift({ id: Date.now() + '_' + Math.random().toString(36).substr(2,6), time: new Date().toLocaleString(), timestamp: Date.now(), text: text });
         saveLogs(logs);
     }
-
-    function clearLogs() {
-        localStorage.removeItem(LOG_STORAGE_KEY);
-        showToast('日志已清空', 'success');
-    }
-
+    function clearLogs() { localStorage.removeItem(LOG_STORAGE_KEY); showToast('日志已清空', 'success'); }
     function showLogs() {
         const logs = getLogs();
-        const logListHtml = logs.length
-            ? logs.map(l => `<div class="log-item"><span>${escapeHtml(l.time)}</span> ${escapeHtml(l.text)}</div>`).join('')
-            : '<div class="empty">暂无记录</div>';
+        const logListHtml = logs.length ? logs.map(l => `<div class="log-item"><span>${escapeHtml(l.time)}</span> ${escapeHtml(l.text)}</div>`).join('') : '<div class="empty">暂无记录</div>';
         document.getElementById('logList').innerHTML = logListHtml;
         const modal = document.getElementById('logModal');
         modal.classList.add('show');
         const clearBtn = document.getElementById('clearLogsBtn');
-        if (clearBtn) {
-            clearBtn.onclick = () => {
-                if (confirm('确定要清空所有操作日志吗？')) {
-                    clearLogs();
-                    showLogs();
-                }
-            };
-        }
+        if (clearBtn) clearBtn.onclick = () => { if (confirm('清空所有操作日志？')) { clearLogs(); showLogs(); } };
     }
 
-    // 注入全局样式
     function injectGlobalStyles() {
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
             style.id = 'admin-global-styles';
             style.textContent = `
-                .submission-title-truncate {
-                    display: inline-block;
-                    max-width: 300px;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                    vertical-align: middle;
-                }
+                .submission-title-truncate { display: inline-block; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
                 @media (max-width: 768px) { .submission-title-truncate { max-width: 180px; } }
                 @media (max-width: 480px) { .submission-title-truncate { max-width: 120px; } }
-                .form-input {
-                    width: 100%;
-                    padding: 8px 12px;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 8px;
-                    font-size: 13px;
-                    background: #fff;
-                    transition: all 0.2s;
-                    box-sizing: border-box;
-                }
-                .form-input:focus {
-                    border-color: #3b82f6;
-                    outline: none;
-                    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-                }
-                textarea.form-input {
-                    resize: vertical;
-                    font-family: inherit;
-                }
-                .inline-select-group {
-                    display: flex;
-                    gap: 10px;
-                    flex-wrap: wrap;
-                    margin-bottom: 12px;
-                }
-                .custom-select-wrapper {
-                    position: relative;
-                    flex: 1;
-                    min-width: 120px;
-                }
-                .custom-select-trigger {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 8px 12px;
-                    background: #fff;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 8px;
-                    font-size: 13px;
-                    color: #1e293b;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    gap: 8px;
-                }
+                .form-input { width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; background: #fff; transition: all 0.2s; box-sizing: border-box; }
+                .form-input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+                textarea.form-input { resize: vertical; font-family: inherit; }
+                .inline-select-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+                .custom-select-wrapper { position: relative; flex: 1; min-width: 120px; }
+                .custom-select-trigger { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; color: #1e293b; cursor: pointer; transition: all 0.2s; gap: 8px; }
                 .custom-select-trigger:hover { border-color: #3b82f6; }
-                .custom-select-trigger.open {
-                    border-color: #3b82f6;
-                    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-                }
-                .custom-select-value {
-                    flex: 1;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
-                .custom-select-arrow {
-                    width: 16px;
-                    height: 16px;
-                    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-                    background-size: contain;
-                    transition: transform 0.2s;
-                }
+                .custom-select-trigger.open { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+                .custom-select-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .custom-select-arrow { width: 16px; height: 16px; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-size: contain; transition: transform 0.2s; }
                 .custom-select-trigger.open .custom-select-arrow { transform: rotate(180deg); }
-                .custom-select-dropdown {
-                    position: fixed;
-                    background: #fff;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                    z-index: 1000;
-                    max-height: 200px;
-                    overflow-y: auto;
-                    opacity: 0;
-                    visibility: hidden;
-                    transform: translateY(-8px);
-                    transition: all 0.2s ease;
-                    scrollbar-width: none;
-                }
+                .custom-select-dropdown { position: fixed; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; max-height: 200px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all 0.2s ease; scrollbar-width: none; }
                 .custom-select-dropdown::-webkit-scrollbar { display: none; }
-                .custom-select-dropdown.open {
-                    opacity: 1;
-                    visibility: visible;
-                    transform: translateY(0);
-                }
-                .custom-select-option {
-                    padding: 8px 12px;
-                    font-size: 13px;
-                    color: #1e293b;
-                    cursor: pointer;
-                    transition: background 0.15s;
-                }
+                .custom-select-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0); }
+                .custom-select-option { padding: 8px 12px; font-size: 13px; color: #1e293b; cursor: pointer; transition: background 0.15s; }
                 .custom-select-option:hover { background: #f1f5f9; }
-                .custom-select-option.selected {
-                    background: #e0f2fe;
-                    color: #0369a1;
-                    font-weight: 500;
-                }
+                .custom-select-option.selected { background: #e0f2fe; color: #0369a1; font-weight: 500; }
                 @media (prefers-color-scheme: dark) {
-                    .custom-select-trigger {
-                        background: #1e293b;
-                        border-color: #334155;
-                        color: #e2e8f0;
-                    }
-                    .custom-select-dropdown {
-                        background: #1e293b;
-                        border-color: #334155;
-                    }
-                    .custom-select-option {
-                        color: #e2e8f0;
-                    }
+                    .custom-select-trigger { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+                    .custom-select-dropdown { background: #1e293b; border-color: #334155; }
+                    .custom-select-option { color: #e2e8f0; }
                     .custom-select-option:hover { background: #334155; }
-                    .custom-select-option.selected {
-                        background: #0f172a;
-                        color: #38bdf8;
-                    }
-                    .form-input {
-                        background: #1e293b;
-                        border-color: #334155;
-                        color: #e2e8f0;
-                    }
+                    .custom-select-option.selected { background: #0f172a; color: #38bdf8; }
+                    .form-input { background: #1e293b; border-color: #334155; color: #e2e8f0; }
                 }
-                .log-item {
-                    padding: 7px;
-                    border-bottom: 1px solid #f1f5f9;
-                    font-size: 11px;
-                }
-                .modal-buttons-left {
-                    display: flex;
-                    gap: 8px;
-                    margin-right: auto;
-                }
-                .logs-list .log-item {
-                    padding: 12px;
-                    border-bottom: 1px solid #e2e8f0;
-                }
+                .log-item { padding: 7px; border-bottom: 1px solid #f1f5f9; font-size: 11px; }
+                .modal-buttons-left { display: flex; gap: 8px; margin-right: auto; }
+                .logs-list .log-item { padding: 12px; border-bottom: 1px solid #e2e8f0; }
                 .logs-list .log-item:last-child { border-bottom: none; }
                 .logs-list strong { color: #3b82f6; }
             `;
@@ -239,7 +96,6 @@
         }
     }
 
-    // 自定义选择器类
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -364,7 +220,6 @@
         if (!str) return '';
         return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
-
     function showToast(msg, type = 'success') {
         const toast = document.getElementById('toast');
         if (!toast) return;
@@ -373,17 +228,16 @@
         clearTimeout(toast._timeout);
         toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300);
     }
-
     function checkUrl(url) {
         try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; }
     }
-
     function autoResizeTextarea(textarea) {
         if (!textarea) return;
         textarea.style.height = 'auto';
         textarea.style.height = textarea.scrollHeight + 'px';
     }
 
+    // Token 管理
     function getStoredToken() {
         let tk = sessionStorage.getItem('admin_token');
         if (tk) {
@@ -405,7 +259,6 @@
         }
         return '';
     }
-
     function saveToken(tk, remember) {
         const exp = Date.now() + TOKEN_EXPIRE_HOURS * 3600000;
         sessionStorage.setItem('admin_token', tk);
@@ -421,7 +274,6 @@
         }
         startSessionRefresh();
     }
-
     function clearToken() {
         sessionStorage.removeItem('admin_token');
         sessionStorage.removeItem('admin_expires');
@@ -430,7 +282,6 @@
         localStorage.removeItem('admin_saved_time');
         if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
     }
-
     async function refreshSession() {
         if (!token) return false;
         try {
@@ -451,7 +302,6 @@
         } catch (e) { console.warn('刷新 session 失败:', e); }
         return false;
     }
-
     function startSessionRefresh() {
         if (refreshTimer) clearTimeout(refreshTimer);
         const expires = parseInt(sessionStorage.getItem('admin_expires') || '0', 10);
@@ -464,13 +314,13 @@
         }
     }
 
+    // 登录锁
     function updateLockMessage() {
         const el = document.getElementById('loginLockMessage');
         if (!el) return;
         if (Date.now() < lockUntil) el.textContent = `登录锁定中，剩余 ${Math.ceil((lockUntil - Date.now()) / 60000)} 分钟`;
         else el.textContent = '';
     }
-
     function checkLock() {
         if (Date.now() < lockUntil) { updateLockMessage(); showToast('登录失败过多，锁定10分钟', 'error'); return false; }
         if (failCount >= MAX_FAIL_COUNT) {
@@ -483,7 +333,6 @@
         }
         return true;
     }
-
     function recordLoginFailure() {
         failCount++;
         sessionStorage.setItem('login_fail_count', failCount + '');
@@ -493,7 +342,6 @@
             updateLockMessage();
         }
     }
-
     function resetLoginFailure() {
         failCount = 0; lockUntil = 0;
         sessionStorage.removeItem('login_fail_count');
@@ -502,6 +350,7 @@
         if (el) el.textContent = '';
     }
 
+    // 模态框
     function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null) {
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalForm').innerHTML = formHtml;
@@ -520,7 +369,6 @@
         }
         document.getElementById('modal').classList.add('show');
     }
-
     async function handleModalSubmit() {
         if (!modalAction) return;
         const btn = document.getElementById('modalSubmit');
@@ -530,7 +378,6 @@
         catch (e) { showToast('操作失败', 'error'); }
         finally { btn.disabled = false; btn.textContent = '确认'; }
     }
-
     function closeModal() { document.getElementById('modal').classList.remove('show'); modalAction = null; }
     function closeLogModal() { document.getElementById('logModal').classList.remove('show'); }
 
@@ -607,7 +454,6 @@
             showToast(e.message === 'Unauthorized' ? 'Token无效' : e.message || '登录失败', 'error');
         } finally { btn.disabled = false; btn.textContent = '登录'; }
     }
-
     function logout() {
         token = '';
         clearToken();
@@ -639,7 +485,6 @@
             else showToast('数据加载失败', 'error');
         }
     }
-
     function selectCat(cid) {
         currentCat = cid;
         currentSub = null;
@@ -651,7 +496,6 @@
         if (subs.length > 0) selectSub(subs[0].id);
         else document.getElementById('siteList').innerHTML = '<div class="empty">请先添加子分类</div>';
     }
-
     function selectSub(sid) {
         currentSub = sid;
         document.querySelectorAll('.sub-item').forEach(el => el.classList.remove('active'));
@@ -659,7 +503,6 @@
         if (target) target.classList.add('active');
         renderSiteList();
     }
-
     function renderCatBar() {
         if (!categories.length) { document.getElementById('catBar').innerHTML = '<div class="empty">暂无分类</div>'; return; }
         document.getElementById('catBar').innerHTML = categories.map(c => `
@@ -669,7 +512,6 @@
             </div>
         `).join('');
     }
-
     function renderSubList() {
         if (!currentCat) { document.getElementById('subList').innerHTML = '<div class="empty">选择分类</div>'; return; }
         const subs = subcategories.filter(s => s.category_id === currentCat);
@@ -681,7 +523,6 @@
             </div>
         `).join('');
     }
-
     function renderSiteList() {
         if (!currentSub) { document.getElementById('siteList').innerHTML = '<div class="empty">选择子分类</div>'; return; }
         const list = sites.filter(s => s.subcategory_id === currentSub);
@@ -777,7 +618,6 @@
                 });
             }
 
-            // 一级分类下拉
             const catSelect = document.createElement('select');
             catSelect.id = 'approveCatSelect';
             catSelect.innerHTML = '<option value="">选择一级分类</option>' + categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
@@ -871,7 +711,6 @@
             async () => { await apiFetch(`/admin/categories/${id}`, { method:'DELETE' }); addLog(`删除分类 ${id}`); showToast('分类已删除'); await loadAllData(); }
         );
     }
-
     function handleModifySub(id, currentName) {
         openModal('修改子分类', `<div class="form-row"><label>名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>`,
             async () => {
@@ -883,7 +722,6 @@
             async () => { await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); addLog(`删除子分类 ${id}`); showToast('子分类已删除'); await loadAllData(); }
         );
     }
-
     async function handleEditSite(id) {
         const site = sites.find(s => s.id === id);
         if (!site) return;
@@ -916,7 +754,6 @@
             if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
         }, 50);
     }
-
     function handleAddCategory() {
         openModal('新增一级分类',
             `<div class="form-row"><label>名称</label><input id="mName" class="form-input"></div>
@@ -929,7 +766,6 @@
             }
         );
     }
-
     function handleAddSub() {
         if (!currentCat) { showToast('请先选择一级分类', 'error'); return; }
         openModal('新增子分类',
@@ -943,7 +779,6 @@
             }
         );
     }
-
     function handleAddSite() {
         if (!currentSub) { showToast('请先选择子分类', 'error'); return; }
         openModal('新增链接',
@@ -956,7 +791,7 @@
                 const title = document.getElementById('mTitle').value.trim();
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
-                if (!checkUrl(url)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
+                if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
                 await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
                     subcategory_id: currentSub, title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
