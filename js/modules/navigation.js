@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 完整版（死链报告按钮隐藏修复）
+ * 优化分类导航系统 - 分页加载版（添加页面可见时自动刷新当前子分类）
  */
 class OptimizedNavigation {
     constructor() {
@@ -118,10 +118,23 @@ class OptimizedNavigation {
             }
             this.isInitialized = true;
             this.startBackgroundUpdates();
+            // 页面可见性变化时刷新当前子分类
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && this.selectedLevel2) {
+                    this.refreshCurrentSubcategory();
+                }
+            });
         } catch(error) {
             console.error('导航初始化失败:', error);
             this.showError();
         }
+    }
+
+    // 刷新当前子分类（清除缓存并重新加载）
+    async refreshCurrentSubcategory() {
+        if (!this.selectedLevel2) return;
+        this.siteCache.delete(this.selectedLevel2);
+        await this.renderLevel3(this.selectedLevel1, this.selectedLevel2);
     }
 
     async loadNavigationStructure() {
@@ -376,7 +389,6 @@ class OptimizedNavigation {
             </div>
         `;
 
-        // 点击卡片统计
         card.addEventListener('click', (e) => {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
@@ -422,7 +434,6 @@ class OptimizedNavigation {
                             reportBtn.style.display = 'none';
                             const currentSubId = this.selectedLevel2;
                             if (currentSubId) {
-                                // 清除缓存并重新加载当前子分类数据
                                 this.siteCache.delete(currentSubId);
                                 const freshSites = await this.loadSites(currentSubId, true);
                                 this.currentSites = freshSites;
