@@ -56,7 +56,7 @@
 .logo {
     width: 36px;
     height: 36px;
-    background: var(--bg-card);
+    background: #ffffff;            /* 改为白色背景 */
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -73,7 +73,7 @@
 
 .nav-brand:hover .logo { 
     transform: scale(1.05);
-    border-color: var(--border-color);  /* 移除激活颜色，保持与默认一致 */
+    border-color: var(--border-color);
 }
 
 .logo i { color: var(--text-primary); font-size: 18px; }
@@ -182,7 +182,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-    .logo { background: var(--bg-card); border-color: var(--border-color); }
+    .logo { background: #ffffff; border-color: var(--border-color); }  /* 深色模式下也保持白色背景 */
     .logo i { color: var(--text-primary); }
     .nav-brand:hover .logo { border-color: var(--border-color); }
     .brand-text { color: var(--text-primary); }
