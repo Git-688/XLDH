@@ -1,4 +1,4 @@
-// music-player.js - 完整修复版（封面优先使用歌曲封面，加载失败回退默认 Logo）
+// music-player.js - 完整修复版（封面优先使用歌曲封面，加载失败回退默认 Logo，支持网易云搜索结果延迟解析）
 // ==================== 自定义下拉选择器组件 ====================
 class CustomSelect {
     constructor(selectElement) {
@@ -810,7 +810,7 @@ class MusicPlayer {
         this.updateActiveSongInSearch(this.currentApi);
     }
 
-    // 新增方法：更新搜索结果列表中的高亮
+    // 更新搜索结果列表中的高亮
     updateActiveSongInSearch(apiId) {
         const el = this.apiElements[apiId];
         if (!el || !el.searchResults) return;
@@ -850,9 +850,11 @@ class MusicPlayer {
         this.currentIndex = index;
         this.currentPlaylist = pl;
         let song = pl[index];
-        if (song._needResolve) {
+        
+        // 汽水音乐延迟解析
+        if (song._needResolve && song.source === 'qishui') {
             const plugin = this.pluginManager.getPlugin('qishui');
-            if (plugin?._getSongUrl) {
+            if (plugin && plugin._getSongUrl) {
                 try {
                     const resolved = await plugin._getSongUrl(song.id, 'standard');
                     if (resolved.url) {
@@ -860,9 +862,29 @@ class MusicPlayer {
                         song.lrc = resolved.lyric || song.lrc;
                         song.cover = resolved.pic || song.cover;
                     }
-                } catch (e) { console.warn('汽水音乐解析失败:', e.message); }
+                } catch (e) {
+                    console.warn('汽水音乐解析失败:', e.message);
+                }
             }
         }
+        
+        // 网易云搜索结果延迟解析（使用新 API）
+        if (song._needResolve && song.source === 'netease') {
+            const neteasePlugin = this.pluginManager.getPlugin('netease');
+            if (neteasePlugin && neteasePlugin._getSongDetails) {
+                try {
+                    const resolved = await neteasePlugin._getSongDetails(song.id, 'standard');
+                    if (resolved.url) {
+                        song.src = resolved.url;
+                        song.lrc = resolved.lrc;
+                        song.cover = resolved.cover;
+                    }
+                } catch (e) {
+                    console.warn('网易云歌曲解析失败:', e.message);
+                }
+            }
+        }
+        
         this.isLoading = true;
         this.elements.playBtn.disabled = true;
         try {
@@ -899,7 +921,7 @@ class MusicPlayer {
         if (this.autoPlayNext && this.currentPlaylist.length > 1) setTimeout(() => this.next(), 1000);
     }
 
-    // 核心修改：更新歌曲信息，封面优先使用歌曲封面，加载失败回退默认 Logo
+    // 更新歌曲信息，封面优先使用歌曲封面，加载失败回退默认 Logo
     async updateSongInfo(song) {
         if (this.elements.songTitle) this.elements.songTitle.textContent = song.title;
         if (this.elements.songArtist) this.elements.songArtist.textContent = song.artist;
