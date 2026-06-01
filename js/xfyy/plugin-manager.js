@@ -1,6 +1,6 @@
 /**
  * 插件管理器 - 支持多个音乐API源
- * 网易云音乐已更换为 TinyAPI 接口
+ * 网易云音乐已更换为 TinyAPI 接口（修复 this 指向问题）
  */
 class PluginManager {
     constructor(cacheManager) {
@@ -17,7 +17,6 @@ class PluginManager {
             version: '3.0.0',
             description: '基于 TinyAPI 网易云音乐接口',
             
-            // 排行榜ID映射（前端歌单ID -> 榜单ID）
             rankIdMap: {
                 '3778678': 19723756,  // 热歌榜 -> 飙升榜（原热歌榜无对应，使用飙升榜替代）
                 '3779629': 3779629,   // 新歌榜
@@ -26,7 +25,7 @@ class PluginManager {
             },
 
             // 获取排行榜歌曲（代替原来的歌单）
-            getPlaylist: async (playlistId) => {
+            getPlaylist: async function(playlistId) {
                 const cacheKey = `netease_playlist_${playlistId}`;
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
@@ -64,7 +63,7 @@ class PluginManager {
             },
 
             // 搜索歌曲
-            search: async (keyword) => {
+            search: async function(keyword) {
                 const cacheKey = `netease_search_${keyword}`;
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
@@ -122,7 +121,7 @@ class PluginManager {
                     return { playUrl: '', cover: '', album: '' };
                 }
             },
-            getPlaylist: async (playlistId, count = 30) => {
+            getPlaylist: async function(playlistId, count = 30) {
                 const safeCount = Math.min(Math.max(1, count), 30);
                 const cacheKey = `qq_hot_playlist_full_${safeCount}`;
                 const cached = this.cacheManager.get(cacheKey);
@@ -160,7 +159,7 @@ class PluginManager {
                     return [];
                 }
             },
-            search: async (keyword) => { return []; }
+            search: async function(keyword) { return []; }
         });
 
         // 汽水音乐插件（保持不变）
@@ -267,19 +266,17 @@ class PluginManager {
             name: '本地音乐',
             version: '1.0.0',
             description: '内置本地音乐列表',
-            getPlaylist: async (playlistId) => {
+            getPlaylist: async function(playlistId) {
                 return window.getLocalMusicList ? window.getLocalMusicList() : [];
             },
-            search: async (keyword) => { return []; }
+            search: async function(keyword) { return []; }
         });
     }
 
     // 将 TinyAPI 返回的歌曲格式化为标准格式
     formatSongFromTinyApi(song, source) {
-        // 构造播放 URL：使用网易云官方外链
         const songId = song.id;
         const playUrl = `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
-        // 歌词暂不支持
         return {
             id: songId,
             title: song.name || '未知歌曲',
