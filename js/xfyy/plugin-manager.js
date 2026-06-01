@@ -1,3 +1,4 @@
+// plugin-manager.js - 完整版（网易云音乐搜索 API 已更换为 tinyaii）
 /**
  * 插件管理器 - 支持多个音乐API源（并发控制，解决 Failed to fetch）
  * 保留网易云、QQ音乐、汽水音乐、本地音乐
@@ -33,11 +34,11 @@ class PluginManager {
     initializePlugins() {
         const self = this; // 保存外部 this 引用
 
-        // 网易云音乐插件（使用新排行榜API，增加并发控制）
+        // 网易云音乐插件（使用新排行榜API，增加并发控制，并更换搜索 API）
         this.registerPlugin('netease', {
             name: '网易云音乐',
-            version: '2.2.3',
-            description: '基于 tinyaii 榜单API + Meting 解析播放地址（并发控制）',
+            version: '2.2.4',
+            description: '基于 tinyaii 榜单API + 搜索API + Meting 解析播放地址（并发控制）',
 
             // 通过歌曲ID获取播放地址和歌词（复用原Meting API，带超时和重试）
             _getSongUrlAndLyric: async function(songId, retries = 2) {
@@ -180,27 +181,51 @@ class PluginManager {
                 }
             },
 
-            // 搜索（保持原有API不变）
+            // ***** 替换为新的 tinyaii 搜索 API *****
             search: async function(keyword) {
+                const API_KEY = 'sk_18b4ef591fe11fde974d772e9663640a';
+                const SEARCH_API = 'https://api.tinyaii.top/v1/netease/search';
                 const cacheKey = `netease_search_${keyword}`;
                 const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 6000);
+                // 参数：limit 默认 20，最大 100；offset 默认 0
+                const limit = 30;  // 可调整
+                const offset = 0;
+                const url = `${SEARCH_API}?keyword=${encodeURIComponent(keyword)}&limit=${limit}&offset=${offset}`;
+
                 try {
-                    const response = await fetch(
-                        `https://api.injahow.cn/meting/?server=netease&type=search&keyword=${encodeURIComponent(keyword)}`,
-                        { signal: controller.signal }
-                    );
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${API_KEY}`,
+                            'Content-Type': 'application/json'
+                        },
+                        signal: controller.signal
+                    });
                     clearTimeout(timeoutId);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
-                    const formatted = Array.isArray(data) ? data.map(song => self.formatSong(song, 'netease')) : [];
+                    const result = await response.json();
+                    if (result.code !== 200) throw new Error(result.message || '搜索失败');
+
+                    const songs = result.data.songs || [];
+                    // 将搜索到的歌曲转换为前端期望的格式（不包含播放地址和歌词，延迟加载）
+                    const formatted = songs.map(song => ({
+                        id: song.id,
+                        title: song.name,
+                        artist: song.singer,
+                        cover: song.cover,
+                        src: '',          // 播放地址稍后通过 _getSongUrlAndLyric 获取
+                        lrc: '',          // 歌词稍后获取
+                        isOnline: true,
+                        source: 'netease'
+                    }));
+                    // 缓存搜索结果（10分钟）
                     self.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
                     return formatted;
                 } catch (error) {
-                    clearTimeout(timeoutId);
                     console.error('网易云搜索请求失败:', error);
                     return [];
                 }
