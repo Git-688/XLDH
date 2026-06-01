@@ -1,4 +1,4 @@
-// plugin-manager.js - 完整版（网易云音乐使用新的 song 解析 API）
+// plugin-manager.js - 完整版（网易云音乐搜索使用 tinyaii song API 自动解析，榜单使用旧API保持稳定）
 /**
  * 插件管理器 - 支持多个音乐API源（并发控制，解决 Failed to fetch）
  * 保留网易云、QQ音乐、汽水音乐、本地音乐
@@ -34,21 +34,18 @@ class PluginManager {
     initializePlugins() {
         const self = this; // 保存外部 this 引用
 
-        // 网易云音乐插件（使用新的 tinyaii API 进行歌曲解析和搜索）
+        // 网易云音乐插件（使用新排行榜API，搜索API + 新的 song 解析API，但榜单歌曲仍使用旧解析保持稳定）
         this.registerPlugin('netease', {
             name: '网易云音乐',
             version: '2.3.0',
-            description: '基于 tinyaii 榜单API + 搜索API + 歌曲解析API（全新）',
+            description: '基于 tinyaii 榜单API + 搜索API + 新song解析（搜索专用），榜单解析保留旧API',
 
-            // 通过歌曲ID获取播放地址和歌词（使用新的 tinyaii song API）
-            _getSongUrlAndLyric: async function(songId, level = 'standard', retries = 2) {
-                const API_KEY = 'sk_18b4ef591fe11fde974d772e9663640a';
-                const SONG_API = 'https://api.tinyaii.top/v1/netease/song';
-                const cacheKey = `netease_song_${songId}_${level}`;
+            // 通过歌曲ID获取播放地址和歌词（旧API，用于榜单歌曲，保持稳定）
+            _getSongUrlAndLyricLegacy: async function(songId, retries = 2) {
+                const cacheKey = `netease_song_legacy_${songId}`;
                 const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
-                const url = `${SONG_API}?id=${songId}&level=${level}`;
                 const fetchWithTimeout = async (url, options, timeout = 8000) => {
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -64,30 +61,26 @@ class PluginManager {
 
                 for (let attempt = 0; attempt <= retries; attempt++) {
                     try {
-                        const response = await fetchWithTimeout(url, {
-                            headers: {
-                                'Authorization': `Bearer ${API_KEY}`,
-                                'Content-Type': 'application/json'
-                            }
-                        }, 8000);
+                        const response = await fetchWithTimeout(
+                            `https://api.injahow.cn/meting/?server=netease&type=song&id=${songId}`,
+                            {},
+                            8000
+                        );
                         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        const result = await response.json();
-                        if (result.code !== 200) throw new Error(result.message || '获取歌曲信息失败');
-                        const data = result.data;
-                        const songData = {
-                            url: data.play_url || '',
-                            lrc: data.lyric || '',
-                            cover: data.cover || '',
-                            name: data.name,
-                            artist: data.singer
+                        const data = await response.json();
+                        const song = Array.isArray(data) ? data[0] : data;
+                        const result = {
+                            url: song?.url || '',
+                            lrc: song?.lrc || '',
+                            cover: song?.pic || ''
                         };
-                        if (songData.url) {
-                            self.cacheManager.set(cacheKey, songData, 60 * 60 * 1000);
+                        if (result.url) {
+                            self.cacheManager.set(cacheKey, result, 60 * 60 * 1000);
                         }
-                        return songData;
+                        return result;
                     } catch (error) {
                         if (attempt === retries) {
-                            console.warn(`获取歌曲 ${songId} 播放地址失败:`, error.message);
+                            console.warn(`获取歌曲 ${songId} 播放地址失败（旧API）:`, error.message);
                             return { url: '', lrc: '', cover: '' };
                         }
                         await new Promise(r => setTimeout(r, 500));
@@ -96,7 +89,63 @@ class PluginManager {
                 return { url: '', lrc: '', cover: '' };
             },
 
-            // 获取榜单列表或榜单歌曲（使用 tinyaii 榜单 API，并并发解析每首歌）
+            // 通过歌曲ID获取播放地址和歌词（新 tinyaii API，用于搜索结果）
+            _getSongDetailViaTinyaii: async function(songId, level = 'standard', retries = 2) {
+                const cacheKey = `netease_song_tinyaii_${songId}_${level}`;
+                const cached = self.cacheManager.get(cacheKey);
+                if (cached) return cached;
+
+                const API_KEY = 'sk_18b4ef591fe11fde974d772e9663640a';
+                const SONG_API = 'https://api.tinyaii.top/v1/netease/song';
+
+                const fetchWithTimeout = async (url, options, timeout = 8000) => {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), timeout);
+                    try {
+                        const response = await fetch(url, { ...options, signal: controller.signal });
+                        clearTimeout(timeoutId);
+                        return response;
+                    } catch (err) {
+                        clearTimeout(timeoutId);
+                        throw err;
+                    }
+                };
+
+                for (let attempt = 0; attempt <= retries; attempt++) {
+                    try {
+                        const url = `${SONG_API}?id=${songId}&level=${level}`;
+                        const response = await fetchWithTimeout(url, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${API_KEY}`,
+                                'Content-Type': 'application/json'
+                            }
+                        }, 8000);
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const result = await response.json();
+                        if (result.code !== 200) throw new Error(result.message || '获取歌曲详情失败');
+                        const data = result.data;
+                        const songDetail = {
+                            url: data.play_url || '',
+                            lrc: data.lyric || '',
+                            cover: data.cover || ''
+                        };
+                        if (songDetail.url) {
+                            self.cacheManager.set(cacheKey, songDetail, 60 * 60 * 1000);
+                        }
+                        return songDetail;
+                    } catch (error) {
+                        if (attempt === retries) {
+                            console.warn(`获取歌曲 ${songId} 详情失败（新API）:`, error.message);
+                            return { url: '', lrc: '', cover: '' };
+                        }
+                        await new Promise(r => setTimeout(r, 500));
+                    }
+                }
+                return { url: '', lrc: '', cover: '' };
+            },
+
+            // 获取榜单列表或榜单歌曲（新API，榜单歌曲解析仍使用旧API保证稳定）
             getPlaylist: async function(playlistId) {
                 const API_KEY = 'sk_18b4ef591fe11fde974d772e9663640a';
                 const API_BASE = 'https://api.tinyaii.top/v1/netease/toplist';
@@ -158,10 +207,10 @@ class PluginManager {
                     if (result.code !== 200) throw new Error(result.message || '获取榜单歌曲失败');
 
                     const songs = result.data.songs || [];
-                    // 使用并发控制获取每首歌的播放地址和歌词（最多同时5个请求）
+                    // 使用并发控制获取每首歌的播放地址和歌词（使用旧API保持稳定）
                     const songTasks = songs.map((song) => {
                         return async () => {
-                            const songInfo = await this._getSongUrlAndLyric(song.id);
+                            const songInfo = await this._getSongUrlAndLyricLegacy(song.id);
                             if (songInfo.url) {
                                 return {
                                     id: song.id,
@@ -188,7 +237,7 @@ class PluginManager {
                 }
             },
 
-            // 搜索功能：使用 tinyaii 搜索 API，并并发解析每首歌的完整信息
+            // ***** 搜索：使用 tinyaii 搜索 API + 新的 song 解析 API *****
             search: async function(keyword) {
                 const API_KEY = 'sk_18b4ef591fe11fde974d772e9663640a';
                 const SEARCH_API = 'https://api.tinyaii.top/v1/netease/search';
@@ -196,6 +245,7 @@ class PluginManager {
                 const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
+                // 参数：limit 默认 20，最大 100；offset 默认 0
                 const limit = 30;  // 可调整
                 const offset = 0;
                 const url = `${SEARCH_API}?keyword=${encodeURIComponent(keyword)}&limit=${limit}&offset=${offset}`;
@@ -217,28 +267,40 @@ class PluginManager {
                     if (result.code !== 200) throw new Error(result.message || '搜索失败');
 
                     const songs = result.data.songs || [];
-                    // 并发解析每首歌的播放链接和歌词
+                    // 对每个搜索结果，使用新的 tinyaii song API 获取详情（播放链接、歌词、封面）
                     const songTasks = songs.map((song) => {
                         return async () => {
-                            const songInfo = await this._getSongUrlAndLyric(song.id);
-                            if (songInfo.url) {
+                            const songDetail = await this._getSongDetailViaTinyaii(song.id, 'standard');
+                            if (songDetail.url) {
                                 return {
                                     id: song.id,
                                     title: song.name,
                                     artist: song.singer,
-                                    src: songInfo.url,
-                                    cover: songInfo.cover || song.cover,
-                                    lrc: songInfo.lrc,
+                                    src: songDetail.url,
+                                    cover: songDetail.cover || song.cover,
+                                    lrc: songDetail.lrc,
                                     isOnline: true,
                                     source: 'netease'
                                 };
                             }
-                            return null;
+                            // 如果解析失败，返回一个占位对象（无播放地址，但用户仍可看到）
+                            return {
+                                id: song.id,
+                                title: song.name,
+                                artist: song.singer,
+                                src: '',
+                                cover: song.cover,
+                                lrc: '',
+                                isOnline: false,
+                                source: 'netease'
+                            };
                         };
                     });
+                    // 并发控制，最多同时请求 5 首歌曲详情
                     const formattedSongs = await self.runWithConcurrency(songTasks, 5);
+                    // 过滤掉既无播放地址也无占位（实际上上面的函数总会返回对象，不过过滤掉完全无效的）
                     const validSongs = formattedSongs.filter(song => song !== null);
-                    // 缓存完整搜索结果（10分钟）
+                    // 缓存搜索结果（10分钟）
                     self.cacheManager.set(cacheKey, validSongs, 10 * 60 * 1000);
                     return validSongs;
                 } catch (error) {
