@@ -1,4 +1,4 @@
-// music-player.js - 完整修复版（音量滑块触摸优化 + 搜索结果高亮同步）
+// music-player.js - 完整修复版（封面优先使用歌曲封面，加载失败回退默认 Logo）
 // ==================== 自定义下拉选择器组件 ====================
 class CustomSelect {
     constructor(selectElement) {
@@ -899,20 +899,55 @@ class MusicPlayer {
         if (this.autoPlayNext && this.currentPlaylist.length > 1) setTimeout(() => this.next(), 1000);
     }
 
+    // 核心修改：更新歌曲信息，封面优先使用歌曲封面，加载失败回退默认 Logo
     async updateSongInfo(song) {
         if (this.elements.songTitle) this.elements.songTitle.textContent = song.title;
         if (this.elements.songArtist) this.elements.songArtist.textContent = song.artist;
-        const coverUrl = song.cover || '/assets/logo.png';
-        if (this.elements.coverImg) {
-            this.elements.coverImg.setAttribute('data-src', coverUrl);
-            this.elements.coverImg.classList.add('lazy-cover');
-            if (this.coverObserver) this.coverObserver.observe(this.elements.coverImg);
-            else this.elements.coverImg.src = coverUrl;
-            this.elements.coverImg.style.display = 'block';
+
+        // 确定封面 URL：优先使用 song.cover，无效则使用默认 Logo
+        let coverUrl = song.cover && (song.cover.startsWith('http://') || song.cover.startsWith('https://'))
+            ? song.cover
+            : '/assets/logo.png';
+
+        // 针对已知可能为空的第三方字段进行兜底（例如网易云某些接口返回 pic 字段）
+        if (coverUrl === '/assets/logo.png' && song.pic && (song.pic.startsWith('http://') || song.pic.startsWith('https://'))) {
+            coverUrl = song.pic;
+        }
+
+        const coverImg = this.elements.coverImg;
+        if (!coverImg) return;
+
+        // 清除旧的观察者或正在加载的图片
+        if (this.coverObserver && coverImg.dataset.src) {
+            this.coverObserver.unobserve(coverImg);
+        }
+
+        // 设置封面图片，并处理加载失败
+        const setCover = (url) => {
+            coverImg.src = url;
+            coverImg.style.display = 'block';
             const placeholder = document.querySelector('.cover-placeholder');
             if (placeholder) placeholder.style.display = 'none';
-            this.elements.coverImg.onerror = () => { this.elements.coverImg.src = '/assets/logo.png'; };
+        };
+
+        // 如果有有效的封面 URL，尝试加载，失败则回退到默认 Logo
+        if (coverUrl !== '/assets/logo.png') {
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                setCover(coverUrl);
+            };
+            tempImg.onerror = () => {
+                console.warn(`封面加载失败，回退至默认 Logo: ${coverUrl}`);
+                setCover('/assets/logo.png');
+            };
+            tempImg.src = coverUrl;
+        } else {
+            setCover('/assets/logo.png');
         }
+
+        // 更新懒加载属性（如果需要）
+        coverImg.removeAttribute('data-src');
+        coverImg.classList.remove('lazy-cover');
     }
 
     async downloadCurrentSong() {
