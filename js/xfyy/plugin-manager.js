@@ -1,5 +1,5 @@
 /**
- * 插件管理器 - 支持多个音乐API源（网易云排行榜已更换为新API）
+ * 插件管理器 - 支持多个音乐API源（网易云排行榜已更换为新API，修复this绑定）
  * 保留网易云、QQ音乐、汽水音乐、本地音乐
  */
 class PluginManager {
@@ -11,13 +11,13 @@ class PluginManager {
     }
 
     initializePlugins() {
-        // 网易云音乐插件（使用新排行榜API）
+        // 网易云音乐插件（使用新排行榜API，修正this绑定）
         this.registerPlugin('netease', {
             name: '网易云音乐',
-            version: '2.2.0',
+            version: '2.2.1',
             description: '基于 tinyaii 榜单API + Meting 解析播放地址',
 
-            // 新增：通过歌曲ID获取播放地址和歌词（复用原Meting API）
+            // 通过歌曲ID获取播放地址和歌词（复用原Meting API）
             _getSongUrlAndLyric: async function(songId) {
                 const cacheKey = `netease_song_${songId}`;
                 const cached = this.cacheManager.get(cacheKey);
@@ -26,7 +26,6 @@ class PluginManager {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 8000);
                 try {
-                    // 使用原 Meting API 获取播放地址和歌词
                     const response = await fetch(
                         `https://api.injahow.cn/meting/?server=netease&type=song&id=${songId}`,
                         { signal: controller.signal }
@@ -50,7 +49,7 @@ class PluginManager {
             },
 
             // 获取榜单列表或榜单歌曲（新API）
-            getPlaylist: async (playlistId) => {
+            getPlaylist: async function(playlistId) {
                 const API_KEY = 'sk_18b4ef591fe11fde974d772e9663640a';
                 const API_BASE = 'https://api.tinyaii.top/v1/netease/toplist';
 
@@ -137,7 +136,7 @@ class PluginManager {
             },
 
             // 搜索（保持原有API不变）
-            search: async (keyword) => {
+            search: async function(keyword) {
                 const cacheKey = `netease_search_${keyword}`;
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
@@ -200,7 +199,7 @@ class PluginManager {
                 }
             },
 
-            getPlaylist: async (playlistId, count = 30) => {
+            getPlaylist: async function(playlistId, count = 30) {
                 const safeCount = Math.min(Math.max(1, count), 30);
                 const cacheKey = `qq_hot_playlist_full_${safeCount}`;
                 const cached = this.cacheManager.get(cacheKey);
@@ -245,7 +244,7 @@ class PluginManager {
                 }
             },
 
-            search: async (keyword, count = 20) => {
+            search: async function(keyword, count = 20) {
                 return [];
             }
         });
