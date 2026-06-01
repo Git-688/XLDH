@@ -1,7 +1,39 @@
 /**
  * 插件管理器 - 支持多个音乐API源
- * 网易云音乐已更换为 TinyAPI 接口（修复 this 指向问题）
+ * 网易云音乐已更换为 TinyAPI 接口（完整修复版）
  */
+
+// 辅助函数：将 TinyAPI 返回的歌曲格式化为标准格式
+function formatSongFromTinyApi(song, source) {
+    const songId = song.id;
+    const playUrl = `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
+    return {
+        id: songId,
+        title: song.name || '未知歌曲',
+        artist: song.singer || '未知歌手',
+        src: playUrl,
+        cover: song.cover || '',
+        lrc: '',
+        isOnline: true,
+        source: source,
+        duration: song.duration || '0:00'
+    };
+}
+
+// 通用格式化（用于其他插件）
+function formatSong(song, source) {
+    return {
+        id: song.id || Utils.generateId(),
+        title: song.title || song.name || '未知歌曲',
+        artist: song.author || song.artist || '未知歌手',
+        src: song.url,
+        cover: song.pic,
+        lrc: song.lrc,
+        isOnline: true,
+        source: source
+    };
+}
+
 class PluginManager {
     constructor(cacheManager) {
         this.cacheManager = cacheManager || new CacheManager();
@@ -18,7 +50,7 @@ class PluginManager {
             description: '基于 TinyAPI 网易云音乐接口',
             
             rankIdMap: {
-                '3778678': 19723756,  // 热歌榜 -> 飙升榜（原热歌榜无对应，使用飙升榜替代）
+                '3778678': 19723756,  // 热歌榜 -> 飙升榜
                 '3779629': 3779629,   // 新歌榜
                 '2884035': 2884035,   // 原创榜
                 '19723756': 19723756  // 飙升榜
@@ -30,7 +62,6 @@ class PluginManager {
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
-                // 映射榜单ID
                 const rankId = this.rankIdMap[playlistId] || 19723756;
                 const apiUrl = `https://api.tinyaii.top/v1/netease/toplist?id=${rankId}`;
 
@@ -53,7 +84,7 @@ class PluginManager {
                 try {
                     const data = await fetchWithTimeout(apiUrl);
                     const songs = data.data?.songs || [];
-                    const formatted = songs.map(song => this.formatSongFromTinyApi(song, 'netease'));
+                    const formatted = songs.map(song => formatSongFromTinyApi(song, 'netease'));
                     this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
                     return formatted;
                 } catch (error) {
@@ -79,7 +110,7 @@ class PluginManager {
                     const data = await response.json();
                     if (data.code !== 200) throw new Error(data.message || '搜索失败');
                     const songs = data.data?.songs || [];
-                    const formatted = songs.map(song => this.formatSongFromTinyApi(song, 'netease'));
+                    const formatted = songs.map(song => formatSongFromTinyApi(song, 'netease'));
                     this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
                     return formatted;
                 } catch (error) {
@@ -90,7 +121,7 @@ class PluginManager {
             }
         });
 
-        // QQ音乐插件（保持不变）
+        // QQ音乐插件
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '2.3.0',
@@ -140,7 +171,7 @@ class PluginManager {
                     const songsWithFullInfo = await Promise.all(
                         hotResult.data.map(async (song) => {
                             const { playUrl, cover, album } = await this._getSongInfoBySongmid(song.songmid);
-                            return this.formatSong({
+                            return formatSong({
                                 title: song.albumname,
                                 artist: song.name,
                                 album: album || song.albumname,
@@ -162,7 +193,7 @@ class PluginManager {
             search: async function(keyword) { return []; }
         });
 
-        // 汽水音乐插件（保持不变）
+        // 汽水音乐插件
         this.registerPlugin('qishui', {
             name: '汽水音乐',
             version: '1.2.1',
@@ -273,38 +304,9 @@ class PluginManager {
         });
     }
 
-    // 将 TinyAPI 返回的歌曲格式化为标准格式
-    formatSongFromTinyApi(song, source) {
-        const songId = song.id;
-        const playUrl = `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
-        return {
-            id: songId,
-            title: song.name || '未知歌曲',
-            artist: song.singer || '未知歌手',
-            src: playUrl,
-            cover: song.cover || '',
-            lrc: '',
-            isOnline: true,
-            source: source,
-            duration: song.duration || '0:00'
-        };
-    }
-
-    // 通用格式化（用于其他插件）
-    formatSong(song, source) {
-        return {
-            id: song.id || Utils.generateId(),
-            title: song.title || song.name || '未知歌曲',
-            artist: song.author || song.artist || '未知歌手',
-            src: song.url,
-            cover: song.pic,
-            lrc: song.lrc,
-            isOnline: true,
-            source: source
-        };
-    }
-
     registerPlugin(id, plugin) {
+        // 将 cacheManager 注入到插件对象中，以便插件方法内部可以使用 this.cacheManager
+        plugin.cacheManager = this.cacheManager;
         this.plugins.set(id, { id, type: 'builtin', ...plugin });
     }
 
@@ -333,7 +335,8 @@ class PluginManager {
         if (!plugin || !plugin.getPlaylist) {
             throw new Error(`插件 ${apiId} 不支持获取歌单`);
         }
-        return await plugin.getPlaylist(playlistId);
+        // 确保调用时 this 指向插件对象
+        return await plugin.getPlaylist.call(plugin, playlistId);
     }
 
     async search(apiId, keyword) {
@@ -341,7 +344,7 @@ class PluginManager {
         if (!plugin || !plugin.search) {
             return [];
         }
-        return await plugin.search(keyword);
+        return await plugin.search.call(plugin, keyword);
     }
 
     async preloadSong(song) {
