@@ -1,4 +1,4 @@
-// music-player.js - 完整版（支持网易云搜索自动解析）
+// music-player.js - 完整修复版（封面优先使用歌曲封面，加载失败回退默认 Logo）
 // ==================== 自定义下拉选择器组件 ====================
 class CustomSelect {
     constructor(selectElement) {
@@ -396,10 +396,12 @@ class MusicPlayer {
         this.elements.modeBtn.addEventListener('click', () => this.togglePlayMode());
         this.elements.volumeBtn.addEventListener('click', () => this.toggleVolumeSlider());
         
+        // 音量滑块：同时支持 mouse 和 touch 事件，提升移动端灵敏度
         this.elements.volumeSlider.addEventListener('input', (e) => {
             this.setVolume(e.target.value / 100);
             this.saveVolume(e.target.value / 100);
         });
+        // 增加 touchmove 事件，确保移动端拖动时连续响应
         this.elements.volumeSlider.addEventListener('touchmove', (e) => {
             e.preventDefault();
             const value = parseInt(e.target.value, 10);
@@ -683,7 +685,7 @@ class MusicPlayer {
         this.currentApi = apiId;
         this.updateSearchToggleButton();
         await this.loadApiPlaylist(apiId);
-        this.updateActiveSongInList();
+        this.updateActiveSongInList(); // 切换后高亮当前播放歌曲
     }
 
     async loadApiPlaylist(apiId) {
@@ -782,6 +784,7 @@ class MusicPlayer {
         const fragment = document.createDocumentFragment();
         results.forEach((song, idx) => fragment.appendChild(this.createSearchSongItem(song, idx, results)));
         container.appendChild(fragment);
+        // 搜索结果渲染后也要高亮当前播放歌曲
         this.updateActiveSongInSearch(apiId);
     }
 
@@ -803,17 +806,21 @@ class MusicPlayer {
         if (this.currentPlaylist && this.currentIndex >= 0 && this.currentIndex < items.length) {
             items[this.currentIndex].classList.add('active');
         }
+        // 同时更新搜索结果中的高亮
         this.updateActiveSongInSearch(this.currentApi);
     }
 
+    // 新增方法：更新搜索结果列表中的高亮
     updateActiveSongInSearch(apiId) {
         const el = this.apiElements[apiId];
         if (!el || !el.searchResults) return;
         const items = el.searchResults.querySelectorAll('.song-item');
+        // 清除所有高亮
         items.forEach(item => item.classList.remove('active'));
         if (this.isPlaying && this.currentPlaylist && this.currentIndex >= 0) {
             const currentSong = this.currentPlaylist[this.currentIndex];
             if (!currentSong) return;
+            // 在搜索结果中查找相同 id 或 title+artist 匹配的项并高亮
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
                 const titleEl = item.querySelector('.song-item-title');
@@ -836,7 +843,6 @@ class MusicPlayer {
         });
     }
 
-    // 核心修改：loadSong 支持解析网易云搜索结果（_needResolve）
     async loadSong(index, playlist = null) {
         if (this.isHandlingNavigationClick) return;
         const pl = playlist || this.currentPlaylist;
@@ -844,9 +850,7 @@ class MusicPlayer {
         this.currentIndex = index;
         this.currentPlaylist = pl;
         let song = pl[index];
-        
-        // 汽水音乐解析（原有）
-        if (song._needResolve && song.source === 'qishui') {
+        if (song._needResolve) {
             const plugin = this.pluginManager.getPlugin('qishui');
             if (plugin?._getSongUrl) {
                 try {
@@ -855,29 +859,10 @@ class MusicPlayer {
                         song.src = resolved.url;
                         song.lrc = resolved.lyric || song.lrc;
                         song.cover = resolved.pic || song.cover;
-                        song._needResolve = false;
                     }
                 } catch (e) { console.warn('汽水音乐解析失败:', e.message); }
             }
         }
-        
-        // 新增：网易云搜索结果解析（使用新的 resolveSong 方法）
-        if (song._needResolve && song.source === 'netease') {
-            try {
-                const resolved = await this.pluginManager.resolveSong('netease', song);
-                if (resolved.src) {
-                    song.src = resolved.src;
-                    song.lrc = resolved.lrc;
-                    song.cover = resolved.cover;
-                    song._needResolve = false;
-                } else {
-                    console.warn('网易云歌曲解析失败: 未获得播放地址');
-                }
-            } catch (e) {
-                console.warn('网易云歌曲解析异常:', e);
-            }
-        }
-        
         this.isLoading = true;
         this.elements.playBtn.disabled = true;
         try {
@@ -914,15 +899,17 @@ class MusicPlayer {
         if (this.autoPlayNext && this.currentPlaylist.length > 1) setTimeout(() => this.next(), 1000);
     }
 
-    // 更新歌曲信息，封面优先使用歌曲封面，加载失败回退默认 Logo
+    // 核心修改：更新歌曲信息，封面优先使用歌曲封面，加载失败回退默认 Logo
     async updateSongInfo(song) {
         if (this.elements.songTitle) this.elements.songTitle.textContent = song.title;
         if (this.elements.songArtist) this.elements.songArtist.textContent = song.artist;
 
+        // 确定封面 URL：优先使用 song.cover，无效则使用默认 Logo
         let coverUrl = song.cover && (song.cover.startsWith('http://') || song.cover.startsWith('https://'))
             ? song.cover
             : '/assets/logo.png';
 
+        // 针对已知可能为空的第三方字段进行兜底（例如网易云某些接口返回 pic 字段）
         if (coverUrl === '/assets/logo.png' && song.pic && (song.pic.startsWith('http://') || song.pic.startsWith('https://'))) {
             coverUrl = song.pic;
         }
@@ -930,10 +917,12 @@ class MusicPlayer {
         const coverImg = this.elements.coverImg;
         if (!coverImg) return;
 
+        // 清除旧的观察者或正在加载的图片
         if (this.coverObserver && coverImg.dataset.src) {
             this.coverObserver.unobserve(coverImg);
         }
 
+        // 设置封面图片，并处理加载失败
         const setCover = (url) => {
             coverImg.src = url;
             coverImg.style.display = 'block';
@@ -941,9 +930,12 @@ class MusicPlayer {
             if (placeholder) placeholder.style.display = 'none';
         };
 
+        // 如果有有效的封面 URL，尝试加载，失败则回退到默认 Logo
         if (coverUrl !== '/assets/logo.png') {
             const tempImg = new Image();
-            tempImg.onload = () => { setCover(coverUrl); };
+            tempImg.onload = () => {
+                setCover(coverUrl);
+            };
             tempImg.onerror = () => {
                 console.warn(`封面加载失败，回退至默认 Logo: ${coverUrl}`);
                 setCover('/assets/logo.png');
@@ -953,6 +945,7 @@ class MusicPlayer {
             setCover('/assets/logo.png');
         }
 
+        // 更新懒加载属性（如果需要）
         coverImg.removeAttribute('data-src');
         coverImg.classList.remove('lazy-cover');
     }
