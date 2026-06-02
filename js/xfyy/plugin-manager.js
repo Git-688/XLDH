@@ -1,7 +1,5 @@
-// plugin-manager.js - 完整版（支持网易云、QQ音乐、汽水音乐、本地音乐，并发控制）
 /**
- * 插件管理器 - 支持多个音乐API源（并发控制，解决 Failed to fetch）
- * 保留网易云、QQ音乐、汽水音乐、本地音乐
+ * 插件管理器 - 支持多个音乐API源（修复播放地址获取失败 + 使用歌曲对应封面）
  */
 class PluginManager {
     constructor(cacheManager) {
@@ -11,81 +9,59 @@ class PluginManager {
         this.initializePlugins();
     }
 
-    /**
-     * 并发控制函数：同时最多执行 limit 个 Promise
-     */
-    async runWithConcurrency(tasks, limit = 5) {
-        const results = [];
-        const executing = [];
-        for (const task of tasks) {
-            const p = Promise.resolve().then(() => task());
-            results.push(p);
-            if (limit <= tasks.length) {
-                const e = p.then(() => executing.splice(executing.indexOf(e), 1));
-                executing.push(e);
-                if (executing.length >= limit) {
-                    await Promise.race(executing);
-                }
-            }
-        }
-        return Promise.all(results);
-    }
-
     initializePlugins() {
-        const self = this; // 保存外部 this 引用
+        const self = this;
 
-        // 网易云音乐插件（使用新排行榜API，增加并发控制）
+        // 网易云音乐插件（使用新排行榜API）
         this.registerPlugin('netease', {
             name: '网易云音乐',
             version: '2.2.3',
-            description: '基于 tinyaii 榜单API + Meting 解析播放地址（并发控制）',
+            description: '基于 tinyaii 榜单API + Meting 解析播放地址',
 
-            // 通过歌曲ID获取播放地址和歌词（复用原Meting API，带超时和重试）
-            _getSongUrlAndLyric: async function(songId, retries = 2) {
+            // 通过歌曲ID获取播放地址和歌词（带重试和备用API）
+            _getSongUrlAndLyric: async function(songId, retryCount = 0) {
                 const cacheKey = `netease_song_${songId}`;
                 const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
-                const fetchWithTimeout = async (url, options, timeout = 8000) => {
+                // 主API和备用API列表
+                const apis = [
+                    `https://api.injahow.cn/meting/?server=netease&type=song&id=${songId}`,
+                    `https://api.i-meto.com/meting/api?server=netease&type=song&id=${songId}`
+                ];
+                
+                for (let i = 0; i < apis.length; i++) {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), timeout);
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
                     try {
-                        const response = await fetch(url, { ...options, signal: controller.signal });
+                        const response = await fetch(apis[i], { signal: controller.signal });
                         clearTimeout(timeoutId);
-                        return response;
-                    } catch (err) {
-                        clearTimeout(timeoutId);
-                        throw err;
-                    }
-                };
-
-                for (let attempt = 0; attempt <= retries; attempt++) {
-                    try {
-                        const response = await fetchWithTimeout(
-                            `https://api.injahow.cn/meting/?server=netease&type=song&id=${songId}`,
-                            {},
-                            8000
-                        );
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        if (!response.ok) continue;
                         const data = await response.json();
                         const song = Array.isArray(data) ? data[0] : data;
-                        const result = {
-                            url: song?.url || '',
-                            lrc: song?.lrc || '',
-                            cover: song?.pic || ''
-                        };
-                        if (result.url) {
+                        if (song && song.url) {
+                            const result = {
+                                url: song.url,
+                                lrc: song.lrc || '',
+                                cover: song.pic || song.cover || ''
+                            };
                             self.cacheManager.set(cacheKey, result, 60 * 60 * 1000);
+                            return result;
                         }
-                        return result;
                     } catch (error) {
-                        if (attempt === retries) {
-                            console.warn(`获取歌曲 ${songId} 播放地址失败:`, error.message);
-                            return { url: '', lrc: '', cover: '' };
-                        }
-                        await new Promise(r => setTimeout(r, 500));
+                        clearTimeout(timeoutId);
+                        console.warn(`获取歌曲 ${songId} 播放地址失败 (API ${i+1}):`, error.message);
                     }
                 }
+                
+                // 重试一次（如果还没超过重试次数）
+                if (retryCount < 2) {
+                    console.log(`重试获取歌曲 ${songId} 播放地址，第 ${retryCount + 1} 次重试`);
+                    await new Promise(r => setTimeout(r, 1000));
+                    return this._getSongUrlAndLyric(songId, retryCount + 1);
+                }
+                
+                console.warn(`歌曲 ${songId} 所有API均获取失败`);
                 return { url: '', lrc: '', cover: '' };
             },
 
@@ -151,28 +127,28 @@ class PluginManager {
                     if (result.code !== 200) throw new Error(result.message || '获取榜单歌曲失败');
 
                     const songs = result.data.songs || [];
-                    // 使用并发控制获取每首歌的播放地址和歌词（最多同时5个请求）
-                    const songTasks = songs.map((song) => {
-                        return async () => {
+                    // 并发获取每首歌的播放地址和歌词（限制并发数）
+                    const batchSize = 5;
+                    const formattedSongs = [];
+                    for (let i = 0; i < songs.length; i += batchSize) {
+                        const batch = songs.slice(i, i + batchSize);
+                        const batchResults = await Promise.all(batch.map(async (song) => {
                             const songInfo = await this._getSongUrlAndLyric(song.id);
-                            if (songInfo.url) {
-                                return {
-                                    id: song.id,
-                                    title: song.name || '未知歌曲',
-                                    artist: song.singer || '未知歌手',
-                                    src: songInfo.url,
-                                    cover: songInfo.cover || song.cover,
-                                    lrc: songInfo.lrc,
-                                    isOnline: true,
-                                    source: 'netease'
-                                };
-                            }
-                            return null;
-                        };
-                    });
-                    const formattedSongs = await self.runWithConcurrency(songTasks, 5);
-                    // 过滤掉 null（无法获取播放地址的歌曲）
-                    const validSongs = formattedSongs.filter(song => song !== null);
+                            return {
+                                id: song.id,
+                                title: song.name || '未知歌曲',
+                                artist: song.singer || '未知歌手',
+                                src: songInfo.url,
+                                cover: songInfo.cover || song.cover,
+                                lrc: songInfo.lrc,
+                                isOnline: true,
+                                source: 'netease'
+                            };
+                        }));
+                        formattedSongs.push(...batchResults);
+                    }
+                    // 过滤掉无法获取播放地址的歌曲
+                    const validSongs = formattedSongs.filter(song => song.src);
                     self.cacheManager.set(cacheKey, validSongs, 30 * 60 * 1000);
                     return validSongs;
                 } catch (error) {
@@ -197,7 +173,12 @@ class PluginManager {
                     clearTimeout(timeoutId);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
-                    const formatted = Array.isArray(data) ? data.map(song => self.formatSong(song, 'netease')) : [];
+                    // 确保每个搜索结果都有封面
+                    const formatted = Array.isArray(data) ? data.map(song => {
+                        const formattedSong = self.formatSong(song, 'netease');
+                        formattedSong.cover = song.pic || song.cover || '';
+                        return formattedSong;
+                    }) : [];
                     self.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
                     return formatted;
                 } catch (error) {
@@ -208,7 +189,7 @@ class PluginManager {
             }
         });
 
-        // QQ音乐插件（保持不变，但优化并发）
+        // QQ音乐插件（保持不变，添加封面支持）
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '2.3.0',
@@ -265,26 +246,22 @@ class PluginManager {
                     
                     if (hotResult.code !== 1) throw new Error(`热歌榜API错误: ${hotResult.msg}`);
 
-                    // 使用并发控制获取每首歌的信息
-                    const songTasks = hotResult.data.map((song) => {
-                        return async () => {
+                    const songsWithFullInfo = await Promise.all(
+                        hotResult.data.map(async (song) => {
                             const { playUrl, cover, album } = await this._getSongInfoBySongmid(song.songmid);
-                            if (playUrl) {
-                                return self.formatSong({
-                                    title: song.albumname,
-                                    artist: song.name,
-                                    album: album || song.albumname,
-                                    url: playUrl,
-                                    cover: cover,
-                                    pageUrl: song.link,
-                                    songmid: song.songmid
-                                }, 'qq');
-                            }
-                            return null;
-                        };
-                    });
-                    const songsWithFullInfo = await self.runWithConcurrency(songTasks, 5);
-                    const validSongs = songsWithFullInfo.filter(song => song !== null);
+                            return self.formatSong({
+                                title: song.albumname,
+                                artist: song.name,
+                                album: album || song.albumname,
+                                url: playUrl,
+                                cover: cover,
+                                pageUrl: song.link,
+                                songmid: song.songmid
+                            }, 'qq');
+                        })
+                    );
+
+                    const validSongs = songsWithFullInfo.filter(song => song.url);
                     
                     self.cacheManager.set(cacheKey, validSongs, 30 * 60 * 1000);
                     return validSongs;
@@ -443,31 +420,11 @@ class PluginManager {
             title: song.title || song.name || '未知歌曲',
             artist: song.author || song.artist || '未知歌手',
             src: song.url,
-            cover: song.pic,
+            cover: song.pic || song.cover || '',
             lrc: song.lrc,
             isOnline: true,
             source: source
         };
-    }
-
-    /**
-     * 并发控制：同时最多执行 limit 个 Promise
-     */
-    async runWithConcurrency(tasks, limit = 5) {
-        const results = [];
-        const executing = [];
-        for (const task of tasks) {
-            const p = Promise.resolve().then(() => task());
-            results.push(p);
-            if (limit <= tasks.length) {
-                const e = p.then(() => executing.splice(executing.indexOf(e), 1));
-                executing.push(e);
-                if (executing.length >= limit) {
-                    await Promise.race(executing);
-                }
-            }
-        }
-        return Promise.all(results);
     }
 
     registerPlugin(id, plugin) {
@@ -519,7 +476,7 @@ class PluginManager {
         if (song.src) {
             promises.push(this.cacheManager.preloadResource(song.src, 'audio'));
         }
-        if (song.cover) {
+        if (song.cover && song.cover !== '/assets/logo.png') {
             promises.push(this.cacheManager.preloadResource(song.cover, 'image'));
         }
         try {
