@@ -1,5 +1,6 @@
 /**
  * 插件管理器 - 支持多个音乐API源（修复播放地址获取失败 + 使用歌曲对应封面）
+ * 修改说明：网易云搜索 API 已更换为 https://api.xunhuisi.store/API/NetEaseMusic/Song.php
  */
 class PluginManager {
     constructor(cacheManager) {
@@ -12,11 +13,11 @@ class PluginManager {
     initializePlugins() {
         const self = this;
 
-        // 网易云音乐插件（使用新排行榜API）
+        // 网易云音乐插件（使用新搜索API + 原榜单API + Meting 解析播放地址）
         this.registerPlugin('netease', {
             name: '网易云音乐',
-            version: '2.2.3',
-            description: '基于 tinyaii 榜单API + Meting 解析播放地址',
+            version: '2.2.4',
+            description: '基于 tinyaii 榜单API + Meting 解析播放地址，搜索使用新API',
 
             // 通过歌曲ID获取播放地址和歌词（带重试和备用API）
             _getSongUrlAndLyric: async function(songId, retryCount = 0) {
@@ -157,28 +158,41 @@ class PluginManager {
                 }
             },
 
-            // 搜索（保持原有API不变）
-            search: async function(keyword) {
+            // 搜索（使用新 API）
+            search: async function(keyword, limit = 30) {
                 const cacheKey = `netease_search_${keyword}`;
                 const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 6000);
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
                 try {
-                    const response = await fetch(
-                        `https://api.injahow.cn/meting/?server=netease&type=search&keyword=${encodeURIComponent(keyword)}`,
-                        { signal: controller.signal }
-                    );
+                    // 新搜索 API
+                    const url = `https://api.xunhuisi.store/API/NetEaseMusic/Song.php?name=${encodeURIComponent(keyword)}&list=${Math.min(limit, 30)}`;
+                    const response = await fetch(url, { signal: controller.signal });
                     clearTimeout(timeoutId);
+
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
-                    // 确保每个搜索结果都有封面
-                    const formatted = Array.isArray(data) ? data.map(song => {
-                        const formattedSong = self.formatSong(song, 'netease');
-                        formattedSong.cover = song.pic || song.cover || '';
-                        return formattedSong;
-                    }) : [];
+
+                    // 校验返回格式
+                    if (data.code !== 200 || !Array.isArray(data.data)) {
+                        throw new Error(data.msg || '搜索返回数据格式错误');
+                    }
+
+                    // 映射为播放器需要的结构（播放地址暂时留空，后续通过 _getSongUrlAndLyric 填充）
+                    const formatted = data.data.map(item => ({
+                        id: item.id,
+                        title: item.name || '未知歌曲',
+                        artist: item.singer || '未知歌手',
+                        src: '',
+                        cover: '',
+                        lrc: '',
+                        isOnline: true,
+                        source: 'netease'
+                    }));
+
+                    // 缓存搜索结果（10分钟）
                     self.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
                     return formatted;
                 } catch (error) {
