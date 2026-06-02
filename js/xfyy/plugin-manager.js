@@ -1,462 +1,383 @@
 /**
- * 插件管理器 - 支持多个音乐API源（修复播放地址获取失败 + 使用歌曲对应封面）
- * 修改说明：网易云搜索 API 已更换为 https://api.xunhuisi.store/API/NetEaseMusic/Song.php
+ * 插件管理器 - 支持多个音乐API源
+ * 负责管理不同音乐平台的插件，包括注册、加载和调用
  */
+
 class PluginManager {
     constructor(cacheManager) {
+        // 初始化缓存管理器和插件集合
         this.cacheManager = cacheManager || new CacheManager();
         this.plugins = new Map();
-        this.currentApi = 'netease';
+        this.currentApi = 'netease'; // 默认使用网易云音乐
         this.initializePlugins();
     }
 
+    /**
+     * 初始化所有内置插件
+     */
     initializePlugins() {
-        const self = this;
-
-        // 网易云音乐插件（使用新搜索API + 原榜单API + Meting 解析播放地址）
+        // ==================== 网易云音乐插件（新 API - injahow.cn/meting） ====================
         this.registerPlugin('netease', {
             name: '网易云音乐',
             version: '2.2.4',
-            description: '基于 tinyaii 榜单API + Meting 解析播放地址，搜索使用新API',
+            description: '基于 injahow.cn/meting API，稳定可靠',
 
-            // 通过歌曲ID获取播放地址和歌词（带重试和备用API）
-            _getSongUrlAndLyric: async function(songId, retryCount = 0) {
-                const cacheKey = `netease_song_${songId}`;
-                const cached = self.cacheManager.get(cacheKey);
-                if (cached) return cached;
-
-                // 主API和备用API列表
-                const apis = [
-                    `https://api.injahow.cn/meting/?server=netease&type=song&id=${songId}`,
-                    `https://api.i-meto.com/meting/api?server=netease&type=song&id=${songId}`
-                ];
-                
-                for (let i = 0; i < apis.length; i++) {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000);
-                    try {
-                        const response = await fetch(apis[i], { signal: controller.signal });
-                        clearTimeout(timeoutId);
-                        if (!response.ok) continue;
-                        const data = await response.json();
-                        const song = Array.isArray(data) ? data[0] : data;
-                        if (song && song.url) {
-                            const result = {
-                                url: song.url,
-                                lrc: song.lrc || '',
-                                cover: song.pic || song.cover || ''
-                            };
-                            self.cacheManager.set(cacheKey, result, 60 * 60 * 1000);
-                            return result;
-                        }
-                    } catch (error) {
-                        clearTimeout(timeoutId);
-                        console.warn(`获取歌曲 ${songId} 播放地址失败 (API ${i+1}):`, error.message);
-                    }
-                }
-                
-                // 重试一次（如果还没超过重试次数）
-                if (retryCount < 2) {
-                    console.log(`重试获取歌曲 ${songId} 播放地址，第 ${retryCount + 1} 次重试`);
-                    await new Promise(r => setTimeout(r, 1000));
-                    return this._getSongUrlAndLyric(songId, retryCount + 1);
-                }
-                
-                console.warn(`歌曲 ${songId} 所有API均获取失败`);
-                return { url: '', lrc: '', cover: '' };
-            },
-
-            // 获取榜单列表或榜单歌曲（新API）
-            getPlaylist: async function(playlistId) {
-                const API_KEY = 'sk_18b4ef591fe11fde974d772e9663640a';
-                const API_BASE = 'https://api.tinyaii.top/v1/netease/toplist';
-
-                // 如果没有传入 playlistId，返回榜单列表（用于前端下拉选择）
-                if (!playlistId) {
-                    const cacheKey = 'netease_toplist_list';
-                    const cached = self.cacheManager.get(cacheKey);
-                    if (cached) return cached;
-
-                    try {
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 8000);
-                        const response = await fetch(API_BASE, {
-                            method: 'GET',
-                            headers: {
-                                'Authorization': `Bearer ${API_KEY}`,
-                                'Content-Type': 'application/json'
-                            },
-                            signal: controller.signal
-                        });
-                        clearTimeout(timeoutId);
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        const result = await response.json();
-                        if (result.code !== 200) throw new Error(result.message || '获取榜单列表失败');
-                        const lists = result.data.lists.map(item => ({
-                            id: String(item.id),
-                            name: item.name,
-                            update: item.update
-                        }));
-                        self.cacheManager.set(cacheKey, lists, 30 * 60 * 1000);
-                        return lists;
-                    } catch (error) {
-                        console.error('获取网易云榜单列表失败:', error);
-                        return [];
-                    }
-                }
-
-                // 有 playlistId：获取该榜单的歌曲列表
+            getPlaylist: async (playlistId) => {
                 const cacheKey = `netease_playlist_${playlistId}`;
-                const cached = self.cacheManager.get(cacheKey);
+                const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000);
-                    const url = `${API_BASE}?id=${playlistId}`;
-                    const response = await fetch(url, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${API_KEY}`,
-                            'Content-Type': 'application/json'
-                        },
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const result = await response.json();
-                    if (result.code !== 200) throw new Error(result.message || '获取榜单歌曲失败');
-
-                    const songs = result.data.songs || [];
-                    // 并发获取每首歌的播放地址和歌词（限制并发数）
-                    const batchSize = 5;
-                    const formattedSongs = [];
-                    for (let i = 0; i < songs.length; i += batchSize) {
-                        const batch = songs.slice(i, i + batchSize);
-                        const batchResults = await Promise.all(batch.map(async (song) => {
-                            const songInfo = await this._getSongUrlAndLyric(song.id);
-                            return {
-                                id: song.id,
-                                title: song.name || '未知歌曲',
-                                artist: song.singer || '未知歌手',
-                                src: songInfo.url,
-                                cover: songInfo.cover || song.cover,
-                                lrc: songInfo.lrc,
-                                isOnline: true,
-                                source: 'netease'
-                            };
-                        }));
-                        formattedSongs.push(...batchResults);
-                    }
-                    // 过滤掉无法获取播放地址的歌曲
-                    const validSongs = formattedSongs.filter(song => song.src);
-                    self.cacheManager.set(cacheKey, validSongs, 30 * 60 * 1000);
-                    return validSongs;
-                } catch (error) {
-                    console.error('获取网易云榜单歌曲失败:', error);
-                    return [];
-                }
-            },
-
-            // 搜索（使用新 API）
-            search: async function(keyword, limit = 30) {
-                const cacheKey = `netease_search_${keyword}`;
-                const cached = self.cacheManager.get(cacheKey);
-                if (cached) return cached;
-
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
-                try {
-                    // 新搜索 API
-                    const url = `https://api.xunhuisi.store/API/NetEaseMusic/Song.php?name=${encodeURIComponent(keyword)}&list=${Math.min(limit, 30)}`;
-                    const response = await fetch(url, { signal: controller.signal });
-                    clearTimeout(timeoutId);
-
+                    const url = `https://api.injahow.cn/meting/?server=netease&type=playlist&id=${playlistId}`;
+                    const response = await fetch(url);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
 
-                    // 校验返回格式
-                    if (data.code !== 200 || !Array.isArray(data.data)) {
-                        throw new Error(data.msg || '搜索返回数据格式错误');
+                    if (!Array.isArray(data)) {
+                        throw new Error('返回数据格式错误');
                     }
 
-                    // 映射为播放器需要的结构（播放地址暂时留空，后续通过 _getSongUrlAndLyric 填充）
-                    const formatted = data.data.map(item => ({
-                        id: item.id,
-                        title: item.name || '未知歌曲',
-                        artist: item.singer || '未知歌手',
-                        src: '',
-                        cover: '',
-                        lrc: '',
-                        isOnline: true,
-                        source: 'netease'
-                    }));
-
-                    // 缓存搜索结果（10分钟）
-                    self.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
+                    const formatted = data.map(song => this.formatSong(song, 'netease'));
+                    this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
                     return formatted;
                 } catch (error) {
-                    clearTimeout(timeoutId);
-                    console.error('网易云搜索请求失败:', error);
-                    return [];
+                    console.error('网易云音乐API请求失败:', error);
+                    throw new Error('获取歌单失败: ' + error.message);
                 }
-            }
-        });
+            },
 
-        // QQ音乐插件（保持不变，添加封面支持）
-        this.registerPlugin('qq', {
-            name: 'QQ音乐',
-            version: '2.3.0',
-            description: '云智热歌榜 + Meting解析',
-
-            _getSongInfoBySongmid: async function(songmid) {
-                const cacheKey = `qq_song_info_${songmid}`;
-                const cached = self.cacheManager.get(cacheKey);
+            search: async (keyword) => {
+                const cacheKey = `netease_search_${keyword}`;
+                const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 5000);
-                    const response = await fetch(
-                        `https://api.i-meto.com/meting/api?server=tencent&type=song&id=${songmid}`,
-                        { signal: controller.signal }
-                    );
-                    clearTimeout(timeoutId);
-                    
+                    const url = `https://api.injahow.cn/meting/?server=netease&type=search&id=${encodeURIComponent(keyword)}`;
+                    const response = await fetch(url);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
-                    
-                    const songInfo = {
-                        playUrl: data[0]?.url || '',
-                        cover: data[0]?.cover || '',
-                        album: data[0]?.album || ''
-                    };
-                    
-                    self.cacheManager.set(cacheKey, songInfo, 60 * 60 * 1000);
-                    return songInfo;
+
+                    if (!Array.isArray(data)) {
+                        throw new Error('搜索返回数据格式错误');
+                    }
+
+                    const formatted = data.map(song => this.formatSong(song, 'netease'));
+                    this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
+                    return formatted;
                 } catch (error) {
-                    console.warn(`歌曲${songmid}信息获取失败:`, error.message);
-                    return { playUrl: '', cover: '', album: '' };
+                    console.error('网易云搜索失败:', error);
+                    throw new Error('搜索失败: ' + error.message);
                 }
             },
 
-            getPlaylist: async function(playlistId, count = 30) {
-                const safeCount = Math.min(Math.max(1, count), 30);
-                const cacheKey = `qq_hot_playlist_full_${safeCount}`;
-                const cached = self.cacheManager.get(cacheKey);
-                if (cached) return cached;
-
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000);
-                    const hotResponse = await fetch(
-                        `https://yunzhiapi.cn/API/qqrgbd.php?token=XIZhAXKnSQcH&count=${safeCount}`,
-                        { signal: controller.signal }
-                    );
-                    clearTimeout(timeoutId);
-                    
-                    if (!hotResponse.ok) throw new Error(`热歌榜HTTP错误: ${hotResponse.status}`);
-                    const hotResult = await hotResponse.json();
-                    
-                    if (hotResult.code !== 1) throw new Error(`热歌榜API错误: ${hotResult.msg}`);
-
-                    const songsWithFullInfo = await Promise.all(
-                        hotResult.data.map(async (song) => {
-                            const { playUrl, cover, album } = await this._getSongInfoBySongmid(song.songmid);
-                            return self.formatSong({
-                                title: song.albumname,
-                                artist: song.name,
-                                album: album || song.albumname,
-                                url: playUrl,
-                                cover: cover,
-                                pageUrl: song.link,
-                                songmid: song.songmid
-                            }, 'qq');
-                        })
-                    );
-
-                    const validSongs = songsWithFullInfo.filter(song => song.url);
-                    
-                    self.cacheManager.set(cacheKey, validSongs, 30 * 60 * 1000);
-                    return validSongs;
-                } catch (error) {
-                    console.error('QQ音乐热歌榜加载失败:', error);
-                    return [];
-                }
-            },
-
-            search: async function(keyword, count = 20) {
-                return [];
+            getDownloadUrl: async (songId) => {
+                return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
             }
         });
 
-        // 汽水音乐插件（保持不变）
-        this.registerPlugin('qishui', {
-            name: '汽水音乐',
-            version: '1.2.1',
-            description: '基于 suol.cc API，支持搜索和排行榜切换',
-            baseUrl: 'https://api.suol.cc/v1/music_qs.php',
-            mToken: '961D28A9C59C411C49C75FA3E9FAF24C',
-
-            rankKeywordMap: {
-                'hot': '热歌榜',
-                'new': '新歌榜',
-                'up':  '飙升榜'
-            },
-
-            _fetchApi: async function(action, params = {}) {
-                const url = new URL(this.baseUrl);
-                url.searchParams.set('action', action);
-                url.searchParams.set('m_token', this.mToken);
-                Object.entries(params).forEach(([k, v]) => {
-                    if (v !== undefined && v !== null && v !== '') {
-                        url.searchParams.set(k, v);
-                    }
-                });
-                
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
-                try {
-                    const response = await fetch(url.toString(), { signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return await response.json();
-                } catch (error) {
-                    clearTimeout(timeoutId);
-                    throw error;
-                }
-            },
-
-            _mapSongItem: function(item) {
-                return {
-                    id: item.id || item.songid || '',
-                    title: item.name || '未知歌曲',
-                    artist: item.artists || '未知歌手',
-                    cover: item.pic || '',
-                    album: item.album || '',
-                    duration: item.duration || 0,
-                    src: '',
-                    lrc: '',
-                    isOnline: true,
-                    source: 'qishui',
-                    _needResolve: true,
-                };
-            },
-
-            getPlaylist: async function(playlistId) {
-                const keyword = this.rankKeywordMap[playlistId] || '热歌榜';
-                const cacheKey = `qishui_rank_${playlistId}`;
-                const cached = self.cacheManager?.get(cacheKey);
-                if (cached) return cached;
-
-                try {
-                    const result = await this._fetchApi('rank', { keyword });
-                    if (result.code !== 200) throw new Error(result.msg || '请求失败');
-
-                    let songs = [];
-                    if (Array.isArray(result.data)) {
-                        songs = result.data.map(item => this._mapSongItem(item));
-                    }
-
-                    self.cacheManager?.set(cacheKey, songs, 30 * 60 * 1000);
-                    return songs;
-                } catch (error) {
-                    console.error('汽水音乐排行榜加载失败:', error);
-                    return [];
-                }
-            },
-
-            search: async function(keyword) {
-                if (!keyword) return [];
-                const cacheKey = `qishui_search_${keyword}`;
-                const cached = self.cacheManager?.get(cacheKey);
-                if (cached) return cached;
-
-                try {
-                    const result = await this._fetchApi('search', { keyword });
-                    if (result.code !== 200) return [];
-
-                    let songs = [];
-                    if (result.data && Array.isArray(result.data.songs)) {
-                        songs = result.data.songs.map(item => this._mapSongItem(item));
-                    }
-
-                    self.cacheManager?.set(cacheKey, songs, 10 * 60 * 1000);
-                    return songs;
-                } catch (error) {
-                    console.error('汽水音乐搜索失败:', error);
-                    return [];
-                }
-            },
-
-            _getSongUrl: async function(songId, level = 'standard') {
-                if (!songId) return { url: '', lyric: '', pic: '' };
-
-                const cacheKey = `qishui_song_${songId}_${level}`;
-                const cached = self.cacheManager?.get(cacheKey);
-                if (cached) return cached;
-
-                try {
-                    const result = await this._fetchApi('song', { id: songId, level });
-                    if (result.code === 200 && result.data) {
-                        const resolved = {
-                            url: result.data.url || '',
-                            lyric: result.data.lyric_lrc || '',
-                            pic: result.data.pic || '',
-                        };
-                        self.cacheManager?.set(cacheKey, resolved, 60 * 60 * 1000);
-                        return resolved;
-                    }
-                } catch (e) {
-                    console.warn(`汽水音乐歌曲${songId}解析失败:`, e.message);
-                }
-                return { url: '', lyric: '', pic: '' };
-            }
-        });
-        
-        // 本地音乐插件（保持不变）
-        this.registerPlugin('local', {
-            name: '本地音乐',
+        // ==================== QQ音乐插件 ====================
+        this.registerPlugin('qq', {
+            name: 'QQ音乐',
             version: '1.0.0',
-            description: '内置本地音乐列表',
+            description: '基于QQ音乐API',
             getPlaylist: async (playlistId) => {
-                return window.getLocalMusicList ? window.getLocalMusicList() : [];
+                const cacheKey = `qq_playlist_${playlistId}`;
+                const cached = this.cacheManager.get(cacheKey);
+                if (cached) return cached;
+
+                try {
+                    const response = await fetch(`https://api.i-meto.com/meting/api?server=tencent&type=playlist&id=${playlistId}`);
+                    const data = await response.json();
+                    const formatted = data.map(song => this.formatSong(song, 'qq'));
+                    
+                    this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
+                    return formatted;
+                } catch (error) {
+                    console.error('QQ音乐API请求失败:', error);
+                    throw new Error('获取歌单失败');
+                }
             },
             search: async (keyword) => {
+                const cacheKey = `qq_search_${keyword}`;
+                const cached = this.cacheManager.get(cacheKey);
+                if (cached) return cached;
+
+                try {
+                    const response = await fetch(`https://api.i-meto.com/meting/api?server=tencent&type=search&id=${encodeURIComponent(keyword)}`);
+                    const data = await response.json();
+                    const formatted = data.map(song => this.formatSong(song, 'qq'));
+                    
+                    this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
+                    return formatted;
+                } catch (error) {
+                    console.error('QQ音乐搜索失败:', error);
+                    throw new Error('搜索失败');
+                }
+            },
+            getDownloadUrl: async (songId) => {
+                return `https://dl.stream.qqmusic.qq.com/${songId}.mp3`;
+            }
+        });
+
+        // ==================== 酷狗音乐插件 ====================
+        this.registerPlugin('kg', {
+            name: '酷狗音乐',
+            version: '1.0.0',
+            description: '基于酷狗音乐API',
+            getPlaylist: async (playlistId) => {
+                const cacheKey = `kg_playlist_${playlistId}`;
+                const cached = this.cacheManager.get(cacheKey);
+                if (cached) return cached;
+
+                try {
+                    const response = await fetch(`https://api.injahow.cn/meting/?type=playlist&id=${playlistId}&server=kugou`);
+                    const data = await response.json();
+                    
+                    if (data.data && data.data.tracks) {
+                        const formatted = data.data.tracks.map(song => ({
+                            id: song.hash || song.id,
+                            title: song.songname || song.name,
+                            artist: song.singername || song.artist,
+                            src: song.url || `https://api.injahow.cn/meting/?type=playlist&id=${song.hash || song.id}`,
+                            cover: song.img || song.cover,
+                            lrc: song.lrc || `https://api.injahow.cn/meting/?type=playlist&id=${song.hash || song.id}`,
+                            isOnline: true,
+                            source: 'kg'
+                        }));
+                        
+                        this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
+                        return formatted;
+                    }
+                    return [];
+                } catch (error) {
+                    console.error('酷狗音乐API请求失败:', error);
+                    throw new Error('获取歌单失败');
+                }
+            },
+            search: async (keyword) => {
+                const cacheKey = `kg_search_${keyword}`;
+                const cached = this.cacheManager.get(cacheKey);
+                if (cached) return cached;
+
+                try {
+                    const response = await fetch(`https://musicfreeapi.vercel.app/kugou/search?keyword=${encodeURIComponent(keyword)}`);
+                    const data = await response.json();
+                    
+                    if (data.data && Array.isArray(data.data)) {
+                        const formatted = data.data.map(song => ({
+                            id: song.hash || song.id,
+                            title: song.songname || song.name,
+                            artist: song.singername || song.artist,
+                            src: song.url || `https://musicfreeapi.vercel.app/kugou/url?id=${song.hash || song.id}`,
+                            cover: song.img || song.cover,
+                            lrc: song.lrc || `https://musicfreeapi.vercel.app/kugou/lrc?id=${song.hash || song.id}`,
+                            isOnline: true,
+                            source: 'kg'
+                        }));
+                        
+                        this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
+                        return formatted;
+                    }
+                    return [];
+                } catch (error) {
+                    console.error('酷狗搜索失败:', error);
+                    throw new Error('搜索失败');
+                }
+            },
+            getDownloadUrl: async (songId) => {
+                return `https://musicfreeapi.vercel.app/kugou/url?id=${songId}`;
+            }
+        });
+
+        // ==================== 酷我音乐插件 ====================
+        this.registerPlugin('kuwo', {
+            name: '酷我音乐',
+            version: '1.0.0',
+            description: '基于酷我音乐API',
+            getPlaylist: async (playlistId) => {
+                try {
+                    const response = await fetch(`https://api.i-meto.com/meting/api?server=kuwo&type=playlist&id=${playlistId}`);
+                    const data = await response.json();
+                    return data.map(song => this.formatSong(song, 'kuwo'));
+                } catch (error) {
+                    console.error('酷我音乐API请求失败:', error);
+                    throw new Error('获取歌单失败');
+                }
+            },
+            search: async (keyword) => {
+                try {
+                    const response = await fetch(`https://api.i-meto.com/meting/api?server=kuwo&type=search&id=${encodeURIComponent(keyword)}`);
+                    const data = await response.json();
+                    return data.map(song => this.formatSong(song, 'kuwo'));
+                } catch (error) {
+                    console.error('酷我音乐搜索失败:', error);
+                    throw new Error('搜索失败');
+                }
+            },
+            getDownloadUrl: async (songId) => {
+                return `https://antiserver.kuwo.cn/anti.s?format=mp3&rid=${songId}&type=convert_url&response=url`;
+            }
+        });
+
+        // ==================== 抖音热歌榜插件 ====================
+        this.registerPlugin('migu', {
+            name: '抖音热歌榜',
+            version: '1.0.0',
+            description: '基于抖音热歌榜API',
+            getPlaylist: async (playlistId) => {
+                try {
+                    console.log('开始获取抖音热歌榜数据...');
+                    const response = await fetch('https://api.injahow.cn/meting/?type=playlist&id=2809513713');
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('抖音热歌榜API响应:', data);
+                    
+                    return this.formatDouyinResponse(data);
+                } catch (error) {
+                    console.error('抖音热歌榜API请求失败:', error);
+                    throw new Error('获取抖音热歌榜失败: ' + error.message);
+                }
+            },
+            search: async (keyword) => {
+                console.log('抖音热歌榜不支持搜索功能');
                 return [];
+            },
+            getDownloadUrl: async (songId) => {
+                return songId;
+            }
+        });
+
+        // ==================== 翻译插件 ====================
+        this.registerPlugin('translator', {
+            name: '歌词翻译器',
+            version: '1.0.0',
+            description: '歌词翻译功能',
+            translateText: async (text, targetLang = 'zh') => {
+                const cacheKey = `translation_${targetLang}_${btoa(text)}`;
+                const cached = this.cacheManager.get(cacheKey);
+                if (cached) return cached;
+
+                try {
+                    const response = await fetch(
+                        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`
+                    );
+                    
+                    const data = await response.json();
+                    
+                    if (data.responseStatus === 200 && data.responseData) {
+                        const translation = data.responseData.translatedText;
+                        this.cacheManager.set(cacheKey, translation, 24 * 60 * 60 * 1000);
+                        return translation;
+                    } else {
+                        throw new Error('翻译API返回错误');
+                    }
+                } catch (error) {
+                    console.warn('翻译失败:', error);
+                    return text;
+                }
             }
         });
     }
 
+    /**
+     * 格式化歌曲信息 - 通用方法
+     */
     formatSong(song, source) {
         return {
             id: song.id || Utils.generateId(),
             title: song.title || song.name || '未知歌曲',
             artist: song.author || song.artist || '未知歌手',
             src: song.url,
-            cover: song.pic || song.cover || '',
+            cover: song.pic,
             lrc: song.lrc,
             isOnline: true,
             source: source
         };
     }
 
+    /**
+     * 处理抖音热歌榜API响应格式
+     */
+    formatDouyinResponse(data) {
+        console.log('处理抖音热歌榜响应数据:', data);
+        
+        if (!data) {
+            console.warn('抖音热歌榜API返回空数据');
+            return [];
+        }
+        
+        if (data.code === 200 && data.data && Array.isArray(data.data)) {
+            return data.data.map(song => this.formatDouyinSong(song)).filter(song => song.src);
+        }
+        
+        if (Array.isArray(data)) {
+            return data.map(song => this.formatDouyinSong(song)).filter(song => song.src);
+        }
+        
+        console.warn('抖音热歌榜API返回格式未知:', data);
+        return [];
+    }
+
+    /**
+     * 抖音热歌榜专用格式化方法
+     */
+    formatDouyinSong(songData) {
+        console.log('抖音热歌原始数据:', songData);
+        
+        const formattedSong = {
+            id: songData.id || songData.hash || Utils.generateId(),
+            title: songData.title || songData.name || songData.songname || '未知歌曲',
+            artist: songData.author || songData.artist || songData.singer || '未知歌手',
+            src: songData.url || songData.play_url || songData.audio_url,
+            cover: songData.pic || songData.cover || songData.album_cover,
+            lrc: songData.lrc || songData.lyric,
+            isOnline: true,
+            source: 'migu'
+        };
+        
+        console.log('格式化后的抖音热歌:', formattedSong);
+        return formattedSong;
+    }
+
+    /**
+     * 注册插件
+     */
     registerPlugin(id, plugin) {
+        if (this.plugins.has(id)) {
+            console.warn(`插件 ${id} 已存在，将被替换`);
+        }
+        
         this.plugins.set(id, {
             id,
             type: 'builtin',
-            ...plugin
+            ...plugin,
+            enabled: true
         });
+        
+        console.log(`插件 ${id} 注册成功`);
     }
 
+    /**
+     * 获取插件
+     */
     getPlugin(id) {
         return this.plugins.get(id);
     }
 
+    /**
+     * 获取所有插件
+     */
     getAllPlugins() {
         return Array.from(this.plugins.values());
     }
 
+    /**
+     * 设置当前API
+     */
     setCurrentApi(apiId) {
         if (this.plugins.has(apiId)) {
             this.currentApi = apiId;
@@ -465,41 +386,221 @@ class PluginManager {
         return false;
     }
 
+    /**
+     * 获取当前API
+     */
     getCurrentApi() {
         return this.currentApi;
     }
 
+    /**
+     * 获取歌单
+     */
     async getPlaylist(apiId, playlistId) {
         const plugin = this.getPlugin(apiId);
         if (!plugin || !plugin.getPlaylist) {
             throw new Error(`插件 ${apiId} 不支持获取歌单`);
         }
+        
+        if (!plugin.enabled) {
+            throw new Error(`插件 ${apiId} 已被禁用`);
+        }
+        
         return await plugin.getPlaylist(playlistId);
     }
 
+    /**
+     * 搜索歌曲
+     */
     async search(apiId, keyword) {
         const plugin = this.getPlugin(apiId);
         if (!plugin || !plugin.search) {
-            return [];
+            throw new Error(`插件 ${apiId} 不支持搜索`);
         }
+        
+        if (!plugin.enabled) {
+            throw new Error(`插件 ${apiId} 已被禁用`);
+        }
+        
         return await plugin.search(keyword);
     }
 
+    /**
+     * 预加载歌曲资源
+     */
     async preloadSong(song) {
         const promises = [];
+        
         if (song.src) {
             promises.push(this.cacheManager.preloadResource(song.src, 'audio'));
         }
-        if (song.cover && song.cover !== '/assets/logo.png') {
+        
+        if (song.cover) {
             promises.push(this.cacheManager.preloadResource(song.cover, 'image'));
         }
+        
         try {
             await Promise.all(promises);
             return true;
-        } catch {
+        } catch (error) {
+            console.warn('预加载资源失败:', error);
             return false;
         }
     }
+
+    /**
+     * 获取下载URL
+     */
+    async getDownloadUrl(apiId, songId) {
+        const plugin = this.getPlugin(apiId);
+        if (!plugin || !plugin.getDownloadUrl) {
+            throw new Error(`插件 ${apiId} 不支持下载`);
+        }
+        
+        if (!plugin.enabled) {
+            throw new Error(`插件 ${apiId} 已被禁用`);
+        }
+        
+        return await plugin.getDownloadUrl(songId);
+    }
+
+    /**
+     * 翻译文本
+     */
+    async translateText(text, targetLang = 'zh') {
+        const translator = this.getPlugin('translator');
+        if (!translator || !translator.translateText) {
+            console.warn('翻译插件未找到，返回原始文本');
+            return text;
+        }
+        
+        return await translator.translateText(text, targetLang);
+    }
+
+    /**
+     * 批量预加载
+     */
+    async preloadMultiple(songs, concurrent = 3) {
+        const results = [];
+        
+        for (let i = 0; i < songs.length; i += concurrent) {
+            const batch = songs.slice(i, i + concurrent);
+            const batchPromises = batch.map(song => this.preloadSong(song));
+            const batchResults = await Promise.allSettled(batchPromises);
+            results.push(...batchResults);
+            
+            // 添加延迟避免请求过于频繁
+            if (i + concurrent < songs.length) {
+                await Utils.sleep(100);
+            }
+        }
+        
+        return results;
+    }
+
+    /**
+     * 启用插件
+     */
+    enablePlugin(pluginId) {
+        const plugin = this.getPlugin(pluginId);
+        if (plugin) {
+            plugin.enabled = true;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 禁用插件
+     */
+    disablePlugin(pluginId) {
+        const plugin = this.getPlugin(pluginId);
+        if (plugin) {
+            plugin.enabled = false;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 检查插件是否启用
+     */
+    isPluginEnabled(pluginId) {
+        const plugin = this.getPlugin(pluginId);
+        return plugin ? plugin.enabled : false;
+    }
+
+    /**
+     * 获取插件状态信息
+     */
+    getPluginStats() {
+        const stats = {
+            total: this.plugins.size,
+            enabled: 0,
+            disabled: 0
+        };
+        
+        for (const plugin of this.plugins.values()) {
+            if (plugin.enabled) {
+                stats.enabled++;
+            } else {
+                stats.disabled++;
+            }
+        }
+        
+        return stats;
+    }
+
+    /**
+     * 重新加载所有插件
+     */
+    async reloadPlugins() {
+        console.log('重新加载所有插件...');
+        const oldPlugins = new Map(this.plugins);
+        this.plugins.clear();
+        
+        try {
+            this.initializePlugins();
+            console.log('插件重新加载成功');
+            return true;
+        } catch (error) {
+            console.error('插件重新加载失败，恢复旧插件:', error);
+            this.plugins = oldPlugins;
+            return false;
+        }
+    }
+
+    /**
+     * 验证插件兼容性
+     */
+    validatePluginCompatibility(plugin) {
+        const requiredMethods = ['getPlaylist', 'search'];
+        const missingMethods = requiredMethods.filter(method => !plugin[method]);
+        
+        if (missingMethods.length > 0) {
+            throw new Error(`插件缺少必要方法: ${missingMethods.join(', ')}`);
+        }
+        
+        return true;
+    }
+
+    /**
+     * 获取插件信息
+     */
+    getPluginInfo(pluginId) {
+        const plugin = this.getPlugin(pluginId);
+        if (!plugin) return null;
+        
+        return {
+            id: plugin.id,
+            name: plugin.name,
+            version: plugin.version,
+            description: plugin.description,
+            enabled: plugin.enabled,
+            type: plugin.type
+        };
+    }
 }
 
+// 导出到全局作用域
 window.PluginManager = PluginManager;
