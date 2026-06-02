@@ -1,5 +1,6 @@
 /**
  * 插件管理器 - 支持多个音乐API源（修复播放地址获取失败 + 使用歌曲对应封面）
+ * 修改：网易云搜索改用巡回寺 API，榜单解析保持不变
  */
 class PluginManager {
     constructor(cacheManager) {
@@ -12,20 +13,20 @@ class PluginManager {
     initializePlugins() {
         const self = this;
 
-        // 网易云音乐插件（使用新搜索/解析API，榜单API保持不变）
+        // 网易云音乐插件（保留原榜单 API，搜索/解析改用巡回寺）
         this.registerPlugin('netease', {
             name: '网易云音乐',
-            version: '2.3.0',
-            description: '基于巡回寺API的搜索/解析 + 榜单API（热歌榜等）',
+            version: '2.2.4',
+            description: '榜单沿用 tinyaii，搜索/解析使用巡回寺 API',
 
-            // 通过歌曲ID获取播放地址和歌词（使用巡回寺API）
+            // 获取歌曲播放地址和歌词（巡回寺 API，支持高音质）
             _getSongUrlAndLyric: async function(songId, retryCount = 0) {
                 const cacheKey = `netease_song_${songId}`;
                 const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 const newApiBase = 'https://api.xunhuisi.store/API/NetEaseMusic/Song.php';
-                const quality = 'high'; // 可选：standard, high, lossless
+                const quality = 'high'; // standard, high, lossless
                 const url = `${newApiBase}?id=${songId}&type=json&quality=${quality}`;
 
                 try {
@@ -37,7 +38,6 @@ class PluginManager {
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
 
-                    // 兼容不同返回格式
                     let songInfo = null;
                     if (data.code === 200) {
                         if (Array.isArray(data.data) && data.data.length > 0) {
@@ -56,7 +56,6 @@ class PluginManager {
                         self.cacheManager.set(cacheKey, result, 60 * 60 * 1000);
                         return result;
                     }
-
                     throw new Error('未获取到播放地址');
                 } catch (error) {
                     console.warn(`获取歌曲 ${songId} 播放地址失败:`, error.message);
@@ -68,7 +67,7 @@ class PluginManager {
                 }
             },
 
-            // 获取榜单列表或榜单歌曲（新API，保持不变）
+            // 获取榜单列表或榜单歌曲（原 API，保持不变）
             getPlaylist: async function(playlistId) {
                 const API_KEY = 'sk_18b4ef591fe11fde974d772e9663640a';
                 const API_BASE = 'https://api.tinyaii.top/v1/netease/toplist';
@@ -160,14 +159,14 @@ class PluginManager {
                 }
             },
 
-            // 搜索（使用巡回寺API，返回列表）
+            // 搜索功能 - 使用巡回寺 API（返回列表，支持最多30条）
             search: async function(keyword) {
                 const cacheKey = `netease_search_${keyword}`;
                 const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 const newApiBase = 'https://api.xunhuisi.store/API/NetEaseMusic/Song.php';
-                const listSize = 30; // 最大30
+                const listSize = 30;
                 const url = `${newApiBase}?name=${encodeURIComponent(keyword)}&list=${listSize}&type=json`;
 
                 try {
@@ -193,7 +192,6 @@ class PluginManager {
                         }));
                     }
 
-                    // 过滤掉没有播放地址的歌曲
                     const validSongs = songs.filter(song => song.src);
                     self.cacheManager.set(cacheKey, validSongs, 10 * 60 * 1000);
                     return validSongs;
