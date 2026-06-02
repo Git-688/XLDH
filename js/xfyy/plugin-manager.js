@@ -1,5 +1,5 @@
 /**
- * 插件管理器 - 支持多个音乐API源
+ * 插件管理器 - 支持多个音乐API源（网易云音乐插件已升级）
  * 负责管理不同音乐平台的插件，包括注册、加载和调用
  */
 
@@ -16,66 +16,153 @@ class PluginManager {
      * 初始化所有内置插件
      */
     initializePlugins() {
-        // ==================== 网易云音乐插件（新 API - injahow.cn/meting） ====================
+        // ========== 网易云音乐插件（全新升级版） ==========
         this.registerPlugin('netease', {
             name: '网易云音乐',
-            version: '2.2.4',
-            description: '基于 injahow.cn/meting API，稳定可靠',
+            version: '2.2.0',
+            description: '基于 injahow/meting API，支持播放地址解析和歌词',
 
-            getPlaylist: async (playlistId) => {
+            // 通过歌曲ID获取播放地址和歌词（带重试和备用API）
+            _getSongUrlAndLyric: async function(songId, retryCount = 0) {
+                const cacheKey = `netease_song_${songId}`;
+                const cached = this.cacheManager.get(cacheKey);
+                if (cached) return cached;
+
+                // 主API和备用API列表
+                const apis = [
+                    `https://api.injahow.cn/meting/?server=netease&type=song&id=${songId}`,
+                    `https://api.i-meto.com/meting/api?server=netease&type=song&id=${songId}`
+                ];
+                
+                for (let i = 0; i < apis.length; i++) {
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 10000);
+                        const response = await fetch(apis[i], { signal: controller.signal });
+                        clearTimeout(timeoutId);
+                        
+                        if (!response.ok) continue;
+                        const data = await response.json();
+                        const song = Array.isArray(data) ? data[0] : data;
+                        if (song && song.url) {
+                            const result = {
+                                url: song.url,
+                                lrc: song.lrc || '',
+                                cover: song.pic || song.cover || ''
+                            };
+                            this.cacheManager.set(cacheKey, result, 60 * 60 * 1000);
+                            return result;
+                        }
+                    } catch (error) {
+                        console.warn(`获取歌曲 ${songId} 播放地址失败 (API ${i+1}):`, error.message);
+                    }
+                }
+                
+                // 重试一次
+                if (retryCount < 2) {
+                    console.log(`重试获取歌曲 ${songId} 播放地址，第 ${retryCount + 1} 次重试`);
+                    await new Promise(r => setTimeout(r, 1000));
+                    return this._getSongUrlAndLyric(songId, retryCount + 1);
+                }
+                
+                console.warn(`歌曲 ${songId} 所有API均获取失败`);
+                return { url: '', lrc: '', cover: '' };
+            },
+
+            // 获取歌单（排行榜或自定义歌单）
+            getPlaylist: async function(playlistId) {
+                // playlistId 可以是 '3778678'（热歌榜）等，也可以直接使用 meting API 的 type=playlist
                 const cacheKey = `netease_playlist_${playlistId}`;
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 try {
+                    // 使用 injahow 的 meting API 获取歌单
                     const url = `https://api.injahow.cn/meting/?server=netease&type=playlist&id=${playlistId}`;
                     const response = await fetch(url);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
-
-                    if (!Array.isArray(data)) {
-                        throw new Error('返回数据格式错误');
+                    
+                    if (!Array.isArray(data) || data.length === 0) {
+                        throw new Error('歌单为空或格式错误');
                     }
 
-                    const formatted = data.map(song => this.formatSong(song, 'netease'));
-                    this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
-                    return formatted;
+                    // 并发获取每首歌的播放地址和歌词（限制并发数）
+                    const batchSize = 5;
+                    const formattedSongs = [];
+                    for (let i = 0; i < data.length; i += batchSize) {
+                        const batch = data.slice(i, i + batchSize);
+                        const batchResults = await Promise.all(batch.map(async (song) => {
+                            const songInfo = await this._getSongUrlAndLyric(song.id);
+                            return {
+                                id: song.id,
+                                title: song.title || '未知歌曲',
+                                artist: song.author || '未知歌手',
+                                src: songInfo.url,
+                                cover: songInfo.cover || song.pic,
+                                lrc: songInfo.lrc,
+                                isOnline: true,
+                                source: 'netease'
+                            };
+                        }));
+                        formattedSongs.push(...batchResults);
+                    }
+                    
+                    // 过滤掉无法获取播放地址的歌曲
+                    const validSongs = formattedSongs.filter(song => song.src);
+                    this.cacheManager.set(cacheKey, validSongs, 30 * 60 * 1000);
+                    return validSongs;
                 } catch (error) {
-                    console.error('网易云音乐API请求失败:', error);
-                    throw new Error('获取歌单失败: ' + error.message);
+                    console.error('网易云音乐歌单获取失败:', error);
+                    throw new Error('获取歌单失败');
                 }
             },
 
-            search: async (keyword) => {
+            // 搜索歌曲
+            search: async function(keyword, limit = 30) {
                 const cacheKey = `netease_search_${keyword}`;
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 try {
+                    // 使用 injahow 的 meting API 搜索
                     const url = `https://api.injahow.cn/meting/?server=netease&type=search&id=${encodeURIComponent(keyword)}`;
                     const response = await fetch(url);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
-
-                    if (!Array.isArray(data)) {
-                        throw new Error('搜索返回数据格式错误');
-                    }
-
-                    const formatted = data.map(song => this.formatSong(song, 'netease'));
+                    
+                    if (!Array.isArray(data)) return [];
+                    
+                    // 限制结果数量
+                    const limited = data.slice(0, limit);
+                    // 注意：搜索结果中可能没有直接提供播放地址，需要后续获取
+                    const formatted = limited.map(song => ({
+                        id: song.id,
+                        title: song.title || '未知歌曲',
+                        artist: song.author || '未知歌手',
+                        src: '',  // 占位，播放时再解析
+                        cover: song.pic || '',
+                        lrc: '',
+                        isOnline: true,
+                        source: 'netease'
+                    }));
+                    
                     this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
                     return formatted;
                 } catch (error) {
-                    console.error('网易云搜索失败:', error);
-                    throw new Error('搜索失败: ' + error.message);
+                    console.error('网易云音乐搜索失败:', error);
+                    throw new Error('搜索失败');
                 }
             },
 
-            getDownloadUrl: async (songId) => {
-                return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
+            // 获取下载链接（直接使用 meting 返回的 url，或特殊处理）
+            getDownloadUrl: async function(songId) {
+                const info = await this._getSongUrlAndLyric(songId);
+                return info.url;
             }
         });
 
-        // ==================== QQ音乐插件 ====================
+        // ========== QQ音乐插件（保持不变） ==========
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '1.0.0',
@@ -119,7 +206,7 @@ class PluginManager {
             }
         });
 
-        // ==================== 酷狗音乐插件 ====================
+        // ========== 酷狗音乐插件（保持不变） ==========
         this.registerPlugin('kg', {
             name: '酷狗音乐',
             version: '1.0.0',
@@ -189,7 +276,7 @@ class PluginManager {
             }
         });
 
-        // ==================== 酷我音乐插件 ====================
+        // ========== 酷我音乐插件（保持不变） ==========
         this.registerPlugin('kuwo', {
             name: '酷我音乐',
             version: '1.0.0',
@@ -219,7 +306,7 @@ class PluginManager {
             }
         });
 
-        // ==================== 抖音热歌榜插件 ====================
+        // ========== 抖音热歌榜插件（保持不变） ==========
         this.registerPlugin('migu', {
             name: '抖音热歌榜',
             version: '1.0.0',
@@ -251,7 +338,7 @@ class PluginManager {
             }
         });
 
-        // ==================== 翻译插件 ====================
+        // ========== 翻译插件（保持不变） ==========
         this.registerPlugin('translator', {
             name: '歌词翻译器',
             version: '1.0.0',
@@ -489,7 +576,6 @@ class PluginManager {
             const batchResults = await Promise.allSettled(batchPromises);
             results.push(...batchResults);
             
-            // 添加延迟避免请求过于频繁
             if (i + concurrent < songs.length) {
                 await Utils.sleep(100);
             }
