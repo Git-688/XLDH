@@ -1,5 +1,5 @@
 /**
- * 插件管理器 - 支持多个音乐API源（网易云音乐插件已升级）
+ * 插件管理器 - 支持多个音乐API源（完整修复版）
  * 负责管理不同音乐平台的插件，包括注册、加载和调用
  */
 
@@ -16,6 +16,9 @@ class PluginManager {
      * 初始化所有内置插件
      */
     initializePlugins() {
+        // 保存外层 this 引用（PluginManager 实例），供箭头函数内部使用
+        const self = this;
+
         // ========== 网易云音乐插件（全新升级版） ==========
         this.registerPlugin('netease', {
             name: '网易云音乐',
@@ -23,9 +26,9 @@ class PluginManager {
             description: '基于 injahow/meting API，支持播放地址解析和歌词',
 
             // 通过歌曲ID获取播放地址和歌词（带重试和备用API）
-            _getSongUrlAndLyric: async function(songId, retryCount = 0) {
+            _getSongUrlAndLyric: async (songId, retryCount = 0) => {
                 const cacheKey = `netease_song_${songId}`;
-                const cached = this.cacheManager.get(cacheKey);
+                const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 // 主API和备用API列表
@@ -40,7 +43,6 @@ class PluginManager {
                         const timeoutId = setTimeout(() => controller.abort(), 10000);
                         const response = await fetch(apis[i], { signal: controller.signal });
                         clearTimeout(timeoutId);
-                        
                         if (!response.ok) continue;
                         const data = await response.json();
                         const song = Array.isArray(data) ? data[0] : data;
@@ -50,7 +52,7 @@ class PluginManager {
                                 lrc: song.lrc || '',
                                 cover: song.pic || song.cover || ''
                             };
-                            this.cacheManager.set(cacheKey, result, 60 * 60 * 1000);
+                            self.cacheManager.set(cacheKey, result, 60 * 60 * 1000);
                             return result;
                         }
                     } catch (error) {
@@ -70,14 +72,12 @@ class PluginManager {
             },
 
             // 获取歌单（排行榜或自定义歌单）
-            getPlaylist: async function(playlistId) {
-                // playlistId 可以是 '3778678'（热歌榜）等，也可以直接使用 meting API 的 type=playlist
+            getPlaylist: async (playlistId) => {
                 const cacheKey = `netease_playlist_${playlistId}`;
-                const cached = this.cacheManager.get(cacheKey);
+                const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 try {
-                    // 使用 injahow 的 meting API 获取歌单
                     const url = `https://api.injahow.cn/meting/?server=netease&type=playlist&id=${playlistId}`;
                     const response = await fetch(url);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -108,9 +108,8 @@ class PluginManager {
                         formattedSongs.push(...batchResults);
                     }
                     
-                    // 过滤掉无法获取播放地址的歌曲
                     const validSongs = formattedSongs.filter(song => song.src);
-                    this.cacheManager.set(cacheKey, validSongs, 30 * 60 * 1000);
+                    self.cacheManager.set(cacheKey, validSongs, 30 * 60 * 1000);
                     return validSongs;
                 } catch (error) {
                     console.error('网易云音乐歌单获取失败:', error);
@@ -119,13 +118,12 @@ class PluginManager {
             },
 
             // 搜索歌曲
-            search: async function(keyword, limit = 30) {
+            search: async (keyword, limit = 30) => {
                 const cacheKey = `netease_search_${keyword}`;
-                const cached = this.cacheManager.get(cacheKey);
+                const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 try {
-                    // 使用 injahow 的 meting API 搜索
                     const url = `https://api.injahow.cn/meting/?server=netease&type=search&id=${encodeURIComponent(keyword)}`;
                     const response = await fetch(url);
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -133,21 +131,19 @@ class PluginManager {
                     
                     if (!Array.isArray(data)) return [];
                     
-                    // 限制结果数量
                     const limited = data.slice(0, limit);
-                    // 注意：搜索结果中可能没有直接提供播放地址，需要后续获取
                     const formatted = limited.map(song => ({
                         id: song.id,
                         title: song.title || '未知歌曲',
                         artist: song.author || '未知歌手',
-                        src: '',  // 占位，播放时再解析
+                        src: '',
                         cover: song.pic || '',
                         lrc: '',
                         isOnline: true,
                         source: 'netease'
                     }));
                     
-                    this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
+                    self.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
                     return formatted;
                 } catch (error) {
                     console.error('网易云音乐搜索失败:', error);
@@ -155,29 +151,29 @@ class PluginManager {
                 }
             },
 
-            // 获取下载链接（直接使用 meting 返回的 url，或特殊处理）
-            getDownloadUrl: async function(songId) {
+            // 获取下载链接
+            getDownloadUrl: async (songId) => {
                 const info = await this._getSongUrlAndLyric(songId);
                 return info.url;
             }
         });
 
-        // ========== QQ音乐插件（保持不变） ==========
+        // ========== QQ音乐插件 ==========
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '1.0.0',
             description: '基于QQ音乐API',
             getPlaylist: async (playlistId) => {
                 const cacheKey = `qq_playlist_${playlistId}`;
-                const cached = this.cacheManager.get(cacheKey);
+                const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 try {
                     const response = await fetch(`https://api.i-meto.com/meting/api?server=tencent&type=playlist&id=${playlistId}`);
                     const data = await response.json();
-                    const formatted = data.map(song => this.formatSong(song, 'qq'));
+                    const formatted = data.map(song => self.formatSong(song, 'qq'));
                     
-                    this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
+                    self.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
                     return formatted;
                 } catch (error) {
                     console.error('QQ音乐API请求失败:', error);
@@ -186,15 +182,15 @@ class PluginManager {
             },
             search: async (keyword) => {
                 const cacheKey = `qq_search_${keyword}`;
-                const cached = this.cacheManager.get(cacheKey);
+                const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 try {
                     const response = await fetch(`https://api.i-meto.com/meting/api?server=tencent&type=search&id=${encodeURIComponent(keyword)}`);
                     const data = await response.json();
-                    const formatted = data.map(song => this.formatSong(song, 'qq'));
+                    const formatted = data.map(song => self.formatSong(song, 'qq'));
                     
-                    this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
+                    self.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
                     return formatted;
                 } catch (error) {
                     console.error('QQ音乐搜索失败:', error);
@@ -206,14 +202,14 @@ class PluginManager {
             }
         });
 
-        // ========== 酷狗音乐插件（保持不变） ==========
+        // ========== 酷狗音乐插件 ==========
         this.registerPlugin('kg', {
             name: '酷狗音乐',
             version: '1.0.0',
             description: '基于酷狗音乐API',
             getPlaylist: async (playlistId) => {
                 const cacheKey = `kg_playlist_${playlistId}`;
-                const cached = this.cacheManager.get(cacheKey);
+                const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 try {
@@ -232,7 +228,7 @@ class PluginManager {
                             source: 'kg'
                         }));
                         
-                        this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
+                        self.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
                         return formatted;
                     }
                     return [];
@@ -243,7 +239,7 @@ class PluginManager {
             },
             search: async (keyword) => {
                 const cacheKey = `kg_search_${keyword}`;
-                const cached = this.cacheManager.get(cacheKey);
+                const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 try {
@@ -262,7 +258,7 @@ class PluginManager {
                             source: 'kg'
                         }));
                         
-                        this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
+                        self.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
                         return formatted;
                     }
                     return [];
@@ -276,7 +272,7 @@ class PluginManager {
             }
         });
 
-        // ========== 酷我音乐插件（保持不变） ==========
+        // ========== 酷我音乐插件 ==========
         this.registerPlugin('kuwo', {
             name: '酷我音乐',
             version: '1.0.0',
@@ -285,7 +281,7 @@ class PluginManager {
                 try {
                     const response = await fetch(`https://api.i-meto.com/meting/api?server=kuwo&type=playlist&id=${playlistId}`);
                     const data = await response.json();
-                    return data.map(song => this.formatSong(song, 'kuwo'));
+                    return data.map(song => self.formatSong(song, 'kuwo'));
                 } catch (error) {
                     console.error('酷我音乐API请求失败:', error);
                     throw new Error('获取歌单失败');
@@ -295,7 +291,7 @@ class PluginManager {
                 try {
                     const response = await fetch(`https://api.i-meto.com/meting/api?server=kuwo&type=search&id=${encodeURIComponent(keyword)}`);
                     const data = await response.json();
-                    return data.map(song => this.formatSong(song, 'kuwo'));
+                    return data.map(song => self.formatSong(song, 'kuwo'));
                 } catch (error) {
                     console.error('酷我音乐搜索失败:', error);
                     throw new Error('搜索失败');
@@ -306,7 +302,7 @@ class PluginManager {
             }
         });
 
-        // ========== 抖音热歌榜插件（保持不变） ==========
+        // ========== 抖音热歌榜插件 ==========
         this.registerPlugin('migu', {
             name: '抖音热歌榜',
             version: '1.0.0',
@@ -323,7 +319,7 @@ class PluginManager {
                     const data = await response.json();
                     console.log('抖音热歌榜API响应:', data);
                     
-                    return this.formatDouyinResponse(data);
+                    return self.formatDouyinResponse(data);
                 } catch (error) {
                     console.error('抖音热歌榜API请求失败:', error);
                     throw new Error('获取抖音热歌榜失败: ' + error.message);
@@ -338,14 +334,14 @@ class PluginManager {
             }
         });
 
-        // ========== 翻译插件（保持不变） ==========
+        // ========== 翻译插件 ==========
         this.registerPlugin('translator', {
             name: '歌词翻译器',
             version: '1.0.0',
             description: '歌词翻译功能',
             translateText: async (text, targetLang = 'zh') => {
                 const cacheKey = `translation_${targetLang}_${btoa(text)}`;
-                const cached = this.cacheManager.get(cacheKey);
+                const cached = self.cacheManager.get(cacheKey);
                 if (cached) return cached;
 
                 try {
@@ -357,7 +353,7 @@ class PluginManager {
                     
                     if (data.responseStatus === 200 && data.responseData) {
                         const translation = data.responseData.translatedText;
-                        this.cacheManager.set(cacheKey, translation, 24 * 60 * 60 * 1000);
+                        self.cacheManager.set(cacheKey, translation, 24 * 60 * 60 * 1000);
                         return translation;
                     } else {
                         throw new Error('翻译API返回错误');
@@ -685,6 +681,17 @@ class PluginManager {
             enabled: plugin.enabled,
             type: plugin.type
         };
+    }
+}
+
+// 确保 Utils 辅助方法存在
+if (typeof window !== 'undefined') {
+    if (!window.Utils) window.Utils = {};
+    if (!Utils.generateId) {
+        Utils.generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+    if (!Utils.sleep) {
+        Utils.sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     }
 }
 
