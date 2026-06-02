@@ -1,4 +1,4 @@
-// music-player.js - 完整修复版（封面优先使用歌曲封面，加载失败回退默认 Logo）
+// music-player.js - 完整修复版（封面优先使用歌曲封面，加载失败回退默认 Logo，支持文本歌词）
 // ==================== 自定义下拉选择器组件 ====================
 class CustomSelect {
     constructor(selectElement) {
@@ -458,6 +458,7 @@ class MusicPlayer {
         });
     }
 
+    // 修改后的 loadLyrics 方法，支持文本歌词
     async loadLyrics(song) {
         this.lyricsData = [];
         this.currentLyricIndex = -1;
@@ -466,12 +467,29 @@ class MusicPlayer {
             this.lyricsLineEl.classList.remove('overflow');
             this.lyricsLineEl.style.transform = '';
         }
-        if (!song.lrc) return;
+
+        if (!song.lrc && !song.lrcText) return;
+
         try {
-            const response = await Utils.safeFetch(song.lrc, { timeout: 5000 });
-            const text = await response.text();
-            this.lyricParser.parseLrc(text);
-            this.lyricsData = this.lyricParser.lyrics;
+            let lyricsText = '';
+            // 如果是文本歌词（新搜索返回的 lrc 字段为文本）
+            if (song.lrcType === 'text' || (typeof song.lrc === 'string' && song.lrc.includes('['))) {
+                lyricsText = song.lrc;
+            }
+            // 如果是 URL，则 fetch
+            else if (song.lrc && (song.lrc.startsWith('http://') || song.lrc.startsWith('https://'))) {
+                const response = await Utils.safeFetch(song.lrc, { timeout: 5000 });
+                lyricsText = await response.text();
+            }
+            // 如果 song.lrcText 存在（兼容旧数据）
+            else if (song.lrcText) {
+                lyricsText = song.lrcText;
+            }
+
+            if (lyricsText) {
+                this.lyricParser.parseLrc(lyricsText);
+                this.lyricsData = this.lyricParser.lyrics;
+            }
         } catch (error) {
             Utils.handleApiError(error, '加载歌词失败', false);
         }
@@ -685,7 +703,7 @@ class MusicPlayer {
         this.currentApi = apiId;
         this.updateSearchToggleButton();
         await this.loadApiPlaylist(apiId);
-        this.updateActiveSongInList(); // 切换后高亮当前播放歌曲
+        this.updateActiveSongInList();
     }
 
     async loadApiPlaylist(apiId) {
@@ -784,7 +802,6 @@ class MusicPlayer {
         const fragment = document.createDocumentFragment();
         results.forEach((song, idx) => fragment.appendChild(this.createSearchSongItem(song, idx, results)));
         container.appendChild(fragment);
-        // 搜索结果渲染后也要高亮当前播放歌曲
         this.updateActiveSongInSearch(apiId);
     }
 
@@ -806,21 +823,17 @@ class MusicPlayer {
         if (this.currentPlaylist && this.currentIndex >= 0 && this.currentIndex < items.length) {
             items[this.currentIndex].classList.add('active');
         }
-        // 同时更新搜索结果中的高亮
         this.updateActiveSongInSearch(this.currentApi);
     }
 
-    // 新增方法：更新搜索结果列表中的高亮
     updateActiveSongInSearch(apiId) {
         const el = this.apiElements[apiId];
         if (!el || !el.searchResults) return;
         const items = el.searchResults.querySelectorAll('.song-item');
-        // 清除所有高亮
         items.forEach(item => item.classList.remove('active'));
         if (this.isPlaying && this.currentPlaylist && this.currentIndex >= 0) {
             const currentSong = this.currentPlaylist[this.currentIndex];
             if (!currentSong) return;
-            // 在搜索结果中查找相同 id 或 title+artist 匹配的项并高亮
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
                 const titleEl = item.querySelector('.song-item-title');
@@ -899,17 +912,14 @@ class MusicPlayer {
         if (this.autoPlayNext && this.currentPlaylist.length > 1) setTimeout(() => this.next(), 1000);
     }
 
-    // 核心修改：更新歌曲信息，封面优先使用歌曲封面，加载失败回退默认 Logo
     async updateSongInfo(song) {
         if (this.elements.songTitle) this.elements.songTitle.textContent = song.title;
         if (this.elements.songArtist) this.elements.songArtist.textContent = song.artist;
 
-        // 确定封面 URL：优先使用 song.cover，无效则使用默认 Logo
         let coverUrl = song.cover && (song.cover.startsWith('http://') || song.cover.startsWith('https://'))
             ? song.cover
             : '/assets/logo.png';
 
-        // 针对已知可能为空的第三方字段进行兜底（例如网易云某些接口返回 pic 字段）
         if (coverUrl === '/assets/logo.png' && song.pic && (song.pic.startsWith('http://') || song.pic.startsWith('https://'))) {
             coverUrl = song.pic;
         }
@@ -917,12 +927,10 @@ class MusicPlayer {
         const coverImg = this.elements.coverImg;
         if (!coverImg) return;
 
-        // 清除旧的观察者或正在加载的图片
         if (this.coverObserver && coverImg.dataset.src) {
             this.coverObserver.unobserve(coverImg);
         }
 
-        // 设置封面图片，并处理加载失败
         const setCover = (url) => {
             coverImg.src = url;
             coverImg.style.display = 'block';
@@ -930,7 +938,6 @@ class MusicPlayer {
             if (placeholder) placeholder.style.display = 'none';
         };
 
-        // 如果有有效的封面 URL，尝试加载，失败则回退到默认 Logo
         if (coverUrl !== '/assets/logo.png') {
             const tempImg = new Image();
             tempImg.onload = () => {
@@ -945,7 +952,6 @@ class MusicPlayer {
             setCover('/assets/logo.png');
         }
 
-        // 更新懒加载属性（如果需要）
         coverImg.removeAttribute('data-src');
         coverImg.classList.remove('lazy-cover');
     }
