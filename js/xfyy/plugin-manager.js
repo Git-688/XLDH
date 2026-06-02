@@ -1,4 +1,4 @@
-// plugin-manager.js - 支持网易云音乐搜索 API 替换（完整版，适配实际返回结构）
+// plugin-manager.js - 支持网易云音乐搜索 API 替换（完整版，适配实际返回结构，支持多首+歌词文本）
 class PluginManager {
     constructor(cacheManager) {
         this.cacheManager = cacheManager || new CacheManager();
@@ -32,7 +32,7 @@ class PluginManager {
         this.registerPlugin('netease', {
             name: '网易云音乐',
             version: '2.3.0',
-            description: '基于 tinyaii 榜单API + 新搜索 API + Meting 解析播放地址（并发控制）',
+            description: '基于 tinyaii 榜单API + 新搜索 API（多首+歌词文本）',
 
             // 通过歌曲ID获取播放地址和歌词（备用，用于榜单歌曲）
             _getSongUrlAndLyric: async function(songId, retries = 2) {
@@ -171,7 +171,7 @@ class PluginManager {
                 }
             },
 
-            // 搜索（已适配实际 API 返回结构）
+            // 搜索：支持返回多首歌曲，并且直接使用 API 返回的歌词文本
             search: async function(keyword) {
                 if (!keyword) return [];
                 const cacheKey = `netease_search_${keyword}`;
@@ -181,7 +181,7 @@ class PluginManager {
                 const SEARCH_API_URL = 'https://apicx.asia/api/netease.api';
                 const SEARCH_TOKEN = 'XLoBhZaCdpq9Rd27fLuEmQ';
                 const SEARCH_BR = 'lossless';
-                const SEARCH_LIMIT = 10;   // n 参数，可调整返回数量
+                const SEARCH_LIMIT = 20;   // 请求 20 首歌
 
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -196,25 +196,39 @@ class PluginManager {
                         throw new Error('API 返回异常');
                     }
 
-                    // 实际 API 返回的单曲对象在 data.song 中，且 data.url 和 data.lrc 已提供
-                    const songData = result.data;
-                    if (!songData.song || !songData.url) {
+                    // 新 API 当 n>1 时，data 可能会变成数组，也可能仍是对象（单首）
+                    // 这里兼容两种情况：如果是对象且包含 song，则包装成数组；如果是数组则直接使用
+                    let songList = [];
+                    if (Array.isArray(result.data)) {
+                        songList = result.data;
+                    } else if (result.data.song && Array.isArray(result.data.song)) {
+                        songList = result.data.song;
+                    } else if (result.data.song) {
+                        // 单个对象
+                        songList = [result.data];
+                    } else {
                         return [];
                     }
 
-                    // 构建标准歌曲对象
-                    const song = {
-                        id: songData.song.id,
-                        title: songData.song.name,
-                        artist: songData.song.artists,
-                        src: songData.url,
-                        cover: songData.song.pic,
-                        lrc: songData.lrc || '',
-                        isOnline: true,
-                        source: 'netease'
-                    };
+                    const songs = [];
+                    for (const item of songList) {
+                        // 每个 item 的结构可能是 { song: {...}, url, lrc, ... }
+                        const songObj = item.song || item;
+                        if (!songObj.id || !item.url) continue;
 
-                    const songs = [song]; // 包装成数组返回
+                        songs.push({
+                            id: songObj.id,
+                            title: songObj.name,
+                            artist: songObj.artists || songObj.artist || '未知歌手',
+                            src: item.url,
+                            cover: songObj.pic || '',
+                            lrc: item.lrc || '',        // 歌词文本
+                            lrcType: 'text',            // 标记为文本歌词
+                            isOnline: true,
+                            source: 'netease'
+                        });
+                    }
+
                     self.cacheManager.set(cacheKey, songs, 10 * 60 * 1000);
                     return songs;
                 } catch (error) {
