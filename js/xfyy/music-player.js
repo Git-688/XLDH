@@ -1,4 +1,4 @@
-// music-player.js - 完整修复版（封面优先使用歌曲封面，加载失败回退默认 Logo）
+// music-player.js - 完整修复版（倍速下拉菜单自动翻转方向，防止超出视口）
 // ==================== 自定义下拉选择器组件 ====================
 class CustomSelect {
     constructor(selectElement) {
@@ -97,21 +97,49 @@ class CustomSelect {
         }
     }
 
-    // 关键修改：区分倍速选择器和普通下拉菜单，倍速使用 fixed 定位
+    // 关键修改：增加边界检测，自动翻转方向
     updateDropdownPosition() {
         if (!this.isOpen) return;
         const rect = this.trigger.getBoundingClientRect();
-        // 判断是否属于倍速选择器（通过父级 .speed-control）
         const isSpeedControl = this.container.closest('.speed-control') !== null;
         
         if (isSpeedControl) {
-            // 倍速选择器：使用 fixed 定位，相对于视口，避免被父容器裁剪
+            // 获取下拉菜单实际高度（如果还未渲染，使用默认值）
+            let dropdownHeight = this.dropdown.offsetHeight;
+            if (!dropdownHeight) {
+                // 临时显示以便获取高度
+                const originalDisplay = this.dropdown.style.display;
+                this.dropdown.style.display = 'block';
+                dropdownHeight = this.dropdown.offsetHeight;
+                this.dropdown.style.display = originalDisplay;
+            }
+            dropdownHeight = dropdownHeight || 150;
+            const viewportHeight = window.innerHeight;
+            const viewportWidth = window.innerWidth;
+            const spaceBelow = viewportHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            
+            let top;
+            // 优先向下，空间不足则向上
+            if (spaceBelow >= dropdownHeight || spaceBelow > spaceAbove) {
+                top = rect.bottom + 4;
+            } else {
+                top = rect.top - dropdownHeight - 4;
+            }
+            
+            // 左右边界修正
+            let left = rect.left;
+            const dropdownWidth = this.dropdown.offsetWidth || rect.width;
+            if (left + dropdownWidth + 10 > viewportWidth) {
+                left = viewportWidth - dropdownWidth - 10;
+            }
+            if (left < 10) left = 10;
+            
             this.dropdown.style.position = 'fixed';
-            this.dropdown.style.top = `${rect.bottom + 4}px`;
-            this.dropdown.style.left = `${rect.left}px`;
+            this.dropdown.style.top = `${top}px`;
+            this.dropdown.style.left = `${left}px`;
             this.dropdown.style.width = `${rect.width}px`;
         } else {
-            // 普通下拉菜单（如歌单选择）：使用 absolute 定位，相对于 trigger
             this.dropdown.style.position = 'absolute';
             this.dropdown.style.top = `${rect.height + 4}px`;
             this.dropdown.style.left = '0';
@@ -126,6 +154,8 @@ class CustomSelect {
         this.isOpen = true;
         this.trigger.classList.add('open');
         this.updateDropdownPosition();
+        // 延迟重新计算，确保高度已渲染
+        setTimeout(() => this.updateDropdownPosition(), 30);
         this.dropdown.classList.add('open');
 
         this.scrollListener = () => this.updateDropdownPosition();
