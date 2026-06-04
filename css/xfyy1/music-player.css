@@ -207,7 +207,9 @@
     position: relative; /* 作为 fixed 定位的参考（left/top 基准） */
 }
 
-/* 由于 fixed 定位，top/left 需要通过 JS 动态计算，此处仅提供基础样式 */
+.speed-control .custom-select .custom-select-dropdown {
+    /* 由于 fixed 定位，top/left 需要通过 JS 动态计算，此处仅提供基础样式 */
+}
 
 .playlist-selector .custom-select { width: 100%; }
 
