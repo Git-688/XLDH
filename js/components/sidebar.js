@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（完整版，修复滚动位置丢失 + QQ头像HTTPS）
+// sidebar.js - 现代悬浮侧滑栏（展开后允许主页滚动）
 (function() {
     // 分类数据
     const CATEGORIES_DATA = [
@@ -51,7 +51,7 @@
             this.isOpen = false;
             this.categories = JSON.parse(JSON.stringify(CATEGORIES_DATA));
             this.userConfig = null;
-            this._savedScrollY = 0;   // 保存关闭侧滑栏前的滚动位置
+            this._savedScrollY = 0;   // 保存关闭侧滑栏前的滚动位置（仍保留，但不再锁定滚动）
             this.init();
         }
 
@@ -348,7 +348,6 @@
                         statusDiv.textContent = '获取头像中...';
                         statusDiv.style.color = '#666';
                         try {
-                            // 强制使用 HTTPS
                             const avatarUrl = `https://api.kuleu.com/api/qqimg?qq=${qq}`;
                             const testImg = new Image();
                             testImg.onload = () => {
@@ -446,15 +445,17 @@
             });
         }
 
+        // 修改后的 show 方法：不再锁定 body 滚动
         show() {
             if (this.isOpen) return;
-            // 保存当前滚动位置
+            // 保存当前滚动位置（以备后续可能需要）
             this._savedScrollY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
             this.closeOtherModals();
             this.isOpen = true;
             this.sidebarEl.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            document.body.classList.add('sidebar-open');
+            // 移除这两行：不再禁止 body 滚动
+            // document.body.style.overflow = 'hidden';
+            // document.body.classList.add('sidebar-open');
             if (window.app && !window._sidebarModalRegistered) {
                 window.app.registerModal(this);
                 window._sidebarModalRegistered = true;
@@ -465,7 +466,7 @@
             if (!this.isOpen) return;
             this.isOpen = false;
             this.sidebarEl.classList.remove('active');
-            document.body.style.overflow = '';
+            // 恢复 body 样式（原本设置的 overflow 已被移除，这里只需移除可能残留的 class）
             document.body.classList.remove('sidebar-open');
             // 恢复滚动位置（仅当保存的值有效且页面未关闭）
             if (typeof this._savedScrollY === 'number' && this._savedScrollY !== undefined) {
