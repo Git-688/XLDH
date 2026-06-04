@@ -325,9 +325,10 @@
 <div id="commentModal" class="feedback-modal"><div class="feedback-modal-content"><div class="feedback-modal-header"><h3><i class="fas fa-comments"></i> 网友评论</h3><button class="feedback-modal-close">&times;</button></div><div class="feedback-modal-body"><div id="waline-comment"></div></div></div></div>
 <div id="submitModal" class="feedback-modal"><div class="feedback-modal-content"><div class="feedback-modal-header"><h3><i class="fas fa-paper-plane"></i> 网站投稿 <span class="submit-remaining-count" style="font-size:12px;margin-left:10px;">今日剩余 6 次</span></h3><button class="feedback-modal-close">&times;</button></div><div class="feedback-modal-body"><form id="submitSiteForm"><div class="form-row"><label>网站链接 <span class="required-star">*</span></label><div style="display:flex;gap:8px;align-items:center;"><input type="url" id="submitUrl" placeholder="https://xjdh688.ccwu.cc" required style="flex:1;"><button type="button" id="fetchSiteInfoBtn" class="fetch-info-btn" title="自动获取信息"><i class="fas fa-magic"></i> 获取信息</button></div><div id="urlCheckResult" class="url-check-result" style="display:none;"></div></div><div class="form-row"><label>网站名称 <span class="required-star">*</span></label><input type="text" id="submitTitle" placeholder="例如：星聚导航" required></div><div class="form-row"><label>网站图标</label><div style="display:flex;align-items:center;gap:10px;"><input type="text" id="submitIcon" placeholder="自动获取或手动输入图标URL" style="flex:1;"><img id="submitIconPreview" src="" style="width:32px;height:32px;border-radius:6px;display:none;" alt="图标预览"></div></div><div class="form-row"><label>简短描述</label><textarea id="submitDesc" rows="2" placeholder="介绍一下这个网站..."></textarea></div><div class="submit-form-buttons"><span class="submit-safe-hint">安全检测中，请耐心等待！</span><button type="button" class="submit-cancel-btn">取消</button><button type="submit" class="submit-save-btn" id="submitSaveBtn" disabled>提交投稿</button></div></form></div></div></div>
 
-<!-- 所有外部脚本统一添加 defer 和 crossorigin="anonymous" 解决跨域错误 -->
-<!-- jQuery 使用 Cloudflare CDN（更稳定） -->
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" crossorigin="anonymous"></script>
+<!-- jQuery 放在最前面，不加 defer，确保播放器脚本执行时已加载 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" crossorigin="anonymous"></script>
+
+<!-- 所有其他外部脚本统一添加 defer 和 crossorigin="anonymous" 解决跨域错误 -->
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js" crossorigin="anonymous"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 <script defer src="./js/utils.js"></script>
@@ -357,7 +358,7 @@
 <script defer src="./js/modules/comment.js"></script>
 <script defer src="./js/modules/submit.js"></script>
 
-<!-- 新增外部播放器脚本 -->
+<!-- 新增外部播放器脚本（放在 jQuery 之后） -->
 <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178053822427" key="178053822427" m="1"></script>
 
 <script>
