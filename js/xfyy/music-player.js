@@ -1,5 +1,7 @@
-// music-player.js - 最终完全修复版（进度条、歌词、倍速菜单）
+// music-player.js - 最终版（下拉菜单互斥展开 + 进度条修复 + 歌词修复 + 倍速菜单位置修复）
 // ==================== 自定义下拉选择器组件 ====================
+let currentOpenCustomSelect = null;  // 全局当前打开的下拉菜单实例
+
 class CustomSelect {
     constructor(selectElement) {
         this.selectElement = selectElement;
@@ -128,11 +130,16 @@ class CustomSelect {
 
     openDropdown() {
         if (this.isOpen) return;
+        // 关闭其他已打开的下拉菜单（互斥）
+        if (currentOpenCustomSelect && currentOpenCustomSelect !== this) {
+            currentOpenCustomSelect.closeDropdown();
+        }
         this.isOpen = true;
         this.trigger.classList.add('open');
         this.updateDropdownPosition();
         setTimeout(() => this.updateDropdownPosition(), 30);
         this.dropdown.classList.add('open');
+        currentOpenCustomSelect = this;
 
         this.scrollListener = () => this.updateDropdownPosition();
         this.resizeListener = () => this.updateDropdownPosition();
@@ -155,6 +162,9 @@ class CustomSelect {
         if (this.scrollListener) window.removeEventListener('scroll', this.scrollListener, true);
         if (this.resizeListener) window.removeEventListener('resize', this.resizeListener);
         document.removeEventListener('click', this.handleOutsideClick);
+        if (currentOpenCustomSelect === this) {
+            currentOpenCustomSelect = null;
+        }
     }
 
     bindEvents() {
@@ -588,7 +598,6 @@ class MusicPlayer {
             this.savePlayState(true);
             document.querySelector('.album-cover')?.classList.add('playing');
             this.updateActiveSongInList();
-            // 确保进度条更新器运行
             if (!this.updateAnimationFrame) this.updateProgress();
         } catch (error) {
             console.error('播放失败:', error);
@@ -920,7 +929,6 @@ class MusicPlayer {
             });
             this.consecutiveErrors = 0;
             this.maxErrorShown = false;
-            // 确保进度更新器重新启动（如果播放状态需要）
             if (this.isPlaying && !this.updateAnimationFrame) this.updateProgress();
         } catch (error) {
             console.error('加载歌曲失败:', error);
@@ -1065,12 +1073,10 @@ class MusicPlayer {
             } else if (duration && !isNaN(duration) && duration === 0) {
                 // 歌曲尚未加载完，稍后再试
             } else {
-                // 无 duration，显示占位符
                 this.elements.currentTime.textContent = '00:00';
                 this.elements.duration.textContent = '00:00';
             }
             this.updateAnimationFrame = null;
-            // 如果正在播放，继续调度
             if (this.isPlaying && !this.audio.paused) {
                 this.updateProgress();
             }
