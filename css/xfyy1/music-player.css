@@ -14,7 +14,7 @@
     border-radius: 8px;
     box-shadow: var(--acrylic-shadow, 0 8px 32px rgba(0,0,0,0.08)), 0 0 0 1px rgba(255, 255, 255, 0.5);
     width: 420px;
-    overflow: hidden;  /* 保持圆角裁剪，但不影响下拉菜单（下拉菜单已挂载到 body 或使用 fixed） */
+    overflow: hidden;
     transition: all 0.3s ease;
     z-index: 10000;
     max-height: 700px;
@@ -196,15 +196,14 @@
 .custom-select-option.selected { background: rgba(67,97,238,0.12); color: var(--primary-color, #4361ee); font-weight: 500; position: relative; }
 .custom-select-option.selected::before { content: '✓'; position: absolute; right: 12px; font-size: 12px; }
 
-/* 倍速下拉列表：使用绝对定位相对于 .speed-control */
+/* 倍速下拉列表：使用绝对定位相对于 .speed-control，并提高 z-index 到最高 */
 .speed-control {
     position: relative;
 }
 .speed-control .custom-select-dropdown {
-    z-index: 100001 !important;
+    z-index: 100002 !important;  /* 高于所有其他元素 */
     width: auto;
     min-width: 65px;
-    /* 定位由 JS 动态设置 top/left，这里只保证基础样式 */
 }
 
 .playlist-selector .custom-select { width: 100%; }
