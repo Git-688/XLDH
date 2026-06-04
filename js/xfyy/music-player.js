@@ -1,4 +1,4 @@
-// music-player.js - 完整修复版（倍速下拉菜单自动翻转方向，防止超出视口）
+// music-player.js - 最终修复版（歌词显示 + 倍速下拉菜单位置修正 + 层级提升）
 // ==================== 自定义下拉选择器组件 ====================
 class CustomSelect {
     constructor(selectElement) {
@@ -97,53 +97,37 @@ class CustomSelect {
         }
     }
 
-    // 关键修改：增加边界检测，自动翻转方向
+    // 修正定位：对于倍速选择器，使用绝对定位相对于 .speed-control 容器
     updateDropdownPosition() {
         if (!this.isOpen) return;
-        const rect = this.trigger.getBoundingClientRect();
         const isSpeedControl = this.container.closest('.speed-control') !== null;
         
         if (isSpeedControl) {
-            // 获取下拉菜单实际高度（如果还未渲染，使用默认值）
-            let dropdownHeight = this.dropdown.offsetHeight;
-            if (!dropdownHeight) {
-                // 临时显示以便获取高度
-                const originalDisplay = this.dropdown.style.display;
-                this.dropdown.style.display = 'block';
-                dropdownHeight = this.dropdown.offsetHeight;
-                this.dropdown.style.display = originalDisplay;
-            }
-            dropdownHeight = dropdownHeight || 150;
-            const viewportHeight = window.innerHeight;
-            const viewportWidth = window.innerWidth;
-            const spaceBelow = viewportHeight - rect.bottom;
-            const spaceAbove = rect.top;
-            
-            let top;
-            // 优先向下，空间不足则向上
-            if (spaceBelow >= dropdownHeight || spaceBelow > spaceAbove) {
-                top = rect.bottom + 4;
+            // 找到 .speed-control 作为相对定位的父容器
+            const speedControl = this.container.closest('.speed-control');
+            if (speedControl) {
+                // 确保父容器是相对定位
+                if (getComputedStyle(speedControl).position !== 'relative') {
+                    speedControl.style.position = 'relative';
+                }
+                this.dropdown.style.position = 'absolute';
+                this.dropdown.style.top = `${this.trigger.offsetHeight + 4}px`;
+                this.dropdown.style.left = '0';
+                this.dropdown.style.width = `${this.trigger.offsetWidth}px`;
+                // 不需要设置 maxHeight，由 CSS 控制
             } else {
-                top = rect.top - dropdownHeight - 4;
+                // fallback
+                this.dropdown.style.position = 'absolute';
+                this.dropdown.style.top = `${this.trigger.offsetHeight + 4}px`;
+                this.dropdown.style.left = '0';
+                this.dropdown.style.width = `${this.trigger.offsetWidth}px`;
             }
-            
-            // 左右边界修正
-            let left = rect.left;
-            const dropdownWidth = this.dropdown.offsetWidth || rect.width;
-            if (left + dropdownWidth + 10 > viewportWidth) {
-                left = viewportWidth - dropdownWidth - 10;
-            }
-            if (left < 10) left = 10;
-            
-            this.dropdown.style.position = 'fixed';
-            this.dropdown.style.top = `${top}px`;
-            this.dropdown.style.left = `${left}px`;
-            this.dropdown.style.width = `${rect.width}px`;
         } else {
+            // 普通下拉菜单（如歌单选择）保持原有逻辑
             this.dropdown.style.position = 'absolute';
-            this.dropdown.style.top = `${rect.height + 4}px`;
+            this.dropdown.style.top = `${this.trigger.offsetHeight + 4}px`;
             this.dropdown.style.left = '0';
-            this.dropdown.style.width = `${rect.width}px`;
+            this.dropdown.style.width = `${this.trigger.offsetWidth}px`;
         }
         this.dropdown.style.maxHeight = '200px';
         this.dropdown.style.overflowY = 'auto';
@@ -154,7 +138,7 @@ class CustomSelect {
         this.isOpen = true;
         this.trigger.classList.add('open');
         this.updateDropdownPosition();
-        // 延迟重新计算，确保高度已渲染
+        // 确保下拉菜单渲染后重新计算位置（防止高度变化）
         setTimeout(() => this.updateDropdownPosition(), 30);
         this.dropdown.classList.add('open');
 
@@ -398,11 +382,12 @@ class MusicPlayer {
             lyricsSection: document.querySelector('.lyrics-section'),
             player: document.querySelector('.music-player')
         };
+        // 确保歌词容器有显示元素
         if (this.elements.lyricsContainer) {
             this.elements.lyricsContainer.innerHTML = '';
             this.lyricsLineEl = document.createElement('div');
             this.lyricsLineEl.className = 'lyrics-single-line';
-            this.lyricsLineEl.textContent = '';
+            this.lyricsLineEl.textContent = '暂无歌词';
             this.elements.lyricsContainer.appendChild(this.lyricsLineEl);
         }
         this.initializeApiElements();
@@ -439,12 +424,10 @@ class MusicPlayer {
         this.elements.modeBtn.addEventListener('click', () => this.togglePlayMode());
         this.elements.volumeBtn.addEventListener('click', () => this.toggleVolumeSlider());
         
-        // 音量滑块：同时支持 mouse 和 touch 事件，提升移动端灵敏度
         this.elements.volumeSlider.addEventListener('input', (e) => {
             this.setVolume(e.target.value / 100);
             this.saveVolume(e.target.value / 100);
         });
-        // 增加 touchmove 事件，确保移动端拖动时连续响应
         this.elements.volumeSlider.addEventListener('touchmove', (e) => {
             e.preventDefault();
             const value = parseInt(e.target.value, 10);
@@ -505,33 +488,52 @@ class MusicPlayer {
         this.lyricsData = [];
         this.currentLyricIndex = -1;
         if (this.lyricsLineEl) {
-            this.lyricsLineEl.textContent = '';
+            this.lyricsLineEl.textContent = '加载歌词中...';
             this.lyricsLineEl.classList.remove('overflow');
             this.lyricsLineEl.style.transform = '';
         }
-        if (!song.lrc) return;
+        if (!song.lrc) {
+            if (this.lyricsLineEl) this.lyricsLineEl.textContent = '暂无歌词';
+            return;
+        }
         try {
             const response = await Utils.safeFetch(song.lrc, { timeout: 5000 });
             const text = await response.text();
             this.lyricParser.parseLrc(text);
             this.lyricsData = this.lyricParser.lyrics;
+            if (this.lyricsData.length === 0) {
+                if (this.lyricsLineEl) this.lyricsLineEl.textContent = '暂无歌词';
+            } else {
+                // 立即显示第一句歌词（如果有）
+                if (this.lyricsData[0]) {
+                    this.lyricsLineEl.textContent = this.lyricsData[0].text;
+                }
+            }
         } catch (error) {
             Utils.handleApiError(error, '加载歌词失败', false);
+            if (this.lyricsLineEl) this.lyricsLineEl.textContent = '歌词加载失败';
         }
     }
 
     updateLyricDisplayByTime(currentTime) {
-        if (!this.lyricsData.length) return;
+        if (!this.lyricsData || this.lyricsData.length === 0) return;
         let activeIndex = -1;
         for (let i = 0; i < this.lyricsData.length; i++) {
             if (currentTime >= this.lyricsData[i].time) activeIndex = i;
             else break;
         }
-        if (activeIndex === -1 || activeIndex === this.currentLyricIndex) return;
+        if (activeIndex === -1) {
+            if (this.lyricsData.length > 0 && this.lyricsLineEl.textContent !== this.lyricsData[0].text) {
+                this.lyricsLineEl.textContent = this.lyricsData[0].text;
+            }
+            return;
+        }
+        if (activeIndex === this.currentLyricIndex) return;
         this.currentLyricIndex = activeIndex;
         if (this.lyricsLineEl) {
             const lyricText = this.lyricsData[activeIndex].text || '';
             this.lyricsLineEl.textContent = lyricText;
+            // 滚动效果（如果有需要）
             const container = this.elements.lyricsContainer;
             if (container && this.lyricsLineEl.scrollWidth > container.clientWidth) {
                 if (!this.lyricsLineEl.classList.contains('overflow')) {
@@ -551,6 +553,7 @@ class MusicPlayer {
         const container = this.elements.lyricsContainer;
         if (!el || !container) return;
         const maxScroll = el.scrollWidth - container.clientWidth;
+        if (maxScroll <= 0) return;
         let startTime = null;
         const duration = 8000;
         const animate = (timestamp) => {
@@ -728,7 +731,7 @@ class MusicPlayer {
         this.currentApi = apiId;
         this.updateSearchToggleButton();
         await this.loadApiPlaylist(apiId);
-        this.updateActiveSongInList(); // 切换后高亮当前播放歌曲
+        this.updateActiveSongInList();
     }
 
     async loadApiPlaylist(apiId) {
@@ -827,7 +830,6 @@ class MusicPlayer {
         const fragment = document.createDocumentFragment();
         results.forEach((song, idx) => fragment.appendChild(this.createSearchSongItem(song, idx, results)));
         container.appendChild(fragment);
-        // 搜索结果渲染后也要高亮当前播放歌曲
         this.updateActiveSongInSearch(apiId);
     }
 
@@ -849,21 +851,17 @@ class MusicPlayer {
         if (this.currentPlaylist && this.currentIndex >= 0 && this.currentIndex < items.length) {
             items[this.currentIndex].classList.add('active');
         }
-        // 同时更新搜索结果中的高亮
         this.updateActiveSongInSearch(this.currentApi);
     }
 
-    // 新增方法：更新搜索结果列表中的高亮
     updateActiveSongInSearch(apiId) {
         const el = this.apiElements[apiId];
         if (!el || !el.searchResults) return;
         const items = el.searchResults.querySelectorAll('.song-item');
-        // 清除所有高亮
         items.forEach(item => item.classList.remove('active'));
         if (this.isPlaying && this.currentPlaylist && this.currentIndex >= 0) {
             const currentSong = this.currentPlaylist[this.currentIndex];
             if (!currentSong) return;
-            // 在搜索结果中查找相同 id 或 title+artist 匹配的项并高亮
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
                 const titleEl = item.querySelector('.song-item-title');
@@ -942,17 +940,14 @@ class MusicPlayer {
         if (this.autoPlayNext && this.currentPlaylist.length > 1) setTimeout(() => this.next(), 1000);
     }
 
-    // 核心修改：更新歌曲信息，封面优先使用歌曲封面，加载失败回退默认 Logo
     async updateSongInfo(song) {
         if (this.elements.songTitle) this.elements.songTitle.textContent = song.title;
         if (this.elements.songArtist) this.elements.songArtist.textContent = song.artist;
 
-        // 确定封面 URL：优先使用 song.cover，无效则使用默认 Logo
         let coverUrl = song.cover && (song.cover.startsWith('http://') || song.cover.startsWith('https://'))
             ? song.cover
             : '/assets/logo.png';
 
-        // 针对已知可能为空的第三方字段进行兜底（例如网易云某些接口返回 pic 字段）
         if (coverUrl === '/assets/logo.png' && song.pic && (song.pic.startsWith('http://') || song.pic.startsWith('https://'))) {
             coverUrl = song.pic;
         }
@@ -960,12 +955,10 @@ class MusicPlayer {
         const coverImg = this.elements.coverImg;
         if (!coverImg) return;
 
-        // 清除旧的观察者或正在加载的图片
         if (this.coverObserver && coverImg.dataset.src) {
             this.coverObserver.unobserve(coverImg);
         }
 
-        // 设置封面图片，并处理加载失败
         const setCover = (url) => {
             coverImg.src = url;
             coverImg.style.display = 'block';
@@ -973,12 +966,9 @@ class MusicPlayer {
             if (placeholder) placeholder.style.display = 'none';
         };
 
-        // 如果有有效的封面 URL，尝试加载，失败则回退到默认 Logo
         if (coverUrl !== '/assets/logo.png') {
             const tempImg = new Image();
-            tempImg.onload = () => {
-                setCover(coverUrl);
-            };
+            tempImg.onload = () => setCover(coverUrl);
             tempImg.onerror = () => {
                 console.warn(`封面加载失败，回退至默认 Logo: ${coverUrl}`);
                 setCover('/assets/logo.png');
@@ -988,7 +978,6 @@ class MusicPlayer {
             setCover('/assets/logo.png');
         }
 
-        // 更新懒加载属性（如果需要）
         coverImg.removeAttribute('data-src');
         coverImg.classList.remove('lazy-cover');
     }
