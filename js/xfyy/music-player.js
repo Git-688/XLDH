@@ -1,4 +1,4 @@
-// music-player.js - 最终修复版（进度条重置 + 倍速下拉菜单不被遮挡）
+// music-player.js - 最终完全修复版（进度条、歌词、倍速菜单）
 // ==================== 自定义下拉选择器组件 ====================
 class CustomSelect {
     constructor(selectElement) {
@@ -9,6 +9,7 @@ class CustomSelect {
         this.options = [];
         this.isOpen = false;
         this.value = selectElement.value;
+        this.isSpeedControl = false;
         this.init();
     }
 
@@ -27,10 +28,19 @@ class CustomSelect {
         this.container.appendChild(this.trigger);
         this.selectElement.parentNode.insertBefore(this.container, this.selectElement.nextSibling);
 
+        // 判断是否为倍速控制
+        this.isSpeedControl = this.container.closest('.speed-control') !== null;
+
         this.dropdown = document.createElement('div');
         this.dropdown.className = 'custom-select-dropdown';
         this.populateOptions();
-        this.container.appendChild(this.dropdown);
+
+        if (this.isSpeedControl) {
+            // 倍速下拉菜单添加到 body，避免被父容器 overflow 裁剪
+            document.body.appendChild(this.dropdown);
+        } else {
+            this.container.appendChild(this.dropdown);
+        }
 
         this.bindEvents();
         this.selectElement.addEventListener('change', () => {
@@ -99,24 +109,13 @@ class CustomSelect {
 
     updateDropdownPosition() {
         if (!this.isOpen) return;
-        const isSpeedControl = this.container.closest('.speed-control') !== null;
-        
-        if (isSpeedControl) {
-            const speedControl = this.container.closest('.speed-control');
-            if (speedControl) {
-                if (getComputedStyle(speedControl).position !== 'relative') {
-                    speedControl.style.position = 'relative';
-                }
-                this.dropdown.style.position = 'absolute';
-                this.dropdown.style.top = `${this.trigger.offsetHeight + 4}px`;
-                this.dropdown.style.left = '0';
-                this.dropdown.style.width = `${this.trigger.offsetWidth}px`;
-            } else {
-                this.dropdown.style.position = 'absolute';
-                this.dropdown.style.top = `${this.trigger.offsetHeight + 4}px`;
-                this.dropdown.style.left = '0';
-                this.dropdown.style.width = `${this.trigger.offsetWidth}px`;
-            }
+        const rect = this.trigger.getBoundingClientRect();
+        if (this.isSpeedControl) {
+            // 相对于视口定位
+            this.dropdown.style.position = 'fixed';
+            this.dropdown.style.top = `${rect.bottom + 4}px`;
+            this.dropdown.style.left = `${rect.left}px`;
+            this.dropdown.style.width = `${rect.width}px`;
         } else {
             this.dropdown.style.position = 'absolute';
             this.dropdown.style.top = `${this.trigger.offsetHeight + 4}px`;
@@ -141,7 +140,7 @@ class CustomSelect {
         window.addEventListener('resize', this.resizeListener);
 
         this.handleOutsideClick = (e) => {
-            if (!this.container.contains(e.target)) {
+            if (!this.container.contains(e.target) && !this.dropdown.contains(e.target)) {
                 this.closeDropdown();
             }
         };
@@ -174,6 +173,7 @@ class CustomSelect {
     destroy() {
         this.closeDropdown();
         this.container.remove();
+        if (this.dropdown.parentNode) this.dropdown.remove();
         this.selectElement.style.display = '';
     }
 }
@@ -588,6 +588,8 @@ class MusicPlayer {
             this.savePlayState(true);
             document.querySelector('.album-cover')?.classList.add('playing');
             this.updateActiveSongInList();
+            // 确保进度条更新器运行
+            if (!this.updateAnimationFrame) this.updateProgress();
         } catch (error) {
             console.error('播放失败:', error);
             this.isPlaying = false;
@@ -897,11 +899,18 @@ class MusicPlayer {
         try {
             this.audio.src = song.src;
             this.audio.load();
-            // 重置进度条显示
+            // 强制重置进度条显示
             this.elements.progress.style.width = '0%';
             this.elements.progressHandle.style.left = '0%';
             this.elements.currentTime.textContent = '00:00';
-            this.audio.currentTime = 0; // 确保从头开始
+            this.audio.currentTime = 0;
+            // 重置歌词显示为第一句
+            if (this.lyricsData && this.lyricsData.length) {
+                this.currentLyricIndex = -1;
+                this.updateLyricDisplayByTime(0);
+            } else {
+                if (this.lyricsLineEl) this.lyricsLineEl.textContent = '加载歌词中...';
+            }
             await this.updateSongInfo(song);
             await this.loadLyrics(song);
             await new Promise(resolve => {
@@ -911,6 +920,8 @@ class MusicPlayer {
             });
             this.consecutiveErrors = 0;
             this.maxErrorShown = false;
+            // 确保进度更新器重新启动（如果播放状态需要）
+            if (this.isPlaying && !this.updateAnimationFrame) this.updateProgress();
         } catch (error) {
             console.error('加载歌曲失败:', error);
             if (!this.isHandlingNavigationClick) this.handlePlaybackError(error);
@@ -1042,7 +1053,7 @@ class MusicPlayer {
         this.updateAnimationFrame = requestAnimationFrame(() => {
             const currentTime = this.audio.currentTime;
             const duration = this.audio.duration;
-            if (duration && !isNaN(duration)) {
+            if (duration && !isNaN(duration) && duration > 0) {
                 const percent = (currentTime / duration) * 100;
                 this.elements.progress.style.width = `${percent}%`;
                 this.elements.progressHandle.style.left = `${percent}%`;
@@ -1051,14 +1062,28 @@ class MusicPlayer {
                     this.lastTimeUpdate = Date.now();
                 }
                 this.updateLyricDisplayByTime(currentTime);
+            } else if (duration && !isNaN(duration) && duration === 0) {
+                // 歌曲尚未加载完，稍后再试
+            } else {
+                // 无 duration，显示占位符
+                this.elements.currentTime.textContent = '00:00';
+                this.elements.duration.textContent = '00:00';
             }
             this.updateAnimationFrame = null;
+            // 如果正在播放，继续调度
+            if (this.isPlaying && !this.audio.paused) {
+                this.updateProgress();
+            }
         });
     }
 
     updateDuration() {
         const dur = this.audio.duration;
-        this.elements.duration.textContent = (dur && !isNaN(dur)) ? Utils.formatTime(dur) : '--:--';
+        if (dur && !isNaN(dur)) {
+            this.elements.duration.textContent = Utils.formatTime(dur);
+        } else {
+            this.elements.duration.textContent = '--:--';
+        }
     }
 
     setVolume(vol) { this.volume = vol; this.audio.volume = vol; if (this.elements.volumeSlider) this.elements.volumeSlider.value = vol * 100; }
@@ -1116,7 +1141,7 @@ class MusicPlayer {
     updateSeek(e) {
         const seekTime = this.getSeekTime(e);
         const duration = this.audio.duration;
-        if (duration) {
+        if (duration && !isNaN(duration) && duration > 0) {
             const percent = (seekTime / duration) * 100;
             this.elements.progress.style.width = `${percent}%`;
             this.elements.progressHandle.style.left = `${percent}%`;
@@ -1128,7 +1153,7 @@ class MusicPlayer {
         this.audio.addEventListener('loadedmetadata', () => { this.updateDuration(); setTimeout(() => this.updateDuration(), 100); });
         this.audio.addEventListener('timeupdate', () => { if (!this.updateAnimationFrame) this.updateProgress(); });
         this.audio.addEventListener('ended', () => this.handleEnded());
-        this.audio.addEventListener('canplay', () => { this.elements.playBtn.disabled = false; this.isLoading = false; this.updateDuration(); });
+        this.audio.addEventListener('canplay', () => { this.elements.playBtn.disabled = false; this.isLoading = false; this.updateDuration(); if (this.isPlaying) this.play(); });
         this.audio.addEventListener('waiting', () => { this.isLoading = true; });
         this.audio.addEventListener('error', (e) => {
             console.error('音频加载错误:', e);
@@ -1138,6 +1163,7 @@ class MusicPlayer {
             if (this.updateAnimationFrame) cancelAnimationFrame(this.updateAnimationFrame);
         });
         this.audio.addEventListener('pause', () => { if (this.updateAnimationFrame) cancelAnimationFrame(this.updateAnimationFrame); });
+        this.audio.addEventListener('play', () => { if (!this.updateAnimationFrame) this.updateProgress(); });
     }
 
     initializePlayer() {
