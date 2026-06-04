@@ -1,4 +1,4 @@
-// music-player.js - 最终修复版（歌词显示 + 倍速下拉菜单位置修正 + 层级提升）
+// music-player.js - 最终修复版（进度条重置 + 倍速下拉菜单不被遮挡）
 // ==================== 自定义下拉选择器组件 ====================
 class CustomSelect {
     constructor(selectElement) {
@@ -97,16 +97,13 @@ class CustomSelect {
         }
     }
 
-    // 修正定位：对于倍速选择器，使用绝对定位相对于 .speed-control 容器
     updateDropdownPosition() {
         if (!this.isOpen) return;
         const isSpeedControl = this.container.closest('.speed-control') !== null;
         
         if (isSpeedControl) {
-            // 找到 .speed-control 作为相对定位的父容器
             const speedControl = this.container.closest('.speed-control');
             if (speedControl) {
-                // 确保父容器是相对定位
                 if (getComputedStyle(speedControl).position !== 'relative') {
                     speedControl.style.position = 'relative';
                 }
@@ -114,16 +111,13 @@ class CustomSelect {
                 this.dropdown.style.top = `${this.trigger.offsetHeight + 4}px`;
                 this.dropdown.style.left = '0';
                 this.dropdown.style.width = `${this.trigger.offsetWidth}px`;
-                // 不需要设置 maxHeight，由 CSS 控制
             } else {
-                // fallback
                 this.dropdown.style.position = 'absolute';
                 this.dropdown.style.top = `${this.trigger.offsetHeight + 4}px`;
                 this.dropdown.style.left = '0';
                 this.dropdown.style.width = `${this.trigger.offsetWidth}px`;
             }
         } else {
-            // 普通下拉菜单（如歌单选择）保持原有逻辑
             this.dropdown.style.position = 'absolute';
             this.dropdown.style.top = `${this.trigger.offsetHeight + 4}px`;
             this.dropdown.style.left = '0';
@@ -138,7 +132,6 @@ class CustomSelect {
         this.isOpen = true;
         this.trigger.classList.add('open');
         this.updateDropdownPosition();
-        // 确保下拉菜单渲染后重新计算位置（防止高度变化）
         setTimeout(() => this.updateDropdownPosition(), 30);
         this.dropdown.classList.add('open');
 
@@ -208,7 +201,6 @@ class MusicPlayer {
     };
 
     constructor() {
-        // 保证 Utils 存在
         if (!window.Utils) {
             window.Utils = {
                 escapeHtml: (str) => {
@@ -273,7 +265,6 @@ class MusicPlayer {
         this.userGestureResolved = false;
         this.userGesturePromise = null;
 
-        // 统一错误边界
         this.setupGlobalErrorHandler();
     }
 
@@ -382,7 +373,6 @@ class MusicPlayer {
             lyricsSection: document.querySelector('.lyrics-section'),
             player: document.querySelector('.music-player')
         };
-        // 确保歌词容器有显示元素
         if (this.elements.lyricsContainer) {
             this.elements.lyricsContainer.innerHTML = '';
             this.lyricsLineEl = document.createElement('div');
@@ -504,7 +494,6 @@ class MusicPlayer {
             if (this.lyricsData.length === 0) {
                 if (this.lyricsLineEl) this.lyricsLineEl.textContent = '暂无歌词';
             } else {
-                // 立即显示第一句歌词（如果有）
                 if (this.lyricsData[0]) {
                     this.lyricsLineEl.textContent = this.lyricsData[0].text;
                 }
@@ -533,7 +522,6 @@ class MusicPlayer {
         if (this.lyricsLineEl) {
             const lyricText = this.lyricsData[activeIndex].text || '';
             this.lyricsLineEl.textContent = lyricText;
-            // 滚动效果（如果有需要）
             const container = this.elements.lyricsContainer;
             if (container && this.lyricsLineEl.scrollWidth > container.clientWidth) {
                 if (!this.lyricsLineEl.classList.contains('overflow')) {
@@ -909,6 +897,11 @@ class MusicPlayer {
         try {
             this.audio.src = song.src;
             this.audio.load();
+            // 重置进度条显示
+            this.elements.progress.style.width = '0%';
+            this.elements.progressHandle.style.left = '0%';
+            this.elements.currentTime.textContent = '00:00';
+            this.audio.currentTime = 0; // 确保从头开始
             await this.updateSongInfo(song);
             await this.loadLyrics(song);
             await new Promise(resolve => {
