@@ -5,18 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>星聚导航后台管理</title>
     
-    <!-- CSP 严格策略：仅允许自身和必要API，移除 unsafe-eval -->
-<meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    script-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai;
-    style-src 'self' 'unsafe-inline';
-    img-src 'self' data: https:;
-    connect-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai https://yunzhiapi.cn;
-    font-src 'self';
-    frame-ancestors 'none';
-    base-uri 'none';
-    form-action 'self';
-">
+    <!-- CSP 严格策略 -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: https:;
+        connect-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai;
+        font-src 'self';
+        frame-ancestors 'none';
+    ">
     <meta http-equiv="X-Frame-Options" content="DENY">
 
     <style>
@@ -27,7 +25,6 @@
             box-sizing: border-box;
         }
 
-        /* 固定高度，禁止页面滚动 */
         html, body {
             height: 100%;
             overflow: hidden;
@@ -43,7 +40,6 @@
             padding: 10px;
         }
 
-        /* 隐藏滚动条（保持功能） */
         ::-webkit-scrollbar {
             display: none;
         }
@@ -52,7 +48,6 @@
             scrollbar-width: none;
         }
 
-        /* 主容器：占满剩余高度，flex 列布局 */
         .container {
             flex: 1;
             display: flex;
@@ -63,7 +58,6 @@
             overflow: hidden;
         }
 
-        /* 头部卡片：固定不滚动 */
         .header-card {
             background: #fff;
             border-radius: 10px;
@@ -74,7 +68,6 @@
             flex-shrink: 0;
         }
 
-        /* 主卡片：flex 列布局，占满剩余高度 */
         .main-card {
             background: #fff;
             border-radius: 10px;
@@ -87,7 +80,6 @@
             overflow: hidden;
         }
 
-        /* 标签栏（tab）固定 */
         .flex-row {
             display: flex;
             gap: 8px;
@@ -114,7 +106,6 @@
             background: #e2e8f0;
         }
 
-        /* 分类栏：固定 */
         .cat-bar {
             width: 100%;
             padding: 10px 14px;
@@ -167,7 +158,6 @@
             color: #fff;
         }
 
-        /* 内容区域：flex 行布局，占满剩余高度 */
         .tab-panel {
             flex: 1;
             display: flex;
@@ -179,10 +169,9 @@
             display: flex;
             gap: 10px;
             flex: 1;
-            min-height: 0;  /* 关键：允许子元素缩小 */
+            min-height: 0;
         }
 
-        /* 左侧面板：flex 列，占满，内部滚动 */
         .sidebar {
             flex: 1;
             background: #f8fafc;
@@ -193,7 +182,6 @@
             overflow: hidden;
             min-width: 0;
         }
-        /* 右侧面板 */
         .main-content {
             flex: 1;
             background: #f8fafc;
@@ -205,7 +193,6 @@
             min-width: 0;
         }
 
-        /* 按钮固定不滚动 */
         #addSubBtn, #addSiteBtn {
             width: 100%;
             height: 44px;
@@ -223,7 +210,6 @@
             background: #2563eb;
         }
 
-        /* 列表容器：flex 列，占满剩余高度，可滚动 */
         .sub-list, .site-list, .rank-list, .feedback-list, .submissions-list {
             flex: 1;
             overflow-y: auto;
@@ -233,7 +219,6 @@
             margin-top: 8px;
         }
 
-        /* 列表项样式 */
         .sub-item, .link-item {
             background: #fff;
             border-radius: 7px;
@@ -295,7 +280,6 @@
             white-space: nowrap;
         }
 
-        /* 通用表单样式 */
         input, select {
             padding: 7px 10px;
             border: 1px solid #e2e8f0;
@@ -392,7 +376,6 @@
             color: #0369a1;
         }
 
-        /* 模态框 */
         .modal {
             position: fixed;
             inset: 0;
@@ -439,7 +422,6 @@
             margin-right: auto;
         }
 
-        /* Toast 提示 */
         .toast {
             position: fixed;
             bottom: 20px;
@@ -531,7 +513,6 @@
             background: #059669;
         }
 
-        /* 投稿详情模态框 */
         #submissionDetailModal .modal-body {
             max-width: 680px;
             padding: 0;
@@ -676,7 +657,6 @@
             background: #dc2626;
         }
 
-        /* 移动端：左右并排，列表依然可滚动 */
         @media (max-width: 768px) {
             .content-layout {
                 flex-direction: row !important;
@@ -732,7 +712,6 @@
             }
         }
 
-        /* 辅助 */
         .link-info strong {
             word-break: break-word;
         }
@@ -796,6 +775,8 @@
             <div class="flex-row" style="margin-bottom:10px;">
                 <input type="text" class="search-box" id="searchInput" placeholder="搜索标题...">
                 <button class="text" id="exportBtn">备份导出</button>
+                <button class="text" id="importBtn">导入数据</button>
+                <button class="text" id="exportStatsBtn">导出统计</button>
                 <button class="text" id="logBtn">操作日志</button>
                 <button class="primary sm" id="refreshNavBtn">刷新导航缓存</button>
                 <button class="primary sm" id="addCategoryBtn">+一级分类</button>
@@ -851,6 +832,30 @@
         </div>
         <div class="modal-content" id="submissionDetailContent">
             <!-- 动态内容 -->
+        </div>
+    </div>
+</div>
+
+<!-- 导入模态框 -->
+<div class="modal" id="importModal">
+    <div class="modal-body">
+        <div class="modal-title">导入数据</div>
+        <div id="importForm">
+            <div class="form-row">
+                <label>导入模式</label>
+                <select id="importMode">
+                    <option value="merge">合并（更新已存在，添加新数据）</option>
+                    <option value="overwrite">覆盖（清空现有数据）</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label>选择 JSON 文件</label>
+                <input type="file" id="importFile" accept=".json">
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="secondary" id="importCancelBtn">取消</button>
+            <button class="primary" id="importConfirmBtn">开始导入</button>
         </div>
     </div>
 </div>
