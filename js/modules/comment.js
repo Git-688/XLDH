@@ -2,6 +2,7 @@
  * 评论模块 - 星聚导航最终版
  * 功能：QQ表情搜索 + 输入自动搜索(防抖500ms)
  * 显示：订阅链接、版权、归属地、设备信息、五字社区等级
+ * 新增：静态表情包（微博/B站/QQ）+ GIF 表情搜索
  */
 class CommentModule {
   static CONFIG = {
@@ -19,6 +20,7 @@ class CommentModule {
       noCopyright: false,
       noRss: false,
 
+      // ========== 静态表情包（多个来源，显示为标签页） ==========
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
         'https://unpkg.com/@waline/emojis@1.4.0/qq',
@@ -27,8 +29,9 @@ class CommentModule {
         'https://unpkg.com/@waline/emojis@1.4.0/alus',
       ],
 
-      // 自定义表情搜索 (QQ 表情包 API)
+      // ========== GIF 表情搜索（自定义 API） ==========
       search: {
+        // 默认表情包（未搜索时显示）
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
             .then(r => r.json())
@@ -44,6 +47,7 @@ class CommentModule {
             })
             .catch(() => []);
         },
+        // 搜索表情包
         search(word) {
           return fetch(
             `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`
@@ -61,6 +65,7 @@ class CommentModule {
             })
             .catch(() => []);
         },
+        // 加载更多
         more(word, pageNumber) {
           return fetch(
             `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`
@@ -127,13 +132,20 @@ class CommentModule {
 
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
-    if (typeof Waline === 'undefined') return;
+    if (typeof Waline === 'undefined') {
+      console.warn('Waline 库未加载，评论功能不可用');
+      return;
+    }
     const container = document.querySelector(el);
     if (!container) return;
     try {
       this.instance = Waline.init({ el, serverURL, ...walineOptions });
     } catch (err) {
       console.error('[评论] 初始化失败', err);
+      // 降级：显示友好提示
+      if (container) {
+        container.innerHTML = '<div class="waline-comment-fallback">评论系统临时不可用，请稍后再试。</div>';
+      }
     }
   }
 
