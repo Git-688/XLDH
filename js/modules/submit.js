@@ -1,5 +1,5 @@
 /**
- * 网站投稿模块（获取信息时同时安全检测，显示详细报告，通过后才可提交）
+ * 网站投稿模块（异步安全检测 + 轮询状态）
  */
 class SubmitModule {
     constructor() {
@@ -24,10 +24,10 @@ class SubmitModule {
         this.cacheTTL = 60000;
         this.todayCount = 0;
 
-        // 安全检测是否已通过
         this.securityPassed = false;
-        // 存储最新安全检测详情
         this.lastSecurityDetail = null;
+        this.currentTaskId = null;
+        this.pollingTimer = null;
 
         this.init();
     }
@@ -138,6 +138,7 @@ class SubmitModule {
         const cancelBtn = this.modal.querySelector('.submit-cancel-btn');
         const closeModal = () => {
             this.modal.classList.remove('active');
+            this.stopPolling();
             this.resetForm();
         };
         closeBtn?.addEventListener('click', closeModal);
@@ -163,12 +164,21 @@ class SubmitModule {
     }
 
     resetSecurityCheck() {
+        this.stopPolling();
         this.securityPassed = false;
         this.lastSecurityDetail = null;
+        this.currentTaskId = null;
         this.urlCheckResult.style.display = 'none';
         this.urlCheckResult.className = 'url-check-result';
         this.urlCheckResult.textContent = '';
         if (this.waitingHint) this.waitingHint.style.display = 'none';
+    }
+
+    stopPolling() {
+        if (this.pollingTimer) {
+            clearInterval(this.pollingTimer);
+            this.pollingTimer = null;
+        }
     }
 
     autoResizeDesc() {
@@ -177,7 +187,6 @@ class SubmitModule {
         this.descInput.style.height = this.descInput.scrollHeight + 'px';
     }
 
-    // 显示详细安全报告
     displaySecurityReport(data) {
         let html = '';
         if (data.alreadySubmitted) {
@@ -197,14 +206,12 @@ class SubmitModule {
             this.urlCheckResult.className = 'url-check-result unsafe';
             return;
         }
-        // 安全通过，显示详细报告
         let detailHtml = '';
         if (data.label) detailHtml += `<div class="security-summary">🔒 ${this.escapeHtml(data.label)}</div>`;
         if (data.riskLevel) {
             const riskText = data.riskLevel === 'low' ? '低风险' : (data.riskLevel === 'medium' ? '中风险' : '未知');
             detailHtml += `<div class="security-detail">风险等级：<span class="risk-${data.riskLevel}">${riskText}</span></div>`;
         }
-        // 如果有详细检测结果（例如VT统计），可以展示
         if (data.details) {
             if (data.details.vt && data.details.vt.stats) {
                 detailHtml += `<div class="security-detail">VirusTotal: 恶意 ${data.details.vt.stats.malicious || 0} / 可疑 ${data.details.vt.stats.suspicious || 0}</div>`;
@@ -228,10 +235,10 @@ class SubmitModule {
 
         if (this.waitingHint) this.waitingHint.style.display = 'inline';
         this.fetchInfoBtn.disabled = true;
-        this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 获取信息并检测安全...';
+        this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 获取信息...';
         this.urlCheckResult.style.display = 'block';
         this.urlCheckResult.className = 'url-check-result checking';
-        this.urlCheckResult.innerHTML = '正在获取网站信息并进行安全检测，请稍候...';
+        this.urlCheckResult.innerHTML = '正在获取网站信息，安全检测后台进行中...';
 
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
@@ -242,7 +249,6 @@ class SubmitModule {
             });
             const data = await response.json();
 
-            // 自动填充表单字段
             if (data.title) this.titleInput.value = data.title;
             if (data.icon) {
                 this.iconInput.value = data.icon;
@@ -253,19 +259,22 @@ class SubmitModule {
                 this.autoResizeDesc();
             }
 
-            // 存储安全检测详情
-            this.lastSecurityDetail = data;
-            // 显示安全报告
-            this.displaySecurityReport(data);
-
-            if (data.alreadySubmitted) {
-                this.securityPassed = false;
-            } else if (data.canSubmit === false) {
-                this.securityPassed = false;
+            if (data.taskId) {
+                this.currentTaskId = data.taskId;
+                this.startPolling();
             } else {
-                this.securityPassed = true;
+                // 兼容旧接口（直接返回检测结果）
+                this.lastSecurityDetail = data;
+                this.displaySecurityReport(data);
+                if (data.alreadySubmitted) {
+                    this.securityPassed = false;
+                } else if (data.canSubmit === false) {
+                    this.securityPassed = false;
+                } else {
+                    this.securityPassed = true;
+                }
+                this.updateSubmitButton();
             }
-            this.updateSubmitButton();
         } catch (error) {
             Utils.handleApiError(error, '获取网站信息失败', true);
             this.urlCheckResult.className = 'url-check-result checking';
@@ -277,6 +286,39 @@ class SubmitModule {
             this.fetchInfoBtn.disabled = false;
             this.fetchInfoBtn.innerHTML = '<i class="fas fa-magic"></i> 获取信息';
         }
+    }
+
+    startPolling() {
+        if (this.pollingTimer) clearInterval(this.pollingTimer);
+        this.pollingTimer = setInterval(async () => {
+            if (!this.currentTaskId) return;
+            try {
+                const res = await Utils.safeFetch(`${this.apiBase}/security-status?taskId=${this.currentTaskId}`);
+                const status = await res.json();
+                if (status.status === 'completed') {
+                    this.stopPolling();
+                    this.lastSecurityDetail = status.result;
+                    this.displaySecurityReport(status.result);
+                    if (status.result.canSubmit !== false) {
+                        this.securityPassed = true;
+                    } else {
+                        this.securityPassed = false;
+                    }
+                    this.updateSubmitButton();
+                } else if (status.status === 'failed') {
+                    this.stopPolling();
+                    this.urlCheckResult.className = 'url-check-result unsafe';
+                    this.urlCheckResult.innerHTML = '安全检测失败，请稍后重试';
+                    this.securityPassed = false;
+                    this.updateSubmitButton();
+                } else {
+                    // pending, 更新提示
+                    this.urlCheckResult.innerHTML = '安全检测进行中，请稍候...';
+                }
+            } catch (err) {
+                console.warn('轮询安全检测状态失败:', err);
+            }
+        }, 2000);
     }
 
     updateSubmitButton() {
