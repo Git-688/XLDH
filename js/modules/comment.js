@@ -2,7 +2,6 @@
  * 评论模块 - 星聚导航最终版
  * 功能：QQ表情搜索 + 输入自动搜索(防抖500ms)
  * 显示：订阅链接、版权、归属地、设备信息、五字社区等级
- * 新增：静态表情包（微博/B站/QQ）+ GIF 表情搜索
  */
 class CommentModule {
   static CONFIG = {
@@ -13,14 +12,13 @@ class CommentModule {
     activeClass: 'active',
     walineOptions: {
       dark: 'auto',
-      meta: ['nick', 'mail', 'link', 'ua', 'region'],  
+      meta: ['nick', 'mail', 'link', 'ua', 'region'],
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
       noCopyright: false,
       noRss: false,
 
-      // ========== 静态表情包（多个来源，显示为标签页） ==========
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
         'https://unpkg.com/@waline/emojis@1.4.0/qq',
@@ -29,62 +27,7 @@ class CommentModule {
         'https://unpkg.com/@waline/emojis@1.4.0/alus',
       ],
 
-      // ========== GIF 表情搜索（自定义 API） ==========
-      search: {
-        // 默认表情包（未搜索时显示）
-        default() {
-          return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
-            .then(r => r.json())
-            .then(json => {
-              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({
-                  src: item.url,
-                  title: item.id || '',
-                  preview: item.url
-                }));
-              }
-              return [];
-            })
-            .catch(() => []);
-        },
-        // 搜索表情包
-        search(word) {
-          return fetch(
-            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`
-          )
-            .then(r => r.json())
-            .then(json => {
-              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({
-                  src: item.url,
-                  title: item.id || word,
-                  preview: item.url
-                }));
-              }
-              return [];
-            })
-            .catch(() => []);
-        },
-        // 加载更多
-        more(word, pageNumber) {
-          return fetch(
-            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`
-          )
-            .then(r => r.json())
-            .then(json => {
-              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({
-                  src: item.url,
-                  title: item.id || word,
-                  preview: item.url
-                }));
-              }
-              return [];
-            })
-            .catch(() => []);
-        }
-      },
-
+      // 【关键】删除顶层search配置，Waline才会渲染左上角笑脸按钮
       // 五字社区等级标签
       locale: {
         level0: '初来乍到',
@@ -103,11 +46,79 @@ class CommentModule {
     this.openBtn = null;
     this.searchTimer = null;
     this.searchObserver = null;
+    this.emojiTimer = null;
+    this.emojiPage = 1; // 表情分页页码，对接原more分页接口
 
     this._initDOM();
     this._bindEvents();
     this._initWaline();
     this._watchSearchPanel();
+    // 监听表情弹窗DOM渲染，挂载自定义搜索
+    this.emojiObserver = new MutationObserver(() => this.bindEmojiSearch());
+  }
+
+  // 原有QQ表情接口封装，保留default/search/more三个接口逻辑
+  async fetchEmoji(word = '', page = 1, limit = 40) {
+    if (!word) {
+      // default默认列表
+      const res = await fetch('https://oiapi.net/api/EmoticonPack?limit=20').catch(() => ({ json: () => ({ data: [] }) }));
+      const json = await res.json();
+      if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
+        return json.data.map(item => ({ src: item.url, title: item.id || '', preview: item.url }));
+      }
+      return [];
+    } else {
+      // search / more分页
+      const api = `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${page}&limit=${limit}`;
+      const res = await fetch(api).catch(() => ({ json: () => ({ data: [] }) }));
+      const json = await res.json();
+      if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
+        return json.data.map(item => ({ src: item.url, title: item.id || word, preview: item.url }));
+      }
+      return [];
+    }
+  }
+
+  // 绑定表情弹窗搜索、分页加载
+  async bindEmojiSearch() {
+    const wrap = document.querySelector('.wl-emoji-wrap');
+    const input = wrap?.querySelector('input');
+    const listDom = wrap?.querySelector('.wl-emoji-list');
+    const loadMoreBtn = wrap?.querySelector('.wl-emoji-more');
+    if (!wrap || !input || !listDom || input.dataset.bindEmoji) return;
+    input.dataset.bindEmoji = '1';
+
+    // 初始化默认表情
+    const initList = await this.fetchEmoji();
+    listDom.innerHTML = initList.map(item => `<img src="${item.src}" data-src="${item.src}" class="wl-emoji-item" alt="${item.title}">`).join('');
+
+    // 输入防抖500ms搜索
+    input.addEventListener('input', () => {
+      clearTimeout(this.emojiTimer);
+      this.emojiPage = 1;
+      const kw = input.value.trim();
+      this.emojiTimer = setTimeout(async () => {
+        const data = await this.fetchEmoji(kw, 1, 40);
+        listDom.innerHTML = data.map(item => `<img src="${item.src}" data-src="${item.src}" class="wl-emoji-item" alt="${item.title}">`).join('');
+      }, 500);
+    });
+
+    // 加载更多分页（对接原more方法）
+    if (loadMoreBtn) {
+      loadMoreBtn.onclick = async () => {
+        this.emojiPage += 1;
+        const kw = input.value.trim();
+        const moreData = await this.fetchEmoji(kw, this.emojiPage, 40);
+        moreData.forEach(item => {
+          const img = document.createElement('img');
+          img.src = item.src;
+          img.dataset.src = item.src;
+          img.className = 'wl-emoji-item';
+          img.alt = item.title;
+          listDom.appendChild(img);
+        });
+      };
+    }
   }
 
   _initDOM() {
@@ -132,24 +143,19 @@ class CommentModule {
 
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
-    if (typeof Waline === 'undefined') {
-      console.warn('Waline 库未加载，评论功能不可用');
-      return;
-    }
+    if (typeof Waline === 'undefined') return;
     const container = document.querySelector(el);
     if (!container) return;
     try {
       this.instance = Waline.init({ el, serverURL, ...walineOptions });
+      // 监听表情面板动态生成
+      this.emojiObserver.observe(container, { childList: true, subtree: true });
     } catch (err) {
       console.error('[评论] 初始化失败', err);
-      // 降级：显示友好提示
-      if (container) {
-        container.innerHTML = '<div class="waline-comment-fallback">评论系统临时不可用，请稍后再试。</div>';
-      }
     }
   }
 
-  // 自动搜索
+  // 评论框内搜索自动搜索防抖（原有逻辑保留不动）
   _watchSearchPanel() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
@@ -202,7 +208,9 @@ class CommentModule {
 
   destroy() {
     clearTimeout(this.searchTimer);
+    clearTimeout(this.emojiTimer);
     this.searchObserver?.disconnect();
+    this.emojiObserver?.disconnect();
     this.instance?.destroy?.();
     this.instance = null;
   }
