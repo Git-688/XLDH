@@ -1,5 +1,5 @@
 /**
- * 全局错误处理管理器（过滤第三方脚本错误，脱敏上报）
+ * 全局错误处理管理器（过滤第三方脚本错误，脱敏上报，支持重试）
  */
 class ErrorHandler {
     constructor() {
@@ -14,54 +14,33 @@ class ErrorHandler {
     maskSensitive(str) {
         if (!str) return '';
         str = String(str);
-        // 脱敏 IP 地址（保留前两段）
         str = str.replace(/\b(\d{1,3}\.\d{1,3})\.\d{1,3}\.\d{1,3}\b/g, '$1.***.***');
-        // 脱敏邮箱地址
         str = str.replace(/\b[\w.-]+@[\w.-]+\.\w{2,4}\b/g, '***@***.***');
-        // 脱敏可能的手机号（简单处理）
         str = str.replace(/\b1[3-9]\d{9}\b/g, '1**********');
-        // 截断过长字符串（超过 500 字符）
         if (str.length > 500) str = str.substring(0, 500) + '…(truncated)';
         return str;
     }
 
-    // 判断是否应该忽略某个错误（避免控制台刷屏）
+    // 判断是否应该忽略某个错误
     shouldIgnore(errorInfo) {
-        // 忽略资源加载错误中的特定域名（例如 favicon 服务）
         if (errorInfo.type === 'resource' && errorInfo.tag === 'IMG') {
             const src = errorInfo.src || '';
-            // 忽略 yandex favicon 服务
-            if (src.includes('favicon.yandex.net')) {
-                return true;
-            }
-            // 忽略 71xk 图标 API（已不稳定）
-            if (src.includes('api.71xk.com')) {
-                return true;
-            }
-            // 忽略根域名作为图片地址（去掉尾部斜杠比较）
+            if (src.includes('favicon.yandex.net')) return true;
+            if (src.includes('api.71xk.com')) return true;
             let origin = window.location.origin;
             if (origin.endsWith('/')) origin = origin.slice(0, -1);
             let cleanSrc = src;
             if (cleanSrc.endsWith('/')) cleanSrc = cleanSrc.slice(0, -1);
-            if (cleanSrc === origin) {
-                return true;
-            }
+            if (cleanSrc === origin) return true;
         }
-        // 忽略跨域脚本错误（Script error.）
-        if (errorInfo.type === 'error' && errorInfo.message === 'Script error.') {
-            return true;
-        }
+        if (errorInfo.type === 'error' && errorInfo.message === 'Script error.') return true;
         return false;
     }
 
     init() {
-        // 捕获 JavaScript 运行时错误
         window.addEventListener('error', (event) => {
             const { message, filename, lineno, colno, error } = event;
-            // 忽略第三方脚本错误（如跨域限制导致的 Script error.）
-            if (message === 'Script error.' || message === 'Script error') {
-                return;
-            }
+            if (message === 'Script error.' || message === 'Script error') return;
             this.handleError({
                 type: 'error',
                 message: this.maskSensitive(message),
@@ -73,7 +52,6 @@ class ErrorHandler {
             });
         });
 
-        // 捕获未处理的 Promise 拒绝
         window.addEventListener('unhandledrejection', (event) => {
             const reason = event.reason;
             this.handleError({
@@ -84,14 +62,10 @@ class ErrorHandler {
             });
         });
 
-        // 捕获资源加载错误（图片、脚本、样式等）
         window.addEventListener('error', (event) => {
             const target = event.target;
             if (target && (target.tagName === 'IMG' || target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
-                // 忽略特定资源的错误，如 cloudflare insights
-                if (target.src && target.src.includes('cloudflareinsights.com')) {
-                    return;
-                }
+                if (target.src && target.src.includes('cloudflareinsights.com')) return;
                 this.handleError({
                     type: 'resource',
                     tag: target.tagName,
@@ -99,7 +73,7 @@ class ErrorHandler {
                     timestamp: Date.now()
                 });
             }
-        }, true); // 捕获阶段
+        }, true);
     }
 
     // 手动上报错误（供模块调用）
@@ -126,26 +100,15 @@ class ErrorHandler {
 
     // 统一错误处理
     handleError(errorInfo) {
-        // 检查是否应该忽略
-        if (this.shouldIgnore(errorInfo)) {
-            return;
-        }
-        // 限制内存中存储的错误数量
-        if (this.errors.length >= this.maxErrors) {
-            this.errors.shift();
-        }
+        if (this.shouldIgnore(errorInfo)) return;
+        if (this.errors.length >= this.maxErrors) this.errors.shift();
         this.errors.push(errorInfo);
-        // 控制台输出（脱敏后）
         console.error('[ErrorHandler]', errorInfo);
-        // 显示用户友好提示（避免频繁弹窗）
         this.showUserFriendlyMessage(errorInfo);
-        // 上报到服务器
         this.reportToServer(errorInfo);
     }
 
-    // 显示用户友好提示（非技术性）
     showUserFriendlyMessage(errorInfo) {
-        // 避免短时间内重复提示
         if (window._lastErrorTime && Date.now() - window._lastErrorTime < 5000) return;
         window._lastErrorTime = Date.now();
 
@@ -159,7 +122,6 @@ class ErrorHandler {
         } else if (errorInfo.type === 'unhandledrejection') {
             userMessage = '操作未能完成，请重试。';
         } else {
-            // 对于其他错误，不显示任何 toast（避免骚扰用户）
             return;
         }
 
@@ -170,30 +132,38 @@ class ErrorHandler {
         }
     }
 
-    // 上报错误到服务器（使用 sendBeacon 或 fetch）
+    // 上报到服务器（增加重试和上下文）
     async reportToServer(errorInfo) {
         if (!this.reportUrl) return;
-        try {
-            // 为了安全，再次对发送的数据进行脱敏（已在构造时脱敏，再次确保）
-            const safeInfo = {
-                ...errorInfo,
-                message: this.maskSensitive(errorInfo.message || ''),
-                stack: this.maskSensitive(errorInfo.stack || ''),
-                filename: this.maskSensitive(errorInfo.filename || ''),
-                details: this.maskSensitive(errorInfo.details || '')
-            };
-            const payload = JSON.stringify(safeInfo);
-            if (navigator.sendBeacon) {
-                navigator.sendBeacon(this.reportUrl, payload);
-            } else {
-                fetch(this.reportUrl, {
-                    method: 'POST',
-                    body: payload,
-                    headers: { 'Content-Type': 'application/json' },
-                    keepalive: true
-                }).catch(() => {});
+        const safeInfo = {
+            ...errorInfo,
+            message: this.maskSensitive(errorInfo.message || ''),
+            stack: this.maskSensitive(errorInfo.stack || ''),
+            filename: this.maskSensitive(errorInfo.filename || ''),
+            details: this.maskSensitive(errorInfo.details || ''),
+            url: window.location.href,
+            userAgent: navigator.userAgent
+        };
+        const payload = JSON.stringify(safeInfo);
+        const send = async (retries = 2) => {
+            try {
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon(this.reportUrl, payload);
+                } else {
+                    await fetch(this.reportUrl, {
+                        method: 'POST',
+                        body: payload,
+                        headers: { 'Content-Type': 'application/json' },
+                        keepalive: true
+                    });
+                }
+            } catch (e) {
+                if (retries > 0) {
+                    setTimeout(() => send(retries - 1), 500);
+                }
             }
-        } catch (e) {}
+        };
+        send();
     }
 
     // 获取已捕获的错误列表
