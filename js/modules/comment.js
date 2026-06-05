@@ -1,6 +1,6 @@
 /**
  * 评论模块 - 星聚导航最终版
- * 功能：QQ表情搜索 + 输入自动搜索(防抖500ms) + 自定义表情包支持
+ * 功能：QQ表情搜索 + 输入自动搜索(防抖500ms) + 官方表情包选项卡
  * 显示：订阅链接、版权、归属地、设备信息、五字社区等级
  */
 class CommentModule {
@@ -10,9 +10,6 @@ class CommentModule {
     modalId: 'commentModal',
     openBtnId: 'commentBtn',
     activeClass: 'active',
-    // 自定义表情包配置（可选）
-    // 如果要使用自定义表情包，请取消注释并修改为你的表情包地址
-    // CUSTOM_EMOJI_URL: 'https://你的域名/emoji/',  // 表情包存储地址，需要包含 info.json
     walineOptions: {
       dark: 'auto',
       meta: ['nick', 'mail', 'link', 'ua', 'region'],  
@@ -22,16 +19,16 @@ class CommentModule {
       noCopyright: false,
       noRss: false,
 
-      // 默认表情包列表（官方）
+      // 官方表情包（多个选项卡）
       emoji: [
-        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
-        'https://unpkg.com/@waline/emojis@1.4.0/qq',
-        'https://unpkg.com/@waline/emojis@1.4.0/tieba',
-        'https://unpkg.com/@waline/emojis@1.4.0/weibo',
-        'https://unpkg.com/@waline/emojis@1.4.0/alus',
+        'https://unpkg.com/@waline/emojis@1.4.0/qq',      // QQ 表情
+        'https://unpkg.com/@waline/emojis@1.4.0/bilibili', // B站表情
+        'https://unpkg.com/@waline/emojis@1.4.0/tieba',    // 贴吧表情
+        'https://unpkg.com/@waline/emojis@1.4.0/weibo',    // 微博表情
+        'https://unpkg.com/@waline/emojis@1.4.0/alus',     // Alus 表情
       ],
 
-      // 自定义表情搜索 (QQ 表情包 API)
+      // 自定义表情搜索（QQ 表情包 API）
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
@@ -103,29 +100,10 @@ class CommentModule {
     this.searchTimer = null;
     this.searchObserver = null;
 
-    // 如果配置了自定义表情包，则添加到 emoji 列表中
-    this.addCustomEmoji();
-
     this._initDOM();
     this._bindEvents();
     this._initWaline();
     this._watchSearchPanel();
-  }
-
-  /**
-   * 添加自定义表情包到 emoji 列表
-   */
-  addCustomEmoji() {
-    // 检查是否配置了自定义表情包
-    if (CommentModule.CONFIG.CUSTOM_EMOJI_URL) {
-      // 确保 emoji 数组存在
-      if (!CommentModule.CONFIG.walineOptions.emoji) {
-        CommentModule.CONFIG.walineOptions.emoji = [];
-      }
-      // 将自定义表情包添加到列表开头（优先显示）
-      CommentModule.CONFIG.walineOptions.emoji.unshift(CommentModule.CONFIG.CUSTOM_EMOJI_URL);
-      console.log('[评论] 已加载自定义表情包:', CommentModule.CONFIG.CUSTOM_EMOJI_URL);
-    }
   }
 
   _initDOM() {
