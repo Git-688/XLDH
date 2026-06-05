@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，修复通过收录功能）
+// admin.js - 星聚导航后台管理（完整版，支持导入导出）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -6,7 +6,6 @@
     const LOCK_DURATION_MS = 10 * 60 * 1000;
     const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
 
-    // 日志存储配置
     const LOG_STORAGE_KEY = 'admin_operation_logs';
     const MAX_LOG_COUNT = 100;
     const LOG_RETENTION_DAYS = 7;
@@ -21,7 +20,7 @@
     let refreshTimer = null;
     let customSelects = {};
 
-    // ========== 日志管理（localStorage 持久化） ==========
+    // ========== 日志管理 ==========
     function getLogs() {
         try {
             const logsRaw = localStorage.getItem(LOG_STORAGE_KEY);
@@ -81,7 +80,6 @@
         }
     }
 
-    // 注入全局样式
     function injectGlobalStyles() {
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
@@ -777,7 +775,6 @@
                 });
             }
 
-            // 一级分类下拉
             const catSelect = document.createElement('select');
             catSelect.id = 'approveCatSelect';
             catSelect.innerHTML = '<option value="">选择一级分类</option>' + categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
@@ -815,7 +812,6 @@
             let subCustomSelect = new CustomSelect(subSelect);
             customSelects.sub = subCustomSelect;
 
-            // 修复：直接从 DOM 获取值，而不是依赖闭包变量
             document.getElementById('doApproveBtn').onclick = async () => {
                 const catSelectEl = document.getElementById('approveCatSelect');
                 const subSelectEl = document.getElementById('approveSubSelect');
@@ -1067,19 +1063,99 @@
         }, 50);
     }
 
-    function exportData() {
-        const blob = new Blob([JSON.stringify({ categories, subcategories, sites, time: new Date().toLocaleString() }, null, 2)], { type:'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `导航备份_${Date.now()}.json`;
-        a.click();
-        addLog('导出备份');
-        showToast('导出成功');
+    async function exportFullData() {
+        try {
+            const response = await fetch(`${API_BASE}/admin/export`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('导出失败');
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `navigation_full_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('导出成功', 'success');
+            addLog('导出完整数据');
+        } catch (err) {
+            showToast('导出失败', 'error');
+        }
     }
 
-    async function refreshNavigation() {
-        try { await apiFetch('/admin/refresh-navigation', { method:'POST' }); showToast('缓存已刷新', 'success'); }
-        catch { showToast('刷新失败', 'error'); }
+    async function importData() {
+        const fileInput = document.getElementById('importFile');
+        const mode = document.getElementById('importMode').value;
+        if (!fileInput.files || !fileInput.files[0]) {
+            showToast('请选择 JSON 文件', 'warn');
+            return;
+        }
+        const file = fileInput.files[0];
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            if (!data.categories || !data.subcategories || !data.sites) {
+                showToast('无效的导入文件格式', 'error');
+                return;
+            }
+            const confirmMsg = mode === 'overwrite' ? '覆盖模式将清空现有数据，确定继续吗？' : '合并模式将更新/添加数据，确定继续吗？';
+            if (!confirm(confirmMsg)) return;
+            const response = await fetch(`${API_BASE}/admin/import`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ mode, data })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                showToast('导入成功', 'success');
+                addLog(`导入数据 (${mode} 模式)`);
+                await loadAllData();
+                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+                closeImportModal();
+            } else {
+                showToast(result.error || '导入失败', 'error');
+            }
+        } catch (err) {
+            showToast('导入失败: ' + err.message, 'error');
+        }
+    }
+
+    function openImportModal() {
+        const modal = document.getElementById('importModal');
+        modal.classList.add('show');
+        document.getElementById('importFile').value = '';
+    }
+
+    function closeImportModal() {
+        const modal = document.getElementById('importModal');
+        modal.classList.remove('show');
+    }
+
+    async function exportStatsCSV() {
+        try {
+            const data = await apiFetch('/admin/topclicks?limit=1000');
+            if (!data.length) {
+                showToast('无统计数据可导出', 'warn');
+                return;
+            }
+            const headers = ['标题', 'URL', '点击次数'];
+            const rows = data.map(item => [item.title, item.url, item.count]);
+            const csvContent = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `click_stats_${Date.now()}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('导出统计成功', 'success');
+            addLog('导出点击统计 CSV');
+        } catch (err) {
+            showToast('导出失败', 'error');
+        }
     }
 
     async function loadSubmissions() {
@@ -1163,12 +1239,19 @@
         document.getElementById('addCategoryBtn').addEventListener('click', handleAddCategory);
         document.getElementById('addSubBtn').addEventListener('click', handleAddSub);
         document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
-        document.getElementById('exportBtn').addEventListener('click', exportData);
+        document.getElementById('exportBtn').addEventListener('click', exportFullData);
+        document.getElementById('importBtn').addEventListener('click', openImportModal);
+        document.getElementById('exportStatsBtn').addEventListener('click', exportStatsCSV);
         document.getElementById('logBtn').addEventListener('click', showLogs);
         document.getElementById('sortRankBtn').addEventListener('click', loadRanking);
         document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
         document.getElementById('refreshSubmissionsBtn').addEventListener('click', loadSubmissions);
-        document.getElementById('refreshNavBtn').addEventListener('click', refreshNavigation);
+        document.getElementById('refreshNavBtn').addEventListener('click', async () => {
+            try {
+                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+                showToast('导航缓存已刷新', 'success');
+            } catch (err) { showToast('刷新失败', 'error'); }
+        });
         document.getElementById('closeLogBtn').addEventListener('click', closeLogModal);
         document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
         document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
@@ -1188,6 +1271,13 @@
                     detailModal.classList.remove('show');
                 }
             };
+        }
+        const importModal = document.getElementById('importModal');
+        if (importModal) {
+            const closeImport = () => closeImportModal();
+            document.getElementById('importCancelBtn').addEventListener('click', closeImport);
+            document.getElementById('importConfirmBtn').addEventListener('click', importData);
+            importModal.addEventListener('click', (e) => { if (e.target === importModal) closeImportModal(); });
         }
         const refreshLogsBtn = document.getElementById('refreshLogsBtn');
         if (refreshLogsBtn) refreshLogsBtn.addEventListener('click', loadAdminLogs);
