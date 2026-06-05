@@ -1,5 +1,5 @@
 /**
- * 轮播图模块 - 性能优化版（支持 WebP、响应式图片、懒加载、多API降级）
+ * 轮播图模块 - 稳定版（仅使用必应官方 API，支持降级渐变背景）
  */
 class CarouselModule {
     constructor() {
@@ -17,13 +17,6 @@ class CarouselModule {
         this.maxConcurrentPreloads = 2;
         this.preloadQueue = [];
         this.init();
-    }
-
-    getOptimalResolution() {
-        const width = window.innerWidth;
-        if (width < 768) return 800;
-        if (width < 1200) return 1200;
-        return 1920;
     }
 
     sanitizeImageUrl(url) {
@@ -81,76 +74,51 @@ class CarouselModule {
         });
     }
 
-    // 尝试多个API获取壁纸，返回第一个成功的
-    async fetchWallpaperWithFallback(index, resolution) {
-        const apis = [
-            // 主 API: bing.biturl.top
-            async () => {
-                const url = `https://bing.biturl.top/?resolution=${resolution}&format=json&index=${index}`;
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('主API响应错误');
-                const data = await response.json();
-                if (!data.url) throw new Error('主API无URL');
-                return data;
-            },
-            // 备用 API: 必应官方接口（无分辨率参数）
-            async () => {
-                const url = `https://cn.bing.com/HPImageArchive.aspx?format=js&idx=${index}&n=1&mkt=zh-CN`;
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('备用API响应错误');
-                const data = await response.json();
-                if (!data.images || !data.images[0] || !data.images[0].url) throw new Error('备用API无URL');
-                return {
-                    url: data.images[0].url,
-                    copyright: data.images[0].copyright || ''
-                };
+    async fetchBingWallpaper(index) {
+        // 使用必应官方 API，idx 参数为偏移量（0=今天，1=昨天...）
+        const url = `https://cn.bing.com/HPImageArchive.aspx?format=js&idx=${index}&n=1&mkt=zh-CN`;
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (!data.images || !data.images[0] || !data.images[0].url) {
+                throw new Error('Invalid response format');
             }
-        ];
-
-        for (const api of apis) {
-            try {
-                const result = await api();
-                let imageUrl = result.url;
-                // 备用API返回的是相对路径，需要补全域名
-                if (imageUrl.startsWith('/')) {
-                    imageUrl = 'https://cn.bing.com' + imageUrl;
-                }
-                let title = result.copyright ? result.copyright : '';
-                title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
-                if (!title) title = index === 0 ? '今日壁纸' : `${index}天前壁纸`;
-                const baseUrl = imageUrl.split('&')[0];
-                const srcset = `${baseUrl}&w=400 400w, ${baseUrl}&w=800 800w, ${baseUrl}&w=1200 1200w, ${baseUrl}&w=1920 1920w`;
-                return { url: imageUrl, srcset, title, isFallback: false };
-            } catch (e) {
-                console.warn(`获取第${index}天壁纸失败（API尝试）:`, e.message);
-                continue;
+            const img = data.images[0];
+            let imageUrl = img.url;
+            if (imageUrl.startsWith('/')) {
+                imageUrl = 'https://cn.bing.com' + imageUrl;
             }
+            let title = img.copyright || '';
+            title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
+            if (!title) title = index === 0 ? '今日壁纸' : `${index}天前壁纸`;
+            return { url: imageUrl, title, success: true };
+        } catch (error) {
+            console.warn(`获取第${index}天壁纸失败:`, error.message);
+            return { url: '', title: index === 0 ? '星聚导航' : `${index}天前`, success: false };
         }
-        // 所有API都失败，返回降级对象（无URL，使用CSS渐变背景）
-        return { url: '', srcset: '', title: index === 0 ? '星聚导航' : `${index}天前`, isFallback: true };
     }
 
     async init() {
         const days = 7;
-        const bingImages = [];
-        const resolution = this.getOptimalResolution();
-
-        // 并行获取7天壁纸，提高速度
-        const promises = [];
+        const images = [];
+        // 串行获取，避免并发限制
         for (let i = 0; i < days; i++) {
-            promises.push(this.fetchWallpaperWithFallback(i, resolution));
-        }
-        const results = await Promise.all(promises);
-        for (const img of results) {
-            bingImages.push(img);
-        }
-
-        if (bingImages.length === 0 || bingImages.every(img => !img.url)) {
-            // 完全失败时使用纯色背景（通过空URL实现）
-            bingImages.push({ url: '', srcset: '', title: '星聚导航', isFallback: true });
+            const img = await this.fetchBingWallpaper(i);
+            images.push(img);
+            // 添加小延迟，避免请求过快
+            if (i < days - 1) await new Promise(r => setTimeout(r, 100));
         }
 
-        this.slides = bingImages;
+        // 如果全部失败，至少有一个占位
+        if (images.length === 0 || images.every(img => !img.url)) {
+            images.push({ url: '', title: '星聚导航', success: false });
+        }
+
+        this.slides = images;
 
         if (this.slides.length > 1) {
             this.clonedSlides = [
@@ -185,28 +153,25 @@ class CarouselModule {
         this.clonedSlides.forEach((slide, index) => {
             const div = document.createElement('div');
             div.className = 'carousel-slide';
-            // 初始背景为渐变色（兜底）
+            // 默认渐变背景
             div.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             div.style.backgroundSize = 'cover';
             div.style.backgroundPosition = 'center';
 
-            if (slide.url && !slide.isFallback) {
+            if (slide.url && slide.success !== false) {
                 const imageUrl = this.sanitizeImageUrl(slide.url);
                 if (index === 1) {
+                    // 当前显示的图片直接加载
                     const img = new Image();
                     img.onload = () => {
                         div.style.background = `url('${imageUrl}') center/cover no-repeat`;
                     };
                     img.src = imageUrl;
                 } else {
+                    // 存储背景，待切换时加载
                     div.setAttribute('data-bg', imageUrl);
                 }
-                if (slide.srcset) div.setAttribute('data-srcset', slide.srcset);
-            } else {
-                // 降级：使用纯色背景或渐变，不设置背景图
-                div.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             }
-
             div.setAttribute('data-index', index);
             this.track.appendChild(div);
         });
