@@ -3,7 +3,7 @@ const CACHE_NAME = 'starlink-v3';
 const NAVIGATION_CACHE_NAME = 'starlink-nav-v3';
 const API_CACHE_NAME = 'starlink-api-v3';
 
-// 需要缓存的静态资源列表
+// 需要缓存的静态资源列表（已移除 api.js，修正 CSS 路径）
 const STATIC_URLS = [
     '/',
     '/index.html',
@@ -20,13 +20,13 @@ const STATIC_URLS = [
     '/css/modules/stats.css',
     '/css/modules/compact-tags.css',
     '/css/responsive.css',
-    '/css/xfyy1/music-player.css',
+    '/css/xfyy1/music-player.css',          // 修正路径（以 / 开头）
     '/js/main.js',
     '/js/utils.js',
     '/js/toast.js',
     '/js/error-handler.js',
     '/js/storage.js',
-    '/js/api.js',
+    // 已删除 api.js
     '/js/components/navbar.js',
     '/js/components/sidebar.js',
     '/js/modules/announcement.js',
