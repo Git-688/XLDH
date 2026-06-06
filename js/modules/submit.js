@@ -163,7 +163,6 @@ class SubmitModule {
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
     }
 
-    // 增强版：停止轮询并清空任务ID
     stopPolling() {
         if (this.pollingTimer) {
             clearInterval(this.pollingTimer);
@@ -171,9 +170,8 @@ class SubmitModule {
         }
     }
 
-    // 增强版：重置所有安全检测相关状态，并停止轮询
     resetSecurityCheck() {
-        this.stopPolling();          // 停止旧轮询
+        this.stopPolling();
         this.securityPassed = false;
         this.lastSecurityDetail = null;
         this.currentTaskId = null;
@@ -230,7 +228,6 @@ class SubmitModule {
         this.urlCheckResult.className = 'url-check-result safe';
     }
 
-    // 核心修复：在开始获取信息前，先清理旧状态并停止轮询
     async fetchSiteInfo() {
         const url = this.urlInput.value.trim();
         if (!url || !Utils.isValidUrl(url)) {
@@ -238,7 +235,6 @@ class SubmitModule {
             return;
         }
 
-        // 清理旧的轮询和安全检测状态
         this.resetSecurityCheck();
 
         if (this.waitingHint) this.waitingHint.style.display = 'inline';
@@ -271,7 +267,6 @@ class SubmitModule {
                 this.currentTaskId = data.taskId;
                 this.startPolling();
             } else {
-                // 兼容旧接口（直接返回检测结果）
                 this.lastSecurityDetail = data;
                 this.displaySecurityReport(data);
                 if (data.alreadySubmitted) {
@@ -320,7 +315,6 @@ class SubmitModule {
                     this.securityPassed = false;
                     this.updateSubmitButton();
                 } else {
-                    // pending, 更新提示
                     this.urlCheckResult.innerHTML = '安全检测进行中，请稍候...';
                 }
             } catch (err) {
@@ -430,7 +424,7 @@ class SubmitModule {
 
     resetForm() {
         this.form.reset();
-        this.resetSecurityCheck();  // 会停止轮询并重置状态
+        this.resetSecurityCheck();
         this.iconPreview.style.display = 'none';
         this.submitSaveBtn.disabled = true;
         if (this.descInput) this.descInput.style.height = 'auto';
@@ -442,6 +436,10 @@ class SubmitModule {
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.submitModule) {
-        window.submitModule = new SubmitModule();
+        if (!window.Starlink) window.Starlink = {};
+        if (!window.Starlink.submit) {
+            window.Starlink.submit = new SubmitModule();
+        }
+        window.submitModule = window.Starlink.submit;
     }
 });
