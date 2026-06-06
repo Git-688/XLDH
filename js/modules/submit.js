@@ -163,22 +163,26 @@ class SubmitModule {
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
     }
 
-    resetSecurityCheck() {
-        this.stopPolling();
-        this.securityPassed = false;
-        this.lastSecurityDetail = null;
-        this.currentTaskId = null;
-        this.urlCheckResult.style.display = 'none';
-        this.urlCheckResult.className = 'url-check-result';
-        this.urlCheckResult.textContent = '';
-        if (this.waitingHint) this.waitingHint.style.display = 'none';
-    }
-
+    // 增强版：停止轮询并清空任务ID
     stopPolling() {
         if (this.pollingTimer) {
             clearInterval(this.pollingTimer);
             this.pollingTimer = null;
         }
+    }
+
+    // 增强版：重置所有安全检测相关状态，并停止轮询
+    resetSecurityCheck() {
+        this.stopPolling();          // 停止旧轮询
+        this.securityPassed = false;
+        this.lastSecurityDetail = null;
+        this.currentTaskId = null;
+        if (this.urlCheckResult) {
+            this.urlCheckResult.style.display = 'none';
+            this.urlCheckResult.className = 'url-check-result';
+            this.urlCheckResult.textContent = '';
+        }
+        if (this.waitingHint) this.waitingHint.style.display = 'none';
     }
 
     autoResizeDesc() {
@@ -226,12 +230,16 @@ class SubmitModule {
         this.urlCheckResult.className = 'url-check-result safe';
     }
 
+    // 核心修复：在开始获取信息前，先清理旧状态并停止轮询
     async fetchSiteInfo() {
         const url = this.urlInput.value.trim();
         if (!url || !Utils.isValidUrl(url)) {
             window.toast.show('请输入正确的网址', 'warning');
             return;
         }
+
+        // 清理旧的轮询和安全检测状态
+        this.resetSecurityCheck();
 
         if (this.waitingHint) this.waitingHint.style.display = 'inline';
         this.fetchInfoBtn.disabled = true;
@@ -422,7 +430,7 @@ class SubmitModule {
 
     resetForm() {
         this.form.reset();
-        this.resetSecurityCheck();
+        this.resetSecurityCheck();  // 会停止轮询并重置状态
         this.iconPreview.style.display = 'none';
         this.submitSaveBtn.disabled = true;
         if (this.descInput) this.descInput.style.height = 'auto';
