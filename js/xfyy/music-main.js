@@ -19,7 +19,12 @@ function tryInitMusicPlayer(retry = 0) {
 
     try {
         musicPlayer = new MusicPlayer();
-        window.musicPlayer = musicPlayer;
+        // 挂载到 Starlink 命名空间
+        if (!window.Starlink) window.Starlink = {};
+        if (!window.Starlink.musicPlayer) {
+            window.Starlink.musicPlayer = musicPlayer;
+        }
+        window.musicPlayer = window.Starlink.musicPlayer;
 
         if (typeof Utils !== 'undefined' && typeof Utils.isMobile === 'function' && Utils.isMobile()) {
             document.body.classList.add('mobile-device');
