@@ -1,5 +1,5 @@
 /**
- * 轮播图模块 - 性能优化版（增强预加载策略，修复 total 未定义错误）
+ * 轮播图模块 - 性能优化版（增强预加载策略）
  * 功能：7天必应壁纸轮播、自动切换、箭头导航、标题显示、预加载前后多张图片（限制并发）
  */
 class CarouselModule {
@@ -15,7 +15,7 @@ class CarouselModule {
         this.autoPlayInterval = 5000;
         this.preloadCache = new Set();
         this.activePreloads = new Map();
-        this.maxConcurrentPreloads = 3;
+        this.maxConcurrentPreloads = 3;     // 提高并发数
         this.preloadQueue = [];
         this.idlePreloadQueue = [];
         this.init();
@@ -68,6 +68,7 @@ class CarouselModule {
         return loadPromise;
     }
 
+    // 预加载指定索引的图片（加入队列，控制并发）
     preloadImage(clonedIndex, priority = 'normal') {
         const slide = this.clonedSlides[clonedIndex];
         if (!slide || !slide.url) return;
@@ -78,6 +79,7 @@ class CarouselModule {
         
         if (this.activePreloads.size >= this.maxConcurrentPreloads) {
             if (priority === 'high') {
+                // 高优先级任务插入队列头部
                 this.preloadQueue.unshift(task);
             } else {
                 this.preloadQueue.push(task);
@@ -92,6 +94,7 @@ class CarouselModule {
         });
     }
 
+    // 预加载多个相邻图片
     preloadNearbySlides(currentIndex, count = 2) {
         const total = this.clonedSlides.length;
         const indices = new Set();
@@ -104,10 +107,10 @@ class CarouselModule {
         });
     }
 
+    // 空闲时预加载剩余图片（整个轮播列表）
     preloadAllIdle() {
         if (this.idlePreloadQueue.length > 0) return;
-        const total = this.clonedSlides.length;  // 修复：定义 total 变量
-        const allIndices = Array.from({ length: total }, (_, i) => i);
+        const allIndices = Array.from({ length: this.clonedSlides.length }, (_, i) => i);
         // 排除已加载的和当前正在加载的
         const toPreload = allIndices.filter(idx => {
             const slide = this.clonedSlides[idx];
@@ -116,6 +119,7 @@ class CarouselModule {
             return url && !this.preloadCache.has(url) && !this.activePreloads.has(url);
         });
         // 按距离当前索引排序，优先加载近的
+        const total = this.clonedSlides.length;
         toPreload.sort((a, b) => {
             const distA = Math.min(Math.abs(a - this.currentIndex), total - Math.abs(a - this.currentIndex));
             const distB = Math.min(Math.abs(b - this.currentIndex), total - Math.abs(b - this.currentIndex));
@@ -197,11 +201,12 @@ class CarouselModule {
         this.renderSlides();
         this.renderDots();
         this.preloadImage(1, 'high');
-        this.preloadNearbySlides(1, 2);
+        this.preloadNearbySlides(1, 2);      // 预加载前后各2张
         this.goToSlide(1, false);
         this.bindEvents();
         this.startAutoplay();
 
+        // 空闲时预加载剩余壁纸
         setTimeout(() => this.preloadAllIdle(), 3000);
     }
 
@@ -256,6 +261,7 @@ class CarouselModule {
 
         this.isTransitioning = true;
 
+        // 预加载当前幻灯片的前后多张（增强预加载）
         this.preloadNearbySlides(clonedIndex, 3);
 
         const currentSlideDiv = this.track.children[clonedIndex];
