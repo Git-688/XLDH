@@ -14,16 +14,17 @@
   --waline-text-color-light: var(--text-secondary, #666666);
 }
 
-/* 发布框去卡片化，紧贴模态框 */
+/* 发布框去卡片化，紧贴模态框 + 大卡片直角 */
 #waline-comment .wl-panel {
   border: none !important;
   box-shadow: none !important;
-  border-radius: 0 !important;
   background: transparent !important;
   padding: 0 !important;
   margin: 0 !important;
   margin-left: -12px;
   margin-right: -12px;
+  /* 仅将发布评论的大卡片外围圆角改为直角，不影响内部输入框 */
+  border-radius: 0 !important;
 }
 
 /* 去除内容区顶部留白 */
@@ -195,8 +196,4 @@
 /* 评论容器自身无外边距 */
 #commentModal.feedback-modal #waline-comment {
   margin: 0;
-}
-
-.wl-panel {
-    border-radius: 0 !important;
 }
