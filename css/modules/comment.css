@@ -133,6 +133,15 @@
   margin-top: 8px;
 }
 
+/* 修复表情弹窗被裁切的问题 */
+.wl-emoji-popup {
+  overflow: visible !important;
+}
+
+#waline-comment .wl-input-action {
+  overflow: visible !important;
+}
+
 /* 移动端适配 */
 @media (max-width: 600px) {
   #waline-comment { --waline-font-size: 0.9rem; }
