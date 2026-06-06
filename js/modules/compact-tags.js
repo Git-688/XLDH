@@ -97,7 +97,11 @@ class CompactTagsModule {
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.compactTagsModule) {
-        window.compactTagsModule = new CompactTagsModule();
+        if (!window.Starlink) window.Starlink = {};
+        if (!window.Starlink.compactTags) {
+            window.Starlink.compactTags = new CompactTagsModule();
+        }
+        window.compactTagsModule = window.Starlink.compactTags;
     }
 });
 window.CompactTagsModule = CompactTagsModule;
