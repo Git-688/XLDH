@@ -15,7 +15,6 @@ class CommentModule {
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
-      // 编辑器工具栏（移除 'emoji'，因为表情通过独立配置启用）
       editorToolbar: [
         'bold',      // 加粗
         'italic',    // 斜体
@@ -30,7 +29,6 @@ class CommentModule {
         'strike',    // 删除线
         'spoiler'    // 剧透（黑幕）
       ],
-      // 表情配置（独立启用，显示表情按钮）
       emoji: [
         'https://fastly.jsdelivr.net/npm/@waline/emojis@1.4.0/qq',
         'https://fastly.jsdelivr.net/npm/@waline/emojis@1.4.0/bilibili',
@@ -38,7 +36,6 @@ class CommentModule {
         'https://fastly.jsdelivr.net/npm/@waline/emojis@1.4.0/weibo',
         'https://fastly.jsdelivr.net/npm/@waline/emojis@1.4.0/alus'
       ],
-      // 表情包搜索（增强功能）
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
@@ -90,7 +87,6 @@ class CommentModule {
             .catch(() => []);
         }
       },
-      // 等级标签
       locale: {
         level0: '初来乍到',
         level1: '偶尔光临',
@@ -99,7 +95,6 @@ class CommentModule {
         level4: '论坛元老',
         level5: '至尊传说'
       },
-      // 成就徽章自定义渲染
       comment: (comment) => {
         const achievement = comment.meta?.achievement;
         if (achievement) {
@@ -168,7 +163,6 @@ class CommentModule {
     }
   }
 
-  // 自动搜索（原有功能）
   _watchSearchPanel() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
@@ -206,7 +200,6 @@ class CommentModule {
     });
   }
 
-  // 草稿自动保存（localStorage）
   _initDraftAutoSave() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
@@ -215,17 +208,14 @@ class CommentModule {
       const textarea = container.querySelector('.wl-editor textarea');
       if (textarea && !textarea.dataset.draftBound) {
         textarea.dataset.draftBound = 'true';
-        // 恢复草稿
         const draft = localStorage.getItem('waline_draft');
         if (draft && textarea.value === '') {
           textarea.value = draft;
           textarea.dispatchEvent(new Event('input', { bubbles: true }));
         }
-        // 自动保存
         textarea.addEventListener('input', (e) => {
           localStorage.setItem('waline_draft', e.target.value);
         });
-        // 提交成功后清除草稿
         const form = container.querySelector('.wl-panel form');
         if (form) {
           form.addEventListener('submit', () => {
@@ -261,7 +251,13 @@ class CommentModule {
 
 // 自动初始化
 document.addEventListener('DOMContentLoaded', () => {
-  window.commentModule = new CommentModule();
+  if (!window.commentModule) {
+    if (!window.Starlink) window.Starlink = {};
+    if (!window.Starlink.comment) {
+      window.Starlink.comment = new CommentModule();
+    }
+    window.commentModule = window.Starlink.comment;
+  }
 });
 window.addEventListener('beforeunload', () => {
   window.commentModule?.destroy?.();
