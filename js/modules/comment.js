@@ -32,11 +32,11 @@ class CommentModule {
       ],
       // 表情配置（独立启用，显示表情按钮）
       emoji: [
-        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/qq',
-        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/bilibili',
-        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/tieba',
-        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/weibo',
-        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/alus'
+        'https://fastly.jsdelivr.net/npm/@waline/emojis@1.4.0/qq',
+        'https://fastly.jsdelivr.net/npm/@waline/emojis@1.4.0/bilibili',
+        'https://fastly.jsdelivr.net/npm/@waline/emojis@1.4.0/tieba',
+        'https://fastly.jsdelivr.net/npm/@waline/emojis@1.4.0/weibo',
+        'https://fastly.jsdelivr.net/npm/@waline/emojis@1.4.0/alus'
       ],
       // 表情包搜索（增强功能）
       search: {
