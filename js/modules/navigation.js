@@ -97,7 +97,7 @@ class OptimizedNavigation {
                         this.imgObserver.unobserve(img);
                     }
                 });
-            }, { rootMargin: '500px' });  // 从 200px 改为 500px，提前加载
+            }, { rootMargin: '500px' });
         }
     }
     observeLazyImages(container) {
@@ -303,7 +303,6 @@ class OptimizedNavigation {
         }
     }
 
-    // 滚动加载更多使用 requestAnimationFrame 节流 + passive:true
     bindScrollLoadMore() {
         const container = document.getElementById('level3Content');
         if (!container) return;
@@ -340,10 +339,6 @@ class OptimizedNavigation {
         if (loadingDiv) {
             loadingDiv.innerHTML = '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载中...</span>';
             loadingDiv.style.display = 'block';
-            loadingDiv.style.alignItems = '';
-            loadingDiv.style.justifyContent = '';
-            loadingDiv.style.padding = '10px';
-            loadingDiv.style.minHeight = '';
         }
         await new Promise(r=>setTimeout(r,200));
         this.currentPage++;
@@ -447,24 +442,37 @@ class OptimizedNavigation {
                         });
                         if (res.ok) {
                             window.toast.show('已反馈，管理员将处理', 'success');
+                            // 立即隐藏当前卡片的报告按钮，并标记为无效
                             reportBtn.style.display = 'none';
+                            card.classList.add('invalid');
+                            // 更新当前子分类的有效站点计数（减1）
                             const currentSubId = this.selectedLevel2;
                             if (currentSubId) {
-                                this.siteCache.delete(currentSubId);
+                                // 更新本地缓存中的站点 valid 状态
+                                const cachedSites = this.siteCache.get(currentSubId);
+                                if (cachedSites) {
+                                    const updatedSites = cachedSites.map(s => {
+                                        if (s.url === reportBtn.dataset.url) {
+                                            return { ...s, valid: false };
+                                        }
+                                        return s;
+                                    });
+                                    this.siteCache.set(currentSubId, updatedSites);
+                                    // 刷新当前显示
+                                    await this.renderLevel3(this.selectedLevel1, currentSubId);
+                                } else {
+                                    // 如果没有缓存，直接重新加载
+                                    await this.renderLevel3(this.selectedLevel1, currentSubId);
+                                }
+                                // 更新子分类计数显示
                                 const freshSites = await this.loadSites(currentSubId, true);
-                                this.currentSites = freshSites;
-                                this.currentPage = 1;
-                                this.hasMore = true;
-                                this.renderSitesPage();
                                 const validCount = freshSites.filter(s => s.valid !== false).length;
                                 this.updateSubcategoryCountDisplay(currentSubId, validCount);
+                                // 重新计算总数
                                 if (this.selectedLevel1) {
                                     await this.loadSubcategoryCountsForLevel1(this.selectedLevel1);
                                 }
-                            } else {
-                                card.classList.add('invalid');
                             }
-                            this.updateInvalidCount(1);
                         } else {
                             const err = await res.json().catch(()=>({}));
                             window.toast.show(err.error || '反馈失败', 'error');
