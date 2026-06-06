@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（支持 WebP 图标、高清懒加载、智能预加载）
+ * 优化分类导航系统 - 分页加载版（支持 WebP 图标、高清懒加载、点击计数修复）
  */
 class OptimizedNavigation {
     constructor() {
@@ -31,12 +31,10 @@ class OptimizedNavigation {
         this.autoRefreshTimer = null;
         this.autoRefreshInterval = 30000;
 
-        // 图标缓存
         this.iconCache = new Map();
         this.iconLoadingSet = new Set();
         this.iconFailedSet = new Set();
 
-        // 预加载队列
         this.preloadQueue = [];
         this.isPreloading = false;
     }
@@ -144,7 +142,6 @@ class OptimizedNavigation {
         return escapedText.replace(regex,'<mark class="search-highlight">$1</mark>');
     }
 
-    // 增强懒加载：使用更智能的预加载策略
     initLazyLoadObserver() {
         if ('IntersectionObserver' in window) {
             this.imgObserver = new IntersectionObserver((entries) => {
@@ -160,13 +157,12 @@ class OptimizedNavigation {
                     }
                 });
             }, {
-                rootMargin: '300px 0px 300px 0px',  // 扩大预加载区域，上下各300px
+                rootMargin: '300px 0px 300px 0px',
                 threshold: 0.01
             });
         }
     }
 
-    // 预加载即将进入视口的图片（使用 requestIdleCallback）
     preloadNearbyImages(container) {
         if (!container || !this.imgObserver) return;
         const images = container.querySelectorAll('img[data-src]');
@@ -175,13 +171,12 @@ class OptimizedNavigation {
         const preloadTask = () => {
             const viewportHeight = window.innerHeight;
             const scrollTop = window.scrollY || document.documentElement.scrollTop;
-            const buffer = 500; // 额外预加载缓冲区
+            const buffer = 500;
             
             images.forEach(img => {
                 const rect = img.getBoundingClientRect();
                 const imgTop = rect.top + scrollTop;
                 const imgBottom = imgTop + rect.height;
-                // 如果图片在视口上下500px范围内，提前加载
                 if (imgBottom + buffer > scrollTop && imgTop - buffer < scrollTop + viewportHeight) {
                     const src = img.dataset.src;
                     if (src && !img.src) {
@@ -200,7 +195,6 @@ class OptimizedNavigation {
         }
     }
 
-    // 滚动停止后预加载更多图片
     bindScrollPreload(container) {
         if (!container) return;
         let scrollTimer = null;
@@ -222,7 +216,6 @@ class OptimizedNavigation {
         if (!this.imgObserver) return;
         const imgs = container.querySelectorAll('img[data-src]');
         imgs.forEach(img => this.imgObserver.observe(img));
-        // 主动预加载附近图片
         this.preloadNearbyImages(container);
         this.bindScrollPreload(container);
     }
@@ -422,7 +415,6 @@ class OptimizedNavigation {
                 loadingDiv.style.color = 'var(--text-secondary)';
             }
         }
-        // 渲染完成后预加载图片
         this.preloadNearbyImages(container);
     }
 
@@ -505,6 +497,9 @@ class OptimizedNavigation {
             descHtml = this._highlightText(site.description || '暂无描述', keyword);
         }
 
+        // 存储当前 views 值用于后续更新缓存
+        const currentViews = views;
+
         card.innerHTML = `
             <div class="card-top">
                 <div class="icon-container">${iconHtml}</div>
@@ -514,7 +509,7 @@ class OptimizedNavigation {
                     </button>
                     <div class="views-container">
                         <i class="fas fa-eye views-icon"></i>
-                        <span class="view-count" data-views="${views}">${formattedViews}</span>
+                        <span class="view-count" data-views="${currentViews}">${formattedViews}</span>
                     </div>
                 </div>
             </div>
@@ -525,14 +520,26 @@ class OptimizedNavigation {
             </div>
         `;
 
-        card.addEventListener('click', (e) => {
+        card.addEventListener('click', async (e) => {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            
             this.isNavigationClick = true;
             if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
-            Utils.safeFetch(`${this.apiBase}/click`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: site.id, url: site.url })
-            }).catch(()=>{});
+            
+            // 发送点击计数请求
+            try {
+                await Utils.safeFetch(`${this.apiBase}/click`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: site.id, url: site.url })
+                });
+            } catch(err) {
+                console.warn('点击计数上报失败:', err);
+            }
+            
+            // 更新前端显示和缓存
             const viewEl = card.querySelector('.view-count');
             if (viewEl) {
                 let cur = parseInt(viewEl.dataset.views) || 0;
@@ -542,7 +549,36 @@ class OptimizedNavigation {
                 viewEl.classList.add('increasing');
                 setTimeout(()=>viewEl.classList.remove('increasing'),300);
             }
-            setTimeout(()=>{ this.isNavigationClick = false; if(window.musicPlayer) window.musicPlayer.isHandlingNavigationClick=false; },100);
+            
+            // 更新 siteCache 中的 views
+            const currentSubId = this.selectedLevel2;
+            if (currentSubId && this.siteCache.has(currentSubId)) {
+                const cachedSites = this.siteCache.get(currentSubId);
+                const updatedSites = cachedSites.map(s => {
+                    if (s.id === site.id) {
+                        return { ...s, views: (s.views || 0) + 1 };
+                    }
+                    return s;
+                });
+                this.siteCache.set(currentSubId, updatedSites);
+                // 同时更新当前展示的 sites 数组
+                if (this.currentSites) {
+                    this.currentSites = this.currentSites.map(s => {
+                        if (s.id === site.id) {
+                            return { ...s, views: (s.views || 0) + 1 };
+                        }
+                        return s;
+                    });
+                }
+            }
+            
+            // 打开链接
+            window.open(site.url, '_blank');
+            
+            setTimeout(()=>{ 
+                this.isNavigationClick = false; 
+                if(window.musicPlayer) window.musicPlayer.isHandlingNavigationClick=false; 
+            }, 100);
         });
 
         const reportBtn = card.querySelector('.report-dead-link-btn');
