@@ -196,3 +196,7 @@
 #commentModal.feedback-modal #waline-comment {
   margin: 0;
 }
+
+.wl-panel {
+    border-radius: 0 !important;
+}
