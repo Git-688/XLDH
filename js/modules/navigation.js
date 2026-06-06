@@ -303,6 +303,7 @@ class OptimizedNavigation {
         }
     }
 
+    // 优化：滚动加载更多使用 requestAnimationFrame 节流 + passive:true
     bindScrollLoadMore() {
         const container = document.getElementById('level3Content');
         if (!container) return;
@@ -311,17 +312,25 @@ class OptimizedNavigation {
             container.removeEventListener('scroll', this.scrollListener);
             this.scrollListener = null;
         }
+        let ticking = false;
         const scrollHandler = () => {
-            if (this.isLoadingMore || !this.hasMore) return;
-            const loadingDiv = container.querySelector('#scroll-loading-trigger');
-            if (!loadingDiv) return;
-            const rect = loadingDiv.getBoundingClientRect();
-            const windowHeight = window.innerHeight;
-            if (rect.top <= windowHeight + 100) this.loadMore();
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(() => {
+                if (this.isLoadingMore || !this.hasMore) {
+                    ticking = false;
+                    return;
+                }
+                const loadingDiv = container.querySelector('#scroll-loading-trigger');
+                if (loadingDiv && loadingDiv.getBoundingClientRect().top <= window.innerHeight + 100) {
+                    this.loadMore();
+                }
+                ticking = false;
+            });
         };
         this.scrollListener = scrollHandler;
-        window.addEventListener('scroll', this.scrollListener);
-        container.addEventListener('scroll', this.scrollListener);
+        window.addEventListener('scroll', this.scrollListener, { passive: true });
+        container.addEventListener('scroll', this.scrollListener, { passive: true });
     }
 
     async loadMore() {
