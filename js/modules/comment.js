@@ -1,6 +1,6 @@
 /**
- * 评论模块 - 完整增强版
- * 功能：显示全部编辑器按钮、评论成就徽章、草稿自动保存
+ * 评论模块 - 完整增强版（表情按钮修正版）
+ * 功能：显示全部编辑器按钮、评论成就徽章、草稿自动保存、表情选择
  */
 class CommentModule {
   static CONFIG = {
@@ -15,19 +15,30 @@ class CommentModule {
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
-      // 1. 显示全部编辑器按钮
+      // 编辑器工具栏（移除 'emoji'，因为表情通过独立配置启用）
       editorToolbar: [
-        'bold', 'italic', 'link', 'image', 'code', 'blockquote',
-        'heading', 'ul', 'ol', 'hr', 'strike', 'spoiler', 'emoji'
+        'bold',      // 加粗
+        'italic',    // 斜体
+        'link',      // 插入链接
+        'image',     // 插入图片
+        'code',      // 插入代码块
+        'blockquote',// 引用
+        'heading',   // 标题
+        'ul',        // 无序列表
+        'ol',        // 有序列表
+        'hr',        // 分割线
+        'strike',    // 删除线
+        'spoiler'    // 剧透（黑幕）
       ],
-      // 原有表情包配置保持不变
+      // 表情配置（独立启用，显示表情按钮）
       emoji: [
         'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/qq',
         'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/bilibili',
         'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/tieba',
         'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/weibo',
-        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/alus',
+        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/alus'
       ],
+      // 表情包搜索（增强功能）
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
@@ -79,6 +90,7 @@ class CommentModule {
             .catch(() => []);
         }
       },
+      // 等级标签
       locale: {
         level0: '初来乍到',
         level1: '偶尔光临',
@@ -87,7 +99,7 @@ class CommentModule {
         level4: '论坛元老',
         level5: '至尊传说'
       },
-      // 2. 成就徽章自定义渲染
+      // 成就徽章自定义渲染
       comment: (comment) => {
         const achievement = comment.meta?.achievement;
         if (achievement) {
@@ -110,7 +122,7 @@ class CommentModule {
     this._bindEvents();
     this._initWaline();
     this._watchSearchPanel();
-    this._initDraftAutoSave();   // 3. 草稿自动保存
+    this._initDraftAutoSave();
   }
 
   _initDOM() {
@@ -194,7 +206,7 @@ class CommentModule {
     });
   }
 
-  // 3. 草稿自动保存（localStorage）
+  // 草稿自动保存（localStorage）
   _initDraftAutoSave() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
