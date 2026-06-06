@@ -366,6 +366,27 @@
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
                 console.log('Service Worker 注册成功，作用域:', registration.scope);
+                
+                // 监听 Service Worker 更新消息
+                navigator.serviceWorker.addEventListener('message', function(event) {
+                    if (event.data && event.data.type === 'SW_UPDATED') {
+                        console.log('检测到新版本 Service Worker，准备提示用户刷新');
+                        if (window.toast) {
+                            window.toast.show('发现新版本，点击刷新获取最新内容', 'info', 10000);
+                            setTimeout(function() {
+                                if (confirm('发现新版本，是否刷新页面以获取最新功能？')) {
+                                    window.location.reload();
+                                }
+                            }, 500);
+                        } else {
+                            setTimeout(function() {
+                                if (confirm('发现新版本，是否刷新页面以获取最新功能？')) {
+                                    window.location.reload();
+                                }
+                            }, 500);
+                        }
+                    }
+                });
             }).catch(function(error) {
                 console.error('Service Worker 注册失败:', error);
             });
