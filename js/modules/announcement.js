@@ -296,8 +296,16 @@ class AnnouncementModule {
 // 等待 DOM 加载完成后再初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        window.announcementModule = new AnnouncementModule();
+        if (!window.Starlink) window.Starlink = {};
+        if (!window.Starlink.announcement) {
+            window.Starlink.announcement = new AnnouncementModule();
+        }
+        window.announcementModule = window.Starlink.announcement;
     });
 } else {
-    window.announcementModule = new AnnouncementModule();
+    if (!window.Starlink) window.Starlink = {};
+    if (!window.Starlink.announcement) {
+        window.Starlink.announcement = new AnnouncementModule();
+    }
+    window.announcementModule = window.Starlink.announcement;
 }
