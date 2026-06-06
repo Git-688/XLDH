@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（支持 WebP 图标、高清懒加载、图标缓存与并发控制）
+ * 优化分类导航系统 - 分页加载版（支持 WebP 图标、高清懒加载、智能预加载）
  */
 class OptimizedNavigation {
     constructor() {
@@ -26,16 +26,19 @@ class OptimizedNavigation {
         this.hasMore = true;
         this.currentSites = [];
         this.scrollListener = null;
+        this.scrollStopTimer = null;
 
         this.autoRefreshTimer = null;
         this.autoRefreshInterval = 30000;
 
-        // 图标缓存：存储域名 -> 成功图标 URL
+        // 图标缓存
         this.iconCache = new Map();
-        // 正在加载中的图标域名集合（避免重复请求）
         this.iconLoadingSet = new Set();
-        // 图标加载失败域名集合（避免重复尝试）
         this.iconFailedSet = new Set();
+
+        // 预加载队列
+        this.preloadQueue = [];
+        this.isPreloading = false;
     }
 
     _escapeHtml(str) { return Utils.escapeHtml(str); }
@@ -45,7 +48,6 @@ class OptimizedNavigation {
         return String(views);
     }
 
-    // 生成图标候选列表（优先 WebP，并过滤掉已失败的 URL）
     _getIconCandidates(url) {
         let domain = '';
         try {
@@ -54,14 +56,10 @@ class OptimizedNavigation {
             if (!domain || domain.length < 4 || !domain.includes('.') || !/^[a-zA-Z0-9.-]+$/.test(domain)) return [];
         } catch(e) { return []; }
         
-        // 如果该域名已被标记为失败，直接返回空数组（不显示图标，使用 FontAwesome 降级）
         if (this.iconFailedSet.has(domain)) return [];
-        
-        // 如果已有成功缓存的图标 URL，直接使用（不再生成候选列表）
         const cachedIcon = this.iconCache.get(domain);
         if (cachedIcon) return [cachedIcon];
         
-        // 生成候选列表
         return [
             `https://icon.horse/icon/${domain}?size=256&format=webp`,
             `https://icon.horse/icon/${domain}?size=128&format=webp`,
@@ -82,17 +80,13 @@ class OptimizedNavigation {
         return true;
     }
 
-    // 获取域名（用于缓存）
     _getDomainFromUrl(url) {
         try {
             const urlObj = new URL(url);
             return urlObj.hostname;
-        } catch(e) {
-            return null;
-        }
+        } catch(e) { return null; }
     }
 
-    // 记录图标加载成功
     _recordIconSuccess(domain, successfulUrl) {
         if (domain && successfulUrl) {
             this.iconCache.set(domain, successfulUrl);
@@ -100,19 +94,14 @@ class OptimizedNavigation {
         }
     }
 
-    // 记录图标加载失败（多次失败后标记域名）
     _recordIconFailure(domain) {
         if (domain) {
-            // 不立即加入失败集合，而是增加失败计数（这里简化：直接加入失败集合，后续不再重试）
-            // 更精细的实现可以记录失败次数，这里为了简化，直接标记为失败
             this.iconFailedSet.add(domain);
             this.iconLoadingSet.delete(domain);
         }
     }
 
-    // 创建图标元素（带缓存和并发控制）
     _createIconElement(siteUrl, existingIcon = null) {
-        // 优先使用用户提供的图标（如果有效）
         if (existingIcon && this._isValidIconUrl(existingIcon)) {
             const domain = this._getDomainFromUrl(siteUrl);
             if (domain) this.iconCache.set(domain, existingIcon);
@@ -122,24 +111,16 @@ class OptimizedNavigation {
         const domain = this._getDomainFromUrl(siteUrl);
         if (!domain) return '<i class="fas fa-link"></i>';
         
-        // 如果域名已被标记为失败，直接返回默认图标
-        if (this.iconFailedSet.has(domain)) {
-            return '<i class="fas fa-link"></i>';
-        }
-        
-        // 如果已有成功缓存的图标，直接使用
+        if (this.iconFailedSet.has(domain)) return '<i class="fas fa-link"></i>';
         const cachedIcon = this.iconCache.get(domain);
         if (cachedIcon) {
             return `<img class="lazy-icon" data-src="${this._escapeHtml(cachedIcon)}" alt="" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>';">`;
         }
         
-        // 生成候选列表
         let candidates = this._getIconCandidates(siteUrl);
         if (candidates.length === 0) return '<i class="fas fa-link"></i>';
         
-        // 标记正在加载中（避免重复请求）
         if (this.iconLoadingSet.has(domain)) {
-            // 正在加载中，暂时显示占位符（不显示图片，等待加载完成后再显示）
             return '<div class="icon-placeholder"><i class="fas fa-spinner fa-pulse"></i></div>';
         }
         this.iconLoadingSet.add(domain);
@@ -148,8 +129,6 @@ class OptimizedNavigation {
         const safeCandidates = candidatesJson.replace(/"/g, '&quot;');
         const domainEscaped = this._escapeHtml(domain);
         
-        // 创建图片元素，并绑定 onerror 和 onload 事件来更新缓存
-        // 注意：由于 data-candidates 存储了候选列表，onerror 会尝试下一个
         return `<img class="lazy-icon" data-domain="${domainEscaped}" data-src="${this._escapeHtml(candidates[0])}" 
                      data-candidates='${safeCandidates}'
                      alt="" loading="lazy"
@@ -165,6 +144,7 @@ class OptimizedNavigation {
         return escapedText.replace(regex,'<mark class="search-highlight">$1</mark>');
     }
 
+    // 增强懒加载：使用更智能的预加载策略
     initLazyLoadObserver() {
         if ('IntersectionObserver' in window) {
             this.imgObserver = new IntersectionObserver((entries) => {
@@ -172,17 +152,79 @@ class OptimizedNavigation {
                     if (entry.isIntersecting) {
                         const img = entry.target;
                         const src = img.dataset.src;
-                        if (src) { img.src = src; img.removeAttribute('data-src'); }
+                        if (src) {
+                            img.src = src;
+                            img.removeAttribute('data-src');
+                        }
                         this.imgObserver.unobserve(img);
                     }
                 });
-            }, { rootMargin: '500px' });
+            }, {
+                rootMargin: '300px 0px 300px 0px',  // 扩大预加载区域，上下各300px
+                threshold: 0.01
+            });
         }
     }
+
+    // 预加载即将进入视口的图片（使用 requestIdleCallback）
+    preloadNearbyImages(container) {
+        if (!container || !this.imgObserver) return;
+        const images = container.querySelectorAll('img[data-src]');
+        if (images.length === 0) return;
+        
+        const preloadTask = () => {
+            const viewportHeight = window.innerHeight;
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const buffer = 500; // 额外预加载缓冲区
+            
+            images.forEach(img => {
+                const rect = img.getBoundingClientRect();
+                const imgTop = rect.top + scrollTop;
+                const imgBottom = imgTop + rect.height;
+                // 如果图片在视口上下500px范围内，提前加载
+                if (imgBottom + buffer > scrollTop && imgTop - buffer < scrollTop + viewportHeight) {
+                    const src = img.dataset.src;
+                    if (src && !img.src) {
+                        img.src = src;
+                        img.removeAttribute('data-src');
+                        this.imgObserver.unobserve(img);
+                    }
+                }
+            });
+        };
+        
+        if (window.requestIdleCallback) {
+            requestIdleCallback(preloadTask, { timeout: 2000 });
+        } else {
+            setTimeout(preloadTask, 200);
+        }
+    }
+
+    // 滚动停止后预加载更多图片
+    bindScrollPreload(container) {
+        if (!container) return;
+        let scrollTimer = null;
+        const scrollHandler = () => {
+            if (scrollTimer) clearTimeout(scrollTimer);
+            scrollTimer = setTimeout(() => {
+                this.preloadNearbyImages(container);
+            }, 200);
+        };
+        window.addEventListener('scroll', scrollHandler, { passive: true });
+        container.addEventListener('scroll', scrollHandler, { passive: true });
+        this._scrollPreloadCleanup = () => {
+            window.removeEventListener('scroll', scrollHandler);
+            container.removeEventListener('scroll', scrollHandler);
+        };
+    }
+
     observeLazyImages(container) {
         if (!this.imgObserver) return;
         const imgs = container.querySelectorAll('img[data-src]');
         imgs.forEach(img => this.imgObserver.observe(img));
+        // 主动预加载附近图片
+        this.preloadNearbyImages(container);
+        this.bindScrollPreload(container);
     }
 
     async init() {
@@ -380,6 +422,8 @@ class OptimizedNavigation {
                 loadingDiv.style.color = 'var(--text-secondary)';
             }
         }
+        // 渲染完成后预加载图片
+        this.preloadNearbyImages(container);
     }
 
     bindScrollLoadMore() {
@@ -733,7 +777,7 @@ class OptimizedNavigation {
             if (container) container.removeEventListener('scroll', this.scrollListener);
             this.scrollListener = null;
         }
-        // 清理图标缓存相关
+        if (this._scrollPreloadCleanup) this._scrollPreloadCleanup();
         this.iconCache.clear();
         this.iconLoadingSet.clear();
         this.iconFailedSet.clear();
