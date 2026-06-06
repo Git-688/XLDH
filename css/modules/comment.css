@@ -1,4 +1,4 @@
-/* ========== 评论模块特化样式 - 最终版（支持表情选项卡） ========== */
+/* ========== 评论模块特化样式 ========== */
 :root {
   --waline-theme-color: var(--primary-color, #4361ee);
 }
@@ -14,7 +14,7 @@
   --waline-text-color-light: var(--text-secondary, #666666);
 }
 
-/* 发布框去卡片化，紧贴模态框 + 大卡片直角 */
+/* 发布框样式 - 大卡片直角，紧贴模态框 */
 #waline-comment .wl-panel {
   border: none !important;
   box-shadow: none !important;
@@ -23,16 +23,15 @@
   margin: 0 !important;
   margin-left: -12px;
   margin-right: -12px;
-  /* 仅将发布评论的大卡片外围圆角改为直角，不影响内部输入框 */
   border-radius: 0 !important;
 }
 
-/* 去除内容区顶部留白 */
+/* 去除内容区多余留白 */
 #commentModal .feedback-modal-body {
   padding-top: 0 !important;
 }
 
-/* 其他元素间距归零 */
+/* 重置 Waline 内部间距 */
 #waline-comment .wl-header,
 #waline-comment .wl-comment-item,
 #waline-comment .wl-comment-item .wl-content,
@@ -168,7 +167,7 @@
   }
 }
 
-/* 降级提示 */
+/* 降级提示（Waline 未加载时的占位） */
 .waline-comment-fallback {
   padding: 20px;
   text-align: center;
@@ -176,24 +175,20 @@
   font-size: 13px;
 }
 
-/* ========== 新增：移除模态框顶部、左右内边距 ========== */
-/* 整体模态框内容区边距清零 */
+/* ========== 模态框整体边距清零（与 style.css 互补） ========== */
 #commentModal.feedback-modal .feedback-modal-content {
   padding: 0;
 }
 
-/* 头部保留合理内边距，避免太挤 */
 #commentModal.feedback-modal .feedback-modal-header {
   padding: 10px 14px 8px;
   margin: 0;
 }
 
-/* body 区域移除内边距，让评论区紧贴边缘 */
 #commentModal.feedback-modal .feedback-modal-body {
   padding: 0;
 }
 
-/* 评论容器自身无外边距 */
 #commentModal.feedback-modal #waline-comment {
   margin: 0;
 }
