@@ -1,6 +1,6 @@
 /* 
  * 优化分类导航样式
- * 性能优化：level3-content 增加 content-visibility
+ * 性能优化：level3-content 增加 content-visibility，卡片添加 will-change
  */
 
 /* ====================== 搜索框样式 ====================== */
@@ -286,6 +286,7 @@
     text-align: center;
     box-sizing: border-box;
     contain: layout style paint;
+    will-change: transform;  /* 性能优化：提示浏览器准备变换 */
 }
 .site-card:hover {
     transform: translateY(-2px);
@@ -319,6 +320,7 @@
     border: 1px solid rgba(0, 0, 0, 0.1);
     padding: 0;
     image-rendering: -webkit-optimize-contrast;
+    will-change: transform;  /* 性能优化：提示浏览器准备变换 */
 }
 .icon-container img {
     width: 100%;
