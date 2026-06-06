@@ -97,7 +97,7 @@ class OptimizedNavigation {
                         this.imgObserver.unobserve(img);
                     }
                 });
-            }, { rootMargin: '200px' });
+            }, { rootMargin: '500px' });  // 从 200px 改为 500px，提前加载
         }
     }
     observeLazyImages(container) {
@@ -303,7 +303,7 @@ class OptimizedNavigation {
         }
     }
 
-    // 优化：滚动加载更多使用 requestAnimationFrame 节流 + passive:true
+    // 滚动加载更多使用 requestAnimationFrame 节流 + passive:true
     bindScrollLoadMore() {
         const container = document.getElementById('level3Content');
         if (!container) return;
