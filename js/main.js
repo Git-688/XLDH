@@ -569,10 +569,12 @@ class App {
     }
 }
 
-// 单例启动
-if (!window.app) {
-    window.app = new App();
+// 单例启动：挂载到 Starlink 命名空间，并保留旧别名
+if (!window.Starlink) window.Starlink = {};
+if (!window.Starlink.app) {
+    window.Starlink.app = new App();
 }
+window.app = window.Starlink.app;
 
 // 如果尚未启动，再次尝试
 if (document.readyState === 'loading') {
