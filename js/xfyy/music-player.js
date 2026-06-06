@@ -1,6 +1,7 @@
-// music-player.js - 最终版（下拉菜单互斥展开 + 进度条修复 + 歌词修复 + 倍速菜单位置修复 + 性能优化）
-// ==================== 自定义下拉选择器组件 ====================
-let currentOpenCustomSelect = null;  // 全局当前打开的下拉菜单实例
+// music-player.js - 最终版（下拉菜单互斥展开 + 进度条修复 + 歌词修复 + 倍速菜单位置修复 + 内存泄漏修复）
+// ==================== 自定义下拉选择器组件（支持实例管理，避免内存泄漏） ====================
+let currentOpenCustomSelect = null;      // 全局当前打开的下拉菜单实例
+let customSelectInstances = new Map();     // 存储所有 CustomSelect 实例，用于清理
 
 class CustomSelect {
     constructor(selectElement) {
@@ -12,7 +13,14 @@ class CustomSelect {
         this.isOpen = false;
         this.value = selectElement.value;
         this.isSpeedControl = false;
+        // 存储事件监听器引用，便于解绑
+        this.boundHandleOutsideClick = null;
+        this.boundScrollListener = null;
+        this.boundResizeListener = null;
         this.init();
+        // 将实例存储到 Map 中，便于销毁
+        const id = selectElement.id || selectElement.name || Math.random().toString(36);
+        customSelectInstances.set(id, this);
     }
 
     init() {
@@ -113,7 +121,6 @@ class CustomSelect {
         if (!this.isOpen) return;
         const rect = this.trigger.getBoundingClientRect();
         if (this.isSpeedControl) {
-            // 相对于视口定位
             this.dropdown.style.position = 'fixed';
             this.dropdown.style.top = `${rect.bottom + 4}px`;
             this.dropdown.style.left = `${rect.left}px`;
@@ -130,7 +137,6 @@ class CustomSelect {
 
     openDropdown() {
         if (this.isOpen) return;
-        // 关闭其他已打开的下拉菜单（互斥）
         if (currentOpenCustomSelect && currentOpenCustomSelect !== this) {
             currentOpenCustomSelect.closeDropdown();
         }
@@ -141,17 +147,17 @@ class CustomSelect {
         this.dropdown.classList.add('open');
         currentOpenCustomSelect = this;
 
-        this.scrollListener = () => this.updateDropdownPosition();
-        this.resizeListener = () => this.updateDropdownPosition();
-        window.addEventListener('scroll', this.scrollListener, true);
-        window.addEventListener('resize', this.resizeListener);
+        this.boundScrollListener = () => this.updateDropdownPosition();
+        this.boundResizeListener = () => this.updateDropdownPosition();
+        window.addEventListener('scroll', this.boundScrollListener, true);
+        window.addEventListener('resize', this.boundResizeListener);
 
-        this.handleOutsideClick = (e) => {
+        this.boundHandleOutsideClick = (e) => {
             if (!this.container.contains(e.target) && !this.dropdown.contains(e.target)) {
                 this.closeDropdown();
             }
         };
-        setTimeout(() => document.addEventListener('click', this.handleOutsideClick), 0);
+        setTimeout(() => document.addEventListener('click', this.boundHandleOutsideClick), 0);
     }
 
     closeDropdown() {
@@ -159,9 +165,9 @@ class CustomSelect {
         this.isOpen = false;
         this.trigger.classList.remove('open');
         this.dropdown.classList.remove('open');
-        if (this.scrollListener) window.removeEventListener('scroll', this.scrollListener, true);
-        if (this.resizeListener) window.removeEventListener('resize', this.resizeListener);
-        document.removeEventListener('click', this.handleOutsideClick);
+        if (this.boundScrollListener) window.removeEventListener('scroll', this.boundScrollListener, true);
+        if (this.boundResizeListener) window.removeEventListener('resize', this.boundResizeListener);
+        if (this.boundHandleOutsideClick) document.removeEventListener('click', this.boundHandleOutsideClick);
         if (currentOpenCustomSelect === this) {
             currentOpenCustomSelect = null;
         }
@@ -182,16 +188,27 @@ class CustomSelect {
 
     destroy() {
         this.closeDropdown();
-        this.container.remove();
-        if (this.dropdown.parentNode) this.dropdown.remove();
+        if (this.container && this.container.parentNode) this.container.remove();
+        if (this.dropdown && this.dropdown.parentNode) this.dropdown.remove();
         this.selectElement.style.display = '';
+        // 从全局 Map 中移除
+        const id = this.selectElement.id || this.selectElement.name || '';
+        if (id) customSelectInstances.delete(id);
+        // 清空引用
+        this.selectElement = null;
+        this.container = null;
+        this.trigger = null;
+        this.dropdown = null;
+        this.options = null;
     }
 }
 
 function initCustomSelects() {
     const selects = document.querySelectorAll('.playlist-selector select, .speed-selector select');
     selects.forEach(select => {
-        if (!select.parentNode.querySelector('.custom-select')) {
+        // 避免重复创建
+        const existing = select.parentNode.querySelector('.custom-select');
+        if (!existing) {
             new CustomSelect(select);
         }
     });
@@ -679,7 +696,7 @@ class MusicPlayer {
             this.elements.modeBtn.title = '随机播放';
         } else {
             path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', 'M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z');
+            path.setAttribute('d', 'M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-6 2.69-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z');
             modeIcon.appendChild(path);
             this.elements.modeBtn.title = '单曲循环';
         }
@@ -771,8 +788,8 @@ class MusicPlayer {
                 el.playlistContainer.innerHTML = `<div class="error-message"><p>加载失败: ${Utils.escapeHtml(error.message)}</p><button class="retry-btn" onclick="window.musicPlayer?.loadApiPlaylist('${apiId}')">重试</button></div>`;
             }
         }
-        const customSelect = el.playlistSelect?.parentNode?.querySelector('.custom-select');
-        if (customSelect?.__customSelectInstance) customSelect.__customSelectInstance.refreshOptions();
+        // 重新初始化自定义选择器（确保新生成的 select 也有实例）
+        initCustomSelects();
     }
 
     async searchApi(apiId) {
@@ -908,12 +925,10 @@ class MusicPlayer {
         try {
             this.audio.src = song.src;
             this.audio.load();
-            // 强制重置进度条显示（transform scale 归零）
             this.elements.progress.style.transform = 'scaleX(0)';
             this.elements.progressHandle.style.left = '0%';
             this.elements.currentTime.textContent = '00:00';
             this.audio.currentTime = 0;
-            // 重置歌词显示为第一句
             if (this.lyricsData && this.lyricsData.length) {
                 this.currentLyricIndex = -1;
                 this.updateLyricDisplayByTime(0);
@@ -1056,7 +1071,6 @@ class MusicPlayer {
         }
     }
 
-    // 性能优化：使用 transform scaleX 代替 width 更新进度条（避免重排），并限制时间文本更新频率
     updateProgress() {
         if (this.isDraggingProgress || this.updateAnimationFrame) return;
         this.updateAnimationFrame = requestAnimationFrame(() => {
@@ -1064,10 +1078,8 @@ class MusicPlayer {
             const duration = this.audio.duration;
             if (duration && !isNaN(duration) && duration > 0) {
                 const percent = (currentTime / duration) * 100;
-                // 使用 transform 代替 width（减少重排）
                 this.elements.progress.style.transform = `scaleX(${percent / 100})`;
                 this.elements.progressHandle.style.left = `${percent}%`;
-                // 限制时间文本更新频率（每秒不超过2次）
                 const now = Date.now();
                 if (!this.lastTimeUpdate || now - this.lastTimeUpdate > 500) {
                     this.elements.currentTime.textContent = Utils.formatTime(currentTime);
@@ -1075,7 +1087,6 @@ class MusicPlayer {
                 }
                 this.updateLyricDisplayByTime(currentTime);
             } else if (duration && !isNaN(duration) && duration === 0) {
-                // 歌曲尚未加载完，稍后再试
             } else {
                 this.elements.currentTime.textContent = '00:00';
                 this.elements.duration.textContent = '00:00';
@@ -1222,6 +1233,13 @@ class MusicPlayer {
         if (this.cacheManager) this.cacheManager.cleanup();
         if (this.coverObserver) this.coverObserver.disconnect();
         if (this._cleanupErrorHandler) this._cleanupErrorHandler();
+        // 销毁所有 CustomSelect 实例，防止内存泄漏
+        customSelectInstances.forEach((instance) => {
+            if (instance && typeof instance.destroy === 'function') {
+                instance.destroy();
+            }
+        });
+        customSelectInstances.clear();
         this.hasNotifiedLocal = false;
         this.hasNotifiedQishui = false;
         if (window.musicPlayer === this) window.musicPlayer = null;
