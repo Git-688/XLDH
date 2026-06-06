@@ -1,7 +1,6 @@
 /**
  * 评论模块 - 星聚导航最终版
- * 功能：QQ表情搜索 + 输入自动搜索(防抖500ms) + 官方表情包选项卡
- * 显示：订阅链接、版权、归属地、设备信息、五字社区等级
+ * 使用 jsdelivr 表情包 CDN，支持多选项卡
  */
 class CommentModule {
   static CONFIG = {
@@ -19,16 +18,16 @@ class CommentModule {
       noCopyright: false,
       noRss: false,
 
-      // 官方表情包（多个选项卡）
+      // 使用 jsdelivr 表情包（稳定，且已在 CSP 白名单）
       emoji: [
-        'https://unpkg.com/@waline/emojis@1.4.0/qq',      // QQ 表情
-        'https://unpkg.com/@waline/emojis@1.4.0/bilibili', // B站表情
-        'https://unpkg.com/@waline/emojis@1.4.0/tieba',    // 贴吧表情
-        'https://unpkg.com/@waline/emojis@1.4.0/weibo',    // 微博表情
-        'https://unpkg.com/@waline/emojis@1.4.0/alus',     // Alus 表情
+        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/qq',
+        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/bilibili',
+        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/tieba',
+        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/weibo',
+        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/alus',
       ],
 
-      // 自定义表情搜索（QQ 表情包 API）
+      // 自定义表情搜索（QQ 表情包 API，可选）
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
