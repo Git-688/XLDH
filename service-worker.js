@@ -20,13 +20,12 @@ const STATIC_URLS = [
     '/css/modules/stats.css',
     '/css/modules/compact-tags.css',
     '/css/responsive.css',
-    '/css/xfyy1/music-player.css',          // 修正路径（以 / 开头）
+    '/css/xfyy1/music-player.css',
     '/js/main.js',
     '/js/utils.js',
     '/js/toast.js',
     '/js/error-handler.js',
     '/js/storage.js',
-    // 已删除 api.js
     '/js/components/navbar.js',
     '/js/components/sidebar.js',
     '/js/modules/announcement.js',
@@ -61,7 +60,8 @@ const CACHED_API_PATTERNS = [
     '/global-submission-count',
     '/notebook'
 ];
-const API_CACHE_TTL = 5 * 60 * 1000; // 5 分钟
+// 缓存时间从 5 分钟延长到 1 小时
+const API_CACHE_TTL = 60 * 60 * 1000; // 1 小时
 
 // 安装事件：缓存静态资源
 self.addEventListener('install', event => {
