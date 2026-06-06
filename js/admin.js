@@ -1,14 +1,10 @@
-// admin.js - 星聚导航后台管理（完整版，支持导入导出）
+// admin.js - 星聚导航后台管理（完整版，支持导入导出，日志功能已移除）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
     const MAX_FAIL_COUNT = 5;
     const LOCK_DURATION_MS = 10 * 60 * 1000;
     const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
-
-    const LOG_STORAGE_KEY = 'admin_operation_logs';
-    const MAX_LOG_COUNT = 100;
-    const LOG_RETENTION_DAYS = 7;
 
     let token = '';
     let categories = [], subcategories = [], sites = [];
@@ -19,344 +15,6 @@
     let currentSubmissionId = null;
     let refreshTimer = null;
     let customSelects = {};
-
-    // ========== 日志管理 ==========
-    function getLogs() {
-        try {
-            const logsRaw = localStorage.getItem(LOG_STORAGE_KEY);
-            const logs = logsRaw ? JSON.parse(logsRaw) : [];
-            const now = Date.now();
-            const filtered = logs.filter(log => (now - log.timestamp) < LOG_RETENTION_DAYS * 24 * 3600 * 1000);
-            if (filtered.length !== logs.length) {
-                localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(filtered));
-            }
-            return filtered;
-        } catch {
-            return [];
-        }
-    }
-
-    function saveLogs(logs) {
-        try {
-            if (logs.length > MAX_LOG_COUNT) {
-                logs = logs.slice(0, MAX_LOG_COUNT);
-            }
-            localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs));
-        } catch (e) {}
-    }
-
-    function addLog(text) {
-        const logs = getLogs();
-        logs.unshift({
-            id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-            time: new Date().toLocaleString(),
-            timestamp: Date.now(),
-            text: text
-        });
-        saveLogs(logs);
-    }
-
-    function clearLogs() {
-        localStorage.removeItem(LOG_STORAGE_KEY);
-        showToast('日志已清空', 'success');
-    }
-
-    function showLogs() {
-        const logs = getLogs();
-        const logListHtml = logs.length
-            ? logs.map(l => `<div class="log-item"><span>${escapeHtml(l.time)}</span> ${escapeHtml(l.text)}</div>`).join('')
-            : '<div class="empty">暂无记录</div>';
-        document.getElementById('logList').innerHTML = logListHtml;
-        const modal = document.getElementById('logModal');
-        modal.classList.add('show');
-        const clearBtn = document.getElementById('clearLogsBtn');
-        if (clearBtn) {
-            clearBtn.onclick = () => {
-                if (confirm('确定要清空所有操作日志吗？')) {
-                    clearLogs();
-                    showLogs();
-                }
-            };
-        }
-    }
-
-    function injectGlobalStyles() {
-        if (!document.getElementById('admin-global-styles')) {
-            const style = document.createElement('style');
-            style.id = 'admin-global-styles';
-            style.textContent = `
-                .submission-title-truncate {
-                    display: inline-block;
-                    max-width: 300px;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                    vertical-align: middle;
-                }
-                @media (max-width: 768px) { .submission-title-truncate { max-width: 180px; } }
-                @media (max-width: 480px) { .submission-title-truncate { max-width: 120px; } }
-                .form-input {
-                    width: 100%;
-                    padding: 8px 12px;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 8px;
-                    font-size: 13px;
-                    background: #fff;
-                    transition: all 0.2s;
-                    box-sizing: border-box;
-                }
-                .form-input:focus {
-                    border-color: #3b82f6;
-                    outline: none;
-                    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-                }
-                textarea.form-input {
-                    resize: vertical;
-                    font-family: inherit;
-                }
-                .inline-select-group {
-                    display: flex;
-                    gap: 10px;
-                    flex-wrap: wrap;
-                    margin-bottom: 12px;
-                }
-                .custom-select-wrapper {
-                    position: relative;
-                    flex: 1;
-                    min-width: 120px;
-                }
-                .custom-select-trigger {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 8px 12px;
-                    background: #fff;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 8px;
-                    font-size: 13px;
-                    color: #1e293b;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    gap: 8px;
-                }
-                .custom-select-trigger:hover { border-color: #3b82f6; }
-                .custom-select-trigger.open {
-                    border-color: #3b82f6;
-                    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-                }
-                .custom-select-value {
-                    flex: 1;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
-                .custom-select-arrow {
-                    width: 16px;
-                    height: 16px;
-                    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-                    background-size: contain;
-                    transition: transform 0.2s;
-                }
-                .custom-select-trigger.open .custom-select-arrow { transform: rotate(180deg); }
-                .custom-select-dropdown {
-                    position: fixed;
-                    background: #fff;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                    z-index: 1000;
-                    max-height: 200px;
-                    overflow-y: auto;
-                    opacity: 0;
-                    visibility: hidden;
-                    transform: translateY(-8px);
-                    transition: all 0.2s ease;
-                    scrollbar-width: none;
-                }
-                .custom-select-dropdown::-webkit-scrollbar { display: none; }
-                .custom-select-dropdown.open {
-                    opacity: 1;
-                    visibility: visible;
-                    transform: translateY(0);
-                }
-                .custom-select-option {
-                    padding: 8px 12px;
-                    font-size: 13px;
-                    color: #1e293b;
-                    cursor: pointer;
-                    transition: background 0.15s;
-                }
-                .custom-select-option:hover { background: #f1f5f9; }
-                .custom-select-option.selected {
-                    background: #e0f2fe;
-                    color: #0369a1;
-                    font-weight: 500;
-                }
-                @media (prefers-color-scheme: dark) {
-                    .custom-select-trigger {
-                        background: #1e293b;
-                        border-color: #334155;
-                        color: #e2e8f0;
-                    }
-                    .custom-select-dropdown {
-                        background: #1e293b;
-                        border-color: #334155;
-                    }
-                    .custom-select-option {
-                        color: #e2e8f0;
-                    }
-                    .custom-select-option:hover { background: #334155; }
-                    .custom-select-option.selected {
-                        background: #0f172a;
-                        color: #38bdf8;
-                    }
-                    .form-input {
-                        background: #1e293b;
-                        border-color: #334155;
-                        color: #e2e8f0;
-                    }
-                }
-                .log-item {
-                    padding: 7px;
-                    border-bottom: 1px solid #f1f5f9;
-                    font-size: 11px;
-                }
-                .modal-buttons-left {
-                    display: flex;
-                    gap: 8px;
-                    margin-right: auto;
-                }
-                .logs-list .log-item {
-                    padding: 12px;
-                    border-bottom: 1px solid #e2e8f0;
-                }
-                .logs-list .log-item:last-child { border-bottom: none; }
-                .logs-list strong { color: #3b82f6; }
-            `;
-            document.head.appendChild(style);
-        }
-    }
-
-    // 自定义选择器类
-    class CustomSelect {
-        constructor(selectElement, onChange) {
-            this.select = selectElement;
-            this.onChange = onChange;
-            this.wrapper = null;
-            this.trigger = null;
-            this.dropdown = null;
-            this.options = [];
-            this.value = this.select.value;
-            this.isOpen = false;
-            this.init();
-        }
-        init() {
-            this.select.style.display = 'none';
-            this.wrapper = document.createElement('div');
-            this.wrapper.className = 'custom-select-wrapper';
-            this.trigger = document.createElement('div');
-            this.trigger.className = 'custom-select-trigger';
-            this.trigger.innerHTML = `<span class="custom-select-value">${this.getSelectedText()}</span><span class="custom-select-arrow"></span>`;
-            this.dropdown = document.createElement('div');
-            this.dropdown.className = 'custom-select-dropdown';
-            this.wrapper.appendChild(this.trigger);
-            this.wrapper.appendChild(this.dropdown);
-            this.select.parentNode.insertBefore(this.wrapper, this.select.nextSibling);
-            this.populateOptions();
-            this.bindEvents();
-            this.select.addEventListener('change', () => this.setValue(this.select.value));
-        }
-        getSelectedText() {
-            const option = this.select.options[this.select.selectedIndex];
-            return option ? option.textContent : '';
-        }
-        populateOptions() {
-            this.dropdown.innerHTML = '';
-            this.options = [];
-            for (let i = 0; i < this.select.options.length; i++) {
-                const option = this.select.options[i];
-                const div = document.createElement('div');
-                div.className = 'custom-select-option';
-                if (i === this.select.selectedIndex) div.classList.add('selected');
-                div.textContent = option.textContent;
-                div.dataset.value = option.value;
-                div.dataset.index = i;
-                div.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.selectOption(i);
-                    this.close();
-                });
-                this.dropdown.appendChild(div);
-                this.options.push(div);
-            }
-        }
-        selectOption(index) {
-            if (index === this.select.selectedIndex) return;
-            this.select.selectedIndex = index;
-            this.value = this.select.value;
-            const valueSpan = this.trigger.querySelector('.custom-select-value');
-            if (valueSpan) valueSpan.textContent = this.select.options[index].textContent;
-            this.options.forEach((opt, i) => opt.classList.toggle('selected', i === index));
-            if (this.onChange) this.onChange(this.value);
-            const changeEvent = new Event('change', { bubbles: true });
-            this.select.dispatchEvent(changeEvent);
-        }
-        setValue(value) {
-            for (let i = 0; i < this.select.options.length; i++) {
-                if (this.select.options[i].value == value) {
-                    this.selectOption(i);
-                    break;
-                }
-            }
-        }
-        open() {
-            if (this.isOpen) return;
-            this.isOpen = true;
-            this.trigger.classList.add('open');
-            this.dropdown.classList.add('open');
-            this.positionDropdown();
-            this.handleOutsideClick = (e) => {
-                if (!this.wrapper.contains(e.target) && !this.dropdown.contains(e.target)) this.close();
-            };
-            setTimeout(() => document.addEventListener('click', this.handleOutsideClick), 0);
-        }
-        close() {
-            if (!this.isOpen) return;
-            this.isOpen = false;
-            this.trigger.classList.remove('open');
-            this.dropdown.classList.remove('open');
-            if (this.handleOutsideClick) document.removeEventListener('click', this.handleOutsideClick);
-        }
-        positionDropdown() {
-            const rect = this.trigger.getBoundingClientRect();
-            const dropdownHeight = this.dropdown.offsetHeight;
-            const viewportHeight = window.innerHeight;
-            let top = rect.bottom + 4;
-            if (top + dropdownHeight > viewportHeight - 10) top = rect.top - dropdownHeight - 4;
-            this.dropdown.style.position = 'fixed';
-            this.dropdown.style.top = `${top}px`;
-            this.dropdown.style.left = `${rect.left}px`;
-            this.dropdown.style.width = `${rect.width}px`;
-        }
-        bindEvents() {
-            this.trigger.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.isOpen ? this.close() : this.open();
-            });
-            window.addEventListener('resize', () => { if (this.isOpen) this.positionDropdown(); });
-            window.addEventListener('scroll', () => { if (this.isOpen) this.positionDropdown(); }, true);
-        }
-        refresh() {
-            this.populateOptions();
-            const valueSpan = this.trigger.querySelector('.custom-select-value');
-            if (valueSpan) valueSpan.textContent = this.getSelectedText();
-        }
-        destroy() {
-            this.close();
-            this.wrapper.remove();
-            this.select.style.display = '';
-        }
-    }
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -530,7 +188,6 @@
     }
 
     function closeModal() { document.getElementById('modal').classList.remove('show'); modalAction = null; }
-    function closeLogModal() { document.getElementById('logModal').classList.remove('show'); }
 
     async function apiFetch(endpoint, opt = {}) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
@@ -597,7 +254,6 @@
             document.getElementById('mainContent').classList.remove('hidden');
             document.querySelector('.remember-checkbox').style.display = 'none';
             await loadAllData();
-            addLog('管理员登录');
             showToast('登录成功' + (remember ? '（已记住密码）' : ''));
         } catch (e) {
             token = '';
@@ -615,7 +271,6 @@
         document.getElementById('tokenInput').style.display = 'block';
         document.getElementById('tokenInput').value = '';
         document.querySelector('.remember-checkbox').style.display = 'block';
-        addLog('退出登录');
         showToast('已退出');
     }
 
@@ -631,7 +286,6 @@
             sites = siteData;
             renderCatBar();
             if (categories.length > 0) selectCat(categories[0].id);
-            addLog('数据加载完成');
         } catch (e) {
             if (e.message === 'Unauthorized') logout();
             else showToast('数据加载失败', 'error');
@@ -870,9 +524,9 @@
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
-                addLog(`修改分类：${currentName} → ${name}`); showToast('修改成功'); await loadAllData();
+                showToast('修改成功'); await loadAllData();
             }, true,
-            async () => { await apiFetch(`/admin/categories/${id}`, { method:'DELETE' }); addLog(`删除分类 ${id}`); showToast('分类已删除'); await loadAllData(); }
+            async () => { await apiFetch(`/admin/categories/${id}`, { method:'DELETE' }); showToast('分类已删除'); await loadAllData(); }
         );
     }
 
@@ -882,9 +536,9 @@
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
-                addLog(`修改子分类：${currentName} → ${name}`); showToast('修改成功'); await loadAllData();
+                showToast('修改成功'); await loadAllData();
             }, true,
-            async () => { await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); addLog(`删除子分类 ${id}`); showToast('子分类已删除'); await loadAllData(); }
+            async () => { await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); showToast('子分类已删除'); await loadAllData(); }
         );
     }
 
@@ -906,9 +560,9 @@
                     title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
-                addLog(`编辑链接：${site.title}`); showToast('修改成功'); await loadAllData();
+                showToast('修改成功'); await loadAllData();
             }, true,
-            async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); addLog(`删除链接 ${id}`); showToast('删除成功'); await loadAllData(); }
+            async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); showToast('删除成功'); await loadAllData(); }
         );
         setTimeout(() => {
             const descTextarea = document.getElementById('mDesc');
@@ -929,7 +583,7 @@
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/categories', { method:'POST', body: JSON.stringify({ name, display_order: +document.getElementById('mSort').value }) });
-                addLog(`新增分类：${name}`); showToast('添加成功'); await loadAllData();
+                showToast('添加成功'); await loadAllData();
             }
         );
     }
@@ -943,7 +597,7 @@
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/subcategories', { method:'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('mSort').value }) });
-                addLog(`新增子分类：${name}`); showToast('添加成功'); await loadAllData();
+                showToast('添加成功'); await loadAllData();
             }
         );
     }
@@ -965,7 +619,7 @@
                     subcategory_id: currentSub, title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
-                addLog(`新增链接：${title}`); showToast('添加成功'); await loadAllData();
+                showToast('添加成功'); await loadAllData();
             }
         );
         setTimeout(() => {
@@ -1077,7 +731,6 @@
             a.click();
             URL.revokeObjectURL(url);
             showToast('导出成功', 'success');
-            addLog('导出完整数据');
         } catch (err) {
             showToast('导出失败', 'error');
         }
@@ -1111,7 +764,6 @@
             const result = await response.json();
             if (response.ok) {
                 showToast('导入成功', 'success');
-                addLog(`导入数据 (${mode} 模式)`);
                 await loadAllData();
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 closeImportModal();
@@ -1152,7 +804,6 @@
             a.click();
             URL.revokeObjectURL(url);
             showToast('导出统计成功', 'success');
-            addLog('导出点击统计 CSV');
         } catch (err) {
             showToast('导出失败', 'error');
         }
@@ -1174,27 +825,6 @@
                 btn.addEventListener('click', () => openSubmissionDetail(btn.dataset.id));
             });
         } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
-    }
-
-    async function loadAdminLogs() {
-        const container = document.getElementById('logsList');
-        if (!container) return;
-        container.innerHTML = '<div class="empty">加载中...</div>';
-        try {
-            const data = await apiFetch('/admin/logs');
-            if (!data.length) {
-                container.innerHTML = '<div class="empty">暂无操作日志</div>';
-                return;
-            }
-            container.innerHTML = data.map(log => `
-                <div class="log-item">
-                    <div><strong>${escapeHtml(log.action)}</strong> ${escapeHtml(log.target)}</div>
-                    <div style="font-size:11px;color:#999;">${new Date(log.created_at).toLocaleString()} · IP: ${escapeHtml(log.ip)}</div>
-                </div>
-            `).join('');
-        } catch (err) {
-            container.innerHTML = '<div class="empty">加载失败</div>';
-        }
     }
 
     function setupEventDelegation() {
@@ -1231,7 +861,6 @@
                 if (tab === 'rank') loadRanking();
                 if (tab === 'feedback') loadFeedback();
                 if (tab === 'submissions') loadSubmissions();
-                if (tab === 'logs') loadAdminLogs();
             });
         });
         document.getElementById('loginBtn').addEventListener('click', login);
@@ -1242,7 +871,6 @@
         document.getElementById('exportBtn').addEventListener('click', exportFullData);
         document.getElementById('importBtn').addEventListener('click', openImportModal);
         document.getElementById('exportStatsBtn').addEventListener('click', exportStatsCSV);
-        document.getElementById('logBtn').addEventListener('click', showLogs);
         document.getElementById('sortRankBtn').addEventListener('click', loadRanking);
         document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
         document.getElementById('refreshSubmissionsBtn').addEventListener('click', loadSubmissions);
@@ -1252,10 +880,8 @@
                 showToast('导航缓存已刷新', 'success');
             } catch (err) { showToast('刷新失败', 'error'); }
         });
-        document.getElementById('closeLogBtn').addEventListener('click', closeLogModal);
         document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
         document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
-        document.getElementById('logModal').addEventListener('click', e => { if (e.target === document.getElementById('logModal')) closeLogModal(); });
         const detailModal = document.getElementById('submissionDetailModal');
         if (detailModal) {
             const closeBtn = detailModal.querySelector('#closeDetailModalBtn');
@@ -1279,8 +905,6 @@
             document.getElementById('importConfirmBtn').addEventListener('click', importData);
             importModal.addEventListener('click', (e) => { if (e.target === importModal) closeImportModal(); });
         }
-        const refreshLogsBtn = document.getElementById('refreshLogsBtn');
-        if (refreshLogsBtn) refreshLogsBtn.addEventListener('click', loadAdminLogs);
     }
 
     injectGlobalStyles();
@@ -1308,4 +932,282 @@
 
     updateLockMessage();
     setupEventDelegation();
+
+    // 自定义选择器类（原 admin.js 中的 CustomSelect，此处保留）
+    class CustomSelect {
+        constructor(selectElement, onChange) {
+            this.select = selectElement;
+            this.onChange = onChange;
+            this.wrapper = null;
+            this.trigger = null;
+            this.dropdown = null;
+            this.options = [];
+            this.value = this.select.value;
+            this.isOpen = false;
+            this.init();
+        }
+        init() {
+            this.select.style.display = 'none';
+            this.wrapper = document.createElement('div');
+            this.wrapper.className = 'custom-select-wrapper';
+            this.trigger = document.createElement('div');
+            this.trigger.className = 'custom-select-trigger';
+            this.trigger.innerHTML = `<span class="custom-select-value">${this.getSelectedText()}</span><span class="custom-select-arrow"></span>`;
+            this.dropdown = document.createElement('div');
+            this.dropdown.className = 'custom-select-dropdown';
+            this.wrapper.appendChild(this.trigger);
+            this.wrapper.appendChild(this.dropdown);
+            this.select.parentNode.insertBefore(this.wrapper, this.select.nextSibling);
+            this.populateOptions();
+            this.bindEvents();
+            this.select.addEventListener('change', () => this.setValue(this.select.value));
+        }
+        getSelectedText() {
+            const option = this.select.options[this.select.selectedIndex];
+            return option ? option.textContent : '';
+        }
+        populateOptions() {
+            this.dropdown.innerHTML = '';
+            this.options = [];
+            for (let i = 0; i < this.select.options.length; i++) {
+                const option = this.select.options[i];
+                const div = document.createElement('div');
+                div.className = 'custom-select-option';
+                if (i === this.select.selectedIndex) div.classList.add('selected');
+                div.textContent = option.textContent;
+                div.dataset.value = option.value;
+                div.dataset.index = i;
+                div.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.selectOption(i);
+                    this.close();
+                });
+                this.dropdown.appendChild(div);
+                this.options.push(div);
+            }
+        }
+        selectOption(index) {
+            if (index === this.select.selectedIndex) return;
+            this.select.selectedIndex = index;
+            this.value = this.select.value;
+            const valueSpan = this.trigger.querySelector('.custom-select-value');
+            if (valueSpan) valueSpan.textContent = this.select.options[index].textContent;
+            this.options.forEach((opt, i) => opt.classList.toggle('selected', i === index));
+            if (this.onChange) this.onChange(this.value);
+            const changeEvent = new Event('change', { bubbles: true });
+            this.select.dispatchEvent(changeEvent);
+        }
+        setValue(value) {
+            for (let i = 0; i < this.select.options.length; i++) {
+                if (this.select.options[i].value == value) {
+                    this.selectOption(i);
+                    break;
+                }
+            }
+        }
+        open() {
+            if (this.isOpen) return;
+            this.isOpen = true;
+            this.trigger.classList.add('open');
+            this.dropdown.classList.add('open');
+            this.positionDropdown();
+            this.handleOutsideClick = (e) => {
+                if (!this.wrapper.contains(e.target) && !this.dropdown.contains(e.target)) this.close();
+            };
+            setTimeout(() => document.addEventListener('click', this.handleOutsideClick), 0);
+        }
+        close() {
+            if (!this.isOpen) return;
+            this.isOpen = false;
+            this.trigger.classList.remove('open');
+            this.dropdown.classList.remove('open');
+            if (this.handleOutsideClick) document.removeEventListener('click', this.handleOutsideClick);
+        }
+        positionDropdown() {
+            const rect = this.trigger.getBoundingClientRect();
+            const dropdownHeight = this.dropdown.offsetHeight;
+            const viewportHeight = window.innerHeight;
+            let top = rect.bottom + 4;
+            if (top + dropdownHeight > viewportHeight - 10) top = rect.top - dropdownHeight - 4;
+            this.dropdown.style.position = 'fixed';
+            this.dropdown.style.top = `${top}px`;
+            this.dropdown.style.left = `${rect.left}px`;
+            this.dropdown.style.width = `${rect.width}px`;
+        }
+        bindEvents() {
+            this.trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.isOpen ? this.close() : this.open();
+            });
+            window.addEventListener('resize', () => { if (this.isOpen) this.positionDropdown(); });
+            window.addEventListener('scroll', () => { if (this.isOpen) this.positionDropdown(); }, true);
+        }
+        refresh() {
+            this.populateOptions();
+            const valueSpan = this.trigger.querySelector('.custom-select-value');
+            if (valueSpan) valueSpan.textContent = this.getSelectedText();
+        }
+        destroy() {
+            this.close();
+            this.wrapper.remove();
+            this.select.style.display = '';
+        }
+    }
+
+    function injectGlobalStyles() {
+        if (!document.getElementById('admin-global-styles')) {
+            const style = document.createElement('style');
+            style.id = 'admin-global-styles';
+            style.textContent = `
+                .submission-title-truncate {
+                    display: inline-block;
+                    max-width: 300px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    vertical-align: middle;
+                }
+                @media (max-width: 768px) { .submission-title-truncate { max-width: 180px; } }
+                @media (max-width: 480px) { .submission-title-truncate { max-width: 120px; } }
+                .form-input {
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    background: #fff;
+                    transition: all 0.2s;
+                    box-sizing: border-box;
+                }
+                .form-input:focus {
+                    border-color: #3b82f6;
+                    outline: none;
+                    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+                }
+                textarea.form-input {
+                    resize: vertical;
+                    font-family: inherit;
+                }
+                .inline-select-group {
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                    margin-bottom: 12px;
+                }
+                .custom-select-wrapper {
+                    position: relative;
+                    flex: 1;
+                    min-width: 120px;
+                }
+                .custom-select-trigger {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 8px 12px;
+                    background: #fff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    color: #1e293b;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    gap: 8px;
+                }
+                .custom-select-trigger:hover { border-color: #3b82f6; }
+                .custom-select-trigger.open {
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+                }
+                .custom-select-value {
+                    flex: 1;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .custom-select-arrow {
+                    width: 16px;
+                    height: 16px;
+                    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+                    background-size: contain;
+                    transition: transform 0.2s;
+                }
+                .custom-select-trigger.open .custom-select-arrow { transform: rotate(180deg); }
+                .custom-select-dropdown {
+                    position: fixed;
+                    background: #fff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    z-index: 1000;
+                    max-height: 200px;
+                    overflow-y: auto;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: translateY(-8px);
+                    transition: all 0.2s ease;
+                    scrollbar-width: none;
+                }
+                .custom-select-dropdown::-webkit-scrollbar { display: none; }
+                .custom-select-dropdown.open {
+                    opacity: 1;
+                    visibility: visible;
+                    transform: translateY(0);
+                }
+                .custom-select-option {
+                    padding: 8px 12px;
+                    font-size: 13px;
+                    color: #1e293b;
+                    cursor: pointer;
+                    transition: background 0.15s;
+                }
+                .custom-select-option:hover { background: #f1f5f9; }
+                .custom-select-option.selected {
+                    background: #e0f2fe;
+                    color: #0369a1;
+                    font-weight: 500;
+                }
+                @media (prefers-color-scheme: dark) {
+                    .custom-select-trigger {
+                        background: #1e293b;
+                        border-color: #334155;
+                        color: #e2e8f0;
+                    }
+                    .custom-select-dropdown {
+                        background: #1e293b;
+                        border-color: #334155;
+                    }
+                    .custom-select-option {
+                        color: #e2e8f0;
+                    }
+                    .custom-select-option:hover { background: #334155; }
+                    .custom-select-option.selected {
+                        background: #0f172a;
+                        color: #38bdf8;
+                    }
+                    .form-input {
+                        background: #1e293b;
+                        border-color: #334155;
+                        color: #e2e8f0;
+                    }
+                }
+                .log-item {
+                    padding: 7px;
+                    border-bottom: 1px solid #f1f5f9;
+                    font-size: 11px;
+                }
+                .modal-buttons-left {
+                    display: flex;
+                    gap: 8px;
+                    margin-right: auto;
+                }
+                .logs-list .log-item {
+                    padding: 12px;
+                    border-bottom: 1px solid #e2e8f0;
+                }
+                .logs-list .log-item:last-child { border-bottom: none; }
+                .logs-list strong { color: #3b82f6; }
+            `;
+            document.head.appendChild(style);
+        }
+    }
 })();
