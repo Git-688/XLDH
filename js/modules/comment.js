@@ -1,6 +1,6 @@
 /**
- * 评论模块 - 星聚导航最终版（修复表情包 CDN）
- * 使用 unpkg.com 表情包 CDN，支持多选项卡
+ * 评论模块 - 完整增强版
+ * 功能：显示全部编辑器按钮、评论成就徽章、草稿自动保存
  */
 class CommentModule {
   static CONFIG = {
@@ -15,19 +15,19 @@ class CommentModule {
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
-      noCopyright: false,
-      noRss: false,
-
-      // 使用 unpkg.com 表情包 CDN（更稳定，支持目录索引）
-      emoji: [
-        'https://unpkg.com/@waline/emojis@1.4.0/qq',
-        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
-        'https://unpkg.com/@waline/emojis@1.4.0/tieba',
-        'https://unpkg.com/@waline/emojis@1.4.0/weibo',
-        'https://unpkg.com/@waline/emojis@1.4.0/alus',
+      // 1. 显示全部编辑器按钮
+      editorToolbar: [
+        'bold', 'italic', 'link', 'image', 'code', 'blockquote',
+        'heading', 'ul', 'ol', 'hr', 'strike', 'spoiler', 'emoji'
       ],
-
-      // 自定义表情搜索（QQ 表情包 API，可选）
+      // 原有表情包配置保持不变
+      emoji: [
+        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/qq',
+        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/bilibili',
+        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/tieba',
+        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/weibo',
+        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/alus',
+      ],
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
@@ -79,8 +79,6 @@ class CommentModule {
             .catch(() => []);
         }
       },
-
-      // 五字社区等级标签
       locale: {
         level0: '初来乍到',
         level1: '偶尔光临',
@@ -88,6 +86,14 @@ class CommentModule {
         level3: '核心会员',
         level4: '论坛元老',
         level5: '至尊传说'
+      },
+      // 2. 成就徽章自定义渲染
+      comment: (comment) => {
+        const achievement = comment.meta?.achievement;
+        if (achievement) {
+          comment.nick = `${comment.nick} <span class="achievement-badge">${achievement}</span>`;
+        }
+        return comment;
       }
     }
   };
@@ -98,11 +104,13 @@ class CommentModule {
     this.openBtn = null;
     this.searchTimer = null;
     this.searchObserver = null;
+    this.draftObserver = null;
 
     this._initDOM();
     this._bindEvents();
     this._initWaline();
     this._watchSearchPanel();
+    this._initDraftAutoSave();   // 3. 草稿自动保存
   }
 
   _initDOM() {
@@ -148,7 +156,7 @@ class CommentModule {
     }
   }
 
-  // 自动搜索
+  // 自动搜索（原有功能）
   _watchSearchPanel() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
@@ -186,6 +194,37 @@ class CommentModule {
     });
   }
 
+  // 3. 草稿自动保存（localStorage）
+  _initDraftAutoSave() {
+    const container = document.querySelector(CommentModule.CONFIG.el);
+    if (!container) return;
+
+    this.draftObserver = new MutationObserver(() => {
+      const textarea = container.querySelector('.wl-editor textarea');
+      if (textarea && !textarea.dataset.draftBound) {
+        textarea.dataset.draftBound = 'true';
+        // 恢复草稿
+        const draft = localStorage.getItem('waline_draft');
+        if (draft && textarea.value === '') {
+          textarea.value = draft;
+          textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        // 自动保存
+        textarea.addEventListener('input', (e) => {
+          localStorage.setItem('waline_draft', e.target.value);
+        });
+        // 提交成功后清除草稿
+        const form = container.querySelector('.wl-panel form');
+        if (form) {
+          form.addEventListener('submit', () => {
+            localStorage.removeItem('waline_draft');
+          });
+        }
+      }
+    });
+    this.draftObserver.observe(container, { childList: true, subtree: true });
+  }
+
   open() {
     if (!this.modal) return;
     if (!this.instance) { this._initWaline(); if (!this.instance) return; }
@@ -202,11 +241,13 @@ class CommentModule {
   destroy() {
     clearTimeout(this.searchTimer);
     this.searchObserver?.disconnect();
+    this.draftObserver?.disconnect();
     this.instance?.destroy?.();
     this.instance = null;
   }
 }
 
+// 自动初始化
 document.addEventListener('DOMContentLoaded', () => {
   window.commentModule = new CommentModule();
 });
