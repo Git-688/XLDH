@@ -1,6 +1,6 @@
 /**
- * 评论模块 - 星聚导航最终版
- * 使用 jsdelivr 表情包 CDN，支持多选项卡
+ * 评论模块 - 星聚导航最终版（修复表情包 CDN）
+ * 使用 unpkg.com 表情包 CDN，支持多选项卡
  */
 class CommentModule {
   static CONFIG = {
@@ -11,20 +11,20 @@ class CommentModule {
     activeClass: 'active',
     walineOptions: {
       dark: 'auto',
-      meta: ['nick', 'mail', 'link', 'ua', 'region'],  
+      meta: ['nick', 'mail', 'link', 'ua', 'region'],
       requiredMeta: ['nick'],
       pageSize: 10,
       login: 'enable',
       noCopyright: false,
       noRss: false,
 
-      // 使用 jsdelivr 表情包（稳定，且已在 CSP 白名单）
+      // 使用 unpkg.com 表情包 CDN（更稳定，支持目录索引）
       emoji: [
-        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/qq',
-        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/bilibili',
-        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/tieba',
-        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/weibo',
-        'https://cdn.jsdelivr.net/npm/@waline/emojis@1.4.0/alus',
+        'https://unpkg.com/@waline/emojis@1.4.0/qq',
+        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
+        'https://unpkg.com/@waline/emojis@1.4.0/tieba',
+        'https://unpkg.com/@waline/emojis@1.4.0/weibo',
+        'https://unpkg.com/@waline/emojis@1.4.0/alus',
       ],
 
       // 自定义表情搜索（QQ 表情包 API，可选）
