@@ -27,6 +27,9 @@
                 WALINE_SERVER: 'https://yy688.ccwu.cc'
             };
             console.log(`[Config] API_BASE: ${apiBase}`);
+
+            // 全局命名空间：统一管理所有模块实例，减少全局污染
+            window.Starlink = window.Starlink || {};
         })();
     </script>
 
