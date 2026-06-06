@@ -1,9 +1,9 @@
 // 星聚导航 Service Worker - 缓存导航数据与静态资源，增强 API 响应缓存
-const CACHE_NAME = 'starlink-v3';
-const NAVIGATION_CACHE_NAME = 'starlink-nav-v3';
-const API_CACHE_NAME = 'starlink-api-v3';
+const CACHE_NAME = 'starlink-v4';  // 版本号升级
+const NAVIGATION_CACHE_NAME = 'starlink-nav-v4';
+const API_CACHE_NAME = 'starlink-api-v4';
 
-// 需要缓存的静态资源列表（已移除 api.js，修正 CSS 路径）
+// 需要缓存的静态资源列表
 const STATIC_URLS = [
     '/',
     '/index.html',
@@ -60,8 +60,11 @@ const CACHED_API_PATTERNS = [
     '/global-submission-count',
     '/notebook'
 ];
-// 缓存时间从 5 分钟延长到 1 小时
 const API_CACHE_TTL = 60 * 60 * 1000; // 1 小时
+
+// 版本更新检测：每隔一段时间检查新版本
+let versionCheckInterval = null;
+const VERSION_CHECK_INTERVAL = 60 * 60 * 1000; // 1小时
 
 // 安装事件：缓存静态资源
 self.addEventListener('install', event => {
@@ -76,7 +79,7 @@ self.addEventListener('install', event => {
     self.skipWaiting();
 });
 
-// 激活事件：清理旧缓存
+// 激活事件：清理旧缓存，并通知客户端更新
 self.addEventListener('activate', event => {
     console.log('Service Worker 激活中...');
     event.waitUntil(
@@ -87,9 +90,27 @@ self.addEventListener('activate', event => {
                     return caches.delete(key);
                 }
             }));
+        }).then(() => {
+            // 通知所有客户端有新版本可用
+            self.clients.matchAll().then(clients => {
+                clients.forEach(client => {
+                    client.postMessage({
+                        type: 'SW_UPDATED',
+                        version: CACHE_NAME,
+                        timestamp: Date.now()
+                    });
+                });
+            });
         })
     );
     self.clients.claim();
+});
+
+// 监听来自客户端的消息
+self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
 
 // 判断请求是否为导航 API
@@ -104,7 +125,7 @@ function isCacheableApiRequest(request) {
     return CACHED_API_PATTERNS.some(pattern => url.pathname.includes(pattern));
 }
 
-// 处理导航 API 请求（缓存优先 + 后台更新）
+// 处理导航 API 请求（缓存优先 + 后台更新，增加版本头）
 async function handleNavigationApi(request, event) {
     const cache = await caches.open(NAVIGATION_CACHE_NAME);
     const cachedResponse = await cache.match(request);
@@ -112,8 +133,16 @@ async function handleNavigationApi(request, event) {
     // 发起网络请求并更新缓存（不等待）
     const fetchPromise = fetch(request).then(response => {
         if (response && response.status === 200) {
+            // 添加自定义版本头，便于调试
             const cloned = response.clone();
-            event.waitUntil(cache.put(request, cloned));
+            const headers = new Headers(cloned.headers);
+            headers.set('X-SW-Cache-Version', CACHE_NAME);
+            const cachedResponseWithHeaders = new Response(cloned.body, {
+                status: cloned.status,
+                statusText: cloned.statusText,
+                headers: headers
+            });
+            event.waitUntil(cache.put(request, cachedResponseWithHeaders));
         }
         return response;
     }).catch(err => {
@@ -121,23 +150,19 @@ async function handleNavigationApi(request, event) {
         return null;
     });
     
-    // 如果有缓存，立即返回缓存，后台更新
     if (cachedResponse) {
         event.waitUntil(fetchPromise);
         return cachedResponse;
     }
-    // 无缓存则等待网络响应
     return fetchPromise;
 }
 
 // 处理其他只读 API（网络优先，缓存后备，带 TTL 校验）
 async function handleCacheableApi(request) {
     const cache = await caches.open(API_CACHE_NAME);
-    // 尝试网络请求
     try {
         const response = await fetch(request);
         if (response && response.status === 200) {
-            // 缓存响应并记录时间戳
             const cloned = response.clone();
             const headers = new Headers(cloned.headers);
             headers.set('sw-cache-timestamp', Date.now());
@@ -152,18 +177,15 @@ async function handleCacheableApi(request) {
     } catch (err) {
         console.warn('网络请求失败，尝试从缓存获取:', err);
     }
-    // 网络失败，尝试从缓存获取
     const cached = await cache.match(request);
     if (cached) {
         const timestamp = cached.headers.get('sw-cache-timestamp');
         if (timestamp && (Date.now() - parseInt(timestamp) < API_CACHE_TTL)) {
             return cached;
         } else {
-            // 缓存过期，删除
             cache.delete(request);
         }
     }
-    // 无缓存或缓存过期，返回错误响应
     return new Response(JSON.stringify({ error: '离线状态下无法获取数据' }), {
         status: 503,
         headers: { 'Content-Type': 'application/json' }
@@ -190,10 +212,8 @@ async function handleStaticResource(request) {
 async function handleOtherRequest(request) {
     try {
         const response = await fetch(request);
-        // 对于 GET 请求且成功，可选择性缓存（但这里不缓存）
         return response;
     } catch (err) {
-        // 网络失败时尝试从缓存获取（仅限 GET）
         if (request.method === 'GET') {
             const cached = await caches.match(request);
             if (cached) return cached;
@@ -205,22 +225,18 @@ async function handleOtherRequest(request) {
 // Fetch 事件：根据请求类型选择策略
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
-    // 只处理同源请求，避免 CDN 等跨域资源
     if (url.origin !== self.location.origin) return;
     
-    // 导航 API 使用缓存优先 + 后台更新
     if (isNavigationApiRequest(url)) {
         event.respondWith(handleNavigationApi(event.request, event));
         return;
     }
     
-    // 可缓存的只读 API（统计、笔记等）使用网络优先，缓存后备
     if (isCacheableApiRequest(event.request)) {
         event.respondWith(handleCacheableApi(event.request));
         return;
     }
     
-    // 静态资源（CSS/JS/HTML）使用缓存优先
     if (event.request.destination === 'document' || 
         event.request.destination === 'script' || 
         event.request.destination === 'style') {
@@ -228,6 +244,16 @@ self.addEventListener('fetch', event => {
         return;
     }
     
-    // 其他同源请求（如 POST /click, /report-dead-link）使用网络优先
     event.respondWith(handleOtherRequest(event.request));
+});
+
+// 后台版本检查（可选，用于主动通知）
+self.addEventListener('activate', () => {
+    if (versionCheckInterval) clearInterval(versionCheckInterval);
+    versionCheckInterval = setInterval(() => {
+        // 请求一个带有版本号的资源，如果失败则提示用户刷新
+        fetch('/?sw-version-check=' + Date.now(), { cache: 'no-store' }).catch(() => {
+            // 如果网络请求失败，不处理
+        });
+    }, VERSION_CHECK_INTERVAL);
 });
