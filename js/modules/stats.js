@@ -29,7 +29,8 @@ function updateUptimeDisplay(startTimeMs) {
     const nowMs = Date.now();
     const uptimeMs = nowMs - startTimeMs;
     const formatted = formatUptime(uptimeMs);
-    $('#uptime').text(formatted);
+    const uptimeEl = document.getElementById('uptime');
+    if (uptimeEl) uptimeEl.textContent = formatted;
 }
 
 async function fetchUptimeStart() {
@@ -42,7 +43,8 @@ async function fetchUptimeStart() {
         setInterval(() => updateUptimeDisplay(startTimeMs), 1000);
     } catch (e) {
         console.error('获取运行时间失败:', e);
-        $('#uptime').text('获取失败');
+        const uptimeEl = document.getElementById('uptime');
+        if (uptimeEl) uptimeEl.textContent = '获取失败';
     }
 }
 
@@ -81,9 +83,12 @@ async function refreshStats() {
         const res = await fetch(`${WORKER_URL}/stats`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        $('#onlineCount').text(data.online);
-        $('#todayCount').text(data.today_uv);
-        $('#totalCount').text(data.total_pv);
+        const onlineEl = document.getElementById('onlineCount');
+        const todayEl = document.getElementById('todayCount');
+        const totalEl = document.getElementById('totalCount');
+        if (onlineEl) onlineEl.textContent = data.online;
+        if (todayEl) todayEl.textContent = data.today_uv;
+        if (totalEl) totalEl.textContent = data.total_pv;
     } catch (e) {
         console.error('获取统计失败:', e);
     }
@@ -103,13 +108,14 @@ function handleVisibilityChange() {
     }
 }
 
-$(document).ready(function() {
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
     postToWorker('/visit');
     postToWorker('/heartbeat');
     heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 30000);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener('beforeunload', function() {
         sendOfflineSignal();
         if (heartbeatInterval) {
             clearInterval(heartbeatInterval);
