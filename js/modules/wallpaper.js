@@ -365,6 +365,10 @@ class CarouselModule {
 // 确保在 DOM 加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.carouselModule) {
-        window.carouselModule = new CarouselModule();
+        if (!window.Starlink) window.Starlink = {};
+        if (!window.Starlink.carousel) {
+            window.Starlink.carousel = new CarouselModule();
+        }
+        window.carouselModule = window.Starlink.carousel;
     }
 });
