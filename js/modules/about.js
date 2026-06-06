@@ -538,10 +538,18 @@ class AboutModule {
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        window.aboutModule = new AboutModule();
+        if (!window.Starlink) window.Starlink = {};
+        if (!window.Starlink.about) {
+            window.Starlink.about = new AboutModule();
+        }
+        window.aboutModule = window.Starlink.about;
         window.aboutModule.init();
     });
 } else {
-    window.aboutModule = new AboutModule();
+    if (!window.Starlink) window.Starlink = {};
+    if (!window.Starlink.about) {
+        window.Starlink.about = new AboutModule();
+    }
+    window.aboutModule = window.Starlink.about;
     window.aboutModule.init();
 }
