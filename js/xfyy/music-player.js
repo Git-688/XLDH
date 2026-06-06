@@ -1,4 +1,4 @@
-// music-player.js - 最终版（下拉菜单互斥展开 + 进度条修复 + 歌词修复 + 倍速菜单位置修复）
+// music-player.js - 最终版（下拉菜单互斥展开 + 进度条修复 + 歌词修复 + 倍速菜单位置修复 + 性能优化）
 // ==================== 自定义下拉选择器组件 ====================
 let currentOpenCustomSelect = null;  // 全局当前打开的下拉菜单实例
 
@@ -908,8 +908,8 @@ class MusicPlayer {
         try {
             this.audio.src = song.src;
             this.audio.load();
-            // 强制重置进度条显示
-            this.elements.progress.style.width = '0%';
+            // 强制重置进度条显示（transform scale 归零）
+            this.elements.progress.style.transform = 'scaleX(0)';
             this.elements.progressHandle.style.left = '0%';
             this.elements.currentTime.textContent = '00:00';
             this.audio.currentTime = 0;
@@ -1056,6 +1056,7 @@ class MusicPlayer {
         }
     }
 
+    // 性能优化：使用 transform scaleX 代替 width 更新进度条（避免重排），并限制时间文本更新频率
     updateProgress() {
         if (this.isDraggingProgress || this.updateAnimationFrame) return;
         this.updateAnimationFrame = requestAnimationFrame(() => {
@@ -1063,11 +1064,14 @@ class MusicPlayer {
             const duration = this.audio.duration;
             if (duration && !isNaN(duration) && duration > 0) {
                 const percent = (currentTime / duration) * 100;
-                this.elements.progress.style.width = `${percent}%`;
+                // 使用 transform 代替 width（减少重排）
+                this.elements.progress.style.transform = `scaleX(${percent / 100})`;
                 this.elements.progressHandle.style.left = `${percent}%`;
-                if (!this.lastTimeUpdate || Date.now() - this.lastTimeUpdate > 500) {
+                // 限制时间文本更新频率（每秒不超过2次）
+                const now = Date.now();
+                if (!this.lastTimeUpdate || now - this.lastTimeUpdate > 500) {
                     this.elements.currentTime.textContent = Utils.formatTime(currentTime);
-                    this.lastTimeUpdate = Date.now();
+                    this.lastTimeUpdate = now;
                 }
                 this.updateLyricDisplayByTime(currentTime);
             } else if (duration && !isNaN(duration) && duration === 0) {
@@ -1129,7 +1133,7 @@ class MusicPlayer {
         if (!this.isDraggingProgress) return;
         this.isDraggingProgress = false;
         if (this.audio.duration) {
-            const percent = parseFloat(this.elements.progress.style.width) / 100;
+            const percent = parseFloat(this.elements.progress.style.transform.match(/scaleX\(([\d.]+)\)/)?.[1] || '0');
             this.audio.currentTime = percent * this.audio.duration;
         }
         document.body.style.overflow = '';
@@ -1149,7 +1153,7 @@ class MusicPlayer {
         const duration = this.audio.duration;
         if (duration && !isNaN(duration) && duration > 0) {
             const percent = (seekTime / duration) * 100;
-            this.elements.progress.style.width = `${percent}%`;
+            this.elements.progress.style.transform = `scaleX(${percent / 100})`;
             this.elements.progressHandle.style.left = `${percent}%`;
             this.elements.currentTime.textContent = Utils.formatTime(seekTime);
         }
