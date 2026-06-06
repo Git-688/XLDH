@@ -491,12 +491,20 @@
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             if (!window.sidebar || !(window.sidebar instanceof ModernSidebar)) {
-                window.sidebar = new ModernSidebar();
+                if (!window.Starlink) window.Starlink = {};
+                if (!window.Starlink.sidebar) {
+                    window.Starlink.sidebar = new ModernSidebar();
+                }
+                window.sidebar = window.Starlink.sidebar;
             }
         });
     } else {
         if (!window.sidebar || !(window.sidebar instanceof ModernSidebar)) {
-            window.sidebar = new ModernSidebar();
+            if (!window.Starlink) window.Starlink = {};
+            if (!window.Starlink.sidebar) {
+                window.Starlink.sidebar = new ModernSidebar();
+            }
+            window.sidebar = window.Starlink.sidebar;
         }
     }
 })();
