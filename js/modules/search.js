@@ -42,8 +42,6 @@ class NewSearchModule {
 
             const searchSubmit = this.modal.querySelector('.search-submit-btn');
             if (searchSubmit) searchSubmit.addEventListener('click', () => this.submitSearch());
-
-            window.newSearchModule = this;
         }
     }
 
@@ -128,7 +126,6 @@ class NewSearchModule {
 
     show() {
         if (!this.modal || this.isOpen) return;
-        // 安全关闭侧滑栏（兼容方法存在性检查）
         if (window.sidebar && typeof window.sidebar.isVisible === 'function' && window.sidebar.isVisible()) {
             window.sidebar.hide();
         }
@@ -227,7 +224,17 @@ class NewSearchModule {
 
 // 直接创建实例
 if (document.readyState !== 'loading') {
-    new NewSearchModule();
+    if (!window.Starlink) window.Starlink = {};
+    if (!window.Starlink.search) {
+        window.Starlink.search = new NewSearchModule();
+    }
+    window.newSearchModule = window.Starlink.search;
 } else {
-    document.addEventListener('DOMContentLoaded', () => new NewSearchModule());
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!window.Starlink) window.Starlink = {};
+        if (!window.Starlink.search) {
+            window.Starlink.search = new NewSearchModule();
+        }
+        window.newSearchModule = window.Starlink.search;
+    });
 }
