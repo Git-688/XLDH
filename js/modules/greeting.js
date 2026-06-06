@@ -622,7 +622,13 @@ class GreetingModule {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.greetingModule = new GreetingModule();
+    if (!window.greetingModule) {
+        if (!window.Starlink) window.Starlink = {};
+        if (!window.Starlink.greeting) {
+            window.Starlink.greeting = new GreetingModule();
+        }
+        window.greetingModule = window.Starlink.greeting;
+    }
     const refreshBtn = document.getElementById('refreshHolidayBtn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
