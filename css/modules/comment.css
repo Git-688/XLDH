@@ -1,176 +1,26 @@
-/* ========== 评论模块特化样式 - 最终版（支持表情选项卡） ========== */
-:root {
-  --waline-theme-color: var(--primary-color, #4361ee);
-}
-
-#waline-comment {
-  --waline-font-size: 0.95rem;
-  --waline-theme-color: var(--primary-color, #4361ee);
-  --waline-active-color: var(--primary-hover, #3a56d4);
-  --waline-bgcolor: var(--bg-card, #ffffff);
-  --waline-bgcolor-light: var(--bg-light, #f8f9fa);
-  --waline-border-color: var(--border-color, #f0f0f0);
-  --waline-text-color: var(--text-primary, #111111);
-  --waline-text-color-light: var(--text-secondary, #666666);
-}
-
-/* 发布框去卡片化，紧贴模态框 */
-#waline-comment .wl-panel {
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  margin-left: -12px;
-  margin-right: -12px;
-}
-
-/* 去除内容区顶部留白 */
-#commentModal .feedback-modal-body {
-  padding-top: 0 !important;
-}
-
-/* 其他元素间距归零 */
-#waline-comment .wl-header,
-#waline-comment .wl-comment-item,
-#waline-comment .wl-comment-item .wl-content,
-#waline-comment .wl-input-group {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* ===== 表情包选项卡样式 ===== */
-.wl-emoji-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  border-bottom: 1px solid var(--waline-border-color);
-  padding-bottom: 4px;
-  margin-bottom: 8px;
-}
-
-.wl-emoji-tab {
-  cursor: pointer;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  color: var(--waline-text-color-light);
-  background: transparent;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.wl-emoji-tab:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--waline-theme-color);
-}
-
-.wl-emoji-tab.active {
-  background: var(--waline-theme-color);
+/* 成就徽章样式 */
+.achievement-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #f5af19, #f12711);
   color: white;
-}
-
-.wl-emoji-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
-  gap: 6px;
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 8px;
-}
-
-.wl-emoji-item {
-  cursor: pointer;
-  text-align: center;
-  transition: transform 0.1s;
-  border-radius: 6px;
-  padding: 4px;
-}
-
-.wl-emoji-item:hover {
-  transform: scale(1.15);
-  background: rgba(0, 0, 0, 0.03);
-}
-
-.wl-emoji-item img {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-  vertical-align: middle;
-}
-
-/* 表情搜索面板 */
-.wl-search {
-  position: relative;
-  margin-top: 8px;
-  border-top: 1px solid var(--waline-border-color);
-  padding-top: 8px;
-}
-
-.wl-search-input {
-  width: 100%;
-  padding: 6px 10px;
-  border: 1px solid var(--waline-border-color);
+  font-size: 10px;
+  padding: 2px 6px;
   border-radius: 20px;
-  font-size: 12px;
-  outline: none;
-  transition: border 0.2s;
+  margin-left: 6px;
+  vertical-align: middle;
+  font-weight: normal;
+  line-height: 1.2;
+  text-shadow: none;
 }
 
-.wl-search-input:focus {
-  border-color: var(--waline-theme-color);
-}
-
-.wl-search-results {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
-  gap: 6px;
-  max-height: 120px;
-  overflow-y: auto;
-  margin-top: 8px;
-}
-
-/* 修复表情弹窗被裁切的问题 */
-.wl-emoji-popup {
-  overflow: visible !important;
-}
-
-#waline-comment .wl-input-action {
-  overflow: visible !important;
-}
-
-/* 移动端适配 */
-@media (max-width: 600px) {
-  #waline-comment { --waline-font-size: 0.9rem; }
-  .wl-emoji-content { grid-template-columns: repeat(auto-fill, minmax(30px, 1fr)); }
-  .wl-emoji-item img { width: 20px; height: 20px; }
-  .wl-emoji-tab { padding: 2px 8px; font-size: 11px; }
-}
-
-/* 暗色模式 */
+/* 深色模式适配 */
 @media (prefers-color-scheme: dark) {
-  #waline-comment {
-    --waline-bgcolor: #2a2a2a;
-    --waline-bgcolor-light: #3a3a3a;
-    --waline-border-color: #3e3e3e;
-    --waline-text-color: #f1f1f1;
-    --waline-text-color-light: #aaaaaa;
-  }
-  .wl-emoji-tab:hover {
-    background: rgba(255, 255, 255, 0.08);
-  }
-  .wl-emoji-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+  .achievement-badge {
+    background: linear-gradient(135deg, #ff9a3c, #d63031);
   }
 }
 
-/* 降级提示 */
-.waline-comment-fallback {
-  padding: 20px;
-  text-align: center;
-  color: var(--text-secondary, #999);
-  font-size: 13px;
+/* 草稿保存提示（可选） */
+.wl-editor textarea:focus {
+  border-color: var(--waline-theme-color, #4361ee);
 }
