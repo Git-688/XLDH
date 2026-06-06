@@ -15,7 +15,7 @@ class CarouselModule {
         this.autoPlayInterval = 5000;
         this.preloadCache = new Set();
         this.activePreloads = new Map();
-        this.maxConcurrentPreloads = 3;     // 提高并发数
+        this.maxConcurrentPreloads = 3;
         this.preloadQueue = [];
         this.idlePreloadQueue = [];
         this.init();
@@ -39,7 +39,7 @@ class CarouselModule {
         return url;
     }
 
-    preloadSingleImage(imageUrl, isHighPriority = true) {
+    preloadSingleImage(imageUrl) {
         if (!imageUrl) return Promise.resolve(false);
         if (this.preloadCache.has(imageUrl)) return Promise.resolve(true);
         if (this.activePreloads.has(imageUrl)) return this.activePreloads.get(imageUrl);
@@ -68,28 +68,32 @@ class CarouselModule {
         return loadPromise;
     }
 
-    // 预加载指定索引的图片（加入队列，控制并发）
+    // 预加载指定索引的图片，返回 Promise
     preloadImage(clonedIndex, priority = 'normal') {
         const slide = this.clonedSlides[clonedIndex];
-        if (!slide || !slide.url) return;
+        if (!slide || !slide.url) return Promise.resolve(false);
         const imageUrl = this.sanitizeImageUrl(slide.url);
-        if (!imageUrl || this.preloadCache.has(imageUrl)) return;
+        if (!imageUrl || this.preloadCache.has(imageUrl)) return Promise.resolve(true);
 
-        const task = () => this.preloadSingleImage(imageUrl, priority === 'high');
+        const task = () => this.preloadSingleImage(imageUrl);
         
-        if (this.activePreloads.size >= this.maxConcurrentPreloads) {
-            if (priority === 'high') {
-                // 高优先级任务插入队列头部
-                this.preloadQueue.unshift(task);
+        return new Promise((resolve) => {
+            if (this.activePreloads.size >= this.maxConcurrentPreloads) {
+                // 队列存储对象，包含任务和 resolve 回调
+                if (priority === 'high') {
+                    this.preloadQueue.unshift({ task, resolve });
+                } else {
+                    this.preloadQueue.push({ task, resolve });
+                }
             } else {
-                this.preloadQueue.push(task);
-            }
-            return;
-        }
-        task().then(() => {
-            if (this.preloadQueue.length > 0) {
-                const next = this.preloadQueue.shift();
-                next();
+                task().then(result => {
+                    resolve(result);
+                    // 处理队列中的下一个
+                    if (this.preloadQueue.length > 0) {
+                        const next = this.preloadQueue.shift();
+                        next.task().then(r => next.resolve(r));
+                    }
+                });
             }
         });
     }
@@ -111,14 +115,12 @@ class CarouselModule {
     preloadAllIdle() {
         if (this.idlePreloadQueue.length > 0) return;
         const allIndices = Array.from({ length: this.clonedSlides.length }, (_, i) => i);
-        // 排除已加载的和当前正在加载的
         const toPreload = allIndices.filter(idx => {
             const slide = this.clonedSlides[idx];
             if (!slide || !slide.url) return false;
             const url = this.sanitizeImageUrl(slide.url);
             return url && !this.preloadCache.has(url) && !this.activePreloads.has(url);
         });
-        // 按距离当前索引排序，优先加载近的
         const total = this.clonedSlides.length;
         toPreload.sort((a, b) => {
             const distA = Math.min(Math.abs(a - this.currentIndex), total - Math.abs(a - this.currentIndex));
@@ -134,9 +136,10 @@ class CarouselModule {
                 setTimeout(processIdle, 500);
                 return;
             }
-            const next = this.idlePreloadQueue.shift();
-            if (next) {
-                next().finally(() => {
+            const nextTask = this.idlePreloadQueue.shift();
+            if (nextTask) {
+                // 确保 nextTask 返回 Promise
+                Promise.resolve(nextTask()).finally(() => {
                     if (this.idlePreloadQueue.length > 0) {
                         setTimeout(processIdle, 100);
                     }
@@ -201,12 +204,11 @@ class CarouselModule {
         this.renderSlides();
         this.renderDots();
         this.preloadImage(1, 'high');
-        this.preloadNearbySlides(1, 2);      // 预加载前后各2张
+        this.preloadNearbySlides(1, 2);
         this.goToSlide(1, false);
         this.bindEvents();
         this.startAutoplay();
 
-        // 空闲时预加载剩余壁纸
         setTimeout(() => this.preloadAllIdle(), 3000);
     }
 
@@ -261,7 +263,7 @@ class CarouselModule {
 
         this.isTransitioning = true;
 
-        // 预加载当前幻灯片的前后多张（增强预加载）
+        // 预加载当前幻灯片的前后多张
         this.preloadNearbySlides(clonedIndex, 3);
 
         const currentSlideDiv = this.track.children[clonedIndex];
