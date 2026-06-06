@@ -101,7 +101,6 @@
 .music-player.show .lyrics-section { opacity: 1; transform: translateY(0); transition-delay: 0.2s; }
 .music-player.show .bottom-section { opacity: 1; transform: translateY(0); transition-delay: 0.25s; }
 
-/* 布局内部样式 */
 .player-top { display: flex; padding: 12px 15px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); }
 .cover-section { display: flex; align-items: center; flex: 1; }
 .album-cover { position: relative; width: 50px; height: 50px; border-radius: 50%; overflow: hidden; margin-right: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -146,15 +145,39 @@
 .time-display { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary, #6c757d); font-weight: 500; }
 .time-text { background: rgba(67,97,238,0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
 .progress-bar { position: relative; height: 6px; background: var(--border-color, #e9ecef); border-radius: 3px; cursor: pointer; width: 100%; overflow: hidden; }
-.progress { position: absolute; height: 100%; background: linear-gradient(90deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080); border-radius: 3px; width: 0%; transition: width 0.1s ease; z-index: 2; }
-.progress-handle { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; background: var(--bg-card, #ffffff); border: 2px solid var(--primary-color, #4361ee); border-radius: 50%; opacity: 0; transition: all 0.2s ease; z-index: 3; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+/* 进度条 - 使用 transform scaleX 代替 width（性能优化） */
+.progress {
+    position: absolute;
+    height: 100%;
+    background: linear-gradient(90deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080);
+    border-radius: 3px;
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    transition: transform 0.1s ease;
+    will-change: transform;
+    z-index: 2;
+}
+.progress-handle {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: var(--bg-card, #ffffff);
+    border: 2px solid var(--primary-color, #4361ee);
+    border-radius: 50%;
+    opacity: 0;
+    transition: all 0.2s ease;
+    z-index: 3;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
 .progress-bar:hover .progress-handle { opacity: 1; }
 .progress-actions { display: flex; align-items: center; gap: 8px; }
 .speed-control { display: flex; align-items: center; position: relative; }
 .speed-selector { width: 65px; }
 .music-player select { display: none !important; }
 
-/* 自定义下拉选择器 (简化) */
 .custom-select { position: relative; width: 100%; user-select: none; }
 .custom-select-trigger {
     display: flex; align-items: center; justify-content: space-between; padding: 6px 10px;
@@ -196,7 +219,6 @@
 .custom-select-option.selected { background: rgba(67,97,238,0.12); color: var(--primary-color, #4361ee); font-weight: 500; position: relative; }
 .custom-select-option.selected::before { content: '✓'; position: absolute; right: 12px; font-size: 12px; }
 
-/* 倍速下拉列表特殊处理（由 JS 定位，此样式仅保留基础） */
 .speed-control .custom-select-dropdown {
     z-index: 100002 !important;
     width: auto;
@@ -231,7 +253,6 @@
     transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
-/* 底部区域（歌单、搜索等） */
 .bottom-section { max-height: 500px; overflow: hidden; transition: max-height 0.3s ease; background: inherit; }
 .music-player.collapsed .bottom-section { max-height: 0; }
 .bottom-tabs { display: flex; border-bottom: 1px solid rgba(0,0,0,0.05); overflow-x: auto; position: sticky; top: 0; background: inherit; z-index: 5; scrollbar-width: none; }
@@ -267,7 +288,6 @@
 .song-item-title { font-weight: 500; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
 .song-item-artist { color: var(--text-secondary, #6c757d); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
 
-/* 搜索容器 */
 .music-player .search-container { display: flex; flex-direction: column; gap: 6px; }
 .music-player .search-header { padding: 0; margin-bottom: 6px; position: sticky; top: 0; background: inherit; z-index: 5; margin-top: 8px; }
 .music-player .search-input-group { display: flex; gap: 0; position: relative; background: rgba(255,255,255,0.6); border-radius: 8px; padding: 0; box-shadow: var(--shadow, 0 2px 4px rgba(0,0,0,0.05)); transition: all 0.3s ease; border: 1px solid transparent; height: 24px; width: 100%; }
