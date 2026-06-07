@@ -146,7 +146,7 @@
 .time-text { background: rgba(67,97,238,0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
 .progress-bar { position: relative; height: 6px; background: var(--border-color, #e9ecef); border-radius: 3px; cursor: pointer; width: 100%; overflow: hidden; touch-action: none; }
 
-/* 进度条 - 单一主题色 + 双保险更新 */
+/* 进度条 - 单一主题色 + 拖拽过渡禁用 */
 .progress {
     position: absolute;
     height: 100%;
@@ -159,6 +159,9 @@
     will-change: width, transform;
     z-index: 2;
     box-shadow: 0 0 4px rgba(67, 97, 238, 0.5);
+}
+.progress.no-transition {
+    transition: none !important;
 }
 .progress-handle {
     position: absolute;
