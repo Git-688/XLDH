@@ -1,5 +1,5 @@
 /**
- * 网站投稿模块（异步安全检测 + 轮询状态）
+ * 网站投稿模块（异步安全检测 + 轮询状态，修复动画）
  */
 class SubmitModule {
     constructor() {
@@ -28,6 +28,7 @@ class SubmitModule {
         this.lastSecurityDetail = null;
         this.currentTaskId = null;
         this.pollingTimer = null;
+        this.isVisible = false;
 
         this.init();
     }
@@ -47,10 +48,13 @@ class SubmitModule {
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class' && this.modal.classList.contains('active')) {
+                    this.isVisible = true;
                     this.ensureStatsBadge();
                     this.loadGlobalTotalCount();
                     this.loadTodayCount();
                     this.resetSecurityCheck();
+                } else if (mutation.attributeName === 'class' && !this.modal.classList.contains('active')) {
+                    this.isVisible = false;
                 }
             });
         });
@@ -137,9 +141,7 @@ class SubmitModule {
         const closeBtn = this.modal.querySelector('.feedback-modal-close');
         const cancelBtn = this.modal.querySelector('.submit-cancel-btn');
         const closeModal = () => {
-            this.modal.classList.remove('active');
-            this.stopPolling();
-            this.resetForm();
+            this.hide();
         };
         closeBtn?.addEventListener('click', closeModal);
         cancelBtn?.addEventListener('click', closeModal);
@@ -234,16 +236,13 @@ class SubmitModule {
             window.toast.show('请输入正确的网址', 'warning');
             return;
         }
-
         this.resetSecurityCheck();
-
         if (this.waitingHint) this.waitingHint.style.display = 'inline';
         this.fetchInfoBtn.disabled = true;
         this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 获取信息...';
         this.urlCheckResult.style.display = 'block';
         this.urlCheckResult.className = 'url-check-result checking';
         this.urlCheckResult.innerHTML = '正在获取网站信息，安全检测后台进行中...';
-
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
             const response = await Utils.safeFetch(`${this.apiBase}/fetch-site-info`, {
@@ -252,7 +251,6 @@ class SubmitModule {
                 body: JSON.stringify({ url: safeUrl })
             });
             const data = await response.json();
-
             if (data.title) this.titleInput.value = data.title;
             if (data.icon) {
                 this.iconInput.value = data.icon;
@@ -262,7 +260,6 @@ class SubmitModule {
                 this.descInput.value = data.description.slice(0, 200);
                 this.autoResizeDesc();
             }
-
             if (data.taskId) {
                 this.currentTaskId = data.taskId;
                 this.startPolling();
@@ -335,18 +332,15 @@ class SubmitModule {
     async handleSubmit(e) {
         e.preventDefault();
         if (this.submitting) return;
-
         const remaining = this.dailyLimit - this.todayCount;
         if (remaining <= 0) {
             window.toast.show(`今日投稿已达上限（${this.dailyLimit}次），请明天再试`, 'warning');
             return;
         }
-
         if (!this.securityPassed) {
             window.toast.show('请先点击“获取信息”完成安全检测，且检测通过后才能提交', 'warning');
             return;
         }
-
         let title = this.titleInput.value.trim();
         let url = this.urlInput.value.trim();
         if (!title || !url) {
@@ -357,7 +351,6 @@ class SubmitModule {
             window.toast.show('请输入正确的网址', 'warning');
             return;
         }
-
         const safeUrl = url.startsWith('http') ? url : `https://${url}`;
         const deviceId = this.getDeviceId();
         const payload = {
@@ -366,12 +359,10 @@ class SubmitModule {
             description: this.descInput.value.trim(),
             icon: this.iconInput.value.trim()
         };
-
         this.submitting = true;
         this.submitSaveBtn.disabled = true;
         this.submitSaveBtn.textContent = '提交中...';
         if (this.waitingHint) this.waitingHint.style.display = 'inline';
-
         try {
             const response = await Utils.safeFetch(`${this.apiBase}/submit-site`, {
                 method: 'POST',
@@ -382,13 +373,12 @@ class SubmitModule {
                 body: JSON.stringify(payload)
             });
             const data = await response.json();
-
             if (response.ok) {
                 window.toast.show('投稿成功！已通过安全检测，等待管理员审核', 'success');
                 this.todayCount++;
                 this.updateRemainingCount();
                 this.updateGlobalTotalCountIncrement();
-                this.modal.classList.remove('active');
+                this.hide();
                 this.resetForm();
             } else {
                 let errorMsg = data.error || '提交失败';
@@ -431,6 +421,26 @@ class SubmitModule {
         this.submitting = false;
         this.securityPassed = false;
         this.lastSecurityDetail = null;
+    }
+
+    show() {
+        if (!this.modal) return;
+        this.modal.classList.add('active');
+        this.isVisible = true;
+        if (window.app) window.app.registerModal(this);
+    }
+
+    hide() {
+        if (!this.modal || !this.isVisible) return;
+        this.modal.classList.remove('active');
+        const onTransitionEnd = () => {
+            this.isVisible = false;
+            if (window.app) window.app.unregisterModal(this);
+            this.modal.removeEventListener('transitionend', onTransitionEnd);
+            this.resetForm();
+        };
+        this.modal.addEventListener('transitionend', onTransitionEnd, { once: true });
+        setTimeout(onTransitionEnd, 400);
     }
 }
 
