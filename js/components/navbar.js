@@ -1,4 +1,4 @@
-// navbar.js - 导航栏模块（移除侧滑栏绑定，由新侧滑栏自行处理）
+// navbar.js - 导航栏模块（修复模态框动画，支持等待关闭完成）
 class Navbar {
     constructor() {
         if (window.navbar && window.navbar instanceof Navbar) return window.navbar;
@@ -55,16 +55,16 @@ class Navbar {
             });
         }
 
-        // 注意：菜单按钮（menuBtn）的事件绑定已移除，由新侧滑栏（sidebar.js）自行处理，避免重复绑定。
-        // 新侧滑栏会在初始化时自动查找 menuBtn 并绑定 toggle 方法，无需在此处理。
+        // 菜单按钮事件绑定由新侧滑栏负责，此处不做重复绑定
 
         const weatherBtn = document.getElementById('weatherBtn');
         if (weatherBtn) {
             weatherBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.closeAllModalsExcept(['weather']);
-                window.app?.modules?.weather?.showModal();
+                this.closeAllModalsExcept(['weather']).then(() => {
+                    window.app?.modules?.weather?.showModal();
+                });
             });
         }
 
@@ -73,8 +73,9 @@ class Navbar {
             submitBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.closeAllModalsExcept(['submit']);
-                document.getElementById('submitModal').classList.add('active');
+                this.closeAllModalsExcept(['submit']).then(() => {
+                    document.getElementById('submitModal')?.classList.add('active');
+                });
             });
         }
 
@@ -96,16 +97,87 @@ class Navbar {
         if (btt) btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
-    handleFeatureToggle(featureKey, toggleFn) {
-        const isOpen = this.isFeatureOpen(featureKey);
-        if (isOpen) {
-            toggleFn();
-        } else {
-            this.closeAllModalsExcept([featureKey]);
-            requestAnimationFrame(() => {
-                toggleFn();
-            });
+    /**
+     * 异步关闭除保留功能外的所有模态框，等待动画完成
+     * @param {Array<string>} keep 保留的功能标识数组，如 ['search', 'music', 'announcement', 'sidebar', 'weather', 'about', 'notebook', 'submit']
+     * @returns {Promise<void>}
+     */
+    closeAllModalsExcept(keep = []) {
+        const closePromises = [];
+
+        // 获取当前应用注册的所有活动模态框实例
+        const activeModals = window.app?.activeModals || [];
+        for (const modal of activeModals) {
+            let shouldClose = true;
+            if (keep.includes('music') && modal === window.musicPlayer) shouldClose = false;
+            if (keep.includes('search') && modal === window.newSearchModule) shouldClose = false;
+            if (keep.includes('announcement') && modal === window.announcementModule) shouldClose = false;
+            if (keep.includes('sidebar') && modal === window.sidebar) shouldClose = false;
+            if (keep.includes('weather') && modal === window.app?.modules?.weather) shouldClose = false;
+            if (keep.includes('about') && modal === window.aboutModule) shouldClose = false;
+            if (keep.includes('notebook') && modal === window.app?.notebookModalHideRef) shouldClose = false;
+            if (keep.includes('submit') && modal === window.submitModule) shouldClose = false;
+
+            if (shouldClose && modal && typeof modal.hide === 'function') {
+                const promise = new Promise((resolve) => {
+                    modal.hide();
+                    // 轮询检查模态框是否已完全关闭（isVisible 变为 false）
+                    const interval = setInterval(() => {
+                        if (!modal.isVisible) {
+                            clearInterval(interval);
+                            resolve();
+                        }
+                    }, 50);
+                    // 后备超时，避免无限等待
+                    setTimeout(() => {
+                        clearInterval(interval);
+                        resolve();
+                    }, 500);
+                });
+                closePromises.push(promise);
+            }
         }
+
+        // 额外处理一些未通过 app.registerModal 注册但需要关闭的组件
+        if (!keep.includes('music')) {
+            const musicPlayer = document.getElementById('musicPlayer');
+            if (musicPlayer && musicPlayer.classList.contains('show') && this.hideMusicPlayer) {
+                this.hideMusicPlayer();
+            }
+        }
+        if (!keep.includes('search') && window.newSearchModule && window.newSearchModule.isOpen && window.newSearchModule.hide) {
+            window.newSearchModule.hide();
+        }
+        if (!keep.includes('sidebar') && window.sidebar && window.sidebar.isVisible && window.sidebar.isVisible()) {
+            window.sidebar.hide();
+        }
+        if (!keep.includes('announcement') && window.announcementModule && window.announcementModule.isVisible && window.announcementModule.hide) {
+            window.announcementModule.hide();
+        }
+        if (!keep.includes('weather') && window.app?.modules?.weather && window.app.modules.weather.isShowing && window.app.modules.weather.hide) {
+            window.app.modules.weather.hide();
+        }
+        if (!keep.includes('about') && window.aboutModule && window.aboutModule.isShowing && window.aboutModule.hide) {
+            window.aboutModule.hide();
+        }
+        if (!keep.includes('notebook') && window.app && window.app.hideNotebookModal) {
+            window.app.hideNotebookModal();
+        }
+        if (!keep.includes('submit') && window.submitModule && window.submitModule.isVisible && window.submitModule.hide) {
+            window.submitModule.hide();
+        }
+
+        return Promise.all(closePromises);
+    }
+
+    /**
+     * 打开或关闭指定功能，会先关闭其他模态框
+     * @param {string} featureKey 功能标识
+     * @param {Function} toggleFn 切换功能的函数
+     */
+    async handleFeatureToggle(featureKey, toggleFn) {
+        await this.closeAllModalsExcept([featureKey]);
+        toggleFn();
     }
 
     isFeatureOpen(key) {
@@ -116,19 +188,6 @@ class Navbar {
             case 'sidebar': return window.sidebar && typeof window.sidebar.isVisible === 'function' && window.sidebar.isVisible();
             default: return false;
         }
-    }
-
-    closeAllModalsExcept(keep = []) {
-        try {
-            if (!keep.includes('music')) this.hideMusicPlayer();
-            if (!keep.includes('search') && window.newSearchModule?.isOpen) window.newSearchModule.hide();
-            if (!keep.includes('sidebar') && window.sidebar && typeof window.sidebar.isVisible === 'function' && window.sidebar.isVisible()) window.sidebar.hide();
-            if (!keep.includes('announcement') && window.announcementModule?.isVisible) window.announcementModule.hide();
-            if (!keep.includes('weather')) window.app?.modules?.weather?.hide?.();
-            if (!keep.includes('about')) window.aboutModule?.hide?.();
-            if (!keep.includes('notebook')) window.app?.hideNotebookModal?.();
-            if (!keep.includes('submit')) document.getElementById('submitModal')?.classList.remove('active');
-        } catch (e) { console.error('关闭模态框失败:', e); }
     }
 
     toggleMusicPlayer() {
