@@ -1,6 +1,5 @@
 /**
- * 简约公告模块 - 清爽现代版（XSS 防护加固，修复 badge 不消失问题）
- * @class AnnouncementModule
+ * 简约公告模块 - 清爽现代版（修复模态框动画）
  */
 class AnnouncementModule {
     constructor() {
@@ -25,7 +24,7 @@ class AnnouncementModule {
         this.loadAnnouncements();
         this.createModal();
         this.setupGlobalEvents();
-        this.updateNavbarBadge();   // 初始化时更新 badge
+        this.updateNavbarBadge();
         this.isInitialized = true;
         window.announcementModule = this;
     }
@@ -33,7 +32,6 @@ class AnnouncementModule {
     loadAnnouncements() {
         const stored = Storage.get('announcements');
         const defaultAnn = this.getDefaultAnnouncements()[0];
-
         if (!stored || stored.length === 0) {
             this.announcements = this.getDefaultAnnouncements();
             Storage.set('announcements', this.announcements);
@@ -48,7 +46,6 @@ class AnnouncementModule {
                 this.announcements = stored;
             }
         }
-        // 确保 read 状态与存储一致
         this.currentAnnouncement = this.announcements[0] || {};
     }
 
@@ -82,17 +79,14 @@ class AnnouncementModule {
             this.modalElement.remove();
             this.modalElement = null;
         }
-
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'announcement-modal-simple';
         this.modalElement.id = 'announcementModal';
-
         const ann = this.currentAnnouncement || {};
         const title = this.escapeHtml(ann.title || '公告');
         const focus = this.escapeHtml(ann.focus || '');
         const updates = ann.updates && Array.isArray(ann.updates) ? ann.updates : [];
         const time = this.escapeHtml(ann.time || new Date().toLocaleDateString());
-
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
                 <div class="announcement-header">
@@ -128,26 +122,20 @@ class AnnouncementModule {
                 </div>
             </div>
         `;
-
         document.body.appendChild(this.modalElement);
         this.bindModalEvents();
     }
 
     bindModalEvents() {
         if (!this.modalElement) return;
-
         const closeBtn = this.modalElement.querySelector('#announcementClose');
         const ackBtn = this.modalElement.querySelector('#announcementAckBtn');
-
-        // 统一关闭处理函数，确保标记已读并更新 badge
         const closeHandler = () => {
             this.markCurrentAsRead();
             this.hide();
         };
-
         if (closeBtn) closeBtn.addEventListener('click', closeHandler);
         if (ackBtn) ackBtn.addEventListener('click', closeHandler);
-
         this.modalElement.addEventListener('click', (e) => {
             if (e.target === this.modalElement) {
                 this.markCurrentAsRead();
@@ -168,15 +156,12 @@ class AnnouncementModule {
 
     markCurrentAsRead() {
         if (!this.currentAnnouncement || this.currentAnnouncement.read) return;
-        // 修改当前公告的 read 状态
         this.currentAnnouncement.read = true;
         const index = this.announcements.findIndex(a => a.id === this.currentAnnouncement.id);
         if (index !== -1) {
             this.announcements[index].read = true;
-            // 同步存储
             Storage.set('announcements', this.announcements);
         }
-        // 更新导航栏红点
         this.updateNavbarBadge();
     }
 
@@ -186,7 +171,6 @@ class AnnouncementModule {
         } else if (window.navbar && typeof window.navbar.updateNotificationBadge === 'function') {
             window.navbar.updateNotificationBadge();
         } else {
-            // 降级：直接操作 DOM
             const btn = document.getElementById('announcementBtn');
             if (btn) {
                 const unread = this.getUnreadCount();
@@ -218,24 +202,29 @@ class AnnouncementModule {
     showModal() {
         if (!this.modalElement) this.createModal();
         if (this.isVisible) return;
-
         this.closeOtherModals();
         this.modalElement.classList.add('active');
         this.isVisible = true;
-
         if (window.app) window.app.registerModal(this);
         this.updateButtonState(true);
     }
 
     hide() {
         if (!this.isVisible || !this.modalElement) return;
-
-        this.updateButtonState(false);
         this.modalElement.classList.remove('active');
-
-        setTimeout(() => {
+        this.updateButtonState(false);
+        const onTransitionEnd = () => {
             this.isVisible = false;
             if (window.app) window.app.unregisterModal(this);
+            this.modalElement.removeEventListener('transitionend', onTransitionEnd);
+        };
+        this.modalElement.addEventListener('transitionend', onTransitionEnd, { once: true });
+        // 后备超时
+        setTimeout(() => {
+            if (this.isVisible) {
+                this.isVisible = false;
+                if (window.app) window.app.unregisterModal(this);
+            }
         }, 400);
     }
 
