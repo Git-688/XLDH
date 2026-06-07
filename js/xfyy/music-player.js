@@ -1,7 +1,7 @@
-// music-player.js - 最终版（下拉菜单互斥展开 + 进度条修复 + 歌词修复 + 倍速菜单位置修复 + 内存泄漏修复）
+// music-player.js - 最终版（进度条样式修复 + 内存泄漏修复 + 自定义选择器）
 // ==================== 自定义下拉选择器组件（支持实例管理，避免内存泄漏） ====================
-let currentOpenCustomSelect = null;      // 全局当前打开的下拉菜单实例
-let customSelectInstances = new Map();     // 存储所有 CustomSelect 实例，用于清理
+let currentOpenCustomSelect = null;
+let customSelectInstances = new Map();
 
 class CustomSelect {
     constructor(selectElement) {
@@ -13,12 +13,10 @@ class CustomSelect {
         this.isOpen = false;
         this.value = selectElement.value;
         this.isSpeedControl = false;
-        // 存储事件监听器引用，便于解绑
         this.boundHandleOutsideClick = null;
         this.boundScrollListener = null;
         this.boundResizeListener = null;
         this.init();
-        // 将实例存储到 Map 中，便于销毁
         const id = selectElement.id || selectElement.name || Math.random().toString(36);
         customSelectInstances.set(id, this);
     }
@@ -38,7 +36,6 @@ class CustomSelect {
         this.container.appendChild(this.trigger);
         this.selectElement.parentNode.insertBefore(this.container, this.selectElement.nextSibling);
 
-        // 判断是否为倍速控制
         this.isSpeedControl = this.container.closest('.speed-control') !== null;
 
         this.dropdown = document.createElement('div');
@@ -46,7 +43,6 @@ class CustomSelect {
         this.populateOptions();
 
         if (this.isSpeedControl) {
-            // 倍速下拉菜单添加到 body，避免被父容器 overflow 裁剪
             document.body.appendChild(this.dropdown);
         } else {
             this.container.appendChild(this.dropdown);
@@ -66,24 +62,19 @@ class CustomSelect {
     populateOptions() {
         this.dropdown.innerHTML = '';
         this.options = [];
-
         for (let i = 0; i < this.selectElement.options.length; i++) {
             const option = this.selectElement.options[i];
             const optionDiv = document.createElement('div');
             optionDiv.className = 'custom-select-option';
-            if (i === this.selectElement.selectedIndex) {
-                optionDiv.classList.add('selected');
-            }
+            if (i === this.selectElement.selectedIndex) optionDiv.classList.add('selected');
             optionDiv.textContent = option.textContent;
             optionDiv.setAttribute('data-value', option.value);
             optionDiv.setAttribute('data-index', i);
-
             optionDiv.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.selectOption(i);
                 this.closeDropdown();
             });
-
             this.dropdown.appendChild(optionDiv);
             this.options.push(optionDiv);
         }
@@ -91,19 +82,11 @@ class CustomSelect {
 
     selectOption(index) {
         if (index === this.selectElement.selectedIndex) return;
-
         this.selectElement.selectedIndex = index;
         this.value = this.selectElement.value;
-
         const valueSpan = this.trigger.querySelector('.custom-select-value');
-        if (valueSpan) {
-            valueSpan.textContent = this.selectElement.options[index].textContent;
-        }
-
-        this.options.forEach((opt, i) => {
-            opt.classList.toggle('selected', i === index);
-        });
-
+        if (valueSpan) valueSpan.textContent = this.selectElement.options[index].textContent;
+        this.options.forEach((opt, i) => opt.classList.toggle('selected', i === index));
         const changeEvent = new Event('change', { bubbles: true });
         this.selectElement.dispatchEvent(changeEvent);
     }
@@ -168,9 +151,7 @@ class CustomSelect {
         if (this.boundScrollListener) window.removeEventListener('scroll', this.boundScrollListener, true);
         if (this.boundResizeListener) window.removeEventListener('resize', this.boundResizeListener);
         if (this.boundHandleOutsideClick) document.removeEventListener('click', this.boundHandleOutsideClick);
-        if (currentOpenCustomSelect === this) {
-            currentOpenCustomSelect = null;
-        }
+        if (currentOpenCustomSelect === this) currentOpenCustomSelect = null;
     }
 
     bindEvents() {
@@ -191,10 +172,8 @@ class CustomSelect {
         if (this.container && this.container.parentNode) this.container.remove();
         if (this.dropdown && this.dropdown.parentNode) this.dropdown.remove();
         this.selectElement.style.display = '';
-        // 从全局 Map 中移除
         const id = this.selectElement.id || this.selectElement.name || '';
         if (id) customSelectInstances.delete(id);
-        // 清空引用
         this.selectElement = null;
         this.container = null;
         this.trigger = null;
@@ -206,9 +185,7 @@ class CustomSelect {
 function initCustomSelects() {
     const selects = document.querySelectorAll('.playlist-selector select, .speed-selector select');
     selects.forEach(select => {
-        // 避免重复创建
-        const existing = select.parentNode.querySelector('.custom-select');
-        if (!existing) {
+        if (!select.parentNode.querySelector('.custom-select')) {
             new CustomSelect(select);
         }
     });
@@ -275,7 +252,6 @@ class MusicPlayer {
         this.updateAnimationFrame = null;
         this.lastTimeUpdate = 0;
         this.dragRAF = null;
-
         this.coverObserver = null;
         this.initCoverObserver();
 
@@ -440,7 +416,6 @@ class MusicPlayer {
         this.elements.nextBtn.addEventListener('click', () => this.next());
         this.elements.modeBtn.addEventListener('click', () => this.togglePlayMode());
         this.elements.volumeBtn.addEventListener('click', () => this.toggleVolumeSlider());
-        
         this.elements.volumeSlider.addEventListener('input', (e) => {
             this.setVolume(e.target.value / 100);
             this.saveVolume(e.target.value / 100);
@@ -453,7 +428,6 @@ class MusicPlayer {
                 this.saveVolume(value / 100);
             }
         });
-        
         this.elements.speedSelect.addEventListener('change', (e) => {
             this.setPlaybackSpeed(parseFloat(e.target.value));
             this.savePlaybackSpeed(parseFloat(e.target.value));
@@ -788,7 +762,6 @@ class MusicPlayer {
                 el.playlistContainer.innerHTML = `<div class="error-message"><p>加载失败: ${Utils.escapeHtml(error.message)}</p><button class="retry-btn" onclick="window.musicPlayer?.loadApiPlaylist('${apiId}')">重试</button></div>`;
             }
         }
-        // 重新初始化自定义选择器（确保新生成的 select 也有实例）
         initCustomSelects();
     }
 
@@ -925,6 +898,7 @@ class MusicPlayer {
         try {
             this.audio.src = song.src;
             this.audio.load();
+            // 重置进度条显示
             this.elements.progress.style.transform = 'scaleX(0)';
             this.elements.progressHandle.style.left = '0%';
             this.elements.currentTime.textContent = '00:00';
@@ -1078,6 +1052,7 @@ class MusicPlayer {
             const duration = this.audio.duration;
             if (duration && !isNaN(duration) && duration > 0) {
                 const percent = (currentTime / duration) * 100;
+                // 使用 transform scaleX 更新进度条（必须确保 transform-origin: 0% 50%）
                 this.elements.progress.style.transform = `scaleX(${percent / 100})`;
                 this.elements.progressHandle.style.left = `${percent}%`;
                 const now = Date.now();
@@ -1087,6 +1062,7 @@ class MusicPlayer {
                 }
                 this.updateLyricDisplayByTime(currentTime);
             } else if (duration && !isNaN(duration) && duration === 0) {
+                // 歌曲尚未加载完，稍后再试
             } else {
                 this.elements.currentTime.textContent = '00:00';
                 this.elements.duration.textContent = '00:00';
@@ -1233,7 +1209,6 @@ class MusicPlayer {
         if (this.cacheManager) this.cacheManager.cleanup();
         if (this.coverObserver) this.coverObserver.disconnect();
         if (this._cleanupErrorHandler) this._cleanupErrorHandler();
-        // 销毁所有 CustomSelect 实例，防止内存泄漏
         customSelectInstances.forEach((instance) => {
             if (instance && typeof instance.destroy === 'function') {
                 instance.destroy();
