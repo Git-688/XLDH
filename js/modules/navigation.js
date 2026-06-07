@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（支持 WebP 图标、高清懒加载、点击计数修复）
+ * 优化分类导航系统 - 分页加载版（修复点击计数，支持乐观更新与失败回滚）
  */
 class OptimizedNavigation {
     constructor() {
@@ -26,24 +26,22 @@ class OptimizedNavigation {
         this.hasMore = true;
         this.currentSites = [];
         this.scrollListener = null;
-        this.scrollStopTimer = null;
 
         this.autoRefreshTimer = null;
         this.autoRefreshInterval = 30000;
 
+        // 图标缓存
         this.iconCache = new Map();
         this.iconLoadingSet = new Set();
         this.iconFailedSet = new Set();
-
-        this.preloadQueue = [];
-        this.isPreloading = false;
     }
 
     _escapeHtml(str) { return Utils.escapeHtml(str); }
     _formatViews(views) {
-        if (views >= 1000000) return `${(views/1000000).toFixed(1).replace('.0','')}M`;
-        if (views >= 1000) return `${(views/1000).toFixed(1).replace('.0','')}K`;
-        return String(views);
+        let num = typeof views === 'number' && !isNaN(views) ? views : 0;
+        if (num >= 1000000) return `${(num/1000000).toFixed(1).replace('.0','')}M`;
+        if (num >= 1000) return `${(num/1000).toFixed(1).replace('.0','')}K`;
+        return String(num);
     }
 
     _getIconCandidates(url) {
@@ -149,17 +147,11 @@ class OptimizedNavigation {
                     if (entry.isIntersecting) {
                         const img = entry.target;
                         const src = img.dataset.src;
-                        if (src) {
-                            img.src = src;
-                            img.removeAttribute('data-src');
-                        }
+                        if (src) { img.src = src; img.removeAttribute('data-src'); }
                         this.imgObserver.unobserve(img);
                     }
                 });
-            }, {
-                rootMargin: '300px 0px 300px 0px',
-                threshold: 0.01
-            });
+            }, { rootMargin: '300px 0px 300px 0px', threshold: 0.01 });
         }
     }
 
@@ -167,12 +159,10 @@ class OptimizedNavigation {
         if (!container || !this.imgObserver) return;
         const images = container.querySelectorAll('img[data-src]');
         if (images.length === 0) return;
-        
         const preloadTask = () => {
             const viewportHeight = window.innerHeight;
             const scrollTop = window.scrollY || document.documentElement.scrollTop;
             const buffer = 500;
-            
             images.forEach(img => {
                 const rect = img.getBoundingClientRect();
                 const imgTop = rect.top + scrollTop;
@@ -187,7 +177,6 @@ class OptimizedNavigation {
                 }
             });
         };
-        
         if (window.requestIdleCallback) {
             requestIdleCallback(preloadTask, { timeout: 2000 });
         } else {
@@ -487,7 +476,8 @@ class OptimizedNavigation {
         card.title = `${site.title}\n${site.description || ''}`;
 
         const iconHtml = this._createIconElement(site.url, site.icon);
-        const views = site.views || 0;
+        // 确保 views 是数字
+        const views = (typeof site.views === 'number' && !isNaN(site.views)) ? site.views : 0;
         const formattedViews = this._formatViews(views);
 
         let titleHtml = this._escapeHtml(site.title);
@@ -496,9 +486,6 @@ class OptimizedNavigation {
             titleHtml = this._highlightText(site.title, keyword);
             descHtml = this._highlightText(site.description || '暂无描述', keyword);
         }
-
-        // 存储当前 views 值用于后续更新缓存
-        const currentViews = views;
 
         card.innerHTML = `
             <div class="card-top">
@@ -509,7 +496,7 @@ class OptimizedNavigation {
                     </button>
                     <div class="views-container">
                         <i class="fas fa-eye views-icon"></i>
-                        <span class="view-count" data-views="${currentViews}">${formattedViews}</span>
+                        <span class="view-count" data-views="${views}">${formattedViews}</span>
                     </div>
                 </div>
             </div>
@@ -520,67 +507,41 @@ class OptimizedNavigation {
             </div>
         `;
 
-        card.addEventListener('click', async (e) => {
+        // 点击卡片（非死链按钮）处理计数
+        card.addEventListener('click', (e) => {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
-            e.preventDefault();
-            e.stopPropagation();
-            
             this.isNavigationClick = true;
             if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
-            
-            // 发送点击计数请求
-            try {
-                await Utils.safeFetch(`${this.apiBase}/click`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: site.id, url: site.url })
-                });
-            } catch(err) {
-                console.warn('点击计数上报失败:', err);
-            }
-            
-            // 更新前端显示和缓存
+
             const viewEl = card.querySelector('.view-count');
-            if (viewEl) {
-                let cur = parseInt(viewEl.dataset.views) || 0;
-                cur++;
-                viewEl.dataset.views = cur;
-                viewEl.textContent = this._formatViews(cur);
-                viewEl.classList.add('increasing');
-                setTimeout(()=>viewEl.classList.remove('increasing'),300);
-            }
-            
-            // 更新 siteCache 中的 views
-            const currentSubId = this.selectedLevel2;
-            if (currentSubId && this.siteCache.has(currentSubId)) {
-                const cachedSites = this.siteCache.get(currentSubId);
-                const updatedSites = cachedSites.map(s => {
-                    if (s.id === site.id) {
-                        return { ...s, views: (s.views || 0) + 1 };
-                    }
-                    return s;
-                });
-                this.siteCache.set(currentSubId, updatedSites);
-                // 同时更新当前展示的 sites 数组
-                if (this.currentSites) {
-                    this.currentSites = this.currentSites.map(s => {
-                        if (s.id === site.id) {
-                            return { ...s, views: (s.views || 0) + 1 };
-                        }
-                        return s;
-                    });
-                }
-            }
-            
-            // 打开链接
-            window.open(site.url, '_blank');
-            
-            setTimeout(()=>{ 
-                this.isNavigationClick = false; 
-                if(window.musicPlayer) window.musicPlayer.isHandlingNavigationClick=false; 
-            }, 100);
+            // 乐观更新：立即增加1
+            let curViews = parseInt(viewEl.dataset.views) || 0;
+            const newViews = curViews + 1;
+            viewEl.dataset.views = newViews;
+            viewEl.textContent = this._formatViews(newViews);
+            viewEl.classList.add('increasing');
+            setTimeout(() => viewEl.classList.remove('increasing'), 300);
+
+            // 发送请求到后端
+            Utils.safeFetch(`${this.apiBase}/click`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: site.id, url: site.url })
+            }).catch((err) => {
+                console.error('点击计数上报失败:', err);
+                // 回滚到原值
+                viewEl.dataset.views = curViews;
+                viewEl.textContent = this._formatViews(curViews);
+                if (window.toast) window.toast.show('计数上报失败，请检查网络', 'warning');
+            }).finally(() => {
+                setTimeout(() => {
+                    this.isNavigationClick = false;
+                    if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
+                }, 100);
+            });
         });
 
+        // 死链报告按钮事件
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
