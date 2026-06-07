@@ -1,20 +1,17 @@
 /**
- * 星聚导航主应用程序（最终版）
- * 完整功能：笔记、搜索、天气、音乐、评论等
+ * 星聚导航主应用程序（最终版，修复模态框动画）
  */
 class App {
     constructor() {
         this.components = {};
         this.modules = {};
-        this.activeModals = [];
+        this.activeModals = [];      // 当前打开的模态框实例列表
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.notebookModalHideRef = null;
 
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.init();
-            });
+            document.addEventListener('DOMContentLoaded', () => { this.init(); });
         } else {
             this.init();
         }
@@ -25,7 +22,6 @@ class App {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
         listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
-        
         const fetchNotebook = async (retry = 2) => {
             try {
                 const response = await fetch('https://api.xjdh688.ccwu.cc/notebook');
@@ -33,13 +29,10 @@ class App {
                 const data = await response.json();
                 return data.items || [];
             } catch (error) {
-                if (retry > 0) {
-                    return fetchNotebook(retry - 1);
-                }
+                if (retry > 0) return fetchNotebook(retry - 1);
                 throw error;
             }
         };
-
         try {
             const items = await fetchNotebook(2);
             if (items.length === 0) {
@@ -72,30 +65,36 @@ class App {
 
     // 显示星聚笔记模态框
     showNotebookModal() {
-        const modal = document.getElementById('notebookModal');
-        if (!modal) return;
-        modal.style.display = 'flex';
-        modal.classList.add('active');
+        const modalEl = document.getElementById('notebookModal');
+        if (!modalEl) return;
+        // 创建包装对象，实现 hide 方法
         if (!this.notebookModalHideRef) {
-            this.notebookModalHideRef = { hide: this.hideNotebookModal.bind(this) };
+            this.notebookModalHideRef = {
+                hide: () => this.hideNotebookModal(),
+                isVisible: () => modalEl.classList.contains('active')
+            };
         }
         this.registerModal(this.notebookModalHideRef);
+        modalEl.classList.add('active');
         this.loadNotebookData();
     }
 
-    // 隐藏星聚笔记模态框
     hideNotebookModal() {
-        const modal = document.getElementById('notebookModal');
-        if (modal) {
-            modal.classList.remove('active');
-            modal.style.display = 'none';
-        }
-        if (this.notebookModalHideRef) {
-            this.unregisterModal(this.notebookModalHideRef);
-        }
+        const modalEl = document.getElementById('notebookModal');
+        if (!modalEl) return;
+        modalEl.classList.remove('active');
+        // 等待动画结束后再从 activeModals 中移除
+        const onTransitionEnd = () => {
+            modalEl.removeEventListener('transitionend', onTransitionEnd);
+            if (this.notebookModalHideRef) {
+                this.unregisterModal(this.notebookModalHideRef);
+            }
+        };
+        modalEl.addEventListener('transitionend', onTransitionEnd, { once: true });
+        // 后备超时
+        setTimeout(onTransitionEnd, 400);
     }
 
-    // 初始化星聚笔记模态框事件
     initNotebookModalEvents() {
         const modal = document.getElementById('notebookModal');
         const closeBtn = modal?.querySelector('.feedback-modal-close');
@@ -108,7 +107,7 @@ class App {
         }
     }
 
-    // 全局图片错误捕获（CSP修复）
+    // 全局图片错误捕获
     initImageFallbackHandler() {
         document.addEventListener('error', (e) => {
             const img = e.target;
@@ -116,10 +115,7 @@ class App {
             e.preventDefault();
             const fbType = img.dataset.fallbackType;
             const parent = img.parentElement;
-            
-            // 防止重复触发
             img.classList.remove('js-img-fallback');
-            
             if (fbType === 'hideAndShowIcon') {
                 img.style.display = 'none';
                 if (parent && !parent.querySelector('.js-fallback-icon')) {
@@ -139,10 +135,9 @@ class App {
                     parent.appendChild(icon);
                 }
             }
-        }, true); // 捕获阶段，因为图片error不冒泡
+        }, true);
     }
 
-    // 应用初始化
     init() {
         if (this.isInitialized) return;
         this.setupErrorHandling();
@@ -156,12 +151,10 @@ class App {
         this.initFloatingButtonsEffect();
         this.isInitialized = true;
 
-        // 挂载全局便捷方法
         window.showNotebookModal = this.showNotebookModal.bind(this);
         window.hideNotebookModal = this.hideNotebookModal.bind(this);
     }
 
-    // 悬浮按钮滚动半透明效果
     initFloatingButtonsEffect() {
         let scrollTimer;
         const floatingBtns = document.querySelector('.floating-buttons');
@@ -248,17 +241,15 @@ class App {
                 if (!window.aboutModule) {
                     this.modules.about = new AboutModule();
                     window.aboutModule = this.modules.about;
-                    this.modules.about.init(); // AboutModule 需要手动初始化
+                    this.modules.about.init();
                 } else {
                     this.modules.about = window.aboutModule;
                 }
             }
 
-            // 等待所有模块初始化完成（静默失败）
             Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {
                 console.log('所有模块初始化完成');
             });
-
         } catch (error) {
             console.error('模块初始化失败:', error);
             this.showToast('部分模块初始化失败', 'warning');
@@ -275,13 +266,11 @@ class App {
         }
     }
 
-    // 全局错误处理
     setupErrorHandling() {
         const shouldIgnore = (message) => {
             const m = String(message || '');
             return m === 'Script error.' || m === 'null' || m === 'undefined' || m.trim() === '';
         };
-
         const handleError = (event) => {
             const msg = event.message || (event.error && event.error.message) || '';
             if (shouldIgnore(msg)) return;
@@ -291,7 +280,6 @@ class App {
             console.error('应用错误:', errorMessage);
             if (!document.hidden) this.showToast('页面遇到问题，建议刷新页面', 'error');
         };
-
         window.addEventListener('error', handleError);
         window.addEventListener('unhandledrejection', handleError);
     }
@@ -358,11 +346,12 @@ class App {
     registerModal(modal) {
         if (!modal || typeof modal.hide !== 'function') return;
         if (!this.activeModals.includes(modal)) {
-            this.activeModals.push(modal);
-            if (this.activeModals.length > 1) {
-                const previousModal = this.activeModals[this.activeModals.length - 2];
-                if (previousModal && previousModal.hide) previousModal.hide();
+            // 关闭当前所有其他模态框（带动画等待）
+            if (this.activeModals.length > 0) {
+                const previous = this.activeModals[this.activeModals.length - 1];
+                previous.hide();
             }
+            this.activeModals.push(modal);
             if (this.components.sidebar && this.components.sidebar.isVisible && this.components.sidebar.isVisible()) {
                 this.components.sidebar.hide();
             }
@@ -375,9 +364,10 @@ class App {
     }
 
     closeAllModals() {
-        this.activeModals.forEach(modal => {
+        const modals = [...this.activeModals];
+        modals.forEach(modal => {
             if (modal && typeof modal.hide === 'function') {
-                try { modal.hide(); } catch (error) { console.error('关闭模态框失败:', error); }
+                modal.hide();
             }
         });
         this.activeModals = [];
@@ -493,32 +483,19 @@ class App {
 
     refreshAllModules() {
         this.showToast('开始刷新所有模块', 'info');
-
         if (this.modules.wallpaper && this.modules.wallpaper.refreshWallpaper) {
-            this.modules.wallpaper.refreshWallpaper().catch(err => {
-                console.error('壁纸刷新失败:', err);
-            });
+            this.modules.wallpaper.refreshWallpaper().catch(err => console.error('壁纸刷新失败:', err));
         }
-
         if (this.modules.weather && this.modules.weather.loadWeatherData) {
-            this.modules.weather.loadWeatherData().catch(err => {
-                console.error('天气刷新失败:', err);
-            });
+            this.modules.weather.loadWeatherData().catch(err => console.error('天气刷新失败:', err));
         }
-
         if (this.modules.announcement && this.modules.announcement.loadAnnouncements) {
             this.modules.announcement.loadAnnouncements();
         }
-
         if (this.components.sidebar) {
-            if (this.components.sidebar.loadWallpaperUserInfo) {
-                this.components.sidebar.loadWallpaperUserInfo();
-            }
-            if (this.components.sidebar.loadDailyQuote) {
-                this.components.sidebar.loadDailyQuote();
-            }
+            if (this.components.sidebar.loadWallpaperUserInfo) this.components.sidebar.loadWallpaperUserInfo();
+            if (this.components.sidebar.loadDailyQuote) this.components.sidebar.loadDailyQuote();
         }
-
         setTimeout(() => {
             this.showToast('所有模块已刷新', 'success');
         }, 1500);
@@ -526,9 +503,7 @@ class App {
 
     resetApp() {
         if (!confirm('确定要重置应用状态吗？这将清除所有临时数据，但不会删除您的个人配置。')) return;
-
         this.closeAllModals();
-
         const keysToRemove = [
             'sidebar_categories_state',
             'last_wallpaper_update',
@@ -538,15 +513,8 @@ class App {
             'musicPlayer_playState',
             'musicPlayer_lyricsMode'
         ];
-
-        keysToRemove.forEach(key => {
-            Storage.remove(key);
-        });
-
-        setTimeout(() => {
-            this.refreshAllModules();
-        }, 500);
-
+        keysToRemove.forEach(key => Storage.remove(key));
+        setTimeout(() => this.refreshAllModules(), 500);
         this.showToast('应用状态已重置', 'success');
     }
 
@@ -576,7 +544,6 @@ if (!window.Starlink.app) {
 }
 window.app = window.Starlink.app;
 
-// 如果尚未启动，再次尝试
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
         if (window.app && !window.app.isInitialized) {
@@ -584,7 +551,4 @@ if (document.readyState === 'loading') {
         }
     });
 }
-
-window.getApp = function() {
-    return window.app;
-};
+window.getApp = function() { return window.app; };
