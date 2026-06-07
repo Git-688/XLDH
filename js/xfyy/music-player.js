@@ -1,4 +1,4 @@
-// music-player.js - 最终版（进度条可见性修复）
+// music-player.js - 最终版（修复拖拽/点击跳转、进度条过渡优化）
 // ==================== 自定义下拉选择器组件 ====================
 let currentOpenCustomSelect = null;
 let customSelectInstances = new Map();
@@ -787,7 +787,10 @@ class MusicPlayer {
     }
 
     async searchApi(apiId) {
-        if (apiId === 'local' || apiId === 'qq') return;
+        if (apiId === 'local') {
+            window.toast?.show('本地音乐不支持搜索', 'info');
+            return;
+        }
         const el = this.apiElements[apiId];
         if (!el || !el.searchInput) return;
         const keyword = el.searchInput.value.trim();
@@ -798,8 +801,19 @@ class MusicPlayer {
         if (el.searchResults) el.searchResults.innerHTML = '<div class="loading">搜索中...</div>';
         try {
             const results = await this.pluginManager.search(apiId, keyword);
-            this.renderSearchResults(apiId, results);
-            if (!results.length) window.toast?.show(`未找到与"${Utils.escapeHtml(keyword)}"相关的歌曲`, 'info');
+            // 确保每个搜索结果都有可播放的 src
+            const processedResults = results.map(song => {
+                if (!song.src && song.id) {
+                    if (apiId === 'netease') {
+                        song.src = `https://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
+                    } else if (apiId === 'qq') {
+                        song.src = `https://dl.stream.qqmusic.qq.com/${song.id}.mp3`;
+                    }
+                }
+                return song;
+            });
+            this.renderSearchResults(apiId, processedResults);
+            if (!processedResults.length) window.toast?.show(`未找到与"${Utils.escapeHtml(keyword)}"相关的歌曲`, 'info');
         } catch (error) {
             Utils.handleApiError(error, '搜索失败', true);
             if (el.searchResults) el.searchResults.innerHTML = `<div class="error-message"><p>搜索失败: ${Utils.escapeHtml(error.message)}</p></div>`;
@@ -836,7 +850,10 @@ class MusicPlayer {
         if (!el || !el.searchResults) return;
         const container = el.searchResults;
         container.innerHTML = '';
-        if (!results.length) { container.innerHTML = '<div class="loading">未找到相关结果</div>'; return; }
+        if (!results.length) {
+            container.innerHTML = '<div class="loading">未找到相关结果</div>';
+            return;
+        }
         const fragment = document.createDocumentFragment();
         results.forEach((song, idx) => fragment.appendChild(this.createSearchSongItem(song, idx, results)));
         container.appendChild(fragment);
@@ -846,9 +863,34 @@ class MusicPlayer {
     createSearchSongItem(song, index, results) {
         const div = document.createElement('div');
         div.className = 'song-item';
-        div.innerHTML = `<div class="song-item-info"><div class="song-item-title">${Utils.escapeHtml(song.title)}</div><div class="song-item-artist">${Utils.escapeHtml(song.artist)}</div></div><button class="search-download-btn" title="下载"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button>`;
-        div.querySelector('.song-item-info').addEventListener('click', () => { this.loadSong(index, results); this.play(); });
-        div.querySelector('.search-download-btn').addEventListener('click', async (e) => { e.stopPropagation(); await this.downloadSong(song); });
+        div.innerHTML = `
+            <div class="song-item-info">
+                <div class="song-item-title">${Utils.escapeHtml(song.title)}</div>
+                <div class="song-item-artist">${Utils.escapeHtml(song.artist)}</div>
+            </div>
+            <button class="search-download-btn" title="下载"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button>
+        `;
+        const infoDiv = div.querySelector('.song-item-info');
+        infoDiv.addEventListener('click', () => {
+            // 确保歌曲有 src
+            let playSong = { ...song };
+            if (!playSong.src && playSong.id) {
+                if (this.currentApi === 'netease') {
+                    playSong.src = `https://music.163.com/song/media/outer/url?id=${playSong.id}.mp3`;
+                } else if (this.currentApi === 'qq') {
+                    playSong.src = `https://dl.stream.qqmusic.qq.com/${playSong.id}.mp3`;
+                }
+            }
+            this.currentPlaylist = results;
+            this.currentIndex = index;
+            this.loadSong(index, results);
+            this.play();
+        });
+        const downloadBtn = div.querySelector('.search-download-btn');
+        downloadBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await this.downloadSong(song);
+        });
         return div;
     }
 
@@ -876,8 +918,8 @@ class MusicPlayer {
                 const item = items[i];
                 const titleEl = item.querySelector('.song-item-title');
                 const artistEl = item.querySelector('.song-item-artist');
-                if (titleEl && artistEl && 
-                    titleEl.textContent === currentSong.title && 
+                if (titleEl && artistEl &&
+                    titleEl.textContent === currentSong.title &&
                     artistEl.textContent === currentSong.artist) {
                     item.classList.add('active');
                     break;
@@ -923,7 +965,7 @@ class MusicPlayer {
         try {
             this.audio.src = song.src;
             this.audio.load();
-            // 重置进度条（宽高双重置）
+            // 重置进度条
             this.elements.progress.style.width = '0%';
             this.elements.progress.style.transform = 'scaleX(0)';
             this.elements.progressHandle.style.left = '0%';
@@ -1071,7 +1113,6 @@ class MusicPlayer {
         }
     }
 
-    // 修复：同时更新 width 和 transform，确保进度条始终可见
     updateProgress() {
         if (this.isDraggingProgress || this.updateAnimationFrame) return;
         this.updateAnimationFrame = requestAnimationFrame(() => {
@@ -1079,7 +1120,6 @@ class MusicPlayer {
             const duration = this.audio.duration;
             if (duration && !isNaN(duration) && duration > 0) {
                 const percent = (currentTime / duration) * 100;
-                // 双保险：使用 width 和 transform
                 this.elements.progress.style.width = `${percent}%`;
                 this.elements.progress.style.transform = `scaleX(${percent / 100})`;
                 this.elements.progressHandle.style.left = `${percent}%`;
@@ -1128,6 +1168,7 @@ class MusicPlayer {
         document.addEventListener('touchmove', (e) => this.dragSeek(e), { passive: false });
         document.addEventListener('touchend', () => this.endSeek());
         
+        // 点击事件（带防冲突标记）
         this.elements.progressBar.addEventListener('click', (e) => {
             if (this.clickPending) {
                 this.clickPending = false;
@@ -1135,6 +1176,13 @@ class MusicPlayer {
             }
             if (!this.isDraggingProgress && this.audio.duration && !isNaN(this.audio.duration) && this.audio.duration > 0) {
                 this.audio.currentTime = this.getSeekTime(e);
+                // 强制刷新进度条显示（因为设置 currentTime 后可能不会立即触发 timeupdate）
+                const seekTime = this.getSeekTime(e);
+                const percent = (seekTime / this.audio.duration) * 100;
+                this.elements.progress.style.width = `${percent}%`;
+                this.elements.progress.style.transform = `scaleX(${percent / 100})`;
+                this.elements.progressHandle.style.left = `${percent}%`;
+                this.elements.currentTime.textContent = Utils.formatTime(seekTime);
             }
         });
     }
@@ -1142,6 +1190,8 @@ class MusicPlayer {
     startSeek(e) {
         e.preventDefault();
         this.isDraggingProgress = true;
+        // 拖拽时禁用过渡，提高实时性
+        this.elements.progress.classList.add('no-transition');
         this.updateSeek(e);
         if (e.type === 'touchstart') document.body.style.overflow = 'hidden';
     }
@@ -1159,13 +1209,22 @@ class MusicPlayer {
     endSeek() {
         if (!this.isDraggingProgress) return;
         this.isDraggingProgress = false;
+        // 恢复过渡
+        this.elements.progress.classList.remove('no-transition');
         const duration = this.audio.duration;
         if (duration && !isNaN(duration) && duration > 0) {
-            this.audio.currentTime = (this.dragPercent / 100) * duration;
+            const seekTime = (this.dragPercent / 100) * duration;
+            this.audio.currentTime = seekTime;
+            // 强制更新一次进度条显示，避免因 timeupdate 延迟导致闪烁
+            this.elements.progress.style.width = `${this.dragPercent}%`;
+            this.elements.progress.style.transform = `scaleX(${this.dragPercent / 100})`;
+            this.elements.progressHandle.style.left = `${this.dragPercent}%`;
+            this.elements.currentTime.textContent = Utils.formatTime(seekTime);
         }
         document.body.style.overflow = '';
         if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
         this.dragRAF = null;
+        // 防止 click 重复 seek
         this.clickPending = true;
         setTimeout(() => { this.clickPending = false; }, 100);
     }
