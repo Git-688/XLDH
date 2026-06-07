@@ -1,4 +1,4 @@
-// music-player.js - 最终版（修复进度条拖拽、点击重复、未就绪行为等问题）
+// music-player.js - 最终版（进度条可见性修复）
 // ==================== 自定义下拉选择器组件 ====================
 let currentOpenCustomSelect = null;
 let customSelectInstances = new Map();
@@ -268,8 +268,8 @@ class MusicPlayer {
         this.updateAnimationFrame = null;
         this.lastTimeUpdate = 0;
         this.dragRAF = null;
-        this.dragPercent = 0;          // 存储拖拽时的百分比（0-100）
-        this.clickPending = false;      // 防止点击与拖拽重复 seek
+        this.dragPercent = 0;
+        this.clickPending = false;
 
         this.coverObserver = null;
         this.initCoverObserver();
@@ -916,7 +916,6 @@ class MusicPlayer {
         }
         this.isLoading = true;
         this.elements.playBtn.disabled = true;
-        // 取消可能正在运行的动画帧
         if (this.updateAnimationFrame) {
             cancelAnimationFrame(this.updateAnimationFrame);
             this.updateAnimationFrame = null;
@@ -924,6 +923,8 @@ class MusicPlayer {
         try {
             this.audio.src = song.src;
             this.audio.load();
+            // 重置进度条（宽高双重置）
+            this.elements.progress.style.width = '0%';
             this.elements.progress.style.transform = 'scaleX(0)';
             this.elements.progressHandle.style.left = '0%';
             this.elements.currentTime.textContent = '00:00';
@@ -1070,6 +1071,7 @@ class MusicPlayer {
         }
     }
 
+    // 修复：同时更新 width 和 transform，确保进度条始终可见
     updateProgress() {
         if (this.isDraggingProgress || this.updateAnimationFrame) return;
         this.updateAnimationFrame = requestAnimationFrame(() => {
@@ -1077,6 +1079,8 @@ class MusicPlayer {
             const duration = this.audio.duration;
             if (duration && !isNaN(duration) && duration > 0) {
                 const percent = (currentTime / duration) * 100;
+                // 双保险：使用 width 和 transform
+                this.elements.progress.style.width = `${percent}%`;
                 this.elements.progress.style.transform = `scaleX(${percent / 100})`;
                 this.elements.progressHandle.style.left = `${percent}%`;
                 const now = Date.now();
@@ -1114,7 +1118,6 @@ class MusicPlayer {
     toggleVolumeSlider() { this.isVolumeSliderVisible ? this.hideVolumeSlider() : this.showVolumeSlider(); }
 
     bindProgressEvents() {
-        // 阻止触摸时页面滚动（移动端）
         this.elements.progressBar.style.touchAction = 'none';
         
         this.elements.progressBar.addEventListener('mousedown', (e) => this.startSeek(e));
@@ -1125,7 +1128,6 @@ class MusicPlayer {
         document.addEventListener('touchmove', (e) => this.dragSeek(e), { passive: false });
         document.addEventListener('touchend', () => this.endSeek());
         
-        // 点击事件（带防冲突标记）
         this.elements.progressBar.addEventListener('click', (e) => {
             if (this.clickPending) {
                 this.clickPending = false;
@@ -1164,7 +1166,6 @@ class MusicPlayer {
         document.body.style.overflow = '';
         if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
         this.dragRAF = null;
-        // 标记防止 click 重复 seek
         this.clickPending = true;
         setTimeout(() => { this.clickPending = false; }, 100);
     }
@@ -1185,6 +1186,7 @@ class MusicPlayer {
         const seekTime = this.getSeekTime(e);
         if (!isNaN(seekTime) && seekTime >= 0 && seekTime <= duration) {
             this.dragPercent = (seekTime / duration) * 100;
+            this.elements.progress.style.width = `${this.dragPercent}%`;
             this.elements.progress.style.transform = `scaleX(${this.dragPercent / 100})`;
             this.elements.progressHandle.style.left = `${this.dragPercent}%`;
             this.elements.currentTime.textContent = Utils.formatTime(seekTime);
