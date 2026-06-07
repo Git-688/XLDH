@@ -1,5 +1,5 @@
-// music-player.js - 最终版（进度条样式修复 + 内存泄漏修复 + 自定义选择器）
-// ==================== 自定义下拉选择器组件（支持实例管理，避免内存泄漏） ====================
+// music-player.js - 最终版（修复进度条拖拽、点击重复、未就绪行为等问题）
+// ==================== 自定义下拉选择器组件 ====================
 let currentOpenCustomSelect = null;
 let customSelectInstances = new Map();
 
@@ -62,19 +62,24 @@ class CustomSelect {
     populateOptions() {
         this.dropdown.innerHTML = '';
         this.options = [];
+
         for (let i = 0; i < this.selectElement.options.length; i++) {
             const option = this.selectElement.options[i];
             const optionDiv = document.createElement('div');
             optionDiv.className = 'custom-select-option';
-            if (i === this.selectElement.selectedIndex) optionDiv.classList.add('selected');
+            if (i === this.selectElement.selectedIndex) {
+                optionDiv.classList.add('selected');
+            }
             optionDiv.textContent = option.textContent;
             optionDiv.setAttribute('data-value', option.value);
             optionDiv.setAttribute('data-index', i);
+
             optionDiv.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.selectOption(i);
                 this.closeDropdown();
             });
+
             this.dropdown.appendChild(optionDiv);
             this.options.push(optionDiv);
         }
@@ -82,11 +87,19 @@ class CustomSelect {
 
     selectOption(index) {
         if (index === this.selectElement.selectedIndex) return;
+
         this.selectElement.selectedIndex = index;
         this.value = this.selectElement.value;
+
         const valueSpan = this.trigger.querySelector('.custom-select-value');
-        if (valueSpan) valueSpan.textContent = this.selectElement.options[index].textContent;
-        this.options.forEach((opt, i) => opt.classList.toggle('selected', i === index));
+        if (valueSpan) {
+            valueSpan.textContent = this.selectElement.options[index].textContent;
+        }
+
+        this.options.forEach((opt, i) => {
+            opt.classList.toggle('selected', i === index);
+        });
+
         const changeEvent = new Event('change', { bubbles: true });
         this.selectElement.dispatchEvent(changeEvent);
     }
@@ -151,7 +164,9 @@ class CustomSelect {
         if (this.boundScrollListener) window.removeEventListener('scroll', this.boundScrollListener, true);
         if (this.boundResizeListener) window.removeEventListener('resize', this.boundResizeListener);
         if (this.boundHandleOutsideClick) document.removeEventListener('click', this.boundHandleOutsideClick);
-        if (currentOpenCustomSelect === this) currentOpenCustomSelect = null;
+        if (currentOpenCustomSelect === this) {
+            currentOpenCustomSelect = null;
+        }
     }
 
     bindEvents() {
@@ -185,7 +200,8 @@ class CustomSelect {
 function initCustomSelects() {
     const selects = document.querySelectorAll('.playlist-selector select, .speed-selector select');
     selects.forEach(select => {
-        if (!select.parentNode.querySelector('.custom-select')) {
+        const existing = select.parentNode.querySelector('.custom-select');
+        if (!existing) {
             new CustomSelect(select);
         }
     });
@@ -252,6 +268,9 @@ class MusicPlayer {
         this.updateAnimationFrame = null;
         this.lastTimeUpdate = 0;
         this.dragRAF = null;
+        this.dragPercent = 0;          // 存储拖拽时的百分比（0-100）
+        this.clickPending = false;      // 防止点击与拖拽重复 seek
+
         this.coverObserver = null;
         this.initCoverObserver();
 
@@ -416,6 +435,7 @@ class MusicPlayer {
         this.elements.nextBtn.addEventListener('click', () => this.next());
         this.elements.modeBtn.addEventListener('click', () => this.togglePlayMode());
         this.elements.volumeBtn.addEventListener('click', () => this.toggleVolumeSlider());
+        
         this.elements.volumeSlider.addEventListener('input', (e) => {
             this.setVolume(e.target.value / 100);
             this.saveVolume(e.target.value / 100);
@@ -428,6 +448,7 @@ class MusicPlayer {
                 this.saveVolume(value / 100);
             }
         });
+        
         this.elements.speedSelect.addEventListener('change', (e) => {
             this.setPlaybackSpeed(parseFloat(e.target.value));
             this.savePlaybackSpeed(parseFloat(e.target.value));
@@ -895,10 +916,14 @@ class MusicPlayer {
         }
         this.isLoading = true;
         this.elements.playBtn.disabled = true;
+        // 取消可能正在运行的动画帧
+        if (this.updateAnimationFrame) {
+            cancelAnimationFrame(this.updateAnimationFrame);
+            this.updateAnimationFrame = null;
+        }
         try {
             this.audio.src = song.src;
             this.audio.load();
-            // 重置进度条显示
             this.elements.progress.style.transform = 'scaleX(0)';
             this.elements.progressHandle.style.left = '0%';
             this.elements.currentTime.textContent = '00:00';
@@ -1052,7 +1077,6 @@ class MusicPlayer {
             const duration = this.audio.duration;
             if (duration && !isNaN(duration) && duration > 0) {
                 const percent = (currentTime / duration) * 100;
-                // 使用 transform scaleX 更新进度条（必须确保 transform-origin: 0% 50%）
                 this.elements.progress.style.transform = `scaleX(${percent / 100})`;
                 this.elements.progressHandle.style.left = `${percent}%`;
                 const now = Date.now();
@@ -1090,13 +1114,27 @@ class MusicPlayer {
     toggleVolumeSlider() { this.isVolumeSliderVisible ? this.hideVolumeSlider() : this.showVolumeSlider(); }
 
     bindProgressEvents() {
+        // 阻止触摸时页面滚动（移动端）
+        this.elements.progressBar.style.touchAction = 'none';
+        
         this.elements.progressBar.addEventListener('mousedown', (e) => this.startSeek(e));
         document.addEventListener('mousemove', (e) => this.dragSeek(e));
         document.addEventListener('mouseup', () => this.endSeek());
+        
         this.elements.progressBar.addEventListener('touchstart', (e) => this.startSeek(e));
         document.addEventListener('touchmove', (e) => this.dragSeek(e), { passive: false });
         document.addEventListener('touchend', () => this.endSeek());
-        this.elements.progressBar.addEventListener('click', (e) => { if (!this.isDraggingProgress) this.audio.currentTime = this.getSeekTime(e); });
+        
+        // 点击事件（带防冲突标记）
+        this.elements.progressBar.addEventListener('click', (e) => {
+            if (this.clickPending) {
+                this.clickPending = false;
+                return;
+            }
+            if (!this.isDraggingProgress && this.audio.duration && !isNaN(this.audio.duration) && this.audio.duration > 0) {
+                this.audio.currentTime = this.getSeekTime(e);
+            }
+        });
     }
 
     startSeek(e) {
@@ -1119,12 +1157,16 @@ class MusicPlayer {
     endSeek() {
         if (!this.isDraggingProgress) return;
         this.isDraggingProgress = false;
-        if (this.audio.duration) {
-            const percent = parseFloat(this.elements.progress.style.transform.match(/scaleX\(([\d.]+)\)/)?.[1] || '0');
-            this.audio.currentTime = percent * this.audio.duration;
+        const duration = this.audio.duration;
+        if (duration && !isNaN(duration) && duration > 0) {
+            this.audio.currentTime = (this.dragPercent / 100) * duration;
         }
         document.body.style.overflow = '';
         if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
+        this.dragRAF = null;
+        // 标记防止 click 重复 seek
+        this.clickPending = true;
+        setTimeout(() => { this.clickPending = false; }, 100);
     }
 
     getSeekTime(e) {
@@ -1132,16 +1174,19 @@ class MusicPlayer {
         let clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
         let percent = (clientX - rect.left) / rect.width;
         percent = Math.max(0, Math.min(1, percent));
-        return percent * (this.audio.duration || 0);
+        const duration = this.audio.duration;
+        if (!duration || isNaN(duration) || duration <= 0) return 0;
+        return percent * duration;
     }
 
     updateSeek(e) {
-        const seekTime = this.getSeekTime(e);
         const duration = this.audio.duration;
-        if (duration && !isNaN(duration) && duration > 0) {
-            const percent = (seekTime / duration) * 100;
-            this.elements.progress.style.transform = `scaleX(${percent / 100})`;
-            this.elements.progressHandle.style.left = `${percent}%`;
+        if (!duration || isNaN(duration) || duration <= 0) return;
+        const seekTime = this.getSeekTime(e);
+        if (!isNaN(seekTime) && seekTime >= 0 && seekTime <= duration) {
+            this.dragPercent = (seekTime / duration) * 100;
+            this.elements.progress.style.transform = `scaleX(${this.dragPercent / 100})`;
+            this.elements.progressHandle.style.left = `${this.dragPercent}%`;
             this.elements.currentTime.textContent = Utils.formatTime(seekTime);
         }
     }
@@ -1158,8 +1203,9 @@ class MusicPlayer {
             this.isLoading = false;
             if (!this.isHandlingNavigationClick) this.handlePlaybackError(new Error('Audio load error'));
             if (this.updateAnimationFrame) cancelAnimationFrame(this.updateAnimationFrame);
+            this.updateAnimationFrame = null;
         });
-        this.audio.addEventListener('pause', () => { if (this.updateAnimationFrame) cancelAnimationFrame(this.updateAnimationFrame); });
+        this.audio.addEventListener('pause', () => { if (this.updateAnimationFrame) cancelAnimationFrame(this.updateAnimationFrame); this.updateAnimationFrame = null; });
         this.audio.addEventListener('play', () => { if (!this.updateAnimationFrame) this.updateProgress(); });
     }
 
