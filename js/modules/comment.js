@@ -1,6 +1,5 @@
 /**
- * 评论模块 - 完整增强版（表情按钮修正版）
- * 功能：显示全部编辑器按钮、评论成就徽章、草稿自动保存、表情选择
+ * 评论模块 - 完整增强版（修复动画）
  */
 class CommentModule {
   static CONFIG = {
@@ -16,18 +15,8 @@ class CommentModule {
       pageSize: 10,
       login: 'enable',
       editorToolbar: [
-        'bold',      // 加粗
-        'italic',    // 斜体
-        'link',      // 插入链接
-        'image',     // 插入图片
-        'code',      // 插入代码块
-        'blockquote',// 引用
-        'heading',   // 标题
-        'ul',        // 无序列表
-        'ol',        // 有序列表
-        'hr',        // 分割线
-        'strike',    // 删除线
-        'spoiler'    // 剧透（黑幕）
+        'bold', 'italic', 'link', 'image', 'code', 'blockquote',
+        'heading', 'ul', 'ol', 'hr', 'strike', 'spoiler'
       ],
       emoji: [
         'https://fastly.jsdelivr.net/npm/@waline/emojis@1.4.0/qq',
@@ -42,45 +31,29 @@ class CommentModule {
             .then(r => r.json())
             .then(json => {
               if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({
-                  src: item.url,
-                  title: item.id || '',
-                  preview: item.url
-                }));
+                return json.data.map(item => ({ src: item.url, title: item.id || '', preview: item.url }));
               }
               return [];
             })
             .catch(() => []);
         },
         search(word) {
-          return fetch(
-            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`
-          )
+          return fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`)
             .then(r => r.json())
             .then(json => {
               if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({
-                  src: item.url,
-                  title: item.id || word,
-                  preview: item.url
-                }));
+                return json.data.map(item => ({ src: item.url, title: item.id || word, preview: item.url }));
               }
               return [];
             })
             .catch(() => []);
         },
         more(word, pageNumber) {
-          return fetch(
-            `https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`
-          )
+          return fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`)
             .then(r => r.json())
             .then(json => {
               if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({
-                  src: item.url,
-                  title: item.id || word,
-                  preview: item.url
-                }));
+                return json.data.map(item => ({ src: item.url, title: item.id || word, preview: item.url }));
               }
               return [];
             })
@@ -112,7 +85,7 @@ class CommentModule {
     this.searchTimer = null;
     this.searchObserver = null;
     this.draftObserver = null;
-
+    this.isVisible = false;
     this._initDOM();
     this._bindEvents();
     this._initWaline();
@@ -135,8 +108,7 @@ class CommentModule {
       });
     }
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && this.modal?.classList.contains(CommentModule.CONFIG.activeClass))
-        this.close();
+      if (e.key === 'Escape' && this.isVisible) this.close();
     });
   }
 
@@ -166,7 +138,6 @@ class CommentModule {
   _watchSearchPanel() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
-
     this.searchObserver = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
@@ -185,12 +156,10 @@ class CommentModule {
     const btn = panel.querySelector('button');
     if (!input || !btn || input.dataset.auto === 'true') return;
     input.dataset.auto = 'true';
-
     const trigger = () => {
       clearTimeout(this.searchTimer);
       if (input.value.trim()) btn.click();
     };
-
     input.addEventListener('input', () => {
       clearTimeout(this.searchTimer);
       this.searchTimer = setTimeout(trigger, 500);
@@ -203,7 +172,6 @@ class CommentModule {
   _initDraftAutoSave() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
-
     this.draftObserver = new MutationObserver(() => {
       const textarea = container.querySelector('.wl-editor textarea');
       if (textarea && !textarea.dataset.draftBound) {
@@ -231,13 +199,22 @@ class CommentModule {
     if (!this.modal) return;
     if (!this.instance) { this._initWaline(); if (!this.instance) return; }
     this.modal.classList.add(CommentModule.CONFIG.activeClass);
+    this.isVisible = true;
     document.body.style.overflow = 'hidden';
+    if (window.app) window.app.registerModal(this);
   }
 
   close() {
-    if (!this.modal) return;
+    if (!this.modal || !this.isVisible) return;
     this.modal.classList.remove(CommentModule.CONFIG.activeClass);
-    document.body.style.overflow = '';
+    const onTransitionEnd = () => {
+      document.body.style.overflow = '';
+      this.isVisible = false;
+      if (window.app) window.app.unregisterModal(this);
+      this.modal.removeEventListener('transitionend', onTransitionEnd);
+    };
+    this.modal.addEventListener('transitionend', onTransitionEnd, { once: true });
+    setTimeout(onTransitionEnd, 400);
   }
 
   destroy() {
