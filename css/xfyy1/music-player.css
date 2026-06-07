@@ -146,17 +146,19 @@
 .time-text { background: rgba(67,97,238,0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
 .progress-bar { position: relative; height: 6px; background: var(--border-color, #e9ecef); border-radius: 3px; cursor: pointer; width: 100%; overflow: hidden; touch-action: none; }
 
-/* 进度条 - 单一颜色（主题色） */
+/* 进度条 - 单一主题色 + 双保险更新 */
 .progress {
     position: absolute;
     height: 100%;
     background: var(--primary-color, #4361ee);
     border-radius: 3px;
+    width: 0%;
     transform-origin: 0 50%;
     transform: scaleX(0);
-    transition: transform 0.1s ease;
-    will-change: transform;
+    transition: width 0.1s ease, transform 0.1s ease;
+    will-change: width, transform;
     z-index: 2;
+    box-shadow: 0 0 4px rgba(67, 97, 238, 0.5);
 }
 .progress-handle {
     position: absolute;
