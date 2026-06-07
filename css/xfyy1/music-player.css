@@ -3,14 +3,11 @@
     position: fixed;
     bottom: 20px;
     right: 20px;
-
     background: var(--acrylic-bg, rgba(255,255,255,0.65));
     backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
     -webkit-backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
-
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
     background-repeat: repeat;
-
     border-radius: 8px;
     box-shadow: var(--acrylic-shadow, 0 8px 32px rgba(0,0,0,0.08)), 0 0 0 1px rgba(255, 255, 255, 0.5);
     width: 420px;
@@ -140,19 +137,20 @@
 .volume-slider input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--primary-color, #4361ee); border-radius: 50%; cursor: pointer; transition: all 0.2s ease; }
 .volume-slider input[type="range"]::-webkit-slider-thumb:hover { background: var(--secondary-color, #3a0ca3); transform: scale(1.2); }
 
+/* ========== 进度条区域（修复样式） ========== */
 .progress-section { padding: 8px 15px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px; min-height: 35px; }
 .progress-container { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
 .time-display { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary, #6c757d); font-weight: 500; }
 .time-text { background: rgba(67,97,238,0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
 .progress-bar { position: relative; height: 6px; background: var(--border-color, #e9ecef); border-radius: 3px; cursor: pointer; width: 100%; overflow: hidden; }
 
-/* 进度条 - 使用 transform scaleX 代替 width（性能优化） */
+/* 进度填充 - 必须设置 transform-origin: 0% 50% */
 .progress {
     position: absolute;
     height: 100%;
     background: linear-gradient(90deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080);
     border-radius: 3px;
-    transform-origin: 0 50%;
+    transform-origin: 0% 50%;
     transform: scaleX(0);
     transition: transform 0.1s ease;
     will-change: transform;
@@ -171,13 +169,26 @@
     transition: all 0.2s ease;
     z-index: 3;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    pointer-events: none; /* 避免干扰拖动 */
 }
 .progress-bar:hover .progress-handle { opacity: 1; }
+
 .progress-actions { display: flex; align-items: center; gap: 8px; }
 .speed-control { display: flex; align-items: center; position: relative; }
 .speed-selector { width: 65px; }
 .music-player select { display: none !important; }
 
+/* 深色模式进度条背景 */
+@media (prefers-color-scheme: dark) {
+    .progress-bar {
+        background: #404040;
+    }
+    .progress {
+        background: linear-gradient(90deg, #ff6b6b, #ffa94d, #ffd43b, #69db7e, #3bc9db, #74c0fc, #b197fc);
+    }
+}
+
+/* 自定义下拉选择器样式 */
 .custom-select { position: relative; width: 100%; user-select: none; }
 .custom-select-trigger {
     display: flex; align-items: center; justify-content: space-between; padding: 6px 10px;
