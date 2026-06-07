@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 分页加载版（修复点击计数，支持乐观更新与失败回滚）
+ * 优化分类导航系统 - 分页加载版（支持 WebP 图标、高清懒加载、智能预加载、点击计数优化）
  */
 class OptimizedNavigation {
     constructor() {
@@ -26,6 +26,7 @@ class OptimizedNavigation {
         this.hasMore = true;
         this.currentSites = [];
         this.scrollListener = null;
+        this.scrollStopTimer = null;
 
         this.autoRefreshTimer = null;
         this.autoRefreshInterval = 30000;
@@ -34,14 +35,17 @@ class OptimizedNavigation {
         this.iconCache = new Map();
         this.iconLoadingSet = new Set();
         this.iconFailedSet = new Set();
+
+        // 预加载队列
+        this.preloadQueue = [];
+        this.isPreloading = false;
     }
 
     _escapeHtml(str) { return Utils.escapeHtml(str); }
     _formatViews(views) {
-        let num = typeof views === 'number' && !isNaN(views) ? views : 0;
-        if (num >= 1000000) return `${(num/1000000).toFixed(1).replace('.0','')}M`;
-        if (num >= 1000) return `${(num/1000).toFixed(1).replace('.0','')}K`;
-        return String(num);
+        if (views >= 1000000) return `${(views/1000000).toFixed(1).replace('.0','')}M`;
+        if (views >= 1000) return `${(views/1000).toFixed(1).replace('.0','')}K`;
+        return String(views);
     }
 
     _getIconCandidates(url) {
@@ -147,11 +151,17 @@ class OptimizedNavigation {
                     if (entry.isIntersecting) {
                         const img = entry.target;
                         const src = img.dataset.src;
-                        if (src) { img.src = src; img.removeAttribute('data-src'); }
+                        if (src) {
+                            img.src = src;
+                            img.removeAttribute('data-src');
+                        }
                         this.imgObserver.unobserve(img);
                     }
                 });
-            }, { rootMargin: '300px 0px 300px 0px', threshold: 0.01 });
+            }, {
+                rootMargin: '300px 0px 300px 0px',
+                threshold: 0.01
+            });
         }
     }
 
@@ -159,10 +169,12 @@ class OptimizedNavigation {
         if (!container || !this.imgObserver) return;
         const images = container.querySelectorAll('img[data-src]');
         if (images.length === 0) return;
+        
         const preloadTask = () => {
             const viewportHeight = window.innerHeight;
             const scrollTop = window.scrollY || document.documentElement.scrollTop;
             const buffer = 500;
+            
             images.forEach(img => {
                 const rect = img.getBoundingClientRect();
                 const imgTop = rect.top + scrollTop;
@@ -177,6 +189,7 @@ class OptimizedNavigation {
                 }
             });
         };
+        
         if (window.requestIdleCallback) {
             requestIdleCallback(preloadTask, { timeout: 2000 });
         } else {
@@ -476,8 +489,7 @@ class OptimizedNavigation {
         card.title = `${site.title}\n${site.description || ''}`;
 
         const iconHtml = this._createIconElement(site.url, site.icon);
-        // 确保 views 是数字
-        const views = (typeof site.views === 'number' && !isNaN(site.views)) ? site.views : 0;
+        const views = site.views || 0;
         const formattedViews = this._formatViews(views);
 
         let titleHtml = this._escapeHtml(site.title);
@@ -507,41 +519,42 @@ class OptimizedNavigation {
             </div>
         `;
 
-        // 点击卡片（非死链按钮）处理计数
-        card.addEventListener('click', (e) => {
+        // 点击卡片：上报点击计数
+        card.addEventListener('click', async (e) => {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
             if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
 
+            // 乐观更新前端显示
             const viewEl = card.querySelector('.view-count');
-            // 乐观更新：立即增加1
-            let curViews = parseInt(viewEl.dataset.views) || 0;
-            const newViews = curViews + 1;
+            let oldViews = parseInt(viewEl.dataset.views) || 0;
+            let newViews = oldViews + 1;
             viewEl.dataset.views = newViews;
             viewEl.textContent = this._formatViews(newViews);
             viewEl.classList.add('increasing');
             setTimeout(() => viewEl.classList.remove('increasing'), 300);
 
-            // 发送请求到后端
-            Utils.safeFetch(`${this.apiBase}/click`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: site.id, url: site.url })
-            }).catch((err) => {
-                console.error('点击计数上报失败:', err);
-                // 回滚到原值
-                viewEl.dataset.views = curViews;
-                viewEl.textContent = this._formatViews(curViews);
+            // 发送计数请求（不等待结果，静默失败）
+            try {
+                await Utils.safeFetch(`${this.apiBase}/click`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: site.id, url: site.url })
+                });
+            } catch (err) {
+                console.warn('点击计数上报失败:', err);
+                // 回滚前端显示
+                viewEl.dataset.views = oldViews;
+                viewEl.textContent = this._formatViews(oldViews);
                 if (window.toast) window.toast.show('计数上报失败，请检查网络', 'warning');
-            }).finally(() => {
-                setTimeout(() => {
-                    this.isNavigationClick = false;
-                    if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
-                }, 100);
-            });
+            }
+
+            setTimeout(() => {
+                this.isNavigationClick = false;
+                if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
+            }, 100);
         });
 
-        // 死链报告按钮事件
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
