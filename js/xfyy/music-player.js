@@ -1,4 +1,4 @@
-// music-player.js - 最终版（修复拖拽/点击跳转、进度条过渡优化）
+// music-player.js - 最终版（修复点击位置精确度，拖拽/点击跳转准确）
 // ==================== 自定义下拉选择器组件 ====================
 let currentOpenCustomSelect = null;
 let customSelectInstances = new Map();
@@ -801,7 +801,6 @@ class MusicPlayer {
         if (el.searchResults) el.searchResults.innerHTML = '<div class="loading">搜索中...</div>';
         try {
             const results = await this.pluginManager.search(apiId, keyword);
-            // 确保每个搜索结果都有可播放的 src
             const processedResults = results.map(song => {
                 if (!song.src && song.id) {
                     if (apiId === 'netease') {
@@ -872,7 +871,6 @@ class MusicPlayer {
         `;
         const infoDiv = div.querySelector('.song-item-info');
         infoDiv.addEventListener('click', () => {
-            // 确保歌曲有 src
             let playSong = { ...song };
             if (!playSong.src && playSong.id) {
                 if (this.currentApi === 'netease') {
@@ -1168,16 +1166,15 @@ class MusicPlayer {
         document.addEventListener('touchmove', (e) => this.dragSeek(e), { passive: false });
         document.addEventListener('touchend', () => this.endSeek());
         
-        // 点击事件（带防冲突标记）
         this.elements.progressBar.addEventListener('click', (e) => {
             if (this.clickPending) {
                 this.clickPending = false;
                 return;
             }
             if (!this.isDraggingProgress && this.audio.duration && !isNaN(this.audio.duration) && this.audio.duration > 0) {
-                this.audio.currentTime = this.getSeekTime(e);
-                // 强制刷新进度条显示（因为设置 currentTime 后可能不会立即触发 timeupdate）
                 const seekTime = this.getSeekTime(e);
+                this.audio.currentTime = seekTime;
+                // 立即更新进度条显示
                 const percent = (seekTime / this.audio.duration) * 100;
                 this.elements.progress.style.width = `${percent}%`;
                 this.elements.progress.style.transform = `scaleX(${percent / 100})`;
@@ -1190,7 +1187,6 @@ class MusicPlayer {
     startSeek(e) {
         e.preventDefault();
         this.isDraggingProgress = true;
-        // 拖拽时禁用过渡，提高实时性
         this.elements.progress.classList.add('no-transition');
         this.updateSeek(e);
         if (e.type === 'touchstart') document.body.style.overflow = 'hidden';
@@ -1209,13 +1205,11 @@ class MusicPlayer {
     endSeek() {
         if (!this.isDraggingProgress) return;
         this.isDraggingProgress = false;
-        // 恢复过渡
         this.elements.progress.classList.remove('no-transition');
         const duration = this.audio.duration;
         if (duration && !isNaN(duration) && duration > 0) {
             const seekTime = (this.dragPercent / 100) * duration;
             this.audio.currentTime = seekTime;
-            // 强制更新一次进度条显示，避免因 timeupdate 延迟导致闪烁
             this.elements.progress.style.width = `${this.dragPercent}%`;
             this.elements.progress.style.transform = `scaleX(${this.dragPercent / 100})`;
             this.elements.progressHandle.style.left = `${this.dragPercent}%`;
@@ -1224,14 +1218,21 @@ class MusicPlayer {
         document.body.style.overflow = '';
         if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
         this.dragRAF = null;
-        // 防止 click 重复 seek
         this.clickPending = true;
         setTimeout(() => { this.clickPending = false; }, 100);
     }
 
     getSeekTime(e) {
         const rect = this.elements.progressBar.getBoundingClientRect();
-        let clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+        let clientX = 0;
+        if (e.type === 'mousedown' || e.type === 'mousemove' || e.type === 'click') {
+            clientX = e.clientX;
+        } else if (e.type === 'touchstart' || e.type === 'touchmove') {
+            clientX = e.touches[0].clientX;
+        } else {
+            clientX = e.clientX;
+        }
+        // 限制边界
         let percent = (clientX - rect.left) / rect.width;
         percent = Math.max(0, Math.min(1, percent));
         const duration = this.audio.duration;
