@@ -120,21 +120,21 @@
     text-overflow: ellipsis;
 }
 
-/* 每日一言卡片 - 白色背景，无内边距，无边框 */
+/* 每日一言卡片 - 白色背景，无内边距，无阴影（已移除阴影） */
 .daily-quote-card {
     margin: 12px 16px;
     padding: 0;
     background: #ffffff;
     border-radius: 8px;
     border: none;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: none; /* 移除阴影 */
 }
 .daily-quote-card p {
     font-size: 12px;
     line-height: 1.4;
     color: var(--text-primary, #1e293b);
     margin: 0;
-    padding: 10px 12px;
+    padding: 0; /* 移除内边距，让文字紧贴边框 */
     text-align: center;
     font-style: italic;
 }
@@ -153,13 +153,13 @@
     height: 0;
 }
 
-/* 分类分组 - 白色背景，添加阴影 */
+/* 分类分组 - 白色背景，添加边框，保留阴影 */
 .category-group {
     margin-bottom: 12px;
     background: #ffffff;
     border-radius: 8px;
-    border: none;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid #e0e0e0; /* 添加边框 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* 保留阴影 */
     overflow: hidden;
     transition: all 0.2s ease;
 }
@@ -257,10 +257,10 @@
     color: currentColor;
 }
 
-/* 底部按钮栏 - 白色背景，按钮白色背景并添加阴影 */
+/* 底部按钮栏 - 白色背景，添加分割线 */
 .sidebar-footer {
     padding: 12px 16px;
-    border-top: none;
+    border-top: 1px solid #e0e0e0; /* 添加分割线 */
     display: flex;
     justify-content: space-around;
     gap: 12px;
@@ -275,7 +275,7 @@
     justify-content: center;
     padding: 8px 0;
     background: #ffffff;
-    border: none;
+    border: 1px solid #e0e0e0; /* 添加边框 */
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -382,7 +382,7 @@
     }
     .daily-quote-card p {
         font-size: 11px;
-        padding: 8px 10px;
+        padding: 0; /* 保持紧贴边框 */
     }
     .sidebar-wallpaper-nickname {
         font-size: 14px;
@@ -416,13 +416,16 @@
     }
     .category-group {
         background: #2d2d2d;
+        border: 1px solid #404040; /* 深色模式边框颜色 */
         box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     .sidebar-footer {
         background: #2d2d2d;
+        border-top-color: #404040; /* 分割线颜色 */
     }
     .footer-btn {
         background: #2d2d2d;
+        border: 1px solid #404040;
         box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     .footer-btn:hover {
