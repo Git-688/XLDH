@@ -1,6 +1,6 @@
 /**
  * 音乐播放器 - 星聚导航专用（完整版）
- * 包含：精确进度条、下载进度、搜索、播放列表、用户手势处理
+ * 包含：精确进度条、下载进度（通过 Worker 代理）、搜索、播放列表、用户手势处理
  */
 class MusicPlayer {
     constructor() {
@@ -488,12 +488,13 @@ class MusicPlayer {
         try {
             const results = await this.pluginManager.search(apiId, keyword);
             const processedResults = results.map(song => {
-                if (!song.src && song.id) {
-                    if (apiId === 'netease') {
-                        song.src = `https://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
-                    } else if (apiId === 'qq') {
-                        song.src = `https://dl.stream.qqmusic.qq.com/${song.id}.mp3`;
-                    }
+                // 确保保留 id 字段（用于下载）
+                if (!song.id && song.url) {
+                    const idMatch = song.url.match(/id=(\d+)/);
+                    if (idMatch) song.id = idMatch[1];
+                }
+                if (!song.src && song.id && apiId === 'netease') {
+                    song.src = `https://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
                 }
                 return song;
             });
@@ -668,39 +669,73 @@ class MusicPlayer {
     }
 
     async downloadCurrentSong() {
-        if (!this.currentPlaylist[this.currentIndex]) { window.toast?.show('没有可下载的歌曲', 'warning'); return; }
+        if (!this.currentPlaylist[this.currentIndex]) {
+            window.toast?.show('没有可下载的歌曲', 'warning');
+            return;
+        }
         await this.downloadSong(this.currentPlaylist[this.currentIndex]);
     }
 
     async downloadSong(song) {
         let progress = null;
         try {
+            window.toast?.show(`正在获取下载地址: ${song.title}`, 'info');
+            
+            let downloadUrl = null;
+            // 方法1：如果有 song.id 且来源是网易云，使用官方外链
+            if (song.id && (song.source === 'netease' || this.currentApi === 'netease')) {
+                downloadUrl = `https://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
+            }
+            // 方法2：如果 song.src 存在，尝试直接使用
+            else if (song.src && song.src.startsWith('http')) {
+                downloadUrl = song.src;
+            }
+            
+            if (!downloadUrl || !downloadUrl.startsWith('http')) {
+                throw new Error('无法获取有效的下载地址');
+            }
+            
             window.toast?.show(`开始下载: ${song.title}`, 'info');
             progress = this.createDownloadProgress();
-            const response = await fetch(song.src);
-            if (!response.ok) throw new Error();
+            
+            // 通过 Worker 代理下载文件（解决跨域）
+            const apiBase = Utils.getApiBase();
+            const proxyDownloadUrl = `${apiBase}/music-proxy?url=${encodeURIComponent(downloadUrl)}`;
+            
+            const response = await fetch(proxyDownloadUrl);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
             const reader = response.body.getReader();
             const chunks = [];
             let loaded = 0;
             const total = parseInt(response.headers.get('content-length') || '0');
+            
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
                 chunks.push(value);
                 loaded += value.length;
-                if (total) this.updateDownloadProgress(progress, (loaded / total) * 100);
+                if (total) {
+                    const percent = (loaded / total) * 100;
+                    this.updateDownloadProgress(progress, percent);
+                }
             }
+            
             const blob = new Blob(chunks);
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `${song.title}.mp3`;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
             progress.remove();
-            window.toast?.show(`下载完成: ${song.title}`, 'info');
+            window.toast?.show(`下载完成: ${song.title}`, 'success');
+            
         } catch (err) {
-            Utils.handleApiError(err, `下载失败: ${song.title}`, true);
+            console.error('下载失败:', err);
+            window.toast?.show(`下载失败: ${song.title}，请稍后重试`, 'error');
             if (progress) progress.remove();
         }
     }
