@@ -1,6 +1,6 @@
 /**
  * 音乐播放器 - 星聚导航专用（完整版）
- * 包含：精确进度条、下载进度（通过 Worker 代理）、搜索、播放列表、用户手势处理
+ * 包含：精确进度条、下载进度（通过 Worker 代理）、搜索、播放列表、用户手势处理、歌词代理
  */
 class MusicPlayer {
     constructor() {
@@ -198,9 +198,11 @@ class MusicPlayer {
             return;
         }
         try {
-            const response = await Utils.safeFetch(song.lrc, { timeout: 5000 });
-            const text = await response.text();
-            this.lyricParser.parseLrc(text);
+            const apiBase = Utils.getApiBase();
+            const proxyUrl = `${apiBase}/music-proxy?url=${encodeURIComponent(song.lrc)}`;
+            const response = await fetch(proxyUrl);
+            const lyricsText = await response.text();
+            this.lyricParser.parseLrc(lyricsText);
             this.lyricsData = this.lyricParser.lyrics;
             if (this.lyricsData.length === 0) {
                 if (this.lyricsLineEl) this.lyricsLineEl.textContent = '暂无歌词';
@@ -210,7 +212,7 @@ class MusicPlayer {
                 }
             }
         } catch (error) {
-            Utils.handleApiError(error, '加载歌词失败', false);
+            console.error('加载歌词失败:', error);
             if (this.lyricsLineEl) this.lyricsLineEl.textContent = '歌词加载失败';
         }
     }
