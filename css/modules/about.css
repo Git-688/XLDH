@@ -25,7 +25,6 @@
     flex-direction: column;
     background: var(--acrylic-bg, rgba(255,255,255,0.65));
     backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
-    -webkit-backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
     border: var(--acrylic-border, 1px solid rgba(255,255,255,0.4));
     border-radius: 8px;
     overflow: hidden;
@@ -38,7 +37,7 @@
 .about-modal.active .about-modal-content {
     transform: scale(1);
 }
-/* 移动端保持相同动画 */
+/* 移动端保持缩放淡入，位置不变 */
 @media (max-width: 768px) {
     .about-modal {
         align-items: center;
@@ -47,13 +46,13 @@
     .about-modal-content {
         transform: scale(0.95);
         border-radius: 8px;
-        transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
     }
     .about-modal.active .about-modal-content {
         transform: scale(1);
     }
 }
-/* 其余样式保持不变 */
+
+/* 顶部区域 */
 .about-header {
     position: relative;
     padding: 14px;
@@ -182,6 +181,8 @@
     font-weight: 500;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
+
+/* 中部内容区域 */
 .about-main-content {
     flex: 1;
     padding: 14px;
@@ -235,6 +236,8 @@
     color: var(--text-secondary, #6c757d);
     margin: 0;
 }
+
+/* 底部按钮区域 */
 .about-footer {
     padding: 12px 14px 14px;
     border-top: 1px solid rgba(255, 255, 255, 0.3);
@@ -325,6 +328,8 @@
     transform: translateY(-1px);
     box-shadow: var(--shadow-lg, 0 4px 6px rgba(0,0,0,0.07));
 }
+
+/* 桌面端适配 */
 @media (min-width: 768px) {
     .about-modal { padding: 0 24px; }
     .about-header { padding: 12px; min-height: 90px; }
@@ -340,6 +345,8 @@
     .about-social-btn { width: 36px; height: 36px; font-size: 14px; }
     .about-close-btn { padding: 7px 12px; font-size: 11px; min-width: 65px; }
 }
+
+/* 深色模式 */
 @media (prefers-color-scheme: dark) {
     .about-modal-content {
         background: var(--acrylic-bg, rgba(30,30,30,0.7));
@@ -356,6 +363,7 @@
     .about-logo { background-color: var(--bg-card, #2d2d2d); }
     .about-close-btn { background: var(--success-color, #10b981); }
 }
+
 @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.1); }
