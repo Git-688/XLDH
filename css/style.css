@@ -454,6 +454,40 @@ p {
 }
 .feedback-modal-body::-webkit-scrollbar { display: none; }
 
+/* ========== 星聚笔记模态框专用样式（移动端边距与主页一致，高度自适应） ========== */
+#notebookModal.feedback-modal {
+    padding: 0; /* 外层不设内边距，让内容自己控制 */
+}
+#notebookModal .feedback-modal-content {
+    max-width: 600px;
+    width: calc(100% - 2 * var(--container-padding-xs, 16px));
+    margin: 0 auto;
+    max-height: 80vh;
+}
+#notebookModal .feedback-modal-body {
+    padding: 12px 16px;
+    max-height: calc(80vh - 52px); /* 减去头部高度 */
+    overflow-y: auto;
+}
+/* 移动端确保左右边距与主页一致 */
+@media (max-width: 768px) {
+    #notebookModal .feedback-modal-content {
+        width: calc(100% - 2 * var(--container-padding-xs, 16px));
+        margin: 0 auto;
+        max-height: 85vh;
+    }
+    #notebookModal .feedback-modal-body {
+        max-height: calc(85vh - 52px);
+        padding: 12px 12px;
+    }
+}
+@media (max-width: 480px) {
+    #notebookModal .feedback-modal-content {
+        width: calc(100% - 2 * var(--container-padding-xs, 16px));
+        margin: 0 auto;
+    }
+}
+
 /* Toast 管理器容器 */
 .toast-manager-container {
     position: fixed;
