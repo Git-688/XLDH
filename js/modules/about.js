@@ -93,14 +93,17 @@ class AboutModule {
                             </div>
                         </div>
                         <div class="about-header-right">
-                            <div class="about-brand">
-                                <div class="about-logo" style="border-radius: 8px; overflow: hidden;">
-                                    <img src="${Utils.escapeHtml(this.logoUrl)}" alt="星聚导航Logo" class="about-logo-img" style="border-radius: 8px; width: 100%; height: 100%; object-fit: cover;">
-                                </div>
-                                <div class="about-title-group">
-                                    <div class="about-title">星聚导航</div>
-                                    <div class="about-subtitle">您的个人导航中心</div>
-                                </div>
+                            <div class="about-brand" style="background: rgba(0, 0, 0, 0.4); padding: 10px 12px; border-radius: 10px; text-align: left; width: 100%;">
+                                <h4 style="margin: 0 0 8px 0; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.95); display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-book-open"></i> 📖 使用说明
+                                </h4>
+                                <ul style="margin: 0; padding-left: 18px; font-size: 10px; color: rgba(255,255,255,0.9); line-height: 1.6;">
+                                    <li>点击左侧分类浏览网站</li>
+                                    <li>使用顶部搜索框快速查找</li>
+                                    <li>点击音乐按钮播放音乐</li>
+                                    <li>点击投稿按钮推荐网站</li>
+                                    <li>点击评论按钮参与讨论</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -217,7 +220,7 @@ class AboutModule {
         }
     }
 
-    // 爱发电模态框 - 重构版：移除标题/副标题，左右卡片白色背景，二维码间距与按钮一致，支持者名单左侧标题+感谢语，卡片白色加阴影，移动端滚动
+    // 爱发电模态框（保持不变，但为了完整性保留）
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
@@ -240,7 +243,6 @@ class AboutModule {
             pointer-events: auto;
         `;
 
-        // 添加自定义样式（覆盖原有样式）
         const style = document.createElement('style');
         style.textContent = `
             .donate-modal-content {
@@ -275,21 +277,18 @@ class AboutModule {
             .donate-method-btn-left.active i {
                 transform: scale(1.1);
             }
-            /* 左边按钮卡片（白色背景） */
             .donate-card-wrapper:first-child {
                 background: #ffffff;
                 border: 1px solid #e0e0e0;
                 padding: 12px;
                 border-radius: 8px;
             }
-            /* 右边二维码卡片（白色背景） */
             .donate-card-wrapper:last-child {
                 background: #ffffff;
                 border: 1px solid #e0e0e0;
                 padding: 12px;
                 border-radius: 8px;
             }
-            /* 二维码图片容器，内边距与左边按钮的内边距保持一致（上下左右均为12px） */
             .qrcode-content img {
                 display: block;
                 max-width: 100%;
@@ -297,7 +296,6 @@ class AboutModule {
                 object-fit: contain;
                 margin: 0 auto;
             }
-            /* 支持者名单容器 */
             .supporters-wrapper {
                 background: #ffffff;
                 border: 1px solid #e0e0e0;
@@ -345,7 +343,6 @@ class AboutModule {
                 box-shadow: 0 1px 2px rgba(0,0,0,0.05);
                 transition: all 0.2s;
             }
-            /* 移动端：支持者名单高度至少显示三行 */
             @media (max-width: 480px) {
                 .supporters-list-scroll {
                     max-height: 90px;
@@ -385,7 +382,6 @@ class AboutModule {
         `;
         donateModal.appendChild(style);
 
-        // 构建模态框 HTML（移除标题和副标题，支持者名单标题移到左侧并添加感谢语）
         donateModal.innerHTML += `
             <div class="donate-modal-content" style="
                 display: flex;
@@ -401,9 +397,7 @@ class AboutModule {
                 transition: transform 0.3s ease;
                 pointer-events: auto;
             ">
-                <!-- 顶部按钮和二维码区域 -->
                 <div style="display: flex; gap: 16px; padding: 16px 16px 0; min-width: 0;">
-                    <!-- 左边按钮卡片（白色背景） -->
                     <div class="donate-card-wrapper" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%;">
                             <button class="donate-method-btn-left" data-type="qq" style="color: #6BC5FF; border-color: #6BC5FF;">
@@ -420,8 +414,6 @@ class AboutModule {
                             </button>
                         </div>
                     </div>
-
-                    <!-- 右边二维码卡片（白色背景） -->
                     <div class="donate-card-wrapper" style="flex: 1; position: relative; display: flex; align-items: center; justify-content: center;">
                         <div class="qrcode-content active" data-type="qq" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
                             <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ" style="max-width: 85%; max-height: 85%; object-fit: contain;">
@@ -442,8 +434,6 @@ class AboutModule {
                         </div>
                     </div>
                 </div>
-
-                <!-- 支持者名单区域 -->
                 <div class="supporters-wrapper" style="margin: 16px;">
                     <div class="supporters-header">
                         <div class="supporters-title">🎖️ 支持者名单</div>
