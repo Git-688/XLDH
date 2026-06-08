@@ -363,7 +363,7 @@ p {
     }
 }
 
-/* ========== 统一反馈模态框（缩放淡入动画，桌面/移动端统一） ========== */
+/* ========== 统一反馈模态框（亚克力效果，统一缩放淡入动画） ========== */
 .feedback-modal {
     position: fixed;
     top: 0;
@@ -407,26 +407,52 @@ p {
     transform: scale(1);
     opacity: 1;
 }
-/* 移动端保持相同动画（不再从底部滑入） */
-@media (max-width: 768px) {
-    .feedback-modal {
-        padding: 12px var(--container-padding-xs, 16px);
-        align-items: center;
-    }
-    .feedback-modal-content {
-        max-width: 100%;
-        border-radius: 8px;
-        transform: scale(0.95);
-        transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-    }
-    .feedback-modal.active .feedback-modal-content {
-        transform: scale(1);
-        opacity: 1;
-    }
-    .feedback-modal-header { padding: 10px 14px 6px; }
-    .feedback-modal-body { padding: 10px 12px; }
-    .feedback-modal-close { width: 36px; height: 36px; font-size: 22px; }
+.feedback-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    color: var(--text-primary, #1e293b);
+    flex-shrink: 0;
 }
+.feedback-modal-header h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+.feedback-modal-header h3 i {
+    margin-right: 8px;
+    margin-left: 0;
+}
+.feedback-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    border: none;
+    color: #64748b;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.feedback-modal-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #334155;
+}
+.feedback-modal-body {
+    padding: 10px 12px;
+    overflow-y: auto;
+    flex: 1;
+    background: transparent;
+    -webkit-overflow-scrolling: touch;
+}
+.feedback-modal-body::-webkit-scrollbar { display: none; }
 
 /* Toast 管理器容器 */
 .toast-manager-container {
@@ -486,7 +512,7 @@ p {
 }
 .toast-close:hover { color: #666; }
 
-/* 投稿表单特定样式（保留） */
+/* 投稿表单特定样式 */
 #submitModal .form-row { margin-bottom: 10px; }
 #submitModal .form-row label {
     display: block;
