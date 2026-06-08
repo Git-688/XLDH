@@ -1,12 +1,11 @@
-/* sidebar.css - 现代悬浮侧滑栏样式（头像/昵称/签名放大版） */
+/* sidebar.css - 现代悬浮侧滑栏样式（纯色背景，无亚克力效果） */
 :root {
     --sidebar-width: 260px;
     --sidebar-mobile-width: 70vw;
     --sidebar-max-mobile: 280px;
-    --sidebar-bg: rgba(255, 255, 255, 0.75);
-    --sidebar-bg-dark: rgba(30, 30, 35, 0.85);
-    --sidebar-blur: blur(20px);
-    --sidebar-border: 1px solid rgba(255, 255, 255, 0.3);
+    --sidebar-bg: #ffffff;
+    --sidebar-bg-dark: #1e1e1e;
+    --sidebar-border: 1px solid #e0e0e0;
     --sidebar-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     --sidebar-transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
@@ -18,8 +17,7 @@
     bottom: 20px;
     width: var(--sidebar-width);
     background: var(--sidebar-bg);
-    backdrop-filter: var(--sidebar-blur);
-    -webkit-backdrop-filter: var(--sidebar-blur);
+    /* 移除 backdrop-filter */
     border-radius: 8px;
     border: var(--sidebar-border);
     box-shadow: var(--sidebar-shadow);
@@ -40,7 +38,7 @@
 @media (prefers-color-scheme: dark) {
     .sidebar {
         background: var(--sidebar-bg-dark);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid #404040;
     }
 }
 
@@ -123,14 +121,13 @@
     text-overflow: ellipsis;
 }
 
-/* 每日一言卡片 - 圆角8px */
+/* 每日一言卡片 - 纯色背景，无亚克力 */
 .daily-quote-card {
     margin: 12px 16px;
     padding: 10px 12px;
-    background: rgba(255,255,255,0.4);
-    backdrop-filter: blur(10px);
+    background: rgba(0,0,0,0.05);
     border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.3);
+    border: 1px solid rgba(0,0,0,0.06);
 }
 .daily-quote-card p {
     font-size: 12px;
@@ -155,13 +152,12 @@
     height: 0;
 }
 
-/* 分类分组 - 圆角8px */
+/* 分类分组 - 纯色背景，无亚克力 */
 .category-group {
     margin-bottom: 12px;
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(8px);
+    background: rgba(0,0,0,0.03);
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(0,0,0,0.06);
     overflow: hidden;
     transition: all 0.2s ease;
 }
@@ -258,15 +254,14 @@
     color: currentColor;
 }
 
-/* 底部按钮栏 - 上下间距相等 */
+/* 底部按钮栏 - 纯色背景，无亚克力 */
 .sidebar-footer {
     padding: 12px 16px;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: space-around;
     gap: 12px;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(8px);
+    background: rgba(0,0,0,0.02);
     flex-shrink: 0;
 }
 
