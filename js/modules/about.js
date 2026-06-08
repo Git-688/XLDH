@@ -1,4 +1,4 @@
-// about.js - 星聚导航关于模块（完整修改版，爱发电模态框使用说明字体加大）
+// about.js - 星聚导航关于模块（完整修改版，左边卡片改为三个独立卡片）
 // 确保 Utils 存在
 if (typeof Utils === 'undefined') {
     window.Utils = {
@@ -77,24 +77,13 @@ class AboutModule {
                     <div class="about-header-bg" style="background-image: url('${Utils.escapeHtml(this.wallpaperUrl)}')"></div>
                     <div class="about-header-overlay"></div>
                     <div class="about-header-content">
-                        <!-- 左边卡片 - 宽度增大，内容不换行 -->
-                        <div class="about-header-left no-wrap">
-                            <div class="about-info-grid">
-                                <div class="about-info-item">
-                                    <span class="info-label">开发者：</span>
-                                    <span class="info-value">${Utils.escapeHtml(this.developer)}</span>
-                                </div>
-                                <div class="about-info-item">
-                                    <span class="info-label">网站版本：</span>
-                                    <span class="info-value">${Utils.escapeHtml(this.version)}</span>
-                                </div>
-                                <div class="about-info-item">
-                                    <span class="info-label">更新日期：</span>
-                                    <span class="info-value">${Utils.escapeHtml(this.updateDate)}</span>
-                                </div>
-                            </div>
+                        <!-- 左边大卡片：三行独立卡片，无内边距 -->
+                        <div class="about-header-left">
+                            <div class="info-card">开发者：${Utils.escapeHtml(this.developer)}</div>
+                            <div class="info-card">网站版本：${Utils.escapeHtml(this.version)}</div>
+                            <div class="info-card">更新日期：${Utils.escapeHtml(this.updateDate)}</div>
                         </div>
-                        <!-- 右边大卡片 - Logo + 标题 + 副标题 -->
+                        <!-- 右边大卡片：Logo + 标题 + 副标题 -->
                         <div class="about-header-right logo-card">
                             <div class="about-brand-logo">
                                 <img class="about-logo-img" src="${Utils.escapeHtml(this.logoUrl)}" alt="星聚导航Logo">
@@ -216,7 +205,7 @@ class AboutModule {
         }
     }
 
-    // 爱发电模态框 - 使用说明字体已加大（标题14px，正文11px）
+    // 爱发电模态框 - 使用说明字体已加大
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
@@ -420,7 +409,6 @@ class AboutModule {
                         <div class="qrcode-content" data-type="alipay" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
                             <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝" style="max-width: 85%; max-height: 85%; object-fit: contain;">
                         </div>
-                        <!-- 帮助面板：字体加大（标题14px，正文11px） -->
                         <div class="qrcode-content" data-type="help" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
                             <div style="width:100%; text-align: center;">
                                 <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary, #1e293b);">📖 使用说明</div>
