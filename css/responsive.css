@@ -59,15 +59,15 @@
     }
 }
 
-/* ========== 4. 移动端触摸优化 ========== */
+/* ========== 4. 移动端触摸优化（已移除弹性回滚效果） ========== */
 @media (max-width: 768px) {
+    /* 原 -webkit-overflow-scrolling: touch 已移除 */
     .sidebar.active .sidebar-categories {
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
+        /* 不再添加弹性滚动效果 */
     }
 }
 
-/* ========== 5. 侧滑栏打开时主内容区域不可交互（避免误触） ========== */
+/* ========== 5. 侧滑栏打开时主内容区域不可交互 ========== */
 .sidebar.active ~ .main-content {
     pointer-events: none;
     user-select: none;
