@@ -1,5 +1,5 @@
 // music-player.js - 最终版（精确进度条、下载进度、稳定API）
-// ==================== 自定义下拉选择器组件（保留原有） ====================
+// ==================== 自定义下拉选择器组件 ====================
 let currentOpenCustomSelect = null;
 let customSelectInstances = new Map();
 
@@ -219,6 +219,29 @@ class MusicPlayer {
         this.initializeElements();
         this.bindEvents();
         this.initializePlayer();
+
+        // 用户手势相关（用于自动播放策略）
+        this.userGestureResolved = false;
+        this.userGesturePromise = null;
+    }
+
+    // 等待用户手势（用于自动播放策略）
+    waitForUserGesture() {
+        if (this.userGestureResolved) return Promise.resolve();
+        if (this.userGesturePromise) return this.userGesturePromise;
+        this.userGesturePromise = new Promise((resolve) => {
+            const handler = () => {
+                this.userGestureResolved = true;
+                document.removeEventListener('click', handler);
+                document.removeEventListener('touchstart', handler);
+                document.removeEventListener('keydown', handler);
+                resolve();
+            };
+            document.addEventListener('click', handler);
+            document.addEventListener('touchstart', handler);
+            document.addEventListener('keydown', handler);
+        });
+        return this.userGesturePromise;
     }
 
     initializeProperties() {
@@ -238,6 +261,9 @@ class MusicPlayer {
         this.isVolumeSliderVisible = false;
         this.hasNotifiedLocal = false;
         this.hasNotifiedQishui = false;
+        this.consecutiveErrors = 0;
+        this.maxConsecutiveErrors = 3;
+        this.maxErrorShown = false;
         
         // 进度条拖拽专用
         this.dragPercent = 0;
@@ -935,7 +961,6 @@ class MusicPlayer {
         }
     }
 
-    // 优化：同时更新 width 和 transform，确保进度条始终可见
     updateProgress() {
         if (this.isDraggingProgress || this.updateAnimationFrame) return;
         this.updateAnimationFrame = requestAnimationFrame(() => {
@@ -952,8 +977,6 @@ class MusicPlayer {
                     this.lastTimeUpdate = now;
                 }
                 this.updateLyricDisplayByTime(currentTime);
-            } else if (duration && !isNaN(duration) && duration === 0) {
-                // 等待加载
             } else {
                 this.elements.currentTime.textContent = '00:00';
                 this.elements.duration.textContent = '00:00';
@@ -980,7 +1003,6 @@ class MusicPlayer {
     hideVolumeSlider() { this.elements.volumeSliderContainer.style.display = 'none'; this.isVolumeSliderVisible = false; }
     toggleVolumeSlider() { this.isVolumeSliderVisible ? this.hideVolumeSlider() : this.showVolumeSlider(); }
 
-    // 进度条事件（精确拖拽/点击）
     bindProgressEvents() {
         this.elements.progressBar.style.touchAction = 'none';
         
@@ -1137,7 +1159,6 @@ class MusicPlayer {
         if (this.scrollAnimationId) cancelAnimationFrame(this.scrollAnimationId);
         if (this.audio) { this.audio.pause(); this.audio.src = ''; this.audio.load(); }
         if (this.cacheManager) this.cacheManager.cleanup();
-        if (this._cleanupErrorHandler) this._cleanupErrorHandler();
         customSelectInstances.forEach((instance) => {
             if (instance && typeof instance.destroy === 'function') {
                 instance.destroy();
