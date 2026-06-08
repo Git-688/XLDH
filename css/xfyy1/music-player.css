@@ -1,24 +1,22 @@
-/* 悬浮音乐播放器样式 - 亚克力效果，圆角 8px */
+/* 悬浮音乐播放器样式 - 纯色背景（无亚克力效果） */
 .music-player {
     position: fixed;
     bottom: 20px;
     right: 20px;
 
-    background: var(--acrylic-bg, rgba(255,255,255,0.65));
-    backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
-    -webkit-backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
-
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    background-repeat: repeat;
+    /* 移除亚克力背景，改为普通白色/浅灰色背景 */
+    background: #ffffff;
+    /* 移除 backdrop-filter */
+    /* 移除背景噪声图 */
 
     border-radius: 8px;
-    box-shadow: var(--acrylic-shadow, 0 8px 32px rgba(0,0,0,0.08)), 0 0 0 1px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     width: 420px;
     overflow: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
     z-index: 10000;
     max-height: 700px;
-    border: var(--acrylic-border, 1px solid rgba(255,255,255,0.5));
+    border: 1px solid #e0e0e0;
     display: none;
     transform: scale(0.95);
     opacity: 0;
@@ -35,7 +33,7 @@
 
 .music-player:hover {
     transform: scale(1) translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.7);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
 }
 
 .music-player.collapsed {
@@ -49,16 +47,15 @@
     transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
 }
 
-/* 深色模式 - 亚克力效果 */
+/* 深色模式 - 纯色背景 */
 @media (prefers-color-scheme: dark) {
     .music-player {
-        background: var(--acrylic-bg, rgba(30,30,30,0.7));
-        border-color: var(--acrylic-border, rgba(255,255,255,0.15));
-        box-shadow: var(--acrylic-shadow, 0 8px 32px rgba(0,0,0,0.3)), 0 0 0 1px rgba(255, 255, 255, 0.1);
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
+        background: #2d2d2d;
+        border: 1px solid #444;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     }
     .music-player:hover {
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
     }
 }
 
@@ -79,7 +76,7 @@
 @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
 @keyframes loading { 0% { left: -100%; } 100% { left: 100%; } }
 
-/* 内容入场动画（延迟出现，无弹性） */
+/* 内容入场动画（延迟出现） */
 .music-player .player-top,
 .music-player .progress-section,
 .music-player .lyrics-section,
@@ -89,7 +86,7 @@
 .music-player.show .lyrics-section { opacity: 1; transform: translateY(0); transition-delay: 0.2s; }
 .music-player.show .bottom-section { opacity: 1; transform: translateY(0); transition-delay: 0.25s; }
 
-.player-top { display: flex; padding: 12px 15px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+.player-top { display: flex; padding: 12px 15px 8px; border-bottom: 1px solid rgba(0,0,0,0.08); }
 .cover-section { display: flex; align-items: center; flex: 1; }
 .album-cover { position: relative; width: 50px; height: 50px; border-radius: 50%; overflow: hidden; margin-right: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 .album-cover img { width: 100%; height: 100%; object-fit: cover; display: none; }
@@ -128,7 +125,7 @@
 .volume-slider input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--primary-color, #4361ee); border-radius: 50%; cursor: pointer; transition: all 0.2s ease; }
 .volume-slider input[type="range"]::-webkit-slider-thumb:hover { background: var(--secondary-color, #3a0ca3); transform: scale(1.2); }
 
-.progress-section { padding: 8px 15px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px; min-height: 35px; }
+.progress-section { padding: 8px 15px 10px; border-bottom: 1px solid rgba(0,0,0,0.08); display: flex; align-items: center; gap: 10px; min-height: 35px; }
 .progress-container { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
 .time-display { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary, #6c757d); font-weight: 500; }
 .time-text { background: rgba(67,97,238,0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
@@ -222,7 +219,7 @@
 /* 歌词区域（单行居中、水平滚动） */
 .lyrics-section {
     padding: 6px 15px;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
     height: 52px;
     display: flex;
     align-items: center;
@@ -249,7 +246,7 @@
 
 .bottom-section { max-height: 500px; overflow: hidden; transition: max-height 0.3s ease; background: inherit; }
 .music-player.collapsed .bottom-section { max-height: 0; }
-.bottom-tabs { display: flex; border-bottom: 1px solid rgba(0,0,0,0.05); overflow-x: auto; position: sticky; top: 0; background: inherit; z-index: 5; scrollbar-width: none; }
+.bottom-tabs { display: flex; border-bottom: 1px solid rgba(0,0,0,0.08); overflow-x: auto; position: sticky; top: 0; background: inherit; z-index: 5; scrollbar-width: none; }
 .bottom-tabs::-webkit-scrollbar { display: none; }
 .tab-btn { flex: 1; background: none; border: none; padding: 10px 5px; font-size: 12px; color: var(--text-secondary, #6c757d); cursor: pointer; transition: all 0.3s ease; border-bottom: 2px solid transparent; min-width: 80px; white-space: nowrap; }
 .tab-btn:hover { color: var(--primary-color, #4361ee); background: rgba(67,97,238,0.05); }
@@ -257,7 +254,7 @@
 
 .tab-content { display: none; padding: 0; max-height: 450px; overflow-y: auto; }
 .tab-content.active { display: block; }
-.playlist-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px 8px; border-bottom: 1px solid rgba(0,0,0,0.05); min-height: 36px; position: sticky; top: 0; background: inherit; z-index: 10; margin-bottom: 0; }
+.playlist-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px 8px; border-bottom: 1px solid rgba(0,0,0,0.08); min-height: 36px; position: sticky; top: 0; background: inherit; z-index: 10; margin-bottom: 0; }
 .playlist-selector { flex: 1; }
 .content-container { max-height: 380px; overflow-y: auto; padding: 0 15px 15px; scrollbar-width: none; }
 .content-container::-webkit-scrollbar { display: none; }
