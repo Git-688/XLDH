@@ -1,4 +1,4 @@
-/* 公告模态框 - 纯色背景（无亚克力），统一缩放淡入动画 */
+/* 公告模态框 - 纯色背景（无亚克力），统一缩放淡入动画，头部与星聚笔记一致 */
 .announcement-modal-simple {
     position: fixed;
     top: 60px;
@@ -60,12 +60,14 @@
     }
 }
 
+/* 头部样式 - 与星聚笔记头部完全一致 */
 .announcement-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px 8px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    color: var(--text-primary, #1e293b);
 }
 .announcement-title {
     display: flex;
@@ -73,16 +75,19 @@
     gap: 8px;
     font-weight: 600;
     font-size: 1.05rem;
-    color: var(--text-primary, #2b2d42);
+    margin: 0;
+}
+.announcement-title i {
+    margin-right: 0;
 }
 .announcement-close {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.05);
     border: none;
-    color: var(--text-secondary, #6c757d);
-    font-size: 0.95rem;
+    color: #64748b;
+    font-size: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -91,38 +96,32 @@
 }
 .announcement-close:hover {
     background: rgba(0, 0, 0, 0.1);
-    color: var(--text-primary, #2b2d42);
+    color: #334155;
 }
+
+/* 正文区域 */
 .announcement-body {
     padding: 16px 20px 12px;
     display: flex;
     flex-direction: column;
     max-height: 350px;
 }
-/* 重要提醒区域 */
+
+/* 重要提醒区域 - 无标题、无图标、无边框、无内边距，背景白色，文字浅红色 */
 .focus-section {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 12px;
+    background: #ffffff;
+    border: none;
+    padding: 0;
     margin-bottom: 16px;
-    flex-shrink: 0;
-    border: 1px solid #e9ecef;
-}
-.section-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-primary, #2b2d42);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
 }
 .focus-content {
-    color: var(--text-primary, #2b2d42);
+    color: #ef4444;
     font-size: 0.85rem;
     line-height: 1.5;
-    padding-left: 20px;
+    margin: 0;
 }
+
+/* 更新内容区域 */
 .updates-section {
     flex: 1;
     overflow-y: auto;
@@ -159,6 +158,8 @@
     border-radius: 50%;
     background: var(--primary-color, #4361ee);
 }
+
+/* 底部区域 */
 .announcement-footer {
     display: flex;
     align-items: center;
@@ -194,16 +195,13 @@
 /* 移动端适配 */
 @media (max-width: 600px) {
     .announcement-header {
-        padding: 14px 18px 6px;
+        padding: 8px 12px 6px;
     }
     .announcement-title {
         font-size: 1rem;
     }
     .announcement-body {
         padding: 14px 18px 10px;
-    }
-    .focus-section {
-        padding: 10px;
     }
     .focus-content {
         font-size: 0.8rem;
@@ -229,7 +227,7 @@
         border-radius: 6px;
     }
     .announcement-header {
-        padding: 12px 14px 4px;
+        padding: 6px 10px 4px;
     }
     .announcement-body {
         padding: 12px 14px 8px;
@@ -242,11 +240,13 @@
     }
 }
 
-/* 深色模式下的移动端适配 */
+/* 深色模式下的适配 */
 @media (prefers-color-scheme: dark) {
     .focus-section {
-        background: #3a3a3a;
-        border-color: #404040;
+        background: #2d2d2d;
+    }
+    .focus-content {
+        color: #f87171;
     }
     .announcement-footer {
         background: #2d2d2d;
