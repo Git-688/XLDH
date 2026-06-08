@@ -1,6 +1,5 @@
 /**
- * 插件管理器 - 星聚导航音乐播放器专用（适配 i-meto API）
- * 支持网易云、QQ、酷狗、酷我、抖音热歌榜、本地音乐
+ * 插件管理器 - 星聚导航音乐播放器专用（使用 Worker 代理解决跨域）
  */
 class PluginManager {
     constructor(cacheManager) {
@@ -10,8 +9,19 @@ class PluginManager {
         this.initializePlugins();
     }
 
+    // 通过 Worker 代理请求
+    async proxyFetch(originalUrl) {
+        const apiBase = Utils.getApiBase(); // 例如 https://api.xjdh688.ccwu.cc
+        const proxyUrl = `${apiBase}/music-proxy?url=${encodeURIComponent(originalUrl)}`;
+        const response = await fetch(proxyUrl);
+        if (!response.ok) {
+            throw new Error(`代理请求失败: ${response.status}`);
+        }
+        return await response.json();
+    }
+
     initializePlugins() {
-        // ========== 网易云音乐插件（仅使用 i-meto API） ==========
+        // 网易云音乐插件
         this.registerPlugin('netease', {
             name: '网易云音乐',
             version: '1.0.3',
@@ -20,10 +30,8 @@ class PluginManager {
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const url = `https://api.i-meto.com/meting/api?server=netease&type=playlist&id=${playlistId}`;
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
+                    const originalUrl = `https://api.i-meto.com/meting/api?server=netease&type=playlist&id=${playlistId}`;
+                    const data = await this.proxyFetch(originalUrl);
                     if (!Array.isArray(data)) throw new Error('数据格式错误');
                     const formatted = data.map(song => this.formatSong(song, 'netease'));
                     this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
@@ -38,10 +46,8 @@ class PluginManager {
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const url = `https://api.i-meto.com/meting/api?server=netease&type=search&id=${encodeURIComponent(keyword)}`;
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
+                    const originalUrl = `https://api.i-meto.com/meting/api?server=netease&type=search&id=${encodeURIComponent(keyword)}`;
+                    const data = await this.proxyFetch(originalUrl);
                     if (!Array.isArray(data)) throw new Error('数据格式错误');
                     const formatted = data.map(song => this.formatSong(song, 'netease'));
                     this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
@@ -56,7 +62,7 @@ class PluginManager {
             }
         });
 
-        // ========== QQ音乐插件 ==========
+        // QQ音乐插件
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '1.0.2',
@@ -65,10 +71,8 @@ class PluginManager {
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const url = `https://api.i-meto.com/meting/api?server=tencent&type=playlist&id=${playlistId}`;
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
+                    const originalUrl = `https://api.i-meto.com/meting/api?server=tencent&type=playlist&id=${playlistId}`;
+                    const data = await this.proxyFetch(originalUrl);
                     if (!Array.isArray(data)) throw new Error('数据格式错误');
                     const formatted = data.map(song => this.formatSong(song, 'qq'));
                     this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
@@ -83,10 +87,8 @@ class PluginManager {
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const url = `https://api.i-meto.com/meting/api?server=tencent&type=search&id=${encodeURIComponent(keyword)}`;
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
+                    const originalUrl = `https://api.i-meto.com/meting/api?server=tencent&type=search&id=${encodeURIComponent(keyword)}`;
+                    const data = await this.proxyFetch(originalUrl);
                     if (!Array.isArray(data)) throw new Error('数据格式错误');
                     const formatted = data.map(song => this.formatSong(song, 'qq'));
                     this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
@@ -101,7 +103,7 @@ class PluginManager {
             }
         });
 
-        // ========== 酷狗音乐插件 ==========
+        // 酷狗音乐插件
         this.registerPlugin('kg', {
             name: '酷狗音乐',
             version: '1.0.1',
@@ -110,10 +112,8 @@ class PluginManager {
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const url = `https://api.i-meto.com/meting/api?server=kugou&type=playlist&id=${playlistId}`;
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
+                    const originalUrl = `https://api.i-meto.com/meting/api?server=kugou&type=playlist&id=${playlistId}`;
+                    const data = await this.proxyFetch(originalUrl);
                     if (!Array.isArray(data)) throw new Error('数据格式错误');
                     const formatted = data.map(song => this.formatSong(song, 'kg'));
                     this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
@@ -128,10 +128,8 @@ class PluginManager {
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const url = `https://api.i-meto.com/meting/api?server=kugou&type=search&id=${encodeURIComponent(keyword)}`;
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
+                    const originalUrl = `https://api.i-meto.com/meting/api?server=kugou&type=search&id=${encodeURIComponent(keyword)}`;
+                    const data = await this.proxyFetch(originalUrl);
                     if (!Array.isArray(data)) throw new Error('数据格式错误');
                     const formatted = data.map(song => this.formatSong(song, 'kg'));
                     this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
@@ -142,20 +140,18 @@ class PluginManager {
                 }
             },
             getDownloadUrl: async (songId) => {
-                return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`; // 降级
+                return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
             }
         });
 
-        // ========== 酷我音乐插件 ==========
+        // 酷我音乐插件
         this.registerPlugin('kuwo', {
             name: '酷我音乐',
             version: '1.0.0',
             getPlaylist: async (playlistId) => {
                 try {
-                    const url = `https://api.i-meto.com/meting/api?server=kuwo&type=playlist&id=${playlistId}`;
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
+                    const originalUrl = `https://api.i-meto.com/meting/api?server=kuwo&type=playlist&id=${playlistId}`;
+                    const data = await this.proxyFetch(originalUrl);
                     if (!Array.isArray(data)) throw new Error('数据格式错误');
                     return data.map(song => this.formatSong(song, 'kuwo'));
                 } catch (error) {
@@ -165,10 +161,8 @@ class PluginManager {
             },
             search: async (keyword) => {
                 try {
-                    const url = `https://api.i-meto.com/meting/api?server=kuwo&type=search&id=${encodeURIComponent(keyword)}`;
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
+                    const originalUrl = `https://api.i-meto.com/meting/api?server=kuwo&type=search&id=${encodeURIComponent(keyword)}`;
+                    const data = await this.proxyFetch(originalUrl);
                     if (!Array.isArray(data)) throw new Error('数据格式错误');
                     return data.map(song => this.formatSong(song, 'kuwo'));
                 } catch (error) {
@@ -181,7 +175,7 @@ class PluginManager {
             }
         });
 
-        // ========== 抖音热歌榜插件（独立API） ==========
+        // 抖音热歌榜插件（独立API，可能也需要代理，但暂时保留原样，可后续修改）
         this.registerPlugin('migu', {
             name: '抖音热歌榜',
             version: '1.0.0',
@@ -200,7 +194,7 @@ class PluginManager {
             getDownloadUrl: async (songId) => songId
         });
 
-        // ========== 本地音乐插件 ==========
+        // 本地音乐插件
         this.registerPlugin('local', {
             name: '本地音乐',
             version: '1.0.1',
@@ -213,7 +207,7 @@ class PluginManager {
             getDownloadUrl: async (songId) => songId
         });
 
-        // ========== 翻译插件（可选） ==========
+        // 翻译插件
         this.registerPlugin('translator', {
             name: '歌词翻译器',
             version: '1.0.0',
@@ -238,7 +232,6 @@ class PluginManager {
         });
     }
 
-    // 格式化歌曲信息（统一字段）
     formatSong(song, source) {
         return {
             id: song.id,
@@ -252,7 +245,6 @@ class PluginManager {
         };
     }
 
-    // 处理抖音热歌榜响应
     formatDouyinResponse(data) {
         if (!data) return [];
         if (data.code === 200 && data.data && Array.isArray(data.data)) {
@@ -264,7 +256,6 @@ class PluginManager {
         return [];
     }
 
-    // 插件注册与通用方法
     registerPlugin(id, plugin) {
         if (this.plugins.has(id)) console.warn(`插件 ${id} 已存在，将被替换`);
         this.plugins.set(id, { id, type: 'builtin', ...plugin, enabled: true });
