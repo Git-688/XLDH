@@ -1,5 +1,5 @@
 /**
- * 插件管理器 - 支持多个音乐API源（整合稳定API，确保搜索可用）
+ * 插件管理器 - 支持多个音乐API源（使用支持CORS的端点）
  */
 class PluginManager {
     constructor(cacheManager) {
@@ -10,17 +10,17 @@ class PluginManager {
     }
 
     initializePlugins() {
-        // ==================== 网易云音乐插件 ====================
+        // ==================== 网易云音乐插件（使用 injahow 镜像，支持 CORS） ====================
         this.registerPlugin('netease', {
             name: '网易云音乐',
             version: '1.0.2',
-            description: '基于 meting API 镜像',
+            description: '基于 injahow 镜像 API',
             getPlaylist: async (playlistId) => {
                 const cacheKey = `netease_playlist_${playlistId}`;
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const response = await fetch(`https://api.i-meto.com/meting/api?server=netease&type=playlist&id=${playlistId}`);
+                    const response = await fetch(`https://api.injahow.cn/meting/?server=netease&type=playlist&id=${playlistId}`);
                     if (!response.ok) throw new Error('API 响应错误');
                     const data = await response.json();
                     if (!Array.isArray(data)) throw new Error('数据格式错误');
@@ -42,7 +42,7 @@ class PluginManager {
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const response = await fetch(`https://api.i-meto.com/meting/api?server=netease&type=search&id=${encodeURIComponent(keyword)}`);
+                    const response = await fetch(`https://api.injahow.cn/meting/?server=netease&type=search&id=${encodeURIComponent(keyword)}`);
                     if (!response.ok) throw new Error('搜索请求失败');
                     const data = await response.json();
                     if (!Array.isArray(data)) throw new Error('搜索数据格式错误');
@@ -64,17 +64,17 @@ class PluginManager {
             }
         });
 
-        // ==================== QQ音乐插件 ====================
+        // ==================== QQ音乐插件（使用 injahow 镜像，支持 CORS） ====================
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '1.0.1',
-            description: '基于 meting API 镜像',
+            description: '基于 injahow 镜像 API',
             getPlaylist: async (playlistId) => {
                 const cacheKey = `qq_playlist_${playlistId}`;
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const response = await fetch(`https://api.i-meto.com/meting/api?server=tencent&type=playlist&id=${playlistId}`);
+                    const response = await fetch(`https://api.injahow.cn/meting/?server=tencent&type=playlist&id=${playlistId}`);
                     if (!response.ok) throw new Error('API 响应错误');
                     const data = await response.json();
                     if (!Array.isArray(data)) throw new Error('数据格式错误');
@@ -96,7 +96,7 @@ class PluginManager {
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const response = await fetch(`https://api.i-meto.com/meting/api?server=tencent&type=search&id=${encodeURIComponent(keyword)}`);
+                    const response = await fetch(`https://api.injahow.cn/meting/?server=tencent&type=search&id=${encodeURIComponent(keyword)}`);
                     if (!response.ok) throw new Error('搜索请求失败');
                     const data = await response.json();
                     if (!Array.isArray(data)) throw new Error('搜索数据格式错误');
@@ -190,7 +190,7 @@ class PluginManager {
             description: '基于酷我音乐API',
             getPlaylist: async (playlistId) => {
                 try {
-                    const response = await fetch(`https://api.i-meto.com/meting/api?server=kuwo&type=playlist&id=${playlistId}`);
+                    const response = await fetch(`https://api.injahow.cn/meting/?server=kuwo&type=playlist&id=${playlistId}`);
                     const data = await response.json();
                     return data.map(song => this.formatSong(song, 'kuwo'));
                 } catch (error) {
@@ -200,7 +200,7 @@ class PluginManager {
             },
             search: async (keyword) => {
                 try {
-                    const response = await fetch(`https://api.i-meto.com/meting/api?server=kuwo&type=search&id=${encodeURIComponent(keyword)}`);
+                    const response = await fetch(`https://api.injahow.cn/meting/?server=kuwo&type=search&id=${encodeURIComponent(keyword)}`);
                     const data = await response.json();
                     return data.map(song => this.formatSong(song, 'kuwo'));
                 } catch (error) {
