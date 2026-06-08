@@ -1,4 +1,4 @@
-/* about.css - 纯色背景（无亚克力），左右对齐调整 */
+/* about.css - 左右卡片缩小20%，左边三行独立卡片，右边内容调整 */
 .about-modal {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     position: fixed;
@@ -35,7 +35,6 @@
 .about-modal.active .about-modal-content {
     transform: scale(1);
 }
-/* 移动端保持缩放淡入，位置居中 */
 @media (max-width: 768px) {
     .about-modal {
         align-items: center;
@@ -94,11 +93,12 @@
     z-index: 3;
     gap: 12px;
 }
-/* 左右卡片统一为正方形，大小相同 */
+/* 左右卡片统一尺寸：宽度各占40%（缩小20%），保持正方形 */
 .about-header-left,
 .about-header-right.logo-card {
-    flex: 1;                 /* 相等宽度 */
-    aspect-ratio: 1 / 1;     /* 正方形比例 */
+    flex: 0 0 auto;
+    width: calc(40% - 6px);   /* 各占约40%，减去一半gap */
+    aspect-ratio: 1 / 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -106,48 +106,43 @@
     background: rgba(0, 0, 0, 0.3);
     border-radius: 12px;
     backdrop-filter: blur(4px);
-    padding: 8px;            /* 内边距统一，保持正方形内部留白 */
+    padding: 0;                /* 移除内边距，由内部卡片控制 */
     min-width: 0;
     overflow: hidden;
 }
-/* 左边卡片：水平排列信息项，内容不换行 */
+/* 左边大卡片内部：三行独立卡片，紧密排列，间距相等 */
 .about-header-left {
-    background: rgba(0, 0, 0, 0.3);
-    white-space: nowrap;
-}
-.about-info-grid {
     display: flex;
-    flex-direction: row;      /* 水平排列 */
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 6px;                 /* 三行卡片之间的间距相等 */
+    padding: 0;
+}
+.info-card {
+    flex: 1;                  /* 三个卡片高度相等 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+    white-space: nowrap;
+    text-align: center;
+    padding: 0 4px;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+/* 右边大卡片：Logo + 标题 + 副标题，内容大小调整 */
+.about-header-right.logo-card {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 12px;
-    width: 100%;
-    flex-wrap: nowrap;
-}
-.about-info-item {
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
-    background: transparent;
-    padding: 0;
-    border-radius: 0;
-    white-space: nowrap;
-}
-.info-label {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 600;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-.info-value {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.95);
-    font-weight: 700;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-/* 右边卡片：Logo + 标题 + 副标题，垂直居中 */
-.about-header-right.logo-card {
-    padding: 8px;
 }
 .about-brand-logo {
     width: 42px;
@@ -197,7 +192,6 @@
     flex-direction: column;
     gap: 12px;
 }
-/* 卡片背景改为白色 */
 .about-card.white-bg {
     display: flex;
     align-items: flex-start;
@@ -372,6 +366,9 @@
     .about-header {
         padding: 12px;
     }
+    .info-card {
+        font-size: 12px;
+    }
     .about-brand-logo {
         width: 48px;
         height: 48px;
@@ -381,10 +378,6 @@
     }
     .about-brand-subtitle {
         font-size: 10px;
-    }
-    .info-label,
-    .info-value {
-        font-size: 11px;
     }
     .about-main-content {
         padding: 12px;
@@ -417,24 +410,24 @@
     }
 }
 
-/* 移动端缩放，保持正方形 */
+/* 移动端调整 */
 @media (max-width: 600px) {
-    .about-header-left .about-info-grid {
-        gap: 8px;
-    }
-    .info-label,
-    .info-value {
+    .info-card {
         font-size: 9px;
     }
     .about-brand-logo {
-        width: 36px;
-        height: 36px;
+        width: 34px;
+        height: 34px;
     }
     .about-brand-title {
-        font-size: 12px;
+        font-size: 11px;
     }
     .about-brand-subtitle {
         font-size: 8px;
+    }
+    .about-header-left,
+    .about-header-right.logo-card {
+        width: calc(38% - 6px); /* 手机端稍微再缩小一点，避免溢出 */
     }
 }
 
@@ -453,6 +446,9 @@
     .about-header-left,
     .about-header-right.logo-card {
         background: rgba(0, 0, 0, 0.5);
+    }
+    .info-card {
+        background: rgba(0, 0, 0, 0.7);
     }
     .about-close-btn {
         background: var(--success-color, #10b981);
