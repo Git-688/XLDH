@@ -15,26 +15,26 @@
     box-shadow: var(--acrylic-shadow, 0 8px 32px rgba(0,0,0,0.08)), 0 0 0 1px rgba(255, 255, 255, 0.5);
     width: 420px;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
     z-index: 10000;
     max-height: 700px;
     border: var(--acrylic-border, 1px solid rgba(255,255,255,0.5));
     display: none;
-    transform: translateY(20px) scale(0.95);
+    transform: scale(0.95);
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: all 0.6s ease;
 }
 
 .music-player.show {
-    transform: translateY(0) scale(1);
+    transform: scale(1);
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
-    transition: all 0.6s ease;
 }
 
 .music-player:hover {
-    transform: translateY(-2px);
+    transform: scale(1) translateY(-2px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.7);
 }
 
@@ -43,9 +43,10 @@
 }
 
 .music-player.hiding {
-    transform: translateY(20px) scale(0.95);
+    transform: scale(0.95);
     opacity: 0;
-    transition: all 0.6s ease;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
 }
 
 /* 深色模式 - 亚克力效果 */
@@ -77,21 +78,8 @@
 
 @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
 @keyframes loading { 0% { left: -100%; } 100% { left: 100%; } }
-@keyframes slideInUp { from { transform: translateY(100%) scale(0.9); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
-@keyframes slideOutDown { from { transform: translateY(0) scale(1); opacity: 1; } to { transform: translateY(100%) scale(0.9); opacity: 0; } }
-@keyframes scaleIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-@keyframes scaleOut { from { transform: scale(1); opacity: 1; } to { transform: scale(0.8); opacity: 0; } }
 
-@media (max-width: 768px) {
-    .music-player { animation: slideInUp 0.6s ease forwards; }
-    .music-player.hiding { animation: slideOutDown 0.5s ease forwards; }
-}
-@media (min-width: 769px) {
-    .music-player { animation: scaleIn 0.6s ease forwards; }
-    .music-player.hiding { animation: scaleOut 0.5s ease forwards; }
-}
-
-/* 内容入场动画 */
+/* 内容入场动画（延迟出现，无弹性） */
 .music-player .player-top,
 .music-player .progress-section,
 .music-player .lyrics-section,
