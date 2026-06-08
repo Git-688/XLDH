@@ -19,7 +19,7 @@
 }
 .search-modal .modal-content {
     position: absolute;
-    top: 24px;
+    /* 移除固定 top: 24px，由 JS 动态设置 */
     right: 24px;
     width: 90%;
     max-width: 460px;
