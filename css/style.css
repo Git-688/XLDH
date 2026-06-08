@@ -1,5 +1,5 @@
 /* ================================================
-   style.css - 星聚导航全局样式（修复模态框动画）
+   style.css - 星聚导航全局样式（统一缩放淡入动画）
    ================================================ */
 
 /* 基础变量定义 */
@@ -363,7 +363,7 @@ p {
     }
 }
 
-/* ========== 统一反馈模态框（亚克力效果，修复动画） ========== */
+/* ========== 统一反馈模态框（缩放淡入动画，桌面/移动端统一） ========== */
 .feedback-modal {
     position: fixed;
     top: 0;
@@ -374,7 +374,7 @@ p {
     z-index: 10002;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.25s ease, visibility 0.25s ease;
+    transition: opacity 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), visibility 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -398,78 +398,30 @@ p {
     max-width: 600px;
     display: flex;
     flex-direction: column;
-    transform: scale(0.95) translateY(8px);
+    transform: scale(0.95);
     opacity: 0;
-    transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
     overflow: hidden;
 }
 .feedback-modal.active .feedback-modal-content {
-    transform: scale(1) translateY(0);
+    transform: scale(1);
     opacity: 1;
 }
-.feedback-modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px 8px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    color: var(--text-primary, #1e293b);
-    flex-shrink: 0;
-}
-.feedback-modal-header h3 {
-    font-size: 1.05rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    margin: 0;
-}
-.feedback-modal-header h3 i {
-    margin-right: 8px;
-    margin-left: 0;
-}
-.feedback-modal-close {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
-    border: none;
-    color: #64748b;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.feedback-modal-close:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: #334155;
-}
-.feedback-modal-body {
-    padding: 10px 12px;
-    overflow-y: auto;
-    flex: 1;
-    background: transparent;
-    -webkit-overflow-scrolling: touch;
-}
-.feedback-modal-body::-webkit-scrollbar { display: none; }
-
-/* 移动端从底部滑入 */
+/* 移动端保持相同动画（不再从底部滑入） */
 @media (max-width: 768px) {
     .feedback-modal {
         padding: 12px var(--container-padding-xs, 16px);
-        align-items: flex-end;
+        align-items: center;
     }
     .feedback-modal-content {
         max-width: 100%;
-        border-radius: 8px 8px 0 0;
-        transform: translateY(100%);
-        opacity: 1;
-        transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
-        box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        transform: scale(0.95);
+        transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
     }
     .feedback-modal.active .feedback-modal-content {
-        transform: translateY(0);
+        transform: scale(1);
+        opacity: 1;
     }
     .feedback-modal-header { padding: 10px 14px 6px; }
     .feedback-modal-body { padding: 10px 12px; }
