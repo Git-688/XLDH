@@ -27,7 +27,7 @@
 }
 
 /* 去除内容区多余留白 */
-#commentModal .feedback-modal-body {
+#commentModal.feedback-modal .feedback-modal-body {
   padding-top: 0 !important;
 }
 
@@ -191,4 +191,76 @@
 
 #commentModal.feedback-modal #waline-comment {
   margin: 0;
+}
+
+/* ========== 评论模态框特殊定位（导航栏下方，上下间距相等，移动端左右边距与主页一致） ========== */
+#commentModal {
+  /* 覆盖父容器默认的居中对齐方式 */
+  align-items: center;
+  justify-content: flex-start;
+  /* 为导航栏留出空间 */
+  padding-top: 60px;
+  box-sizing: border-box;
+}
+
+/* 桌面端：内容区垂直居中（上下边距相等） */
+@media (min-width: 769px) {
+  #commentModal {
+    display: flex;
+    flex-direction: column;
+  }
+  #commentModal .feedback-modal-content {
+    margin: auto 0;                /* 垂直方向自动居中，上下间距相等 */
+    max-height: calc(100vh - 60px); /* 最大高度不超过视口减去导航栏高度 */
+    overflow-y: auto;
+    width: 100%;
+    max-width: 600px;
+  }
+}
+
+/* 移动端：左右边距与主页容器一致，上下间距相等，高度自适应 */
+@media (max-width: 768px) {
+  #commentModal {
+    padding-left: var(--container-padding-xs, 16px);
+    padding-right: var(--container-padding-xs, 16px);
+    padding-top: 60px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+  #commentModal .feedback-modal-content {
+    margin: auto 0;                /* 垂直方向自动居中，上下间距相等 */
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100vh - 60px); /* 确保不超出视口（导航栏已占用60px） */
+    overflow-y: auto;
+  }
+}
+
+/* 小屏手机进一步优化（380px以下） */
+@media (max-width: 480px) {
+  #commentModal {
+    padding-left: var(--container-padding-xs, 16px);
+    padding-right: var(--container-padding-xs, 16px);
+  }
+}
+
+/* 横屏小高度时，限制最大高度防止溢出 */
+@media (max-height: 500px) and (orientation: landscape) {
+  #commentModal .feedback-modal-content {
+    max-height: calc(100vh - 70px);
+  }
+}
+
+/* 滚动条美化（可选） */
+#commentModal .feedback-modal-content::-webkit-scrollbar {
+  width: 4px;
+}
+#commentModal .feedback-modal-content::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.05);
+  border-radius: 4px;
+}
+#commentModal .feedback-modal-content::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 4px;
 }
