@@ -55,7 +55,7 @@
     }
 }
 
-/* 顶部区域 - 左右对齐调整：左边宽度缩小，右边宽度增大 */
+/* 顶部区域 - 左边宽度增大，内容不换行 */
 .about-header {
     position: relative;
     padding: 14px;
@@ -94,22 +94,62 @@
     z-index: 3;
     gap: 16px;
 }
-/* 左边区域 - 宽度缩小 */
+/* 左边卡片 - 宽度增大，内容不换行 */
 .about-header-left {
-    flex: 3;
+    flex: 4;  /* 增大宽度 */
     min-width: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    white-space: nowrap;  /* 内容不允许换行 */
 }
-/* 右边区域 - 宽度增大 */
-.about-header-right {
-    flex: 5;
+/* 右边大卡片 - Logo + 标题 + 副标题，居中显示 */
+.about-header-right.logo-card {
+    flex: 3;
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
-    text-align: right;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 12px 8px;
+    backdrop-filter: blur(4px);
+    min-width: 0;
+}
+.about-brand-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    padding: 4px;
+    box-sizing: border-box;
+}
+.about-logo-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: contain;
+    display: block;
+}
+.about-brand-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    margin: 6px 0 2px;
+    text-align: center;
+    white-space: nowrap;
+}
+.about-brand-subtitle {
+    font-size: 11px;
+    color: rgba(255,255,255,0.85);
+    text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+    text-align: center;
+    white-space: nowrap;
 }
 
 .about-info-grid {
@@ -125,6 +165,7 @@
     padding: 6px 10px;
     border-radius: 8px;
     border: none;
+    white-space: nowrap;
 }
 .info-label {
     font-size: 10px;
@@ -138,61 +179,7 @@
     color: rgba(255, 255, 255, 0.95);
     font-weight: 700;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* 右边品牌卡片 - 垂直居中，内容大小调整 */
-.about-brand {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.4);
-    padding: 8px 12px;
-    border-radius: 10px;
-    border: none;
-    width: auto;
-    max-width: 100%;
-}
-.about-logo {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 6px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-    padding: 2px;
-    box-sizing: border-box;
-    background-color: #ffffff;
-}
-.about-logo-img {
-    width: 100%;
-    height: 100%;
-    border-radius: 6px;
-    object-fit: contain;
-    display: block;
-}
-.about-title-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-.about-title {
-    font-size: 14px;
-    font-weight: 800;
-    color: rgba(255, 255, 255, 0.95);
-    line-height: 1.2;
-    letter-spacing: 0.5px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-.about-subtitle {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.8);
-    margin-top: 2px;
-    line-height: 1.2;
-    font-weight: 500;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
 }
 
 /* 中部内容区域 */
@@ -207,18 +194,19 @@
     flex-direction: column;
     gap: 12px;
 }
-.about-card {
+/* 卡片背景改为白色 */
+.about-card.white-bg {
     display: flex;
     align-items: flex-start;
     gap: 10px;
     padding: 12px;
-    background: #f8f9fa;
+    background: #ffffff;
     border-radius: 8px;
     border: 1px solid #e9ecef;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
 }
-.about-card:hover {
+.about-card.white-bg:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
@@ -382,23 +370,20 @@
         padding: 12px;
         min-height: 90px;
     }
-    .about-brand {
-        padding: 8px 16px;
+    .about-brand-logo {
+        width: 64px;
+        height: 64px;
     }
-    .about-logo {
-        width: 48px;
-        height: 48px;
+    .about-brand-title {
+        font-size: 18px;
     }
-    .about-title {
-        font-size: 16px;
-    }
-    .about-subtitle {
-        font-size: 11px;
+    .about-brand-subtitle {
+        font-size: 12px;
     }
     .about-main-content {
         padding: 12px;
     }
-    .about-card {
+    .about-card.white-bg {
         padding: 10px;
     }
     .card-icon {
@@ -431,15 +416,15 @@
     .about-modal-content {
         background: #2d2d2d;
     }
-    .about-card {
+    .about-card.white-bg {
         background: #3a3a3a;
         border-color: #404040;
     }
     .about-footer {
         background: #2d2d2d;
     }
-    .about-logo {
-        background-color: #2d2d2d;
+    .about-brand-logo {
+        background: rgba(0, 0, 0, 0.4);
     }
     .about-close-btn {
         background: var(--success-color, #10b981);
