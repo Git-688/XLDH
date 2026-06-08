@@ -1,4 +1,4 @@
-/* about.css - 纯色背景（无亚克力效果） */
+/* about.css - 纯色背景（无亚克力），左右对齐调整 */
 .about-modal {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     position: fixed;
@@ -55,13 +55,13 @@
     }
 }
 
-/* 顶部区域 */
+/* 顶部区域 - 左右对齐调整：左边宽度缩小，右边宽度增大 */
 .about-header {
     position: relative;
     padding: 14px;
     min-height: 100px;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     overflow: hidden;
 }
 .about-header-bg {
@@ -88,16 +88,30 @@
 .about-header-content {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: stretch;
     width: 100%;
     position: relative;
     z-index: 3;
-    gap: 14px;
+    gap: 16px;
 }
+/* 左边区域 - 宽度缩小 */
 .about-header-left {
-    flex: 1;
+    flex: 3;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
+/* 右边区域 - 宽度增大 */
+.about-header-right {
+    flex: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    text-align: right;
+}
+
 .about-info-grid {
     display: flex;
     flex-direction: column;
@@ -125,25 +139,22 @@
     font-weight: 700;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
-.about-header-right {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    min-width: 80px;
-}
+
+/* 右边品牌卡片 - 垂直居中，内容大小调整 */
 .about-brand {
     display: flex;
     flex-direction: column;
     align-items: center;
     background: rgba(0, 0, 0, 0.4);
-    padding: 10px;
+    padding: 8px 12px;
     border-radius: 10px;
     border: none;
+    width: auto;
+    max-width: 100%;
 }
 .about-logo {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -168,7 +179,7 @@
     align-items: center;
 }
 .about-title {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 800;
     color: rgba(255, 255, 255, 0.95);
     line-height: 1.2;
@@ -176,7 +187,7 @@
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 .about-subtitle {
-    font-size: 8px;
+    font-size: 10px;
     color: rgba(255, 255, 255, 0.8);
     margin-top: 2px;
     line-height: 1.2;
@@ -249,10 +260,10 @@
     margin: 0;
 }
 
-/* 底部按钮区域 */
+/* 免责声明卡片背景改为白色 */
 .about-footer {
     padding: 12px 14px 14px;
-    border-top: 1px solid #e9ecef;
+    border-top: none;
     background: #ffffff;
 }
 .about-action-buttons {
@@ -362,7 +373,7 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
 
-/* 桌面端适配 */
+/* 桌面端适配 - 调整间距 */
 @media (min-width: 768px) {
     .about-modal {
         padding: 0 24px;
@@ -371,15 +382,18 @@
         padding: 12px;
         min-height: 90px;
     }
+    .about-brand {
+        padding: 8px 16px;
+    }
     .about-logo {
-        width: 36px;
-        height: 36px;
+        width: 48px;
+        height: 48px;
     }
     .about-title {
-        font-size: 13px;
+        font-size: 16px;
     }
     .about-subtitle {
-        font-size: 9px;
+        font-size: 11px;
     }
     .about-main-content {
         padding: 12px;
@@ -423,7 +437,6 @@
     }
     .about-footer {
         background: #2d2d2d;
-        border-top-color: #404040;
     }
     .about-logo {
         background-color: #2d2d2d;
