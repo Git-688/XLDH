@@ -1,6 +1,8 @@
 /**
  * 搜索模块 - 修复版（CSP 兼容，XSS 防护，兼容侧滑栏）
  * 依赖 Utils.escapeHtml, Utils.debounce
+ * 
+ * 修改说明：动态定位搜索框位置，使其位于导航栏下方，间距与壁纸顶部到导航栏一致
  */
 class NewSearchModule {
     constructor() {
@@ -26,6 +28,11 @@ class NewSearchModule {
 
         this.isOpen = false;
         this.suggestTimer = null;
+
+        // 动态定位相关
+        this.updateModalPosition = this.updateModalPosition.bind(this);
+        this.handleResize = this.handleResize.bind(this);
+        this.isResizeListenerAdded = false;
 
         if (this.modal) {
             this.renderDropdown();
@@ -122,10 +129,44 @@ class NewSearchModule {
         });
     }
 
+    /**
+     * 计算搜索框的正确 top 位置（导航栏高度 + 壁纸区上边距）
+     */
+    updateModalPosition() {
+        if (!this.modal) return;
+        const navbar = document.querySelector('.navbar');
+        const navbarHeight = navbar ? navbar.offsetHeight : 60;
+        const wallpaperSec = document.querySelector('.wallpaper-section');
+        let extraGap = 0;
+        if (wallpaperSec) {
+            const style = window.getComputedStyle(wallpaperSec);
+            const paddingTop = parseFloat(style.paddingTop);
+            if (!isNaN(paddingTop)) extraGap = paddingTop;
+        }
+        const topPos = navbarHeight + extraGap;
+        const modalContent = this.modal.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.style.top = `${topPos}px`;
+        }
+    }
+
+    handleResize() {
+        if (this.isOpen) {
+            this.updateModalPosition();
+        }
+    }
+
     toggle() { this.isOpen ? this.hide() : this.show(); }
 
     show() {
         if (!this.modal || this.isOpen) return;
+        // 先更新位置
+        this.updateModalPosition();
+        // 添加 resize 监听
+        if (!this.isResizeListenerAdded) {
+            window.addEventListener('resize', this.handleResize);
+            this.isResizeListenerAdded = true;
+        }
         if (window.sidebar && typeof window.sidebar.isVisible === 'function' && window.sidebar.isVisible()) {
             window.sidebar.hide();
         }
@@ -144,6 +185,10 @@ class NewSearchModule {
         this.isOpen = false;
         this.clearSuggestions();
         this.closeDropdown();
+        if (this.isResizeListenerAdded) {
+            window.removeEventListener('resize', this.handleResize);
+            this.isResizeListenerAdded = false;
+        }
     }
 
     setEngine(key) {
