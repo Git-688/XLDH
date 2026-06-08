@@ -1,5 +1,5 @@
 /**
- * 插件管理器 - 支持多个音乐API源（稳定版，使用 api.injahow.cn 镜像 + 备用）
+ * 插件管理器 - 支持多个音乐API源（稳定版，使用 api.injahow.cn 镜像）
  * 整合独立播放器的健壮实现，修复网易云搜索、下载等功能
  */
 
@@ -158,7 +158,7 @@ class PluginManager {
             }
         });
 
-        // ========== 酷狗音乐插件（使用 injahow 镜像） ==========
+        // ========== 酷狗音乐插件 ==========
         this.registerPlugin('kg', {
             name: '酷狗音乐',
             version: '1.0.1',
@@ -196,7 +196,7 @@ class PluginManager {
                 }
             },
             getDownloadUrl: async (songId) => {
-                return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`; // 降级
+                return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
             }
         });
 
@@ -263,7 +263,7 @@ class PluginManager {
             getDownloadUrl: async (songId) => songId
         });
 
-        // ========== 翻译插件（可选） ==========
+        // ========== 翻译插件 ==========
         this.registerPlugin('translator', {
             name: '歌词翻译器',
             version: '1.0.0',
