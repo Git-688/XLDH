@@ -1,6 +1,6 @@
 /**
- * 音乐播放器 - 星聚导航专用（完整版）
- * 包含：精确进度条、下载进度（通过 Worker 代理）、搜索、播放列表、用户手势处理、歌词代理
+ * 音乐播放器 - 星聚导航专用（完整修复版）
+ * 包含：精确进度条、下载进度（通过 Worker 代理）、搜索、播放列表、用户手势处理、歌词代理、歌单显示修复、倍速控件修复
  */
 class MusicPlayer {
     constructor() {
@@ -431,6 +431,15 @@ class MusicPlayer {
         if (tabContent) tabContent.classList.add('active');
         this.currentApi = apiId;
         this.updateSearchToggleButton();
+        
+        // 强制重置搜索模式，确保歌单容器显示
+        this.isSearchMode.set(apiId, false);
+        const el = this.apiElements[apiId];
+        if (el) {
+            if (el.playlistContainer) el.playlistContainer.style.display = 'block';
+            if (el.searchContainer) el.searchContainer.style.display = 'none';
+        }
+        
         await this.loadApiPlaylist(apiId);
         this.updateActiveSongInList();
     }
@@ -938,6 +947,22 @@ class MusicPlayer {
             this.elements.coverImg.onerror = () => { this.elements.coverImg.src = defaultLogo; };
         }
         this.loadApiPlaylist(this.currentApi);
+        
+        // 修复：确保自定义下拉框在播放器显示后再生成
+        const initCustomSelectsWithRetry = () => {
+            if (document.querySelector('.music-player.show')) {
+                if (typeof initCustomSelects === 'function') {
+                    initCustomSelects();
+                    console.log('CustomSelects initialized');
+                } else {
+                    console.warn('initCustomSelects not defined');
+                }
+            } else {
+                setTimeout(initCustomSelectsWithRetry, 300);
+            }
+        };
+        setTimeout(initCustomSelectsWithRetry, 500);
+        
         setInterval(() => this.cacheManager.cleanup(), 30 * 60 * 1000);
         this.hasInitialized = true;
         if (this.isPlaying) {
@@ -970,6 +995,17 @@ class MusicPlayer {
         if (window.musicPlayer === this) window.musicPlayer = null;
         console.log('音乐播放器资源已清理');
     }
+}
+
+// 确保全局函数 initCustomSelects 存在（已在 CustomSelect 后定义）
+function initCustomSelects() {
+    const selects = document.querySelectorAll('.playlist-selector select, .speed-selector select');
+    selects.forEach(select => {
+        const existing = select.parentNode.querySelector('.custom-select');
+        if (!existing) {
+            new CustomSelect(select);
+        }
+    });
 }
 
 window.MusicPlayer = MusicPlayer;
