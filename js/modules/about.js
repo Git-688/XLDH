@@ -217,7 +217,7 @@ class AboutModule {
         }
     }
 
-    // 移除亚克力效果后的捐赠模态框（纯色背景）
+    // 爱发电模态框 - 重构版：移除标题/副标题，左右卡片白色背景，二维码间距与按钮一致，支持者名单左侧标题+感谢语，卡片白色加阴影，移动端滚动
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
@@ -240,6 +240,7 @@ class AboutModule {
             pointer-events: auto;
         `;
 
+        // 添加自定义样式（覆盖原有样式）
         const style = document.createElement('style');
         style.textContent = `
             .donate-modal-content {
@@ -274,31 +275,117 @@ class AboutModule {
             .donate-method-btn-left.active i {
                 transform: scale(1.1);
             }
-            .donate-card-wrapper {
-                flex: 1;
-                min-width: 0;
-                aspect-ratio: 1 / 1;
-                background: #f8f9fa;
-                border-radius: 12px;
-                padding: 12px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                box-sizing: border-box;
+            /* 左边按钮卡片（白色背景） */
+            .donate-card-wrapper:first-child {
+                background: #ffffff;
                 border: 1px solid #e0e0e0;
+                padding: 12px;
+                border-radius: 8px;
             }
-            @media (min-width: 768px) {
-                .donate-method-btn-left {
-                    max-width: 64px;
+            /* 右边二维码卡片（白色背景） */
+            .donate-card-wrapper:last-child {
+                background: #ffffff;
+                border: 1px solid #e0e0e0;
+                padding: 12px;
+                border-radius: 8px;
+            }
+            /* 二维码图片容器，内边距与左边按钮的内边距保持一致（上下左右均为12px） */
+            .qrcode-content img {
+                display: block;
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+                margin: 0 auto;
+            }
+            /* 支持者名单容器 */
+            .supporters-wrapper {
+                background: #ffffff;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 12px;
+                margin-top: 12px;
+            }
+            .supporters-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                flex-wrap: wrap;
+                margin-bottom: 12px;
+                gap: 8px;
+            }
+            .supporters-title {
+                font-size: 13px;
+                font-weight: 600;
+                color: #1e293b;
+                margin: 0;
+            }
+            .supporters-thanks {
+                font-size: 11px;
+                color: #64748b;
+                font-style: italic;
+            }
+            .supporters-list-scroll {
+                max-height: 110px;
+                overflow-y: auto;
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+                gap: 6px;
+                padding-right: 4px;
+                scrollbar-width: thin;
+            }
+            .supporter-name {
+                background: #ffffff;
+                color: #1e293b;
+                padding: 4px 8px;
+                border-radius: 6px;
+                font-size: 10px;
+                text-align: center;
+                white-space: nowrap;
+                border: 1px solid #e9ecef;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                transition: all 0.2s;
+            }
+            /* 移动端：支持者名单高度至少显示三行 */
+            @media (max-width: 480px) {
+                .supporters-list-scroll {
+                    max-height: 90px;
+                    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
                 }
-                .donate-method-btn-left i {
-                    font-size: 1.5rem;
+                .donate-card-wrapper:first-child,
+                .donate-card-wrapper:last-child {
+                    padding: 8px;
+                }
+                .donate-method-btn-left {
+                    max-width: 40px;
+                }
+                .supporters-wrapper {
+                    padding: 8px;
+                }
+            }
+            @media (prefers-color-scheme: dark) {
+                .donate-card-wrapper:first-child,
+                .donate-card-wrapper:last-child,
+                .supporters-wrapper {
+                    background: #2d2d2d;
+                    border-color: #404040;
+                }
+                .supporter-name {
+                    background: #2d2d2d;
+                    border-color: #404040;
+                    color: #e0e0e0;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                }
+                .supporters-title {
+                    color: #f0f0f0;
+                }
+                .supporters-thanks {
+                    color: #aaa;
                 }
             }
         `;
         donateModal.appendChild(style);
 
+        // 构建模态框 HTML（移除标题和副标题，支持者名单标题移到左侧并添加感谢语）
         donateModal.innerHTML += `
             <div class="donate-modal-content" style="
                 display: flex;
@@ -314,11 +401,11 @@ class AboutModule {
                 transition: transform 0.3s ease;
                 pointer-events: auto;
             ">
-                <div style="display: flex; gap: 12px; padding: 16px 16px 0; min-width: 0;">
-                    <div class="donate-card-wrapper">
-                        <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0;">感谢支持</h3>
-                        <p style="font-size: 10px; color: #64748b; margin: 0 0 12px 0;">您的支持，是更新的动力！</p>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;">
+                <!-- 顶部按钮和二维码区域 -->
+                <div style="display: flex; gap: 16px; padding: 16px 16px 0; min-width: 0;">
+                    <!-- 左边按钮卡片（白色背景） -->
+                    <div class="donate-card-wrapper" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%;">
                             <button class="donate-method-btn-left" data-type="qq" style="color: #6BC5FF; border-color: #6BC5FF;">
                                 <i class="fab fa-qq"></i>
                             </button>
@@ -334,15 +421,16 @@ class AboutModule {
                         </div>
                     </div>
 
-                    <div class="donate-card-wrapper" style="position: relative;">
+                    <!-- 右边二维码卡片（白色背景） -->
+                    <div class="donate-card-wrapper" style="flex: 1; position: relative; display: flex; align-items: center; justify-content: center;">
                         <div class="qrcode-content active" data-type="qq" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ" style="max-width: 80%; max-height: 80%; object-fit: contain;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ" style="max-width: 85%; max-height: 85%; object-fit: contain;">
                         </div>
                         <div class="qrcode-content" data-type="wechat" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信" style="max-width: 80%; max-height: 80%; object-fit: contain;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信" style="max-width: 85%; max-height: 85%; object-fit: contain;">
                         </div>
                         <div class="qrcode-content" data-type="alipay" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝" style="max-width: 80%; max-height: 80%; object-fit: contain;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝" style="max-width: 85%; max-height: 85%; object-fit: contain;">
                         </div>
                         <div class="qrcode-content" data-type="help" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
                             <div style="font-size: 10px; color: #64748b; line-height: 1.6; text-align: center;">
@@ -355,26 +443,14 @@ class AboutModule {
                     </div>
                 </div>
 
-                <div style="padding: 12px 16px 16px;">
-                    <div style="
-                        background: #f8f9fa;
-                        border-radius: 12px;
-                        padding: 10px 12px;
-                        border: 1px solid #e9ecef;
-                    ">
-                        <h4 style="font-size: 11px; color: #1e293b; margin: 0 0 8px 0; font-weight: 600; text-align: center;">支持者名单</h4>
-                        <div class="supporters-list-scroll" style="
-                            max-height: 70px;
-                            overflow-y: auto;
-                            display: grid;
-                            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
-                            gap: 4px;
-                            padding-right: 2px;
-                            scrollbar-width: none;
-                            -ms-overflow-style: none;
-                        ">
-                            ${this.supporters.map(name => `<span style="background: #ffffff; color: #1e293b; padding: 2px 5px; border-radius: 4px; font-size: 10px; text-align: center; white-space: nowrap; border: 1px solid #e9ecef;">${Utils.escapeHtml(name)}</span>`).join('')}
-                        </div>
+                <!-- 支持者名单区域 -->
+                <div class="supporters-wrapper" style="margin: 16px;">
+                    <div class="supporters-header">
+                        <div class="supporters-title">🎖️ 支持者名单</div>
+                        <div class="supporters-thanks">✨ 感谢您的每一份支持 ✨</div>
+                    </div>
+                    <div class="supporters-list-scroll">
+                        ${this.supporters.map(name => `<span class="supporter-name">${Utils.escapeHtml(name)}</span>`).join('')}
                     </div>
                 </div>
             </div>
