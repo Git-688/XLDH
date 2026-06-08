@@ -1,5 +1,5 @@
 /**
- * 插件管理器 - 支持多个音乐API源（使用支持CORS的端点）
+ * 插件管理器 - 支持多个音乐API源（修复搜索数据格式错误）
  */
 class PluginManager {
     constructor(cacheManager) {
@@ -10,10 +10,10 @@ class PluginManager {
     }
 
     initializePlugins() {
-        // ==================== 网易云音乐插件（使用 injahow 镜像，支持 CORS） ====================
+        // ==================== 网易云音乐插件 ====================
         this.registerPlugin('netease', {
             name: '网易云音乐',
-            version: '1.0.2',
+            version: '1.0.3',
             description: '基于 injahow 镜像 API',
             getPlaylist: async (playlistId) => {
                 const cacheKey = `netease_playlist_${playlistId}`;
@@ -23,8 +23,10 @@ class PluginManager {
                     const response = await fetch(`https://api.injahow.cn/meting/?server=netease&type=playlist&id=${playlistId}`);
                     if (!response.ok) throw new Error('API 响应错误');
                     const data = await response.json();
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    const formatted = data.map(song => this.formatSong(song, 'netease'));
+                    // 歌单数据一般是数组
+                    let songs = Array.isArray(data) ? data : (data.data || data.result || []);
+                    if (!Array.isArray(songs)) songs = [];
+                    const formatted = songs.map(song => this.formatSong(song, 'netease'));
                     for (const song of formatted) {
                         if (!song.src && song.id) {
                             song.src = `https://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
@@ -45,8 +47,21 @@ class PluginManager {
                     const response = await fetch(`https://api.injahow.cn/meting/?server=netease&type=search&id=${encodeURIComponent(keyword)}`);
                     if (!response.ok) throw new Error('搜索请求失败');
                     const data = await response.json();
-                    if (!Array.isArray(data)) throw new Error('搜索数据格式错误');
-                    const formatted = data.map(song => this.formatSong(song, 'netease'));
+                    // 尝试多种可能的数据结构
+                    let songs = [];
+                    if (Array.isArray(data)) {
+                        songs = data;
+                    } else if (data.result && Array.isArray(data.result.songs)) {
+                        songs = data.result.songs;
+                    } else if (data.data && Array.isArray(data.data)) {
+                        songs = data.data;
+                    } else if (data.songs && Array.isArray(data.songs)) {
+                        songs = data.songs;
+                    } else {
+                        console.warn('未知的搜索响应格式:', data);
+                        throw new Error('搜索数据格式错误');
+                    }
+                    const formatted = songs.map(song => this.formatSong(song, 'netease'));
                     for (const song of formatted) {
                         if (!song.src && song.id) {
                             song.src = `https://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
@@ -64,10 +79,10 @@ class PluginManager {
             }
         });
 
-        // ==================== QQ音乐插件（使用 injahow 镜像，支持 CORS） ====================
+        // ==================== QQ音乐插件 ====================
         this.registerPlugin('qq', {
             name: 'QQ音乐',
-            version: '1.0.1',
+            version: '1.0.2',
             description: '基于 injahow 镜像 API',
             getPlaylist: async (playlistId) => {
                 const cacheKey = `qq_playlist_${playlistId}`;
@@ -77,8 +92,9 @@ class PluginManager {
                     const response = await fetch(`https://api.injahow.cn/meting/?server=tencent&type=playlist&id=${playlistId}`);
                     if (!response.ok) throw new Error('API 响应错误');
                     const data = await response.json();
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    const formatted = data.map(song => this.formatSong(song, 'qq'));
+                    let songs = Array.isArray(data) ? data : (data.data || data.result || []);
+                    if (!Array.isArray(songs)) songs = [];
+                    const formatted = songs.map(song => this.formatSong(song, 'qq'));
                     for (const song of formatted) {
                         if (!song.src && song.id) {
                             song.src = `https://dl.stream.qqmusic.qq.com/${song.id}.mp3`;
@@ -99,8 +115,20 @@ class PluginManager {
                     const response = await fetch(`https://api.injahow.cn/meting/?server=tencent&type=search&id=${encodeURIComponent(keyword)}`);
                     if (!response.ok) throw new Error('搜索请求失败');
                     const data = await response.json();
-                    if (!Array.isArray(data)) throw new Error('搜索数据格式错误');
-                    const formatted = data.map(song => this.formatSong(song, 'qq'));
+                    let songs = [];
+                    if (Array.isArray(data)) {
+                        songs = data;
+                    } else if (data.result && Array.isArray(data.result.songs)) {
+                        songs = data.result.songs;
+                    } else if (data.data && Array.isArray(data.data)) {
+                        songs = data.data;
+                    } else if (data.songs && Array.isArray(data.songs)) {
+                        songs = data.songs;
+                    } else {
+                        console.warn('未知的QQ搜索响应格式:', data);
+                        throw new Error('搜索数据格式错误');
+                    }
+                    const formatted = songs.map(song => this.formatSong(song, 'qq'));
                     for (const song of formatted) {
                         if (!song.src && song.id) {
                             song.src = `https://dl.stream.qqmusic.qq.com/${song.id}.mp3`;
