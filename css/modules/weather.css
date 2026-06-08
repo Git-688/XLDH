@@ -732,3 +732,55 @@
         color: var(--primary-color, #7b9cff);
     }
 }
+
+/* ========== 天气预报模态框特殊定位（导航栏下方，上下间距相等，移动端左右边距与主页一致） ========== */
+.weather-modal-card {
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 60px;
+    box-sizing: border-box;
+}
+
+@media (min-width: 769px) {
+    .weather-modal-card {
+        display: flex;
+        flex-direction: column;
+    }
+    .weather-modal-card .weather-modal-content {
+        margin: auto 0;
+        max-height: calc(100vh - 60px);
+        overflow-y: auto;
+        width: 100%;
+        max-width: 350px;
+    }
+}
+
+@media (max-width: 768px) {
+    .weather-modal-card {
+        padding-left: var(--container-padding-xs, 16px);
+        padding-right: var(--container-padding-xs, 16px);
+        padding-top: 60px;
+        display: flex;
+        flex-direction: column;
+    }
+    .weather-modal-card .weather-modal-content {
+        margin: auto 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: calc(100vh - 60px);
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .weather-modal-card {
+        padding-left: var(--container-padding-xs, 16px);
+        padding-right: var(--container-padding-xs, 16px);
+    }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .weather-modal-card .weather-modal-content {
+        max-height: calc(100vh - 70px);
+    }
+}
