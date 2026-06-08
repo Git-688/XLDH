@@ -9,19 +9,24 @@ class PluginManager {
         this.initializePlugins();
     }
 
-    // 通过 Worker 代理请求
+    // 通过 Worker 代理请求（返回 JSON 或文本）
     async proxyFetch(originalUrl) {
-        const apiBase = Utils.getApiBase(); // 例如 https://api.xjdh688.ccwu.cc
+        const apiBase = Utils.getApiBase();
         const proxyUrl = `${apiBase}/music-proxy?url=${encodeURIComponent(originalUrl)}`;
         const response = await fetch(proxyUrl);
         if (!response.ok) {
             throw new Error(`代理请求失败: ${response.status}`);
         }
-        return await response.json();
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            return await response.json();
+        } else {
+            return await response.text();
+        }
     }
 
     initializePlugins() {
-        // 网易云音乐插件
+        // ========== 网易云音乐插件 ==========
         this.registerPlugin('netease', {
             name: '网易云音乐',
             version: '1.0.3',
@@ -62,7 +67,7 @@ class PluginManager {
             }
         });
 
-        // QQ音乐插件
+        // ========== QQ音乐插件 ==========
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '1.0.2',
@@ -103,7 +108,7 @@ class PluginManager {
             }
         });
 
-        // 酷狗音乐插件
+        // ========== 酷狗音乐插件 ==========
         this.registerPlugin('kg', {
             name: '酷狗音乐',
             version: '1.0.1',
@@ -144,7 +149,7 @@ class PluginManager {
             }
         });
 
-        // 酷我音乐插件
+        // ========== 酷我音乐插件 ==========
         this.registerPlugin('kuwo', {
             name: '酷我音乐',
             version: '1.0.0',
@@ -175,7 +180,7 @@ class PluginManager {
             }
         });
 
-        // 抖音热歌榜插件（独立API，可能也需要代理，但暂时保留原样，可后续修改）
+        // ========== 抖音热歌榜插件（独立API，可用原 fetch 或也通过代理） ==========
         this.registerPlugin('migu', {
             name: '抖音热歌榜',
             version: '1.0.0',
@@ -194,7 +199,7 @@ class PluginManager {
             getDownloadUrl: async (songId) => songId
         });
 
-        // 本地音乐插件
+        // ========== 本地音乐插件 ==========
         this.registerPlugin('local', {
             name: '本地音乐',
             version: '1.0.1',
@@ -207,7 +212,7 @@ class PluginManager {
             getDownloadUrl: async (songId) => songId
         });
 
-        // 翻译插件
+        // ========== 翻译插件 ==========
         this.registerPlugin('translator', {
             name: '歌词翻译器',
             version: '1.0.0',
