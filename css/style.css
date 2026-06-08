@@ -1,5 +1,5 @@
 /* ================================================
-   style.css - 星聚导航全局样式（统一缩放淡入动画）
+   style.css - 星聚导航全局样式（纯色背景，无亚克力）
    ================================================ */
 
 /* 基础变量定义 */
@@ -46,13 +46,6 @@
     --stat-invalid-color: #e57373;
     --card-hover-bg-start: rgba(67, 97, 238, 0.02);
     --card-hover-bg-end: rgba(67, 97, 238, 0.05);
-    --acrylic-bg: rgba(255, 255, 255, 0.6);
-    --acrylic-blur: blur(24px) saturate(125%);
-    --acrylic-border: 1px solid rgba(255, 255, 255, 0.5);
-    --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-    --acrylic-light-bg: rgba(255, 255, 255, 0.8);
-    --acrylic-light-blur: blur(10px) saturate(110%);
-    --acrylic-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
 }
 
 @media (prefers-color-scheme: dark) {
@@ -69,10 +62,6 @@
         --stat-invalid-color: #ef9a9a;
         --card-hover-bg-start: rgba(124, 200, 255, 0.05);
         --card-hover-bg-end: rgba(124, 200, 255, 0.1);
-        --acrylic-bg: rgba(30, 30, 30, 0.7);
-        --acrylic-border: 1px solid rgba(255, 255, 255, 0.15);
-        --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        --acrylic-light-bg: rgba(40, 40, 40, 0.7);
     }
 }
 
@@ -363,7 +352,7 @@ p {
     }
 }
 
-/* ========== 统一反馈模态框（亚克力效果，统一缩放淡入动画） ========== */
+/* ========== 统一反馈模态框（纯色背景，无亚克力） ========== */
 .feedback-modal {
     position: fixed;
     top: 0;
@@ -388,12 +377,10 @@ p {
     pointer-events: auto;
 }
 .feedback-modal-content {
-    background: var(--acrylic-bg, rgba(255, 255, 255, 0.65));
-    backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
-    -webkit-backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
-    border: var(--acrylic-border, 1px solid rgba(255, 255, 255, 0.4));
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
-    box-shadow: var(--acrylic-shadow, 0 20px 40px rgba(0, 0, 0, 0.12));
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
     width: 100%;
     max-width: 600px;
     display: flex;
@@ -431,7 +418,7 @@ p {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
+    background: rgba(0, 0, 0, 0.05);
     border: none;
     color: #64748b;
     font-size: 1rem;
@@ -442,7 +429,7 @@ p {
     transition: background 0.2s;
 }
 .feedback-modal-close:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.1);
     color: #334155;
 }
 .feedback-modal-body {
@@ -453,6 +440,25 @@ p {
     -webkit-overflow-scrolling: touch;
 }
 .feedback-modal-body::-webkit-scrollbar { display: none; }
+
+/* 深色模式模态框背景 */
+@media (prefers-color-scheme: dark) {
+    .feedback-modal-content {
+        background: #2d2d2d;
+        border: 1px solid #404040;
+    }
+    .feedback-modal-header {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+    .feedback-modal-close {
+        background: rgba(255, 255, 255, 0.1);
+        color: #adb5bd;
+    }
+    .feedback-modal-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #f8f9fa;
+    }
+}
 
 /* Toast 管理器容器 */
 .toast-manager-container {
