@@ -217,6 +217,7 @@ class AboutModule {
         }
     }
 
+    // 移除亚克力效果后的捐赠模态框（纯色背景）
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
@@ -254,7 +255,7 @@ class AboutModule {
                 justify-content: center;
                 border: 2px solid;
                 border-radius: 8px;
-                background: rgba(255,255,255,0.7);
+                background: #ffffff;
                 cursor: pointer;
                 transition: all 0.2s ease;
                 box-sizing: border-box;
@@ -277,9 +278,7 @@ class AboutModule {
                 flex: 1;
                 min-width: 0;
                 aspect-ratio: 1 / 1;
-                background: rgba(255,255,255,0.5);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
+                background: #f8f9fa;
                 border-radius: 12px;
                 padding: 12px;
                 display: flex;
@@ -287,6 +286,7 @@ class AboutModule {
                 align-items: center;
                 justify-content: center;
                 box-sizing: border-box;
+                border: 1px solid #e0e0e0;
             }
             @media (min-width: 768px) {
                 .donate-method-btn-left {
@@ -305,10 +305,8 @@ class AboutModule {
                 flex-direction: column;
                 width: 100%;
                 max-width: 500px;
-                background: rgba(255,255,255,0.65);
-                backdrop-filter: blur(24px) saturate(180%);
-                -webkit-backdrop-filter: blur(24px) saturate(180%);
-                border: 1px solid rgba(255,255,255,0.4);
+                background: #ffffff;
+                border: 1px solid #e0e0e0;
                 border-radius: 12px;
                 overflow: hidden;
                 box-shadow: 0 10px 40px rgba(0,0,0,0.1);
@@ -359,11 +357,10 @@ class AboutModule {
 
                 <div style="padding: 12px 16px 16px;">
                     <div style="
-                        background: rgba(255,255,255,0.5);
-                        backdrop-filter: blur(10px);
-                        -webkit-backdrop-filter: blur(10px);
+                        background: #f8f9fa;
                         border-radius: 12px;
                         padding: 10px 12px;
+                        border: 1px solid #e9ecef;
                     ">
                         <h4 style="font-size: 11px; color: #1e293b; margin: 0 0 8px 0; font-weight: 600; text-align: center;">支持者名单</h4>
                         <div class="supporters-list-scroll" style="
@@ -376,17 +373,15 @@ class AboutModule {
                             scrollbar-width: none;
                             -ms-overflow-style: none;
                         ">
-                            ${this.supporters.map(name => `<span style="background: rgba(255,255,255,0.7); color: #1e293b; padding: 2px 5px; border-radius: 4px; font-size: 10px; text-align: center; white-space: nowrap;">${Utils.escapeHtml(name)}</span>`).join('')}
+                            ${this.supporters.map(name => `<span style="background: #ffffff; color: #1e293b; padding: 2px 5px; border-radius: 4px; font-size: 10px; text-align: center; white-space: nowrap; border: 1px solid #e9ecef;">${Utils.escapeHtml(name)}</span>`).join('')}
                         </div>
                     </div>
                 </div>
             </div>
             <button class="donate-close-btn-bottom" style="
                 margin-top: 12px;
-                background: rgba(255,255,255,0.7);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                border: 1px solid rgba(255,255,255,0.5);
+                background: #ffffff;
+                border: 1px solid #e0e0e0;
                 border-radius: 50%;
                 width: 36px;
                 height: 36px;
@@ -435,7 +430,7 @@ class AboutModule {
         const setActive = (activeBtn) => {
             buttons.forEach(b => {
                 b.classList.remove('active');
-                b.style.background = 'rgba(255,255,255,0.7)';
+                b.style.background = '#ffffff';
             });
             activeBtn.classList.add('active');
             const activeColor = activeBtn.style.color || '#6BC5FF';
