@@ -103,9 +103,9 @@
     justify-content: center;
     white-space: nowrap;
 }
-/* 右边大卡片 - 缩小宽度，内边距上下左右一致 */
+/* 右边大卡片 - 再缩小20%（flex从2.5改为2.1），内边距上下左右一致 */
 .about-header-right.logo-card {
-    flex: 2.5;          /* 从3减小到2.5，使卡片缩小 */
+    flex: 2.1;          /* 缩小约20% */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -117,8 +117,8 @@
     min-width: 0;
 }
 .about-brand-logo {
-    width: 52px;        /* 稍微缩小Logo尺寸，配合卡片缩小 */
-    height: 52px;
+    width: 48px;        /* 进一步缩小Logo，配合卡片缩小 */
+    height: 48px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.2);
     display: flex;
@@ -136,7 +136,7 @@
     display: block;
 }
 .about-brand-title {
-    font-size: 15px;    /* 略微缩小标题字体，适应卡片缩小 */
+    font-size: 14px;    /* 缩小标题字体 */
     font-weight: 800;
     color: white;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
@@ -145,7 +145,7 @@
     white-space: nowrap;
 }
 .about-brand-subtitle {
-    font-size: 10px;    /* 略微缩小副标题 */
+    font-size: 9px;     /* 缩小副标题 */
     color: rgba(255,255,255,0.85);
     text-shadow: 0 1px 1px rgba(0,0,0,0.3);
     text-align: center;
@@ -248,7 +248,7 @@
     margin: 0;
 }
 
-/* 免责声明卡片背景改为白色 */
+/* 底部区域 */
 .about-footer {
     padding: 12px 14px 14px;
     border-top: none;
@@ -371,14 +371,14 @@
         min-height: 90px;
     }
     .about-brand-logo {
-        width: 56px;
-        height: 56px;
+        width: 52px;
+        height: 52px;
     }
     .about-brand-title {
-        font-size: 16px;
+        font-size: 15px;
     }
     .about-brand-subtitle {
-        font-size: 11px;
+        font-size: 10px;
     }
     .about-main-content {
         padding: 12px;
