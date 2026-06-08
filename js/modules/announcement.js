@@ -1,5 +1,6 @@
 /**
  * 简约公告模块 - 清爽现代版（修复模态框动画）
+ * 已移除重要提醒标题和星星图标，重要提醒文字改为浅红色
  */
 class AnnouncementModule {
     constructor() {
@@ -87,6 +88,7 @@ class AnnouncementModule {
         const focus = this.escapeHtml(ann.focus || '');
         const updates = ann.updates && Array.isArray(ann.updates) ? ann.updates : [];
         const time = this.escapeHtml(ann.time || new Date().toLocaleDateString());
+        // 重要提醒区域：只显示内容，无标题和图标
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
                 <div class="announcement-header">
@@ -100,10 +102,6 @@ class AnnouncementModule {
                 </div>
                 <div class="announcement-body">
                     <div class="focus-section">
-                        <div class="section-label">
-                            <i class="fas fa-star" style="color: #f59e0b; font-size: 0.9rem;"></i>
-                            <span>重要提醒</span>
-                        </div>
                         <div class="focus-content">${focus}</div>
                     </div>
                     <div class="updates-section">
@@ -219,7 +217,6 @@ class AnnouncementModule {
             this.modalElement.removeEventListener('transitionend', onTransitionEnd);
         };
         this.modalElement.addEventListener('transitionend', onTransitionEnd, { once: true });
-        // 后备超时
         setTimeout(() => {
             if (this.isVisible) {
                 this.isVisible = false;
