@@ -182,7 +182,23 @@
 .progress-actions { display: flex; align-items: center; gap: 8px; }
 .speed-control { display: flex; align-items: center; position: relative; }
 .speed-selector { width: 65px; }
-.music-player select { display: none !important; }
+/* 倍速选择器 - 确保原生 select 显示（修复隐藏问题） */
+.speed-control .speed-selector select {
+    display: block !important;
+    width: 100%;
+    padding: 4px 6px;
+    border: 1px solid var(--border-color, #e9ecef);
+    border-radius: 6px;
+    font-size: 11px;
+    background: var(--bg-card, #ffffff);
+    color: var(--text-primary, #2b2d42);
+    cursor: pointer;
+    outline: none;
+}
+.speed-control .speed-selector select:focus {
+    border-color: var(--primary-color, #4361ee);
+}
+.music-player select { display: none !important; } /* 仅隐藏其他 select，倍速选择器已单独覆盖 */
 
 .custom-select { position: relative; width: 100%; user-select: none; }
 .custom-select-trigger {
@@ -323,7 +339,7 @@
 .download-btn:hover { background: rgba(67,97,238,0.1); color: var(--primary-color, #4361ee); transform: scale(1.05); }
 .download-btn svg { width: 18px; height: 18px; fill: currentColor; }
 
-/* 下载进度条样式（新增） */
+/* 下载进度条样式 */
 .download-progress {
     position: fixed;
     bottom: 80px;
