@@ -51,7 +51,7 @@
             this.isOpen = false;
             this.categories = JSON.parse(JSON.stringify(CATEGORIES_DATA));
             this.userConfig = null;
-            this._savedScrollY = 0;   // 保存关闭侧滑栏前的滚动位置（仍保留，但不再锁定滚动）
+            this._savedScrollY = 0;
             this.init();
         }
 
@@ -289,37 +289,54 @@
             }
         }
 
+        // 修改后的 openProfileModal：移除亚克力效果，调整头部高度与星聚笔记一致，移动端左右边距与主页一致，移除头像激活指示样式
         openProfileModal() {
             const currentAvatar = (this.userConfig && this.userConfig.avatar) ? this.userConfig.avatar : './assets/logo.png';
+            const containerPadding = getComputedStyle(document.documentElement).getPropertyValue('--container-padding-xs').trim() || '16px';
             const modalHtml = `
                 <div id="profileModal" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:10002;display:flex;align-items:center;justify-content:center;">
-                    <div class="profile-modal-card" style="background:var(--acrylic-bg, rgba(255,255,255,0.65));backdrop-filter:var(--acrylic-blur, blur(24px) saturate(125%));-webkit-backdrop-filter:var(--acrylic-blur, blur(24px) saturate(125%));border:var(--acrylic-border, 1px solid rgba(255,255,255,0.4));border-radius:8px;box-shadow:var(--acrylic-shadow, 0 8px 32px rgba(0,0,0,0.08));width:360px;max-width:90%;padding:0;overflow:hidden;">
-                        <div style="position:relative;padding:20px 20px 16px;border-bottom:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:space-between;">
-                            <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-primary, #1e293b);">个人资料</h3>
-                            <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;background:#f0f0f0;border:2px solid var(--primary-color, #4361ee);box-shadow:0 2px 8px rgba(0,0,0,0.1);flex-shrink:0;">
+                    <div class="profile-modal-card" style="
+                        background: #ffffff;
+                        border: 1px solid #e0e0e0;
+                        border-radius: 8px;
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+                        width: 360px;
+                        max-width: calc(100% - 2 * ${containerPadding});
+                        padding: 0;
+                        overflow: hidden;
+                    ">
+                        <div style="
+                            padding: 10px 14px 8px;
+                            border-bottom: 1px solid rgba(0,0,0,0.08);
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                        ">
+                            <h3 style="margin:0;font-size:16px;font-weight:600;color:var(--text-primary, #1e293b);">个人资料</h3>
+                            <div style="width:32px;height:32px;border-radius:8px;overflow:hidden;background:#f0f0f0;flex-shrink:0;">
                                 <img id="profileAvatarPreview" src="${this.escapeHtml(currentAvatar)}" alt="头像预览" style="width:100%;height:100%;object-fit:cover;">
                             </div>
                         </div>
                         <div style="padding:16px 20px;">
                             <div style="margin-bottom:16px;">
                                 <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary, #64748b);">QQ号码（自动获取头像）</label>
-                                <input type="text" id="profileQQ" placeholder="输入QQ号" value="" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.6);font-size:13px;">
+                                <input type="text" id="profileQQ" placeholder="输入QQ号" value="" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e0e0e0;background:#ffffff;font-size:13px;">
                                 <div id="qqAvatarStatus" style="font-size:11px;margin-top:6px;color:#666;"></div>
                             </div>
                             <div style="margin-bottom:16px;">
                                 <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary, #64748b);">昵称</label>
-                                <input type="text" id="profileNickname" placeholder="昵称" value="${this.escapeHtml(this.userConfig?.nickname || '')}" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.6);font-size:13px;">
+                                <input type="text" id="profileNickname" placeholder="昵称" value="${this.escapeHtml(this.userConfig?.nickname || '')}" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e0e0e0;background:#ffffff;font-size:13px;">
                             </div>
                             <div style="margin-bottom:16px;">
                                 <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary, #64748b);">个性签名</label>
-                                <input type="text" id="profileSignature" placeholder="个性签名" value="${this.escapeHtml(this.userConfig?.signature || '')}" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.6);font-size:13px;">
+                                <input type="text" id="profileSignature" placeholder="个性签名" value="${this.escapeHtml(this.userConfig?.signature || '')}" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e0e0e0;background:#ffffff;font-size:13px;">
                             </div>
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
                                 <div style="font-size:11px;color:#ef4444;background:rgba(239,68,68,0.1);padding:4px 8px;border-radius:6px;">
                                     <i class="fas fa-info-circle"></i> QQ号仅供获取头像！
                                 </div>
                                 <div style="display:flex;gap:12px;">
-                                    <button id="profileCancelBtn" style="padding:8px 20px;background:rgba(0,0,0,0.05);border:none;border-radius:30px;cursor:pointer;font-size:13px;">取消</button>
+                                    <button id="profileCancelBtn" style="padding:8px 20px;background:#f8f9fa;border:1px solid #e0e0e0;border-radius:30px;cursor:pointer;font-size:13px;">取消</button>
                                     <button id="profileSaveBtn" style="padding:8px 20px;background:#4361ee;color:white;border:none;border-radius:30px;cursor:pointer;font-size:13px;">保存</button>
                                 </div>
                             </div>
@@ -445,17 +462,12 @@
             });
         }
 
-        // 修改后的 show 方法：不再锁定 body 滚动
         show() {
             if (this.isOpen) return;
-            // 保存当前滚动位置（以备后续可能需要）
             this._savedScrollY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
             this.closeOtherModals();
             this.isOpen = true;
             this.sidebarEl.classList.add('active');
-            // 移除这两行：不再禁止 body 滚动
-            // document.body.style.overflow = 'hidden';
-            // document.body.classList.add('sidebar-open');
             if (window.app && !window._sidebarModalRegistered) {
                 window.app.registerModal(this);
                 window._sidebarModalRegistered = true;
@@ -466,9 +478,7 @@
             if (!this.isOpen) return;
             this.isOpen = false;
             this.sidebarEl.classList.remove('active');
-            // 恢复 body 样式（原本设置的 overflow 已被移除，这里只需移除可能残留的 class）
             document.body.classList.remove('sidebar-open');
-            // 恢复滚动位置（仅当保存的值有效且页面未关闭）
             if (typeof this._savedScrollY === 'number' && this._savedScrollY !== undefined) {
                 window.scrollTo(0, this._savedScrollY);
                 this._savedScrollY = 0;
