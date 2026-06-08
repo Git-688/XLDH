@@ -23,14 +23,14 @@
     transform: translateY(20px) scale(0.95);
     opacity: 0;
     pointer-events: none;
-    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.6s ease;
 }
 
 .music-player.show {
     transform: translateY(0) scale(1);
     opacity: 1;
     pointer-events: auto;
-    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.6s ease;
 }
 
 .music-player:hover {
@@ -83,11 +83,11 @@
 @keyframes scaleOut { from { transform: scale(1); opacity: 1; } to { transform: scale(0.8); opacity: 0; } }
 
 @media (max-width: 768px) {
-    .music-player { animation: slideInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+    .music-player { animation: slideInUp 0.6s ease forwards; }
     .music-player.hiding { animation: slideOutDown 0.5s ease forwards; }
 }
 @media (min-width: 769px) {
-    .music-player { animation: scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+    .music-player { animation: scaleIn 0.6s ease forwards; }
     .music-player.hiding { animation: scaleOut 0.5s ease forwards; }
 }
 
