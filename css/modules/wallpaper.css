@@ -45,12 +45,12 @@
     user-select: none;
 }
 
-/* 幻灯片轨道 —— 性能优化：transition 仅限 transform */
+/* 幻灯片轨道 —— 性能优化：transition 仅限 transform，改用 ease */
 .carousel-track {
     display: flex;
     width: 100%;
     height: 100%;
-    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+    transition: transform 0.5s ease;  /* 原贝塞尔曲线改为 ease */
     will-change: transform;
 }
 
