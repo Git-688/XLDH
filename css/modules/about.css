@@ -92,33 +92,33 @@
     width: 100%;
     position: relative;
     z-index: 3;
-    gap: 16px;
+    gap: 12px;  /* 卡片之间的间距，与内边距保持一致 */
 }
 /* 左边卡片 - 宽度增大，内容不换行 */
 .about-header-left {
-    flex: 4;  /* 增大宽度 */
+    flex: 4;
     min-width: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    white-space: nowrap;  /* 内容不允许换行 */
+    white-space: nowrap;
 }
-/* 右边大卡片 - Logo + 标题 + 副标题，居中显示 */
+/* 右边大卡片 - 缩小宽度，内边距上下左右一致 */
 .about-header-right.logo-card {
-    flex: 3;
+    flex: 2.5;          /* 从3减小到2.5，使卡片缩小 */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 12px;
-    padding: 12px 8px;
+    padding: 12px;      /* 上下左右内边距一致 */
     backdrop-filter: blur(4px);
     min-width: 0;
 }
 .about-brand-logo {
-    width: 56px;
-    height: 56px;
+    width: 52px;        /* 稍微缩小Logo尺寸，配合卡片缩小 */
+    height: 52px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.2);
     display: flex;
@@ -136,16 +136,16 @@
     display: block;
 }
 .about-brand-title {
-    font-size: 16px;
+    font-size: 15px;    /* 略微缩小标题字体，适应卡片缩小 */
     font-weight: 800;
     color: white;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    margin: 6px 0 2px;
+    margin: 4px 0 2px;
     text-align: center;
     white-space: nowrap;
 }
 .about-brand-subtitle {
-    font-size: 11px;
+    font-size: 10px;    /* 略微缩小副标题 */
     color: rgba(255,255,255,0.85);
     text-shadow: 0 1px 1px rgba(0,0,0,0.3);
     text-align: center;
@@ -371,14 +371,14 @@
         min-height: 90px;
     }
     .about-brand-logo {
-        width: 64px;
-        height: 64px;
+        width: 56px;
+        height: 56px;
     }
     .about-brand-title {
-        font-size: 18px;
+        font-size: 16px;
     }
     .about-brand-subtitle {
-        font-size: 12px;
+        font-size: 11px;
     }
     .about-main-content {
         padding: 12px;
