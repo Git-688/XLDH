@@ -1,5 +1,6 @@
 /**
  * 插件管理器 - 星聚导航音乐播放器专用（使用 Worker 代理解决跨域）
+ * 插件列表：netease（网易云）、qq（QQ音乐）、qishui（汽水音乐）、local（本地音乐）
  */
 class PluginManager {
     constructor(cacheManager) {
@@ -108,95 +109,99 @@ class PluginManager {
             }
         });
 
-        // ========== 酷狗音乐插件 ==========
-        this.registerPlugin('kg', {
-            name: '酷狗音乐',
+        // ========== 汽水音乐插件 ==========
+        this.registerPlugin('qishui', {
+            name: '汽水音乐',
             version: '1.0.1',
             getPlaylist: async (playlistId) => {
-                const cacheKey = `kg_playlist_${playlistId}`;
+                const cacheKey = `qishui_playlist_${playlistId}`;
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const originalUrl = `https://api.i-meto.com/meting/api?server=kugou&type=playlist&id=${playlistId}`;
-                    const data = await this.proxyFetch(originalUrl);
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    const formatted = data.map(song => this.formatSong(song, 'kg'));
+                    const token = '961D28A9C59C411C49C75FA3E9FAF24C';
+                    let url = '';
+                    if (playlistId === 'hot') {
+                        url = `https://api.suol.cc/v1/music_qs.php?type=hot&token=${token}`;
+                    } else if (playlistId === 'new') {
+                        url = `https://api.suol.cc/v1/music_qs.php?type=new&token=${token}`;
+                    } else if (playlistId === 'up') {
+                        url = `https://api.suol.cc/v1/music_qs.php?type=up&token=${token}`;
+                    } else {
+                        url = `https://api.suol.cc/v1/music_qs.php?type=hot&token=${token}`;
+                    }
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('API 响应错误');
+                    const data = await response.json();
+                    if (data.code !== 200 || !data.data || !Array.isArray(data.data)) {
+                        throw new Error('数据格式错误');
+                    }
+                    const formatted = data.data.map(song => ({
+                        id: song.id,
+                        title: song.name,
+                        artist: song.artist,
+                        src: song.url,
+                        cover: song.pic,
+                        lrc: song.lrc,
+                        isOnline: true,
+                        source: 'qishui',
+                        _needResolve: true
+                    }));
                     this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
                     return formatted;
                 } catch (error) {
-                    console.error('酷狗歌单加载失败:', error);
+                    console.error('汽水音乐API请求失败:', error);
                     return [];
                 }
             },
             search: async (keyword) => {
-                const cacheKey = `kg_search_${keyword}`;
+                const cacheKey = `qishui_search_${keyword}`;
                 const cached = this.cacheManager.get(cacheKey);
                 if (cached) return cached;
                 try {
-                    const originalUrl = `https://api.i-meto.com/meting/api?server=kugou&type=search&id=${encodeURIComponent(keyword)}`;
-                    const data = await this.proxyFetch(originalUrl);
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    const formatted = data.map(song => this.formatSong(song, 'kg'));
+                    const token = '961D28A9C59C411C49C75FA3E9FAF24C';
+                    const url = `https://api.suol.cc/v1/music_qs.php?type=search&keyword=${encodeURIComponent(keyword)}&token=${token}`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    if (data.code !== 200 || !data.data || !Array.isArray(data.data)) {
+                        throw new Error('搜索数据格式错误');
+                    }
+                    const formatted = data.data.map(song => ({
+                        id: song.id,
+                        title: song.name,
+                        artist: song.artist,
+                        src: song.url,
+                        cover: song.pic,
+                        lrc: song.lrc,
+                        isOnline: true,
+                        source: 'qishui',
+                        _needResolve: true
+                    }));
                     this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
                     return formatted;
                 } catch (error) {
-                    console.error('酷狗搜索失败:', error);
+                    console.error('汽水音乐搜索失败:', error);
                     return [];
                 }
             },
-            getDownloadUrl: async (songId) => {
-                return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
-            }
-        });
-
-        // ========== 酷我音乐插件 ==========
-        this.registerPlugin('kuwo', {
-            name: '酷我音乐',
-            version: '1.0.0',
-            getPlaylist: async (playlistId) => {
+            _getSongUrl: async (songId, quality = 'standard') => {
                 try {
-                    const originalUrl = `https://api.i-meto.com/meting/api?server=kuwo&type=playlist&id=${playlistId}`;
-                    const data = await this.proxyFetch(originalUrl);
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    return data.map(song => this.formatSong(song, 'kuwo'));
-                } catch (error) {
-                    console.error('酷我歌单加载失败:', error);
-                    return [];
-                }
-            },
-            search: async (keyword) => {
-                try {
-                    const originalUrl = `https://api.i-meto.com/meting/api?server=kuwo&type=search&id=${encodeURIComponent(keyword)}`;
-                    const data = await this.proxyFetch(originalUrl);
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    return data.map(song => this.formatSong(song, 'kuwo'));
-                } catch (error) {
-                    console.error('酷我搜索失败:', error);
-                    return [];
-                }
-            },
-            getDownloadUrl: async (songId) => {
-                return `https://antiserver.kuwo.cn/anti.s?format=mp3&rid=${songId}&type=convert_url&response=url`;
-            }
-        });
-
-        // ========== 抖音热歌榜插件（独立API，可用原 fetch 或也通过代理） ==========
-        this.registerPlugin('migu', {
-            name: '抖音热歌榜',
-            version: '1.0.0',
-            getPlaylist: async () => {
-                try {
-                    const response = await fetch('https://api.injahow.cn/meting/?type=playlist&id=2809513713');
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const token = '961D28A9C59C411C49C75FA3E9FAF24C';
+                    const url = `https://api.suol.cc/v1/music_qs.php?type=url&id=${songId}&quality=${quality}&token=${token}`;
+                    const response = await fetch(url);
                     const data = await response.json();
-                    return this.formatDouyinResponse(data);
+                    if (data.code === 200 && data.data && data.data.url) {
+                        return {
+                            url: data.data.url,
+                            lyric: data.data.lrc || '',
+                            pic: data.data.pic || ''
+                        };
+                    }
+                    throw new Error('获取播放地址失败');
                 } catch (error) {
-                    console.error('抖音热歌榜加载失败:', error);
-                    return [];
+                    console.error('解析汽水音乐播放地址失败:', error);
+                    return { url: '', lyric: '', pic: '' };
                 }
-            },
-            search: async () => [],
-            getDownloadUrl: async (songId) => songId
+            }
         });
 
         // ========== 本地音乐插件 ==========
@@ -211,30 +216,6 @@ class PluginManager {
             search: async () => [],
             getDownloadUrl: async (songId) => songId
         });
-
-        // ========== 翻译插件 ==========
-        this.registerPlugin('translator', {
-            name: '歌词翻译器',
-            version: '1.0.0',
-            translateText: async (text, targetLang = 'zh') => {
-                const cacheKey = `translation_${targetLang}_${btoa(text)}`;
-                const cached = this.cacheManager.get(cacheKey);
-                if (cached) return cached;
-                try {
-                    const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`);
-                    const data = await response.json();
-                    if (data.responseStatus === 200 && data.responseData) {
-                        const translation = data.responseData.translatedText;
-                        this.cacheManager.set(cacheKey, translation, 24 * 60 * 60 * 1000);
-                        return translation;
-                    }
-                    return text;
-                } catch (error) {
-                    console.warn('翻译失败:', error);
-                    return text;
-                }
-            }
-        });
     }
 
     formatSong(song, source) {
@@ -248,17 +229,6 @@ class PluginManager {
             isOnline: true,
             source: source
         };
-    }
-
-    formatDouyinResponse(data) {
-        if (!data) return [];
-        if (data.code === 200 && data.data && Array.isArray(data.data)) {
-            return data.data.map(song => this.formatSong(song, 'migu')).filter(s => s.src);
-        }
-        if (Array.isArray(data)) {
-            return data.map(song => this.formatSong(song, 'migu')).filter(s => s.src);
-        }
-        return [];
     }
 
     registerPlugin(id, plugin) {
@@ -302,12 +272,6 @@ class PluginManager {
         const plugin = this.getPlugin(apiId);
         if (!plugin || !plugin.getDownloadUrl) throw new Error(`插件 ${apiId} 不支持下载`);
         return await plugin.getDownloadUrl(songId);
-    }
-
-    async translateText(text, targetLang = 'zh') {
-        const translator = this.getPlugin('translator');
-        if (!translator || !translator.translateText) return text;
-        return await translator.translateText(text, targetLang);
     }
 
     async preloadMultiple(songs, concurrent = 3) {
