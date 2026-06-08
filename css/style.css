@@ -378,7 +378,7 @@ p {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--container-padding-xs, 16px);
+    padding: 12px;
     box-sizing: border-box;
     pointer-events: none;
 }
@@ -402,39 +402,6 @@ p {
     opacity: 0;
     transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
     overflow: hidden;
-    max-height: calc(100vh - calc(2 * var(--container-padding-xs, 16px)));
-}
-@media (min-width: 576px) {
-    .feedback-modal {
-        padding: var(--container-padding-sm, 20px);
-    }
-    .feedback-modal-content {
-        max-height: calc(100vh - calc(2 * var(--container-padding-sm, 20px)));
-    }
-}
-@media (min-width: 768px) {
-    .feedback-modal {
-        padding: var(--container-padding-md, 24px);
-    }
-    .feedback-modal-content {
-        max-height: calc(100vh - calc(2 * var(--container-padding-md, 24px)));
-    }
-}
-@media (min-width: 992px) {
-    .feedback-modal {
-        padding: var(--container-padding-lg, 28px);
-    }
-    .feedback-modal-content {
-        max-height: calc(100vh - calc(2 * var(--container-padding-lg, 28px)));
-    }
-}
-@media (min-width: 1200px) {
-    .feedback-modal {
-        padding: var(--container-padding-xl, 32px);
-    }
-    .feedback-modal-content {
-        max-height: calc(100vh - calc(2 * var(--container-padding-xl, 32px)));
-    }
 }
 .feedback-modal.active .feedback-modal-content {
     transform: scale(1);
@@ -670,4 +637,77 @@ p {
     background: rgba(245,158,11,0.1);
     color: #d97706;
     border: 1px solid rgba(245,158,11,0.2);
+}
+
+/* ========== 星聚笔记模态框特殊样式（定位：导航栏下方水平居中，上下间距相等） ========== */
+#notebookModal {
+    /* 覆盖父容器默认的居中对齐方式 */
+    align-items: center;
+    justify-content: flex-start;
+    /* 为导航栏留出空间，并使用 border-box 确保内边距计入高度 */
+    padding-top: 60px;
+    box-sizing: border-box;
+}
+
+/* 桌面端：内容区垂直居中（上下边距相等） */
+@media (min-width: 769px) {
+    #notebookModal {
+        display: flex;
+        flex-direction: column;
+    }
+    #notebookModal .feedback-modal-content {
+        margin: auto 0;                /* 垂直方向自动居中，上下间距相等 */
+        max-height: calc(100vh - 60px); /* 最大高度不超过视口减去导航栏高度 */
+        overflow-y: auto;
+        width: 100%;
+        max-width: 600px;
+    }
+}
+
+/* 移动端：左右边距与主页容器一致，上下间距相等，高度自适应 */
+@media (max-width: 768px) {
+    #notebookModal {
+        padding-left: var(--container-padding-xs, 16px);
+        padding-right: var(--container-padding-xs, 16px);
+        padding-top: 60px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+    }
+    #notebookModal .feedback-modal-content {
+        margin: auto 0;                /* 垂直方向自动居中，上下间距相等 */
+        width: 100%;
+        max-width: 100%;
+        max-height: calc(100vh - 60px); /* 确保不超出视口（导航栏已占用60px） */
+        overflow-y: auto;
+        /* 移除原有的固定宽度和边距，使其完全跟随父容器内边距 */
+    }
+}
+
+/* 小屏手机进一步优化（380px以下） */
+@media (max-width: 480px) {
+    #notebookModal {
+        padding-left: var(--container-padding-xs, 16px);
+        padding-right: var(--container-padding-xs, 16px);
+    }
+}
+
+/* 横屏小高度时，限制最大高度防止溢出 */
+@media (max-height: 500px) and (orientation: landscape) {
+    #notebookModal .feedback-modal-content {
+        max-height: calc(100vh - 70px);
+    }
+}
+
+/* 确保内容滚动条美观（可选） */
+#notebookModal .feedback-modal-content::-webkit-scrollbar {
+    width: 4px;
+}
+#notebookModal .feedback-modal-content::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05);
+    border-radius: 4px;
+}
+#notebookModal .feedback-modal-content::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
 }
