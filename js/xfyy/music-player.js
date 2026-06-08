@@ -2,6 +2,216 @@
  * 音乐播放器 - 星聚导航专用（完整修复版）
  * 包含：精确进度条、下载进度（通过 Worker 代理）、搜索、播放列表、用户手势处理、歌词代理、歌单显示修复、倍速控件修复
  */
+
+// ==================== 自定义下拉选择器组件（必须在播放器类之前定义） ====================
+let currentOpenCustomSelect = null;
+let customSelectInstances = new Map();
+
+class CustomSelect {
+    constructor(selectElement) {
+        this.selectElement = selectElement;
+        this.container = null;
+        this.trigger = null;
+        this.dropdown = null;
+        this.options = [];
+        this.isOpen = false;
+        this.value = selectElement.value;
+        this.isSpeedControl = false;
+        this.boundHandleOutsideClick = null;
+        this.boundScrollListener = null;
+        this.boundResizeListener = null;
+        this.init();
+        const id = selectElement.id || selectElement.name || Math.random().toString(36);
+        customSelectInstances.set(id, this);
+    }
+
+    init() {
+        this.selectElement.style.display = 'none';
+        this.container = document.createElement('div');
+        this.container.className = 'custom-select';
+        this.container.setAttribute('data-select-id', this.selectElement.id || '');
+
+        this.trigger = document.createElement('div');
+        this.trigger.className = 'custom-select-trigger';
+        this.trigger.innerHTML = `
+            <span class="custom-select-value">${this.getSelectedText()}</span>
+            <span class="arrow"></span>
+        `;
+        this.container.appendChild(this.trigger);
+        this.selectElement.parentNode.insertBefore(this.container, this.selectElement.nextSibling);
+
+        this.isSpeedControl = this.container.closest('.speed-control') !== null;
+
+        this.dropdown = document.createElement('div');
+        this.dropdown.className = 'custom-select-dropdown';
+        this.populateOptions();
+
+        if (this.isSpeedControl) {
+            document.body.appendChild(this.dropdown);
+        } else {
+            this.container.appendChild(this.dropdown);
+        }
+
+        this.bindEvents();
+        this.selectElement.addEventListener('change', () => {
+            this.setValue(this.selectElement.value, false);
+        });
+    }
+
+    getSelectedText() {
+        const option = this.selectElement.options[this.selectElement.selectedIndex];
+        return option ? option.textContent : '';
+    }
+
+    populateOptions() {
+        this.dropdown.innerHTML = '';
+        this.options = [];
+
+        for (let i = 0; i < this.selectElement.options.length; i++) {
+            const option = this.selectElement.options[i];
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'custom-select-option';
+            if (i === this.selectElement.selectedIndex) {
+                optionDiv.classList.add('selected');
+            }
+            optionDiv.textContent = option.textContent;
+            optionDiv.setAttribute('data-value', option.value);
+            optionDiv.setAttribute('data-index', i);
+
+            optionDiv.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.selectOption(i);
+                this.closeDropdown();
+            });
+
+            this.dropdown.appendChild(optionDiv);
+            this.options.push(optionDiv);
+        }
+    }
+
+    selectOption(index) {
+        if (index === this.selectElement.selectedIndex) return;
+
+        this.selectElement.selectedIndex = index;
+        this.value = this.selectElement.value;
+
+        const valueSpan = this.trigger.querySelector('.custom-select-value');
+        if (valueSpan) {
+            valueSpan.textContent = this.selectElement.options[index].textContent;
+        }
+
+        this.options.forEach((opt, i) => {
+            opt.classList.toggle('selected', i === index);
+        });
+
+        const changeEvent = new Event('change', { bubbles: true });
+        this.selectElement.dispatchEvent(changeEvent);
+    }
+
+    setValue(value, triggerChange = true) {
+        for (let i = 0; i < this.selectElement.options.length; i++) {
+            if (this.selectElement.options[i].value === value) {
+                this.selectOption(i);
+                break;
+            }
+        }
+    }
+
+    updateDropdownPosition() {
+        if (!this.isOpen) return;
+        const rect = this.trigger.getBoundingClientRect();
+        if (this.isSpeedControl) {
+            this.dropdown.style.position = 'fixed';
+            this.dropdown.style.top = `${rect.bottom + 4}px`;
+            this.dropdown.style.left = `${rect.left}px`;
+            this.dropdown.style.width = `${rect.width}px`;
+        } else {
+            this.dropdown.style.position = 'absolute';
+            this.dropdown.style.top = `${this.trigger.offsetHeight + 4}px`;
+            this.dropdown.style.left = '0';
+            this.dropdown.style.width = `${this.trigger.offsetWidth}px`;
+        }
+        this.dropdown.style.maxHeight = '200px';
+        this.dropdown.style.overflowY = 'auto';
+    }
+
+    openDropdown() {
+        if (this.isOpen) return;
+        if (currentOpenCustomSelect && currentOpenCustomSelect !== this) {
+            currentOpenCustomSelect.closeDropdown();
+        }
+        this.isOpen = true;
+        this.trigger.classList.add('open');
+        this.updateDropdownPosition();
+        setTimeout(() => this.updateDropdownPosition(), 30);
+        this.dropdown.classList.add('open');
+        currentOpenCustomSelect = this;
+
+        this.boundScrollListener = () => this.updateDropdownPosition();
+        this.boundResizeListener = () => this.updateDropdownPosition();
+        window.addEventListener('scroll', this.boundScrollListener, true);
+        window.addEventListener('resize', this.boundResizeListener);
+
+        this.boundHandleOutsideClick = (e) => {
+            if (!this.container.contains(e.target) && !this.dropdown.contains(e.target)) {
+                this.closeDropdown();
+            }
+        };
+        setTimeout(() => document.addEventListener('click', this.boundHandleOutsideClick), 0);
+    }
+
+    closeDropdown() {
+        if (!this.isOpen) return;
+        this.isOpen = false;
+        this.trigger.classList.remove('open');
+        this.dropdown.classList.remove('open');
+        if (this.boundScrollListener) window.removeEventListener('scroll', this.boundScrollListener, true);
+        if (this.boundResizeListener) window.removeEventListener('resize', this.boundResizeListener);
+        if (this.boundHandleOutsideClick) document.removeEventListener('click', this.boundHandleOutsideClick);
+        if (currentOpenCustomSelect === this) {
+            currentOpenCustomSelect = null;
+        }
+    }
+
+    bindEvents() {
+        this.trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.isOpen ? this.closeDropdown() : this.openDropdown();
+        });
+    }
+
+    refreshOptions() {
+        this.populateOptions();
+        const valueSpan = this.trigger.querySelector('.custom-select-value');
+        if (valueSpan) valueSpan.textContent = this.getSelectedText();
+    }
+
+    destroy() {
+        this.closeDropdown();
+        if (this.container && this.container.parentNode) this.container.remove();
+        if (this.dropdown && this.dropdown.parentNode) this.dropdown.remove();
+        this.selectElement.style.display = '';
+        const id = this.selectElement.id || this.selectElement.name || '';
+        if (id) customSelectInstances.delete(id);
+        this.selectElement = null;
+        this.container = null;
+        this.trigger = null;
+        this.dropdown = null;
+        this.options = null;
+    }
+}
+
+function initCustomSelects() {
+    const selects = document.querySelectorAll('.playlist-selector select, .speed-selector select');
+    selects.forEach(select => {
+        const existing = select.parentNode.querySelector('.custom-select');
+        if (!existing) {
+            new CustomSelect(select);
+        }
+    });
+}
+
+// ==================== 主播放器类 ====================
 class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audio-element');
@@ -995,17 +1205,6 @@ class MusicPlayer {
         if (window.musicPlayer === this) window.musicPlayer = null;
         console.log('音乐播放器资源已清理');
     }
-}
-
-// 确保全局函数 initCustomSelects 存在（已在 CustomSelect 后定义）
-function initCustomSelects() {
-    const selects = document.querySelectorAll('.playlist-selector select, .speed-selector select');
-    selects.forEach(select => {
-        const existing = select.parentNode.querySelector('.custom-select');
-        if (!existing) {
-            new CustomSelect(select);
-        }
-    });
 }
 
 window.MusicPlayer = MusicPlayer;
