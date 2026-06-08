@@ -1,4 +1,4 @@
-/* about.css - 纯色背景（无亚克力），左右对齐调整 */
+/* about.css - 纯色背景（无亚克力），左右对齐调整，顶部卡片正方形比例 */
 .about-modal {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     position: fixed;
@@ -55,7 +55,7 @@
     }
 }
 
-/* 顶部区域 - 左边宽度增大，内容不换行 */
+/* 顶部区域 */
 .about-header {
     position: relative;
     padding: 14px;
@@ -85,39 +85,82 @@
     background: linear-gradient(135deg, rgba(67, 97, 238, 0.3), rgba(58, 12, 163, 0.2));
     z-index: 2;
 }
+/* 左右网格布局，正方形比例 */
 .about-header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: 4fr 2.1fr;
+    gap: 12px;               /* 卡片之间的间距 */
     width: 100%;
     position: relative;
     z-index: 3;
-    gap: 12px;  /* 卡片之间的间距，与内边距保持一致 */
 }
-/* 左边卡片 - 宽度增大，内容不换行 */
+
+/* 左边卡片 - 正方形比例，内部项目垂直均匀分布 */
 .about-header-left {
-    flex: 4;
+    aspect-ratio: 1 / 1;     /* 正方形比例 */
     min-width: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;  /* 三个项目均匀分布，上下留白 */
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 12px;            /* 内边距一致，计入正方形内部 */
+    backdrop-filter: blur(4px);
     white-space: nowrap;
+    box-sizing: border-box;
 }
-/* 右边大卡片 - 再缩小20%（flex从2.5改为2.1），内边距上下左右一致 */
+
+/* 右边大卡片 - 正方形比例 */
 .about-header-right.logo-card {
-    flex: 2.1;          /* 缩小约20% */
+    aspect-ratio: 1 / 1;     /* 正方形比例 */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 12px;
-    padding: 12px;      /* 上下左右内边距一致 */
+    padding: 12px;            /* 上下左右内边距一致 */
     backdrop-filter: blur(4px);
     min-width: 0;
+    box-sizing: border-box;
 }
+
+.about-info-grid {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
+    gap: 12px;               /* 增大了三个卡片之间的间距 */
+}
+
+.about-info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 8px 10px;       /* 稍微增加内边距，提升可读性 */
+    border-radius: 8px;
+    border: none;
+    white-space: nowrap;
+}
+.info-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    min-width: 50px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.info-value {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+}
+
+/* 右边卡片内部元素 */
 .about-brand-logo {
-    width: 48px;        /* 进一步缩小Logo，配合卡片缩小 */
+    width: 48px;
     height: 48px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.2);
@@ -136,7 +179,7 @@
     display: block;
 }
 .about-brand-title {
-    font-size: 14px;    /* 缩小标题字体 */
+    font-size: 14px;
     font-weight: 800;
     color: white;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
@@ -145,40 +188,10 @@
     white-space: nowrap;
 }
 .about-brand-subtitle {
-    font-size: 9px;     /* 缩小副标题 */
+    font-size: 9px;
     color: rgba(255,255,255,0.85);
     text-shadow: 0 1px 1px rgba(0,0,0,0.3);
     text-align: center;
-    white-space: nowrap;
-}
-
-.about-info-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-.about-info-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(0, 0, 0, 0.4);
-    padding: 6px 10px;
-    border-radius: 8px;
-    border: none;
-    white-space: nowrap;
-}
-.info-label {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 600;
-    min-width: 50px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-.info-value {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.95);
-    font-weight: 700;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     white-space: nowrap;
 }
 
@@ -361,7 +374,7 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
 
-/* 桌面端适配 - 调整间距 */
+/* 桌面端适配 - 调整内部元素大小 */
 @media (min-width: 768px) {
     .about-modal {
         padding: 0 24px;
@@ -379,6 +392,12 @@
     }
     .about-brand-subtitle {
         font-size: 10px;
+    }
+    .about-info-item {
+        padding: 9px 12px;
+    }
+    .info-label, .info-value {
+        font-size: 11px;
     }
     .about-main-content {
         padding: 12px;
@@ -411,6 +430,30 @@
     }
 }
 
+/* 移动端小屏适配 - 调整正方形比例可能偏大，适当减小内边距 */
+@media (max-width: 480px) {
+    .about-header-left,
+    .about-header-right.logo-card {
+        padding: 8px;
+    }
+    .about-info-grid {
+        gap: 8px;
+    }
+    .about-info-item {
+        padding: 6px 8px;
+    }
+    .about-brand-logo {
+        width: 40px;
+        height: 40px;
+    }
+    .about-brand-title {
+        font-size: 12px;
+    }
+    .about-brand-subtitle {
+        font-size: 8px;
+    }
+}
+
 /* 深色模式 */
 @media (prefers-color-scheme: dark) {
     .about-modal-content {
@@ -423,8 +466,9 @@
     .about-footer {
         background: #2d2d2d;
     }
-    .about-brand-logo {
-        background: rgba(0, 0, 0, 0.4);
+    .about-header-left,
+    .about-header-right.logo-card {
+        background: rgba(0, 0, 0, 0.5);
     }
     .about-close-btn {
         background: var(--success-color, #10b981);
