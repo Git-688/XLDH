@@ -1,4 +1,4 @@
-// about.js - 星聚导航关于模块（完整修改版）
+// about.js - 星聚导航关于模块（完整修改版，爱发电模态框使用说明添加标题）
 // 确保 Utils 存在
 if (typeof Utils === 'undefined') {
     window.Utils = {
@@ -216,7 +216,7 @@ class AboutModule {
         }
     }
 
-    // 爱发电模态框（保持不变）
+    // 爱发电模态框 - 使用说明添加标题（已修改）
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
@@ -420,12 +420,16 @@ class AboutModule {
                         <div class="qrcode-content" data-type="alipay" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
                             <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝" style="max-width: 85%; max-height: 85%; object-fit: contain;">
                         </div>
+                        <!-- 帮助面板：添加标题 “📖 使用说明” -->
                         <div class="qrcode-content" data-type="help" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                            <div style="font-size: 10px; color: #64748b; line-height: 1.6; text-align: center;">
-                                <p style="margin: 0 0 6px 0;">1. 选择左侧支付方式</p>
-                                <p style="margin: 0 0 6px 0;">2. 使用对应App扫描</p>
-                                <p style="margin: 0 0 6px 0;">3. 输入您想支持的金额</p>
-                                <p style="margin: 0;">4. 备注留下您的名字</p>
+                            <div style="width:100%; text-align: center;">
+                                <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary, #1e293b);">📖 使用说明</div>
+                                <div style="font-size: 10px; color: var(--text-secondary, #64748b); line-height: 1.6;">
+                                    <p style="margin: 0 0 6px 0;">1. 选择左侧支付方式</p>
+                                    <p style="margin: 0 0 6px 0;">2. 使用对应App扫描</p>
+                                    <p style="margin: 0 0 6px 0;">3. 输入您想支持的金额</p>
+                                    <p style="margin: 0;">4. 备注留下您的名字</p>
+                                </div>
                             </div>
                         </div>
                     </div>
