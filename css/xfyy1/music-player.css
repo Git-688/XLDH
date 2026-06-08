@@ -323,7 +323,7 @@
 .download-btn:hover { background: rgba(67,97,238,0.1); color: var(--primary-color, #4361ee); transform: scale(1.05); }
 .download-btn svg { width: 18px; height: 18px; fill: currentColor; }
 
-/* 下载进度条样式（新增） */
+/* 下载进度条样式 */
 .download-progress {
     position: fixed;
     bottom: 80px;
