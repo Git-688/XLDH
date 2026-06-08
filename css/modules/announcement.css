@@ -159,14 +159,14 @@
     background: var(--primary-color, #4361ee);
 }
 
-/* 底部区域 */
+/* 底部区域 - 白色背景 + 明显分割线（已修改） */
 .announcement-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 12px 20px 16px;
-    background: #f8f9fa;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    background: #ffffff;           /* 改为纯白色 */
+    border-top: 1px solid #e0e0e0; /* 清晰的分割线 */
 }
 .announcement-date {
     display: flex;
@@ -240,7 +240,7 @@
     }
 }
 
-/* 深色模式下的适配 */
+/* 深色模式下的底部适配 */
 @media (prefers-color-scheme: dark) {
     .focus-section {
         background: #2d2d2d;
@@ -249,8 +249,8 @@
         color: #f87171;
     }
     .announcement-footer {
-        background: #2d2d2d;
-        border-top-color: rgba(255, 255, 255, 0.08);
+        background: #2d2d2d;           /* 深色模式背景与主体一致 */
+        border-top: 1px solid #404040; /* 深色分割线 */
     }
 }
 
