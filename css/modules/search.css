@@ -1,4 +1,4 @@
-/* 搜索模态框 - 统一缩放淡入动画 */
+/* 搜索模态框 - 纯色背景（无亚克力），统一缩放淡入动画 */
 .search-modal {
     position: fixed;
     top: 0;
@@ -10,7 +10,7 @@
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), visibility 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 .search-modal.active {
     visibility: visible;
@@ -19,20 +19,18 @@
 }
 .search-modal .modal-content {
     position: absolute;
-    /* 移除固定 top: 24px，由 JS 动态设置 */
+    /* 动态位置由 JS 设置 */
     right: 24px;
     width: 90%;
     max-width: 460px;
-    background: var(--acrylic-bg, rgba(255,255,255,0.6));
-    backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
-    -webkit-backdrop-filter: var(--acrylic-blur, blur(24px) saturate(125%));
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
     padding: 12px 14px;
-    box-shadow: var(--acrylic-shadow, 0 8px 32px rgba(0, 0, 0, 0.08));
-    border: var(--acrylic-border, 1px solid rgba(255, 255, 255, 0.5));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     transform: scale(0.95);
     opacity: 0;
-    transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    transition: transform 0.3s ease, opacity 0.3s ease;
 }
 .search-modal.active .modal-content {
     transform: scale(1);
@@ -104,10 +102,10 @@
     top: calc(12px + 36px + 6px);
     left: 14px;
     width: 170px;
-    background: var(--bg-card, #ffffff);
-    border: 1px solid var(--border-color, #e9ecef);
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
-    box-shadow: var(--shadow-xl, 0 8px 16px rgba(0, 0, 0, 0.1));
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     z-index: 10001;
     max-height: 220px;
     overflow-y: auto;
@@ -139,7 +137,7 @@
     border-radius: 6px;
 }
 .engine-dropdown-item:hover {
-    background: var(--bg-secondary, #f8f9fa);
+    background: #f8f9fa;
 }
 .engine-dropdown-item.active {
     background: rgba(67, 97, 238, 0.08);
@@ -157,13 +155,13 @@
 .suggestions {
     max-height: 160px;
     overflow-y: auto;
-    border: 1px solid var(--border-color, #e9ecef);
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
     margin: 6px 0;
     visibility: hidden;
     opacity: 0;
     transition: opacity 0.15s, visibility 0.15s;
-    background: var(--bg-card, #ffffff);
+    background: #ffffff;
     scrollbar-width: none;
 }
 .suggestions::-webkit-scrollbar {
@@ -178,21 +176,21 @@
     font-size: 0.85rem;
     color: var(--text-primary, #2b2d42);
     cursor: pointer;
-    border-bottom: 1px solid var(--border-color, #e9ecef);
+    border-bottom: 1px solid #e9ecef;
     transition: background 0.15s;
 }
 .suggestion-item:last-child {
     border-bottom: none;
 }
 .suggestion-item:hover {
-    background: var(--bg-secondary, #f8f9fa);
+    background: #f8f9fa;
 }
 
 /* 历史记录 */
 .history-panel {
     margin-top: 6px;
     padding: 8px 10px;
-    background: var(--bg-secondary, #f8f9fa);
+    background: #f8f9fa;
     border-radius: 8px;
     max-height: 200px;
     overflow-y: auto;
@@ -271,5 +269,40 @@
     }
     .engine-dropdown {
         width: 150px;
+    }
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+    .search-modal .modal-content {
+        background: #2d2d2d;
+        border: 1px solid #404040;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    .engine-dropdown {
+        background: #2d2d2d;
+        border: 1px solid #404040;
+    }
+    .engine-dropdown-item:hover {
+        background: #3a3a3a;
+    }
+    .suggestions {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+    .suggestion-item {
+        border-bottom-color: #404040;
+    }
+    .suggestion-item:hover {
+        background: #3a3a3a;
+    }
+    .history-panel {
+        background: #3a3a3a;
+    }
+    .history-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .delete-history:hover {
+        background: rgba(239, 68, 68, 0.2);
     }
 }
