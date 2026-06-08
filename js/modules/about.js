@@ -1,3 +1,4 @@
+// about.js - 星聚导航关于模块（完整修改版）
 // 确保 Utils 存在
 if (typeof Utils === 'undefined') {
     window.Utils = {
@@ -76,7 +77,8 @@ class AboutModule {
                     <div class="about-header-bg" style="background-image: url('${Utils.escapeHtml(this.wallpaperUrl)}')"></div>
                     <div class="about-header-overlay"></div>
                     <div class="about-header-content">
-                        <div class="about-header-left">
+                        <!-- 左边卡片 - 宽度增大，内容不换行 -->
+                        <div class="about-header-left no-wrap">
                             <div class="about-info-grid">
                                 <div class="about-info-item">
                                     <span class="info-label">开发者：</span>
@@ -92,25 +94,19 @@ class AboutModule {
                                 </div>
                             </div>
                         </div>
-                        <div class="about-header-right">
-                            <div class="about-brand" style="background: rgba(0, 0, 0, 0.4); padding: 10px 12px; border-radius: 10px; text-align: left; width: 100%;">
-                                <h4 style="margin: 0 0 8px 0; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.95); display: flex; align-items: center; gap: 6px;">
-                                    <i class="fas fa-book-open"></i> 📖 使用说明
-                                </h4>
-                                <ul style="margin: 0; padding-left: 18px; font-size: 10px; color: rgba(255,255,255,0.9); line-height: 1.6;">
-                                    <li>点击左侧分类浏览网站</li>
-                                    <li>使用顶部搜索框快速查找</li>
-                                    <li>点击音乐按钮播放音乐</li>
-                                    <li>点击投稿按钮推荐网站</li>
-                                    <li>点击评论按钮参与讨论</li>
-                                </ul>
+                        <!-- 右边大卡片 - Logo + 标题 + 副标题 -->
+                        <div class="about-header-right logo-card">
+                            <div class="about-brand-logo">
+                                <img class="about-logo-img" src="${Utils.escapeHtml(this.logoUrl)}" alt="星聚导航Logo">
                             </div>
+                            <div class="about-brand-title">星聚导航</div>
+                            <div class="about-brand-subtitle">启跃星门，航图绘星河</div>
                         </div>
                     </div>
                 </div>
                 <div class="about-main-content">
                     <div class="about-cards">
-                        <div class="about-card">
+                        <div class="about-card white-bg">
                             <div class="card-icon intro-icon">
                                 <i class="fas fa-info-circle"></i>
                             </div>
@@ -119,7 +115,7 @@ class AboutModule {
                                 <p>星聚导航是一个现代化的个人导航网站，致力于收集整理网络上的优质资源和个人开发的小工具，为用户提供便捷的上网导航体验。</p>
                             </div>
                         </div>
-                        <div class="about-card">
+                        <div class="about-card white-bg">
                             <div class="card-icon disclaimer-icon">
                                 <i class="fas fa-exclamation-triangle"></i>
                             </div>
@@ -220,7 +216,7 @@ class AboutModule {
         }
     }
 
-    // 爱发电模态框（保持不变，但为了完整性保留）
+    // 爱发电模态框（保持不变）
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
