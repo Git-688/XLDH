@@ -146,7 +146,7 @@
 .time-text { background: rgba(67,97,238,0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
 .progress-bar { position: relative; height: 6px; background: var(--border-color, #e9ecef); border-radius: 3px; cursor: pointer; width: 100%; overflow: hidden; touch-action: none; }
 
-/* 进度条 - 单一主题色 + 拖拽过渡禁用 */
+/* 进度条 - 单一主题色 + 双保险更新 */
 .progress {
     position: absolute;
     height: 100%;
@@ -160,6 +160,7 @@
     z-index: 2;
     box-shadow: 0 0 4px rgba(67, 97, 238, 0.5);
 }
+/* 拖拽时禁用过渡，提升实时性 */
 .progress.no-transition {
     transition: none !important;
 }
@@ -321,9 +322,34 @@
 .download-btn { background: none; border: none; padding: 8px; border-radius: 50%; cursor: pointer; transition: all 0.3s ease; color: var(--text-secondary, #6c757d); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; }
 .download-btn:hover { background: rgba(67,97,238,0.1); color: var(--primary-color, #4361ee); transform: scale(1.05); }
 .download-btn svg { width: 18px; height: 18px; fill: currentColor; }
-.download-progress { position: fixed; bottom: 80px; right: 20px; background: var(--bg-card, #ffffff); padding: 10px 15px; border-radius: 8px; box-shadow: var(--shadow-lg, 0 4px 6px rgba(0,0,0,0.07)); z-index: 10002; min-width: 200px; }
-.download-progress-bar { height: 4px; background: var(--border-color, #e9ecef); border-radius: 2px; overflow: hidden; margin-top: 5px; }
-.download-progress-fill { height: 100%; background: var(--primary-color, #4361ee); transition: width 0.3s ease; border-radius: 2px; }
+
+/* 下载进度条样式（新增） */
+.download-progress {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    background: var(--bg-card, #ffffff);
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg, 0 4px 6px rgba(0,0,0,0.07));
+    z-index: 10002;
+    min-width: 200px;
+    font-size: 12px;
+    font-family: inherit;
+}
+.download-progress-bar {
+    height: 4px;
+    background: var(--border-color, #e9ecef);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+.download-progress-fill {
+    height: 100%;
+    background: var(--primary-color, #4361ee);
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
 
 @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } .album-cover.playing img { animation: none; } }
 @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -358,4 +384,19 @@
     .music-player .search-input-group input { padding: 6px 12px; font-size: 12px; }
     .music-player .search-header { margin-top: 6px; }
     #search-toggle-btn .search-icon, #search-toggle-btn .back-icon { width: 16px; height: 16px; }
+}
+
+/* 深色模式下载进度条适配 */
+@media (prefers-color-scheme: dark) {
+    .download-progress {
+        background: rgba(30,30,30,0.9);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+    }
+    .download-progress-bar {
+        background: #3a3a3a;
+    }
+    .download-progress-fill {
+        background: var(--primary-color, #4361ee);
+    }
 }
