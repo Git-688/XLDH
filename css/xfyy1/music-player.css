@@ -43,18 +43,6 @@
     transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
 }
 
-/* 深色模式 - 纯色背景 */
-@media (prefers-color-scheme: dark) {
-    .music-player {
-        background: #2d2d2d;
-        border: 1px solid #444;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
-    .music-player:hover {
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-    }
-}
-
 /* 音乐按钮动画 */
 #musicBtn { position: relative; transition: all 0.3s ease; }
 #musicBtn.active { background: var(--primary-color, #4361ee); color: white; transform: scale(1.1); }
@@ -373,17 +361,377 @@
     #search-toggle-btn .search-icon, #search-toggle-btn .back-icon { width: 16px; height: 16px; }
 }
 
-/* 深色模式下载进度条适配 */
+/* ==================== 深色模式优化 ==================== */
+/* 系统深色模式 */
 @media (prefers-color-scheme: dark) {
-    .download-progress {
-        background: rgba(30,30,30,0.9);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
+    .music-player {
+        background: #2d2d2d;
+        border: 1px solid #404040;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     }
-    .download-progress-bar {
+    .music-player:hover {
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .player-top {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .song-title {
+        color: #f0f0f0;
+    }
+    .song-artist {
+        color: #adb5bd;
+    }
+
+    .cover-placeholder {
         background: #3a3a3a;
     }
-    .download-progress-fill {
-        background: var(--primary-color, #4361ee);
+
+    .control-btn {
+        color: #adb5bd;
     }
+    .control-btn:hover {
+        background: rgba(67, 97, 238, 0.2);
+        color: #7b9cff;
+    }
+
+    .play-btn {
+        background: var(--primary-color, #4361ee);
+        color: white;
+    }
+    .play-btn:hover {
+        background: var(--secondary-color, #3a56d6);
+    }
+
+    .progress-section {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+    .progress-bar {
+        background: #404040;
+    }
+    .progress {
+        background: #7b9cff;
+        box-shadow: 0 0 4px rgba(123, 156, 255, 0.5);
+    }
+    .progress-handle {
+        background: #2d2d2d;
+        border-color: #7b9cff;
+    }
+    .time-text {
+        background: rgba(123, 156, 255, 0.15);
+    }
+    .time-display {
+        color: #adb5bd;
+    }
+
+    .custom-select-trigger {
+        background: #3a3a3a;
+        border-color: #404040;
+        color: #e0e0e0;
+    }
+    .custom-select-trigger:hover {
+        border-color: #7b9cff;
+        background: rgba(123, 156, 255, 0.1);
+    }
+    .custom-select-dropdown {
+        background: #2d2d2d;
+        border-color: #404040;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+    .custom-select-option {
+        color: #e0e0e0;
+    }
+    .custom-select-option:hover {
+        background: rgba(123, 156, 255, 0.15);
+        color: #7b9cff;
+    }
+    .custom-select-option.selected {
+        background: rgba(123, 156, 255, 0.2);
+        color: #7b9cff;
+    }
+
+    .lyrics-section {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+    .lyrics-single-line {
+        color: #f0f0f0;
+    }
+
+    .bottom-tabs {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+    .tab-btn {
+        color: #adb5bd;
+    }
+    .tab-btn:hover {
+        color: #7b9cff;
+        background: rgba(123, 156, 255, 0.1);
+    }
+    .tab-btn.active {
+        color: #7b9cff;
+        border-bottom-color: #7b9cff;
+    }
+
+    .playlist-header {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .loading {
+        color: #adb5bd;
+    }
+
+    .song-item {
+        color: #e0e0e0;
+    }
+    .song-item:hover {
+        background: rgba(123, 156, 255, 0.1);
+    }
+    .song-item.active {
+        background: rgba(123, 156, 255, 0.2);
+        color: #7b9cff;
+    }
+    .song-item.active::before {
+        color: #7b9cff;
+    }
+    .song-item-artist {
+        color: #adb5bd;
+    }
+
+    .music-player .search-input-group {
+        background: #3a3a3a;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .music-player .search-input-group:focus-within {
+        background: #2d2d2d;
+        border-color: #7b9cff;
+    }
+    .music-player .search-input-group input {
+        color: #f0f0f0;
+    }
+    .music-player .search-input-group input::placeholder {
+        color: #8f9bb3;
+    }
+    .music-player .search-icon {
+        color: #adb5bd;
+    }
+    .music-player .search-input-group:focus-within .search-icon {
+        color: #7b9cff;
+    }
+
+    .music-player .search-download-btn {
+        color: #adb5bd;
+    }
+    .music-player .search-download-btn:hover {
+        background: rgba(123, 156, 255, 0.2);
+        color: #7b9cff;
+    }
+
+    .error-message {
+        background: rgba(239, 68, 68, 0.15);
+    }
+
+    .download-progress {
+        background: #2d2d2d;
+        border: 1px solid #404040;
+        color: #f0f0f0;
+    }
+    .download-progress-bar {
+        background: #404040;
+    }
+    .download-progress-fill {
+        background: #7b9cff;
+    }
+
+    /* 音量滑块深色 */
+    .volume-slider {
+        background: #2d2d2d;
+        border: 1px solid #404040;
+    }
+    .volume-slider input[type="range"] {
+        background: #404040;
+    }
+    .volume-slider input[type="range"]::-webkit-slider-thumb {
+        background: #7b9cff;
+    }
+    .volume-slider input[type="range"]::-webkit-slider-thumb:hover {
+        background: #5a7aff;
+    }
+}
+
+/* 手动深色模式覆盖 */
+.dark-mode .music-player {
+    background: #2d2d2d;
+    border: 1px solid #404040;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.dark-mode .music-player:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.dark-mode .player-top {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+.dark-mode .song-title {
+    color: #f0f0f0;
+}
+.dark-mode .song-artist {
+    color: #adb5bd;
+}
+.dark-mode .cover-placeholder {
+    background: #3a3a3a;
+}
+.dark-mode .control-btn {
+    color: #adb5bd;
+}
+.dark-mode .control-btn:hover {
+    background: rgba(67, 97, 238, 0.2);
+    color: #7b9cff;
+}
+.dark-mode .play-btn {
+    background: var(--primary-color, #4361ee);
+    color: white;
+}
+.dark-mode .play-btn:hover {
+    background: var(--secondary-color, #3a56d6);
+}
+.dark-mode .progress-section {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+.dark-mode .progress-bar {
+    background: #404040;
+}
+.dark-mode .progress {
+    background: #7b9cff;
+    box-shadow: 0 0 4px rgba(123, 156, 255, 0.5);
+}
+.dark-mode .progress-handle {
+    background: #2d2d2d;
+    border-color: #7b9cff;
+}
+.dark-mode .time-text {
+    background: rgba(123, 156, 255, 0.15);
+}
+.dark-mode .time-display {
+    color: #adb5bd;
+}
+.dark-mode .custom-select-trigger {
+    background: #3a3a3a;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+.dark-mode .custom-select-trigger:hover {
+    border-color: #7b9cff;
+    background: rgba(123, 156, 255, 0.1);
+}
+.dark-mode .custom-select-dropdown {
+    background: #2d2d2d;
+    border-color: #404040;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+.dark-mode .custom-select-option {
+    color: #e0e0e0;
+}
+.dark-mode .custom-select-option:hover {
+    background: rgba(123, 156, 255, 0.15);
+    color: #7b9cff;
+}
+.dark-mode .custom-select-option.selected {
+    background: rgba(123, 156, 255, 0.2);
+    color: #7b9cff;
+}
+.dark-mode .lyrics-section {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+.dark-mode .lyrics-single-line {
+    color: #f0f0f0;
+}
+.dark-mode .bottom-tabs {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+.dark-mode .tab-btn {
+    color: #adb5bd;
+}
+.dark-mode .tab-btn:hover {
+    color: #7b9cff;
+    background: rgba(123, 156, 255, 0.1);
+}
+.dark-mode .tab-btn.active {
+    color: #7b9cff;
+    border-bottom-color: #7b9cff;
+}
+.dark-mode .playlist-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+.dark-mode .loading {
+    color: #adb5bd;
+}
+.dark-mode .song-item {
+    color: #e0e0e0;
+}
+.dark-mode .song-item:hover {
+    background: rgba(123, 156, 255, 0.1);
+}
+.dark-mode .song-item.active {
+    background: rgba(123, 156, 255, 0.2);
+    color: #7b9cff;
+}
+.dark-mode .song-item.active::before {
+    color: #7b9cff;
+}
+.dark-mode .song-item-artist {
+    color: #adb5bd;
+}
+.dark-mode .music-player .search-input-group {
+    background: #3a3a3a;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.dark-mode .music-player .search-input-group:focus-within {
+    background: #2d2d2d;
+    border-color: #7b9cff;
+}
+.dark-mode .music-player .search-input-group input {
+    color: #f0f0f0;
+}
+.dark-mode .music-player .search-input-group input::placeholder {
+    color: #8f9bb3;
+}
+.dark-mode .music-player .search-icon {
+    color: #adb5bd;
+}
+.dark-mode .music-player .search-input-group:focus-within .search-icon {
+    color: #7b9cff;
+}
+.dark-mode .music-player .search-download-btn {
+    color: #adb5bd;
+}
+.dark-mode .music-player .search-download-btn:hover {
+    background: rgba(123, 156, 255, 0.2);
+    color: #7b9cff;
+}
+.dark-mode .error-message {
+    background: rgba(239, 68, 68, 0.15);
+}
+.dark-mode .download-progress {
+    background: #2d2d2d;
+    border: 1px solid #404040;
+    color: #f0f0f0;
+}
+.dark-mode .download-progress-bar {
+    background: #404040;
+}
+.dark-mode .download-progress-fill {
+    background: #7b9cff;
+}
+.dark-mode .volume-slider {
+    background: #2d2d2d;
+    border: 1px solid #404040;
+}
+.dark-mode .volume-slider input[type="range"] {
+    background: #404040;
+}
+.dark-mode .volume-slider input[type="range"]::-webkit-slider-thumb {
+    background: #7b9cff;
+}
+.dark-mode .volume-slider input[type="range"]::-webkit-slider-thumb:hover {
+    background: #5a7aff;
 }
