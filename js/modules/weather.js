@@ -1,15 +1,9 @@
 /**
- * 天气模块 - 基于 GPS 经纬度定位 + 城市手动选择
- * 主 API：https://cn.apihz.cn/api/tianqi/tqybjw.php (经纬度查询)
- * 手动 API：https://cn.apihz.cn/api/tianqi/tqyb.php (省份+城市，用于手动选择)
- * 不包含任何 IP 定位备用，定位失败则引导用户手动选择
+ * 天气模块 - 基于 Worker 代理（密钥在服务端，安全）
+ * 通过调用后端 /weather/proxy 接口获取天气数据，无需在前端暴露 API 密钥
  */
 class WeatherModule {
     static CONFIG = {
-        // 经纬度天气 API（GPS 定位使用）
-        WEATHER_API_GPS: 'https://cn.apihz.cn/api/tianqi/tqybjw.php',
-        // 城市天气 API（手动选择使用）
-        WEATHER_API_CITY: 'https://cn.apihz.cn/api/tianqi/tqyb.php',
         get API_BASE() {
             return Utils.getApiBase();
         }
@@ -24,15 +18,11 @@ class WeatherModule {
         this.autoRefreshTime = 10 * 60 * 1000;
         this.initialized = false;
         this.isLoading = false;
-        this.useAutoLocation = true;      // 是否使用自动定位（GPS）
-        this.manualCity = null;           // 手动选择的城市
-        this.manualProvince = null;       // 手动选择时保存省份
+        this.useAutoLocation = true;
+        this.manualCity = null;
+        this.manualProvince = null;
         this.escHandler = null;
         this.showModalBound = this.showModal.bind(this);
-        // APiHz API 凭证
-        this.apiId = '10014221';
-        this.apiKey = '4a7768de1cf2e0f41fc0a4005240c837';
-        // GPS 定位是否已尝试过（避免重复弹窗）
         this.gpsAttempted = false;
     }
 
@@ -61,7 +51,6 @@ class WeatherModule {
         } else if (this.manualCity) {
             await this.loadWeatherDataByCity(this.manualCity);
         } else {
-            // 没有保存任何城市，尝试 GPS
             await this.tryGpsLocation();
         }
         this.initialized = true;
@@ -78,7 +67,7 @@ class WeatherModule {
                 this.manualCity = manual;
                 this.manualProvince = manualProv || null;
                 this.useAutoLocation = false;
-                console.log('使用手动选择的城市:', manual, '省份:', manualProv);
+                console.log('使用手动选择的城市:', manual);
                 return;
             }
             this.useAutoLocation = true;
@@ -113,42 +102,32 @@ class WeatherModule {
                 localStorage.removeItem('weather_manual_province');
             }
             this.currentCity = city;
-            console.log('城市已保存:', city, isManual ? '(手动)' : '(GPS)', province ? `省份:${province}` : '');
+            console.log('城市已保存:', city, isManual ? '(手动)' : '(GPS)');
         } catch (error) {
             console.error('保存城市失败:', error);
         }
     }
 
-    /**
-     * 尝试 GPS 定位（仅一次）
-     */
     async tryGpsLocation() {
         if (this.gpsAttempted) return;
         this.gpsAttempted = true;
         try {
-            // 请求高精度位置
             const position = await this.getCurrentPosition();
             const { latitude, longitude } = position.coords;
             console.log(`GPS 定位成功: 经度 ${longitude}, 纬度 ${latitude}`);
             await this.loadWeatherDataByLonLat(longitude, latitude);
         } catch (error) {
             console.error('GPS 定位失败:', error.message);
-            // 定位失败，提示用户手动选择
             this.useAutoLocation = false;
             if (window.app && window.app.showToast) {
                 window.app.showToast('无法自动定位，请手动选择城市', 'warning');
             }
-            // 如果当前没有手动城市，弹出城市选择框
             if (!this.manualCity) {
                 setTimeout(() => this.showCityPrompt(), 500);
             }
-            // 注意：不降级到 IP 定位，直接标记为手动模式
         }
     }
 
-    /**
-     * 封装 Geolocation API 为 Promise
-     */
     getCurrentPosition() {
         return new Promise((resolve, reject) => {
             if (!navigator.geolocation) {
@@ -163,19 +142,17 @@ class WeatherModule {
         });
     }
 
-    /**
-     * 通过经纬度加载天气数据（主 API）
-     * @param {number} lon 经度
-     * @param {number} lat 纬度
-     */
     async loadWeatherDataByLonLat(lon, lat) {
         try {
-            this.weatherData = await this.fetchWeatherByLonLat(lon, lat);
-            // 从返回数据中提取城市名
-            let cityName = this.weatherData.city;
-            if (!cityName && this.weatherData.shi) {
-                cityName = this.weatherData.shi.replace(/市$/, '');
+            const apiBase = Utils.getApiBase();
+            const url = `${apiBase}/weather/proxy?lon=${lon}&lat=${lat}`;
+            const response = await Utils.safeFetch(url, { timeout: 10000 });
+            const data = await response.json();
+            if (data.code !== 200) {
+                throw new Error(data.msg || '获取天气数据失败');
             }
+            this.weatherData = this.parseWeatherData(data);
+            let cityName = this.weatherData.city;
             if (cityName) {
                 this.currentCity = cityName;
                 this.saveCity(cityName, false);
@@ -188,108 +165,29 @@ class WeatherModule {
         }
     }
 
-    async fetchWeatherByLonLat(lon, lat) {
-        const url = `${WeatherModule.CONFIG.WEATHER_API_GPS}?id=${this.apiId}&key=${this.apiKey}&lon=${lon}&lat=${lat}&day=7&hourtype=0&suntimetype=0`;
+    async loadWeatherDataByCity(city) {
         try {
+            const apiBase = Utils.getApiBase();
+            const url = `${apiBase}/weather/proxy?city=${encodeURIComponent(city)}`;
             const response = await Utils.safeFetch(url, { timeout: 10000 });
             const data = await response.json();
             if (data.code !== 200) {
                 throw new Error(data.msg || '获取天气数据失败');
             }
-            return this.parseWeatherData(data);
+            this.weatherData = this.parseWeatherData(data);
+            // 手动覆盖城市名为用户选择的城市（代理返回的可能不准确）
+            this.weatherData.city = city;
+            this.currentCity = city;
+            this.saveCity(city, true, null);
+            return true;
         } catch (error) {
-            Utils.handleApiError(error, '获取天气数据失败');
+            console.error('城市天气查询失败:', error);
+            this.weatherData = null;
             throw error;
         }
     }
 
-    /**
-     * 通过城市名加载天气数据（手动选择）
-     * 使用 tqyb.php 接口，优先只传 place，失败时尝试补全省份
-     */
-    async loadWeatherDataByCity(city) {
-        try {
-            // 先尝试只传城市名（place 参数）
-            let weather = await this.fetchWeatherByCityOnly(city);
-            this.weatherData = weather;
-            this.currentCity = weather.city;
-            this.saveCity(city, true, null);
-            return true;
-        } catch (error) {
-            console.error('通过城市名查询失败，尝试补全省份:', error);
-            const province = this.guessProvinceByCity(city);
-            if (province) {
-                try {
-                    this.weatherData = await this.fetchWeatherByProvinceCity(province, city);
-                    this.weatherData.city = city;
-                    this.saveCity(city, true, province);
-                    return true;
-                } catch (e) {
-                    console.error('补全省份后仍然失败:', e);
-                }
-            }
-            this.weatherData = null;
-            throw new Error('无法查询该城市天气，请检查城市名称');
-        }
-    }
-
-    async fetchWeatherByCityOnly(place) {
-        const url = `${WeatherModule.CONFIG.WEATHER_API_CITY}?id=${this.apiId}&key=${this.apiKey}&place=${encodeURIComponent(place)}&day=7&hourtype=0&suntimetype=0`;
-        const response = await Utils.safeFetch(url, { timeout: 10000 });
-        const data = await response.json();
-        if (data.code !== 200) {
-            throw new Error(data.msg || '获取天气数据失败');
-        }
-        return this.parseWeatherData(data);
-    }
-
-    async fetchWeatherByProvinceCity(province, city) {
-        const url = `${WeatherModule.CONFIG.WEATHER_API_CITY}?id=${this.apiId}&key=${this.apiKey}&sheng=${encodeURIComponent(province)}&place=${encodeURIComponent(city)}&day=7&hourtype=0&suntimetype=0`;
-        const response = await Utils.safeFetch(url, { timeout: 10000 });
-        const data = await response.json();
-        if (data.code !== 200) {
-            throw new Error(data.msg || '获取天气数据失败');
-        }
-        return this.parseWeatherData(data);
-    }
-
-    /**
-     * 简单的城市到省份映射（用于手动查询补全）
-     */
-    guessProvinceByCity(city) {
-        const map = {
-            '北京': '北京', '上海': '上海', '天津': '天津', '重庆': '重庆',
-            '广州': '广东', '深圳': '广东', '珠海': '广东', '佛山': '广东', '东莞': '广东',
-            '杭州': '浙江', '宁波': '浙江', '温州': '浙江', '绍兴': '浙江',
-            '南京': '江苏', '苏州': '江苏', '无锡': '江苏', '常州': '江苏', '徐州': '江苏',
-            '成都': '四川', '绵阳': '四川', '宜宾': '四川', '德阳': '四川',
-            '武汉': '湖北', '宜昌': '湖北', '襄阳': '湖北',
-            '西安': '陕西', '咸阳': '陕西', '宝鸡': '陕西',
-            '郑州': '河南', '洛阳': '河南', '开封': '河南',
-            '长沙': '湖南', '株洲': '湖南', '湘潭': '湖南',
-            '济南': '山东', '青岛': '山东', '烟台': '山东', '威海': '山东',
-            '合肥': '安徽', '芜湖': '安徽', '蚌埠': '安徽',
-            '福州': '福建', '厦门': '福建', '泉州': '福建',
-            '南昌': '江西', '九江': '江西', '赣州': '江西',
-            '南宁': '广西', '桂林': '广西', '柳州': '广西',
-            '昆明': '云南', '丽江': '云南', '大理': '云南',
-            '贵阳': '贵州', '遵义': '贵州',
-            '兰州': '甘肃', '酒泉': '甘肃',
-            '乌鲁木齐': '新疆', '克拉玛依': '新疆',
-            '呼和浩特': '内蒙古', '包头': '内蒙古',
-            '哈尔滨': '黑龙江', '大庆': '黑龙江',
-            '长春': '吉林', '吉林': '吉林',
-            '沈阳': '辽宁', '大连': '辽宁',
-            '石家庄': '河北', '唐山': '河北',
-            '太原': '山西', '大同': '山西',
-            '西宁': '青海', '银川': '宁夏', '拉萨': '西藏',
-            '海口': '海南', '三亚': '海南'
-        };
-        return map[city] || null;
-    }
-
     async loadWeatherData() {
-        // 由具体调用路径决定，此处保留兼容
         if (this.useAutoLocation) {
             await this.tryGpsLocation();
         } else if (this.manualCity) {
@@ -300,9 +198,6 @@ class WeatherModule {
         return true;
     }
 
-    /**
-     * 解析天气数据（兼容 GPS API 和城市 API 返回格式）
-     */
     parseWeatherData(data) {
         if (!data || data.code !== 200) {
             throw new Error(data?.msg || '天气数据格式错误');
@@ -336,7 +231,6 @@ class WeatherModule {
             return 'fas fa-cloud-sun';
         };
 
-        // 提取城市名
         let cityName = '未知';
         if (data.name) cityName = data.name;
         else if (data.shi) cityName = data.shi;
@@ -745,8 +639,7 @@ class WeatherModule {
     }
 
     async handleGpsRefresh() {
-        // 重新尝试 GPS 定位
-        this.gpsAttempted = false; // 重置尝试标记，允许再次请求
+        this.gpsAttempted = false;
         try {
             if (window.app && window.app.showToast) window.app.showToast('正在获取您的位置...', 'info');
             const locationBtn = this.modalElement?.querySelector('#weatherLocationBtn');
