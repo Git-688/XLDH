@@ -1,11 +1,10 @@
 /**
- * 天气模块 - 简化卡片式设计（支持手动选择城市并持久化，一键回到自动定位）
- * 使用 kuleu 免费 API（无需 key），增强容错，确保模态框总能弹出
+ * 天气模块 - 稳定版（修复 API 失效 + 模态框不显示问题）
  */
 class WeatherModule {
     static CONFIG = {
-        // 使用 kuleu 免费天气 API（无需 key）
-        WEATHER_API: 'https://api.kuleu.com/api/tianqi',
+        // 使用 vvhan 免费天气 API（无需 key）
+        WEATHER_API: 'https://api.vvhan.com/api/weather',
         GEO_API: 'https://api.pearapi.ai/api/map/',
         get API_BASE() {
             return Utils.getApiBase();
@@ -202,13 +201,13 @@ class WeatherModule {
             return true;
         } catch (error) {
             console.error('加载天气数据失败:', error);
-            // 返回模拟数据，确保界面不空白
+            // 使用模拟数据确保界面有内容
             this.weatherData = this.getMockWeatherData(this.currentCity);
             return false;
         }
     }
 
-    // 获取模拟天气数据（当 API 完全不可用时使用）
+    // 模拟数据（当 API 完全不可用时）
     getMockWeatherData(city) {
         return {
             city: city,
@@ -232,7 +231,7 @@ class WeatherModule {
         };
     }
 
-    // 通过代理请求天气 API（适配 kuleu 接口）
+    // 通过代理请求天气 API（适配 vvhan 格式）
     async fetchWeatherData(city) {
         const apiBase = Utils.getApiBase();
         const targetUrl = `${WeatherModule.CONFIG.WEATHER_API}?city=${encodeURIComponent(city)}`;
@@ -245,11 +244,11 @@ class WeatherModule {
             try {
                 data = JSON.parse(text);
             } catch (e) {
-                console.error('JSON解析失败，返回模拟数据');
+                console.error('JSON解析失败，使用模拟数据');
                 throw new Error('JSON解析失败');
             }
-            // 适配 kuleu 返回格式：{ code: 200, data: { city, temp, weather, ... } }
-            if (data && data.code === 200 && data.data) {
+            // 适配 vvhan 格式：{ success: true, data: { city, temp, weather, ... } }
+            if (data && data.success === true && data.data) {
                 const w = data.data;
                 const getWeatherIcon = (cond) => {
                     const map = {
@@ -263,29 +262,44 @@ class WeatherModule {
                     for (let k in map) if (cond.includes(k)) return map[k];
                     return 'fas fa-cloud-sun';
                 };
-                // 构建预报（kuleu 可能没有预报，使用模拟）
-                const forecasts = [];
-                const weekdays = ['今天', '明天', '后天'];
-                for (let i = 0; i < 3; i++) {
-                    forecasts.push({
-                        day: weekdays[i],
-                        weather: w.weather || '晴',
-                        icon: getWeatherIcon(w.weather),
-                        dayTemp: w.temp ? w.temp + '°C' : '20°C',
-                        nightTemp: w.temp ? (parseInt(w.temp) - 5) + '°C' : '15°C',
-                        wind: w.wind || '微风'
-                    });
+                // 构建预报（vvhan 可能提供 forecast 数组）
+                let forecasts = [];
+                if (w.forecast && Array.isArray(w.forecast)) {
+                    for (let i = 0; i < Math.min(3, w.forecast.length); i++) {
+                        const f = w.forecast[i];
+                        forecasts.push({
+                            day: i === 0 ? '今天' : i === 1 ? '明天' : f.date || '后天',
+                            weather: f.type,
+                            icon: getWeatherIcon(f.type),
+                            dayTemp: f.high,
+                            nightTemp: f.low,
+                            wind: f.fx + '风 ' + f.fl + '级'
+                        });
+                    }
+                } else {
+                    // 降级生成三天预报
+                    const weekdays = ['今天', '明天', '后天'];
+                    for (let i = 0; i < 3; i++) {
+                        forecasts.push({
+                            day: weekdays[i],
+                            weather: w.weather || '晴',
+                            icon: getWeatherIcon(w.weather),
+                            dayTemp: w.temp ? w.temp + '°C' : '20°C',
+                            nightTemp: w.temp ? (parseInt(w.temp) - 5) + '°C' : '15°C',
+                            wind: w.wind || '微风'
+                        });
+                    }
                 }
                 return {
                     city: w.city || city,
                     dayTemperature: w.temp ? w.temp + '°C' : '22°C',
-                    nightTemperature: w.temp ? (parseInt(w.temp) - 5) + '°C' : '15°C',
+                    nightTemperature: w.low ? w.low + '°C' : (w.temp ? (parseInt(w.temp) - 5) + '°C' : '15°C'),
                     weather: w.weather || '晴',
                     weatherIcon: getWeatherIcon(w.weather),
                     humidity: w.humidity || '--',
                     wind: w.wind || '无持续风向',
-                    visibility: '--',
-                    airQuality: '--',
+                    visibility: w.visibility || '--',
+                    airQuality: w.air || '--',
                     airColor: '#1890ff',
                     updateTime: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
                     warning: null,
@@ -301,12 +315,34 @@ class WeatherModule {
         }
     }
 
-    // 显示模态框，确保总是弹出
+    // 安全关闭其他模态框（增加 try-catch，避免中断）
+    closeOtherModals() {
+        try {
+            if (window.sidebar && typeof window.sidebar.isVisible === 'function' && window.sidebar.isVisible()) {
+                window.sidebar.hide();
+            }
+        } catch (e) { console.warn('关闭 sidebar 失败', e); }
+        try {
+            if (window.searchModule && window.searchModule.isModalOpen) {
+                window.searchModule.hide();
+            }
+        } catch (e) { console.warn('关闭 searchModal 失败', e); }
+        try {
+            if (window.app && window.app.components && window.app.components.navbar) {
+                window.app.components.navbar.hideMusicPlayer();
+            }
+        } catch (e) { console.warn('关闭音乐播放器失败', e); }
+    }
+
     showModal() {
+        // 防止重复点击导致的多次创建
         if (this.isLoading) return;
         try {
             this.closeOtherModals();
-            this.createModal();          // 创建 DOM 元素
+            // 确保 modal 存在，如果不存在则创建
+            if (!this.modalElement || !document.body.contains(this.modalElement)) {
+                this.createModal();
+            }
             this.modalElement.style.display = 'flex';
             this.isShowing = true;
             requestAnimationFrame(() => {
@@ -317,9 +353,11 @@ class WeatherModule {
                     content.style.opacity = '1';
                 }
             });
-            if (window.app) window.app.registerModal(this);
+            if (window.app && typeof window.app.registerModal === 'function') {
+                window.app.registerModal(this);
+            }
             this.isLoading = true;
-            // 异步加载数据，无论成功失败都更新内容
+            // 异步加载数据，完成后刷新内容（无论成败都会更新）
             this.loadWeatherData().finally(() => {
                 this.updateModalContent();
                 this.isLoading = false;
@@ -701,14 +739,6 @@ class WeatherModule {
         }
     }
 
-    closeOtherModals() {
-        if (window.sidebar && window.sidebar.isVisible) window.sidebar.hide();
-        if (window.searchModule && window.searchModule.isModalOpen) window.searchModule.hide();
-        if (window.app && window.app.components && window.app.components.navbar) {
-            window.app.components.navbar.hideMusicPlayer();
-        }
-    }
-
     hide() {
         if (!this.isShowing || !this.modalElement) return;
         this.modalElement.style.opacity = '0';
@@ -724,7 +754,9 @@ class WeatherModule {
                 document.removeEventListener('keydown', this.escHandler);
                 this.escHandler = null;
             }
-            if (window.app) window.app.unregisterModal(this);
+            if (window.app && typeof window.app.unregisterModal === 'function') {
+                window.app.unregisterModal(this);
+            }
         }, 200);
     }
 
