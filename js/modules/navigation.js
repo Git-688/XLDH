@@ -12,7 +12,7 @@ class OptimizedNavigation {
         this.isNavigationClick = false;
         this.skeletonCount = 6;
         this.updateTimer = null;
-        this.UPDATE_INTERVAL = 5 * 60 * 1000;
+        this.UPDATE_INTERVAL = 5 * 60 * 1000;  // 5分钟
         this.apiBase = Utils.getApiBase();
         this.imgObserver = null;
         this.isSearching = false;
@@ -29,7 +29,7 @@ class OptimizedNavigation {
         this.scrollStopTimer = null;
 
         this.autoRefreshTimer = null;
-        this.autoRefreshInterval = 30000;
+        this.autoRefreshInterval = 5 * 60 * 1000;  // 统一为 5 分钟
 
         // 图标缓存
         this.iconCache = new Map();
