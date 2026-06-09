@@ -1,4 +1,4 @@
-// about.js - 星聚导航关于模块（完整版，修复亮色/深色模式下激活按钮背景）
+// about.js - 星聚导航关于模块（完整版，微信按钮改为 GitHub）
 // 确保 Utils 存在
 if (typeof Utils === 'undefined') {
     window.Utils = {
@@ -40,6 +40,23 @@ class AboutModule {
             wechat: './assets/images/wx.png',
             alipay: './assets/images/zfb.png'
         };
+        this.injectGithubButtonStyle();
+    }
+
+    // 注入 GitHub 按钮样式
+    injectGithubButtonStyle() {
+        if (document.getElementById('github-btn-style')) return;
+        const style = document.createElement('style');
+        style.id = 'github-btn-style';
+        style.textContent = `
+            .about-social-btn.github-btn {
+                background: #24292e;
+            }
+            .about-social-btn.github-btn:hover {
+                background: #1a1e24;
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     init() {
@@ -125,9 +142,9 @@ class AboutModule {
                                 <i class="fab fa-qq"></i>
                                 <span class="tooltip-text">QQ联系</span>
                             </button>
-                            <button class="about-social-btn wechat-btn tooltip" id="aboutWechatBtn">
-                                <i class="fab fa-weixin"></i>
-                                <span class="tooltip-text">微信联系</span>
+                            <button class="about-social-btn github-btn tooltip" id="aboutGithubBtn">
+                                <i class="fab fa-github"></i>
+                                <span class="tooltip-text">GitHub仓库</span>
                             </button>
                             <button class="about-social-btn donate-btn tooltip" id="aboutDonateBtn">
                                 <i class="fas fa-heart"></i>
@@ -179,13 +196,10 @@ class AboutModule {
                 window.open('https://yunzhiapi.cn/API/QQtzmp.php?token=XIZhAXKnSQcH&qq=1595126534', '_blank');
             });
         }
-        const wechatBtn = document.getElementById('aboutWechatBtn');
-        if (wechatBtn) {
-            wechatBtn.addEventListener('click', (e) => {
-                const btn = e.currentTarget;
-                const originalHTML = btn.innerHTML;
-                btn.innerHTML = '<span>微信号: example</span>';
-                setTimeout(() => { btn.innerHTML = originalHTML; }, 3000);
+        const githubBtn = document.getElementById('aboutGithubBtn');
+        if (githubBtn) {
+            githubBtn.addEventListener('click', () => {
+                window.open('https://github.com/Git-688/XLDH', '_blank');
             });
         }
         const donateBtn = document.getElementById('aboutDonateBtn');
@@ -208,7 +222,7 @@ class AboutModule {
         }
     }
 
-    // 爱发电模态框（修复亮色/深色模式激活按钮背景）
+    // 爱发电模态框（优化亮色/深色模式激活按钮背景）
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
@@ -615,11 +629,9 @@ class AboutModule {
         const setActive = (activeBtn) => {
             buttons.forEach(b => {
                 b.classList.remove('active');
-                // 移除可能的内联背景
                 b.style.background = '';
             });
             activeBtn.classList.add('active');
-            // 不设置内联 background，完全由 CSS 控制
         };
         const defaultBtn = donateModal.querySelector('.donate-method-btn-left[data-type="qq"]');
         if (defaultBtn) setActive(defaultBtn);
