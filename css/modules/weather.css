@@ -26,7 +26,7 @@
     pointer-events: auto;
 }
 
-/* 天气卡片内容 - 纯色背景，无亚克力效果 */
+/* 天气卡片内容 - 纯色背景，无亚克力效果，大小不变 */
 .weather-modal-content {
     max-width: 350px;
     width: 100%;
@@ -63,9 +63,9 @@
     }
 }
 
-/* 头部 - 纯色背景 */
+/* 头部 - 纯色背景，内边距缩小 */
 .weather-header {
-    padding: 12px 16px;
+    padding: 8px 12px;  /* 原 12px 16px 缩小 */
     background: #f8f9fa;
     border-bottom: 1px solid #e9ecef;
     display: flex;
@@ -82,40 +82,40 @@
 .weather-title {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;          /* 原 6px 缩小 */
     flex-wrap: wrap;
 }
 
 .weather-title span:first-child {
-    font-size: 14px;
+    font-size: 12px;   /* 原 14px 缩小 */
     font-weight: 600;
     color: #333;
 }
 
 .weather-auto-location-badge {
-    font-size: 10px;
-    padding: 2px 6px;
+    font-size: 9px;     /* 原 10px 缩小 */
+    padding: 1px 5px;   /* 原 2px 6px 缩小 */
     background: #e6f7ff;
     color: #1890ff;
     border-radius: 10px;
 }
 
 .auto-refresh-label {
-    font-size: 10px;
+    font-size: 9px;     /* 原 10px 缩小 */
     color: #999;
-    margin-left: 8px;
+    margin-left: 6px;
 }
 
 .auto-refresh-label i {
-    font-size: 9px;
-    margin-right: 3px;
+    font-size: 8px;     /* 原 9px 缩小 */
+    margin-right: 2px;
 }
 
 /* 头部操作按钮组 */
 .weather-header-actions {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;          /* 原 6px 缩小 */
 }
 
 .weather-icon-btn {
@@ -126,12 +126,12 @@
     padding: 4px;
     border-radius: 50%;
     transition: all 0.2s ease;
-    width: 28px;
-    height: 28px;
+    width: 26px;        /* 原 28px 缩小 */
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 11px;    /* 原 12px 缩小 */
 }
 
 .weather-icon-btn:hover {
@@ -139,7 +139,7 @@
     color: var(--primary-color, #4361ee);
 }
 
-/* 内容区域 - 移除滚动，完整显示 */
+/* 内容区域 */
 .weather-body {
     overflow: visible;
     flex: 1;
@@ -148,19 +148,19 @@
 
 /* 加载状态 */
 .loading-state {
-    padding: 40px 20px;
+    padding: 30px 20px;  /* 原 40px 20px 缩小 */
     text-align: center;
 }
 
 .loading-spinner {
     display: inline-block;
-    width: 20px;
-    height: 20px;
+    width: 18px;         /* 原 20px 缩小 */
+    height: 18px;
     border: 2px solid #f3f3f3;
     border-top: 2px solid var(--primary-color, #4361ee);
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 @keyframes spin {
@@ -169,33 +169,33 @@
 }
 
 .loading-state p {
-    font-size: 12px;
+    font-size: 11px;     /* 原 12px 缩小 */
     color: #666;
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 /* 错误状态 */
 .error-state {
-    padding: 40px 20px;
+    padding: 30px 20px;  /* 原 40px 20px 缩小 */
     text-align: center;
 }
 
 .error-icon {
-    font-size: 24px;
+    font-size: 22px;     /* 原 24px 缩小 */
     color: #ff4d4f;
-    margin-bottom: 10px;
-}
-
-.error-state p {
-    font-size: 12px;
-    color: #666;
     margin-bottom: 8px;
 }
 
+.error-state p {
+    font-size: 11px;     /* 原 12px 缩小 */
+    color: #666;
+    margin-bottom: 6px;
+}
+
 .error-sub-text {
-    font-size: 11px;
+    font-size: 10px;     /* 原 11px 缩小 */
     color: #999;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .error-actions {
@@ -205,72 +205,54 @@
 }
 
 .weather-action-btn {
-    padding: 6px 16px;
-    font-size: 12px;
+    padding: 5px 12px;   /* 原 6px 16px 缩小 */
+    font-size: 11px;     /* 原 12px 缩小 */
     border: none;
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
 
-.retry-btn {
-    background: var(--primary-color, #4361ee);
-    color: white;
-}
-
-.retry-btn:hover {
-    background: var(--secondary-color, #3a56d6);
-}
-
-.manual-location-btn {
-    background: var(--success-color, #52c41a);
-    color: white;
-}
-
-.manual-location-btn:hover {
-    background: #4caf50;
-}
-
-/* ==================== 天气数据展示（纯色背景） ==================== */
+/* ==================== 天气数据展示（纯色背景，内部尺寸缩小） ==================== */
 
 /* 当前天气 */
 .weather-current {
-    padding: 16px 16px 12px;
+    padding: 10px 12px 8px;  /* 原 16px 16px 12px 缩小 */
     border-bottom: 1px solid #e9ecef;
     text-align: center;
 }
 
 .weather-city {
-    font-size: 12px;
+    font-size: 11px;         /* 原 12px 缩小 */
     color: #666;
-    margin-bottom: 6px;
+    margin-bottom: 4px;      /* 原 6px 缩小 */
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
     flex-wrap: wrap;
 }
 
 .weather-city i {
-    font-size: 11px;
+    font-size: 10px;         /* 原 11px 缩小 */
 }
 
 .weather-update-time {
-    font-size: 11px;
+    font-size: 10px;         /* 原 11px 缩小 */
     color: #999;
-    margin-left: 4px;
+    margin-left: 3px;
 }
 
 .weather-main {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    margin-bottom: 12px;
+    gap: 12px;               /* 原 16px 缩小 */
+    margin-bottom: 8px;      /* 原 12px 缩小 */
 }
 
 .weather-icon {
-    font-size: 36px;
+    font-size: 32px;         /* 原 36px 缩小 */
     color: var(--primary-color, #4361ee);
 }
 
@@ -281,15 +263,15 @@
 }
 
 .weather-desc {
-    font-size: 14px;
+    font-size: 12px;         /* 原 14px 缩小 */
     color: #333;
     font-weight: 500;
-    margin-bottom: 4px;
+    margin-bottom: 2px;      /* 原 4px 缩小 */
 }
 
 .temp-details {
     display: flex;
-    gap: 12px;
+    gap: 8px;                /* 原 12px 缩小 */
     align-items: center;
 }
 
@@ -298,13 +280,13 @@
 }
 
 .temp-label {
-    font-size: 11px;
+    font-size: 9px;          /* 原 11px 缩小 */
     color: #999;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
 }
 
 .temp-value {
-    font-size: 18px;
+    font-size: 15px;         /* 原 18px 缩小 */
     font-weight: 600;
 }
 
@@ -318,116 +300,116 @@
 
 .temp-separator {
     color: #ccc;
-    font-size: 12px;
+    font-size: 10px;         /* 原 12px 缩小 */
 }
 
 /* 天气提示 - 纯色背景 */
 .weather-tips {
-    margin-top: 12px;
-    padding: 8px 12px;
+    margin-top: 8px;         /* 原 12px 缩小 */
+    padding: 6px 10px;       /* 原 8px 12px 缩小 */
     background: #f8f9fa;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: 10px;         /* 原 12px 缩小 */
     color: #666;
     border-left: 3px solid var(--primary-color, #4361ee);
 }
 
 .weather-tips i {
-    color: var(--primary-color, #4361ee);
-    margin-right: 6px;
+    font-size: 10px;         /* 原 12px 缩小 */
+    margin-right: 4px;
 }
 
 /* 天气详情网格 - 纯色背景 */
 .weather-details {
-    padding: 16px;
+    padding: 12px;           /* 原 16px 缩小 */
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 8px;               /* 原 12px 缩小 */
 }
 
 .weather-detail {
     text-align: center;
-    padding: 12px;
+    padding: 8px;            /* 原 12px 缩小 */
     background: #f8f9fa;
-    border-radius: 8px;
+    border-radius: 6px;      /* 原 8px 缩小 */
     border: 1px solid #e9ecef;
 }
 
 .detail-icon {
-    font-size: 16px;
+    font-size: 14px;         /* 原 16px 缩小 */
     color: var(--primary-color, #4361ee);
-    margin-bottom: 8px;
+    margin-bottom: 4px;      /* 原 8px 缩小 */
 }
 
 .detail-label {
-    font-size: 11px;
+    font-size: 9px;          /* 原 11px 缩小 */
     color: #999;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .detail-value {
-    font-size: 14px;
+    font-size: 12px;         /* 原 14px 缩小 */
     color: #333;
     font-weight: 500;
 }
 
 /* 天气预报 - 纯色背景 */
 .weather-forecast {
-    padding: 0 16px 16px;
+    padding: 0 12px 12px;    /* 原 0 16px 16px 缩小 */
 }
 
 .forecast-title {
-    font-size: 12px;
+    font-size: 11px;         /* 原 12px 缩小 */
     color: #666;
-    margin: 12px 0 8px;
+    margin: 8px 0 6px;       /* 原 12px 0 8px 缩小 */
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 .forecast-title i {
-    font-size: 11px;
+    font-size: 10px;         /* 原 11px 缩小 */
     color: var(--primary-color, #4361ee);
 }
 
 .forecast-days {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    gap: 6px;               /* 原 8px 缩小 */
 }
 
 .forecast-day {
     text-align: center;
-    padding: 12px 6px;
+    padding: 8px 4px;        /* 原 12px 6px 缩小 */
     background: #f8f9fa;
-    border-radius: 8px;
+    border-radius: 6px;      /* 原 8px 缩小 */
     border: 1px solid #e9ecef;
 }
 
 .forecast-day-name {
-    font-size: 12px;
+    font-size: 10px;         /* 原 12px 缩小 */
     color: #666;
-    margin-bottom: 6px;
+    margin-bottom: 4px;      /* 原 6px 缩小 */
     font-weight: 500;
 }
 
 .forecast-day-icon {
-    font-size: 16px;
+    font-size: 14px;         /* 原 16px 缩小 */
     color: var(--primary-color, #4361ee);
-    margin-bottom: 6px;
+    margin-bottom: 4px;      /* 原 6px 缩小 */
 }
 
 .forecast-day-weather {
-    font-size: 11px;
+    font-size: 9px;          /* 原 11px 缩小 */
     color: #333;
-    margin-bottom: 6px;
+    margin-bottom: 4px;      /* 原 6px 缩小 */
 }
 
 .forecast-day-temp {
     display: flex;
     justify-content: center;
-    gap: 4px;
-    font-size: 12px;
+    gap: 3px;               /* 原 4px 缩小 */
+    font-size: 10px;        /* 原 12px 缩小 */
 }
 
 .forecast-day-temp .day {
@@ -442,23 +424,9 @@
     color: #4dabf7;
 }
 
-/* 底部提示栏 - 纯色背景 */
-.weather-footer {
-    padding: 12px 16px;
-    border-top: 1px solid #e9ecef;
-    text-align: center;
-    font-size: 11px;
-    color: #999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    flex-shrink: 0;
-    background: #ffffff;
-}
-
-.weather-footer i {
-    font-size: 10px;
+/* 手动模式提示条 */
+.manual-mode-hint {
+    margin: 6px 12px;       /* 原 margin-bottom 12px，缩小子 */
 }
 
 /* ==================== 城市选择弹出框（纯色背景，无亚克力） ==================== */
@@ -490,8 +458,8 @@
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    padding: 20px;
-    width: 300px;
+    padding: 16px;          /* 原 20px 缩小 */
+    width: 280px;           /* 原 300px 缩小 */
     max-width: 100%;
     transform: scale(0.95);
     transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
@@ -506,68 +474,68 @@
 .prompt-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
+    gap: 6px;
+    margin-bottom: 12px;    /* 原 16px 缩小 */
     color: var(--primary-color, #4361ee);
 }
 
 .prompt-header h3 {
     margin: 0;
-    font-size: 16px;
+    font-size: 14px;        /* 原 16px 缩小 */
     font-weight: 600;
     color: #333;
 }
 
 .prompt-input-group {
-    margin-bottom: 16px;
+    margin-bottom: 12px;    /* 原 16px 缩小 */
 }
 
 .prompt-input-group label {
     display: block;
-    margin-bottom: 6px;
-    font-size: 12px;
+    margin-bottom: 4px;     /* 原 6px 缩小 */
+    font-size: 11px;        /* 原 12px 缩小 */
     color: #666;
 }
 
 .prompt-input-group input {
     width: 100%;
-    padding: 10px 12px;
+    padding: 8px 10px;      /* 原 10px 12px 缩小 */
     border: 1px solid #e0e0e0;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 12px;        /* 原 14px 缩小 */
     background: #ffffff;
     color: #333;
     box-sizing: border-box;
 }
 
 .prompt-hint {
-    margin: 8px 0 0 0;
-    font-size: 11px;
+    margin: 6px 0 0 0;      /* 原 8px 缩小 */
+    font-size: 10px;        /* 原 11px 缩小 */
     color: #999;
 }
 
 .hot-cities {
-    margin-bottom: 16px;
+    margin-bottom: 12px;    /* 原 16px 缩小 */
 }
 
 .hot-cities p {
-    margin: 0 0 8px 0;
-    font-size: 12px;
+    margin: 0 0 6px 0;      /* 原 8px 缩小 */
+    font-size: 11px;        /* 原 12px 缩小 */
     color: #666;
 }
 
 .hot-city-buttons {
     display: flex;
-    gap: 6px;
+    gap: 5px;               /* 原 6px 缩小 */
     flex-wrap: wrap;
 }
 
 .hot-city-btn {
-    padding: 6px 10px;
+    padding: 5px 8px;       /* 原 6px 10px 缩小 */
     background: #f8f9fa;
     border: 1px solid #e9ecef;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 11px;        /* 原 12px 缩小 */
     color: #666;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -581,7 +549,7 @@
 
 .prompt-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;               /* 原 10px 缩小 */
     justify-content: flex-end;
 }
 
@@ -589,6 +557,8 @@
     background: #f8f9fa;
     border: 1px solid #e0e0e0;
     color: #666;
+    padding: 5px 12px;      /* 原 6px 16px 缩小 */
+    font-size: 11px;
 }
 
 .cancel-btn:hover {
@@ -599,6 +569,8 @@
     background: var(--primary-color, #4361ee);
     color: white;
     font-weight: 500;
+    padding: 5px 12px;
+    font-size: 11px;
 }
 
 .confirm-btn:hover {
@@ -621,6 +593,10 @@
     }
     .city-prompt-modal {
         padding: 12px var(--container-padding-xs, 16px);
+    }
+    .city-prompt-content {
+        width: 260px;
+        padding: 14px;
     }
 }
 
@@ -655,7 +631,6 @@
     .weather-update-time,
     .weather-tips,
     .weather-detail .detail-label,
-    .weather-footer,
     .forecast-title,
     .prompt-header h3,
     .prompt-input-group label,
@@ -721,14 +696,9 @@
     .prompt-header {
         color: var(--primary-color, #7b9cff);
     }
-
-    .weather-footer {
-        background: #2d2d2d;
-        border-top-color: #404040;
-    }
 }
 
-/* ========== 天气预报模态框特殊定位（导航栏下方，上下间距相等，移动端左右边距与主页一致） ========== */
+/* ========== 天气预报模态框特殊定位（导航栏下方，上下间距相等） ========== */
 .weather-modal-card {
     align-items: center;
     justify-content: flex-start;
