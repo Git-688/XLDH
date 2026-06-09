@@ -142,9 +142,9 @@
     max-height: 350px;
 }
 
-/* 重要提醒区域 - 无标题、无图标、无边框、无内边距 */
+/* 重要提醒区域 - 背景透明，无白色背景 */
 .focus-section {
-    background: #ffffff;
+    background: transparent;
     border: none;
     padding: 0;
     margin-bottom: 16px;
@@ -155,16 +155,10 @@
     line-height: 1.5;
     margin: 0;
 }
-/* 深色模式重要提醒 - 背景跟随模态框 */
+/* 深色模式重要提醒文字颜色适配 */
 @media (prefers-color-scheme: dark) {
-    .focus-section {
-        background: #2d2d2d;
-    }
     .focus-content {
         color: #f87171;
-    }
-    .dark-mode .focus-section {
-        background: #2d2d2d;
     }
     .dark-mode .focus-content {
         color: #f87171;
@@ -226,13 +220,13 @@
     }
 }
 
-/* 底部区域 - 背景与模态框一致，分割线颜色适配 */
+/* 底部区域 - 背景透明，保留分割线 */
 .announcement-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 12px 20px 16px;
-    background: #ffffff;
+    background: transparent;
     border-top: 1px solid #e0e0e0;
 }
 .announcement-date {
@@ -258,10 +252,9 @@
     background: #3651d4;
     box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
 }
-/* 深色模式底部区域 - 背景改为深色 */
+/* 深色模式底部区域边框颜色适配 */
 @media (prefers-color-scheme: dark) {
     .announcement-footer {
-        background: #2d2d2d;
         border-top-color: #404040;
     }
     .announcement-date {
@@ -274,7 +267,6 @@
         background: #5a7aff;
     }
     .dark-mode .announcement-footer {
-        background: #2d2d2d;
         border-top-color: #404040;
     }
     .dark-mode .announcement-date {
