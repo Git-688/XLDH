@@ -254,6 +254,192 @@
     margin: 0;
 }
 
+/* ==================== 深色模式优化（系统偏好） ==================== */
+@media (prefers-color-scheme: dark) {
+    .search-modal .modal-content {
+        background: #2d2d2d;
+        border: 1px solid #404040;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .search-input {
+        background: #1e1e1e;
+        border-color: #404040;
+        color: #f8f9fa;
+    }
+    .search-input:focus {
+        border-color: var(--primary-color, #4361ee);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+
+    .engine-trigger-btn {
+        background: #2d2d2d;
+        border-color: #404040;
+        color: #adb5bd;
+    }
+    .engine-trigger-btn:hover {
+        border-color: var(--primary-color, #6d8cff);
+        color: var(--primary-color, #6d8cff);
+    }
+
+    .search-submit-btn {
+        background: var(--primary-color, #4361ee);
+        color: white;
+    }
+    .search-submit-btn:hover {
+        background: var(--secondary-color, #3a56d6);
+    }
+
+    .engine-dropdown {
+        background: #2d2d2d;
+        border-color: #404040;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+    .engine-dropdown-item {
+        color: #e0e0e0;
+    }
+    .engine-dropdown-item:hover {
+        background: #3a3a3a;
+    }
+    .engine-dropdown-item.active {
+        background: rgba(67, 97, 238, 0.2);
+        color: #6d8cff;
+    }
+    .engine-dropdown-item i {
+        color: #adb5bd;
+    }
+
+    .suggestions {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+    .suggestion-item {
+        color: #e0e0e0;
+        border-bottom-color: #404040;
+    }
+    .suggestion-item:hover {
+        background: #3a3a3a;
+    }
+
+    .history-panel {
+        background: #3a3a3a;
+    }
+    .history-title {
+        color: #adb5bd;
+    }
+    .clear-history-btn {
+        color: #6d8cff;
+    }
+    .history-item {
+        color: #e0e0e0;
+    }
+    .history-item:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+    .delete-history {
+        color: #adb5bd;
+    }
+    .delete-history:hover {
+        color: #f87171;
+        background: rgba(239, 68, 68, 0.2);
+    }
+    .history-empty {
+        color: #adb5bd;
+    }
+}
+
+/* ==================== 手动深色模式覆盖（通过 .dark-mode 类） ==================== */
+.dark-mode .search-modal .modal-content {
+    background: #2d2d2d;
+    border: 1px solid #404040;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .search-input {
+    background: #1e1e1e;
+    border-color: #404040;
+    color: #f8f9fa;
+}
+.dark-mode .search-input:focus {
+    border-color: var(--primary-color, #4361ee);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+}
+
+.dark-mode .engine-trigger-btn {
+    background: #2d2d2d;
+    border-color: #404040;
+    color: #adb5bd;
+}
+.dark-mode .engine-trigger-btn:hover {
+    border-color: var(--primary-color, #6d8cff);
+    color: var(--primary-color, #6d8cff);
+}
+
+.dark-mode .search-submit-btn {
+    background: var(--primary-color, #4361ee);
+    color: white;
+}
+.dark-mode .search-submit-btn:hover {
+    background: var(--secondary-color, #3a56d6);
+}
+
+.dark-mode .engine-dropdown {
+    background: #2d2d2d;
+    border-color: #404040;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+.dark-mode .engine-dropdown-item {
+    color: #e0e0e0;
+}
+.dark-mode .engine-dropdown-item:hover {
+    background: #3a3a3a;
+}
+.dark-mode .engine-dropdown-item.active {
+    background: rgba(67, 97, 238, 0.2);
+    color: #6d8cff;
+}
+.dark-mode .engine-dropdown-item i {
+    color: #adb5bd;
+}
+
+.dark-mode .suggestions {
+    background: #2d2d2d;
+    border-color: #404040;
+}
+.dark-mode .suggestion-item {
+    color: #e0e0e0;
+    border-bottom-color: #404040;
+}
+.dark-mode .suggestion-item:hover {
+    background: #3a3a3a;
+}
+
+.dark-mode .history-panel {
+    background: #3a3a3a;
+}
+.dark-mode .history-title {
+    color: #adb5bd;
+}
+.dark-mode .clear-history-btn {
+    color: #6d8cff;
+}
+.dark-mode .history-item {
+    color: #e0e0e0;
+}
+.dark-mode .history-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+.dark-mode .delete-history {
+    color: #adb5bd;
+}
+.dark-mode .delete-history:hover {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.2);
+}
+.dark-mode .history-empty {
+    color: #adb5bd;
+}
+
 /* 移动端适配 */
 @media (max-width: 768px) {
     .search-modal .modal-content {
@@ -269,40 +455,5 @@
     }
     .engine-dropdown {
         width: 150px;
-    }
-}
-
-/* 深色模式适配 */
-@media (prefers-color-scheme: dark) {
-    .search-modal .modal-content {
-        background: #2d2d2d;
-        border: 1px solid #404040;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-    .engine-dropdown {
-        background: #2d2d2d;
-        border: 1px solid #404040;
-    }
-    .engine-dropdown-item:hover {
-        background: #3a3a3a;
-    }
-    .suggestions {
-        background: #2d2d2d;
-        border-color: #404040;
-    }
-    .suggestion-item {
-        border-bottom-color: #404040;
-    }
-    .suggestion-item:hover {
-        background: #3a3a3a;
-    }
-    .history-panel {
-        background: #3a3a3a;
-    }
-    .history-item:hover {
-        background: rgba(255, 255, 255, 0.05);
-    }
-    .delete-history:hover {
-        background: rgba(239, 68, 68, 0.2);
     }
 }
