@@ -1,4 +1,4 @@
-/* about.css - 圆角8px，左边卡片透明，右边logo上下间距相等 */
+/* about.css - 关于网站模态框（深色模式优化版） */
 .about-modal {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     position: fixed;
@@ -35,6 +35,7 @@
 .about-modal.active .about-modal-content {
     transform: scale(1);
 }
+/* 移动端保持缩放淡入，位置居中 */
 @media (max-width: 768px) {
     .about-modal {
         align-items: center;
@@ -93,21 +94,20 @@
     z-index: 3;
     gap: 14px;
 }
-/* 左边大卡片：透明背景，无模糊，圆角8px */
+/* 左边大卡片：透明背景，圆角8px */
 .about-header-left {
     flex: 1.6;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     gap: 8px;
-    background: transparent;      /* 完全透明 */
-    border-radius: 8px;           /* 与主页logo圆角一致 */
-    backdrop-filter: none;        /* 移除模糊 */
+    background: transparent;
+    border-radius: 8px;
+    backdrop-filter: none;
     padding: 0;
     min-width: 0;
     overflow: hidden;
 }
-/* 左边内部卡片：保留半透明背景，保证文字可读 */
 .info-card {
     flex: 1;
     display: flex;
@@ -126,7 +126,7 @@
     box-sizing: border-box;
     text-align: left;
 }
-/* 右边大卡片：圆角8px，保持正方形，内部logo上下间距相等 */
+/* 右边大卡片：圆角8px，logo上下间距相等 */
 .about-header-right.logo-card {
     flex: 1;
     aspect-ratio: 1 / 1;
@@ -135,22 +135,20 @@
     justify-content: center;
     align-items: center;
     background: rgba(0, 0, 0, 0.3);
-    border-radius: 8px;           /* 圆角改为8px，与左边一致 */
+    border-radius: 8px;
     backdrop-filter: blur(4px);
-    padding: 12px 0;              /* 上下内边距相等，保证logo上下间距一致 */
+    padding: 12px 0;
     min-width: 0;
     overflow: hidden;
 }
-/* logo 样式圆角不变（50%圆形），上下间距由父容器padding控制 */
 .about-brand-logo {
     width: 64px;
     height: 64px;
-    border-radius: 50%;           /* 保持圆形 */
+    border-radius: 50%;
     background: rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
-    /* 移除 margin，间距由父容器 padding 控制 */
     margin: 0;
     padding: 6px;
     box-sizing: border-box;
@@ -384,7 +382,7 @@
         font-size: 12px;
     }
     .about-header-right.logo-card {
-        padding: 16px 0;          /* 上下内边距相等 */
+        padding: 16px 0;
     }
     .about-main-content {
         padding: 16px;
@@ -435,7 +433,7 @@
         font-size: 9px;
     }
     .about-header-right.logo-card {
-        padding: 10px 0;          /* 移动端上下内边距相等 */
+        padding: 10px 0;
     }
     .about-header-content {
         gap: 12px;
@@ -445,37 +443,101 @@
     }
 }
 
-/* 深色模式 */
-@media (prefers-color-scheme: dark) {
-    .about-modal-content {
-        background: #2d2d2d;
-    }
-    .about-card.white-bg {
-        background: #3a3a3a;
-        border-color: #404040;
-    }
-    .about-footer {
-        background: #2d2d2d;
-    }
-    /* 左边大卡片透明，无需深色覆盖；内部卡片背景保持不变 */
-    .info-card {
-        background: rgba(0, 0, 0, 0.7);
-    }
-    .about-header-right.logo-card {
-        background: rgba(0, 0, 0, 0.5);
-    }
-    .about-close-btn {
-        background: var(--success-color, #10b981);
-    }
+/* ==================== 深色模式优化（全面适配 .dark-mode） ==================== */
+.dark-mode .about-modal-content {
+    background: #1e1e2e;  /* 深色背景基底 */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-/* 减少动画偏好 */
-@media (prefers-reduced-motion: reduce) {
-    .about-modal,
-    .about-modal-content,
-    .about-card,
-    .about-social-btn,
-    .about-close-btn {
-        transition: none;
-    }
+.dark-mode .about-card.white-bg {
+    background: #2a2a3a;
+    border-color: #3a3a4a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.dark-mode .about-card.white-bg:hover {
+    background: #2f2f42;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.dark-mode .card-content h3 {
+    color: #e0e0e0;
+}
+.dark-mode .card-content p {
+    color: #b0b0c0;
+}
+
+.dark-mode .about-footer {
+    background: #1e1e2e;
+    border-top: 1px solid #3a3a4a;
+}
+.dark-mode .about-close-btn {
+    background: #2d3e50;
+    color: #f0f0f0;
+}
+.dark-mode .about-close-btn:hover {
+    background: #3a5a70;
+}
+
+/* 深色模式下左边卡片内文字优化（info-card本身半透明背景较深，文字白色保留） */
+.dark-mode .info-card {
+    background: rgba(30, 30, 46, 0.85);
+    color: #f0f0f0;
+    text-shadow: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 深色模式下右边卡片背景微调 */
+.dark-mode .about-header-right.logo-card {
+    background: rgba(30, 30, 46, 0.7);
+}
+.dark-mode .about-brand-logo {
+    background: rgba(255, 255, 255, 0.15);
+}
+.dark-mode .about-brand-title,
+.dark-mode .about-brand-subtitle {
+    color: #f0f0f0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* 深色模式下底部按钮图标颜色保持原色彩，但背景微调 */
+.dark-mode .about-social-btn {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.dark-mode .qq-btn {
+    background: #3b6e8f;
+}
+.dark-mode .qq-btn:hover {
+    background: #2d5a78;
+}
+.dark-mode .wechat-btn {
+    background: #4f8b2d;
+}
+.dark-mode .wechat-btn:hover {
+    background: #3d6e1f;
+}
+.dark-mode .donate-btn {
+    background: #b04545;
+}
+.dark-mode .donate-btn:hover {
+    background: #8f3535;
+}
+.dark-mode .space-btn {
+    background: #b87b2c;
+}
+.dark-mode .space-btn:hover {
+    background: #9a6420;
+}
+.dark-mode .about-social-btn .tooltip-text {
+    background-color: #2d2d3a;
+    color: #eee;
+}
+.dark-mode .about-social-btn .tooltip-text::after {
+    border-color: #2d2d3a transparent transparent transparent;
+}
+
+/* 可选：深色模式下滑块、滚动条样式（不影响主体） */
+.dark-mode ::-webkit-scrollbar-track {
+    background: #2a2a3a;
+}
+.dark-mode ::-webkit-scrollbar-thumb {
+    background: #555;
 }
