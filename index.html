@@ -28,12 +28,11 @@
             };
             console.log(`[Config] API_BASE: ${apiBase}`);
 
-            // 全局命名空间：统一管理所有模块实例，减少全局污染
             window.Starlink = window.Starlink || {};
         })();
     </script>
 
-    <!-- CSP 安全策略（已添加必要源） -->
+    <!-- CSP 安全策略（添加必要源） -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'none'; form-action 'self';">
 
     <meta name="theme-color" content="#4361ee">
@@ -374,7 +373,6 @@
     <footer class="footer"><div class="footer-compact-container"><div class="footer-disclaimer-card"><div class="disclaimer-header"><span class="disclaimer-title">免责声明：</span><span class="disclaimer-version">v1.0 · 生效于 2025.12.08</span></div><div class="disclaimer-text">本站资源均搜集于公开网络，<strong>仅供个人学习与研究</strong>，不保证可用性及安全，使用者需自行承担风险。若涉及版权问题，请通过 <span class="email-text">1595126534@qq.com</span> 联系处理。严禁用于商业或非法目的。</div></div><div class="footer-stats-cards"><div class="stat-card"><div class="stat-card-inner"><div class="stat-icon running-icon"><i class="fas fa-heartbeat heartbeat-enhanced"></i></div><div class="stat-content"><div class="stat-name">运行时间</div><div class="stat-number" id="uptime">0天 0时 0分 0秒</div></div></div></div><div class="stat-card"><div class="stat-card-inner"><div class="stat-icon online-icon"><i class="fas fa-users"></i></div><div class="stat-content"><div class="stat-name">在线人数</div><div class="stat-number" id="onlineCount">0</div></div></div></div><div class="stat-card"><div class="stat-card-inner"><div class="stat-icon today-icon"><i class="fas fa-user-plus"></i></div><div class="stat-content"><div class="stat-name">今日访客 (UV)</div><div class="stat-number" id="todayCount">0</div></div></div></div><div class="stat-card"><div class="stat-card-inner"><div class="stat-icon total-icon"><i class="fas fa-chart-line"></i></div><div class="stat-content"><div class="stat-name">总浏览量 (PV)</div><div class="stat-number" id="totalCount">0</div></div></div></div></div></div></footer>
     <div class="floating-buttons">
         <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
-        <!-- 主题切换按钮（新增） -->
         <button class="floating-btn theme-btn" id="themeToggleBtn" aria-label="切换主题"><i class="fas fa-moon"></i></button>
         <button class="floating-btn comment-btn" id="commentBtn" aria-label="评论"><i class="fas fa-comments"></i></button>
         <button class="floating-btn submit-btn" id="floatingSubmitBtn" aria-label="网站投稿"><i class="fas fa-paper-plane"></i></button>
@@ -398,7 +396,7 @@
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 <script defer src="./js/utils.js"></script>
 <script defer src="./js/toast.js"></script>
-<!-- storage.js 和 error-handler.js 已删除，功能已合并到 utils.js -->
+<!-- storage.js 和 error-handler.js 已合并到 utils.js，删除引用 -->
 <script defer src="./js/components/navbar.js"></script>
 <script defer src="./js/components/sidebar.js"></script>
 <script defer src="./js/modules/announcement.js"></script>
@@ -417,15 +415,46 @@
 <script defer src="./js/xfyy/plugin-manager.js"></script>
 <script defer src="./js/xfyy/music-player.js"></script>
 <script defer src="./js/xfyy/music-main.js"></script>
-<!-- Waline JS v3.15.2 使用 defer 加载 -->
 <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js" crossorigin="anonymous"></script>
 <script defer src="./js/modules/comment.js"></script>
 <script defer src="./js/modules/submit.js"></script>
-
-<!-- 主题切换模块 -->
 <script defer src="./js/modules/theme.js"></script>
 
-<!-- 点击粒子特效（确保在 jQuery 之后加载，且添加 ready 初始化） -->
+<script>
+    // 注册 Service Worker（延迟到页面加载完成）
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+                console.log('Service Worker 注册成功，作用域:', registration.scope);
+                
+                // 监听 Service Worker 更新消息
+                navigator.serviceWorker.addEventListener('message', function(event) {
+                    if (event.data && event.data.type === 'SW_UPDATED') {
+                        console.log('检测到新版本 Service Worker，准备提示用户刷新');
+                        if (window.toast) {
+                            window.toast.show('发现新版本，点击刷新获取最新内容', 'info', 10000);
+                            setTimeout(function() {
+                                if (confirm('发现新版本，是否刷新页面以获取最新功能？')) {
+                                    window.location.reload();
+                                }
+                            }, 500);
+                        } else {
+                            setTimeout(function() {
+                                if (confirm('发现新版本，是否刷新页面以获取最新功能？')) {
+                                    window.location.reload();
+                                }
+                            }, 500);
+                        }
+                    }
+                });
+            }).catch(function(error) {
+                console.error('Service Worker 注册失败:', error);
+            });
+        });
+    }
+</script>
+
+<!-- 点击粒子特效（确保在 jQuery 之后加载） -->
 <script src="https://joe.deepakmt.xyz/usr/themes/Joe/assets/cursor/cursor2.js" async></script>
 
 </body>
