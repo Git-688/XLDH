@@ -825,3 +825,84 @@ p {
         max-height: calc(100vh - 70px);
     }
 }
+
+/* ==================== 星聚笔记深色模式优化 ==================== */
+/* 系统深色模式 */
+@media (prefers-color-scheme: dark) {
+    /* 笔记列表项背景改为深色半透明，保留模糊效果 */
+    .notebook-item {
+        background: rgba(40, 40, 40, 0.8);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    .notebook-item:hover {
+        border-color: #7b9cff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    /* 笔记头部 ID 标签背景和文字 */
+    .notebook-id {
+        background: rgba(60, 60, 60, 0.9);
+        color: #adb5bd;
+    }
+    .notebook-time {
+        color: #adb5bd;
+    }
+    /* 笔记标题 */
+    .notebook-title {
+        color: #f0f0f0;
+    }
+    /* 笔记内容区域 */
+    .notebook-content {
+        background: rgba(50, 50, 50, 0.8);
+        color: #c0c0c0;
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+    /* 滚动条颜色适配 */
+    #notebookModal .feedback-modal-content::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    /* 加载和错误状态文字 */
+    #notebook-list .loading,
+    #notebook-list .empty,
+    #notebook-list .error {
+        color: #adb5bd;
+    }
+}
+
+/* 手动深色模式（.dark-mode 类） */
+.dark-mode .notebook-item {
+    background: rgba(40, 40, 40, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+.dark-mode .notebook-item:hover {
+    border-color: #7b9cff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.dark-mode .notebook-id {
+    background: rgba(60, 60, 60, 0.9);
+    color: #adb5bd;
+}
+.dark-mode .notebook-time {
+    color: #adb5bd;
+}
+.dark-mode .notebook-title {
+    color: #f0f0f0;
+}
+.dark-mode .notebook-content {
+    background: rgba(50, 50, 50, 0.8);
+    color: #c0c0c0;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+.dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+.dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+}
+.dark-mode #notebook-list .loading,
+.dark-mode #notebook-list .empty,
+.dark-mode #notebook-list .error {
+    color: #adb5bd;
+}
