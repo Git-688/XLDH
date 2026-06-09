@@ -28,11 +28,12 @@
             };
             console.log(`[Config] API_BASE: ${apiBase}`);
 
+            // 全局命名空间：统一管理所有模块实例，减少全局污染
             window.Starlink = window.Starlink || {};
         })();
     </script>
 
-    <!-- CSP 安全策略（添加必要源，允许 jQuery 和粒子特效脚本） -->
+    <!-- CSP 安全策略（已添加必要源） -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'none'; form-action 'self';">
 
     <meta name="theme-color" content="#4361ee">
@@ -79,7 +80,7 @@
     <link rel="preload" href="./js/main.js" as="script">
 
     <style>
-        /* 基础变量定义（与原有保持一致） */
+        /* 基础变量定义 */
         :root {
             --primary-color: #4361ee;
             --secondary-color: #3a0ca3;
@@ -129,7 +130,6 @@
             --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
             --acrylic-light-bg: rgba(255, 255, 255, 0.8);
             --acrylic-light-blur: blur(10px) saturate(110%);
-            --acrylic-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
         }
 
         @media (prefers-color-scheme: dark) {
@@ -151,6 +151,66 @@
                 --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
                 --acrylic-light-bg: rgba(40, 40, 40, 0.7);
             }
+        }
+
+        /* 手动深色模式覆盖（通过 .dark-mode 类） */
+        .dark-mode {
+            --text-primary: #f8f9fa;
+            --text-secondary: #adb5bd;
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-card: #2d2d2d;
+            --border-color: #404040;
+            --nav-level1-active: #7bc8ff;
+            --nav-level2-active: #ff8a65;
+            --stat-site-color: #a5d6a7;
+            --stat-invalid-color: #ef9a9a;
+            --card-hover-bg-start: rgba(124, 200, 255, 0.05);
+            --card-hover-bg-end: rgba(124, 200, 255, 0.1);
+            --acrylic-bg: rgba(30, 30, 30, 0.7);
+            --acrylic-border: 1px solid rgba(255, 255, 255, 0.15);
+            --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --acrylic-light-bg: rgba(40, 40, 40, 0.7);
+        }
+
+        /* 深色模式下额外覆盖（确保所有模态框背景变深） */
+        .dark-mode .weather-modal-content,
+        .dark-mode .feedback-modal-content,
+        .dark-mode .announcement-modal-container,
+        .dark-mode .about-modal-content,
+        .dark-mode .city-prompt-content,
+        .dark-mode .music-player,
+        .dark-mode .search-modal .modal-content {
+            background: #2d2d2d;
+            border-color: #404040;
+        }
+        .dark-mode .weather-header,
+        .dark-mode .feedback-modal-header,
+        .dark-mode .announcement-header,
+        .dark-mode .weather-detail,
+        .dark-mode .forecast-day,
+        .dark-mode .weather-tips,
+        .dark-mode .manual-mode-hint {
+            background: #3a3a3a;
+            border-color: #404040;
+        }
+        .dark-mode .weather-title span:first-child,
+        .dark-mode .weather-desc,
+        .dark-mode .weather-detail .detail-value,
+        .dark-mode .forecast-day-weather,
+        .dark-mode .forecast-day-name,
+        .dark-mode .site-title,
+        .dark-mode .site-description,
+        .dark-mode .song-title,
+        .dark-mode .song-artist,
+        .dark-mode .category-name,
+        .dark-mode .daily-quote-card p {
+            color: #f0f0f0;
+        }
+        .dark-mode .weather-icon,
+        .dark-mode .detail-icon,
+        .dark-mode .forecast-day-icon {
+            color: #7b9cff;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -314,6 +374,8 @@
     <footer class="footer"><div class="footer-compact-container"><div class="footer-disclaimer-card"><div class="disclaimer-header"><span class="disclaimer-title">免责声明：</span><span class="disclaimer-version">v1.0 · 生效于 2025.12.08</span></div><div class="disclaimer-text">本站资源均搜集于公开网络，<strong>仅供个人学习与研究</strong>，不保证可用性及安全，使用者需自行承担风险。若涉及版权问题，请通过 <span class="email-text">1595126534@qq.com</span> 联系处理。严禁用于商业或非法目的。</div></div><div class="footer-stats-cards"><div class="stat-card"><div class="stat-card-inner"><div class="stat-icon running-icon"><i class="fas fa-heartbeat heartbeat-enhanced"></i></div><div class="stat-content"><div class="stat-name">运行时间</div><div class="stat-number" id="uptime">0天 0时 0分 0秒</div></div></div></div><div class="stat-card"><div class="stat-card-inner"><div class="stat-icon online-icon"><i class="fas fa-users"></i></div><div class="stat-content"><div class="stat-name">在线人数</div><div class="stat-number" id="onlineCount">0</div></div></div></div><div class="stat-card"><div class="stat-card-inner"><div class="stat-icon today-icon"><i class="fas fa-user-plus"></i></div><div class="stat-content"><div class="stat-name">今日访客 (UV)</div><div class="stat-number" id="todayCount">0</div></div></div></div><div class="stat-card"><div class="stat-card-inner"><div class="stat-icon total-icon"><i class="fas fa-chart-line"></i></div><div class="stat-content"><div class="stat-name">总浏览量 (PV)</div><div class="stat-number" id="totalCount">0</div></div></div></div></div></div></footer>
     <div class="floating-buttons">
         <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
+        <!-- 主题切换按钮（新增） -->
+        <button class="floating-btn theme-btn" id="themeToggleBtn" aria-label="切换主题"><i class="fas fa-moon"></i></button>
         <button class="floating-btn comment-btn" id="commentBtn" aria-label="评论"><i class="fas fa-comments"></i></button>
         <button class="floating-btn submit-btn" id="floatingSubmitBtn" aria-label="网站投稿"><i class="fas fa-paper-plane"></i></button>
         <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
@@ -361,6 +423,9 @@
 <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js" crossorigin="anonymous"></script>
 <script defer src="./js/modules/comment.js"></script>
 <script defer src="./js/modules/submit.js"></script>
+
+<!-- 主题切换模块 -->
+<script defer src="./js/modules/theme.js"></script>
 
 <script>
     // 注册 Service Worker（延迟到页面加载完成）
