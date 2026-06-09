@@ -1,4 +1,4 @@
-// about.js - 星聚导航关于模块（完整修改版，左边卡片改为三个独立卡片）
+// about.js - 星聚导航关于模块（爱发电模态框使用说明卡片大小与二维码卡片一致）
 // 确保 Utils 存在
 if (typeof Utils === 'undefined') {
     window.Utils = {
@@ -77,13 +77,11 @@ class AboutModule {
                     <div class="about-header-bg" style="background-image: url('${Utils.escapeHtml(this.wallpaperUrl)}')"></div>
                     <div class="about-header-overlay"></div>
                     <div class="about-header-content">
-                        <!-- 左边大卡片：三行独立卡片，无内边距 -->
                         <div class="about-header-left">
                             <div class="info-card">开发者：${Utils.escapeHtml(this.developer)}</div>
                             <div class="info-card">网站版本：${Utils.escapeHtml(this.version)}</div>
                             <div class="info-card">更新日期：${Utils.escapeHtml(this.updateDate)}</div>
                         </div>
-                        <!-- 右边大卡片：Logo + 标题 + 副标题 -->
                         <div class="about-header-right logo-card">
                             <div class="about-brand-logo">
                                 <img class="about-logo-img" src="${Utils.escapeHtml(this.logoUrl)}" alt="星聚导航Logo">
@@ -205,7 +203,7 @@ class AboutModule {
         }
     }
 
-    // 爱发电模态框 - 使用说明字体已加大
+    // 爱发电模态框 - 使用说明卡片大小与二维码卡片一致
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
@@ -276,8 +274,8 @@ class AboutModule {
             }
             .qrcode-content img {
                 display: block;
-                max-width: 100%;
-                max-height: 100%;
+                max-width: 85%;
+                max-height: 85%;
                 object-fit: contain;
                 margin: 0 auto;
             }
@@ -328,6 +326,39 @@ class AboutModule {
                 box-shadow: 0 1px 2px rgba(0,0,0,0.05);
                 transition: all 0.2s;
             }
+            /* 帮助卡片内容容器，大小与二维码图片区域一致 */
+            .help-content-container {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+            }
+            .help-inner {
+                max-width: 85%;
+                max-height: 85%;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .help-inner .help-title {
+                font-size: 14px;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: var(--text-primary, #1e293b);
+            }
+            .help-inner .help-steps {
+                font-size: 11px;
+                color: var(--text-secondary, #64748b);
+                line-height: 1.6;
+            }
+            .help-inner .help-steps p {
+                margin: 0 0 6px 0;
+            }
             @media (max-width: 480px) {
                 .supporters-list-scroll {
                     max-height: 90px;
@@ -342,6 +373,12 @@ class AboutModule {
                 }
                 .supporters-wrapper {
                     padding: 8px;
+                }
+                .help-inner .help-title {
+                    font-size: 12px;
+                }
+                .help-inner .help-steps {
+                    font-size: 10px;
                 }
             }
             @media (prefers-color-scheme: dark) {
@@ -362,6 +399,12 @@ class AboutModule {
                 }
                 .supporters-thanks {
                     color: #aaa;
+                }
+                .help-inner .help-title {
+                    color: #f0f0f0;
+                }
+                .help-inner .help-steps {
+                    color: #ccc;
                 }
             }
         `;
@@ -409,14 +452,17 @@ class AboutModule {
                         <div class="qrcode-content" data-type="alipay" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
                             <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝" style="max-width: 85%; max-height: 85%; object-fit: contain;">
                         </div>
+                        <!-- 帮助卡片：使用与二维码卡片相同大小的容器 -->
                         <div class="qrcode-content" data-type="help" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                            <div style="width:100%; text-align: center;">
-                                <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary, #1e293b);">📖 使用说明</div>
-                                <div style="font-size: 11px; color: var(--text-secondary, #64748b); line-height: 1.6;">
-                                    <p style="margin: 0 0 6px 0;">1. 选择左侧支付方式</p>
-                                    <p style="margin: 0 0 6px 0;">2. 使用对应App扫描</p>
-                                    <p style="margin: 0 0 6px 0;">3. 输入您想支持的金额</p>
-                                    <p style="margin: 0;">4. 备注留下您的名字</p>
+                            <div class="help-content-container">
+                                <div class="help-inner">
+                                    <div class="help-title">📖 使用说明</div>
+                                    <div class="help-steps">
+                                        <p>1. 选择左侧支付方式</p>
+                                        <p>2. 使用对应App扫描</p>
+                                        <p>3. 输入您想支持的金额</p>
+                                        <p>4. 备注留下您的名字</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
