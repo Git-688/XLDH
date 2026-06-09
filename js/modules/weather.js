@@ -1,5 +1,5 @@
 /**
- * 天气模块 - 基于 apihz.cn API 重构版（修复弹出问题）
+ * 天气模块 - 基于 apihz.cn API
  * 支持自动定位（IP）、手动选择城市、未来七天预报
  */
 class WeatherModule {
@@ -298,12 +298,10 @@ class WeatherModule {
         if (this.isLoading) return;
         this.closeOtherModals();
         this.createModal();
-        // 关键修复：添加 active 类，使 visibility 变为 visible
         this.modalElement.classList.add('active');
         this.modalElement.style.display = 'flex';
         this.isShowing = true;
         requestAnimationFrame(() => {
-            // 确保动画正常触发
             this.modalElement.style.opacity = '1';
             const content = this.modalElement.querySelector('.weather-modal-content');
             if (content) {
@@ -472,10 +470,7 @@ class WeatherModule {
                 </div>
             </div>
             
-            <div class="weather-footer">
-                <i class="fas fa-circle-info"></i>
-                点击📍可手动选择城市，点击📍可重新自动定位
-            </div>
+            <!-- 已移除底部提示文字 -->
         `;
     }
 
@@ -486,10 +481,13 @@ class WeatherModule {
         if (closeBtn) closeBtn.addEventListener('click', (e) => { e.stopPropagation(); this.hide(); });
 
         const changeCityBtn = this.modalElement.querySelector('#changeCityBtn');
-        if (changeCityBtn) changeCityBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.showCityPrompt();
-        });
+        if (changeCityBtn) {
+            changeCityBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                console.log('手动选择城市按钮被点击');
+                this.showCityPrompt();
+            });
+        }
 
         const locationBtn = this.modalElement.querySelector('#weatherLocationBtn');
         if (locationBtn) {
@@ -511,6 +509,7 @@ class WeatherModule {
     }
 
     showCityPrompt() {
+        console.log('showCityPrompt 被调用');
         const esc = this._escapeHtml.bind(this);
         const modal = document.createElement('div');
         modal.className = 'city-prompt-modal';
@@ -711,7 +710,6 @@ class WeatherModule {
 
     hide() {
         if (!this.isShowing || !this.modalElement) return;
-        // 移除 active 类，恢复隐藏状态
         this.modalElement.classList.remove('active');
         this.modalElement.style.opacity = '0';
         const content = this.modalElement.querySelector('.weather-modal-content');
