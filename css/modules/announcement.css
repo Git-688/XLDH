@@ -142,7 +142,7 @@
     max-height: 350px;
 }
 
-/* 重要提醒区域 - 无标题、无图标、无边框、无内边距，背景白色，文字浅红色 */
+/* 重要提醒区域 - 无标题、无图标、无边框、无内边距 */
 .focus-section {
     background: #ffffff;
     border: none;
@@ -155,7 +155,7 @@
     line-height: 1.5;
     margin: 0;
 }
-/* 深色模式重要提醒 - 背景跟随模态框，文字保持红色但降低亮度 */
+/* 深色模式重要提醒 - 背景跟随模态框 */
 @media (prefers-color-scheme: dark) {
     .focus-section {
         background: #2d2d2d;
@@ -226,7 +226,7 @@
     }
 }
 
-/* 底部区域 - 白色背景 + 明显分割线 */
+/* 底部区域 - 背景与模态框一致，分割线颜色适配 */
 .announcement-footer {
     display: flex;
     align-items: center;
@@ -258,7 +258,7 @@
     background: #3651d4;
     box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
 }
-/* 深色模式底部区域 */
+/* 深色模式底部区域 - 背景改为深色 */
 @media (prefers-color-scheme: dark) {
     .announcement-footer {
         background: #2d2d2d;
