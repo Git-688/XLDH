@@ -1,5 +1,6 @@
 /**
  * 插件管理器 - 星聚导航音乐播放器专用（使用 Worker 代理解决跨域）
+ * 已移除歌词翻译插件
  */
 class PluginManager {
     constructor(cacheManager) {
@@ -212,29 +213,7 @@ class PluginManager {
             getDownloadUrl: async (songId) => songId
         });
 
-        // 翻译插件
-        this.registerPlugin('translator', {
-            name: '歌词翻译器',
-            version: '1.0.0',
-            translateText: async (text, targetLang = 'zh') => {
-                const cacheKey = `translation_${targetLang}_${btoa(text)}`;
-                const cached = this.cacheManager.get(cacheKey);
-                if (cached) return cached;
-                try {
-                    const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`);
-                    const data = await response.json();
-                    if (data.responseStatus === 200 && data.responseData) {
-                        const translation = data.responseData.translatedText;
-                        this.cacheManager.set(cacheKey, translation, 24 * 60 * 60 * 1000);
-                        return translation;
-                    }
-                    return text;
-                } catch (error) {
-                    console.warn('翻译失败:', error);
-                    return text;
-                }
-            }
-        });
+        // 注意：歌词翻译插件已移除
     }
 
     formatSong(song, source) {
@@ -302,12 +281,6 @@ class PluginManager {
         const plugin = this.getPlugin(apiId);
         if (!plugin || !plugin.getDownloadUrl) throw new Error(`插件 ${apiId} 不支持下载`);
         return await plugin.getDownloadUrl(songId);
-    }
-
-    async translateText(text, targetLang = 'zh') {
-        const translator = this.getPlugin('translator');
-        if (!translator || !translator.translateText) return text;
-        return await translator.translateText(text, targetLang);
     }
 
     async preloadMultiple(songs, concurrent = 3) {
