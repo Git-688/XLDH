@@ -211,14 +211,14 @@
 /* 深色模式下更新列表 */
 @media (prefers-color-scheme: dark) {
     .updates-list li {
-        color: #f0f0f0;
+        color: #e0e0e0;
         border-bottom-color: rgba(255, 255, 255, 0.08);
     }
     .updates-list li::before {
         background: #7b9cff;
     }
     .dark-mode .updates-list li {
-        color: #f0f0f0;
+        color: #e0e0e0;
         border-bottom-color: rgba(255, 255, 255, 0.08);
     }
     .dark-mode .updates-list li::before {
@@ -267,12 +267,24 @@
     .announcement-date {
         color: #adb5bd;
     }
+    .announcement-ack-btn {
+        background: #4361ee;
+    }
+    .announcement-ack-btn:hover {
+        background: #5a7aff;
+    }
     .dark-mode .announcement-footer {
         background: #2d2d2d;
         border-top-color: #404040;
     }
     .dark-mode .announcement-date {
         color: #adb5bd;
+    }
+    .dark-mode .announcement-ack-btn {
+        background: #4361ee;
+    }
+    .dark-mode .announcement-ack-btn:hover {
+        background: #5a7aff;
     }
 }
 
