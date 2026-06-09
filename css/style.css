@@ -1253,3 +1253,54 @@ p {
 .dark-mode .security-hint {
     color: #c0c0c0;
 }
+
+/* ==================== 主页深色模式终极补丁 ==================== */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #121212;
+        color: #e0e0e0;
+    }
+    a:not(.site-card):not(.minimal-tag):not(.footer-btn):not(.nav-btn) {
+        color: #7b9cff;
+    }
+    a:not(.site-card):not(.minimal-tag):not(.footer-btn):not(.nav-btn):hover {
+        color: #a0c0ff;
+    }
+    hr, .divider {
+        border-color: #404040;
+    }
+    .loading-spinner {
+        border-color: #333;
+        border-top-color: #7b9cff;
+    }
+    /* 确保所有卡片、容器背景统一 */
+    .card, .panel, .widget {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+}
+
+/* 手动深色模式同类覆盖 */
+.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+.dark-mode a:not(.site-card):not(.minimal-tag):not(.footer-btn):not(.nav-btn) {
+    color: #7b9cff;
+}
+.dark-mode a:not(.site-card):not(.minimal-tag):not(.footer-btn):not(.nav-btn):hover {
+    color: #a0c0ff;
+}
+.dark-mode hr, .dark-mode .divider {
+    border-color: #404040;
+}
+.dark-mode .loading-spinner {
+    border-color: #333;
+    border-top-color: #7b9cff;
+}
+.dark-mode .card,
+.dark-mode .panel,
+.dark-mode .widget {
+    background: #2d2d2d;
+    border-color: #404040;
+}
