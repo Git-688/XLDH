@@ -56,8 +56,9 @@
 }
 .greeting-left { flex: 1; min-width: 0; }
 
+/* 强制确保问候语字体缩小30% */
 .greeting-text h1 {
-    font-size: 1.12em;   /* 原1.6em，缩小30% */
+    font-size: 1.12em !important;   /* 原1.6em，缩小30% */
     font-weight: 700;
     color: var(--text-primary);
     margin: 0 0 12px 0;
@@ -260,7 +261,7 @@
     .bookmark-btn span { writing-mode: horizontal-tb; font-size: 0.85em; }
     .greeting-header { flex-direction: row; align-items: center; gap: 16px; }
     .datetime { width: auto; text-align: right; padding: 10px 14px; }
-    .greeting-text h1 { font-size: 0.98em; margin-bottom: -2px; }  /* 原1.4em，缩小30% */
+    .greeting-text h1 { font-size: 0.98em !important; margin-bottom: -2px; }  /* 原1.4em */
     .countdown-holiday { font-size: 0.85em; margin-top: -2px; }
     #holidayName { font-size: 1.275em; }
     #holidayCountdown { padding: 3px 10px; font-size: 0.95em; }
@@ -275,7 +276,7 @@
     .greeting-section { padding: var(--section-margin-sm) 0; }
     .greeting-main-card { padding: 16px; gap: 16px; }
     .greeting-header { flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 12px; }
-    .greeting-text h1 { font-size: 0.84em; margin-bottom: -3px; }  /* 原1.2em，缩小30% */
+    .greeting-text h1 { font-size: 0.84em !important; margin-bottom: -3px; }  /* 原1.2em */
     .countdown-holiday { font-size: 0.82em; gap: 4px; flex-wrap: wrap; margin-top: -3px; }
     #holidayName { font-size: 1.23em; }
     #holidayCountdown { padding: 2px 8px; font-size: 0.88em; }
@@ -293,7 +294,7 @@
     .greeting-section { padding: var(--section-margin-xs) 0; }
     .greeting-main-card { padding: 14px; gap: 14px; }
     .greeting-header { gap: 10px; flex-wrap: nowrap; }
-    .greeting-text h1 { font-size: 0.77em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: -4px; }  /* 原1.1em，缩小30% */
+    .greeting-text h1 { font-size: 0.77em !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: -4px; }  /* 原1.1em */
     .countdown-holiday { font-size: 0.78em; margin-top: -4px; }
     #holidayName { font-size: 1.17em; }
     #holidayCountdown { padding: 2px 8px; font-size: 0.85em; }
