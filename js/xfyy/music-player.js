@@ -1,6 +1,7 @@
 /**
  * 音乐播放器 - 星聚导航专用（完整修复版）
  * 包含：精确进度条、下载进度（通过 Worker 代理）、搜索、播放列表、用户手势处理、歌词代理、歌单显示修复、倍速控件修复
+ * 下载功能已添加进度提示（包括无总长度时的旋转动画）
  */
 
 // ==================== 自定义下拉选择器组件（必须在播放器类之前定义） ====================
@@ -224,7 +225,6 @@ class MusicPlayer {
         this.bindEvents();
         this.initializePlayer();
 
-        // 用户手势（自动播放策略）
         this.userGestureResolved = false;
         this.userGesturePromise = null;
     }
@@ -268,7 +268,6 @@ class MusicPlayer {
         this.maxConsecutiveErrors = 3;
         this.maxErrorShown = false;
         
-        // 进度条拖拽专用
         this.dragPercent = 0;
         this.clickPending = false;
         this.dragRAF = null;
@@ -642,7 +641,6 @@ class MusicPlayer {
         this.currentApi = apiId;
         this.updateSearchToggleButton();
         
-        // 强制重置搜索模式，确保歌单容器显示
         this.isSearchMode.set(apiId, false);
         const el = this.apiElements[apiId];
         if (el) {
@@ -709,7 +707,6 @@ class MusicPlayer {
         try {
             const results = await this.pluginManager.search(apiId, keyword);
             const processedResults = results.map(song => {
-                // 确保保留 id 字段（用于下载）
                 if (!song.id && song.url) {
                     const idMatch = song.url.match(/id=(\d+)/);
                     if (idMatch) song.id = idMatch[1];
@@ -828,7 +825,6 @@ class MusicPlayer {
         try {
             this.audio.src = song.src;
             this.audio.load();
-            // 重置进度条
             this.elements.progress.style.width = '0%';
             this.elements.progress.style.transform = 'scaleX(0)';
             this.elements.progressHandle.style.left = '0%';
@@ -889,6 +885,7 @@ class MusicPlayer {
         }
     }
 
+    // ==================== 下载功能（增强进度提示） ====================
     async downloadCurrentSong() {
         if (!this.currentPlaylist[this.currentIndex]) {
             window.toast?.show('没有可下载的歌曲', 'warning');
@@ -899,16 +896,17 @@ class MusicPlayer {
 
     async downloadSong(song) {
         let progress = null;
+        let totalBytes = 0;
+        let loadedBytes = 0;
+        let indeterminate = false; // 是否不确定进度
+
         try {
             window.toast?.show(`正在获取下载地址: ${song.title}`, 'info');
             
             let downloadUrl = null;
-            // 方法1：如果有 song.id 且来源是网易云，使用官方外链
             if (song.id && (song.source === 'netease' || this.currentApi === 'netease')) {
                 downloadUrl = `https://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
-            }
-            // 方法2：如果 song.src 存在，尝试直接使用
-            else if (song.src && song.src.startsWith('http')) {
+            } else if (song.src && song.src.startsWith('http')) {
                 downloadUrl = song.src;
             }
             
@@ -919,25 +917,32 @@ class MusicPlayer {
             window.toast?.show(`开始下载: ${song.title}`, 'info');
             progress = this.createDownloadProgress();
             
-            // 通过 Worker 代理下载文件（解决跨域）
+            // 通过 Worker 代理下载文件
             const apiBase = Utils.getApiBase();
             const proxyDownloadUrl = `${apiBase}/music-proxy?url=${encodeURIComponent(downloadUrl)}`;
             
             const response = await fetch(proxyDownloadUrl);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             
+            const contentLength = response.headers.get('content-length');
+            totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
+            
+            // 如果没有总长度，显示不确定进度（旋转动画）
+            if (totalBytes === 0) {
+                indeterminate = true;
+                this.setIndeterminateProgress(progress);
+            }
+            
             const reader = response.body.getReader();
             const chunks = [];
-            let loaded = 0;
-            const total = parseInt(response.headers.get('content-length') || '0');
             
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
                 chunks.push(value);
-                loaded += value.length;
-                if (total) {
-                    const percent = (loaded / total) * 100;
+                loadedBytes += value.length;
+                if (totalBytes > 0 && !indeterminate) {
+                    const percent = (loadedBytes / totalBytes) * 100;
                     this.updateDownloadProgress(progress, percent);
                 }
             }
@@ -951,6 +956,8 @@ class MusicPlayer {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            
+            // 下载完成，移除进度条
             progress.remove();
             window.toast?.show(`下载完成: ${song.title}`, 'success');
             
@@ -964,15 +971,45 @@ class MusicPlayer {
     createDownloadProgress() {
         const div = document.createElement('div');
         div.className = 'download-progress';
-        div.innerHTML = `<div>下载中...</div><div class="download-progress-bar"><div class="download-progress-fill" style="width:0%"></div></div>`;
+        div.innerHTML = `
+            <div class="download-progress-header">下载中...</div>
+            <div class="download-progress-bar-container">
+                <div class="download-progress-bar">
+                    <div class="download-progress-fill" style="width:0%"></div>
+                </div>
+                <div class="download-progress-spinner" style="display:none;">
+                    <i class="fas fa-spinner fa-pulse"></i>
+                </div>
+            </div>
+        `;
         document.body.appendChild(div);
         return div;
     }
 
     updateDownloadProgress(el, percent) {
         const fill = el.querySelector('.download-progress-fill');
-        if (fill) fill.style.width = `${Math.min(percent, 100)}%`;
+        if (fill) {
+            fill.style.width = `${Math.min(percent, 100)}%`;
+            // 当进度超过5%时，显示百分比文本（可选）
+            if (percent > 5) {
+                const header = el.querySelector('.download-progress-header');
+                if (header) header.textContent = `下载中 ${Math.floor(percent)}%`;
+            }
+        }
     }
+
+    setIndeterminateProgress(el) {
+        // 无总长度时，隐藏进度条，显示旋转图标
+        const bar = el.querySelector('.download-progress-bar');
+        const spinner = el.querySelector('.download-progress-spinner');
+        if (bar) bar.style.display = 'none';
+        if (spinner) {
+            spinner.style.display = 'block';
+            const header = el.querySelector('.download-progress-header');
+            if (header) header.textContent = '下载中 (大小未知)...';
+        }
+    }
+    // ==================== 下载功能结束 ====================
 
     handleEnded() {
         if (this.playMode === 2) {
@@ -1158,7 +1195,6 @@ class MusicPlayer {
         }
         this.loadApiPlaylist(this.currentApi);
         
-        // 修复：确保自定义下拉框在播放器显示后再生成
         const initCustomSelectsWithRetry = () => {
             if (document.querySelector('.music-player.show')) {
                 if (typeof initCustomSelects === 'function') {
