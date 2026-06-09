@@ -1,10 +1,10 @@
 /**
- * 天气模块 - 终极完整版（确保模态框总能弹出）
- * 支持手动选择城市、自动定位、自动刷新
+ * 天气模块 - 简化卡片式设计（支持手动选择城市并持久化，一键回到自动定位）
+ * 使用配置化 API 地址和统一错误处理
  */
 class WeatherModule {
     static CONFIG = {
-        WEATHER_API: 'https://api.vvhan.com/api/weather',
+        WEATHER_API: 'https://www.cunyuapi.top/weather',
         GEO_API: 'https://api.pearapi.ai/api/map/',
         get API_BASE() {
             return Utils.getApiBase();
@@ -201,183 +201,145 @@ class WeatherModule {
             return true;
         } catch (error) {
             console.error('加载天气数据失败:', error);
-            this.weatherData = this.getMockWeatherData(this.currentCity);
-            return false;
-        }
-    }
-
-    getMockWeatherData(city) {
-        return {
-            city: city,
-            dayTemperature: '22°C',
-            nightTemperature: '15°C',
-            weather: '晴',
-            weatherIcon: 'fas fa-sun',
-            humidity: '65%',
-            wind: '东南风 2级',
-            visibility: '10km',
-            airQuality: '良',
-            airColor: '#10b981',
-            updateTime: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-            warning: null,
-            tips: '天气舒适，适合户外活动',
-            forecasts: [
-                { day: '今天', weather: '晴', icon: 'fas fa-sun', dayTemp: '22°C', nightTemp: '15°C', wind: '东南风 2级' },
-                { day: '明天', weather: '多云', icon: 'fas fa-cloud-sun', dayTemp: '24°C', nightTemp: '16°C', wind: '南风 3级' },
-                { day: '后天', weather: '阴', icon: 'fas fa-cloud', dayTemp: '20°C', nightTemp: '14°C', wind: '北风 2级' }
-            ]
-        };
-    }
-
-    async fetchWeatherData(city) {
-        const apiBase = Utils.getApiBase();
-        const targetUrl = `${WeatherModule.CONFIG.WEATHER_API}?city=${encodeURIComponent(city)}`;
-        const proxyUrl = `${apiBase}/music-proxy?url=${encodeURIComponent(targetUrl)}`;
-        try {
-            const response = await Utils.safeFetch(proxyUrl, { timeout: 8000 });
-            const text = await response.text();
-            console.log('天气API原始返回:', text.substring(0, 300));
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                throw new Error('JSON解析失败');
-            }
-            if (data && data.success === true && data.data) {
-                const w = data.data;
-                const getWeatherIcon = (cond) => {
-                    const map = {
-                        '晴': 'fas fa-sun',
-                        '多云': 'fas fa-cloud-sun',
-                        '阴': 'fas fa-cloud',
-                        '雨': 'fas fa-cloud-rain',
-                        '雪': 'fas fa-snowflake',
-                        '雾': 'fas fa-smog'
-                    };
-                    for (let k in map) if (cond.includes(k)) return map[k];
-                    return 'fas fa-cloud-sun';
-                };
-                let forecasts = [];
-                if (w.forecast && Array.isArray(w.forecast)) {
-                    for (let i = 0; i < Math.min(3, w.forecast.length); i++) {
-                        const f = w.forecast[i];
-                        forecasts.push({
-                            day: i === 0 ? '今天' : i === 1 ? '明天' : f.date || '后天',
-                            weather: f.type,
-                            icon: getWeatherIcon(f.type),
-                            dayTemp: f.high,
-                            nightTemp: f.low,
-                            wind: f.fx + '风 ' + f.fl + '级'
-                        });
-                    }
-                } else {
-                    const weekdays = ['今天', '明天', '后天'];
-                    for (let i = 0; i < 3; i++) {
-                        forecasts.push({
-                            day: weekdays[i],
-                            weather: w.weather || '晴',
-                            icon: getWeatherIcon(w.weather),
-                            dayTemp: w.temp ? w.temp + '°C' : '20°C',
-                            nightTemp: w.temp ? (parseInt(w.temp) - 5) + '°C' : '15°C',
-                            wind: w.wind || '微风'
-                        });
-                    }
-                }
-                return {
-                    city: w.city || city,
-                    dayTemperature: w.temp ? w.temp + '°C' : '22°C',
-                    nightTemperature: w.low ? w.low + '°C' : (w.temp ? (parseInt(w.temp) - 5) + '°C' : '15°C'),
-                    weather: w.weather || '晴',
-                    weatherIcon: getWeatherIcon(w.weather),
-                    humidity: w.humidity || '--',
-                    wind: w.wind || '无持续风向',
-                    visibility: w.visibility || '--',
-                    airQuality: w.air || '--',
-                    airColor: '#1890ff',
-                    updateTime: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-                    warning: null,
-                    tips: w.tips || (w.weather ? `今日${w.weather}，注意天气变化` : '天气数据更新中'),
-                    forecasts: forecasts
-                };
-            } else {
-                throw new Error('API返回格式错误');
-            }
-        } catch (error) {
-            console.error('天气请求失败:', error);
+            this.weatherData = null;
             throw error;
         }
     }
 
-    closeOtherModals() {
-        const safeCall = (fn, name) => {
-            try {
-                if (fn && typeof fn === 'function') fn();
-            } catch (e) {
-                console.warn(`关闭 ${name} 失败:`, e);
-            }
-        };
-        if (window.sidebar && typeof window.sidebar.isVisible === 'function' && window.sidebar.isVisible()) {
-            safeCall(() => window.sidebar.hide(), 'sidebar');
-        }
-        if (window.searchModule && window.searchModule.isModalOpen) {
-            safeCall(() => window.searchModule.hide(), 'searchModule');
-        }
-        if (window.app && window.app.components && window.app.components.navbar) {
-            safeCall(() => window.app.components.navbar.hideMusicPlayer(), 'musicPlayer');
-        }
-        if (window.announcementModule && window.announcementModule.isVisible) {
-            safeCall(() => window.announcementModule.hide(), 'announcementModule');
-        }
-        if (window.aboutModule && window.aboutModule.isShowing) {
-            safeCall(() => window.aboutModule.hide(), 'aboutModule');
-        }
-        if (window.submitModule && window.submitModule.isVisible) {
-            safeCall(() => window.submitModule.hide(), 'submitModule');
-        }
-        if (window.app && typeof window.app.hideNotebookModal === 'function') {
-            safeCall(() => window.app.hideNotebookModal(), 'notebookModal');
+    async fetchWeatherData(city) {
+        const url = `${WeatherModule.CONFIG.WEATHER_API}?city=${encodeURIComponent(city)}`;
+        try {
+            const response = await Utils.safeFetch(url, { timeout: 8000 });
+            const data = await response.json();
+            return this.parseWeatherData(data);
+        } catch (error) {
+            Utils.handleApiError(error, '获取天气数据失败');
+            throw error;
         }
     }
 
-    showModal() {
-        if (this.isLoading) {
-            console.log('天气模块正在加载中，请稍后');
-            return;
+    parseWeatherData(data) {
+        if (!data || !data.city_info || !data.forecasts || !data.forecasts[0]) {
+            throw new Error('天气数据格式错误');
         }
-        try {
-            this.closeOtherModals();
+        const cityInfo = data.city_info;
+        const today = data.forecasts[0];
 
-            if (!this.modalElement || !document.body.contains(this.modalElement)) {
-                this.createModal();
+        const getWeatherIcon = (condition) => {
+            if (!condition) return 'fas fa-cloud-sun';
+            const iconMap = {
+                '晴': 'fas fa-sun',
+                '多云': 'fas fa-cloud-sun',
+                '阴': 'fas fa-cloud',
+                '雾': 'fas fa-smog',
+                '雨': 'fas fa-cloud-rain',
+                '小雨': 'fas fa-cloud-rain',
+                '中雨': 'fas fa-cloud-showers-heavy',
+                '大雨': 'fas fa-cloud-showers-heavy',
+                '暴雨': 'fas fa-poo-storm',
+                '雪': 'fas fa-snowflake',
+                '小雪': 'fas fa-snowflake',
+                '中雪': 'fas fa-snowflake',
+                '大雪': 'fas fa-snowman',
+                '雷阵雨': 'fas fa-bolt',
+                '阵雨': 'fas fa-cloud-showers-heavy',
+                '毛毛雨': 'fas fa-cloud-rain'
+            };
+            for (const [key, icon] of Object.entries(iconMap)) {
+                if (condition.includes(key)) return icon;
             }
+            return 'fas fa-cloud-sun';
+        };
 
-            this.modalElement.style.display = 'flex';
-            this.modalElement.style.opacity = '0';
-            this.modalElement.style.visibility = 'visible';
-            this.modalElement.offsetHeight;
+        const formatUpdateTime = (timeStr) => {
+            if (!timeStr) return '刚刚';
+            try {
+                const time = new Date(timeStr);
+                return time.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+            } catch { return '刚刚'; }
+        };
+
+        const getWeatherTips = (weather) => {
+            const tips = [];
+            if (weather.includes('雨')) tips.push('今日有雨，请携带雨具');
+            if (weather.includes('雪')) tips.push('路面可能结冰，请注意交通安全');
+            if (weather.includes('雾')) tips.push('能见度较低，请注意行车安全');
+            if (weather.includes('晴')) tips.push('天气晴朗，适宜户外活动');
+            if (weather.includes('阴') || weather.includes('多云')) tips.push('天气适宜，注意适当增减衣物');
+            const dayTemp = parseInt(today.temperature.day) || 0;
+            const nightTemp = parseInt(today.temperature.night) || 0;
+            if (dayTemp > 30) tips.push('天气炎热，注意防暑降温');
+            else if (dayTemp < 5) tips.push('天气寒冷，注意保暖');
+            if (dayTemp - nightTemp > 10) tips.push('昼夜温差较大，请注意增减衣物');
+            return tips.length > 0 ? tips.join('；') : '天气信息更新，请注意查看详情';
+        };
+
+        const generateForecasts = (forecasts) => {
+            const result = [];
+            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            for (let i = 0; i < Math.min(3, forecasts.length); i++) {
+                const forecast = forecasts[i];
+                const date = new Date(forecast.date);
+                const dayName = i === 0 ? '今天' : i === 1 ? '明天' : weekdays[date.getDay()];
+                result.push({
+                    day: dayName,
+                    weather: forecast.weather.day,
+                    icon: getWeatherIcon(forecast.weather.day),
+                    dayTemp: forecast.temperature.day + '°C',
+                    nightTemp: forecast.temperature.night + '°C',
+                    wind: forecast.wind.day.direction + '风 ' + forecast.wind.day.power + '级'
+                });
+            }
+            return result;
+        };
+
+        return {
+            city: cityInfo.city.replace('市', ''),
+            dayTemperature: today.temperature.day + '°C',
+            nightTemperature: today.temperature.night + '°C',
+            weather: today.weather.day,
+            weatherIcon: getWeatherIcon(today.weather.day),
+            humidity: '--',
+            wind: today.wind.day.direction + '风 ' + today.wind.day.power + '级',
+            visibility: '--',
+            airQuality: '--',
+            airColor: '#1890ff',
+            updateTime: formatUpdateTime(cityInfo.reporttime),
+            warning: null,
+            warningColor: null,
+            warningTime: null,
+            tips: getWeatherTips(today.weather.day),
+            forecasts: generateForecasts(data.forecasts)
+        };
+    }
+
+    showModal() {
+        if (this.isLoading) return;
+        this.closeOtherModals();
+        this.createModal();
+        this.modalElement.style.display = 'flex';
+        this.isShowing = true;
+        requestAnimationFrame(() => {
             this.modalElement.style.opacity = '1';
             const content = this.modalElement.querySelector('.weather-modal-content');
             if (content) {
                 content.style.transform = 'translateY(0) scale(1)';
                 content.style.opacity = '1';
             }
-            this.isShowing = true;
-
-            if (window.app && typeof window.app.registerModal === 'function') {
-                window.app.registerModal(this);
-            }
-
-            this.isLoading = true;
-            this.loadWeatherData().finally(() => {
-                this.updateModalContent();
-                this.isLoading = false;
-            });
-        } catch (err) {
-            console.error('显示天气模态框时发生致命错误:', err);
+        });
+        if (window.app) window.app.registerModal(this);
+        this.isLoading = true;
+        this.loadWeatherData().then(() => {
+            this.updateModalContent();
+        }).catch(error => {
+            console.error('加载天气数据失败:', error);
+            this.updateModalContent();
             if (window.app && window.app.showToast) {
-                window.app.showToast('天气功能暂时不可用', 'error');
+                window.app.showToast('天气数据加载失败，请稍后重试', 'error');
             }
-        }
+        }).finally(() => {
+            this.isLoading = false;
+        });
     }
 
     createModal() {
@@ -386,7 +348,6 @@ class WeatherModule {
         }
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'weather-modal-card';
-        this.modalElement.style.cssText = 'display: none; opacity: 0; visibility: hidden; transition: opacity 0.3s ease;';
         this.modalElement.innerHTML = `
             <div class="weather-modal-content">
                 <div class="weather-header">
@@ -697,13 +658,9 @@ class WeatherModule {
         if (this.refreshInterval) clearInterval(this.refreshInterval);
         this.refreshInterval = setInterval(async () => {
             try {
-                if (this.isShowing) {
-                    await this.loadWeatherData();
-                    this.updateModalContent();
-                }
-            } catch (error) {
-                console.warn('自动刷新天气数据失败:', error);
-            }
+                await this.loadWeatherData();
+                if (this.isShowing && this.modalElement) this.updateModalContent();
+            } catch (error) { console.warn('自动刷新天气数据失败:', error); }
         }, this.autoRefreshTime);
     }
 
@@ -752,6 +709,14 @@ class WeatherModule {
         }
     }
 
+    closeOtherModals() {
+        if (window.sidebar && window.sidebar.isVisible) window.sidebar.hide();
+        if (window.searchModule && window.searchModule.isModalOpen) window.searchModule.hide();
+        if (window.app && window.app.components && window.app.components.navbar) {
+            window.app.components.navbar.hideMusicPlayer();
+        }
+    }
+
     hide() {
         if (!this.isShowing || !this.modalElement) return;
         this.modalElement.style.opacity = '0';
@@ -767,16 +732,13 @@ class WeatherModule {
                 document.removeEventListener('keydown', this.escHandler);
                 this.escHandler = null;
             }
-            if (window.app && typeof window.app.unregisterModal === 'function') {
-                window.app.unregisterModal(this);
-            }
+            if (window.app) window.app.unregisterModal(this);
         }, 200);
     }
 
     async refreshWeather() {
         try {
             await this.loadWeatherData();
-            if (this.isShowing) this.updateModalContent();
             return true;
         } catch (error) {
             console.error('手动刷新天气数据失败:', error);
@@ -792,13 +754,8 @@ class WeatherModule {
         }
     }
 
-    getWeatherData() {
-        return this.weatherData;
-    }
-
-    getCurrentCity() {
-        return this.currentCity;
-    }
+    getWeatherData() { return this.weatherData; }
+    getCurrentCity() { return this.currentCity; }
 
     destroy() {
         this.hide();
