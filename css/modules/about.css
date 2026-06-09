@@ -1,4 +1,4 @@
-/* about.css - 左边卡片宽度增大，右边正方形，logo放大，文本左对齐 */
+/* about.css - 圆角8px，左边卡片透明，右边logo上下间距相等 */
 .about-modal {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     position: fixed;
@@ -57,7 +57,7 @@
 /* 顶部区域 */
 .about-header {
     position: relative;
-    padding: 14px;              /* 上下左右内边距，用于间距参考 */
+    padding: 14px;
     min-height: 100px;
     display: flex;
     align-items: stretch;
@@ -91,28 +91,28 @@
     width: 100%;
     position: relative;
     z-index: 3;
-    gap: 14px;                 /* 水平间距等于 .about-header 的 padding 值 (14px) */
+    gap: 14px;
 }
-/* 左边大卡片：宽度增大，取消正方形约束，文本左对齐 */
+/* 左边大卡片：透明背景，无模糊，圆角8px */
 .about-header-left {
-    flex: 1.6;                 /* 比右边更宽 */
+    flex: 1.6;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 8px;                  /* 三行卡片之间的间距 */
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 12px;
-    backdrop-filter: blur(4px);
-    padding: 0;                /* 内边距为0，由内部卡片撑满 */
+    gap: 8px;
+    background: transparent;      /* 完全透明 */
+    border-radius: 8px;           /* 与主页logo圆角一致 */
+    backdrop-filter: none;        /* 移除模糊 */
+    padding: 0;
     min-width: 0;
     overflow: hidden;
 }
-/* 左边内部卡片：文本左对齐，内边距适当增加 */
+/* 左边内部卡片：保留半透明背景，保证文字可读 */
 .info-card {
     flex: 1;
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* 左对齐 */
+    justify-content: flex-start;
     background: rgba(0, 0, 0, 0.5);
     border-radius: 8px;
     font-size: 11px;
@@ -120,37 +120,38 @@
     color: white;
     text-shadow: 0 1px 1px rgba(0,0,0,0.3);
     white-space: nowrap;
-    padding: 0 12px;           /* 左右内边距，避免文字贴边 */
+    padding: 0 12px;
     margin: 0;
     width: 100%;
     box-sizing: border-box;
     text-align: left;
 }
-/* 右边大卡片：保持正方形比例，logo 放大 */
+/* 右边大卡片：圆角8px，保持正方形，内部logo上下间距相等 */
 .about-header-right.logo-card {
-    flex: 1;                   /* 右边宽度由内容决定，但受 flex 约束 */
-    aspect-ratio: 1 / 1;       /* 强制正方形 */
+    flex: 1;
+    aspect-ratio: 1 / 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     background: rgba(0, 0, 0, 0.3);
-    border-radius: 12px;
+    border-radius: 8px;           /* 圆角改为8px，与左边一致 */
     backdrop-filter: blur(4px);
-    padding: 0;
+    padding: 12px 0;              /* 上下内边距相等，保证logo上下间距一致 */
     min-width: 0;
     overflow: hidden;
 }
-/* Logo 放大一半（原基础42px → 63px，取64px） */
+/* logo 样式圆角不变（50%圆形），上下间距由父容器padding控制 */
 .about-brand-logo {
     width: 64px;
     height: 64px;
-    border-radius: 50%;
+    border-radius: 50%;           /* 保持圆形 */
     background: rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 8px;
+    /* 移除 margin，间距由父容器 padding 控制 */
+    margin: 0;
     padding: 6px;
     box-sizing: border-box;
 }
@@ -362,16 +363,15 @@
         padding: 0 24px;
     }
     .about-header {
-        padding: 16px;           /* 增大上下内边距，保持间距一致 */
+        padding: 16px;
     }
     .about-header-content {
-        gap: 16px;               /* 水平间距等于 padding 值 */
+        gap: 16px;
     }
     .info-card {
         font-size: 13px;
         padding: 0 16px;
     }
-    /* 右边 logo 进一步放大 */
     .about-brand-logo {
         width: 72px;
         height: 72px;
@@ -382,6 +382,9 @@
     }
     .about-brand-subtitle {
         font-size: 12px;
+    }
+    .about-header-right.logo-card {
+        padding: 16px 0;          /* 上下内边距相等 */
     }
     .about-main-content {
         padding: 16px;
@@ -424,7 +427,6 @@
     .about-brand-logo {
         width: 54px;
         height: 54px;
-        margin-bottom: 6px;
     }
     .about-brand-title {
         font-size: 13px;
@@ -432,8 +434,11 @@
     .about-brand-subtitle {
         font-size: 9px;
     }
+    .about-header-right.logo-card {
+        padding: 10px 0;          /* 移动端上下内边距相等 */
+    }
     .about-header-content {
-        gap: 12px;               /* 移动端间距保持与 padding 一致 */
+        gap: 12px;
     }
     .about-header {
         padding: 12px;
@@ -452,12 +457,12 @@
     .about-footer {
         background: #2d2d2d;
     }
-    .about-header-left,
-    .about-header-right.logo-card {
-        background: rgba(0, 0, 0, 0.5);
-    }
+    /* 左边大卡片透明，无需深色覆盖；内部卡片背景保持不变 */
     .info-card {
         background: rgba(0, 0, 0, 0.7);
+    }
+    .about-header-right.logo-card {
+        background: rgba(0, 0, 0, 0.5);
     }
     .about-close-btn {
         background: var(--success-color, #10b981);
