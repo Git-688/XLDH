@@ -1,10 +1,11 @@
 /**
- * 天气模块 - 基于 apihz.cn API
- * 支持自动定位（IP）、手动选择城市、未来七天预报
+ * 天气模块 - 基于 apihz.cn API（整合 IP 归属地查询，提升自动定位精度）
+ * 支持：IP 归属地自动定位 + 天气查询、手动选择城市、未来七天预报
  */
 class WeatherModule {
     static CONFIG = {
         WEATHER_API: 'https://cn.apihz.cn/api/tianqi/tqybip.php',
+        IP_LOCATION_API: 'https://cn.apihz.cn/api/ip/chaapi.php',
         get API_BASE() {
             return Utils.getApiBase();
         }
@@ -93,6 +94,26 @@ class WeatherModule {
         }
     }
 
+    /**
+     * 新增：通过 IP 获取精准归属地（省份+城市）
+     * 使用 chaapi.php 接口
+     */
+    async fetchIpLocation() {
+        const url = `${WeatherModule.CONFIG.IP_LOCATION_API}?id=${this.apiId}&key=${this.apiKey}&td=0`;
+        try {
+            const response = await Utils.safeFetch(url, { timeout: 5000 });
+            const data = await response.json();
+            if (data.code === 200 && data.sheng && data.shi) {
+                const city = data.shi.replace(/市$/, '');
+                return { city, province: data.sheng, full: data.msg };
+            }
+            throw new Error(data.msg || 'IP 归属地查询失败');
+        } catch (error) {
+            console.warn('IP 归属地查询失败:', error);
+            throw error;
+        }
+    }
+
     async tryAutoLocation() {
         try {
             this.useAutoLocation = true;
@@ -109,13 +130,38 @@ class WeatherModule {
         }
     }
 
+    /**
+     * 增强版：先通过 IP 归属地 API 获取城市，再查询天气
+     * 使用 Promise.allSettled 容错，确保即使归属地查询失败也不影响天气展示
+     */
     async loadWeatherDataByIp() {
         try {
-            this.weatherData = await this.fetchWeatherDataByIp();
-            if (this.weatherData && this.weatherData.city) {
-                this.currentCity = this.weatherData.city;
-                this.saveCity(this.currentCity, false);
+            // 同时发起归属地查询和天气查询（不等待彼此）
+            const [locationResult, weatherResult] = await Promise.allSettled([
+                this.fetchIpLocation(),
+                this.fetchWeatherDataByIp()
+            ]);
+
+            let finalWeatherData = weatherResult.status === 'fulfilled' ? weatherResult.value : null;
+            if (!finalWeatherData) {
+                throw new Error('天气数据获取失败');
             }
+
+            // 优先使用归属地 API 返回的城市
+            if (locationResult.status === 'fulfilled' && locationResult.value && locationResult.value.city) {
+                finalWeatherData.city = locationResult.value.city;
+                this.saveCity(locationResult.value.city, false);
+            } else if (finalWeatherData.place) {
+                // 降级：从天气 API 的 place 字段提取城市
+                const placeParts = finalWeatherData.place.split(',');
+                const placeCity = placeParts[1] ? placeParts[1].trim() : (placeParts[0] || finalWeatherData.city);
+                if (placeCity && placeCity !== '未知') {
+                    finalWeatherData.city = placeCity;
+                    this.saveCity(placeCity, false);
+                }
+            }
+
+            this.weatherData = finalWeatherData;
             return true;
         } catch (error) {
             console.error('通过 IP 加载天气数据失败:', error);
@@ -124,6 +170,9 @@ class WeatherModule {
         }
     }
 
+    /**
+     * 原始 IP 天气查询（纯天气接口，不含归属地）
+     */
     async fetchWeatherDataByIp() {
         const url = `${WeatherModule.CONFIG.WEATHER_API}?id=${this.apiId}&key=${this.apiKey}&day=7&hourtype=0&suntimetype=0`;
         try {
@@ -139,6 +188,10 @@ class WeatherModule {
         }
     }
 
+    /**
+     * 通过城市名查询天气（手动选择场景）
+     * 注意：当前 IP 天气接口不支持直接传城市名，故采用 IP 接口 + 前端覆盖城市名的策略
+     */
     async loadWeatherDataByCity(city) {
         try {
             this.weatherData = await this.fetchWeatherDataByCity(city);
@@ -162,7 +215,8 @@ class WeatherModule {
                 throw new Error(data.msg || '获取天气数据失败');
             }
             const parsed = this.parseWeatherData(data);
-            parsed.city = city.replace('市', '');
+            // 手动覆盖城市名为用户选择的城市
+            parsed.city = city.replace(/市$/, '');
             return parsed;
         } catch (error) {
             Utils.handleApiError(error, '获取天气数据失败');
@@ -187,6 +241,9 @@ class WeatherModule {
         }
     }
 
+    /**
+     * 解析天气数据（兼容新旧两种数据来源）
+     */
     parseWeatherData(data) {
         if (!data || data.code !== 200) {
             throw new Error(data?.msg || '天气数据格式错误');
@@ -220,7 +277,14 @@ class WeatherModule {
             return 'fas fa-cloud-sun';
         };
 
-        let cityName = data.name || data.shi || data.sheng || '未知';
+        // 提取城市名（优先使用 place 字段）
+        let cityName = '未知';
+        if (data.place) {
+            const placeParts = data.place.split(',');
+            cityName = placeParts[1] ? placeParts[1].trim() : placeParts[0].trim();
+        } else {
+            cityName = data.name || data.shi || data.sheng || '未知';
+        }
         if (cityName.endsWith('市')) cityName = cityName.slice(0, -1);
         if (cityName.endsWith('县')) cityName = cityName.slice(0, -1);
 
@@ -233,9 +297,8 @@ class WeatherModule {
         const nowInfo = data.nowinfo || {};
         const currentTemp = nowInfo.temperature;
         const currentHumidity = nowInfo.humidity;
-        const currentWindScale = nowInfo.windScale;
-        const currentWindDir = nowInfo.windDirection;
 
+        // 未来几天预报
         const dayKeys = ['weatherday2', 'weatherday3', 'weatherday4', 'weatherday5', 'weatherday6', 'weatherday7'];
         const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
         const forecasts = [];
@@ -280,15 +343,11 @@ class WeatherModule {
             currentTemp: currentTemp !== undefined ? currentTemp + '°C' : todayTempDay ? todayTempDay + '°C' : '--',
             humidity: currentHumidity !== undefined ? currentHumidity + '%' : '--',
             wind: (todayWindDir ? todayWindDir + ' ' : '') + todayWindScale,
-            currentWindScale: currentWindScale || todayWindScale || '',
-            currentWindDir: currentWindDir || todayWindDir || '',
             visibility: '--',
             airQuality: '--',
             airColor: '#1890ff',
             updateTime: data.uptime ? data.uptime : (nowInfo.uptime || '刚刚'),
             warning: null,
-            warningColor: null,
-            warningTime: null,
             tips: getWeatherTips(),
             forecasts: forecasts
         };
