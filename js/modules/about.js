@@ -1,4 +1,4 @@
-// about.js - 星聚导航关于模块（完整版）
+// about.js - 星聚导航关于模块（完整版，优化爱发电深色模式）
 // 确保 Utils 存在
 if (typeof Utils === 'undefined') {
     window.Utils = {
@@ -11,6 +11,9 @@ if (typeof Utils === 'undefined') {
                 if (m === '"') return '&quot;';
                 return '&#39;';
             });
+        },
+        getApiBase: function() {
+            return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
         }
     };
 }
@@ -205,7 +208,7 @@ class AboutModule {
         }
     }
 
-    // 爱发电模态框（使用说明文字带标题，字体大小已优化）
+    // 爱发电模态框（优化深色模式）
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
@@ -228,6 +231,34 @@ class AboutModule {
             pointer-events: auto;
         `;
 
+        // 深色模式检测（系统或手动类）
+        const isDarkMode = () => {
+            return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ||
+                   document.documentElement.classList.contains('dark-mode');
+        };
+
+        // 动态获取深色模式颜色变量
+        const getDarkColors = () => {
+            if (isDarkMode()) {
+                return {
+                    bgCard: '#2d2d2d',
+                    borderColor: '#404040',
+                    textPrimary: '#f0f0f0',
+                    textSecondary: '#c0c0c0',
+                    hoverBg: '#3a3a3a'
+                };
+            }
+            return {
+                bgCard: '#ffffff',
+                borderColor: '#e0e0e0',
+                textPrimary: '#1e293b',
+                textSecondary: '#64748b',
+                hoverBg: '#f8f9fa'
+            };
+        };
+
+        const colors = getDarkColors();
+
         const style = document.createElement('style');
         style.textContent = `
             .donate-modal-content {
@@ -239,8 +270,8 @@ class AboutModule {
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                background: #ffffff;
-                border: 1px solid #e0e0e0;
+                background: ${colors.bgCard};
+                border: 1px solid ${colors.borderColor};
                 border-radius: 8px;
                 padding: 0 !important;
                 margin: 0;
@@ -264,7 +295,7 @@ class AboutModule {
                 justify-content: center;
                 border: 2px solid;
                 border-radius: 8px;
-                background: #ffffff;
+                background: ${colors.bgCard};
                 cursor: pointer;
                 transition: all 0.2s ease;
                 box-sizing: border-box;
@@ -313,19 +344,19 @@ class AboutModule {
                 font-size: 16px;
                 font-weight: 600;
                 margin-bottom: 12px;
-                color: var(--text-primary, #1e293b);
+                color: ${colors.textPrimary};
             }
             .help-inner .help-steps {
                 font-size: 12px;
-                color: var(--text-secondary, #64748b);
+                color: ${colors.textSecondary};
                 line-height: 1.6;
             }
             .help-inner .help-steps p {
                 margin: 0 0 8px 0;
             }
             .supporters-wrapper {
-                background: #ffffff;
-                border: 1px solid #e0e0e0;
+                background: ${colors.bgCard};
+                border: 1px solid ${colors.borderColor};
                 border-radius: 8px;
                 padding: 12px;
                 margin-top: 12px;
@@ -341,12 +372,12 @@ class AboutModule {
             .supporters-title {
                 font-size: 13px;
                 font-weight: 600;
-                color: #1e293b;
+                color: ${colors.textPrimary};
                 margin: 0;
             }
             .supporters-thanks {
                 font-size: 11px;
-                color: #64748b;
+                color: ${colors.textSecondary};
                 font-style: italic;
             }
             .supporters-list-scroll {
@@ -359,14 +390,14 @@ class AboutModule {
                 scrollbar-width: thin;
             }
             .supporter-name {
-                background: #ffffff;
-                color: #1e293b;
+                background: ${colors.bgCard};
+                color: ${colors.textPrimary};
                 padding: 4px 8px;
                 border-radius: 6px;
                 font-size: 10px;
                 text-align: center;
                 white-space: nowrap;
-                border: 1px solid #e9ecef;
+                border: 1px solid ${colors.borderColor};
                 box-shadow: 0 1px 2px rgba(0,0,0,0.05);
                 transition: all 0.2s;
             }
@@ -389,6 +420,7 @@ class AboutModule {
                     margin-bottom: 6px;
                 }
             }
+            /* 深色模式下额外适配（动态更新，但保留静态备用） */
             @media (prefers-color-scheme: dark) {
                 .donate-card-wrapper {
                     background: #2d2d2d;
@@ -423,6 +455,39 @@ class AboutModule {
                     background: currentColor !important;
                 }
             }
+            /* 手动深色模式覆盖 */
+            .dark-mode .donate-card-wrapper {
+                background: #2d2d2d;
+                border-color: #404040;
+            }
+            .dark-mode .supporters-wrapper {
+                background: #2d2d2d;
+                border-color: #404040;
+            }
+            .dark-mode .supporter-name {
+                background: #2d2d2d;
+                border-color: #404040;
+                color: #e0e0e0;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            }
+            .dark-mode .supporters-title {
+                color: #f0f0f0;
+            }
+            .dark-mode .supporters-thanks {
+                color: #aaa;
+            }
+            .dark-mode .help-inner .help-title {
+                color: #f0f0f0;
+            }
+            .dark-mode .help-inner .help-steps {
+                color: #ccc;
+            }
+            .dark-mode .donate-method-btn-left {
+                background: #2d2d2d;
+            }
+            .dark-mode .donate-method-btn-left.active {
+                background: currentColor !important;
+            }
         `;
         donateModal.appendChild(style);
 
@@ -432,8 +497,8 @@ class AboutModule {
                 flex-direction: column;
                 width: 100%;
                 max-width: 500px;
-                background: #ffffff;
-                border: 1px solid #e0e0e0;
+                background: ${colors.bgCard};
+                border: 1px solid ${colors.borderColor};
                 border-radius: 12px;
                 overflow: hidden;
                 box-shadow: 0 10px 40px rgba(0,0,0,0.1);
@@ -497,8 +562,8 @@ class AboutModule {
             </div>
             <button class="donate-close-btn-bottom" style="
                 margin-top: 12px;
-                background: #ffffff;
-                border: 1px solid #e0e0e0;
+                background: ${colors.bgCard};
+                border: 1px solid ${colors.borderColor};
                 border-radius: 50%;
                 width: 36px;
                 height: 36px;
@@ -506,7 +571,7 @@ class AboutModule {
                 align-items: center;
                 justify-content: center;
                 cursor: pointer;
-                color: #64748b;
+                color: ${colors.textSecondary};
                 font-size: 16px;
                 transition: all 0.2s;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -547,7 +612,7 @@ class AboutModule {
         const setActive = (activeBtn) => {
             buttons.forEach(b => {
                 b.classList.remove('active');
-                b.style.background = '#ffffff';
+                b.style.background = '';
             });
             activeBtn.classList.add('active');
             const activeColor = activeBtn.style.color || '#6BC5FF';
