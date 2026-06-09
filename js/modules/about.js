@@ -1,4 +1,4 @@
-// about.js - 星聚导航关于模块（爱发电模态框使用说明卡片大小与二维码卡片一致）
+// about.js - 星聚导航关于模块（爱发电模态框：左右卡片正方形，右边图片填满）
 // 确保 Utils 存在
 if (typeof Utils === 'undefined') {
     window.Utils = {
@@ -203,7 +203,7 @@ class AboutModule {
         }
     }
 
-    // 爱发电模态框 - 使用说明卡片大小与二维码卡片一致
+    // 爱发电模态框 - 左右卡片正方形，右边图片填满卡片
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
@@ -231,11 +231,34 @@ class AboutModule {
             .donate-modal-content {
                 font-size: 10px !important;
             }
+            /* 左右两个大卡片设置为正方形 */
+            .donate-card-wrapper {
+                aspect-ratio: 1 / 1 !important;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: #ffffff;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 0 !important;
+                margin: 0;
+                box-sizing: border-box;
+                overflow: hidden;
+            }
+            /* 左边按钮网格容器填满正方形 */
+            .left-buttons-grid {
+                width: 100%;
+                height: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                padding: 12px;
+                box-sizing: border-box;
+            }
             .donate-method-btn-left {
                 width: 100%;
-                max-width: 48px;
-                aspect-ratio: 1 / 1;
-                margin: 0 auto;
+                height: 100%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -245,39 +268,62 @@ class AboutModule {
                 cursor: pointer;
                 transition: all 0.2s ease;
                 box-sizing: border-box;
-                padding: 0;
+                aspect-ratio: 1 / 1;
             }
             .donate-method-btn-left i {
-                font-size: clamp(1rem, 4vw, 1.3rem);
+                font-size: clamp(1.2rem, 5vw, 1.8rem);
                 transition: transform 0.2s;
             }
             .donate-method-btn-left.active {
                 color: #fff !important;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                transform: scale(1.08);
+                transform: scale(1.05);
                 border-color: transparent !important;
             }
             .donate-method-btn-left.active i {
                 transform: scale(1.1);
             }
-            .donate-card-wrapper:first-child {
-                background: #ffffff;
-                border: 1px solid #e0e0e0;
-                padding: 12px;
-                border-radius: 8px;
-            }
-            .donate-card-wrapper:last-child {
-                background: #ffffff;
-                border: 1px solid #e0e0e0;
-                padding: 12px;
-                border-radius: 8px;
+            /* 右边卡片内图片填满 */
+            .qrcode-content {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             .qrcode-content img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;   /* 填满卡片，保持比例裁剪 */
                 display: block;
-                max-width: 85%;
-                max-height: 85%;
-                object-fit: contain;
-                margin: 0 auto;
+            }
+            /* 帮助面板文字内容，同样填满但保留内边距 */
+            .help-content-container {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                padding: 12px;
+                box-sizing: border-box;
+            }
+            .help-inner {
+                width: 100%;
+            }
+            .help-inner .help-title {
+                font-size: 16px;
+                font-weight: 600;
+                margin-bottom: 12px;
+                color: var(--text-primary, #1e293b);
+            }
+            .help-inner .help-steps {
+                font-size: 12px;
+                color: var(--text-secondary, #64748b);
+                line-height: 1.6;
+            }
+            .help-inner .help-steps p {
+                margin: 0 0 8px 0;
             }
             .supporters-wrapper {
                 background: #ffffff;
@@ -326,64 +372,30 @@ class AboutModule {
                 box-shadow: 0 1px 2px rgba(0,0,0,0.05);
                 transition: all 0.2s;
             }
-            /* 帮助卡片内容容器，大小与二维码图片区域一致 */
-            .help-content-container {
-                width: 100%;
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                text-align: center;
-            }
-            .help-inner {
-                max-width: 85%;
-                max-height: 85%;
-                width: 100%;
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-            }
-            .help-inner .help-title {
-                font-size: 14px;
-                font-weight: 600;
-                margin-bottom: 8px;
-                color: var(--text-primary, #1e293b);
-            }
-            .help-inner .help-steps {
-                font-size: 11px;
-                color: var(--text-secondary, #64748b);
-                line-height: 1.6;
-            }
-            .help-inner .help-steps p {
-                margin: 0 0 6px 0;
-            }
             @media (max-width: 480px) {
                 .supporters-list-scroll {
                     max-height: 90px;
                     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
                 }
-                .donate-card-wrapper:first-child,
-                .donate-card-wrapper:last-child {
-                    padding: 8px;
-                }
-                .donate-method-btn-left {
-                    max-width: 40px;
-                }
-                .supporters-wrapper {
+                .left-buttons-grid {
+                    gap: 8px;
                     padding: 8px;
                 }
                 .help-inner .help-title {
-                    font-size: 12px;
+                    font-size: 13px;
                 }
                 .help-inner .help-steps {
                     font-size: 10px;
                 }
+                .help-inner .help-steps p {
+                    margin-bottom: 6px;
+                }
             }
             @media (prefers-color-scheme: dark) {
-                .donate-card-wrapper:first-child,
-                .donate-card-wrapper:last-child,
+                .donate-card-wrapper {
+                    background: #2d2d2d;
+                    border-color: #404040;
+                }
                 .supporters-wrapper {
                     background: #2d2d2d;
                     border-color: #404040;
@@ -406,6 +418,12 @@ class AboutModule {
                 .help-inner .help-steps {
                     color: #ccc;
                 }
+                .donate-method-btn-left {
+                    background: #2d2d2d;
+                }
+                .donate-method-btn-left.active {
+                    background: currentColor !important;
+                }
             }
         `;
         donateModal.appendChild(style);
@@ -425,9 +443,10 @@ class AboutModule {
                 transition: transform 0.3s ease;
                 pointer-events: auto;
             ">
-                <div style="display: flex; gap: 16px; padding: 16px 16px 0; min-width: 0;">
-                    <div class="donate-card-wrapper" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%;">
+                <div style="display: flex; gap: 16px; padding: 16px; min-width: 0;">
+                    <!-- 左边大卡片：正方形，四个按钮 -->
+                    <div class="donate-card-wrapper" style="flex: 1;">
+                        <div class="left-buttons-grid">
                             <button class="donate-method-btn-left" data-type="qq" style="color: #6BC5FF; border-color: #6BC5FF;">
                                 <i class="fab fa-qq"></i>
                             </button>
@@ -442,18 +461,18 @@ class AboutModule {
                             </button>
                         </div>
                     </div>
-                    <div class="donate-card-wrapper" style="flex: 1; position: relative; display: flex; align-items: center; justify-content: center;">
-                        <div class="qrcode-content active" data-type="qq" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ" style="max-width: 85%; max-height: 85%; object-fit: contain;">
+                    <!-- 右边大卡片：正方形，展示二维码/说明，图片填满 -->
+                    <div class="donate-card-wrapper" style="flex: 1; position: relative;">
+                        <div class="qrcode-content active" data-type="qq">
+                            <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ">
                         </div>
-                        <div class="qrcode-content" data-type="wechat" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信" style="max-width: 85%; max-height: 85%; object-fit: contain;">
+                        <div class="qrcode-content" data-type="wechat" style="display: none;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信">
                         </div>
-                        <div class="qrcode-content" data-type="alipay" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                            <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝" style="max-width: 85%; max-height: 85%; object-fit: contain;">
+                        <div class="qrcode-content" data-type="alipay" style="display: none;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝">
                         </div>
-                        <!-- 帮助卡片：使用与二维码卡片相同大小的容器 -->
-                        <div class="qrcode-content" data-type="help" style="display: none; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                        <div class="qrcode-content" data-type="help" style="display: none;">
                             <div class="help-content-container">
                                 <div class="help-inner">
                                     <div class="help-title">📖 使用说明</div>
@@ -468,7 +487,7 @@ class AboutModule {
                         </div>
                     </div>
                 </div>
-                <div class="supporters-wrapper" style="margin: 16px;">
+                <div class="supporters-wrapper" style="margin: 0 16px 16px 16px;">
                     <div class="supporters-header">
                         <div class="supporters-title">🎖️ 支持者名单</div>
                         <div class="supporters-thanks">✨ 感谢您的每一份支持 ✨</div>
