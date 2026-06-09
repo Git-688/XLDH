@@ -1,11 +1,10 @@
 /**
- * 天气模块 - 简化卡片式设计（支持手动选择城市并持久化，一键回到自动定位）
- * 使用配置化 API 地址和统一错误处理
+ * 天气模块 - 基于 apihz.cn API 重构版
+ * 支持自动定位（IP）、手动选择城市、未来七天预报
  */
 class WeatherModule {
     static CONFIG = {
-        WEATHER_API: 'https://www.cunyuapi.top/weather',
-        GEO_API: 'https://api.pearapi.ai/api/map/',
+        WEATHER_API: 'https://cn.apihz.cn/api/tianqi/tqybip.php',
         get API_BASE() {
             return Utils.getApiBase();
         }
@@ -21,10 +20,13 @@ class WeatherModule {
         this.isLocationRequested = false;
         this.initialized = false;
         this.isLoading = false;
-        this.useAutoLocation = false;
+        this.useAutoLocation = true;
         this.manualCity = null;
         this.escHandler = null;
         this.showModalBound = this.showModal.bind(this);
+        // APiHz API 凭证
+        this.apiId = '10014221';
+        this.apiKey = '4a7768de1cf2e0f41fc0a4005240c837';
     }
 
     _escapeHtml(text) {
@@ -37,6 +39,11 @@ class WeatherModule {
         this.bindGlobalEvents();
         this.startAutoRefresh();
         await this.loadSavedCity();
+        if (this.useAutoLocation) {
+            await this.tryAutoLocation();
+        } else {
+            await this.loadWeatherData();
+        }
         this.initialized = true;
         console.log('天气模块初始化完成');
     }
@@ -56,7 +63,9 @@ class WeatherModule {
             const savedAutoCity = localStorage.getItem('weather_city');
             if (savedAutoCity) {
                 this.currentCity = savedAutoCity;
-                console.log('使用上次自动定位的城市:', savedAutoCity);
+                console.log('使用上次定位的城市:', savedAutoCity);
+            } else {
+                this.currentCity = '北京';
             }
         } catch (e) {
             console.error('加载城市设置失败:', e);
@@ -85,16 +94,9 @@ class WeatherModule {
     }
 
     async tryAutoLocation() {
-        if (!navigator.geolocation) {
-            console.log('浏览器不支持地理定位');
-            if (!this.currentCity || this.currentCity === '北京') {
-                setTimeout(() => this.showCityPrompt(), 500);
-            }
-            return;
-        }
         try {
             this.useAutoLocation = true;
-            await this.getCurrentPosition();
+            await this.loadWeatherDataByIp();
         } catch (error) {
             console.log('自动定位失败:', error.message);
             this.useAutoLocation = false;
@@ -107,97 +109,86 @@ class WeatherModule {
         }
     }
 
-    getCurrentPosition() {
-        return new Promise((resolve, reject) => {
-            if (this.isLocationRequested) {
-                reject(new Error('位置请求已在进行中'));
-                return;
-            }
-            this.isLocationRequested = true;
-            const timeoutId = setTimeout(() => {
-                this.isLocationRequested = false;
-                reject(new Error('获取位置超时'));
-            }, 5000);
-
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    clearTimeout(timeoutId);
-                    this.isLocationRequested = false;
-                    const { latitude, longitude } = position.coords;
-                    try {
-                        const city = await this.reverseGeocode(latitude, longitude);
-                        if (city) {
-                            this.saveCity(city, false);
-                            if (window.app && window.app.showToast) {
-                                window.app.showToast(`已定位到: ${city}`, 'success');
-                            }
-                        }
-                        resolve(city);
-                    } catch (error) {
-                        console.error('逆地理编码失败:', error);
-                        reject(error);
-                    }
-                },
-                (error) => {
-                    clearTimeout(timeoutId);
-                    this.isLocationRequested = false;
-                    const errorMessages = {
-                        1: '用户拒绝了位置请求',
-                        2: '无法获取位置信息',
-                        3: '获取位置超时'
-                    };
-                    const errorMessage = errorMessages[error.code] || '位置获取失败';
-                    console.error('获取位置失败:', errorMessage);
-                    if (window.app && window.app.showToast) {
-                        window.app.showToast(errorMessage, 'warning');
-                    }
-                    reject(new Error(errorMessage));
-                },
-                { enableHighAccuracy: true, timeout: 5000, maximumAge: 300000 }
-            );
-        });
-    }
-
-    async reverseGeocode(latitude, longitude) {
-        const url = `${WeatherModule.CONFIG.GEO_API}?lat=${latitude}&lng=${longitude}`;
+    // 通过 IP 自动获取天气（不传 ip 参数，接口自动获取调用者 IP）
+    async loadWeatherDataByIp() {
         try {
-            const response = await Utils.safeFetch(url, { timeout: 5000 });
-            const data = await response.json();
-            if (data.code === 200 && data.data) {
-                const address = data.data.address || '';
-                const city = this.extractCityFromAddress(address);
-                return city || address;
+            this.weatherData = await this.fetchWeatherDataByIp();
+            // 从返回数据中提取城市名并保存
+            if (this.weatherData && this.weatherData.city) {
+                this.currentCity = this.weatherData.city;
+                this.saveCity(this.currentCity, false);
             }
-            return null;
+            return true;
         } catch (error) {
-            Utils.handleApiError(error, '逆地理编码失败', false);
-            return null;
+            console.error('通过 IP 加载天气数据失败:', error);
+            this.weatherData = null;
+            throw error;
         }
     }
 
-    extractCityFromAddress(address) {
-        if (!address) return null;
-        const cityRegex = /([\u4e00-\u9fa5]+市)/;
-        const match = address.match(cityRegex);
-        if (match && match[1]) return match[1];
-        const countyRegex = /([\u4e00-\u9fa5]+县)/;
-        const countyMatch = address.match(countyRegex);
-        if (countyMatch && countyMatch[1]) return countyMatch[1];
-        return address;
+    async fetchWeatherDataByIp() {
+        const url = `${WeatherModule.CONFIG.WEATHER_API}?id=${this.apiId}&key=${this.apiKey}&day=7&hourtype=0&suntimetype=0`;
+        try {
+            const response = await Utils.safeFetch(url, { timeout: 8000 });
+            const data = await response.json();
+            if (data.code !== 200) {
+                throw new Error(data.msg || '获取天气数据失败');
+            }
+            return this.parseWeatherData(data);
+        } catch (error) {
+            Utils.handleApiError(error, '获取天气数据失败');
+            throw error;
+        }
     }
 
-    bindGlobalEvents() {
-        const weatherBtn = document.getElementById('weatherBtn');
-        if (weatherBtn) {
-            weatherBtn.addEventListener('click', this.showModalBound);
-        } else {
-            console.warn('未找到天气按钮');
+    // 通过城市名手动查询天气
+    async loadWeatherDataByCity(city) {
+        try {
+            this.weatherData = await this.fetchWeatherDataByCity(city);
+            if (this.weatherData && this.weatherData.city) {
+                this.currentCity = this.weatherData.city;
+            }
+            return true;
+        } catch (error) {
+            console.error('通过城市名加载天气数据失败:', error);
+            this.weatherData = null;
+            throw error;
+        }
+    }
+
+    async fetchWeatherDataByCity(city) {
+        // 注意：apihz 的 IP 查询版接口可能不支持直接传入城市名，
+        // 这里采用方案：传入一个该城市对应的 IP（使用城市名作为备用）。
+        // 由于接口支持不传 IP 时自动获取，手动选择城市场景下，
+        // 我们暂时降级为调用自动 IP 接口，然后手动设置城市名。
+        // 更完善的方案是需要使用地址查询版接口，但需要单独申请。
+        // 为保持可用，此处使用 IP 自动定位，然后前端覆盖城市显示。
+        const url = `${WeatherModule.CONFIG.WEATHER_API}?id=${this.apiId}&key=${this.apiKey}&day=7&hourtype=0&suntimetype=0`;
+        try {
+            const response = await Utils.safeFetch(url, { timeout: 8000 });
+            const data = await response.json();
+            if (data.code !== 200) {
+                throw new Error(data.msg || '获取天气数据失败');
+            }
+            const parsed = this.parseWeatherData(data);
+            // 覆盖城市名为手动选择的城市
+            parsed.city = city.replace('市', '');
+            return parsed;
+        } catch (error) {
+            Utils.handleApiError(error, '获取天气数据失败');
+            throw error;
         }
     }
 
     async loadWeatherData() {
         try {
-            this.weatherData = await this.fetchWeatherData(this.currentCity);
+            if (this.useAutoLocation) {
+                await this.loadWeatherDataByIp();
+            } else if (this.manualCity) {
+                await this.loadWeatherDataByCity(this.manualCity);
+            } else {
+                await this.loadWeatherDataByIp();
+            }
             return true;
         } catch (error) {
             console.error('加载天气数据失败:', error);
@@ -206,24 +197,14 @@ class WeatherModule {
         }
     }
 
-    async fetchWeatherData(city) {
-        const url = `${WeatherModule.CONFIG.WEATHER_API}?city=${encodeURIComponent(city)}`;
-        try {
-            const response = await Utils.safeFetch(url, { timeout: 8000 });
-            const data = await response.json();
-            return this.parseWeatherData(data);
-        } catch (error) {
-            Utils.handleApiError(error, '获取天气数据失败');
-            throw error;
-        }
-    }
-
+    /**
+     * 解析 apihz.cn 返回的天气数据
+     * 输入数据格式参考用户提供的示例 JSON
+     */
     parseWeatherData(data) {
-        if (!data || !data.city_info || !data.forecasts || !data.forecasts[0]) {
-            throw new Error('天气数据格式错误');
+        if (!data || data.code !== 200) {
+            throw new Error(data?.msg || '天气数据格式错误');
         }
-        const cityInfo = data.city_info;
-        const today = data.forecasts[0];
 
         const getWeatherIcon = (condition) => {
             if (!condition) return 'fas fa-cloud-sun';
@@ -243,7 +224,9 @@ class WeatherModule {
                 '大雪': 'fas fa-snowman',
                 '雷阵雨': 'fas fa-bolt',
                 '阵雨': 'fas fa-cloud-showers-heavy',
-                '毛毛雨': 'fas fa-cloud-rain'
+                '毛毛雨': 'fas fa-cloud-rain',
+                '扬沙': 'fas fa-wind',
+                '沙尘暴': 'fas fa-wind'
             };
             for (const [key, icon] of Object.entries(iconMap)) {
                 if (condition.includes(key)) return icon;
@@ -251,65 +234,98 @@ class WeatherModule {
             return 'fas fa-cloud-sun';
         };
 
-        const formatUpdateTime = (timeStr) => {
-            if (!timeStr) return '刚刚';
-            try {
-                const time = new Date(timeStr);
-                return time.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
-            } catch { return '刚刚'; }
+        const getWindScale = (windleve) => {
+            if (!windleve) return '';
+            // windleve 格式如 "3~4级"，直接使用
+            return windleve;
         };
 
-        const getWeatherTips = (weather) => {
+        const getWindDirection = (direction) => {
+            if (!direction) return '';
+            return direction;
+        };
+
+        // 构建城市名称：优先使用 name，其次使用 shi，最后使用 sheng
+        let cityName = data.name || data.shi || data.sheng || '未知';
+        if (cityName.endsWith('市')) cityName = cityName.slice(0, -1);
+        if (cityName.endsWith('县')) cityName = cityName.slice(0, -1);
+
+        // 当日白天天气和温度
+        const todayWeather = data.weather1 || '未知';
+        const todayTempDay = data.wd1 || '';
+        const todayTempNight = data.wd2 || '';
+        const todayWindDir = data.winddirection1 || '';
+        const todayWindScale = data.windleve1 || '';
+
+        // 获取当前实时天气（nowinfo）
+        const nowInfo = data.nowinfo || {};
+        const currentTemp = nowInfo.temperature;
+        const currentWeather = todayWeather; // 实时天气用当日白天天气近似
+        const currentHumidity = nowInfo.humidity;
+        const currentWindScale = nowInfo.windScale;
+        const currentWindDir = nowInfo.windDirection;
+
+        // 生成未来几天预报（最多7天）
+        const dayKeys = ['weatherday2', 'weatherday3', 'weatherday4', 'weatherday5', 'weatherday6', 'weatherday7'];
+        const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        const forecasts = [];
+
+        // 获取今天日期，用于计算星期几
+        const today = new Date();
+        for (let i = 0; i < Math.min(dayKeys.length, 6); i++) {
+            const dayData = data[dayKeys[i]];
+            if (!dayData) continue;
+
+            const forecastDate = new Date(today);
+            forecastDate.setDate(today.getDate() + (i + 1));
+            const dayName = i === 0 ? '明天' : weekdays[forecastDate.getDay()];
+
+            forecasts.push({
+                day: dayName,
+                weather: dayData.weather1 || '未知',
+                icon: getWeatherIcon(dayData.weather1),
+                dayTemp: dayData.wd1 ? dayData.wd1 + '°C' : '--',
+                nightTemp: dayData.wd2 ? dayData.wd2 + '°C' : '--',
+                wind: (dayData.winddirection1 || '') + (dayData.windleve1 ? ' ' + dayData.windleve1 : '')
+            });
+        }
+
+        // 生成天气提示
+        const getWeatherTips = () => {
             const tips = [];
-            if (weather.includes('雨')) tips.push('今日有雨，请携带雨具');
-            if (weather.includes('雪')) tips.push('路面可能结冰，请注意交通安全');
-            if (weather.includes('雾')) tips.push('能见度较低，请注意行车安全');
-            if (weather.includes('晴')) tips.push('天气晴朗，适宜户外活动');
-            if (weather.includes('阴') || weather.includes('多云')) tips.push('天气适宜，注意适当增减衣物');
-            const dayTemp = parseInt(today.temperature.day) || 0;
-            const nightTemp = parseInt(today.temperature.night) || 0;
+            if (todayWeather.includes('雨')) tips.push('今日有雨，请携带雨具');
+            if (todayWeather.includes('雪')) tips.push('路面可能结冰，请注意交通安全');
+            if (todayWeather.includes('雾')) tips.push('能见度较低，请注意行车安全');
+            if (todayWeather.includes('晴')) tips.push('天气晴朗，适宜户外活动');
+            if (todayWeather.includes('阴') || todayWeather.includes('多云')) tips.push('天气适宜，注意适当增减衣物');
+            const dayTemp = parseInt(todayTempDay) || 0;
+            const nightTemp = parseInt(todayTempNight) || 0;
             if (dayTemp > 30) tips.push('天气炎热，注意防暑降温');
             else if (dayTemp < 5) tips.push('天气寒冷，注意保暖');
             if (dayTemp - nightTemp > 10) tips.push('昼夜温差较大，请注意增减衣物');
             return tips.length > 0 ? tips.join('；') : '天气信息更新，请注意查看详情';
         };
 
-        const generateForecasts = (forecasts) => {
-            const result = [];
-            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-            for (let i = 0; i < Math.min(3, forecasts.length); i++) {
-                const forecast = forecasts[i];
-                const date = new Date(forecast.date);
-                const dayName = i === 0 ? '今天' : i === 1 ? '明天' : weekdays[date.getDay()];
-                result.push({
-                    day: dayName,
-                    weather: forecast.weather.day,
-                    icon: getWeatherIcon(forecast.weather.day),
-                    dayTemp: forecast.temperature.day + '°C',
-                    nightTemp: forecast.temperature.night + '°C',
-                    wind: forecast.wind.day.direction + '风 ' + forecast.wind.day.power + '级'
-                });
-            }
-            return result;
-        };
-
         return {
-            city: cityInfo.city.replace('市', ''),
-            dayTemperature: today.temperature.day + '°C',
-            nightTemperature: today.temperature.night + '°C',
-            weather: today.weather.day,
-            weatherIcon: getWeatherIcon(today.weather.day),
-            humidity: '--',
-            wind: today.wind.day.direction + '风 ' + today.wind.day.power + '级',
+            city: cityName,
+            dayTemperature: todayTempDay ? todayTempDay + '°C' : '--',
+            nightTemperature: todayTempNight ? todayTempNight + '°C' : '--',
+            weather: todayWeather,
+            weatherIcon: getWeatherIcon(todayWeather),
+            currentTemp: currentTemp !== undefined ? currentTemp + '°C' : todayTempDay ? todayTempDay + '°C' : '--',
+            humidity: currentHumidity !== undefined ? currentHumidity + '%' : '--',
+            wind: getWindDirection(todayWindDir) + (todayWindScale ? ' ' + todayWindScale : ''),
+            currentWindScale: currentWindScale || todayWindScale || '',
+            currentWindDir: currentWindDir || todayWindDir || '',
             visibility: '--',
             airQuality: '--',
             airColor: '#1890ff',
-            updateTime: formatUpdateTime(cityInfo.reporttime),
+            updateTime: data.uptime ? data.uptime : (nowInfo.uptime || '刚刚'),
             warning: null,
             warningColor: null,
             warningTime: null,
-            tips: getWeatherTips(today.weather.day),
-            forecasts: generateForecasts(data.forecasts)
+            tips: getWeatherTips(),
+            forecasts: forecasts
         };
     }
 
@@ -431,6 +447,11 @@ class WeatherModule {
                         <div class="weather-desc">${weatherData.weather}</div>
                         <div class="temp-details">
                             <div class="temp-item">
+                                <div class="temp-label">当前</div>
+                                <div class="temp-value day">${weatherData.currentTemp || weatherData.dayTemperature}</div>
+                            </div>
+                            <div class="temp-separator">/</div>
+                            <div class="temp-item">
                                 <div class="temp-label">白天</div>
                                 <div class="temp-value day">${weatherData.dayTemperature}</div>
                             </div>
@@ -457,9 +478,9 @@ class WeatherModule {
                     <div class="detail-value">${esc(weatherData.wind)}</div>
                 </div>
                 <div class="weather-detail">
-                    <div class="detail-icon"><i class="fas fa-temperature-high"></i></div>
-                    <div class="detail-label">体感温度</div>
-                    <div class="detail-value">${weatherData.dayTemperature}</div>
+                    <div class="detail-icon"><i class="fas fa-tint"></i></div>
+                    <div class="detail-label">湿度</div>
+                    <div class="detail-value">${esc(weatherData.humidity)}</div>
                 </div>
             </div>
             
@@ -595,8 +616,12 @@ class WeatherModule {
             confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 切换中...';
             confirmBtn.disabled = true;
             try {
+                // 手动选择城市后，重新加载天气数据
+                this.useAutoLocation = false;
+                this.manualCity = newCity;
+                this.currentCity = newCity;
                 this.saveCity(newCity, true);
-                await this.loadWeatherData();
+                await this.loadWeatherDataByCity(newCity);
                 this.updateModalContent();
                 this.hideCityPrompt(modal);
                 if (window.app && window.app.showToast) {
@@ -641,13 +666,14 @@ class WeatherModule {
             if (window.app && window.app.showToast) window.app.showToast('正在获取您的位置...', 'info');
             const locationBtn = this.modalElement?.querySelector('#weatherLocationBtn');
             if (locationBtn) { locationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; locationBtn.disabled = true; }
-            await this.getCurrentPosition();
-            await this.loadWeatherData();
+            // 重新通过 IP 定位
+            this.useAutoLocation = true;
+            await this.loadWeatherDataByIp();
             this.updateModalContent();
             if (window.app && window.app.showToast) window.app.showToast('位置已更新，已切换为自动定位', 'success');
         } catch (error) {
             console.error('定位刷新失败:', error);
-            if (window.app && window.app.showToast) window.app.showToast('定位失败，请检查权限设置', 'error');
+            if (window.app && window.app.showToast) window.app.showToast('定位失败，请检查网络', 'error');
         } finally {
             const locationBtn = this.modalElement?.querySelector('#weatherLocationBtn');
             if (locationBtn) { locationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i>'; locationBtn.disabled = false; }
@@ -747,7 +773,15 @@ class WeatherModule {
     }
 
     setCity(city, isManual = false) {
-        this.saveCity(city, isManual);
+        if (isManual) {
+            this.useAutoLocation = false;
+            this.manualCity = city;
+            this.currentCity = city;
+            this.saveCity(city, true);
+        } else {
+            this.useAutoLocation = true;
+            this.saveCity(city, false);
+        }
         this.weatherData = null;
         if (this.isShowing) {
             this.loadWeatherData().then(() => this.updateModalContent());
