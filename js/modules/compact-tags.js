@@ -1,4 +1,4 @@
-// compact-tags.js - 彩虹浅色标签模块（使用 Utils.escapeHtml）
+// compact-tags.js - 彩虹浅色标签模块（所有链接在新标签页打开）
 class CompactTagsModule {
     constructor() {
         this.tags = [
@@ -59,6 +59,8 @@ class CompactTagsModule {
             return `
                 <a href="${tag.link}" 
                    class="minimal-tag ${colorClass}" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
                    data-index="${index}"
                    data-name="${safeName}"
                    title="${safeName}">
