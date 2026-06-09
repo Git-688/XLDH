@@ -398,6 +398,7 @@
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 <script defer src="./js/utils.js"></script>
 <script defer src="./js/toast.js"></script>
+<!-- storage.js 和 error-handler.js 已删除，功能已合并到 utils.js -->
 <script defer src="./js/components/navbar.js"></script>
 <script defer src="./js/components/sidebar.js"></script>
 <script defer src="./js/modules/announcement.js"></script>
@@ -423,40 +424,6 @@
 
 <!-- 主题切换模块 -->
 <script defer src="./js/modules/theme.js"></script>
-
-<script>
-    // 注册 Service Worker（延迟到页面加载完成）
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-            navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
-                console.log('Service Worker 注册成功，作用域:', registration.scope);
-                
-                // 监听 Service Worker 更新消息
-                navigator.serviceWorker.addEventListener('message', function(event) {
-                    if (event.data && event.data.type === 'SW_UPDATED') {
-                        console.log('检测到新版本 Service Worker，准备提示用户刷新');
-                        if (window.toast) {
-                            window.toast.show('发现新版本，点击刷新获取最新内容', 'info', 10000);
-                            setTimeout(function() {
-                                if (confirm('发现新版本，是否刷新页面以获取最新功能？')) {
-                                    window.location.reload();
-                                }
-                            }, 500);
-                        } else {
-                            setTimeout(function() {
-                                if (confirm('发现新版本，是否刷新页面以获取最新功能？')) {
-                                    window.location.reload();
-                                }
-                            }, 500);
-                        }
-                    }
-                });
-            }).catch(function(error) {
-                console.error('Service Worker 注册失败:', error);
-            });
-        });
-    }
-</script>
 
 <!-- 点击粒子特效（确保在 jQuery 之后加载，且添加 ready 初始化） -->
 <script src="https://joe.deepakmt.xyz/usr/themes/Joe/assets/cursor/cursor2.js" async></script>
