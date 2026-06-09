@@ -100,9 +100,9 @@
     flex-direction: column;
     justify-content: space-between;
     gap: 8px;
-    background: transparent;      /* 完全透明 */
-    border-radius: 8px;           /* 与主页logo圆角一致 */
-    backdrop-filter: none;        /* 移除模糊 */
+    background: transparent;
+    border-radius: 8px;
+    backdrop-filter: none;
     padding: 0;
     min-width: 0;
     overflow: hidden;
@@ -135,9 +135,9 @@
     justify-content: center;
     align-items: center;
     background: rgba(0, 0, 0, 0.3);
-    border-radius: 8px;           /* 圆角改为8px，与左边一致 */
+    border-radius: 8px;
     backdrop-filter: blur(4px);
-    padding: 12px 0;              /* 上下内边距相等，保证logo上下间距一致 */
+    padding: 12px 0;
     min-width: 0;
     overflow: hidden;
 }
@@ -145,12 +145,11 @@
 .about-brand-logo {
     width: 64px;
     height: 64px;
-    border-radius: 50%;           /* 保持圆形 */
+    border-radius: 50%;
     background: rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
-    /* 移除 margin，间距由父容器 padding 控制 */
     margin: 0;
     padding: 6px;
     box-sizing: border-box;
@@ -384,7 +383,7 @@
         font-size: 12px;
     }
     .about-header-right.logo-card {
-        padding: 16px 0;          /* 上下内边距相等 */
+        padding: 16px 0;
     }
     .about-main-content {
         padding: 16px;
@@ -435,7 +434,7 @@
         font-size: 9px;
     }
     .about-header-right.logo-card {
-        padding: 10px 0;          /* 移动端上下内边距相等 */
+        padding: 10px 0;
     }
     .about-header-content {
         gap: 12px;
@@ -445,19 +444,31 @@
     }
 }
 
-/* 深色模式 */
+/* ==================== 深色模式优化 ==================== */
+/* 系统深色模式 */
 @media (prefers-color-scheme: dark) {
     .about-modal-content {
         background: #2d2d2d;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
     .about-card.white-bg {
         background: #3a3a3a;
         border-color: #404040;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .about-card.white-bg:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    .card-content h3 {
+        color: #f0f0f0;
+    }
+    .card-content p {
+        color: #c0c0c0;
     }
     .about-footer {
         background: #2d2d2d;
     }
-    /* 左边大卡片透明，无需深色覆盖；内部卡片背景保持不变 */
+    /* 左边大卡片透明，无需深色覆盖；内部卡片背景加深 */
     .info-card {
         background: rgba(0, 0, 0, 0.7);
     }
@@ -467,6 +478,75 @@
     .about-close-btn {
         background: var(--success-color, #10b981);
     }
+    .about-close-btn:hover {
+        background: #0da271;
+    }
+    /* 社交按钮深色微调（保持原有颜色，稍微提亮） */
+    .qq-btn { background: #5AB5EF; }
+    .qq-btn:hover { background: #4A9FD9; }
+    .wechat-btn { background: #6EC312; }
+    .wechat-btn:hover { background: #5CAD0F; }
+    .donate-btn { background: #ef4444; }
+    .donate-btn:hover { background: #dc2626; }
+    .space-btn { background: #f59e0b; }
+    .space-btn:hover { background: #d97706; }
+    .about-social-btn .tooltip-text {
+        background-color: #e0e0e0;
+        color: #1e1e1e;
+    }
+    .about-social-btn .tooltip-text::after {
+        border-color: #e0e0e0 transparent transparent transparent;
+    }
+}
+
+/* 手动深色模式（.dark-mode 类） */
+.dark-mode .about-modal-content {
+    background: #2d2d2d;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+.dark-mode .about-card.white-bg {
+    background: #3a3a3a;
+    border-color: #404040;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.dark-mode .about-card.white-bg:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+.dark-mode .card-content h3 {
+    color: #f0f0f0;
+}
+.dark-mode .card-content p {
+    color: #c0c0c0;
+}
+.dark-mode .about-footer {
+    background: #2d2d2d;
+}
+.dark-mode .info-card {
+    background: rgba(0, 0, 0, 0.7);
+}
+.dark-mode .about-header-right.logo-card {
+    background: rgba(0, 0, 0, 0.5);
+}
+.dark-mode .about-close-btn {
+    background: var(--success-color, #10b981);
+}
+.dark-mode .about-close-btn:hover {
+    background: #0da271;
+}
+.dark-mode .qq-btn { background: #5AB5EF; }
+.dark-mode .qq-btn:hover { background: #4A9FD9; }
+.dark-mode .wechat-btn { background: #6EC312; }
+.dark-mode .wechat-btn:hover { background: #5CAD0F; }
+.dark-mode .donate-btn { background: #ef4444; }
+.dark-mode .donate-btn:hover { background: #dc2626; }
+.dark-mode .space-btn { background: #f59e0b; }
+.dark-mode .space-btn:hover { background: #d97706; }
+.dark-mode .about-social-btn .tooltip-text {
+    background-color: #e0e0e0;
+    color: #1e1e1e;
+}
+.dark-mode .about-social-btn .tooltip-text::after {
+    border-color: #e0e0e0 transparent transparent transparent;
 }
 
 /* 减少动画偏好 */
