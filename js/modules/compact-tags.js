@@ -2,7 +2,7 @@
 class CompactTagsModule {
     constructor() {
         this.tags = [
-            { name: '60s快讯', icon: 'fas fa-newspaper', link: 'pages/tools/60s.html' },
+            { name: '60s快讯', icon: 'fas fa-newspaper', link: 'pages/tools/60s快讯.html' },
             { name: '本草药材', icon: 'fas fa-leaf', link: 'pages/tools/本草药材.html' },
             { name: '壁纸引擎', icon: 'fas fa-desktop', link: 'pages/tools/壁纸引擎.html' },
             { name: '彩票开奖', icon: 'fas fa-ticket-alt', link: 'pages/tools/彩票开奖.html' },
