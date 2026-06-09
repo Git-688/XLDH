@@ -31,7 +31,18 @@ class WeatherModule {
     }
 
     _escapeHtml(text) {
-        return Utils.escapeHtml(text);
+        // 确保 Utils.escapeHtml 可用，否则使用备胎
+        if (typeof Utils !== 'undefined' && Utils.escapeHtml) {
+            return Utils.escapeHtml(text);
+        }
+        if (!text) return '';
+        return String(text).replace(/[&<>"']/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            if (m === '"') return '&quot;';
+            return '&#39;';
+        });
     }
 
     async init() {
@@ -94,10 +105,6 @@ class WeatherModule {
         }
     }
 
-    /**
-     * 新增：通过 IP 获取精准归属地（省份+城市）
-     * 使用 chaapi.php 接口
-     */
     async fetchIpLocation() {
         const url = `${WeatherModule.CONFIG.IP_LOCATION_API}?id=${this.apiId}&key=${this.apiKey}&td=0`;
         try {
@@ -130,13 +137,8 @@ class WeatherModule {
         }
     }
 
-    /**
-     * 增强版：先通过 IP 归属地 API 获取城市，再查询天气
-     * 使用 Promise.allSettled 容错，确保即使归属地查询失败也不影响天气展示
-     */
     async loadWeatherDataByIp() {
         try {
-            // 同时发起归属地查询和天气查询（不等待彼此）
             const [locationResult, weatherResult] = await Promise.allSettled([
                 this.fetchIpLocation(),
                 this.fetchWeatherDataByIp()
@@ -147,12 +149,10 @@ class WeatherModule {
                 throw new Error('天气数据获取失败');
             }
 
-            // 优先使用归属地 API 返回的城市
             if (locationResult.status === 'fulfilled' && locationResult.value && locationResult.value.city) {
                 finalWeatherData.city = locationResult.value.city;
                 this.saveCity(locationResult.value.city, false);
             } else if (finalWeatherData.place) {
-                // 降级：从天气 API 的 place 字段提取城市
                 const placeParts = finalWeatherData.place.split(',');
                 const placeCity = placeParts[1] ? placeParts[1].trim() : (placeParts[0] || finalWeatherData.city);
                 if (placeCity && placeCity !== '未知') {
@@ -170,9 +170,6 @@ class WeatherModule {
         }
     }
 
-    /**
-     * 原始 IP 天气查询（纯天气接口，不含归属地）
-     */
     async fetchWeatherDataByIp() {
         const url = `${WeatherModule.CONFIG.WEATHER_API}?id=${this.apiId}&key=${this.apiKey}&day=7&hourtype=0&suntimetype=0`;
         try {
@@ -188,10 +185,6 @@ class WeatherModule {
         }
     }
 
-    /**
-     * 通过城市名查询天气（手动选择场景）
-     * 注意：当前 IP 天气接口不支持直接传城市名，故采用 IP 接口 + 前端覆盖城市名的策略
-     */
     async loadWeatherDataByCity(city) {
         try {
             this.weatherData = await this.fetchWeatherDataByCity(city);
@@ -215,7 +208,6 @@ class WeatherModule {
                 throw new Error(data.msg || '获取天气数据失败');
             }
             const parsed = this.parseWeatherData(data);
-            // 手动覆盖城市名为用户选择的城市
             parsed.city = city.replace(/市$/, '');
             return parsed;
         } catch (error) {
@@ -241,9 +233,6 @@ class WeatherModule {
         }
     }
 
-    /**
-     * 解析天气数据（兼容新旧两种数据来源）
-     */
     parseWeatherData(data) {
         if (!data || data.code !== 200) {
             throw new Error(data?.msg || '天气数据格式错误');
@@ -277,7 +266,6 @@ class WeatherModule {
             return 'fas fa-cloud-sun';
         };
 
-        // 提取城市名（优先使用 place 字段）
         let cityName = '未知';
         if (data.place) {
             const placeParts = data.place.split(',');
@@ -298,7 +286,6 @@ class WeatherModule {
         const currentTemp = nowInfo.temperature;
         const currentHumidity = nowInfo.humidity;
 
-        // 未来几天预报
         const dayKeys = ['weatherday2', 'weatherday3', 'weatherday4', 'weatherday5', 'weatherday6', 'weatherday7'];
         const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
         const forecasts = [];
@@ -528,8 +515,6 @@ class WeatherModule {
                     `).join('')}
                 </div>
             </div>
-            
-            <!-- 已移除底部提示文字 -->
         `;
     }
 
@@ -569,117 +554,126 @@ class WeatherModule {
 
     showCityPrompt() {
         console.log('showCityPrompt 被调用');
-        const esc = this._escapeHtml.bind(this);
-        const modal = document.createElement('div');
-        modal.className = 'city-prompt-modal';
-
-        modal.innerHTML = `
-            <div class="city-prompt-content">
-                <div class="prompt-header">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <h3>选择城市</h3>
-                </div>
-                <div class="prompt-input-group">
-                    <label>请输入城市名称</label>
-                    <input type="text" id="cityInput" value="${esc(this.currentCity)}" placeholder="例如：北京、上海、广州...">
-                    <p class="prompt-hint">提示：请输入完整的城市名，如"北京市"、"上海市"</p>
-                </div>
-                <div class="hot-cities">
-                    <p>热门城市：</p>
-                    <div class="hot-city-buttons">
-                        ${['北京市', '上海市', '广州市', '深圳市', '杭州市', '南京市', '成都市', '武汉市'].map(city => `
-                            <button type="button" class="hot-city-btn" data-city="${esc(city)}">${esc(city)}</button>
-                        `).join('')}
-                    </div>
-                </div>
-                <div class="prompt-actions" style="justify-content: space-between;">
-                    <button type="button" id="autoLocateBtn" class="weather-action-btn" style="background:#10b981; color:white;">
-                        <i class="fas fa-location-crosshairs"></i> 自动定位
-                    </button>
-                    <div style="display:flex; gap:8px;">
-                        <button type="button" id="cancelCityBtn" class="weather-action-btn cancel-btn">取消</button>
-                        <button type="button" id="confirmCityBtn" class="weather-action-btn confirm-btn">确认切换</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-        requestAnimationFrame(() => {
+        try {
+            const esc = this._escapeHtml.bind(this);
+            const modal = document.createElement('div');
+            modal.className = 'city-prompt-modal';
+            // 关键修复：设置 active 类使 visibility 生效
+            modal.classList.add('active');
+            modal.style.display = 'flex';
             modal.style.opacity = '1';
+
+            modal.innerHTML = `
+                <div class="city-prompt-content">
+                    <div class="prompt-header">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <h3>选择城市</h3>
+                    </div>
+                    <div class="prompt-input-group">
+                        <label>请输入城市名称</label>
+                        <input type="text" id="cityInput" value="${esc(this.currentCity)}" placeholder="例如：北京、上海、广州...">
+                        <p class="prompt-hint">提示：请输入完整的城市名，如"北京市"、"上海市"</p>
+                    </div>
+                    <div class="hot-cities">
+                        <p>热门城市：</p>
+                        <div class="hot-city-buttons">
+                            ${['北京市', '上海市', '广州市', '深圳市', '杭州市', '南京市', '成都市', '武汉市'].map(city => `
+                                <button type="button" class="hot-city-btn" data-city="${esc(city)}">${esc(city)}</button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="prompt-actions" style="justify-content: space-between;">
+                        <button type="button" id="autoLocateBtn" class="weather-action-btn" style="background:#10b981; color:white;">
+                            <i class="fas fa-location-crosshairs"></i> 自动定位
+                        </button>
+                        <div style="display:flex; gap:8px;">
+                            <button type="button" id="cancelCityBtn" class="weather-action-btn cancel-btn">取消</button>
+                            <button type="button" id="confirmCityBtn" class="weather-action-btn confirm-btn">确认切换</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // 添加动画效果（内容缩放）
             const content = modal.querySelector('.city-prompt-content');
             if (content) {
+                content.style.transform = 'scale(1)';
                 content.style.opacity = '1';
-                content.style.transform = 'translateY(0)';
             }
-        });
 
-        const cancelBtn = modal.querySelector('#cancelCityBtn');
-        const confirmBtn = modal.querySelector('#confirmCityBtn');
-        const autoLocateBtn = modal.querySelector('#autoLocateBtn');
-        const cityInput = modal.querySelector('#cityInput');
-        const quickCityBtns = modal.querySelectorAll('.hot-city-btn');
+            const cancelBtn = modal.querySelector('#cancelCityBtn');
+            const confirmBtn = modal.querySelector('#confirmCityBtn');
+            const autoLocateBtn = modal.querySelector('#autoLocateBtn');
+            const cityInput = modal.querySelector('#cityInput');
+            const quickCityBtns = modal.querySelectorAll('.hot-city-btn');
 
-        quickCityBtns.forEach(btn => {
-            btn.addEventListener('click', () => { cityInput.value = btn.dataset.city; });
-        });
+            quickCityBtns.forEach(btn => {
+                btn.addEventListener('click', () => { cityInput.value = btn.dataset.city; });
+            });
 
-        autoLocateBtn.addEventListener('click', async () => {
-            await this.handleLocationRefresh();
-            this.hideCityPrompt(modal);
-            this.updateModalContent();
-        });
-
-        confirmBtn.addEventListener('click', async () => {
-            let newCity = cityInput.value.trim();
-            if (!newCity) {
-                alert('请输入城市名称');
-                return;
-            }
-            if (!newCity.endsWith('市') && !newCity.endsWith('县') && newCity.length <= 3) {
-                newCity = newCity + '市';
-            }
-            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 切换中...';
-            confirmBtn.disabled = true;
-            try {
-                this.useAutoLocation = false;
-                this.manualCity = newCity;
-                this.currentCity = newCity;
-                this.saveCity(newCity, true);
-                await this.loadWeatherDataByCity(newCity);
-                this.updateModalContent();
+            autoLocateBtn.addEventListener('click', async () => {
+                await this.handleLocationRefresh();
                 this.hideCityPrompt(modal);
-                if (window.app && window.app.showToast) {
-                    window.app.showToast(`已切换到: ${newCity}`, 'success');
-                }
-            } catch (error) {
-                console.error('切换城市失败:', error);
-                confirmBtn.innerHTML = '确认切换';
-                confirmBtn.disabled = false;
-                if (window.app && window.app.showToast) {
-                    window.app.showToast(`切换城市失败: ${error.message || '请检查城市名称是否正确'}`, 'error');
-                }
-            }
-        });
+                this.updateModalContent();
+            });
 
-        const hidePrompt = () => {
-            modal.style.opacity = '0';
-            const content = modal.querySelector('.city-prompt-content');
-            if (content) content.style.opacity = '0';
-            setTimeout(() => modal.remove(), 300);
-        };
-        cancelBtn.addEventListener('click', hidePrompt);
-        modal.addEventListener('click', (e) => { if (e.target === modal) hidePrompt(); });
-        const escHandler = (e) => {
-            if (e.key === 'Escape') { hidePrompt(); document.removeEventListener('keydown', escHandler); }
-        };
-        document.addEventListener('keydown', escHandler);
-        cityInput.focus();
-        cityInput.select();
+            confirmBtn.addEventListener('click', async () => {
+                let newCity = cityInput.value.trim();
+                if (!newCity) {
+                    alert('请输入城市名称');
+                    return;
+                }
+                if (!newCity.endsWith('市') && !newCity.endsWith('县') && newCity.length <= 3) {
+                    newCity = newCity + '市';
+                }
+                confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 切换中...';
+                confirmBtn.disabled = true;
+                try {
+                    this.useAutoLocation = false;
+                    this.manualCity = newCity;
+                    this.currentCity = newCity;
+                    this.saveCity(newCity, true);
+                    await this.loadWeatherDataByCity(newCity);
+                    this.updateModalContent();
+                    this.hideCityPrompt(modal);
+                    if (window.app && window.app.showToast) {
+                        window.app.showToast(`已切换到: ${newCity}`, 'success');
+                    }
+                } catch (error) {
+                    console.error('切换城市失败:', error);
+                    confirmBtn.innerHTML = '确认切换';
+                    confirmBtn.disabled = false;
+                    if (window.app && window.app.showToast) {
+                        window.app.showToast(`切换城市失败: ${error.message || '请检查城市名称是否正确'}`, 'error');
+                    }
+                }
+            });
+
+            const hidePrompt = () => {
+                modal.classList.remove('active');
+                modal.style.opacity = '0';
+                const content = modal.querySelector('.city-prompt-content');
+                if (content) content.style.opacity = '0';
+                setTimeout(() => modal.remove(), 300);
+            };
+            cancelBtn.addEventListener('click', hidePrompt);
+            modal.addEventListener('click', (e) => { if (e.target === modal) hidePrompt(); });
+            const escHandler = (e) => {
+                if (e.key === 'Escape') { hidePrompt(); document.removeEventListener('keydown', escHandler); }
+            };
+            document.addEventListener('keydown', escHandler);
+            cityInput.focus();
+            cityInput.select();
+        } catch (err) {
+            console.error('showCityPrompt 出错:', err);
+        }
     }
 
     hideCityPrompt(modal) {
         if (!modal) return;
+        modal.classList.remove('active');
         modal.style.opacity = '0';
         const content = modal.querySelector('.city-prompt-content');
         if (content) content.style.opacity = '0';
