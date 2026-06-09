@@ -1,5 +1,5 @@
 /**
- * 天气模块 - 基于 apihz.cn API 重构版
+ * 天气模块 - 基于 apihz.cn API 重构版（修复弹出问题）
  * 支持自动定位（IP）、手动选择城市、未来七天预报
  */
 class WeatherModule {
@@ -109,11 +109,9 @@ class WeatherModule {
         }
     }
 
-    // 通过 IP 自动获取天气（不传 ip 参数，接口自动获取调用者 IP）
     async loadWeatherDataByIp() {
         try {
             this.weatherData = await this.fetchWeatherDataByIp();
-            // 从返回数据中提取城市名并保存
             if (this.weatherData && this.weatherData.city) {
                 this.currentCity = this.weatherData.city;
                 this.saveCity(this.currentCity, false);
@@ -141,7 +139,6 @@ class WeatherModule {
         }
     }
 
-    // 通过城市名手动查询天气
     async loadWeatherDataByCity(city) {
         try {
             this.weatherData = await this.fetchWeatherDataByCity(city);
@@ -157,12 +154,6 @@ class WeatherModule {
     }
 
     async fetchWeatherDataByCity(city) {
-        // 注意：apihz 的 IP 查询版接口可能不支持直接传入城市名，
-        // 这里采用方案：传入一个该城市对应的 IP（使用城市名作为备用）。
-        // 由于接口支持不传 IP 时自动获取，手动选择城市场景下，
-        // 我们暂时降级为调用自动 IP 接口，然后手动设置城市名。
-        // 更完善的方案是需要使用地址查询版接口，但需要单独申请。
-        // 为保持可用，此处使用 IP 自动定位，然后前端覆盖城市显示。
         const url = `${WeatherModule.CONFIG.WEATHER_API}?id=${this.apiId}&key=${this.apiKey}&day=7&hourtype=0&suntimetype=0`;
         try {
             const response = await Utils.safeFetch(url, { timeout: 8000 });
@@ -171,7 +162,6 @@ class WeatherModule {
                 throw new Error(data.msg || '获取天气数据失败');
             }
             const parsed = this.parseWeatherData(data);
-            // 覆盖城市名为手动选择的城市
             parsed.city = city.replace('市', '');
             return parsed;
         } catch (error) {
@@ -197,10 +187,6 @@ class WeatherModule {
         }
     }
 
-    /**
-     * 解析 apihz.cn 返回的天气数据
-     * 输入数据格式参考用户提供的示例 JSON
-     */
     parseWeatherData(data) {
         if (!data || data.code !== 200) {
             throw new Error(data?.msg || '天气数据格式错误');
@@ -234,52 +220,32 @@ class WeatherModule {
             return 'fas fa-cloud-sun';
         };
 
-        const getWindScale = (windleve) => {
-            if (!windleve) return '';
-            // windleve 格式如 "3~4级"，直接使用
-            return windleve;
-        };
-
-        const getWindDirection = (direction) => {
-            if (!direction) return '';
-            return direction;
-        };
-
-        // 构建城市名称：优先使用 name，其次使用 shi，最后使用 sheng
         let cityName = data.name || data.shi || data.sheng || '未知';
         if (cityName.endsWith('市')) cityName = cityName.slice(0, -1);
         if (cityName.endsWith('县')) cityName = cityName.slice(0, -1);
 
-        // 当日白天天气和温度
         const todayWeather = data.weather1 || '未知';
         const todayTempDay = data.wd1 || '';
         const todayTempNight = data.wd2 || '';
         const todayWindDir = data.winddirection1 || '';
         const todayWindScale = data.windleve1 || '';
 
-        // 获取当前实时天气（nowinfo）
         const nowInfo = data.nowinfo || {};
         const currentTemp = nowInfo.temperature;
-        const currentWeather = todayWeather; // 实时天气用当日白天天气近似
         const currentHumidity = nowInfo.humidity;
         const currentWindScale = nowInfo.windScale;
         const currentWindDir = nowInfo.windDirection;
 
-        // 生成未来几天预报（最多7天）
         const dayKeys = ['weatherday2', 'weatherday3', 'weatherday4', 'weatherday5', 'weatherday6', 'weatherday7'];
         const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
         const forecasts = [];
-
-        // 获取今天日期，用于计算星期几
         const today = new Date();
         for (let i = 0; i < Math.min(dayKeys.length, 6); i++) {
             const dayData = data[dayKeys[i]];
             if (!dayData) continue;
-
             const forecastDate = new Date(today);
             forecastDate.setDate(today.getDate() + (i + 1));
             const dayName = i === 0 ? '明天' : weekdays[forecastDate.getDay()];
-
             forecasts.push({
                 day: dayName,
                 weather: dayData.weather1 || '未知',
@@ -290,7 +256,6 @@ class WeatherModule {
             });
         }
 
-        // 生成天气提示
         const getWeatherTips = () => {
             const tips = [];
             if (todayWeather.includes('雨')) tips.push('今日有雨，请携带雨具');
@@ -314,7 +279,7 @@ class WeatherModule {
             weatherIcon: getWeatherIcon(todayWeather),
             currentTemp: currentTemp !== undefined ? currentTemp + '°C' : todayTempDay ? todayTempDay + '°C' : '--',
             humidity: currentHumidity !== undefined ? currentHumidity + '%' : '--',
-            wind: getWindDirection(todayWindDir) + (todayWindScale ? ' ' + todayWindScale : ''),
+            wind: (todayWindDir ? todayWindDir + ' ' : '') + todayWindScale,
             currentWindScale: currentWindScale || todayWindScale || '',
             currentWindDir: currentWindDir || todayWindDir || '',
             visibility: '--',
@@ -333,9 +298,12 @@ class WeatherModule {
         if (this.isLoading) return;
         this.closeOtherModals();
         this.createModal();
+        // 关键修复：添加 active 类，使 visibility 变为 visible
+        this.modalElement.classList.add('active');
         this.modalElement.style.display = 'flex';
         this.isShowing = true;
         requestAnimationFrame(() => {
+            // 确保动画正常触发
             this.modalElement.style.opacity = '1';
             const content = this.modalElement.querySelector('.weather-modal-content');
             if (content) {
@@ -616,7 +584,6 @@ class WeatherModule {
             confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 切换中...';
             confirmBtn.disabled = true;
             try {
-                // 手动选择城市后，重新加载天气数据
                 this.useAutoLocation = false;
                 this.manualCity = newCity;
                 this.currentCity = newCity;
@@ -666,7 +633,6 @@ class WeatherModule {
             if (window.app && window.app.showToast) window.app.showToast('正在获取您的位置...', 'info');
             const locationBtn = this.modalElement?.querySelector('#weatherLocationBtn');
             if (locationBtn) { locationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; locationBtn.disabled = true; }
-            // 重新通过 IP 定位
             this.useAutoLocation = true;
             await this.loadWeatherDataByIp();
             this.updateModalContent();
@@ -738,13 +704,15 @@ class WeatherModule {
     closeOtherModals() {
         if (window.sidebar && window.sidebar.isVisible) window.sidebar.hide();
         if (window.searchModule && window.searchModule.isModalOpen) window.searchModule.hide();
-        if (window.app && window.app.components && window.app.components.navbar) {
+        if (window.app?.components?.navbar?.hideMusicPlayer) {
             window.app.components.navbar.hideMusicPlayer();
         }
     }
 
     hide() {
         if (!this.isShowing || !this.modalElement) return;
+        // 移除 active 类，恢复隐藏状态
+        this.modalElement.classList.remove('active');
         this.modalElement.style.opacity = '0';
         const content = this.modalElement.querySelector('.weather-modal-content');
         if (content) {
