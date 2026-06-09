@@ -150,6 +150,26 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 > 采取**自愿**原则, 收到的赞赏将用于提高开发者积极性和开发环境。
 
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <strong>QQ 支付</strong><br>
+        <img src="./assets/images/qq.png" width="150" alt="QQ收款码">
+      </td>
+      <td align="center">
+        <strong>微信支付</strong><br>
+        <img src="./assets/images/wx.png" width="150" alt="微信收款码">
+      </td>
+      <td align="center">
+        <strong>支付宝</strong><br>
+        <img src="./assets/images/zfb.png" width="150" alt="支付宝收款码">
+      </td>
+    </tr>
+  </table>
+  <p>⭐️ 感谢您的支持！ ⭐️</p>
+</div>
+
 <div id='readme-reward' style="display: flex; gap: 8px; flex-wrap: wrap; width: 100%">
   <img src="https://s2.loli.net/2022/11/16/X2kFMdaxvSc1V5P.jpg" alt="wxpay" height="160px"style="margin: 24px;"/>
   <img src="https://s2.loli.net/2022/11/16/vZ4xkCopKRmIFVX.jpg" alt="alipay" height="160px" style="margin:24px;"/>
@@ -157,7 +177,7 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 📄 许可证
 
-本项目基于 [MIT](license) License 开源，© 2022-PRESENT Viki。
+本项目基于 [MIT](license) License 开源，© 2025-PRESENT Viki。
 
 ---
 
