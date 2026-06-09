@@ -144,14 +144,20 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 已为 index.html 和 admin.html 分别配置严格的CSP，限制脚本、样式、连接来源。若添加新第三方资源，请同步更新 meta 标签。
 
-## 🤝 贡献与支持
+## 💰 赞赏项目
 
-欢迎提 Issue、PR，或通过邮箱 1595126534@qq.com 联系作者。
-如果你有新的实用网站想要收录，请在 [投稿页面](https://f.wps.cn/g/TI3Gxbe1/) 填写，或直接提交到仓库。
+如果觉得这个项目对你有帮助，欢迎请我喝咖啡 ☕️
+
+> 采取**自愿**原则, 收到的赞赏将用于提高开发者积极性和开发环境。
+
+<div id='readme-reward' style="display: flex; gap: 8px; flex-wrap: wrap; width: 100%">
+  <img src="https://s2.loli.net/2022/11/16/X2kFMdaxvSc1V5P.jpg" alt="wxpay" height="160px"style="margin: 24px;"/>
+  <img src="https://s2.loli.net/2022/11/16/vZ4xkCopKRmIFVX.jpg" alt="alipay" height="160px" style="margin:24px;"/>
+</div>
 
 📄 许可证
 
-本项目基于 MIT License 开源。
+本项目基于 [MIT](license) License 开源，© 2022-PRESENT Viki。
 
 ---
 
