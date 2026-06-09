@@ -1016,3 +1016,240 @@ p {
 .dark-mode #profileModal .profile-modal-card > div:first-child > div:last-child {
     background: #3a3a3a !important;
 }
+
+/* ==================== 网站投稿深色模式优化 ==================== */
+/* 系统深色模式 */
+@media (prefers-color-scheme: dark) {
+    #submitModal .feedback-modal-content {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+
+    #submitModal .feedback-modal-header {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    #submitModal .feedback-modal-header h3 {
+        color: #f0f0f0;
+    }
+
+    #submitModal .feedback-modal-header h3 i {
+        color: #7b9cff;
+    }
+
+    #submitModal .form-row label {
+        color: #adb5bd;
+    }
+
+    #submitModal .form-row input,
+    #submitModal .form-row textarea {
+        background: #1e1e1e;
+        border-color: #404040;
+        color: #f8f9fa;
+    }
+
+    #submitModal .form-row input:focus,
+    #submitModal .form-row textarea:focus {
+        border-color: var(--primary-color, #4361ee);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+
+    #submitModal .form-row input::placeholder,
+    #submitModal .form-row textarea::placeholder {
+        color: #8f9bb3;
+    }
+
+    .submit-cancel-btn {
+        background: #3a3a3a;
+        border-color: #404040;
+        color: #e0e0e0;
+    }
+
+    .submit-cancel-btn:hover {
+        background: #4a4a4a;
+        color: #ffffff;
+    }
+
+    .submit-save-btn {
+        background: var(--primary-color, #4361ee);
+        color: white;
+    }
+
+    .submit-save-btn:hover:not(:disabled) {
+        background: #5a7aff;
+    }
+
+    .submit-save-btn:disabled {
+        opacity: 0.5;
+    }
+
+    .submit-safe-hint {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+    }
+
+    .fetch-info-btn,
+    .check-url-btn {
+        background: #3a3a3a;
+        border-color: #404040;
+        color: #adb5bd;
+    }
+
+    .fetch-info-btn:hover,
+    .check-url-btn:hover {
+        border-color: var(--primary-color, #7b9cff);
+        color: #7b9cff;
+        background: rgba(123, 156, 255, 0.1);
+    }
+
+    .url-check-result.safe {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border-color: rgba(52, 211, 153, 0.3);
+    }
+
+    .url-check-result.unsafe {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+        border-color: rgba(248, 113, 113, 0.3);
+    }
+
+    .url-check-result.checking {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+        border-color: rgba(251, 191, 36, 0.3);
+    }
+
+    .security-report.safe {
+        color: #34d399;
+    }
+
+    .security-report.unsafe {
+        color: #f87171;
+    }
+
+    .security-detail {
+        color: #adb5bd;
+    }
+
+    .security-hint {
+        color: #c0c0c0;
+    }
+}
+
+/* 手动深色模式（.dark-mode 类） */
+.dark-mode #submitModal .feedback-modal-content {
+    background: #2d2d2d;
+    border-color: #404040;
+}
+
+.dark-mode #submitModal .feedback-modal-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode #submitModal .feedback-modal-header h3 {
+    color: #f0f0f0;
+}
+
+.dark-mode #submitModal .feedback-modal-header h3 i {
+    color: #7b9cff;
+}
+
+.dark-mode #submitModal .form-row label {
+    color: #adb5bd;
+}
+
+.dark-mode #submitModal .form-row input,
+.dark-mode #submitModal .form-row textarea {
+    background: #1e1e1e;
+    border-color: #404040;
+    color: #f8f9fa;
+}
+
+.dark-mode #submitModal .form-row input:focus,
+.dark-mode #submitModal .form-row textarea:focus {
+    border-color: var(--primary-color, #4361ee);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+}
+
+.dark-mode #submitModal .form-row input::placeholder,
+.dark-mode #submitModal .form-row textarea::placeholder {
+    color: #8f9bb3;
+}
+
+.dark-mode .submit-cancel-btn {
+    background: #3a3a3a;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+.dark-mode .submit-cancel-btn:hover {
+    background: #4a4a4a;
+    color: #ffffff;
+}
+
+.dark-mode .submit-save-btn {
+    background: var(--primary-color, #4361ee);
+    color: white;
+}
+
+.dark-mode .submit-save-btn:hover:not(:disabled) {
+    background: #5a7aff;
+}
+
+.dark-mode .submit-save-btn:disabled {
+    opacity: 0.5;
+}
+
+.dark-mode .submit-safe-hint {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+}
+
+.dark-mode .fetch-info-btn,
+.dark-mode .check-url-btn {
+    background: #3a3a3a;
+    border-color: #404040;
+    color: #adb5bd;
+}
+
+.dark-mode .fetch-info-btn:hover,
+.dark-mode .check-url-btn:hover {
+    border-color: var(--primary-color, #7b9cff);
+    color: #7b9cff;
+    background: rgba(123, 156, 255, 0.1);
+}
+
+.dark-mode .url-check-result.safe {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border-color: rgba(52, 211, 153, 0.3);
+}
+
+.dark-mode .url-check-result.unsafe {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.3);
+}
+
+.dark-mode .url-check-result.checking {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+.dark-mode .security-report.safe {
+    color: #34d399;
+}
+
+.dark-mode .security-report.unsafe {
+    color: #f87171;
+}
+
+.dark-mode .security-detail {
+    color: #adb5bd;
+}
+
+.dark-mode .security-hint {
+    color: #c0c0c0;
+}
