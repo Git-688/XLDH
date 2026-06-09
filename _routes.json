@@ -1,6 +1,0 @@
-{
-  "version": 1,
-  "include": ["/*"],
-  "exclude": ["/pages/tools/*", "/css/*", "/js/*", "/assets/*", "/*.html"],
-  "fallback": "/index.html"
-}
