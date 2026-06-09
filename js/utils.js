@@ -117,12 +117,6 @@
     };
 
     // ========== 统一错误处理 ==========
-    /**
-     * 统一处理 API 请求错误
-     * @param {Error} error - 错误对象
-     * @param {string} defaultMessage - 默认提示信息
-     * @param {boolean} showToast - 是否显示 toast 提示
-     */
     Utils.handleApiError = function(error, defaultMessage = '操作失败，请稍后重试', showToast = true) {
         console.error('[API Error]', error);
         let message = defaultMessage;
@@ -140,7 +134,6 @@
         if (showToast && window.toast && typeof window.toast.show === 'function') {
             window.toast.show(message, 'error');
         }
-        // 可选：将错误上报到服务器
         const apiBase = window.APP_CONFIG?.API_BASE || '';
         if (apiBase) {
             fetch(`${apiBase}/log`, {
@@ -186,6 +179,177 @@
     // 获取 Waline 评论服务器地址
     Utils.getWalineServer = function() {
         return (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc';
+    };
+
+    // ========== 以下是从 storage.js 合并进来的存储方法 ==========
+    const STORAGE_PREFIX = 'starlink_';
+
+    // 获取存储值
+    Utils.getStorage = function(key, defaultValue = null) {
+        try {
+            const item = localStorage.getItem(STORAGE_PREFIX + key);
+            return item === null ? defaultValue : JSON.parse(item);
+        } catch (error) {
+            console.error(`获取存储数据失败 (${key}):`, error);
+            return defaultValue;
+        }
+    };
+
+    // 设置存储值
+    Utils.setStorage = function(key, value) {
+        try {
+            localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
+            return true;
+        } catch (error) {
+            console.error(`设置存储数据失败 (${key}):`, error);
+            return false;
+        }
+    };
+
+    // 删除存储值
+    Utils.removeStorage = function(key) {
+        try {
+            localStorage.removeItem(STORAGE_PREFIX + key);
+            return true;
+        } catch (error) {
+            console.error(`删除存储数据失败 (${key}):`, error);
+            return false;
+        }
+    };
+
+    // 清除所有带前缀的存储
+    Utils.clearStorage = function() {
+        try {
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith(STORAGE_PREFIX)) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            return true;
+        } catch (error) {
+            console.error('清除存储失败:', error);
+            return false;
+        }
+    };
+
+    // 获取所有存储键名（去掉前缀）
+    Utils.getAllStorageKeys = function() {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(STORAGE_PREFIX)) {
+                keys.push(key.substring(STORAGE_PREFIX.length));
+            }
+        }
+        return keys;
+    };
+
+    // ========== 网站统计功能（原先在 storage.js 中） ==========
+    Utils.getSiteViews = function(url) {
+        if (!url) return 0;
+        try {
+            const siteViews = this.getStorage('site_views', {});
+            const normalizedUrl = this.normalizeUrl(url);
+            return siteViews[normalizedUrl] || 0;
+        } catch {
+            return 0;
+        }
+    };
+
+    Utils.incrementSiteViews = function(url) {
+        if (!url) return 0;
+        try {
+            const normalizedUrl = this.normalizeUrl(url);
+            const siteViews = this.getStorage('site_views', {});
+            siteViews[normalizedUrl] = (siteViews[normalizedUrl] || 0) + 1;
+            this.setStorage('site_views', siteViews);
+            return siteViews[normalizedUrl];
+        } catch {
+            return 0;
+        }
+    };
+
+    Utils.getAllSiteStats = function() {
+        return this.getStorage('site_views', {});
+    };
+
+    Utils.resetAllSiteStats = function() {
+        this.setStorage('site_views', {});
+    };
+
+    Utils.getPopularSites = function(limit = 10) {
+        try {
+            const siteViews = this.getStorage('site_views', {});
+            return Object.entries(siteViews)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, limit)
+                .map(([url, views]) => ({ url, views }));
+        } catch {
+            return [];
+        }
+    };
+
+    Utils.getSiteStatsSummary = function() {
+        try {
+            const siteViews = this.getStorage('site_views', {});
+            const urls = Object.keys(siteViews);
+            return {
+                totalSites: urls.length,
+                totalViews: Object.values(siteViews).reduce((sum, views) => sum + views, 0),
+                averageViews: urls.length > 0 ? 
+                    Math.round(Object.values(siteViews).reduce((sum, views) => sum + views, 0) / urls.length) : 0,
+                mostViewed: this.getPopularSites(1)[0] || null
+            };
+        } catch {
+            return { totalSites: 0, totalViews: 0, averageViews: 0, mostViewed: null };
+        }
+    };
+
+    Utils.normalizeUrl = function(url) {
+        if (!url) return '';
+        try {
+            let normalized = url.toLowerCase();
+            normalized = normalized.replace(/^(https?:\/\/)?(www\.)?/, '');
+            normalized = normalized.replace(/\/$/, '');
+            return normalized;
+        } catch {
+            return url;
+        }
+    };
+
+    Utils.getLinkValidity = function(url) {
+        const normalizedUrl = this.normalizeUrl(url);
+        const cacheKey = `link_validity_${normalizedUrl}`;
+        return this.getStorage(cacheKey, null);
+    };
+
+    Utils.setLinkValidity = function(url, valid) {
+        const normalizedUrl = this.normalizeUrl(url);
+        const cacheKey = `link_validity_${normalizedUrl}`;
+        return this.setStorage(cacheKey, { valid, timestamp: Date.now() });
+    };
+
+    // 为了兼容旧代码，保留 Storage 全局对象（但实质指向 Utils 的存储方法）
+    window.Storage = {
+        get: Utils.getStorage.bind(Utils),
+        set: Utils.setStorage.bind(Utils),
+        remove: Utils.removeStorage.bind(Utils),
+        clear: Utils.clearStorage.bind(Utils),
+        getAllKeys: Utils.getAllStorageKeys.bind(Utils),
+        getItem: Utils.getStorage.bind(Utils),
+        setItem: Utils.setStorage.bind(Utils),
+        getSiteViews: Utils.getSiteViews.bind(Utils),
+        incrementSiteViews: Utils.incrementSiteViews.bind(Utils),
+        getAllSiteStats: Utils.getAllSiteStats.bind(Utils),
+        resetAllSiteStats: Utils.resetAllSiteStats.bind(Utils),
+        getPopularSites: Utils.getPopularSites.bind(Utils),
+        getSiteStatsSummary: Utils.getSiteStatsSummary.bind(Utils),
+        normalizeUrl: Utils.normalizeUrl.bind(Utils),
+        getLinkValidity: Utils.getLinkValidity.bind(Utils),
+        setLinkValidity: Utils.setLinkValidity.bind(Utils)
     };
 
     window.Utils = Utils;
