@@ -1,5 +1,7 @@
 /* ================================================
    style.css - 星聚导航全局样式（纯色背景，无亚克力）
+   包含：基础变量、重置样式、导航栏、侧边栏、模态框、
+   天气模块、音乐播放器、响应式、深色模式等
    ================================================ */
 
 /* 基础变量定义 */
@@ -46,8 +48,16 @@
     --stat-invalid-color: #e57373;
     --card-hover-bg-start: rgba(67, 97, 238, 0.02);
     --card-hover-bg-end: rgba(67, 97, 238, 0.05);
+    --acrylic-bg: rgba(255, 255, 255, 0.6);
+    --acrylic-blur: blur(24px) saturate(125%);
+    --acrylic-border: 1px solid rgba(255, 255, 255, 0.5);
+    --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --acrylic-light-bg: rgba(255, 255, 255, 0.8);
+    --acrylic-light-blur: blur(10px) saturate(110%);
+    --acrylic-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
 }
 
+/* 深色模式（跟随系统） */
 @media (prefers-color-scheme: dark) {
     :root {
         --text-primary: #f8f9fa;
@@ -62,7 +72,71 @@
         --stat-invalid-color: #ef9a9a;
         --card-hover-bg-start: rgba(124, 200, 255, 0.05);
         --card-hover-bg-end: rgba(124, 200, 255, 0.1);
+        --acrylic-bg: rgba(30, 30, 30, 0.7);
+        --acrylic-border: 1px solid rgba(255, 255, 255, 0.15);
+        --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        --acrylic-light-bg: rgba(40, 40, 40, 0.7);
     }
+}
+
+/* 手动深色模式覆盖（通过 .dark-mode 类） */
+.dark-mode {
+    --text-primary: #f8f9fa;
+    --text-secondary: #adb5bd;
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+    --bg-card: #2d2d2d;
+    --border-color: #404040;
+    --nav-level1-active: #7bc8ff;
+    --nav-level2-active: #ff8a65;
+    --stat-site-color: #a5d6a7;
+    --stat-invalid-color: #ef9a9a;
+    --card-hover-bg-start: rgba(124, 200, 255, 0.05);
+    --card-hover-bg-end: rgba(124, 200, 255, 0.1);
+    --acrylic-bg: rgba(30, 30, 30, 0.7);
+    --acrylic-border: 1px solid rgba(255, 255, 255, 0.15);
+    --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --acrylic-light-bg: rgba(40, 40, 40, 0.7);
+}
+
+/* 深色模式下额外覆盖（确保所有模态框背景变深） */
+.dark-mode .weather-modal-content,
+.dark-mode .feedback-modal-content,
+.dark-mode .announcement-modal-container,
+.dark-mode .about-modal-content,
+.dark-mode .city-prompt-content,
+.dark-mode .music-player,
+.dark-mode .search-modal .modal-content {
+    background: #2d2d2d;
+    border-color: #404040;
+}
+.dark-mode .weather-header,
+.dark-mode .feedback-modal-header,
+.dark-mode .announcement-header,
+.dark-mode .weather-detail,
+.dark-mode .forecast-day,
+.dark-mode .weather-tips,
+.dark-mode .manual-mode-hint {
+    background: #3a3a3a;
+    border-color: #404040;
+}
+.dark-mode .weather-title span:first-child,
+.dark-mode .weather-desc,
+.dark-mode .weather-detail .detail-value,
+.dark-mode .forecast-day-weather,
+.dark-mode .forecast-day-name,
+.dark-mode .site-title,
+.dark-mode .site-description,
+.dark-mode .song-title,
+.dark-mode .song-artist,
+.dark-mode .category-name,
+.dark-mode .daily-quote-card p {
+    color: #f0f0f0;
+}
+.dark-mode .weather-icon,
+.dark-mode .detail-icon,
+.dark-mode .forecast-day-icon {
+    color: #7b9cff;
 }
 
 /* 基础重置 */
@@ -645,14 +719,13 @@ p {
     border: 1px solid rgba(245,158,11,0.2);
 }
 
-/* ========== 星聚笔记模态框特殊样式（定位：导航栏下方水平居中，上下间距相等） ========== */
+/* ========== 星聚笔记模态框特殊样式 ========== */
 #notebookModal {
     align-items: center;
     justify-content: flex-start;
     padding-top: 60px;
     box-sizing: border-box;
 }
-
 @media (min-width: 769px) {
     #notebookModal {
         display: flex;
@@ -666,7 +739,6 @@ p {
         max-width: 600px;
     }
 }
-
 @media (max-width: 768px) {
     #notebookModal {
         padding-left: var(--container-padding-xs, 16px);
@@ -683,20 +755,17 @@ p {
         overflow-y: auto;
     }
 }
-
 @media (max-width: 480px) {
     #notebookModal {
         padding-left: var(--container-padding-xs, 16px);
         padding-right: var(--container-padding-xs, 16px);
     }
 }
-
 @media (max-height: 500px) and (orientation: landscape) {
     #notebookModal .feedback-modal-content {
         max-height: calc(100vh - 70px);
     }
 }
-
 #notebookModal .feedback-modal-content::-webkit-scrollbar {
     width: 4px;
 }
@@ -709,14 +778,13 @@ p {
     border-radius: 4px;
 }
 
-/* ========== 网站投稿模态框特殊定位（导航栏下方，上下间距相等，移动端左右边距与主页一致） ========== */
+/* ========== 网站投稿模态框特殊定位 ========== */
 #submitModal {
     align-items: center;
     justify-content: flex-start;
     padding-top: 60px;
     box-sizing: border-box;
 }
-
 @media (min-width: 769px) {
     #submitModal {
         display: flex;
@@ -730,7 +798,6 @@ p {
         max-width: 520px;
     }
 }
-
 @media (max-width: 768px) {
     #submitModal {
         padding-left: var(--container-padding-xs, 16px);
@@ -747,14 +814,12 @@ p {
         overflow-y: auto;
     }
 }
-
 @media (max-width: 480px) {
     #submitModal {
         padding-left: var(--container-padding-xs, 16px);
         padding-right: var(--container-padding-xs, 16px);
     }
 }
-
 @media (max-height: 500px) and (orientation: landscape) {
     #submitModal .feedback-modal-content {
         max-height: calc(100vh - 70px);
