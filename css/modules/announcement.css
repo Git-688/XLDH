@@ -51,11 +51,17 @@
     }
 }
 
-/* 深色模式适配 */
+/* 深色模式适配 - 优化对比度与视觉舒适度 */
 @media (prefers-color-scheme: dark) {
     .announcement-modal-container {
         background: #2d2d2d;
         border: 1px solid #404040;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    /* 手动深色模式覆盖（通过 .dark-mode 类） */
+    .dark-mode .announcement-modal-container {
+        background: #2d2d2d;
+        border-color: #404040;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
 }
@@ -69,6 +75,16 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     color: var(--text-primary, #1e293b);
 }
+/* 深色模式头部 */
+@media (prefers-color-scheme: dark) {
+    .announcement-header {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+    .dark-mode .announcement-header {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+}
+
 .announcement-title {
     display: flex;
     align-items: center;
@@ -98,6 +114,25 @@
     background: rgba(0, 0, 0, 0.1);
     color: #334155;
 }
+/* 深色模式关闭按钮 */
+@media (prefers-color-scheme: dark) {
+    .announcement-close {
+        background: rgba(255, 255, 255, 0.08);
+        color: #adb5bd;
+    }
+    .announcement-close:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #f8f9fa;
+    }
+    .dark-mode .announcement-close {
+        background: rgba(255, 255, 255, 0.08);
+        color: #adb5bd;
+    }
+    .dark-mode .announcement-close:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #f8f9fa;
+    }
+}
 
 /* 正文区域 */
 .announcement-body {
@@ -119,6 +154,21 @@
     font-size: 0.85rem;
     line-height: 1.5;
     margin: 0;
+}
+/* 深色模式重要提醒 - 背景跟随模态框，文字保持红色但降低亮度 */
+@media (prefers-color-scheme: dark) {
+    .focus-section {
+        background: #2d2d2d;
+    }
+    .focus-content {
+        color: #f87171;
+    }
+    .dark-mode .focus-section {
+        background: #2d2d2d;
+    }
+    .dark-mode .focus-content {
+        color: #f87171;
+    }
 }
 
 /* 更新内容区域 */
@@ -158,15 +208,32 @@
     border-radius: 50%;
     background: var(--primary-color, #4361ee);
 }
+/* 深色模式下更新列表 */
+@media (prefers-color-scheme: dark) {
+    .updates-list li {
+        color: #f0f0f0;
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+    .updates-list li::before {
+        background: #7b9cff;
+    }
+    .dark-mode .updates-list li {
+        color: #f0f0f0;
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+    .dark-mode .updates-list li::before {
+        background: #7b9cff;
+    }
+}
 
-/* 底部区域 - 白色背景 + 明显分割线（已修改） */
+/* 底部区域 - 白色背景 + 明显分割线 */
 .announcement-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 12px 20px 16px;
-    background: #ffffff;           /* 改为纯白色 */
-    border-top: 1px solid #e0e0e0; /* 清晰的分割线 */
+    background: #ffffff;
+    border-top: 1px solid #e0e0e0;
 }
 .announcement-date {
     display: flex;
@@ -190,6 +257,23 @@
 .announcement-ack-btn:hover {
     background: #3651d4;
     box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+}
+/* 深色模式底部区域 */
+@media (prefers-color-scheme: dark) {
+    .announcement-footer {
+        background: #2d2d2d;
+        border-top-color: #404040;
+    }
+    .announcement-date {
+        color: #adb5bd;
+    }
+    .dark-mode .announcement-footer {
+        background: #2d2d2d;
+        border-top-color: #404040;
+    }
+    .dark-mode .announcement-date {
+        color: #adb5bd;
+    }
 }
 
 /* 移动端适配 */
@@ -237,20 +321,6 @@
     }
     .updates-list li {
         font-size: 0.73rem;
-    }
-}
-
-/* 深色模式下的底部适配 */
-@media (prefers-color-scheme: dark) {
-    .focus-section {
-        background: #2d2d2d;
-    }
-    .focus-content {
-        color: #f87171;
-    }
-    .announcement-footer {
-        background: #2d2d2d;           /* 深色模式背景与主体一致 */
-        border-top: 1px solid #404040; /* 深色分割线 */
     }
 }
 
