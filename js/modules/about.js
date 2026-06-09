@@ -1,4 +1,4 @@
-// about.js - 星聚导航关于模块（爱发电模态框：左右卡片正方形，右边图片填满）
+// about.js - 星聚导航关于模块（优化深色模式下爱发电模态框样式）
 // 确保 Utils 存在
 if (typeof Utils === 'undefined') {
     window.Utils = {
@@ -77,11 +77,24 @@ class AboutModule {
                     <div class="about-header-bg" style="background-image: url('${Utils.escapeHtml(this.wallpaperUrl)}')"></div>
                     <div class="about-header-overlay"></div>
                     <div class="about-header-content">
-                        <div class="about-header-left">
-                            <div class="info-card">开发者：${Utils.escapeHtml(this.developer)}</div>
-                            <div class="info-card">网站版本：${Utils.escapeHtml(this.version)}</div>
-                            <div class="info-card">更新日期：${Utils.escapeHtml(this.updateDate)}</div>
+                        <!-- 左边卡片 - 宽度增大，内容不换行 -->
+                        <div class="about-header-left no-wrap">
+                            <div class="about-info-grid">
+                                <div class="about-info-item">
+                                    <span class="info-label">开发者：</span>
+                                    <span class="info-value">${Utils.escapeHtml(this.developer)}</span>
+                                </div>
+                                <div class="about-info-item">
+                                    <span class="info-label">网站版本：</span>
+                                    <span class="info-value">${Utils.escapeHtml(this.version)}</span>
+                                </div>
+                                <div class="about-info-item">
+                                    <span class="info-label">更新日期：</span>
+                                    <span class="info-value">${Utils.escapeHtml(this.updateDate)}</span>
+                                </div>
+                            </div>
                         </div>
+                        <!-- 右边大卡片 - Logo + 标题 + 副标题 -->
                         <div class="about-header-right logo-card">
                             <div class="about-brand-logo">
                                 <img class="about-logo-img" src="${Utils.escapeHtml(this.logoUrl)}" alt="星聚导航Logo">
@@ -203,7 +216,7 @@ class AboutModule {
         }
     }
 
-    // 爱发电模态框 - 左右卡片正方形，右边图片填满卡片
+    // 爱发电模态框 - 深色模式已优化（同时支持系统深色和手动 .dark-mode）
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
@@ -226,6 +239,7 @@ class AboutModule {
             pointer-events: auto;
         `;
 
+        // 增强深色模式样式（支持手动 .dark-mode 和系统深色）
         const style = document.createElement('style');
         style.textContent = `
             .donate-modal-content {
@@ -294,10 +308,10 @@ class AboutModule {
             .qrcode-content img {
                 width: 100%;
                 height: 100%;
-                object-fit: cover;   /* 填满卡片，保持比例裁剪 */
+                object-fit: cover;
                 display: block;
             }
-            /* 帮助面板文字内容，同样填满但保留内边距 */
+            /* 帮助面板文字内容 */
             .help-content-container {
                 width: 100%;
                 height: 100%;
@@ -391,38 +405,51 @@ class AboutModule {
                     margin-bottom: 6px;
                 }
             }
-            @media (prefers-color-scheme: dark) {
+            /* ========== 深色模式优化（同时支持系统深色和手动 .dark-mode） ========== */
+            @media (prefers-color-scheme: dark),
+                   .dark-mode {
                 .donate-card-wrapper {
-                    background: #2d2d2d;
-                    border-color: #404040;
-                }
-                .supporters-wrapper {
-                    background: #2d2d2d;
-                    border-color: #404040;
-                }
-                .supporter-name {
-                    background: #2d2d2d;
-                    border-color: #404040;
-                    color: #e0e0e0;
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-                }
-                .supporters-title {
-                    color: #f0f0f0;
-                }
-                .supporters-thanks {
-                    color: #aaa;
-                }
-                .help-inner .help-title {
-                    color: #f0f0f0;
-                }
-                .help-inner .help-steps {
-                    color: #ccc;
+                    background: #2d2d2d !important;
+                    border-color: #404040 !important;
                 }
                 .donate-method-btn-left {
-                    background: #2d2d2d;
+                    background: #3a3a3a !important;
+                    border-color: #5a5a5a !important;
+                    color: #e0e0e0 !important;
                 }
                 .donate-method-btn-left.active {
                     background: currentColor !important;
+                    color: #fff !important;
+                    border-color: transparent !important;
+                }
+                .donate-method-btn-left i {
+                    color: inherit;
+                }
+                .supporters-wrapper {
+                    background: #2d2d2d !important;
+                    border-color: #404040 !important;
+                }
+                .supporters-title {
+                    color: #f0f0f0 !important;
+                }
+                .supporters-thanks {
+                    color: #aaa !important;
+                }
+                .supporter-name {
+                    background: #3a3a3a !important;
+                    border-color: #505050 !important;
+                    color: #e0e0e0 !important;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+                }
+                .help-inner .help-title {
+                    color: #f0f0f0 !important;
+                }
+                .help-inner .help-steps {
+                    color: #cccccc !important;
+                }
+                .qrcode-content img {
+                    /* 二维码图片在深色模式下不需要额外处理，但为了清晰可加微弱阴影 */
+                    filter: brightness(0.95);
                 }
             }
         `;
@@ -461,7 +488,7 @@ class AboutModule {
                             </button>
                         </div>
                     </div>
-                    <!-- 右边大卡片：正方形，展示二维码/说明，图片填满 -->
+                    <!-- 右边大卡片：正方形，展示二维码/说明 -->
                     <div class="donate-card-wrapper" style="flex: 1; position: relative;">
                         <div class="qrcode-content active" data-type="qq">
                             <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ">
