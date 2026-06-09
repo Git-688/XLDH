@@ -150,7 +150,8 @@
   .wl-emoji-tab { padding: 2px 8px; font-size: 11px; }
 }
 
-/* 暗色模式 */
+/* ==================== 深色模式优化 ==================== */
+/* 系统深色模式 */
 @media (prefers-color-scheme: dark) {
   #waline-comment {
     --waline-bgcolor: #2a2a2a;
@@ -165,6 +166,126 @@
   .wl-emoji-item:hover {
     background: rgba(255, 255, 255, 0.05);
   }
+  /* Waline 内部元素深色覆盖 */
+  #waline-comment .wl-editor {
+    background: var(--waline-bgcolor);
+    border-color: var(--waline-border-color);
+    color: var(--waline-text-color);
+  }
+  #waline-comment .wl-input {
+    background: var(--waline-bgcolor);
+    border-color: var(--waline-border-color);
+    color: var(--waline-text-color);
+  }
+  #waline-comment .wl-btn {
+    background: var(--waline-bgcolor-light);
+    color: var(--waline-text-color);
+  }
+  #waline-comment .wl-btn-primary {
+    background: var(--waline-theme-color);
+    color: white;
+  }
+  #waline-comment .wl-comment {
+    background: var(--waline-bgcolor);
+    border-color: var(--waline-border-color);
+  }
+  #waline-comment .wl-comment-item {
+    border-bottom-color: var(--waline-border-color);
+  }
+  #waline-comment .wl-nick {
+    color: var(--waline-text-color);
+  }
+  #waline-comment .wl-time {
+    color: var(--waline-text-color-light);
+  }
+  #waline-comment .wl-comment-text {
+    color: var(--waline-text-color);
+  }
+  #waline-comment .wl-preview {
+    background: var(--waline-bgcolor-light);
+    color: var(--waline-text-color);
+  }
+  #waline-comment .wl-emoji-container {
+    border-bottom-color: var(--waline-border-color);
+  }
+  #waline-comment .wl-search {
+    border-top-color: var(--waline-border-color);
+  }
+  #waline-comment .wl-search-input {
+    background: var(--waline-bgcolor);
+    border-color: var(--waline-border-color);
+    color: var(--waline-text-color);
+  }
+  #waline-comment .wl-search-input:focus {
+    border-color: var(--waline-theme-color);
+  }
+}
+
+/* 手动深色模式覆盖（.dark-mode 类） */
+.dark-mode #waline-comment {
+  --waline-bgcolor: #2a2a2a;
+  --waline-bgcolor-light: #3a3a3a;
+  --waline-border-color: #3e3e3e;
+  --waline-text-color: #f1f1f1;
+  --waline-text-color-light: #aaaaaa;
+}
+.dark-mode .wl-emoji-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.dark-mode .wl-emoji-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.dark-mode #waline-comment .wl-editor {
+  background: var(--waline-bgcolor);
+  border-color: var(--waline-border-color);
+  color: var(--waline-text-color);
+}
+.dark-mode #waline-comment .wl-input {
+  background: var(--waline-bgcolor);
+  border-color: var(--waline-border-color);
+  color: var(--waline-text-color);
+}
+.dark-mode #waline-comment .wl-btn {
+  background: var(--waline-bgcolor-light);
+  color: var(--waline-text-color);
+}
+.dark-mode #waline-comment .wl-btn-primary {
+  background: var(--waline-theme-color);
+  color: white;
+}
+.dark-mode #waline-comment .wl-comment {
+  background: var(--waline-bgcolor);
+  border-color: var(--waline-border-color);
+}
+.dark-mode #waline-comment .wl-comment-item {
+  border-bottom-color: var(--waline-border-color);
+}
+.dark-mode #waline-comment .wl-nick {
+  color: var(--waline-text-color);
+}
+.dark-mode #waline-comment .wl-time {
+  color: var(--waline-text-color-light);
+}
+.dark-mode #waline-comment .wl-comment-text {
+  color: var(--waline-text-color);
+}
+.dark-mode #waline-comment .wl-preview {
+  background: var(--waline-bgcolor-light);
+  color: var(--waline-text-color);
+}
+.dark-mode #waline-comment .wl-emoji-container {
+  border-bottom-color: var(--waline-border-color);
+}
+.dark-mode #waline-comment .wl-search {
+  border-top-color: var(--waline-border-color);
+}
+.dark-mode #waline-comment .wl-search-input {
+  background: var(--waline-bgcolor);
+  border-color: var(--waline-border-color);
+  color: var(--waline-text-color);
+}
+.dark-mode #waline-comment .wl-search-input:focus {
+  border-color: var(--waline-theme-color);
 }
 
 /* 降级提示（Waline 未加载时的占位） */
@@ -263,4 +384,20 @@
 #commentModal .feedback-modal-content::-webkit-scrollbar-thumb {
   background: rgba(0,0,0,0.2);
   border-radius: 4px;
+}
+
+/* 深色模式滚动条适配 */
+@media (prefers-color-scheme: dark) {
+  #commentModal .feedback-modal-content::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+  }
+  #commentModal .feedback-modal-content::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+  }
+}
+.dark-mode #commentModal .feedback-modal-content::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+}
+.dark-mode #commentModal .feedback-modal-content::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
 }
