@@ -1,0 +1,160 @@
+// storage.js - 统一本地存储管理（所有键名前缀 starlink_）
+class Storage {
+    static PREFIX = 'starlink_';
+    
+    static get(key, defaultValue = null) {
+        try {
+            const item = localStorage.getItem(this.PREFIX + key);
+            return item === null ? defaultValue : JSON.parse(item);
+        } catch (error) {
+            console.error(`获取存储数据失败 (${key}):`, error);
+            return defaultValue;
+        }
+    }
+
+    static set(key, value) {
+        try {
+            localStorage.setItem(this.PREFIX + key, JSON.stringify(value));
+            return true;
+        } catch (error) {
+            console.error(`设置存储数据失败 (${key}):`, error);
+            return false;
+        }
+    }
+
+    static remove(key) {
+        try {
+            localStorage.removeItem(this.PREFIX + key);
+            return true;
+        } catch (error) {
+            console.error(`删除存储数据失败 (${key}):`, error);
+            return false;
+        }
+    }
+
+    static clear() {
+        try {
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith(this.PREFIX)) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            return true;
+        } catch (error) {
+            console.error('清除存储失败:', error);
+            return false;
+        }
+    }
+
+    static getAllKeys() {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(this.PREFIX)) {
+                keys.push(key.substring(this.PREFIX.length));
+            }
+        }
+        return keys;
+    }
+
+    // 别名方法，方便其他模块调用
+    static getItem(key, defaultValue = null) {
+        return this.get(key, defaultValue);
+    }
+
+    static setItem(key, value) {
+        return this.set(key, value);
+    }
+
+    // ==================== 网站统计功能 ====================
+    static getSiteViews(url) {
+        if (!url) return 0;
+        try {
+            const siteViews = this.get('site_views', {});
+            const normalizedUrl = this.normalizeUrl(url);
+            return siteViews[normalizedUrl] || 0;
+        } catch {
+            return 0;
+        }
+    }
+
+    static incrementSiteViews(url) {
+        if (!url) return 0;
+        try {
+            const normalizedUrl = this.normalizeUrl(url);
+            const siteViews = this.get('site_views', {});
+            siteViews[normalizedUrl] = (siteViews[normalizedUrl] || 0) + 1;
+            this.set('site_views', siteViews);
+            return siteViews[normalizedUrl];
+        } catch {
+            return 0;
+        }
+    }
+
+    static getAllSiteStats() {
+        return this.get('site_views', {});
+    }
+
+    static resetAllSiteStats() {
+        this.set('site_views', {});
+    }
+
+    static getPopularSites(limit = 10) {
+        try {
+            const siteViews = this.get('site_views', {});
+            return Object.entries(siteViews)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, limit)
+                .map(([url, views]) => ({ url, views }));
+        } catch {
+            return [];
+        }
+    }
+
+    static getSiteStatsSummary() {
+        try {
+            const siteViews = this.get('site_views', {});
+            const urls = Object.keys(siteViews);
+            return {
+                totalSites: urls.length,
+                totalViews: Object.values(siteViews).reduce((sum, views) => sum + views, 0),
+                averageViews: urls.length > 0 ? 
+                    Math.round(Object.values(siteViews).reduce((sum, views) => sum + views, 0) / urls.length) : 0,
+                mostViewed: this.getPopularSites(1)[0] || null
+            };
+        } catch {
+            return { totalSites: 0, totalViews: 0, averageViews: 0, mostViewed: null };
+        }
+    }
+
+    static normalizeUrl(url) {
+        if (!url) return '';
+        try {
+            let normalized = url.toLowerCase();
+            normalized = normalized.replace(/^(https?:\/\/)?(www\.)?/, '');
+            normalized = normalized.replace(/\/$/, '');
+            return normalized;
+        } catch {
+            return url;
+        }
+    }
+
+    // ==================== 链接有效性缓存 ====================
+    static getLinkValidity(url) {
+        const normalizedUrl = this.normalizeUrl(url);
+        const cacheKey = `link_validity_${normalizedUrl}`;
+        return this.get(cacheKey, null);
+    }
+
+    static setLinkValidity(url, valid) {
+        const normalizedUrl = this.normalizeUrl(url);
+        const cacheKey = `link_validity_${normalizedUrl}`;
+        return this.set(cacheKey, { valid, timestamp: Date.now() });
+    }
+}
+
+// 确保全局可用
+window.Storage = Storage;
