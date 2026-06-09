@@ -1,4 +1,4 @@
-/* sidebar.css - 现代悬浮侧滑栏样式（纯色背景，无亚克力） */
+/* sidebar.css - 现代悬浮侧滑栏样式（纯色背景，无亚克力，深色模式优化） */
 :root {
     --sidebar-width: 260px;
     --sidebar-mobile-width: 70vw;
@@ -33,12 +33,21 @@
     transform: translateX(0);
 }
 
-/* 深色模式适配 */
+/* 深色模式基础适配（跟随系统） */
 @media (prefers-color-scheme: dark) {
     .sidebar {
         background: var(--sidebar-bg-dark);
         border: 1px solid #404040;
+        --sidebar-border: 1px solid #404040;
+        --sidebar-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
+}
+
+/* 手动深色模式覆盖（.dark-mode） */
+.dark-mode .sidebar {
+    background: #1e1e1e;
+    border: 1px solid #404040;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 /* 壁纸头部区域 */
@@ -78,7 +87,6 @@
     pointer-events: auto;
 }
 
-/* 头像放大：从44px改为56px */
 .sidebar-wallpaper-avatar {
     width: 56px;
     height: 56px;
@@ -102,7 +110,6 @@
     flex: 1;
     min-width: 0;
 }
-/* 昵称放大：15px -> 18px */
 .sidebar-wallpaper-nickname {
     font-size: 18px;
     font-weight: 700;
@@ -111,7 +118,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-/* 签名放大：10px -> 12px */
 .sidebar-wallpaper-signature {
     font-size: 12px;
     opacity: 0.9;
@@ -120,26 +126,41 @@
     text-overflow: ellipsis;
 }
 
-/* 每日一言卡片 - 白色背景，无内边距，无阴影（已移除阴影） */
+/* 每日一言卡片 - 白色背景，无内边距，无阴影 */
 .daily-quote-card {
     margin: 12px 16px;
     padding: 0;
     background: #ffffff;
     border-radius: 8px;
     border: none;
-    box-shadow: none; /* 移除阴影 */
+    box-shadow: none;
 }
 .daily-quote-card p {
     font-size: 12px;
     line-height: 1.4;
     color: var(--text-primary, #1e293b);
     margin: 0;
-    padding: 0; /* 移除内边距，让文字紧贴边框 */
     text-align: center;
     font-style: italic;
 }
 
-/* 分类容器 - 隐藏滚动条，顶部间距为0 */
+/* 深色模式下每日一言卡片 */
+@media (prefers-color-scheme: dark) {
+    .daily-quote-card {
+        background: #2d2d2d;
+    }
+    .daily-quote-card p {
+        color: #e0e0e0;
+    }
+}
+.dark-mode .daily-quote-card {
+    background: #2d2d2d;
+}
+.dark-mode .daily-quote-card p {
+    color: #e0e0e0;
+}
+
+/* 分类容器 - 隐藏滚动条 */
 .sidebar-categories {
     flex: 1;
     overflow-y: auto;
@@ -149,19 +170,31 @@
 }
 .sidebar-categories::-webkit-scrollbar {
     display: none;
-    width: 0;
-    height: 0;
 }
 
-/* 分类分组 - 白色背景，添加边框，保留阴影 */
+/* 分类分组 */
 .category-group {
     margin-bottom: 12px;
     background: #ffffff;
     border-radius: 8px;
-    border: 1px solid #e0e0e0; /* 添加边框 */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* 保留阴影 */
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     overflow: hidden;
     transition: all 0.2s ease;
+}
+
+/* 深色模式下分类分组 */
+@media (prefers-color-scheme: dark) {
+    .category-group {
+        background: #2d2d2d;
+        border: 1px solid #404040;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+}
+.dark-mode .category-group {
+    background: #2d2d2d;
+    border: 1px solid #404040;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .category-group-header {
@@ -173,9 +206,17 @@
     user-select: none;
     transition: background 0.2s;
 }
-
 .category-group-header:hover {
     background: rgba(67, 97, 238, 0.08);
+}
+/* 深色模式下 hover */
+@media (prefers-color-scheme: dark) {
+    .category-group-header:hover {
+        background: rgba(67, 97, 238, 0.2);
+    }
+}
+.dark-mode .category-group-header:hover {
+    background: rgba(67, 97, 238, 0.2);
 }
 
 .category-name {
@@ -186,11 +227,19 @@
     font-weight: 600;
     color: var(--text-primary, #1e293b);
 }
-
 .category-name i {
     width: 20px;
     color: var(--primary-color, #4361ee);
     font-size: 14px;
+}
+/* 深色模式下分类名颜色 */
+@media (prefers-color-scheme: dark) {
+    .category-name {
+        color: #f0f0f0;
+    }
+}
+.dark-mode .category-name {
+    color: #f0f0f0;
 }
 
 .category-toggle {
@@ -206,9 +255,23 @@
     transition: transform 0.25s ease;
     border-radius: 50%;
 }
-
 .category-toggle:hover {
     background: rgba(0, 0, 0, 0.05);
+}
+/* 深色模式下 toggle 按钮颜色 */
+@media (prefers-color-scheme: dark) {
+    .category-toggle {
+        color: #adb5bd;
+    }
+    .category-toggle:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+}
+.dark-mode .category-toggle {
+    color: #adb5bd;
+}
+.dark-mode .category-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .category-group.expanded .category-toggle {
@@ -221,7 +284,6 @@
     overflow: hidden;
     transition: max-height 0.3s ease-out;
 }
-
 .category-group.expanded .category-items {
     max-height: 400px;
     overflow-y: auto;
@@ -244,28 +306,54 @@
     border-radius: 0;
     margin: 2px 0;
 }
-
 .category-item:hover {
     background: rgba(67, 97, 238, 0.12);
     color: var(--primary-color, #4361ee);
     padding-left: 48px;
 }
-
 .category-item i {
     width: 18px;
     font-size: 13px;
     color: currentColor;
 }
+/* 深色模式下分类项样式 */
+@media (prefers-color-scheme: dark) {
+    .category-item {
+        color: #e0e0e0;
+    }
+    .category-item:hover {
+        background: rgba(67, 97, 238, 0.25);
+        color: #7bc8ff;
+    }
+}
+.dark-mode .category-item {
+    color: #e0e0e0;
+}
+.dark-mode .category-item:hover {
+    background: rgba(67, 97, 238, 0.25);
+    color: #7bc8ff;
+}
 
-/* 底部按钮栏 - 白色背景，添加分割线 */
+/* 底部按钮栏 */
 .sidebar-footer {
     padding: 12px 16px;
-    border-top: 1px solid #e0e0e0; /* 添加分割线 */
+    border-top: 1px solid #e0e0e0;
     display: flex;
     justify-content: space-around;
     gap: 12px;
     background: #ffffff;
     flex-shrink: 0;
+}
+/* 深色模式下底部栏 */
+@media (prefers-color-scheme: dark) {
+    .sidebar-footer {
+        background: #2d2d2d;
+        border-top-color: #404040;
+    }
+}
+.dark-mode .sidebar-footer {
+    background: #2d2d2d;
+    border-top-color: #404040;
 }
 
 .footer-btn {
@@ -275,36 +363,70 @@
     justify-content: center;
     padding: 8px 0;
     background: #ffffff;
-    border: 1px solid #e0e0e0; /* 添加边框 */
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: 20px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
-
 .footer-btn i {
     font-size: 20px;
 }
-
 .footer-btn:hover {
     background: rgba(67, 97, 238, 0.1);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.12);
 }
+/* 深色模式下底部按钮 */
+@media (prefers-color-scheme: dark) {
+    .footer-btn {
+        background: #2d2d2d;
+        border: 1px solid #404040;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .footer-btn:hover {
+        background: rgba(67, 97, 238, 0.2);
+    }
+}
+.dark-mode .footer-btn {
+    background: #2d2d2d;
+    border: 1px solid #404040;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.dark-mode .footer-btn:hover {
+    background: rgba(67, 97, 238, 0.2);
+}
 
-/* 各按钮独立颜色 - 保持不变 */
+/* 各按钮独立颜色 - 保持原有，深色模式下略微调整亮度 */
 .footer-btn[data-action="notebook"] { color: #8b5cf6; }
 .footer-btn[data-action="notebook"]:hover { background: rgba(139, 92, 246, 0.15); color: #7c3aed; }
-
 .footer-btn[data-action="gift"] { color: #f97316; }
 .footer-btn[data-action="gift"]:hover { background: rgba(249, 115, 22, 0.15); color: #ea580c; }
-
 .footer-btn[data-action="about"] { color: #ec4899; }
 .footer-btn[data-action="about"]:hover { background: rgba(236, 72, 153, 0.15); color: #db2777; }
-
 .footer-btn[data-action="qq"] { color: #3b82f6; }
 .footer-btn[data-action="qq"]:hover { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
+
+/* 深色模式下按钮独立颜色（适当提高亮度） */
+@media (prefers-color-scheme: dark) {
+    .footer-btn[data-action="notebook"] { color: #a78bfa; }
+    .footer-btn[data-action="notebook"]:hover { color: #c4b5fd; }
+    .footer-btn[data-action="gift"] { color: #fb923c; }
+    .footer-btn[data-action="gift"]:hover { color: #fdba74; }
+    .footer-btn[data-action="about"] { color: #f472b6; }
+    .footer-btn[data-action="about"]:hover { color: #f9a8d4; }
+    .footer-btn[data-action="qq"] { color: #60a5fa; }
+    .footer-btn[data-action="qq"]:hover { color: #93c5fd; }
+}
+.dark-mode .footer-btn[data-action="notebook"] { color: #a78bfa; }
+.dark-mode .footer-btn[data-action="notebook"]:hover { color: #c4b5fd; }
+.dark-mode .footer-btn[data-action="gift"] { color: #fb923c; }
+.dark-mode .footer-btn[data-action="gift"]:hover { color: #fdba74; }
+.dark-mode .footer-btn[data-action="about"] { color: #f472b6; }
+.dark-mode .footer-btn[data-action="about"]:hover { color: #f9a8d4; }
+.dark-mode .footer-btn[data-action="qq"] { color: #60a5fa; }
+.dark-mode .footer-btn[data-action="qq"]:hover { color: #93c5fd; }
 
 /* 响应式：左右边距与主页一致 */
 @media (min-width: 576px) {
@@ -340,7 +462,6 @@
         left: var(--container-padding-xs, 16px);
         transform: translateX(calc(-100% - var(--container-padding-xs, 16px)));
     }
-    /* 移动端头像适当缩小但保持比原来大 */
     .sidebar-wallpaper-avatar {
         width: 48px;
         height: 48px;
@@ -382,7 +503,6 @@
     }
     .daily-quote-card p {
         font-size: 11px;
-        padding: 0; /* 保持紧贴边框 */
     }
     .sidebar-wallpaper-nickname {
         font-size: 14px;
@@ -404,34 +524,6 @@
     .daily-quote-card {
         display: none;
     }
-}
-
-/* 深色模式覆盖（保持白色背景的元素需调整） */
-@media (prefers-color-scheme: dark) {
-    .daily-quote-card {
-        background: #2d2d2d;
-    }
-    .daily-quote-card p {
-        color: #e0e0e0;
-    }
-    .category-group {
-        background: #2d2d2d;
-        border: 1px solid #404040; /* 深色模式边框颜色 */
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    .sidebar-footer {
-        background: #2d2d2d;
-        border-top-color: #404040; /* 分割线颜色 */
-    }
-    .footer-btn {
-        background: #2d2d2d;
-        border: 1px solid #404040;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    .footer-btn:hover {
-        background: rgba(67, 97, 238, 0.2);
-    }
-    /* 按钮颜色在深色模式下仍然保持原有色彩，但背景深色不影响文字 */
 }
 
 /* 减少动画 */
