@@ -1,6 +1,8 @@
-// ==================== 通用工具函数库（含错误处理） ====================
+// ==================== 通用工具函数库（含存储管理和错误处理） ====================
 (function(window) {
     const Utils = {};
+
+    // ==================== 基础工具函数 ====================
 
     // HTML 转义
     Utils.escapeHtml = function(str) {
@@ -68,7 +70,7 @@
         }
     };
 
-    // 生成唯一 ID（用于临时标识，如音乐播放器）
+    // 生成唯一 ID
     Utils.generateId = function() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
     };
@@ -88,12 +90,12 @@
         return deviceId;
     };
 
-    // 深拷贝对象（简化版）
+    // 深拷贝对象
     Utils.deepClone = function(obj) {
         return JSON.parse(JSON.stringify(obj));
     };
 
-    // 设置 Cookie
+    // Cookie 操作
     Utils.setCookie = function(name, value, days) {
         let expires = '';
         if (days) {
@@ -104,7 +106,6 @@
         document.cookie = name + '=' + (value || '') + expires + '; path=/';
     };
 
-    // 获取 Cookie
     Utils.getCookie = function(name) {
         const nameEQ = name + '=';
         const ca = document.cookie.split(';');
@@ -116,7 +117,19 @@
         return null;
     };
 
-    // ========== 统一错误处理 ==========
+    // ==================== API 相关 ====================
+
+    // 获取后端 API 基础地址
+    Utils.getApiBase = function() {
+        return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
+    };
+
+    // 获取 Waline 评论服务器地址
+    Utils.getWalineServer = function() {
+        return (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc';
+    };
+
+    // 统一错误处理（用于 API 请求）
     Utils.handleApiError = function(error, defaultMessage = '操作失败，请稍后重试', showToast = true) {
         console.error('[API Error]', error);
         let message = defaultMessage;
@@ -134,7 +147,7 @@
         if (showToast && window.toast && typeof window.toast.show === 'function') {
             window.toast.show(message, 'error');
         }
-        const apiBase = window.APP_CONFIG?.API_BASE || '';
+        const apiBase = Utils.getApiBase();
         if (apiBase) {
             fetch(`${apiBase}/log`, {
                 method: 'POST',
@@ -171,22 +184,12 @@
         }
     };
 
-    // 获取后端 API 基础地址（统一入口）
-    Utils.getApiBase = function() {
-        return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
-    };
+    // ==================== 全局错误捕获与上报（原 error-handler.js） ====================
 
-    // 获取 Waline 评论服务器地址
-    Utils.getWalineServer = function() {
-        return (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc';
-    };
-
-    // ========== 全局错误捕获与上报（原 error-handler.js） ==========
     let _errors = [];
     const _maxErrors = 50;
     let _reportUrl = null;
 
-    // 脱敏函数
     function _maskSensitive(str) {
         if (!str) return '';
         str = String(str);
@@ -197,7 +200,6 @@
         return str;
     }
 
-    // 判断是否应该忽略某个错误
     function _shouldIgnore(errorInfo) {
         if (errorInfo.type === 'resource' && errorInfo.tag === 'IMG') {
             const src = errorInfo.src || '';
@@ -213,7 +215,6 @@
         return false;
     }
 
-    // 上报错误到服务器
     async function _reportToServer(errorInfo) {
         if (!_reportUrl) {
             _reportUrl = Utils.getApiBase() + '/log';
@@ -240,11 +241,10 @@
                 });
             }
         } catch (e) {
-            // 静默失败，不上报也无妨
+            // 静默失败
         }
     }
 
-    // 显示用户友好的错误提示
     function _showUserFriendlyMessage(errorInfo) {
         if (window._lastErrorTime && Date.now() - window._lastErrorTime < 5000) return;
         window._lastErrorTime = Date.now();
@@ -269,7 +269,6 @@
         }
     }
 
-    // 统一错误处理
     function _handleError(errorInfo) {
         if (_shouldIgnore(errorInfo)) return;
         if (_errors.length >= _maxErrors) _errors.shift();
@@ -322,7 +321,7 @@
         }, true);
     };
 
-    // 手动上报错误（供模块调用）
+    // 手动上报错误
     Utils.reportError = function(error, module = 'unknown') {
         let errorInfo;
         if (error instanceof Error) {
@@ -354,9 +353,11 @@
         _errors = [];
     };
 
-    // ========== 存储方法（原 storage.js） ==========
+    // ==================== 存储管理（原 storage.js） ====================
+
     const STORAGE_PREFIX = 'starlink_';
 
+    // 获取存储值
     Utils.getStorage = function(key, defaultValue = null) {
         try {
             const item = localStorage.getItem(STORAGE_PREFIX + key);
@@ -367,6 +368,7 @@
         }
     };
 
+    // 设置存储值
     Utils.setStorage = function(key, value) {
         try {
             localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
@@ -377,6 +379,7 @@
         }
     };
 
+    // 删除存储值
     Utils.removeStorage = function(key) {
         try {
             localStorage.removeItem(STORAGE_PREFIX + key);
@@ -387,6 +390,7 @@
         }
     };
 
+    // 清除所有带前缀的存储
     Utils.clearStorage = function() {
         try {
             const keysToRemove = [];
@@ -404,6 +408,7 @@
         }
     };
 
+    // 获取所有存储键名（去掉前缀）
     Utils.getAllStorageKeys = function() {
         const keys = [];
         for (let i = 0; i < localStorage.length; i++) {
@@ -415,7 +420,20 @@
         return keys;
     };
 
-    // 网站统计功能
+    // ==================== 网站统计功能（原 storage.js 扩展） ====================
+
+    Utils.normalizeUrl = function(url) {
+        if (!url) return '';
+        try {
+            let normalized = url.toLowerCase();
+            normalized = normalized.replace(/^(https?:\/\/)?(www\.)?/, '');
+            normalized = normalized.replace(/\/$/, '');
+            return normalized;
+        } catch {
+            return url;
+        }
+    };
+
     Utils.getSiteViews = function(url) {
         if (!url) return 0;
         try {
@@ -476,18 +494,6 @@
         }
     };
 
-    Utils.normalizeUrl = function(url) {
-        if (!url) return '';
-        try {
-            let normalized = url.toLowerCase();
-            normalized = normalized.replace(/^(https?:\/\/)?(www\.)?/, '');
-            normalized = normalized.replace(/\/$/, '');
-            return normalized;
-        } catch {
-            return url;
-        }
-    };
-
     Utils.getLinkValidity = function(url) {
         const normalizedUrl = this.normalizeUrl(url);
         const cacheKey = `link_validity_${normalizedUrl}`;
@@ -500,7 +506,7 @@
         return this.setStorage(cacheKey, { valid, timestamp: Date.now() });
     };
 
-    // 兼容旧 Storage 对象
+    // ==================== 兼容旧 Storage 全局对象 ====================
     window.Storage = {
         get: Utils.getStorage.bind(Utils),
         set: Utils.setStorage.bind(Utils),
@@ -520,6 +526,7 @@
         setLinkValidity: Utils.setLinkValidity.bind(Utils)
     };
 
+    // ==================== 自动初始化 ====================
     // 自动初始化错误处理器
     Utils.initErrorHandler();
 
