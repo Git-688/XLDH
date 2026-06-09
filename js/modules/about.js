@@ -1,4 +1,4 @@
-// about.js - 星聚导航关于模块（完整版，优化爱发电深色模式激活按钮背景）
+// about.js - 星聚导航关于模块（完整版，修复亮色/深色模式下激活按钮背景）
 // 确保 Utils 存在
 if (typeof Utils === 'undefined') {
     window.Utils = {
@@ -208,7 +208,7 @@ class AboutModule {
         }
     }
 
-    // 爱发电模态框（优化深色模式，修复激活按钮背景）
+    // 爱发电模态框（修复亮色/深色模式激活按钮背景）
     showDonateModal() {
         const donateModal = document.createElement('div');
         donateModal.className = 'donate-modal';
@@ -305,16 +305,24 @@ class AboutModule {
                 font-size: clamp(1.2rem, 5vw, 1.8rem);
                 transition: transform 0.2s;
             }
+            /* 亮色模式默认激活样式 */
             .donate-method-btn-left.active {
-                color: #fff !important;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                transform: scale(1.05);
+                background: rgba(0, 0, 0, 0.08) !important;
                 border-color: transparent !important;
-                /* 修复深色模式激活背景：使用半透明白色，而不是纯色背景 */
-                background: rgba(255, 255, 255, 0.15) !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                transform: scale(1.05);
             }
             .donate-method-btn-left.active i {
                 transform: scale(1.1);
+            }
+            /* 深色模式下激活样式 */
+            @media (prefers-color-scheme: dark) {
+                .donate-method-btn-left.active {
+                    background: rgba(255, 255, 255, 0.15) !important;
+                }
+            }
+            .dark-mode .donate-method-btn-left.active {
+                background: rgba(255, 255, 255, 0.15) !important;
             }
             .qrcode-content {
                 width: 100%;
@@ -422,7 +430,7 @@ class AboutModule {
                     margin-bottom: 6px;
                 }
             }
-            /* 深色模式下额外适配（保持激活按钮背景半透明） */
+            /* 深色模式下额外适配 */
             @media (prefers-color-scheme: dark) {
                 .donate-card-wrapper {
                     background: #2d2d2d;
@@ -453,11 +461,7 @@ class AboutModule {
                 .donate-method-btn-left {
                     background: #2d2d2d;
                 }
-                .donate-method-btn-left.active {
-                    background: rgba(255, 255, 255, 0.15) !important;
-                }
             }
-            /* 手动深色模式覆盖 */
             .dark-mode .donate-card-wrapper {
                 background: #2d2d2d;
                 border-color: #404040;
@@ -486,9 +490,6 @@ class AboutModule {
             }
             .dark-mode .donate-method-btn-left {
                 background: #2d2d2d;
-            }
-            .dark-mode .donate-method-btn-left.active {
-                background: rgba(255, 255, 255, 0.15) !important;
             }
         `;
         donateModal.appendChild(style);
@@ -614,12 +615,11 @@ class AboutModule {
         const setActive = (activeBtn) => {
             buttons.forEach(b => {
                 b.classList.remove('active');
-                // 移除内联背景，让 CSS 控制
+                // 移除可能的内联背景
                 b.style.background = '';
             });
             activeBtn.classList.add('active');
-            // 不再设置内联 background，避免覆盖 CSS 定义的半透明背景
-            // 只需确保边框透明和图标白色（由 CSS 处理）
+            // 不设置内联 background，完全由 CSS 控制
         };
         const defaultBtn = donateModal.querySelector('.donate-method-btn-left[data-type="qq"]');
         if (defaultBtn) setActive(defaultBtn);
