@@ -170,7 +170,7 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
   <p>⭐️ 感谢您的支持！ ⭐️</p>
 </div>
 
-## 📈 项目 Star 历史
+## 📈 Star 历史
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Git-688/XLDH&type=Date)](https://star-history.com/#Git-688/XLDH&Date)
 
