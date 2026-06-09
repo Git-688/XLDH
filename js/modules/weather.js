@@ -1,10 +1,10 @@
 /**
  * 天气模块 - 简化卡片式设计（支持手动选择城市并持久化，一键回到自动定位）
- * 使用 Worker 代理解决跨域，更换稳定 API
+ * 使用 Worker 代理解决跨域，增强 JSON 解析容错
  */
 class WeatherModule {
     static CONFIG = {
-        WEATHER_API: 'https://api.vvhan.com/api/weather',  // 备用稳定接口
+        WEATHER_API: 'https://api.vvhan.com/api/weather',  // 稳定接口
         GEO_API: 'https://api.pearapi.ai/api/map/',
         get API_BASE() {
             return Utils.getApiBase();
@@ -206,15 +206,23 @@ class WeatherModule {
         }
     }
 
-    // 关键修改：通过 Worker 代理请求天气 API，解决跨域和网络问题
+    // 关键修改：通过 Worker 代理请求，增强 JSON 解析容错
     async fetchWeatherData(city) {
         const apiBase = Utils.getApiBase();
-        // 使用代理请求目标天气接口
         const targetUrl = `${WeatherModule.CONFIG.WEATHER_API}?city=${encodeURIComponent(city)}`;
         const proxyUrl = `${apiBase}/music-proxy?url=${encodeURIComponent(targetUrl)}`;
         try {
             const response = await Utils.safeFetch(proxyUrl, { timeout: 8000 });
-            const data = await response.json();
+            // 先获取原始文本，用于调试和容错
+            const text = await response.text();
+            console.log('天气API返回原始内容:', text.substring(0, 200));
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (parseError) {
+                console.error('JSON解析失败，原始内容:', text);
+                throw new Error('天气服务返回的数据格式错误，请稍后重试');
+            }
             return this.parseWeatherData(data);
         } catch (error) {
             Utils.handleApiError(error, '获取天气数据失败');
@@ -265,14 +273,13 @@ class WeatherModule {
                 if (weatherDesc.includes('晴')) tips.push('天气晴朗，适宜户外活动');
                 if (weatherDesc.includes('阴') || weatherDesc.includes('多云')) tips.push('天气适宜，注意适当增减衣物');
                 const dayTemp = parseInt(today.temperature || '0');
-                const nightTemp = parseInt(today.temperature || '0'); // 无单独夜间温度时使用同一温度
+                const nightTemp = parseInt(today.temperature || '0');
                 if (dayTemp > 30) tips.push('天气炎热，注意防暑降温');
                 else if (dayTemp < 5) tips.push('天气寒冷，注意保暖');
                 if (dayTemp - nightTemp > 10) tips.push('昼夜温差较大，请注意增减衣物');
                 return tips.length > 0 ? tips.join('；') : '天气信息更新，请注意查看详情';
             };
 
-            // 构建未来三天预报（若接口提供则使用，否则模拟）
             const forecasts = [];
             if (weather.forecast && Array.isArray(weather.forecast)) {
                 for (let i = 0; i < Math.min(3, weather.forecast.length); i++) {
@@ -287,7 +294,6 @@ class WeatherModule {
                     });
                 }
             } else {
-                // 降级模拟
                 const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
                 for (let i = 0; i < 3; i++) {
                     const d = new Date();
@@ -323,7 +329,6 @@ class WeatherModule {
                 forecasts: forecasts
             };
         }
-        // 兼容其他格式
         throw new Error('天气数据格式错误');
     }
 
@@ -347,7 +352,7 @@ class WeatherModule {
             this.updateModalContent();
         }).catch(error => {
             console.error('加载天气数据失败:', error);
-            this.updateModalContent();
+            this.updateModalContent(); // 显示错误状态
             if (window.app && window.app.showToast) {
                 window.app.showToast('天气数据加载失败，请稍后重试', 'error');
             }
