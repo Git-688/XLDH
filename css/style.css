@@ -906,3 +906,113 @@ p {
 .dark-mode #notebook-list .error {
     color: #adb5bd;
 }
+
+/* ==================== 个人资料模态框深色模式优化 ==================== */
+/* 系统深色模式 */
+@media (prefers-color-scheme: dark) {
+    #profileModal .profile-modal-card {
+        background: #2d2d2d !important;
+        border-color: #404040 !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    }
+    #profileModal .profile-modal-card h3 {
+        color: #f0f0f0 !important;
+    }
+    #profileModal .profile-modal-card > div:first-child {
+        border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+    }
+    #profileModal .profile-modal-card label {
+        color: #adb5bd !important;
+    }
+    #profileModal .profile-modal-card input {
+        background: #1e1e1e !important;
+        border-color: #404040 !important;
+        color: #f8f9fa !important;
+    }
+    #profileModal .profile-modal-card input:focus {
+        border-color: var(--primary-color, #4361ee) !important;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2) !important;
+    }
+    #profileModal .profile-modal-card input::placeholder {
+        color: #8f9bb3 !important;
+    }
+    #profileModal .profile-modal-card #qqAvatarStatus {
+        color: #adb5bd !important;
+    }
+    #profileModal .profile-modal-card .profile-avatar-preview {
+        background: #3a3a3a !important;
+    }
+    #profileModal .profile-modal-card button#profileCancelBtn {
+        background: #3a3a3a !important;
+        border-color: #404040 !important;
+        color: #e0e0e0 !important;
+    }
+    #profileModal .profile-modal-card button#profileCancelBtn:hover {
+        background: #4a4a4a !important;
+        color: #ffffff !important;
+    }
+    #profileModal .profile-modal-card button#profileSaveBtn {
+        background: var(--primary-color, #4361ee) !important;
+        color: white !important;
+    }
+    #profileModal .profile-modal-card button#profileSaveBtn:hover {
+        background: #5a7aff !important;
+    }
+    /* 头像预览区域圆角背景 */
+    #profileModal .profile-modal-card > div:first-child > div:last-child {
+        background: #3a3a3a !important;
+    }
+}
+
+/* 手动深色模式（.dark-mode 类） */
+.dark-mode #profileModal .profile-modal-card {
+    background: #2d2d2d !important;
+    border-color: #404040 !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+.dark-mode #profileModal .profile-modal-card h3 {
+    color: #f0f0f0 !important;
+}
+.dark-mode #profileModal .profile-modal-card > div:first-child {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+.dark-mode #profileModal .profile-modal-card label {
+    color: #adb5bd !important;
+}
+.dark-mode #profileModal .profile-modal-card input {
+    background: #1e1e1e !important;
+    border-color: #404040 !important;
+    color: #f8f9fa !important;
+}
+.dark-mode #profileModal .profile-modal-card input:focus {
+    border-color: var(--primary-color, #4361ee) !important;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2) !important;
+}
+.dark-mode #profileModal .profile-modal-card input::placeholder {
+    color: #8f9bb3 !important;
+}
+.dark-mode #profileModal .profile-modal-card #qqAvatarStatus {
+    color: #adb5bd !important;
+}
+.dark-mode #profileModal .profile-modal-card .profile-avatar-preview {
+    background: #3a3a3a !important;
+}
+.dark-mode #profileModal .profile-modal-card button#profileCancelBtn {
+    background: #3a3a3a !important;
+    border-color: #404040 !important;
+    color: #e0e0e0 !important;
+}
+.dark-mode #profileModal .profile-modal-card button#profileCancelBtn:hover {
+    background: #4a4a4a !important;
+    color: #ffffff !important;
+}
+.dark-mode #profileModal .profile-modal-card button#profileSaveBtn {
+    background: var(--primary-color, #4361ee) !important;
+    color: white !important;
+}
+.dark-mode #profileModal .profile-modal-card button#profileSaveBtn:hover {
+    background: #5a7aff !important;
+}
+.dark-mode #profileModal .profile-modal-card > div:first-child > div:last-child {
+    background: #3a3a3a !important;
+}
