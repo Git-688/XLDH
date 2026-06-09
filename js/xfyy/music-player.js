@@ -1,7 +1,7 @@
 /**
  * 音乐播放器 - 星聚导航专用（完整修复版）
  * 包含：精确进度条、下载进度（通过 Worker 代理）、搜索、播放列表、用户手势处理、歌词代理、歌单显示修复、倍速控件修复
- * 下载功能已添加进度提示（包括无总长度时的旋转动画）
+ * 进度条点击和拖拽已优化，支持触摸设备
  */
 
 // ==================== 自定义下拉选择器组件（必须在播放器类之前定义） ====================
@@ -898,7 +898,7 @@ class MusicPlayer {
         let progress = null;
         let totalBytes = 0;
         let loadedBytes = 0;
-        let indeterminate = false; // 是否不确定进度
+        let indeterminate = false;
 
         try {
             window.toast?.show(`正在获取下载地址: ${song.title}`, 'info');
@@ -917,7 +917,6 @@ class MusicPlayer {
             window.toast?.show(`开始下载: ${song.title}`, 'info');
             progress = this.createDownloadProgress();
             
-            // 通过 Worker 代理下载文件
             const apiBase = Utils.getApiBase();
             const proxyDownloadUrl = `${apiBase}/music-proxy?url=${encodeURIComponent(downloadUrl)}`;
             
@@ -927,7 +926,6 @@ class MusicPlayer {
             const contentLength = response.headers.get('content-length');
             totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
             
-            // 如果没有总长度，显示不确定进度（旋转动画）
             if (totalBytes === 0) {
                 indeterminate = true;
                 this.setIndeterminateProgress(progress);
@@ -957,7 +955,6 @@ class MusicPlayer {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            // 下载完成，移除进度条
             progress.remove();
             window.toast?.show(`下载完成: ${song.title}`, 'success');
             
@@ -990,7 +987,6 @@ class MusicPlayer {
         const fill = el.querySelector('.download-progress-fill');
         if (fill) {
             fill.style.width = `${Math.min(percent, 100)}%`;
-            // 当进度超过5%时，显示百分比文本（可选）
             if (percent > 5) {
                 const header = el.querySelector('.download-progress-header');
                 if (header) header.textContent = `下载中 ${Math.floor(percent)}%`;
@@ -999,7 +995,6 @@ class MusicPlayer {
     }
 
     setIndeterminateProgress(el) {
-        // 无总长度时，隐藏进度条，显示旋转图标
         const bar = el.querySelector('.download-progress-bar');
         const spinner = el.querySelector('.download-progress-spinner');
         if (bar) bar.style.display = 'none';
@@ -1009,7 +1004,6 @@ class MusicPlayer {
             if (header) header.textContent = '下载中 (大小未知)...';
         }
     }
-    // ==================== 下载功能结束 ====================
 
     handleEnded() {
         if (this.playMode === 2) {
@@ -1022,6 +1016,7 @@ class MusicPlayer {
         }
     }
 
+    // ==================== 进度条优化（精准点击和拖拽） ====================
     updateProgress() {
         if (this.isDraggingProgress || this.updateAnimationFrame) return;
         this.updateAnimationFrame = requestAnimationFrame(() => {
@@ -1064,15 +1059,60 @@ class MusicPlayer {
     hideVolumeSlider() { this.elements.volumeSliderContainer.style.display = 'none'; this.isVolumeSliderVisible = false; }
     toggleVolumeSlider() { this.isVolumeSliderVisible ? this.hideVolumeSlider() : this.showVolumeSlider(); }
 
+    // 优化进度条事件绑定
     bindProgressEvents() {
-        this.elements.progressBar.style.touchAction = 'none';
-        this.elements.progressBar.addEventListener('mousedown', (e) => this.startSeek(e));
-        document.addEventListener('mousemove', (e) => this.dragSeek(e));
-        document.addEventListener('mouseup', () => this.endSeek());
-        this.elements.progressBar.addEventListener('touchstart', (e) => this.startSeek(e));
-        document.addEventListener('touchmove', (e) => this.dragSeek(e), { passive: false });
-        document.addEventListener('touchend', () => this.endSeek());
-        this.elements.progressBar.addEventListener('click', (e) => {
+        const progressBar = this.elements.progressBar;
+        progressBar.style.touchAction = 'none';
+
+        const handleStart = (e) => {
+            e.preventDefault();
+            if (!this.audio.duration || isNaN(this.audio.duration) || this.audio.duration === Infinity) return;
+            this.isDraggingProgress = true;
+            this.elements.progress.classList.add('no-transition');
+            this.updateSeek(e);
+            if (e.type === 'touchstart') document.body.style.overflow = 'hidden';
+        };
+
+        const handleMove = (e) => {
+            if (!this.isDraggingProgress) return;
+            e.preventDefault();
+            if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
+            this.dragRAF = requestAnimationFrame(() => {
+                this.updateSeek(e);
+                this.dragRAF = null;
+            });
+        };
+
+        const handleEnd = () => {
+            if (!this.isDraggingProgress) return;
+            this.isDraggingProgress = false;
+            this.elements.progress.classList.remove('no-transition');
+            const duration = this.audio.duration;
+            if (duration && !isNaN(duration) && duration > 0) {
+                const seekTime = (this.dragPercent / 100) * duration;
+                this.audio.currentTime = seekTime;
+                this.elements.progress.style.width = `${this.dragPercent}%`;
+                this.elements.progress.style.transform = `scaleX(${this.dragPercent / 100})`;
+                this.elements.progressHandle.style.left = `${this.dragPercent}%`;
+                this.elements.currentTime.textContent = Utils.formatTime(seekTime);
+            }
+            document.body.style.overflow = '';
+            if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
+            this.dragRAF = null;
+            this.clickPending = true;
+            setTimeout(() => { this.clickPending = false; }, 100);
+        };
+
+        progressBar.addEventListener('mousedown', handleStart);
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleEnd);
+
+        progressBar.addEventListener('touchstart', handleStart);
+        document.addEventListener('touchmove', handleMove, { passive: false });
+        document.addEventListener('touchend', handleEnd);
+
+        // 点击直接跳转（不拖拽时）
+        progressBar.addEventListener('click', (e) => {
             if (this.clickPending) {
                 this.clickPending = false;
                 return;
@@ -1089,44 +1129,7 @@ class MusicPlayer {
         });
     }
 
-    startSeek(e) {
-        e.preventDefault();
-        this.isDraggingProgress = true;
-        this.elements.progress.classList.add('no-transition');
-        this.updateSeek(e);
-        if (e.type === 'touchstart') document.body.style.overflow = 'hidden';
-    }
-
-    dragSeek(e) {
-        if (!this.isDraggingProgress) return;
-        e.preventDefault();
-        if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
-        this.dragRAF = requestAnimationFrame(() => {
-            this.updateSeek(e);
-            this.dragRAF = null;
-        });
-    }
-
-    endSeek() {
-        if (!this.isDraggingProgress) return;
-        this.isDraggingProgress = false;
-        this.elements.progress.classList.remove('no-transition');
-        const duration = this.audio.duration;
-        if (duration && !isNaN(duration) && duration > 0) {
-            const seekTime = (this.dragPercent / 100) * duration;
-            this.audio.currentTime = seekTime;
-            this.elements.progress.style.width = `${this.dragPercent}%`;
-            this.elements.progress.style.transform = `scaleX(${this.dragPercent / 100})`;
-            this.elements.progressHandle.style.left = `${this.dragPercent}%`;
-            this.elements.currentTime.textContent = Utils.formatTime(seekTime);
-        }
-        document.body.style.overflow = '';
-        if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
-        this.dragRAF = null;
-        this.clickPending = true;
-        setTimeout(() => { this.clickPending = false; }, 100);
-    }
-
+    // 计算点击/拖拽对应的播放时间
     getSeekTime(e) {
         const rect = this.elements.progressBar.getBoundingClientRect();
         let clientX = 0;
@@ -1144,6 +1147,7 @@ class MusicPlayer {
         return percent * duration;
     }
 
+    // 更新拖拽过程中的进度条位置和当前时间
     updateSeek(e) {
         const duration = this.audio.duration;
         if (!duration || isNaN(duration) || duration <= 0) return;
