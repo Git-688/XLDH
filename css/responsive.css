@@ -1,74 +1,551 @@
 /* ================================================
-   responsive.css - 全局响应式适配（精简版）
-   包含：浮动按钮、侧滑栏横屏适配、触摸优化、减少动画、侧滑栏打开时主内容不可交互
+   responsive.css - 星聚导航响应式样式
+   包含：移动端、平板、大屏适配，横屏优化，
+   浮动按钮、侧滑栏、导航、音乐播放器等模块的响应式调整
    ================================================ */
 
-/* ========== 1. 浮动按钮响应式优化 ========== */
-@media (max-width: 768px) {
-    .floating-buttons {
-        bottom: 16px;
-        right: 16px;
-        gap: 8px;
+/* ========== 全局响应式断点 ========== */
+/* 超大屏幕（≥1600px） */
+@media (min-width: 1600px) {
+    .container,
+    .nav-container,
+    .greeting-container,
+    .footer-compact-container {
+        max-width: 1400px;
     }
-    .floating-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 18px;
+    .tags-grid {
+        grid-template-columns: repeat(10, 1fr);
+        gap: 12px;
     }
-}
-@media (max-width: 480px) {
-    .floating-buttons {
-        bottom: 12px;
-        right: 12px;
-        gap: 6px;
+    .minimal-tag {
+        padding: 12px 16px;
+        min-height: 52px;
     }
-    .floating-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
+    .tag-label {
+        font-size: 14px;
     }
-}
-@media (max-width: 360px) {
-    .floating-buttons {
-        bottom: 10px;
-        right: 10px;
-        gap: 5px;
+    .navigation-left {
+        width: 160px;
     }
-    .floating-btn {
-        width: 38px;
-        height: 38px;
-        font-size: 15px;
+    .navigation-middle {
+        width: 180px;
+    }
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
     }
 }
 
-/* ========== 2. 横屏小高度页面优化 ========== */
-@media (max-height: 600px) and (orientation: landscape) {
+/* 大屏桌面（1200px - 1599px） */
+@media (min-width: 1200px) and (max-width: 1599px) {
+    .tags-grid {
+        grid-template-columns: repeat(8, 1fr);
+        gap: 12px;
+    }
+    .minimal-tag {
+        padding: 12px 16px;
+        min-height: 50px;
+    }
+}
+
+/* 标准桌面（992px - 1199px） */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .tags-grid {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+    }
+    .minimal-tag {
+        padding: 10px 14px;
+        min-height: 46px;
+    }
+    .navigation-left,
+    .navigation-middle {
+        width: 130px;
+    }
+}
+
+/* 平板横屏 / 小桌面（768px - 991px） */
+@media (min-width: 768px) and (max-width: 991px) {
+    /* 导航栏三列改为折叠 */
+    .navigation-body {
+        flex-direction: column;
+    }
+    .navigation-left,
+    .navigation-middle {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .level1-nav,
+    .level2-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 0;
+        display: flex;
+    }
+    .level1-btn,
+    .level2-btn {
+        flex: 0 0 auto;
+        padding: 0 16px;
+        border-right: 1px solid var(--border-color);
+        border-bottom: none;
+    }
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 10px;
+    }
+    .tags-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px;
+    }
+    .minimal-tag {
+        padding: 8px 12px;
+        min-height: 42px;
+    }
+    .tag-label {
+        font-size: 12px;
+    }
+    /* 页脚统计卡片一行显示 */
+    .footer-stats-cards {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* 平板竖屏 / 大手机（576px - 767px） */
+@media (min-width: 576px) and (max-width: 767px) {
+    /* 导航主体折叠 */
+    .navigation-body {
+        flex-direction: column;
+    }
+    .navigation-left,
+    .navigation-middle {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .level1-nav,
+    .level2-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 0;
+    }
+    .level1-btn,
+    .level2-btn {
+        flex: 0 0 auto;
+        padding: 0 14px;
+        border-right: 1px solid var(--border-color);
+        border-bottom: none;
+        font-size: 12px;
+    }
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 8px;
+    }
+    .site-card {
+        min-height: 100px;
+        padding: 8px;
+    }
+    .icon-container {
+        width: 32px;
+        height: 32px;
+    }
+    .views-icon {
+        font-size: 12px;
+    }
+    .view-count {
+        font-size: 12px;
+    }
+    .site-title {
+        font-size: 12px;
+    }
+    .site-description {
+        font-size: 10px;
+    }
+    .tags-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+    .minimal-tag {
+        padding: 8px 12px;
+        min-height: 40px;
+    }
+    .tag-label {
+        font-size: 11px;
+    }
+    /* 问候区布局调整 */
+    .greeting-container {
+        flex-direction: column;
+    }
+    .greeting-main-card {
+        width: 100%;
+    }
+    .bookmark-btn {
+        width: 100%;
+        flex-direction: row;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px;
+    }
+    .bookmark-btn span {
+        writing-mode: horizontal-tb;
+    }
+    /* 页脚统计卡片两列显示 */
+    .footer-stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    /* 侧边栏宽度调整 */
     .sidebar {
-        max-height: 85vh;
+        width: 70vw;
+        max-width: 280px;
+    }
+}
+
+/* 手机（<576px） */
+@media (max-width: 575px) {
+    /* 导航主体折叠 */
+    .navigation-body {
+        flex-direction: column;
+    }
+    .navigation-left,
+    .navigation-middle {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .level1-nav,
+    .level2-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 0;
+    }
+    .level1-btn,
+    .level2-btn {
+        flex: 0 0 auto;
+        padding: 0 12px;
+        border-right: 1px solid var(--border-color);
+        border-bottom: none;
+        font-size: 11px;
+        height: 36px;
+        min-height: 36px;
+    }
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 6px;
+        padding: 8px;
+    }
+    .site-card {
+        min-height: 90px;
+        padding: 6px;
+    }
+    .icon-container {
+        width: 28px;
+        height: 28px;
+    }
+    .views-icon {
+        font-size: 11px;
+    }
+    .view-count {
+        font-size: 11px;
+    }
+    .site-title {
+        font-size: 11px;
+    }
+    .site-description {
+        font-size: 9px;
+    }
+    .tags-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    .minimal-tag {
+        padding: 6px 10px;
+        min-height: 36px;
+    }
+    .tag-label {
+        font-size: 10px;
+    }
+    .tag-icon {
+        font-size: 12px;
+    }
+    /* 问候区 */
+    .greeting-container {
+        flex-direction: column;
+    }
+    .greeting-main-card {
+        width: 100%;
+        padding: 12px;
+    }
+    .greeting-text h1 {
+        font-size: 1.1rem;
+    }
+    .datetime {
+        padding: 6px 10px;
+        min-width: 100px;
+    }
+    #currentTime {
+        font-size: 0.9rem;
+    }
+    #currentDate {
+        font-size: 0.7rem;
+    }
+    .fish-section {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+    .fish-btn {
+        padding: 6px 8px;
+        min-height: 40px;
+    }
+    .fish-btn i {
+        font-size: 14px;
+    }
+    .fish-count {
+        font-size: 0.8rem;
+    }
+    .bookmark-btn {
+        width: 100%;
+        flex-direction: row;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px;
+    }
+    .bookmark-btn span {
+        writing-mode: horizontal-tb;
+    }
+    /* 页脚统计卡片两列 */
+    .footer-stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .stat-card {
+        padding: 8px;
+    }
+    .stat-number {
+        font-size: 13px;
+    }
+    .stat-name {
+        font-size: 9px;
+    }
+    /* 侧边栏宽度 */
+    .sidebar {
+        width: 70vw;
+        max-width: 280px;
+    }
+    .sidebar-wallpaper-avatar {
+        width: 42px;
+        height: 42px;
+    }
+    .sidebar-wallpaper-nickname {
+        font-size: 14px;
+    }
+    .sidebar-wallpaper-signature {
+        font-size: 10px;
+    }
+    .daily-quote-card p {
+        font-size: 11px;
+    }
+    /* 音乐播放器全宽 */
+    .music-player {
+        left: 12px;
+        right: 12px;
+        width: auto;
+        max-width: none;
+        bottom: 12px;
+    }
+    /* 模态框全宽 */
+    .feedback-modal-content {
+        max-width: calc(100% - 24px);
+    }
+    .weather-modal-content {
+        max-width: calc(100% - 24px);
+    }
+    .about-modal-content {
+        max-width: calc(100% - 24px);
+    }
+}
+
+/* 超小手机（<375px） */
+@media (max-width: 374px) {
+    .tags-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    .minimal-tag {
+        padding: 5px 8px;
+    }
+    .tag-label {
+        font-size: 9px;
+    }
+    .level3-content {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    }
+    .site-title {
+        font-size: 10px;
+    }
+    .site-description {
+        display: none; /* 超小屏隐藏描述以节省空间 */
+    }
+    .greeting-text h1 {
+        font-size: 1rem;
+    }
+    .countdown-holiday {
+        font-size: 0.7rem;
+    }
+    #holidayCountdown {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
+    .fish-section {
+        gap: 4px;
+    }
+    .fish-btn {
+        padding: 4px 6px;
+        min-height: 36px;
+    }
+    .fish-btn i {
+        font-size: 12px;
+    }
+    .fish-count {
+        font-size: 0.7rem;
+    }
+    .footer-stats-cards {
+        gap: 6px;
+    }
+    .stat-card {
+        padding: 6px;
+    }
+    .stat-number {
+        font-size: 12px;
+    }
+}
+
+/* ========== 横屏小高度适配（如折叠屏、平板横屏） ========== */
+@media (max-height: 600px) and (orientation: landscape) {
+    /* 侧边栏高度适应 */
+    .sidebar {
+        top: 60px !important;
+        bottom: 10px;
+        max-height: calc(100vh - 70px);
     }
     .sidebar-wallpaper {
         aspect-ratio: 21/9;
     }
+    .daily-quote-card {
+        display: none; /* 节省空间 */
+    }
+    .sidebar-categories {
+        max-height: calc(100vh - 200px);
+    }
+    /* 壁纸轮播高度减小 */
+    .wallpaper-container {
+        height: 30vh;
+        min-height: 120px;
+    }
+    /* 导航一级菜单行内 */
+    .level1-nav,
+    .level2-nav {
+        max-height: 40px;
+    }
+    .level1-btn,
+    .level2-btn {
+        height: 36px;
+        line-height: 36px;
+    }
+    /* 音乐播放器高度适配 */
+    .music-player {
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+    .bottom-section {
+        max-height: 300px;
+    }
 }
 
-/* ========== 3. 减少动画模式适配 ========== */
+/* ========== 触摸优化 ========== */
+@media (hover: none) and (pointer: coarse) {
+    /* 增大点击区域 */
+    .nav-btn,
+    .floating-btn,
+    .footer-btn,
+    .level1-btn,
+    .level2-btn,
+    .site-card,
+    .minimal-tag,
+    .category-item,
+    .song-item,
+    .search-download-btn {
+        cursor: default;
+        -webkit-tap-highlight-color: transparent;
+    }
+    /* 移除 hover 效果，改用 active */
+    .site-card:active {
+        transform: scale(0.98);
+    }
+    .minimal-tag:active {
+        transform: scale(0.97);
+    }
+}
+
+/* ========== 减少动画（用户偏好） ========== */
 @media (prefers-reduced-motion: reduce) {
     * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    .carousel-track,
+    .progress,
+    .progress-handle,
+    .toast-item {
         transition: none !important;
+    }
+    .album-cover.playing img {
+        animation: none !important;
+    }
+    .fish-effect {
         animation: none !important;
     }
 }
 
-/* ========== 4. 移动端触摸优化（已移除弹性回滚效果） ========== */
-@media (max-width: 768px) {
-    /* 原 -webkit-overflow-scrolling: touch 已移除 */
-    .sidebar.active .sidebar-categories {
-        /* 不再添加弹性滚动效果 */
+/* ========== 打印样式 ========== */
+@media print {
+    .navbar,
+    .sidebar,
+    .floating-buttons,
+    .music-player,
+    .feedback-modal,
+    .search-modal,
+    .engine-tooltip,
+    .footer {
+        display: none !important;
     }
-}
-
-/* ========== 5. 侧滑栏打开时主内容区域不可交互 ========== */
-.sidebar.active ~ .main-content {
-    pointer-events: none;
-    user-select: none;
+    body {
+        background: white;
+        color: black;
+        font-size: 12pt;
+    }
+    .main-content {
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        width: 100%;
+        max-width: none;
+        padding: 0;
+    }
+    .site-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    a {
+        text-decoration: none;
+        color: black;
+    }
+    a[href]:after {
+        content: " (" attr(href) ")";
+        font-size: 10pt;
+    }
 }
