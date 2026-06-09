@@ -1,10 +1,17 @@
 /**
- * 天气模块 - 基于 apihz.cn API（整合 IP 归属地查询，提升自动定位精度）
- * 支持：IP 归属地自动定位 + 天气查询、手动选择城市、未来七天预报
+ * 天气模块 - 最终完整版
+ * 数据源：
+ *   1. 主要：https://api.4qb.cn/api/weather_1 (支持城市名，用于手动选择及自动定位)
+ *   2. 备用：https://cn.apihz.cn/api/tianqi/tqybip.php (IP 天气，仅当主 API 失效时使用)
+ * 定位：通过 IP 归属地 API (https://cn.apihz.cn/api/ip/chaapi.php) 获取城市名
  */
 class WeatherModule {
     static CONFIG = {
-        WEATHER_API: 'https://cn.apihz.cn/api/tianqi/tqybip.php',
+        // 主要天气 API（支持城市名）
+        WEATHER_API_CITY: 'https://api.4qb.cn/api/weather_1',
+        // 备用 IP 天气 API
+        WEATHER_API_IP: 'https://cn.apihz.cn/api/tianqi/tqybip.php',
+        // IP 归属地 API（用于自动定位）
         IP_LOCATION_API: 'https://cn.apihz.cn/api/ip/chaapi.php',
         get API_BASE() {
             return Utils.getApiBase();
@@ -25,13 +32,12 @@ class WeatherModule {
         this.manualCity = null;
         this.escHandler = null;
         this.showModalBound = this.showModal.bind(this);
-        // APiHz API 凭证
+        // APiHz API 凭证（用于备用 IP 天气和归属地查询）
         this.apiId = '10014221';
         this.apiKey = '4a7768de1cf2e0f41fc0a4005240c837';
     }
 
     _escapeHtml(text) {
-        // 确保 Utils.escapeHtml 可用，否则使用备胎
         if (typeof Utils !== 'undefined' && Utils.escapeHtml) {
             return Utils.escapeHtml(text);
         }
@@ -105,6 +111,10 @@ class WeatherModule {
         }
     }
 
+    /**
+     * 通过 IP 获取精准归属地（省份+城市）
+     * 使用 chaapi.php 接口
+     */
     async fetchIpLocation() {
         const url = `${WeatherModule.CONFIG.IP_LOCATION_API}?id=${this.apiId}&key=${this.apiKey}&td=0`;
         try {
@@ -137,54 +147,56 @@ class WeatherModule {
         }
     }
 
+    /**
+     * 自动定位天气：先通过 IP 获取城市，再调用主 API（4qb）查询天气
+     * 若主 API 失败，则降级到备用 IP 天气 API
+     */
     async loadWeatherDataByIp() {
         try {
-            const [locationResult, weatherResult] = await Promise.allSettled([
-                this.fetchIpLocation(),
-                this.fetchWeatherDataByIp()
-            ]);
-
-            let finalWeatherData = weatherResult.status === 'fulfilled' ? weatherResult.value : null;
-            if (!finalWeatherData) {
-                throw new Error('天气数据获取失败');
+            // 1. 获取城市名
+            let city = null;
+            try {
+                const location = await this.fetchIpLocation();
+                city = location.city;
+            } catch (e) {
+                console.warn('归属地查询失败，将使用默认城市或备用 API');
             }
 
-            if (locationResult.status === 'fulfilled' && locationResult.value && locationResult.value.city) {
-                finalWeatherData.city = locationResult.value.city;
-                this.saveCity(locationResult.value.city, false);
-            } else if (finalWeatherData.place) {
-                const placeParts = finalWeatherData.place.split(',');
-                const placeCity = placeParts[1] ? placeParts[1].trim() : (placeParts[0] || finalWeatherData.city);
-                if (placeCity && placeCity !== '未知') {
-                    finalWeatherData.city = placeCity;
-                    this.saveCity(placeCity, false);
+            if (city) {
+                // 2. 使用主 API 查询该城市天气
+                try {
+                    this.weatherData = await this.fetchWeatherDataByCity(city);
+                    this.weatherData.city = city;
+                    this.saveCity(city, false);
+                    return true;
+                } catch (mainError) {
+                    console.warn('主 API 查询失败，降级到备用 IP 天气 API', mainError);
+                    // 降级：使用备用 IP 天气 API
+                    this.weatherData = await this.fetchWeatherDataByIpFallback();
+                    if (this.weatherData && this.weatherData.city) {
+                        this.saveCity(this.weatherData.city, false);
+                    }
+                    return true;
                 }
+            } else {
+                // 没有获取到城市名，直接使用备用 IP 天气 API
+                this.weatherData = await this.fetchWeatherDataByIpFallback();
+                if (this.weatherData && this.weatherData.city) {
+                    this.saveCity(this.weatherData.city, false);
+                }
+                return true;
             }
-
-            this.weatherData = finalWeatherData;
-            return true;
         } catch (error) {
-            console.error('通过 IP 加载天气数据失败:', error);
+            console.error('自动定位加载天气失败:', error);
             this.weatherData = null;
             throw error;
         }
     }
 
-    async fetchWeatherDataByIp() {
-        const url = `${WeatherModule.CONFIG.WEATHER_API}?id=${this.apiId}&key=${this.apiKey}&day=7&hourtype=0&suntimetype=0`;
-        try {
-            const response = await Utils.safeFetch(url, { timeout: 8000 });
-            const data = await response.json();
-            if (data.code !== 200) {
-                throw new Error(data.msg || '获取天气数据失败');
-            }
-            return this.parseWeatherData(data);
-        } catch (error) {
-            Utils.handleApiError(error, '获取天气数据失败');
-            throw error;
-        }
-    }
-
+    /**
+     * 通过城市名查询天气（手动选择场景）- 使用主 API
+     * @param {string} city 城市名称
+     */
     async loadWeatherDataByCity(city) {
         try {
             this.weatherData = await this.fetchWeatherDataByCity(city);
@@ -194,22 +206,42 @@ class WeatherModule {
             return true;
         } catch (error) {
             console.error('通过城市名加载天气数据失败:', error);
-            this.weatherData = null;
+            // 尝试降级到备用 API（但备用 API 不支持城市名，只能返回 IP 天气，意义不大，仍抛出错误）
             throw error;
         }
     }
 
+    /**
+     * 调用主 API (4qb) 获取指定城市的天气数据
+     * @param {string} city 
+     */
     async fetchWeatherDataByCity(city) {
-        const url = `${WeatherModule.CONFIG.WEATHER_API}?id=${this.apiId}&key=${this.apiKey}&day=7&hourtype=0&suntimetype=0`;
+        const url = `${WeatherModule.CONFIG.WEATHER_API_CITY}?city=${encodeURIComponent(city)}&type=json`;
+        try {
+            const response = await Utils.safeFetch(url, { timeout: 10000 });
+            const data = await response.json();
+            if (data.code !== 1) {
+                throw new Error(data.text || '获取天气数据失败');
+            }
+            return this.parseNewWeatherData(data);
+        } catch (error) {
+            Utils.handleApiError(error, '获取天气数据失败');
+            throw error;
+        }
+    }
+
+    /**
+     * 备用 API：IP 天气（不依赖城市名）
+     */
+    async fetchWeatherDataByIpFallback() {
+        const url = `${WeatherModule.CONFIG.WEATHER_API_IP}?id=${this.apiId}&key=${this.apiKey}&day=7&hourtype=0&suntimetype=0`;
         try {
             const response = await Utils.safeFetch(url, { timeout: 8000 });
             const data = await response.json();
             if (data.code !== 200) {
                 throw new Error(data.msg || '获取天气数据失败');
             }
-            const parsed = this.parseWeatherData(data);
-            parsed.city = city.replace(/市$/, '');
-            return parsed;
+            return this.parseLegacyWeatherData(data);
         } catch (error) {
             Utils.handleApiError(error, '获取天气数据失败');
             throw error;
@@ -233,7 +265,95 @@ class WeatherModule {
         }
     }
 
-    parseWeatherData(data) {
+    /**
+     * 解析新 API (api.4qb.cn) 返回的数据
+     */
+    parseNewWeatherData(data) {
+        const cityData = data.data;
+        
+        const getWeatherIcon = (condition) => {
+            if (!condition) return 'fas fa-cloud-sun';
+            const iconMap = {
+                '晴': 'fas fa-sun',
+                '多云': 'fas fa-cloud-sun',
+                '阴': 'fas fa-cloud',
+                '雾': 'fas fa-smog',
+                '雨': 'fas fa-cloud-rain',
+                '小雨': 'fas fa-cloud-rain',
+                '中雨': 'fas fa-cloud-showers-heavy',
+                '大雨': 'fas fa-cloud-showers-heavy',
+                '暴雨': 'fas fa-poo-storm',
+                '雪': 'fas fa-snowflake',
+                '小雪': 'fas fa-snowflake',
+                '中雪': 'fas fa-snowflake',
+                '大雪': 'fas fa-snowman',
+                '雷阵雨': 'fas fa-bolt',
+                '阵雨': 'fas fa-cloud-showers-heavy',
+                '毛毛雨': 'fas fa-cloud-rain',
+                '扬沙': 'fas fa-wind',
+                '沙尘暴': 'fas fa-wind'
+            };
+            for (const [key, icon] of Object.entries(iconMap)) {
+                if (condition.includes(key)) return icon;
+            }
+            return 'fas fa-cloud-sun';
+        };
+
+        // 处理未来天气预报（新 API 可能返回 forecasts 数组，若没有则尝试从其他字段构建）
+        let forecasts = [];
+        if (cityData.forecasts && Array.isArray(cityData.forecasts)) {
+            forecasts = cityData.forecasts.slice(0, 3).map(day => ({
+                day: day.date || day.week,
+                weather: day.dayWeather || day.weather || '未知',
+                icon: getWeatherIcon(day.dayWeather || day.weather),
+                dayTemp: day.tempHigh ? `${day.tempHigh}°C` : '--',
+                nightTemp: day.tempLow ? `${day.tempLow}°C` : '--',
+                wind: day.wind || ''
+            }));
+        } else {
+            // 如果 API 没有返回 forecasts，使用简单的占位
+            const today = new Date();
+            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            for (let i = 1; i <= 3; i++) {
+                const forecastDate = new Date(today);
+                forecastDate.setDate(today.getDate() + i);
+                const dayName = i === 1 ? '明天' : weekdays[forecastDate.getDay()];
+                forecasts.push({
+                    day: dayName,
+                    weather: '--',
+                    icon: 'fas fa-cloud-sun',
+                    dayTemp: '--',
+                    nightTemp: '--',
+                    wind: ''
+                });
+            }
+        }
+
+        const current = cityData.current || {};
+        const tips = this.generateWeatherTips(cityData.weather, cityData.temp);
+
+        return {
+            city: cityData.city,
+            dayTemperature: cityData.temp ? `${cityData.temp}°C` : '--',
+            nightTemperature: cityData.tempn ? `${cityData.tempn}°C` : '--',
+            weather: cityData.weather,
+            weatherIcon: getWeatherIcon(cityData.weather),
+            currentTemp: current.temp ? `${current.temp}°C` : (cityData.temp ? `${cityData.temp}°C` : '--'),
+            humidity: current.humidity || '--',
+            wind: cityData.wind || '',
+            visibility: current.visibility || '--',
+            airQuality: current.air || '--',
+            updateTime: current.time ? `${current.date} ${current.time}` : new Date().toLocaleString(),
+            tips: tips,
+            forecasts: forecasts,
+            livingIndex: cityData.living || []
+        };
+    }
+
+    /**
+     * 解析备用 IP 天气 API 返回的数据（原有格式）
+     */
+    parseLegacyWeatherData(data) {
         if (!data || data.code !== 200) {
             throw new Error(data?.msg || '天气数据格式错误');
         }
@@ -306,20 +426,7 @@ class WeatherModule {
             });
         }
 
-        const getWeatherTips = () => {
-            const tips = [];
-            if (todayWeather.includes('雨')) tips.push('今日有雨，请携带雨具');
-            if (todayWeather.includes('雪')) tips.push('路面可能结冰，请注意交通安全');
-            if (todayWeather.includes('雾')) tips.push('能见度较低，请注意行车安全');
-            if (todayWeather.includes('晴')) tips.push('天气晴朗，适宜户外活动');
-            if (todayWeather.includes('阴') || todayWeather.includes('多云')) tips.push('天气适宜，注意适当增减衣物');
-            const dayTemp = parseInt(todayTempDay) || 0;
-            const nightTemp = parseInt(todayTempNight) || 0;
-            if (dayTemp > 30) tips.push('天气炎热，注意防暑降温');
-            else if (dayTemp < 5) tips.push('天气寒冷，注意保暖');
-            if (dayTemp - nightTemp > 10) tips.push('昼夜温差较大，请注意增减衣物');
-            return tips.length > 0 ? tips.join('；') : '天气信息更新，请注意查看详情';
-        };
+        const tips = this.generateWeatherTips(todayWeather, todayTempDay);
 
         return {
             city: cityName,
@@ -332,14 +439,28 @@ class WeatherModule {
             wind: (todayWindDir ? todayWindDir + ' ' : '') + todayWindScale,
             visibility: '--',
             airQuality: '--',
-            airColor: '#1890ff',
             updateTime: data.uptime ? data.uptime : (nowInfo.uptime || '刚刚'),
-            warning: null,
-            tips: getWeatherTips(),
+            tips: tips,
             forecasts: forecasts
         };
     }
 
+    generateWeatherTips(weather, temp) {
+        const tips = [];
+        if (weather.includes('雨')) tips.push('今日有雨，请携带雨具');
+        if (weather.includes('雪')) tips.push('路面可能结冰，请注意交通安全');
+        if (weather.includes('雾')) tips.push('能见度较低，请注意行车安全');
+        if (weather.includes('晴')) tips.push('天气晴朗，适宜户外活动');
+        if (weather.includes('阴') || weather.includes('多云')) tips.push('天气适宜，注意适当增减衣物');
+        const tempNum = parseInt(temp);
+        if (!isNaN(tempNum)) {
+            if (tempNum > 30) tips.push('天气炎热，注意防暑降温');
+            else if (tempNum < 5) tips.push('天气寒冷，注意保暖');
+        }
+        return tips.length > 0 ? tips.join('；') : '天气信息更新，请注意查看详情';
+    }
+
+    // ========== UI 渲染与交互（保持不变，仅微调） ==========
     showModal() {
         if (this.isLoading) return;
         this.closeOtherModals();
@@ -558,7 +679,6 @@ class WeatherModule {
             const esc = this._escapeHtml.bind(this);
             const modal = document.createElement('div');
             modal.className = 'city-prompt-modal';
-            // 关键修复：设置 active 类使 visibility 生效
             modal.classList.add('active');
             modal.style.display = 'flex';
             modal.style.opacity = '1';
@@ -596,7 +716,6 @@ class WeatherModule {
 
             document.body.appendChild(modal);
 
-            // 添加动画效果（内容缩放）
             const content = modal.querySelector('.city-prompt-content');
             if (content) {
                 content.style.transform = 'scale(1)';
