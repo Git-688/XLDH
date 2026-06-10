@@ -1,6 +1,6 @@
 /**
  * 网站投稿模块（异步安全检测 + 轮询状态）
- * 已移除每日投稿限制
+ * 已移除每日投稿限制，修复 getDeviceId 方法
  */
 class SubmitModule {
     constructor() {
@@ -35,6 +35,20 @@ class SubmitModule {
 
     escapeHtml(str) {
         return Utils.escapeHtml(str);
+    }
+
+    getDeviceId() {
+        // 使用 Utils 中提供的统一设备ID方法
+        if (typeof Utils.getDeviceId === 'function') {
+            return Utils.getDeviceId();
+        }
+        // 降级方案
+        let deviceId = localStorage.getItem('device_id');
+        if (!deviceId) {
+            deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('device_id', deviceId);
+        }
+        return deviceId;
     }
 
     init() {
@@ -105,8 +119,6 @@ class SubmitModule {
             this.loadGlobalTotalCount();
         }
     }
-
-    // 每日限制相关方法已全部移除：不再加载今日次数、不再更新剩余次数
 
     bindEvents() {
         const closeBtn = this.modal.querySelector('.feedback-modal-close');
@@ -296,7 +308,7 @@ class SubmitModule {
         const title = this.titleInput.value.trim();
         const url = this.urlInput.value.trim();
         const urlValid = Utils.isValidUrl(url);
-        // 每日限制已移除，只检查标题、网址、安全检测通过
+        // 只检查标题、网址、安全检测通过
         const enable = !!(title && urlValid && this.securityPassed);
         this.submitSaveBtn.disabled = !enable || this.submitting;
     }
@@ -304,7 +316,6 @@ class SubmitModule {
     async handleSubmit(e) {
         e.preventDefault();
         if (this.submitting) return;
-        // 每日限制已移除，不再检查剩余次数
         if (!this.securityPassed) {
             window.toast.show('请先点击“获取信息”完成安全检测，且检测通过后才能提交', 'warning');
             return;
@@ -320,7 +331,7 @@ class SubmitModule {
             return;
         }
         const safeUrl = url.startsWith('http') ? url : `https://${url}`;
-        const deviceId = this.getDeviceId();
+        const deviceId = this.getDeviceId(); // 修复：确保方法存在
         const contact = this.contactInput ? this.contactInput.value.trim() : '';
         const payload = {
             title: title,
