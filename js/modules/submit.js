@@ -1,6 +1,6 @@
 /**
- * 网站投稿模块（异步安全检测 + 轮询状态，修复动画）
- * 新增：联系方式字段，用于审核结果通知
+ * 网站投稿模块（异步安全检测 + 轮询状态）
+ * 已移除每日投稿限制
  */
 class SubmitModule {
     constructor() {
@@ -10,7 +10,7 @@ class SubmitModule {
         this.titleInput = document.getElementById('submitTitle');
         this.iconInput = document.getElementById('submitIcon');
         this.descInput = document.getElementById('submitDesc');
-        this.contactInput = document.getElementById('submitContact'); // 新增
+        this.contactInput = document.getElementById('submitContact');
         this.iconPreview = document.getElementById('submitIconPreview');
         this.fetchInfoBtn = document.getElementById('fetchSiteInfoBtn');
         this.submitSaveBtn = document.getElementById('submitSaveBtn');
@@ -18,13 +18,11 @@ class SubmitModule {
         this.waitingHint = this.modal ? this.modal.querySelector('.submit-safe-hint') : null;
 
         this.apiBase = Utils.getApiBase();
-        this.dailyLimit = 6;
         this.statsBadge = null;
         this.submitting = false;
         this.cachedTotalCount = null;
         this.cachedTotalCountTime = 0;
         this.cacheTTL = 60000;
-        this.todayCount = 0;
 
         this.securityPassed = false;
         this.lastSecurityDetail = null;
@@ -53,7 +51,6 @@ class SubmitModule {
                     this.isVisible = true;
                     this.ensureStatsBadge();
                     this.loadGlobalTotalCount();
-                    this.loadTodayCount();
                     this.resetSecurityCheck();
                 } else if (mutation.attributeName === 'class' && !this.modal.classList.contains('active')) {
                     this.isVisible = false;
@@ -109,35 +106,7 @@ class SubmitModule {
         }
     }
 
-    async loadTodayCount() {
-        try {
-            const deviceId = this.getDeviceId();
-            const response = await Utils.safeFetch(`${this.apiBase}/user/today-submission-count`, {
-                headers: { 'X-Device-Id': deviceId }
-            });
-            const data = await response.json();
-            this.todayCount = data.count || 0;
-            this.updateRemainingCount();
-        } catch (error) {
-            Utils.handleApiError(error, '获取今日投稿次数失败', false);
-            this.todayCount = 0;
-            this.updateRemainingCount();
-        }
-    }
-
-    updateRemainingCount() {
-        const remaining = Math.max(0, this.dailyLimit - this.todayCount);
-        const remainingSpan = document.querySelector('.submit-remaining-count');
-        if (remainingSpan) {
-            remainingSpan.textContent = `今日剩余 ${remaining} 次`;
-            if (remaining <= 0) remainingSpan.style.color = '#ef4444';
-            else remainingSpan.style.color = '';
-        }
-    }
-
-    getDeviceId() {
-        return Utils.getDeviceId();
-    }
+    // 每日限制相关方法已全部移除：不再加载今日次数、不再更新剩余次数
 
     bindEvents() {
         const closeBtn = this.modal.querySelector('.feedback-modal-close');
@@ -327,19 +296,15 @@ class SubmitModule {
         const title = this.titleInput.value.trim();
         const url = this.urlInput.value.trim();
         const urlValid = Utils.isValidUrl(url);
-        const remaining = this.dailyLimit - this.todayCount;
-        const enable = !!(title && urlValid && this.securityPassed && remaining > 0);
+        // 每日限制已移除，只检查标题、网址、安全检测通过
+        const enable = !!(title && urlValid && this.securityPassed);
         this.submitSaveBtn.disabled = !enable || this.submitting;
     }
 
     async handleSubmit(e) {
         e.preventDefault();
         if (this.submitting) return;
-        const remaining = this.dailyLimit - this.todayCount;
-        if (remaining <= 0) {
-            window.toast.show(`今日投稿已达上限（${this.dailyLimit}次），请明天再试`, 'warning');
-            return;
-        }
+        // 每日限制已移除，不再检查剩余次数
         if (!this.securityPassed) {
             window.toast.show('请先点击“获取信息”完成安全检测，且检测通过后才能提交', 'warning');
             return;
@@ -380,8 +345,6 @@ class SubmitModule {
             const data = await response.json();
             if (response.ok) {
                 window.toast.show('投稿成功！已通过安全检测，等待管理员审核', 'success');
-                this.todayCount++;
-                this.updateRemainingCount();
                 this.updateGlobalTotalCountIncrement();
                 this.hide();
                 this.resetForm();
