@@ -1,5 +1,6 @@
 /**
  * 优化分类导航系统 - 分页加载版（支持 WebP 图标、高清懒加载、智能预加载、点击计数优化）
+ * 修复：无效链接统计改为全局统计（所有分类下的无效链接总数）
  */
 class OptimizedNavigation {
     constructor() {
@@ -237,6 +238,8 @@ class OptimizedNavigation {
                 await this.loadSubcategoryCountsForLevel1(firstCategory);
                 this.selectLevel1(firstCategory, false);
             }
+            // 初始化全局无效统计
+            await this.recalculateGlobalInvalidCount();
             this.isInitialized = true;
             this.startBackgroundUpdates();
             document.addEventListener('visibilitychange', () => {
@@ -247,6 +250,30 @@ class OptimizedNavigation {
             console.error('导航初始化失败:', error);
             this.showError();
         }
+    }
+
+    // 重新计算全局无效链接总数（遍历所有已缓存的子分类）
+    async recalculateGlobalInvalidCount() {
+        let totalInvalid = 0;
+        // 遍历所有已加载的子分类缓存
+        for (const [subId, sites] of this.siteCache.entries()) {
+            totalInvalid += sites.filter(s => s.valid === false).length;
+        }
+        // 如果某些子分类尚未缓存，需要从后端获取（但通常初始化时所有子分类都已缓存）
+        // 为了确保完整性，可以主动加载所有一级分类下的子分类数据（如果尚未加载）
+        if (this.structure) {
+            for (const catName in this.structure) {
+                const subcategories = this.structure[catName].subcategories;
+                for (const sub of subcategories) {
+                    if (!this.siteCache.has(sub.id)) {
+                        const sites = await this.loadSites(sub.id, true);
+                        totalInvalid += sites.filter(s => s.valid === false).length;
+                    }
+                }
+            }
+        }
+        this.stats.invalidCount = totalInvalid;
+        this.updateStatsDisplay();
     }
 
     startAutoRefresh() {
@@ -262,6 +289,8 @@ class OptimizedNavigation {
         if (!this.selectedLevel2) return;
         this.siteCache.delete(this.selectedLevel2);
         await this.renderLevel3(this.selectedLevel1, this.selectedLevel2);
+        // 刷新后重新计算全局无效数
+        await this.recalculateGlobalInvalidCount();
     }
 
     async loadNavigationStructure() {
@@ -598,6 +627,8 @@ class OptimizedNavigation {
                                 if (this.selectedLevel1) {
                                     await this.loadSubcategoryCountsForLevel1(this.selectedLevel1);
                                 }
+                                // 更新全局无效统计
+                                await this.recalculateGlobalInvalidCount();
                             }
                         } else {
                             const err = await res.json().catch(()=>({}));
@@ -765,6 +796,8 @@ class OptimizedNavigation {
                     const currentSub = document.querySelector('.level2-btn.active');
                     if (currentSub) await this.renderLevel3(this.selectedLevel1, currentSub.dataset.level2);
                 }
+                // 结构变化后重新计算全局无效统计
+                await this.recalculateGlobalInvalidCount();
             }
         } catch(e) { console.warn('后台更新失败:',e); }
     }
