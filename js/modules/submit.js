@@ -1,5 +1,6 @@
 /**
  * 网站投稿模块（异步安全检测 + 轮询状态，修复动画）
+ * 新增：联系方式字段，用于审核结果通知
  */
 class SubmitModule {
     constructor() {
@@ -9,6 +10,7 @@ class SubmitModule {
         this.titleInput = document.getElementById('submitTitle');
         this.iconInput = document.getElementById('submitIcon');
         this.descInput = document.getElementById('submitDesc');
+        this.contactInput = document.getElementById('submitContact'); // 新增
         this.iconPreview = document.getElementById('submitIconPreview');
         this.fetchInfoBtn = document.getElementById('fetchSiteInfoBtn');
         this.submitSaveBtn = document.getElementById('submitSaveBtn');
@@ -161,6 +163,7 @@ class SubmitModule {
             this.autoResizeDesc();
             this.updateSubmitButton();
         });
+        this.contactInput?.addEventListener('input', () => this.updateSubmitButton());
 
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
     }
@@ -353,11 +356,13 @@ class SubmitModule {
         }
         const safeUrl = url.startsWith('http') ? url : `https://${url}`;
         const deviceId = this.getDeviceId();
+        const contact = this.contactInput ? this.contactInput.value.trim() : '';
         const payload = {
             title: title,
             url: safeUrl,
             description: this.descInput.value.trim(),
-            icon: this.iconInput.value.trim()
+            icon: this.iconInput.value.trim(),
+            contact: contact
         };
         this.submitting = true;
         this.submitSaveBtn.disabled = true;
