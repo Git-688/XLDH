@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，支持导入导出，投稿详情可编辑）
+// admin.js - 星聚导航后台管理（完整版，支持手动发送邮件）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -346,7 +346,7 @@
         `).join('');
     }
 
-    // 修改后的投稿详情模态框：移除保存修改按钮，提交者改为可编辑邮箱，网址可编辑
+    // 投稿详情模态框：支持手动选择是否发送邮件
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -382,7 +382,6 @@
             if (!item) { showToast('未找到该投稿', 'error'); return; }
             const vtColor = (item.vt_result || '').includes('安全') ? '#10b981' : '#ef4444';
 
-            // 构建可编辑的模态框内容，移除了保存修改按钮
             let html = `
                 <div class="info-card">
                     <div class="info-row"><div class="info-label">标题</div><div class="info-value"><input type="text" id="editTitle" value="${escapeHtml(item.title)}" class="form-input" style="width:100%;" /></div></div>
@@ -393,9 +392,6 @@
                     <div class="info-row"><div class="info-label">提交时间</div><div class="info-value">${new Date(item.submit_time).toLocaleString()}</div></div>
                     <div class="info-row"><div class="info-label">安全检测</div><div class="info-value"><span style="color:${vtColor}">${escapeHtml(item.vt_result || '未检测')}</span></div></div>
                 </div>
-            `;
-            // 直接显示通过/拒绝操作，没有保存修改按钮
-            html += `
                 <div class="action-section">
                     <div class="action-card"><h4><i class="fas fa-check-circle"></i> 通过收录</h4>
                         <div class="inline-select-group">
@@ -403,10 +399,22 @@
                             <div class="custom-select-wrapper" id="approveSubSelectWrapper"></div>
                             <input type="number" id="approveOrder" placeholder="排序" value="0" class="form-input" style="width:80px;">
                         </div>
-                        <button class="btn-approve" id="doApproveBtn">✓ 通过并收录</button>
+                        <div style="margin: 10px 0 0 0;">
+                            <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                                <input type="checkbox" id="sendEmailCheckbox" checked style="width: auto; margin: 0;">
+                                <span style="font-size: 12px;">📧 发送邮件通知投稿者</span>
+                            </label>
+                        </div>
+                        <button class="btn-approve" id="doApproveBtn" style="margin-top: 8px;">✓ 通过并收录</button>
                     </div>
                     <div class="action-card"><h4><i class="fas fa-ban"></i> 拒绝投稿</h4>
-                        <button class="btn-reject" id="doRejectBtn">✗ 拒绝（删除投稿）</button>
+                        <div style="margin: 10px 0 0 0;">
+                            <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                                <input type="checkbox" id="sendEmailCheckboxReject" checked style="width: auto; margin: 0;">
+                                <span style="font-size: 12px;">📧 发送邮件通知投稿者</span>
+                            </label>
+                        </div>
+                        <button class="btn-reject" id="doRejectBtn" style="margin-top: 8px;">✗ 拒绝（删除投稿）</button>
                     </div>
                 </div>
             `;
@@ -456,7 +464,7 @@
             let subCustomSelect = new CustomSelect(subSelect);
             customSelects.sub = subCustomSelect;
 
-            // 通过收录：收集当前编辑框中的值，发送到后端
+            // 通过收录
             document.getElementById('doApproveBtn').onclick = async () => {
                 const catSelectEl = document.getElementById('approveCatSelect');
                 const subSelectEl = document.getElementById('approveSubSelect');
@@ -467,12 +475,12 @@
                     return;
                 }
                 const displayOrder = document.getElementById('approveOrder').value || 0;
-                // 获取编辑后的值
                 const editedTitle = document.getElementById('editTitle').value.trim();
                 const editedUrl = document.getElementById('editUrl').value.trim();
                 const editedIcon = document.getElementById('editIcon').value.trim();
                 const editedDesc = document.getElementById('editDesc').value.trim();
                 const editedContact = document.getElementById('editContact').value.trim();
+                const sendEmail = document.getElementById('sendEmailCheckbox').checked;
                 if (!editedTitle || !editedUrl) {
                     showToast('标题和网址不能为空', 'error');
                     return;
@@ -491,10 +499,11 @@
                             url: editedUrl,
                             icon: editedIcon,
                             description: editedDesc,
-                            contact: editedContact
+                            contact: editedContact,
+                            sendEmail: sendEmail
                         })
                     });
-                    showToast('已通过并收录', 'success');
+                    showToast('已通过并收录' + (sendEmail ? '，邮件已发送' : '，未发送邮件'), 'success');
                     detailModal.classList.remove('show');
                     cleanupSelectors();
                     await loadSubmissions();
@@ -505,12 +514,16 @@
                 }
             };
 
-            // 拒绝投稿：直接删除，后端会发送拒绝邮件
+            // 拒绝投稿
             document.getElementById('doRejectBtn').onclick = async () => {
                 if (!confirm('确定要拒绝该投稿吗？拒绝后将永久删除，用户不可修改')) return;
+                const sendEmail = document.getElementById('sendEmailCheckboxReject').checked;
                 try {
-                    await apiFetch(`/admin/submissions/${id}`, { method: 'DELETE' });
-                    showToast('已拒绝并删除', 'success');
+                    await apiFetch(`/admin/submissions/${id}`, {
+                        method: 'DELETE',
+                        body: JSON.stringify({ sendEmail: sendEmail })
+                    });
+                    showToast('已拒绝并删除' + (sendEmail ? '，邮件已发送' : '，未发送邮件'), 'success');
                     detailModal.classList.remove('show');
                     cleanupSelectors();
                     await loadSubmissions();
@@ -945,7 +958,6 @@
     updateLockMessage();
     setupEventDelegation();
 
-    // CustomSelect 类
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
