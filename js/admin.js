@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，支持导入导出，日志功能已移除）
+// admin.js - 星聚导航后台管理（完整版，支持导入导出，投稿详情可编辑）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -346,6 +346,7 @@
         `).join('');
     }
 
+    // 修改后的投稿详情模态框：移除保存修改按钮，提交者改为可编辑邮箱，网址可编辑
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -381,20 +382,19 @@
             if (!item) { showToast('未找到该投稿', 'error'); return; }
             const vtColor = (item.vt_result || '').includes('安全') ? '#10b981' : '#ef4444';
 
+            // 构建可编辑的模态框内容，移除了保存修改按钮
             let html = `
                 <div class="info-card">
                     <div class="info-row"><div class="info-label">标题</div><div class="info-value"><input type="text" id="editTitle" value="${escapeHtml(item.title)}" class="form-input" style="width:100%;" /></div></div>
-                    <div class="info-row"><div class="info-label">网址</div><div class="info-value"><a href="${escapeHtml(item.url)}" target="_blank">${escapeHtml(item.url)}</a></div></div>
+                    <div class="info-row"><div class="info-label">网址</div><div class="info-value"><input type="text" id="editUrl" value="${escapeHtml(item.url)}" class="form-input" style="width:100%;" /></div></div>
                     <div class="info-row"><div class="info-label">图标</div><div class="info-value"><input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" class="form-input" style="width:100%;" placeholder="请输入图标URL或FontAwesome类名" /></div></div>
                     <div class="info-row"><div class="info-label">描述</div><div class="info-value"><textarea id="editDesc" rows="2" class="form-input" style="width:100%; resize: vertical;">${escapeHtml(item.description || '')}</textarea></div></div>
-                    <div class="info-row"><div class="info-label">提交者</div><div class="info-value">${escapeHtml(item.submitter_ip)}</div></div>
+                    <div class="info-row"><div class="info-label">提交者（邮箱）</div><div class="info-value"><input type="email" id="editContact" value="${escapeHtml(item.contact || '')}" class="form-input" style="width:100%;" placeholder="投稿者邮箱" /></div></div>
                     <div class="info-row"><div class="info-label">提交时间</div><div class="info-value">${new Date(item.submit_time).toLocaleString()}</div></div>
                     <div class="info-row"><div class="info-label">安全检测</div><div class="info-value"><span style="color:${vtColor}">${escapeHtml(item.vt_result || '未检测')}</span></div></div>
                 </div>
-                <div class="action-card" style="margin-top:8px;">
-                    <button class="primary" id="saveEditBtn">💾 保存修改</button>
-                </div>
             `;
+            // 直接显示通过/拒绝操作，没有保存修改按钮
             html += `
                 <div class="action-section">
                     <div class="action-card"><h4><i class="fas fa-check-circle"></i> 通过收录</h4>
@@ -418,17 +418,7 @@
                 descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
             }
 
-            const saveBtn = document.getElementById('saveEditBtn');
-            if (saveBtn) {
-                saveBtn.addEventListener('click', async () => {
-                    const newTitle = document.getElementById('editTitle').value.trim();
-                    if (!newTitle) { showToast('标题不能为空', 'error'); return; }
-                    await editSubmission(item.id, newTitle, document.getElementById('editDesc').value.trim(), document.getElementById('editIcon').value.trim());
-                    openSubmissionDetail(id);
-                    showToast('修改已保存', 'success');
-                });
-            }
-
+            // 动态生成分类选择器
             const catSelect = document.createElement('select');
             catSelect.id = 'approveCatSelect';
             catSelect.innerHTML = '<option value="">选择一级分类</option>' + categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
@@ -466,6 +456,7 @@
             let subCustomSelect = new CustomSelect(subSelect);
             customSelects.sub = subCustomSelect;
 
+            // 通过收录：收集当前编辑框中的值，发送到后端
             document.getElementById('doApproveBtn').onclick = async () => {
                 const catSelectEl = document.getElementById('approveCatSelect');
                 const subSelectEl = document.getElementById('approveSubSelect');
@@ -476,12 +467,31 @@
                     return;
                 }
                 const displayOrder = document.getElementById('approveOrder').value || 0;
+                // 获取编辑后的值
+                const editedTitle = document.getElementById('editTitle').value.trim();
+                const editedUrl = document.getElementById('editUrl').value.trim();
+                const editedIcon = document.getElementById('editIcon').value.trim();
+                const editedDesc = document.getElementById('editDesc').value.trim();
+                const editedContact = document.getElementById('editContact').value.trim();
+                if (!editedTitle || !editedUrl) {
+                    showToast('标题和网址不能为空', 'error');
+                    return;
+                }
+                if (!checkUrl(editedUrl)) {
+                    showToast('网址格式错误', 'error');
+                    return;
+                }
                 try {
                     await apiFetch(`/admin/submissions/${id}/approve`, {
                         method: 'POST',
                         body: JSON.stringify({
                             subcategory_id: parseInt(subId),
-                            display_order: parseInt(displayOrder)
+                            display_order: parseInt(displayOrder),
+                            title: editedTitle,
+                            url: editedUrl,
+                            icon: editedIcon,
+                            description: editedDesc,
+                            contact: editedContact
                         })
                     });
                     showToast('已通过并收录', 'success');
@@ -495,6 +505,7 @@
                 }
             };
 
+            // 拒绝投稿：直接删除，后端会发送拒绝邮件
             document.getElementById('doRejectBtn').onclick = async () => {
                 if (!confirm('确定要拒绝该投稿吗？拒绝后将永久删除，用户不可修改')) return;
                 try {
@@ -512,6 +523,7 @@
     }
 
     async function editSubmission(id, newTitle, newDesc, newIcon) {
+        // 此函数已不再使用（保存修改按钮已移除），但保留以防其他地方调用
         try {
             await apiFetch(`/admin/submissions/${id}`, { method: 'PUT', body: JSON.stringify({ title: newTitle, description: newDesc, icon: newIcon }) });
             return true;
@@ -933,7 +945,7 @@
     updateLockMessage();
     setupEventDelegation();
 
-    // 自定义选择器类（原 admin.js 中的 CustomSelect，此处保留）
+    // CustomSelect 类
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
