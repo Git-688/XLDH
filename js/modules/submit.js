@@ -1,6 +1,6 @@
 /**
  * 网站投稿模块（异步安全检测 + 轮询状态）
- * 已移除每日投稿限制，修复 getDeviceId 方法
+ * 已移除每日投稿限制，邮箱改为必填，修复 getDeviceId
  */
 class SubmitModule {
     constructor() {
@@ -307,9 +307,10 @@ class SubmitModule {
     updateSubmitButton() {
         const title = this.titleInput.value.trim();
         const url = this.urlInput.value.trim();
+        const contact = this.contactInput ? this.contactInput.value.trim() : '';
         const urlValid = Utils.isValidUrl(url);
-        // 只检查标题、网址、安全检测通过
-        const enable = !!(title && urlValid && this.securityPassed);
+        const contactValid = contact && contact.includes('@'); // 邮箱必填，简单验证
+        const enable = !!(title && urlValid && this.securityPassed && contactValid);
         this.submitSaveBtn.disabled = !enable || this.submitting;
     }
 
@@ -322,6 +323,7 @@ class SubmitModule {
         }
         let title = this.titleInput.value.trim();
         let url = this.urlInput.value.trim();
+        let contact = this.contactInput ? this.contactInput.value.trim() : '';
         if (!title || !url) {
             window.toast.show('请填写网站名称和链接', 'warning');
             return;
@@ -330,9 +332,12 @@ class SubmitModule {
             window.toast.show('请输入正确的网址', 'warning');
             return;
         }
+        if (!contact || !contact.includes('@')) {
+            window.toast.show('请填写有效的邮箱地址，用于接收审核结果通知', 'warning');
+            return;
+        }
         const safeUrl = url.startsWith('http') ? url : `https://${url}`;
-        const deviceId = this.getDeviceId(); // 修复：确保方法存在
-        const contact = this.contactInput ? this.contactInput.value.trim() : '';
+        const deviceId = this.getDeviceId();
         const payload = {
             title: title,
             url: safeUrl,
