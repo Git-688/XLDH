@@ -1,6 +1,4 @@
 /* about.css - 圆角8px，左边卡片透明，右边logo上下间距相等 */
-/* 修改：免责声明、简介卡片背景强制白色，深色模式下也保持白色背景和深色文字 */
-
 .about-modal {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     position: fixed;
@@ -192,15 +190,15 @@
     flex-direction: column;
     gap: 12px;
 }
-/* 简介和免责声明卡片 - 背景强制白色，文字深色，不随主题变化 */
+/* 简介和免责声明卡片 - 跟随主题 */
 .about-card.white-bg {
     display: flex;
     align-items: flex-start;
     gap: 10px;
     padding: 12px;
-    background: #ffffff !important;      /* 强制白色背景 */
+    background: var(--bg-card, #ffffff);
     border-radius: 8px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color, #e9ecef);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
 }
@@ -233,7 +231,7 @@
 .card-content h3 {
     font-size: 12px;
     margin-bottom: 6px;
-    color: #2b2d42 !important;      /* 强制深色文字 */
+    color: var(--text-primary, #2b2d42);
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -242,7 +240,7 @@
 .card-content p {
     font-size: 10px;
     line-height: 1.5;
-    color: #6c757d !important;      /* 强制深色二级文字 */
+    color: var(--text-secondary, #6c757d);
     margin: 0;
 }
 
@@ -250,7 +248,7 @@
 .about-footer {
     padding: 12px 14px 14px;
     border-top: none;
-    background: #ffffff;
+    background: var(--bg-card, #ffffff);
 }
 .about-action-buttons {
     display: flex;
@@ -308,7 +306,7 @@
 .about-social-btn .tooltip-text {
     visibility: hidden;
     width: 60px;
-    background-color: #2b2d42;
+    background-color: var(--text-primary, #2b2d42);
     color: white;
     text-align: center;
     border-radius: 4px;
@@ -330,7 +328,7 @@
     margin-left: -4px;
     border-width: 4px;
     border-style: solid;
-    border-color: #2b2d42 transparent transparent transparent;
+    border-color: var(--text-primary, #2b2d42) transparent transparent transparent;
 }
 .about-social-btn:hover .tooltip-text {
     visibility: visible;
@@ -447,11 +445,24 @@
     }
 }
 
-/* ==================== 深色模式优化 ==================== */
-/* 深色模式下，卡片背景仍然保持白色，文字保持深色（已强制） */
+/* ==================== 深色模式优化（跟随主题） ==================== */
 .dark-mode .about-modal-content {
     background: var(--bg-card);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+.dark-mode .about-card.white-bg {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.dark-mode .about-card.white-bg:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+.dark-mode .card-content h3 {
+    color: var(--text-primary);
+}
+.dark-mode .card-content p {
+    color: var(--text-secondary);
 }
 .dark-mode .about-footer {
     background: var(--bg-card);
@@ -482,17 +493,6 @@
 }
 .dark-mode .about-social-btn .tooltip-text::after {
     border-color: #e0e0e0 transparent transparent transparent;
-}
-/* 深色模式下，强制卡片背景为白色、文字深色，覆盖任何可能的深色模式影响 */
-.dark-mode .about-card.white-bg {
-    background: #ffffff !important;
-    border-color: #e9ecef !important;
-}
-.dark-mode .card-content h3 {
-    color: #2b2d42 !important;
-}
-.dark-mode .card-content p {
-    color: #6c757d !important;
 }
 
 /* 减少动画偏好 */
