@@ -23,8 +23,8 @@
 .announcement-modal-container {
     width: 100%;
     max-width: 480px;
-    background: #ffffff;
-    border: 1px solid #e0e0e0;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     overflow: hidden;
@@ -51,21 +51,6 @@
     }
 }
 
-/* 深色模式适配 - 优化对比度与视觉舒适度 */
-@media (prefers-color-scheme: dark) {
-    .announcement-modal-container {
-        background: #2d2d2d;
-        border: 1px solid #404040;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-    /* 手动深色模式覆盖（通过 .dark-mode 类） */
-    .dark-mode .announcement-modal-container {
-        background: #2d2d2d;
-        border-color: #404040;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-}
-
 /* 头部样式 - 与星聚笔记头部完全一致 */
 .announcement-header {
     display: flex;
@@ -75,16 +60,6 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     color: var(--text-primary, #1e293b);
 }
-/* 深色模式头部 */
-@media (prefers-color-scheme: dark) {
-    .announcement-header {
-        border-bottom-color: rgba(255, 255, 255, 0.08);
-    }
-    .dark-mode .announcement-header {
-        border-bottom-color: rgba(255, 255, 255, 0.08);
-    }
-}
-
 .announcement-title {
     display: flex;
     align-items: center;
@@ -102,7 +77,7 @@
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.05);
     border: none;
-    color: #64748b;
+    color: var(--text-secondary, #64748b);
     font-size: 1rem;
     display: flex;
     align-items: center;
@@ -112,26 +87,7 @@
 }
 .announcement-close:hover {
     background: rgba(0, 0, 0, 0.1);
-    color: #334155;
-}
-/* 深色模式关闭按钮 */
-@media (prefers-color-scheme: dark) {
-    .announcement-close {
-        background: rgba(255, 255, 255, 0.08);
-        color: #adb5bd;
-    }
-    .announcement-close:hover {
-        background: rgba(255, 255, 255, 0.15);
-        color: #f8f9fa;
-    }
-    .dark-mode .announcement-close {
-        background: rgba(255, 255, 255, 0.08);
-        color: #adb5bd;
-    }
-    .dark-mode .announcement-close:hover {
-        background: rgba(255, 255, 255, 0.15);
-        color: #f8f9fa;
-    }
+    color: var(--text-primary, #334155);
 }
 
 /* 正文区域 */
@@ -154,15 +110,6 @@
     font-size: 0.85rem;
     line-height: 1.5;
     margin: 0;
-}
-/* 深色模式重要提醒文字颜色适配 */
-@media (prefers-color-scheme: dark) {
-    .focus-content {
-        color: #f87171;
-    }
-    .dark-mode .focus-content {
-        color: #f87171;
-    }
 }
 
 /* 更新内容区域 */
@@ -202,23 +149,6 @@
     border-radius: 50%;
     background: var(--primary-color, #4361ee);
 }
-/* 深色模式下更新列表 */
-@media (prefers-color-scheme: dark) {
-    .updates-list li {
-        color: #e0e0e0;
-        border-bottom-color: rgba(255, 255, 255, 0.08);
-    }
-    .updates-list li::before {
-        background: #7b9cff;
-    }
-    .dark-mode .updates-list li {
-        color: #e0e0e0;
-        border-bottom-color: rgba(255, 255, 255, 0.08);
-    }
-    .dark-mode .updates-list li::before {
-        background: #7b9cff;
-    }
-}
 
 /* 底部区域 - 背景透明，保留分割线 */
 .announcement-footer {
@@ -227,7 +157,7 @@
     justify-content: space-between;
     padding: 12px 20px 16px;
     background: transparent;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--border-color, #e0e0e0);
 }
 .announcement-date {
     display: flex;
@@ -251,33 +181,6 @@
 .announcement-ack-btn:hover {
     background: #3651d4;
     box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
-}
-/* 深色模式底部区域边框颜色适配 */
-@media (prefers-color-scheme: dark) {
-    .announcement-footer {
-        border-top-color: #404040;
-    }
-    .announcement-date {
-        color: #adb5bd;
-    }
-    .announcement-ack-btn {
-        background: #4361ee;
-    }
-    .announcement-ack-btn:hover {
-        background: #5a7aff;
-    }
-    .dark-mode .announcement-footer {
-        border-top-color: #404040;
-    }
-    .dark-mode .announcement-date {
-        color: #adb5bd;
-    }
-    .dark-mode .announcement-ack-btn {
-        background: #4361ee;
-    }
-    .dark-mode .announcement-ack-btn:hover {
-        background: #5a7aff;
-    }
 }
 
 /* 移动端适配 */
@@ -342,4 +245,45 @@
     .announcement-modal-simple.active .announcement-modal-container {
         transform: scale(1);
     }
+}
+
+/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
+.dark-mode .announcement-modal-container {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+.dark-mode .announcement-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+.dark-mode .announcement-close {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+}
+.dark-mode .announcement-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+}
+.dark-mode .focus-content {
+    color: #f87171;
+}
+.dark-mode .updates-list li {
+    color: var(--text-primary);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+.dark-mode .updates-list li::before {
+    background: var(--primary-color);
+}
+.dark-mode .announcement-footer {
+    border-top-color: var(--border-color);
+}
+.dark-mode .announcement-date {
+    color: var(--text-secondary);
+}
+.dark-mode .announcement-ack-btn {
+    background: var(--primary-color);
+}
+.dark-mode .announcement-ack-btn:hover {
+    background: #5a7aff;
 }
