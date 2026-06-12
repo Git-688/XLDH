@@ -1,6 +1,10 @@
 // compact-tags.js - 彩虹浅色标签模块（所有链接在新标签页打开）
+// 修改：挂载到 window.Starlink.compactTags
 class CompactTagsModule {
     constructor() {
+        // 避免重复实例化
+        if (window.Starlink && window.Starlink.compactTags) return window.Starlink.compactTags;
+        
         this.tags = [
             { name: '60s快讯', icon: 'fas fa-newspaper', link: 'pages/tools/60s快讯.html' },
             { name: '本草药材', icon: 'fas fa-leaf', link: 'pages/tools/本草药材.html' },
@@ -42,6 +46,11 @@ class CompactTagsModule {
         ].sort((a, b) => a.name.localeCompare(b.name, 'zh'));
 
         this.init();
+        
+        // 挂载到 Starlink
+        if (window.Starlink) window.Starlink.compactTags = this;
+        // 保留旧全局变量以便兼容
+        window.compactTagsModule = this;
     }
 
     init() {
@@ -98,12 +107,10 @@ class CompactTagsModule {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!window.compactTagsModule) {
-        if (!window.Starlink) window.Starlink = {};
-        if (!window.Starlink.compactTags) {
-            window.Starlink.compactTags = new CompactTagsModule();
-        }
-        window.compactTagsModule = window.Starlink.compactTags;
+    if (!window.Starlink) window.Starlink = {};
+    if (!window.Starlink.compactTags) {
+        window.Starlink.compactTags = new CompactTagsModule();
     }
+    window.compactTagsModule = window.Starlink.compactTags;
 });
 window.CompactTagsModule = CompactTagsModule;
