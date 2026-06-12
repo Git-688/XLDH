@@ -1,6 +1,7 @@
 /**
  * 网站投稿模块（异步安全检测 + 轮询状态）
  * 已移除每日投稿限制，邮箱改为必填，修复 getDeviceId
+ * 已移除底部安全检测提示
  */
 class SubmitModule {
     constructor() {
@@ -15,7 +16,6 @@ class SubmitModule {
         this.fetchInfoBtn = document.getElementById('fetchSiteInfoBtn');
         this.submitSaveBtn = document.getElementById('submitSaveBtn');
         this.urlCheckResult = document.getElementById('urlCheckResult');
-        this.waitingHint = this.modal ? this.modal.querySelector('.submit-safe-hint') : null;
 
         this.apiBase = Utils.getApiBase();
         this.statsBadge = null;
@@ -166,7 +166,6 @@ class SubmitModule {
             this.urlCheckResult.className = 'url-check-result';
             this.urlCheckResult.textContent = '';
         }
-        if (this.waitingHint) this.waitingHint.style.display = 'none';
     }
 
     autoResizeDesc() {
@@ -221,7 +220,6 @@ class SubmitModule {
             return;
         }
         this.resetSecurityCheck();
-        if (this.waitingHint) this.waitingHint.style.display = 'inline';
         this.fetchInfoBtn.disabled = true;
         this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 获取信息...';
         this.urlCheckResult.style.display = 'block';
@@ -266,7 +264,6 @@ class SubmitModule {
             this.securityPassed = false;
             this.updateSubmitButton();
         } finally {
-            if (this.waitingHint) this.waitingHint.style.display = 'none';
             this.fetchInfoBtn.disabled = false;
             this.fetchInfoBtn.innerHTML = '<i class="fas fa-magic"></i> 获取信息';
         }
@@ -348,7 +345,6 @@ class SubmitModule {
         this.submitting = true;
         this.submitSaveBtn.disabled = true;
         this.submitSaveBtn.textContent = '提交中...';
-        if (this.waitingHint) this.waitingHint.style.display = 'inline';
         try {
             const response = await Utils.safeFetch(`${this.apiBase}/submit-site`, {
                 method: 'POST',
@@ -382,7 +378,6 @@ class SubmitModule {
             this.submitting = false;
             this.submitSaveBtn.disabled = false;
             this.submitSaveBtn.textContent = '提交投稿';
-            if (this.waitingHint) this.waitingHint.style.display = 'none';
         }
     }
 
