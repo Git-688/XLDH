@@ -1,6 +1,7 @@
 /**
  * 音乐播放器主入口文件 - 适配星聚导航
  * 修复移动端自动播放策略：等待用户首次交互后才允许播放
+ * 修改：挂载到 window.Starlink.musicPlayer
  */
 let musicPlayer = null;
 let pendingPlay = false;      // 标记是否有待播放的歌曲
@@ -12,7 +13,10 @@ function tryInitMusicPlayer(retry = 0) {
             setTimeout(() => tryInitMusicPlayer(retry + 1), 300);
         } else {
             console.error('MusicPlayer 类长时间未加载');
-            window.toast?.show('音乐播放器加载失败', 'error');
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) {
+                toast.show('音乐播放器加载失败', 'error');
+            }
         }
         return;
     }
@@ -24,6 +28,7 @@ function tryInitMusicPlayer(retry = 0) {
         if (!window.Starlink.musicPlayer) {
             window.Starlink.musicPlayer = musicPlayer;
         }
+        // 保留旧全局变量以便兼容
         window.musicPlayer = window.Starlink.musicPlayer;
 
         if (typeof Utils !== 'undefined' && typeof Utils.isMobile === 'function' && Utils.isMobile()) {
@@ -52,7 +57,10 @@ function tryInitMusicPlayer(retry = 0) {
         }, 500);
     } catch (error) {
         console.error('音乐播放器核心初始化失败:', error);
-        window.toast?.show('音乐播放器初始化失败', 'error');
+        const toast = window.Starlink?.toast || window.toast;
+        if (toast && toast.show) {
+            toast.show('音乐播放器初始化失败', 'error');
+        }
     }
 }
 
@@ -90,37 +98,43 @@ function setupGlobalErrorHandling() {
 }
 setupGlobalErrorHandling();
 
-window.toggleMusicPlayer = () => window.app?.components?.navbar?.toggleMusicPlayer();
-window.showMusicPlayer = () => window.app?.components?.navbar?.showMusicPlayer();
-window.hideMusicPlayer = () => window.app?.components?.navbar?.hideMusicPlayer();
-window.cleanupMusicPlayer = () => musicPlayer?.cleanup?.();
+// 全局函数（保留兼容）
+window.toggleMusicPlayer = () => window.Starlink?.navbar?.toggleMusicPlayer?.() || window.app?.components?.navbar?.toggleMusicPlayer?.();
+window.showMusicPlayer = () => window.Starlink?.navbar?.showMusicPlayer?.() || window.app?.components?.navbar?.showMusicPlayer?.();
+window.hideMusicPlayer = () => window.Starlink?.navbar?.hideMusicPlayer?.() || window.app?.components?.navbar?.hideMusicPlayer?.();
+window.cleanupMusicPlayer = () => {
+    if (window.Starlink?.musicPlayer) window.Starlink.musicPlayer.cleanup?.();
+    else if (window.musicPlayer) window.musicPlayer.cleanup?.();
+};
 window.addEventListener('beforeunload', () => window.cleanupMusicPlayer());
 
 // 键盘快捷键
 document.addEventListener('keydown', (e) => {
-    if (!musicPlayer) return;
+    const player = window.Starlink?.musicPlayer || window.musicPlayer;
+    if (!player) return;
     if (e.code === 'Space' && !e.target.matches('input, textarea, select')) {
         e.preventDefault();
-        musicPlayer.togglePlay?.();
+        player.togglePlay?.();
     }
     if (e.code === 'ArrowLeft' && e.ctrlKey) {
         e.preventDefault();
-        musicPlayer.previous?.();
+        player.previous?.();
     }
     if (e.code === 'ArrowRight' && e.ctrlKey) {
         e.preventDefault();
-        musicPlayer.next?.();
+        player.next?.();
     }
     if (e.code === 'KeyM' && e.ctrlKey) {
         e.preventDefault();
-        musicPlayer.setVolume?.(musicPlayer.volume > 0 ? 0 : 0.5);
+        player.setVolume?.(player.volume > 0 ? 0 : 0.5);
     }
 });
 
 // 页面隐藏时释放动画帧
 document.addEventListener('visibilitychange', () => {
-    if (musicPlayer && document.hidden && musicPlayer.updateAnimationFrame) {
-        cancelAnimationFrame(musicPlayer.updateAnimationFrame);
-        musicPlayer.updateAnimationFrame = null;
+    const player = window.Starlink?.musicPlayer || window.musicPlayer;
+    if (player && document.hidden && player.updateAnimationFrame) {
+        cancelAnimationFrame(player.updateAnimationFrame);
+        player.updateAnimationFrame = null;
     }
 });
