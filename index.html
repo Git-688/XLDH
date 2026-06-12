@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +8,6 @@
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
 
-    <!-- 全局配置 - 支持环境自动切换 -->
     <script>
         (function() {
             let apiBase = '';
@@ -28,13 +26,10 @@
                 WALINE_SERVER: 'https://yy688.ccwu.cc'
             };
             console.log(`[Config] API_BASE: ${apiBase}`);
-        
-            // 全局命名空间：统一管理所有模块实例，减少全局污染
             window.Starlink = window.Starlink || {};
         })();
     </script>
 
-    <!-- CSP 安全策略 - 已移除 unsafe-eval -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'none'; form-action 'self';">
 
     <meta name="theme-color" content="#4361ee">
@@ -43,12 +38,10 @@
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
 
-    <!-- 预加载字体文件（关键性能优化） -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 
-    <!-- 关键 CSS：首屏必需，正常加载 -->
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
     <link rel="stylesheet" href="./css/modules/sidebar.css">
@@ -62,11 +55,9 @@
     <link rel="stylesheet" href="./css/modules/stats.css">
     <link rel="stylesheet" href="./css/responsive.css">
 
-    <!-- 非关键 CSS：异步加载（不阻塞渲染） -->
     <link rel="preload" href="./css/modules/compact-tags.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <!-- Waline CSS v3.15.2 使用预加载 + 异步加载 -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -77,11 +68,9 @@
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-
     <link rel="preload" href="./js/main.js" as="script">
 
     <style>
-        /* 基础变量定义 */
         :root {
             --primary-color: #4361ee;
             --secondary-color: #3a0ca3;
@@ -154,7 +143,6 @@
             }
         }
         
-        /* 手动深色模式覆盖（通过 .dark-mode 类） */
         .dark-mode {
             --text-primary: #f8f9fa;
             --text-secondary: #adb5bd;
@@ -174,7 +162,6 @@
             --acrylic-light-bg: rgba(40, 40, 40, 0.7);
         }
         
-        /* 深色模式下额外覆盖（确保所有模态框背景变深） */
         .dark-mode .weather-modal-content,
         .dark-mode .feedback-modal-content,
         .dark-mode .announcement-modal-container,
@@ -220,8 +207,8 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
             font-size: 13px;
             line-height: 1.6;
-            color: var(--text-primary, #2b2d42);
-            background-color: var(--bg-primary, #ffffff);
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -235,34 +222,34 @@
         }
         .navbar {
             position: fixed; top: 0; left: 0; width: 100%; height: 60px;
-            background: var(--bg-primary, #ffffff); border-bottom: 1px solid var(--border-color, #e9ecef);
-            z-index: var(--z-navbar, 999); box-shadow: var(--shadow, 0 2px 4px rgba(0,0,0,0.05));
+            background: var(--bg-primary); border-bottom: 1px solid var(--border-color);
+            z-index: var(--z-navbar); box-shadow: var(--shadow);
         }
-        .nav-container { display: flex; justify-content: space-between; align-items: center; height: 100%; max-width: 1200px; margin: 0 auto; padding: 0 var(--container-padding-xs, 16px); }
+        .nav-container { display: flex; justify-content: space-between; align-items: center; height: 100%; max-width: 1200px; margin: 0 auto; padding: 0 var(--container-padding-xs); }
         .nav-brand { display: flex; align-items: center; gap: 10px; }
-        .logo { width: 32px; height: 32px; border-radius: 8px; background: var(--primary-color, #4361ee); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-        .brand-text { font-size: 16px; font-weight: 600; color: var(--text-primary, #2b2d42); }
+        .logo { width: 32px; height: 32px; border-radius: 8px; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .brand-text { font-size: 16px; font-weight: 600; color: var(--text-primary); }
         .nav-actions { display: flex; gap: 8px; }
-        .nav-btn { width: 36px; height: 36px; border: none; border-radius: 6px; background: var(--bg-secondary, #f8f9fa); color: var(--text-secondary, #6c757d); cursor: pointer; transition: var(--transition, all 0.2s ease); display: flex; align-items: center; justify-content: center; font-size: 14px; }
-        .nav-btn:hover { background: var(--primary-color, #4361ee); color: white; }
+        .nav-btn { width: 36px; height: 36px; border: none; border-radius: 6px; background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .nav-btn:hover { background: var(--primary-color); color: white; }
         .main-content { margin-top: 60px; min-height: calc(100vh - 120px); }
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 var(--container-padding-xs, 16px); width: 100%; }
-        .container-fluid { width: 100%; padding: 0 var(--container-padding-xs, 16px); }
-        @media (min-width: 576px) { .container, .container-fluid { padding: 0 var(--container-padding-sm, 20px); } }
-        @media (min-width: 768px) { .container, .container-fluid { padding: 0 var(--container-padding-md, 24px); } }
-        @media (min-width: 992px) { .container, .container-fluid { padding: 0 var(--container-padding-lg, 28px); } }
-        @media (min-width: 1200px) { .container, .container-fluid { padding: 0 var(--container-padding-xl, 32px); } }
-        .floating-buttons { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 12px; z-index: var(--z-floating, 100); }
-        .floating-btn { width: 50px; height: 50px; border: none; border-radius: 50%; background: var(--bg-card, #ffffff); color: var(--text-secondary, #6c757d); cursor: pointer; transition: var(--transition, all 0.2s ease); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 var(--container-padding-xs); width: 100%; }
+        .container-fluid { width: 100%; padding: 0 var(--container-padding-xs); }
+        @media (min-width: 576px) { .container, .container-fluid { padding: 0 var(--container-padding-sm); } }
+        @media (min-width: 768px) { .container, .container-fluid { padding: 0 var(--container-padding-md); } }
+        @media (min-width: 992px) { .container, .container-fluid { padding: 0 var(--container-padding-lg); } }
+        @media (min-width: 1200px) { .container, .container-fluid { padding: 0 var(--container-padding-xl); } }
+        .floating-buttons { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 12px; z-index: var(--z-floating); }
+        .floating-btn { width: 50px; height: 50px; border: none; border-radius: 50%; background: var(--bg-card); color: var(--text-secondary); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
         .floating-btn:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        .back-to-top { color: var(--error-color, #ef4444); opacity: 0; transform: translateY(10px); visibility: hidden; transition: all 0.3s ease; }
+        .back-to-top { color: var(--error-color); opacity: 0; transform: translateY(10px); visibility: hidden; transition: all 0.3s ease; }
         .back-to-top.visible { opacity: 1; transform: translateY(0); visibility: visible; }
         .back-to-top:hover { color: #ff3333; }
         .refresh-btn { color: #10b981; }
         .refresh-btn:hover { color: #059669; }
         .activity-btn { color: #ff6b35; }
         .activity-btn:hover { color: #ff5733; }
-        .weather-btn { color: var(--primary-color, #4361ee); }
+        .weather-btn { color: var(--primary-color); }
         .weather-btn:hover { color: #3a56d6; }
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
@@ -272,7 +259,7 @@
             .back-to-top { color: #ff6b6b; }
             .back-to-top:hover { color: #ff5252; }
             .refresh-btn { color: #34d399; }
-            .refresh-btn:hover { color: var(--success-color, #10b981); }
+            .refresh-btn:hover { color: var(--success-color); }
             .weather-btn { color: #6d8cff; }
             .weather-btn:hover { color: #5a7aff; }
             .activity-btn { color: #ff8c5a; }
@@ -290,32 +277,32 @@
         #notebookModal .feedback-modal-header h3 i { color: #4361ee; }
         .notebook-list { padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
         .notebook-item { background: rgba(255,255,255,0.5); backdrop-filter: blur(5px); border-radius: 8px; padding: 8px 12px; border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s ease; }
-        .notebook-item:hover { border-color: var(--primary-color, #4361ee); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .notebook-item:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .notebook-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .notebook-id { font-size: 10px; color: var(--text-secondary, #6c757d); background: rgba(255,255,255,0.7); padding: 2px 8px; border-radius: 20px; font-weight: 500; }
-        .notebook-time { font-size: 10px; color: var(--text-secondary, #6c757d); display: flex; align-items: center; gap: 4px; }
-        .notebook-title { font-size: 15px; font-weight: 700; color: var(--text-primary, #2b2d42); margin-bottom: 6px; }
-        .notebook-content { font-size: 12px; color: var(--text-secondary, #6c757d); line-height: 1.5; word-break: break-word; white-space: pre-wrap; background: rgba(255,255,255,0.4); padding: 8px 10px; border-radius: 6px; backdrop-filter: blur(4px); border: 1px solid rgba(0,0,0,0.03); }
+        .notebook-id { font-size: 10px; color: var(--text-secondary); background: rgba(255,255,255,0.7); padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+        .notebook-time { font-size: 10px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
+        .notebook-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+        .notebook-content { font-size: 12px; color: var(--text-secondary); line-height: 1.5; word-break: break-word; white-space: pre-wrap; background: rgba(255,255,255,0.4); padding: 8px 10px; border-radius: 6px; backdrop-filter: blur(4px); border: 1px solid rgba(0,0,0,0.03); }
         #commentModal .feedback-modal-content { max-height: 75vh; max-width: 700px; }
         #commentModal .feedback-modal-header h3 i { color: #f59e0b; }
         #submitModal .feedback-modal-content { max-height: 90vh; max-width: 520px; }
         #submitModal .feedback-modal-body { overflow-y: auto; }
         #submitModal .feedback-modal-header h3 i { color: #4361ee; }
         #submitModal .form-row { margin-bottom: 10px; }
-        #submitModal .form-row label { display: block; font-size: 12px; color: var(--text-secondary, #6c757d); margin-bottom: 3px; font-weight: 500; }
-        #submitModal .required-star { color: var(--error-color, #ef4444); }
-        #submitModal .form-row input, #submitModal .form-row textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color, #e9ecef); border-radius: 8px; background: var(--bg-card, #ffffff); color: var(--text-primary, #2b2d42); font-size: 13px; outline: none; transition: border 0.2s; font-family: inherit; }
+        #submitModal .form-row label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 3px; font-weight: 500; }
+        #submitModal .required-star { color: var(--error-color); }
+        #submitModal .form-row input, #submitModal .form-row textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font-size: 13px; outline: none; transition: border 0.2s; font-family: inherit; }
         #submitModal .form-row textarea { min-height: 36px; overflow-y: hidden; resize: none; }
-        #submitModal .form-row input:focus, #submitModal .form-row textarea:focus { border-color: var(--primary-color, #4361ee); box-shadow: 0 0 0 3px rgba(67,97,238,0.08); }
-        .submit-form-buttons { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color, #e9ecef); }
-        .submit-cancel-btn { padding: 6px 12px; border: 1px solid var(--border-color, #e9ecef); border-radius: 8px; background: var(--bg-card, #ffffff); color: var(--text-secondary, #6c757d); cursor: pointer; font-size: 13px; transition: all 0.2s; white-space: nowrap; }
-        .submit-cancel-btn:hover { background: var(--bg-secondary, #f8f9fa); color: var(--text-primary, #2b2d42); }
-        .submit-save-btn { padding: 6px 16px; border: none; border-radius: 8px; background: var(--primary-color, #4361ee); color: white; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
-        .submit-save-btn:hover:not(:disabled) { background: var(--secondary-color, #3a0ca3); transform: translateY(-1px); }
+        #submitModal .form-row input:focus, #submitModal .form-row textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(67,97,238,0.08); }
+        .submit-form-buttons { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color); }
+        .submit-cancel-btn { padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.2s; white-space: nowrap; }
+        .submit-cancel-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+        .submit-save-btn { padding: 6px 16px; border: none; border-radius: 8px; background: var(--primary-color); color: white; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
+        .submit-save-btn:hover:not(:disabled) { background: var(--secondary-color); transform: translateY(-1px); }
         .submit-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .fetch-info-btn, .check-url-btn { padding: 8px 14px; border: 1px solid var(--border-color, #e9ecef); border-radius: 8px; background: var(--bg-card, #ffffff); color: var(--text-secondary, #6c757d); cursor: pointer; font-size: 12px; white-space: nowrap; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
-        .fetch-info-btn:hover { border-color: var(--primary-color, #4361ee); color: var(--primary-color, #4361ee); background: rgba(67,97,238,0.05); }
-        .check-url-btn:hover { border-color: var(--success-color, #10b981); color: var(--success-color, #10b981); background: rgba(16,185,129,0.05); }
+        .fetch-info-btn, .check-url-btn { padding: 8px 14px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: 12px; white-space: nowrap; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
+        .fetch-info-btn:hover { border-color: var(--primary-color); color: var(--primary-color); background: rgba(67,97,238,0.05); }
+        .check-url-btn:hover { border-color: var(--success-color); color: var(--success-color); background: rgba(16,185,129,0.05); }
         .fetch-info-btn:disabled, .check-url-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .url-check-result { margin-top: 8px; padding: 8px 12px; border-radius: 8px; font-size: 12px; line-height: 1.4; }
         .url-check-result.safe { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
@@ -489,7 +476,6 @@
         </footer>
         <div class="floating-buttons">
             <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
-            <!-- 主题切换按钮（新增） -->
             <button class="floating-btn theme-btn" id="themeToggleBtn" aria-label="切换主题"><i class="fas fa-moon"></i></button>
             <button class="floating-btn comment-btn" id="commentBtn" aria-label="评论"><i class="fas fa-comments"></i></button>
             <button class="floating-btn submit-btn" id="floatingSubmitBtn" aria-label="网站投稿"><i class="fas fa-paper-plane"></i></button>
@@ -685,6 +671,7 @@
             </div>
         </div>
     </div>
+    <!-- 投稿模态框：已添加底部提示 -->
     <div id="submitModal" class="feedback-modal">
         <div class="feedback-modal-content">
             <div class="feedback-modal-header">
@@ -692,33 +679,53 @@
             </div>
             <div class="feedback-modal-body">
                 <form id="submitSiteForm">
-                    <div class="form-row"><label>网站链接 <span class="required-star">*</span></label>
-                        <div style="display:flex;gap:8px;align-items:center;"><input type="url" id="submitUrl" placeholder="https://xjdh688.ccwu.cc" required style="flex:1;"><button type="button" id="fetchSiteInfoBtn" class="fetch-info-btn" title="自动获取信息"><i class="fas fa-magic"></i> 获取信息</button></div>
+                    <div class="form-row">
+                        <label>网站链接 <span class="required-star">*</span></label>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="url" id="submitUrl" placeholder="https://xjdh688.ccwu.cc" required style="flex:1;">
+                            <button type="button" id="fetchSiteInfoBtn" class="fetch-info-btn" title="自动获取信息"><i class="fas fa-magic"></i> 获取信息</button>
+                        </div>
                         <div id="urlCheckResult" class="url-check-result" style="display:none;"></div>
                     </div>
-                    <div class="form-row"><label>网站名称 <span class="required-star">*</span></label><input type="text" id="submitTitle" placeholder="例如：星聚导航" required></div>
-                    <div class="form-row"><label>网站图标<span class="required-star">*</span></label>
-                        <div style="display:flex;align-items:center;gap:10px;"><input type="text" id="submitIcon" placeholder="自动获取或手动输入图标URL" style="flex:1;"><img id="submitIconPreview" src="" style="width:32px;height:32px;border-radius:6px;display:none;" alt="图标预览"></div>
+                    <div class="form-row">
+                        <label>网站名称 <span class="required-star">*</span></label>
+                        <input type="text" id="submitTitle" placeholder="例如：星聚导航" required>
                     </div>
-                    <div class="form-row"><label>简短描述</label><textarea id="submitDesc" rows="2" placeholder="介绍一下这个网站..."></textarea></div>
-                    <div class="form-row"><label>联系方式<span class="required-star">*</span>（仅用于审核结果通知）</label><input type="text" id="submitContact" placeholder="QQ邮箱地址"></div>
-                    <div class="submit-form-buttons"><button type="button" class="submit-cancel-btn">取消</button><button type="submit" class="submit-save-btn" id="submitSaveBtn" disabled>提交投稿</button></div>
+                    <div class="form-row">
+                        <label>网站图标<span class="required-star">*</span></label>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <input type="text" id="submitIcon" placeholder="自动获取或手动输入图标URL" style="flex:1;">
+                            <img id="submitIconPreview" src="" style="width:32px;height:32px;border-radius:6px;display:none;" alt="图标预览">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <label>简短描述</label>
+                        <textarea id="submitDesc" rows="2" placeholder="介绍一下这个网站..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <label>联系方式<span class="required-star">*</span>（仅用于审核结果通知）</label>
+                        <input type="text" id="submitContact" placeholder="QQ邮箱地址">
+                    </div>
+                    <div class="submit-form-buttons">
+                        <button type="button" class="submit-cancel-btn">取消</button>
+                        <button type="submit" class="submit-save-btn" id="submitSaveBtn" disabled>提交投稿</button>
+                    </div>
                 </form>
+                <div class="submit-hint" style="font-size: 11px; color: #f59e0b; text-align: center; margin-top: 8px; padding: 4px 0;">
+                    ⚠️ 检测稍缓，请稍等！！！
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- 引入 jQuery（粒子特效依赖） -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
 
-    <!-- 所有外部脚本添加 defer 和 crossorigin -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js" crossorigin="anonymous"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
     <script defer src="./js/utils.js"></script>
     <script defer src="./js/toast.js"></script>
     <script defer src="./js/error-handler.js"></script>
     <script defer src="./js/storage.js"></script>
-    <!-- api.js 已删除，不再引用 -->
     <script defer src="./js/components/navbar.js"></script>
     <script defer src="./js/components/sidebar.js"></script>
     <script defer src="./js/modules/announcement.js"></script>
@@ -737,25 +744,19 @@
     <script defer src="./js/xfyy/plugin-manager.js"></script>
     <script defer src="./js/xfyy/music-player.js"></script>
     <script defer src="./js/xfyy/music-main.js"></script>
-    <!-- Waline JS v3.15.2 使用 defer 加载 -->
     <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js" crossorigin="anonymous"></script>
     <script defer src="./js/modules/comment.js"></script>
     <script defer src="./js/modules/submit.js"></script>
-
-    <!-- 主题切换模块 -->
     <script defer src="./js/modules/theme.js"></script>
 
     <script>
-        // 注册 Service Worker（延迟到页面加载完成）
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
                     console.log('Service Worker 注册成功，作用域:', registration.scope);
-                    
-                    // 监听 Service Worker 更新消息
                     navigator.serviceWorker.addEventListener('message', function(event) {
                         if (event.data && event.data.type === 'SW_UPDATED') {
-                            console.log('检测到新版本 Service Worker，准备提示用户刷新');
+                            console.log('检测到新版本 Service Worker');
                             if (window.toast) {
                                 window.toast.show('发现新版本，点击刷新获取最新内容', 'info', 10000);
                                 setTimeout(function() {
@@ -779,9 +780,6 @@
         }
     </script>
 
-    <!-- 点击粒子特效（确保在 jQuery 之后加载，且添加 ready 初始化） -->
-       <script defer src="./js/cursor2.js"></script>
-
+    <script defer src="./js/cursor2.js"></script>
 </body>
-
 </html>
