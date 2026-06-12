@@ -1,6 +1,7 @@
 /* ================================================
    style.css - 星聚导航全局样式（纯色背景，无亚克力）
    深色模式：通过 .dark-mode 类切换，统一变量管理
+   包含：骨架屏动画、过渡效果优化
    ================================================ */
 
 /* 基础变量定义（亮色模式，默认） */
@@ -406,7 +407,7 @@ p {
     flex-direction: column;
     transform: scale(0.95);
     opacity: 0;
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.3s ease;
     overflow: hidden;
 }
 .feedback-modal.active .feedback-modal-content {
@@ -1044,4 +1045,34 @@ p {
     height: 12px;
     border-radius: 4px;
     background: var(--bg-secondary);
+}
+
+/* 笔记骨架屏 */
+.skeleton-notebook-item {
+    height: 80px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border-color) 50%, var(--bg-secondary) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+/* ==================== 动画效果优化 ==================== */
+/* 模态框动画增强（已在 .feedback-modal-content 中定义 transition） */
+/* 导航卡片 hover 增强 */
+.site-card {
+    transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.site-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* 音乐播放器底部折叠动画 */
+.music-player .bottom-section {
+    transition: max-height 0.3s ease-out;
+    overflow: hidden;
+}
+.music-player.collapsed .bottom-section {
+    max-height: 0 !important;
 }
