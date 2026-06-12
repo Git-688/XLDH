@@ -1,10 +1,10 @@
 // 星聚导航 Service Worker - 缓存导航数据与静态资源，增强 API 响应缓存
-// 版本 v5：移除 /navigation/sites 缓存，避免与后端优化冲突
-const CACHE_NAME = 'starlink-v5';
-const NAVIGATION_CACHE_NAME = 'starlink-nav-v5';
-const API_CACHE_NAME = 'starlink-api-v5';
+// 版本 v6：优化站点列表缓存策略（网络优先、缓存后备，TTL 5分钟）
+const CACHE_NAME = 'starlink-v6';
+const NAVIGATION_CACHE_NAME = 'starlink-nav-v6';
+const API_CACHE_NAME = 'starlink-api-v6';
 
-// 需要缓存的静态资源列表
+// 需要缓存的静态资源列表（增加字体文件）
 const STATIC_URLS = [
     '/',
     '/index.html',
@@ -48,24 +48,33 @@ const STATIC_URLS = [
     '/data/local-music-data.js'
 ];
 
-// 需要缓存的导航 API 路径（仅结构，不再缓存站点列表）
+// 需要缓存的导航 API 路径（缓存优先，用于结构）
 const NAV_API_PATTERNS = [
     '/navigation/structure'
-    // '/navigation/sites' 已移除，该数据已优化为直接查询 D1
 ];
 
-// 需要缓存的其他只读 API（网络优先，缓存后备，限制 TTL）
+// 网络优先、缓存后备的 API 列表（支持 TTL 校验）
 const CACHED_API_PATTERNS = [
-    '/stats',
-    '/uptime',
-    '/global-submission-count',
-    '/notebook'
+    '/navigation/sites',          // 站点列表，TTL 5分钟
+    '/stats',                     // 统计数据，TTL 1小时
+    '/uptime',                    // 运行时间，TTL 1小时
+    '/global-submission-count',   // 投稿总数，TTL 1小时
+    '/notebook'                   // 笔记，TTL 1小时
 ];
-const API_CACHE_TTL = 60 * 60 * 1000; // 1 小时
 
-// 版本更新检测：每隔一段时间检查新版本
+// 针对不同 API 的单独 TTL（毫秒）
+const API_TTL_MAP = {
+    '/navigation/sites': 5 * 60 * 1000,   // 5分钟
+    'default': 60 * 60 * 1000             // 默认1小时
+};
+
+function getApiTtl(urlPath) {
+    return API_TTL_MAP[urlPath] || API_TTL_MAP.default;
+}
+
+// 版本更新检测
 let versionCheckInterval = null;
-const VERSION_CHECK_INTERVAL = 60 * 60 * 1000; // 1小时
+const VERSION_CHECK_INTERVAL = 60 * 60 * 1000;
 
 // 安装事件：缓存静态资源
 self.addEventListener('install', event => {
@@ -92,7 +101,6 @@ self.addEventListener('activate', event => {
                 }
             }));
         }).then(() => {
-            // 通知所有客户端有新版本可用
             self.clients.matchAll().then(clients => {
                 clients.forEach(client => {
                     client.postMessage({
@@ -114,27 +122,25 @@ self.addEventListener('message', event => {
     }
 });
 
-// 判断请求是否为导航 API
+// 判断请求是否为导航 API（缓存优先）
 function isNavigationApiRequest(url) {
     return NAV_API_PATTERNS.some(pattern => url.pathname.includes(pattern));
 }
 
-// 判断请求是否为可缓存的只读 API
+// 判断请求是否为可缓存的只读 API（网络优先，缓存后备）
 function isCacheableApiRequest(request) {
     if (request.method !== 'GET') return false;
     const url = new URL(request.url);
     return CACHED_API_PATTERNS.some(pattern => url.pathname.includes(pattern));
 }
 
-// 处理导航 API 请求（缓存优先 + 后台更新，增加版本头）
+// 处理导航 API 请求（缓存优先 + 后台更新）
 async function handleNavigationApi(request, event) {
     const cache = await caches.open(NAVIGATION_CACHE_NAME);
     const cachedResponse = await cache.match(request);
     
-    // 发起网络请求并更新缓存（不等待）
     const fetchPromise = fetch(request).then(response => {
         if (response && response.status === 200) {
-            // 添加自定义版本头，便于调试
             const cloned = response.clone();
             const headers = new Headers(cloned.headers);
             headers.set('X-SW-Cache-Version', CACHE_NAME);
@@ -160,13 +166,18 @@ async function handleNavigationApi(request, event) {
 
 // 处理其他只读 API（网络优先，缓存后备，带 TTL 校验）
 async function handleCacheableApi(request) {
+    const url = new URL(request.url);
+    const apiPath = url.pathname;
+    const ttl = getApiTtl(apiPath);
     const cache = await caches.open(API_CACHE_NAME);
+    
     try {
         const response = await fetch(request);
         if (response && response.status === 200) {
             const cloned = response.clone();
             const headers = new Headers(cloned.headers);
             headers.set('sw-cache-timestamp', Date.now());
+            headers.set('sw-cache-ttl', ttl);
             const cachedResponse = new Response(cloned.body, {
                 status: cloned.status,
                 statusText: cloned.statusText,
@@ -178,10 +189,12 @@ async function handleCacheableApi(request) {
     } catch (err) {
         console.warn('网络请求失败，尝试从缓存获取:', err);
     }
+    
     const cached = await cache.match(request);
     if (cached) {
         const timestamp = cached.headers.get('sw-cache-timestamp');
-        if (timestamp && (Date.now() - parseInt(timestamp) < API_CACHE_TTL)) {
+        const cacheTtl = cached.headers.get('sw-cache-ttl') || ttl;
+        if (timestamp && (Date.now() - parseInt(timestamp) < parseInt(cacheTtl))) {
             return cached;
         } else {
             cache.delete(request);
@@ -226,6 +239,7 @@ async function handleOtherRequest(request) {
 // Fetch 事件：根据请求类型选择策略
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
+    // 仅处理本站请求
     if (url.origin !== self.location.origin) return;
     
     if (isNavigationApiRequest(url)) {
@@ -238,9 +252,11 @@ self.addEventListener('fetch', event => {
         return;
     }
     
+    // 对静态资源（文档、脚本、样式、字体）使用缓存优先
     if (event.request.destination === 'document' || 
         event.request.destination === 'script' || 
-        event.request.destination === 'style') {
+        event.request.destination === 'style' ||
+        event.request.destination === 'font') {
         event.respondWith(handleStaticResource(event.request));
         return;
     }
@@ -248,13 +264,10 @@ self.addEventListener('fetch', event => {
     event.respondWith(handleOtherRequest(event.request));
 });
 
-// 后台版本检查（可选，用于主动通知）
+// 后台版本检查（可选）
 self.addEventListener('activate', () => {
     if (versionCheckInterval) clearInterval(versionCheckInterval);
     versionCheckInterval = setInterval(() => {
-        // 请求一个带有版本号的资源，如果失败则提示用户刷新
-        fetch('/?sw-version-check=' + Date.now(), { cache: 'no-store' }).catch(() => {
-            // 如果网络请求失败，不处理
-        });
+        fetch('/?sw-version-check=' + Date.now(), { cache: 'no-store' }).catch(() => {});
     }, VERSION_CHECK_INTERVAL);
 });
