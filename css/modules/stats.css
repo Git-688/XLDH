@@ -13,19 +13,16 @@
         padding: calc(var(--section-margin-sm, 20px) * 0.6) var(--container-padding-sm, 20px);
     }
 }
-
 @media (min-width: 768px) {
     .footer-compact-container {
         padding: calc(var(--section-margin-md, 24px) * 0.6) var(--container-padding-md, 24px);
     }
 }
-
 @media (min-width: 992px) {
     .footer-compact-container {
         padding: calc(var(--section-margin-lg, 28px) * 0.6) var(--container-padding-lg, 28px);
     }
 }
-
 @media (min-width: 1200px) {
     .footer-compact-container {
         padding: calc(var(--section-margin-lg, 28px) * 0.6) var(--container-padding-xl, 32px);
@@ -100,14 +97,12 @@
         grid-auto-rows: auto;
     }
 }
-
 /* 平板端：四列 */
 @media (min-width: 768px) and (max-width: 1024px) {
     .footer-stats-cards {
         grid-template-columns: repeat(4, 1fr);
     }
 }
-
 /* 桌面端：一行四列 */
 @media (min-width: 1025px) {
     .footer-stats-cards {
@@ -260,7 +255,6 @@
         font-size: 10px;
     }
 }
-
 @media (max-width: 375px) {
     .footer-disclaimer-card {
         padding: 8px 10px;
@@ -286,13 +280,11 @@
         font-size: 9px;
     }
 }
-
 @media (max-width: 767px) {
     .footer-compact-container {
         padding-top: calc(var(--section-margin-xs, 16px) * 0.5);
     }
 }
-
 @media (min-width: 1025px) {
     .footer-compact-container {
         padding-top: calc(var(--section-margin-lg, 28px) * 0.6);
@@ -304,4 +296,42 @@
     width: 40px;
     height: 40px;
     font-size: 14px;
+}
+
+/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
+.dark-mode .footer-disclaimer-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+.dark-mode .disclaimer-header {
+    border-bottom-color: var(--border-color);
+}
+.dark-mode .disclaimer-title {
+    color: var(--text-primary);
+}
+.dark-mode .disclaimer-version {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+.dark-mode .disclaimer-text {
+    color: var(--text-secondary);
+}
+.dark-mode .disclaimer-text strong {
+    color: var(--text-primary);
+}
+.dark-mode .stat-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+.dark-mode .stat-card:hover {
+    border-color: var(--primary-color);
+}
+.dark-mode .running-icon {
+    border-color: var(--error-color);
+}
+.dark-mode .stat-name {
+    color: var(--text-secondary);
+}
+.dark-mode .stat-number {
+    color: var(--text-primary);
 }
