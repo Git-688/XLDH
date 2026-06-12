@@ -1,9 +1,13 @@
 /**
  * 简约公告模块 - 清爽现代版（修复模态框动画）
  * 已移除重要提醒标题和星星图标，重要提醒文字改为浅红色
+ * 修改：挂载到 window.Starlink.announcement
  */
 class AnnouncementModule {
     constructor() {
+        // 避免重复实例化
+        if (window.Starlink && window.Starlink.announcement) return window.Starlink.announcement;
+        
         this.announcements = [];
         this.modalElement = null;
         this.isVisible = false;
@@ -11,6 +15,11 @@ class AnnouncementModule {
         this.currentAnnouncement = null;
         this.escapeHandler = null;
         this.init();
+        
+        // 挂载到 Starlink
+        if (window.Starlink) window.Starlink.announcement = this;
+        // 保留旧全局变量以便兼容
+        window.announcementModule = this;
     }
 
     escapeHtml(text) {
@@ -27,7 +36,6 @@ class AnnouncementModule {
         this.setupGlobalEvents();
         this.updateNavbarBadge();
         this.isInitialized = true;
-        window.announcementModule = this;
     }
 
     loadAnnouncements() {
@@ -164,7 +172,10 @@ class AnnouncementModule {
     }
 
     updateNavbarBadge() {
-        if (window.app?.components?.navbar && typeof window.app.components.navbar.updateNotificationBadge === 'function') {
+        // 使用 Starlink 命名空间获取 navbar
+        if (window.Starlink?.navbar && typeof window.Starlink.navbar.updateNotificationBadge === 'function') {
+            window.Starlink.navbar.updateNotificationBadge();
+        } else if (window.app?.components?.navbar && typeof window.app.components.navbar.updateNotificationBadge === 'function') {
             window.app.components.navbar.updateNotificationBadge();
         } else if (window.navbar && typeof window.navbar.updateNotificationBadge === 'function') {
             window.navbar.updateNotificationBadge();
@@ -203,7 +214,9 @@ class AnnouncementModule {
         this.closeOtherModals();
         this.modalElement.classList.add('active');
         this.isVisible = true;
-        if (window.app) window.app.registerModal(this);
+        // 注册到应用
+        if (window.Starlink?.app) window.Starlink.app.registerModal(this);
+        else if (window.app) window.app.registerModal(this);
         this.updateButtonState(true);
     }
 
@@ -213,14 +226,17 @@ class AnnouncementModule {
         this.updateButtonState(false);
         const onTransitionEnd = () => {
             this.isVisible = false;
-            if (window.app) window.app.unregisterModal(this);
+            // 从应用中注销
+            if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
+            else if (window.app) window.app.unregisterModal(this);
             this.modalElement.removeEventListener('transitionend', onTransitionEnd);
         };
         this.modalElement.addEventListener('transitionend', onTransitionEnd, { once: true });
         setTimeout(() => {
             if (this.isVisible) {
                 this.isVisible = false;
-                if (window.app) window.app.unregisterModal(this);
+                if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
+                else if (window.app) window.app.unregisterModal(this);
             }
         }, 400);
     }
@@ -230,14 +246,31 @@ class AnnouncementModule {
     }
 
     closeOtherModals() {
-        if (window.sidebar?.isVisible?.()) window.sidebar.hide();
-        if (window.searchModule?.isModalOpen?.()) window.searchModule.hide();
+        // 使用 Starlink 命名空间关闭其他模态框
+        if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
+        else if (window.sidebar?.isVisible?.()) window.sidebar.hide();
+        
+        if (window.Starlink?.search?.isModalOpen?.()) window.Starlink.search.hide();
+        else if (window.searchModule?.isModalOpen?.()) window.searchModule.hide();
+        
         const musicPlayer = document.getElementById('musicPlayer');
-        if (musicPlayer?.classList.contains('show') && window.app?.components?.navbar) {
+        if (musicPlayer?.classList.contains('show') && window.Starlink?.navbar) {
+            window.Starlink.navbar.hideMusicPlayer();
+        } else if (musicPlayer?.classList.contains('show') && window.app?.components?.navbar) {
             window.app.components.navbar.hideMusicPlayer();
         }
-        if (window.aboutModule?.isVisible) window.aboutModule.hide();
-        if (window.app?.modules?.weather?.hide) window.app.modules.weather.hide();
+        
+        if (window.Starlink?.weather?.isShowing) window.Starlink.weather.hide();
+        else if (window.app?.modules?.weather?.hide) window.app.modules.weather.hide();
+        
+        if (window.Starlink?.about?.isVisible) window.Starlink.about.hide();
+        else if (window.aboutModule?.isVisible) window.aboutModule.hide();
+        
+        if (window.Starlink?.app?.hideNotebookModal) window.Starlink.app.hideNotebookModal();
+        else if (window.hideNotebookModal) window.hideNotebookModal();
+        
+        const submitModal = document.getElementById('submitModal');
+        if (submitModal?.classList.contains('active')) submitModal.classList.remove('active');
     }
 
     updateButtonState(active) {
