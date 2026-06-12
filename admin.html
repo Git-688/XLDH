@@ -722,6 +722,107 @@
             background: transparent;
             color: #64748b;
         }
+        .custom-select-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 120px;
+        }
+        .custom-select-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #1e293b;
+            cursor: pointer;
+            transition: all 0.2s;
+            gap: 8px;
+        }
+        .custom-select-trigger:hover { border-color: #3b82f6; }
+        .custom-select-trigger.open {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        .custom-select-value {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .custom-select-arrow {
+            width: 16px;
+            height: 16px;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-size: contain;
+            transition: transform 0.2s;
+        }
+        .custom-select-trigger.open .custom-select-arrow { transform: rotate(180deg); }
+        .custom-select-dropdown {
+            position: fixed;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.2s ease;
+            scrollbar-width: none;
+        }
+        .custom-select-dropdown::-webkit-scrollbar { display: none; }
+        .custom-select-dropdown.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .custom-select-option {
+            padding: 8px 12px;
+            font-size: 13px;
+            color: #1e293b;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .custom-select-option:hover { background: #f1f5f9; }
+        .custom-select-option.selected {
+            background: #e0f2fe;
+            color: #0369a1;
+            font-weight: 500;
+        }
+        @media (prefers-color-scheme: dark) {
+            .custom-select-trigger {
+                background: #1e293b;
+                border-color: #334155;
+                color: #e2e8f0;
+            }
+            .custom-select-dropdown {
+                background: #1e293b;
+                border-color: #334155;
+            }
+            .custom-select-option {
+                color: #e2e8f0;
+            }
+            .custom-select-option:hover { background: #334155; }
+            .custom-select-option.selected {
+                background: #0f172a;
+                color: #38bdf8;
+            }
+        }
+        .submission-title-truncate {
+            display: inline-block;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        @media (max-width: 768px) { .submission-title-truncate { max-width: 180px; } }
+        @media (max-width: 480px) { .submission-title-truncate { max-width: 120px; } }
     </style>
 </head>
 <body>
@@ -772,15 +873,12 @@
                 <button class="primary sm" id="refreshNavBtn">刷新导航缓存</button>
                 <button class="primary sm" id="addCategoryBtn">+一级分类</button>
             </div>
-
             <div class="cat-bar" id="catBar"></div>
-
             <div class="content-layout">
                 <div class="sidebar">
                     <button class="primary" id="addSubBtn">+子分类</button>
                     <div class="sub-list" id="subList"></div>
                 </div>
-
                 <div class="main-content">
                     <button class="primary" id="addSiteBtn">+添加链接</button>
                     <div class="site-list" id="siteList"></div>
@@ -804,9 +902,14 @@
             <div class="feedback-list" id="feedbackList"></div>
         </div>
 
+        <!-- 待审核标签页，添加批量操作按钮和复选框 -->
         <div id="submissionsTab" class="tab-panel hidden">
-            <div class="flex-row" style="margin-bottom:10px;">
-                <button class="primary sm" id="refreshSubmissionsBtn">刷新列表</button>
+            <div class="flex-row" style="margin-bottom:10px; justify-content: space-between; flex-wrap: wrap;">
+                <div style="display: flex; gap: 8px;">
+                    <button class="primary sm" id="refreshSubmissionsBtn">刷新列表</button>
+                    <button class="primary sm" id="batchApproveBtn" disabled>批量通过</button>
+                    <button class="danger sm" id="batchRejectBtn" disabled>批量拒绝</button>
+                </div>
                 <span class="badge badge-blue">用户投稿的网站，审核后可加入导航</span>
             </div>
             <div class="submissions-list" id="submissionsList"></div>
@@ -821,9 +924,7 @@
             <h3>📝 投稿详情</h3>
             <button id="closeDetailModalBtn" aria-label="关闭">&times;</button>
         </div>
-        <div class="modal-content" id="submissionDetailContent">
-            <!-- 动态内容 -->
-        </div>
+        <div class="modal-content" id="submissionDetailContent"></div>
     </div>
 </div>
 
