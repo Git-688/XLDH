@@ -150,78 +150,103 @@
   .wl-emoji-tab { padding: 2px 8px; font-size: 11px; }
 }
 
-/* ==================== 深色模式优化 ==================== */
-/* 系统深色模式 */
-@media (prefers-color-scheme: dark) {
-  #waline-comment {
-    --waline-bgcolor: #2a2a2a;
-    --waline-bgcolor-light: #3a3a3a;
-    --waline-border-color: #3e3e3e;
-    --waline-text-color: #f1f1f1;
-    --waline-text-color-light: #aaaaaa;
+/* 降级提示（Waline 未加载时的占位） */
+.waline-comment-fallback {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary, #999);
+  font-size: 13px;
+}
+
+/* ========== 模态框整体边距清零（与 style.css 互补） ========== */
+#commentModal.feedback-modal .feedback-modal-content {
+  padding: 0;
+}
+
+#commentModal.feedback-modal .feedback-modal-header {
+  padding: 10px 14px 8px;
+  margin: 0;
+}
+
+#commentModal.feedback-modal .feedback-modal-body {
+  padding: 0;
+}
+
+#commentModal.feedback-modal #waline-comment {
+  margin: 0;
+}
+
+/* ========== 评论模态框特殊定位（导航栏下方，上下间距相等，移动端左右边距与主页一致） ========== */
+#commentModal {
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 60px;
+  box-sizing: border-box;
+}
+
+/* 桌面端：内容区垂直居中（上下边距相等） */
+@media (min-width: 769px) {
+  #commentModal {
+    display: flex;
+    flex-direction: column;
   }
-  .wl-emoji-tab:hover {
-    background: rgba(255, 255, 255, 0.08);
-  }
-  .wl-emoji-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
-  /* Waline 内部元素深色覆盖 */
-  #waline-comment .wl-editor {
-    background: var(--waline-bgcolor);
-    border-color: var(--waline-border-color);
-    color: var(--waline-text-color);
-  }
-  #waline-comment .wl-input {
-    background: var(--waline-bgcolor);
-    border-color: var(--waline-border-color);
-    color: var(--waline-text-color);
-  }
-  #waline-comment .wl-btn {
-    background: var(--waline-bgcolor-light);
-    color: var(--waline-text-color);
-  }
-  #waline-comment .wl-btn-primary {
-    background: var(--waline-theme-color);
-    color: white;
-  }
-  #waline-comment .wl-comment {
-    background: var(--waline-bgcolor);
-    border-color: var(--waline-border-color);
-  }
-  #waline-comment .wl-comment-item {
-    border-bottom-color: var(--waline-border-color);
-  }
-  #waline-comment .wl-nick {
-    color: var(--waline-text-color);
-  }
-  #waline-comment .wl-time {
-    color: var(--waline-text-color-light);
-  }
-  #waline-comment .wl-comment-text {
-    color: var(--waline-text-color);
-  }
-  #waline-comment .wl-preview {
-    background: var(--waline-bgcolor-light);
-    color: var(--waline-text-color);
-  }
-  #waline-comment .wl-emoji-container {
-    border-bottom-color: var(--waline-border-color);
-  }
-  #waline-comment .wl-search {
-    border-top-color: var(--waline-border-color);
-  }
-  #waline-comment .wl-search-input {
-    background: var(--waline-bgcolor);
-    border-color: var(--waline-border-color);
-    color: var(--waline-text-color);
-  }
-  #waline-comment .wl-search-input:focus {
-    border-color: var(--waline-theme-color);
+  #commentModal .feedback-modal-content {
+    margin: auto 0;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+    width: 100%;
+    max-width: 600px;
   }
 }
 
-/* 手动深色模式覆盖（.dark-mode 类） */
+/* 移动端：左右边距与主页容器一致，上下间距相等，高度自适应 */
+@media (max-width: 768px) {
+  #commentModal {
+    padding-left: var(--container-padding-xs, 16px);
+    padding-right: var(--container-padding-xs, 16px);
+    padding-top: 60px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+  #commentModal .feedback-modal-content {
+    margin: auto 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+}
+
+/* 小屏手机进一步优化（380px以下） */
+@media (max-width: 480px) {
+  #commentModal {
+    padding-left: var(--container-padding-xs, 16px);
+    padding-right: var(--container-padding-xs, 16px);
+  }
+}
+
+/* 横屏小高度时，限制最大高度防止溢出 */
+@media (max-height: 500px) and (orientation: landscape) {
+  #commentModal .feedback-modal-content {
+    max-height: calc(100vh - 70px);
+  }
+}
+
+/* 滚动条美化（可选） */
+#commentModal .feedback-modal-content::-webkit-scrollbar {
+  width: 4px;
+}
+#commentModal .feedback-modal-content::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.05);
+  border-radius: 4px;
+}
+#commentModal .feedback-modal-content::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 4px;
+}
+
+/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
 .dark-mode #waline-comment {
   --waline-bgcolor: #2a2a2a;
   --waline-bgcolor-light: #3a3a3a;
@@ -287,117 +312,9 @@
 .dark-mode #waline-comment .wl-search-input:focus {
   border-color: var(--waline-theme-color);
 }
-
-/* 降级提示（Waline 未加载时的占位） */
-.waline-comment-fallback {
-  padding: 20px;
-  text-align: center;
-  color: var(--text-secondary, #999);
-  font-size: 13px;
-}
-
-/* ========== 模态框整体边距清零（与 style.css 互补） ========== */
-#commentModal.feedback-modal .feedback-modal-content {
-  padding: 0;
-}
-
-#commentModal.feedback-modal .feedback-modal-header {
-  padding: 10px 14px 8px;
-  margin: 0;
-}
-
-#commentModal.feedback-modal .feedback-modal-body {
-  padding: 0;
-}
-
-#commentModal.feedback-modal #waline-comment {
-  margin: 0;
-}
-
-/* ========== 评论模态框特殊定位（导航栏下方，上下间距相等，移动端左右边距与主页一致） ========== */
-#commentModal {
-  /* 覆盖父容器默认的居中对齐方式 */
-  align-items: center;
-  justify-content: flex-start;
-  /* 为导航栏留出空间 */
-  padding-top: 60px;
-  box-sizing: border-box;
-}
-
-/* 桌面端：内容区垂直居中（上下边距相等） */
-@media (min-width: 769px) {
-  #commentModal {
-    display: flex;
-    flex-direction: column;
-  }
-  #commentModal .feedback-modal-content {
-    margin: auto 0;                /* 垂直方向自动居中，上下间距相等 */
-    max-height: calc(100vh - 60px); /* 最大高度不超过视口减去导航栏高度 */
-    overflow-y: auto;
-    width: 100%;
-    max-width: 600px;
-  }
-}
-
-/* 移动端：左右边距与主页容器一致，上下间距相等，高度自适应 */
-@media (max-width: 768px) {
-  #commentModal {
-    padding-left: var(--container-padding-xs, 16px);
-    padding-right: var(--container-padding-xs, 16px);
-    padding-top: 60px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-  }
-  #commentModal .feedback-modal-content {
-    margin: auto 0;                /* 垂直方向自动居中，上下间距相等 */
-    width: 100%;
-    max-width: 100%;
-    max-height: calc(100vh - 60px); /* 确保不超出视口（导航栏已占用60px） */
-    overflow-y: auto;
-  }
-}
-
-/* 小屏手机进一步优化（380px以下） */
-@media (max-width: 480px) {
-  #commentModal {
-    padding-left: var(--container-padding-xs, 16px);
-    padding-right: var(--container-padding-xs, 16px);
-  }
-}
-
-/* 横屏小高度时，限制最大高度防止溢出 */
-@media (max-height: 500px) and (orientation: landscape) {
-  #commentModal .feedback-modal-content {
-    max-height: calc(100vh - 70px);
-  }
-}
-
-/* 滚动条美化（可选） */
-#commentModal .feedback-modal-content::-webkit-scrollbar {
-  width: 4px;
-}
-#commentModal .feedback-modal-content::-webkit-scrollbar-track {
-  background: rgba(0,0,0,0.05);
-  border-radius: 4px;
-}
-#commentModal .feedback-modal-content::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.2);
-  border-radius: 4px;
-}
-
-/* 深色模式滚动条适配 */
-@media (prefers-color-scheme: dark) {
-  #commentModal .feedback-modal-content::-webkit-scrollbar-track {
-    background: rgba(255,255,255,0.05);
-  }
-  #commentModal .feedback-modal-content::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.2);
-  }
-}
 .dark-mode #commentModal .feedback-modal-content::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
 }
 .dark-mode #commentModal .feedback-modal-content::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
