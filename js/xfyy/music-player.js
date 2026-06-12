@@ -2,6 +2,7 @@
  * 音乐播放器 - 星聚导航专用（完整修复版）
  * 包含：精确进度条、下载进度（通过 Worker 代理）、搜索、播放列表、用户手势处理、歌词代理、歌单显示修复、倍速控件修复
  * 进度条点击和拖拽已优化，支持触摸设备
+ * 修改：挂载到 window.Starlink.musicPlayer，支持单例
  */
 
 // ==================== 自定义下拉选择器组件（必须在播放器类之前定义） ====================
@@ -215,6 +216,9 @@ function initCustomSelects() {
 // ==================== 主播放器类 ====================
 class MusicPlayer {
     constructor() {
+        // 避免重复实例化
+        if (window.Starlink && window.Starlink.musicPlayer) return window.Starlink.musicPlayer;
+        
         this.audio = document.getElementById('audio-element');
         this.cacheManager = new CacheManager();
         this.lyricParser = new LyricParser();
@@ -227,6 +231,14 @@ class MusicPlayer {
 
         this.userGestureResolved = false;
         this.userGesturePromise = null;
+        
+        // 挂载到 Starlink 命名空间
+        if (!window.Starlink) window.Starlink = {};
+        if (!window.Starlink.musicPlayer) {
+            window.Starlink.musicPlayer = this;
+        }
+        // 保留旧全局变量以便兼容
+        window.musicPlayer = window.Starlink.musicPlayer;
     }
 
     waitForUserGesture() {
@@ -517,7 +529,8 @@ class MusicPlayer {
             if (error.name === 'NotAllowedError') {
                 this.userGestureResolved = false;
                 this.userGesturePromise = null;
-                window.toast?.show('请在页面任意位置点击后再次播放', 'info');
+                const toast = window.Starlink?.toast || window.toast;
+                if (toast && toast.show) toast.show('请在页面任意位置点击后再次播放', 'info');
             } else {
                 this.handlePlaybackError(error);
             }
@@ -568,7 +581,8 @@ class MusicPlayer {
         this.playMode = (this.playMode + 1) % 3;
         this.savePlayMode(this.playMode);
         this.updateModeIcon();
-        window.toast?.show(`播放模式: ${this.getPlayModeText()}`, 'info');
+        const toast = window.Starlink?.toast || window.toast;
+        if (toast && toast.show) toast.show(`播放模式: ${this.getPlayModeText()}`, 'info');
     }
 
     getPlayModeText() { return ['顺序播放', '随机播放', '单曲循环'][this.playMode]; }
@@ -598,7 +612,8 @@ class MusicPlayer {
 
     toggleSearchMode(apiId) {
         if (apiId === 'migu' || apiId === 'local') {
-            window.toast?.show('该功能不支持搜索', 'info');
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) toast.show('该功能不支持搜索', 'info');
             return;
         }
         const el = this.apiElements[apiId];
@@ -665,20 +680,23 @@ class MusicPlayer {
             if (apiId === 'local') {
                 playlist = await this.pluginManager.getPlaylist(apiId, 'local');
                 if (playlist.length && !this.hasNotifiedLocal) {
-                    window.toast?.show(`已加载 ${playlist.length} 首本地歌曲`, 'info');
+                    const toast = window.Starlink?.toast || window.toast;
+                    if (toast && toast.show) toast.show(`已加载 ${playlist.length} 首本地歌曲`, 'info');
                     this.hasNotifiedLocal = true;
                 }
             } else if (apiId === 'migu') {
                 playlist = await this.pluginManager.getPlaylist(apiId, 'hot');
                 if (playlist.length && !this.hasNotifiedQishui) {
-                    window.toast?.show(`已加载 ${playlist.length} 首抖音热歌`, 'info');
+                    const toast = window.Starlink?.toast || window.toast;
+                    if (toast && toast.show) toast.show(`已加载 ${playlist.length} 首抖音热歌`, 'info');
                     this.hasNotifiedQishui = true;
                 }
             } else {
                 const playlistId = el.playlistSelect?.value || '3778678';
                 playlist = await this.pluginManager.getPlaylist(apiId, playlistId);
                 if (playlist.length && !sessionStorage.getItem(`notified_${apiId}_${playlistId}`)) {
-                    window.toast?.show(`已加载 ${playlist.length} 首歌曲`, 'info');
+                    const toast = window.Starlink?.toast || window.toast;
+                    if (toast && toast.show) toast.show(`已加载 ${playlist.length} 首歌曲`, 'info');
                     sessionStorage.setItem(`notified_${apiId}_${playlistId}`, 'true');
                 }
             }
@@ -686,14 +704,15 @@ class MusicPlayer {
         } catch (error) {
             Utils.handleApiError(error, `加载 ${apiId} 歌单失败`, true);
             if (el.playlistContainer) {
-                el.playlistContainer.innerHTML = `<div class="error-message"><p>加载失败: ${Utils.escapeHtml(error.message)}</p><button class="retry-btn" onclick="window.musicPlayer?.loadApiPlaylist('${apiId}')">重试</button></div>`;
+                el.playlistContainer.innerHTML = `<div class="error-message"><p>加载失败: ${Utils.escapeHtml(error.message)}</p><button class="retry-btn" onclick="window.Starlink?.musicPlayer?.loadApiPlaylist('${apiId}')">重试</button></div>`;
             }
         }
     }
 
     async searchApi(apiId) {
         if (apiId === 'migu' || apiId === 'local') {
-            window.toast?.show('该功能不支持搜索', 'info');
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) toast.show('该功能不支持搜索', 'info');
             return;
         }
         const el = this.apiElements[apiId];
@@ -717,7 +736,10 @@ class MusicPlayer {
                 return song;
             });
             this.renderSearchResults(apiId, processedResults);
-            if (!processedResults.length) window.toast?.show(`未找到与"${Utils.escapeHtml(keyword)}"相关的歌曲`, 'info');
+            if (!processedResults.length) {
+                const toast = window.Starlink?.toast || window.toast;
+                if (toast && toast.show) toast.show(`未找到与"${Utils.escapeHtml(keyword)}"相关的歌曲`, 'info');
+            }
         } catch (error) {
             Utils.handleApiError(error, '搜索失败', true);
             if (el.searchResults) el.searchResults.innerHTML = `<div class="error-message"><p>搜索失败: ${Utils.escapeHtml(error.message)}</p></div>`;
@@ -859,7 +881,8 @@ class MusicPlayer {
         this.consecutiveErrors++;
         if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
             if (!this.maxErrorShown) {
-                window.toast?.show('连续多首资源失效，已停止自动播放', 'error');
+                const toast = window.Starlink?.toast || window.toast;
+                if (toast && toast.show) toast.show('连续多首资源失效，已停止自动播放', 'error');
                 this.maxErrorShown = true;
             }
             this.autoPlayNext = false;
@@ -888,7 +911,8 @@ class MusicPlayer {
     // ==================== 下载功能（增强进度提示） ====================
     async downloadCurrentSong() {
         if (!this.currentPlaylist[this.currentIndex]) {
-            window.toast?.show('没有可下载的歌曲', 'warning');
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) toast.show('没有可下载的歌曲', 'warning');
             return;
         }
         await this.downloadSong(this.currentPlaylist[this.currentIndex]);
@@ -901,7 +925,8 @@ class MusicPlayer {
         let indeterminate = false;
 
         try {
-            window.toast?.show(`正在获取下载地址: ${song.title}`, 'info');
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) toast.show(`正在获取下载地址: ${song.title}`, 'info');
             
             let downloadUrl = null;
             if (song.id && (song.source === 'netease' || this.currentApi === 'netease')) {
@@ -914,7 +939,7 @@ class MusicPlayer {
                 throw new Error('无法获取有效的下载地址');
             }
             
-            window.toast?.show(`开始下载: ${song.title}`, 'info');
+            if (toast && toast.show) toast.show(`开始下载: ${song.title}`, 'info');
             progress = this.createDownloadProgress();
             
             const apiBase = Utils.getApiBase();
@@ -956,11 +981,12 @@ class MusicPlayer {
             URL.revokeObjectURL(url);
             
             progress.remove();
-            window.toast?.show(`下载完成: ${song.title}`, 'success');
+            if (toast && toast.show) toast.show(`下载完成: ${song.title}`, 'success');
             
         } catch (err) {
             console.error('下载失败:', err);
-            window.toast?.show(`下载失败: ${song.title}，请稍后重试`, 'error');
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) toast.show(`下载失败: ${song.title}，请稍后重试`, 'error');
             if (progress) progress.remove();
         }
     }
@@ -1220,7 +1246,8 @@ class MusicPlayer {
             this.savePlayState(false);
             this.userGestureResolved = false;
             this.updatePlayButton();
-            window.toast?.show('点击播放按钮开始音乐', 'info');
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) toast.show('点击播放按钮开始音乐', 'info');
         }
     }
 
@@ -1242,6 +1269,7 @@ class MusicPlayer {
         if (this.cacheManager) this.cacheManager.cleanup();
         this.hasNotifiedLocal = false;
         this.hasNotifiedQishui = false;
+        if (window.Starlink?.musicPlayer === this) window.Starlink.musicPlayer = null;
         if (window.musicPlayer === this) window.musicPlayer = null;
         console.log('音乐播放器资源已清理');
     }
