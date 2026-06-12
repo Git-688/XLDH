@@ -50,7 +50,7 @@
     display: flex;
     width: 100%;
     height: 100%;
-    transition: transform 0.5s ease;  /* 原贝塞尔曲线改为 ease */
+    transition: transform 0.5s ease;
     will-change: transform;
 }
 
@@ -186,15 +186,13 @@
     .wallpaper-title { font-size: 12px; }
 }
 
-/* 深色模式适配 */
-@media (prefers-color-scheme: dark) {
-    .wallpaper-container {
-        background: linear-gradient(135deg, var(--primary-color, #4361ee) 0%, var(--accent-color, #7209b7) 100%);
-    }
-    .carousel-arrow {
-        background: rgba(0, 0, 0, 0.3);
-    }
-    .carousel-arrow:hover {
-        background: rgba(0, 0, 0, 0.5);
-    }
+/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
+.dark-mode .wallpaper-container {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+}
+.dark-mode .carousel-arrow {
+    background: rgba(0, 0, 0, 0.3);
+}
+.dark-mode .carousel-arrow:hover {
+    background: rgba(0, 0, 0, 0.5);
 }
