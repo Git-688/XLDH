@@ -33,23 +33,6 @@
     transform: translateX(0);
 }
 
-/* 深色模式基础适配（跟随系统） */
-@media (prefers-color-scheme: dark) {
-    .sidebar {
-        background: var(--sidebar-bg-dark);
-        border: 1px solid #404040;
-        --sidebar-border: 1px solid #404040;
-        --sidebar-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    }
-}
-
-/* 手动深色模式覆盖（.dark-mode） */
-.dark-mode .sidebar {
-    background: #1e1e1e;
-    border: 1px solid #404040;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
-
 /* 壁纸头部区域 */
 .sidebar-wallpaper {
     position: relative;
@@ -130,7 +113,7 @@
 .daily-quote-card {
     margin: 12px 16px;
     padding: 0;
-    background: #ffffff;
+    background: var(--bg-card, #ffffff);
     border-radius: 8px;
     border: none;
     box-shadow: none;
@@ -142,22 +125,6 @@
     margin: 0;
     text-align: center;
     font-style: italic;
-}
-
-/* 深色模式下每日一言卡片 */
-@media (prefers-color-scheme: dark) {
-    .daily-quote-card {
-        background: #2d2d2d;
-    }
-    .daily-quote-card p {
-        color: #e0e0e0;
-    }
-}
-.dark-mode .daily-quote-card {
-    background: #2d2d2d;
-}
-.dark-mode .daily-quote-card p {
-    color: #e0e0e0;
 }
 
 /* 分类容器 - 隐藏滚动条 */
@@ -175,26 +142,12 @@
 /* 分类分组 */
 .category-group {
     margin-bottom: 12px;
-    background: #ffffff;
+    background: var(--bg-card, #ffffff);
     border-radius: 8px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-color, #e0e0e0);
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     overflow: hidden;
     transition: all 0.2s ease;
-}
-
-/* 深色模式下分类分组 */
-@media (prefers-color-scheme: dark) {
-    .category-group {
-        background: #2d2d2d;
-        border: 1px solid #404040;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-}
-.dark-mode .category-group {
-    background: #2d2d2d;
-    border: 1px solid #404040;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .category-group-header {
@@ -209,15 +162,6 @@
 .category-group-header:hover {
     background: rgba(67, 97, 238, 0.08);
 }
-/* 深色模式下 hover */
-@media (prefers-color-scheme: dark) {
-    .category-group-header:hover {
-        background: rgba(67, 97, 238, 0.2);
-    }
-}
-.dark-mode .category-group-header:hover {
-    background: rgba(67, 97, 238, 0.2);
-}
 
 .category-name {
     display: flex;
@@ -231,15 +175,6 @@
     width: 20px;
     color: var(--primary-color, #4361ee);
     font-size: 14px;
-}
-/* 深色模式下分类名颜色 */
-@media (prefers-color-scheme: dark) {
-    .category-name {
-        color: #f0f0f0;
-    }
-}
-.dark-mode .category-name {
-    color: #f0f0f0;
 }
 
 .category-toggle {
@@ -257,21 +192,6 @@
 }
 .category-toggle:hover {
     background: rgba(0, 0, 0, 0.05);
-}
-/* 深色模式下 toggle 按钮颜色 */
-@media (prefers-color-scheme: dark) {
-    .category-toggle {
-        color: #adb5bd;
-    }
-    .category-toggle:hover {
-        background: rgba(255, 255, 255, 0.1);
-    }
-}
-.dark-mode .category-toggle {
-    color: #adb5bd;
-}
-.dark-mode .category-toggle:hover {
-    background: rgba(255, 255, 255, 0.1);
 }
 
 .category-group.expanded .category-toggle {
@@ -316,44 +236,16 @@
     font-size: 13px;
     color: currentColor;
 }
-/* 深色模式下分类项样式 */
-@media (prefers-color-scheme: dark) {
-    .category-item {
-        color: #e0e0e0;
-    }
-    .category-item:hover {
-        background: rgba(67, 97, 238, 0.25);
-        color: #7bc8ff;
-    }
-}
-.dark-mode .category-item {
-    color: #e0e0e0;
-}
-.dark-mode .category-item:hover {
-    background: rgba(67, 97, 238, 0.25);
-    color: #7bc8ff;
-}
 
 /* 底部按钮栏 */
 .sidebar-footer {
     padding: 12px 16px;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--border-color, #e0e0e0);
     display: flex;
     justify-content: space-around;
     gap: 12px;
-    background: #ffffff;
+    background: var(--bg-card, #ffffff);
     flex-shrink: 0;
-}
-/* 深色模式下底部栏 */
-@media (prefers-color-scheme: dark) {
-    .sidebar-footer {
-        background: #2d2d2d;
-        border-top-color: #404040;
-    }
-}
-.dark-mode .sidebar-footer {
-    background: #2d2d2d;
-    border-top-color: #404040;
 }
 
 .footer-btn {
@@ -362,8 +254,8 @@
     align-items: center;
     justify-content: center;
     padding: 8px 0;
-    background: #ffffff;
-    border: 1px solid #e0e0e0;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -378,25 +270,6 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.12);
 }
-/* 深色模式下底部按钮 */
-@media (prefers-color-scheme: dark) {
-    .footer-btn {
-        background: #2d2d2d;
-        border: 1px solid #404040;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    .footer-btn:hover {
-        background: rgba(67, 97, 238, 0.2);
-    }
-}
-.dark-mode .footer-btn {
-    background: #2d2d2d;
-    border: 1px solid #404040;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-.dark-mode .footer-btn:hover {
-    background: rgba(67, 97, 238, 0.2);
-}
 
 /* 各按钮独立颜色 - 保持原有，深色模式下略微调整亮度 */
 .footer-btn[data-action="notebook"] { color: #8b5cf6; }
@@ -407,26 +280,6 @@
 .footer-btn[data-action="about"]:hover { background: rgba(236, 72, 153, 0.15); color: #db2777; }
 .footer-btn[data-action="qq"] { color: #3b82f6; }
 .footer-btn[data-action="qq"]:hover { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
-
-/* 深色模式下按钮独立颜色（适当提高亮度） */
-@media (prefers-color-scheme: dark) {
-    .footer-btn[data-action="notebook"] { color: #a78bfa; }
-    .footer-btn[data-action="notebook"]:hover { color: #c4b5fd; }
-    .footer-btn[data-action="gift"] { color: #fb923c; }
-    .footer-btn[data-action="gift"]:hover { color: #fdba74; }
-    .footer-btn[data-action="about"] { color: #f472b6; }
-    .footer-btn[data-action="about"]:hover { color: #f9a8d4; }
-    .footer-btn[data-action="qq"] { color: #60a5fa; }
-    .footer-btn[data-action="qq"]:hover { color: #93c5fd; }
-}
-.dark-mode .footer-btn[data-action="notebook"] { color: #a78bfa; }
-.dark-mode .footer-btn[data-action="notebook"]:hover { color: #c4b5fd; }
-.dark-mode .footer-btn[data-action="gift"] { color: #fb923c; }
-.dark-mode .footer-btn[data-action="gift"]:hover { color: #fdba74; }
-.dark-mode .footer-btn[data-action="about"] { color: #f472b6; }
-.dark-mode .footer-btn[data-action="about"]:hover { color: #f9a8d4; }
-.dark-mode .footer-btn[data-action="qq"] { color: #60a5fa; }
-.dark-mode .footer-btn[data-action="qq"]:hover { color: #93c5fd; }
 
 /* 响应式：左右边距与主页一致 */
 @media (min-width: 576px) {
@@ -538,3 +391,63 @@
         animation: none;
     }
 }
+
+/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
+.dark-mode .sidebar {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+.dark-mode .daily-quote-card {
+    background: var(--bg-secondary);
+}
+.dark-mode .daily-quote-card p {
+    color: var(--text-primary);
+}
+.dark-mode .category-group {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+.dark-mode .category-group-header:hover {
+    background: rgba(67, 97, 238, 0.2);
+}
+.dark-mode .category-name {
+    color: var(--text-primary);
+}
+.dark-mode .category-name i {
+    color: var(--primary-color);
+}
+.dark-mode .category-toggle {
+    color: var(--text-secondary);
+}
+.dark-mode .category-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.dark-mode .category-item {
+    color: var(--text-primary);
+}
+.dark-mode .category-item:hover {
+    background: rgba(67, 97, 238, 0.25);
+    color: var(--primary-color);
+}
+.dark-mode .sidebar-footer {
+    background: var(--bg-secondary);
+    border-top-color: var(--border-color);
+}
+.dark-mode .footer-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+.dark-mode .footer-btn:hover {
+    background: rgba(67, 97, 238, 0.2);
+}
+.dark-mode .footer-btn[data-action="notebook"] { color: #a78bfa; }
+.dark-mode .footer-btn[data-action="notebook"]:hover { color: #c4b5fd; }
+.dark-mode .footer-btn[data-action="gift"] { color: #fb923c; }
+.dark-mode .footer-btn[data-action="gift"]:hover { color: #fdba74; }
+.dark-mode .footer-btn[data-action="about"] { color: #f472b6; }
+.dark-mode .footer-btn[data-action="about"]:hover { color: #f9a8d4; }
+.dark-mode .footer-btn[data-action="qq"] { color: #60a5fa; }
+.dark-mode .footer-btn[data-action="qq"]:hover { color: #93c5fd; }
