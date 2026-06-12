@@ -1,10 +1,12 @@
 /**
  * 优化分类导航系统 - 分页加载版（支持 WebP 图标、高清懒加载、智能预加载、点击计数优化）
  * 修复：无效链接统计改为全局统计（所有分类下的无效链接总数）
- * 优化：骨架屏显示更细腻
+ * 添加：NProgress 风格的顶部进度条
  */
 class OptimizedNavigation {
     constructor() {
+        if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
+        
         this.structure = null;
         this.siteCache = new Map();
         this.selectedLevel1 = null;
@@ -39,6 +41,9 @@ class OptimizedNavigation {
 
         this.preloadQueue = [];
         this.isPreloading = false;
+        
+        if (window.Starlink) window.Starlink.navigation = this;
+        window.optimizedNavigation = this;
     }
 
     _escapeHtml(str) { return Utils.escapeHtml(str); }
@@ -132,8 +137,8 @@ class OptimizedNavigation {
         return `<img class="lazy-icon" data-domain="${domainEscaped}" data-src="${this._escapeHtml(candidates[0])}" 
                      data-candidates='${safeCandidates}'
                      alt="" loading="lazy"
-                     onerror="this.onerror=null; const candidates = JSON.parse(this.getAttribute('data-candidates')); const domain = this.getAttribute('data-domain'); const idx = candidates.indexOf(this.src); if (idx !== -1 && idx + 1 < candidates.length) { this.src = candidates[idx+1]; } else { if (window.optimizedNavigation && window.optimizedNavigation._recordIconFailure) { window.optimizedNavigation._recordIconFailure(domain); } this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>'; }"
-                     onload="const domain = this.getAttribute('data-domain'); if (window.optimizedNavigation && window.optimizedNavigation._recordIconSuccess) { window.optimizedNavigation._recordIconSuccess(domain, this.src); }">`;
+                     onerror="this.onerror=null; const candidates = JSON.parse(this.getAttribute('data-candidates')); const domain = this.getAttribute('data-domain'); const idx = candidates.indexOf(this.src); if (idx !== -1 && idx + 1 < candidates.length) { this.src = candidates[idx+1]; } else { if (window.Starlink?.navigation && window.Starlink.navigation._recordIconFailure) { window.Starlink.navigation._recordIconFailure(domain); } this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>'; }"
+                     onload="const domain = this.getAttribute('data-domain'); if (window.Starlink?.navigation && window.Starlink.navigation._recordIconSuccess) { window.Starlink.navigation._recordIconSuccess(domain, this.src); }">`;
     }
 
     _highlightText(text, keyword) {
@@ -287,18 +292,29 @@ class OptimizedNavigation {
     }
 
     async loadNavigationStructure() {
-        const response = await Utils.safeFetch(`${this.apiBase}/navigation/structure`);
-        if (!response.ok) throw new Error('Failed to load navigation structure');
-        this.structure = await response.json();
+        NProgress.start();
+        try {
+            const response = await Utils.safeFetch(`${this.apiBase}/navigation/structure`);
+            if (!response.ok) throw new Error('Failed to load navigation structure');
+            this.structure = await response.json();
+            return this.structure;
+        } finally {
+            NProgress.done();
+        }
     }
 
     async loadSites(subcategoryId, forceRefresh = false) {
-        if (!forceRefresh && this.siteCache.has(subcategoryId)) return this.siteCache.get(subcategoryId);
-        const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
-        if (!response.ok) throw new Error('Failed to load sites');
-        const sites = await response.json();
-        this.siteCache.set(subcategoryId, sites);
-        return sites;
+        NProgress.start();
+        try {
+            if (!forceRefresh && this.siteCache.has(subcategoryId)) return this.siteCache.get(subcategoryId);
+            const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
+            if (!response.ok) throw new Error('Failed to load sites');
+            const sites = await response.json();
+            this.siteCache.set(subcategoryId, sites);
+            return sites;
+        } finally {
+            NProgress.done();
+        }
     }
 
     async loadSubcategoryCountsForLevel1(level1) {
@@ -676,6 +692,7 @@ class OptimizedNavigation {
         const container = document.getElementById('level3Content');
         if (!container) return;
         this.showSkeleton();
+        NProgress.start();
         try {
             const searchUrl = `${this.apiBase}/search?q=${encodeURIComponent(query)}`;
             const response = await Utils.safeFetch(searchUrl);
@@ -697,7 +714,10 @@ class OptimizedNavigation {
         } catch(e) {
             console.error(e);
             container.innerHTML = '<div class="empty-state">搜索失败，请重试</div>';
-        } finally { this.isSearching = false; }
+        } finally {
+            NProgress.done();
+            this.isSearching = false;
+        }
     }
 
     clearSearch() {
