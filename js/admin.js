@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，支持手动发送邮件）
+// admin.js - 星聚导航后台管理（完整版，支持手动发送邮件，修复内存泄漏）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -932,32 +932,7 @@
         }
     }
 
-    injectGlobalStyles();
-    const storedToken = getStoredToken();
-    if (storedToken) {
-        token = storedToken;
-        (async () => {
-            try {
-                await apiFetch('/admin/categories');
-                document.getElementById('tokenInput').style.display = 'none';
-                document.getElementById('loginBtn').classList.add('hidden');
-                document.getElementById('logoutBtn').classList.remove('hidden');
-                document.getElementById('mainContent').classList.remove('hidden');
-                document.querySelector('.remember-checkbox').style.display = 'none';
-                await loadAllData();
-                startSessionRefresh();
-            } catch (e) { logout(); }
-        })();
-    }
-
-    setInterval(() => {
-        const exp = sessionStorage.getItem('admin_expires');
-        if (exp && Date.now() > parseInt(exp, 10) - 60000) showToast('登录即将过期', 'warn');
-    }, 30000);
-
-    updateLockMessage();
-    setupEventDelegation();
-
+    // ==================== CustomSelect 类（支持 destroy 方法） ====================
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -1234,4 +1209,30 @@
             document.head.appendChild(style);
         }
     }
+
+    injectGlobalStyles();
+    const storedToken = getStoredToken();
+    if (storedToken) {
+        token = storedToken;
+        (async () => {
+            try {
+                await apiFetch('/admin/categories');
+                document.getElementById('tokenInput').style.display = 'none';
+                document.getElementById('loginBtn').classList.add('hidden');
+                document.getElementById('logoutBtn').classList.remove('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                document.querySelector('.remember-checkbox').style.display = 'none';
+                await loadAllData();
+                startSessionRefresh();
+            } catch (e) { logout(); }
+        })();
+    }
+
+    setInterval(() => {
+        const exp = sessionStorage.getItem('admin_expires');
+        if (exp && Date.now() > parseInt(exp, 10) - 60000) showToast('登录即将过期', 'warn');
+    }, 30000);
+
+    updateLockMessage();
+    setupEventDelegation();
 })();
