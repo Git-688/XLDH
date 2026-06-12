@@ -1,5 +1,5 @@
 /**
- * Toast 管理器 - 全局统一提示（使用 Utils.escapeHtml）
+ * Toast 管理器 - 全局统一提示（支持图标、可配置时长）
  */
 class ToastManager {
     constructor() {
@@ -19,20 +19,33 @@ class ToastManager {
         document.body.appendChild(this.container);
     }
 
+    /**
+     * 显示提示
+     * @param {string} message 提示内容
+     * @param {string} type 类型：info, success, warning, error
+     * @param {number} duration 显示时长（毫秒），默认3000
+     * @returns {number} toast ID
+     */
     show(message, type = 'info', duration = this.defaultDuration) {
         const id = ++this.counter;
         const toast = document.createElement('div');
         toast.className = `toast-item toast-${type}`;
         toast.setAttribute('role', 'alert');
+        
+        // 获取对应图标
+        const icon = this.getIcon(type);
+        
         toast.innerHTML = `
             <div class="toast-content">
-                <i class="fas fa-${this.getIcon(type)}"></i>
+                <i class="fas fa-${icon}"></i>
                 <span>${Utils.escapeHtml(message)}</span>
             </div>
             <button class="toast-close" aria-label="关闭">×</button>
         `;
 
-        toast.querySelector('.toast-close').addEventListener('click', () => this.remove(id));
+        const closeBtn = toast.querySelector('.toast-close');
+        closeBtn.addEventListener('click', () => this.remove(id));
+        
         const timeoutId = setTimeout(() => this.remove(id), duration);
 
         if (this.toasts.size >= this.maxToasts) {
@@ -42,6 +55,8 @@ class ToastManager {
 
         this.container.appendChild(toast);
         this.toasts.set(id, { element: toast, timeoutId });
+        
+        // 触发重绘以执行动画
         requestAnimationFrame(() => toast.classList.add('show'));
         return id;
     }
@@ -73,4 +88,5 @@ class ToastManager {
     }
 }
 
+// 单例
 window.toast = new ToastManager();
