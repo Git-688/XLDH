@@ -2,9 +2,13 @@
  * 网站投稿模块（异步安全检测 + 轮询状态）
  * 已移除每日投稿限制，邮箱改为必填，修复 getDeviceId
  * 已移除底部安全检测提示
+ * 修改：挂载到 window.Starlink.submit
  */
 class SubmitModule {
     constructor() {
+        // 避免重复实例化
+        if (window.Starlink && window.Starlink.submit) return window.Starlink.submit;
+        
         this.modal = document.getElementById('submitModal');
         this.form = document.getElementById('submitSiteForm');
         this.urlInput = document.getElementById('submitUrl');
@@ -31,6 +35,11 @@ class SubmitModule {
         this.isVisible = false;
 
         this.init();
+        
+        // 挂载到 Starlink
+        if (window.Starlink) window.Starlink.submit = this;
+        // 保留旧全局变量以便兼容
+        window.submitModule = this;
     }
 
     escapeHtml(str) {
@@ -404,9 +413,17 @@ class SubmitModule {
 
     show() {
         if (!this.modal) return;
+        // 关闭侧边栏
+        if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible?.()) {
+            window.Starlink.sidebar.hide();
+        } else if (window.sidebar && window.sidebar.isVisible?.()) {
+            window.sidebar.hide();
+        }
         this.modal.classList.add('active');
         this.isVisible = true;
-        if (window.app) window.app.registerModal(this);
+        // 注册到应用
+        if (window.Starlink?.app) window.Starlink.app.registerModal(this);
+        else if (window.app) window.app.registerModal(this);
     }
 
     hide() {
@@ -414,7 +431,9 @@ class SubmitModule {
         this.modal.classList.remove('active');
         const onTransitionEnd = () => {
             this.isVisible = false;
-            if (window.app) window.app.unregisterModal(this);
+            // 从应用中注销
+            if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
+            else if (window.app) window.app.unregisterModal(this);
             this.modal.removeEventListener('transitionend', onTransitionEnd);
             this.resetForm();
         };
@@ -424,11 +443,9 @@ class SubmitModule {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!window.submitModule) {
-        if (!window.Starlink) window.Starlink = {};
-        if (!window.Starlink.submit) {
-            window.Starlink.submit = new SubmitModule();
-        }
-        window.submitModule = window.Starlink.submit;
+    if (!window.Starlink) window.Starlink = {};
+    if (!window.Starlink.submit) {
+        window.Starlink.submit = new SubmitModule();
     }
+    window.submitModule = window.Starlink.submit;
 });
