@@ -1,12 +1,14 @@
 /**
  * 搜索模块 - 修复版（CSP 兼容，XSS 防护，兼容侧滑栏）
  * 依赖 Utils.escapeHtml, Utils.debounce
- * 
  * 修改说明：动态定位搜索框位置，使其位于导航栏下方，间距与壁纸顶部到导航栏一致
+ * 修改：挂载到 window.Starlink.search
  */
 class NewSearchModule {
     constructor() {
-        if (window.newSearchModule) return window.newSearchModule;
+        // 避免重复实例化
+        if (window.Starlink && window.Starlink.search) return window.Starlink.search;
+        
         this.engines = [
             { key: 'baidu',   label: '百度',   url: 'https://www.baidu.com/s?wd=', icon: 'fas fa-search' },
             { key: 'google',  label: '谷歌',   url: 'https://www.google.com/search?q=', icon: 'fab fa-google' },
@@ -50,6 +52,11 @@ class NewSearchModule {
             const searchSubmit = this.modal.querySelector('.search-submit-btn');
             if (searchSubmit) searchSubmit.addEventListener('click', () => this.submitSearch());
         }
+        
+        // 挂载到 Starlink
+        if (window.Starlink) window.Starlink.search = this;
+        // 保留旧全局变量以便兼容
+        window.newSearchModule = this;
     }
 
     loadSetting(key, def) {
@@ -167,7 +174,10 @@ class NewSearchModule {
             window.addEventListener('resize', this.handleResize);
             this.isResizeListenerAdded = true;
         }
-        if (window.sidebar && typeof window.sidebar.isVisible === 'function' && window.sidebar.isVisible()) {
+        // 关闭侧边栏
+        if (window.Starlink?.sidebar && typeof window.Starlink.sidebar.isVisible === 'function' && window.Starlink.sidebar.isVisible()) {
+            window.Starlink.sidebar.hide();
+        } else if (window.sidebar && typeof window.sidebar.isVisible === 'function' && window.sidebar.isVisible()) {
             window.sidebar.hide();
         }
         this.modal.classList.add('active');
@@ -177,6 +187,9 @@ class NewSearchModule {
         this.renderHistory();
         this.clearSuggestions();
         this.closeDropdown();
+        // 注册到应用
+        if (window.Starlink?.app) window.Starlink.app.registerModal(this);
+        else if (window.app) window.app.registerModal(this);
     }
 
     hide() {
@@ -189,6 +202,9 @@ class NewSearchModule {
             window.removeEventListener('resize', this.handleResize);
             this.isResizeListenerAdded = false;
         }
+        // 从应用中注销
+        if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
+        else if (window.app) window.app.unregisterModal(this);
     }
 
     setEngine(key) {
