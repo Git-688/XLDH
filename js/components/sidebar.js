@@ -1,4 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（展开后允许主页滚动）
+// sidebar.js - 现代悬浮侧滑栏（支持触摸手势）
 (function() {
     // 分类数据
     const CATEGORIES_DATA = [
@@ -37,7 +37,7 @@
         ] }
     ];
 
-    // 底部按钮配置（只有图标，独立颜色）
+    // 底部按钮配置
     const FOOTER_BUTTONS = [
         { icon: 'fas fa-pen', action: 'notebook', color: '#8b5cf6' },
         { icon: 'fas fa-gift', action: 'gift', color: '#f97316' },
@@ -47,7 +47,6 @@
 
     class ModernSidebar {
         constructor() {
-            // 避免重复实例化
             if (window.Starlink && window.Starlink.sidebar) return window.Starlink.sidebar;
             this.sidebarEl = document.getElementById('sidebar');
             this.isOpen = false;
@@ -56,7 +55,6 @@
             this._savedScrollY = 0;
             this.init();
             if (window.Starlink) window.Starlink.sidebar = this;
-            // 保留旧全局变量以便兼容（可选）
             window.sidebar = this;
         }
 
@@ -69,7 +67,42 @@
             this.loadExpandedState();
             this.setFixedTop();
             this.loadWallpaperBackground();
+            this.initTouchGestures();
             window.addEventListener('resize', () => this.setFixedTop());
+        }
+
+        // 触摸手势：左滑关闭侧边栏，右滑打开
+        initTouchGestures() {
+            let touchStartX = 0;
+            let touchStartTime = 0;
+            const threshold = 50;      // 滑动最小距离（像素）
+            const edgeWidth = 30;       // 边缘检测宽度（像素）
+
+            document.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartTime = Date.now();
+            }, { passive: true });
+
+            document.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].clientX;
+                const diffX = touchEndX - touchStartX;
+                const absDiff = Math.abs(diffX);
+                const duration = Date.now() - touchStartTime;
+                
+                // 快速滑动判断（时间<300ms，距离>threshold）
+                const isFastSwipe = duration < 300 && absDiff > threshold;
+                
+                // 左滑：从右侧向左滑动（diffX < -threshold），关闭侧边栏
+                if (isFastSwipe && diffX < -threshold && this.isOpen) {
+                    this.hide();
+                    e.preventDefault();
+                }
+                // 右滑：从左侧边缘向右滑动（touchStartX < edgeWidth && diffX > threshold），打开侧边栏
+                else if (isFastSwipe && diffX > threshold && touchStartX < edgeWidth && !this.isOpen) {
+                    this.show();
+                    e.preventDefault();
+                }
+            });
         }
 
         render() {
@@ -226,21 +259,13 @@
         handleFooterAction(action) {
             switch (action) {
                 case 'notebook':
-                    if (window.Starlink?.app?.showNotebookModal) {
-                        window.Starlink.app.showNotebookModal();
-                    } else if (window.showNotebookModal) {
-                        window.showNotebookModal();
-                    }
+                    if (window.showNotebookModal) window.showNotebookModal();
                     break;
                 case 'gift':
                     window.open('./pages/tools/羊毛福利.html', '_blank');
                     break;
                 case 'about':
-                    if (window.Starlink?.about && window.Starlink.about.show) {
-                        window.Starlink.about.show();
-                    } else if (window.aboutModule && window.aboutModule.show) {
-                        window.aboutModule.show();
-                    }
+                    if (window.aboutModule && window.aboutModule.show) window.aboutModule.show();
                     break;
                 case 'qq':
                     window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
@@ -301,7 +326,6 @@
             }
         }
 
-        // 修改后的 openProfileModal：移除亚克力效果，调整头部高度与星聚笔记一致，移动端左右边距与主页一致，移除头像激活指示样式
         openProfileModal() {
             const currentAvatar = (this.userConfig && this.userConfig.avatar) ? this.userConfig.avatar : './assets/logo.png';
             const containerPadding = getComputedStyle(document.documentElement).getPropertyValue('--container-padding-xs').trim() || '16px';
@@ -437,7 +461,6 @@
         }
 
         closeOtherModals() {
-            // 使用 Starlink 命名空间关闭其他模态框
             if (window.Starlink?.search && typeof window.Starlink.search.hide === 'function') window.Starlink.search.hide();
             else if (window.newSearchModule && typeof window.newSearchModule.hide === 'function') window.newSearchModule.hide();
             
