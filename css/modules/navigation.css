@@ -1,6 +1,7 @@
 /* 
  * 优化分类导航样式
  * 性能优化：level3-content 增加 content-visibility，卡片添加 will-change
+ * 深色模式统一使用 .dark-mode 类
  */
 
 /* ====================== 搜索框样式 ====================== */
@@ -286,7 +287,7 @@
     text-align: center;
     box-sizing: border-box;
     contain: layout style paint;
-    will-change: transform;  /* 性能优化：提示浏览器准备变换 */
+    will-change: transform;
 }
 .site-card:hover {
     transform: translateY(-2px);
@@ -320,7 +321,7 @@
     border: 1px solid rgba(0, 0, 0, 0.1);
     padding: 0;
     image-rendering: -webkit-optimize-contrast;
-    will-change: transform;  /* 性能优化：提示浏览器准备变换 */
+    will-change: transform;
 }
 .icon-container img {
     width: 100%;
@@ -505,19 +506,56 @@
     .site-description { font-size: 9px; }
 }
 
-/* 暗色模式 */
-@media (prefers-color-scheme: dark) {
-    .navigation-body, .navigation-left, .navigation-middle { background: var(--bg-card); border-color: var(--border-color); }
-    .level1-btn, .level2-btn { border-color: var(--border-color); }
-    .level1-btn:hover, .level2-btn:hover { background: rgba(67, 97, 238, 0.1); }
-    .level1-btn.active { color: var(--nav-level1-active); }
-    .level2-btn.active { color: var(--nav-level2-active); }
-    .level2-btn.active .level2-btn-count { background: var(--nav-level2-active); color: #1a1a1a; }
-    .site-card { background: var(--bg-card); border-color: var(--border-color); }
-    .site-card:hover { border-color: var(--nav-level1-active); }
-    .icon-container { border-color: var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-    .divider-line { background: repeating-linear-gradient(to right, transparent, transparent 2px, #888 2px, #888 4px); }
-    .view-count { color: var(--nav-level1-active) !important; }
-    .views-icon { color: var(--nav-level1-active); }
-    .skeleton-icon, .skeleton-btn, .skeleton-views, .skeleton-title, .skeleton-description { background: linear-gradient(90deg, #3a3a3a 25%, #4a4a4a 50%, #3a3a3a 75%); background-size: 200% 100%; }
+/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
+.dark-mode .navigation-body,
+.dark-mode .navigation-left,
+.dark-mode .navigation-middle {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+.dark-mode .level1-btn,
+.dark-mode .level2-btn {
+    border-color: var(--border-color);
+}
+.dark-mode .level1-btn:hover,
+.dark-mode .level2-btn:hover {
+    background: rgba(67, 97, 238, 0.1);
+}
+.dark-mode .level1-btn.active {
+    color: var(--nav-level1-active);
+}
+.dark-mode .level2-btn.active {
+    color: var(--nav-level2-active);
+}
+.dark-mode .level2-btn.active .level2-btn-count {
+    background: var(--nav-level2-active);
+    color: #1a1a1a;
+}
+.dark-mode .site-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+.dark-mode .site-card:hover {
+    border-color: var(--nav-level1-active);
+}
+.dark-mode .icon-container {
+    border-color: var(--border-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.dark-mode .divider-line {
+    background: repeating-linear-gradient(to right, transparent, transparent 2px, #888 2px, #888 4px);
+}
+.dark-mode .view-count {
+    color: var(--nav-level1-active) !important;
+}
+.dark-mode .views-icon {
+    color: var(--nav-level1-active);
+}
+.dark-mode .skeleton-icon,
+.dark-mode .skeleton-btn,
+.dark-mode .skeleton-views,
+.dark-mode .skeleton-title,
+.dark-mode .skeleton-description {
+    background: linear-gradient(90deg, #3a3a3a 25%, #4a4a4a 50%, #3a3a3a 75%);
+    background-size: 200% 100%;
 }
