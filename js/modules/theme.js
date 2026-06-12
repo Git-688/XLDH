@@ -1,7 +1,7 @@
 /**
  * 主题切换模块 - 白天/黑夜模式
  * 支持保存用户偏好、跟随系统、手动切换
- * 修改：挂载到 window.Starlink.theme
+ * 修改：统一使用 .dark-mode 类，移除媒体查询依赖，挂载到 window.Starlink.theme
  */
 class ThemeModule {
     constructor() {
@@ -37,12 +37,10 @@ class ThemeModule {
     }
 
     loadThemePreference() {
-        // 从 localStorage 读取主题偏好
         const savedTheme = localStorage.getItem(this.THEME_KEY);
         if (savedTheme && this.availableThemes.includes(savedTheme)) {
             this.currentTheme = savedTheme;
         } else {
-            // 默认使用 auto (跟随系统)
             this.currentTheme = 'auto';
         }
         this.applyTheme();
@@ -50,8 +48,6 @@ class ThemeModule {
 
     applyTheme() {
         const htmlElement = document.documentElement;
-        // 先移除深色类（如果存在）
-        htmlElement.classList.remove(this.DARK_CLASS);
         
         let shouldBeDark = false;
         if (this.currentTheme === 'dark') {
@@ -59,18 +55,16 @@ class ThemeModule {
         } else if (this.currentTheme === 'light') {
             shouldBeDark = false;
         } else if (this.currentTheme === 'auto') {
-            // 跟随系统
             shouldBeDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         }
         
         if (shouldBeDark) {
             htmlElement.classList.add(this.DARK_CLASS);
+        } else {
+            htmlElement.classList.remove(this.DARK_CLASS);
         }
         
-        // 更新按钮图标
         this.updateButtonIcon(shouldBeDark);
-        
-        // 保存偏好
         localStorage.setItem(this.THEME_KEY, this.currentTheme);
     }
 
@@ -79,9 +73,9 @@ class ThemeModule {
         const icon = this.themeToggleBtn.querySelector('i');
         if (icon) {
             if (isDark) {
-                icon.className = 'fas fa-sun'; // 深色模式下显示太阳，表示切换回亮色
+                icon.className = 'fas fa-sun';
             } else {
-                icon.className = 'fas fa-moon'; // 亮色模式下显示月亮，表示切换到深色
+                icon.className = 'fas fa-moon';
             }
         }
         this.themeToggleBtn.setAttribute('aria-label', isDark ? '切换到亮色模式' : '切换到深色模式');
@@ -129,7 +123,7 @@ class ThemeModule {
     }
 }
 
-// 单例模式
+// 单例模式初始化
 if (!window.Starlink) window.Starlink = {};
 if (!window.Starlink.theme) {
     window.Starlink.theme = new ThemeModule();
