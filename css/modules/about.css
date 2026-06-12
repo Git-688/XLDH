@@ -23,7 +23,7 @@
 .about-modal-content {
     display: flex;
     flex-direction: column;
-    background: #ffffff;
+    background: var(--bg-card, #ffffff);
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
@@ -195,9 +195,9 @@
     align-items: flex-start;
     gap: 10px;
     padding: 12px;
-    background: #ffffff;
+    background: var(--bg-secondary, #ffffff);
     border-radius: 8px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color, #e9ecef);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
 }
@@ -247,7 +247,7 @@
 .about-footer {
     padding: 12px 14px 14px;
     border-top: none;
-    background: #ffffff;
+    background: var(--bg-card, #ffffff);
 }
 .about-action-buttons {
     display: flex;
@@ -444,82 +444,27 @@
     }
 }
 
-/* ==================== 深色模式优化 ==================== */
-/* 系统深色模式 */
-@media (prefers-color-scheme: dark) {
-    .about-modal-content {
-        background: #2d2d2d;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    }
-    .about-card.white-bg {
-        background: #3a3a3a;
-        border-color: #404040;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-    .about-card.white-bg:hover {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    }
-    .card-content h3 {
-        color: #f0f0f0;
-    }
-    .card-content p {
-        color: #c0c0c0;
-    }
-    .about-footer {
-        background: #2d2d2d;
-    }
-    /* 左边大卡片透明，无需深色覆盖；内部卡片背景加深 */
-    .info-card {
-        background: rgba(0, 0, 0, 0.7);
-    }
-    .about-header-right.logo-card {
-        background: rgba(0, 0, 0, 0.5);
-    }
-    .about-close-btn {
-        background: var(--success-color, #10b981);
-    }
-    .about-close-btn:hover {
-        background: #0da271;
-    }
-    /* 社交按钮深色微调（保持原有颜色，稍微提亮） */
-    .qq-btn { background: #5AB5EF; }
-    .qq-btn:hover { background: #4A9FD9; }
-    .wechat-btn { background: #6EC312; }
-    .wechat-btn:hover { background: #5CAD0F; }
-    .donate-btn { background: #ef4444; }
-    .donate-btn:hover { background: #dc2626; }
-    .space-btn { background: #f59e0b; }
-    .space-btn:hover { background: #d97706; }
-    .about-social-btn .tooltip-text {
-        background-color: #e0e0e0;
-        color: #1e1e1e;
-    }
-    .about-social-btn .tooltip-text::after {
-        border-color: #e0e0e0 transparent transparent transparent;
-    }
-}
-
-/* 手动深色模式（.dark-mode 类） */
+/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
 .dark-mode .about-modal-content {
-    background: #2d2d2d;
+    background: var(--bg-card);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 .dark-mode .about-card.white-bg {
-    background: #3a3a3a;
-    border-color: #404040;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 .dark-mode .about-card.white-bg:hover {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 .dark-mode .card-content h3 {
-    color: #f0f0f0;
+    color: var(--text-primary);
 }
 .dark-mode .card-content p {
-    color: #c0c0c0;
+    color: var(--text-secondary);
 }
 .dark-mode .about-footer {
-    background: #2d2d2d;
+    background: var(--bg-card);
 }
 .dark-mode .info-card {
     background: rgba(0, 0, 0, 0.7);
@@ -528,7 +473,7 @@
     background: rgba(0, 0, 0, 0.5);
 }
 .dark-mode .about-close-btn {
-    background: var(--success-color, #10b981);
+    background: var(--success-color);
 }
 .dark-mode .about-close-btn:hover {
     background: #0da271;
@@ -537,9 +482,9 @@
 .dark-mode .qq-btn:hover { background: #4A9FD9; }
 .dark-mode .wechat-btn { background: #6EC312; }
 .dark-mode .wechat-btn:hover { background: #5CAD0F; }
-.dark-mode .donate-btn { background: #ef4444; }
+.dark-mode .donate-btn { background: var(--error-color); }
 .dark-mode .donate-btn:hover { background: #dc2626; }
-.dark-mode .space-btn { background: #f59e0b; }
+.dark-mode .space-btn { background: var(--warning-color); }
 .dark-mode .space-btn:hover { background: #d97706; }
 .dark-mode .about-social-btn .tooltip-text {
     background-color: #e0e0e0;
