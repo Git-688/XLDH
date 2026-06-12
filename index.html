@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <meta name="description" content="星聚导航是一个现代化的个人导航网站，提供便捷的上网导航体验和各种实用工具">
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
+
     <!-- 全局配置 - 支持环境自动切换 -->
     <script>
         (function() {
@@ -31,16 +33,21 @@
             window.Starlink = window.Starlink || {};
         })();
     </script>
+
     <!-- CSP 安全策略（已添加必要源） -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz https://unpkg.zhimg.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.zhimg.com; img-src * data:; media-src *; connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'none'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'none'; form-action 'self';">
+
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
+
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
+
     <!-- 预加载字体文件（关键性能优化） -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
     <!-- 关键 CSS：首屏必需，正常加载 -->
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
@@ -54,21 +61,25 @@
     <link rel="stylesheet" href="./css/modules/greeting.css">
     <link rel="stylesheet" href="./css/modules/stats.css">
     <link rel="stylesheet" href="./css/responsive.css">
+
     <!-- 非关键 CSS：异步加载（不阻塞渲染） -->
     <link rel="preload" href="./css/modules/compact-tags.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <!-- 【已修改】Waline CSS v3.15.2 替换为国内知乎镜像 -->
-    <link rel="preload" href="https://unpkg.zhimg.com/@waline/client@3.15.2/dist/waline.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <!-- Waline CSS v3.15.2 使用预加载 + 异步加载 -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/regular.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+
     <link rel="preload" href="./js/main.js" as="script">
+
     <style>
         /* 基础变量定义 */
         :root {
@@ -242,8 +253,8 @@
         @media (min-width: 992px) { .container, .container-fluid { padding: 0 var(--container-padding-lg, 28px); } }
         @media (min-width: 1200px) { .container, .container-fluid { padding: 0 var(--container-padding-xl, 32px); } }
         .floating-buttons { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 12px; z-index: var(--z-floating, 100); }
-        .floating-btn { width: 50px; height: 50px; border: none; border-radius: 50%; background: var(--bg-card, #ffffff); color: var(--text-secondary, #6c757d); cursor: pointer; transition: var(--transition, all 0.2s ease); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0.15); }
-        .floating-btn:hover { box-shadow: 0 4px 12px rgba(0,0,0.2); }
+        .floating-btn { width: 50px; height: 50px; border: none; border-radius: 50%; background: var(--bg-card, #ffffff); color: var(--text-secondary, #6c757d); cursor: pointer; transition: var(--transition, all 0.2s ease); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .floating-btn:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .back-to-top { color: var(--error-color, #ef4444); opacity: 0; transform: translateY(10px); visibility: hidden; transition: all 0.3s ease; }
         .back-to-top.visible { opacity: 1; transform: translateY(0); visibility: visible; }
         .back-to-top:hover { color: #ff3333; }
@@ -257,7 +268,7 @@
         .floating-btn.submit-btn:hover { color: #0891b2; }
         @media (prefers-color-scheme: dark) {
             .floating-btn { background: #2d2d2d; color: rgba(255,255,255,0.9); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-            .floating-btn:hover { background: #383838; color: rgba(255,255,255,0.9); box-shadow: 0 4px 12px rgba(0,0,0.4); }
+            .floating-btn:hover { background: #383838; color: rgba(255,255,255,0.9); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
             .back-to-top { color: #ff6b6b; }
             .back-to-top:hover { color: #ff5252; }
             .refresh-btn { color: #34d399; }
@@ -321,6 +332,7 @@
         }
     </style>
 </head>
+
 <body>
     <nav class="navbar" id="navbar">
         <div class="nav-container">
@@ -636,7 +648,7 @@
                 </div>
             </div>
         </div>
-        <audio id="audio-element" preload="metadata" style="display:none;">
+        <audio id="audio-element" preload="metadata" style="display:none;"></audio>
         <div class="search-modal" id="searchModal">
             <div class="modal-content">
                 <div class="search-bar"><button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎"><i id="engineIcon" class="fas fa-search"></i></button><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off"><button class="search-submit-btn">搜索</button></div>
@@ -650,6 +662,7 @@
         </div>
         <div class="engine-tooltip" id="engineTooltip"></div>
     </main>
+
     <div id="notebookModal" class="feedback-modal">
         <div class="feedback-modal-content">
             <div class="feedback-modal-header">
@@ -694,8 +707,10 @@
             </div>
         </div>
     </div>
+
     <!-- 引入 jQuery（粒子特效依赖） -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+
     <!-- 所有外部脚本添加 defer 和 crossorigin -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js" crossorigin="anonymous"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
@@ -722,12 +737,14 @@
     <script defer src="./js/xfyy/plugin-manager.js"></script>
     <script defer src="./js/xfyy/music-player.js"></script>
     <script defer src="./js/xfyy/music-main.js"></script>
-    <!-- 【已修改】Waline JS v3.15.2 替换为国内知乎镜像 -->
-    <script defer src="https://unpkg.zhimg.com/@waline/client@3.15.2/dist/waline.umd.js" crossorigin="anonymous"></script>
+    <!-- Waline JS v3.15.2 使用 defer 加载 -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js" crossorigin="anonymous"></script>
     <script defer src="./js/modules/comment.js"></script>
     <script defer src="./js/modules/submit.js"></script>
+
     <!-- 主题切换模块 -->
     <script defer src="./js/modules/theme.js"></script>
+
     <script>
         // 注册 Service Worker（延迟到页面加载完成）
         if ('serviceWorker' in navigator) {
@@ -761,7 +778,10 @@
             });
         }
     </script>
+
     <!-- 点击粒子特效（确保在 jQuery 之后加载，且添加 ready 初始化） -->
        <script defer src="./js/cursor2.js"></script>
+
 </body>
+
 </html>
