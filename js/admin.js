@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，支持手动发送邮件 + 批量审核）
+// admin.js - 星聚导航后台管理（完整版，支持公告管理，排序值优化）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -15,10 +15,6 @@
     let currentSubmissionId = null;
     let refreshTimer = null;
     let customSelects = {};
-
-    // 批量审核相关全局变量
-    let currentSubmissionsData = [];   // 存储当前投稿列表
-    let selectedSubmissionIds = new Set(); // 存储选中的投稿ID
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -350,7 +346,133 @@
         `).join('');
     }
 
-    // 投稿详情模态框（原有，略作调整）
+    // ==================== 公告管理 ====================
+    async function loadAnnouncements() {
+        const list = document.getElementById('announcementsList');
+        if (!list) return;
+        list.innerHTML = '<div class="empty">加载中...</div>';
+        try {
+            const data = await apiFetch('/admin/announcements');
+            if (!data.length) {
+                list.innerHTML = '<div class="empty">暂无公告，点击“新建公告”添加</div>';
+                return;
+            }
+            list.innerHTML = data.map(item => `
+                <div class="announcement-item" data-id="${item.id}">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <strong style="font-size:14px;">${escapeHtml(item.title)}</strong>
+                        <div>
+                            <span class="announcement-status ${item.is_active ? 'status-active' : 'status-inactive'}">${item.is_active ? '已启用' : '已停用'}</span>
+                            <button class="sm primary edit-announcement-btn" data-id="${item.id}" style="margin-left:8px;">编辑</button>
+                        </div>
+                    </div>
+                    <div class="announcement-content">${escapeHtml(item.content)}</div>
+                    <div style="font-size:10px; color:#999; margin-top:6px;">创建: ${new Date(item.created_at).toLocaleString()}</div>
+                </div>
+            `).join('');
+            document.querySelectorAll('.edit-announcement-btn').forEach(btn => {
+                btn.addEventListener('click', () => openAnnouncementModal(parseInt(btn.dataset.id)));
+            });
+        } catch (e) {
+            list.innerHTML = '<div class="empty">加载失败</div>';
+        }
+    }
+
+    async function getNextSortValue(type, parentId = null) {
+        try {
+            let maxOrder = 0;
+            if (type === 'category') {
+                const max = categories.reduce((max, c) => Math.max(max, c.display_order || 0), 0);
+                maxOrder = max;
+            } else if (type === 'subcategory' && parentId) {
+                const subs = subcategories.filter(s => s.category_id === parentId);
+                const max = subs.reduce((max, s) => Math.max(max, s.display_order || 0), 0);
+                maxOrder = max;
+            } else if (type === 'site' && parentId) {
+                const sitesList = sites.filter(s => s.subcategory_id === parentId);
+                const max = sitesList.reduce((max, s) => Math.max(max, s.display_order || 0), 0);
+                maxOrder = max;
+            }
+            return maxOrder + 1;
+        } catch { return 0; }
+    }
+
+    async function openAnnouncementModal(id = null) {
+        const modal = document.getElementById('announcementDetailModal');
+        const titleEl = document.getElementById('announcementModalTitle');
+        const formContainer = document.getElementById('announcementFormContainer');
+        const deleteBtn = document.getElementById('announcementDeleteBtn');
+        
+        if (id) {
+            const data = await apiFetch('/admin/announcements');
+            const item = data.find(a => a.id === id);
+            if (!item) { showToast('公告不存在', 'error'); return; }
+            titleEl.textContent = '编辑公告';
+            deleteBtn.style.display = 'inline-flex';
+            formContainer.innerHTML = `
+                <div class="form-row"><label>标题</label><input type="text" id="annTitle" value="${escapeHtml(item.title)}"></div>
+                <div class="form-row"><label>内容</label><textarea id="annContent" rows="5">${escapeHtml(item.content)}</textarea></div>
+                <div class="form-row"><label><input type="checkbox" id="annActive" ${item.is_active ? 'checked' : ''}> 启用公告（前端显示）</label></div>
+            `;
+            deleteBtn.onclick = async () => {
+                if (!confirm('确定删除该公告？')) return;
+                await apiFetch(`/admin/announcements/${id}`, { method: 'DELETE' });
+                showToast('公告已删除', 'success');
+                modal.classList.remove('show');
+                await loadAnnouncements();
+            };
+        } else {
+            titleEl.textContent = '新建公告';
+            deleteBtn.style.display = 'none';
+            formContainer.innerHTML = `
+                <div class="form-row"><label>标题</label><input type="text" id="annTitle" placeholder="公告标题"></div>
+                <div class="form-row"><label>内容</label><textarea id="annContent" rows="5" placeholder="公告内容..."></textarea></div>
+                <div class="form-row"><label><input type="checkbox" id="annActive" checked> 启用公告</label></div>
+            `;
+        }
+        modal.classList.add('show');
+        
+        const saveBtn = document.getElementById('announcementSaveBtn');
+        const cancelBtn = document.getElementById('announcementCancelBtn');
+        const closeBtn = document.getElementById('closeAnnouncementModalBtn');
+        const saveHandler = async () => {
+            const title = document.getElementById('annTitle').value.trim();
+            const content = document.getElementById('annContent').value.trim();
+            const is_active = document.getElementById('annActive').checked ? 1 : 0;
+            if (!title || !content) { showToast('标题和内容不能为空', 'error'); return; }
+            saveBtn.disabled = true;
+            saveBtn.textContent = '保存中...';
+            try {
+                if (id) {
+                    await apiFetch(`/admin/announcements/${id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ title, content, is_active })
+                    });
+                    showToast('公告已更新', 'success');
+                } else {
+                    await apiFetch('/admin/announcements', {
+                        method: 'POST',
+                        body: JSON.stringify({ title, content, is_active })
+                    });
+                    showToast('公告已创建', 'success');
+                }
+                modal.classList.remove('show');
+                await loadAnnouncements();
+            } catch (err) {
+                showToast('操作失败', 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '保存';
+            }
+        };
+        const closeModal = () => modal.classList.remove('show');
+        saveBtn.onclick = saveHandler;
+        cancelBtn.onclick = closeModal;
+        closeBtn.onclick = closeModal;
+        modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+    }
+
+    // ==================== 投稿详情模态框（无批量） ====================
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -536,35 +658,42 @@
         } catch (err) { showToast('加载详情失败', 'error'); }
     }
 
-    async function editSubmission(id, newTitle, newDesc, newIcon) {
-        try {
-            await apiFetch(`/admin/submissions/${id}`, { method: 'PUT', body: JSON.stringify({ title: newTitle, description: newDesc, icon: newIcon }) });
-            return true;
-        } catch (err) { showToast('更新失败', 'error'); return false; }
-    }
-
+    // 修改分类（增加排序值）
     function handleModifyCategory(id, currentName) {
-        openModal('修改分类', `<div class="form-row"><label>名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>`,
-            async () => {
-                const name = document.getElementById('mName').value.trim();
-                if (!name) { showToast('名称不能为空', 'error'); return; }
-                await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
-                showToast('修改成功'); await loadAllData();
-            }, true,
-            async () => { await apiFetch(`/admin/categories/${id}`, { method:'DELETE' }); showToast('分类已删除'); await loadAllData(); }
-        );
+        const cat = categories.find(c => c.id === id);
+        const currentOrder = cat?.display_order || 0;
+        openModal('修改分类', `
+            <div class="form-row"><label>名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>
+            <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}"></div>
+        `, async () => {
+            const name = document.getElementById('mName').value.trim();
+            const order = parseInt(document.getElementById('mOrder').value) || 0;
+            if (!name) { showToast('名称不能为空', 'error'); return; }
+            await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
+            showToast('修改成功'); await loadAllData();
+        }, true, async () => { 
+            await apiFetch(`/admin/categories/${id}`, { method:'DELETE' }); 
+            showToast('分类已删除'); await loadAllData(); 
+        });
     }
 
+    // 修改子分类（增加排序值）
     function handleModifySub(id, currentName) {
-        openModal('修改子分类', `<div class="form-row"><label>名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>`,
-            async () => {
-                const name = document.getElementById('mName').value.trim();
-                if (!name) { showToast('名称不能为空', 'error'); return; }
-                await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
-                showToast('修改成功'); await loadAllData();
-            }, true,
-            async () => { await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); showToast('子分类已删除'); await loadAllData(); }
-        );
+        const sub = subcategories.find(s => s.id === id);
+        const currentOrder = sub?.display_order || 0;
+        openModal('修改子分类', `
+            <div class="form-row"><label>名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>
+            <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}"></div>
+        `, async () => {
+            const name = document.getElementById('mName').value.trim();
+            const order = parseInt(document.getElementById('mOrder').value) || 0;
+            if (!name) { showToast('名称不能为空', 'error'); return; }
+            await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
+            showToast('修改成功'); await loadAllData();
+        }, true, async () => { 
+            await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); 
+            showToast('子分类已删除'); await loadAllData(); 
+        });
     }
 
     async function handleEditSite(id) {
@@ -575,7 +704,7 @@
              <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" class="form-input" value="${escapeHtml(site.url)}"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
              <div class="form-row"><label>图标</label><input id="mIcon" class="form-input" value="${escapeHtml(site.icon||'fas fa-link')}"></div>
              <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%;">${escapeHtml(site.description||'')}</textarea></div>
-             <div class="form-row"><label>排序</label><input type="number" id="mSort" class="form-input" value="${site.display_order}"></div>`,
+             <div class="form-row"><label>排序值</label><input type="number" id="mSort" class="form-input" value="${site.display_order}"></div>`,
             async () => {
                 const title = document.getElementById('mTitle').value.trim();
                 const url = document.getElementById('mUrl').value.trim();
@@ -600,10 +729,11 @@
         }, 50);
     }
 
-    function handleAddCategory() {
+    async function handleAddCategory() {
+        const nextOrder = await getNextSortValue('category');
         openModal('新增一级分类',
             `<div class="form-row"><label>名称</label><input id="mName" class="form-input"></div>
-             <div class="form-row"><label>排序</label><input type="number" id="mSort" class="form-input" value="${categories.length}"></div>`,
+             <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}"></div>`,
             async () => {
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
@@ -613,11 +743,12 @@
         );
     }
 
-    function handleAddSub() {
+    async function handleAddSub() {
         if (!currentCat) { showToast('请先选择一级分类', 'error'); return; }
+        const nextOrder = await getNextSortValue('subcategory', currentCat);
         openModal('新增子分类',
             `<div class="form-row"><label>名称</label><input id="mName" class="form-input"></div>
-             <div class="form-row"><label>排序</label><input type="number" id="mSort" class="form-input" value="0"></div>`,
+             <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}"></div>`,
             async () => {
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
@@ -627,14 +758,15 @@
         );
     }
 
-    function handleAddSite() {
+    async function handleAddSite() {
         if (!currentSub) { showToast('请先选择子分类', 'error'); return; }
+        const nextOrder = await getNextSortValue('site', currentSub);
         openModal('新增链接',
             `<div class="form-row"><label>标题</label><input id="mTitle" class="form-input"></div>
              <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" class="form-input"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
              <div class="form-row"><label>图标</label><input id="mIcon" class="form-input" value="fas fa-link"></div>
              <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%;"></textarea></div>
-             <div class="form-row"><label>排序</label><input type="number" id="mSort" class="form-input" value="0"></div>`,
+             <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}"></div>`,
             async () => {
                 const title = document.getElementById('mTitle').value.trim();
                 const url = document.getElementById('mUrl').value.trim();
@@ -811,220 +943,26 @@
         modal.classList.remove('show');
     }
 
-    async function exportStatsCSV() {
-        try {
-            const data = await apiFetch('/admin/topclicks?limit=1000');
-            if (!data.length) {
-                showToast('无统计数据可导出', 'warn');
-                return;
-            }
-            const headers = ['标题', 'URL', '点击次数'];
-            const rows = data.map(item => [item.title, item.url, item.count]);
-            const csvContent = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `click_stats_${Date.now()}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('导出统计成功', 'success');
-        } catch (err) {
-            showToast('导出失败', 'error');
-        }
-    }
-
-    // ------------------- 批量审核相关函数 -------------------
-    function updateBatchButtonsState() {
-        const batchApproveBtn = document.getElementById('batchApproveBtn');
-        const batchRejectBtn = document.getElementById('batchRejectBtn');
-        const hasSelected = selectedSubmissionIds.size > 0;
-        if (batchApproveBtn) batchApproveBtn.disabled = !hasSelected;
-        if (batchRejectBtn) batchRejectBtn.disabled = !hasSelected;
-    }
-
-    // 批量通过
-    async function batchApprove() {
-        const ids = Array.from(selectedSubmissionIds);
-        if (ids.length === 0) {
-            showToast('请先选择要审核的投稿', 'warning');
-            return;
-        }
-        // 弹出分类选择模态框（复用通用模态框）
-        const categoriesHtml = categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
-        const modalHtml = `
-            <div class="form-row">
-                <label>选择分类</label>
-                <select id="batchCatSelect">${categoriesHtml}</select>
-            </div>
-            <div class="form-row">
-                <label>选择子分类</label>
-                <select id="batchSubSelect"><option value="">先选择一级分类</option></select>
-            </div>
-            <div class="form-row">
-                <label>排序（数字越小越靠前）</label>
-                <input type="number" id="batchOrder" value="0">
-            </div>
-            <div class="form-row">
-                <label>
-                    <input type="checkbox" id="batchSendEmail" checked> 发送邮件通知投稿者
-                </label>
-            </div>
-            <div class="form-row">
-                <label>审核备注（可选）</label>
-                <textarea id="batchComment" rows="2" placeholder="审核备注会附在邮件中"></textarea>
-            </div>
-        `;
-        openModal('批量通过', modalHtml, async () => {
-            const catId = document.getElementById('batchCatSelect').value;
-            const subId = document.getElementById('batchSubSelect').value;
-            if (!catId || !subId) {
-                showToast('请选择一级分类和二级分类', 'error');
-                return;
-            }
-            const displayOrder = parseInt(document.getElementById('batchOrder').value) || 0;
-            const sendEmail = document.getElementById('batchSendEmail').checked;
-            const comment = document.getElementById('batchComment').value.trim();
-            const btn = document.getElementById('modalSubmit');
-            btn.disabled = true;
-            btn.textContent = '处理中...';
-            try {
-                const res = await apiFetch('/admin/submissions/batch-approve', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        ids,
-                        subcategoryId: parseInt(subId),
-                        displayOrder,
-                        sendEmail,
-                        comment
-                    })
-                });
-                showToast(`批量通过成功，共处理 ${res.count} 条`, 'success');
-                selectedSubmissionIds.clear();
-                await loadSubmissions();
-                await loadAllData();
-                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
-                closeModal();
-            } catch (err) {
-                showToast('批量通过失败: ' + err.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '确认';
-            }
-        }, false, null);
-
-        // 动态加载子分类
-        const catSelect = document.getElementById('batchCatSelect');
-        const subSelect = document.getElementById('batchSubSelect');
-        catSelect.addEventListener('change', async () => {
-            const catId = catSelect.value;
-            if (!catId) {
-                subSelect.innerHTML = '<option value="">先选择一级分类</option>';
-                return;
-            }
-            try {
-                const subsData = await apiFetch(`/admin/subcategories?category_id=${catId}`);
-                subSelect.innerHTML = '<option value="">选择二级分类</option>' + subsData.map(sub => `<option value="${sub.id}">${escapeHtml(sub.name)}</option>`).join('');
-            } catch (e) {
-                subSelect.innerHTML = '<option value="">加载失败</option>';
-            }
-        });
-    }
-
-    // 批量拒绝
-    async function batchReject() {
-        const ids = Array.from(selectedSubmissionIds);
-        if (ids.length === 0) {
-            showToast('请先选择要审核的投稿', 'warning');
-            return;
-        }
-        const modalHtml = `
-            <div class="form-row">
-                <label>
-                    <input type="checkbox" id="batchRejectSendEmail" checked> 发送邮件通知投稿者
-                </label>
-            </div>
-            <div class="form-row">
-                <label>拒绝原因（可选，会附在邮件中）</label>
-                <textarea id="batchRejectComment" rows="2" placeholder="例如：不符合收录标准"></textarea>
-            </div>
-        `;
-        openModal('批量拒绝', modalHtml, async () => {
-            const sendEmail = document.getElementById('batchRejectSendEmail').checked;
-            const comment = document.getElementById('batchRejectComment').value.trim();
-            const btn = document.getElementById('modalSubmit');
-            btn.disabled = true;
-            btn.textContent = '处理中...';
-            try {
-                const res = await apiFetch('/admin/submissions/batch-reject', {
-                    method: 'POST',
-                    body: JSON.stringify({ ids, sendEmail, comment })
-                });
-                showToast(`批量拒绝成功，共处理 ${res.count} 条`, 'success');
-                selectedSubmissionIds.clear();
-                await loadSubmissions();
-                closeModal();
-            } catch (err) {
-                showToast('批量拒绝失败: ' + err.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '确认';
-            }
-        }, false, null);
-    }
-
-    // 修改 loadSubmissions 函数，添加复选框和绑定事件
     async function loadSubmissions() {
         const list = document.getElementById('submissionsList');
         list.innerHTML = '<div class="empty">加载中...</div>';
         try {
             const data = await apiFetch('/admin/submissions');
-            currentSubmissionsData = data;
             if (!data.length) {
                 list.innerHTML = '<div class="empty">暂无待审核网站</div>';
-                selectedSubmissionIds.clear();
-                updateBatchButtonsState();
                 return;
             }
-            // 渲染列表，每行添加复选框
             list.innerHTML = data.map(item => `
-                <div class="link-item" style="display:flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <input type="checkbox" class="submission-checkbox" data-id="${item.id}" ${selectedSubmissionIds.has(item.id) ? 'checked' : ''}>
-                        <span><strong class="submission-title-truncate" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</strong></span>
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="sm primary" data-action="viewSubmission" data-id="${item.id}">查看</button>
-                    </div>
+                <div class="link-item" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span><strong class="submission-title-truncate" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</strong></span>
+                    <button class="sm primary" data-action="viewSubmission" data-id="${item.id}">查看</button>
                 </div>
             `).join('');
-            // 绑定复选框事件
-            const checkboxes = list.querySelectorAll('.submission-checkbox');
-            checkboxes.forEach(cb => {
-                cb.addEventListener('change', (e) => {
-                    const id = parseInt(e.target.dataset.id);
-                    if (e.target.checked) {
-                        selectedSubmissionIds.add(id);
-                    } else {
-                        selectedSubmissionIds.delete(id);
-                    }
-                    updateBatchButtonsState();
-                });
-            });
-            // 绑定查看按钮
             list.querySelectorAll('[data-action="viewSubmission"]').forEach(btn => {
                 btn.addEventListener('click', () => openSubmissionDetail(btn.dataset.id));
             });
-            updateBatchButtonsState();
-        } catch (e) {
-            list.innerHTML = '<div class="empty">加载失败</div>';
-        }
+        } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
-
-    // 刷新投稿列表时保留已选中的ID？可不清空，但为了避免歧义，清空选中状态更合理
-    // 在 refreshSubmissionsBtn 的点击处理中调用 loadSubmissions 时会重置 selectedSubmissionIds
-    // 但注意 reset 应该在 loadSubmissions 之前，我们已在函数开头不重置，但为了用户体验，在手动刷新时重置选中
-    // 下面在 setupEventDelegation 中处理
 
     function setupEventDelegation() {
         document.getElementById('catBar').addEventListener('click', e => {
@@ -1059,11 +997,8 @@
                 document.getElementById(`${tab}Tab`).classList.remove('hidden');
                 if (tab === 'rank') loadRanking();
                 if (tab === 'feedback') loadFeedback();
-                if (tab === 'submissions') {
-                    // 切换标签时清空选中状态
-                    selectedSubmissionIds.clear();
-                    loadSubmissions();
-                }
+                if (tab === 'submissions') loadSubmissions();
+                if (tab === 'announcement') loadAnnouncements();
             });
         });
         document.getElementById('loginBtn').addEventListener('click', login);
@@ -1073,20 +1008,11 @@
         document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
         document.getElementById('exportBtn').addEventListener('click', exportFullData);
         document.getElementById('importBtn').addEventListener('click', openImportModal);
-        document.getElementById('exportStatsBtn').addEventListener('click', exportStatsCSV);
         document.getElementById('sortRankBtn').addEventListener('click', loadRanking);
         document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
-        const refreshSubmissionsBtn = document.getElementById('refreshSubmissionsBtn');
-        if (refreshSubmissionsBtn) {
-            refreshSubmissionsBtn.addEventListener('click', () => {
-                selectedSubmissionIds.clear();
-                loadSubmissions();
-            });
-        }
-        const batchApproveBtn = document.getElementById('batchApproveBtn');
-        if (batchApproveBtn) batchApproveBtn.addEventListener('click', batchApprove);
-        const batchRejectBtn = document.getElementById('batchRejectBtn');
-        if (batchRejectBtn) batchRejectBtn.addEventListener('click', batchReject);
+        document.getElementById('refreshSubmissionsBtn').addEventListener('click', loadSubmissions);
+        document.getElementById('refreshAnnouncementBtn')?.addEventListener('click', loadAnnouncements);
+        document.getElementById('addAnnouncementBtn')?.addEventListener('click', () => openAnnouncementModal(null));
         document.getElementById('refreshNavBtn').addEventListener('click', async () => {
             try {
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
@@ -1118,9 +1044,16 @@
             document.getElementById('importConfirmBtn').addEventListener('click', importData);
             importModal.addEventListener('click', (e) => { if (e.target === importModal) closeImportModal(); });
         }
+        // 公告模态框关闭
+        const announcementModal = document.getElementById('announcementDetailModal');
+        if (announcementModal) {
+            announcementModal.addEventListener('click', (e) => {
+                if (e.target === announcementModal) announcementModal.classList.remove('show');
+            });
+        }
     }
 
-    // CustomSelect 类（与之前相同，支持 destroy）
+    // CustomSelect 类（与之前相同）
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -1246,47 +1179,38 @@
             const style = document.createElement('style');
             style.id = 'admin-global-styles';
             style.textContent = `
-                .submission-title-truncate {
-                    display: inline-block;
-                    max-width: 300px;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                    vertical-align: middle;
-                }
+                .submission-title-truncate { display: inline-block; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
                 @media (max-width: 768px) { .submission-title-truncate { max-width: 180px; } }
                 @media (max-width: 480px) { .submission-title-truncate { max-width: 120px; } }
-                .form-input {
-                    width: 100%;
-                    padding: 8px 12px;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 8px;
-                    font-size: 13px;
-                    background: #fff;
-                    transition: all 0.2s;
-                    box-sizing: border-box;
+                .form-input { width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; background: #fff; transition: all 0.2s; box-sizing: border-box; }
+                .form-input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+                textarea.form-input { resize: vertical; font-family: inherit; }
+                .inline-select-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+                .custom-select-wrapper { position: relative; flex: 1; min-width: 120px; }
+                .custom-select-trigger { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; color: #1e293b; cursor: pointer; transition: all 0.2s; gap: 8px; }
+                .custom-select-trigger:hover { border-color: #3b82f6; }
+                .custom-select-trigger.open { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+                .custom-select-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .custom-select-arrow { width: 16px; height: 16px; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-size: contain; transition: transform 0.2s; }
+                .custom-select-trigger.open .custom-select-arrow { transform: rotate(180deg); }
+                .custom-select-dropdown { position: fixed; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; max-height: 200px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all 0.2s ease; scrollbar-width: none; }
+                .custom-select-dropdown::-webkit-scrollbar { display: none; }
+                .custom-select-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0); }
+                .custom-select-option { padding: 8px 12px; font-size: 13px; color: #1e293b; cursor: pointer; transition: background 0.15s; }
+                .custom-select-option:hover { background: #f1f5f9; }
+                .custom-select-option.selected { background: #e0f2fe; color: #0369a1; font-weight: 500; }
+                @media (prefers-color-scheme: dark) {
+                    .custom-select-trigger { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+                    .custom-select-dropdown { background: #1e293b; border-color: #334155; }
+                    .custom-select-option { color: #e2e8f0; }
+                    .custom-select-option:hover { background: #334155; }
+                    .custom-select-option.selected { background: #0f172a; color: #38bdf8; }
+                    .form-input { background: #1e293b; border-color: #334155; color: #e2e8f0; }
                 }
-                .form-input:focus {
-                    border-color: #3b82f6;
-                    outline: none;
-                    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-                }
-                textarea.form-input {
-                    resize: vertical;
-                    font-family: inherit;
-                }
-                .inline-select-group {
-                    display: flex;
-                    gap: 10px;
-                    flex-wrap: wrap;
-                    margin-bottom: 12px;
-                }
-                .custom-select-wrapper {
-                    position: relative;
-                    flex: 1;
-                    min-width: 120px;
-                }
-                /* ... 其他样式与原有一致 ... */
+                .announcement-content { max-height: 80px; overflow-y: auto; font-size: 12px; color: #475569; margin: 8px 0; padding: 4px 0; }
+                .announcement-status { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+                .status-active { background: #dcfce7; color: #16a34a; }
+                .status-inactive { background: #fee2e2; color: #dc2626; }
             `;
             document.head.appendChild(style);
         }
