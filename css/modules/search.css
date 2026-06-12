@@ -23,8 +23,8 @@
     right: 24px;
     width: 90%;
     max-width: 460px;
-    background: #ffffff;
-    border: 1px solid #e0e0e0;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 8px;
     padding: 12px 14px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
@@ -102,8 +102,8 @@
     top: calc(12px + 36px + 6px);
     left: 14px;
     width: 170px;
-    background: #ffffff;
-    border: 1px solid #e0e0e0;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 8px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     z-index: 10001;
@@ -137,7 +137,7 @@
     border-radius: 6px;
 }
 .engine-dropdown-item:hover {
-    background: #f8f9fa;
+    background: var(--bg-secondary, #f8f9fa);
 }
 .engine-dropdown-item.active {
     background: rgba(67, 97, 238, 0.08);
@@ -155,13 +155,13 @@
 .suggestions {
     max-height: 160px;
     overflow-y: auto;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 8px;
     margin: 6px 0;
     visibility: hidden;
     opacity: 0;
     transition: opacity 0.15s, visibility 0.15s;
-    background: #ffffff;
+    background: var(--bg-card, #ffffff);
     scrollbar-width: none;
 }
 .suggestions::-webkit-scrollbar {
@@ -176,21 +176,21 @@
     font-size: 0.85rem;
     color: var(--text-primary, #2b2d42);
     cursor: pointer;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--border-color, #e9ecef);
     transition: background 0.15s;
 }
 .suggestion-item:last-child {
     border-bottom: none;
 }
 .suggestion-item:hover {
-    background: #f8f9fa;
+    background: var(--bg-secondary, #f8f9fa);
 }
 
 /* 历史记录 */
 .history-panel {
     margin-top: 6px;
     padding: 8px 10px;
-    background: #f8f9fa;
+    background: var(--bg-secondary, #f8f9fa);
     border-radius: 8px;
     max-height: 200px;
     overflow-y: auto;
@@ -254,192 +254,6 @@
     margin: 0;
 }
 
-/* ==================== 深色模式优化（系统偏好） ==================== */
-@media (prefers-color-scheme: dark) {
-    .search-modal .modal-content {
-        background: #2d2d2d;
-        border: 1px solid #404040;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .search-input {
-        background: #1e1e1e;
-        border-color: #404040;
-        color: #f8f9fa;
-    }
-    .search-input:focus {
-        border-color: var(--primary-color, #4361ee);
-        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
-    }
-
-    .engine-trigger-btn {
-        background: #2d2d2d;
-        border-color: #404040;
-        color: #adb5bd;
-    }
-    .engine-trigger-btn:hover {
-        border-color: var(--primary-color, #6d8cff);
-        color: var(--primary-color, #6d8cff);
-    }
-
-    .search-submit-btn {
-        background: var(--primary-color, #4361ee);
-        color: white;
-    }
-    .search-submit-btn:hover {
-        background: var(--secondary-color, #3a56d6);
-    }
-
-    .engine-dropdown {
-        background: #2d2d2d;
-        border-color: #404040;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-    }
-    .engine-dropdown-item {
-        color: #e0e0e0;
-    }
-    .engine-dropdown-item:hover {
-        background: #3a3a3a;
-    }
-    .engine-dropdown-item.active {
-        background: rgba(67, 97, 238, 0.2);
-        color: #6d8cff;
-    }
-    .engine-dropdown-item i {
-        color: #adb5bd;
-    }
-
-    .suggestions {
-        background: #2d2d2d;
-        border-color: #404040;
-    }
-    .suggestion-item {
-        color: #e0e0e0;
-        border-bottom-color: #404040;
-    }
-    .suggestion-item:hover {
-        background: #3a3a3a;
-    }
-
-    .history-panel {
-        background: #3a3a3a;
-    }
-    .history-title {
-        color: #adb5bd;
-    }
-    .clear-history-btn {
-        color: #6d8cff;
-    }
-    .history-item {
-        color: #e0e0e0;
-    }
-    .history-item:hover {
-        background: rgba(255, 255, 255, 0.08);
-    }
-    .delete-history {
-        color: #adb5bd;
-    }
-    .delete-history:hover {
-        color: #f87171;
-        background: rgba(239, 68, 68, 0.2);
-    }
-    .history-empty {
-        color: #adb5bd;
-    }
-}
-
-/* ==================== 手动深色模式覆盖（通过 .dark-mode 类） ==================== */
-.dark-mode .search-modal .modal-content {
-    background: #2d2d2d;
-    border: 1px solid #404040;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-.dark-mode .search-input {
-    background: #1e1e1e;
-    border-color: #404040;
-    color: #f8f9fa;
-}
-.dark-mode .search-input:focus {
-    border-color: var(--primary-color, #4361ee);
-    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
-}
-
-.dark-mode .engine-trigger-btn {
-    background: #2d2d2d;
-    border-color: #404040;
-    color: #adb5bd;
-}
-.dark-mode .engine-trigger-btn:hover {
-    border-color: var(--primary-color, #6d8cff);
-    color: var(--primary-color, #6d8cff);
-}
-
-.dark-mode .search-submit-btn {
-    background: var(--primary-color, #4361ee);
-    color: white;
-}
-.dark-mode .search-submit-btn:hover {
-    background: var(--secondary-color, #3a56d6);
-}
-
-.dark-mode .engine-dropdown {
-    background: #2d2d2d;
-    border-color: #404040;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-}
-.dark-mode .engine-dropdown-item {
-    color: #e0e0e0;
-}
-.dark-mode .engine-dropdown-item:hover {
-    background: #3a3a3a;
-}
-.dark-mode .engine-dropdown-item.active {
-    background: rgba(67, 97, 238, 0.2);
-    color: #6d8cff;
-}
-.dark-mode .engine-dropdown-item i {
-    color: #adb5bd;
-}
-
-.dark-mode .suggestions {
-    background: #2d2d2d;
-    border-color: #404040;
-}
-.dark-mode .suggestion-item {
-    color: #e0e0e0;
-    border-bottom-color: #404040;
-}
-.dark-mode .suggestion-item:hover {
-    background: #3a3a3a;
-}
-
-.dark-mode .history-panel {
-    background: #3a3a3a;
-}
-.dark-mode .history-title {
-    color: #adb5bd;
-}
-.dark-mode .clear-history-btn {
-    color: #6d8cff;
-}
-.dark-mode .history-item {
-    color: #e0e0e0;
-}
-.dark-mode .history-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
-.dark-mode .delete-history {
-    color: #adb5bd;
-}
-.dark-mode .delete-history:hover {
-    color: #f87171;
-    background: rgba(239, 68, 68, 0.2);
-}
-.dark-mode .history-empty {
-    color: #adb5bd;
-}
-
 /* 移动端适配 */
 @media (max-width: 768px) {
     .search-modal .modal-content {
@@ -456,4 +270,89 @@
     .engine-dropdown {
         width: 150px;
     }
+}
+
+/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
+.dark-mode .search-modal .modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+.dark-mode .search-input {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+.dark-mode .search-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+}
+.dark-mode .engine-trigger-btn {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+.dark-mode .engine-trigger-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+.dark-mode .search-submit-btn {
+    background: var(--primary-color);
+}
+.dark-mode .search-submit-btn:hover {
+    background: var(--secondary-color);
+}
+.dark-mode .engine-dropdown {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+.dark-mode .engine-dropdown-item {
+    color: var(--text-primary);
+}
+.dark-mode .engine-dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+.dark-mode .engine-dropdown-item.active {
+    background: rgba(67, 97, 238, 0.2);
+    color: var(--primary-color);
+}
+.dark-mode .engine-dropdown-item i {
+    color: var(--text-secondary);
+}
+.dark-mode .suggestions {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+.dark-mode .suggestion-item {
+    color: var(--text-primary);
+    border-bottom-color: var(--border-color);
+}
+.dark-mode .suggestion-item:hover {
+    background: var(--bg-secondary);
+}
+.dark-mode .history-panel {
+    background: var(--bg-secondary);
+}
+.dark-mode .history-title {
+    color: var(--text-secondary);
+}
+.dark-mode .clear-history-btn {
+    color: var(--primary-color);
+}
+.dark-mode .history-item {
+    color: var(--text-primary);
+}
+.dark-mode .history-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+.dark-mode .delete-history {
+    color: var(--text-secondary);
+}
+.dark-mode .delete-history:hover {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.2);
+}
+.dark-mode .history-empty {
+    color: var(--text-secondary);
 }
