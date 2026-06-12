@@ -2,7 +2,7 @@
  * 音乐播放器 - 星聚导航专用（完整修复版）
  * 包含：精确进度条、下载进度（通过 Worker 代理）、搜索、播放列表、用户手势处理、歌词代理、歌单显示修复、倍速控件修复
  * 进度条点击和拖拽已优化，支持触摸设备
- * 修改：挂载到 window.Starlink.musicPlayer，支持单例，修复内存泄漏
+ * 修改：挂载到 window.Starlink.musicPlayer，支持单例，修复内存泄漏，添加歌单骨架屏
  */
 
 // ==================== 自定义下拉选择器组件（必须在播放器类之前定义） ====================
@@ -216,7 +216,6 @@ function initCustomSelects() {
 // ==================== 主播放器类 ====================
 class MusicPlayer {
     constructor() {
-        // 避免重复实例化
         if (window.Starlink && window.Starlink.musicPlayer) return window.Starlink.musicPlayer;
         
         this.audio = document.getElementById('audio-element');
@@ -232,12 +231,10 @@ class MusicPlayer {
         this.userGestureResolved = false;
         this.userGesturePromise = null;
         
-        // 挂载到 Starlink 命名空间
         if (!window.Starlink) window.Starlink = {};
         if (!window.Starlink.musicPlayer) {
             window.Starlink.musicPlayer = this;
         }
-        // 保留旧全局变量以便兼容
         window.musicPlayer = window.Starlink.musicPlayer;
     }
 
@@ -746,20 +743,69 @@ class MusicPlayer {
         }
     }
 
+    // 骨架屏生成方法
+    generatePlaylistSkeleton() {
+        let html = '';
+        for (let i = 0; i < 8; i++) {
+            html += `
+                <div class="skeleton-song-item">
+                    <div class="skeleton-song-cover skeleton"></div>
+                    <div class="skeleton-song-info">
+                        <div class="skeleton-song-title skeleton"></div>
+                        <div class="skeleton-song-artist skeleton"></div>
+                    </div>
+                </div>
+            `;
+        }
+        return html;
+    }
+
     renderPlaylist(apiId, playlist) {
         const el = this.apiElements[apiId];
         if (!el || !el.playlistContainer) return;
         const container = el.playlistContainer;
-        container.innerHTML = '';
+        
+        // 显示骨架屏
+        container.innerHTML = this.generatePlaylistSkeleton();
+        
         if (!playlist.length) {
-            container.innerHTML = '<div class="loading">歌单为空</div>';
+            setTimeout(() => {
+                container.innerHTML = '<div class="loading">歌单为空</div>';
+            }, 50);
             return;
         }
-        this.currentPlaylist = playlist;
-        const fragment = document.createDocumentFragment();
-        playlist.forEach((song, idx) => fragment.appendChild(this.createSongItem(song, idx, playlist)));
-        container.appendChild(fragment);
-        this.updateActiveSongInList();
+        // 延迟一点再替换，让骨架屏可见（可选）
+        setTimeout(() => {
+            this.currentPlaylist = playlist;
+            const fragment = document.createDocumentFragment();
+            playlist.forEach((song, idx) => fragment.appendChild(this.createSongItem(song, idx, playlist)));
+            container.innerHTML = '';
+            container.appendChild(fragment);
+            this.updateActiveSongInList();
+        }, 50);
+    }
+
+    renderSearchResults(apiId, results) {
+        const el = this.apiElements[apiId];
+        if (!el || !el.searchResults) return;
+        const container = el.searchResults;
+        
+        // 显示骨架屏
+        container.innerHTML = this.generatePlaylistSkeleton();
+        
+        if (!results.length) { 
+            setTimeout(() => {
+                container.innerHTML = '<div class="loading">未找到相关结果</div>';
+            }, 50);
+            return; 
+        }
+        setTimeout(() => {
+            const fragment = document.createDocumentFragment();
+            results.forEach((song, idx) => fragment.appendChild(this.createSearchSongItem(song, idx, results)));
+            container.innerHTML = '';
+            container.appendChild(fragment);
+            this.updateActiveSongInSearch(apiId);
+        }, 50);
     }
 
     createSongItem(song, index, playlist) {
@@ -769,18 +815,6 @@ class MusicPlayer {
         div.innerHTML = `<div class="song-item-info"><div class="song-item-title">${Utils.escapeHtml(song.title)}</div><div class="song-item-artist">${Utils.escapeHtml(song.artist)}</div></div>`;
         div.addEventListener('click', () => { this.loadSong(index, playlist); this.play(); });
         return div;
-    }
-
-    renderSearchResults(apiId, results) {
-        const el = this.apiElements[apiId];
-        if (!el || !el.searchResults) return;
-        const container = el.searchResults;
-        container.innerHTML = '';
-        if (!results.length) { container.innerHTML = '<div class="loading">未找到相关结果</div>'; return; }
-        const fragment = document.createDocumentFragment();
-        results.forEach((song, idx) => fragment.appendChild(this.createSearchSongItem(song, idx, results)));
-        container.appendChild(fragment);
-        this.updateActiveSongInSearch(apiId);
     }
 
     createSearchSongItem(song, index, results) {
@@ -1137,7 +1171,6 @@ class MusicPlayer {
         document.addEventListener('touchmove', handleMove, { passive: false });
         document.addEventListener('touchend', handleEnd);
 
-        // 点击直接跳转（不拖拽时）
         progressBar.addEventListener('click', (e) => {
             if (this.clickPending) {
                 this.clickPending = false;
@@ -1155,7 +1188,6 @@ class MusicPlayer {
         });
     }
 
-    // 计算点击/拖拽对应的播放时间
     getSeekTime(e) {
         const rect = this.elements.progressBar.getBoundingClientRect();
         let clientX = 0;
@@ -1173,7 +1205,6 @@ class MusicPlayer {
         return percent * duration;
     }
 
-    // 更新拖拽过程中的进度条位置和当前时间
     updateSeek(e) {
         const duration = this.audio.duration;
         if (!duration || isNaN(duration) || duration <= 0) return;
@@ -1266,7 +1297,6 @@ class MusicPlayer {
         if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
         if (this.scrollAnimationId) cancelAnimationFrame(this.scrollAnimationId);
         
-        // 移除全局事件监听器
         if (this.boundResizeListener) {
             window.removeEventListener('resize', this.boundResizeListener);
         }
@@ -1277,7 +1307,6 @@ class MusicPlayer {
             document.removeEventListener('click', this.boundHandleOutsideClick);
         }
         
-        // 移除音频元素事件并替换新元素
         if (this.audio) {
             this.audio.pause();
             this.audio.src = '';
@@ -1291,7 +1320,6 @@ class MusicPlayer {
         this.hasNotifiedLocal = false;
         this.hasNotifiedQishui = false;
         
-        // 销毁所有 CustomSelect 实例
         if (typeof customSelectInstances !== 'undefined' && customSelectInstances) {
             customSelectInstances.forEach((instance, id) => {
                 if (instance && typeof instance.destroy === 'function') {
