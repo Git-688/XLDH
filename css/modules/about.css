@@ -1,4 +1,6 @@
 /* about.css - 圆角8px，左边卡片透明，右边logo上下间距相等 */
+/* 修改：免责声明、简介卡片背景强制白色，深色模式下也保持白色背景和深色文字 */
+
 .about-modal {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     position: fixed;
@@ -190,14 +192,15 @@
     flex-direction: column;
     gap: 12px;
 }
+/* 简介和免责声明卡片 - 背景强制白色，文字深色，不随主题变化 */
 .about-card.white-bg {
     display: flex;
     align-items: flex-start;
     gap: 10px;
     padding: 12px;
-    background: var(--bg-secondary, #ffffff);
+    background: #ffffff !important;      /* 强制白色背景 */
     border-radius: 8px;
-    border: 1px solid var(--border-color, #e9ecef);
+    border: 1px solid #e9ecef;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
 }
@@ -218,10 +221,10 @@
     color: white;
 }
 .intro-icon {
-    background: var(--primary-color, #4361ee);
+    background: #4361ee;
 }
 .disclaimer-icon {
-    background: var(--error-color, #ef4444);
+    background: #ef4444;
 }
 .card-content {
     flex: 1;
@@ -230,7 +233,7 @@
 .card-content h3 {
     font-size: 12px;
     margin-bottom: 6px;
-    color: var(--text-primary, #2b2d42);
+    color: #2b2d42 !important;      /* 强制深色文字 */
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -239,7 +242,7 @@
 .card-content p {
     font-size: 10px;
     line-height: 1.5;
-    color: var(--text-secondary, #6c757d);
+    color: #6c757d !important;      /* 强制深色二级文字 */
     margin: 0;
 }
 
@@ -247,7 +250,7 @@
 .about-footer {
     padding: 12px 14px 14px;
     border-top: none;
-    background: var(--bg-card, #ffffff);
+    background: #ffffff;
 }
 .about-action-buttons {
     display: flex;
@@ -291,13 +294,13 @@
     background: #6EC312;
 }
 .donate-btn {
-    background: var(--error-color, #ef4444);
+    background: #ef4444;
 }
 .donate-btn:hover {
     background: #FF6B6B;
 }
 .space-btn {
-    background: var(--warning-color, #f59e0b);
+    background: #f59e0b;
 }
 .space-btn:hover {
     background: #FFC952;
@@ -305,7 +308,7 @@
 .about-social-btn .tooltip-text {
     visibility: hidden;
     width: 60px;
-    background-color: var(--text-primary, #2b2d42);
+    background-color: #2b2d42;
     color: white;
     text-align: center;
     border-radius: 4px;
@@ -327,7 +330,7 @@
     margin-left: -4px;
     border-width: 4px;
     border-style: solid;
-    border-color: var(--text-primary, #2b2d42) transparent transparent transparent;
+    border-color: #2b2d42 transparent transparent transparent;
 }
 .about-social-btn:hover .tooltip-text {
     visibility: visible;
@@ -336,7 +339,7 @@
 .about-close-btn {
     padding: 8px 14px;
     border: none;
-    background: var(--success-color, #10b981);
+    background: #10b981;
     color: white;
     border-radius: 6px;
     cursor: pointer;
@@ -444,24 +447,11 @@
     }
 }
 
-/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
+/* ==================== 深色模式优化 ==================== */
+/* 深色模式下，卡片背景仍然保持白色，文字保持深色（已强制） */
 .dark-mode .about-modal-content {
     background: var(--bg-card);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-.dark-mode .about-card.white-bg {
-    background: var(--bg-secondary);
-    border-color: var(--border-color);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-.dark-mode .about-card.white-bg:hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-}
-.dark-mode .card-content h3 {
-    color: var(--text-primary);
-}
-.dark-mode .card-content p {
-    color: var(--text-secondary);
 }
 .dark-mode .about-footer {
     background: var(--bg-card);
@@ -473,7 +463,7 @@
     background: rgba(0, 0, 0, 0.5);
 }
 .dark-mode .about-close-btn {
-    background: var(--success-color);
+    background: #10b981;
 }
 .dark-mode .about-close-btn:hover {
     background: #0da271;
@@ -482,9 +472,9 @@
 .dark-mode .qq-btn:hover { background: #4A9FD9; }
 .dark-mode .wechat-btn { background: #6EC312; }
 .dark-mode .wechat-btn:hover { background: #5CAD0F; }
-.dark-mode .donate-btn { background: var(--error-color); }
+.dark-mode .donate-btn { background: #ef4444; }
 .dark-mode .donate-btn:hover { background: #dc2626; }
-.dark-mode .space-btn { background: var(--warning-color); }
+.dark-mode .space-btn { background: #f59e0b; }
 .dark-mode .space-btn:hover { background: #d97706; }
 .dark-mode .about-social-btn .tooltip-text {
     background-color: #e0e0e0;
@@ -492,6 +482,17 @@
 }
 .dark-mode .about-social-btn .tooltip-text::after {
     border-color: #e0e0e0 transparent transparent transparent;
+}
+/* 深色模式下，强制卡片背景为白色、文字深色，覆盖任何可能的深色模式影响 */
+.dark-mode .about-card.white-bg {
+    background: #ffffff !important;
+    border-color: #e9ecef !important;
+}
+.dark-mode .card-content h3 {
+    color: #2b2d42 !important;
+}
+.dark-mode .card-content p {
+    color: #6c757d !important;
 }
 
 /* 减少动画偏好 */
