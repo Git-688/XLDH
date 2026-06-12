@@ -1,7 +1,8 @@
 // 星聚导航 Service Worker - 缓存导航数据与静态资源，增强 API 响应缓存
-const CACHE_NAME = 'starlink-v4';  // 版本号升级
-const NAVIGATION_CACHE_NAME = 'starlink-nav-v4';
-const API_CACHE_NAME = 'starlink-api-v4';
+// 版本 v5：移除 /navigation/sites 缓存，避免与后端优化冲突
+const CACHE_NAME = 'starlink-v5';
+const NAVIGATION_CACHE_NAME = 'starlink-nav-v5';
+const API_CACHE_NAME = 'starlink-api-v5';
 
 // 需要缓存的静态资源列表
 const STATIC_URLS = [
@@ -47,10 +48,10 @@ const STATIC_URLS = [
     '/data/local-music-data.js'
 ];
 
-// 需要缓存的导航 API 路径（模糊匹配，缓存优先）
+// 需要缓存的导航 API 路径（仅结构，不再缓存站点列表）
 const NAV_API_PATTERNS = [
-    '/navigation/structure',
-    '/navigation/sites'
+    '/navigation/structure'
+    // '/navigation/sites' 已移除，该数据已优化为直接查询 D1
 ];
 
 // 需要缓存的其他只读 API（网络优先，缓存后备，限制 TTL）
