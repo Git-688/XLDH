@@ -1,9 +1,12 @@
 // navbar.js - 导航栏模块（修复模态框动画，支持等待关闭完成）
 class Navbar {
     constructor() {
-        if (window.navbar && window.navbar instanceof Navbar) return window.navbar;
+        // 避免重复实例化
+        if (window.Starlink && window.Starlink.navbar) return window.Starlink.navbar;
         this.announcements = [];
         this.init();
+        if (window.Starlink) window.Starlink.navbar = this;
+        // 保留旧全局变量以便兼容（可选，建议逐步移除）
         window.navbar = this;
     }
 
@@ -31,7 +34,11 @@ class Navbar {
             searchBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (window.newSearchModule && typeof window.newSearchModule.toggle === 'function') {
+                // 使用 Starlink 中的搜索模块
+                const searchModule = window.Starlink?.search;
+                if (searchModule && typeof searchModule.toggle === 'function') {
+                    this.handleFeatureToggle('search', () => searchModule.toggle());
+                } else if (window.newSearchModule && typeof window.newSearchModule.toggle === 'function') {
                     this.handleFeatureToggle('search', () => window.newSearchModule.toggle());
                 }
             });
@@ -51,7 +58,12 @@ class Navbar {
             annBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.handleFeatureToggle('announcement', () => window.announcementModule?.toggleModal());
+                const announcementModule = window.Starlink?.announcement;
+                if (announcementModule && typeof announcementModule.toggleModal === 'function') {
+                    this.handleFeatureToggle('announcement', () => announcementModule.toggleModal());
+                } else if (window.announcementModule && typeof window.announcementModule.toggleModal === 'function') {
+                    this.handleFeatureToggle('announcement', () => window.announcementModule.toggleModal());
+                }
             });
         }
 
@@ -63,7 +75,12 @@ class Navbar {
                 e.preventDefault();
                 e.stopPropagation();
                 this.closeAllModalsExcept(['weather']).then(() => {
-                    window.app?.modules?.weather?.showModal();
+                    const weatherModule = window.Starlink?.weather;
+                    if (weatherModule && typeof weatherModule.showModal === 'function') {
+                        weatherModule.showModal();
+                    } else if (window.app?.modules?.weather?.showModal) {
+                        window.app.modules.weather.showModal();
+                    }
                 });
             });
         }
@@ -74,7 +91,12 @@ class Navbar {
                 e.preventDefault();
                 e.stopPropagation();
                 this.closeAllModalsExcept(['submit']).then(() => {
-                    document.getElementById('submitModal')?.classList.add('active');
+                    const submitModule = window.Starlink?.submit;
+                    if (submitModule && typeof submitModule.show === 'function') {
+                        submitModule.show();
+                    } else {
+                        document.getElementById('submitModal')?.classList.add('active');
+                    }
                 });
             });
         }
@@ -102,33 +124,31 @@ class Navbar {
      * @param {Array<string>} keep 保留的功能标识数组，如 ['search', 'music', 'announcement', 'sidebar', 'weather', 'about', 'notebook', 'submit']
      * @returns {Promise<void>}
      */
-    closeAllModalsExcept(keep = []) {
+    async closeAllModalsExcept(keep = []) {
         const closePromises = [];
 
         // 获取当前应用注册的所有活动模态框实例
-        const activeModals = window.app?.activeModals || [];
+        const activeModals = window.Starlink?.app?.activeModals || [];
         for (const modal of activeModals) {
             let shouldClose = true;
-            if (keep.includes('music') && modal === window.musicPlayer) shouldClose = false;
-            if (keep.includes('search') && modal === window.newSearchModule) shouldClose = false;
-            if (keep.includes('announcement') && modal === window.announcementModule) shouldClose = false;
-            if (keep.includes('sidebar') && modal === window.sidebar) shouldClose = false;
-            if (keep.includes('weather') && modal === window.app?.modules?.weather) shouldClose = false;
-            if (keep.includes('about') && modal === window.aboutModule) shouldClose = false;
-            if (keep.includes('notebook') && modal === window.app?.notebookModalHideRef) shouldClose = false;
-            if (keep.includes('submit') && modal === window.submitModule) shouldClose = false;
+            if (keep.includes('music') && modal === window.Starlink?.musicPlayer) shouldClose = false;
+            if (keep.includes('search') && modal === window.Starlink?.search) shouldClose = false;
+            if (keep.includes('announcement') && modal === window.Starlink?.announcement) shouldClose = false;
+            if (keep.includes('sidebar') && modal === window.Starlink?.sidebar) shouldClose = false;
+            if (keep.includes('weather') && modal === window.Starlink?.weather) shouldClose = false;
+            if (keep.includes('about') && modal === window.Starlink?.about) shouldClose = false;
+            if (keep.includes('notebook') && modal === window.Starlink?.app?.notebookModalHideRef) shouldClose = false;
+            if (keep.includes('submit') && modal === window.Starlink?.submit) shouldClose = false;
 
             if (shouldClose && modal && typeof modal.hide === 'function') {
                 const promise = new Promise((resolve) => {
                     modal.hide();
-                    // 轮询检查模态框是否已完全关闭（isVisible 变为 false）
                     const interval = setInterval(() => {
                         if (!modal.isVisible) {
                             clearInterval(interval);
                             resolve();
                         }
                     }, 50);
-                    // 后备超时，避免无限等待
                     setTimeout(() => {
                         clearInterval(interval);
                         resolve();
@@ -145,25 +165,37 @@ class Navbar {
                 this.hideMusicPlayer();
             }
         }
-        if (!keep.includes('search') && window.newSearchModule && window.newSearchModule.isOpen && window.newSearchModule.hide) {
+        if (!keep.includes('search') && window.Starlink?.search && window.Starlink.search.isOpen && window.Starlink.search.hide) {
+            window.Starlink.search.hide();
+        } else if (!keep.includes('search') && window.newSearchModule && window.newSearchModule.isOpen && window.newSearchModule.hide) {
             window.newSearchModule.hide();
         }
-        if (!keep.includes('sidebar') && window.sidebar && window.sidebar.isVisible && window.sidebar.isVisible()) {
+        if (!keep.includes('sidebar') && window.Starlink?.sidebar && window.Starlink.sidebar.isVisible && window.Starlink.sidebar.isVisible()) {
+            window.Starlink.sidebar.hide();
+        } else if (!keep.includes('sidebar') && window.sidebar && window.sidebar.isVisible && window.sidebar.isVisible()) {
             window.sidebar.hide();
         }
-        if (!keep.includes('announcement') && window.announcementModule && window.announcementModule.isVisible && window.announcementModule.hide) {
+        if (!keep.includes('announcement') && window.Starlink?.announcement && window.Starlink.announcement.isVisible && window.Starlink.announcement.hide) {
+            window.Starlink.announcement.hide();
+        } else if (!keep.includes('announcement') && window.announcementModule && window.announcementModule.isVisible && window.announcementModule.hide) {
             window.announcementModule.hide();
         }
-        if (!keep.includes('weather') && window.app?.modules?.weather && window.app.modules.weather.isShowing && window.app.modules.weather.hide) {
+        if (!keep.includes('weather') && window.Starlink?.weather && window.Starlink.weather.isShowing && window.Starlink.weather.hide) {
+            window.Starlink.weather.hide();
+        } else if (!keep.includes('weather') && window.app?.modules?.weather && window.app.modules.weather.isShowing && window.app.modules.weather.hide) {
             window.app.modules.weather.hide();
         }
-        if (!keep.includes('about') && window.aboutModule && window.aboutModule.isShowing && window.aboutModule.hide) {
+        if (!keep.includes('about') && window.Starlink?.about && window.Starlink.about.isShowing && window.Starlink.about.hide) {
+            window.Starlink.about.hide();
+        } else if (!keep.includes('about') && window.aboutModule && window.aboutModule.isShowing && window.aboutModule.hide) {
             window.aboutModule.hide();
         }
-        if (!keep.includes('notebook') && window.app && window.app.hideNotebookModal) {
-            window.app.hideNotebookModal();
+        if (!keep.includes('notebook') && window.Starlink?.app && window.Starlink.app.hideNotebookModal) {
+            window.Starlink.app.hideNotebookModal();
         }
-        if (!keep.includes('submit') && window.submitModule && window.submitModule.isVisible && window.submitModule.hide) {
+        if (!keep.includes('submit') && window.Starlink?.submit && window.Starlink.submit.isVisible && window.Starlink.submit.hide) {
+            window.Starlink.submit.hide();
+        } else if (!keep.includes('submit') && window.submitModule && window.submitModule.isVisible && window.submitModule.hide) {
             window.submitModule.hide();
         }
 
@@ -182,10 +214,10 @@ class Navbar {
 
     isFeatureOpen(key) {
         switch (key) {
-            case 'search': return window.newSearchModule?.isOpen === true;
+            case 'search': return window.Starlink?.search?.isOpen === true || window.newSearchModule?.isOpen === true;
             case 'music': return document.getElementById('musicPlayer')?.classList.contains('show') === true;
-            case 'announcement': return window.announcementModule?.isVisible === true;
-            case 'sidebar': return window.sidebar && typeof window.sidebar.isVisible === 'function' && window.sidebar.isVisible();
+            case 'announcement': return window.Starlink?.announcement?.isVisible === true || window.announcementModule?.isVisible === true;
+            case 'sidebar': return (window.Starlink?.sidebar?.isVisible?.() === true) || (window.sidebar?.isVisible?.() === true);
             default: return false;
         }
     }
@@ -248,7 +280,15 @@ class Navbar {
     updateNotificationBadge() {
         const btn = document.getElementById('announcementBtn');
         if (!btn) return;
-        const unread = this.getUnreadAnnouncementCount();
+        let unread = 0;
+        if (window.Starlink?.announcement) {
+            unread = window.Starlink.announcement.getUnreadCount?.() || 0;
+        } else if (window.announcementModule) {
+            unread = window.announcementModule.getUnreadCount?.() || 0;
+        } else {
+            const stored = Storage.get('announcements') || [];
+            unread = stored.filter(a => !a.read).length;
+        }
         let badge = btn.querySelector('.nav-badge');
         if (unread > 0) {
             if (!badge) {
@@ -267,12 +307,31 @@ class Navbar {
     }
 
     getUnreadAnnouncementCount() {
-        if (window.app?.modules?.announcement) return window.app.modules.announcement.getUnreadCount();
+        if (window.Starlink?.announcement) {
+            return window.Starlink.announcement.getUnreadCount?.() || 0;
+        } else if (window.announcementModule) {
+            return window.announcementModule.getUnreadCount?.() || 0;
+        }
         const stored = Storage.get('announcements') || [];
         return stored.filter(a => !a.read).length;
     }
 
     destroy() {
         window.removeEventListener('scroll', this.handleScroll);
+    }
+}
+
+// 初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!window.Starlink) window.Starlink = {};
+        if (!window.Starlink.navbar) {
+            window.Starlink.navbar = new Navbar();
+        }
+    });
+} else {
+    if (!window.Starlink) window.Starlink = {};
+    if (!window.Starlink.navbar) {
+        window.Starlink.navbar = new Navbar();
     }
 }
