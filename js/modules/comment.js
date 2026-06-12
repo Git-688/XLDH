@@ -1,5 +1,6 @@
 /**
  * 评论模块 - 完整增强版（修复动画）
+ * 修改：挂载到 window.Starlink.comment
  */
 class CommentModule {
   static CONFIG = {
@@ -79,6 +80,9 @@ class CommentModule {
   };
 
   constructor() {
+    // 避免重复实例化
+    if (window.Starlink && window.Starlink.comment) return window.Starlink.comment;
+    
     this.instance = null;
     this.modal = null;
     this.openBtn = null;
@@ -91,6 +95,11 @@ class CommentModule {
     this._initWaline();
     this._watchSearchPanel();
     this._initDraftAutoSave();
+    
+    // 挂载到 Starlink
+    if (window.Starlink) window.Starlink.comment = this;
+    // 保留旧全局变量以便兼容
+    window.commentModule = this;
   }
 
   _initDOM() {
@@ -198,10 +207,18 @@ class CommentModule {
   open() {
     if (!this.modal) return;
     if (!this.instance) { this._initWaline(); if (!this.instance) return; }
+    // 关闭侧边栏
+    if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible?.()) {
+      window.Starlink.sidebar.hide();
+    } else if (window.sidebar && window.sidebar.isVisible?.()) {
+      window.sidebar.hide();
+    }
     this.modal.classList.add(CommentModule.CONFIG.activeClass);
     this.isVisible = true;
     document.body.style.overflow = 'hidden';
-    if (window.app) window.app.registerModal(this);
+    // 注册到应用
+    if (window.Starlink?.app) window.Starlink.app.registerModal(this);
+    else if (window.app) window.app.registerModal(this);
   }
 
   close() {
@@ -210,7 +227,9 @@ class CommentModule {
     const onTransitionEnd = () => {
       document.body.style.overflow = '';
       this.isVisible = false;
-      if (window.app) window.app.unregisterModal(this);
+      // 从应用中注销
+      if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
+      else if (window.app) window.app.unregisterModal(this);
       this.modal.removeEventListener('transitionend', onTransitionEnd);
     };
     this.modal.addEventListener('transitionend', onTransitionEnd, { once: true });
@@ -228,14 +247,13 @@ class CommentModule {
 
 // 自动初始化
 document.addEventListener('DOMContentLoaded', () => {
-  if (!window.commentModule) {
-    if (!window.Starlink) window.Starlink = {};
-    if (!window.Starlink.comment) {
-      window.Starlink.comment = new CommentModule();
-    }
-    window.commentModule = window.Starlink.comment;
+  if (!window.Starlink) window.Starlink = {};
+  if (!window.Starlink.comment) {
+    window.Starlink.comment = new CommentModule();
   }
+  window.commentModule = window.Starlink.comment;
 });
 window.addEventListener('beforeunload', () => {
+  window.Starlink?.comment?.destroy?.();
   window.commentModule?.destroy?.();
 });
