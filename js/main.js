@@ -171,16 +171,19 @@ class App {
 
     initCoreComponents() {
         try {
-            if (typeof CompactSidebar !== 'undefined') {
-                if (!window.sidebar || !window.sidebar.isInitialized) {
-                    this.components.sidebar = new CompactSidebar();
-                    this.components.sidebar.init().catch(error => {
-                        console.error('侧边栏初始化失败:', error);
-                        this.showToast('侧边栏初始化失败，部分功能可能不可用', 'warning');
-                    });
-                } else {
-                    this.components.sidebar = window.sidebar;
-                }
+            // 从 Starlink 获取 sidebar 实例
+            if (window.Starlink && window.Starlink.sidebar) {
+                this.components.sidebar = window.Starlink.sidebar;
+            } else if (typeof CompactSidebar !== 'undefined') {
+                // 兼容旧代码：如果还未初始化，则创建
+                this.components.sidebar = new CompactSidebar();
+                if (window.Starlink) window.Starlink.sidebar = this.components.sidebar;
+                this.components.sidebar.init().catch(error => {
+                    console.error('侧边栏初始化失败:', error);
+                    this.showToast('侧边栏初始化失败，部分功能可能不可用', 'warning');
+                });
+            } else {
+                console.warn('CompactSidebar 未定义');
             }
         } catch (error) {
             console.error('核心组件初始化失败:', error);
@@ -192,59 +195,82 @@ class App {
         try {
             const initPromises = [];
 
-            if (typeof NewSearchModule !== 'undefined') {
-                if (!window.newSearchModule) {
-                    this.modules.search = new NewSearchModule();
-                    window.newSearchModule = this.modules.search;
-                } else {
-                    this.modules.search = window.newSearchModule;
-                }
+            // 搜索模块
+            if (window.Starlink && window.Starlink.search) {
+                this.modules.search = window.Starlink.search;
+                initPromises.push(this.modules.search.init?.());
+            } else if (typeof NewSearchModule !== 'undefined') {
+                this.modules.search = new NewSearchModule();
+                if (window.Starlink) window.Starlink.search = this.modules.search;
                 initPromises.push(this.modules.search.init?.());
             }
 
-            if (typeof WallpaperModule !== 'undefined') {
-                this.modules.wallpaper = new WallpaperModule();
+            // 壁纸模块
+            if (window.Starlink && window.Starlink.carousel) {
+                this.modules.wallpaper = window.Starlink.carousel;
+                initPromises.push(this.modules.wallpaper.init?.());
+            } else if (typeof CarouselModule !== 'undefined') {
+                this.modules.wallpaper = new CarouselModule();
+                if (window.Starlink) window.Starlink.carousel = this.modules.wallpaper;
                 initPromises.push(this.modules.wallpaper.init?.());
             }
 
-            if (typeof GreetingModule !== 'undefined') {
+            // 问候模块
+            if (window.Starlink && window.Starlink.greeting) {
+                this.modules.greeting = window.Starlink.greeting;
+                initPromises.push(this.modules.greeting.init?.());
+            } else if (typeof GreetingModule !== 'undefined') {
                 this.modules.greeting = new GreetingModule();
+                if (window.Starlink) window.Starlink.greeting = this.modules.greeting;
                 initPromises.push(this.modules.greeting.init?.());
             }
 
-            if (typeof OptimizedNavigation !== 'undefined') {
+            // 导航模块
+            if (window.Starlink && window.Starlink.navigation) {
+                this.modules.navigation = window.Starlink.navigation;
+                initPromises.push(this.modules.navigation.init?.());
+            } else if (typeof OptimizedNavigation !== 'undefined') {
                 this.modules.navigation = new OptimizedNavigation();
-                window.optimizedNavigation = this.modules.navigation;
+                if (window.Starlink) window.Starlink.navigation = this.modules.navigation;
                 initPromises.push(this.modules.navigation.init?.());
             }
 
-            if (typeof FooterModule !== 'undefined') {
+            // 页脚模块（stats）
+            if (window.Starlink && window.Starlink.footer) {
+                this.modules.footer = window.Starlink.footer;
+                initPromises.push(this.modules.footer.init?.());
+            } else if (typeof FooterModule !== 'undefined') {
                 this.modules.footer = new FooterModule();
+                if (window.Starlink) window.Starlink.footer = this.modules.footer;
                 initPromises.push(this.modules.footer.init?.());
             }
 
-            if (typeof WeatherModule !== 'undefined') {
+            // 天气模块
+            if (window.Starlink && window.Starlink.weather) {
+                this.modules.weather = window.Starlink.weather;
+                initPromises.push(this.modules.weather.init?.());
+            } else if (typeof WeatherModule !== 'undefined') {
                 this.modules.weather = new WeatherModule();
+                if (window.Starlink) window.Starlink.weather = this.modules.weather;
                 initPromises.push(this.modules.weather.init?.());
             }
 
-            if (typeof AnnouncementModule !== 'undefined') {
-                if (!window.announcementModule) {
-                    this.modules.announcement = new AnnouncementModule();
-                    window.announcementModule = this.modules.announcement;
-                } else {
-                    this.modules.announcement = window.announcementModule;
-                }
+            // 公告模块
+            if (window.Starlink && window.Starlink.announcement) {
+                this.modules.announcement = window.Starlink.announcement;
+            } else if (typeof AnnouncementModule !== 'undefined') {
+                this.modules.announcement = new AnnouncementModule();
+                if (window.Starlink) window.Starlink.announcement = this.modules.announcement;
             }
 
-            if (typeof AboutModule !== 'undefined') {
-                if (!window.aboutModule) {
-                    this.modules.about = new AboutModule();
-                    window.aboutModule = this.modules.about;
-                    this.modules.about.init();
-                } else {
-                    this.modules.about = window.aboutModule;
-                }
+            // 关于模块
+            if (window.Starlink && window.Starlink.about) {
+                this.modules.about = window.Starlink.about;
+                if (this.modules.about.init) this.modules.about.init();
+            } else if (typeof AboutModule !== 'undefined') {
+                this.modules.about = new AboutModule();
+                if (window.Starlink) window.Starlink.about = this.modules.about;
+                this.modules.about.init();
             }
 
             Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {
@@ -258,8 +284,11 @@ class App {
 
     initDependentComponents() {
         try {
-            if (typeof Navbar !== 'undefined') {
+            if (typeof Navbar !== 'undefined' && !window.Starlink.navbar) {
                 this.components.navbar = new Navbar();
+                if (window.Starlink) window.Starlink.navbar = this.components.navbar;
+            } else if (window.Starlink && window.Starlink.navbar) {
+                this.components.navbar = window.Starlink.navbar;
             }
         } catch (error) {
             console.error('依赖组件初始化失败:', error);
@@ -376,7 +405,7 @@ class App {
         if (this.components.navbar?.hideMusicPlayer) this.components.navbar.hideMusicPlayer();
         if (this.modules.search?.isModalOpen && this.modules.search.hide) this.modules.search.hide();
         this.hideNotebookModal();
-        if (window.walineFeedback?.isVisible) window.walineFeedback.hide();
+        if (window.Starlink?.comment?.isVisible) window.Starlink.comment.hide();
     }
 
     showToast(message, type = 'info') {
@@ -542,13 +571,14 @@ if (!window.Starlink) window.Starlink = {};
 if (!window.Starlink.app) {
     window.Starlink.app = new App();
 }
+// 保留 window.app 作为兼容别名（但建议逐步迁移）
 window.app = window.Starlink.app;
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        if (window.app && !window.app.isInitialized) {
-            window.app.init();
+        if (window.Starlink.app && !window.Starlink.app.isInitialized) {
+            window.Starlink.app.init();
         }
     });
 }
-window.getApp = function() { return window.app; };
+window.getApp = function() { return window.Starlink.app; };
