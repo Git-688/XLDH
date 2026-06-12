@@ -1,6 +1,7 @@
 /**
  * 天气模块 - 基于 Worker 代理（密钥在服务端，安全）
  * 通过调用后端 /weather/proxy 接口获取天气数据，无需在前端暴露 API 密钥
+ * 修改：挂载到 window.Starlink.weather
  */
 class WeatherModule {
     static CONFIG = {
@@ -10,6 +11,9 @@ class WeatherModule {
     };
 
     constructor() {
+        // 避免重复实例化
+        if (window.Starlink && window.Starlink.weather) return window.Starlink.weather;
+        
         this.currentCity = '北京';
         this.weatherData = null;
         this.modalElement = null;
@@ -24,6 +28,11 @@ class WeatherModule {
         this.escHandler = null;
         this.showModalBound = this.showModal.bind(this);
         this.gpsAttempted = false;
+        
+        // 挂载到 Starlink
+        if (window.Starlink) window.Starlink.weather = this;
+        // 保留旧全局变量以便兼容
+        window.weatherModule = this;
     }
 
     _escapeHtml(text) {
@@ -119,7 +128,10 @@ class WeatherModule {
         } catch (error) {
             console.error('GPS 定位失败:', error.message);
             this.useAutoLocation = false;
-            if (window.app && window.app.showToast) {
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) {
+                toast.show('无法自动定位，请手动选择城市', 'warning');
+            } else if (window.app && window.app.showToast) {
                 window.app.showToast('无法自动定位，请手动选择城市', 'warning');
             }
             if (!this.manualCity) {
@@ -318,14 +330,20 @@ class WeatherModule {
                 content.style.opacity = '1';
             }
         });
-        if (window.app) window.app.registerModal(this);
+        // 注册到应用
+        if (window.Starlink?.app) window.Starlink.app.registerModal(this);
+        else if (window.app) window.app.registerModal(this);
+        
         this.isLoading = true;
         this.loadWeatherData().then(() => {
             this.updateModalContent();
         }).catch(error => {
             console.error('加载天气数据失败:', error);
             this.updateModalContent();
-            if (window.app && window.app.showToast) {
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) {
+                toast.show('天气数据加载失败，请稍后重试', 'error');
+            } else if (window.app && window.app.showToast) {
                 window.app.showToast('天气数据加载失败，请稍后重试', 'error');
             }
         }).finally(() => {
@@ -596,14 +614,20 @@ class WeatherModule {
                     await this.loadWeatherDataByCity(newCity);
                     this.updateModalContent();
                     this.hideCityPrompt(modal);
-                    if (window.app && window.app.showToast) {
+                    const toast = window.Starlink?.toast || window.toast;
+                    if (toast && toast.show) {
+                        toast.show(`已切换到: ${newCity}`, 'success');
+                    } else if (window.app && window.app.showToast) {
                         window.app.showToast(`已切换到: ${newCity}`, 'success');
                     }
                 } catch (error) {
                     console.error('切换城市失败:', error);
                     confirmBtn.innerHTML = '确认切换';
                     confirmBtn.disabled = false;
-                    if (window.app && window.app.showToast) {
+                    const toast = window.Starlink?.toast || window.toast;
+                    if (toast && toast.show) {
+                        toast.show(`切换城市失败: ${error.message || '请检查城市名称是否正确'}`, 'error');
+                    } else if (window.app && window.app.showToast) {
                         window.app.showToast(`切换城市失败: ${error.message || '请检查城市名称是否正确'}`, 'error');
                     }
                 }
@@ -641,15 +665,20 @@ class WeatherModule {
     async handleGpsRefresh() {
         this.gpsAttempted = false;
         try {
-            if (window.app && window.app.showToast) window.app.showToast('正在获取您的位置...', 'info');
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) toast.show('正在获取您的位置...', 'info');
+            else if (window.app && window.app.showToast) window.app.showToast('正在获取您的位置...', 'info');
             const locationBtn = this.modalElement?.querySelector('#weatherLocationBtn');
             if (locationBtn) { locationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; locationBtn.disabled = true; }
             await this.tryGpsLocation();
             this.updateModalContent();
-            if (window.app && window.app.showToast) window.app.showToast('位置已更新', 'success');
+            if (toast && toast.show) toast.show('位置已更新', 'success');
+            else if (window.app && window.app.showToast) window.app.showToast('位置已更新', 'success');
         } catch (error) {
             console.error('GPS 刷新失败:', error);
-            if (window.app && window.app.showToast) window.app.showToast('定位失败，请手动选择城市', 'error');
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) toast.show('定位失败，请手动选择城市', 'error');
+            else if (window.app && window.app.showToast) window.app.showToast('定位失败，请手动选择城市', 'error');
         } finally {
             const locationBtn = this.modalElement?.querySelector('#weatherLocationBtn');
             if (locationBtn) { locationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i>'; locationBtn.disabled = false; }
@@ -712,11 +741,14 @@ class WeatherModule {
     }
 
     closeOtherModals() {
-        if (window.sidebar && window.sidebar.isVisible) window.sidebar.hide();
-        if (window.searchModule && window.searchModule.isModalOpen) window.searchModule.hide();
-        if (window.app?.components?.navbar?.hideMusicPlayer) {
-            window.app.components.navbar.hideMusicPlayer();
-        }
+        if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible) window.Starlink.sidebar.hide();
+        else if (window.sidebar && window.sidebar.isVisible) window.sidebar.hide();
+        
+        if (window.Starlink?.search && window.Starlink.search.isModalOpen) window.Starlink.search.hide();
+        else if (window.searchModule && window.searchModule.isModalOpen) window.searchModule.hide();
+        
+        if (window.Starlink?.navbar?.hideMusicPlayer) window.Starlink.navbar.hideMusicPlayer();
+        else if (window.app?.components?.navbar?.hideMusicPlayer) window.app.components.navbar.hideMusicPlayer();
     }
 
     hide() {
@@ -735,7 +767,9 @@ class WeatherModule {
                 document.removeEventListener('keydown', this.escHandler);
                 this.escHandler = null;
             }
-            if (window.app) window.app.unregisterModal(this);
+            // 从应用中注销
+            if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
+            else if (window.app) window.app.unregisterModal(this);
         }, 200);
     }
 
