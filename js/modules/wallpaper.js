@@ -1,9 +1,13 @@
 /**
  * 轮播图模块 - 性能优化版（增强预加载策略）
  * 功能：7天必应壁纸轮播、自动切换、箭头导航、标题显示、预加载前后多张图片（限制并发）
+ * 修改：挂载到 window.Starlink.carousel
  */
 class CarouselModule {
     constructor() {
+        // 避免重复实例化
+        if (window.Starlink && window.Starlink.carousel) return window.Starlink.carousel;
+        
         this.currentIndex = 1;
         this.slides = [];
         this.clonedSlides = [];
@@ -19,6 +23,11 @@ class CarouselModule {
         this.preloadQueue = [];
         this.idlePreloadQueue = [];
         this.init();
+        
+        // 挂载到 Starlink
+        if (window.Starlink) window.Starlink.carousel = this;
+        // 保留旧全局变量以便兼容
+        window.carouselModule = this;
     }
 
     getResolutionForWidth() {
@@ -394,11 +403,9 @@ class CarouselModule {
 
 // 确保在 DOM 加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
-    if (!window.carouselModule) {
-        if (!window.Starlink) window.Starlink = {};
-        if (!window.Starlink.carousel) {
-            window.Starlink.carousel = new CarouselModule();
-        }
-        window.carouselModule = window.Starlink.carousel;
+    if (!window.Starlink) window.Starlink = {};
+    if (!window.Starlink.carousel) {
+        window.Starlink.carousel = new CarouselModule();
     }
+    window.carouselModule = window.Starlink.carousel;
 });
