@@ -1,10 +1,10 @@
 // 星聚导航 Service Worker - 缓存导航数据与静态资源，增强 API 响应缓存
-// 版本 v6：优化站点列表缓存策略（网络优先、缓存后备，TTL 5分钟）
+// 版本 v6（移除后台版本检查，优化缓存策略）
 const CACHE_NAME = 'starlink-v6';
 const NAVIGATION_CACHE_NAME = 'starlink-nav-v6';
 const API_CACHE_NAME = 'starlink-api-v6';
 
-// 需要缓存的静态资源列表（增加字体文件）
+// 需要缓存的静态资源列表
 const STATIC_URLS = [
     '/',
     '/index.html',
@@ -72,10 +72,6 @@ function getApiTtl(urlPath) {
     return API_TTL_MAP[urlPath] || API_TTL_MAP.default;
 }
 
-// 版本更新检测
-let versionCheckInterval = null;
-const VERSION_CHECK_INTERVAL = 60 * 60 * 1000;
-
 // 安装事件：缓存静态资源
 self.addEventListener('install', event => {
     console.log('Service Worker 安装中...');
@@ -101,6 +97,7 @@ self.addEventListener('activate', event => {
                 }
             }));
         }).then(() => {
+            // 通知所有客户端有新版本可用
             self.clients.matchAll().then(clients => {
                 clients.forEach(client => {
                     client.postMessage({
@@ -262,12 +259,4 @@ self.addEventListener('fetch', event => {
     }
     
     event.respondWith(handleOtherRequest(event.request));
-});
-
-// 后台版本检查（可选）
-self.addEventListener('activate', () => {
-    if (versionCheckInterval) clearInterval(versionCheckInterval);
-    versionCheckInterval = setInterval(() => {
-        fetch('/?sw-version-check=' + Date.now(), { cache: 'no-store' }).catch(() => {});
-    }, VERSION_CHECK_INTERVAL);
 });
