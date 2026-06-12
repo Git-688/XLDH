@@ -1,9 +1,13 @@
 /**
  * 优化分类导航系统 - 分页加载版（支持 WebP 图标、高清懒加载、智能预加载、点击计数优化）
  * 修复：无效链接统计改为全局统计（所有分类下的无效链接总数）
+ * 修改：挂载到 window.Starlink.navigation
  */
 class OptimizedNavigation {
     constructor() {
+        // 避免重复实例化
+        if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
+        
         this.structure = null;
         this.siteCache = new Map();
         this.selectedLevel1 = null;
@@ -40,6 +44,11 @@ class OptimizedNavigation {
         // 预加载队列
         this.preloadQueue = [];
         this.isPreloading = false;
+        
+        // 挂载到 Starlink
+        if (window.Starlink) window.Starlink.navigation = this;
+        // 保留旧全局变量以便兼容
+        window.optimizedNavigation = this;
     }
 
     _escapeHtml(str) { return Utils.escapeHtml(str); }
@@ -133,8 +142,8 @@ class OptimizedNavigation {
         return `<img class="lazy-icon" data-domain="${domainEscaped}" data-src="${this._escapeHtml(candidates[0])}" 
                      data-candidates='${safeCandidates}'
                      alt="" loading="lazy"
-                     onerror="this.onerror=null; const candidates = JSON.parse(this.getAttribute('data-candidates')); const domain = this.getAttribute('data-domain'); const idx = candidates.indexOf(this.src); if (idx !== -1 && idx + 1 < candidates.length) { this.src = candidates[idx+1]; } else { if (window.optimizedNavigation && window.optimizedNavigation._recordIconFailure) { window.optimizedNavigation._recordIconFailure(domain); } this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>'; }"
-                     onload="const domain = this.getAttribute('data-domain'); if (window.optimizedNavigation && window.optimizedNavigation._recordIconSuccess) { window.optimizedNavigation._recordIconSuccess(domain, this.src); }">`;
+                     onerror="this.onerror=null; const candidates = JSON.parse(this.getAttribute('data-candidates')); const domain = this.getAttribute('data-domain'); const idx = candidates.indexOf(this.src); if (idx !== -1 && idx + 1 < candidates.length) { this.src = candidates[idx+1]; } else { if (window.Starlink?.navigation && window.Starlink.navigation._recordIconFailure) { window.Starlink.navigation._recordIconFailure(domain); } this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>'; }"
+                     onload="const domain = this.getAttribute('data-domain'); if (window.Starlink?.navigation && window.Starlink.navigation._recordIconSuccess) { window.Starlink.navigation._recordIconSuccess(domain, this.src); }">`;
     }
 
     _highlightText(text, keyword) {
@@ -552,7 +561,8 @@ class OptimizedNavigation {
         card.addEventListener('click', async (e) => {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
-            if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
+            if (window.Starlink?.musicPlayer) window.Starlink.musicPlayer.isHandlingNavigationClick = true;
+            else if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
 
             // 乐观更新前端显示
             const viewEl = card.querySelector('.view-count');
@@ -580,7 +590,8 @@ class OptimizedNavigation {
 
             setTimeout(() => {
                 this.isNavigationClick = false;
-                if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
+                if (window.Starlink?.musicPlayer) window.Starlink.musicPlayer.isHandlingNavigationClick = false;
+                else if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
             }, 100);
         });
 
@@ -827,4 +838,22 @@ class OptimizedNavigation {
     }
 }
 
-window.getOptimizedNavigation = function() { return window.optimizedNavigation; };
+// 全局辅助函数（保留兼容）
+window.getOptimizedNavigation = function() { return window.Starlink?.navigation || window.optimizedNavigation; };
+
+// 自动初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!window.Starlink) window.Starlink = {};
+        if (!window.Starlink.navigation) {
+            window.Starlink.navigation = new OptimizedNavigation();
+            window.Starlink.navigation.init();
+        }
+    });
+} else {
+    if (!window.Starlink) window.Starlink = {};
+    if (!window.Starlink.navigation) {
+        window.Starlink.navigation = new OptimizedNavigation();
+        window.Starlink.navigation.init();
+    }
+}
