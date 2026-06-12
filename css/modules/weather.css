@@ -30,8 +30,8 @@
 .weather-modal-content {
     max-width: 350px;
     width: 100%;
-    background: #ffffff;
-    border: 1px solid #e0e0e0;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     transform: scale(0.95);
@@ -66,8 +66,8 @@
 /* ========== 头部样式 ========== */
 .weather-header {
     padding: 12px 16px;
-    background: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
+    background: var(--bg-secondary, #f8f9fa);
+    border-bottom: 1px solid var(--border-color, #e9ecef);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -89,7 +89,7 @@
 .weather-title span:first-child {
     font-size: 14px;
     font-weight: 600;
-    color: #333;
+    color: var(--text-primary, #333);
 }
 
 .weather-auto-location-badge {
@@ -102,7 +102,7 @@
 
 .auto-refresh-label {
     font-size: 10px;
-    color: #999;
+    color: var(--text-secondary, #999);
     margin-left: 8px;
 }
 
@@ -120,7 +120,7 @@
 .weather-icon-btn {
     background: none;
     border: none;
-    color: #666;
+    color: var(--text-secondary, #666);
     cursor: pointer;
     padding: 4px;
     border-radius: 50%;
@@ -134,7 +134,7 @@
 }
 
 .weather-icon-btn:hover {
-    background: #f0f0f0;
+    background: var(--bg-secondary, #f0f0f0);
     color: var(--primary-color, #4361ee);
 }
 
@@ -169,7 +169,7 @@
 
 .loading-state p {
     font-size: 11px;
-    color: #666;
+    color: var(--text-secondary, #666);
     margin-top: 8px;
 }
 
@@ -187,13 +187,13 @@
 
 .error-state p {
     font-size: 11px;
-    color: #666;
+    color: var(--text-secondary, #666);
     margin-bottom: 6px;
 }
 
 .error-sub-text {
     font-size: 10px;
-    color: #999;
+    color: var(--text-secondary, #999);
     margin-bottom: 10px;
 }
 
@@ -217,13 +217,13 @@
 /* 当前天气 */
 .weather-current {
     padding: 10px 12px 8px;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--border-color, #e9ecef);
     text-align: center;
 }
 
 .weather-city {
     font-size: 11px;
-    color: #666;
+    color: var(--text-secondary, #666);
     margin-bottom: 4px;
     display: flex;
     align-items: center;
@@ -238,7 +238,7 @@
 
 .weather-update-time {
     font-size: 10px;
-    color: #999;
+    color: var(--text-secondary, #999);
     margin-left: 3px;
 }
 
@@ -263,7 +263,7 @@
 
 .weather-desc {
     font-size: 12px;
-    color: #333;
+    color: var(--text-primary, #333);
     font-weight: 500;
     margin-bottom: 2px;
 }
@@ -280,7 +280,7 @@
 
 .temp-label {
     font-size: 9px;
-    color: #999;
+    color: var(--text-secondary, #999);
     margin-bottom: 1px;
 }
 
@@ -306,10 +306,10 @@
 .weather-tips {
     margin-top: 8px;
     padding: 6px 10px;
-    background: #f8f9fa;
+    background: var(--bg-secondary, #f8f9fa);
     border-radius: 6px;
     font-size: 10px;
-    color: #666;
+    color: var(--text-secondary, #666);
     border-left: 3px solid var(--primary-color, #4361ee);
 }
 
@@ -329,9 +329,9 @@
 .weather-detail {
     text-align: center;
     padding: 8px;
-    background: #f8f9fa;
+    background: var(--bg-secondary, #f8f9fa);
     border-radius: 6px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color, #e9ecef);
 }
 
 .detail-icon {
@@ -342,13 +342,13 @@
 
 .detail-label {
     font-size: 9px;
-    color: #999;
+    color: var(--text-secondary, #999);
     margin-bottom: 2px;
 }
 
 .detail-value {
     font-size: 12px;
-    color: #333;
+    color: var(--text-primary, #333);
     font-weight: 500;
 }
 
@@ -359,7 +359,7 @@
 
 .forecast-title {
     font-size: 11px;
-    color: #666;
+    color: var(--text-secondary, #666);
     margin: 8px 0 6px;
     display: flex;
     align-items: center;
@@ -380,14 +380,14 @@
 .forecast-day {
     text-align: center;
     padding: 8px 4px;
-    background: #f8f9fa;
+    background: var(--bg-secondary, #f8f9fa);
     border-radius: 6px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color, #e9ecef);
 }
 
 .forecast-day-name {
     font-size: 10px;
-    color: #666;
+    color: var(--text-secondary, #666);
     margin-bottom: 4px;
     font-weight: 500;
 }
@@ -400,7 +400,7 @@
 
 .forecast-day-weather {
     font-size: 9px;
-    color: #333;
+    color: var(--text-primary, #333);
     margin-bottom: 4px;
 }
 
@@ -453,8 +453,8 @@
 }
 
 .city-prompt-content {
-    background: #ffffff;
-    border: 1px solid #e0e0e0;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     padding: 16px;
@@ -482,7 +482,7 @@
     margin: 0;
     font-size: 14px;
     font-weight: 600;
-    color: #333;
+    color: var(--text-primary, #333);
 }
 
 .prompt-input-group {
@@ -493,24 +493,24 @@
     display: block;
     margin-bottom: 4px;
     font-size: 11px;
-    color: #666;
+    color: var(--text-secondary, #666);
 }
 
 .prompt-input-group input {
     width: 100%;
     padding: 8px 10px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 6px;
     font-size: 12px;
-    background: #ffffff;
-    color: #333;
+    background: var(--bg-card, #ffffff);
+    color: var(--text-primary, #333);
     box-sizing: border-box;
 }
 
 .prompt-hint {
     margin: 6px 0 0 0;
     font-size: 10px;
-    color: #999;
+    color: var(--text-secondary, #999);
 }
 
 .hot-cities {
@@ -520,7 +520,7 @@
 .hot-cities p {
     margin: 0 0 6px 0;
     font-size: 11px;
-    color: #666;
+    color: var(--text-secondary, #666);
 }
 
 .hot-city-buttons {
@@ -531,17 +531,17 @@
 
 .hot-city-btn {
     padding: 5px 8px;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
+    background: var(--bg-secondary, #f8f9fa);
+    border: 1px solid var(--border-color, #e9ecef);
     border-radius: 4px;
     font-size: 11px;
-    color: #666;
+    color: var(--text-secondary, #666);
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .hot-city-btn:hover {
-    background: #e9ecef;
+    background: var(--border-color, #e9ecef);
     border-color: var(--primary-color, #4361ee);
     color: var(--primary-color, #4361ee);
 }
@@ -553,15 +553,15 @@
 }
 
 .cancel-btn {
-    background: #f8f9fa;
-    border: 1px solid #e0e0e0;
-    color: #666;
+    background: var(--bg-secondary, #f8f9fa);
+    border: 1px solid var(--border-color, #e0e0e0);
+    color: var(--text-secondary, #666);
     padding: 5px 12px;
     font-size: 11px;
 }
 
 .cancel-btn:hover {
-    background: #e9ecef;
+    background: var(--border-color, #e9ecef);
 }
 
 .confirm-btn {
@@ -651,429 +651,167 @@
     }
 }
 
-/* ==================== 深色模式优化 ==================== */
-/* 系统深色模式 */
-@media (prefers-color-scheme: dark) {
-    .weather-modal-content {
-        background: #2d2d2d;
-        border-color: #404040;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .weather-header {
-        background: #3a3a3a;
-        border-bottom-color: #404040;
-    }
-
-    .weather-title span:first-child {
-        color: #f0f0f0;
-    }
-
-    .weather-auto-location-badge {
-        background: #1e3a5f;
-        color: #6bc8ff;
-    }
-
-    .auto-refresh-label {
-        color: #adb5bd;
-    }
-
-    .weather-icon-btn {
-        color: #adb5bd;
-    }
-
-    .weather-icon-btn:hover {
-        background: #4a4a4a;
-        color: #7b9cff;
-    }
-
-    .weather-current {
-        border-bottom-color: #404040;
-    }
-
-    .weather-city {
-        color: #adb5bd;
-    }
-
-    .weather-update-time {
-        color: #8f9bb3;
-    }
-
-    .weather-desc {
-        color: #f0f0f0;
-    }
-
-    .weather-icon {
-        color: #7b9cff;
-    }
-
-    .temp-value.day {
-        color: #ff8c8c;
-    }
-
-    .temp-value.night {
-        color: #7bc8ff;
-    }
-
-    .temp-separator {
-        color: #666;
-    }
-
-    .weather-tips {
-        background: #3a3a3a;
-        color: #c0c0c0;
-        border-left-color: #7b9cff;
-    }
-
-    .weather-detail {
-        background: #3a3a3a;
-        border-color: #404040;
-    }
-
-    .detail-icon {
-        color: #7b9cff;
-    }
-
-    .detail-label {
-        color: #adb5bd;
-    }
-
-    .detail-value {
-        color: #e0e0e0;
-    }
-
-    .forecast-title {
-        color: #adb5bd;
-    }
-
-    .forecast-title i {
-        color: #7b9cff;
-    }
-
-    .forecast-day {
-        background: #3a3a3a;
-        border-color: #404040;
-    }
-
-    .forecast-day-name {
-        color: #adb5bd;
-    }
-
-    .forecast-day-icon {
-        color: #7b9cff;
-    }
-
-    .forecast-day-weather {
-        color: #e0e0e0;
-    }
-
-    .forecast-day-temp .day {
-        color: #ff8c8c;
-    }
-
-    .forecast-day-temp .night {
-        color: #7bc8ff;
-    }
-
-    .forecast-day-temp .sep {
-        color: #666;
-    }
-
-    .manual-mode-hint {
-        background: rgba(245, 158, 11, 0.15);
-    }
-
-    .manual-mode-hint span {
-        color: #fbbf24;
-    }
-
-    /* 城市选择弹窗深色 */
-    .city-prompt-content {
-        background: #2d2d2d;
-        border-color: #404040;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .prompt-header {
-        color: #7b9cff;
-    }
-
-    .prompt-header h3 {
-        color: #f0f0f0;
-    }
-
-    .prompt-input-group label {
-        color: #adb5bd;
-    }
-
-    .prompt-input-group input {
-        background: #1e1e1e;
-        border-color: #404040;
-        color: #f8f9fa;
-    }
-
-    .prompt-input-group input:focus {
-        border-color: #7b9cff;
-        box-shadow: 0 0 0 3px rgba(123, 156, 255, 0.2);
-    }
-
-    .prompt-hint {
-        color: #8f9bb3;
-    }
-
-    .hot-cities p {
-        color: #adb5bd;
-    }
-
-    .hot-city-btn {
-        background: #3a3a3a;
-        border-color: #404040;
-        color: #c0c0c0;
-    }
-
-    .hot-city-btn:hover {
-        background: #4a4a4a;
-        border-color: #7b9cff;
-        color: #7b9cff;
-    }
-
-    .cancel-btn {
-        background: #3a3a3a;
-        border-color: #404040;
-        color: #c0c0c0;
-    }
-
-    .cancel-btn:hover {
-        background: #4a4a4a;
-    }
-
-    .confirm-btn {
-        background: #4361ee;
-    }
-
-    .confirm-btn:hover {
-        background: #5a7aff;
-    }
-
-    /* 加载和错误状态文字 */
-    .loading-state p,
-    .error-state p,
-    .error-sub-text {
-        color: #adb5bd;
-    }
-
-    .error-icon {
-        color: #f87171;
-    }
-}
-
-/* 手动深色模式（.dark-mode 类） */
+/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
 .dark-mode .weather-modal-content {
-    background: #2d2d2d;
-    border-color: #404040;
+    background: var(--bg-card);
+    border-color: var(--border-color);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
-
 .dark-mode .weather-header {
-    background: #3a3a3a;
-    border-bottom-color: #404040;
+    background: var(--bg-secondary);
+    border-bottom-color: var(--border-color);
 }
-
 .dark-mode .weather-title span:first-child {
-    color: #f0f0f0;
+    color: var(--text-primary);
 }
-
 .dark-mode .weather-auto-location-badge {
     background: #1e3a5f;
     color: #6bc8ff;
 }
-
 .dark-mode .auto-refresh-label {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
-
 .dark-mode .weather-icon-btn {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
-
 .dark-mode .weather-icon-btn:hover {
-    background: #4a4a4a;
-    color: #7b9cff;
+    background: var(--bg-secondary);
+    color: var(--primary-color);
 }
-
 .dark-mode .weather-current {
-    border-bottom-color: #404040;
+    border-bottom-color: var(--border-color);
 }
-
 .dark-mode .weather-city {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
-
 .dark-mode .weather-update-time {
     color: #8f9bb3;
 }
-
 .dark-mode .weather-desc {
-    color: #f0f0f0;
+    color: var(--text-primary);
 }
-
 .dark-mode .weather-icon {
-    color: #7b9cff;
+    color: var(--primary-color);
 }
-
 .dark-mode .temp-value.day {
     color: #ff8c8c;
 }
-
 .dark-mode .temp-value.night {
     color: #7bc8ff;
 }
-
 .dark-mode .temp-separator {
     color: #666;
 }
-
 .dark-mode .weather-tips {
-    background: #3a3a3a;
+    background: var(--bg-secondary);
     color: #c0c0c0;
-    border-left-color: #7b9cff;
+    border-left-color: var(--primary-color);
 }
-
 .dark-mode .weather-detail {
-    background: #3a3a3a;
-    border-color: #404040;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
 }
-
 .dark-mode .detail-icon {
-    color: #7b9cff;
+    color: var(--primary-color);
 }
-
 .dark-mode .detail-label {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
-
 .dark-mode .detail-value {
-    color: #e0e0e0;
+    color: var(--text-primary);
 }
-
 .dark-mode .forecast-title {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
-
 .dark-mode .forecast-title i {
-    color: #7b9cff;
+    color: var(--primary-color);
 }
-
 .dark-mode .forecast-day {
-    background: #3a3a3a;
-    border-color: #404040;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
 }
-
 .dark-mode .forecast-day-name {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
-
 .dark-mode .forecast-day-icon {
-    color: #7b9cff;
+    color: var(--primary-color);
 }
-
 .dark-mode .forecast-day-weather {
-    color: #e0e0e0;
+    color: var(--text-primary);
 }
-
 .dark-mode .forecast-day-temp .day {
     color: #ff8c8c;
 }
-
 .dark-mode .forecast-day-temp .night {
     color: #7bc8ff;
 }
-
 .dark-mode .forecast-day-temp .sep {
     color: #666;
 }
-
 .dark-mode .manual-mode-hint {
     background: rgba(245, 158, 11, 0.15);
 }
-
 .dark-mode .manual-mode-hint span {
     color: #fbbf24;
 }
-
 .dark-mode .city-prompt-content {
-    background: #2d2d2d;
-    border-color: #404040;
+    background: var(--bg-card);
+    border-color: var(--border-color);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
-
 .dark-mode .prompt-header {
-    color: #7b9cff;
+    color: var(--primary-color);
 }
-
 .dark-mode .prompt-header h3 {
-    color: #f0f0f0;
+    color: var(--text-primary);
 }
-
 .dark-mode .prompt-input-group label {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
-
 .dark-mode .prompt-input-group input {
-    background: #1e1e1e;
-    border-color: #404040;
-    color: #f8f9fa;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
 }
-
 .dark-mode .prompt-input-group input:focus {
-    border-color: #7b9cff;
+    border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(123, 156, 255, 0.2);
 }
-
 .dark-mode .prompt-hint {
     color: #8f9bb3;
 }
-
 .dark-mode .hot-cities p {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
-
 .dark-mode .hot-city-btn {
-    background: #3a3a3a;
-    border-color: #404040;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
     color: #c0c0c0;
 }
-
 .dark-mode .hot-city-btn:hover {
     background: #4a4a4a;
-    border-color: #7b9cff;
-    color: #7b9cff;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
 }
-
 .dark-mode .cancel-btn {
-    background: #3a3a3a;
-    border-color: #404040;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
     color: #c0c0c0;
 }
-
 .dark-mode .cancel-btn:hover {
     background: #4a4a4a;
 }
-
 .dark-mode .confirm-btn {
-    background: #4361ee;
+    background: var(--primary-color);
 }
-
 .dark-mode .confirm-btn:hover {
     background: #5a7aff;
 }
-
 .dark-mode .loading-state p,
 .dark-mode .error-state p,
 .dark-mode .error-sub-text {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
-
 .dark-mode .error-icon {
     color: #f87171;
 }
