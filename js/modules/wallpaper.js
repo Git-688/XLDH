@@ -1,11 +1,10 @@
 /**
  * 轮播图模块 - 性能优化版（增强预加载策略）
  * 功能：7天必应壁纸轮播、自动切换、箭头导航、标题显示、预加载前后多张图片（限制并发）
- * 修改：挂载到 window.Starlink.carousel
+ * 优化：增加空闲预加载、优先级队列
  */
 class CarouselModule {
     constructor() {
-        // 避免重复实例化
         if (window.Starlink && window.Starlink.carousel) return window.Starlink.carousel;
         
         this.currentIndex = 1;
@@ -24,9 +23,7 @@ class CarouselModule {
         this.idlePreloadQueue = [];
         this.init();
         
-        // 挂载到 Starlink
         if (window.Starlink) window.Starlink.carousel = this;
-        // 保留旧全局变量以便兼容
         window.carouselModule = this;
     }
 
@@ -77,7 +74,6 @@ class CarouselModule {
         return loadPromise;
     }
 
-    // 预加载指定索引的图片，返回 Promise
     preloadImage(clonedIndex, priority = 'normal') {
         const slide = this.clonedSlides[clonedIndex];
         if (!slide || !slide.url) return Promise.resolve(false);
@@ -88,7 +84,6 @@ class CarouselModule {
         
         return new Promise((resolve) => {
             if (this.activePreloads.size >= this.maxConcurrentPreloads) {
-                // 队列存储对象，包含任务和 resolve 回调
                 if (priority === 'high') {
                     this.preloadQueue.unshift({ task, resolve });
                 } else {
@@ -97,7 +92,6 @@ class CarouselModule {
             } else {
                 task().then(result => {
                     resolve(result);
-                    // 处理队列中的下一个
                     if (this.preloadQueue.length > 0) {
                         const next = this.preloadQueue.shift();
                         next.task().then(r => next.resolve(r));
@@ -107,7 +101,6 @@ class CarouselModule {
         });
     }
 
-    // 预加载多个相邻图片
     preloadNearbySlides(currentIndex, count = 2) {
         const total = this.clonedSlides.length;
         const indices = new Set();
@@ -120,7 +113,6 @@ class CarouselModule {
         });
     }
 
-    // 空闲时预加载剩余图片（整个轮播列表）
     preloadAllIdle() {
         if (this.idlePreloadQueue.length > 0) return;
         const allIndices = Array.from({ length: this.clonedSlides.length }, (_, i) => i);
@@ -147,7 +139,6 @@ class CarouselModule {
             }
             const nextTask = this.idlePreloadQueue.shift();
             if (nextTask) {
-                // 确保 nextTask 返回 Promise
                 Promise.resolve(nextTask()).finally(() => {
                     if (this.idlePreloadQueue.length > 0) {
                         setTimeout(processIdle, 100);
@@ -213,7 +204,7 @@ class CarouselModule {
         this.renderSlides();
         this.renderDots();
         this.preloadImage(1, 'high');
-        this.preloadNearbySlides(1, 2);
+        this.preloadNearbySlides(1, 3);
         this.goToSlide(1, false);
         this.bindEvents();
         this.startAutoplay();
@@ -271,8 +262,6 @@ class CarouselModule {
         if (clonedIndex < 0 || clonedIndex >= total) return;
 
         this.isTransitioning = true;
-
-        // 预加载当前幻灯片的前后多张
         this.preloadNearbySlides(clonedIndex, 3);
 
         const currentSlideDiv = this.track.children[clonedIndex];
@@ -401,7 +390,6 @@ class CarouselModule {
     }
 }
 
-// 确保在 DOM 加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.Starlink) window.Starlink = {};
     if (!window.Starlink.carousel) {
