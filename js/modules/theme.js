@@ -1,9 +1,13 @@
 /**
  * 主题切换模块 - 白天/黑夜模式
  * 支持保存用户偏好、跟随系统、手动切换
+ * 修改：挂载到 window.Starlink.theme
  */
 class ThemeModule {
     constructor() {
+        // 避免重复实例化
+        if (window.Starlink && window.Starlink.theme) return window.Starlink.theme;
+        
         this.THEME_KEY = 'starlink_theme';
         this.DARK_CLASS = 'dark-mode';
         this.availableThemes = ['light', 'dark', 'auto'];
@@ -12,6 +16,11 @@ class ThemeModule {
         this.isInitialized = false;
         this.systemThemeQuery = null;
         this.systemThemeHandler = null;
+        
+        // 挂载到 Starlink
+        if (window.Starlink) window.Starlink.theme = this;
+        // 保留旧全局变量以便兼容
+        window.themeModule = this;
     }
 
     init() {
@@ -88,9 +97,10 @@ class ThemeModule {
         }
         this.applyTheme();
         // 可选：显示提示
-        if (window.toast) {
+        const toast = window.Starlink?.toast || window.toast;
+        if (toast && toast.show) {
             const themeName = this.currentTheme === 'auto' ? '跟随系统' : (this.currentTheme === 'dark' ? '深色模式' : '亮色模式');
-            window.toast.show(`已切换至 ${themeName}`, 'info');
+            toast.show(`已切换至 ${themeName}`, 'info');
         }
     }
 
@@ -120,12 +130,14 @@ class ThemeModule {
 }
 
 // 单例模式
-if (!window.themeModule) {
-    window.themeModule = new ThemeModule();
+if (!window.Starlink) window.Starlink = {};
+if (!window.Starlink.theme) {
+    window.Starlink.theme = new ThemeModule();
     // 等待 DOM 加载完成后初始化
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => window.themeModule.init());
+        document.addEventListener('DOMContentLoaded', () => window.Starlink.theme.init());
     } else {
-        window.themeModule.init();
+        window.Starlink.theme.init();
     }
 }
+window.themeModule = window.Starlink.theme;
