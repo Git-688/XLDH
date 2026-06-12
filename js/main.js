@@ -1,11 +1,11 @@
 /**
- * 星聚导航主应用程序（最终版，修复模态框动画）
+ * 星聚导航主应用程序（最终版，修复模态框动画，完善骨架屏）
  */
 class App {
     constructor() {
         this.components = {};
         this.modules = {};
-        this.activeModals = [];      // 当前打开的模态框实例列表
+        this.activeModals = [];
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.notebookModalHideRef = null;
@@ -17,11 +17,13 @@ class App {
         }
     }
 
-    // 加载星聚笔记数据
+    // 加载星聚笔记数据（带骨架屏）
     async loadNotebookData() {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
-        listEl.innerHTML = '<div class="loading">加载笔记中...</div>';
+        // 显示骨架屏
+        listEl.innerHTML = '<div class="skeleton-notebook-item"></div>'.repeat(5);
+        
         const fetchNotebook = async (retry = 2) => {
             try {
                 const response = await fetch('https://api.xjdh688.ccwu.cc/notebook');
@@ -33,6 +35,7 @@ class App {
                 throw error;
             }
         };
+        
         try {
             const items = await fetchNotebook(2);
             if (items.length === 0) {
@@ -67,7 +70,6 @@ class App {
     showNotebookModal() {
         const modalEl = document.getElementById('notebookModal');
         if (!modalEl) return;
-        // 创建包装对象，实现 hide 方法
         if (!this.notebookModalHideRef) {
             this.notebookModalHideRef = {
                 hide: () => this.hideNotebookModal(),
@@ -83,7 +85,6 @@ class App {
         const modalEl = document.getElementById('notebookModal');
         if (!modalEl) return;
         modalEl.classList.remove('active');
-        // 等待动画结束后再从 activeModals 中移除
         const onTransitionEnd = () => {
             modalEl.removeEventListener('transitionend', onTransitionEnd);
             if (this.notebookModalHideRef) {
@@ -91,7 +92,6 @@ class App {
             }
         };
         modalEl.addEventListener('transitionend', onTransitionEnd, { once: true });
-        // 后备超时
         setTimeout(onTransitionEnd, 400);
     }
 
@@ -171,19 +171,16 @@ class App {
 
     initCoreComponents() {
         try {
-            // 从 Starlink 获取 sidebar 实例
-            if (window.Starlink && window.Starlink.sidebar) {
-                this.components.sidebar = window.Starlink.sidebar;
-            } else if (typeof CompactSidebar !== 'undefined') {
-                // 兼容旧代码：如果还未初始化，则创建
-                this.components.sidebar = new CompactSidebar();
-                if (window.Starlink) window.Starlink.sidebar = this.components.sidebar;
-                this.components.sidebar.init().catch(error => {
-                    console.error('侧边栏初始化失败:', error);
-                    this.showToast('侧边栏初始化失败，部分功能可能不可用', 'warning');
-                });
-            } else {
-                console.warn('CompactSidebar 未定义');
+            if (typeof CompactSidebar !== 'undefined') {
+                if (!window.sidebar || !window.sidebar.isInitialized) {
+                    this.components.sidebar = new CompactSidebar();
+                    this.components.sidebar.init().catch(error => {
+                        console.error('侧边栏初始化失败:', error);
+                        this.showToast('侧边栏初始化失败，部分功能可能不可用', 'warning');
+                    });
+                } else {
+                    this.components.sidebar = window.sidebar;
+                }
             }
         } catch (error) {
             console.error('核心组件初始化失败:', error);
@@ -195,82 +192,59 @@ class App {
         try {
             const initPromises = [];
 
-            // 搜索模块
-            if (window.Starlink && window.Starlink.search) {
-                this.modules.search = window.Starlink.search;
-                initPromises.push(this.modules.search.init?.());
-            } else if (typeof NewSearchModule !== 'undefined') {
-                this.modules.search = new NewSearchModule();
-                if (window.Starlink) window.Starlink.search = this.modules.search;
+            if (typeof NewSearchModule !== 'undefined') {
+                if (!window.newSearchModule) {
+                    this.modules.search = new NewSearchModule();
+                    window.newSearchModule = this.modules.search;
+                } else {
+                    this.modules.search = window.newSearchModule;
+                }
                 initPromises.push(this.modules.search.init?.());
             }
 
-            // 壁纸模块
-            if (window.Starlink && window.Starlink.carousel) {
-                this.modules.wallpaper = window.Starlink.carousel;
-                initPromises.push(this.modules.wallpaper.init?.());
-            } else if (typeof CarouselModule !== 'undefined') {
-                this.modules.wallpaper = new CarouselModule();
-                if (window.Starlink) window.Starlink.carousel = this.modules.wallpaper;
+            if (typeof WallpaperModule !== 'undefined') {
+                this.modules.wallpaper = new WallpaperModule();
                 initPromises.push(this.modules.wallpaper.init?.());
             }
 
-            // 问候模块
-            if (window.Starlink && window.Starlink.greeting) {
-                this.modules.greeting = window.Starlink.greeting;
-                initPromises.push(this.modules.greeting.init?.());
-            } else if (typeof GreetingModule !== 'undefined') {
+            if (typeof GreetingModule !== 'undefined') {
                 this.modules.greeting = new GreetingModule();
-                if (window.Starlink) window.Starlink.greeting = this.modules.greeting;
                 initPromises.push(this.modules.greeting.init?.());
             }
 
-            // 导航模块
-            if (window.Starlink && window.Starlink.navigation) {
-                this.modules.navigation = window.Starlink.navigation;
-                initPromises.push(this.modules.navigation.init?.());
-            } else if (typeof OptimizedNavigation !== 'undefined') {
+            if (typeof OptimizedNavigation !== 'undefined') {
                 this.modules.navigation = new OptimizedNavigation();
-                if (window.Starlink) window.Starlink.navigation = this.modules.navigation;
+                window.optimizedNavigation = this.modules.navigation;
                 initPromises.push(this.modules.navigation.init?.());
             }
 
-            // 页脚模块（stats）
-            if (window.Starlink && window.Starlink.footer) {
-                this.modules.footer = window.Starlink.footer;
-                initPromises.push(this.modules.footer.init?.());
-            } else if (typeof FooterModule !== 'undefined') {
+            if (typeof FooterModule !== 'undefined') {
                 this.modules.footer = new FooterModule();
-                if (window.Starlink) window.Starlink.footer = this.modules.footer;
                 initPromises.push(this.modules.footer.init?.());
             }
 
-            // 天气模块
-            if (window.Starlink && window.Starlink.weather) {
-                this.modules.weather = window.Starlink.weather;
-                initPromises.push(this.modules.weather.init?.());
-            } else if (typeof WeatherModule !== 'undefined') {
+            if (typeof WeatherModule !== 'undefined') {
                 this.modules.weather = new WeatherModule();
-                if (window.Starlink) window.Starlink.weather = this.modules.weather;
                 initPromises.push(this.modules.weather.init?.());
             }
 
-            // 公告模块
-            if (window.Starlink && window.Starlink.announcement) {
-                this.modules.announcement = window.Starlink.announcement;
-            } else if (typeof AnnouncementModule !== 'undefined') {
-                this.modules.announcement = new AnnouncementModule();
-                if (window.Starlink) window.Starlink.announcement = this.modules.announcement;
+            if (typeof AnnouncementModule !== 'undefined') {
+                if (!window.announcementModule) {
+                    this.modules.announcement = new AnnouncementModule();
+                    window.announcementModule = this.modules.announcement;
+                } else {
+                    this.modules.announcement = window.announcementModule;
+                }
             }
 
-            // 关于模块
-            if (window.Starlink && window.Starlink.about) {
-                this.modules.about = window.Starlink.about;
-                if (this.modules.about.init) this.modules.about.init();
-            } else if (typeof AboutModule !== 'undefined') {
-                this.modules.about = new AboutModule();
-                if (window.Starlink) window.Starlink.about = this.modules.about;
-                this.modules.about.init();
+            if (typeof AboutModule !== 'undefined') {
+                if (!window.aboutModule) {
+                    this.modules.about = new AboutModule();
+                    window.aboutModule = this.modules.about;
+                    this.modules.about.init();
+                } else {
+                    this.modules.about = window.aboutModule;
+                }
             }
 
             Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {
@@ -284,11 +258,8 @@ class App {
 
     initDependentComponents() {
         try {
-            if (typeof Navbar !== 'undefined' && !window.Starlink.navbar) {
+            if (typeof Navbar !== 'undefined') {
                 this.components.navbar = new Navbar();
-                if (window.Starlink) window.Starlink.navbar = this.components.navbar;
-            } else if (window.Starlink && window.Starlink.navbar) {
-                this.components.navbar = window.Starlink.navbar;
             }
         } catch (error) {
             console.error('依赖组件初始化失败:', error);
@@ -375,7 +346,6 @@ class App {
     registerModal(modal) {
         if (!modal || typeof modal.hide !== 'function') return;
         if (!this.activeModals.includes(modal)) {
-            // 关闭当前所有其他模态框（带动画等待）
             if (this.activeModals.length > 0) {
                 const previous = this.activeModals[this.activeModals.length - 1];
                 previous.hide();
@@ -405,7 +375,7 @@ class App {
         if (this.components.navbar?.hideMusicPlayer) this.components.navbar.hideMusicPlayer();
         if (this.modules.search?.isModalOpen && this.modules.search.hide) this.modules.search.hide();
         this.hideNotebookModal();
-        if (window.Starlink?.comment?.isVisible) window.Starlink.comment.hide();
+        if (window.walineFeedback?.isVisible) window.walineFeedback.hide();
     }
 
     showToast(message, type = 'info') {
@@ -571,14 +541,13 @@ if (!window.Starlink) window.Starlink = {};
 if (!window.Starlink.app) {
     window.Starlink.app = new App();
 }
-// 保留 window.app 作为兼容别名（但建议逐步迁移）
 window.app = window.Starlink.app;
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        if (window.Starlink.app && !window.Starlink.app.isInitialized) {
-            window.Starlink.app.init();
+        if (window.app && !window.app.isInitialized) {
+            window.app.init();
         }
     });
 }
-window.getApp = function() { return window.Starlink.app; };
+window.getApp = function() { return window.app; };
