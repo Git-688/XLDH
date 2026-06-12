@@ -2,7 +2,7 @@
  * 音乐播放器 - 星聚导航专用（完整修复版）
  * 包含：精确进度条、下载进度（通过 Worker 代理）、搜索、播放列表、用户手势处理、歌词代理、歌单显示修复、倍速控件修复
  * 进度条点击和拖拽已优化，支持触摸设备
- * 修改：挂载到 window.Starlink.musicPlayer，支持单例
+ * 修改：挂载到 window.Starlink.musicPlayer，支持单例，修复内存泄漏
  */
 
 // ==================== 自定义下拉选择器组件（必须在播放器类之前定义） ====================
@@ -1265,10 +1265,42 @@ class MusicPlayer {
         if (this.updateAnimationFrame) cancelAnimationFrame(this.updateAnimationFrame);
         if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
         if (this.scrollAnimationId) cancelAnimationFrame(this.scrollAnimationId);
-        if (this.audio) { this.audio.pause(); this.audio.src = ''; this.audio.load(); }
+        
+        // 移除全局事件监听器
+        if (this.boundResizeListener) {
+            window.removeEventListener('resize', this.boundResizeListener);
+        }
+        if (this.boundScrollListener) {
+            window.removeEventListener('scroll', this.boundScrollListener, true);
+        }
+        if (this.boundHandleOutsideClick) {
+            document.removeEventListener('click', this.boundHandleOutsideClick);
+        }
+        
+        // 移除音频元素事件并替换新元素
+        if (this.audio) {
+            this.audio.pause();
+            this.audio.src = '';
+            this.audio.load();
+            const newAudio = this.audio.cloneNode();
+            this.audio.parentNode?.replaceChild(newAudio, this.audio);
+            this.audio = newAudio;
+        }
+        
         if (this.cacheManager) this.cacheManager.cleanup();
         this.hasNotifiedLocal = false;
         this.hasNotifiedQishui = false;
+        
+        // 销毁所有 CustomSelect 实例
+        if (typeof customSelectInstances !== 'undefined' && customSelectInstances) {
+            customSelectInstances.forEach((instance, id) => {
+                if (instance && typeof instance.destroy === 'function') {
+                    instance.destroy();
+                }
+            });
+            customSelectInstances.clear();
+        }
+        
         if (window.Starlink?.musicPlayer === this) window.Starlink.musicPlayer = null;
         if (window.musicPlayer === this) window.musicPlayer = null;
         console.log('音乐播放器资源已清理');
