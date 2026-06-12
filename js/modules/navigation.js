@@ -1,13 +1,10 @@
 /**
  * 优化分类导航系统 - 分页加载版（支持 WebP 图标、高清懒加载、智能预加载、点击计数优化）
  * 修复：无效链接统计改为全局统计（所有分类下的无效链接总数）
- * 修改：挂载到 window.Starlink.navigation
+ * 优化：骨架屏显示更细腻
  */
 class OptimizedNavigation {
     constructor() {
-        // 避免重复实例化
-        if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
-        
         this.structure = null;
         this.siteCache = new Map();
         this.selectedLevel1 = null;
@@ -17,7 +14,7 @@ class OptimizedNavigation {
         this.isNavigationClick = false;
         this.skeletonCount = 6;
         this.updateTimer = null;
-        this.UPDATE_INTERVAL = 5 * 60 * 1000;  // 5分钟
+        this.UPDATE_INTERVAL = 5 * 60 * 1000;
         this.apiBase = Utils.getApiBase();
         this.imgObserver = null;
         this.isSearching = false;
@@ -34,21 +31,14 @@ class OptimizedNavigation {
         this.scrollStopTimer = null;
 
         this.autoRefreshTimer = null;
-        this.autoRefreshInterval = 5 * 60 * 1000;  // 统一为 5 分钟
+        this.autoRefreshInterval = 5 * 60 * 1000;
 
-        // 图标缓存
         this.iconCache = new Map();
         this.iconLoadingSet = new Set();
         this.iconFailedSet = new Set();
 
-        // 预加载队列
         this.preloadQueue = [];
         this.isPreloading = false;
-        
-        // 挂载到 Starlink
-        if (window.Starlink) window.Starlink.navigation = this;
-        // 保留旧全局变量以便兼容
-        window.optimizedNavigation = this;
     }
 
     _escapeHtml(str) { return Utils.escapeHtml(str); }
@@ -142,8 +132,8 @@ class OptimizedNavigation {
         return `<img class="lazy-icon" data-domain="${domainEscaped}" data-src="${this._escapeHtml(candidates[0])}" 
                      data-candidates='${safeCandidates}'
                      alt="" loading="lazy"
-                     onerror="this.onerror=null; const candidates = JSON.parse(this.getAttribute('data-candidates')); const domain = this.getAttribute('data-domain'); const idx = candidates.indexOf(this.src); if (idx !== -1 && idx + 1 < candidates.length) { this.src = candidates[idx+1]; } else { if (window.Starlink?.navigation && window.Starlink.navigation._recordIconFailure) { window.Starlink.navigation._recordIconFailure(domain); } this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>'; }"
-                     onload="const domain = this.getAttribute('data-domain'); if (window.Starlink?.navigation && window.Starlink.navigation._recordIconSuccess) { window.Starlink.navigation._recordIconSuccess(domain, this.src); }">`;
+                     onerror="this.onerror=null; const candidates = JSON.parse(this.getAttribute('data-candidates')); const domain = this.getAttribute('data-domain'); const idx = candidates.indexOf(this.src); if (idx !== -1 && idx + 1 < candidates.length) { this.src = candidates[idx+1]; } else { if (window.optimizedNavigation && window.optimizedNavigation._recordIconFailure) { window.optimizedNavigation._recordIconFailure(domain); } this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>'; }"
+                     onload="const domain = this.getAttribute('data-domain'); if (window.optimizedNavigation && window.optimizedNavigation._recordIconSuccess) { window.optimizedNavigation._recordIconSuccess(domain, this.src); }">`;
     }
 
     _highlightText(text, keyword) {
@@ -247,7 +237,6 @@ class OptimizedNavigation {
                 await this.loadSubcategoryCountsForLevel1(firstCategory);
                 this.selectLevel1(firstCategory, false);
             }
-            // 初始化全局无效统计
             await this.recalculateGlobalInvalidCount();
             this.isInitialized = true;
             this.startBackgroundUpdates();
@@ -261,15 +250,11 @@ class OptimizedNavigation {
         }
     }
 
-    // 重新计算全局无效链接总数（遍历所有已缓存的子分类）
     async recalculateGlobalInvalidCount() {
         let totalInvalid = 0;
-        // 遍历所有已加载的子分类缓存
         for (const [subId, sites] of this.siteCache.entries()) {
             totalInvalid += sites.filter(s => s.valid === false).length;
         }
-        // 如果某些子分类尚未缓存，需要从后端获取（但通常初始化时所有子分类都已缓存）
-        // 为了确保完整性，可以主动加载所有一级分类下的子分类数据（如果尚未加载）
         if (this.structure) {
             for (const catName in this.structure) {
                 const subcategories = this.structure[catName].subcategories;
@@ -298,7 +283,6 @@ class OptimizedNavigation {
         if (!this.selectedLevel2) return;
         this.siteCache.delete(this.selectedLevel2);
         await this.renderLevel3(this.selectedLevel1, this.selectedLevel2);
-        // 刷新后重新计算全局无效数
         await this.recalculateGlobalInvalidCount();
     }
 
@@ -557,14 +541,11 @@ class OptimizedNavigation {
             </div>
         `;
 
-        // 点击卡片：上报点击计数
         card.addEventListener('click', async (e) => {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
-            if (window.Starlink?.musicPlayer) window.Starlink.musicPlayer.isHandlingNavigationClick = true;
-            else if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
+            if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
 
-            // 乐观更新前端显示
             const viewEl = card.querySelector('.view-count');
             let oldViews = parseInt(viewEl.dataset.views) || 0;
             let newViews = oldViews + 1;
@@ -573,7 +554,6 @@ class OptimizedNavigation {
             viewEl.classList.add('increasing');
             setTimeout(() => viewEl.classList.remove('increasing'), 300);
 
-            // 发送计数请求（不等待结果，静默失败）
             try {
                 await Utils.safeFetch(`${this.apiBase}/click`, {
                     method: 'POST',
@@ -582,7 +562,6 @@ class OptimizedNavigation {
                 });
             } catch (err) {
                 console.warn('点击计数上报失败:', err);
-                // 回滚前端显示
                 viewEl.dataset.views = oldViews;
                 viewEl.textContent = this._formatViews(oldViews);
                 if (window.toast) window.toast.show('计数上报失败，请检查网络', 'warning');
@@ -590,8 +569,7 @@ class OptimizedNavigation {
 
             setTimeout(() => {
                 this.isNavigationClick = false;
-                if (window.Starlink?.musicPlayer) window.Starlink.musicPlayer.isHandlingNavigationClick = false;
-                else if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
+                if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
             }, 100);
         });
 
@@ -638,7 +616,6 @@ class OptimizedNavigation {
                                 if (this.selectedLevel1) {
                                     await this.loadSubcategoryCountsForLevel1(this.selectedLevel1);
                                 }
-                                // 更新全局无效统计
                                 await this.recalculateGlobalInvalidCount();
                             }
                         } else {
@@ -778,11 +755,36 @@ class OptimizedNavigation {
 
     showSkeleton() {
         const container = document.getElementById('level3Content');
-        if (container) container.innerHTML = this.generateSkeletonHTML();
+        if (container) {
+            container.innerHTML = this.generateSkeletonHTML();
+        }
     }
+
     generateSkeletonHTML() {
-        return Array(this.skeletonCount).fill(`<div class="site-card skeleton-card"><div class="card-top"><div class="icon-container skeleton-icon"></div><div class="card-top-right"><div class="skeleton-btn"></div><div class="views-container"><div class="skeleton-views"></div></div></div></div><div class="divider-line skeleton-divider"></div><div class="card-bottom"><div class="site-title skeleton-title"></div><div class="site-description skeleton-description"></div></div></div>`).join('');
+        let html = '';
+        for (let i = 0; i < this.skeletonCount; i++) {
+            html += `
+                <div class="site-card skeleton-card">
+                    <div class="card-top">
+                        <div class="icon-container skeleton-icon"></div>
+                        <div class="card-top-right">
+                            <div class="skeleton-btn skeleton" style="width:14px;height:14px;border-radius:3px;"></div>
+                            <div class="views-container">
+                                <div class="skeleton-views skeleton" style="width:30px;height:14px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="divider-line skeleton-divider"></div>
+                    <div class="card-bottom">
+                        <div class="skeleton-title skeleton"></div>
+                        <div class="skeleton-description skeleton"></div>
+                    </div>
+                </div>
+            `;
+        }
+        return html;
     }
+
     renderEmptyState() {
         const container = document.getElementById('level3Content');
         if (container) container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-compass"></i></div><h3 class="empty-title">选择一个分类开始探索</h3><p class="empty-subtitle">点击左侧分类查看详细内容</p></div>`;
@@ -807,10 +809,9 @@ class OptimizedNavigation {
                     const currentSub = document.querySelector('.level2-btn.active');
                     if (currentSub) await this.renderLevel3(this.selectedLevel1, currentSub.dataset.level2);
                 }
-                // 结构变化后重新计算全局无效统计
                 await this.recalculateGlobalInvalidCount();
             }
-        } catch(e) { console.warn('后台更新失败:',e); }
+        } catch(e) { console.warn('后台更新失败:', e); }
     }
     refresh() {
         this.structure = null;
@@ -838,22 +839,4 @@ class OptimizedNavigation {
     }
 }
 
-// 全局辅助函数（保留兼容）
-window.getOptimizedNavigation = function() { return window.Starlink?.navigation || window.optimizedNavigation; };
-
-// 自动初始化
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        if (!window.Starlink) window.Starlink = {};
-        if (!window.Starlink.navigation) {
-            window.Starlink.navigation = new OptimizedNavigation();
-            window.Starlink.navigation.init();
-        }
-    });
-} else {
-    if (!window.Starlink) window.Starlink = {};
-    if (!window.Starlink.navigation) {
-        window.Starlink.navigation = new OptimizedNavigation();
-        window.Starlink.navigation.init();
-    }
-}
+window.getOptimizedNavigation = function() { return window.optimizedNavigation; };
