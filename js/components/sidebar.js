@@ -47,12 +47,17 @@
 
     class ModernSidebar {
         constructor() {
+            // 避免重复实例化
+            if (window.Starlink && window.Starlink.sidebar) return window.Starlink.sidebar;
             this.sidebarEl = document.getElementById('sidebar');
             this.isOpen = false;
             this.categories = JSON.parse(JSON.stringify(CATEGORIES_DATA));
             this.userConfig = null;
             this._savedScrollY = 0;
             this.init();
+            if (window.Starlink) window.Starlink.sidebar = this;
+            // 保留旧全局变量以便兼容（可选）
+            window.sidebar = this;
         }
 
         init() {
@@ -65,7 +70,6 @@
             this.setFixedTop();
             this.loadWallpaperBackground();
             window.addEventListener('resize', () => this.setFixedTop());
-            window.sidebar = this;
         }
 
         render() {
@@ -222,13 +226,21 @@
         handleFooterAction(action) {
             switch (action) {
                 case 'notebook':
-                    if (window.showNotebookModal) window.showNotebookModal();
+                    if (window.Starlink?.app?.showNotebookModal) {
+                        window.Starlink.app.showNotebookModal();
+                    } else if (window.showNotebookModal) {
+                        window.showNotebookModal();
+                    }
                     break;
                 case 'gift':
                     window.open('./pages/tools/羊毛福利.html', '_blank');
                     break;
                 case 'about':
-                    if (window.aboutModule && window.aboutModule.show) window.aboutModule.show();
+                    if (window.Starlink?.about && window.Starlink.about.show) {
+                        window.Starlink.about.show();
+                    } else if (window.aboutModule && window.aboutModule.show) {
+                        window.aboutModule.show();
+                    }
                     break;
                 case 'qq':
                     window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
@@ -425,12 +437,25 @@
         }
 
         closeOtherModals() {
-            if (window.newSearchModule && typeof window.newSearchModule.hide === 'function') window.newSearchModule.hide();
-            if (window.announcementModule && typeof window.announcementModule.hide === 'function') window.announcementModule.hide();
-            if (window.app && window.app.components && window.app.components.navbar) window.app.components.navbar.hideMusicPlayer();
-            if (window.app && window.app.modules && window.app.modules.weather && typeof window.app.modules.weather.hide === 'function') window.app.modules.weather.hide();
-            if (window.aboutModule && typeof window.aboutModule.hide === 'function') window.aboutModule.hide();
-            if (window.hideNotebookModal && typeof window.hideNotebookModal === 'function') window.hideNotebookModal();
+            // 使用 Starlink 命名空间关闭其他模态框
+            if (window.Starlink?.search && typeof window.Starlink.search.hide === 'function') window.Starlink.search.hide();
+            else if (window.newSearchModule && typeof window.newSearchModule.hide === 'function') window.newSearchModule.hide();
+            
+            if (window.Starlink?.announcement && typeof window.Starlink.announcement.hide === 'function') window.Starlink.announcement.hide();
+            else if (window.announcementModule && typeof window.announcementModule.hide === 'function') window.announcementModule.hide();
+            
+            if (window.Starlink?.navbar?.hideMusicPlayer) window.Starlink.navbar.hideMusicPlayer();
+            else if (window.app?.components?.navbar) window.app.components.navbar.hideMusicPlayer();
+            
+            if (window.Starlink?.weather && typeof window.Starlink.weather.hide === 'function') window.Starlink.weather.hide();
+            else if (window.app?.modules?.weather && typeof window.app.modules.weather.hide === 'function') window.app.modules.weather.hide();
+            
+            if (window.Starlink?.about && typeof window.Starlink.about.hide === 'function') window.Starlink.about.hide();
+            else if (window.aboutModule && typeof window.aboutModule.hide === 'function') window.aboutModule.hide();
+            
+            if (window.Starlink?.app?.hideNotebookModal && typeof window.Starlink.app.hideNotebookModal === 'function') window.Starlink.app.hideNotebookModal();
+            else if (window.hideNotebookModal && typeof window.hideNotebookModal === 'function') window.hideNotebookModal();
+            
             const submitModal = document.getElementById('submitModal');
             if (submitModal && submitModal.classList.contains('active')) submitModal.classList.remove('active');
             const profileModal = document.getElementById('profileModal');
@@ -468,8 +493,8 @@
             this.closeOtherModals();
             this.isOpen = true;
             this.sidebarEl.classList.add('active');
-            if (window.app && !window._sidebarModalRegistered) {
-                window.app.registerModal(this);
+            if (window.Starlink?.app && !window._sidebarModalRegistered) {
+                window.Starlink.app.registerModal(this);
                 window._sidebarModalRegistered = true;
             }
         }
@@ -500,21 +525,15 @@
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            if (!window.sidebar || !(window.sidebar instanceof ModernSidebar)) {
-                if (!window.Starlink) window.Starlink = {};
-                if (!window.Starlink.sidebar) {
-                    window.Starlink.sidebar = new ModernSidebar();
-                }
-                window.sidebar = window.Starlink.sidebar;
-            }
-        });
-    } else {
-        if (!window.sidebar || !(window.sidebar instanceof ModernSidebar)) {
             if (!window.Starlink) window.Starlink = {};
             if (!window.Starlink.sidebar) {
                 window.Starlink.sidebar = new ModernSidebar();
             }
-            window.sidebar = window.Starlink.sidebar;
+        });
+    } else {
+        if (!window.Starlink) window.Starlink = {};
+        if (!window.Starlink.sidebar) {
+            window.Starlink.sidebar = new ModernSidebar();
         }
     }
 })();
