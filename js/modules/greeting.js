@@ -1,6 +1,10 @@
 // 问候区模块 - 优化效果和显示（自制木鱼音效，复用 AudioContext）
+// 修改：挂载到 window.Starlink.greeting
 class GreetingModule {
     constructor() {
+        // 避免重复实例化
+        if (window.Starlink && window.Starlink.greeting) return window.Starlink.greeting;
+        
         this.initialized = false;
         this.eventBound = false;
         this.holidayRefreshTimer = null;
@@ -8,6 +12,11 @@ class GreetingModule {
         this.currentHoliday = null;
         this.audioCtx = null;
         this.init();
+        
+        // 挂载到 Starlink
+        if (window.Starlink) window.Starlink.greeting = this;
+        // 保留旧全局变量以便兼容
+        window.greetingModule = this;
     }
 
     async init() {
@@ -324,7 +333,10 @@ class GreetingModule {
         this.holidayRefreshTimer = setTimeout(async () => {
             localStorage.removeItem('holidayDataCache');
             await this.setupHolidayCountdown();
-            if (window.app && window.app.showToast) {
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) {
+                toast.show('节日数据已更新', 'info');
+            } else if (window.app && window.app.showToast) {
                 window.app.showToast('节日数据已更新', 'info');
             }
         }, timeUntilMidnight + 1000);
@@ -583,12 +595,18 @@ class GreetingModule {
                 holidayCountdownEl.classList.remove('active-countdown', 'status-3days', 'status-7days', 'status-more');
             }
             await this.setupHolidayCountdown();
-            if (window.app && window.app.showToast) {
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) {
+                toast.show('节日数据已刷新', 'success');
+            } else if (window.app && window.app.showToast) {
                 window.app.showToast('节日数据已刷新', 'success');
             }
         } catch (error) {
             console.error('手动刷新节日数据失败:', error);
-            if (window.app && window.app.showToast) {
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) {
+                toast.show('刷新失败，请重试', 'error');
+            } else if (window.app && window.app.showToast) {
                 window.app.showToast('刷新失败，请重试', 'error');
             }
         }
@@ -603,7 +621,10 @@ class GreetingModule {
             const fishData = { merit: 0, luck: 0, wealth: 0, health: 0, lastUpdate: new Date().toDateString() };
             Storage.set('woodenFish', fishData);
             this.updateFishCounts(fishData);
-            if (window.app && window.app.showToast) {
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) {
+                toast.show('木鱼计数已重置', 'success');
+            } else if (window.app && window.app.showToast) {
                 window.app.showToast('木鱼计数已重置', 'success');
             }
         }
@@ -622,17 +643,16 @@ class GreetingModule {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (!window.greetingModule) {
-        if (!window.Starlink) window.Starlink = {};
-        if (!window.Starlink.greeting) {
-            window.Starlink.greeting = new GreetingModule();
-        }
-        window.greetingModule = window.Starlink.greeting;
+    if (!window.Starlink) window.Starlink = {};
+    if (!window.Starlink.greeting) {
+        window.Starlink.greeting = new GreetingModule();
     }
+    window.greetingModule = window.Starlink.greeting;
+    
     const refreshBtn = document.getElementById('refreshHolidayBtn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
-            window.greetingModule.refreshHolidayData();
+            window.Starlink.greeting.refreshHolidayData();
         });
     }
 });
