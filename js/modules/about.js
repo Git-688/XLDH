@@ -20,6 +20,9 @@ if (typeof Utils === 'undefined') {
 
 class AboutModule {
     constructor() {
+        // 避免重复实例化
+        if (window.Starlink && window.Starlink.about) return window.Starlink.about;
+        
         this.modalElement = null;
         this.isShowing = false;
         this.isInitialized = false;
@@ -41,6 +44,11 @@ class AboutModule {
             alipay: './assets/images/zfb.png'
         };
         this.injectGithubButtonStyle();
+        
+        // 挂载到 Starlink
+        if (window.Starlink) window.Starlink.about = this;
+        // 保留旧全局变量以便兼容
+        window.aboutModule = this;
     }
 
     // 注入 GitHub 按钮样式
@@ -664,7 +672,12 @@ class AboutModule {
     show() {
         if (!this.modalElement) this.createModal();
         if (this.isShowing) return;
-        if (window.sidebar && window.sidebar.isVisible()) window.sidebar.hide();
+        // 关闭侧边栏
+        if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible?.()) {
+            window.Starlink.sidebar.hide();
+        } else if (window.sidebar && window.sidebar.isVisible?.()) {
+            window.sidebar.hide();
+        }
         this.isShowing = true;
         this.modalElement.style.display = 'flex';
         this.modalElement.offsetHeight;
@@ -673,7 +686,9 @@ class AboutModule {
             const content = this.modalElement.querySelector('.about-modal-content');
             content.style.transform = 'scale(1)';
         }, 10);
-        if (window.app) window.app.registerModal(this);
+        // 注册到应用
+        if (window.Starlink?.app) window.Starlink.app.registerModal(this);
+        else if (window.app) window.app.registerModal(this);
     }
 
     hide() {
@@ -684,7 +699,9 @@ class AboutModule {
         setTimeout(() => {
             this.modalElement.style.display = 'none';
             this.isShowing = false;
-            if (window.app) window.app.unregisterModal(this);
+            // 从应用中注销
+            if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
+            else if (window.app) window.app.unregisterModal(this);
         }, 300);
     }
 
