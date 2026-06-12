@@ -4,7 +4,7 @@
     bottom: 20px;
     right: 20px;
 
-    background: #ffffff;
+    background: var(--bg-card, #ffffff);
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     width: 420px;
@@ -12,7 +12,7 @@
     transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
     z-index: 10000;
     max-height: 700px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-color, #e0e0e0);
     display: none;
     transform: scale(0.95);
     opacity: 0;
@@ -226,11 +226,10 @@
     display: inline-block;
     white-space: nowrap;
     font-size: 16px;
-    line-height: 1.4;  /* 约22.4px，垂直居中于56px容器内 */
+    line-height: 1.4;
     color: var(--text-primary, #2b2d42);
     font-weight: 500;
     transition: opacity 0.35s ease, transform 0.35s ease;
-    /* 无额外 margin/padding */
 }
 
 .bottom-section { max-height: 500px; overflow: hidden; transition: max-height 0.3s ease; background: inherit; }
@@ -352,7 +351,6 @@
     .progress-actions { gap: 6px; }
     .song-title-container { height: 22px; width: 80px; max-width: 80px; }
     .song-artist-container { height: 18px; width: 70px; max-width: 70px; }
-    /* 移动端歌词容器高度调整 */
     .lyrics-section { height: 48px; }
     .lyrics-single-line { font-size: 14px; line-height: 1.4; }
     .music-player .search-input-group { height: 28px; border-radius: 8px; }
@@ -361,208 +359,10 @@
     #search-toggle-btn .search-icon, #search-toggle-btn .back-icon { width: 16px; height: 16px; }
 }
 
-/* ==================== 深色模式优化 ==================== */
-/* 系统深色模式 */
-@media (prefers-color-scheme: dark) {
-    .music-player {
-        background: #2d2d2d;
-        border: 1px solid #404040;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
-    .music-player:hover {
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-    }
-
-    .player-top {
-        border-bottom-color: rgba(255, 255, 255, 0.08);
-    }
-
-    .song-title {
-        color: #f0f0f0;
-    }
-    .song-artist {
-        color: #adb5bd;
-    }
-
-    .cover-placeholder {
-        background: #3a3a3a;
-    }
-
-    .control-btn {
-        color: #adb5bd;
-    }
-    .control-btn:hover {
-        background: rgba(67, 97, 238, 0.2);
-        color: #7b9cff;
-    }
-
-    .play-btn {
-        background: var(--primary-color, #4361ee);
-        color: white;
-    }
-    .play-btn:hover {
-        background: var(--secondary-color, #3a56d6);
-    }
-
-    .progress-section {
-        border-bottom-color: rgba(255, 255, 255, 0.08);
-    }
-    .progress-bar {
-        background: #404040;
-    }
-    .progress {
-        background: #7b9cff;
-        box-shadow: 0 0 4px rgba(123, 156, 255, 0.5);
-    }
-    .progress-handle {
-        background: #2d2d2d;
-        border-color: #7b9cff;
-    }
-    .time-text {
-        background: rgba(123, 156, 255, 0.15);
-    }
-    .time-display {
-        color: #adb5bd;
-    }
-
-    .custom-select-trigger {
-        background: #3a3a3a;
-        border-color: #404040;
-        color: #e0e0e0;
-    }
-    .custom-select-trigger:hover {
-        border-color: #7b9cff;
-        background: rgba(123, 156, 255, 0.1);
-    }
-    .custom-select-dropdown {
-        background: #2d2d2d;
-        border-color: #404040;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-    }
-    .custom-select-option {
-        color: #e0e0e0;
-    }
-    .custom-select-option:hover {
-        background: rgba(123, 156, 255, 0.15);
-        color: #7b9cff;
-    }
-    .custom-select-option.selected {
-        background: rgba(123, 156, 255, 0.2);
-        color: #7b9cff;
-    }
-
-    .lyrics-section {
-        border-bottom-color: rgba(255, 255, 255, 0.08);
-    }
-    .lyrics-single-line {
-        color: #f0f0f0;
-    }
-
-    .bottom-tabs {
-        border-bottom-color: rgba(255, 255, 255, 0.08);
-    }
-    .tab-btn {
-        color: #adb5bd;
-    }
-    .tab-btn:hover {
-        color: #7b9cff;
-        background: rgba(123, 156, 255, 0.1);
-    }
-    .tab-btn.active {
-        color: #7b9cff;
-        border-bottom-color: #7b9cff;
-    }
-
-    .playlist-header {
-        border-bottom-color: rgba(255, 255, 255, 0.08);
-    }
-
-    .loading {
-        color: #adb5bd;
-    }
-
-    .song-item {
-        color: #e0e0e0;
-    }
-    .song-item:hover {
-        background: rgba(123, 156, 255, 0.1);
-    }
-    .song-item.active {
-        background: rgba(123, 156, 255, 0.2);
-        color: #7b9cff;
-    }
-    .song-item.active::before {
-        color: #7b9cff;
-    }
-    .song-item-artist {
-        color: #adb5bd;
-    }
-
-    .music-player .search-input-group {
-        background: #3a3a3a;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-    .music-player .search-input-group:focus-within {
-        background: #2d2d2d;
-        border-color: #7b9cff;
-    }
-    .music-player .search-input-group input {
-        color: #f0f0f0;
-    }
-    .music-player .search-input-group input::placeholder {
-        color: #8f9bb3;
-    }
-    .music-player .search-icon {
-        color: #adb5bd;
-    }
-    .music-player .search-input-group:focus-within .search-icon {
-        color: #7b9cff;
-    }
-
-    .music-player .search-download-btn {
-        color: #adb5bd;
-    }
-    .music-player .search-download-btn:hover {
-        background: rgba(123, 156, 255, 0.2);
-        color: #7b9cff;
-    }
-
-    .error-message {
-        background: rgba(239, 68, 68, 0.15);
-    }
-
-    .download-progress {
-        background: #2d2d2d;
-        border: 1px solid #404040;
-        color: #f0f0f0;
-    }
-    .download-progress-bar {
-        background: #404040;
-    }
-    .download-progress-fill {
-        background: #7b9cff;
-    }
-
-    /* 音量滑块深色 */
-    .volume-slider {
-        background: #2d2d2d;
-        border: 1px solid #404040;
-    }
-    .volume-slider input[type="range"] {
-        background: #404040;
-    }
-    .volume-slider input[type="range"]::-webkit-slider-thumb {
-        background: #7b9cff;
-    }
-    .volume-slider input[type="range"]::-webkit-slider-thumb:hover {
-        background: #5a7aff;
-    }
-}
-
-/* 手动深色模式覆盖 */
+/* ==================== 深色模式优化（仅使用 .dark-mode 类，移除媒体查询） ==================== */
 .dark-mode .music-player {
-    background: #2d2d2d;
-    border: 1px solid #404040;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 .dark-mode .music-player:hover {
@@ -572,165 +372,165 @@
     border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 .dark-mode .song-title {
-    color: #f0f0f0;
+    color: var(--text-primary);
 }
 .dark-mode .song-artist {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
 .dark-mode .cover-placeholder {
-    background: #3a3a3a;
+    background: var(--bg-secondary);
 }
 .dark-mode .control-btn {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
 .dark-mode .control-btn:hover {
     background: rgba(67, 97, 238, 0.2);
-    color: #7b9cff;
+    color: var(--primary-color);
 }
 .dark-mode .play-btn {
-    background: var(--primary-color, #4361ee);
+    background: var(--primary-color);
     color: white;
 }
 .dark-mode .play-btn:hover {
-    background: var(--secondary-color, #3a56d6);
+    background: var(--secondary-color);
 }
 .dark-mode .progress-section {
     border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 .dark-mode .progress-bar {
-    background: #404040;
+    background: var(--border-color);
 }
 .dark-mode .progress {
-    background: #7b9cff;
+    background: var(--primary-color);
     box-shadow: 0 0 4px rgba(123, 156, 255, 0.5);
 }
 .dark-mode .progress-handle {
-    background: #2d2d2d;
-    border-color: #7b9cff;
+    background: var(--bg-card);
+    border-color: var(--primary-color);
 }
 .dark-mode .time-text {
     background: rgba(123, 156, 255, 0.15);
 }
 .dark-mode .time-display {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
 .dark-mode .custom-select-trigger {
-    background: #3a3a3a;
-    border-color: #404040;
-    color: #e0e0e0;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
 }
 .dark-mode .custom-select-trigger:hover {
-    border-color: #7b9cff;
+    border-color: var(--primary-color);
     background: rgba(123, 156, 255, 0.1);
 }
 .dark-mode .custom-select-dropdown {
-    background: #2d2d2d;
-    border-color: #404040;
+    background: var(--bg-card);
+    border-color: var(--border-color);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 .dark-mode .custom-select-option {
-    color: #e0e0e0;
+    color: var(--text-primary);
 }
 .dark-mode .custom-select-option:hover {
     background: rgba(123, 156, 255, 0.15);
-    color: #7b9cff;
+    color: var(--primary-color);
 }
 .dark-mode .custom-select-option.selected {
     background: rgba(123, 156, 255, 0.2);
-    color: #7b9cff;
+    color: var(--primary-color);
 }
 .dark-mode .lyrics-section {
     border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 .dark-mode .lyrics-single-line {
-    color: #f0f0f0;
+    color: var(--text-primary);
 }
 .dark-mode .bottom-tabs {
     border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 .dark-mode .tab-btn {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
 .dark-mode .tab-btn:hover {
-    color: #7b9cff;
+    color: var(--primary-color);
     background: rgba(123, 156, 255, 0.1);
 }
 .dark-mode .tab-btn.active {
-    color: #7b9cff;
-    border-bottom-color: #7b9cff;
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
 }
 .dark-mode .playlist-header {
     border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 .dark-mode .loading {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
 .dark-mode .song-item {
-    color: #e0e0e0;
+    color: var(--text-primary);
 }
 .dark-mode .song-item:hover {
     background: rgba(123, 156, 255, 0.1);
 }
 .dark-mode .song-item.active {
     background: rgba(123, 156, 255, 0.2);
-    color: #7b9cff;
+    color: var(--primary-color);
 }
 .dark-mode .song-item.active::before {
-    color: #7b9cff;
+    color: var(--primary-color);
 }
 .dark-mode .song-item-artist {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
 .dark-mode .music-player .search-input-group {
-    background: #3a3a3a;
+    background: var(--bg-secondary);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 .dark-mode .music-player .search-input-group:focus-within {
-    background: #2d2d2d;
-    border-color: #7b9cff;
+    background: var(--bg-card);
+    border-color: var(--primary-color);
 }
 .dark-mode .music-player .search-input-group input {
-    color: #f0f0f0;
+    color: var(--text-primary);
 }
 .dark-mode .music-player .search-input-group input::placeholder {
     color: #8f9bb3;
 }
 .dark-mode .music-player .search-icon {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
 .dark-mode .music-player .search-input-group:focus-within .search-icon {
-    color: #7b9cff;
+    color: var(--primary-color);
 }
 .dark-mode .music-player .search-download-btn {
-    color: #adb5bd;
+    color: var(--text-secondary);
 }
 .dark-mode .music-player .search-download-btn:hover {
     background: rgba(123, 156, 255, 0.2);
-    color: #7b9cff;
+    color: var(--primary-color);
 }
 .dark-mode .error-message {
     background: rgba(239, 68, 68, 0.15);
 }
 .dark-mode .download-progress {
-    background: #2d2d2d;
-    border: 1px solid #404040;
-    color: #f0f0f0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
 }
 .dark-mode .download-progress-bar {
-    background: #404040;
+    background: var(--border-color);
 }
 .dark-mode .download-progress-fill {
-    background: #7b9cff;
+    background: var(--primary-color);
 }
 .dark-mode .volume-slider {
-    background: #2d2d2d;
-    border: 1px solid #404040;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
 }
 .dark-mode .volume-slider input[type="range"] {
-    background: #404040;
+    background: var(--border-color);
 }
 .dark-mode .volume-slider input[type="range"]::-webkit-slider-thumb {
-    background: #7b9cff;
+    background: var(--primary-color);
 }
 .dark-mode .volume-slider input[type="range"]::-webkit-slider-thumb:hover {
     background: #5a7aff;
