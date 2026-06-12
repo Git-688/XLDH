@@ -671,7 +671,7 @@
             </div>
         </div>
     </div>
-    <!-- 投稿模态框：已添加底部提示 -->
+    <!-- 投稿模态框 - 提示在左下角与按钮同行 -->
     <div id="submitModal" class="feedback-modal">
         <div class="feedback-modal-content">
             <div class="feedback-modal-header">
@@ -706,14 +706,17 @@
                         <label>联系方式<span class="required-star">*</span>（仅用于审核结果通知）</label>
                         <input type="text" id="submitContact" placeholder="QQ邮箱地址">
                     </div>
-                    <div class="submit-form-buttons">
-                        <button type="button" class="submit-cancel-btn">取消</button>
-                        <button type="submit" class="submit-save-btn" id="submitSaveBtn" disabled>提交投稿</button>
+                    <!-- 按钮行，左侧提示，右侧按钮组 -->
+                    <div class="submit-form-buttons" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="submit-hint" style="font-size: 11px; color: #f59e0b;">
+                            ⚠️ 检测稍缓，请稍等候！
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="submit-cancel-btn">取消</button>
+                            <button type="submit" class="submit-save-btn" id="submitSaveBtn" disabled>提交投稿</button>
+                        </div>
                     </div>
                 </form>
-                <div class="submit-hint" style="font-size: 11px; color: #f59e0b; text-align: center; margin-top: 8px; padding: 4px 0;">
-                    ⚠️ 检测稍缓，请稍等候！
-                </div>
             </div>
         </div>
     </div>
