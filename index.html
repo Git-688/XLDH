@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>星聚导航 - 您的个人导航中心</title>
-    <meta name="description" content="星聚导航是一个现代化的个人导航网站，提供便捷的上网导航体验和各种实用工具">
+    <meta name="description" content="星聚导航是一个现代化的个人导航网站，提供便捷的上网体验和各种实用工具">
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
-
     <!-- 全局配置 - 支持环境自动切换 -->
     <script>
         (function() {
@@ -27,26 +26,20 @@
                 WALINE_SERVER: 'https://yy688.ccwu.cc'
             };
             console.log(`[Config] API_BASE: ${apiBase}`);
-
             // 全局命名空间：统一管理所有模块实例，减少全局污染
             window.Starlink = window.Starlink || {};
         })();
     </script>
-
     <!-- CSP 安全策略（已添加必要源） -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'none'; form-action 'self';">
-
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
-
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
-
     <!-- 预加载字体文件（关键性能优化） -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
-
     <!-- 关键 CSS：首屏必需，正常加载 -->
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
@@ -60,7 +53,6 @@
     <link rel="stylesheet" href="./css/modules/greeting.css">
     <link rel="stylesheet" href="./css/modules/stats.css">
     <link rel="stylesheet" href="./css/responsive.css">
-
     <!-- 非关键 CSS：异步加载（不阻塞渲染） -->
     <link rel="preload" href="./css/modules/compact-tags.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -72,13 +64,10 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/regular.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-
     <link rel="preload" href="./js/main.js" as="script">
-
     <style>
         /* 基础变量定义 */
         :root {
@@ -95,8 +84,8 @@
             --bg-card: #ffffff;
             --border-color: #e9ecef;
             --shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.07);
-            --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 4px 6px rgba(0, 0, 0.07);
+            --shadow-xl: 0 8px 16px rgba(0, 0, 0.1);
             --radius: 8px;
             --radius-sm: 6px;
             --radius-lg: 12px;
@@ -122,16 +111,15 @@
             --nav-level2-active: #ff7043;
             --stat-site-color: #81c784;
             --stat-invalid-color: #e57373;
-            --card-hover-bg-start: rgba(67, 97, 238, 0.02);
+            --card-hover-bg-start: rgba(67, 97, 0.02);
             --card-hover-bg-end: rgba(67, 97, 238, 0.05);
             --acrylic-bg: rgba(255, 255, 255, 0.6);
             --acrylic-blur: blur(24px) saturate(125%);
-            --acrylic-border: 1px solid rgba(255, 255, 255, 0.5);
+            --acrylic-border: 1px solid rgba(255, 255, 0.5);
             --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-            --acrylic-light-bg: rgba(255, 255, 255, 0.8);
+            --acrylic-light-bg: rgba(255, 255, 0.8);
             --acrylic-light-blur: blur(10px) saturate(110%);
         }
-
         @media (prefers-color-scheme: dark) {
             :root {
                 --text-primary: #f8f9fa;
@@ -147,12 +135,11 @@
                 --card-hover-bg-start: rgba(124, 200, 255, 0.05);
                 --card-hover-bg-end: rgba(124, 200, 255, 0.1);
                 --acrylic-bg: rgba(30, 30, 30, 0.7);
-                --acrylic-border: 1px solid rgba(255, 255, 255, 0.15);
-                --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-                --acrylic-light-bg: rgba(40, 40, 40, 0.7);
+                --acrylic-border: 1px solid rgba(255, 255, 0.15);
+                --acrylic-shadow: 0 8px 32px rgba(0, 0, 0.3);
+                --acrylic-light-bg: rgba(40, 40, 0.7);
             }
         }
-
         /* 手动深色模式覆盖（通过 .dark-mode 类） */
         .dark-mode {
             --text-primary: #f8f9fa;
@@ -168,11 +155,10 @@
             --card-hover-bg-start: rgba(124, 200, 255, 0.05);
             --card-hover-bg-end: rgba(124, 200, 255, 0.1);
             --acrylic-bg: rgba(30, 30, 30, 0.7);
-            --acrylic-border: 1px solid rgba(255, 255, 255, 0.15);
-            --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            --acrylic-light-bg: rgba(40, 40, 40, 0.7);
+            --acrylic-border: 1px solid rgba(255, 255, 0.15);
+            --acrylic-shadow: 0 8px 32px rgba(0, 0, 0.3);
+            --acrylic-light-bg: rgba(40, 40, 0.7);
         }
-
         /* 深色模式下额外覆盖（确保所有模态框背景变深） */
         .dark-mode .weather-modal-content,
         .dark-mode .feedback-modal-content,
@@ -212,7 +198,6 @@
         .dark-mode .forecast-day-icon {
             color: #7b9cff;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; font-size: 16px; -webkit-overflow-scrolling: touch; }
         body {
@@ -265,20 +250,6 @@
         .weather-btn:hover { color: #3a56d6; }
         .floating-btn.submit-btn { color: #06b6d4; }
         .floating-btn.submit-btn:hover { color: #0891b2; }
-        @media (prefers-color-scheme: dark) {
-            .floating-btn { background: #2d2d2d; color: rgba(255,255,255,0.9); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-            .floating-btn:hover { background: #383838; color: rgba(255,255,255,0.9); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-            .back-to-top { color: #ff6b6b; }
-            .back-to-top:hover { color: #ff5252; }
-            .refresh-btn { color: #34d399; }
-            .refresh-btn:hover { color: var(--success-color, #10b981); }
-            .weather-btn { color: #6d8cff; }
-            .weather-btn:hover { color: #5a7aff; }
-            .activity-btn { color: #ff8c5a; }
-            .activity-btn:hover { color: #ff7a47; }
-            .floating-btn.submit-btn { color: #22d3ee; }
-            .floating-btn.submit-btn:hover { color: #67e8f9; }
-        }
         @media (max-width: 768px) { .floating-buttons { bottom: 16px; right: 16px; gap: 10px; } .floating-btn { width: 44px; height: 44px; font-size: 18px; } }
         @media (max-width: 480px) { .floating-buttons { bottom: 12px; right: 12px; gap: 8px; } .floating-btn { width: 40px; height: 40px; font-size: 16px; } }
         .floating-btn.submit-btn { color: #06b6d4; }
@@ -288,13 +259,13 @@
         #notebookModal .feedback-modal-content { max-height: 75vh; max-width: 600px; }
         #notebookModal .feedback-modal-header h3 i { color: #4361ee; }
         .notebook-list { padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-        .notebook-item { background: rgba(255,255,255,0.5); backdrop-filter: blur(5px); border-radius: 8px; padding: 8px 12px; border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s ease; }
+        .notebook-item { background: rgba(255,255,0.5); backdrop-filter: blur(5px); border-radius: 8px; padding: 8px 12px; border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s ease; }
         .notebook-item:hover { border-color: var(--primary-color, #4361ee); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .notebook-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .notebook-id { font-size: 10px; color: var(--text-secondary, #6c757d); background: rgba(255,255,255,0.7); padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+        .notebook-id { font-size: 10px; color: var(--text-secondary, #6c757d); background: rgba(255,255,0.7); padding: 2px 8px; border-radius: 20px; font-weight: 500; }
         .notebook-time { font-size: 10px; color: var(--text-secondary, #6c757d); display: flex; align-items: center; gap: 4px; }
         .notebook-title { font-size: 15px; font-weight: 700; color: var(--text-primary, #2b2d42); margin-bottom: 6px; }
-        .notebook-content { font-size: 12px; color: var(--text-secondary, #6c757d); line-height: 1.5; word-break: break-word; white-space: pre-wrap; background: rgba(255,255,255,0.4); padding: 8px 10px; border-radius: 6px; backdrop-filter: blur(4px); border: 1px solid rgba(0,0,0,0.03); }
+        .notebook-content { font-size: 12px; color: var(--text-secondary, #6c757d); line-height: 1.5; word-break: break-word; white-space: pre-wrap; background: rgba(255,255,0.4); padding: 8px 10px; border-radius: 6px; backdrop-filter: blur(4px); border: 1px solid rgba(0,0,0,0.03); }
         #commentModal .feedback-modal-content { max-height: 75vh; max-width: 700px; }
         #commentModal .feedback-modal-header h3 i { color: #f59e0b; }
         #submitModal .feedback-modal-content { max-height: 90vh; max-width: 520px; }
@@ -303,7 +274,7 @@
         #submitModal .form-row { margin-bottom: 10px; }
         #submitModal .form-row label { display: block; font-size: 12px; color: var(--text-secondary, #6c757d); margin-bottom: 3px; font-weight: 500; }
         #submitModal .required-star { color: var(--error-color, #ef4444); }
-        #submitModal .form-row input, #submitModal .form-row textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color, #e9ecef); border-radius: 8px; background: var(--bg-card, #ffffff); color: var(--text-primary, #2b2d42); font-size: 13px; outline: none; transition: border 0.2s; font-family: inherit; }
+        #submitModal .form-row input, #submitModal .form-row text { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color, #e9ecef); border-radius: 8px; background: var(--bg-card, #ffffff); color: var(--text-primary, #2b2d42); font-size: 13px; outline: none; transition: border 0.2s; font-family: inherit; }
         #submitModal .form-row textarea { min-height: 36px; overflow-y: hidden; resize: none; }
         #submitModal .form-row input:focus, #submitModal .form-row textarea:focus { border-color: var(--primary-color, #4361ee); box-shadow: 0 0 0 3px rgba(67,97,238,0.08); }
         .submit-form-buttons { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color, #e9ecef); }
@@ -318,8 +289,8 @@
         .fetch-info-btn:disabled, .check-url-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .url-check-result { margin-top: 8px; padding: 8px 12px; border-radius: 8px; font-size: 12px; line-height: 1.4; }
         .url-check-result.safe { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
-        .url-check-result.unsafe { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
-        .url-check-result.checking { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
+        .url-check-result.unsafe { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,0.2); }
+        .url-check-result.checking { background: rgba(245,158,0.1); color: #d97706; border: 1px solid rgba(245,158,0.2); }
         @media (max-width: 768px) {
             #notebookModal .feedback-modal-content { height: 90%; max-height: 90%; }
             #commentModal .feedback-modal-content { height: 90%; max-height: 90%; }
@@ -350,7 +321,7 @@
     <div class="sidebar-wallpaper" id="sidebarWallpaper">
         <div class="sidebar-wallpaper-overlay"></div>
         <div class="sidebar-wallpaper-user-info">
-            <div class="sidebar-wallpaper-avatar"><img id="sidebarWallpaperAvatar" src="" alt="用户头像" loading="lazy" class="js-img-fallback" data-fallback-type="defaultAvatar" data-default-svg="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo="></div>
+            <div class="sidebar-wallpaper-avatar"><img id="sidebarWallpaperAvatar" src="" alt="用户头像" loading="lazy" class="js-img-fallback" data-fallback-type="defaultAvatar" data-default-svg="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NCAxMCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo="></div>
             <div class="sidebar-wallpaper-user-text"><div class="sidebar-wallpaper-nickname" id="sidebarWallpaperNickname">访客用户</div><div class="sidebar-wallpaper-signature" id="sidebarWallpaperSignature">探索无限可能</div></div>
         </div>
     </div>
@@ -368,9 +339,9 @@
 <main class="main-content">
     <section class="wallpaper-section"><div class="container"><div class="wallpaper-container" id="wallpaperCarousel"><div class="carousel-track" id="carouselTrack"></div><button class="carousel-arrow carousel-arrow-left" id="carouselArrowLeft" aria-label="上一张"><i class="fas fa-chevron-left"></i></button><button class="carousel-arrow carousel-arrow-right" id="carouselArrowRight" aria-label="下一张"><i class="fas fa-chevron-right"></i></button><div class="wallpaper-info" id="wallpaperInfo"><div class="wallpaper-title" id="wallpaperTitle"></div><div class="carousel-dots" id="carouselDots"></div></div></div></div></section>
     <section class="greeting-section"><div class="greeting-container"><div class="greeting-main-card"><div class="greeting-header"><div class="greeting-left"><div class="greeting-text"><h1 id="greeting">下午好!</h1></div><div class="countdown-holiday" id="countdownHoliday"><span id="holidayName">下一个节日</span><span id="holidayCountdown">还有0天</span></div></div><div class="datetime" id="datetime"><div id="currentTime">14:30:45</div><div id="currentDate">2024年1月15日 星期一</div></div></div><div class="fish-section"><button class="fish-btn" data-type="merit" aria-label="功德"><i class="fas fa-hands-praying"></i><span class="fish-count" id="meritCount">0</span></button><button class="fish-btn" data-type="luck" aria-label="幸运"><i class="fas fa-clover"></i><span class="fish-count" id="luckCount">0</span></button><button class="fish-btn" data-type="wealth" aria-label="财富"><i class="fas fa-coins"></i><span class="fish-count" id="wealthCount">0</span></button><button class="fish-btn" data-type="health" aria-label="健康"><i class="fas fa-heart"></i><span class="fish-count" id="healthCount">0</span></button></div></div><a href="./pages/others/sq.html" class="bookmark-btn" aria-label="我的书签" target="_blank"><i class="fas fa-bookmark"></i><span>我的书签</span></a></div></section>
-    <section class="minimal-tags-section"><div class="container"><div class="tags-header"><h2 class="tags-title">常用标签</h2><span class="tags-subtitle-right">基于免费公益接口制作❗️</span></div><div class="tags-grid" id="tagsGrid"><div class="tags-loading" id="tagsLoading"><div class="loading-spinner"></div></div></div></div></section>
-    <section class="navigation-section"><div class="container"><div class="navigation-header"><div class="header-content"><div class="nav-header-left"><h2 class="navigation-title">分类导航</h2></div><div class="navigation-stats"><span class="stat-item"><span class="stat-number" id="siteCount">0+</span><span class="stat-label">网址</span></span><span class="stat-divider">•</span><span class="stat-item"><span class="stat-number" id="invalidCount">0</span><span class="stat-label">无效</span></span><a href="./pages/others/ck.html" class="repo-btn" title="查看仓库" target="_blank"><i class="fas fa-archive"></i><span>仓库</span></a></div></div></div><div class="navigation-body"><div class="navigation-left"><div class="level1-nav" id="level1Nav"></div></div><div class="navigation-middle"><div class="level2-nav" id="level2Nav"></div></div><div class="navigation-right"><div class="level3-content" id="level3Content"></div></div></div></div></section>
-    <footer class="footer"><div class="footer-compact-container"><div class="footer-disclaimer-card"><div class="disclaimer-header"><span class="disclaimer-title">免责声明：</span><span class="disclaimer-version">v1.0 · 生效于 2025.12.08</span></div><div class="disclaimer-text">本站资源均搜集于公开网络，<strong>仅供个人学习与研究</strong>，不保证可用性及安全，使用者需自行承担风险。若涉及版权问题，请通过 <span class="email-text">1595126534@qq.com</span> 联系处理。严禁用于商业或非法目的。</div></div><div class="footer-stats-cards"><div class="stat-card"><div class="stat-card-inner"><div class="stat-icon running-icon"><i class="fas fa-heartbeat heartbeat-enhanced"></i></div><div class="stat-content"><div class="stat-name">运行时间</div><div class="stat-number" id="uptime">0天 0时 0分 0秒</div></div></div></div><div class="stat-card"><div class="stat-card-inner"><div class="stat-icon online-icon"><i class="fas fa-users"></i></div><div class="stat-content"><div class="stat-name">在线人数</div><div class="stat-number" id="onlineCount">0</div></div></div></div><div class="stat-card"><div class="stat-card-inner"><div class="stat-icon today-icon"><i class="fas fa-user-plus"></i></div><div class="stat-content"><div class="stat-name">今日访客 (UV)</div><div class="stat-number" id="todayCount">0</div></div></div></div><div class="stat-card"><div class="stat-card-inner"><div class="stat-icon total-icon"><i class="fas fa-chart-line"></i></div><div class="stat-content"><div class="stat-name">总浏览量 (PV)</div><div class="stat-number" id="totalCount">0</div></div></div></div></div></div></footer>
+    <section class="minimal-tags-section"><div class="container"><div class="tags-header"><h2 class="tags-title">常用标签</h2><span class="tags-subtitle-right">基于免费公益接口制作❗️</span></div><div class="tags-grid" id="tagsGrid"><div class="tags-loading" id="tagsLoading"><div class="loading-spinner"></div></div></div></section>
+    <section class="navigation-section"><div class="container"><div class="navigation-header"><div class="header-content"><div class="nav-header-left"><h2 class="navigation-title">分类导航</h2></div><div class="navigation-stats"><span class="stat-item"><span class="stat-number" id="siteCount">0+</span><span class="stat-label">网址</span></span><span class="stat-divider">•</span><span class="stat-item"><span class="stat-number" id="invalidCount">0</span><span class="stat-label">无效</span></span><a href="./pages/others/ck.html" class="repo-btn" title="查看仓库" target="_blank"><i class="fas fa-archive"></i><span>仓库</span></a></div></div><div class="navigation-body"><div class="navigation-left"><div class="level1Nav"></div></div><div class="navigation-middle"><div class="level2Nav"></div></div><div class="navigation-right"><div class="level3Content"></div></div></div></div></section>
+    <footer class="footer"><div class="footer-compact-container"><div class="disclaimer-card"><div class="disclaimer-header"><span class="disclaimer-title">免责声明：</span><span class="disclaimer-version">v1.0 · 生效于 2025.12.08</span></div><div class="disclaimer-text">本站资源均搜集于公开网络，<strong>仅供个人学习与研究</strong>，不保证可用性及安全，使用者需自行承担风险。若涉及版权问题，请通过 1595126534@qq.com 联系处理。严禁用于商业或非法目的。</div></div><div class="footer-stats-cards"><div class="stat-card"><div class="stat-inner"><div class="stat-icon running-icon"><i class="fas fa-heartbeat"></i></div><div class="stat-content"><div class="stat-name">运行时间</div><div class="stat-number" id="uptime">0天 0时 0分 0秒</div></div></div></div><div class="stat-card"><div class="stat-inner"><div class="stat-icon online-icon"><i class="fas fa-users"></i></div><div class="stat-content"><div class="stat-name">在线人数</div><div class="stat-number" id="onlineCount">0</div></div></div></div><div class="stat-card"><div class="stat-inner"><div class="stat-icon today-icon"><i class="fas fa-user-plus"></i></div><div class="stat-content"><div class="stat-name">今日访客 (UV)</div><div class="stat-number" id="todayCount">0</div></div></div></div><div class="stat-card"><div class="stat-inner"><div class="stat-icon total-icon"><i class="fas fa-chart-line"></i></div><div class="stat-content"><div class="stat-name">总浏览量 (PV)</div><div class="stat-number" id="totalCount">0</div></div></div></div></div></div></footer>
     <div class="floating-buttons">
         <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
         <!-- 主题切换按钮（新增） -->
@@ -379,19 +350,16 @@
         <button class="floating-btn submit-btn" id="floatingSubmitBtn" aria-label="网站投稿"><i class="fas fa-paper-plane"></i></button>
         <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
     </div>
-    <div class="music-player" id="musicPlayer"><div class="player-top"><div class="cover-section"><div class="album-cover"><img id="cover-img" src="" alt="专辑封面" loading="lazy"><div class="cover-placeholder"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="#f0f0f0"/><circle cx="32" cy="32" r="16" fill="#ddd"/><circle cx="32" cy="32" r="8" fill="#4a90e2"/></svg></div></div><div class="song-basic-info"><div class="song-title-container"><div class="song-title" id="song-title">加载中...</div></div><div class="song-artist-container"><div class="song-artist" id="song-artist">请稍候</div></div></div></div><div class="control-panel"><div class="playback-controls"><button class="control-btn" id="prev-btn" title="上一首"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button><button class="control-btn play-btn" id="play-btn" title="播放"><svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><svg class="pause-icon" viewBox="0 0 24 24" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></button><button class="control-btn" id="next-btn" title="下一首"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button></div><div class="play-mode-controls"><button class="control-btn mode-btn" id="mode-btn" title="播放模式"><svg class="mode-icon" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg></button><div class="volume-control"><button class="control-btn" id="volume-btn" title="音量"><svg class="volume-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></button><div class="volume-slider" id="volume-slider-container" style="display: none;"><input type="range" id="volume-slider" min="0" max="100" value="50"></div></div><button class="control-btn" id="search-toggle-btn" title="搜索"><svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><svg class="back-icon" viewBox="0 0 24 24" style="display: none;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button><button class="control-btn" id="download-btn" title="下载当前歌曲"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button></div></div></div><div class="progress-section"><div class="progress-container"><div class="progress-bar" id="progress-bar"><div class="progress-bg"></div><div class="progress" id="progress"></div><div class="progress-handle" id="progress-handle"></div></div><div class="time-display"><span id="current-time" class="time-text">00:00</span><span id="duration" class="time-text">00:00</span></div></div><div class="progress-actions"><div class="speed-control"><div class="speed-selector"><select id="speed-select"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></div></div></div></div><div class="lyrics-section"><div class="lyrics-container" id="lyrics-container"><div class="lyrics-line"></div><div class="lyrics-line active"></div><div class="lyrics-line"></div></div></div><div class="bottom-section"><div class="bottom-tabs"><button class="tab-btn active" data-tab="netease">网易云音乐</button><button class="tab-btn" data-tab="qq">QQ音乐</button><button class="tab-btn" data-tab="qishui">汽水音乐</button><button class="tab-btn" data-tab="local">本地音乐</button></div><div class="tab-content active" id="netease-content"><div class="playlist-header"><div class="playlist-selector"><select id="netease-playlist-select"><option value="3778678">热歌榜</option><option value="3779629">新歌榜</option><option value="2884035">原创榜</option><option value="19723756">飙升榜</option></select></div></div><div class="content-container"><div class="playlist-container" id="netease-playlist-container"><div class="loading">加载中...</div></div><div class="search-container" id="netease-search-container" style="display: none;"><div class="search-header"><div class="search-input-group"><input type="text" id="netease-search-input" placeholder="搜索歌曲、歌手..."></div></div><div class="search-results" id="netease-search-results"><div class="loading">输入关键词搜索</div></div></div></div></div><div class="tab-content" id="qq-content"><div class="playlist-header"><div class="playlist-selector"><select id="qq-playlist-select"><option value="7512357727">热歌榜</option><option value="7712337727">新歌榜</option><option value="7612347727">原创榜</option></select></div></div><div class="content-container"><div class="playlist-container" id="qq-playlist-container"><div class="loading">加载中...</div></div><div class="search-container" id="qq-search-container" style="display: none;"><div class="search-header"><div class="search-input-group"><input type="text" id="qq-search-input" placeholder="搜索歌曲、歌手..."></div></div><div class="search-results" id="qq-search-results"><div class="loading">输入关键词搜索</div></div></div></div></div><div class="tab-content" id="qishui-content"><div class="playlist-header"><div class="playlist-selector"><select id="qishui-playlist-select"><option value="hot">热歌榜</option><option value="new">新歌榜</option><option value="up">飙升榜</option></select></div></div><div class="content-container"><div class="playlist-container" id="qishui-playlist-container"><div class="loading">加载汽水音乐热歌榜中...</div></div><div class="search-container" id="qishui-search-container" style="display: none;"><div class="search-header"><div class="search-input-group"><input type="text" id="qishui-search-input" placeholder="搜索歌曲、歌手..."></div></div><div class="search-results" id="qishui-search-results"><div class="loading">输入关键词搜索</div></div></div></div></div><div class="tab-content" id="local-content"><div class="content-container"><div class="playlist-container" id="local-playlist-container"><div class="loading">加载本地歌曲中...</div></div></div></div></div></div>
-    <audio id="audio-element" preload="metadata" style="display:none;"></audio>
-    <div class="search-modal" id="searchModal"><div class="modal-content"><div class="search-bar"><button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎"><i id="engineIcon" class="fas fa-search"></i></button><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off"><button class="search-submit-btn">搜索</button></div><div class="engine-dropdown" id="engineDropdown"></div><div class="suggestions" id="suggestions"></div><div class="history-panel" id="historyPanel"><div class="history-title"><span>历史记录</span><span id="clearHistory" class="clear-history-btn">清除</span></div><div id="historyList"></div></div></div></div>
+    <div class="music-player" id="musicPlayer"><div class="player-top"><div class="cover-section"><div class="album-cover"><img id="cover-img" src="" alt="专辑封面" loading="lazy"><div class="cover-placeholder"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="#f0f0f0"/><circle cx="32" cy="16" r="8" fill="#ddd"/><circle cx="32" cy="32" r="8" fill="#4a90e2"/></svg></div></div><div class="song-basic-info"><div class="song-title-container"><div class="song-title" id="song-title">加载中...</div></div><div class="song-artist-container"><div class="song-artist" id="song-artist">请稍候</div></div></div></div><div class="control-panel"><div class="playback-controls"><button class="control-btn" id="prev-btn" title="上一首"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button><button class="control-btn play-btn" id="play-btn" title="播放"><svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><svg class="pause-icon" viewBox="0 0 24" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></button><button class="control-btn" id="next-btn" title="下一首"><svg viewBox="0 0 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button></div><div class="play-mode-controls"><button class="control-btn" id="mode-btn" title="播放模式"><svg class="mode-icon" viewBox="0 0 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v3h12v-6h-2v-4z"/></svg></button><div class="volume-control"><button class="control-btn" id="volume-btn" title="音量"><svg class="volume-icon" viewBox="0 0 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></button><div class="volume-slider" id="volume-slider-container" style="display: none;"><input type="range" id="volume-slider" min="0" max="100" value="50"></div></div><button class="control-btn" id="search-toggle-btn" title="搜索"><svg class="search-icon" viewBox="0 0 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><svg class="back-icon" viewBox="0 0 24" style="display: none;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button><button class="control-btn" id="download-btn" title="下载当前歌曲"><svg viewBox="0 0 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button></div></div><div class="progress-section"><div class="progress-container"><div class="progress-bar" id="progress-bar"><div class="progress-bg"></div><div class="progress" id="progress"></div><div class="progress-handle" id="progress-handle"></div></div><div class="time-display"><span id="current-time" class="time-text">00:00</span><span id="duration" class="time-text">00:00</span></div></div><div class="progress-actions"><div class="speed-control"><div class="speed-selector"><select id="speed-select"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></div></div></div></div><div class="lyrics-section"><div class="lyrics-container" id="lyrics-container"><div class="lyrics-line"></div><div class="lyrics-line active"></div><div class="lyrics-line"></div></div></div><div class="bottom-section"><div class="bottom-tabs"><button class="tab-btn active" data-tab="netease">网易云音乐</button><button class="tab-btn" data-tab="qq">QQ音乐</button><button class="tab-btn" data-tab="qishui">汽水音乐</button><button class="tab-btn" data-tab="local">本地音乐</button></div><div class="tab-content active" id="netease-content"><div class="playlist-header"><div class="playlist-selector"><select id="netease-playlist-select"><option value="3778678">热歌榜</option><option value="3779629">新歌榜</option><option value="2884035">原创榜</option><option value="19723756">飙升榜</option></select></div></div><div class="content-container"><div class="playlist-container" id="netease-playlist-container"><div class="loading">加载中...</div></div><div class="search-container" id="netease-search-container" style="display: none;"><div class="search-header"><div class="search-input-group"><input type="text" id="netease-search-input" placeholder="搜索歌曲、歌手..."></div></div><div class="search-results" id="netease-search-results"><div class="loading">输入关键词搜索</div></div></div></div></div><div class="tab-content" id="qq-content"><div class="playlist-header"><div class="playlist-selector"><select id="qq-playlist-select"><option value="7512357727">热歌榜</option><option value="7712337727">新歌榜</option><option value="7612347727">原创榜</option></select></div></div><div class="content-container"><div class="playlist-container" id="qq-playlist-container"><div class="loading">加载中...</div></div><div class="search-container" id="qq-search-container" style="display: none;"><div class="search-header"><div class="search-input-group"><input type="text" id="qq-search-input" placeholder="搜索歌曲、歌手..."></div></div><div class="search-results" id="qq-search-results"><div class="loading">输入关键词搜索</div></div></div></div></div><div class="tab-content" id="qishui-content"><div class="playlist-header"><div class="playlist-selector"><select id="qishui-playlist-select"><option value="hot">热歌榜</option><option value="new">新歌榜</option><option value="up">飙升榜</option></select></div></div><div class="content-container"><div class="playlist-container" id="qishui-playlist-container"><div class="loading">加载汽水音乐热歌榜中...</div></div><div class="search-container" id="qishui-search-container" style="display: none;"><div class="search-header"><div class="search-input-group"><input type="text" id="qishui-search-input" placeholder="搜索歌曲、歌手..."></div></div><div class="search-results" id="qishui-search-results"><div class="loading">输入关键词搜索</div></div></div></div></div><div class="tab-content" id="local-content"><div class="content-container"><div class="playlist-container" id="local-playlist-container"><div class="loading">加载本地歌曲中...</div></div></div></div></div></div>
+    <audio id="audio-element" preload="metadata" style="display:none;">
+    <div class="search-modal" id="searchModal"><div class="modal-content"><div class="search-bar"><button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎"><i class="fas fa-search"></i></button><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off"><button class="search-submit-btn">搜索</button></div><div class="engine-dropdown" id="engineDropdown"></div><div class="suggestions" id="suggestions"></div><div class="history-panel" id="historyPanel"><div class="history-title"><span>历史记录</span><span id="clearHistory" class="clear-history-btn">清除</span></div><div id="historyList"></div></div></div></div>
     <div class="engine-tooltip" id="engineTooltip"></div>
 </main>
-
 <div id="notebookModal" class="feedback-modal"><div class="feedback-modal-content"><div class="feedback-modal-header"><h3><i class="fas fa-pen-fancy"></i> 星聚笔记</h3><button class="feedback-modal-close">&times;</button></div><div class="feedback-modal-body"><div id="notebook-list" class="notebook-list"><div class="loading">加载笔记中...</div></div></div></div></div>
 <div id="commentModal" class="feedback-modal"><div class="feedback-modal-content"><div class="feedback-modal-header"><h3><i class="fas fa-comments"></i> 网友评论</h3><button class="feedback-modal-close">&times;</button></div><div class="feedback-modal-body"><div id="waline-comment"></div></div></div></div>
 <div id="submitModal" class="feedback-modal"><div class="feedback-modal-content"><div class="feedback-modal-header"><h3><i class="fas fa-paper-plane"></i> 网站投稿</h3><button class="feedback-modal-close">&times;</button></div><div class="feedback-modal-body"><form id="submitSiteForm"><div class="form-row"><label>网站链接 <span class="required-star">*</span></label><div style="display:flex;gap:8px;align-items:center;"><input type="url" id="submitUrl" placeholder="https://xjdh688.ccwu.cc" required style="flex:1;"><button type="button" id="fetchSiteInfoBtn" class="fetch-info-btn" title="自动获取信息"><i class="fas fa-magic"></i> 获取信息</button></div><div id="urlCheckResult" class="url-check-result" style="display:none;"></div></div><div class="form-row"><label>网站名称 <span class="required-star">*</span></label><input type="text" id="submitTitle" placeholder="例如：星聚导航" required></div><div class="form-row"><label>网站图标</label><div style="display:flex;align-items:center;gap:10px;"><input type="text" id="submitIcon" placeholder="自动获取或手动输入图标URL" style="flex:1;"><img id="submitIconPreview" src="" style="width:32px;height:32px;border-radius:6px;display:none;" alt="图标预览"></div></div><div class="form-row"><label>简短描述</label><textarea id="submitDesc" rows="2" placeholder="介绍一下这个网站..."></textarea></div><div class="form-row"><label>联系方式<span class="required-star">*</span>（仅用于审核结果通知）</label><input type="text" id="submitContact" placeholder="QQ号邮箱"></div><div class="submit-form-buttons"><button type="button" class="submit-cancel-btn">取消</button><button type="submit" class="submit-save-btn" id="submitSaveBtn" disabled>提交投稿</button></div></form></div></div></div>
-
 <!-- 引入 jQuery（粒子特效依赖） -->
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
-
 <!-- 所有外部脚本添加 defer 和 crossorigin -->
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js" crossorigin="anonymous"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
@@ -399,7 +367,6 @@
 <script defer src="./js/toast.js"></script>
 <script defer src="./js/error-handler.js"></script>
 <script defer src="./js/storage.js"></script>
-<!-- api.js 已删除，不再引用 -->
 <script defer src="./js/components/navbar.js"></script>
 <script defer src="./js/components/sidebar.js"></script>
 <script defer src="./js/modules/announcement.js"></script>
@@ -422,10 +389,8 @@
 <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js" crossorigin="anonymous"></script>
 <script defer src="./js/modules/comment.js"></script>
 <script defer src="./js/modules/submit.js"></script>
-
 <!-- 主题切换模块 -->
 <script defer src="./js/modules/theme.js"></script>
-
 <script>
     // 注册 Service Worker（延迟到页面加载完成）
     if ('serviceWorker' in navigator) {
@@ -460,8 +425,19 @@
     }
 </script>
 
-<!-- 点击粒子特效（确保在 jQuery 之后加载，且添加 ready 初始化） -->
-<script src="https://joe.deepakmt.xyz/usr/themes/Joe/assets/cursor/cursor2.js" async></script>
-
+<!-- 【已移除原加载失败的 cursor2.js 脚本】 -->
+<!-- 内嵌完整版点击粒子特效（兼容桌面+手机，无外部依赖） -->
+<script>
+$(function(){let t=function(){"use strict";function t(t){return"[object Array]"==Object.prototype.toString.call(t)}function e(t){return"function"==typeof t}function n(t){return"number"==typeof t}function i(t){return"string"==typeof t}function o(t){return b[t]||String.fromCharCode(t)}function r(t,e,n){for(var i in e)(n||!t.hasOwnProperty(i))&&(t[i]=e[i]);return t}function a(t,e){return function(){t.apply(e,arguments)}}function c(t){var n={};for(var i in t)n[i]=e(t[i])?a(t[i],t):t[i];return n}function s(t){function n(n){e(n)&&n.apply(t,[].splice.call(arguments,1))}function a(t){for(_=0;_<$.length;_++)D=$[_],i(D)?O[(t?"add":"remove")+"EventListener"].call(O,D,A,!1):e(D)?A=D:O=D}function s(){S(N),N=k(s),U||(n(t.setup),U=e(t.setup),n(t.resize)),t.running&&!M&&(t.dt=(B=+new Date)-t.now,t.millis+=t.dt,t.now=B,n(t.update),t.autoclear&&K&&t.clear(),n(t.draw)),M=++M%t.interval}function u(){O=j?t.style:t.canvas,W=j?"px":"",t.fullscreen&&(t.height=w.innerHeight,t.width=w.innerWidth),O.height=t.height+W,O.width=t.width+W,t.retina&&K&&Y&&(O.height=t.height*Y,O.width=t.width*Y,O.style.height=t.height+"px",O.style.width=t.width+"px",t.scale(Y,Y)),U&&n(t.resize)}function l(t,e){return R=e.getBoundingClientRect(),t.x=t.pageX-R.left-w.scrollX,t.y=t.pageY-R.top-w.scrollY,t}function h(e,n){return l(e,t.element),n=n||{},n.ox=n.x||e.x,n.oy=n.y||e.y,n.x=e.x,n.y=e.y,n.dx=n.x-n.ox,n.dy=n.y-n.oy,n}function d(t){if(t.preventDefault(),F=c(t),F.originalEvent=t,F.touches)for(Q.length=F.touches.length,_=0;_<F.touches.length;_++)Q[_]=h(F.touches[_],Q[_]);else Q.length=0,Q[0]=h(F,V);return r(V,Q[0],!0),F}function f(e){for(e=d(e),X=(q=$.indexOf(G=e.type))-1,t.dragging=!!/down|start/.test(G)||!/up|end/.test(G)&&t.dragging;X;)i($[X])?n(t[$[X--]],e):i($[q])?n(t[$[q++]],e):X=0}function p(e){z=e.keyCode,H="keyup"==e.type,J[z]=!H,n(t[e.type],e)}function m(e){t.autopause&&("blur"==e.type?C:E)(),n(t[e.type],e)}function E(){t.now=+new Date,t.running=!0}function C(){t.running=!1}function P(){(t.running?C:E)()}function T(){K&&t.clearRect(0,0,t.width,t.height)}function I(){L=t.element.parentNode,_=x.indexOf(t),L&&L.removeChild(t),~_&&x.splice(_,1),a(!1),C()}var N,A,O,L,R,_,W,B,D,F,G,z,H,X,q,M=0,Q=[],U=!1,Y=w.devicePixelRatio,j=t.type==y,K=t.type==g,V={x:0,y:0,ox:0,oy:0,dx:0,dy:0},$=[t.element,f,"mousedown","touchstart",f,"mousemove","touchmove",f,"mouseup","touchend",f,"click",v,p,"keydown","keyup",w,m,"focus","blur",u,"resize"],J={};for(z in b)J[b[z]]=!1;return r(t,{touches:Q,mouse:V,keys:J,dragging:!1,running:!1,millis:0,now:NaN,dt:NaN,destroy:I,toggle:P,clear:T,start:E,stop:C}),x.push(t),t.autostart&&E(),a(!0),u(),s(),t}let u=document.createElement("div");u.setAttribute("id","clickCanvas"),u.style.cssText="position:fixed;left:0;top:0;z-index:5201314;pointer-events:none;",document.body.appendChild(u);for(var l,h,d="E LN10 LN2 LOG2E LOG10E LOG10 PI SQRT1_2 SQRT2 abs acos asin atan ceil cos exp floor log round sin sqrt tan atan2 pow max min".split(" "),f="__hasSketch",p=Math,g="canvas",m="webgl",y="dom",v=document,w=window,x=[],E={fullscreen:!0,autostart:!0,autoclear:!0,autopause:!0,container:v.body,interval:1,globals:!0,retina:!1,type:g},b={8:"BACKSPACE",9:"TAB",13:"ENTER",16:"SHIFT",27:"ESCAPE",32:"SPACE",37:"LEFT",38:"UP",39:"RIGHT",40:"DOWN"},C={CANVAS:g,WEB_GL:m,WEBGL:m,DOM:y,instances:x,install:function(e){if(!e[f]){for(var i=0;i<d.length;i++)e[d[i]]=p[d[i]];r(e,{TWO_PI:2*p.PI,HALF_PI:p.PI/2,QUATER_PI:p.PI/4,random:function(e,i){return t(e)?e[~~(p.random()*e.length)]:(n(i)||(i=e||1,e=0),e+p.random()*(i-e))},lerp:function(t,e,n){return t+n*(e-t)},map:function(t,e,n,i,o){return(t-e)/(n-e)*(o-i)+i}}),e[f]=!0}},create:function(t){return t=r(t||{},E),t.globals&&C.install(self),l=t.element=t.element||v.createElement(t.type===y?"div":"canvas"),h=t.context=t.context||function(){switch(t.type){case g:return l.getContext("2d",t);case m:return l.getContext("webgl",t)||l.getContext("experimental-webgl",t);case y:return l.canvas=l}}(),t.container.appendChild(l),C.augment(h,t)},augment:function(t,e){return e=r(e||{},E),e.element=t.canvas||t,e.element.className+=" sketch",r(t,e,!0),s(t)}},P=["ms","moz","webkit","o"],T=self,I=0,N="AnimationFrame",A="request"+N,O="cancel"+N,k=T[A],S=T[O],L=0;L<P.length&&!k;L++)k=T[P[L]+"Request"+N],S=T[P[L]+"Cancel"+A];return T[A]=k=k||function(t){var e=+new Date,n=p.max(0,16-(e-I)),i=setTimeout(function(){t(e+n)},n);return I=e+n,i},T[O]=S=S||function(t)},C}();if(document.getElementById("clickCanvas")){function e(t,e,n){this.init(t,e,n)}e.prototype={init:function(t,e,n){this.alive=!0,this.radius=n||10,this.wander=.15,this.theta=random(TWO_PI),this.drag=.92,this.color="#ffeb3b",this.x=t||0,this.y=e||0,this.vx=0,this.vy=0},move:function(){this.x+=this.vx,this.y+=this.vy,this.vx*=this.drag,this.theta+=random(-.5,.5)*this.wander,this.vx+=.1*sin(this.theta),this.vy+=.1*cos(this.theta),this.radius*=.96,this.alive=this.radius>.5},draw:function(t){t.beginPath(),t.arc(this.x,this.y,this.radius,0,TWO_PI),t.fillStyle=this.color,t.fill()}};var n=50,i=["#5ee4ff","#f44033","#ffeb3b","#F38630","#FA6900","#f403e8","#F9D423"],o=[],r=[],a=t.create({container:document.getElementById("clickCanvas")});a.spawn=function(t,a){o.length>=n&&r.push(o.shift()),particle=r.length?r.pop():new e,particle.init(t,a,random(5,20)),particle.wander=random(.5,2),particle.color=random(i),particle.drag=random(.9,.99),theta=random(TWO_PI),force=random(1,5),particle.vx=sin(theta)*force,particle.vy=cos(theta)*force,o.push(particle)},a.update=function(){var t,e;for(t=o.length-1;t>=0;t--)e=o[t],e.alive?e.move():r.push(o.splice(t,1)[0])},a.draw=function(){a.globalCompositeOperation="lighter";for(var t=o.length-1;t>=0;t--)o[t].draw(a)},function runEffect(t){
+    if("TEXTAREA"!==t.target.nodeName&&"INPUT"!==t.target.nodeName&&"A"!==t.target.nodeName&&"I"!==t.target.nodeName&&"IMG"!==t.target.nodeName){
+        let x = t.clientX || (t.touches && t.touches[0].clientX);
+        let y = t.clientY || (t.touches && t.touches[0].clientY);
+        for(let e=random(15,20),n=0;n<e;n++)a.spawn(x,y)
+    }
+}
+document.addEventListener("mousedown",runEffect);
+document.addEventListener("touchstart",runEffect);
+})}});
+</script>
 </body>
 </html>
