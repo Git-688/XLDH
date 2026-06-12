@@ -1,7 +1,7 @@
 /**
  * 优化分类导航系统 - 分页加载版（支持 WebP 图标、高清懒加载、智能预加载、点击计数优化）
  * 修复：无效链接统计改为全局统计（所有分类下的无效链接总数）
- * 添加：NProgress 风格的顶部进度条
+ * 移除：NProgress 进度条调用（改用页面滚动进度条）
  */
 class OptimizedNavigation {
     constructor() {
@@ -292,29 +292,19 @@ class OptimizedNavigation {
     }
 
     async loadNavigationStructure() {
-        NProgress.start();
-        try {
-            const response = await Utils.safeFetch(`${this.apiBase}/navigation/structure`);
-            if (!response.ok) throw new Error('Failed to load navigation structure');
-            this.structure = await response.json();
-            return this.structure;
-        } finally {
-            NProgress.done();
-        }
+        const response = await Utils.safeFetch(`${this.apiBase}/navigation/structure`);
+        if (!response.ok) throw new Error('Failed to load navigation structure');
+        this.structure = await response.json();
+        return this.structure;
     }
 
     async loadSites(subcategoryId, forceRefresh = false) {
-        NProgress.start();
-        try {
-            if (!forceRefresh && this.siteCache.has(subcategoryId)) return this.siteCache.get(subcategoryId);
-            const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
-            if (!response.ok) throw new Error('Failed to load sites');
-            const sites = await response.json();
-            this.siteCache.set(subcategoryId, sites);
-            return sites;
-        } finally {
-            NProgress.done();
-        }
+        if (!forceRefresh && this.siteCache.has(subcategoryId)) return this.siteCache.get(subcategoryId);
+        const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
+        if (!response.ok) throw new Error('Failed to load sites');
+        const sites = await response.json();
+        this.siteCache.set(subcategoryId, sites);
+        return sites;
     }
 
     async loadSubcategoryCountsForLevel1(level1) {
@@ -692,7 +682,6 @@ class OptimizedNavigation {
         const container = document.getElementById('level3Content');
         if (!container) return;
         this.showSkeleton();
-        NProgress.start();
         try {
             const searchUrl = `${this.apiBase}/search?q=${encodeURIComponent(query)}`;
             const response = await Utils.safeFetch(searchUrl);
@@ -715,7 +704,6 @@ class OptimizedNavigation {
             console.error(e);
             container.innerHTML = '<div class="empty-state">搜索失败，请重试</div>';
         } finally {
-            NProgress.done();
             this.isSearching = false;
         }
     }
