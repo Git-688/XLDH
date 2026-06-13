@@ -56,14 +56,17 @@
     padding: 0;
 }
 
-/* 左上角卡片 */
+/* 左上角卡片 - 添加边框、内边距、圆角 */
 .greeting-left-card {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 0;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-card);
 }
 
 /* 问候语 */
@@ -94,7 +97,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 1.5em;  /* 与问候语字体大小一致 */
+    font-size: 1.5em;
 }
 .primary-holiday .holiday-icon {
     font-size: 1em;
@@ -107,7 +110,7 @@
     background: rgba(67,97,238,0.15);
     padding: 2px 8px;
     border-radius: 20px;
-    font-size: 0.7em;   /* 相对父容器缩小，保持视觉协调 */
+    font-size: 0.7em;
     font-weight: 500;
     color: #ffffff !important;
     display: inline-block;
@@ -190,12 +193,12 @@
     background: rgba(67,97,238,0.1);
 }
 
-/* 木鱼按钮区域 - 使用 grid 布局，左右边距与按钮间距相等 */
+/* 木鱼按钮区域 - 左右留白与按钮间距一致（均为8px） */
 .fish-section {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
-    padding: 0 8px 8px 8px;  /* 左右内边距等于 gap，实现左右间距与按钮间距一致 */
+    padding: 0 8px 8px 8px;
 }
 .fish-btn {
     position: relative;
@@ -307,6 +310,7 @@
 /* 响应式设计：保持一行，缩放内容，内边距保持为0 */
 @media (max-width: 992px) {
     .greeting-top-row { gap: 12px; }
+    .greeting-left-card { padding: 6px; }
     .greeting-text h1 { font-size: 1.3em !important; }
     .primary-holiday { font-size: 1.3em; }
     .primary-holiday .holiday-countdown { padding: 2px 5px; font-size: 0.7em; }
@@ -323,6 +327,7 @@
 @media (max-width: 768px) {
     .greeting-section { padding: var(--section-margin-sm) 0; }
     .greeting-top-row { gap: 8px; }
+    .greeting-left-card { padding: 5px; }
     .greeting-text h1 { font-size: 1.1em !important; }
     .primary-holiday { font-size: 1.1em; }
     .primary-holiday .holiday-countdown { padding: 2px 4px; font-size: 0.65em; }
@@ -341,6 +346,7 @@
 @media (max-width: 576px) {
     .greeting-section { padding: var(--section-margin-xs) 0; }
     .greeting-top-row { gap: 6px; }
+    .greeting-left-card { padding: 4px; }
     .greeting-text h1 { font-size: 1em !important; }
     .primary-holiday { font-size: 1em; }
     .primary-holiday .holiday-countdown { padding: 2px 4px; font-size: 0.6em; }
@@ -395,6 +401,10 @@
 
 /* 深色模式优化 */
 .dark-mode .greeting-main-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+.dark-mode .greeting-left-card {
     background: var(--bg-card);
     border-color: var(--border-color);
 }
