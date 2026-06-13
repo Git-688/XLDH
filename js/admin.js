@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（确保标签页独立显示）
+// admin.js - 星聚导航后台管理（修复标签页切换，不破坏登录样式）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -755,7 +755,6 @@
         } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    // 投稿详情模态框（完整版）
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -965,7 +964,7 @@
             if (btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
         });
 
-        // 标签页切换：确保每次只显示当前激活的页面
+        // 标签页切换 - 确保每次只显示一个面板
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const tabId = btn.dataset.tab;
@@ -973,11 +972,11 @@
                 // 更新按钮样式
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                // 隐藏所有标签页容器
+                // 隐藏所有标签页内容
                 document.querySelectorAll('.tab-panel').forEach(panel => {
                     panel.classList.add('hidden');
                 });
-                // 显示当前激活的标签页
+                // 显示选中的标签页
                 const activePanel = document.getElementById(`${tabId}Tab`);
                 if (activePanel) {
                     activePanel.classList.remove('hidden');
