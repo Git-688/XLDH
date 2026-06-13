@@ -37,27 +37,28 @@
     border: 1px solid var(--border-color);
     padding: 20px;
     transition: transform 0.3s ease;
+    position: relative;
 }
 .greeting-main-card:hover {
     transform: translateY(-2px);
 }
 
-/* 左右两列布局（弹性，右侧与木鱼区域垂直居中） */
-.greeting-content-wrapper {
+/* 日期卡片头部栏（右上角） */
+.greeting-header-bar {
     display: flex;
-    justify-content: space-between;
-    align-items: center; /* 垂直居中，使右侧卡片与左侧木鱼区域中心对齐 */
-    gap: 20px;
-    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-bottom: 16px;
 }
+
+/* 主体内容区域（不再使用左右两列） */
+.greeting-content-wrapper {
+    display: block;
+}
+
 .greeting-left {
-    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 12px;
-}
-.greeting-right {
-    flex-shrink: 0;
 }
 
 /* 问候语 */
@@ -143,7 +144,7 @@
     white-space: nowrap;
 }
 
-/* 右侧日期卡片 */
+/* 右侧日期卡片（本身样式不变） */
 .datetime {
     background: var(--bg-card);
     padding: 12px 16px;
@@ -306,18 +307,13 @@
 
 /* 响应式设计 */
 @media (max-width: 992px) {
-    .greeting-content-wrapper {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .greeting-right {
-        align-self: flex-start;
-    }
+    .greeting-header-bar { margin-bottom: 12px; }
+    .greeting-left { gap: 10px; }
     .greeting-text h1 { font-size: 1.32em !important; margin-bottom: -2px; }
     .holidays-container { gap: 6px; }
     .primary-holiday { font-size: 1.275em; }
     .primary-holiday .holiday-countdown { padding: 2px 8px; font-size: 0.9em; }
-    .datetime { padding: 10px 14px; width: auto; min-width: auto; }
+    .datetime { padding: 10px 14px; min-width: auto; }
     .datetime-row { gap: 8px; }
     #currentTime { font-size: 1.1em; }
     #currentDate { font-size: 0.8em; }
@@ -332,6 +328,8 @@
 @media (max-width: 768px) {
     .greeting-section { padding: var(--section-margin-sm) 0; }
     .greeting-main-card { padding: 16px; }
+    .greeting-header-bar { margin-bottom: 10px; }
+    .greeting-left { gap: 8px; }
     .greeting-text h1 { font-size: 1.15em !important; margin-bottom: -3px; }
     .holidays-container { gap: 4px; }
     .primary-holiday { font-size: 1.23em; }
@@ -353,6 +351,8 @@
 @media (max-width: 576px) {
     .greeting-section { padding: var(--section-margin-xs) 0; }
     .greeting-main-card { padding: 14px; }
+    .greeting-header-bar { margin-bottom: 8px; }
+    .greeting-left { gap: 6px; }
     .greeting-text h1 { font-size: 1.05em !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: -4px; }
     .holidays-container { gap: 4px; }
     .primary-holiday { font-size: 1.17em; }
