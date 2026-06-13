@@ -46,7 +46,7 @@
     transform: translateY(-2px);
 }
 
-/* 卡片顶部：问候语和时间在同一水平线，但整体垂直底部对齐 */
+/* 卡片顶部：问候语和时间在同一水平线，且左侧内容垂直方向两端对齐 */
 .greeting-header {
     display: flex;
     justify-content: space-between;
@@ -59,10 +59,10 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: space-between; /* 关键：使问候语在上，节日容器在下 */
 }
 
-/* 问候语字体大于节假日字体（节假日为1.425em） */
+/* 问候语 */
 .greeting-text h1 {
     font-size: 1.5em !important;
     font-weight: 700;
@@ -81,13 +81,13 @@
     font-weight: 700;
 }
 
-/* 节日容器：将主要节日推到容器底部 */
+/* 节日容器：推到底部 */
 .holidays-container {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
     gap: 4px;
-    margin-top: auto;
+    margin-top: auto; /* 确保容器位于底部 */
 }
 .countdown-holiday {
     display: flex;
