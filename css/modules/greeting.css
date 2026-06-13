@@ -39,7 +39,7 @@
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;  /* 原为20px，调小使问候语与节日更近 */
     transition: transform 0.3s ease;
 }
 .greeting-main-card:hover {
@@ -59,12 +59,12 @@
     min-width: 0;
 }
 
-/* 问候语 */
+/* 问候语 - 减小下边距使其更靠近节日 */
 .greeting-text h1 {
     font-size: 1.5em !important;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0 0 12px 0;
+    margin: 0 0 4px 0;  /* 原为12px，减小至4px */
     letter-spacing: 0.02em;
     display: inline-block;
 }
@@ -314,14 +314,14 @@
 /* 响应式设计 - 移动端调整 */
 @media (max-width: 992px) {
     .greeting-container { flex-direction: column; gap: 16px; }
-    .greeting-main-card { padding: 18px; gap: 18px; width: 100%; order: 1; }
+    .greeting-main-card { padding: 18px; gap: 12px; width: 100%; order: 1; }
     .bookmark-btn { width: 100%; padding: 14px 20px; flex-direction: row; justify-content: center; gap: 12px; order: 2; }
     .bookmark-btn i { margin-bottom: 0; font-size: 22px; }
     .bookmark-btn span { writing-mode: horizontal-tb; font-size: 0.85em; }
     .greeting-header { flex-direction: row; align-items: center; gap: 16px; }
     .datetime { padding: 10px 14px; }
     .datetime-row { gap: 8px; }
-    .greeting-text h1 { font-size: 1.32em !important; margin-bottom: -2px; }
+    .greeting-text h1 { font-size: 1.32em !important; margin-bottom: 2px; }
     .holidays-container { gap: 6px; }
     .primary-holiday { font-size: 1.275em; }
     .primary-holiday .holiday-countdown { padding: 2px 8px; font-size: 0.9em; }
@@ -335,9 +335,9 @@
 }
 @media (max-width: 768px) {
     .greeting-section { padding: var(--section-margin-sm) 0; }
-    .greeting-main-card { padding: 16px; gap: 16px; }
+    .greeting-main-card { padding: 16px; gap: 12px; }
     .greeting-header { flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 12px; }
-    .greeting-text h1 { font-size: 1.15em !important; margin-bottom: -3px; }
+    .greeting-text h1 { font-size: 1.15em !important; margin-bottom: 2px; }
     .holidays-container { gap: 4px; }
     .primary-holiday { font-size: 1.23em; }
     .primary-holiday .holiday-countdown { padding: 2px 8px; font-size: 0.85em; }
@@ -357,9 +357,9 @@
 }
 @media (max-width: 576px) {
     .greeting-section { padding: var(--section-margin-xs) 0; }
-    .greeting-main-card { padding: 14px; gap: 14px; }
+    .greeting-main-card { padding: 14px; gap: 10px; }
     .greeting-header { gap: 10px; flex-wrap: nowrap; }
-    .greeting-text h1 { font-size: 1.05em !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: -4px; }
+    .greeting-text h1 { font-size: 1.05em !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
     .holidays-container { gap: 4px; }
     .primary-holiday { font-size: 1.17em; }
     .primary-holiday .holiday-countdown { padding: 2px 8px; font-size: 0.8em; }
