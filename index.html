@@ -71,7 +71,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preload" href="./js/main.js" as="script">
 
-    <!-- 滚动进度条样式 - 七彩色渐变 -->
+    <!-- 滚动进度条样式：由蓝渐变到红 -->
     <style>
         .scroll-progress {
             position: fixed;
@@ -79,20 +79,20 @@
             left: 0;
             width: 0%;
             height: 2px;
-            background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
+            background: linear-gradient(90deg, #4361ee, #ef4444);
             z-index: 100000;
             transition: width 0.1s ease-out;
-            box-shadow: 0 0 6px rgba(255,0,0,0.5), 0 0 6px rgba(255,127,0,0.5), 0 0 6px rgba(255,255,0,0.5);
+            box-shadow: 0 0 6px rgba(67, 97, 238, 0.5);
         }
         @media (prefers-color-scheme: dark) {
             .scroll-progress {
-                background: linear-gradient(90deg, #ff4d4d, #ff9f4d, #ffff4d, #4dff4d, #4d4dff, #aa4dff, #ff4dff);
-                box-shadow: 0 0 6px rgba(255,77,77,0.5);
+                background: linear-gradient(90deg, #7b9cff, #ff6b6b);
+                box-shadow: 0 0 6px rgba(123, 156, 255, 0.5);
             }
         }
         .dark-mode .scroll-progress {
-            background: linear-gradient(90deg, #ff4d4d, #ff9f4d, #ffff4d, #4dff4d, #4d4dff, #aa4dff, #ff4dff);
-            box-shadow: 0 0 6px rgba(255,77,77,0.5);
+            background: linear-gradient(90deg, #7b9cff, #ff6b6b);
+            box-shadow: 0 0 6px rgba(123, 156, 255, 0.5);
         }
     </style>
 
@@ -693,7 +693,7 @@
                 </div>
                 <div class="submit-form-buttons" style="display: flex; justify-content: space-between; align-items: center;">
                     <div class="submit-hint" style="font-size: 11px; color: #f59e0b;">
-                        <i class="fas fa-circle-exclamation"></i> 检测稍缓，请稍等待！
+                        <i class="fas fa-circle-exclamation"></i> 检测稍缓，请稍等！！！
                     </div>
                     <div style="display: flex; gap: 8px;">
                         <button type="button" class="submit-cancel-btn">取消</button>
