@@ -1,4 +1,4 @@
-// announcement.js - 简约公告模块（修复按钮无响应问题）
+// announcement.js - 简约公告模块（单公告模式，修复模态框打开问题）
 class AnnouncementModule {
     constructor() {
         if (window.Starlink && window.Starlink.announcement) return window.Starlink.announcement;
@@ -28,8 +28,9 @@ class AnnouncementModule {
                 return {
                     id: data.id,
                     title: data.title,
+                    important: data.important || '',
                     content: data.content,
-                    time: new Date(data.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+                    date: data.date || new Date(data.created_at).toLocaleDateString('zh-CN')
                 };
             }
             return null;
@@ -54,15 +55,22 @@ class AnnouncementModule {
         this.modalElement.className = 'announcement-modal-simple';
         this.modalElement.id = 'announcementModal';
         
-        if (!this.currentAnnouncement) {
+        if (!this.currentAnnouncement || !this.currentAnnouncement.title) {
             this.modalElement.innerHTML = `
                 <div class="announcement-modal-container">
                     <div class="announcement-header">
-                        <div class="announcement-title"><i class="fas fa-bell"></i><span>暂无公告</span></div>
-                        <button class="announcement-close" id="announcementClose"><i class="fas fa-times"></i></button>
+                        <div class="announcement-title">
+                            <i class="fas fa-bell" style="color: #4361ee; font-size: 1.2rem;"></i>
+                            <span>暂无公告</span>
+                        </div>
+                        <button class="announcement-close" id="announcementClose" aria-label="关闭">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                     <div class="announcement-body">
-                        <div class="focus-section"><div class="focus-content">当前没有系统公告，敬请期待。</div></div>
+                        <div class="focus-section">
+                            <div class="focus-content">当前没有系统公告，敬请期待。</div>
+                        </div>
                     </div>
                     <div class="announcement-footer">
                         <button class="announcement-ack-btn" id="announcementAckBtn">知道了</button>
@@ -75,20 +83,29 @@ class AnnouncementModule {
         }
 
         const title = this.escapeHtml(this.currentAnnouncement.title);
-        const contentHtml = this.currentAnnouncement.content || '<div class="focus-content">暂无详细内容</div>';
-        const time = this.escapeHtml(this.currentAnnouncement.time);
+        const important = this.escapeHtml(this.currentAnnouncement.important || '');
+        const content = this.escapeHtml(this.currentAnnouncement.content).replace(/\n/g, '<br>');
+        const date = this.escapeHtml(this.currentAnnouncement.date);
 
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
                 <div class="announcement-header">
-                    <div class="announcement-title"><i class="fas fa-bell"></i><span>${title}</span></div>
-                    <button class="announcement-close" id="announcementClose"><i class="fas fa-times"></i></button>
+                    <div class="announcement-title">
+                        <i class="fas fa-bell" style="color: #4361ee; font-size: 1.2rem;"></i>
+                        <span>${title}</span>
+                    </div>
+                    <button class="announcement-close" id="announcementClose" aria-label="关闭">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
                 <div class="announcement-body">
-                    ${contentHtml}
+                    ${important ? `<div class="focus-section"><div class="focus-content">📢 ${important}</div></div>` : ''}
+                    <div class="content-section">
+                        <div class="announcement-full-content">${content}</div>
+                    </div>
                 </div>
                 <div class="announcement-footer">
-                    <span class="announcement-date"><i class="far fa-calendar-alt"></i> ${time}</span>
+                    <span class="announcement-date"><i class="far fa-calendar-alt"></i> ${date}</span>
                     <button class="announcement-ack-btn" id="announcementAckBtn">知道了</button>
                 </div>
             </div>
@@ -101,29 +118,36 @@ class AnnouncementModule {
         if (!this.modalElement) return;
         const closeBtn = this.modalElement.querySelector('#announcementClose');
         const ackBtn = this.modalElement.querySelector('#announcementAckBtn');
-        const closeHandler = () => this.hide();
+        const closeHandler = () => {
+            this.hide();
+        };
         if (closeBtn) closeBtn.addEventListener('click', closeHandler);
         if (ackBtn) ackBtn.addEventListener('click', closeHandler);
         this.modalElement.addEventListener('click', (e) => {
-            if (e.target === this.modalElement) this.hide();
+            if (e.target === this.modalElement) {
+                this.hide();
+            }
         });
     }
 
     setupGlobalEvents() {
         this.escapeHandler = (e) => {
-            if (e.key === 'Escape' && this.isVisible) this.hide();
+            if (e.key === 'Escape' && this.isVisible) {
+                this.hide();
+            }
         };
         document.addEventListener('keydown', this.escapeHandler);
         
-        // 修复公告按钮事件：确保每次点击都能打开
+        // 绑定公告按钮事件 - 确保每次点击都能打开
         const announcementBtn = document.getElementById('announcementBtn');
-        if (announcementBtn && !announcementBtn._bound) {
-            announcementBtn._bound = true;
-            announcementBtn.addEventListener('click', (e) => {
+        if (announcementBtn) {
+            // 移除旧监听避免重复绑定
+            const newBtn = announcementBtn.cloneNode(true);
+            announcementBtn.parentNode.replaceChild(newBtn, announcementBtn);
+            newBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                // 重新加载最新公告后再显示
-                this.loadAnnouncement().then(() => this.showModal());
+                this.toggleModal();
             });
         }
     }
@@ -131,25 +155,18 @@ class AnnouncementModule {
     showModal() {
         if (!this.modalElement) this.createModal();
         if (this.isVisible) return;
-        // 关闭其他模态框
-        if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
-        if (window.Starlink?.search?.isOpen) window.Starlink.search.hide();
-        const musicPlayer = document.getElementById('musicPlayer');
-        if (musicPlayer?.classList.contains('show')) {
-            if (window.Starlink?.navbar?.hideMusicPlayer) window.Starlink.navbar.hideMusicPlayer();
-        }
-        if (window.Starlink?.weather?.isShowing) window.Starlink.weather.hide();
-        if (window.aboutModule?.isVisible) window.aboutModule.hide();
-        
+        this.closeOtherModals();
         this.modalElement.classList.add('active');
         this.isVisible = true;
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
         else if (window.app) window.app.registerModal(this);
+        this.updateButtonState(true);
     }
 
     hide() {
         if (!this.isVisible || !this.modalElement) return;
         this.modalElement.classList.remove('active');
+        this.updateButtonState(false);
         const onTransitionEnd = () => {
             this.isVisible = false;
             if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
@@ -169,9 +186,44 @@ class AnnouncementModule {
     toggleModal() {
         this.isVisible ? this.hide() : this.showModal();
     }
+
+    closeOtherModals() {
+        if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
+        if (window.Starlink?.search?.isModalOpen?.()) window.Starlink.search.hide();
+        const musicPlayer = document.getElementById('musicPlayer');
+        if (musicPlayer?.classList.contains('show')) {
+            if (window.Starlink?.navbar?.hideMusicPlayer) window.Starlink.navbar.hideMusicPlayer();
+        }
+        if (window.Starlink?.weather?.isShowing) window.Starlink.weather.hide();
+        if (window.Starlink?.about?.isVisible) window.Starlink.about.hide();
+        if (window.Starlink?.app?.hideNotebookModal) window.Starlink.app.hideNotebookModal();
+        const submitModal = document.getElementById('submitModal');
+        if (submitModal?.classList.contains('active')) submitModal.classList.remove('active');
+    }
+
+    updateButtonState(active) {
+        const btn = document.getElementById('announcementBtn');
+        if (btn) btn.classList.toggle('active', active);
+    }
+
+    async refresh() {
+        await this.loadAnnouncement();
+        if (this.isVisible) this.showModal();
+    }
+
+    destroy() {
+        this.hide();
+        if (this.escapeHandler) {
+            document.removeEventListener('keydown', this.escapeHandler);
+        }
+        if (this.modalElement?.parentNode) {
+            this.modalElement.parentNode.removeChild(this.modalElement);
+        }
+        this.modalElement = null;
+    }
 }
 
-// 确保在 DOM 加载完成后初始化
+// 初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         if (!window.Starlink) window.Starlink = {};
