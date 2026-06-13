@@ -98,7 +98,7 @@ class AnnouncementModule {
                     </button>
                 </div>
                 <div class="announcement-body">
-                    ${important ? `<div class="focus-section"><div class="focus-content"><i class="fas fa-circle-exclamation"></i>${important}</div></div>` : ''}
+                    ${important ? `<div class="focus-section"><div class="focus-content">${important}</div></div>` : ''}
                     <div class="updates-section">
                         <div class="updates-title"><i class="fas fa-sync-alt"></i> 更新内容：</div>
                         <div class="announcement-full-content">${content}</div>
