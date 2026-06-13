@@ -82,7 +82,6 @@ class AnnouncementModule {
         this.createModal();
     }
 
-    // 模态框结构：保留原有样式，并增加“更新内容”标题与绿色图标
     createModal() {
         if (this.modalElement) {
             this.modalElement.remove();
@@ -124,7 +123,6 @@ class AnnouncementModule {
         const content = this.escapeHtml(this.currentAnnouncement.content).replace(/\n/g, '<br>');
         const date = this.escapeHtml(this.currentAnnouncement.date);
 
-        // 保留原有所属结构，同时增加“更新内容”标题及绿色图标
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
                 <div class="announcement-header">
@@ -141,7 +139,6 @@ class AnnouncementModule {
                         <div class="focus-content">${important ? `${important}` : '暂无重要提示'}</div>
                     </div>
                     <div class="updates-section">
-                        <!-- 新增更新内容标题，带绿色图标 -->
                         <div class="updates-title">
                             <i class="fas fa-sync-alt" style="color: #10b981;"></i> 更新内容：
                         </div>
