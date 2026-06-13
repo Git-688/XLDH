@@ -1,4 +1,4 @@
-// announcement.js - 简约公告模块（单公告模式，支持未读标记，不改变原有样式）
+// announcement.js - 简约公告模块（单公告模式，支持未读标记，保留原有样式并增加更新标题与绿色图标）
 class AnnouncementModule {
     constructor() {
         if (window.Starlink && window.Starlink.announcement) return window.Starlink.announcement;
@@ -25,7 +25,6 @@ class AnnouncementModule {
             const response = await fetch(`${this.apiBase}/announcement/active`);
             const data = await response.json();
             if (data && data.id && data.title && data.content) {
-                // 检查是否有更新（本地存储的 lastSeenId 与当前 id 不同）
                 const lastSeenId = localStorage.getItem('announcement_last_seen_id');
                 if (!lastSeenId || data.id !== parseInt(lastSeenId)) {
                     this.setUnreadFlag(true);
@@ -49,7 +48,6 @@ class AnnouncementModule {
         }
     }
 
-    // 设置公告未读徽章（不影响任何其他样式）
     setUnreadFlag(hasUnread) {
         const btn = document.getElementById('announcementBtn');
         if (!btn) return;
@@ -70,7 +68,6 @@ class AnnouncementModule {
         }
     }
 
-    // 标记公告为已读
     markAsRead() {
         if (this.currentAnnouncement && this.currentAnnouncement.id) {
             localStorage.setItem('announcement_last_seen_id', this.currentAnnouncement.id);
@@ -85,7 +82,7 @@ class AnnouncementModule {
         this.createModal();
     }
 
-    // 保持原有模态框结构不变（完全恢复之前的版本）
+    // 模态框结构：保留原有样式，并增加“更新内容”标题与绿色图标
     createModal() {
         if (this.modalElement) {
             this.modalElement.remove();
@@ -127,7 +124,7 @@ class AnnouncementModule {
         const content = this.escapeHtml(this.currentAnnouncement.content).replace(/\n/g, '<br>');
         const date = this.escapeHtml(this.currentAnnouncement.date);
 
-        // 完全恢复原来的模态框结构（喇叭图标、重要内容区域、更新列表等）
+        // 保留原有所属结构，同时增加“更新内容”标题及绿色图标
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
                 <div class="announcement-header">
@@ -144,6 +141,10 @@ class AnnouncementModule {
                         <div class="focus-content">${important ? `${important}` : '暂无重要提示'}</div>
                     </div>
                     <div class="updates-section">
+                        <!-- 新增更新内容标题，带绿色图标 -->
+                        <div class="updates-title">
+                            <i class="fas fa-sync-alt" style="color: #10b981;"></i> 更新内容：
+                        </div>
                         <ul class="updates-list">
                             <li>${content}</li>
                         </ul>
@@ -201,7 +202,6 @@ class AnnouncementModule {
         this.closeOtherModals();
         this.modalElement.classList.add('active');
         this.isVisible = true;
-        // 打开公告时标记为已读，并隐藏徽章
         this.markAsRead();
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
         else if (window.app) window.app.registerModal(this);
