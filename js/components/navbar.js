@@ -1,12 +1,10 @@
 // navbar.js - 导航栏模块（修复模态框动画，支持等待关闭完成）
 class Navbar {
     constructor() {
-        // 避免重复实例化
         if (window.Starlink && window.Starlink.navbar) return window.Starlink.navbar;
         this.announcements = [];
         this.init();
         if (window.Starlink) window.Starlink.navbar = this;
-        // 保留旧全局变量以便兼容（可选，建议逐步移除）
         window.navbar = this;
     }
 
@@ -21,7 +19,7 @@ class Navbar {
         try {
             this.bindEvents();
             this.loadAnnouncements();
-            this.updateNotificationBadge();
+            // 不再调用 updateNotificationBadge，因为公告未读徽章由 announcement.js 管理
             setTimeout(() => this.handleScroll(), 100);
         } catch (e) {
             console.error('导航栏初始化失败:', e);
@@ -34,7 +32,6 @@ class Navbar {
             searchBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                // 使用 Starlink 中的搜索模块
                 const searchModule = window.Starlink?.search;
                 if (searchModule && typeof searchModule.toggle === 'function') {
                     this.handleFeatureToggle('search', () => searchModule.toggle());
@@ -66,8 +63,6 @@ class Navbar {
                 }
             });
         }
-
-        // 菜单按钮事件绑定由新侧滑栏负责，此处不做重复绑定
 
         const weatherBtn = document.getElementById('weatherBtn');
         if (weatherBtn) {
@@ -119,15 +114,8 @@ class Navbar {
         if (btt) btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
-    /**
-     * 异步关闭除保留功能外的所有模态框，等待动画完成
-     * @param {Array<string>} keep 保留的功能标识数组，如 ['search', 'music', 'announcement', 'sidebar', 'weather', 'about', 'notebook', 'submit']
-     * @returns {Promise<void>}
-     */
     async closeAllModalsExcept(keep = []) {
         const closePromises = [];
-
-        // 获取当前应用注册的所有活动模态框实例
         const activeModals = window.Starlink?.app?.activeModals || [];
         for (const modal of activeModals) {
             let shouldClose = true;
@@ -139,7 +127,6 @@ class Navbar {
             if (keep.includes('about') && modal === window.Starlink?.about) shouldClose = false;
             if (keep.includes('notebook') && modal === window.Starlink?.app?.notebookModalHideRef) shouldClose = false;
             if (keep.includes('submit') && modal === window.Starlink?.submit) shouldClose = false;
-
             if (shouldClose && modal && typeof modal.hide === 'function') {
                 const promise = new Promise((resolve) => {
                     modal.hide();
@@ -157,8 +144,6 @@ class Navbar {
                 closePromises.push(promise);
             }
         }
-
-        // 额外处理一些未通过 app.registerModal 注册但需要关闭的组件
         if (!keep.includes('music')) {
             const musicPlayer = document.getElementById('musicPlayer');
             if (musicPlayer && musicPlayer.classList.contains('show') && this.hideMusicPlayer) {
@@ -198,15 +183,9 @@ class Navbar {
         } else if (!keep.includes('submit') && window.submitModule && window.submitModule.isVisible && window.submitModule.hide) {
             window.submitModule.hide();
         }
-
         return Promise.all(closePromises);
     }
 
-    /**
-     * 打开或关闭指定功能，会先关闭其他模态框
-     * @param {string} featureKey 功能标识
-     * @param {Function} toggleFn 切换功能的函数
-     */
     async handleFeatureToggle(featureKey, toggleFn) {
         await this.closeAllModalsExcept([featureKey]);
         toggleFn();
@@ -267,6 +246,7 @@ class Navbar {
     }
 
     loadAnnouncements() {
+        // 保留原有加载公告数据逻辑（可能用于其他用途），但不再用于显示未读标记
         this.announcements = Storage.get('announcements') || [{
             id: 'single_announcement',
             title: '星聚导航公告',
@@ -277,43 +257,12 @@ class Navbar {
         }];
     }
 
-    updateNotificationBadge() {
-        const btn = document.getElementById('announcementBtn');
-        if (!btn) return;
-        let unread = 0;
-        if (window.Starlink?.announcement) {
-            unread = window.Starlink.announcement.getUnreadCount?.() || 0;
-        } else if (window.announcementModule) {
-            unread = window.announcementModule.getUnreadCount?.() || 0;
-        } else {
-            const stored = Storage.get('announcements') || [];
-            unread = stored.filter(a => !a.read).length;
-        }
-        let badge = btn.querySelector('.nav-badge');
-        if (unread > 0) {
-            if (!badge) {
-                badge = document.createElement('div');
-                badge.className = 'nav-badge';
-                btn.appendChild(badge);
-            }
-            badge.textContent = unread > 9 ? '9+' : unread;
-            badge.classList.add('show');
-            btn.classList.add('has-unread');
-        } else if (badge) {
-            badge.classList.remove('show');
-            setTimeout(() => badge.remove(), 300);
-            btn.classList.remove('has-unread');
-        }
-    }
+    // 此方法不再使用，保留空实现避免报错
+    updateNotificationBadge() {}
 
     getUnreadAnnouncementCount() {
-        if (window.Starlink?.announcement) {
-            return window.Starlink.announcement.getUnreadCount?.() || 0;
-        } else if (window.announcementModule) {
-            return window.announcementModule.getUnreadCount?.() || 0;
-        }
-        const stored = Storage.get('announcements') || [];
-        return stored.filter(a => !a.read).length;
+        // 公告未读由 announcement.js 管理，这里返回 0 以避免冲突
+        return 0;
     }
 
     destroy() {
