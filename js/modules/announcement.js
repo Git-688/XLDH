@@ -8,7 +8,9 @@ class AnnouncementModule {
         this.currentAnnouncement = null;
         this.escapeHandler = null;
         this.apiBase = Utils.getApiBase();
-        this.init();
+        // 直接初始化，不调用 init（因为不存在 init 方法）
+        this.loadAnnouncement();
+        this.setupGlobalEvents();
         if (window.Starlink) window.Starlink.announcement = this;
         window.announcementModule = this;
     }
@@ -134,6 +136,17 @@ class AnnouncementModule {
             }
         };
         document.addEventListener('keydown', this.escapeHandler);
+        
+        // 绑定公告按钮事件
+        const announcementBtn = document.getElementById('announcementBtn');
+        if (announcementBtn && !announcementBtn._bound) {
+            announcementBtn._bound = true;
+            announcementBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleModal();
+            });
+        }
     }
 
     showModal() {
@@ -222,7 +235,6 @@ if (document.readyState === 'loading') {
             window.Starlink.announcement = new AnnouncementModule();
         }
         window.announcementModule = window.Starlink.announcement;
-        window.announcementModule.loadAnnouncement();
     });
 } else {
     if (!window.Starlink) window.Starlink = {};
@@ -230,5 +242,4 @@ if (document.readyState === 'loading') {
         window.Starlink.announcement = new AnnouncementModule();
     }
     window.announcementModule = window.Starlink.announcement;
-    window.announcementModule.loadAnnouncement();
 }
