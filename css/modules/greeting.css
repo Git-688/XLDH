@@ -39,32 +39,37 @@
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px;  /* 原为20px，调小使问候语与节日更近 */
+    gap: 20px;
     transition: transform 0.3s ease;
 }
 .greeting-main-card:hover {
     transform: translateY(-2px);
 }
 
-/* 卡片顶部：问候语和时间在同一水平线，且左侧内容垂直方向两端对齐 */
-.greeting-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+/* 使用 grid 实现左右两列，右侧卡片与木鱼区域垂直底部对齐，桌面和移动端保持相同布局 */
+.greeting-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
     gap: 20px;
-    flex-wrap: nowrap;
+    align-items: end; /* 使右侧卡片底部与左侧木鱼底部对齐 */
 }
-.greeting-left {
-    flex: 1;
-    min-width: 0;
+.greeting-left-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.greeting-right-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* 确保卡片内容从底部开始排列 */
 }
 
-/* 问候语 - 减小下边距使其更靠近节日 */
+/* 问候语 */
 .greeting-text h1 {
     font-size: 1.5em !important;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0 0 4px 0;  /* 原为12px，减小至4px */
+    margin: 0 0 12px 0;
     letter-spacing: 0.02em;
     display: inline-block;
 }
@@ -78,13 +83,11 @@
     font-weight: 700;
 }
 
-/* 节日容器：位于问候语和木鱼之间，与木鱼紧邻 */
+/* 节日容器 */
 .holidays-container {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-top: 0;
-    margin-bottom: 0;
 }
 .countdown-holiday {
     display: flex;
@@ -144,9 +147,8 @@
     white-space: nowrap;
 }
 
-/* 日期卡片 + 展开按钮（按钮在左上角，与时间同行） */
+/* 右侧日期卡片 */
 .datetime {
-    flex-shrink: 0;
     background: var(--bg-card);
     padding: 12px 16px;
     border-radius: 8px;
@@ -154,8 +156,8 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     gap: 8px;
+    min-width: 140px;
 }
 .datetime-row {
     display: flex;
@@ -311,20 +313,21 @@
     pointer-events: none;
 }
 
-/* 响应式设计 - 移动端调整 */
+/* 响应式 - 统一保持 grid 两列布局，仅调整间距和字体大小（不改变结构） */
 @media (max-width: 992px) {
     .greeting-container { flex-direction: column; gap: 16px; }
-    .greeting-main-card { padding: 18px; gap: 12px; width: 100%; order: 1; }
+    .greeting-main-card { padding: 18px; gap: 18px; width: 100%; order: 1; }
     .bookmark-btn { width: 100%; padding: 14px 20px; flex-direction: row; justify-content: center; gap: 12px; order: 2; }
     .bookmark-btn i { margin-bottom: 0; font-size: 22px; }
     .bookmark-btn span { writing-mode: horizontal-tb; font-size: 0.85em; }
-    .greeting-header { flex-direction: row; align-items: center; gap: 16px; }
-    .datetime { padding: 10px 14px; }
-    .datetime-row { gap: 8px; }
-    .greeting-text h1 { font-size: 1.32em !important; margin-bottom: 2px; }
+    .greeting-grid { gap: 16px; }
+    .greeting-left-col { gap: 10px; }
+    .greeting-text h1 { font-size: 1.32em !important; margin-bottom: -2px; }
     .holidays-container { gap: 6px; }
     .primary-holiday { font-size: 1.275em; }
     .primary-holiday .holiday-countdown { padding: 2px 8px; font-size: 0.9em; }
+    .datetime { padding: 10px 14px; }
+    .datetime-row { gap: 8px; }
     #currentTime { font-size: 1.1em; }
     #currentDate { font-size: 0.8em; }
     .fish-section { gap: 6px; }
@@ -335,13 +338,14 @@
 }
 @media (max-width: 768px) {
     .greeting-section { padding: var(--section-margin-sm) 0; }
-    .greeting-main-card { padding: 16px; gap: 12px; }
-    .greeting-header { flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 12px; }
-    .greeting-text h1 { font-size: 1.15em !important; margin-bottom: 2px; }
+    .greeting-main-card { padding: 16px; gap: 16px; }
+    .greeting-grid { gap: 12px; }
+    .greeting-left-col { gap: 8px; }
+    .greeting-text h1 { font-size: 1.15em !important; margin-bottom: -3px; }
     .holidays-container { gap: 4px; }
     .primary-holiday { font-size: 1.23em; }
     .primary-holiday .holiday-countdown { padding: 2px 8px; font-size: 0.85em; }
-    .datetime { padding: 8px 12px; }
+    .datetime { padding: 8px 12px; min-width: auto; }
     .datetime-row { flex-direction: row; justify-content: space-between; }
     #currentTime { font-size: 1em; }
     #currentDate { font-size: 0.75em; text-align: right; }
@@ -357,29 +361,29 @@
 }
 @media (max-width: 576px) {
     .greeting-section { padding: var(--section-margin-xs) 0; }
-    .greeting-main-card { padding: 14px; gap: 10px; }
-    .greeting-header { gap: 10px; flex-wrap: nowrap; }
-    .greeting-text h1 { font-size: 1.05em !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+    .greeting-main-card { padding: 14px; gap: 14px; }
+    .greeting-grid { gap: 10px; }
+    .greeting-left-col { gap: 6px; }
+    .greeting-text h1 { font-size: 1.05em !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: -4px; }
     .holidays-container { gap: 4px; }
     .primary-holiday { font-size: 1.17em; }
     .primary-holiday .holiday-countdown { padding: 2px 8px; font-size: 0.8em; }
-    .datetime { padding: 6px 10px; min-width: 100px; }
+    .datetime { padding: 6px 10px; }
     .datetime-row { gap: 6px; }
     #currentTime { font-size: 0.95em; }
     #currentDate { font-size: 0.7em; }
     .expand-holiday-btn { font-size: 10px; padding: 2px 8px; }
-    .fish-section { grid-template-columns: repeat(4, 1fr); gap: 4px; }
+    .fish-section { gap: 4px; }
     .fish-btn { padding: 5px 6px; min-height: 38px; }
     .fish-btn i { font-size: 12px; }
     .fish-count { font-size: 0.8em; padding: 1px 4px; }
     .bookmark-btn { padding: 10px 14px; }
 }
 @media (max-width: 400px) {
-    .greeting-header { flex-direction: row; align-items: flex-start; gap: 8px; }
-    .datetime { min-width: 100px; padding: 5px 8px; }
-    .datetime-row { flex-wrap: wrap; justify-content: flex-start; }
+    .greeting-text h1 { font-size: 1em !important; }
     .primary-holiday { font-size: 1.1em; }
     .primary-holiday .holiday-countdown { font-size: 0.75em; }
+    .datetime-row { flex-wrap: wrap; justify-content: flex-start; }
 }
 
 /* 节日倒计时状态样式 */
@@ -412,7 +416,7 @@
     100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
-/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
+/* ==================== 深色模式优化 ==================== */
 .dark-mode .greeting-main-card {
     background: var(--bg-card);
     border-color: var(--border-color);
