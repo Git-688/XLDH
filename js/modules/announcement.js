@@ -1,24 +1,15 @@
-/**
- * 简约公告模块 - 清爽现代版（修复模态框动画）
- * 已移除重要提醒标题和星星图标，重要提醒文字改为浅红色
- * 修改：挂载到 window.Starlink.announcement
- */
+// announcement.js - 简约公告模块（从后端 API 获取动态公告，保留原有样式）
 class AnnouncementModule {
     constructor() {
-        // 避免重复实例化
         if (window.Starlink && window.Starlink.announcement) return window.Starlink.announcement;
-        
-        this.announcements = [];
         this.modalElement = null;
         this.isVisible = false;
         this.isInitialized = false;
         this.currentAnnouncement = null;
         this.escapeHandler = null;
+        this.apiBase = Utils.getApiBase();
         this.init();
-        
-        // 挂载到 Starlink
         if (window.Starlink) window.Starlink.announcement = this;
-        // 保留旧全局变量以便兼容
         window.announcementModule = this;
     }
 
@@ -29,58 +20,29 @@ class AnnouncementModule {
         return div.innerHTML;
     }
 
-    init() {
-        if (this.isInitialized) return;
-        this.loadAnnouncements();
-        this.createModal();
-        this.setupGlobalEvents();
-        this.updateNavbarBadge();
-        this.isInitialized = true;
-    }
-
-    loadAnnouncements() {
-        const stored = Storage.get('announcements');
-        const defaultAnn = this.getDefaultAnnouncements()[0];
-        if (!stored || stored.length === 0) {
-            this.announcements = this.getDefaultAnnouncements();
-            Storage.set('announcements', this.announcements);
-        } else {
-            const storedFirst = stored[0];
-            const needUpdate = this.isAnnouncementDifferent(storedFirst, defaultAnn);
-            if (needUpdate) {
-                const newAnnouncements = this.getDefaultAnnouncements();
-                Storage.set('announcements', newAnnouncements);
-                this.announcements = newAnnouncements;
-            } else {
-                this.announcements = stored;
+    async fetchActiveAnnouncement() {
+        try {
+            const response = await fetch(`${this.apiBase}/announcement/active`);
+            const data = await response.json();
+            if (data && data.id && data.title && data.content) {
+                return {
+                    id: data.id,
+                    title: data.title,
+                    content: data.content,
+                    time: new Date(data.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+                };
             }
+            return null;
+        } catch (error) {
+            console.error('获取公告失败:', error);
+            return null;
         }
-        this.currentAnnouncement = this.announcements[0] || {};
     }
 
-    isAnnouncementDifferent(stored, defaultAnn) {
-        if (stored.id !== defaultAnn.id) return true;
-        if (stored.title !== defaultAnn.title) return true;
-        if (stored.focus !== defaultAnn.focus) return true;
-        if (JSON.stringify(stored.updates) !== JSON.stringify(defaultAnn.updates)) return true;
-        return false;
-    }
-
-    getDefaultAnnouncements() {
-        return [{
-            id: 'static_announcement',
-            title: '系统公告',
-            focus: '本站仅提供导航服务，不存储任何文件、不收集隐私。所有链接均来自公开的互联网，如有侵权请联系删除！！！',
-            updates: [
-                '全新界面设计-更加现代化和美观的视觉体验',
-                '音乐播放器-支持多平台音乐搜索和播放',
-                '星聚影视-影视、音乐、漫画、小说',
-                '更多实用工具-新增多个日常使用的小工具',
-                '清除缓存-可以加载更新内容！！！',
-            ],
-            time: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }),
-            read: false
-        }];
+    async loadAnnouncement() {
+        const ann = await this.fetchActiveAnnouncement();
+        this.currentAnnouncement = ann;
+        this.createModal();
     }
 
     createModal() {
@@ -91,12 +53,38 @@ class AnnouncementModule {
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'announcement-modal-simple';
         this.modalElement.id = 'announcementModal';
-        const ann = this.currentAnnouncement || {};
-        const title = this.escapeHtml(ann.title || '公告');
-        const focus = this.escapeHtml(ann.focus || '');
-        const updates = ann.updates && Array.isArray(ann.updates) ? ann.updates : [];
-        const time = this.escapeHtml(ann.time || new Date().toLocaleDateString());
-        // 重要提醒区域：只显示内容，无标题和图标
+        
+        if (!this.currentAnnouncement) {
+            this.modalElement.innerHTML = `
+                <div class="announcement-modal-container">
+                    <div class="announcement-header">
+                        <div class="announcement-title">
+                            <i class="fas fa-bell" style="color: #4361ee; font-size: 1.2rem;"></i>
+                            <span>暂无公告</span>
+                        </div>
+                        <button class="announcement-close" id="announcementClose" aria-label="关闭">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="announcement-body">
+                        <div class="focus-section">
+                            <div class="focus-content">当前没有系统公告，敬请期待。</div>
+                        </div>
+                    </div>
+                    <div class="announcement-footer">
+                        <button class="announcement-ack-btn" id="announcementAckBtn">知道了</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(this.modalElement);
+            this.bindModalEvents();
+            return;
+        }
+
+        const title = this.escapeHtml(this.currentAnnouncement.title);
+        const content = this.escapeHtml(this.currentAnnouncement.content).replace(/\n/g, '<br>');
+        const time = this.escapeHtml(this.currentAnnouncement.time);
+
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
                 <div class="announcement-header">
@@ -110,16 +98,7 @@ class AnnouncementModule {
                 </div>
                 <div class="announcement-body">
                     <div class="focus-section">
-                        <div class="focus-content">${focus}</div>
-                    </div>
-                    <div class="updates-section">
-                        <div class="section-label">
-                            <i class="fas fa-sync-alt" style="color: #10b981; font-size: 0.9rem;"></i>
-                            <span>更新内容</span>
-                        </div>
-                        <ul class="updates-list">
-                            ${updates.map(item => `<li>${this.escapeHtml(item)}</li>`).join('')}
-                        </ul>
+                        <div class="focus-content">${content}</div>
                     </div>
                 </div>
                 <div class="announcement-footer">
@@ -137,14 +116,12 @@ class AnnouncementModule {
         const closeBtn = this.modalElement.querySelector('#announcementClose');
         const ackBtn = this.modalElement.querySelector('#announcementAckBtn');
         const closeHandler = () => {
-            this.markCurrentAsRead();
             this.hide();
         };
         if (closeBtn) closeBtn.addEventListener('click', closeHandler);
         if (ackBtn) ackBtn.addEventListener('click', closeHandler);
         this.modalElement.addEventListener('click', (e) => {
             if (e.target === this.modalElement) {
-                this.markCurrentAsRead();
                 this.hide();
             }
         });
@@ -153,59 +130,10 @@ class AnnouncementModule {
     setupGlobalEvents() {
         this.escapeHandler = (e) => {
             if (e.key === 'Escape' && this.isVisible) {
-                this.markCurrentAsRead();
                 this.hide();
             }
         };
         document.addEventListener('keydown', this.escapeHandler);
-    }
-
-    markCurrentAsRead() {
-        if (!this.currentAnnouncement || this.currentAnnouncement.read) return;
-        this.currentAnnouncement.read = true;
-        const index = this.announcements.findIndex(a => a.id === this.currentAnnouncement.id);
-        if (index !== -1) {
-            this.announcements[index].read = true;
-            Storage.set('announcements', this.announcements);
-        }
-        this.updateNavbarBadge();
-    }
-
-    updateNavbarBadge() {
-        // 使用 Starlink 命名空间获取 navbar
-        if (window.Starlink?.navbar && typeof window.Starlink.navbar.updateNotificationBadge === 'function') {
-            window.Starlink.navbar.updateNotificationBadge();
-        } else if (window.app?.components?.navbar && typeof window.app.components.navbar.updateNotificationBadge === 'function') {
-            window.app.components.navbar.updateNotificationBadge();
-        } else if (window.navbar && typeof window.navbar.updateNotificationBadge === 'function') {
-            window.navbar.updateNotificationBadge();
-        } else {
-            const btn = document.getElementById('announcementBtn');
-            if (btn) {
-                const unread = this.getUnreadCount();
-                let badge = btn.querySelector('.nav-badge');
-                if (unread > 0) {
-                    if (!badge) {
-                        badge = document.createElement('div');
-                        badge.className = 'nav-badge';
-                        btn.appendChild(badge);
-                    }
-                    badge.textContent = unread > 9 ? '9+' : unread;
-                    badge.classList.add('show');
-                    btn.classList.add('has-unread');
-                } else {
-                    if (badge) {
-                        badge.classList.remove('show');
-                        setTimeout(() => badge.remove(), 300);
-                        btn.classList.remove('has-unread');
-                    }
-                }
-            }
-        }
-    }
-
-    getUnreadCount() {
-        return this.announcements.filter(a => !a.read).length;
     }
 
     showModal() {
@@ -214,7 +142,6 @@ class AnnouncementModule {
         this.closeOtherModals();
         this.modalElement.classList.add('active');
         this.isVisible = true;
-        // 注册到应用
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
         else if (window.app) window.app.registerModal(this);
         this.updateButtonState(true);
@@ -226,7 +153,6 @@ class AnnouncementModule {
         this.updateButtonState(false);
         const onTransitionEnd = () => {
             this.isVisible = false;
-            // 从应用中注销
             if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
             else if (window.app) window.app.unregisterModal(this);
             this.modalElement.removeEventListener('transitionend', onTransitionEnd);
@@ -246,29 +172,21 @@ class AnnouncementModule {
     }
 
     closeOtherModals() {
-        // 使用 Starlink 命名空间关闭其他模态框
         if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
         else if (window.sidebar?.isVisible?.()) window.sidebar.hide();
-        
         if (window.Starlink?.search?.isModalOpen?.()) window.Starlink.search.hide();
         else if (window.searchModule?.isModalOpen?.()) window.searchModule.hide();
-        
         const musicPlayer = document.getElementById('musicPlayer');
-        if (musicPlayer?.classList.contains('show') && window.Starlink?.navbar) {
-            window.Starlink.navbar.hideMusicPlayer();
-        } else if (musicPlayer?.classList.contains('show') && window.app?.components?.navbar) {
-            window.app.components.navbar.hideMusicPlayer();
+        if (musicPlayer?.classList.contains('show')) {
+            if (window.Starlink?.navbar?.hideMusicPlayer) window.Starlink.navbar.hideMusicPlayer();
+            else if (window.app?.components?.navbar) window.app.components.navbar.hideMusicPlayer();
         }
-        
         if (window.Starlink?.weather?.isShowing) window.Starlink.weather.hide();
         else if (window.app?.modules?.weather?.hide) window.app.modules.weather.hide();
-        
         if (window.Starlink?.about?.isVisible) window.Starlink.about.hide();
         else if (window.aboutModule?.isVisible) window.aboutModule.hide();
-        
         if (window.Starlink?.app?.hideNotebookModal) window.Starlink.app.hideNotebookModal();
         else if (window.hideNotebookModal) window.hideNotebookModal();
-        
         const submitModal = document.getElementById('submitModal');
         if (submitModal?.classList.contains('active')) submitModal.classList.remove('active');
     }
@@ -278,25 +196,9 @@ class AnnouncementModule {
         if (btn) btn.classList.toggle('active', active);
     }
 
-    resetAnnouncements() {
-        this.announcements = this.getDefaultAnnouncements();
-        this.currentAnnouncement = this.announcements[0];
-        Storage.set('announcements', this.announcements);
-        this.createModal();
-        this.updateNavbarBadge();
-    }
-
-    getAnnouncements() {
-        return this.announcements;
-    }
-
-    updateAnnouncements(newAnnouncements) {
-        if (!Array.isArray(newAnnouncements) || newAnnouncements.length === 0) return;
-        Storage.set('announcements', newAnnouncements);
-        this.loadAnnouncements();
-        this.createModal();
+    async refresh() {
+        await this.loadAnnouncement();
         if (this.isVisible) this.showModal();
-        this.updateNavbarBadge();
     }
 
     destroy() {
@@ -312,7 +214,7 @@ class AnnouncementModule {
     }
 }
 
-// 等待 DOM 加载完成后再初始化
+// 初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         if (!window.Starlink) window.Starlink = {};
@@ -320,6 +222,7 @@ if (document.readyState === 'loading') {
             window.Starlink.announcement = new AnnouncementModule();
         }
         window.announcementModule = window.Starlink.announcement;
+        window.announcementModule.loadAnnouncement();
     });
 } else {
     if (!window.Starlink) window.Starlink = {};
@@ -327,4 +230,5 @@ if (document.readyState === 'loading') {
         window.Starlink.announcement = new AnnouncementModule();
     }
     window.announcementModule = window.Starlink.announcement;
+    window.announcementModule.loadAnnouncement();
 }
