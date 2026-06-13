@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（单公告模式，左右布局，统一圆角8px）
+// admin.js - 星聚导航后台管理（完整修复版）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -16,7 +16,6 @@
     let refreshTimer = null;
     let customSelects = {};
 
-    // 单公告数据
     let currentAnnouncement = null;
 
     function escapeHtml(str) {
@@ -347,7 +346,7 @@
         if (!list.length) { document.getElementById('siteList').innerHTML = '<div class="empty">暂无链接</div>'; return; }
         document.getElementById('siteList').innerHTML = list.map(s => `
             <div class="link-item">
-                <div class="link-info"><div><strong>${escapeHtml(s.title)}</strong></div></div>
+                <div class="link-info"><strong>${escapeHtml(s.title)}</strong></div>
                 <div class="link-actions"><button class="primary" data-action="editSite" data-id="${s.id}">编辑</button></div>
             </div>
         `).join('');
@@ -410,7 +409,6 @@
                 currentAnnouncement = { id: res.id, ...payload };
                 showToast('公告已发布', 'success');
             }
-            // 刷新前端公告缓存（可选）
             if (window.announcementModule && window.announcementModule.loadAnnouncement) {
                 window.announcementModule.loadAnnouncement();
             }
@@ -612,7 +610,7 @@
             let html = '';
             const renderItems = (items) => items.map(item => `
                 <div class="link-item">
-                    <div class="link-info"><strong>${escapeHtml(item.title||'无标题')}</strong><div style="font-size:10px;color:#999">来自 ${escapeHtml(item.reporter_ip)} 于 ${new Date(item.report_time).toLocaleString()}</div></div>
+                    <div class="link-info"><strong>${escapeHtml(item.title||'无标题')}</strong><div style="font-size:10px;color:#999">于 ${new Date(item.report_time).toLocaleString()}</div></div>
                     <div class="link-actions">
                         <button class="sm primary" data-action="replaceLink" data-reportid="${item.id}" data-siteid="${item.site_id||0}" data-url="${escapeHtml(item.url)}" data-title="${escapeHtml(item.title||'')}">更换链接</button>
                     </div>
@@ -757,12 +755,188 @@
         } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    // 投稿详情模态框（与之前相同，略）
+    // 投稿详情模态框（完整版）
     async function openSubmissionDetail(id) {
-        // ... 保持原有实现（因篇幅省略，实际代码与之前相同）
-        // 为节省篇幅，此处省略，实际部署请保留原函数完整代码
-        // 由于代码量较大，此处仅作示意，完整代码请参考之前版本
-        showToast('投稿详情功能正常', 'info');
+        currentSubmissionId = id;
+        const detailModal = document.getElementById('submissionDetailModal');
+        const contentDiv = document.getElementById('submissionDetailContent');
+
+        const cleanupSelectors = () => {
+            if (customSelects.cat) { customSelects.cat.destroy(); delete customSelects.cat; }
+            if (customSelects.sub) { customSelects.sub.destroy(); delete customSelects.sub; }
+        };
+        cleanupSelectors();
+
+        const removeModalListeners = () => {
+            const newCloseBtn = detailModal.querySelector('#closeDetailModalBtn');
+            if (newCloseBtn) {
+                const newClone = newCloseBtn.cloneNode(true);
+                newCloseBtn.parentNode.replaceChild(newClone, newCloseBtn);
+                newClone.onclick = () => {
+                    cleanupSelectors();
+                    detailModal.classList.remove('show');
+                };
+            }
+            detailModal.onclick = (e) => {
+                if (e.target === detailModal) {
+                    cleanupSelectors();
+                    detailModal.classList.remove('show');
+                }
+            };
+        };
+
+        try {
+            const data = await apiFetch('/admin/submissions');
+            const item = data.find(s => s.id == id);
+            if (!item) { showToast('未找到该投稿', 'error'); return; }
+            const vtColor = (item.vt_result || '').includes('安全') ? '#10b981' : '#ef4444';
+
+            let html = `
+                <div class="info-card" style="margin-bottom:16px;">
+                    <div class="info-row" style="margin-bottom:8px;"><label style="font-size:11px; width:70px;">标题</label><input type="text" id="editTitle" value="${escapeHtml(item.title)}" style="flex:1; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></div>
+                    <div class="info-row" style="margin-bottom:8px;"><label style="font-size:11px; width:70px;">网址</label><input type="text" id="editUrl" value="${escapeHtml(item.url)}" style="flex:1; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></div>
+                    <div class="info-row" style="margin-bottom:8px;"><label style="font-size:11px; width:70px;">图标</label><input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" style="flex:1; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></div>
+                    <div class="info-row" style="margin-bottom:8px;"><label style="font-size:11px; width:70px;">描述</label><textarea id="editDesc" rows="2" style="flex:1; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;">${escapeHtml(item.description || '')}</textarea></div>
+                    <div class="info-row" style="margin-bottom:8px;"><label style="font-size:11px; width:70px;">提交者</label><input type="email" id="editContact" value="${escapeHtml(item.contact || '')}" style="flex:1; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></div>
+                    <div class="info-row" style="margin-bottom:8px;"><label style="font-size:11px; width:70px;">提交时间</label><div style="flex:1; font-size:11px;">${new Date(item.submit_time).toLocaleString()}</div></div>
+                    <div class="info-row"><label style="font-size:11px; width:70px;">安全检测</label><div style="flex:1; font-size:11px; color:${vtColor}">${escapeHtml(item.vt_result || '未检测')}</div></div>
+                </div>
+                <div class="action-section" style="display:flex; gap:12px; flex-wrap:wrap;">
+                    <div style="flex:1; background:#f8fafc; padding:12px; border-radius:12px;">
+                        <h4 style="font-size:12px; margin-bottom:8px;"><i class="fas fa-check-circle"></i> 通过收录</h4>
+                        <div class="inline-select-group" style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <div class="custom-select-wrapper" id="approveCatSelectWrapper" style="min-width:120px;"></div>
+                            <div class="custom-select-wrapper" id="approveSubSelectWrapper" style="min-width:120px;"></div>
+                            <input type="number" id="approveOrder" placeholder="排序" value="0" style="width:80px; padding:6px; font-size:12px; border-radius:8px;" step="1">
+                        </div>
+                        <div style="margin: 10px 0 0 0;">
+                            <label style="display: inline-flex; align-items: center; gap: 6px; font-size:11px;">
+                                <input type="checkbox" id="sendEmailCheckbox" checked style="width: auto;">
+                                📧 发送邮件通知投稿者
+                            </label>
+                        </div>
+                        <button class="btn-approve" id="doApproveBtn" style="margin-top: 8px; background:#10b981; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px;">✓ 通过并收录</button>
+                    </div>
+                    <div style="flex:1; background:#f8fafc; padding:12px; border-radius:12px;">
+                        <h4 style="font-size:12px; margin-bottom:8px;"><i class="fas fa-ban"></i> 拒绝投稿</h4>
+                        <div style="margin: 10px 0 0 0;">
+                            <label style="display: inline-flex; align-items: center; gap: 6px; font-size:11px;">
+                                <input type="checkbox" id="sendEmailCheckboxReject" checked style="width: auto;">
+                                📧 发送邮件通知投稿者
+                            </label>
+                        </div>
+                        <button class="btn-reject" id="doRejectBtn" style="margin-top: 8px; background:#ef4444; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px;">✗ 拒绝（删除投稿）</button>
+                    </div>
+                </div>
+            `;
+            contentDiv.innerHTML = html;
+
+            const descTextarea = document.getElementById('editDesc');
+            if (descTextarea) {
+                autoResizeTextarea(descTextarea);
+                descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
+            }
+
+            const catSelect = document.createElement('select');
+            catSelect.id = 'approveCatSelect';
+            catSelect.innerHTML = '<option value="">选择一级分类</option>' + categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+            const catWrapper = document.getElementById('approveCatSelectWrapper');
+            catWrapper.innerHTML = '';
+            catWrapper.appendChild(catSelect);
+
+            const subSelect = document.createElement('select');
+            subSelect.id = 'approveSubSelect';
+            subSelect.innerHTML = '<option value="">先选择一级分类</option>';
+            const subWrapper = document.getElementById('approveSubSelectWrapper');
+            subWrapper.innerHTML = '';
+            subWrapper.appendChild(subSelect);
+
+            let catCustomSelect = new CustomSelect(catSelect, async (value) => {
+                subSelect.innerHTML = '<option value="">加载中...</option>';
+                if (customSelects.sub) customSelects.sub.destroy();
+                if (value) {
+                    try {
+                        const subsData = await apiFetch(`/admin/subcategories?category_id=${value}`);
+                        subSelect.innerHTML = '<option value="">选择二级分类</option>' + subsData.map(sub => `<option value="${sub.id}">${escapeHtml(sub.name)}</option>`).join('');
+                    } catch (e) {
+                        subSelect.innerHTML = '<option value="">加载失败</option>';
+                        showToast('加载子分类失败', 'error');
+                    }
+                } else {
+                    subSelect.innerHTML = '<option value="">先选择一级分类</option>';
+                }
+                customSelects.sub = new CustomSelect(subSelect);
+            });
+            customSelects.cat = catCustomSelect;
+            customSelects.sub = new CustomSelect(subSelect);
+
+            document.getElementById('doApproveBtn').onclick = async () => {
+                const catSelectEl = document.getElementById('approveCatSelect');
+                const subSelectEl = document.getElementById('approveSubSelect');
+                const catId = catSelectEl ? catSelectEl.value : '';
+                const subId = subSelectEl ? subSelectEl.value : '';
+                if (!catId || !subId) {
+                    showToast('请选择一级分类和二级分类', 'error');
+                    return;
+                }
+                const displayOrder = document.getElementById('approveOrder').value || 0;
+                const editedTitle = document.getElementById('editTitle').value.trim();
+                const editedUrl = document.getElementById('editUrl').value.trim();
+                const editedIcon = document.getElementById('editIcon').value.trim();
+                const editedDesc = document.getElementById('editDesc').value.trim();
+                const editedContact = document.getElementById('editContact').value.trim();
+                const sendEmail = document.getElementById('sendEmailCheckbox').checked;
+                if (!editedTitle || !editedUrl) {
+                    showToast('标题和网址不能为空', 'error');
+                    return;
+                }
+                if (!checkUrl(editedUrl)) {
+                    showToast('网址格式错误', 'error');
+                    return;
+                }
+                try {
+                    await apiFetch(`/admin/submissions/${id}/approve`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            subcategory_id: parseInt(subId),
+                            display_order: parseInt(displayOrder),
+                            title: editedTitle,
+                            url: editedUrl,
+                            icon: editedIcon,
+                            description: editedDesc,
+                            contact: editedContact,
+                            sendEmail: sendEmail
+                        })
+                    });
+                    showToast('已通过并收录' + (sendEmail ? '，邮件已发送' : '，未发送邮件'), 'success');
+                    detailModal.classList.remove('show');
+                    cleanupSelectors();
+                    await loadSubmissions();
+                    await loadAllData();
+                    await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+                } catch (err) {
+                    showToast('操作失败', 'error');
+                }
+            };
+
+            document.getElementById('doRejectBtn').onclick = async () => {
+                if (!confirm('确定要拒绝该投稿吗？拒绝后将永久删除，用户不可修改')) return;
+                const sendEmail = document.getElementById('sendEmailCheckboxReject').checked;
+                try {
+                    await apiFetch(`/admin/submissions/${id}`, {
+                        method: 'DELETE',
+                        body: JSON.stringify({ sendEmail: sendEmail })
+                    });
+                    showToast('已拒绝并删除' + (sendEmail ? '，邮件已发送' : '，未发送邮件'), 'success');
+                    detailModal.classList.remove('show');
+                    cleanupSelectors();
+                    await loadSubmissions();
+                } catch (err) { showToast('操作失败', 'error'); }
+            };
+
+            removeModalListeners();
+            detailModal.classList.add('show');
+        } catch (err) { showToast('加载详情失败', 'error'); }
     }
 
     // ==================== 事件绑定 ====================
@@ -819,7 +993,6 @@
                 showToast('导航缓存已刷新', 'success');
             } catch (err) { showToast('刷新失败', 'error'); }
         });
-        // 公告表单按钮
         document.getElementById('annPublishBtn').addEventListener('click', saveAnnouncement);
         document.getElementById('annClearBtn').addEventListener('click', clearAnnouncementForm);
         document.getElementById('annCancelBtn').addEventListener('click', () => {
@@ -828,7 +1001,6 @@
         });
         document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
         document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
-        // 导入模态框
         const importModal = document.getElementById('importModal');
         if (importModal) {
             document.getElementById('importCancelBtn').addEventListener('click', closeImportModal);
@@ -993,6 +1165,7 @@
                 }
                 @media (max-width: 640px) {
                     .content-layout { flex-direction: row !important; }
+                    .action-buttons-row button { font-size: 10px; padding: 5px 6px; }
                 }
             `;
             document.head.appendChild(style);
