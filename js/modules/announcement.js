@@ -141,7 +141,7 @@ class AnnouncementModule {
                 </div>
                 <div class="announcement-body">
                     <div class="focus-section">
-                        <div class="focus-content">${important ? `📢 ${important}` : '暂无重要提示'}</div>
+                        <div class="focus-content">${important ? `${important}` : '暂无重要提示'}</div>
                     </div>
                     <div class="updates-section">
                         <ul class="updates-list">
