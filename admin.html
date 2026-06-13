@@ -216,7 +216,7 @@
             gap: 8px;
         }
 
-        /* 顶部操作栏：搜索框单独一行 */
+        /* 搜索行 */
         .search-row {
             margin-bottom: 12px;
         }
@@ -301,6 +301,20 @@
         .cat-item.active .rename-text-btn {
             background: rgba(255,255,255,0.2);
             color: #fff;
+        }
+
+        /* 关键修复：让标签页容器参与 flex 并限制高度 */
+        .tab-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #manageTab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         /* 左右布局：始终左右排列，宽度相等 */
@@ -435,10 +449,10 @@
             font-size: 10px;
         }
 
-        /* 统一输入框样式 */
-        input, select, textarea, .form-input {
+        /* 统一输入框样式 - 确保左右内边距一致 */
+        input, select, textarea, .form-input, .search-box, .date-input {
             width: 100%;
-            padding: 6px 10px;
+            padding: 6px 10px !important;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             font-size: 12px;
@@ -446,14 +460,15 @@
             transition: all 0.2s;
             outline: none;
             font-family: inherit;
+            box-sizing: border-box;
         }
-        input:focus, select:focus, textarea:focus, .form-input:focus {
+        input:focus, select:focus, textarea:focus, .form-input:focus, .search-box:focus, .date-input:focus {
             border-color: #3b82f6;
             box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
         }
 
+        /* 搜索框宽度自适应 */
         .search-box {
-            width: 100%;
             max-width: 300px;
         }
 
@@ -533,7 +548,6 @@
             resize: vertical;
             min-height: 80px;
         }
-        /* 启用公告 + 按钮行 */
         .announcement-actions-row {
             display: flex;
             justify-content: space-between;
@@ -593,7 +607,8 @@
         <div class="login-card">
             <div class="login-header">
                 <div class="login-logo">
-                    <img src="https://tc688.ccwu.cc/file/星聚导航/1781189176148_logo.png" alt="星聚导航">
+                    <!-- logo 链接已改为与主页一致 -->
+                    <img src="/assets/logo.png" alt="星聚导航">
                 </div>
                 <h2>星聚导航</h2>
                 <p>管理员登录</p>
