@@ -1,4 +1,4 @@
-// 问候区模块 - 节日显示优化（只显示当天节日，支持展开/收起）
+// 问候区模块 - 优化效果和显示（自制木鱼音效，复用 AudioContext）
 class GreetingModule {
     constructor() {
         if (window.Starlink && window.Starlink.greeting) return window.Starlink.greeting;
@@ -8,9 +8,9 @@ class GreetingModule {
         this.holidayCheckTimer = null;
         this.currentHoliday = null;
         this.audioCtx = null;
-        this.todayHolidays = [];     // 当天节日列表
-        this.nextHoliday = null;      // 下一个节日（无当天节日时使用）
-        this.expanded = false;        // 展开状态
+        this.todayHolidays = [];
+        this.nextHoliday = null;
+        this.expanded = false;
         this.init();
         if (window.Starlink) window.Starlink.greeting = this;
         window.greetingModule = this;
@@ -79,15 +79,13 @@ class GreetingModule {
         if (holidayNameEl) holidayNameEl.removeAttribute('title');
     }
 
-    // 从 API 加载节日数据
     async loadHolidayData() {
         try {
             const apiUrl = 'https://xiaodi.ykxbl.top/Api/dsr.php?n=30';
             const response = await Utils.safeFetch(apiUrl, { timeout: 5000 });
             const data = await response.json();
             if (data && data.code === 0 && data.data && data.data.length > 0) {
-                // 处理 API 返回的数据
-                const holidays = data.data.map(item => {
+                return data.data.map(item => {
                     let days = item.countdown;
                     let status = days === 0 ? 'active' : 'upcoming';
                     return {
@@ -102,7 +100,6 @@ class GreetingModule {
                         date: item.date
                     };
                 });
-                return holidays;
             }
             return this.getDefaultHolidays();
         } catch (error) {
@@ -156,9 +153,7 @@ class GreetingModule {
             await this.checkHolidayExpiration();
             const holidays = await this.loadHolidayData();
             const todayStr = new Date().toISOString().slice(0, 10);
-            // 筛选当天节日
             const todayHolidays = holidays.filter(h => h.is_today === true || (h.date === todayStr && h.days === 0));
-            // 如果没有当天节日，则取最近的一个未来节日
             let nextHoliday = null;
             if (todayHolidays.length === 0) {
                 const futureHolidays = holidays.filter(h => h.days > 0).sort((a, b) => a.days - b.days);
@@ -219,14 +214,12 @@ class GreetingModule {
         }
     }
 
-    // 更新节日显示（支持展开/收起）
     updateHolidayDisplay() {
         const primaryContainer = document.getElementById('primaryHolidayContainer');
         const secondaryContainer = document.getElementById('secondaryHolidaysList');
         const expandBtn = document.getElementById('expandHolidayBtn');
         if (!primaryContainer) return;
 
-        // 确定要显示的主要节日
         let mainHoliday = null;
         let extraHolidays = [];
         if (this.todayHolidays.length > 0) {
@@ -236,14 +229,12 @@ class GreetingModule {
             mainHoliday = this.nextHoliday;
             extraHolidays = [];
         } else {
-            // 无任何节日数据
             primaryContainer.innerHTML = `<span class="holiday-icon">🎉</span> 暂无节日信息`;
             if (secondaryContainer) secondaryContainer.innerHTML = '';
             if (expandBtn) expandBtn.style.display = 'none';
             return;
         }
 
-        // 渲染主要节日
         const daysText = mainHoliday.days === 0 ? '今日' : (mainHoliday.days !== null ? `${mainHoliday.days}天` : '计算中...');
         primaryContainer.innerHTML = `
             <span class="holiday-icon">${mainHoliday.icon}</span>
@@ -251,7 +242,6 @@ class GreetingModule {
             <span class="holiday-countdown ${mainHoliday.days === 0 ? 'active-countdown' : ''}">${daysText}</span>
         `;
 
-        // 处理额外节日（仅当天多个节日时）
         if (extraHolidays.length > 0) {
             if (expandBtn) {
                 expandBtn.style.display = 'inline-flex';
@@ -259,10 +249,10 @@ class GreetingModule {
             }
             if (secondaryContainer) {
                 if (this.expanded) {
+                    // 只显示节日名称，不显示倒计时标签
                     secondaryContainer.innerHTML = extraHolidays.map(h => `
                         <div class="secondary-holiday-item">
                             <span class="secondary-name">${Utils.escapeHtml(h.name)}</span>
-                            <span class="secondary-countdown">今日</span>
                         </div>
                     `).join('');
                     secondaryContainer.style.display = 'flex';
@@ -279,7 +269,6 @@ class GreetingModule {
         }
     }
 
-    // 切换展开/收起
     toggleHolidayExpand() {
         this.expanded = !this.expanded;
         this.updateHolidayDisplay();
@@ -334,7 +323,6 @@ class GreetingModule {
                 }
             }
         });
-        // 绑定展开按钮事件
         const expandBtn = document.getElementById('expandHolidayBtn');
         if (expandBtn) {
             expandBtn.addEventListener('click', () => this.toggleHolidayExpand());
