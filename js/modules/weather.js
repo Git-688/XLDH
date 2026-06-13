@@ -1,7 +1,7 @@
 /**
  * 天气模块 - 基于 Worker 代理（密钥在服务端，安全）
  * 通过调用后端 /weather/proxy 接口获取天气数据，无需在前端暴露 API 密钥
- * 修改：挂载到 window.Starlink.weather
+ * 修改：挂载到 window.Starlink.weather，修复 bindGlobalEvents 方法
  */
 class WeatherModule {
     static CONFIG = {
@@ -64,6 +64,19 @@ class WeatherModule {
         }
         this.initialized = true;
         console.log('天气模块初始化完成');
+    }
+
+    bindGlobalEvents() {
+        // 绑定天气按钮事件
+        const weatherBtn = document.getElementById('weatherBtn');
+        if (weatherBtn && !weatherBtn._weatherBound) {
+            weatherBtn._weatherBound = true;
+            weatherBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.showModal();
+            });
+        }
     }
 
     loadSavedCity() {
