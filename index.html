@@ -360,12 +360,11 @@
             </div>
         </div>
     </section>
-
     <section class="greeting-section">
         <div class="greeting-container">
             <div class="greeting-main-card">
-                <div class="greeting-two-columns">
-                    <!-- 左侧列：问候语 + 节日 + 木鱼 -->
+                <div class="greeting-content-wrapper">
+                    <!-- 左侧：问候语 + 节日容器 + 木鱼 -->
                     <div class="greeting-left">
                         <div class="greeting-text">
                             <h1 id="greeting">下午好!</h1>
@@ -376,7 +375,6 @@
                             </div>
                             <div id="secondaryHolidaysList" class="secondary-holidays-list" style="display: none;"></div>
                         </div>
-                        <!-- 木鱼区域（位于左侧底部） -->
                         <div class="fish-section">
                             <button class="fish-btn" data-type="merit" aria-label="功德"><i class="fas fa-hands-praying"></i><span class="fish-count" id="meritCount">0</span></button>
                             <button class="fish-btn" data-type="luck" aria-label="幸运"><i class="fas fa-clover"></i><span class="fish-count" id="luckCount">0</span></button>
@@ -384,7 +382,7 @@
                             <button class="fish-btn" data-type="health" aria-label="健康"><i class="fas fa-heart"></i><span class="fish-count" id="healthCount">0</span></button>
                         </div>
                     </div>
-                    <!-- 右侧列：日期卡片在上，书签按钮在下 -->
+                    <!-- 右侧：日期卡片 -->
                     <div class="greeting-right">
                         <div class="datetime" id="datetime">
                             <div class="datetime-row">
@@ -393,13 +391,16 @@
                             </div>
                             <div id="currentDate">2024年1月15日 星期一</div>
                         </div>
-                        <a href="./pages/others/sq.html" class="bookmark-btn" aria-label="我的书签" target="_blank"><i class="fas fa-bookmark"></i><span>我的书签</span></a>
                     </div>
                 </div>
             </div>
+            <!-- 书签按钮独立于卡片外部下方 -->
+            <a href="./pages/others/sq.html" class="bookmark-btn" aria-label="我的书签" target="_blank">
+                <i class="fas fa-bookmark"></i>
+                <span>我的书签</span>
+            </a>
         </div>
     </section>
-
     <section class="minimal-tags-section">
         <div class="container">
             <div class="tags-header">
@@ -412,7 +413,6 @@
             </div>
         </div>
     </section>
-
     <section class="navigation-section">
         <div class="container">
             <div class="navigation-header">
@@ -436,7 +436,6 @@
             </div>
         </div>
     </section>
-
     <footer class="footer">
         <div class="footer-compact-container">
             <div class="footer-disclaimer-card">
