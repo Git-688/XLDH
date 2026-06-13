@@ -363,8 +363,15 @@
     <section class="greeting-section">
         <div class="greeting-container">
             <div class="greeting-main-card">
-                <!-- 日期卡片：位于卡片右上角 -->
-                <div class="greeting-header-bar">
+                <div class="greeting-top-row">
+                    <div class="greeting-left-card">
+                        <div class="greeting-text">
+                            <h1 id="greeting">下午好!</h1>
+                        </div>
+                        <div class="primary-holiday-container">
+                            <div id="primaryHolidayContainer" class="primary-holiday"></div>
+                        </div>
+                    </div>
                     <div class="datetime" id="datetime">
                         <div class="datetime-row">
                             <button id="expandHolidayBtn" class="expand-holiday-btn" style="display: none;">展开</button>
@@ -373,28 +380,14 @@
                         <div id="currentDate">2024年1月15日 星期一</div>
                     </div>
                 </div>
-                <!-- 主体内容：问候语 + 节日 + 木鱼 -->
-                <div class="greeting-content-wrapper">
-                    <div class="greeting-left">
-                        <div class="greeting-text">
-                            <h1 id="greeting">下午好!</h1>
-                        </div>
-                        <div class="holidays-container" id="holidaysContainer">
-                            <div class="countdown-holiday">
-                                <div id="primaryHolidayContainer" class="primary-holiday"></div>
-                            </div>
-                            <div id="secondaryHolidaysList" class="secondary-holidays-list" style="display: none;"></div>
-                        </div>
-                        <div class="fish-section">
-                            <button class="fish-btn" data-type="merit" aria-label="功德"><i class="fas fa-hands-praying"></i><span class="fish-count" id="meritCount">0</span></button>
-                            <button class="fish-btn" data-type="luck" aria-label="幸运"><i class="fas fa-clover"></i><span class="fish-count" id="luckCount">0</span></button>
-                            <button class="fish-btn" data-type="wealth" aria-label="财富"><i class="fas fa-coins"></i><span class="fish-count" id="wealthCount">0</span></button>
-                            <button class="fish-btn" data-type="health" aria-label="健康"><i class="fas fa-heart"></i><span class="fish-count" id="healthCount">0</span></button>
-                        </div>
-                    </div>
+                <div id="secondaryHolidaysList" class="secondary-holidays-list" style="display: none;"></div>
+                <div class="fish-section">
+                    <button class="fish-btn" data-type="merit" aria-label="功德"><i class="fas fa-hands-praying"></i><span class="fish-count" id="meritCount">0</span></button>
+                    <button class="fish-btn" data-type="luck" aria-label="幸运"><i class="fas fa-clover"></i><span class="fish-count" id="luckCount">0</span></button>
+                    <button class="fish-btn" data-type="wealth" aria-label="财富"><i class="fas fa-coins"></i><span class="fish-count" id="wealthCount">0</span></button>
+                    <button class="fish-btn" data-type="health" aria-label="健康"><i class="fas fa-heart"></i><span class="fish-count" id="healthCount">0</span></button>
                 </div>
             </div>
-            <!-- 书签按钮独立于卡片外部下方 -->
             <a href="./pages/others/sq.html" class="bookmark-btn" aria-label="我的书签" target="_blank">
                 <i class="fas fa-bookmark"></i>
                 <span>我的书签</span>
