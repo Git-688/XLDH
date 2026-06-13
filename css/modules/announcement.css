@@ -95,7 +95,7 @@
     max-height: 350px;
 }
 
-/* 重要内容区域 - 浅红色平面背景，字体白色 */
+/* 重要内容区域 - 浅红色平面背景 */
 .focus-section {
     background: #fff0f0;
     padding: 8px 12px;
@@ -103,7 +103,7 @@
     border-radius: 6px;
 }
 .focus-content {
-    color: #ffffff;
+    color: #dc2626;
     font-size: 0.85rem;
     line-height: 1.5;
     margin: 0;
@@ -130,6 +130,7 @@
     align-items: center;
     gap: 6px;
 }
+/* 更新图标设置为绿色 */
 .updates-title i {
     color: #10b981;
     font-size: 13px;
@@ -248,7 +249,7 @@
     background: rgba(220, 38, 38, 0.15);
 }
 .dark-mode .focus-content {
-    color: #ffffff;
+    color: #f87171;
 }
 .dark-mode .updates-title {
     color: var(--text-primary);
