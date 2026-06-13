@@ -27,7 +27,7 @@
 
         html, body {
             height: 100%;
-            overflow: hidden;
+            overflow: auto;  /* 确保滚动正常 */
         }
 
         body {
@@ -40,16 +40,20 @@
             padding: 16px;
         }
 
-        /* 简约滚动条（隐藏） */
+        /* 自定义滚动条（可选） */
         ::-webkit-scrollbar {
-            display: none;
+            width: 6px;
+            height: 6px;
         }
-        * {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+        ::-webkit-scrollbar-track {
+            background: #eef2f6;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
         }
 
-        /* 主容器 */
         .container {
             flex: 1;
             display: flex;
@@ -57,10 +61,10 @@
             max-width: 1200px;
             margin: 0 auto;
             width: 100%;
-            overflow: hidden;
+            overflow: visible;
         }
 
-        /* 登录卡片区域（新版简约现代） */
+        /* 登录卡片（简约现代） */
         .login-section {
             display: flex;
             justify-content: center;
@@ -71,7 +75,7 @@
 
         .login-card {
             background: #ffffff;
-            border-radius: 16px;
+            border-radius: 8px;          /* 圆角 8px */
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
             padding: 28px 24px 32px;
             width: 100%;
@@ -88,14 +92,18 @@
         .login-logo {
             width: 48px;
             height: 48px;
-            background: #3b82f6;
-            border-radius: 12px;
+            background: #fff;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 12px;
-            color: white;
-            font-size: 24px;
+            overflow: hidden;
+        }
+        .login-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         .login-header h2 {
@@ -127,7 +135,7 @@
             padding: 8px 12px;
             font-size: 12px;
             border: 1px solid #e2e8f0;
-            border-radius: 10px;
+            border-radius: 8px;
             background: #fff;
             transition: all 0.2s;
             outline: none;
@@ -157,7 +165,7 @@
             width: 100%;
             background: #3b82f6;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             padding: 8px 12px;
             font-size: 12px;
             font-weight: 500;
@@ -191,17 +199,17 @@
             margin-top: 12px;
         }
 
-        /* 登录后主内容区域（紧凑） */
+        /* 登录后主内容区域（紧凑，可滚动） */
         .main-card {
             background: #fff;
-            border-radius: 16px;
+            border-radius: 8px;
             padding: 16px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.03);
             border: 1px solid #eef2f6;
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: auto;
         }
 
         .flex-row {
@@ -233,7 +241,7 @@
             width: 100%;
             padding: 8px 12px;
             background: #f8fafc;
-            border-radius: 12px;
+            border-radius: 8px;
             margin-bottom: 12px;
             display: flex;
             gap: 6px;
@@ -278,11 +286,12 @@
             gap: 12px;
             flex: 1;
             min-height: 0;
+            overflow: auto;
         }
 
         .sidebar, .main-content {
             background: #f8fafc;
-            border-radius: 12px;
+            border-radius: 8px;
             padding: 12px;
             display: flex;
             flex-direction: column;
@@ -296,12 +305,12 @@
             flex: 1;
         }
 
-        #addSubBtn, #addSiteBtn, #addAnnouncementBtn {
+        #addSubBtn, #addSiteBtn {
             width: 100%;
             height: 36px;
             margin-bottom: 8px;
             font-size: 12px;
-            border-radius: 10px;
+            border-radius: 8px;
             background: #3b82f6;
             color: #fff;
             border: none;
@@ -309,7 +318,7 @@
             font-weight: 500;
         }
 
-        .sub-list, .site-list, .rank-list, .feedback-list, .submissions-list, .announcements-list {
+        .sub-list, .site-list, .rank-list, .feedback-list, .submissions-list {
             flex: 1;
             overflow-y: auto;
             display: flex;
@@ -318,9 +327,9 @@
             margin-top: 8px;
         }
 
-        .sub-item, .link-item, .announcement-item {
+        .sub-item, .link-item {
             background: #fff;
-            border-radius: 10px;
+            border-radius: 8px;
             padding: 8px 12px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.02);
             word-break: break-word;
@@ -333,6 +342,7 @@
             gap: 8px;
         }
 
+        /* 统一按钮样式 */
         button {
             border: none;
             border-radius: 8px;
@@ -358,10 +368,26 @@
             font-size: 10px;
         }
 
+        /* 统一输入框样式 */
+        input, textarea, select {
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            font-size: 12px;
+            background: #fff;
+            outline: none;
+            transition: all 0.2s;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
+        }
+
         .search-box {
             max-width: 200px;
         }
 
+        /* 模态框 */
         .modal {
             position: fixed;
             inset: 0;
@@ -381,7 +407,7 @@
         }
         .modal-body {
             background: #fff;
-            border-radius: 16px;
+            border-radius: 8px;
             width: 100%;
             max-width: 420px;
             padding: 20px;
@@ -416,7 +442,42 @@
 
         .hidden { display: none; }
 
-        /* 响应式：移动端 */
+        /* 公告编辑表单区域 */
+        .announcement-editor {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 8px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #334155;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+        }
+        .switch-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .switch-group label {
+            margin-bottom: 0;
+        }
+        .announcement-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
         @media (max-width: 640px) {
             body { padding: 12px; }
             .login-card { padding: 24px 20px; max-width: 280px; }
@@ -438,12 +499,12 @@
 </div>
 
 <div class="container">
-    <!-- 登录前卡片（简约） -->
+    <!-- 登录前卡片 -->
     <div id="loginWrapper" class="login-section">
         <div class="login-card">
             <div class="login-header">
                 <div class="login-logo">
-                    <i class="fas fa-star"></i>
+                    <img src="https://tc688.ccwu.cc/file/星聚导航/1781189176148_logo.png" alt="星聚导航">
                 </div>
                 <h2>星聚导航</h2>
                 <p>管理员登录</p>
@@ -463,7 +524,7 @@
         </div>
     </div>
 
-    <!-- 登录后主内容（紧凑） -->
+    <!-- 登录后主内容 -->
     <div id="mainContent" class="hidden main-card">
         <div class="flex-row" style="margin-bottom:12px; justify-content: space-between;">
             <div class="flex-row">
@@ -471,7 +532,7 @@
                 <div class="tab-btn" data-tab="rank">点击排行</div>
                 <div class="tab-btn" data-tab="feedback">用户反馈</div>
                 <div class="tab-btn" data-tab="submissions">待审核</div>
-                <div class="tab-btn" data-tab="announcement">公告管理</div>
+                <div class="tab-btn" data-tab="announcement">公告编辑</div>
             </div>
             <button class="secondary sm" id="logoutBtn">退出</button>
         </div>
@@ -525,13 +586,31 @@
             <div class="submissions-list" id="submissionsList"></div>
         </div>
 
-        <!-- 公告管理标签页 -->
+        <!-- 公告编辑标签页（单个公告，无历史） -->
         <div id="announcementTab" class="tab-panel hidden">
-            <div class="flex-row" style="margin-bottom:10px; justify-content: space-between;">
-                <button class="primary sm" id="addAnnouncementBtn">+ 新建公告</button>
-                <button class="primary sm" id="refreshAnnouncementBtn">刷新列表</button>
+            <div class="announcement-editor">
+                <div class="form-group">
+                    <label>公告标题</label>
+                    <input type="text" id="annTitle" placeholder="输入公告标题">
+                </div>
+                <div class="form-group">
+                    <label>公告内容</label>
+                    <textarea id="annContent" rows="6" placeholder="输入公告详细内容..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>发布时间（自动）</label>
+                    <input type="text" id="annCreatedAt" readonly disabled style="background:#f1f5f9;">
+                </div>
+                <div class="switch-group">
+                    <label>启用公告：</label>
+                    <input type="checkbox" id="annActive"> <span style="font-size:11px; color:#64748b;">开启后前端将显示此公告</span>
+                </div>
+                <div class="announcement-actions">
+                    <button class="secondary" id="annClearBtn">清除</button>
+                    <button class="secondary" id="annCancelBtn">取消</button>
+                    <button class="primary" id="annPublishBtn">发布</button>
+                </div>
             </div>
-            <div class="announcements-list" id="announcementsList"></div>
         </div>
     </div>
 </div>
@@ -544,46 +623,6 @@
             <button id="closeDetailModalBtn" style="background:none; border:none; font-size:18px; cursor:pointer;">&times;</button>
         </div>
         <div id="submissionDetailContent"></div>
-    </div>
-</div>
-
-<!-- 公告编辑模态框 -->
-<div class="modal" id="announcementDetailModal">
-    <div class="modal-body">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 id="announcementModalTitle" style="font-size:14px;">公告详情</h3>
-            <button id="closeAnnouncementModalBtn" style="background:none; border:none; font-size:18px; cursor:pointer;">&times;</button>
-        </div>
-        <div id="announcementFormContainer"></div>
-        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
-            <button class="secondary" id="announcementCancelBtn">取消</button>
-            <button class="primary" id="announcementSaveBtn">保存</button>
-            <button class="danger" id="announcementDeleteBtn" style="display:none;">删除</button>
-        </div>
-    </div>
-</div>
-
-<!-- 导入数据模态框 -->
-<div class="modal" id="importModal">
-    <div class="modal-body">
-        <div class="modal-title" style="font-size:14px; margin-bottom:16px;">导入数据</div>
-        <div id="importForm">
-            <div class="form-row" style="margin-bottom:12px;">
-                <label style="font-size:11px;">导入模式</label>
-                <select id="importMode" style="width:100%; padding:6px; border-radius:8px; font-size:12px;">
-                    <option value="merge">合并（更新已存在，添加新数据）</option>
-                    <option value="overwrite">覆盖（清空现有数据）</option>
-                </select>
-            </div>
-            <div class="form-row" style="margin-bottom:12px;">
-                <label style="font-size:11px;">选择 JSON 文件</label>
-                <input type="file" id="importFile" accept=".json" style="width:100%; font-size:11px;">
-            </div>
-        </div>
-        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
-            <button class="secondary" id="importCancelBtn">取消</button>
-            <button class="primary" id="importConfirmBtn">开始导入</button>
-        </div>
     </div>
 </div>
 
