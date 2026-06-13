@@ -781,6 +781,32 @@
     }
 </script>
 <script defer src="./js/cursor2.js"></script>
-<script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178053822427" key="178053822427" m="1"></script>
+
+<script>
+(function() {
+function loadPlayer() {
+    const musicScript = document.createElement('script');
+    musicScript.type = 'text/javascript';
+    musicScript.id = 'myhk';
+    musicScript.src = 'https://myhkw.cn/api/player/178053822427';
+    musicScript.setAttribute('key', '178053822427');
+    musicScript.setAttribute('m', '1');
+    musicScript.defer = true;
+    musicScript.onerror = function() {
+        console.warn('音乐播放器加载失败');
+    };
+    document.body.appendChild(musicScript);
+}
+
+// 浏览器空闲/3秒后加载，两处数值保持一致
+if ('requestIdleCallback' in window) {
+    requestIdleCallback(loadPlayer, { timeout: 3000 });
+} else {
+    setTimeout(loadPlayer, 3000);
+}
+})();
+</script>
+
+
 </body>
 </html>
