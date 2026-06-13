@@ -1,8 +1,5 @@
-// admin.js - 星聚导航后台管理（完整版，支持公告管理，排序值自动计算）
-// 修复内容：
-// 1. 导入文件大小前端限制
-// 2. 增加响应式 CSS（移动端布局）
-// 3. 自定义选择器深色模式已完善
+// admin.js - 星聚导航后台管理（适配简约登录界面）
+// 修复：登录后正确隐藏 loginWrapper，显示 mainContent
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -20,7 +17,6 @@
     let refreshTimer = null;
     let customSelects = {};
 
-    // 公告编辑模式标记
     let editingAnnouncementId = null;
 
     function escapeHtml(str) {
@@ -255,11 +251,13 @@
             const remember = document.getElementById('rememberToken').checked;
             saveToken(sessionToken, remember);
             await apiFetch('/admin/categories');
-            document.getElementById('tokenInput').style.display = 'none';
-            document.getElementById('loginBtn').classList.add('hidden');
-            document.getElementById('logoutBtn').classList.remove('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
-            document.querySelector('.remember-checkbox').style.display = 'none';
+            // 隐藏登录区域，显示主内容
+            const loginWrapper = document.getElementById('loginWrapper');
+            const mainContent = document.getElementById('mainContent');
+            if (loginWrapper) loginWrapper.style.display = 'none';
+            if (mainContent) mainContent.classList.remove('hidden');
+            // 清理登录表单（可选）
+            document.getElementById('tokenInput').value = '';
             await loadAllData();
             showToast('登录成功' + (remember ? '（已记住密码）' : ''));
         } catch (e) {
@@ -272,12 +270,14 @@
     function logout() {
         token = '';
         clearToken();
-        document.getElementById('loginBtn').classList.remove('hidden');
-        document.getElementById('logoutBtn').classList.add('hidden');
-        document.getElementById('mainContent').classList.add('hidden');
-        document.getElementById('tokenInput').style.display = 'block';
-        document.getElementById('tokenInput').value = '';
-        document.querySelector('.remember-checkbox').style.display = 'block';
+        // 显示登录区域，隐藏主内容
+        const loginWrapper = document.getElementById('loginWrapper');
+        const mainContent = document.getElementById('mainContent');
+        if (loginWrapper) loginWrapper.style.display = 'flex';
+        if (mainContent) mainContent.classList.add('hidden');
+        // 清空输入框
+        const tokenInput = document.getElementById('tokenInput');
+        if (tokenInput) tokenInput.value = '';
         showToast('已退出');
     }
 
@@ -387,7 +387,7 @@
             list.innerHTML = data.map(item => `
                 <div class="announcement-item" data-id="${item.id}">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <strong style="font-size:14px;">${escapeHtml(item.title)}</strong>
+                        <strong style="font-size:13px;">${escapeHtml(item.title)}</strong>
                         <div>
                             <span class="announcement-status ${item.is_active ? 'status-active' : 'status-inactive'}">${item.is_active ? '已启用' : '已停用'}</span>
                             <button class="sm primary edit-announcement-btn" data-id="${item.id}" style="margin-left:8px;">编辑</button>
@@ -419,11 +419,10 @@
             titleEl.textContent = '编辑公告';
             deleteBtn.style.display = 'inline-flex';
             formContainer.innerHTML = `
-                <div class="form-row"><label>标题</label><input type="text" id="annTitle" value="${escapeHtml(item.title)}"></div>
-                <div class="form-row"><label>内容</label><textarea id="annContent" rows="5">${escapeHtml(item.content)}</textarea></div>
-                <div class="form-row"><label><input type="checkbox" id="annActive" ${item.is_active ? 'checked' : ''}> 启用公告（前端显示）</label></div>
+                <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">标题</label><input type="text" id="annTitle" value="${escapeHtml(item.title)}" style="width:100%; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></div>
+                <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">内容</label><textarea id="annContent" rows="4" style="width:100%; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;">${escapeHtml(item.content)}</textarea></div>
+                <div class="form-row"><label style="font-size:11px;"><input type="checkbox" id="annActive" ${item.is_active ? 'checked' : ''}> 启用公告（前端显示）</label></div>
             `;
-            // 移除旧事件，避免重复绑定
             const newDeleteBtn = deleteBtn.cloneNode(true);
             deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
             newDeleteBtn.onclick = async () => {
@@ -438,9 +437,9 @@
             titleEl.textContent = '新建公告';
             deleteBtn.style.display = 'none';
             formContainer.innerHTML = `
-                <div class="form-row"><label>标题</label><input type="text" id="annTitle" placeholder="公告标题"></div>
-                <div class="form-row"><label>内容</label><textarea id="annContent" rows="5" placeholder="公告内容..."></textarea></div>
-                <div class="form-row"><label><input type="checkbox" id="annActive" checked> 启用公告</label></div>
+                <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">标题</label><input type="text" id="annTitle" placeholder="公告标题" style="width:100%; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></div>
+                <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">内容</label><textarea id="annContent" rows="4" placeholder="公告内容..." style="width:100%; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></textarea></div>
+                <div class="form-row"><label style="font-size:11px;"><input type="checkbox" id="annActive" checked> 启用公告</label></div>
             `;
         }
         modal.classList.add('show');
@@ -522,38 +521,40 @@
             const vtColor = (item.vt_result || '').includes('安全') ? '#10b981' : '#ef4444';
 
             let html = `
-                <div class="info-card">
-                    <div class="info-row"><div class="info-label">标题</div><div class="info-value"><input type="text" id="editTitle" value="${escapeHtml(item.title)}" class="form-input" style="width:100%;" /></div></div>
-                    <div class="info-row"><div class="info-label">网址</div><div class="info-value"><input type="text" id="editUrl" value="${escapeHtml(item.url)}" class="form-input" style="width:100%;" /></div></div>
-                    <div class="info-row"><div class="info-label">图标</div><div class="info-value"><input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" class="form-input" style="width:100%;" placeholder="请输入图标URL或FontAwesome类名" /></div></div>
-                    <div class="info-row"><div class="info-label">描述</div><div class="info-value"><textarea id="editDesc" rows="2" class="form-input" style="width:100%; resize: vertical;">${escapeHtml(item.description || '')}</textarea></div></div>
-                    <div class="info-row"><div class="info-label">提交者（邮箱）</div><div class="info-value"><input type="email" id="editContact" value="${escapeHtml(item.contact || '')}" class="form-input" style="width:100%;" placeholder="投稿者邮箱" /></div></div>
-                    <div class="info-row"><div class="info-label">提交时间</div><div class="info-value">${new Date(item.submit_time).toLocaleString()}</div></div>
-                    <div class="info-row"><div class="info-label">安全检测</div><div class="info-value"><span style="color:${vtColor}">${escapeHtml(item.vt_result || '未检测')}</span></div></div>
+                <div class="info-card" style="margin-bottom:16px;">
+                    <div class="info-row" style="margin-bottom:8px;"><label style="font-size:11px; width:70px;">标题</label><input type="text" id="editTitle" value="${escapeHtml(item.title)}" style="flex:1; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></div>
+                    <div class="info-row" style="margin-bottom:8px;"><label style="font-size:11px; width:70px;">网址</label><input type="text" id="editUrl" value="${escapeHtml(item.url)}" style="flex:1; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></div>
+                    <div class="info-row" style="margin-bottom:8px;"><label style="font-size:11px; width:70px;">图标</label><input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" style="flex:1; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></div>
+                    <div class="info-row" style="margin-bottom:8px;"><label style="font-size:11px; width:70px;">描述</label><textarea id="editDesc" rows="2" style="flex:1; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;">${escapeHtml(item.description || '')}</textarea></div>
+                    <div class="info-row" style="margin-bottom:8px;"><label style="font-size:11px; width:70px;">提交者</label><input type="email" id="editContact" value="${escapeHtml(item.contact || '')}" style="flex:1; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></div>
+                    <div class="info-row" style="margin-bottom:8px;"><label style="font-size:11px; width:70px;">提交时间</label><div style="flex:1; font-size:11px;">${new Date(item.submit_time).toLocaleString()}</div></div>
+                    <div class="info-row"><label style="font-size:11px; width:70px;">安全检测</label><div style="flex:1; font-size:11px; color:${vtColor}">${escapeHtml(item.vt_result || '未检测')}</div></div>
                 </div>
-                <div class="action-section">
-                    <div class="action-card"><h4><i class="fas fa-check-circle"></i> 通过收录</h4>
-                        <div class="inline-select-group">
-                            <div class="custom-select-wrapper" id="approveCatSelectWrapper"></div>
-                            <div class="custom-select-wrapper" id="approveSubSelectWrapper"></div>
-                            <input type="number" id="approveOrder" placeholder="排序" value="0" class="form-input" style="width:80px;" step="1">
+                <div class="action-section" style="display:flex; gap:12px; flex-wrap:wrap;">
+                    <div style="flex:1; background:#f8fafc; padding:12px; border-radius:12px;">
+                        <h4 style="font-size:12px; margin-bottom:8px;"><i class="fas fa-check-circle"></i> 通过收录</h4>
+                        <div class="inline-select-group" style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <div class="custom-select-wrapper" id="approveCatSelectWrapper" style="min-width:120px;"></div>
+                            <div class="custom-select-wrapper" id="approveSubSelectWrapper" style="min-width:120px;"></div>
+                            <input type="number" id="approveOrder" placeholder="排序" value="0" style="width:80px; padding:6px; font-size:12px; border-radius:8px;" step="1">
                         </div>
                         <div style="margin: 10px 0 0 0;">
-                            <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-                                <input type="checkbox" id="sendEmailCheckbox" checked style="width: auto; margin: 0;">
-                                <span style="font-size: 12px;">📧 发送邮件通知投稿者</span>
+                            <label style="display: inline-flex; align-items: center; gap: 6px; font-size:11px;">
+                                <input type="checkbox" id="sendEmailCheckbox" checked style="width: auto;">
+                                📧 发送邮件通知投稿者
                             </label>
                         </div>
-                        <button class="btn-approve" id="doApproveBtn" style="margin-top: 8px;">✓ 通过并收录</button>
+                        <button class="btn-approve" id="doApproveBtn" style="margin-top: 8px; background:#10b981; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px;">✓ 通过并收录</button>
                     </div>
-                    <div class="action-card"><h4><i class="fas fa-ban"></i> 拒绝投稿</h4>
+                    <div style="flex:1; background:#f8fafc; padding:12px; border-radius:12px;">
+                        <h4 style="font-size:12px; margin-bottom:8px;"><i class="fas fa-ban"></i> 拒绝投稿</h4>
                         <div style="margin: 10px 0 0 0;">
-                            <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-                                <input type="checkbox" id="sendEmailCheckboxReject" checked style="width: auto; margin: 0;">
-                                <span style="font-size: 12px;">📧 发送邮件通知投稿者</span>
+                            <label style="display: inline-flex; align-items: center; gap: 6px; font-size:11px;">
+                                <input type="checkbox" id="sendEmailCheckboxReject" checked style="width: auto;">
+                                📧 发送邮件通知投稿者
                             </label>
                         </div>
-                        <button class="btn-reject" id="doRejectBtn" style="margin-top: 8px;">✗ 拒绝（删除投稿）</button>
+                        <button class="btn-reject" id="doRejectBtn" style="margin-top: 8px; background:#ef4444; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px;">✗ 拒绝（删除投稿）</button>
                     </div>
                 </div>
             `;
@@ -565,7 +566,6 @@
                 descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
             }
 
-            // 分类选择器
             const catSelect = document.createElement('select');
             catSelect.id = 'approveCatSelect';
             catSelect.innerHTML = '<option value="">选择一级分类</option>' + categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
@@ -573,7 +573,6 @@
             catWrapper.innerHTML = '';
             catWrapper.appendChild(catSelect);
 
-            // 子分类选择器（初始为空）
             const subSelect = document.createElement('select');
             subSelect.id = 'approveSubSelect';
             subSelect.innerHTML = '<option value="">先选择一级分类</option>';
@@ -582,7 +581,6 @@
             subWrapper.appendChild(subSelect);
 
             let catCustomSelect = new CustomSelect(catSelect, async (value) => {
-                // 清空子分类选择器
                 subSelect.innerHTML = '<option value="">加载中...</option>';
                 if (customSelects.sub) customSelects.sub.destroy();
                 if (value) {
@@ -675,8 +673,8 @@
         const cat = categories.find(c => c.id === id);
         const currentOrder = cat?.display_order || 0;
         openModal('修改分类', `
-            <div class="form-row"><label>名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>
-            <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1"></div>
+            <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}" style="width:100%; padding:6px; font-size:12px;"></div>
+            <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>
         `, async () => {
             const name = document.getElementById('mName').value.trim();
             const order = parseInt(document.getElementById('mOrder').value) || 0;
@@ -693,8 +691,8 @@
         const sub = subcategories.find(s => s.id === id);
         const currentOrder = sub?.display_order || 0;
         openModal('修改子分类', `
-            <div class="form-row"><label>名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>
-            <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1"></div>
+            <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}" style="width:100%; padding:6px; font-size:12px;"></div>
+            <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>
         `, async () => {
             const name = document.getElementById('mName').value.trim();
             const order = parseInt(document.getElementById('mOrder').value) || 0;
@@ -711,11 +709,11 @@
         const site = sites.find(s => s.id === id);
         if (!site) return;
         openModal('编辑链接',
-            `<div class="form-row"><label>标题</label><input id="mTitle" class="form-input" value="${escapeHtml(site.title)}"></div>
-             <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" class="form-input" value="${escapeHtml(site.url)}"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
-             <div class="form-row"><label>图标</label><input id="mIcon" class="form-input" value="${escapeHtml(site.icon||'fas fa-link')}"></div>
-             <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%;">${escapeHtml(site.description||'')}</textarea></div>
-             <div class="form-row"><label>排序值</label><input type="number" id="mSort" class="form-input" value="${site.display_order}" step="1"></div>`,
+            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">标题</label><input id="mTitle" class="form-input" value="${escapeHtml(site.title)}" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">网址</label><div style="display:flex; gap:4px;"><input id="mUrl" class="form-input" value="${escapeHtml(site.url)}" style="flex:1; padding:6px; font-size:12px;"><button type="button" id="fetchInfoBtn" class="fetch-info-btn" style="padding:4px 10px;">获取信息</button></div></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">图标</label><input id="mIcon" class="form-input" value="${escapeHtml(site.icon||'fas fa-link')}" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%; padding:6px; font-size:12px;">${escapeHtml(site.description||'')}</textarea></div>
+             <div class="form-row"><label style="font-size:11px;">排序值</label><input type="number" id="mSort" class="form-input" value="${site.display_order}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>`,
             async () => {
                 const title = document.getElementById('mTitle').value.trim();
                 const url = document.getElementById('mUrl').value.trim();
@@ -743,8 +741,8 @@
     async function handleAddCategory() {
         const nextOrder = await getNextSortValue('category');
         openModal('新增一级分类',
-            `<div class="form-row"><label>名称</label><input id="mName" class="form-input"></div>
-             <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1"></div>`,
+            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>`,
             async () => {
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
@@ -758,8 +756,8 @@
         if (!currentCat) { showToast('请先选择一级分类', 'error'); return; }
         const nextOrder = await getNextSortValue('subcategory', currentCat);
         openModal('新增子分类',
-            `<div class="form-row"><label>名称</label><input id="mName" class="form-input"></div>
-             <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1"></div>`,
+            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>`,
             async () => {
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
@@ -773,11 +771,11 @@
         if (!currentSub) { showToast('请先选择子分类', 'error'); return; }
         const nextOrder = await getNextSortValue('site', currentSub);
         openModal('新增链接',
-            `<div class="form-row"><label>标题</label><input id="mTitle" class="form-input"></div>
-             <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" class="form-input"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
-             <div class="form-row"><label>图标</label><input id="mIcon" class="form-input" value="fas fa-link"></div>
-             <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%;"></textarea></div>
-             <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1"></div>`,
+            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">标题</label><input id="mTitle" class="form-input" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">网址</label><div style="display:flex; gap:4px;"><input id="mUrl" class="form-input" style="flex:1; padding:6px; font-size:12px;"><button type="button" id="fetchInfoBtn" class="fetch-info-btn" style="padding:4px 10px;">获取信息</button></div></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">图标</label><input id="mIcon" class="form-input" value="fas fa-link" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%; padding:6px; font-size:12px;"></textarea></div>
+             <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>`,
             async () => {
                 const title = document.getElementById('mTitle').value.trim();
                 const url = document.getElementById('mUrl').value.trim();
@@ -835,15 +833,15 @@
             let html = '';
             const renderItems = (items) => items.map(item => `
                 <div class="link-item">
-                    <div class="link-info"><strong>${escapeHtml(item.title||'无标题')}</strong><div class="link-url" style="display:none;">${escapeHtml(item.url)}</div><div style="font-size:10px;color:#999">来自 ${escapeHtml(item.reporter_ip)} 于 ${new Date(item.report_time).toLocaleString()}</div></div>
+                    <div class="link-info"><strong>${escapeHtml(item.title||'无标题')}</strong><div style="font-size:10px;color:#999">来自 ${escapeHtml(item.reporter_ip)} 于 ${new Date(item.report_time).toLocaleString()}</div></div>
                     <div class="link-actions">
                         <button class="sm primary" data-action="replaceLink" data-reportid="${item.id}" data-siteid="${item.site_id||0}" data-url="${escapeHtml(item.url)}" data-title="${escapeHtml(item.title||'')}">更换链接</button>
                     </div>
                 </div>
             `).join('');
-            if (groups.today.length) html += `<div class="feedback-date-group"><h4>📅 今天</h4>${renderItems(groups.today)}</div>`;
-            if (groups.yesterday.length) html += `<div class="feedback-date-group"><h4>📅 昨天</h4>${renderItems(groups.yesterday)}</div>`;
-            if (groups.older.length) html += `<div class="feedback-date-group"><h4>📅 更早</h4>${renderItems(groups.older)}</div>`;
+            if (groups.today.length) html += `<div class="feedback-date-group"><h4 style="font-size:12px;">📅 今天</h4>${renderItems(groups.today)}</div>`;
+            if (groups.yesterday.length) html += `<div class="feedback-date-group"><h4 style="font-size:12px;">📅 昨天</h4>${renderItems(groups.yesterday)}</div>`;
+            if (groups.older.length) html += `<div class="feedback-date-group"><h4 style="font-size:12px;">📅 更早</h4>${renderItems(groups.older)}</div>`;
             list.innerHTML = html;
             list.querySelectorAll('[data-action="replaceLink"]').forEach(btn => btn.addEventListener('click', replaceLinkHandler));
         } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
@@ -857,10 +855,10 @@
         const site = sites.find(s => s.id === siteId);
         if (!site) { showToast('未找到网站记录', 'error'); return; }
         openModal('更换链接',
-            `<div class="form-row"><label>标题</label><input id="mTitle" class="form-input" value="${escapeHtml(site.title)}"></div>
-             <div class="form-row"><label>网址</label><input id="mUrl" class="form-input" value="${escapeHtml(site.url)}"></div>
-             <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%;">${escapeHtml(site.description||'')}</textarea></div>
-             <div class="form-row"><label>图标</label><input id="mIcon" class="form-input" value="${escapeHtml(site.icon||'fas fa-link')}"></div>`,
+            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">标题</label><input id="mTitle" class="form-input" value="${escapeHtml(site.title)}" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">网址</label><input id="mUrl" class="form-input" value="${escapeHtml(site.url)}" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%; padding:6px; font-size:12px;">${escapeHtml(site.description||'')}</textarea></div>
+             <div class="form-row"><label style="font-size:11px;">图标</label><input id="mIcon" class="form-input" value="${escapeHtml(site.icon||'fas fa-link')}" style="width:100%; padding:6px; font-size:12px;"></div>`,
             async () => {
                 const newTitle = document.getElementById('mTitle').value.trim();
                 const newUrl = document.getElementById('mUrl').value.trim();
@@ -913,7 +911,6 @@
             return;
         }
         const file = fileInput.files[0];
-        // 前端文件大小限制（10MB）
         if (file.size > 10 * 1024 * 1024) {
             showToast('文件不能超过 10MB', 'error');
             return;
@@ -1134,7 +1131,7 @@
             const changeEvent = new Event('change', { bubbles: true });
             this.select.dispatchEvent(changeEvent);
         }
-        setValue(value, triggerChange = true) {
+        setValue(value) {
             for (let i = 0; i < this.select.options.length; i++) {
                 if (this.select.options[i].value == value) {
                     this.selectOption(i);
@@ -1199,21 +1196,21 @@
                 .submission-title-truncate { display: inline-block; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
                 @media (max-width: 768px) { .submission-title-truncate { max-width: 180px; } }
                 @media (max-width: 480px) { .submission-title-truncate { max-width: 120px; } }
-                .form-input { width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; background: #fff; transition: all 0.2s; box-sizing: border-box; }
-                .form-input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+                .form-input { width: 100%; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; background: #fff; transition: all 0.2s; box-sizing: border-box; }
+                .form-input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
                 textarea.form-input { resize: vertical; font-family: inherit; }
-                .inline-select-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-                .custom-select-wrapper { position: relative; flex: 1; min-width: 120px; }
-                .custom-select-trigger { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; color: #1e293b; cursor: pointer; transition: all 0.2s; gap: 8px; }
+                .inline-select-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+                .custom-select-wrapper { position: relative; flex: 1; min-width: 110px; }
+                .custom-select-trigger { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; color: #1e293b; cursor: pointer; gap: 6px; }
                 .custom-select-trigger:hover { border-color: #3b82f6; }
-                .custom-select-trigger.open { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-                .custom-select-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                .custom-select-arrow { width: 16px; height: 16px; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-size: contain; transition: transform 0.2s; }
+                .custom-select-trigger.open { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
+                .custom-select-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+                .custom-select-arrow { width: 12px; height: 12px; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-size: contain; transition: transform 0.2s; }
                 .custom-select-trigger.open .custom-select-arrow { transform: rotate(180deg); }
-                .custom-select-dropdown { position: fixed; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; max-height: 200px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: all 0.2s ease; scrollbar-width: none; }
+                .custom-select-dropdown { position: fixed; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 1000; max-height: 180px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-6px); transition: all 0.15s ease; scrollbar-width: none; }
                 .custom-select-dropdown::-webkit-scrollbar { display: none; }
                 .custom-select-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0); }
-                .custom-select-option { padding: 8px 12px; font-size: 13px; color: #1e293b; cursor: pointer; transition: background 0.15s; }
+                .custom-select-option { padding: 6px 10px; font-size: 11px; color: #1e293b; cursor: pointer; transition: background 0.1s; }
                 .custom-select-option:hover { background: #f1f5f9; }
                 .custom-select-option.selected { background: #e0f2fe; color: #0369a1; font-weight: 500; }
                 @media (prefers-color-scheme: dark) {
@@ -1224,11 +1221,10 @@
                     .custom-select-option.selected { background: #0f172a; color: #38bdf8; }
                     .form-input { background: #1e293b; border-color: #334155; color: #e2e8f0; }
                 }
-                .announcement-content { max-height: 80px; overflow-y: auto; font-size: 12px; color: #475569; margin: 8px 0; padding: 4px 0; }
-                .announcement-status { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+                .announcement-content { max-height: 70px; overflow-y: auto; font-size: 11px; color: #475569; margin: 6px 0; }
+                .announcement-status { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 9px; }
                 .status-active { background: #dcfce7; color: #16a34a; }
                 .status-inactive { background: #fee2e2; color: #dc2626; }
-                /* 响应式布局修复 */
                 @media (max-width: 768px) {
                     .content-layout { flex-direction: column !important; }
                     .sidebar, .main-content { width: 100% !important; margin-bottom: 12px; }
@@ -1245,15 +1241,20 @@
         (async () => {
             try {
                 await apiFetch('/admin/categories');
-                document.getElementById('tokenInput').style.display = 'none';
-                document.getElementById('loginBtn').classList.add('hidden');
-                document.getElementById('logoutBtn').classList.remove('hidden');
-                document.getElementById('mainContent').classList.remove('hidden');
-                document.querySelector('.remember-checkbox').style.display = 'none';
+                const loginWrapper = document.getElementById('loginWrapper');
+                const mainContent = document.getElementById('mainContent');
+                if (loginWrapper) loginWrapper.style.display = 'none';
+                if (mainContent) mainContent.classList.remove('hidden');
                 await loadAllData();
                 startSessionRefresh();
             } catch (e) { logout(); }
         })();
+    } else {
+        // 确保初始状态：登录区域可见，主内容隐藏
+        const loginWrapper = document.getElementById('loginWrapper');
+        const mainContent = document.getElementById('mainContent');
+        if (loginWrapper) loginWrapper.style.display = 'flex';
+        if (mainContent) mainContent.classList.add('hidden');
     }
 
     setInterval(() => {
