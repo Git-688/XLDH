@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（修复标签页切换，不破坏登录样式）
+// admin.js - 星聚导航后台管理（完整版，包含排序值自动获取、按钮文字优化、模态框头部固定）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -373,7 +373,14 @@
                 document.getElementById('annActive').checked = true;
             }
         } catch (e) {
-            showToast('加载公告失败', 'error');
+            console.error('加载公告失败:', e);
+            showToast('加载公告失败: ' + (e.message || '请检查网络'), 'error');
+            currentAnnouncement = null;
+            document.getElementById('annTitle').value = '';
+            document.getElementById('annImportant').value = '';
+            document.getElementById('annContent').value = '';
+            document.getElementById('annDate').value = new Date().toISOString().slice(0,10);
+            document.getElementById('annActive').checked = true;
         }
     }
 
@@ -389,7 +396,7 @@
         }
         const payload = {
             title,
-            important,
+            important: important || '',
             content,
             date: date || new Date().toISOString().slice(0,10),
             is_active
@@ -413,7 +420,8 @@
                 window.announcementModule.loadAnnouncement();
             }
         } catch (err) {
-            showToast('保存失败', 'error');
+            console.error('保存公告失败:', err);
+            showToast('保存失败: ' + (err.message || '网络错误'), 'error');
         }
     }
 
@@ -442,6 +450,15 @@
                 maxOrder = max;
             }
             return maxOrder + 1;
+        } catch { return 0; }
+    }
+
+    // 获取指定子分类下的最大排序值
+    async function getMaxDisplayOrderForSubcategory(subcategoryId) {
+        try {
+            const subSites = sites.filter(s => s.subcategory_id === subcategoryId);
+            const maxOrder = subSites.reduce((max, s) => Math.max(max, s.display_order || 0), 0);
+            return maxOrder;
         } catch { return 0; }
     }
 
@@ -755,10 +772,56 @@
         } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
+    // 投稿详情模态框（完整版，增加排序值自动获取、头部固定、按钮文字修改）
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
         const contentDiv = document.getElementById('submissionDetailContent');
+        // 添加固定头部样式
+        if (!detailModal.querySelector('style')) {
+            const style = document.createElement('style');
+            style.textContent = `
+                #submissionDetailModal .modal-body {
+                    display: flex;
+                    flex-direction: column;
+                    padding: 0;
+                    max-height: 80vh;
+                }
+                #submissionDetailModal .modal-header {
+                    padding: 12px 16px;
+                    border-bottom: 1px solid #e2e8f0;
+                    flex-shrink: 0;
+                    position: sticky;
+                    top: 0;
+                    background: #fff;
+                    z-index: 10;
+                }
+                #submissionDetailModal .modal-content-scroll {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 16px;
+                }
+                @media (prefers-color-scheme: dark) {
+                    #submissionDetailModal .modal-header {
+                        background: #1e293b;
+                        border-bottom-color: #334155;
+                    }
+                }
+            `;
+            detailModal.appendChild(style);
+        }
+        // 重构模态框结构
+        const originalBody = detailModal.querySelector('.modal-body');
+        const originalHeader = originalBody.querySelector('div:first-child');
+        const originalContent = originalBody.querySelector('#submissionDetailContent');
+        if (originalHeader && originalContent && !originalBody.querySelector('.modal-header')) {
+            const headerHtml = originalHeader.outerHTML;
+            const contentHtml = originalContent.outerHTML;
+            originalBody.innerHTML = `
+                <div class="modal-header">${headerHtml}</div>
+                <div class="modal-content-scroll">${contentHtml}</div>
+            `;
+        }
 
         const cleanupSelectors = () => {
             if (customSelects.cat) { customSelects.cat.destroy(); delete customSelects.cat; }
@@ -802,33 +865,35 @@
                 </div>
                 <div class="action-section" style="display:flex; gap:12px; flex-wrap:wrap;">
                     <div style="flex:1; background:#f8fafc; padding:12px; border-radius:12px;">
-                        <h4 style="font-size:12px; margin-bottom:8px;"><i class="fas fa-check-circle"></i> 通过收录</h4>
+                        <h4 style="font-size:12px; margin-bottom:8px;"><i class="fas fa-check-circle"></i> 收录</h4>
                         <div class="inline-select-group" style="display:flex; gap:8px; flex-wrap:wrap;">
                             <div class="custom-select-wrapper" id="approveCatSelectWrapper" style="min-width:120px;"></div>
                             <div class="custom-select-wrapper" id="approveSubSelectWrapper" style="min-width:120px;"></div>
-                            <input type="number" id="approveOrder" placeholder="排序" value="0" style="width:80px; padding:6px; font-size:12px; border-radius:8px;" step="1">
+                            <input type="number" id="approveOrder" placeholder="排序" value="0" style="width:80px; padding:6px; font-size:12px; border-radius:8px;" step="1" readonly>
                         </div>
                         <div style="margin: 10px 0 0 0;">
                             <label style="display: inline-flex; align-items: center; gap: 6px; font-size:11px;">
                                 <input type="checkbox" id="sendEmailCheckbox" checked style="width: auto;">
-                                📧 发送邮件通知投稿者
+                                📧 发送邮件通知
                             </label>
                         </div>
-                        <button class="btn-approve" id="doApproveBtn" style="margin-top: 8px; background:#10b981; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px;">✓ 通过并收录</button>
+                        <button class="btn-approve" id="doApproveBtn" style="margin-top: 8px; background:#10b981; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px;">✓ 收录</button>
                     </div>
                     <div style="flex:1; background:#f8fafc; padding:12px; border-radius:12px;">
-                        <h4 style="font-size:12px; margin-bottom:8px;"><i class="fas fa-ban"></i> 拒绝投稿</h4>
+                        <h4 style="font-size:12px; margin-bottom:8px;"><i class="fas fa-ban"></i> 拒绝</h4>
                         <div style="margin: 10px 0 0 0;">
                             <label style="display: inline-flex; align-items: center; gap: 6px; font-size:11px;">
                                 <input type="checkbox" id="sendEmailCheckboxReject" checked style="width: auto;">
-                                📧 发送邮件通知投稿者
+                                📧 发送邮件通知
                             </label>
                         </div>
-                        <button class="btn-reject" id="doRejectBtn" style="margin-top: 8px; background:#ef4444; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px;">✗ 拒绝（删除投稿）</button>
+                        <button class="btn-reject" id="doRejectBtn" style="margin-top: 8px; background:#ef4444; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px;">✗ 拒绝</button>
                     </div>
                 </div>
             `;
-            contentDiv.innerHTML = html;
+            const scrollContainer = detailModal.querySelector('.modal-content-scroll');
+            if (scrollContainer) scrollContainer.innerHTML = html;
+            else contentDiv.innerHTML = html;
 
             const descTextarea = document.getElementById('editDesc');
             if (descTextarea) {
@@ -849,6 +914,7 @@
             const subWrapper = document.getElementById('approveSubSelectWrapper');
             subWrapper.innerHTML = '';
             subWrapper.appendChild(subSelect);
+            const orderInput = document.getElementById('approveOrder');
 
             let catCustomSelect = new CustomSelect(catSelect, async (value) => {
                 subSelect.innerHTML = '<option value="">加载中...</option>';
@@ -864,10 +930,24 @@
                 } else {
                     subSelect.innerHTML = '<option value="">先选择一级分类</option>';
                 }
-                customSelects.sub = new CustomSelect(subSelect);
+                customSelects.sub = new CustomSelect(subSelect, async (subValue) => {
+                    if (subValue) {
+                        const maxOrder = await getMaxDisplayOrderForSubcategory(parseInt(subValue));
+                        if (orderInput) orderInput.value = maxOrder + 1;
+                    } else {
+                        if (orderInput) orderInput.value = 0;
+                    }
+                });
             });
             customSelects.cat = catCustomSelect;
-            customSelects.sub = new CustomSelect(subSelect);
+            customSelects.sub = new CustomSelect(subSelect, async (subValue) => {
+                if (subValue) {
+                    const maxOrder = await getMaxDisplayOrderForSubcategory(parseInt(subValue));
+                    if (orderInput) orderInput.value = maxOrder + 1;
+                } else {
+                    if (orderInput) orderInput.value = 0;
+                }
+            });
 
             document.getElementById('doApproveBtn').onclick = async () => {
                 const catSelectEl = document.getElementById('approveCatSelect');
@@ -878,7 +958,7 @@
                     showToast('请选择一级分类和二级分类', 'error');
                     return;
                 }
-                const displayOrder = document.getElementById('approveOrder').value || 0;
+                const displayOrder = orderInput ? orderInput.value : 0;
                 const editedTitle = document.getElementById('editTitle').value.trim();
                 const editedUrl = document.getElementById('editUrl').value.trim();
                 const editedIcon = document.getElementById('editIcon').value.trim();
@@ -907,7 +987,7 @@
                             sendEmail: sendEmail
                         })
                     });
-                    showToast('已通过并收录' + (sendEmail ? '，邮件已发送' : '，未发送邮件'), 'success');
+                    showToast('已收录' + (sendEmail ? '，邮件已发送' : ''), 'success');
                     detailModal.classList.remove('show');
                     cleanupSelectors();
                     await loadSubmissions();
@@ -926,7 +1006,7 @@
                         method: 'DELETE',
                         body: JSON.stringify({ sendEmail: sendEmail })
                     });
-                    showToast('已拒绝并删除' + (sendEmail ? '，邮件已发送' : '，未发送邮件'), 'success');
+                    showToast('已拒绝' + (sendEmail ? '，邮件已发送' : ''), 'success');
                     detailModal.classList.remove('show');
                     cleanupSelectors();
                     await loadSubmissions();
@@ -964,24 +1044,16 @@
             if (btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
         });
 
-        // 标签页切换 - 确保每次只显示一个面板
+        // 标签页切换
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const tabId = btn.dataset.tab;
                 if (!tabId) return;
-                // 更新按钮样式
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                // 隐藏所有标签页内容
-                document.querySelectorAll('.tab-panel').forEach(panel => {
-                    panel.classList.add('hidden');
-                });
-                // 显示选中的标签页
+                document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
                 const activePanel = document.getElementById(`${tabId}Tab`);
-                if (activePanel) {
-                    activePanel.classList.remove('hidden');
-                }
-                // 加载对应数据
+                if (activePanel) activePanel.classList.remove('hidden');
                 if (tabId === 'rank') loadRanking();
                 if (tabId === 'feedback') loadFeedback();
                 if (tabId === 'submissions') loadSubmissions();
