@@ -363,8 +363,18 @@
     <section class="greeting-section">
         <div class="greeting-container">
             <div class="greeting-main-card">
+                <!-- 日期卡片：位于卡片右上角 -->
+                <div class="greeting-header-bar">
+                    <div class="datetime" id="datetime">
+                        <div class="datetime-row">
+                            <button id="expandHolidayBtn" class="expand-holiday-btn" style="display: none;">展开</button>
+                            <div id="currentTime">14:30:45</div>
+                        </div>
+                        <div id="currentDate">2024年1月15日 星期一</div>
+                    </div>
+                </div>
+                <!-- 主体内容：问候语 + 节日 + 木鱼 -->
                 <div class="greeting-content-wrapper">
-                    <!-- 左侧：问候语 + 节日容器 + 木鱼 -->
                     <div class="greeting-left">
                         <div class="greeting-text">
                             <h1 id="greeting">下午好!</h1>
@@ -380,16 +390,6 @@
                             <button class="fish-btn" data-type="luck" aria-label="幸运"><i class="fas fa-clover"></i><span class="fish-count" id="luckCount">0</span></button>
                             <button class="fish-btn" data-type="wealth" aria-label="财富"><i class="fas fa-coins"></i><span class="fish-count" id="wealthCount">0</span></button>
                             <button class="fish-btn" data-type="health" aria-label="健康"><i class="fas fa-heart"></i><span class="fish-count" id="healthCount">0</span></button>
-                        </div>
-                    </div>
-                    <!-- 右侧：日期卡片 -->
-                    <div class="greeting-right">
-                        <div class="datetime" id="datetime">
-                            <div class="datetime-row">
-                                <button id="expandHolidayBtn" class="expand-holiday-btn" style="display: none;">展开</button>
-                                <div id="currentTime">14:30:45</div>
-                            </div>
-                            <div id="currentDate">2024年1月15日 星期一</div>
                         </div>
                     </div>
                 </div>
