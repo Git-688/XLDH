@@ -1,3 +1,4 @@
+// announcement.js - 简约公告模块（单公告模式，支持未读标记）
 class AnnouncementModule {
     constructor() {
         if (window.Starlink && window.Starlink.announcement) return window.Starlink.announcement;
@@ -24,6 +25,13 @@ class AnnouncementModule {
             const response = await fetch(`${this.apiBase}/announcement/active`);
             const data = await response.json();
             if (data && data.id && data.title && data.content) {
+                // 检查是否有更新（本地存储的 lastSeenId 与当前 id 不同）
+                const lastSeenId = localStorage.getItem('announcement_last_seen_id');
+                if (!lastSeenId || data.id !== parseInt(lastSeenId)) {
+                    this.setUnreadFlag(true);
+                } else {
+                    this.setUnreadFlag(false);
+                }
                 return {
                     id: data.id,
                     title: data.title,
@@ -31,11 +39,44 @@ class AnnouncementModule {
                     content: data.content,
                     date: data.date || new Date(data.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
                 };
+            } else {
+                // 没有公告，隐藏徽章
+                this.setUnreadFlag(false);
+                return null;
             }
-            return null;
         } catch (error) {
             console.error('获取公告失败:', error);
             return null;
+        }
+    }
+
+    // 设置公告未读徽章
+    setUnreadFlag(hasUnread) {
+        const btn = document.getElementById('announcementBtn');
+        if (!btn) return;
+        if (hasUnread) {
+            btn.classList.add('has-unread');
+            let badge = btn.querySelector('.nav-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'nav-badge';
+                btn.appendChild(badge);
+            }
+            badge.textContent = '新';
+            badge.style.display = 'inline-flex';
+        } else {
+            btn.classList.remove('has-unread');
+            const badge = btn.querySelector('.nav-badge');
+            if (badge) badge.style.display = 'none';
+        }
+    }
+
+    // 标记公告为已读
+    markAsRead() {
+        if (this.currentAnnouncement && this.currentAnnouncement.id) {
+            localStorage.setItem('announcement_last_seen_id', this.currentAnnouncement.id);
+            localStorage.setItem('announcement_last_seen_time', Date.now());
+            this.setUnreadFlag(false);
         }
     }
 
@@ -94,13 +135,13 @@ class AnnouncementModule {
                         <span>${title}</span>
                     </div>
                     <button class="announcement-close" id="announcementClose" aria-label="关闭">
-                        <i class="fas fa-times"></i>
+                        <i class="fas fa-times</i>
                     </button>
                 </div>
                 <div class="announcement-body">
-                    ${important ? `<div class="focus-section"><div class="focus-content">${important}</div></div>` : ''}
+                    ${important ? `<div class="focus-section"><div class="focus-content">📢 ${important}</div></div>` : ''}
                     <div class="updates-section">
-                        <div class="updates-title"><i class="fas fa-sync-alt"></i> 更新内容：</div>
+                        <div class="updates-title"><i class="fas fa-sync-alt"></i> 更新内容</div>
                         <div class="announcement-full-content">${content}</div>
                     </div>
                 </div>
@@ -156,6 +197,8 @@ class AnnouncementModule {
         this.closeOtherModals();
         this.modalElement.classList.add('active');
         this.isVisible = true;
+        // 打开公告时标记为已读
+        this.markAsRead();
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
         else if (window.app) window.app.registerModal(this);
         this.updateButtonState(true);
