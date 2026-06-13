@@ -4,14 +4,14 @@
     position: relative;
 }
 
-/* 主容器 - 左右布局 */
+/* 主容器 - 垂直排列，卡片在上，书签按钮在下 */
 .greeting-container {
     display: flex;
+    flex-direction: column;
     gap: 16px;
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 var(--container-padding-xs);
-    align-items: stretch;
 }
 
 @media (min-width: 576px) {
@@ -30,39 +30,34 @@
     .greeting-section { padding: var(--section-margin-lg) 0; }
 }
 
-/* 左侧大卡片 */
+/* 主卡片 */
 .greeting-main-card {
-    flex: 1;
     background: var(--bg-card);
     border-radius: 10px;
     border: 1px solid var(--border-color);
     padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
     transition: transform 0.3s ease;
 }
 .greeting-main-card:hover {
     transform: translateY(-2px);
 }
 
-/* 两列布局：桌面和移动端始终保持两列，不换行，右侧内容与左侧木鱼底部对齐 */
-.greeting-two-columns {
-    display: grid;
-    grid-template-columns: 1fr auto;
+/* 左右两列布局（弹性，右侧与木鱼区域垂直居中） */
+.greeting-content-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* 垂直居中，使右侧卡片与左侧木鱼区域中心对齐 */
     gap: 20px;
-    align-items: end; /* 右侧内容底部与左侧木鱼底部对齐 */
+    flex-wrap: wrap;
 }
 .greeting-left {
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 .greeting-right {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    justify-content: flex-end; /* 确保内容从底部开始排列，使日期卡片紧贴木鱼上方 */
+    flex-shrink: 0;
 }
 
 /* 问候语 */
@@ -148,33 +143,33 @@
     white-space: nowrap;
 }
 
-/* 右侧日期卡片（调整大小：内边距减小） */
+/* 右侧日期卡片 */
 .datetime {
     background: var(--bg-card);
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    min-width: 130px;
+    gap: 8px;
+    min-width: 140px;
 }
 .datetime-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 12px;
 }
 #currentTime {
-    font-size: 1.1em;
+    font-size: 1.2em;
     font-weight: 600;
     color: var(--primary-color);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
 #currentDate {
-    font-size: 0.8em;
+    font-size: 0.85em;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
@@ -184,7 +179,7 @@
 .expand-holiday-btn {
     background: transparent;
     border: 1px solid var(--border-color);
-    padding: 2px 8px;
+    padding: 2px 10px;
     border-radius: 20px;
     font-size: 11px;
     cursor: pointer;
@@ -194,42 +189,6 @@
 }
 .expand-holiday-btn:hover {
     background: rgba(67,97,238,0.1);
-}
-
-/* 书签按钮（恢复原样） */
-.bookmark-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 8px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    width: 80px;
-    color: #9575CD;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-.bookmark-btn:hover {
-    transform: translateY(-2px);
-    background: var(--bg-card);
-    color: #7E57C2;
-    border-color: #7E57C2;
-    box-shadow: 0 4px 12px rgba(149, 117, 205, 0.2);
-}
-.bookmark-btn i {
-    font-size: 20px;
-    margin-bottom: 6px;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-}
-.bookmark-btn span {
-    font-size: 0.75em;
-    font-weight: 600;
-    line-height: 1.2;
-    writing-mode: horizontal-tb;
 }
 
 /* 木鱼按钮区域 */
@@ -243,13 +202,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 10px;
+    padding: 8px 12px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    min-height: 44px;
+    min-height: 50px;
     overflow: visible;
     user-select: none;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -259,6 +218,7 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
 .fish-btn[data-type="merit"] {
     background: var(--bg-card);
     color: #70c1ff;
@@ -279,8 +239,9 @@
     color: #8ddf8d;
     border-color: rgba(141, 223, 141, 0.3);
 }
+
 .fish-btn i { 
-    font-size: 16px; 
+    font-size: 18px; 
     transition: transform 0.2s ease;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
@@ -289,15 +250,47 @@
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 .fish-count {
-    font-size: 0.9em;
+    font-size: 1em;
     font-weight: 700;
     background: rgba(0, 0, 0, 0.05);
-    padding: 2px 6px;
+    padding: 3px 8px;
     border-radius: 6px;
-    min-width: 24px;
+    min-width: 28px;
     text-align: center;
     transition: all 0.2s ease;
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+/* 书签按钮（独立于卡片外部） */
+.bookmark-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 20px;
+    text-decoration: none;
+    color: #9575CD;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    font-size: 14px;
+    font-weight: 500;
+}
+.bookmark-btn:hover {
+    transform: translateY(-2px);
+    background: var(--bg-card);
+    color: #7E57C2;
+    border-color: #7E57C2;
+    box-shadow: 0 4px 12px rgba(149, 117, 205, 0.2);
+}
+.bookmark-btn i {
+    font-size: 18px;
+}
+.bookmark-btn span {
+    font-size: 14px;
 }
 
 /* 木鱼点击动画 */
@@ -311,73 +304,70 @@
     pointer-events: none;
 }
 
-/* 响应式：保持两列布局，仅调整间距和字体大小（不改变结构） */
+/* 响应式设计 */
 @media (max-width: 992px) {
-    .greeting-container { flex-direction: column; gap: 16px; }
-    .greeting-main-card { padding: 18px; gap: 18px; width: 100%; order: 1; }
-    .greeting-two-columns { gap: 16px; }
-    .greeting-left { gap: 10px; }
-    .greeting-right { gap: 10px; }
+    .greeting-content-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .greeting-right {
+        align-self: flex-start;
+    }
     .greeting-text h1 { font-size: 1.32em !important; margin-bottom: -2px; }
     .holidays-container { gap: 6px; }
     .primary-holiday { font-size: 1.275em; }
     .primary-holiday .holiday-countdown { padding: 2px 8px; font-size: 0.9em; }
-    .datetime { padding: 8px 12px; min-width: auto; }
+    .datetime { padding: 10px 14px; width: auto; min-width: auto; }
     .datetime-row { gap: 8px; }
-    #currentTime { font-size: 1.05em; }
-    #currentDate { font-size: 0.75em; }
+    #currentTime { font-size: 1.1em; }
+    #currentDate { font-size: 0.8em; }
     .fish-section { gap: 6px; }
-    .fish-btn { padding: 6px 8px; min-height: 40px; }
-    .fish-btn i { font-size: 14px; }
-    .fish-count { font-size: 0.85em; padding: 2px 5px; }
-    .bookmark-btn { width: 70px; padding: 10px 6px; }
-    .bookmark-btn i { font-size: 18px; }
-    .bookmark-btn span { font-size: 0.7em; }
+    .fish-btn { padding: 8px 10px; min-height: 45px; }
+    .fish-btn i { font-size: 16px; }
+    .fish-count { font-size: 0.9em; padding: 2px 6px; }
     .expand-holiday-btn { font-size: 10px; padding: 2px 8px; }
+    .bookmark-btn { padding: 10px 16px; font-size: 13px; }
+    .bookmark-btn i { font-size: 16px; }
 }
 @media (max-width: 768px) {
     .greeting-section { padding: var(--section-margin-sm) 0; }
-    .greeting-main-card { padding: 16px; gap: 16px; }
-    .greeting-two-columns { gap: 12px; }
-    .greeting-left { gap: 8px; }
-    .greeting-right { gap: 8px; }
+    .greeting-main-card { padding: 16px; }
     .greeting-text h1 { font-size: 1.15em !important; margin-bottom: -3px; }
     .holidays-container { gap: 4px; }
     .primary-holiday { font-size: 1.23em; }
     .primary-holiday .holiday-countdown { padding: 2px 8px; font-size: 0.85em; }
-    .datetime { padding: 6px 10px; }
-    .datetime-row { justify-content: space-between; }
+    .datetime { padding: 8px 12px; }
+    .datetime-row { flex-direction: row; justify-content: space-between; }
     #currentTime { font-size: 1em; }
-    #currentDate { font-size: 0.7em; }
+    #currentDate { font-size: 0.75em; text-align: right; }
+    .expand-holiday-btn { margin: 0; }
     .fish-section { gap: 4px; }
-    .fish-btn { padding: 5px 8px; min-height: 36px; }
-    .fish-btn i { font-size: 12px; }
-    .fish-count { font-size: 0.8em; padding: 1px 4px; }
-    .bookmark-btn { width: 65px; padding: 8px 5px; }
-    .bookmark-btn i { font-size: 16px; margin-bottom: 4px; }
-    .bookmark-btn span { font-size: 0.65em; }
+    .fish-btn { padding: 6px 8px; min-height: 40px; }
+    .fish-btn i { font-size: 14px; }
+    .fish-count { font-size: 0.85em; padding: 2px 5px; }
+    .secondary-holiday-item { padding: 3px 8px; font-size: 10px; }
+    .secondary-name { max-width: 65px; }
+    .bookmark-btn { padding: 8px 14px; font-size: 12px; }
+    .bookmark-btn i { font-size: 14px; }
 }
 @media (max-width: 576px) {
     .greeting-section { padding: var(--section-margin-xs) 0; }
-    .greeting-main-card { padding: 14px; gap: 14px; }
-    .greeting-two-columns { gap: 10px; }
-    .greeting-left { gap: 6px; }
-    .greeting-right { gap: 6px; }
+    .greeting-main-card { padding: 14px; }
     .greeting-text h1 { font-size: 1.05em !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: -4px; }
+    .holidays-container { gap: 4px; }
     .primary-holiday { font-size: 1.17em; }
-    .primary-holiday .holiday-countdown { padding: 2px 6px; font-size: 0.8em; }
-    .datetime { padding: 5px 8px; }
+    .primary-holiday .holiday-countdown { padding: 2px 8px; font-size: 0.8em; }
+    .datetime { padding: 6px 10px; }
     .datetime-row { gap: 6px; }
-    #currentTime { font-size: 0.9em; }
-    #currentDate { font-size: 0.65em; }
+    #currentTime { font-size: 0.95em; }
+    #currentDate { font-size: 0.7em; }
+    .expand-holiday-btn { font-size: 10px; padding: 2px 8px; }
     .fish-section { gap: 4px; }
-    .fish-btn { padding: 4px 6px; min-height: 32px; }
-    .fish-btn i { font-size: 11px; }
-    .fish-count { font-size: 0.75em; padding: 1px 3px; }
-    .bookmark-btn { width: 60px; padding: 6px 4px; }
-    .bookmark-btn i { font-size: 14px; }
-    .bookmark-btn span { font-size: 0.6em; }
-    .expand-holiday-btn { font-size: 9px; padding: 2px 6px; }
+    .fish-btn { padding: 5px 6px; min-height: 38px; }
+    .fish-btn i { font-size: 12px; }
+    .fish-count { font-size: 0.8em; padding: 1px 4px; }
+    .bookmark-btn { padding: 8px 12px; font-size: 11px; }
+    .bookmark-btn i { font-size: 13px; }
 }
 @media (max-width: 400px) {
     .greeting-text h1 { font-size: 1em !important; }
