@@ -1,3 +1,4 @@
+// navbar.js - 导航栏模块（修复模态框动画，支持等待关闭完成）
 class Navbar {
     constructor() {
         if (window.Starlink && window.Starlink.navbar) return window.Starlink.navbar;
@@ -7,10 +8,18 @@ class Navbar {
         window.navbar = this;
     }
 
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     init() {
         try {
             this.bindEvents();
             this.loadAnnouncements();
+            // 不再调用 updateNotificationBadge，因为公告未读徽章由 announcement.js 管理
             setTimeout(() => this.handleScroll(), 100);
         } catch (e) {
             console.error('导航栏初始化失败:', e);
@@ -237,6 +246,7 @@ class Navbar {
     }
 
     loadAnnouncements() {
+        // 保留原有加载公告数据逻辑（可能用于其他用途），但不再用于显示未读标记
         this.announcements = Storage.get('announcements') || [{
             id: 'single_announcement',
             title: '星聚导航公告',
@@ -247,9 +257,11 @@ class Navbar {
         }];
     }
 
+    // 此方法不再使用，保留空实现避免报错
     updateNotificationBadge() {}
 
     getUnreadAnnouncementCount() {
+        // 公告未读由 announcement.js 管理，这里返回 0 以避免冲突
         return 0;
     }
 
@@ -258,6 +270,7 @@ class Navbar {
     }
 }
 
+// 初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         if (!window.Starlink) window.Starlink = {};
