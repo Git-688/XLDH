@@ -30,38 +30,33 @@
     .greeting-section { padding: var(--section-margin-lg) 0; }
 }
 
-/* 左侧大卡片 - 纯色背景，明显阴影，圆角加大 */
+/* 左侧大卡片 */
 .greeting-main-card {
     flex: 1;
-    background: var(--bg-card, #ffffff);
-    border-radius: 12px;
-    border: 1px solid var(--border-color, #e9ecef);
+    background: var(--bg-card);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 20px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease;
 }
 .greeting-main-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 /* 卡片顶部：问候语和时间在同一水平线，且左侧内容垂直方向两端对齐 */
 .greeting-header {
     display: flex;
     justify-content: space-between;
-    align-items: stretch;
+    align-items: flex-start;
     gap: 20px;
     flex-wrap: nowrap;
 }
 .greeting-left {
     flex: 1;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
 }
 
 /* 问候语 */
@@ -83,13 +78,13 @@
     font-weight: 700;
 }
 
-/* 节日容器：推到底部 */
+/* 节日容器：位于问候语和木鱼之间，与木鱼紧邻 */
 .holidays-container {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    gap: 4px;
-    margin-top: auto;
+    gap: 8px;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 .countdown-holiday {
     display: flex;
@@ -327,7 +322,7 @@
     .datetime { padding: 10px 14px; }
     .datetime-row { gap: 8px; }
     .greeting-text h1 { font-size: 1.32em !important; margin-bottom: -2px; }
-    .holidays-container { margin-top: -2px; }
+    .holidays-container { gap: 6px; }
     .primary-holiday { font-size: 1.275em; }
     .primary-holiday .holiday-countdown { padding: 2px 8px; font-size: 0.9em; }
     #currentTime { font-size: 1.1em; }
@@ -343,7 +338,7 @@
     .greeting-main-card { padding: 16px; gap: 16px; }
     .greeting-header { flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 12px; }
     .greeting-text h1 { font-size: 1.15em !important; margin-bottom: -3px; }
-    .holidays-container { margin-top: -3px; }
+    .holidays-container { gap: 4px; }
     .primary-holiday { font-size: 1.23em; }
     .primary-holiday .holiday-countdown { padding: 2px 8px; font-size: 0.85em; }
     .datetime { padding: 8px 12px; }
@@ -365,7 +360,7 @@
     .greeting-main-card { padding: 14px; gap: 14px; }
     .greeting-header { gap: 10px; flex-wrap: nowrap; }
     .greeting-text h1 { font-size: 1.05em !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: -4px; }
-    .holidays-container { margin-top: -4px; }
+    .holidays-container { gap: 4px; }
     .primary-holiday { font-size: 1.17em; }
     .primary-holiday .holiday-countdown { padding: 2px 8px; font-size: 0.8em; }
     .datetime { padding: 6px 10px; min-width: 100px; }
@@ -421,10 +416,6 @@
 .dark-mode .greeting-main-card {
     background: var(--bg-card);
     border-color: var(--border-color);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-.dark-mode .greeting-main-card:hover {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 .dark-mode .datetime {
     background: var(--bg-secondary);
