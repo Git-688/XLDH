@@ -27,7 +27,7 @@ class AboutModule {
         this.isShowing = false;
         this.isInitialized = false;
         this.version = 'v1.6.8';
-        this.updateDate = '2025-12-08';
+        this.updateDate = '2026-06-14';
         this.developer = '神木Ai';
         this.wallpaperUrl = './assets/images/wallpaper-about.jpg';
         this.logoUrl = './assets/logo.png';
@@ -117,7 +117,7 @@ class AboutModule {
                                 <img class="about-logo-img" src="${Utils.escapeHtml(this.logoUrl)}" alt="星聚导航Logo">
                             </div>
                             <div class="about-brand-title">星聚导航</div>
-                            <div class="about-brand-subtitle">启跃星门，航图绘星河</div>
+                            <div class="about-brand-subtitle">一款免费开源的个人专属网站</div>
                         </div>
                     </div>
                 </div>
