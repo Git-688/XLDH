@@ -1,18 +1,27 @@
-// announcement.js - 简约公告模块（从后端 API 获取动态公告，保留原有样式）
+// announcement.js - 简约公告模块（从后端 API 获取动态公告，支持未读徽章）
+// 修复：模态框正确显示、增加更新徽章、用户阅读后清除徽章
+
 class AnnouncementModule {
     constructor() {
         if (window.Starlink && window.Starlink.announcement) return window.Starlink.announcement;
         this.modalElement = null;
         this.isVisible = false;
-        this.isInitialized = false;
         this.currentAnnouncement = null;
         this.escapeHandler = null;
         this.apiBase = Utils.getApiBase();
-        // 直接初始化，不调用 init（因为不存在 init 方法）
-        this.loadAnnouncement();
-        this.setupGlobalEvents();
+        // 标记是否已检查过更新（用于页面加载时显示徽章）
+        this.initialCheckDone = false;
+        this.init();
         if (window.Starlink) window.Starlink.announcement = this;
         window.announcementModule = this;
+    }
+
+    // 初始化：加载公告并设置事件
+    async init() {
+        await this.loadAnnouncement();
+        this.setupGlobalEvents();
+        // 首次检查并显示徽章
+        await this.checkAndShowBadge();
     }
 
     escapeHtml(text) {
@@ -22,9 +31,11 @@ class AnnouncementModule {
         return div.innerHTML;
     }
 
+    // 获取当前启用的公告（只有一个）
     async fetchActiveAnnouncement() {
         try {
             const response = await fetch(`${this.apiBase}/announcement/active`);
+            if (!response.ok) return null;
             const data = await response.json();
             if (data && data.id && data.title && data.content) {
                 return {
@@ -45,8 +56,11 @@ class AnnouncementModule {
         const ann = await this.fetchActiveAnnouncement();
         this.currentAnnouncement = ann;
         this.createModal();
+        // 每次加载公告后也检查徽章（但徽章显示依据是否已读）
+        await this.checkAndShowBadge();
     }
 
+    // 创建模态框 DOM（始终使用最新公告内容）
     createModal() {
         if (this.modalElement) {
             this.modalElement.remove();
@@ -55,7 +69,7 @@ class AnnouncementModule {
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'announcement-modal-simple';
         this.modalElement.id = 'announcementModal';
-        
+
         if (!this.currentAnnouncement) {
             this.modalElement.innerHTML = `
                 <div class="announcement-modal-container">
@@ -118,35 +132,105 @@ class AnnouncementModule {
         const closeBtn = this.modalElement.querySelector('#announcementClose');
         const ackBtn = this.modalElement.querySelector('#announcementAckBtn');
         const closeHandler = () => {
+            // 用户点击关闭或“知道了”，标记当前公告为已读
+            this.markAsRead();
             this.hide();
         };
         if (closeBtn) closeBtn.addEventListener('click', closeHandler);
         if (ackBtn) ackBtn.addEventListener('click', closeHandler);
         this.modalElement.addEventListener('click', (e) => {
             if (e.target === this.modalElement) {
+                this.markAsRead();
                 this.hide();
             }
         });
     }
 
+    // 标记当前公告为已读（存储到 localStorage）
+    markAsRead() {
+        if (this.currentAnnouncement && this.currentAnnouncement.id) {
+            localStorage.setItem('last_read_announcement_id', this.currentAnnouncement.id);
+            // 同时记录阅读时间戳，用于徽章判断
+            localStorage.setItem('last_read_announcement_time', Date.now());
+            // 移除徽章
+            this.removeBadge();
+        }
+    }
+
+    // 检查是否有未读公告，并显示/隐藏徽章
+    async checkAndShowBadge() {
+        // 确保公告已加载
+        if (!this.currentAnnouncement) {
+            // 如果没有公告，移除任何徽章
+            this.removeBadge();
+            return;
+        }
+        const lastReadId = localStorage.getItem('last_read_announcement_id');
+        const isUnread = (!lastReadId || lastReadId != this.currentAnnouncement.id);
+        if (isUnread) {
+            this.showBadge();
+        } else {
+            this.removeBadge();
+        }
+    }
+
+    // 在公告按钮上显示红点或数字徽章
+    showBadge() {
+        const btn = document.getElementById('announcementBtn');
+        if (!btn) return;
+        // 避免重复添加
+        let badge = btn.querySelector('.announcement-badge');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'announcement-badge';
+            badge.textContent = '●'; // 红点，也可以用数字
+            badge.style.cssText = 'position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; border-radius: 50%; width: 10px; height: 10px; font-size: 8px; display: flex; align-items: center; justify-content: center; line-height: 1;';
+            btn.style.position = 'relative';
+            btn.appendChild(badge);
+        }
+    }
+
+    removeBadge() {
+        const btn = document.getElementById('announcementBtn');
+        if (!btn) return;
+        const badge = btn.querySelector('.announcement-badge');
+        if (badge) badge.remove();
+    }
+
     setupGlobalEvents() {
         this.escapeHandler = (e) => {
             if (e.key === 'Escape' && this.isVisible) {
+                this.markAsRead();
                 this.hide();
             }
         };
         document.addEventListener('keydown', this.escapeHandler);
         
-        // 绑定公告按钮事件
+        // 绑定公告按钮事件（确保只绑定一次）
         const announcementBtn = document.getElementById('announcementBtn');
-        if (announcementBtn && !announcementBtn._bound) {
-            announcementBtn._bound = true;
+        if (announcementBtn && !announcementBtn._announcementBound) {
+            announcementBtn._announcementBound = true;
             announcementBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 this.toggleModal();
             });
         }
+
+        // 可选：定时检查公告是否有更新（例如每5分钟）
+        setInterval(async () => {
+            const newAnn = await this.fetchActiveAnnouncement();
+            if (newAnn && (!this.currentAnnouncement || newAnn.id !== this.currentAnnouncement.id)) {
+                // 公告内容有变化，重新加载
+                await this.loadAnnouncement();
+                // 如果模态框当前是打开的，刷新内容
+                if (this.isVisible) {
+                    this.showModal(); // 重新渲染
+                }
+                // 更新徽章
+                await this.checkAndShowBadge();
+            }
+        }, 300000); // 5分钟
     }
 
     showModal() {
@@ -158,6 +242,8 @@ class AnnouncementModule {
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
         else if (window.app) window.app.registerModal(this);
         this.updateButtonState(true);
+        // 每次打开模态框时重新检查徽章（虽然打开后就会标记已读，但为了避免打开前徽章消失问题）
+        this.checkAndShowBadge();
     }
 
     hide() {
@@ -212,6 +298,7 @@ class AnnouncementModule {
     async refresh() {
         await this.loadAnnouncement();
         if (this.isVisible) this.showModal();
+        await this.checkAndShowBadge();
     }
 
     destroy() {
@@ -223,7 +310,6 @@ class AnnouncementModule {
             this.modalElement.parentNode.removeChild(this.modalElement);
         }
         this.modalElement = null;
-        this.isInitialized = false;
     }
 }
 
