@@ -1,5 +1,6 @@
 /**
  * 全局错误处理管理器（过滤第三方脚本错误，脱敏上报，支持重试）
+ * 增强：资源错误捕获具体 src，添加域名忽略列表
  */
 class ErrorHandler {
     constructor() {
@@ -23,22 +24,54 @@ class ErrorHandler {
 
     // 判断是否应该忽略某个错误
     shouldIgnore(errorInfo) {
-        if (errorInfo.type === 'resource' && errorInfo.tag === 'IMG') {
-            const src = errorInfo.src || '';
-            if (src.includes('favicon.yandex.net')) return true;
-            if (src.includes('api.71xk.com')) return true;
-            let origin = window.location.origin;
-            if (origin.endsWith('/')) origin = origin.slice(0, -1);
-            let cleanSrc = src;
-            if (cleanSrc.endsWith('/')) cleanSrc = cleanSrc.slice(0, -1);
-            if (cleanSrc === origin) return true;
+        // 忽略空消息或信息不完整的资源错误
+        if (errorInfo.type === 'resource' && !errorInfo.message && !errorInfo.stack && !errorInfo.src) {
+            return true;
+        }
+        // 忽略特定域名的资源加载失败（如外部图标、壁纸 API）
+        if (errorInfo.type === 'resource' && errorInfo.src) {
+            const ignoreDomains = [
+                'favicon.yandex.net',
+                'icon.horse',
+                'api.71xk.com',
+                'bing.biturl.top',
+                'pearapi.ai',
+                'yunzhiapi.cn'
+            ];
+            if (ignoreDomains.some(domain => errorInfo.src.includes(domain))) {
+                return true;
+            }
         }
         if (errorInfo.type === 'error' && errorInfo.message === 'Script error.') return true;
         return false;
     }
 
     init() {
+        // 捕获 JavaScript 运行时错误
         window.addEventListener('error', (event) => {
+            // 资源加载错误（IMG, SCRIPT, LINK 等）
+            const target = event.target;
+            if (target && (target.tagName === 'IMG' || target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
+                const src = target.src || target.href;
+                if (src) {
+                    this.handleError({
+                        type: 'resource',
+                        tag: target.tagName,
+                        src: this.maskSensitive(src),
+                        message: `Failed to load ${target.tagName}: ${src}`,
+                        timestamp: Date.now()
+                    });
+                } else {
+                    this.handleError({
+                        type: 'resource',
+                        tag: target.tagName,
+                        message: 'Resource load failed (no src/href)',
+                        timestamp: Date.now()
+                    });
+                }
+                return;
+            }
+            // 普通错误
             const { message, filename, lineno, colno, error } = event;
             if (message === 'Script error.' || message === 'Script error') return;
             this.handleError({
@@ -52,6 +85,7 @@ class ErrorHandler {
             });
         });
 
+        // 捕获未处理的 Promise 拒绝
         window.addEventListener('unhandledrejection', (event) => {
             const reason = event.reason;
             this.handleError({
@@ -61,19 +95,6 @@ class ErrorHandler {
                 timestamp: Date.now()
             });
         });
-
-        window.addEventListener('error', (event) => {
-            const target = event.target;
-            if (target && (target.tagName === 'IMG' || target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
-                if (target.src && target.src.includes('cloudflareinsights.com')) return;
-                this.handleError({
-                    type: 'resource',
-                    tag: target.tagName,
-                    src: this.maskSensitive(target.src || target.href),
-                    timestamp: Date.now()
-                });
-            }
-        }, true);
     }
 
     // 手动上报错误（供模块调用）
@@ -121,6 +142,9 @@ class ErrorHandler {
             userMessage = '请求后端服务失败，请稍后重试。';
         } else if (errorInfo.type === 'unhandledrejection') {
             userMessage = '操作未能完成，请重试。';
+        } else if (errorInfo.type === 'resource' && errorInfo.tag === 'IMG') {
+            // 图片加载失败通常不影响核心功能，不提示
+            return;
         } else {
             return;
         }
@@ -141,6 +165,7 @@ class ErrorHandler {
             stack: this.maskSensitive(errorInfo.stack || ''),
             filename: this.maskSensitive(errorInfo.filename || ''),
             details: this.maskSensitive(errorInfo.details || ''),
+            src: this.maskSensitive(errorInfo.src || ''),
             url: window.location.href,
             userAgent: navigator.userAgent
         };
