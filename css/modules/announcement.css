@@ -95,7 +95,7 @@
     max-height: 350px;
 }
 
-/* 重要内容区域 - 浅红色平面背景（无边框） */
+/* 重要内容区域 - 浅红色平面背景，字体白色 */
 .focus-section {
     background: #fff0f0;
     padding: 8px 12px;
@@ -103,7 +103,7 @@
     border-radius: 6px;
 }
 .focus-content {
-    color: #dc2626;
+    color: #ffffff;
     font-size: 0.85rem;
     line-height: 1.5;
     margin: 0;
@@ -131,7 +131,7 @@
     gap: 6px;
 }
 .updates-title i {
-    color: var(--primary-color, #4361ee);
+    color: #10b981;
     font-size: 13px;
 }
 .announcement-full-content {
@@ -248,13 +248,13 @@
     background: rgba(220, 38, 38, 0.15);
 }
 .dark-mode .focus-content {
-    color: #f87171;
+    color: #ffffff;
 }
 .dark-mode .updates-title {
     color: var(--text-primary);
 }
 .dark-mode .updates-title i {
-    color: var(--primary-color);
+    color: #34d399;
 }
 .dark-mode .announcement-full-content {
     color: var(--text-secondary);
