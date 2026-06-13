@@ -74,7 +74,6 @@ class AnnouncementModule {
             return;
         }
 
-        // 使用 innerHTML 直接显示富文本内容（后台编辑的HTML结构）
         const title = this.escapeHtml(this.currentAnnouncement.title);
         const contentHtml = this.currentAnnouncement.content || '<div class="focus-content">暂无详细内容</div>';
         const time = this.escapeHtml(this.currentAnnouncement.time);
