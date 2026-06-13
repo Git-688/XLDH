@@ -368,13 +368,6 @@
                         <div class="greeting-text">
                             <h1 id="greeting">下午好!</h1>
                         </div>
-                        <!-- 节日区域：主要节日 + 次要节日列表 -->
-                        <div class="holidays-container">
-                            <div class="countdown-holiday">
-                                <div id="primaryHolidayContainer" class="primary-holiday"></div>
-                            </div>
-                            <div id="secondaryHolidaysList" class="secondary-holidays-list" style="display: none;"></div>
-                        </div>
                     </div>
                     <div class="datetime" id="datetime">
                         <div class="datetime-row">
@@ -384,8 +377,21 @@
                         <div id="currentDate">2024年1月15日 星期一</div>
                     </div>
                 </div>
-                <div class="fish-section"><button class="fish-btn" data-type="merit" aria-label="功德"><i class="fas fa-hands-praying"></i><span class="fish-count" id="meritCount">0</span></button><button class="fish-btn" data-type="luck" aria-label="幸运"><i class="fas fa-clover"></i><span class="fish-count" id="luckCount">0</span></button><button class="fish-btn" data-type="wealth" aria-label="财富"><i class="fas fa-coins"></i><span class="fish-count" id="wealthCount">0</span></button><button class="fish-btn" data-type="health" aria-label="健康"><i class="fas fa-heart"></i><span class="fish-count" id="healthCount">0</span></button></div>
-            </div><a href="./pages/others/sq.html" class="bookmark-btn" aria-label="我的书签" target="_blank"><i class="fas fa-bookmark"></i><span>我的书签</span></a>
+                <!-- 节日容器：移至问候语和木鱼之间，紧邻木鱼上方 -->
+                <div class="holidays-container" id="holidaysContainer">
+                    <div class="countdown-holiday">
+                        <div id="primaryHolidayContainer" class="primary-holiday"></div>
+                    </div>
+                    <div id="secondaryHolidaysList" class="secondary-holidays-list" style="display: none;"></div>
+                </div>
+                <div class="fish-section">
+                    <button class="fish-btn" data-type="merit" aria-label="功德"><i class="fas fa-hands-praying"></i><span class="fish-count" id="meritCount">0</span></button>
+                    <button class="fish-btn" data-type="luck" aria-label="幸运"><i class="fas fa-clover"></i><span class="fish-count" id="luckCount">0</span></button>
+                    <button class="fish-btn" data-type="wealth" aria-label="财富"><i class="fas fa-coins"></i><span class="fish-count" id="wealthCount">0</span></button>
+                    <button class="fish-btn" data-type="health" aria-label="健康"><i class="fas fa-heart"></i><span class="fish-count" id="healthCount">0</span></button>
+                </div>
+            </div>
+            <a href="./pages/others/sq.html" class="bookmark-btn" aria-label="我的书签" target="_blank"><i class="fas fa-bookmark"></i><span>我的书签</span></a>
         </div>
     </section>
     <section class="minimal-tags-section">
