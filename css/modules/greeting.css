@@ -401,3 +401,77 @@
 .dark-mode #holidayCountdown.status-7days { background: rgba(139, 92, 246, 0.8) !important; }
 .dark-mode #holidayCountdown.status-more { background: rgba(67, 97, 238, 0.8) !important; }
 .dark-mode #holidayCountdown.status-unknown { background: rgba(108, 117, 125, 0.8) !important; }
+
+/* 次要节日列表样式 */
+.secondary-holidays-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color, #e9ecef);
+}
+.secondary-holiday-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(67, 97, 238, 0.08);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    color: var(--text-primary, #2b2d42);
+}
+.secondary-name {
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.secondary-countdown {
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 10px;
+    background: rgba(0,0,0,0.05);
+}
+.secondary-countdown.status-active {
+    background: #10b981;
+    color: white;
+}
+.secondary-countdown.status-1day {
+    background: #f59e0b;
+    color: white;
+}
+.secondary-countdown.status-3days {
+    background: #f97316;
+    color: white;
+}
+.secondary-countdown.status-7days {
+    background: #3b82f6;
+    color: white;
+}
+.secondary-empty {
+    font-size: 11px;
+    color: var(--text-secondary, #6c757d);
+    opacity: 0.7;
+}
+
+/* 深色模式适配 */
+.dark-mode .secondary-holiday-item {
+    background: rgba(123, 156, 255, 0.15);
+}
+.dark-mode .secondary-countdown {
+    background: rgba(255,255,255,0.1);
+}
+.dark-mode .secondary-countdown.status-active {
+    background: #0da271;
+}
+.dark-mode .secondary-countdown.status-1day {
+    background: #d97706;
+}
+.dark-mode .secondary-countdown.status-3days {
+    background: #ea580c;
+}
+.dark-mode .secondary-countdown.status-7days {
+    background: #2563eb;
+}
