@@ -1,5 +1,5 @@
-// admin.js - 星聚导航后台管理（适配简约登录界面）
-// 修复：登录后正确隐藏 loginWrapper，显示 mainContent
+// admin.js - 星聚导航后台管理（适配简约登录界面 + 单个公告编辑）
+// 修复：登录后正确显示管理界面，支持公告编辑（无列表），统一圆角 8px，滚动正常
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -17,7 +17,8 @@
     let refreshTimer = null;
     let customSelects = {};
 
-    let editingAnnouncementId = null;
+    // 公告编辑相关变量
+    let currentAnnouncementId = null;   // 当前编辑的公告ID，null表示新建
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -251,14 +252,13 @@
             const remember = document.getElementById('rememberToken').checked;
             saveToken(sessionToken, remember);
             await apiFetch('/admin/categories');
-            // 隐藏登录区域，显示主内容
             const loginWrapper = document.getElementById('loginWrapper');
             const mainContent = document.getElementById('mainContent');
             if (loginWrapper) loginWrapper.style.display = 'none';
             if (mainContent) mainContent.classList.remove('hidden');
-            // 清理登录表单（可选）
             document.getElementById('tokenInput').value = '';
             await loadAllData();
+            await loadAnnouncementForEdit(); // 加载公告数据
             showToast('登录成功' + (remember ? '（已记住密码）' : ''));
         } catch (e) {
             token = '';
@@ -270,12 +270,10 @@
     function logout() {
         token = '';
         clearToken();
-        // 显示登录区域，隐藏主内容
         const loginWrapper = document.getElementById('loginWrapper');
         const mainContent = document.getElementById('mainContent');
         if (loginWrapper) loginWrapper.style.display = 'flex';
         if (mainContent) mainContent.classList.add('hidden');
-        // 清空输入框
         const tokenInput = document.getElementById('tokenInput');
         if (tokenInput) tokenInput.value = '';
         showToast('已退出');
@@ -353,7 +351,213 @@
         `).join('');
     }
 
-    // ==================== 排序值自动计算 ====================
+    // ==================== 公告编辑（单个） ====================
+    async function loadAnnouncementForEdit() {
+        try {
+            const data = await apiFetch('/admin/announcements');
+            if (data && data.length > 0) {
+                const ann = data[0]; // 取最新的公告
+                currentAnnouncementId = ann.id;
+                document.getElementById('annTitle').value = ann.title;
+                document.getElementById('annContent').value = ann.content;
+                document.getElementById('annActive').checked = ann.is_active === 1;
+                document.getElementById('annCreatedAt').value = new Date(ann.created_at).toLocaleString();
+            } else {
+                currentAnnouncementId = null;
+                document.getElementById('annTitle').value = '';
+                document.getElementById('annContent').value = '';
+                document.getElementById('annActive').checked = false;
+                document.getElementById('annCreatedAt').value = '未发布';
+            }
+        } catch (e) {
+            console.error('加载公告失败', e);
+            showToast('加载公告失败', 'error');
+        }
+    }
+
+    async function publishAnnouncement() {
+        const title = document.getElementById('annTitle').value.trim();
+        const content = document.getElementById('annContent').value.trim();
+        const is_active = document.getElementById('annActive').checked ? 1 : 0;
+        if (!title || !content) {
+            showToast('标题和内容不能为空', 'error');
+            return;
+        }
+        try {
+            if (currentAnnouncementId) {
+                // 更新现有公告
+                await apiFetch(`/admin/announcements/${currentAnnouncementId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ title, content, is_active })
+                });
+                showToast('公告已更新', 'success');
+            } else {
+                // 创建新公告
+                const result = await apiFetch('/admin/announcements', {
+                    method: 'POST',
+                    body: JSON.stringify({ title, content, is_active })
+                });
+                currentAnnouncementId = result.id;
+                showToast('公告已发布', 'success');
+            }
+            // 刷新显示时间
+            if (currentAnnouncementId) {
+                const updated = await apiFetch('/admin/announcements');
+                const ann = updated.find(a => a.id === currentAnnouncementId);
+                if (ann) document.getElementById('annCreatedAt').value = new Date(ann.created_at).toLocaleString();
+            }
+        } catch (err) {
+            showToast('操作失败', 'error');
+        }
+    }
+
+    function clearAnnouncementForm() {
+        document.getElementById('annTitle').value = '';
+        document.getElementById('annContent').value = '';
+        document.getElementById('annActive').checked = false;
+        document.getElementById('annCreatedAt').value = '未发布';
+        currentAnnouncementId = null;
+        showToast('表单已清空', 'info');
+    }
+
+    function cancelAnnouncementEdit() {
+        // 重置为当前已保存的状态
+        loadAnnouncementForEdit();
+        showToast('已取消修改', 'info');
+    }
+
+    // ==================== 分类/子分类/网站管理 ====================
+    function handleModifyCategory(id, currentName) {
+        const cat = categories.find(c => c.id === id);
+        const currentOrder = cat?.display_order || 0;
+        openModal('修改分类', `
+            <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}" style="width:100%; padding:6px; font-size:12px;"></div>
+            <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>
+        `, async () => {
+            const name = document.getElementById('mName').value.trim();
+            const order = parseInt(document.getElementById('mOrder').value) || 0;
+            if (!name) { showToast('名称不能为空', 'error'); return; }
+            await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
+            showToast('修改成功'); await loadAllData();
+        }, true, async () => { 
+            await apiFetch(`/admin/categories/${id}`, { method:'DELETE' }); 
+            showToast('分类已删除'); await loadAllData(); 
+        });
+    }
+
+    function handleModifySub(id, currentName) {
+        const sub = subcategories.find(s => s.id === id);
+        const currentOrder = sub?.display_order || 0;
+        openModal('修改子分类', `
+            <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}" style="width:100%; padding:6px; font-size:12px;"></div>
+            <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>
+        `, async () => {
+            const name = document.getElementById('mName').value.trim();
+            const order = parseInt(document.getElementById('mOrder').value) || 0;
+            if (!name) { showToast('名称不能为空', 'error'); return; }
+            await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
+            showToast('修改成功'); await loadAllData();
+        }, true, async () => { 
+            await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); 
+            showToast('子分类已删除'); await loadAllData(); 
+        });
+    }
+
+    async function handleEditSite(id) {
+        const site = sites.find(s => s.id === id);
+        if (!site) return;
+        openModal('编辑链接',
+            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">标题</label><input id="mTitle" class="form-input" value="${escapeHtml(site.title)}" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">网址</label><div style="display:flex; gap:4px;"><input id="mUrl" class="form-input" value="${escapeHtml(site.url)}" style="flex:1; padding:6px; font-size:12px;"><button type="button" id="fetchInfoBtn" class="fetch-info-btn" style="padding:4px 10px;">获取信息</button></div></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">图标</label><input id="mIcon" class="form-input" value="${escapeHtml(site.icon||'fas fa-link')}" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%; padding:6px; font-size:12px;">${escapeHtml(site.description||'')}</textarea></div>
+             <div class="form-row"><label style="font-size:11px;">排序值</label><input type="number" id="mSort" class="form-input" value="${site.display_order}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>`,
+            async () => {
+                const title = document.getElementById('mTitle').value.trim();
+                const url = document.getElementById('mUrl').value.trim();
+                if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
+                if (!checkUrl(url)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
+                await apiFetch(`/admin/sites/${id}`, { method:'PUT', body: JSON.stringify({
+                    title, url, description: document.getElementById('mDesc').value,
+                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
+                })});
+                showToast('修改成功'); await loadAllData();
+            }, true,
+            async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); showToast('删除成功'); await loadAllData(); }
+        );
+        setTimeout(() => {
+            const descTextarea = document.getElementById('mDesc');
+            if (descTextarea) {
+                autoResizeTextarea(descTextarea);
+                descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
+            }
+            const fetchBtn = document.getElementById('fetchInfoBtn');
+            if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
+        }, 50);
+    }
+
+    async function handleAddCategory() {
+        const nextOrder = await getNextSortValue('category');
+        openModal('新增一级分类',
+            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>`,
+            async () => {
+                const name = document.getElementById('mName').value.trim();
+                if (!name) { showToast('名称不能为空', 'error'); return; }
+                await apiFetch('/admin/categories', { method:'POST', body: JSON.stringify({ name, display_order: +document.getElementById('mSort').value }) });
+                showToast('添加成功'); await loadAllData();
+            }
+        );
+    }
+
+    async function handleAddSub() {
+        if (!currentCat) { showToast('请先选择一级分类', 'error'); return; }
+        const nextOrder = await getNextSortValue('subcategory', currentCat);
+        openModal('新增子分类',
+            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>`,
+            async () => {
+                const name = document.getElementById('mName').value.trim();
+                if (!name) { showToast('名称不能为空', 'error'); return; }
+                await apiFetch('/admin/subcategories', { method:'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('mSort').value }) });
+                showToast('添加成功'); await loadAllData();
+            }
+        );
+    }
+
+    async function handleAddSite() {
+        if (!currentSub) { showToast('请先选择子分类', 'error'); return; }
+        const nextOrder = await getNextSortValue('site', currentSub);
+        openModal('新增链接',
+            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">标题</label><input id="mTitle" class="form-input" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">网址</label><div style="display:flex; gap:4px;"><input id="mUrl" class="form-input" style="flex:1; padding:6px; font-size:12px;"><button type="button" id="fetchInfoBtn" class="fetch-info-btn" style="padding:4px 10px;">获取信息</button></div></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">图标</label><input id="mIcon" class="form-input" value="fas fa-link" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%; padding:6px; font-size:12px;"></textarea></div>
+             <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>`,
+            async () => {
+                const title = document.getElementById('mTitle').value.trim();
+                const url = document.getElementById('mUrl').value.trim();
+                if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
+                if (!checkUrl(url)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
+                await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
+                    subcategory_id: currentSub, title, url, description: document.getElementById('mDesc').value,
+                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
+                })});
+                showToast('添加成功'); await loadAllData();
+            }
+        );
+        setTimeout(() => {
+            const descTextarea = document.getElementById('mDesc');
+            if (descTextarea) {
+                autoResizeTextarea(descTextarea);
+                descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
+            }
+            const fetchBtn = document.getElementById('fetchInfoBtn');
+            if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
+        }, 50);
+    }
+
+    // ==================== 排序值辅助 ====================
     async function getNextSortValue(type, parentId = null) {
         try {
             let maxOrder = 0;
@@ -373,115 +577,183 @@
         } catch { return 0; }
     }
 
-    // ==================== 公告管理 ====================
-    async function loadAnnouncements() {
-        const list = document.getElementById('announcementsList');
-        if (!list) return;
+    // ==================== 点击排行、反馈、投稿 ====================
+    async function loadRanking() {
+        const list = document.getElementById('rankList');
         list.innerHTML = '<div class="empty">加载中...</div>';
         try {
-            const data = await apiFetch('/admin/announcements');
-            if (!data.length) {
-                list.innerHTML = '<div class="empty">暂无公告，点击“新建公告”添加</div>';
-                return;
-            }
+            const data = await apiFetch('/admin/topclicks?limit=20');
+            if (!data.length) { list.innerHTML = '<div class="empty">暂无数据</div>'; return; }
             list.innerHTML = data.map(item => `
-                <div class="announcement-item" data-id="${item.id}">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <strong style="font-size:13px;">${escapeHtml(item.title)}</strong>
-                        <div>
-                            <span class="announcement-status ${item.is_active ? 'status-active' : 'status-inactive'}">${item.is_active ? '已启用' : '已停用'}</span>
-                            <button class="sm primary edit-announcement-btn" data-id="${item.id}" style="margin-left:8px;">编辑</button>
-                        </div>
-                    </div>
-                    <div class="announcement-content">${escapeHtml(item.content)}</div>
-                    <div style="font-size:10px; color:#999; margin-top:6px;">创建: ${new Date(item.created_at).toLocaleString()}</div>
+                <div class="link-item">
+                    <div class="link-info"><strong>${escapeHtml(item.title)}</strong></div>
+                    <span class="badge badge-blue">${item.count}次</span>
                 </div>
             `).join('');
-            document.querySelectorAll('.edit-announcement-btn').forEach(btn => {
-                btn.addEventListener('click', () => openAnnouncementModal(parseInt(btn.dataset.id)));
+        } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
+    }
+
+    async function loadFeedback() {
+        const list = document.getElementById('feedbackList');
+        list.innerHTML = '<div class="empty">加载中...</div>';
+        try {
+            const data = await apiFetch('/admin/dead-link-reports');
+            if (!data.length) { list.innerHTML = '<div class="empty">暂无反馈</div>'; return; }
+            const today = new Date(); today.setHours(0,0,0,0);
+            const yesterday = new Date(today); yesterday.setDate(yesterday.getDate()-1);
+            const groups = { today:[], yesterday:[], older:[] };
+            data.forEach(item => {
+                const d = new Date(item.report_time); d.setHours(0,0,0,0);
+                if (d.getTime()===today.getTime()) groups.today.push(item);
+                else if (d.getTime()===yesterday.getTime()) groups.yesterday.push(item);
+                else groups.older.push(item);
             });
-        } catch (e) {
-            list.innerHTML = '<div class="empty">加载失败</div>';
+            let html = '';
+            const renderItems = (items) => items.map(item => `
+                <div class="link-item">
+                    <div class="link-info"><strong>${escapeHtml(item.title||'无标题')}</strong><div style="font-size:10px;color:#999">来自 ${escapeHtml(item.reporter_ip)} 于 ${new Date(item.report_time).toLocaleString()}</div></div>
+                    <div class="link-actions">
+                        <button class="sm primary" data-action="replaceLink" data-reportid="${item.id}" data-siteid="${item.site_id||0}" data-url="${escapeHtml(item.url)}" data-title="${escapeHtml(item.title||'')}">更换链接</button>
+                    </div>
+                </div>
+            `).join('');
+            if (groups.today.length) html += `<div class="feedback-date-group"><h4 style="font-size:12px;">📅 今天</h4>${renderItems(groups.today)}</div>`;
+            if (groups.yesterday.length) html += `<div class="feedback-date-group"><h4 style="font-size:12px;">📅 昨天</h4>${renderItems(groups.yesterday)}</div>`;
+            if (groups.older.length) html += `<div class="feedback-date-group"><h4 style="font-size:12px;">📅 更早</h4>${renderItems(groups.older)}</div>`;
+            list.innerHTML = html;
+            list.querySelectorAll('[data-action="replaceLink"]').forEach(btn => btn.addEventListener('click', replaceLinkHandler));
+        } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
+    }
+
+    async function replaceLinkHandler(e) {
+        const btn = e.currentTarget;
+        const reportId = parseInt(btn.dataset.reportid);
+        const siteId = parseInt(btn.dataset.siteid);
+        if (!siteId) { showToast('未找到网站记录', 'error'); return; }
+        const site = sites.find(s => s.id === siteId);
+        if (!site) { showToast('未找到网站记录', 'error'); return; }
+        openModal('更换链接',
+            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">标题</label><input id="mTitle" class="form-input" value="${escapeHtml(site.title)}" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">网址</label><input id="mUrl" class="form-input" value="${escapeHtml(site.url)}" style="width:100%; padding:6px; font-size:12px;"></div>
+             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%; padding:6px; font-size:12px;">${escapeHtml(site.description||'')}</textarea></div>
+             <div class="form-row"><label style="font-size:11px;">图标</label><input id="mIcon" class="form-input" value="${escapeHtml(site.icon||'fas fa-link')}" style="width:100%; padding:6px; font-size:12px;"></div>`,
+            async () => {
+                const newTitle = document.getElementById('mTitle').value.trim();
+                const newUrl = document.getElementById('mUrl').value.trim();
+                if (!newTitle || !newUrl) { showToast('标题和网址不能为空', 'error'); return; }
+                if (!checkUrl(newUrl)) { showToast('网址格式错误', 'error'); return; }
+                await apiFetch('/admin/replace-link', {
+                    method: 'POST',
+                    body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value })
+                });
+                showToast('链接已更新', 'success');
+                await loadFeedback();
+                await loadAllData();
+                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+                closeModal();
+            }
+        );
+        setTimeout(() => {
+            const descTextarea = document.getElementById('mDesc');
+            if (descTextarea) {
+                autoResizeTextarea(descTextarea);
+                descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
+            }
+        }, 50);
+    }
+
+    async function exportFullData() {
+        try {
+            const response = await fetch(`${API_BASE}/admin/export`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('导出失败');
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `navigation_full_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('导出成功', 'success');
+        } catch (err) {
+            showToast('导出失败', 'error');
         }
     }
 
-    async function openAnnouncementModal(id = null) {
-        const modal = document.getElementById('announcementDetailModal');
-        const titleEl = document.getElementById('announcementModalTitle');
-        const formContainer = document.getElementById('announcementFormContainer');
-        const deleteBtn = document.getElementById('announcementDeleteBtn');
-        
-        if (id) {
-            editingAnnouncementId = id;
-            const data = await apiFetch('/admin/announcements');
-            const item = data.find(a => a.id === id);
-            if (!item) { showToast('公告不存在', 'error'); return; }
-            titleEl.textContent = '编辑公告';
-            deleteBtn.style.display = 'inline-flex';
-            formContainer.innerHTML = `
-                <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">标题</label><input type="text" id="annTitle" value="${escapeHtml(item.title)}" style="width:100%; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></div>
-                <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">内容</label><textarea id="annContent" rows="4" style="width:100%; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;">${escapeHtml(item.content)}</textarea></div>
-                <div class="form-row"><label style="font-size:11px;"><input type="checkbox" id="annActive" ${item.is_active ? 'checked' : ''}> 启用公告（前端显示）</label></div>
-            `;
-            const newDeleteBtn = deleteBtn.cloneNode(true);
-            deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
-            newDeleteBtn.onclick = async () => {
-                if (!confirm('确定删除该公告？')) return;
-                await apiFetch(`/admin/announcements/${id}`, { method: 'DELETE' });
-                showToast('公告已删除', 'success');
-                modal.classList.remove('show');
-                await loadAnnouncements();
-            };
-        } else {
-            editingAnnouncementId = null;
-            titleEl.textContent = '新建公告';
-            deleteBtn.style.display = 'none';
-            formContainer.innerHTML = `
-                <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">标题</label><input type="text" id="annTitle" placeholder="公告标题" style="width:100%; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></div>
-                <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">内容</label><textarea id="annContent" rows="4" placeholder="公告内容..." style="width:100%; padding:6px; font-size:12px; border-radius:8px; border:1px solid #e2e8f0;"></textarea></div>
-                <div class="form-row"><label style="font-size:11px;"><input type="checkbox" id="annActive" checked> 启用公告</label></div>
-            `;
+    async function importData() {
+        const fileInput = document.getElementById('importFile');
+        const mode = document.getElementById('importMode').value;
+        if (!fileInput.files || !fileInput.files[0]) {
+            showToast('请选择 JSON 文件', 'warn');
+            return;
         }
-        modal.classList.add('show');
-        
-        const saveBtn = document.getElementById('announcementSaveBtn');
-        const cancelBtn = document.getElementById('announcementCancelBtn');
-        const closeBtn = document.getElementById('closeAnnouncementModalBtn');
-        const saveHandler = async () => {
-            const title = document.getElementById('annTitle').value.trim();
-            const content = document.getElementById('annContent').value.trim();
-            const is_active = document.getElementById('annActive').checked ? 1 : 0;
-            if (!title || !content) { showToast('标题和内容不能为空', 'error'); return; }
-            saveBtn.disabled = true;
-            saveBtn.textContent = '保存中...';
-            try {
-                if (editingAnnouncementId) {
-                    await apiFetch(`/admin/announcements/${editingAnnouncementId}`, {
-                        method: 'PUT',
-                        body: JSON.stringify({ title, content, is_active })
-                    });
-                    showToast('公告已更新', 'success');
-                } else {
-                    await apiFetch('/admin/announcements', {
-                        method: 'POST',
-                        body: JSON.stringify({ title, content, is_active })
-                    });
-                    showToast('公告已创建', 'success');
-                }
-                modal.classList.remove('show');
-                await loadAnnouncements();
-            } catch (err) {
-                showToast('操作失败', 'error');
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.textContent = '保存';
+        const file = fileInput.files[0];
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('文件不能超过 10MB', 'error');
+            return;
+        }
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            if (!data.categories || !data.subcategories || !data.sites) {
+                showToast('无效的导入文件格式', 'error');
+                return;
             }
-        };
-        const closeModalFn = () => modal.classList.remove('show');
-        saveBtn.onclick = saveHandler;
-        cancelBtn.onclick = closeModalFn;
-        closeBtn.onclick = closeModalFn;
-        modal.onclick = (e) => { if (e.target === modal) closeModalFn(); };
+            const confirmMsg = mode === 'overwrite' ? '覆盖模式将清空现有数据，确定继续吗？' : '合并模式将更新/添加数据，确定继续吗？';
+            if (!confirm(confirmMsg)) return;
+            const response = await fetch(`${API_BASE}/admin/import`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ mode, data })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                showToast('导入成功', 'success');
+                await loadAllData();
+                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+                closeImportModal();
+            } else {
+                showToast(result.error || '导入失败', 'error');
+            }
+        } catch (err) {
+            showToast('导入失败: ' + err.message, 'error');
+        }
+    }
+
+    function openImportModal() {
+        const modal = document.getElementById('importModal');
+        modal.classList.add('show');
+        document.getElementById('importFile').value = '';
+    }
+
+    function closeImportModal() {
+        const modal = document.getElementById('importModal');
+        modal.classList.remove('show');
+    }
+
+    async function loadSubmissions() {
+        const list = document.getElementById('submissionsList');
+        list.innerHTML = '<div class="empty">加载中...</div>';
+        try {
+            const data = await apiFetch('/admin/submissions');
+            if (!data.length) {
+                list.innerHTML = '<div class="empty">暂无待审核网站</div>';
+                return;
+            }
+            list.innerHTML = data.map(item => `
+                <div class="link-item" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span><strong class="submission-title-truncate" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</strong></span>
+                    <button class="sm primary" data-action="viewSubmission" data-id="${item.id}">查看</button>
+                </div>
+            `).join('');
+            list.querySelectorAll('[data-action="viewSubmission"]').forEach(btn => {
+                btn.addEventListener('click', () => openSubmissionDetail(btn.dataset.id));
+            });
+        } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
     // ==================== 投稿详情模态框 ====================
@@ -668,405 +940,6 @@
         } catch (err) { showToast('加载详情失败', 'error'); }
     }
 
-    // ==================== 分类/子分类/网站管理 ====================
-    function handleModifyCategory(id, currentName) {
-        const cat = categories.find(c => c.id === id);
-        const currentOrder = cat?.display_order || 0;
-        openModal('修改分类', `
-            <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}" style="width:100%; padding:6px; font-size:12px;"></div>
-            <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>
-        `, async () => {
-            const name = document.getElementById('mName').value.trim();
-            const order = parseInt(document.getElementById('mOrder').value) || 0;
-            if (!name) { showToast('名称不能为空', 'error'); return; }
-            await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
-            showToast('修改成功'); await loadAllData();
-        }, true, async () => { 
-            await apiFetch(`/admin/categories/${id}`, { method:'DELETE' }); 
-            showToast('分类已删除'); await loadAllData(); 
-        });
-    }
-
-    function handleModifySub(id, currentName) {
-        const sub = subcategories.find(s => s.id === id);
-        const currentOrder = sub?.display_order || 0;
-        openModal('修改子分类', `
-            <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}" style="width:100%; padding:6px; font-size:12px;"></div>
-            <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>
-        `, async () => {
-            const name = document.getElementById('mName').value.trim();
-            const order = parseInt(document.getElementById('mOrder').value) || 0;
-            if (!name) { showToast('名称不能为空', 'error'); return; }
-            await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
-            showToast('修改成功'); await loadAllData();
-        }, true, async () => { 
-            await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); 
-            showToast('子分类已删除'); await loadAllData(); 
-        });
-    }
-
-    async function handleEditSite(id) {
-        const site = sites.find(s => s.id === id);
-        if (!site) return;
-        openModal('编辑链接',
-            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">标题</label><input id="mTitle" class="form-input" value="${escapeHtml(site.title)}" style="width:100%; padding:6px; font-size:12px;"></div>
-             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">网址</label><div style="display:flex; gap:4px;"><input id="mUrl" class="form-input" value="${escapeHtml(site.url)}" style="flex:1; padding:6px; font-size:12px;"><button type="button" id="fetchInfoBtn" class="fetch-info-btn" style="padding:4px 10px;">获取信息</button></div></div>
-             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">图标</label><input id="mIcon" class="form-input" value="${escapeHtml(site.icon||'fas fa-link')}" style="width:100%; padding:6px; font-size:12px;"></div>
-             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%; padding:6px; font-size:12px;">${escapeHtml(site.description||'')}</textarea></div>
-             <div class="form-row"><label style="font-size:11px;">排序值</label><input type="number" id="mSort" class="form-input" value="${site.display_order}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>`,
-            async () => {
-                const title = document.getElementById('mTitle').value.trim();
-                const url = document.getElementById('mUrl').value.trim();
-                if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
-                if (!checkUrl(url)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
-                await apiFetch(`/admin/sites/${id}`, { method:'PUT', body: JSON.stringify({
-                    title, url, description: document.getElementById('mDesc').value,
-                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
-                })});
-                showToast('修改成功'); await loadAllData();
-            }, true,
-            async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); showToast('删除成功'); await loadAllData(); }
-        );
-        setTimeout(() => {
-            const descTextarea = document.getElementById('mDesc');
-            if (descTextarea) {
-                autoResizeTextarea(descTextarea);
-                descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
-            }
-            const fetchBtn = document.getElementById('fetchInfoBtn');
-            if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
-        }, 50);
-    }
-
-    async function handleAddCategory() {
-        const nextOrder = await getNextSortValue('category');
-        openModal('新增一级分类',
-            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" style="width:100%; padding:6px; font-size:12px;"></div>
-             <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>`,
-            async () => {
-                const name = document.getElementById('mName').value.trim();
-                if (!name) { showToast('名称不能为空', 'error'); return; }
-                await apiFetch('/admin/categories', { method:'POST', body: JSON.stringify({ name, display_order: +document.getElementById('mSort').value }) });
-                showToast('添加成功'); await loadAllData();
-            }
-        );
-    }
-
-    async function handleAddSub() {
-        if (!currentCat) { showToast('请先选择一级分类', 'error'); return; }
-        const nextOrder = await getNextSortValue('subcategory', currentCat);
-        openModal('新增子分类',
-            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" style="width:100%; padding:6px; font-size:12px;"></div>
-             <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>`,
-            async () => {
-                const name = document.getElementById('mName').value.trim();
-                if (!name) { showToast('名称不能为空', 'error'); return; }
-                await apiFetch('/admin/subcategories', { method:'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('mSort').value }) });
-                showToast('添加成功'); await loadAllData();
-            }
-        );
-    }
-
-    async function handleAddSite() {
-        if (!currentSub) { showToast('请先选择子分类', 'error'); return; }
-        const nextOrder = await getNextSortValue('site', currentSub);
-        openModal('新增链接',
-            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">标题</label><input id="mTitle" class="form-input" style="width:100%; padding:6px; font-size:12px;"></div>
-             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">网址</label><div style="display:flex; gap:4px;"><input id="mUrl" class="form-input" style="flex:1; padding:6px; font-size:12px;"><button type="button" id="fetchInfoBtn" class="fetch-info-btn" style="padding:4px 10px;">获取信息</button></div></div>
-             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">图标</label><input id="mIcon" class="form-input" value="fas fa-link" style="width:100%; padding:6px; font-size:12px;"></div>
-             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%; padding:6px; font-size:12px;"></textarea></div>
-             <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1" style="width:100%; padding:6px; font-size:12px;"></div>`,
-            async () => {
-                const title = document.getElementById('mTitle').value.trim();
-                const url = document.getElementById('mUrl').value.trim();
-                if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
-                if (!checkUrl(url)) { showToast('网址格式错误，仅支持 http/https', 'error'); return; }
-                await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
-                    subcategory_id: currentSub, title, url, description: document.getElementById('mDesc').value,
-                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
-                })});
-                showToast('添加成功'); await loadAllData();
-            }
-        );
-        setTimeout(() => {
-            const descTextarea = document.getElementById('mDesc');
-            if (descTextarea) {
-                autoResizeTextarea(descTextarea);
-                descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
-            }
-            const fetchBtn = document.getElementById('fetchInfoBtn');
-            if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
-        }, 50);
-    }
-
-    // ==================== 点击排行、反馈等 ====================
-    async function loadRanking() {
-        const list = document.getElementById('rankList');
-        list.innerHTML = '<div class="empty">加载中...</div>';
-        try {
-            const data = await apiFetch('/admin/topclicks?limit=20');
-            if (!data.length) { list.innerHTML = '<div class="empty">暂无数据</div>'; return; }
-            list.innerHTML = data.map(item => `
-                <div class="link-item">
-                    <div class="link-info"><strong>${escapeHtml(item.title)}</strong></div>
-                    <span class="badge badge-blue">${item.count}次</span>
-                </div>
-            `).join('');
-        } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
-    }
-
-    async function loadFeedback() {
-        const list = document.getElementById('feedbackList');
-        list.innerHTML = '<div class="empty">加载中...</div>';
-        try {
-            const data = await apiFetch('/admin/dead-link-reports');
-            if (!data.length) { list.innerHTML = '<div class="empty">暂无反馈</div>'; return; }
-            const today = new Date(); today.setHours(0,0,0,0);
-            const yesterday = new Date(today); yesterday.setDate(yesterday.getDate()-1);
-            const groups = { today:[], yesterday:[], older:[] };
-            data.forEach(item => {
-                const d = new Date(item.report_time); d.setHours(0,0,0,0);
-                if (d.getTime()===today.getTime()) groups.today.push(item);
-                else if (d.getTime()===yesterday.getTime()) groups.yesterday.push(item);
-                else groups.older.push(item);
-            });
-            let html = '';
-            const renderItems = (items) => items.map(item => `
-                <div class="link-item">
-                    <div class="link-info"><strong>${escapeHtml(item.title||'无标题')}</strong><div style="font-size:10px;color:#999">来自 ${escapeHtml(item.reporter_ip)} 于 ${new Date(item.report_time).toLocaleString()}</div></div>
-                    <div class="link-actions">
-                        <button class="sm primary" data-action="replaceLink" data-reportid="${item.id}" data-siteid="${item.site_id||0}" data-url="${escapeHtml(item.url)}" data-title="${escapeHtml(item.title||'')}">更换链接</button>
-                    </div>
-                </div>
-            `).join('');
-            if (groups.today.length) html += `<div class="feedback-date-group"><h4 style="font-size:12px;">📅 今天</h4>${renderItems(groups.today)}</div>`;
-            if (groups.yesterday.length) html += `<div class="feedback-date-group"><h4 style="font-size:12px;">📅 昨天</h4>${renderItems(groups.yesterday)}</div>`;
-            if (groups.older.length) html += `<div class="feedback-date-group"><h4 style="font-size:12px;">📅 更早</h4>${renderItems(groups.older)}</div>`;
-            list.innerHTML = html;
-            list.querySelectorAll('[data-action="replaceLink"]').forEach(btn => btn.addEventListener('click', replaceLinkHandler));
-        } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
-    }
-
-    async function replaceLinkHandler(e) {
-        const btn = e.currentTarget;
-        const reportId = parseInt(btn.dataset.reportid);
-        const siteId = parseInt(btn.dataset.siteid);
-        if (!siteId) { showToast('未找到网站记录', 'error'); return; }
-        const site = sites.find(s => s.id === siteId);
-        if (!site) { showToast('未找到网站记录', 'error'); return; }
-        openModal('更换链接',
-            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">标题</label><input id="mTitle" class="form-input" value="${escapeHtml(site.title)}" style="width:100%; padding:6px; font-size:12px;"></div>
-             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">网址</label><input id="mUrl" class="form-input" value="${escapeHtml(site.url)}" style="width:100%; padding:6px; font-size:12px;"></div>
-             <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%; padding:6px; font-size:12px;">${escapeHtml(site.description||'')}</textarea></div>
-             <div class="form-row"><label style="font-size:11px;">图标</label><input id="mIcon" class="form-input" value="${escapeHtml(site.icon||'fas fa-link')}" style="width:100%; padding:6px; font-size:12px;"></div>`,
-            async () => {
-                const newTitle = document.getElementById('mTitle').value.trim();
-                const newUrl = document.getElementById('mUrl').value.trim();
-                if (!newTitle || !newUrl) { showToast('标题和网址不能为空', 'error'); return; }
-                if (!checkUrl(newUrl)) { showToast('网址格式错误', 'error'); return; }
-                await apiFetch('/admin/replace-link', {
-                    method: 'POST',
-                    body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value })
-                });
-                showToast('链接已更新', 'success');
-                await loadFeedback();
-                await loadAllData();
-                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
-                closeModal();
-            }
-        );
-        setTimeout(() => {
-            const descTextarea = document.getElementById('mDesc');
-            if (descTextarea) {
-                autoResizeTextarea(descTextarea);
-                descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
-            }
-        }, 50);
-    }
-
-    async function exportFullData() {
-        try {
-            const response = await fetch(`${API_BASE}/admin/export`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('导出失败');
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `navigation_full_${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('导出成功', 'success');
-        } catch (err) {
-            showToast('导出失败', 'error');
-        }
-    }
-
-    async function importData() {
-        const fileInput = document.getElementById('importFile');
-        const mode = document.getElementById('importMode').value;
-        if (!fileInput.files || !fileInput.files[0]) {
-            showToast('请选择 JSON 文件', 'warn');
-            return;
-        }
-        const file = fileInput.files[0];
-        if (file.size > 10 * 1024 * 1024) {
-            showToast('文件不能超过 10MB', 'error');
-            return;
-        }
-        try {
-            const text = await file.text();
-            const data = JSON.parse(text);
-            if (!data.categories || !data.subcategories || !data.sites) {
-                showToast('无效的导入文件格式', 'error');
-                return;
-            }
-            const confirmMsg = mode === 'overwrite' ? '覆盖模式将清空现有数据，确定继续吗？' : '合并模式将更新/添加数据，确定继续吗？';
-            if (!confirm(confirmMsg)) return;
-            const response = await fetch(`${API_BASE}/admin/import`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ mode, data })
-            });
-            const result = await response.json();
-            if (response.ok) {
-                showToast('导入成功', 'success');
-                await loadAllData();
-                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
-                closeImportModal();
-            } else {
-                showToast(result.error || '导入失败', 'error');
-            }
-        } catch (err) {
-            showToast('导入失败: ' + err.message, 'error');
-        }
-    }
-
-    function openImportModal() {
-        const modal = document.getElementById('importModal');
-        modal.classList.add('show');
-        document.getElementById('importFile').value = '';
-    }
-
-    function closeImportModal() {
-        const modal = document.getElementById('importModal');
-        modal.classList.remove('show');
-    }
-
-    async function loadSubmissions() {
-        const list = document.getElementById('submissionsList');
-        list.innerHTML = '<div class="empty">加载中...</div>';
-        try {
-            const data = await apiFetch('/admin/submissions');
-            if (!data.length) {
-                list.innerHTML = '<div class="empty">暂无待审核网站</div>';
-                return;
-            }
-            list.innerHTML = data.map(item => `
-                <div class="link-item" style="display:flex; justify-content:space-between; align-items:center;">
-                    <span><strong class="submission-title-truncate" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</strong></span>
-                    <button class="sm primary" data-action="viewSubmission" data-id="${item.id}">查看</button>
-                </div>
-            `).join('');
-            list.querySelectorAll('[data-action="viewSubmission"]').forEach(btn => {
-                btn.addEventListener('click', () => openSubmissionDetail(btn.dataset.id));
-            });
-        } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
-    }
-
-    // ==================== 事件绑定 ====================
-    function setupEventDelegation() {
-        document.getElementById('catBar').addEventListener('click', e => {
-            const btn = e.target.closest('[data-action]');
-            if (btn && btn.dataset.action === 'modifyCat') {
-                handleModifyCategory(parseInt(btn.dataset.id), btn.dataset.name);
-                return;
-            }
-            const item = e.target.closest('.cat-item');
-            if (item) selectCat(parseInt(item.dataset.cid));
-        });
-        document.getElementById('subList').addEventListener('click', e => {
-            const btn = e.target.closest('[data-action]');
-            if (btn && btn.dataset.action === 'modifySub') {
-                handleModifySub(parseInt(btn.dataset.id), btn.dataset.name);
-                return;
-            }
-            const item = e.target.closest('.sub-item');
-            if (item) selectSub(parseInt(item.dataset.sid));
-        });
-        document.getElementById('siteList').addEventListener('click', e => {
-            const btn = e.target.closest('[data-action]');
-            if (!btn) return;
-            if (btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
-        });
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-                btn.classList.add('active');
-                const tab = btn.dataset.tab;
-                document.getElementById(`${tab}Tab`).classList.remove('hidden');
-                if (tab === 'rank') loadRanking();
-                if (tab === 'feedback') loadFeedback();
-                if (tab === 'submissions') loadSubmissions();
-                if (tab === 'announcement') loadAnnouncements();
-            });
-        });
-        document.getElementById('loginBtn').addEventListener('click', login);
-        document.getElementById('logoutBtn').addEventListener('click', logout);
-        document.getElementById('addCategoryBtn').addEventListener('click', handleAddCategory);
-        document.getElementById('addSubBtn').addEventListener('click', handleAddSub);
-        document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
-        document.getElementById('exportBtn').addEventListener('click', exportFullData);
-        document.getElementById('importBtn').addEventListener('click', openImportModal);
-        document.getElementById('sortRankBtn').addEventListener('click', loadRanking);
-        document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
-        document.getElementById('refreshSubmissionsBtn').addEventListener('click', loadSubmissions);
-        document.getElementById('refreshAnnouncementBtn')?.addEventListener('click', loadAnnouncements);
-        document.getElementById('addAnnouncementBtn')?.addEventListener('click', () => openAnnouncementModal(null));
-        document.getElementById('refreshNavBtn').addEventListener('click', async () => {
-            try {
-                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
-                showToast('导航缓存已刷新', 'success');
-            } catch (err) { showToast('刷新失败', 'error'); }
-        });
-        document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
-        document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
-        const detailModal = document.getElementById('submissionDetailModal');
-        if (detailModal) {
-            const closeBtn = detailModal.querySelector('#closeDetailModalBtn');
-            if (closeBtn) closeBtn.onclick = () => {
-                if (customSelects.cat) { customSelects.cat.destroy(); delete customSelects.cat; }
-                if (customSelects.sub) { customSelects.sub.destroy(); delete customSelects.sub; }
-                detailModal.classList.remove('show');
-            };
-            detailModal.onclick = (e) => {
-                if (e.target === detailModal) {
-                    if (customSelects.cat) { customSelects.cat.destroy(); delete customSelects.cat; }
-                    if (customSelects.sub) { customSelects.sub.destroy(); delete customSelects.sub; }
-                    detailModal.classList.remove('show');
-                }
-            };
-        }
-        const importModal = document.getElementById('importModal');
-        if (importModal) {
-            const closeImport = () => closeImportModal();
-            document.getElementById('importCancelBtn').addEventListener('click', closeImport);
-            document.getElementById('importConfirmBtn').addEventListener('click', importData);
-            importModal.addEventListener('click', (e) => { if (e.target === importModal) closeImportModal(); });
-        }
-        const announcementModal = document.getElementById('announcementDetailModal');
-        if (announcementModal) {
-            announcementModal.addEventListener('click', (e) => {
-                if (e.target === announcementModal) announcementModal.classList.remove('show');
-            });
-        }
-    }
-
     // ==================== CustomSelect 类 ====================
     class CustomSelect {
         constructor(selectElement, onChange) {
@@ -1221,16 +1094,100 @@
                     .custom-select-option.selected { background: #0f172a; color: #38bdf8; }
                     .form-input { background: #1e293b; border-color: #334155; color: #e2e8f0; }
                 }
-                .announcement-content { max-height: 70px; overflow-y: auto; font-size: 11px; color: #475569; margin: 6px 0; }
-                .announcement-status { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 9px; }
-                .status-active { background: #dcfce7; color: #16a34a; }
-                .status-inactive { background: #fee2e2; color: #dc2626; }
                 @media (max-width: 768px) {
                     .content-layout { flex-direction: column !important; }
                     .sidebar, .main-content { width: 100% !important; margin-bottom: 12px; }
                 }
             `;
             document.head.appendChild(style);
+        }
+    }
+
+    // ==================== 事件绑定 ====================
+    function setupEventDelegation() {
+        document.getElementById('catBar').addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (btn && btn.dataset.action === 'modifyCat') {
+                handleModifyCategory(parseInt(btn.dataset.id), btn.dataset.name);
+                return;
+            }
+            const item = e.target.closest('.cat-item');
+            if (item) selectCat(parseInt(item.dataset.cid));
+        });
+        document.getElementById('subList').addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (btn && btn.dataset.action === 'modifySub') {
+                handleModifySub(parseInt(btn.dataset.id), btn.dataset.name);
+                return;
+            }
+            const item = e.target.closest('.sub-item');
+            if (item) selectSub(parseInt(item.dataset.sid));
+        });
+        document.getElementById('siteList').addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            if (btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
+        });
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+                btn.classList.add('active');
+                const tab = btn.dataset.tab;
+                document.getElementById(`${tab}Tab`).classList.remove('hidden');
+                if (tab === 'rank') loadRanking();
+                if (tab === 'feedback') loadFeedback();
+                if (tab === 'submissions') loadSubmissions();
+                if (tab === 'announcement') loadAnnouncementForEdit(); // 切换到公告页时加载数据
+            });
+        });
+        document.getElementById('loginBtn').addEventListener('click', login);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('addCategoryBtn').addEventListener('click', handleAddCategory);
+        document.getElementById('addSubBtn').addEventListener('click', handleAddSub);
+        document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
+        document.getElementById('exportBtn').addEventListener('click', exportFullData);
+        document.getElementById('importBtn').addEventListener('click', openImportModal);
+        document.getElementById('sortRankBtn').addEventListener('click', loadRanking);
+        document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
+        document.getElementById('refreshSubmissionsBtn').addEventListener('click', loadSubmissions);
+        document.getElementById('refreshNavBtn').addEventListener('click', async () => {
+            try {
+                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+                showToast('导航缓存已刷新', 'success');
+            } catch (err) { showToast('刷新失败', 'error'); }
+        });
+        // 公告编辑相关按钮
+        document.getElementById('annPublishBtn').addEventListener('click', publishAnnouncement);
+        document.getElementById('annClearBtn').addEventListener('click', clearAnnouncementForm);
+        document.getElementById('annCancelBtn').addEventListener('click', cancelAnnouncementEdit);
+
+        document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+        document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+
+        const detailModal = document.getElementById('submissionDetailModal');
+        if (detailModal) {
+            const closeBtn = detailModal.querySelector('#closeDetailModalBtn');
+            if (closeBtn) closeBtn.onclick = () => {
+                if (customSelects.cat) { customSelects.cat.destroy(); delete customSelects.cat; }
+                if (customSelects.sub) { customSelects.sub.destroy(); delete customSelects.sub; }
+                detailModal.classList.remove('show');
+            };
+            detailModal.onclick = (e) => {
+                if (e.target === detailModal) {
+                    if (customSelects.cat) { customSelects.cat.destroy(); delete customSelects.cat; }
+                    if (customSelects.sub) { customSelects.sub.destroy(); delete customSelects.sub; }
+                    detailModal.classList.remove('show');
+                }
+            };
+        }
+
+        const importModal = document.getElementById('importModal');
+        if (importModal) {
+            const closeImport = () => closeImportModal();
+            document.getElementById('importCancelBtn').addEventListener('click', closeImport);
+            document.getElementById('importConfirmBtn').addEventListener('click', importData);
+            importModal.addEventListener('click', (e) => { if (e.target === importModal) closeImportModal(); });
         }
     }
 
@@ -1246,11 +1203,11 @@
                 if (loginWrapper) loginWrapper.style.display = 'none';
                 if (mainContent) mainContent.classList.remove('hidden');
                 await loadAllData();
+                await loadAnnouncementForEdit();
                 startSessionRefresh();
             } catch (e) { logout(); }
         })();
     } else {
-        // 确保初始状态：登录区域可见，主内容隐藏
         const loginWrapper = document.getElementById('loginWrapper');
         const mainContent = document.getElementById('mainContent');
         if (loginWrapper) loginWrapper.style.display = 'flex';
