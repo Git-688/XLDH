@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>星聚导航后台管理</title>
     
-    <!-- CSP 严格策略 -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai;
@@ -18,18 +17,8 @@
     <meta http-equiv="X-Frame-Options" content="DENY">
 
     <style>
-        /* ========== 基础重置 ========== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            height: 100%;
-            overflow: hidden;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f7f8fa;
@@ -39,796 +28,80 @@
             flex-direction: column;
             padding: 10px;
         }
-
-        ::-webkit-scrollbar {
-            display: none;
-        }
-        * {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        .container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        .header-card {
-            background: #fff;
-            border-radius: 10px;
-            padding: 14px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border: 1px solid #f1f3f5;
-            flex-shrink: 0;
-        }
-
-        .main-card {
-            background: #fff;
-            border-radius: 10px;
-            padding: 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border: 1px solid #f1f3f5;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .flex-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-            flex-shrink: 0;
-        }
-
-        .tab-btn {
-            padding: 7px 14px;
-            border-radius: 7px;
-            background: #f1f5f9;
-            color: #64748b;
-            cursor: pointer;
-            font-size: 12px;
-            white-space: nowrap;
-            transition: all 0.2s;
-        }
-        .tab-btn.active {
-            background: #3b82f6;
-            color: #fff;
-        }
-        .tab-btn:hover {
-            background: #e2e8f0;
-        }
-
-        .cat-bar {
-            width: 100%;
-            padding: 10px 14px;
-            background: #f8fafc;
-            border-radius: 10px;
-            margin-bottom: 12px;
-            display: flex;
-            gap: 7px;
-            align-items: center;
-            overflow-x: auto;
-            flex-wrap: nowrap;
-            flex-shrink: 0;
-        }
-        .cat-item {
-            padding: 8px 15px;
-            border-radius: 7px;
-            background: #fff;
-            cursor: pointer;
-            white-space: nowrap;
-            font-weight: 500;
-            font-size: 12px;
-            transition: all .2s;
-            flex-shrink: 0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .cat-item.active {
-            background: #3b82f6;
-            color: #fff;
-        }
-        .cat-item .rename-text-btn {
-            background: #e2e8f0;
-            border: none;
-            cursor: pointer;
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 4px;
-            color: #475569;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-        .cat-item .rename-text-btn:hover {
-            background: #cbd5e1;
-            color: #1e293b;
-        }
-        .cat-item.active .rename-text-btn {
-            background: rgba(255,255,255,0.2);
-            color: #fff;
-        }
-
-        .tab-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .content-layout {
-            display: flex;
-            gap: 10px;
-            flex: 1;
-            min-height: 0;
-        }
-
-        .sidebar {
-            flex: 1;
-            background: #f8fafc;
-            border-radius: 10px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            min-width: 0;
-        }
-        .main-content {
-            flex: 1;
-            background: #f8fafc;
-            border-radius: 10px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            min-width: 0;
-        }
-
-        #addSubBtn, #addSiteBtn {
-            width: 100%;
-            height: 44px;
-            margin-bottom: 8px;
-            font-size: 12px;
-            border-radius: 7px;
-            background: #3b82f6;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            flex-shrink: 0;
-        }
-        #addSubBtn:hover, #addSiteBtn:hover {
-            background: #2563eb;
-        }
-
-        .sub-list, .site-list, .rank-list, .feedback-list, .submissions-list {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .sub-item, .link-item {
-            background: #fff;
-            border-radius: 7px;
-            padding: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            word-break: break-word;
-            flex-shrink: 0;
-        }
-        .sub-item {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .sub-item.active {
-            background: #e0f2fe;
-            color: #0369a1;
-        }
-        .sub-item span {
-            font-weight: 500;
-        }
-        .sub-item .rename-text-btn {
-            width: 100%;
-            text-align: center;
-            background: #e2e8f0;
-            border: none;
-            cursor: pointer;
-            font-size: 11px;
-            padding: 5px 8px;
-            border-radius: 4px;
-            color: #475569;
-            transition: all 0.2s;
-            font-weight: 500;
-            margin-top: 2px;
-            height: 30px;
-            line-height: 1.2;
-        }
-        .sub-item .rename-text-btn:hover {
-            background: #cbd5e1;
-            color: #1e293b;
-        }
-
-        .link-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .link-info {
-            flex: 1;
-            min-width: 120px;
-        }
-        .link-actions {
-            display: flex;
-            gap: 5px;
-            flex-shrink: 0;
-        }
-        .link-actions button {
-            white-space: nowrap;
-        }
-
-        input, select {
-            padding: 7px 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 7px;
-            font-size: 12px;
-            width: 100%;
-            background: #fff;
-            outline: none;
-            transition: all .2s;
-        }
-        input:focus, select:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
-        }
-        .form-row {
-            margin-bottom: 12px;
-        }
-        .form-row label {
-            font-size: 11px;
-            color: #64748b;
-            margin-bottom: 4px;
-            display: block;
-        }
-
-        button {
-            border: none;
-            border-radius: 7px;
-            padding: 6px 10px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all .2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 500;
-        }
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        button.primary {
-            background: #3b82f6;
-            color: #fff;
-        }
-        button.primary:hover {
-            background: #2563eb;
-        }
-        button.danger {
-            background: #ef4444;
-            color: #fff;
-        }
-        button.danger:hover {
-            background: #dc2626;
-        }
-        button.secondary {
-            background: #64748b;
-            color: #fff;
-        }
-        button.secondary:hover {
-            background: #475569;
-        }
-        button.text {
-            background: transparent;
-            color: #64748b;
-            padding: 4px 7px;
-            font-size: 11px;
-        }
-        button.text:hover {
-            color: #3b82f6;
-        }
-        button.sm {
-            padding: 4px 7px;
-            font-size: 11px;
-        }
-
-        .search-box {
-            max-width: 220px;
-        }
-        .badge {
-            padding: 2px 7px;
-            border-radius: 5px;
-            font-size: 10px;
-        }
-        .badge-green {
-            background: #dcfce7;
-            color: #16a34a;
-        }
-        .badge-red {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-        .badge-blue {
-            background: #e0f2fe;
-            color: #0369a1;
-        }
-
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 99;
-            opacity: 0;
-            visibility: hidden;
-            transition: all .2s;
-            padding: 12px;
-        }
-        .modal.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-body {
-            background: #fff;
-            border-radius: 10px;
-            width: 100%;
-            max-width: 460px;
-            padding: 18px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        .modal-title {
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: #1e293b;
-        }
-        .modal-buttons {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-            margin-top: 14px;
-            flex-wrap: wrap;
-        }
-        .modal-buttons-left {
-            display: flex;
-            gap: 8px;
-            margin-right: auto;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translate(-50%, 12px);
-            padding: 8px 16px;
-            border-radius: 7px;
-            font-size: 12px;
-            color: #fff;
-            z-index: 999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all .25s ease;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-            white-space: nowrap;
-        }
-        .toast.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translate(-50%, 0);
-        }
-        .toast.success {
-            background: #10b981;
-        }
-        .toast.error {
-            background: #ef4444;
-        }
-        .toast.warn {
-            background: #f59e0b;
-        }
-
-        .log-item {
-            padding: 7px;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 11px;
-        }
-        .empty {
-            text-align: center;
-            padding: 18px;
-            color: #94a3b8;
-            font-size: 11px;
-        }
-        .hidden {
-            display: none;
-        }
-        
-        .feedback-date-group {
-            margin-bottom: 20px;
-        }
-        .feedback-date-group h4 {
-            font-size: 13px;
-            margin: 10px 0 8px 0;
-            padding-left: 4px;
-            border-left: 3px solid #3b82f6;
-            color: #1e293b;
-        }
-
-        .remember-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin-top: 4px;
-        }
-        .remember-checkbox input[type="checkbox"] {
-            width: auto;
-            margin: 0;
-        }
-        .remember-checkbox label {
-            font-size: 11px;
-            color: #64748b;
-            cursor: pointer;
-        }
-
-        .lock-message {
-            color: #ef4444;
-            font-size: 11px;
-            margin-top: 4px;
-        }
-
-        .fetch-info-btn {
-            background: #10b981;
-            color: #fff;
-            padding: 6px 12px;
-            font-size: 11px;
-            margin-left: 6px;
-            white-space: nowrap;
-        }
-        .fetch-info-btn:hover {
-            background: #059669;
-        }
-
-        #submissionDetailModal .modal-body {
-            max-width: 680px;
-            padding: 0;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-        #submissionDetailModal .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid #e9ecef;
-            background: #fff;
-            position: sticky;
-            top: 0;
-            z-index: 1;
-        }
-        #submissionDetailModal .modal-header h3 {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1e293b;
-            margin: 0;
-        }
-        #submissionDetailModal .modal-header button {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #94a3b8;
-            padding: 4px 8px;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-        #submissionDetailModal .modal-header button:hover {
-            background: #f1f5f9;
-            color: #475569;
-        }
-        #submissionDetailModal .modal-content {
-            padding: 20px;
-        }
-        .info-card {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 24px;
-        }
-        .info-row {
-            display: flex;
-            margin-bottom: 12px;
-            font-size: 13px;
-            line-height: 1.5;
-        }
-        .info-row:last-child {
-            margin-bottom: 0;
-        }
-        .info-label {
-            width: 90px;
-            flex-shrink: 0;
-            color: #64748b;
-            font-weight: 500;
-        }
-        .info-value {
-            flex: 1;
-            color: #1e293b;
-            word-break: break-all;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 500;
-        }
-        .status-approved {
-            background: #dcfce7;
-            color: #15803d;
-        }
-        .status-rejected {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-        .status-pending {
-            background: #fef3c7;
-            color: #b45309;
-        }
-        .action-card {
-            background: #fff;
-            border: 1px solid #e9ecef;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-        }
-        .action-card h4 {
-            font-size: 14px;
-            font-weight: 600;
-            margin: 0 0 12px 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #1e293b;
-        }
-        .inline-select-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 12px;
-        }
-        .inline-select-group select,
-        .inline-select-group input {
-            flex: 1;
-            min-width: 100px;
-        }
-        .action-card textarea {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 12px;
-            margin-bottom: 12px;
-            resize: vertical;
-            font-family: inherit;
-        }
-        .action-card button {
-            width: 100%;
-            padding: 8px;
-            font-size: 13px;
-        }
-        .btn-approve {
-            background: #10b981;
-            color: #fff;
-        }
-        .btn-approve:hover {
-            background: #059669;
-        }
-        .btn-reject {
-            background: #ef4444;
-            color: #fff;
-        }
-        .btn-reject:hover {
-            background: #dc2626;
-        }
-
-        @media (max-width: 768px) {
-            .content-layout {
-                flex-direction: row !important;
-                flex-wrap: nowrap;
-            }
-            .sidebar, .main-content {
-                flex: 1 1 calc(50% - 5px) !important;
-                min-width: 0;
-            }
-            #addSubBtn, #addSiteBtn {
-                height: 40px;
-                font-size: 11px;
-                margin-bottom: 6px;
-            }
-            .modal-body {
-                max-width: 95%;
-                padding: 14px;
-            }
-            .info-row {
-                flex-direction: column;
-            }
-            .info-label {
-                width: 100%;
-                margin-bottom: 4px;
-            }
-            #submissionDetailModal .modal-body {
-                max-width: calc(100vw - 24px);
-            }
-            .site-list .link-actions {
-                flex-wrap: wrap;
-            }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 6px;
-            }
-            .main-card {
-                padding: 10px;
-            }
-            .cat-item {
-                padding: 6px 12px;
-            }
-            .sub-item, .site-list .link-item {
-                padding: 8px;
-            }
-            #addSubBtn, #addSiteBtn {
-                height: 38px;
-                font-size: 10px;
-            }
-            .sidebar, .main-content {
-                flex: 1 1 calc(50% - 4px);
-            }
-        }
-
-        .link-info strong {
-            word-break: break-word;
-        }
-        .sub-list, .site-list {
-            overflow-x: hidden;
-        }
-        .text {
-            background: transparent;
-            color: #64748b;
-        }
-        .custom-select-wrapper {
-            position: relative;
-            flex: 1;
-            min-width: 120px;
-        }
-        .custom-select-trigger {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 13px;
-            color: #1e293b;
-            cursor: pointer;
-            transition: all 0.2s;
-            gap: 8px;
-        }
-        .custom-select-trigger:hover { border-color: #3b82f6; }
-        .custom-select-trigger.open {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-        .custom-select-value {
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .custom-select-arrow {
-            width: 16px;
-            height: 16px;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-            background-size: contain;
-            transition: transform 0.2s;
-        }
-        .custom-select-trigger.open .custom-select-arrow { transform: rotate(180deg); }
-        .custom-select-dropdown {
-            position: fixed;
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            z-index: 1000;
-            max-height: 200px;
-            overflow-y: auto;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-8px);
-            transition: all 0.2s ease;
-            scrollbar-width: none;
-        }
-        .custom-select-dropdown::-webkit-scrollbar { display: none; }
-        .custom-select-dropdown.open {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-        .custom-select-option {
-            padding: 8px 12px;
-            font-size: 13px;
-            color: #1e293b;
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-        .custom-select-option:hover { background: #f1f5f9; }
-        .custom-select-option.selected {
-            background: #e0f2fe;
-            color: #0369a1;
-            font-weight: 500;
-        }
-        @media (prefers-color-scheme: dark) {
-            .custom-select-trigger {
-                background: #1e293b;
-                border-color: #334155;
-                color: #e2e8f0;
-            }
-            .custom-select-dropdown {
-                background: #1e293b;
-                border-color: #334155;
-            }
-            .custom-select-option {
-                color: #e2e8f0;
-            }
-            .custom-select-option:hover { background: #334155; }
-            .custom-select-option.selected {
-                background: #0f172a;
-                color: #38bdf8;
-            }
-        }
-        .submission-title-truncate {
-            display: inline-block;
-            max-width: 300px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            vertical-align: middle;
-        }
-        @media (max-width: 768px) { .submission-title-truncate { max-width: 180px; } }
-        @media (max-width: 480px) { .submission-title-truncate { max-width: 120px; } }
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+        .container { flex: 1; display: flex; flex-direction: column; max-width: 1200px; margin: 0 auto; width: 100%; overflow: hidden; }
+        .header-card { background: #fff; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #f1f3f5; flex-shrink: 0; }
+        .main-card { background: #fff; border-radius: 10px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #f1f3f5; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .flex-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; flex-shrink: 0; }
+        .tab-btn { padding: 7px 14px; border-radius: 7px; background: #f1f5f9; color: #64748b; cursor: pointer; font-size: 12px; white-space: nowrap; transition: all 0.2s; }
+        .tab-btn.active { background: #3b82f6; color: #fff; }
+        .tab-btn:hover { background: #e2e8f0; }
+        .cat-bar { width: 100%; padding: 10px 14px; background: #f8fafc; border-radius: 10px; margin-bottom: 12px; display: flex; gap: 7px; align-items: center; overflow-x: auto; flex-wrap: nowrap; flex-shrink: 0; }
+        .cat-item { padding: 8px 15px; border-radius: 7px; background: #fff; cursor: pointer; white-space: nowrap; font-weight: 500; font-size: 12px; transition: all .2s; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 8px; }
+        .cat-item.active { background: #3b82f6; color: #fff; }
+        .cat-item .rename-text-btn { background: #e2e8f0; border: none; cursor: pointer; font-size: 11px; padding: 3px 8px; border-radius: 4px; color: #475569; transition: all 0.2s; font-weight: 500; }
+        .cat-item .rename-text-btn:hover { background: #cbd5e1; color: #1e293b; }
+        .cat-item.active .rename-text-btn { background: rgba(255,255,255,0.2); color: #fff; }
+        .tab-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .content-layout { display: flex; gap: 10px; flex: 1; min-height: 0; }
+        .sidebar { flex: 1; background: #f8fafc; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+        .main-content { flex: 1; background: #f8fafc; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+        #addSubBtn, #addSiteBtn, #addAnnouncementBtn { width: 100%; height: 44px; margin-bottom: 8px; font-size: 12px; border-radius: 7px; background: #3b82f6; color: #fff; border: none; cursor: pointer; font-weight: 500; flex-shrink: 0; }
+        #addSubBtn:hover, #addSiteBtn:hover, #addAnnouncementBtn:hover { background: #2563eb; }
+        .sub-list, .site-list, .rank-list, .feedback-list, .submissions-list, .announcements-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+        .sub-item, .link-item, .announcement-item { background: #fff; border-radius: 7px; padding: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); word-break: break-word; flex-shrink: 0; }
+        .sub-item { display: flex; flex-direction: column; gap: 6px; }
+        .sub-item.active { background: #e0f2fe; color: #0369a1; }
+        .sub-item span { font-weight: 500; }
+        .sub-item .rename-text-btn { width: 100%; text-align: center; background: #e2e8f0; border: none; cursor: pointer; font-size: 11px; padding: 5px 8px; border-radius: 4px; color: #475569; margin-top: 2px; height: 30px; }
+        .sub-item .rename-text-btn:hover { background: #cbd5e1; color: #1e293b; }
+        .link-item { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .link-info { flex: 1; min-width: 120px; }
+        .link-actions { display: flex; gap: 5px; flex-shrink: 0; }
+        input, select, textarea { padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 7px; font-size: 12px; width: 100%; background: #fff; outline: none; transition: all .2s; }
+        input:focus, select:focus, textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        .form-row { margin-bottom: 12px; }
+        .form-row label { font-size: 11px; color: #64748b; margin-bottom: 4px; display: block; }
+        button { border: none; border-radius: 7px; padding: 6px 10px; font-size: 12px; cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; justify-content: center; font-weight: 500; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        button.primary { background: #3b82f6; color: #fff; }
+        button.primary:hover { background: #2563eb; }
+        button.danger { background: #ef4444; color: #fff; }
+        button.danger:hover { background: #dc2626; }
+        button.secondary { background: #64748b; color: #fff; }
+        button.secondary:hover { background: #475569; }
+        button.sm { padding: 4px 7px; font-size: 11px; }
+        .search-box { max-width: 220px; }
+        .badge { padding: 2px 7px; border-radius: 5px; font-size: 10px; }
+        .badge-blue { background: #e0f2fe; color: #0369a1; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; z-index: 99; opacity: 0; visibility: hidden; transition: all .2s; padding: 12px; }
+        .modal.show { opacity: 1; visibility: visible; }
+        .modal-body { background: #fff; border-radius: 10px; width: 100%; max-width: 460px; padding: 18px; max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #1e293b; }
+        .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; flex-wrap: wrap; }
+        .modal-buttons-left { display: flex; gap: 8px; margin-right: auto; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 12px); padding: 8px 16px; border-radius: 7px; font-size: 12px; color: #fff; z-index: 999; opacity: 0; visibility: hidden; transition: all .25s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.15); white-space: nowrap; }
+        .toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        .toast.warn { background: #f59e0b; }
+        .empty { text-align: center; padding: 18px; color: #94a3b8; font-size: 11px; }
+        .hidden { display: none; }
+        .remember-checkbox { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+        .lock-message { color: #ef4444; font-size: 11px; margin-top: 4px; }
+        .fetch-info-btn { background: #10b981; color: #fff; padding: 6px 12px; font-size: 11px; margin-left: 6px; white-space: nowrap; }
+        .fetch-info-btn:hover { background: #059669; }
+        @media (max-width: 768px) { .content-layout { flex-direction: row !important; flex-wrap: nowrap; } .sidebar, .main-content { flex: 1 1 calc(50% - 5px) !important; } }
+        .announcement-content { max-height: 80px; overflow-y: auto; font-size: 12px; color: #475569; margin: 8px 0; padding: 4px 0; }
+        .announcement-status { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+        .status-active { background: #dcfce7; color: #16a34a; }
+        .status-inactive { background: #fee2e2; color: #dc2626; }
     </style>
 </head>
 <body>
 <div class="toast" id="toast"></div>
 
-<!-- 通用模态框 -->
 <div class="modal" id="modal">
     <div class="modal-body">
         <div class="modal-title" id="modalTitle"></div>
@@ -862,14 +135,15 @@
             <div class="tab-btn" data-tab="rank">点击排行</div>
             <div class="tab-btn" data-tab="feedback">用户反馈</div>
             <div class="tab-btn" data-tab="submissions">待审核</div>
+            <div class="tab-btn" data-tab="announcement">公告管理</div>
         </div>
 
+        <!-- 数据管理标签页 -->
         <div id="manageTab" class="tab-panel">
             <div class="flex-row" style="margin-bottom:10px;">
                 <input type="text" class="search-box" id="searchInput" placeholder="搜索标题...">
                 <button class="text" id="exportBtn">备份导出</button>
                 <button class="text" id="importBtn">导入数据</button>
-                <button class="text" id="exportStatsBtn">导出统计</button>
                 <button class="primary sm" id="refreshNavBtn">刷新导航缓存</button>
                 <button class="primary sm" id="addCategoryBtn">+一级分类</button>
             </div>
@@ -886,6 +160,7 @@
             </div>
         </div>
 
+        <!-- 点击排行标签页 -->
         <div id="rankTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px;">
                 <button class="primary sm" id="sortRankBtn">按点击数降序</button>
@@ -894,6 +169,7 @@
             <div class="rank-list" id="rankList"></div>
         </div>
 
+        <!-- 用户反馈标签页 -->
         <div id="feedbackTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px;">
                 <button class="primary sm" id="refreshFeedbackBtn">刷新列表</button>
@@ -902,17 +178,22 @@
             <div class="feedback-list" id="feedbackList"></div>
         </div>
 
-        <!-- 待审核标签页，添加批量操作按钮和复选框 -->
+        <!-- 待审核标签页（无批量操作） -->
         <div id="submissionsTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px; justify-content: space-between; flex-wrap: wrap;">
-                <div style="display: flex; gap: 8px;">
-                    <button class="primary sm" id="refreshSubmissionsBtn">刷新列表</button>
-                    <button class="primary sm" id="batchApproveBtn" disabled>批量通过</button>
-                    <button class="danger sm" id="batchRejectBtn" disabled>批量拒绝</button>
-                </div>
+                <button class="primary sm" id="refreshSubmissionsBtn">刷新列表</button>
                 <span class="badge badge-blue">用户投稿的网站，审核后可加入导航</span>
             </div>
             <div class="submissions-list" id="submissionsList"></div>
+        </div>
+
+        <!-- 公告管理标签页 -->
+        <div id="announcementTab" class="tab-panel hidden">
+            <div class="flex-row" style="margin-bottom:10px; justify-content: space-between;">
+                <button class="primary sm" id="addAnnouncementBtn">+ 新建公告</button>
+                <button class="primary sm" id="refreshAnnouncementBtn">刷新列表</button>
+            </div>
+            <div class="announcements-list" id="announcementsList"></div>
         </div>
     </div>
 </div>
@@ -920,11 +201,27 @@
 <!-- 投稿详情模态框 -->
 <div class="modal" id="submissionDetailModal">
     <div class="modal-body">
-        <div class="modal-header">
+        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #e9ecef;">
             <h3>📝 投稿详情</h3>
-            <button id="closeDetailModalBtn" aria-label="关闭">&times;</button>
+            <button id="closeDetailModalBtn" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
         </div>
-        <div class="modal-content" id="submissionDetailContent"></div>
+        <div class="modal-content" id="submissionDetailContent" style="padding:20px;"></div>
+    </div>
+</div>
+
+<!-- 公告编辑模态框 -->
+<div class="modal" id="announcementDetailModal">
+    <div class="modal-body">
+        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:0 0 12px 0;">
+            <h3 id="announcementModalTitle">公告详情</h3>
+            <button id="closeAnnouncementModalBtn" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+        </div>
+        <div id="announcementFormContainer"></div>
+        <div class="modal-buttons">
+            <button class="secondary" id="announcementCancelBtn">取消</button>
+            <button class="primary" id="announcementSaveBtn">保存</button>
+            <button class="danger" id="announcementDeleteBtn" style="display:none;">删除</button>
+        </div>
     </div>
 </div>
 
