@@ -1,4 +1,8 @@
 // admin.js - 星聚导航后台管理（完整版，支持公告管理，排序值自动计算）
+// 修复内容：
+// 1. 导入文件大小前端限制
+// 2. 增加响应式 CSS（移动端布局）
+// 3. 自定义选择器深色模式已完善
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -532,7 +536,7 @@
                         <div class="inline-select-group">
                             <div class="custom-select-wrapper" id="approveCatSelectWrapper"></div>
                             <div class="custom-select-wrapper" id="approveSubSelectWrapper"></div>
-                            <input type="number" id="approveOrder" placeholder="排序" value="0" class="form-input" style="width:80px;">
+                            <input type="number" id="approveOrder" placeholder="排序" value="0" class="form-input" style="width:80px;" step="1">
                         </div>
                         <div style="margin: 10px 0 0 0;">
                             <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
@@ -672,7 +676,7 @@
         const currentOrder = cat?.display_order || 0;
         openModal('修改分类', `
             <div class="form-row"><label>名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>
-            <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}"></div>
+            <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1"></div>
         `, async () => {
             const name = document.getElementById('mName').value.trim();
             const order = parseInt(document.getElementById('mOrder').value) || 0;
@@ -690,7 +694,7 @@
         const currentOrder = sub?.display_order || 0;
         openModal('修改子分类', `
             <div class="form-row"><label>名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>
-            <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}"></div>
+            <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1"></div>
         `, async () => {
             const name = document.getElementById('mName').value.trim();
             const order = parseInt(document.getElementById('mOrder').value) || 0;
@@ -711,7 +715,7 @@
              <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" class="form-input" value="${escapeHtml(site.url)}"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
              <div class="form-row"><label>图标</label><input id="mIcon" class="form-input" value="${escapeHtml(site.icon||'fas fa-link')}"></div>
              <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%;">${escapeHtml(site.description||'')}</textarea></div>
-             <div class="form-row"><label>排序值</label><input type="number" id="mSort" class="form-input" value="${site.display_order}"></div>`,
+             <div class="form-row"><label>排序值</label><input type="number" id="mSort" class="form-input" value="${site.display_order}" step="1"></div>`,
             async () => {
                 const title = document.getElementById('mTitle').value.trim();
                 const url = document.getElementById('mUrl').value.trim();
@@ -740,7 +744,7 @@
         const nextOrder = await getNextSortValue('category');
         openModal('新增一级分类',
             `<div class="form-row"><label>名称</label><input id="mName" class="form-input"></div>
-             <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}"></div>`,
+             <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1"></div>`,
             async () => {
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
@@ -755,7 +759,7 @@
         const nextOrder = await getNextSortValue('subcategory', currentCat);
         openModal('新增子分类',
             `<div class="form-row"><label>名称</label><input id="mName" class="form-input"></div>
-             <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}"></div>`,
+             <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1"></div>`,
             async () => {
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
@@ -773,7 +777,7 @@
              <div class="form-row"><label>网址</label><div style="display:flex;gap:4px;align-items:center"><input id="mUrl" class="form-input"><button type="button" id="fetchInfoBtn" class="fetch-info-btn">获取信息</button></div></div>
              <div class="form-row"><label>图标</label><input id="mIcon" class="form-input" value="fas fa-link"></div>
              <div class="form-row"><label>描述</label><textarea id="mDesc" rows="2" class="form-input" style="width:100%;"></textarea></div>
-             <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}"></div>`,
+             <div class="form-row"><label>排序值（数字越小越靠前）</label><input type="number" id="mSort" class="form-input" value="${nextOrder}" step="1"></div>`,
             async () => {
                 const title = document.getElementById('mTitle').value.trim();
                 const url = document.getElementById('mUrl').value.trim();
@@ -909,6 +913,11 @@
             return;
         }
         const file = fileInput.files[0];
+        // 前端文件大小限制（10MB）
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('文件不能超过 10MB', 'error');
+            return;
+        }
         try {
             const text = await file.text();
             const data = JSON.parse(text);
@@ -1125,7 +1134,7 @@
             const changeEvent = new Event('change', { bubbles: true });
             this.select.dispatchEvent(changeEvent);
         }
-        setValue(value) {
+        setValue(value, triggerChange = true) {
             for (let i = 0; i < this.select.options.length; i++) {
                 if (this.select.options[i].value == value) {
                     this.selectOption(i);
@@ -1219,6 +1228,11 @@
                 .announcement-status { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
                 .status-active { background: #dcfce7; color: #16a34a; }
                 .status-inactive { background: #fee2e2; color: #dc2626; }
+                /* 响应式布局修复 */
+                @media (max-width: 768px) {
+                    .content-layout { flex-direction: column !important; }
+                    .sidebar, .main-content { width: 100% !important; margin-bottom: 12px; }
+                }
             `;
             document.head.appendChild(style);
         }
