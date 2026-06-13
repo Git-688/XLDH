@@ -30,20 +30,22 @@
     .greeting-section { padding: var(--section-margin-lg) 0; }
 }
 
-/* 左侧大卡片 */
+/* 左侧大卡片 - 纯色背景，明显阴影，圆角加大 */
 .greeting-main-card {
     flex: 1;
-    background: var(--bg-card);
-    border-radius: 10px;
-    border: 1px solid var(--border-color);
+    background: var(--bg-card, #ffffff);
+    border-radius: 12px;
+    border: 1px solid var(--border-color, #e9ecef);
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 20px;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 .greeting-main-card:hover {
     transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 /* 卡片顶部：问候语和时间在同一水平线，且左侧内容垂直方向两端对齐 */
@@ -59,7 +61,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* 关键：使问候语在上，节日容器在下 */
+    justify-content: space-between;
 }
 
 /* 问候语 */
@@ -87,7 +89,7 @@
     flex-direction: column;
     justify-content: flex-end;
     gap: 4px;
-    margin-top: auto; /* 确保容器位于底部 */
+    margin-top: auto;
 }
 .countdown-holiday {
     display: flex;
@@ -419,6 +421,10 @@
 .dark-mode .greeting-main-card {
     background: var(--bg-card);
     border-color: var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.dark-mode .greeting-main-card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 .dark-mode .datetime {
     background: var(--bg-secondary);
