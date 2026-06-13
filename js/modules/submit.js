@@ -1,12 +1,8 @@
 /**
  * 网站投稿模块（异步安全检测 + 轮询状态）
- * 已移除每日投稿限制，邮箱改为必填，修复 getDeviceId
- * 已移除底部安全检测提示
- * 修改：挂载到 window.Starlink.submit
  */
 class SubmitModule {
     constructor() {
-        // 避免重复实例化
         if (window.Starlink && window.Starlink.submit) return window.Starlink.submit;
         
         this.modal = document.getElementById('submitModal');
@@ -36,9 +32,7 @@ class SubmitModule {
 
         this.init();
         
-        // 挂载到 Starlink
         if (window.Starlink) window.Starlink.submit = this;
-        // 保留旧全局变量以便兼容
         window.submitModule = this;
     }
 
@@ -47,11 +41,9 @@ class SubmitModule {
     }
 
     getDeviceId() {
-        // 使用 Utils 中提供的统一设备ID方法
         if (typeof Utils.getDeviceId === 'function') {
             return Utils.getDeviceId();
         }
-        // 降级方案
         let deviceId = localStorage.getItem('device_id');
         if (!deviceId) {
             deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
@@ -315,7 +307,7 @@ class SubmitModule {
         const url = this.urlInput.value.trim();
         const contact = this.contactInput ? this.contactInput.value.trim() : '';
         const urlValid = Utils.isValidUrl(url);
-        const contactValid = contact && contact.includes('@'); // 邮箱必填，简单验证
+        const contactValid = contact && contact.includes('@');
         const enable = !!(title && urlValid && this.securityPassed && contactValid);
         this.submitSaveBtn.disabled = !enable || this.submitting;
     }
@@ -413,7 +405,6 @@ class SubmitModule {
 
     show() {
         if (!this.modal) return;
-        // 关闭侧边栏
         if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible?.()) {
             window.Starlink.sidebar.hide();
         } else if (window.sidebar && window.sidebar.isVisible?.()) {
@@ -421,7 +412,6 @@ class SubmitModule {
         }
         this.modal.classList.add('active');
         this.isVisible = true;
-        // 注册到应用
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
         else if (window.app) window.app.registerModal(this);
     }
@@ -431,7 +421,6 @@ class SubmitModule {
         this.modal.classList.remove('active');
         const onTransitionEnd = () => {
             this.isVisible = false;
-            // 从应用中注销
             if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
             else if (window.app) window.app.unregisterModal(this);
             this.modal.removeEventListener('transitionend', onTransitionEnd);
