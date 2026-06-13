@@ -1,4 +1,7 @@
-// admin.js - 星聚导航后台管理（完整修复版）
+// admin.js - 星聚导航后台管理（完整版，无省略）
+// 功能：登录、会话管理、分类/子分类/链接 CRUD、导入导出、点击排行、死链反馈处理、投稿审核、单公告编辑
+// 样式：左右等宽布局，滚动条隐藏，圆角 8px，输入框左右内边距一致
+
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -16,6 +19,7 @@
     let refreshTimer = null;
     let customSelects = {};
 
+    // 单公告数据
     let currentAnnouncement = null;
 
     function escapeHtml(str) {
