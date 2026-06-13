@@ -30,12 +30,12 @@
     .greeting-section { padding: var(--section-margin-lg) 0; }
 }
 
-/* 主卡片 - 内边距为0 */
+/* 主卡片 - 四周留白统一为 8px */
 .greeting-main-card {
     background: var(--bg-card);
     border-radius: 10px;
     border: 1px solid var(--border-color);
-    padding: 0;
+    padding: 8px;               /* 统一四周内边距 8px */
     transition: transform 0.3s ease;
     display: flex;
     flex-direction: column;
@@ -46,12 +46,12 @@
     transform: translateY(-2px);
 }
 
-/* 顶部两行：强制左右并排，不换行，内部间距统一为8px */
+/* 顶部两行：强制左右并排，不换行，无额外内边距 */
 .greeting-top-row {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 8px;           /* 统一为8px */
+    gap: 8px;
     flex-wrap: nowrap;
     padding: 0;
 }
@@ -62,7 +62,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;           /* 内部垂直间距统一8px */
+    gap: 8px;
     padding: 8px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -121,7 +121,7 @@
     color: white;
 }
 
-/* 次要节日列表 - 间距统一8px */
+/* 次要节日列表 - 无额外内边距，靠父级留白 */
 .secondary-holidays-list {
     display: flex;
     flex-wrap: wrap;
@@ -144,16 +144,16 @@
     white-space: nowrap;
 }
 
-/* 右侧日期卡片 - 内边距统一8px，其他内部间距8px */
+/* 右侧日期卡片 - 内边距8px，内部间距8px */
 .datetime {
     background: var(--bg-card);
-    padding: 8px;               /* 改为8px，与左上角卡片内边距一致 */
+    padding: 8px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
-    gap: 8px;                   /* 内部元素间距统一8px */
+    gap: 8px;
     min-width: 120px;
     flex-shrink: 0;
 }
@@ -193,12 +193,12 @@
     background: rgba(67,97,238,0.1);
 }
 
-/* 木鱼按钮区域 - 左右边距与内部间隙统一为8px */
+/* 木鱼按钮区域 - 无额外内边距，靠父级留白；按钮间距8px */
 .fish-section {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
-    padding: 0 8px 8px 8px;
+    padding: 0;
 }
 .fish-btn {
     position: relative;
@@ -264,12 +264,12 @@
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
-/* 书签按钮 */
+/* 书签按钮（独立于大卡片外部） */
 .bookmark-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;           /* 统一为8px */
+    gap: 8px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -307,9 +307,10 @@
     pointer-events: none;
 }
 
-/* 响应式设计：保持一行，缩放内容，内边距统一按比例缩小 */
+/* 响应式设计：缩放内边距和间距 */
 @media (max-width: 992px) {
-    .greeting-top-row { gap: 8px; }
+    .greeting-main-card { padding: 6px; gap: 6px; }
+    .greeting-top-row { gap: 6px; }
     .greeting-left-card { padding: 6px; gap: 6px; }
     .greeting-text h1 { font-size: 1.3em !important; }
     .primary-holiday { font-size: 1.3em; }
@@ -319,7 +320,7 @@
     #currentTime { font-size: 0.95em; }
     #currentDate { font-size: 0.7em; }
     .expand-holiday-btn { font-size: 8px; padding: 2px 5px; }
-    .fish-section { gap: 7px; padding: 0 7px 7px 7px; }
+    .fish-section { gap: 6px; }
     .fish-btn { padding: 5px 8px; min-height: 40px; }
     .fish-btn i { font-size: 14px; }
     .fish-count { font-size: 0.85em; padding: 2px 5px; }
@@ -327,7 +328,8 @@
 }
 @media (max-width: 768px) {
     .greeting-section { padding: var(--section-margin-sm) 0; }
-    .greeting-top-row { gap: 6px; }
+    .greeting-main-card { padding: 5px; gap: 5px; }
+    .greeting-top-row { gap: 5px; }
     .greeting-left-card { padding: 5px; gap: 5px; }
     .greeting-text h1 { font-size: 1.1em !important; }
     .primary-holiday { font-size: 1.1em; }
@@ -337,7 +339,7 @@
     #currentTime { font-size: 0.85em; }
     #currentDate { font-size: 0.65em; }
     .expand-holiday-btn { font-size: 7px; padding: 2px 4px; }
-    .fish-section { gap: 6px; padding: 0 6px 6px 6px; }
+    .fish-section { gap: 5px; }
     .fish-btn { padding: 4px 6px; min-height: 36px; }
     .fish-btn i { font-size: 12px; }
     .fish-count { font-size: 0.8em; padding: 1px 4px; }
@@ -347,7 +349,8 @@
 }
 @media (max-width: 576px) {
     .greeting-section { padding: var(--section-margin-xs) 0; }
-    .greeting-top-row { gap: 5px; }
+    .greeting-main-card { padding: 4px; gap: 4px; }
+    .greeting-top-row { gap: 4px; }
     .greeting-left-card { padding: 4px; gap: 4px; }
     .greeting-text h1 { font-size: 1em !important; }
     .primary-holiday { font-size: 1em; }
@@ -357,11 +360,11 @@
     #currentTime { font-size: 0.8em; }
     #currentDate { font-size: 0.6em; }
     .expand-holiday-btn { font-size: 7px; padding: 2px 4px; }
-    .fish-section { gap: 5px; padding: 0 5px 5px 5px; }
+    .fish-section { gap: 4px; }
     .fish-btn { padding: 4px 5px; min-height: 34px; }
     .fish-btn i { font-size: 11px; }
     .fish-count { font-size: 0.75em; padding: 1px 3px; min-width: 22px; }
-    .secondary-holidays-list { gap: 5px; }
+    .secondary-holidays-list { gap: 4px; }
     .secondary-holiday-item { font-size: 7px; }
     .secondary-name { max-width: 50px; }
     .bookmark-btn { gap: 4px; padding: 6px 10px; }
