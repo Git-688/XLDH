@@ -117,7 +117,7 @@ class AboutModule {
                                 <img class="about-logo-img" src="${Utils.escapeHtml(this.logoUrl)}" alt="星聚导航Logo">
                             </div>
                             <div class="about-brand-title">星聚导航</div>
-                            <div class="about-brand-subtitle">一款免费开源的个人专属网站</div>
+                            <div class="about-brand-subtitle">免费开源的个人网站</div>
                         </div>
                     </div>
                 </div>
