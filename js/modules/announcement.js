@@ -1,4 +1,4 @@
-// announcement.js - 简约公告模块（单公告模式，支持未读标记）
+// announcement.js - 简约公告模块（单公告模式，支持未读标记，不改变原有样式）
 class AnnouncementModule {
     constructor() {
         if (window.Starlink && window.Starlink.announcement) return window.Starlink.announcement;
@@ -40,7 +40,6 @@ class AnnouncementModule {
                     date: data.date || new Date(data.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
                 };
             } else {
-                // 没有公告，隐藏徽章
                 this.setUnreadFlag(false);
                 return null;
             }
@@ -50,7 +49,7 @@ class AnnouncementModule {
         }
     }
 
-    // 设置公告未读徽章
+    // 设置公告未读徽章（不影响任何其他样式）
     setUnreadFlag(hasUnread) {
         const btn = document.getElementById('announcementBtn');
         if (!btn) return;
@@ -86,6 +85,7 @@ class AnnouncementModule {
         this.createModal();
     }
 
+    // 保持原有模态框结构不变（完全恢复之前的版本）
     createModal() {
         if (this.modalElement) {
             this.modalElement.remove();
@@ -100,7 +100,7 @@ class AnnouncementModule {
                 <div class="announcement-modal-container">
                     <div class="announcement-header">
                         <div class="announcement-title">
-                            <i class="fas fa-circle-exclamation" style="color: #4361ee; font-size: 1.2rem;"></i>
+                            <i class="fas fa-bell" style="color: #4361ee; font-size: 1.2rem;"></i>
                             <span>暂无公告</span>
                         </div>
                         <button class="announcement-close" id="announcementClose" aria-label="关闭">
@@ -127,22 +127,26 @@ class AnnouncementModule {
         const content = this.escapeHtml(this.currentAnnouncement.content).replace(/\n/g, '<br>');
         const date = this.escapeHtml(this.currentAnnouncement.date);
 
+        // 完全恢复原来的模态框结构（喇叭图标、重要内容区域、更新列表等）
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
                 <div class="announcement-header">
                     <div class="announcement-title">
-                        <i class="fas fa-circle-exclamation" style="color: #4361ee; font-size: 1.2rem;"></i>
+                        <i class="fas fa-bell" style="color: #4361ee; font-size: 1.2rem;"></i>
                         <span>${title}</span>
                     </div>
                     <button class="announcement-close" id="announcementClose" aria-label="关闭">
-                        <i class="fas fa-times</i>
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <div class="announcement-body">
-                    ${important ? `<div class="focus-section"><div class="focus-content">📢 ${important}</div></div>` : ''}
+                    <div class="focus-section">
+                        <div class="focus-content">${important ? `📢 ${important}` : '暂无重要提示'}</div>
+                    </div>
                     <div class="updates-section">
-                        <div class="updates-title"><i class="fas fa-sync-alt"></i> 更新内容</div>
-                        <div class="announcement-full-content">${content}</div>
+                        <ul class="updates-list">
+                            <li>${content}</li>
+                        </ul>
                     </div>
                 </div>
                 <div class="announcement-footer">
@@ -197,7 +201,7 @@ class AnnouncementModule {
         this.closeOtherModals();
         this.modalElement.classList.add('active');
         this.isVisible = true;
-        // 打开公告时标记为已读
+        // 打开公告时标记为已读，并隐藏徽章
         this.markAsRead();
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
         else if (window.app) window.app.registerModal(this);
