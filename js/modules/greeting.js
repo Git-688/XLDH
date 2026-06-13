@@ -1,4 +1,4 @@
-// 问候区模块 - 优化节日倒计时显示（使用 Timor Tech API）
+// 问候区模块 - 优化节日倒计时显示（适配 Timor Tech API）
 class GreetingModule {
     constructor() {
         if (window.Starlink && window.Starlink.greeting) return window.Starlink.greeting;
@@ -74,17 +74,20 @@ class GreetingModule {
         if (el) el.removeAttribute('title');
     }
 
-    // ==================== 节日 API（Timor Tech）优化版 ====================
+    // ==================== 节日 API（Timor Tech）适配实际返回格式 ====================
     async loadHolidayData() {
         try {
             const response = await Utils.safeFetch('https://timor.tech/api/holiday/next', { timeout: 8000 });
             const data = await response.json();
-            if (data && data.code === 0 && data.data && data.data.length > 0) {
-                const next = data.data[0];
-                const name = next.name;
-                const days = next.leave;
-                // 格式化为 "节日名 还有X天"
-                return [`${name} 还有${days}天`];
+            // 检查返回结构：{ code: 0, holiday: { name, rest, date, ... } }
+            if (data && data.code === 0 && data.holiday) {
+                const holiday = data.holiday;
+                const name = holiday.name;
+                const days = holiday.rest; // 剩余天数
+                if (days !== undefined && days !== null) {
+                    // 格式化为 "节日名 还有X天"
+                    return [`${name} 还有${days}天`];
+                }
             }
             return this.getDefaultHolidays();
         } catch (error) {
@@ -129,7 +132,7 @@ class GreetingModule {
 
     parseSingleHoliday(holidayStr) {
         if (!holidayStr) return null;
-        // 匹配格式：节日名 还有X天  或  节日名 进行中
+        // 匹配格式：节日名 还有X天
         const match = holidayStr.match(/^(.+?)\s+还有(\d+)天$/);
         if (match) {
             const name = match[1];
