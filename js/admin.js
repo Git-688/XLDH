@@ -1,7 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，无省略）
-// 功能：登录、会话管理、分类/子分类/链接 CRUD、导入导出、点击排行、死链反馈处理、投稿审核、单公告编辑
-// 样式：左右等宽布局，滚动条隐藏，圆角 8px，输入框左右内边距一致
-
+// admin.js - 星聚导航后台管理（确保标签页独立显示）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -19,7 +16,6 @@
     let refreshTimer = null;
     let customSelects = {};
 
-    // 单公告数据
     let currentAnnouncement = null;
 
     function escapeHtml(str) {
@@ -968,19 +964,32 @@
             if (!btn) return;
             if (btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
         });
+
+        // 标签页切换：确保每次只显示当前激活的页面
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab;
+                if (!tabId) return;
+                // 更新按钮样式
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
                 btn.classList.add('active');
-                const tab = btn.dataset.tab;
-                document.getElementById(`${tab}Tab`).classList.remove('hidden');
-                if (tab === 'rank') loadRanking();
-                if (tab === 'feedback') loadFeedback();
-                if (tab === 'submissions') loadSubmissions();
-                if (tab === 'announcement') loadAnnouncement();
+                // 隐藏所有标签页容器
+                document.querySelectorAll('.tab-panel').forEach(panel => {
+                    panel.classList.add('hidden');
+                });
+                // 显示当前激活的标签页
+                const activePanel = document.getElementById(`${tabId}Tab`);
+                if (activePanel) {
+                    activePanel.classList.remove('hidden');
+                }
+                // 加载对应数据
+                if (tabId === 'rank') loadRanking();
+                if (tabId === 'feedback') loadFeedback();
+                if (tabId === 'submissions') loadSubmissions();
+                if (tabId === 'announcement') loadAnnouncement();
             });
         });
+
         document.getElementById('loginBtn').addEventListener('click', login);
         document.getElementById('logoutBtn').addEventListener('click', logout);
         document.getElementById('addCategoryBtn').addEventListener('click', handleAddCategory);
