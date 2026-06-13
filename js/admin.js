@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，支持公告管理，排序值优化）
+// admin.js - 星聚导航后台管理（完整版，支持公告管理，排序值自动计算）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -15,6 +15,9 @@
     let currentSubmissionId = null;
     let refreshTimer = null;
     let customSelects = {};
+
+    // 公告编辑模式标记
+    let editingAnnouncementId = null;
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -346,6 +349,26 @@
         `).join('');
     }
 
+    // ==================== 排序值自动计算 ====================
+    async function getNextSortValue(type, parentId = null) {
+        try {
+            let maxOrder = 0;
+            if (type === 'category') {
+                const max = categories.reduce((max, c) => Math.max(max, c.display_order || 0), 0);
+                maxOrder = max;
+            } else if (type === 'subcategory' && parentId) {
+                const subs = subcategories.filter(s => s.category_id === parentId);
+                const max = subs.reduce((max, s) => Math.max(max, s.display_order || 0), 0);
+                maxOrder = max;
+            } else if (type === 'site' && parentId) {
+                const sitesList = sites.filter(s => s.subcategory_id === parentId);
+                const max = sitesList.reduce((max, s) => Math.max(max, s.display_order || 0), 0);
+                maxOrder = max;
+            }
+            return maxOrder + 1;
+        } catch { return 0; }
+    }
+
     // ==================== 公告管理 ====================
     async function loadAnnouncements() {
         const list = document.getElementById('announcementsList');
@@ -378,25 +401,6 @@
         }
     }
 
-    async function getNextSortValue(type, parentId = null) {
-        try {
-            let maxOrder = 0;
-            if (type === 'category') {
-                const max = categories.reduce((max, c) => Math.max(max, c.display_order || 0), 0);
-                maxOrder = max;
-            } else if (type === 'subcategory' && parentId) {
-                const subs = subcategories.filter(s => s.category_id === parentId);
-                const max = subs.reduce((max, s) => Math.max(max, s.display_order || 0), 0);
-                maxOrder = max;
-            } else if (type === 'site' && parentId) {
-                const sitesList = sites.filter(s => s.subcategory_id === parentId);
-                const max = sitesList.reduce((max, s) => Math.max(max, s.display_order || 0), 0);
-                maxOrder = max;
-            }
-            return maxOrder + 1;
-        } catch { return 0; }
-    }
-
     async function openAnnouncementModal(id = null) {
         const modal = document.getElementById('announcementDetailModal');
         const titleEl = document.getElementById('announcementModalTitle');
@@ -404,6 +408,7 @@
         const deleteBtn = document.getElementById('announcementDeleteBtn');
         
         if (id) {
+            editingAnnouncementId = id;
             const data = await apiFetch('/admin/announcements');
             const item = data.find(a => a.id === id);
             if (!item) { showToast('公告不存在', 'error'); return; }
@@ -414,7 +419,10 @@
                 <div class="form-row"><label>内容</label><textarea id="annContent" rows="5">${escapeHtml(item.content)}</textarea></div>
                 <div class="form-row"><label><input type="checkbox" id="annActive" ${item.is_active ? 'checked' : ''}> 启用公告（前端显示）</label></div>
             `;
-            deleteBtn.onclick = async () => {
+            // 移除旧事件，避免重复绑定
+            const newDeleteBtn = deleteBtn.cloneNode(true);
+            deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+            newDeleteBtn.onclick = async () => {
                 if (!confirm('确定删除该公告？')) return;
                 await apiFetch(`/admin/announcements/${id}`, { method: 'DELETE' });
                 showToast('公告已删除', 'success');
@@ -422,6 +430,7 @@
                 await loadAnnouncements();
             };
         } else {
+            editingAnnouncementId = null;
             titleEl.textContent = '新建公告';
             deleteBtn.style.display = 'none';
             formContainer.innerHTML = `
@@ -443,8 +452,8 @@
             saveBtn.disabled = true;
             saveBtn.textContent = '保存中...';
             try {
-                if (id) {
-                    await apiFetch(`/admin/announcements/${id}`, {
+                if (editingAnnouncementId) {
+                    await apiFetch(`/admin/announcements/${editingAnnouncementId}`, {
                         method: 'PUT',
                         body: JSON.stringify({ title, content, is_active })
                     });
@@ -465,14 +474,14 @@
                 saveBtn.textContent = '保存';
             }
         };
-        const closeModal = () => modal.classList.remove('show');
+        const closeModalFn = () => modal.classList.remove('show');
         saveBtn.onclick = saveHandler;
-        cancelBtn.onclick = closeModal;
-        closeBtn.onclick = closeModal;
-        modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+        cancelBtn.onclick = closeModalFn;
+        closeBtn.onclick = closeModalFn;
+        modal.onclick = (e) => { if (e.target === modal) closeModalFn(); };
     }
 
-    // ==================== 投稿详情模态框（无批量） ====================
+    // ==================== 投稿详情模态框 ====================
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -552,42 +561,41 @@
                 descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
             }
 
+            // 分类选择器
             const catSelect = document.createElement('select');
             catSelect.id = 'approveCatSelect';
             catSelect.innerHTML = '<option value="">选择一级分类</option>' + categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
             const catWrapper = document.getElementById('approveCatSelectWrapper');
             catWrapper.innerHTML = '';
             catWrapper.appendChild(catSelect);
-            let catCustomSelect = new CustomSelect(catSelect, async (value) => {
-                const subWrapper = document.getElementById('approveSubSelectWrapper');
-                subWrapper.innerHTML = '';
-                const newSubSelect = document.createElement('select');
-                newSubSelect.id = 'approveSubSelect';
-                newSubSelect.innerHTML = '<option value="">先选择一级分类</option>';
-                subWrapper.appendChild(newSubSelect);
-                if (customSelects.sub) customSelects.sub.destroy();
-                customSelects.sub = new CustomSelect(newSubSelect);
-                if (value) {
-                    try {
-                        const subsData = await apiFetch(`/admin/subcategories?category_id=${value}`);
-                        const subSelectEl = document.getElementById('approveSubSelect');
-                        if (subSelectEl) {
-                            subSelectEl.innerHTML = '<option value="">选择二级分类</option>' + subsData.map(sub => `<option value="${sub.id}">${escapeHtml(sub.name)}</option>`).join('');
-                            if (customSelects.sub) customSelects.sub.refresh();
-                        }
-                    } catch (e) { showToast('加载子分类失败', 'error'); }
-                }
-            });
-            customSelects.cat = catCustomSelect;
 
-            const subWrapper = document.getElementById('approveSubSelectWrapper');
-            subWrapper.innerHTML = '';
+            // 子分类选择器（初始为空）
             const subSelect = document.createElement('select');
             subSelect.id = 'approveSubSelect';
             subSelect.innerHTML = '<option value="">先选择一级分类</option>';
+            const subWrapper = document.getElementById('approveSubSelectWrapper');
+            subWrapper.innerHTML = '';
             subWrapper.appendChild(subSelect);
-            let subCustomSelect = new CustomSelect(subSelect);
-            customSelects.sub = subCustomSelect;
+
+            let catCustomSelect = new CustomSelect(catSelect, async (value) => {
+                // 清空子分类选择器
+                subSelect.innerHTML = '<option value="">加载中...</option>';
+                if (customSelects.sub) customSelects.sub.destroy();
+                if (value) {
+                    try {
+                        const subsData = await apiFetch(`/admin/subcategories?category_id=${value}`);
+                        subSelect.innerHTML = '<option value="">选择二级分类</option>' + subsData.map(sub => `<option value="${sub.id}">${escapeHtml(sub.name)}</option>`).join('');
+                    } catch (e) {
+                        subSelect.innerHTML = '<option value="">加载失败</option>';
+                        showToast('加载子分类失败', 'error');
+                    }
+                } else {
+                    subSelect.innerHTML = '<option value="">先选择一级分类</option>';
+                }
+                customSelects.sub = new CustomSelect(subSelect);
+            });
+            customSelects.cat = catCustomSelect;
+            customSelects.sub = new CustomSelect(subSelect);
 
             document.getElementById('doApproveBtn').onclick = async () => {
                 const catSelectEl = document.getElementById('approveCatSelect');
@@ -658,7 +666,7 @@
         } catch (err) { showToast('加载详情失败', 'error'); }
     }
 
-    // 修改分类（增加排序值）
+    // ==================== 分类/子分类/网站管理 ====================
     function handleModifyCategory(id, currentName) {
         const cat = categories.find(c => c.id === id);
         const currentOrder = cat?.display_order || 0;
@@ -677,7 +685,6 @@
         });
     }
 
-    // 修改子分类（增加排序值）
     function handleModifySub(id, currentName) {
         const sub = subcategories.find(s => s.id === id);
         const currentOrder = sub?.display_order || 0;
@@ -790,6 +797,7 @@
         }, 50);
     }
 
+    // ==================== 点击排行、反馈等 ====================
     async function loadRanking() {
         const list = document.getElementById('rankList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -964,6 +972,7 @@
         } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
+    // ==================== 事件绑定 ====================
     function setupEventDelegation() {
         document.getElementById('catBar').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
@@ -1044,7 +1053,6 @@
             document.getElementById('importConfirmBtn').addEventListener('click', importData);
             importModal.addEventListener('click', (e) => { if (e.target === importModal) closeImportModal(); });
         }
-        // 公告模态框关闭
         const announcementModal = document.getElementById('announcementDetailModal');
         if (announcementModal) {
             announcementModal.addEventListener('click', (e) => {
@@ -1053,7 +1061,7 @@
         }
     }
 
-    // CustomSelect 类（与之前相同）
+    // ==================== CustomSelect 类 ====================
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
