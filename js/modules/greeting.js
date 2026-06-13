@@ -1,10 +1,7 @@
-// 问候区模块 - 优化效果和显示（自制木鱼音效，复用 AudioContext）
-// 修改：挂载到 window.Starlink.greeting
+// 问候区模块 - 优化节日倒计时显示（使用 Timor Tech API）
 class GreetingModule {
     constructor() {
-        // 避免重复实例化
         if (window.Starlink && window.Starlink.greeting) return window.Starlink.greeting;
-        
         this.initialized = false;
         this.eventBound = false;
         this.holidayRefreshTimer = null;
@@ -12,24 +9,18 @@ class GreetingModule {
         this.currentHoliday = null;
         this.audioCtx = null;
         this.init();
-        
-        // 挂载到 Starlink
         if (window.Starlink) window.Starlink.greeting = this;
-        // 保留旧全局变量以便兼容
         window.greetingModule = this;
     }
 
     async init() {
         if (this.initialized) return;
-        
         this.loadWoodenFishData();
         this.bindEvents();
         this.startTimers();
         await this.setupHolidayCountdown();
-        
         this.handleResize();
         window.addEventListener('resize', this.handleResize.bind(this));
-        
         this.initialized = true;
     }
 
@@ -37,21 +28,17 @@ class GreetingModule {
         if (!this.audioCtx) {
             try {
                 this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (this.audioCtx.state === 'running') {
-                } else {
+                if (this.audioCtx.state !== 'running') {
                     this.audioCtx.suspend();
                     const resumeCtx = () => {
-                        if (this.audioCtx && this.audioCtx.state === 'suspended') {
-                            this.audioCtx.resume();
-                        }
+                        if (this.audioCtx && this.audioCtx.state === 'suspended') this.audioCtx.resume();
                         document.removeEventListener('click', resumeCtx);
                         document.removeEventListener('touchstart', resumeCtx);
                     };
                     document.addEventListener('click', resumeCtx);
                     document.addEventListener('touchstart', resumeCtx);
                 }
-            } catch (e) {
-            }
+            } catch (e) {}
         }
         return this.audioCtx;
     }
@@ -59,47 +46,45 @@ class GreetingModule {
     playWoodenFishSound() {
         const ctx = this.ensureAudioContext();
         if (!ctx) return;
-        
         try {
             const now = ctx.currentTime;
             const gainNode = ctx.createGain();
             gainNode.connect(ctx.destination);
             gainNode.gain.setValueAtTime(0.3, now);
             gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            
             const osc1 = ctx.createOscillator();
             osc1.type = 'sine';
             osc1.frequency.setValueAtTime(800, now);
             osc1.frequency.exponentialRampToValueAtTime(400, now + 0.02);
             osc1.connect(gainNode);
-            
             const osc2 = ctx.createOscillator();
             osc2.type = 'triangle';
             osc2.frequency.setValueAtTime(1200, now);
             osc2.frequency.exponentialRampToValueAtTime(600, now + 0.03);
             osc2.connect(gainNode);
-            
             osc1.start(now);
             osc2.start(now);
             osc1.stop(now + 0.1);
             osc2.stop(now + 0.1);
-        } catch (e) {
-        }
+        } catch (e) {}
     }
 
     handleResize() {
-        const holidayNameEl = document.getElementById('holidayName');
-        if (holidayNameEl) {
-            holidayNameEl.removeAttribute('title');
-        }
+        const el = document.getElementById('holidayName');
+        if (el) el.removeAttribute('title');
     }
 
+    // ==================== 节日 API（Timor Tech）优化版 ====================
     async loadHolidayData() {
         try {
-            const response = await Utils.safeFetch('https://api.pearapi.ai/api/countdownday/', { timeout: 5000 });
+            const response = await Utils.safeFetch('https://timor.tech/api/holiday/next', { timeout: 8000 });
             const data = await response.json();
-            if (data.code === 200 && data.data && data.data.length > 0) {
-                return data.data;
+            if (data && data.code === 0 && data.data && data.data.length > 0) {
+                const next = data.data[0];
+                const name = next.name;
+                const days = next.leave;
+                // 格式化为 "节日名 还有X天"
+                return [`${name} 还有${days}天`];
             }
             return this.getDefaultHolidays();
         } catch (error) {
@@ -109,8 +94,7 @@ class GreetingModule {
     }
 
     getDefaultHolidays() {
-        const today = new Date();
-        const year = today.getFullYear();
+        const year = new Date().getFullYear();
         return [
             `${year}年春节 计算中...`,
             `${year}年端午节 计算中...`,
@@ -120,13 +104,8 @@ class GreetingModule {
     }
 
     processHolidayData(holidayData) {
-        if (!holidayData || holidayData.length === 0) {
-            return this.getDefaultHoliday();
-        }
-        const now = new Date();
-        let current = null;
-        let next = null;
-        let foundCurrent = false;
+        if (!holidayData || holidayData.length === 0) return this.getDefaultHoliday();
+        let current = null, next = null, foundCurrent = false;
         for (const holidayStr of holidayData) {
             const holiday = this.parseSingleHoliday(holidayStr);
             if (!holiday) continue;
@@ -139,115 +118,68 @@ class GreetingModule {
                 next = holiday;
                 break;
             }
-            if (!next && holiday.days > 0) {
-                next = holiday;
-            }
+            if (!next && holiday.days > 0) next = holiday;
         }
         if (!current && !next && holidayData.length > 0) {
-            const firstHoliday = this.parseSingleHoliday(holidayData[0]);
-            if (firstHoliday) {
-                next = firstHoliday;
-            }
+            const first = this.parseSingleHoliday(holidayData[0]);
+            if (first) next = first;
         }
         return { current, next };
     }
 
     parseSingleHoliday(holidayStr) {
         if (!holidayStr) return null;
-        const match = holidayStr.match(/^(?:(\d{4})年)?(.+?)\s+(?:剩余)?(\d+天|进行中|\d+小时|\d+分钟)$/);
-        if (!match) {
-            const simpleMatch = holidayStr.match(/^(.+?)\s+(.+)$/);
-            if (simpleMatch) {
-                const [, name, countdown] = simpleMatch;
-                return this.createHolidayObject(name, countdown);
-            }
-            return null;
+        // 匹配格式：节日名 还有X天  或  节日名 进行中
+        const match = holidayStr.match(/^(.+?)\s+还有(\d+)天$/);
+        if (match) {
+            const name = match[1];
+            const days = parseInt(match[2]);
+            return this.createHolidayObject(name, days, false);
         }
-        const [, year, name, countdown] = match;
-        return this.createHolidayObject(name, countdown);
+        const activeMatch = holidayStr.match(/^(.+?)\s+进行中$/);
+        if (activeMatch) {
+            return this.createHolidayObject(activeMatch[1], 0, true);
+        }
+        // 兼容旧格式
+        const legacyMatch = holidayStr.match(/^(?:(\d{4})年)?(.+?)\s+(?:剩余)?(\d+天|进行中|\d+小时|\d+分钟)$/);
+        if (legacyMatch) {
+            const name = legacyMatch[2];
+            const countdown = legacyMatch[3];
+            if (countdown === '进行中') return this.createHolidayObject(name, 0, true);
+            const daysMatch = countdown.match(/(\d+)天/);
+            if (daysMatch) return this.createHolidayObject(name, parseInt(daysMatch[1]), false);
+        }
+        return null;
     }
 
-    createHolidayObject(name, countdown) {
-        const now = new Date();
-        const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+    createHolidayObject(name, days, isActive) {
         return {
             name: name,
-            countdown: countdown,
-            displayText: this.formatCountdown(countdown),
-            status: countdown === '进行中' ? 'active' : 'upcoming',
-            days: this.extractDays(countdown),
-            hours: this.extractHours(countdown),
+            days: days,
+            displayText: isActive ? '进行中' : `还有${days}天`,
+            status: isActive ? 'active' : 'upcoming',
             icon: this.getHolidayIcon(name),
-            expiresAt: countdown === '进行中' ? tomorrow.getTime() : null,
-            raw: `${name} ${countdown}`
         };
     }
 
-    formatCountdown(countdown) {
-        if (countdown === '进行中') return '进行中';
-        const daysMatch = countdown.match(/(\d+)天/);
-        if (daysMatch) {
-            const days = parseInt(daysMatch[1]);
-            return `${days}天`;
+    getHolidayIcon(name) {
+        const icons = {
+            '春节': '🧧', '圣诞': '🎄', '中秋': '🌕', '端午': '🎏', '国庆': '🇨🇳',
+            '元宵': '🏮', '清明': '🌸', '元旦': '🎆', '劳动': '👷', '儿童': '🎈',
+            '情人': '❤️', '母亲': '👨‍👩‍👧‍👦', '父亲': '👨‍👩‍👧‍👦', '教师': '👨‍🏫', '妇女': '👩',
+            '青年': '👦', '重阳': '🌼'
+        };
+        for (const [key, icon] of Object.entries(icons)) {
+            if (name.includes(key)) return icon;
         }
-        const hoursMatch = countdown.match(/(\d+)小时/);
-        if (hoursMatch) {
-            const hours = parseInt(hoursMatch[1]);
-            return `${hours}小时`;
-        }
-        return countdown;
-    }
-
-    extractDays(countdown) {
-        if (countdown === '进行中') return 0;
-        const daysMatch = countdown.match(/(\d+)天/);
-        if (daysMatch) {
-            return parseInt(daysMatch[1]);
-        }
-        return null;
-    }
-
-    extractHours(countdown) {
-        const hoursMatch = countdown.match(/(\d+)小时/);
-        if (hoursMatch) {
-            return parseInt(hoursMatch[1]);
-        }
-        return null;
+        return '🎉';
     }
 
     getDefaultHoliday() {
         return {
             current: null,
-            next: {
-                name: '下一个节日',
-                countdown: '计算中...',
-                displayText: '计算中...',
-                status: 'unknown',
-                days: null,
-                icon: '🎉',
-                raw: '下一个节日 计算中...'
-            }
+            next: { name: '下一个节日', days: null, displayText: '计算中...', status: 'unknown', icon: '🎉' }
         };
-    }
-
-    getHolidayIcon(name) {
-        if (name.includes('春节')) return '🧧';
-        else if (name.includes('圣诞')) return '🎄';
-        else if (name.includes('中秋')) return '🌕';
-        else if (name.includes('端午')) return '🎏';
-        else if (name.includes('国庆')) return '🇨🇳';
-        else if (name.includes('元宵')) return '🏮';
-        else if (name.includes('清明')) return '🌸';
-        else if (name.includes('元旦')) return '🎆';
-        else if (name.includes('劳动')) return '👷';
-        else if (name.includes('儿童')) return '🎈';
-        else if (name.includes('情人')) return '❤️';
-        else if (name.includes('母亲') || name.includes('父亲')) return '👨‍👩‍👧‍👦';
-        else if (name.includes('教师')) return '👨‍🏫';
-        else if (name.includes('妇女')) return '👩';
-        else if (name.includes('青年')) return '👦';
-        else if (name.includes('重阳')) return '🌼';
-        else return '🎉';
     }
 
     async setupHolidayCountdown() {
@@ -268,23 +200,20 @@ class GreetingModule {
             this.cacheHolidayData(holidays);
         } catch (error) {
             console.error('设置节日倒计时失败:', error);
-            const cachedData = this.getCachedHolidayData();
-            if (cachedData) {
-                const displayHoliday = cachedData.current || cachedData.next;
-                this.updateHolidayDisplay(displayHoliday);
-            }
+            const cached = this.getCachedHolidayData();
+            if (cached) this.updateHolidayDisplay(cached.current || cached.next);
         }
     }
 
     async checkHolidayExpiration() {
-        const cachedData = this.getCachedHolidayData();
-        if (!cachedData || !cachedData.current) return;
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        if (cachedData.current.status === 'active') {
-            const lastUpdate = new Date(cachedData.timestamp);
-            const lastUpdateDate = new Date(lastUpdate.getFullYear(), lastUpdate.getMonth(), lastUpdate.getDate());
-            if (today > lastUpdateDate) {
+        const cached = this.getCachedHolidayData();
+        if (!cached || !cached.current) return;
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        if (cached.current.status === 'active') {
+            const lastUpdate = new Date(cached.timestamp);
+            lastUpdate.setHours(0,0,0,0);
+            if (today > lastUpdate) {
                 localStorage.removeItem('holidayDataCache');
                 this.currentHoliday = null;
             }
@@ -293,18 +222,10 @@ class GreetingModule {
 
     cacheHolidayData(holidays) {
         try {
-            const now = new Date();
-            const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
-            const cache = {
-                current: holidays.current,
-                next: holidays.next,
-                timestamp: Date.now(),
-                expiresAt: holidays.current ? tomorrow.getTime() : Date.now() + (24 * 60 * 60 * 1000)
-            };
+            const expiresAt = holidays.current ? new Date(new Date().setHours(24,0,0,0)).getTime() : Date.now() + 86400000;
+            const cache = { current: holidays.current, next: holidays.next, timestamp: Date.now(), expiresAt };
             localStorage.setItem('holidayDataCache', JSON.stringify(cache));
-        } catch (error) {
-            console.error('缓存节日数据失败:', error);
-        }
+        } catch (error) {}
     }
 
     getCachedHolidayData() {
@@ -317,95 +238,63 @@ class GreetingModule {
                 return null;
             }
             return cache;
-        } catch (error) {
-            return null;
-        }
+        } catch { return null; }
     }
 
     scheduleHolidayRefresh(holiday) {
         if (!holiday || holiday.status !== 'active') return;
-        if (this.holidayRefreshTimer) {
-            clearTimeout(this.holidayRefreshTimer);
-        }
+        if (this.holidayRefreshTimer) clearTimeout(this.holidayRefreshTimer);
         const now = new Date();
         const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
-        const timeUntilMidnight = tomorrow.getTime() - now.getTime();
+        const delay = tomorrow.getTime() - now.getTime();
         this.holidayRefreshTimer = setTimeout(async () => {
             localStorage.removeItem('holidayDataCache');
             await this.setupHolidayCountdown();
             const toast = window.Starlink?.toast || window.toast;
-            if (toast && toast.show) {
-                toast.show('节日数据已更新', 'info');
-            } else if (window.app && window.app.showToast) {
-                window.app.showToast('节日数据已更新', 'info');
-            }
-        }, timeUntilMidnight + 1000);
+            if (toast?.show) toast.show('节日数据已更新', 'info');
+        }, delay + 1000);
     }
 
     updateHolidayDisplay(holidayInfo) {
-        const holidayNameEl = document.getElementById('holidayName');
-        const holidayCountdownEl = document.getElementById('holidayCountdown');
-        if (!holidayNameEl || !holidayCountdownEl) return;
+        const nameEl = document.getElementById('holidayName');
+        const countdownEl = document.getElementById('holidayCountdown');
+        if (!nameEl || !countdownEl) return;
         if (!holidayInfo) {
-            holidayNameEl.innerHTML = `<span class="holiday-icon">🎉</span> 下一个节日`;
-            holidayCountdownEl.textContent = "计算中...";
-            holidayCountdownEl.classList.add('status-unknown');
-            holidayNameEl.removeAttribute('title');
-            holidayNameEl.classList.remove('active-holiday');
+            nameEl.innerHTML = '<span class="holiday-icon">🎉</span> 下一个节日';
+            countdownEl.textContent = '计算中...';
+            countdownEl.classList.add('status-unknown');
             return;
         }
-        holidayNameEl.innerHTML = `<span class="holiday-icon">${holidayInfo.icon}</span> ${Utils.escapeHtml(holidayInfo.name)}`;
-        holidayNameEl.removeAttribute('title');
-        holidayCountdownEl.textContent = holidayInfo.displayText;
-        this.setHolidayStyle(holidayCountdownEl, holidayInfo);
-        if (holidayInfo.status === 'active') {
-            holidayCountdownEl.classList.add('active-countdown');
-        } else {
-            holidayCountdownEl.classList.remove('active-countdown');
-        }
+        nameEl.innerHTML = `<span class="holiday-icon">${holidayInfo.icon}</span> ${Utils.escapeHtml(holidayInfo.name)}`;
+        countdownEl.textContent = holidayInfo.displayText;
+        this.setHolidayStyle(countdownEl, holidayInfo);
+        if (holidayInfo.status === 'active') countdownEl.classList.add('active-countdown');
+        else countdownEl.classList.remove('active-countdown');
     }
 
     setHolidayStyle(element, holidayInfo) {
         element.classList.remove('active-countdown', 'status-3days', 'status-7days', 'status-more', 'status-unknown');
-        if (holidayInfo.status === 'active') {
-            element.classList.add('active-countdown');
-        } else if (holidayInfo.days !== null && holidayInfo.days <= 3) {
-            element.classList.add('status-3days');
-        } else if (holidayInfo.days !== null && holidayInfo.days <= 7) {
-            element.classList.add('status-7days');
-        } else if (holidayInfo.days !== null && holidayInfo.days > 7) {
-            element.classList.add('status-more');
-        } else {
-            element.classList.add('status-unknown');
-        }
-        element.style.background = '';
-        element.style.color = '';
-        element.style.border = '';
+        if (holidayInfo.status === 'active') element.classList.add('active-countdown');
+        else if (holidayInfo.days !== null && holidayInfo.days <= 3) element.classList.add('status-3days');
+        else if (holidayInfo.days !== null && holidayInfo.days <= 7) element.classList.add('status-7days');
+        else if (holidayInfo.days !== null && holidayInfo.days > 7) element.classList.add('status-more');
+        else element.classList.add('status-unknown');
     }
 
     loadWoodenFishData() {
-        const fishData = Storage.get('woodenFish') || {
-            merit: 0, luck: 0, wealth: 0, health: 0, lastUpdate: new Date().toDateString()
-        };
-        const today = new Date().toDateString();
-        if (fishData.lastUpdate !== today) {
-            fishData.lastUpdate = today;
+        let fishData = Storage.get('woodenFish') || { merit:0, luck:0, wealth:0, health:0, lastUpdate: new Date().toDateString() };
+        if (fishData.lastUpdate !== new Date().toDateString()) {
+            fishData.lastUpdate = new Date().toDateString();
             Storage.set('woodenFish', fishData);
         }
         this.updateFishCounts(fishData);
     }
 
     updateFishCounts(fishData) {
-        const counts = {
-            merit: document.getElementById('meritCount'),
-            luck: document.getElementById('luckCount'),
-            wealth: document.getElementById('wealthCount'),
-            health: document.getElementById('healthCount')
-        };
-        for (const [type, element] of Object.entries(counts)) {
-            if (element) {
-                element.textContent = fishData[type] || 0;
-            }
+        const ids = { merit:'meritCount', luck:'luckCount', wealth:'wealthCount', health:'healthCount' };
+        for (const [type, id] of Object.entries(ids)) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = fishData[type] || 0;
         }
     }
 
@@ -414,23 +303,18 @@ class GreetingModule {
         document.querySelectorAll('.fish-btn').forEach(btn => {
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
-        });
-        document.querySelectorAll('.fish-btn').forEach(btn => {
-            btn.addEventListener('click', this.handleFishClick.bind(this), { once: false });
+            newBtn.addEventListener('click', this.handleFishClick.bind(this));
         });
         document.addEventListener('keydown', (e) => {
-            if (e.altKey) {
-                const type = e.key === '1' ? 'merit' : 
-                            e.key === '2' ? 'luck' : 
-                            e.key === '3' ? 'wealth' : 
-                            e.key === '4' ? 'health' : null;
-                if (type) {
-                    this.incrementFishCount(type, 1);
-                    const btn = document.querySelector(`.fish-btn[data-type="${type}"]`);
-                    if (btn) {
-                        this.showFishEffect(btn);
-                        this.playWoodenFishSound();
-                    }
+            if (!e.altKey) return;
+            const typeMap = { '1':'merit', '2':'luck', '3':'wealth', '4':'health' };
+            const type = typeMap[e.key];
+            if (type) {
+                this.incrementFishCount(type, 1);
+                const btn = document.querySelector(`.fish-btn[data-type="${type}"]`);
+                if (btn) {
+                    this.showFishEffect(btn);
+                    this.playWoodenFishSound();
                 }
             }
         });
@@ -444,60 +328,35 @@ class GreetingModule {
         this.playWoodenFishSound();
         this.incrementFishCount(type, 1);
         this.showFishEffect(e.currentTarget);
-        if (navigator.vibrate) {
-            navigator.vibrate(20);
-        }
+        if (navigator.vibrate) navigator.vibrate(20);
     }
 
     incrementFishCount(type, amount = 1) {
-        const fishData = Storage.get('woodenFish') || {
-            merit: 0, luck: 0, wealth: 0, health: 0
-        };
+        const fishData = Storage.get('woodenFish') || { merit:0, luck:0, wealth:0, health:0 };
         fishData[type] = (fishData[type] || 0) + amount;
         Storage.set('woodenFish', fishData);
         this.updateFishCounts(fishData);
     }
 
     showFishEffect(element) {
-        const effect = document.createElement('div');
         const type = element.dataset.type;
-        const textMap = { merit: '功德+1', luck: '幸运+1', wealth: '财富+1', health: '健康+1' };
-        effect.innerHTML = textMap[type] || '+1';
-        effect.className = 'fish-effect';
+        const texts = { merit:'功德+1', luck:'幸运+1', wealth:'财富+1', health:'健康+1' };
+        const colors = { merit:'#70c1ff', luck:'#ff9e9e', wealth:'#ffd670', health:'#8ddf8d' };
         const rect = element.getBoundingClientRect();
-        const btnCenterX = rect.left + rect.width / 2;
-        const btnCenterY = rect.top + rect.height / 2;
-        const colors = { merit: '#70c1ff', luck: '#ff9e9e', wealth: '#ffd670', health: '#8ddf8d' };
-        const color = colors[type] || '#FFFFFF';
-        const offsetX = (Math.random() - 0.5) * 30;
-        const offsetY = (Math.random() - 0.5) * 10;
+        const effect = document.createElement('div');
+        effect.innerHTML = texts[type] || '+1';
+        effect.className = 'fish-effect';
         effect.style.cssText = `
-            position: fixed;
-            color: ${color};
-            font-weight: 800;
-            pointer-events: none;
-            z-index: 1000;
-            animation: floatUp 1.2s ease-out forwards;
-            font-size: 16px;
-            top: ${btnCenterY + offsetY}px;
-            left: ${btnCenterX + offsetX}px;
-            transform: translate(-50%, -50%);
-            text-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 0 16px ${color}80, 0 0 24px ${color}40;
+            position: fixed; left: ${rect.left + rect.width/2}px; top: ${rect.top + rect.height/2}px;
+            transform: translate(-50%, -50%); color: ${colors[type] || '#fff'}; font-weight: 800;
+            pointer-events: none; z-index: 1000; animation: floatUp 1.2s ease-out forwards;
+            font-size: 16px; white-space: nowrap; background: rgba(255,255,255,0.9);
+            padding: 4px 8px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             opacity: 0;
-            white-space: nowrap;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 4px 8px;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         `;
         document.body.appendChild(effect);
-        effect.offsetHeight;
-        effect.style.opacity = '1';
-        setTimeout(() => {
-            if (effect.parentNode) {
-                effect.parentNode.removeChild(effect);
-            }
-        }, 1200);
+        requestAnimationFrame(() => effect.style.opacity = '1');
+        setTimeout(() => effect.remove(), 1200);
     }
 
     startTimers() {
@@ -507,136 +366,78 @@ class GreetingModule {
             this.updateTime();
             this.updateGreeting();
         }, 1000);
-        setInterval(async () => {
-            await this.checkAndUpdateHoliday();
-        }, 5 * 60 * 1000);
-        setInterval(async () => {
-            const now = new Date();
-            if (now.getMinutes() === 0) {
-                await this.checkAndUpdateHoliday();
-            }
+        setInterval(() => this.checkAndUpdateHoliday(), 5 * 60 * 1000);
+        setInterval(() => {
+            if (new Date().getMinutes() === 0) this.checkAndUpdateHoliday();
         }, 60 * 1000);
     }
 
     async checkAndUpdateHoliday() {
-        try {
-            const cachedData = this.getCachedHolidayData();
-            if (!cachedData) {
-                await this.setupHolidayCountdown();
-                return;
+        const cached = this.getCachedHolidayData();
+        if (!cached) return this.setupHolidayCountdown();
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (cached.current && cached.current.status === 'active') {
+            const lastUpdate = new Date(cached.timestamp);
+            lastUpdate.setHours(0,0,0,0);
+            if (today > lastUpdate) {
+                localStorage.removeItem('holidayDataCache');
+                return this.setupHolidayCountdown();
             }
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            if (cachedData.current && cachedData.current.status === 'active') {
-                const lastUpdate = new Date(cachedData.timestamp);
-                const lastUpdateDate = new Date(lastUpdate.getFullYear(), lastUpdate.getMonth(), lastUpdate.getDate());
-                if (today > lastUpdateDate) {
-                    localStorage.removeItem('holidayDataCache');
-                    await this.setupHolidayCountdown();
-                    return;
-                }
-            }
-            if (cachedData.expiresAt - Date.now() < 10 * 60 * 1000) {
-                await this.setupHolidayCountdown();
-            }
-        } catch (error) {
-            console.error('检查节日状态失败:', error);
         }
+        if (cached.expiresAt - Date.now() < 600000) await this.setupHolidayCountdown();
     }
 
     updateTime() {
         const now = new Date();
-        const timeElement = document.getElementById('currentTime');
-        const dateElement = document.getElementById('currentDate');
-        if (timeElement) {
-            timeElement.textContent = now.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }
-        if (dateElement) {
-            dateElement.textContent = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-        }
+        const timeEl = document.getElementById('currentTime');
+        const dateEl = document.getElementById('currentDate');
+        if (timeEl) timeEl.textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+        if (dateEl) dateEl.textContent = now.toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
     }
 
     updateGreeting() {
         const hour = new Date().getHours();
-        let greeting = '';
-        let emoji = '';
-        if (hour >= 5 && hour < 9) {
-            greeting = '早上好，朋友！';
-            emoji = '🍞';
-        } else if (hour >= 9 && hour < 12) {
-            greeting = '上午好，朋友！';
-            emoji = '☀️';
-        } else if (hour >= 12 && hour < 14) {
-            greeting = '中午好，朋友！';
-            emoji = '🍱';
-        } else if (hour >= 14 && hour < 18) {
-            greeting = '下午好，朋友！';
-            emoji = '🌤️';
-        } else if (hour >= 18 && hour < 22) {
-            greeting = '晚上好，朋友！';
-            emoji = '🍻';
-        } else {
-            greeting = '夜深啦，朋友早点休息！';
-            emoji = '🌌';
-        }
-        const greetingElement = document.getElementById('greeting');
-        if (greetingElement) {
-            greetingElement.innerHTML = `<span class="greeting-emoji">${emoji}</span> <span class="greeting-text-content">${Utils.escapeHtml(greeting)}</span>`;
-        }
+        let greeting, emoji;
+        if (hour >= 5 && hour < 9) { greeting = '早上好，朋友！'; emoji = '🍞'; }
+        else if (hour >= 9 && hour < 12) { greeting = '上午好，朋友！'; emoji = '☀️'; }
+        else if (hour >= 12 && hour < 14) { greeting = '中午好，朋友！'; emoji = '🍱'; }
+        else if (hour >= 14 && hour < 18) { greeting = '下午好，朋友！'; emoji = '🌤️'; }
+        else if (hour >= 18 && hour < 22) { greeting = '晚上好，朋友！'; emoji = '🍻'; }
+        else { greeting = '夜深啦，朋友早点休息！'; emoji = '🌌'; }
+        const el = document.getElementById('greeting');
+        if (el) el.innerHTML = `<span class="greeting-emoji">${emoji}</span> <span class="greeting-text-content">${Utils.escapeHtml(greeting)}</span>`;
     }
 
     async refreshHolidayData() {
         try {
             localStorage.removeItem('holidayDataCache');
-            const holidayCountdownEl = document.getElementById('holidayCountdown');
-            if (holidayCountdownEl) {
-                holidayCountdownEl.textContent = "刷新中...";
-                holidayCountdownEl.classList.add('status-unknown');
-                holidayCountdownEl.classList.remove('active-countdown', 'status-3days', 'status-7days', 'status-more');
-            }
+            const el = document.getElementById('holidayCountdown');
+            if (el) { el.textContent = '刷新中...'; el.classList.add('status-unknown'); }
             await this.setupHolidayCountdown();
             const toast = window.Starlink?.toast || window.toast;
-            if (toast && toast.show) {
-                toast.show('节日数据已刷新', 'success');
-            } else if (window.app && window.app.showToast) {
-                window.app.showToast('节日数据已刷新', 'success');
-            }
+            if (toast?.show) toast.show('节日数据已刷新', 'success');
         } catch (error) {
-            console.error('手动刷新节日数据失败:', error);
             const toast = window.Starlink?.toast || window.toast;
-            if (toast && toast.show) {
-                toast.show('刷新失败，请重试', 'error');
-            } else if (window.app && window.app.showToast) {
-                window.app.showToast('刷新失败，请重试', 'error');
-            }
+            if (toast?.show) toast.show('刷新失败，请重试', 'error');
         }
     }
 
-    getFishStats() {
-        return Storage.get('woodenFish') || { merit: 0, luck: 0, wealth: 0, health: 0 };
-    }
+    getFishStats() { return Storage.get('woodenFish') || { merit:0, luck:0, wealth:0, health:0 }; }
 
     resetFishData() {
         if (confirm('确定要重置所有木鱼计数吗？')) {
-            const fishData = { merit: 0, luck: 0, wealth: 0, health: 0, lastUpdate: new Date().toDateString() };
-            Storage.set('woodenFish', fishData);
-            this.updateFishCounts(fishData);
+            Storage.set('woodenFish', { merit:0, luck:0, wealth:0, health:0, lastUpdate: new Date().toDateString() });
+            this.updateFishCounts(Storage.get('woodenFish'));
             const toast = window.Starlink?.toast || window.toast;
-            if (toast && toast.show) {
-                toast.show('木鱼计数已重置', 'success');
-            } else if (window.app && window.app.showToast) {
-                window.app.showToast('木鱼计数已重置', 'success');
-            }
+            if (toast?.show) toast.show('木鱼计数已重置', 'success');
         }
     }
 
     destroy() {
         if (this.holidayRefreshTimer) clearTimeout(this.holidayRefreshTimer);
         if (this.holidayCheckTimer) clearInterval(this.holidayCheckTimer);
-        if (this.audioCtx) {
-            this.audioCtx.close().catch(() => {});
-            this.audioCtx = null;
-        }
+        if (this.audioCtx) this.audioCtx.close().catch(()=>{});
         this.initialized = false;
         this.eventBound = false;
     }
@@ -644,16 +445,9 @@ class GreetingModule {
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.Starlink) window.Starlink = {};
-    if (!window.Starlink.greeting) {
-        window.Starlink.greeting = new GreetingModule();
-    }
+    if (!window.Starlink.greeting) window.Starlink.greeting = new GreetingModule();
     window.greetingModule = window.Starlink.greeting;
-    
     const refreshBtn = document.getElementById('refreshHolidayBtn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => {
-            window.Starlink.greeting.refreshHolidayData();
-        });
-    }
+    if (refreshBtn) refreshBtn.addEventListener('click', () => window.Starlink.greeting.refreshHolidayData());
 });
 window.GreetingModule = GreetingModule;
