@@ -38,7 +38,6 @@
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
 
-    <!-- 预加载关键资源 -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -73,7 +72,6 @@
 
     <!-- 滚动进度条样式 -->
     <style>
-        /* 简约滚动进度条 */
         .scroll-progress {
             position: fixed;
             top: 0;
@@ -85,7 +83,6 @@
             transition: width 0.1s ease-out;
             box-shadow: 0 0 6px var(--primary-color, #4361ee);
         }
-        /* 深色模式适配 */
         @media (prefers-color-scheme: dark) {
             .scroll-progress {
                 background: #7b9cff;
@@ -307,7 +304,6 @@
 </head>
 
 <body>
-<!-- 滚动进度条元素 -->
 <div class="scroll-progress" id="scrollProgress"></div>
 
 <nav class="navbar" id="navbar">
@@ -715,14 +711,12 @@
     (function() {
         const progressBar = document.getElementById('scrollProgress');
         if (!progressBar) return;
-        
         function updateScrollProgress() {
             const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
             const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
             const scrolled = (winScroll / height) * 100;
             progressBar.style.width = scrolled + '%';
         }
-        
         window.addEventListener('scroll', updateScrollProgress);
         window.addEventListener('resize', updateScrollProgress);
         updateScrollProgress();
