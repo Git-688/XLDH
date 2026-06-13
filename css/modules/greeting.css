@@ -30,30 +30,30 @@
     .greeting-section { padding: var(--section-margin-lg) 0; }
 }
 
-/* 主卡片 - 完全移除内边距 */
+/* 主卡片 - 内边距为0 */
 .greeting-main-card {
     background: var(--bg-card);
     border-radius: 10px;
     border: 1px solid var(--border-color);
-    padding: 0;               /* 关键：无内边距 */
+    padding: 0;
     transition: transform 0.3s ease;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
     overflow: hidden;
 }
 .greeting-main-card:hover {
     transform: translateY(-2px);
 }
 
-/* 顶部两行：强制左右并排，不换行 */
+/* 顶部两行：强制左右并排，不换行，内边距为0 */
 .greeting-top-row {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 20px;
+    gap: 12px;
     flex-wrap: nowrap;
-    padding: 16px 20px 0 20px;   /* 恢复原始内边距 */
+    padding: 0;
 }
 
 /* 左上角卡片 */
@@ -62,7 +62,8 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
+    padding: 0;
 }
 
 /* 问候语 */
@@ -84,7 +85,7 @@
     font-weight: 700;
 }
 
-/* 主要节日容器 - 样式保持不变 */
+/* 主要节日容器 - 字体与问候语一致 */
 .primary-holiday-container {
     display: flex;
     align-items: center;
@@ -93,7 +94,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 1.2em;
+    font-size: 1.5em;  /* 与问候语字体大小一致 */
 }
 .primary-holiday .holiday-icon {
     font-size: 1em;
@@ -106,7 +107,7 @@
     background: rgba(67,97,238,0.15);
     padding: 2px 8px;
     border-radius: 20px;
-    font-size: 0.85em;
+    font-size: 0.7em;   /* 相对父容器缩小，保持视觉协调 */
     font-weight: 500;
     color: #ffffff !important;
     display: inline-block;
@@ -117,12 +118,12 @@
     color: white;
 }
 
-/* 次要节日列表 */
+/* 次要节日列表 - 内边距为0 */
 .secondary-holidays-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    padding: 0 20px;
+    gap: 6px;
+    padding: 0;
 }
 .secondary-holiday-item {
     display: inline-flex;
@@ -143,31 +144,31 @@
 /* 右侧日期卡片 */
 .datetime {
     background: var(--bg-card);
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    min-width: 130px;
+    gap: 4px;
+    min-width: 120px;
     flex-shrink: 0;
 }
 .datetime-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 6px;
 }
 #currentTime {
-    font-size: 1.1em;
+    font-size: 1.05em;
     font-weight: 600;
     color: var(--primary-color);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
 #currentDate {
-    font-size: 0.8em;
+    font-size: 0.75em;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
@@ -177,9 +178,9 @@
 .expand-holiday-btn {
     background: transparent;
     border: 1px solid var(--border-color);
-    padding: 2px 8px;
+    padding: 2px 6px;
     border-radius: 20px;
-    font-size: 10px;
+    font-size: 9px;
     cursor: pointer;
     color: var(--primary-color);
     transition: all 0.2s;
@@ -189,25 +190,25 @@
     background: rgba(67,97,238,0.1);
 }
 
-/* 木鱼按钮区域 */
+/* 木鱼按钮区域 - 使用 grid 布局，左右边距与按钮间距相等 */
 .fish-section {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
-    padding: 0 20px 16px 20px;
+    padding: 0 8px 8px 8px;  /* 左右内边距等于 gap，实现左右间距与按钮间距一致 */
 }
 .fish-btn {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: 6px 10px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    min-height: 50px;
+    min-height: 44px;
     overflow: visible;
     user-select: none;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -240,7 +241,7 @@
 }
 
 .fish-btn i { 
-    font-size: 18px;
+    font-size: 16px;
     transition: transform 0.2s ease;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
@@ -249,33 +250,33 @@
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 .fish-count {
-    font-size: 1em;
+    font-size: 0.9em;
     font-weight: 700;
     background: rgba(0, 0, 0, 0.05);
-    padding: 3px 8px;
+    padding: 2px 6px;
     border-radius: 6px;
-    min-width: 28px;
+    min-width: 26px;
     text-align: center;
     transition: all 0.2s ease;
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
-/* 书签按钮（独立于卡片外部下方） */
+/* 书签按钮 */
 .bookmark-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 12px 20px;
+    padding: 10px 16px;
     text-decoration: none;
     color: #9575CD;
     transition: all 0.3s ease;
     width: 100%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
 }
 .bookmark-btn:hover {
@@ -286,10 +287,10 @@
     box-shadow: 0 4px 12px rgba(149, 117, 205, 0.2);
 }
 .bookmark-btn i {
-    font-size: 18px;
+    font-size: 16px;
 }
 .bookmark-btn span {
-    font-size: 14px;
+    font-size: 12px;
 }
 
 /* 木鱼点击动画 */
@@ -303,64 +304,63 @@
     pointer-events: none;
 }
 
-/* 响应式设计：保持一行，但适当缩放 */
+/* 响应式设计：保持一行，缩放内容，内边距保持为0 */
 @media (max-width: 992px) {
-    .greeting-top-row { padding: 12px 16px 0 16px; gap: 16px; }
-    .greeting-text h1 { font-size: 1.32em !important; }
-    .primary-holiday { font-size: 1.1em; }
-    .primary-holiday .holiday-countdown { padding: 2px 6px; font-size: 0.8em; }
-    .datetime { padding: 6px 10px; min-width: 120px; gap: 4px; }
-    .datetime-row { gap: 8px; }
-    #currentTime { font-size: 1em; }
-    #currentDate { font-size: 0.75em; }
-    .expand-holiday-btn { font-size: 9px; padding: 2px 6px; }
-    .fish-section { padding: 0 16px 12px 16px; gap: 6px; }
-    .fish-btn { padding: 8px 10px; min-height: 45px; }
-    .fish-btn i { font-size: 16px; }
-    .fish-count { font-size: 0.9em; padding: 2px 6px; }
-    .secondary-holidays-list { padding: 0 16px; }
+    .greeting-top-row { gap: 12px; }
+    .greeting-text h1 { font-size: 1.3em !important; }
+    .primary-holiday { font-size: 1.3em; }
+    .primary-holiday .holiday-countdown { padding: 2px 5px; font-size: 0.7em; }
+    .datetime { padding: 5px 8px; min-width: 110px; gap: 3px; }
+    .datetime-row { gap: 5px; }
+    #currentTime { font-size: 0.95em; }
+    #currentDate { font-size: 0.7em; }
+    .expand-holiday-btn { font-size: 8px; padding: 2px 5px; }
+    .fish-section { gap: 7px; padding: 0 7px 7px 7px; }
+    .fish-btn { padding: 5px 8px; min-height: 40px; }
+    .fish-btn i { font-size: 14px; }
+    .fish-count { font-size: 0.85em; padding: 2px 5px; }
 }
 @media (max-width: 768px) {
     .greeting-section { padding: var(--section-margin-sm) 0; }
-    .greeting-top-row { padding: 10px 12px 0 12px; gap: 12px; }
-    .greeting-text h1 { font-size: 1.15em !important; }
-    .primary-holiday { font-size: 1em; }
-    .primary-holiday .holiday-countdown { padding: 2px 6px; font-size: 0.75em; }
-    .datetime { padding: 6px 8px; min-width: 110px; }
-    .datetime-row { gap: 6px; }
-    #currentTime { font-size: 0.9em; }
-    #currentDate { font-size: 0.7em; }
-    .expand-holiday-btn { font-size: 8px; padding: 2px 5px; }
-    .fish-section { padding: 0 12px 10px 12px; gap: 4px; }
-    .fish-btn { padding: 6px 8px; min-height: 40px; }
-    .fish-btn i { font-size: 14px; }
-    .fish-count { font-size: 0.85em; padding: 2px 5px; }
-    .secondary-holiday-item { padding: 3px 8px; font-size: 9px; }
-    .secondary-name { max-width: 65px; }
+    .greeting-top-row { gap: 8px; }
+    .greeting-text h1 { font-size: 1.1em !important; }
+    .primary-holiday { font-size: 1.1em; }
+    .primary-holiday .holiday-countdown { padding: 2px 4px; font-size: 0.65em; }
+    .datetime { padding: 4px 6px; min-width: 100px; }
+    .datetime-row { gap: 4px; }
+    #currentTime { font-size: 0.85em; }
+    #currentDate { font-size: 0.65em; }
+    .expand-holiday-btn { font-size: 7px; padding: 2px 4px; }
+    .fish-section { gap: 6px; padding: 0 6px 6px 6px; }
+    .fish-btn { padding: 4px 6px; min-height: 36px; }
+    .fish-btn i { font-size: 12px; }
+    .fish-count { font-size: 0.8em; padding: 1px 4px; }
+    .secondary-holiday-item { padding: 2px 6px; font-size: 8px; }
+    .secondary-name { max-width: 60px; }
 }
 @media (max-width: 576px) {
     .greeting-section { padding: var(--section-margin-xs) 0; }
-    .greeting-top-row { padding: 8px 10px 0 10px; gap: 10px; }
-    .greeting-text h1 { font-size: 1.05em !important; }
-    .primary-holiday { font-size: 0.95em; }
-    .primary-holiday .holiday-countdown { padding: 2px 5px; font-size: 0.7em; }
-    .datetime { padding: 5px 8px; min-width: 100px; }
-    .datetime-row { gap: 5px; }
-    #currentTime { font-size: 0.85em; }
-    #currentDate { font-size: 0.65em; }
-    .expand-holiday-btn { font-size: 8px; padding: 2px 5px; }
-    .fish-section { padding: 0 10px 8px 10px; gap: 4px; }
-    .fish-btn { padding: 5px 6px; min-height: 38px; }
-    .fish-btn i { font-size: 12px; }
-    .fish-count { font-size: 0.8em; padding: 1px 4px; }
-    .secondary-holidays-list { padding: 0 10px; }
-    .secondary-holiday-item { font-size: 8px; }
-    .secondary-name { max-width: 55px; }
+    .greeting-top-row { gap: 6px; }
+    .greeting-text h1 { font-size: 1em !important; }
+    .primary-holiday { font-size: 1em; }
+    .primary-holiday .holiday-countdown { padding: 2px 4px; font-size: 0.6em; }
+    .datetime { padding: 4px 5px; min-width: 90px; }
+    .datetime-row { gap: 3px; }
+    #currentTime { font-size: 0.8em; }
+    #currentDate { font-size: 0.6em; }
+    .expand-holiday-btn { font-size: 7px; padding: 2px 4px; }
+    .fish-section { gap: 5px; padding: 0 5px 5px 5px; }
+    .fish-btn { padding: 4px 5px; min-height: 34px; }
+    .fish-btn i { font-size: 11px; }
+    .fish-count { font-size: 0.75em; padding: 1px 3px; min-width: 22px; }
+    .secondary-holidays-list { gap: 4px; }
+    .secondary-holiday-item { font-size: 7px; }
+    .secondary-name { max-width: 50px; }
 }
 @media (max-width: 400px) {
-    .datetime { min-width: 90px; }
+    .datetime { min-width: 85px; }
     .datetime-row { flex-wrap: wrap; justify-content: flex-end; }
-    .expand-holiday-btn { order: 2; margin-top: 4px; }
+    .expand-holiday-btn { order: 2; margin-top: 3px; }
 }
 
 /* 节日倒计时状态样式 */
@@ -393,7 +393,7 @@
     100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
-/* 深色模式 */
+/* 深色模式优化 */
 .dark-mode .greeting-main-card {
     background: var(--bg-card);
     border-color: var(--border-color);
