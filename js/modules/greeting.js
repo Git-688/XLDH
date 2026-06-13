@@ -1,31 +1,27 @@
-// 问候区模块 - 使用新节日 API
+// 问候区模块 - 优化效果和显示（自制木鱼音效，复用 AudioContext）
 class GreetingModule {
     constructor() {
         if (window.Starlink && window.Starlink.greeting) return window.Starlink.greeting;
-        
         this.initialized = false;
         this.eventBound = false;
         this.holidayRefreshTimer = null;
         this.holidayCheckTimer = null;
         this.currentHoliday = null;
         this.audioCtx = null;
+        this.holidayList = []; // 存储所有节日
         this.init();
-        
         if (window.Starlink) window.Starlink.greeting = this;
         window.greetingModule = this;
     }
 
     async init() {
         if (this.initialized) return;
-        
         this.loadWoodenFishData();
         this.bindEvents();
         this.startTimers();
         await this.setupHolidayCountdown();
-        
         this.handleResize();
         window.addEventListener('resize', this.handleResize.bind(this));
-        
         this.initialized = true;
     }
 
@@ -33,7 +29,8 @@ class GreetingModule {
         if (!this.audioCtx) {
             try {
                 this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (this.audioCtx.state === 'suspended') {
+                if (this.audioCtx.state !== 'running') {
+                    this.audioCtx.suspend();
                     const resumeCtx = () => {
                         if (this.audioCtx && this.audioCtx.state === 'suspended') {
                             this.audioCtx.resume();
@@ -52,26 +49,22 @@ class GreetingModule {
     playWoodenFishSound() {
         const ctx = this.ensureAudioContext();
         if (!ctx) return;
-        
         try {
             const now = ctx.currentTime;
             const gainNode = ctx.createGain();
             gainNode.connect(ctx.destination);
             gainNode.gain.setValueAtTime(0.3, now);
             gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            
             const osc1 = ctx.createOscillator();
             osc1.type = 'sine';
             osc1.frequency.setValueAtTime(800, now);
             osc1.frequency.exponentialRampToValueAtTime(400, now + 0.02);
             osc1.connect(gainNode);
-            
             const osc2 = ctx.createOscillator();
             osc2.type = 'triangle';
             osc2.frequency.setValueAtTime(1200, now);
             osc2.frequency.exponentialRampToValueAtTime(600, now + 0.03);
             osc2.connect(gainNode);
-            
             osc1.start(now);
             osc2.start(now);
             osc1.stop(now + 0.1);
@@ -86,46 +79,31 @@ class GreetingModule {
         }
     }
 
+    // 从新 API 加载节日数据
     async loadHolidayData() {
         try {
-            // 使用新的节日倒计时 API
-            const response = await Utils.safeFetch('https://115exuq280928.vicp.fun/API/60s/daoshu.php?num=10', { timeout: 8000 });
-            const text = await response.text();
-            
-            // 解析返回的纯文本格式
-            const lines = text.split('\n');
-            const holidays = [];
-            
-            // 跳过第一行标题行，从第2行开始解析
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
-                
-                // 匹配格式: "1. 中国文化遗产日 (6月13日 今天)"
-                // 或 "5. 京东618 (6月18日 还有5天)"
-                const match = line.match(/^\d+\.\s+(.+?)\s+\((.+?)\s+(.+?)\)$/);
-                if (match) {
-                    const name = match[1];
-                    const dateStr = match[2];
-                    let countdown = match[3];
-                    
-                    // 统一转换为"还有X天"格式
-                    if (countdown === '今天') {
-                        countdown = '进行中';
-                    } else if (countdown.startsWith('还有')) {
-                        // 已经是"还有X天"格式，保持不变
-                    } else {
-                        countdown = countdown;
-                    }
-                    
-                    holidays.push(`${name} ${countdown}`);
-                }
+            const apiUrl = 'https://xiaodi.ykxbl.top/Api/dsr.php?n=20';
+            const response = await Utils.safeFetch(apiUrl, { timeout: 5000 });
+            const data = await response.json();
+            if (data && data.code === 0 && data.data && data.data.length > 0) {
+                // 处理 API 返回的数据，转换为内部格式
+                return data.data.map(item => {
+                    let days = item.countdown;
+                    let status = days === 0 ? 'active' : 'upcoming';
+                    return {
+                        name: item.title,
+                        countdown: `${days}天`,
+                        displayText: days === 0 ? '进行中' : `${days}天`,
+                        status: status,
+                        days: days,
+                        icon: this.getHolidayIcon(item.title),
+                        raw: `${item.title} ${days === 0 ? '进行中' : `剩余${days}天`}`,
+                        is_today: item.is_today || false
+                    };
+                });
             }
-            
-            if (holidays.length === 0) {
-                return this.getDefaultHolidays();
-            }
-            return holidays;
+            // 如果 API 返回无效数据，使用默认数据
+            return this.getDefaultHolidays();
         } catch (error) {
             Utils.handleApiError(error, '获取节日数据失败', false);
             return this.getDefaultHolidays();
@@ -136,44 +114,52 @@ class GreetingModule {
         const today = new Date();
         const year = today.getFullYear();
         return [
-            `${year}年春节 计算中...`,
-            `${year}年端午节 计算中...`,
-            `${year}年中秋节 计算中...`,
-            `${year}年国庆节 计算中...`
+            {
+                name: '元旦', countdown: '计算中...', displayText: '计算中...', status: 'unknown',
+                days: null, icon: '🎉', raw: `${year}年元旦 计算中...`, is_today: false
+            },
+            {
+                name: '春节', countdown: '计算中...', displayText: '计算中...', status: 'unknown',
+                days: null, icon: '🧧', raw: `${year}年春节 计算中...`, is_today: false
+            },
+            {
+                name: '清明节', countdown: '计算中...', displayText: '计算中...', status: 'unknown',
+                days: null, icon: '🌸', raw: `${year}年清明节 计算中...`, is_today: false
+            },
+            {
+                name: '端午节', countdown: '计算中...', displayText: '计算中...', status: 'unknown',
+                days: null, icon: '🎏', raw: `${year}年端午节 计算中...`, is_today: false
+            },
+            {
+                name: '中秋节', countdown: '计算中...', displayText: '计算中...', status: 'unknown',
+                days: null, icon: '🌕', raw: `${year}年中秋节 计算中...`, is_today: false
+            },
+            {
+                name: '国庆节', countdown: '计算中...', displayText: '计算中...', status: 'unknown',
+                days: null, icon: '🇨🇳', raw: `${year}年国庆节 计算中...`, is_today: false
+            }
         ];
     }
 
+    // 处理节日列表，分离主要和次要节日
     processHolidayData(holidayData) {
         if (!holidayData || holidayData.length === 0) {
-            return this.getDefaultHoliday();
+            return { primary: null, secondary: [] };
         }
+        // 获取当前的日期（用于后续可能的排序）
         const now = new Date();
-        let current = null;
-        let next = null;
-        let foundCurrent = false;
-        for (const holidayStr of holidayData) {
-            const holiday = this.parseSingleHoliday(holidayStr);
-            if (!holiday) continue;
-            if (holiday.status === 'active') {
-                current = holiday;
-                foundCurrent = true;
-                continue;
-            }
-            if (foundCurrent) {
-                next = holiday;
-                break;
-            }
-            if (!next && holiday.days > 0) {
-                next = holiday;
-            }
+        // 将节日分为进行中、未开始和已结束，并过滤掉已结束的（countdown < 0）
+        const upcomingHolidays = holidayData.filter(h => h.days >= 0);
+        if (upcomingHolidays.length === 0) {
+            return { primary: null, secondary: [] };
         }
-        if (!current && !next && holidayData.length > 0) {
-            const firstHoliday = this.parseSingleHoliday(holidayData[0]);
-            if (firstHoliday) {
-                next = firstHoliday;
-            }
-        }
-        return { current, next };
+        // 按剩余天数升序排序
+        upcomingHolidays.sort((a, b) => a.days - b.days);
+        // 第一个作为主要节日
+        const primary = upcomingHolidays[0];
+        // 其余的作为次要节日
+        const secondary = upcomingHolidays.slice(1, 6); // 最多显示5个次要节日
+        return { primary, secondary };
     }
 
     parseSingleHoliday(holidayStr) {
@@ -265,12 +251,19 @@ class GreetingModule {
         else if (name.includes('元旦')) return '🎆';
         else if (name.includes('劳动')) return '👷';
         else if (name.includes('儿童')) return '🎈';
-        else if (name.includes('情人')) return '❤️';
+        else if (name.includes('情人') || name.includes('七夕')) return '❤️';
         else if (name.includes('母亲') || name.includes('父亲')) return '👨‍👩‍👧‍👦';
         else if (name.includes('教师')) return '👨‍🏫';
         else if (name.includes('妇女')) return '👩';
         else if (name.includes('青年')) return '👦';
         else if (name.includes('重阳')) return '🌼';
+        else if (name.includes('腊八')) return '🥣';
+        else if (name.includes('冬至')) return '🥟';
+        else if (name.includes('高考')) return '📚';
+        else if (name.includes('纪念日')) return '🕯️';
+        else if (name.includes('京东') || name.includes('618')) return '🛒';
+        else if (name.includes('献血')) return '🩸';
+        else if (name.includes('奥林匹克')) return '🏅';
         else return '🎉';
     }
 
@@ -278,34 +271,25 @@ class GreetingModule {
         try {
             await this.checkHolidayExpiration();
             const holidayData = await this.loadHolidayData();
-            const holidays = this.processHolidayData(holidayData);
-            let displayHoliday = null;
-            if (holidays.current) {
-                this.currentHoliday = holidays.current;
-                displayHoliday = holidays.current;
-                this.scheduleHolidayRefresh(holidays.current);
-            } else if (holidays.next) {
-                displayHoliday = holidays.next;
-                this.currentHoliday = null;
-            }
-            this.updateHolidayDisplay(displayHoliday);
-            this.cacheHolidayData(holidays);
+            const { primary, secondary } = this.processHolidayData(holidayData);
+            this.holidayList = secondary;
+            this.updateHolidayDisplay(primary, secondary);
+            this.cacheHolidayData(primary, secondary);
         } catch (error) {
             console.error('设置节日倒计时失败:', error);
             const cachedData = this.getCachedHolidayData();
             if (cachedData) {
-                const displayHoliday = cachedData.current || cachedData.next;
-                this.updateHolidayDisplay(displayHoliday);
+                this.updateHolidayDisplay(cachedData.primary, cachedData.secondary);
             }
         }
     }
 
     async checkHolidayExpiration() {
         const cachedData = this.getCachedHolidayData();
-        if (!cachedData || !cachedData.current) return;
+        if (!cachedData || !cachedData.primary) return;
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        if (cachedData.current.status === 'active') {
+        if (cachedData.primary.status === 'active') {
             const lastUpdate = new Date(cachedData.timestamp);
             const lastUpdateDate = new Date(lastUpdate.getFullYear(), lastUpdate.getMonth(), lastUpdate.getDate());
             if (today > lastUpdateDate) {
@@ -315,15 +299,15 @@ class GreetingModule {
         }
     }
 
-    cacheHolidayData(holidays) {
+    cacheHolidayData(primary, secondary) {
         try {
             const now = new Date();
             const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
             const cache = {
-                current: holidays.current,
-                next: holidays.next,
+                primary: primary,
+                secondary: secondary,
                 timestamp: Date.now(),
-                expiresAt: holidays.current ? tomorrow.getTime() : Date.now() + (24 * 60 * 60 * 1000)
+                expiresAt: primary && primary.status === 'active' ? tomorrow.getTime() : Date.now() + (24 * 60 * 60 * 1000)
             };
             localStorage.setItem('holidayDataCache', JSON.stringify(cache));
         } catch (error) {
@@ -366,27 +350,62 @@ class GreetingModule {
         }, timeUntilMidnight + 1000);
     }
 
-    updateHolidayDisplay(holidayInfo) {
+    // 更新节日显示：主要节日 + 次要节日列表
+    updateHolidayDisplay(primaryHoliday, secondaryHolidays = []) {
+        // 更新主要节日显示
         const holidayNameEl = document.getElementById('holidayName');
         const holidayCountdownEl = document.getElementById('holidayCountdown');
         if (!holidayNameEl || !holidayCountdownEl) return;
-        if (!holidayInfo) {
+        if (!primaryHoliday) {
             holidayNameEl.innerHTML = `<span class="holiday-icon">🎉</span> 下一个节日`;
             holidayCountdownEl.textContent = "计算中...";
             holidayCountdownEl.classList.add('status-unknown');
             holidayNameEl.removeAttribute('title');
             holidayNameEl.classList.remove('active-holiday');
+        } else {
+            holidayNameEl.innerHTML = `<span class="holiday-icon">${primaryHoliday.icon}</span> ${Utils.escapeHtml(primaryHoliday.name)}`;
+            holidayNameEl.removeAttribute('title');
+            holidayCountdownEl.textContent = primaryHoliday.displayText;
+            this.setHolidayStyle(holidayCountdownEl, primaryHoliday);
+            if (primaryHoliday.status === 'active') {
+                holidayCountdownEl.classList.add('active-countdown');
+            } else {
+                holidayCountdownEl.classList.remove('active-countdown');
+            }
+        }
+        // 更新次要节日列表
+        this.updateSecondaryHolidays(secondaryHolidays);
+    }
+
+    // 渲染次要节日列表
+    updateSecondaryHolidays(holidays) {
+        const container = document.getElementById('secondaryHolidays');
+        if (!container) return;
+        if (!holidays || holidays.length === 0) {
+            container.innerHTML = '<span class="secondary-empty">暂无更多节日</span>';
             return;
         }
-        holidayNameEl.innerHTML = `<span class="holiday-icon">${holidayInfo.icon}</span> ${Utils.escapeHtml(holidayInfo.name)}`;
-        holidayNameEl.removeAttribute('title');
-        holidayCountdownEl.textContent = holidayInfo.displayText;
-        this.setHolidayStyle(holidayCountdownEl, holidayInfo);
-        if (holidayInfo.status === 'active') {
-            holidayCountdownEl.classList.add('active-countdown');
-        } else {
-            holidayCountdownEl.classList.remove('active-countdown');
-        }
+        const html = holidays.map(holiday => {
+            let displayText = holiday.displayText;
+            let statusClass = '';
+            if (holiday.days === 0) {
+                displayText = '今日';
+                statusClass = 'status-active';
+            } else if (holiday.days === 1) {
+                statusClass = 'status-1day';
+            } else if (holiday.days <= 3) {
+                statusClass = 'status-3days';
+            } else if (holiday.days <= 7) {
+                statusClass = 'status-7days';
+            }
+            return `
+                <div class="secondary-holiday-item">
+                    <span class="secondary-name">${Utils.escapeHtml(holiday.name)}</span>
+                    <span class="secondary-countdown ${statusClass}">${displayText}</span>
+                </div>
+            `;
+        }).join('');
+        container.innerHTML = html;
     }
 
     setHolidayStyle(element, holidayInfo) {
@@ -402,6 +421,9 @@ class GreetingModule {
         } else {
             element.classList.add('status-unknown');
         }
+        element.style.background = '';
+        element.style.color = '';
+        element.style.border = '';
     }
 
     loadWoodenFishData() {
@@ -548,7 +570,7 @@ class GreetingModule {
             }
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            if (cachedData.current && cachedData.current.status === 'active') {
+            if (cachedData.primary && cachedData.primary.status === 'active') {
                 const lastUpdate = new Date(cachedData.timestamp);
                 const lastUpdateDate = new Date(lastUpdate.getFullYear(), lastUpdate.getMonth(), lastUpdate.getDate());
                 if (today > lastUpdateDate) {
