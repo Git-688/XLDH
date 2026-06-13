@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>星聚导航后台管理</title>
     
-    <!-- CSP 严格策略 -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai;
@@ -18,20 +17,10 @@
     <meta http-equiv="X-Frame-Options" content="DENY">
 
     <style>
-        /* ========== 全局重置 ========== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            height: 100%;
-            overflow: hidden;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f5f7fb;
             font-size: 12px;
             color: #1e293b;
@@ -39,553 +28,168 @@
             flex-direction: column;
             padding: 16px;
         }
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* 隐藏所有滚动条但保留滚动功能 */
-        ::-webkit-scrollbar {
-            display: none;
-        }
-        * {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .container { flex: 1; display: flex; flex-direction: column; max-width: 1200px; margin: 0 auto; width: 100%; overflow: hidden; }
 
-        .container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        /* ========== 登录卡片 ========== */
-        .login-section {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100%;
-            flex: 1;
-        }
-
+        /* 登录卡片 */
+        .login-section { display: flex; justify-content: center; align-items: center; min-height: 100%; flex: 1; }
         .login-card {
-            background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
-            padding: 28px 24px 32px;
-            width: 100%;
-            max-width: 320px;
-            transition: all 0.2s ease;
-            border: 1px solid #eef2f6;
+            background: #fff; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+            padding: 28px 24px 32px; width: 100%; max-width: 320px; border: 1px solid #eef2f6;
         }
+        .login-header { text-align: center; margin-bottom: 24px; }
+        .login-logo { width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 8px; overflow: hidden; }
+        .login-logo img { width: 100%; height: 100%; object-fit: contain; }
+        .login-header h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; color: #0f172a; }
+        .login-header p { font-size: 11px; color: #64748b; }
 
-        .login-header {
-            text-align: center;
-            margin-bottom: 24px;
-        }
-
-        .login-logo {
-            width: 48px;
-            height: 48px;
-            margin: 0 auto 12px;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .login-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .login-header h2 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: #0f172a;
-        }
-
-        .login-header p {
-            font-size: 11px;
-            color: #64748b;
-        }
-
-        .login-form .input-group {
-            margin-bottom: 16px;
-        }
-
-        .login-form label {
-            display: block;
-            font-size: 11px;
-            font-weight: 500;
-            color: #475569;
-            margin-bottom: 6px;
-        }
-
+        .login-form .input-group { margin-bottom: 16px; }
+        .login-form label { display: block; font-size: 11px; font-weight: 500; color: #475569; margin-bottom: 6px; }
         .login-form input {
-            width: 100%;
-            padding: 8px 12px;
-            font-size: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            background: #fff;
-            transition: all 0.2s;
-            outline: none;
+            width: 100%; padding: 8px 12px; font-size: 12px; border: 1px solid #e2e8f0; border-radius: 8px;
+            background: #fff; outline: none;
         }
-
-        .login-form input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-
-        .remember-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin: 12px 0 16px;
-            font-size: 11px;
-            color: #475569;
-        }
-
-        .remember-checkbox input {
-            width: 14px;
-            height: 14px;
-            margin: 0;
-        }
-
+        .login-form input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .remember-checkbox { display: flex; align-items: center; gap: 6px; margin: 12px 0 16px; font-size: 11px; }
         .login-btn {
-            width: 100%;
-            background: #3b82f6;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 12px;
-            font-weight: 500;
-            color: white;
-            cursor: pointer;
-            transition: background 0.2s;
+            width: 100%; background: #3b82f6; border: none; border-radius: 8px; padding: 8px 12px;
+            font-size: 12px; font-weight: 500; color: white; cursor: pointer;
         }
+        .login-btn:hover { background: #2563eb; }
+        .logout-btn { background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; }
+        .logout-btn:hover { background: #e2e8f0; }
+        .lock-message { font-size: 10px; color: #ef4444; text-align: center; margin-top: 12px; }
 
-        .login-btn:hover {
-            background: #2563eb;
-        }
-
-        .logout-btn {
-            background: #f1f5f9;
-            color: #1e293b;
-            border: 1px solid #e2e8f0;
-        }
-
-        .logout-btn:hover {
-            background: #e2e8f0;
-        }
-
-        .lock-message {
-            font-size: 10px;
-            color: #ef4444;
-            text-align: center;
-            margin-top: 12px;
-        }
-
-        /* ========== 主内容区域 ========== */
+        /* 主内容 */
         .main-card {
-            background: #fff;
-            border-radius: 8px;
-            padding: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            border: 1px solid #eef2f6;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            background: #fff; border-radius: 8px; padding: 16px; border: 1px solid #eef2f6;
+            flex: 1; display: flex; flex-direction: column; overflow: hidden;
         }
+        .tabs-row { margin-bottom: 12px; flex-shrink: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+        .tabs-row::-webkit-scrollbar { display: none; }
+        .tabs-row .flex-row { display: inline-flex; gap: 8px; }
 
-        /* 标签页按钮行 - 可滚动隐藏滚动条 */
-        .tabs-row {
-            margin-bottom: 12px;
-            flex-shrink: 0;
-            overflow-x: auto;
-            white-space: nowrap;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-        .tabs-row::-webkit-scrollbar {
-            display: none;
-        }
-        .tabs-row .flex-row {
-            display: inline-flex;
-            gap: 8px;
-        }
+        .search-row { margin-bottom: 12px; }
+        .search-row .search-box { width: 100%; max-width: 300px; }
 
-        /* 搜索行 */
-        .search-row {
-            margin-bottom: 12px;
-        }
-        .search-row .search-box {
-            width: 100%;
-            max-width: 300px;
-        }
-
-        /* 操作按钮行：等宽按钮 */
-        .action-buttons-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 12px;
-        }
-        .action-buttons-row button {
-            flex: 1;
-            min-width: 0;
-            white-space: nowrap;
-            padding: 6px 8px;
-            font-size: 11px;
-            border-radius: 8px;
-        }
+        .action-buttons-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .action-buttons-row button { flex: 1; white-space: nowrap; padding: 6px 8px; font-size: 11px; border-radius: 8px; }
 
         .tab-btn {
-            padding: 6px 14px;
-            border-radius: 8px;
-            background: #f1f5f9;
-            color: #475569;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
-            display: inline-block;
+            padding: 6px 14px; border-radius: 8px; background: #f1f5f9; color: #475569;
+            cursor: pointer; font-size: 12px; display: inline-block;
         }
-        .tab-btn.active {
-            background: #3b82f6;
-            color: #fff;
-        }
-        .tab-btn:hover {
-            background: #e2e8f0;
-        }
+        .tab-btn.active { background: #3b82f6; color: #fff; }
+        .tab-btn:hover { background: #e2e8f0; }
 
         .cat-bar {
-            width: 100%;
-            padding: 8px 12px;
-            background: #f8fafc;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            display: flex;
-            gap: 6px;
-            align-items: center;
-            overflow-x: auto;
-            flex-wrap: nowrap;
-            flex-shrink: 0;
+            width: 100%; padding: 8px 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 12px;
+            display: flex; gap: 6px; overflow-x: auto; flex-shrink: 0;
         }
         .cat-item {
-            padding: 6px 12px;
-            border-radius: 8px;
-            background: #fff;
-            cursor: pointer;
-            white-space: nowrap;
-            font-size: 12px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            padding: 6px 12px; border-radius: 8px; background: #fff; cursor: pointer;
+            white-space: nowrap; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 8px;
         }
-        .cat-item.active {
-            background: #3b82f6;
-            color: #fff;
-        }
+        .cat-item.active { background: #3b82f6; color: #fff; }
         .cat-item .rename-text-btn {
-            background: #e2e8f0;
-            border: none;
-            cursor: pointer;
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 8px;
+            background: #e2e8f0; border: none; cursor: pointer; font-size: 10px; padding: 2px 8px; border-radius: 8px;
             color: #475569;
         }
-        .cat-item.active .rename-text-btn {
-            background: rgba(255,255,255,0.2);
-            color: #fff;
-        }
+        .cat-item.active .rename-text-btn { background: rgba(255,255,255,0.2); color: #fff; }
 
-        /* 关键修复：让标签页容器参与 flex 并限制高度 */
-        .tab-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        #manageTab {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+        /* 关键：每个标签页独立显示/隐藏 */
+        .tab-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .tab-panel.hidden { display: none !important; }
 
-        /* 左右布局：始终左右排列，宽度相等 */
-        .content-layout {
-            display: flex;
-            gap: 12px;
-            flex: 1;
-            min-height: 0;
-            flex-direction: row !important;
-        }
+        #manageTab { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
+        .content-layout { display: flex; gap: 12px; flex: 1; min-height: 0; flex-direction: row !important; }
         .sidebar, .main-content {
-            background: #f8fafc;
-            border-radius: 8px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            min-width: 0;
-            flex: 1;
-            width: 50%;
+            background: #f8fafc; border-radius: 8px; padding: 12px; display: flex;
+            flex-direction: column; overflow: hidden; min-width: 0; flex: 1; width: 50%;
         }
 
-        /* 子分类列表和链接列表容器 - 可滚动 */
         .sub-list, .site-list, .rank-list, .feedback-list, .submissions-list {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 8px;
+            flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 8px;
         }
 
-        /* 子分类项：名称左对齐，按钮右对齐，名称过长省略 */
         .sub-item {
-            background: #fff;
-            border-radius: 8px;
-            padding: 8px 12px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-            min-width: 0;
+            background: #fff; border-radius: 8px; padding: 8px 12px;
+            display: flex; justify-content: space-between; align-items: center; gap: 8px;
         }
-        .sub-item span {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        .sub-item .rename-text-btn {
-            flex-shrink: 0;
-            background: #e2e8f0;
-            border: none;
-            cursor: pointer;
-            font-size: 10px;
-            padding: 3px 10px;
-            border-radius: 8px;
-            color: #475569;
-        }
-        .sub-item.active {
-            background: #e0f2fe;
-            color: #0369a1;
-        }
+        .sub-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; }
+        .sub-item .rename-text-btn { flex-shrink: 0; background: #e2e8f0; border: none; cursor: pointer; font-size: 10px; padding: 3px 10px; border-radius: 8px; color: #475569; }
+        .sub-item.active { background: #e0f2fe; color: #0369a1; }
 
-        /* 链接项：名称左对齐，按钮右对齐，名称过长省略 */
         .link-item {
-            background: #fff;
-            border-radius: 8px;
-            padding: 8px 12px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-            min-width: 0;
+            background: #fff; border-radius: 8px; padding: 8px 12px;
+            display: flex; justify-content: space-between; align-items: center; gap: 8px;
         }
-        .link-info {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .link-info strong {
-            font-size: 12px;
-            font-weight: 500;
-        }
-        .link-actions {
-            flex-shrink: 0;
-        }
+        .link-info { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .link-info strong { font-size: 12px; font-weight: 500; }
+        .link-actions { flex-shrink: 0; }
 
         #addSubBtn, #addSiteBtn {
-            width: 100%;
-            height: 36px;
-            margin-bottom: 8px;
-            font-size: 12px;
-            border-radius: 8px;
-            background: #3b82f6;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            flex-shrink: 0;
+            width: 100%; height: 36px; margin-bottom: 8px; font-size: 12px; border-radius: 8px;
+            background: #3b82f6; color: #fff; border: none; cursor: pointer; font-weight: 500;
         }
 
-        /* 统一点击、按钮样式 */
-        button {
-            border: none;
-            border-radius: 8px;
-            padding: 5px 10px;
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        button.primary {
-            background: #3b82f6;
-            color: #fff;
-        }
-        button.danger {
-            background: #ef4444;
-            color: #fff;
-        }
-        button.secondary {
-            background: #64748b;
-            color: #fff;
-        }
-        button.sm {
-            padding: 3px 8px;
-            font-size: 10px;
-        }
+        button { border: none; border-radius: 8px; padding: 5px 10px; font-size: 11px; cursor: pointer; }
+        button.primary { background: #3b82f6; color: #fff; }
+        button.danger { background: #ef4444; color: #fff; }
+        button.secondary { background: #64748b; color: #fff; }
+        button.sm { padding: 3px 8px; font-size: 10px; }
 
-        /* 统一输入框样式 - 确保左右内边距一致 */
         input, select, textarea, .form-input, .search-box, .date-input {
-            width: 100%;
-            padding: 6px 10px !important;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 12px;
-            background: #fff;
-            transition: all 0.2s;
-            outline: none;
-            font-family: inherit;
-            box-sizing: border-box;
+            width: 100%; padding: 6px 10px !important; border: 1px solid #e2e8f0; border-radius: 8px;
+            font-size: 12px; background: #fff; outline: none; font-family: inherit; box-sizing: border-box;
         }
-        input:focus, select:focus, textarea:focus, .form-input:focus, .search-box:focus, .date-input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
-        }
+        input:focus, select:focus, textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
 
-        /* 搜索框宽度自适应 */
-        .search-box {
-            max-width: 300px;
-        }
+        .search-box { max-width: 300px; }
 
-        /* 模态框 */
         .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 99;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s;
-            padding: 16px;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.2); display: flex;
+            align-items: center; justify-content: center; z-index: 99; opacity: 0; visibility: hidden;
+            transition: all 0.2s; padding: 16px;
         }
-        .modal.show {
-            opacity: 1;
-            visibility: visible;
-        }
+        .modal.show { opacity: 1; visibility: visible; }
         .modal-body {
-            background: #fff;
-            border-radius: 8px;
-            width: 100%;
-            max-width: 420px;
-            padding: 20px;
-            max-height: 80vh;
-            overflow-y: auto;
+            background: #fff; border-radius: 8px; width: 100%; max-width: 420px;
+            padding: 20px; max-height: 80vh; overflow-y: auto;
             box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1);
         }
 
-        /* Toast 提示 */
         .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translate(-50%, 12px);
-            padding: 6px 14px;
-            border-radius: 30px;
-            font-size: 11px;
-            color: #fff;
-            z-index: 999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s;
-            white-space: nowrap;
+            position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 12px);
+            padding: 6px 14px; border-radius: 30px; font-size: 11px; color: #fff;
+            z-index: 999; opacity: 0; visibility: hidden; transition: all 0.2s; white-space: nowrap;
         }
-        .toast.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translate(-50%, 0);
-        }
+        .toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
         .toast.success { background: #10b981; }
         .toast.error { background: #ef4444; }
         .toast.warn { background: #f59e0b; }
 
-        .hidden { display: none; }
+        .hidden { display: none !important; }
 
-        /* 公告编辑表单布局 */
-        .announcement-form-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .form-row {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .form-row label {
-            font-size: 11px;
-            font-weight: 500;
-            color: #475569;
-        }
-        .form-row textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        .announcement-actions-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 8px;
-        }
-        .announcement-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .announcement-checkbox label {
-            margin-bottom: 0;
-        }
-        .announcement-buttons {
-            display: flex;
-            gap: 8px;
-        }
+        /* 公告表单 */
+        .announcement-form-container { display: flex; flex-direction: column; gap: 12px; }
+        .form-row { display: flex; flex-direction: column; gap: 4px; }
+        .form-row label { font-size: 11px; font-weight: 500; color: #475569; }
+        .form-row textarea { resize: vertical; min-height: 80px; }
+        .announcement-actions-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+        .announcement-checkbox { display: flex; align-items: center; gap: 6px; }
+        .announcement-buttons { display: flex; gap: 8px; }
 
-        /* 响应式 */
         @media (max-width: 640px) {
             body { padding: 12px; }
             .login-card { padding: 24px 20px; max-width: 280px; }
-            .content-layout {
-                flex-direction: row !important;
-                gap: 8px;
-            }
-            .sidebar, .main-content {
-                min-width: 0;
-            }
-            .action-buttons-row button {
-                font-size: 10px;
-                padding: 5px 6px;
-            }
-            .tab-btn {
-                padding: 4px 10px;
-                font-size: 11px;
-            }
+            .content-layout { flex-direction: row !important; gap: 8px; }
+            .sidebar, .main-content { min-width: 0; }
+            .action-buttons-row button { font-size: 10px; padding: 5px 6px; }
+            .tab-btn { padding: 4px 10px; font-size: 11px; }
         }
     </style>
 </head>
@@ -629,7 +233,7 @@
 
     <!-- 主内容区域 -->
     <div id="mainContent" class="hidden main-card">
-        <!-- 可滚动的标签页按钮 -->
+        <!-- 标签页按钮 -->
         <div class="tabs-row">
             <div class="flex-row">
                 <div class="tab-btn active" data-tab="manage">数据管理</div>
@@ -642,11 +246,9 @@
 
         <!-- 数据管理标签页 -->
         <div id="manageTab" class="tab-panel">
-            <!-- 搜索框单独一行 -->
             <div class="search-row">
                 <input type="text" class="search-box" id="searchInput" placeholder="搜索标题...">
             </div>
-            <!-- 操作按钮等宽一行 -->
             <div class="action-buttons-row">
                 <button class="logout-btn" id="logoutBtn">退出</button>
                 <button class="secondary" id="exportBtn">备份导出</button>
@@ -676,7 +278,7 @@
             <div class="rank-list" id="rankList"></div>
         </div>
 
-        <!-- 用户反馈标签页（移除来自信息） -->
+        <!-- 用户反馈标签页 -->
         <div id="feedbackTab" class="tab-panel hidden">
             <div class="flex-row" style="margin-bottom:10px;">
                 <button class="primary sm" id="refreshFeedbackBtn">刷新列表</button>
@@ -694,7 +296,7 @@
             <div class="submissions-list" id="submissionsList"></div>
         </div>
 
-        <!-- 公告编辑标签页（单公告模式） -->
+        <!-- 公告编辑标签页 -->
         <div id="announcementTab" class="tab-panel hidden">
             <div class="announcement-form-container" id="announcementFormContainer">
                 <div class="form-row">
@@ -713,7 +315,6 @@
                     <label>公告日期</label>
                     <input type="date" id="annDate" class="date-input">
                 </div>
-                <!-- 启用公告 + 按钮同一行 -->
                 <div class="announcement-actions-row">
                     <div class="announcement-checkbox">
                         <input type="checkbox" id="annActive">
