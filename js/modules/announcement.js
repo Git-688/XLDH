@@ -1,4 +1,3 @@
-// announcement.js - 简约公告模块（单公告模式，修复模态框打开问题）
 class AnnouncementModule {
     constructor() {
         if (window.Starlink && window.Starlink.announcement) return window.Starlink.announcement;
@@ -30,7 +29,7 @@ class AnnouncementModule {
                     title: data.title,
                     important: data.important || '',
                     content: data.content,
-                    date: data.date || new Date(data.created_at).toLocaleDateString('zh-CN')
+                    date: data.date || new Date(data.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
                 };
             }
             return null;
@@ -60,7 +59,7 @@ class AnnouncementModule {
                 <div class="announcement-modal-container">
                     <div class="announcement-header">
                         <div class="announcement-title">
-                            <i class="fas fa-bell" style="color: #4361ee; font-size: 1.2rem;"></i>
+                            <i class="fas fa-circle-exclamation" style="color: #4361ee; font-size: 1.2rem;"></i>
                             <span>暂无公告</span>
                         </div>
                         <button class="announcement-close" id="announcementClose" aria-label="关闭">
@@ -91,7 +90,7 @@ class AnnouncementModule {
             <div class="announcement-modal-container">
                 <div class="announcement-header">
                     <div class="announcement-title">
-                        <i class="fas fa-bell" style="color: #4361ee; font-size: 1.2rem;"></i>
+                        <i class="fas fa-circle-exclamation" style="color: #4361ee; font-size: 1.2rem;"></i>
                         <span>${title}</span>
                     </div>
                     <button class="announcement-close" id="announcementClose" aria-label="关闭">
@@ -100,7 +99,8 @@ class AnnouncementModule {
                 </div>
                 <div class="announcement-body">
                     ${important ? `<div class="focus-section"><div class="focus-content">📢 ${important}</div></div>` : ''}
-                    <div class="content-section">
+                    <div class="updates-section">
+                        <div class="updates-title">📋 更新内容</div>
                         <div class="announcement-full-content">${content}</div>
                     </div>
                 </div>
@@ -138,10 +138,8 @@ class AnnouncementModule {
         };
         document.addEventListener('keydown', this.escapeHandler);
         
-        // 绑定公告按钮事件 - 确保每次点击都能打开
         const announcementBtn = document.getElementById('announcementBtn');
         if (announcementBtn) {
-            // 移除旧监听避免重复绑定
             const newBtn = announcementBtn.cloneNode(true);
             announcementBtn.parentNode.replaceChild(newBtn, announcementBtn);
             newBtn.addEventListener('click', (e) => {
@@ -223,7 +221,6 @@ class AnnouncementModule {
     }
 }
 
-// 初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         if (!window.Starlink) window.Starlink = {};
