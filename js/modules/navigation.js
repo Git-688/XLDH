@@ -1,8 +1,6 @@
 /**
- * 优化分类导航系统 - 分页加载版（支持 WebP 图标、高清懒加载、智能预加载、点击计数优化）
- * 修复：无效链接统计改为全局统计（所有分类下的无效链接总数）
- * 移除：NProgress 进度条调用（改用页面滚动进度条）
- * 优化：图标获取改为统一代理 /icon-proxy，减少外部请求重试
+ * 优化分类导航系统 - 分页加载版（支持后端图标代理、WebP 图标、高清懒加载、智能预加载、点击计数优化）
+ * 修改：使用 /icon?domain=xxx 代理图标，无需前端自行拼接第三方图标源
  */
 class OptimizedNavigation {
     constructor() {
@@ -36,10 +34,12 @@ class OptimizedNavigation {
         this.autoRefreshTimer = null;
         this.autoRefreshInterval = 5 * 60 * 1000;
 
-        // 图标缓存（域名 -> 代理URL）
         this.iconCache = new Map();
         this.iconLoadingSet = new Set();
         this.iconFailedSet = new Set();
+
+        this.preloadQueue = [];
+        this.isPreloading = false;
         
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
@@ -52,71 +52,44 @@ class OptimizedNavigation {
         return String(views);
     }
 
-    _getDomainFromUrl(url) {
+    /**
+     * 将站点图标 URL 转换为完整可访问的地址
+     * 后端返回的 icon 可能是：
+     *   1. 相对路径：/icon?domain=example.com
+     *   2. 完整 http/https URL（旧数据或自定义图标）
+     *   3. 空字符串
+     */
+    _getFullIconUrl(icon, siteUrl) {
+        if (!icon) return '';
+        // 如果是相对路径，补全 API 域名
+        if (icon.startsWith('/icon?domain=')) {
+            return this.apiBase + icon;
+        }
+        // 已经是完整 URL
+        if (icon.startsWith('http://') || icon.startsWith('https://')) {
+            return icon;
+        }
+        // 其他情况（如旧数据中的图标名），尝试通过域名生成代理链接
         try {
-            const urlObj = new URL(url);
-            return urlObj.hostname;
-        } catch(e) { return null; }
+            const urlObj = new URL(siteUrl);
+            const domain = urlObj.hostname;
+            if (domain) {
+                return this.apiBase + `/icon?domain=${encodeURIComponent(domain)}`;
+            }
+        } catch(e) {}
+        return '';
     }
 
-    // 统一通过代理获取图标
-    _getIconUrl(domain) {
-        if (!domain) return null;
-        // 如果该域名已标记为失败，返回 null 使用字体图标
-        if (this.iconFailedSet.has(domain)) return null;
-        // 如果已有缓存的代理 URL，直接返回
-        if (this.iconCache.has(domain)) return this.iconCache.get(domain);
-        // 生成代理 URL
-        const proxyUrl = `${this.apiBase}/icon-proxy?domain=${encodeURIComponent(domain)}`;
-        this.iconCache.set(domain, proxyUrl);
-        return proxyUrl;
-    }
-
-    _recordIconSuccess(domain) {
-        // 成功时无需额外操作，代理已缓存
-        this.iconLoadingSet.delete(domain);
-    }
-
-    _recordIconFailure(domain) {
-        if (domain) {
-            this.iconFailedSet.add(domain);
-            this.iconLoadingSet.delete(domain);
-            this.iconCache.delete(domain);
+    // 创建图标 HTML（使用 img 标签，后端代理图标）
+    _createIconElement(iconUrl, siteUrl) {
+        const fullIconUrl = this._getFullIconUrl(iconUrl, siteUrl);
+        if (fullIconUrl) {
+            // 使用后端代理图标，不需要候选列表，直接加载
+            return `<img class="lazy-icon" data-src="${this._escapeHtml(fullIconUrl)}" alt="" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>';">`;
+        } else {
+            // 无图标，显示字体图标
+            return '<i class="fas fa-link"></i>';
         }
-    }
-
-    _createIconElement(siteUrl, existingIcon = null) {
-        const domain = this._getDomainFromUrl(siteUrl);
-        if (!domain) return '<i class="fas fa-link"></i>';
-        
-        // 如果已有有效的现有图标且是完整 URL，优先使用（但注意避免重复代理）
-        if (existingIcon && this._isValidIconUrl(existingIcon) && !existingIcon.includes('icon.horse') && !existingIcon.includes('favicon.yandex') && !existingIcon.includes('google.com/s2/favicons')) {
-            // 直接使用用户提供的图标，不经过代理
-            return `<img class="lazy-icon" data-src="${this._escapeHtml(existingIcon)}" alt="" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>';">`;
-        }
-        
-        const iconUrl = this._getIconUrl(domain);
-        if (!iconUrl) return '<i class="fas fa-link"></i>';
-        
-        if (this.iconLoadingSet.has(domain)) {
-            return '<div class="icon-placeholder"><i class="fas fa-spinner fa-pulse"></i></div>';
-        }
-        this.iconLoadingSet.add(domain);
-        
-        // 使用代理 URL，onerror 时标记失败并回退到字体图标
-        return `<img class="lazy-icon" data-domain="${this._escapeHtml(domain)}" data-src="${this._escapeHtml(iconUrl)}" 
-                     alt="" loading="lazy"
-                     onerror="this.onerror=null; const domain=this.getAttribute('data-domain'); if(window.Starlink?.navigation && window.Starlink.navigation._recordIconFailure){ window.Starlink.navigation._recordIconFailure(domain); } this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>';"
-                     onload="const domain=this.getAttribute('data-domain'); if(window.Starlink?.navigation && window.Starlink.navigation._recordIconSuccess){ window.Starlink.navigation._recordIconSuccess(domain); }">`;
-    }
-
-    _isValidIconUrl(url) {
-        if (!url || typeof url !== 'string') return false;
-        const trimmed = url.trim();
-        if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) return false;
-        if (!/\.(png|jpg|jpeg|ico|svg|webp)(\?.*)?$/i.test(trimmed)) return false;
-        if (/[^\x00-\x7F]/.test(trimmed)) return false;
-        return true;
     }
 
     _highlightText(text, keyword) {
@@ -494,7 +467,8 @@ class OptimizedNavigation {
         card.rel = 'noopener noreferrer';
         card.title = `${site.title}\n${site.description || ''}`;
 
-        const iconHtml = this._createIconElement(site.url, site.icon);
+        // 使用新的图标获取方法（后端代理）
+        const iconHtml = this._createIconElement(site.icon, site.url);
         const views = site.views || 0;
         const formattedViews = this._formatViews(views);
 
