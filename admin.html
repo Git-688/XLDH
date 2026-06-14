@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>星聚导航后台管理</title>
     
+    <!-- CSP 严格策略 -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai;
@@ -215,6 +216,25 @@
             gap: 8px;
         }
 
+        /* 标签页按钮样式 - 激活时背景蓝色，字体白色 */
+        .tab-btn {
+            padding: 6px 14px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            color: #475569;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+        .tab-btn.active {
+            background: #3b82f6;
+            color: #ffffff;
+        }
+        .tab-btn:hover {
+            background: #e2e8f0;
+        }
+
         /* 搜索行 */
         .search-row {
             margin-bottom: 12px;
@@ -238,23 +258,6 @@
             padding: 6px 8px;
             font-size: 11px;
             border-radius: 8px;
-        }
-
-        .tab-btn {
-            padding: 6px 14px;
-            border-radius: 8px;
-            background: #f1f5f9;
-            color: #475569;
-            cursor: pointer;
-            font-size: 12px;
-            display: inline-block;
-        }
-        .tab-btn.active {
-            background: #3b82f6;
-            color: #fff;
-        }
-        .tab-btn:hover {
-            background: #e2e8f0;
         }
 
         .cat-bar {
@@ -346,7 +349,7 @@
             margin-top: 8px;
         }
 
-        /* 子分类项：名称左对齐，按钮右对齐，名称过长省略 */
+        /* 子分类项 */
         .sub-item {
             background: #fff;
             border-radius: 8px;
@@ -379,7 +382,7 @@
             color: #0369a1;
         }
 
-        /* 链接项：名称左对齐，按钮右对齐，名称过长省略 */
+        /* 链接项 */
         .link-item {
             background: #fff;
             border-radius: 8px;
@@ -517,7 +520,8 @@
         .announcement-form-container { display: flex; flex-direction: column; gap: 12px; }
         .form-row { display: flex; flex-direction: column; gap: 4px; }
         .form-row label { font-size: 11px; font-weight: 500; color: #475569; }
-        .form-row textarea { resize: vertical; min-height: 80px; }
+        /* 公告内容文本框完整显示，不滚动 */
+        .form-row textarea { resize: vertical; min-height: 200px; overflow-y: visible; }
         .announcement-actions-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
         .announcement-checkbox { display: flex; align-items: center; gap: 6px; }
         .announcement-buttons { display: flex; gap: 8px; }
@@ -635,7 +639,7 @@
             <div class="submissions-list" id="submissionsList"></div>
         </div>
 
-        <!-- 公告编辑标签页 -->
+        <!-- 公告编辑标签页（内容文本框完整显示） -->
         <div id="announcementTab" class="tab-panel hidden">
             <div class="announcement-form-container" id="announcementFormContainer">
                 <div class="form-row">
@@ -648,7 +652,7 @@
                 </div>
                 <div class="form-row">
                     <label>详细内容</label>
-                    <textarea id="annContent" rows="4" placeholder="详细公告内容..."></textarea>
+                    <textarea id="annContent" rows="6" placeholder="详细公告内容..." style="min-height:200px; overflow-y:visible;"></textarea>
                 </div>
                 <div class="form-row">
                     <label>公告日期</label>
