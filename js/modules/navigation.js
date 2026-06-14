@@ -2,6 +2,7 @@
  * 优化分类导航系统 - 分页加载版（支持 WebP 图标、高清懒加载、智能预加载、点击计数优化）
  * 修复：无效链接统计改为全局统计（所有分类下的无效链接总数）
  * 移除：NProgress 进度条调用（改用页面滚动进度条）
+ * 优化：图标获取改为统一代理 /icon-proxy，减少外部请求重试
  */
 class OptimizedNavigation {
     constructor() {
@@ -35,12 +36,10 @@ class OptimizedNavigation {
         this.autoRefreshTimer = null;
         this.autoRefreshInterval = 5 * 60 * 1000;
 
+        // 图标缓存（域名 -> 代理URL）
         this.iconCache = new Map();
         this.iconLoadingSet = new Set();
         this.iconFailedSet = new Set();
-
-        this.preloadQueue = [];
-        this.isPreloading = false;
         
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
@@ -53,27 +52,62 @@ class OptimizedNavigation {
         return String(views);
     }
 
-    _getIconCandidates(url) {
-        let domain = '';
+    _getDomainFromUrl(url) {
         try {
             const urlObj = new URL(url);
-            domain = urlObj.hostname;
-            if (!domain || domain.length < 4 || !domain.includes('.') || !/^[a-zA-Z0-9.-]+$/.test(domain)) return [];
-        } catch(e) { return []; }
+            return urlObj.hostname;
+        } catch(e) { return null; }
+    }
+
+    // 统一通过代理获取图标
+    _getIconUrl(domain) {
+        if (!domain) return null;
+        // 如果该域名已标记为失败，返回 null 使用字体图标
+        if (this.iconFailedSet.has(domain)) return null;
+        // 如果已有缓存的代理 URL，直接返回
+        if (this.iconCache.has(domain)) return this.iconCache.get(domain);
+        // 生成代理 URL
+        const proxyUrl = `${this.apiBase}/icon-proxy?domain=${encodeURIComponent(domain)}`;
+        this.iconCache.set(domain, proxyUrl);
+        return proxyUrl;
+    }
+
+    _recordIconSuccess(domain) {
+        // 成功时无需额外操作，代理已缓存
+        this.iconLoadingSet.delete(domain);
+    }
+
+    _recordIconFailure(domain) {
+        if (domain) {
+            this.iconFailedSet.add(domain);
+            this.iconLoadingSet.delete(domain);
+            this.iconCache.delete(domain);
+        }
+    }
+
+    _createIconElement(siteUrl, existingIcon = null) {
+        const domain = this._getDomainFromUrl(siteUrl);
+        if (!domain) return '<i class="fas fa-link"></i>';
         
-        if (this.iconFailedSet.has(domain)) return [];
-        const cachedIcon = this.iconCache.get(domain);
-        if (cachedIcon) return [cachedIcon];
+        // 如果已有有效的现有图标且是完整 URL，优先使用（但注意避免重复代理）
+        if (existingIcon && this._isValidIconUrl(existingIcon) && !existingIcon.includes('icon.horse') && !existingIcon.includes('favicon.yandex') && !existingIcon.includes('google.com/s2/favicons')) {
+            // 直接使用用户提供的图标，不经过代理
+            return `<img class="lazy-icon" data-src="${this._escapeHtml(existingIcon)}" alt="" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>';">`;
+        }
         
-        return [
-            `https://icon.horse/icon/${domain}?size=256&format=webp`,
-            `https://icon.horse/icon/${domain}?size=128&format=webp`,
-            `https://icon.horse/icon/${domain}?size=256`,
-            `https://icon.horse/icon/${domain}?size=128`,
-            `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
-            `https://favicon.yandex.net/favicon/${domain}`,
-            `https://${domain}/favicon.ico`
-        ];
+        const iconUrl = this._getIconUrl(domain);
+        if (!iconUrl) return '<i class="fas fa-link"></i>';
+        
+        if (this.iconLoadingSet.has(domain)) {
+            return '<div class="icon-placeholder"><i class="fas fa-spinner fa-pulse"></i></div>';
+        }
+        this.iconLoadingSet.add(domain);
+        
+        // 使用代理 URL，onerror 时标记失败并回退到字体图标
+        return `<img class="lazy-icon" data-domain="${this._escapeHtml(domain)}" data-src="${this._escapeHtml(iconUrl)}" 
+                     alt="" loading="lazy"
+                     onerror="this.onerror=null; const domain=this.getAttribute('data-domain'); if(window.Starlink?.navigation && window.Starlink.navigation._recordIconFailure){ window.Starlink.navigation._recordIconFailure(domain); } this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>';"
+                     onload="const domain=this.getAttribute('data-domain'); if(window.Starlink?.navigation && window.Starlink.navigation._recordIconSuccess){ window.Starlink.navigation._recordIconSuccess(domain); }">`;
     }
 
     _isValidIconUrl(url) {
@@ -83,62 +117,6 @@ class OptimizedNavigation {
         if (!/\.(png|jpg|jpeg|ico|svg|webp)(\?.*)?$/i.test(trimmed)) return false;
         if (/[^\x00-\x7F]/.test(trimmed)) return false;
         return true;
-    }
-
-    _getDomainFromUrl(url) {
-        try {
-            const urlObj = new URL(url);
-            return urlObj.hostname;
-        } catch(e) { return null; }
-    }
-
-    _recordIconSuccess(domain, successfulUrl) {
-        if (domain && successfulUrl) {
-            this.iconCache.set(domain, successfulUrl);
-            this.iconLoadingSet.delete(domain);
-        }
-    }
-
-    _recordIconFailure(domain) {
-        if (domain) {
-            this.iconFailedSet.add(domain);
-            this.iconLoadingSet.delete(domain);
-        }
-    }
-
-    _createIconElement(siteUrl, existingIcon = null) {
-        if (existingIcon && this._isValidIconUrl(existingIcon)) {
-            const domain = this._getDomainFromUrl(siteUrl);
-            if (domain) this.iconCache.set(domain, existingIcon);
-            return `<img class="lazy-icon" data-src="${this._escapeHtml(existingIcon)}" alt="" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>';">`;
-        }
-        
-        const domain = this._getDomainFromUrl(siteUrl);
-        if (!domain) return '<i class="fas fa-link"></i>';
-        
-        if (this.iconFailedSet.has(domain)) return '<i class="fas fa-link"></i>';
-        const cachedIcon = this.iconCache.get(domain);
-        if (cachedIcon) {
-            return `<img class="lazy-icon" data-src="${this._escapeHtml(cachedIcon)}" alt="" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>';">`;
-        }
-        
-        let candidates = this._getIconCandidates(siteUrl);
-        if (candidates.length === 0) return '<i class="fas fa-link"></i>';
-        
-        if (this.iconLoadingSet.has(domain)) {
-            return '<div class="icon-placeholder"><i class="fas fa-spinner fa-pulse"></i></div>';
-        }
-        this.iconLoadingSet.add(domain);
-        
-        const candidatesJson = JSON.stringify(candidates);
-        const safeCandidates = candidatesJson.replace(/"/g, '&quot;');
-        const domainEscaped = this._escapeHtml(domain);
-        
-        return `<img class="lazy-icon" data-domain="${domainEscaped}" data-src="${this._escapeHtml(candidates[0])}" 
-                     data-candidates='${safeCandidates}'
-                     alt="" loading="lazy"
-                     onerror="this.onerror=null; const candidates = JSON.parse(this.getAttribute('data-candidates')); const domain = this.getAttribute('data-domain'); const idx = candidates.indexOf(this.src); if (idx !== -1 && idx + 1 < candidates.length) { this.src = candidates[idx+1]; } else { if (window.Starlink?.navigation && window.Starlink.navigation._recordIconFailure) { window.Starlink.navigation._recordIconFailure(domain); } this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>'; }"
-                     onload="const domain = this.getAttribute('data-domain'); if (window.Starlink?.navigation && window.Starlink.navigation._recordIconSuccess) { window.Starlink.navigation._recordIconSuccess(domain, this.src); }">`;
     }
 
     _highlightText(text, keyword) {
