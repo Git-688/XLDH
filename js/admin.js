@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，支持添加链接后自动关闭模态框且不切换分类/子分类）
+// admin.js - 星聚导航后台管理（完整版，支持添加链接后自动关闭模态框且不切换分类/子分类，增加验证码）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -17,6 +17,9 @@
     let customSelects = {};
 
     let currentAnnouncement = null;
+
+    // 验证码相关
+    let currentCaptchaMd5key = null;
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -160,80 +163,61 @@
         if (el) el.textContent = '';
     }
 
-    function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null) {
-        const modal = document.getElementById('modal');
-        document.querySelector('#modal .modal-title').textContent = title;
-        document.getElementById('modalForm').innerHTML = formHtml;
-        modalAction = submitCb;
-        const buttonsContainer = document.querySelector('#modal .modal-buttons');
-        let html = '';
-        if (showDelete && deleteCb) html += `<div class="modal-buttons-left" style="margin-right:auto;"><button class="danger" id="modalDeleteBtn">删除</button></div>`;
-        html += `<button class="secondary" id="modalCancelBtn">取消</button><button class="primary" id="modalSubmit">确认</button>`;
-        buttonsContainer.innerHTML = html;
-        document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
-        document.getElementById('modalSubmit').addEventListener('click', handleModalSubmit);
-        if (showDelete && deleteCb) {
-            document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
-                if (confirm('确定删除？此操作不可恢复！')) { try { await deleteCb(); closeModal(); } catch (e) { showToast('删除失败', 'error'); } }
-            });
+    // 获取设备 ID（用于验证码绑定）
+    function getDeviceId() {
+        let deviceId = localStorage.getItem('device_id');
+        if (!deviceId) {
+            deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('device_id', deviceId);
         }
-        modal.classList.add('show');
+        return deviceId;
     }
 
-    async function handleModalSubmit() {
-        if (!modalAction) return;
-        const btn = document.getElementById('modalSubmit');
-        btn.disabled = true;
-        btn.textContent = '提交中…';
-        try { await modalAction(); }
-        catch (e) { showToast('操作失败', 'error'); }
-        finally { btn.disabled = false; btn.textContent = '确认'; }
-    }
+    // 加载验证码
+    async function loadCaptcha() {
+        const captchaGroup = document.getElementById('captchaGroup');
+        const captchaImg = document.getElementById('captchaImg');
+        if (!captchaGroup || !captchaImg) return;
 
-    function closeModal() { 
-        document.getElementById('modal').classList.remove('show'); 
-        modalAction = null; 
-    }
-
-    async function apiFetch(endpoint, opt = {}) {
-        const headers = { 'Content-Type': 'application/json', ...opt.headers };
-        if (token) headers.Authorization = `Bearer ${token}`;
-        const res = await fetch(API_BASE + endpoint, { ...opt, headers });
-        if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
-        if (res.status === 403) { showToast('IP不在白名单', 'error'); throw new Error('Forbidden'); }
-        if (!res.ok) throw new Error(await res.text() || '请求失败');
-        return res.json();
-    }
-
-    async function fetchSiteInfo(urlInputId, titleInputId, iconInputId, descInputId) {
-        const urlInput = document.getElementById(urlInputId);
-        const titleInput = document.getElementById(titleInputId);
-        const iconInput = document.getElementById(iconInputId);
-        const descInput = document.getElementById(descInputId);
-        if (!urlInput || !titleInput || !iconInput || !descInput) return;
-        let rawUrl = urlInput.value.trim();
-        if (!rawUrl) { showToast('请先输入网址', 'warn'); return; }
-        if (!/^https?:\/\//i.test(rawUrl)) rawUrl = 'https://' + rawUrl;
-        const btn = document.getElementById('fetchInfoBtn');
-        if (btn) { btn.disabled = true; btn.textContent = '获取中...'; }
         try {
-            const resp = await fetch(`https://api.pearapi.ai/api/website/info/?url=${encodeURIComponent(rawUrl)}`);
-            if (!resp.ok) throw new Error('失败');
-            const data = await resp.json();
-            if (data.code === 200 && data.data) {
-                if (data.data.title) titleInput.value = data.data.title;
-                if (data.data.icon) iconInput.value = data.data.icon;
-                if (data.data.description) descInput.value = data.data.description;
-                showToast('获取成功', 'success');
-            } else showToast('无信息', 'warn');
-        } catch { showToast('获取失败', 'error'); }
-        finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
+            const response = await fetch(`${API_BASE}/admin/captcha`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Device-Id': getDeviceId()
+                }
+            });
+            const data = await response.json();
+            if (data.imgurl && data.md5key) {
+                captchaImg.src = data.imgurl;
+                currentCaptchaMd5key = data.md5key;
+                captchaGroup.style.display = 'block';
+            } else {
+                console.error('获取验证码失败:', data.error);
+                showToast('获取验证码失败，请刷新重试', 'error');
+            }
+        } catch (err) {
+            console.error('加载验证码异常:', err);
+            showToast('验证码服务异常', 'error');
+        }
+    }
+
+    // 刷新验证码
+    function refreshCaptcha() {
+        loadCaptcha();
     }
 
     async function login() {
         if (!checkLock()) return;
         const rawToken = document.getElementById('tokenInput').value.trim();
         if (!rawToken) { showToast('请输入Token', 'error'); return; }
+
+        const captchaCode = document.getElementById('captchaInput')?.value.trim() || '';
+        if (!captchaCode) {
+            showToast('请输入验证码', 'error');
+            return;
+        }
+
         const btn = document.getElementById('loginBtn');
         btn.disabled = true;
         btn.textContent = '登录中…';
@@ -241,13 +225,16 @@
             const loginRes = await fetch(`${API_BASE}/admin/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: rawToken })
+                body: JSON.stringify({
+                    token: rawToken,
+                    captchaCode: captchaCode,
+                    md5key: currentCaptchaMd5key
+                })
             });
+            const loginData = await loginRes.json().catch(() => ({}));
             if (!loginRes.ok) {
-                const errData = await loginRes.json().catch(() => ({}));
-                throw new Error(errData.error || '登录失败');
+                throw new Error(loginData.error || '登录失败');
             }
-            const loginData = await loginRes.json();
             const sessionToken = loginData.sessionToken;
             token = sessionToken;
             resetLoginFailure();
@@ -259,13 +246,19 @@
             if (loginWrapper) loginWrapper.style.display = 'none';
             if (mainContent) mainContent.classList.remove('hidden');
             document.getElementById('tokenInput').value = '';
+            document.getElementById('captchaInput').value = '';
             await loadAllData();
             showToast('登录成功' + (remember ? '（已记住密码）' : ''));
         } catch (e) {
             token = '';
             recordLoginFailure();
-            showToast(e.message === 'Unauthorized' ? 'Token无效' : e.message || '登录失败', 'error');
-        } finally { btn.disabled = false; btn.textContent = '登录'; }
+            showToast(e.message === 'Unauthorized' ? 'Token无效或验证码错误' : e.message || '登录失败', 'error');
+            // 登录失败后刷新验证码
+            loadCaptcha();
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '登录';
+        }
     }
 
     function logout() {
@@ -277,6 +270,8 @@
         if (mainContent) mainContent.classList.add('hidden');
         const tokenInput = document.getElementById('tokenInput');
         if (tokenInput) tokenInput.value = '';
+        const captchaInput = document.getElementById('captchaInput');
+        if (captchaInput) captchaInput.value = '';
         showToast('已退出');
     }
 
@@ -364,7 +359,6 @@
                 const date = currentAnnouncement.date ? currentAnnouncement.date : (currentAnnouncement.created_at ? new Date(currentAnnouncement.created_at).toISOString().slice(0,10) : '');
                 document.getElementById('annDate').value = date;
                 document.getElementById('annActive').checked = currentAnnouncement.is_active === 1;
-                // 公告内容框自动调整高度
                 const contentTextarea = document.getElementById('annContent');
                 if (contentTextarea) autoResizeTextarea(contentTextarea);
             } else {
@@ -1059,6 +1053,10 @@
             document.getElementById('importConfirmBtn').addEventListener('click', importData);
             importModal.addEventListener('click', (e) => { if (e.target === importModal) closeImportModal(); });
         }
+
+        // 验证码刷新
+        const captchaImg = document.getElementById('captchaImg');
+        if (captchaImg) captchaImg.addEventListener('click', refreshCaptcha);
     }
 
     // ==================== CustomSelect 类 ====================
@@ -1225,6 +1223,8 @@
     }
 
     injectGlobalStyles();
+    
+    // 如果有存储的 token，尝试自动登录并加载验证码（页面加载后显示验证码）
     const storedToken = getStoredToken();
     if (storedToken) {
         token = storedToken;
@@ -1245,6 +1245,8 @@
         const mainContent = document.getElementById('mainContent');
         if (loginWrapper) loginWrapper.style.display = 'flex';
         if (mainContent) mainContent.classList.add('hidden');
+        // 显示登录页面时加载验证码
+        loadCaptcha();
     }
 
     setInterval(() => {
