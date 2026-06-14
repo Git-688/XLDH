@@ -724,35 +724,7 @@
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
 
 <!-- 新增外部脚本：完全放开了 myhkw.cn 的 CSP 限制 -->
-
-
-<!-- 音乐播放器延迟加载代码 开始 -->
-<script>
-(function() {
-function loadNonCriticalResources() {
-    const musicScript = document.createElement('script');
-    musicScript.type = 'text/javascript';
-    musicScript.id = 'myhk';
-    musicScript.src = 'https://myhkw.cn/api/player/178139989192';
-    musicScript.setAttribute('key', '178139989192');
-    musicScript.setAttribute('m', '1');
-    musicScript.defer = true;
-    musicScript.onerror = function() {
-        console.warn('音乐播放器加载失败');
-    };
-    document.body.appendChild(musicScript);
-}
-
-if ('requestIdleCallback' in window) {
-    requestIdleCallback(loadNonCriticalResources, { timeout: 3000 });
-} else {
-    setTimeout(loadNonCriticalResources, 3000);
-}
-})();
-</script>
-<!-- 音乐播放器延迟加载代码 结束 -->
-
-
+<script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
 <script>
     (function() {
