@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，支持添加链接后自动关闭模态框且不切换分类/子分类，增加验证码）
+// admin.js - 星聚导航后台管理（完整版，支持添加链接后自动关闭模态框且不切换分类/子分类，增加验证码并修复设备ID问题）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -163,7 +163,7 @@
         if (el) el.textContent = '';
     }
 
-    // 获取设备 ID（用于验证码绑定）
+    // 获取设备 ID（持久化 localStorage）
     function getDeviceId() {
         let deviceId = localStorage.getItem('device_id');
         if (!deviceId) {
@@ -224,7 +224,10 @@
         try {
             const loginRes = await fetch(`${API_BASE}/admin/login`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Device-Id': getDeviceId()   // 关键：传递设备ID
+                },
                 body: JSON.stringify({
                     token: rawToken,
                     captchaCode: captchaCode,
@@ -1245,8 +1248,14 @@
         const mainContent = document.getElementById('mainContent');
         if (loginWrapper) loginWrapper.style.display = 'flex';
         if (mainContent) mainContent.classList.add('hidden');
-        // 显示登录页面时加载验证码
+        // 显示登录页面时加载验证码，并设置定时刷新（每 4 分钟）
         loadCaptcha();
+        setInterval(() => {
+            // 仅当验证码区域可见且当前未登录时刷新
+            if (document.getElementById('captchaGroup')?.style.display !== 'none' && !token) {
+                loadCaptcha();
+            }
+        }, 4 * 60 * 1000); // 4 分钟刷新一次，避免过期
     }
 
     setInterval(() => {
