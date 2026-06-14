@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +7,7 @@
     <meta name="description" content="星聚导航是一个现代化的个人导航网站，提供便捷的上网导航体验和各种实用工具">
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
+
     <script>
         (function() {
             let apiBase = '';
@@ -29,14 +29,20 @@
             window.Starlink = window.Starlink || {};
         })();
     </script>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz https://myhkw.cn; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz https://xiaodi.ykxbl.top https://myhkw.cn; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'none'; form-action 'self';">
+
+    <!-- CSP 已添加 myhkw.cn 域名 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz https://myhkw.cn; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz https://xiaodi.ykxbl.top; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'none'; form-action 'self';">
+
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
+
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
+
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
     <link rel="stylesheet" href="./css/modules/sidebar.css">
@@ -50,6 +56,7 @@
     <link rel="stylesheet" href="./css/modules/stats.css">
     <link rel="stylesheet" href="./css/modules/compact-tags.css">
     <link rel="stylesheet" href="./css/responsive.css">
+
     <link rel="preload" href="./css/modules/compact-tags.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -59,10 +66,12 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/regular.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preload" href="./js/main.js" as="script">
+
     <!-- 滚动进度条样式：由蓝渐变到红 -->
     <style>
         .scroll-progress {
@@ -87,6 +96,7 @@
             box-shadow: 0 0 6px rgba(123, 156, 255, 0.5);
         }
     </style>
+
     <style>
         :root {
             --primary-color: #4361ee;
@@ -294,8 +304,10 @@
         }
     </style>
 </head>
+
 <body>
 <div class="scroll-progress" id="scrollProgress"></div>
+
 <nav class="navbar" id="navbar">
     <div class="nav-container">
         <div class="nav-brand">
@@ -624,7 +636,7 @@
             </div>
         </div>
     </div>
-    <audio id="audio-element" preload="metadata" style="display:none;">
+    <audio id="audio-element" preload="metadata" style="display:none;"></audio>
     <div class="search-modal" id="searchModal">
         <div class="modal-content">
             <div class="search-bar"><button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎"><i id="engineIcon" class="fas fa-search"></i></button><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off"><button class="search-submit-btn">搜索</button></div>
@@ -638,6 +650,7 @@
     </div>
     <div class="engine-tooltip" id="engineTooltip"></div>
 </main>
+
 <div id="notebookModal" class="feedback-modal">
     <div class="feedback-modal-content">
         <div class="feedback-modal-header">
@@ -707,7 +720,9 @@
         </div>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+
 <script>
     (function() {
         const progressBar = document.getElementById('scrollProgress');
@@ -723,6 +738,7 @@
         updateScrollProgress();
     })();
 </script>
+
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js" crossorigin="anonymous"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 <script defer src="./js/utils.js"></script>
@@ -751,6 +767,7 @@
 <script defer src="./js/modules/comment.js"></script>
 <script defer src="./js/modules/submit.js"></script>
 <script defer src="./js/modules/theme.js"></script>
+
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
@@ -781,13 +798,34 @@
         });
     }
 </script>
+
 <script defer src="./js/cursor2.js"></script>
 
+<!-- 第三方音乐播放器（延迟加载） -->
+<script>
+(function() {
+function loadPlayer() {
+    const musicScript = document.createElement('script');
+    musicScript.type = 'text/javascript';
+    musicScript.id = 'myhk';
+    musicScript.src = 'https://myhkw.cn/api/player/178053822427';
+    musicScript.setAttribute('key', '178053822427');
+    musicScript.setAttribute('m', '1');
+    musicScript.defer = true;
+    musicScript.onerror = function() {
+        console.warn('音乐播放器加载失败');
+    };
+    document.body.appendChild(musicScript);
+}
 
-<script type="text/javascript" src="https://myhkw.cn/player/js/jquery.min.js"></script>
-
-<script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178053822427" key="178053822427" m="1"></script>
-
+// 浏览器空闲/3秒后加载，两处数值保持一致
+if ('requestIdleCallback' in window) {
+    requestIdleCallback(loadPlayer, { timeout: 3000 });
+} else {
+    setTimeout(loadPlayer, 3000);
+}
+})();
+</script>
 
 </body>
 </html>
