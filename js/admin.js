@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，支持添加链接后自动关闭模态框且不切换分类/子分类，增加验证码并修复设备ID问题）
+// admin.js - 星聚导航后台管理（完整版，修复 apiFetch 未定义错误）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -17,10 +17,9 @@
     let customSelects = {};
 
     let currentAnnouncement = null;
-
-    // 验证码相关
     let currentCaptchaMd5key = null;
 
+    // ==================== 工具函数 ====================
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -45,6 +44,28 @@
         textarea.style.height = textarea.scrollHeight + 'px';
     }
 
+    // 获取设备 ID
+    function getDeviceId() {
+        let deviceId = localStorage.getItem('device_id');
+        if (!deviceId) {
+            deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('device_id', deviceId);
+        }
+        return deviceId;
+    }
+
+    // ==================== API 请求封装（必须定义在调用之前） ====================
+    async function apiFetch(endpoint, opt = {}) {
+        const headers = { 'Content-Type': 'application/json', ...opt.headers };
+        if (token) headers.Authorization = `Bearer ${token}`;
+        const res = await fetch(API_BASE + endpoint, { ...opt, headers });
+        if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+        if (res.status === 403) { showToast('IP不在白名单', 'error'); throw new Error('Forbidden'); }
+        if (!res.ok) throw new Error(await res.text() || '请求失败');
+        return res.json();
+    }
+
+    // ==================== 会话管理 ====================
     function getStoredToken() {
         let tk = sessionStorage.getItem('admin_token');
         if (tk) {
@@ -125,6 +146,7 @@
         }
     }
 
+    // ==================== 登录锁定 ====================
     function updateLockMessage() {
         const el = document.getElementById('loginLockMessage');
         if (!el) return;
@@ -163,22 +185,11 @@
         if (el) el.textContent = '';
     }
 
-    // 获取设备 ID（持久化 localStorage）
-    function getDeviceId() {
-        let deviceId = localStorage.getItem('device_id');
-        if (!deviceId) {
-            deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
-            localStorage.setItem('device_id', deviceId);
-        }
-        return deviceId;
-    }
-
-    // 加载验证码
+    // ==================== 验证码 ====================
     async function loadCaptcha() {
         const captchaGroup = document.getElementById('captchaGroup');
         const captchaImg = document.getElementById('captchaImg');
         if (!captchaGroup || !captchaImg) return;
-
         try {
             const response = await fetch(`${API_BASE}/admin/captcha`, {
                 method: 'POST',
@@ -202,11 +213,11 @@
         }
     }
 
-    // 刷新验证码
     function refreshCaptcha() {
         loadCaptcha();
     }
 
+    // ==================== 登录/登出 ====================
     async function login() {
         if (!checkLock()) return;
         const rawToken = document.getElementById('tokenInput').value.trim();
@@ -226,7 +237,7 @@
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'X-Device-Id': getDeviceId()   // 关键：传递设备ID
+                    'X-Device-Id': getDeviceId()
                 },
                 body: JSON.stringify({
                     token: rawToken,
@@ -256,8 +267,7 @@
             token = '';
             recordLoginFailure();
             showToast(e.message === 'Unauthorized' ? 'Token无效或验证码错误' : e.message || '登录失败', 'error');
-            // 登录失败后刷新验证码
-            loadCaptcha();
+            loadCaptcha(); // 刷新验证码
         } finally {
             btn.disabled = false;
             btn.textContent = '登录';
@@ -278,6 +288,7 @@
         showToast('已退出');
     }
 
+    // ==================== 数据加载与渲染 ====================
     async function loadAllData() {
         try {
             const [catData, subData, siteData] = await Promise.all([
@@ -350,7 +361,7 @@
         `).join('');
     }
 
-    // ==================== 单公告管理 ====================
+    // ==================== 公告管理 ====================
     async function loadAnnouncement() {
         try {
             const data = await apiFetch('/admin/announcements');
@@ -435,7 +446,7 @@
         if (contentTextarea) autoResizeTextarea(contentTextarea);
     }
 
-    // ==================== 排序值自动计算 ====================
+    // ==================== 排序辅助 ====================
     async function getNextSortValue(type, parentId = null) {
         try {
             let maxOrder = 0;
@@ -455,7 +466,43 @@
         } catch { return 0; }
     }
 
-    // ==================== 分类/子分类/网站管理 ====================
+    // ==================== 增删改查模态框 ====================
+    function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null) {
+        const modal = document.getElementById('modal');
+        document.querySelector('#modal .modal-title').textContent = title;
+        document.getElementById('modalForm').innerHTML = formHtml;
+        modalAction = submitCb;
+        const buttonsContainer = document.querySelector('#modal .modal-buttons');
+        let html = '';
+        if (showDelete && deleteCb) html += `<div class="modal-buttons-left" style="margin-right:auto;"><button class="danger" id="modalDeleteBtn">删除</button></div>`;
+        html += `<button class="secondary" id="modalCancelBtn">取消</button><button class="primary" id="modalSubmit">确认</button>`;
+        buttonsContainer.innerHTML = html;
+        document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+        document.getElementById('modalSubmit').addEventListener('click', handleModalSubmit);
+        if (showDelete && deleteCb) {
+            document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
+                if (confirm('确定删除？此操作不可恢复！')) { try { await deleteCb(); closeModal(); } catch (e) { showToast('删除失败', 'error'); } }
+            });
+        }
+        modal.classList.add('show');
+    }
+
+    async function handleModalSubmit() {
+        if (!modalAction) return;
+        const btn = document.getElementById('modalSubmit');
+        btn.disabled = true;
+        btn.textContent = '提交中…';
+        try { await modalAction(); closeModal(); }
+        catch (e) { showToast('操作失败', 'error'); }
+        finally { btn.disabled = false; btn.textContent = '确认'; }
+    }
+
+    function closeModal() { 
+        document.getElementById('modal').classList.remove('show'); 
+        modalAction = null; 
+    }
+
+    // 分类/子分类/网站 管理
     function handleModifyCategory(id, currentName) {
         const cat = categories.find(c => c.id === id);
         const currentOrder = cat?.display_order || 0;
@@ -568,21 +615,18 @@
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
                 if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
-                const response = await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
+                await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
                     subcategory_id: currentSub, title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
                 showToast('添加成功', 'success');
-                closeModal(); // 关闭模态框
-                // 刷新当前子分类的链接列表（不重新加载全部数据，避免切换分类）
+                closeModal();
                 const newSite = await apiFetch('/admin/sites?subcategory_id=' + currentSub);
                 if (newSite && newSite.length) {
-                    // 更新本地 sites 数组中的当前子分类数据
                     const otherSites = sites.filter(s => s.subcategory_id !== currentSub);
                     sites = [...otherSites, ...newSite];
                     renderSiteList();
                 } else {
-                    // 降级：重新加载所有数据但不改变当前选中
                     await loadAllDataButKeepSelection();
                 }
             }
@@ -598,7 +642,6 @@
         }, 50);
     }
 
-    // 辅助函数：重新加载数据但不改变当前选中的分类和子分类
     async function loadAllDataButKeepSelection() {
         try {
             const [catData, subData, siteData] = await Promise.all([
@@ -610,7 +653,6 @@
             subcategories = subData;
             sites = siteData;
             renderCatBar();
-            // 恢复选中状态
             if (currentCat) {
                 selectCat(currentCat);
                 if (currentSub) selectSub(currentSub);
@@ -621,7 +663,7 @@
         }
     }
 
-    // ==================== 点击排行、反馈等 ====================
+    // ==================== 辅助功能：排行、反馈等 ====================
     async function loadRanking() {
         const list = document.getElementById('rankList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -983,85 +1025,6 @@
         } catch (err) { showToast('加载详情失败', 'error'); }
     }
 
-    // ==================== 事件绑定 ====================
-    function setupEventDelegation() {
-        document.getElementById('catBar').addEventListener('click', e => {
-            const btn = e.target.closest('[data-action]');
-            if (btn && btn.dataset.action === 'modifyCat') {
-                handleModifyCategory(parseInt(btn.dataset.id), btn.dataset.name);
-                return;
-            }
-            const item = e.target.closest('.cat-item');
-            if (item) selectCat(parseInt(item.dataset.cid));
-        });
-        document.getElementById('subList').addEventListener('click', e => {
-            const btn = e.target.closest('[data-action]');
-            if (btn && btn.dataset.action === 'modifySub') {
-                handleModifySub(parseInt(btn.dataset.id), btn.dataset.name);
-                return;
-            }
-            const item = e.target.closest('.sub-item');
-            if (item) selectSub(parseInt(item.dataset.sid));
-        });
-        document.getElementById('siteList').addEventListener('click', e => {
-            const btn = e.target.closest('[data-action]');
-            if (!btn) return;
-            if (btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
-        });
-
-        // 标签页切换
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tabId = btn.dataset.tab;
-                if (!tabId) return;
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
-                const activePanel = document.getElementById(`${tabId}Tab`);
-                if (activePanel) activePanel.classList.remove('hidden');
-                if (tabId === 'rank') loadRanking();
-                if (tabId === 'feedback') loadFeedback();
-                if (tabId === 'submissions') loadSubmissions();
-                if (tabId === 'announcement') loadAnnouncement();
-            });
-        });
-
-        document.getElementById('loginBtn').addEventListener('click', login);
-        document.getElementById('logoutBtn').addEventListener('click', logout);
-        document.getElementById('addCategoryBtn').addEventListener('click', handleAddCategory);
-        document.getElementById('addSubBtn').addEventListener('click', handleAddSub);
-        document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
-        document.getElementById('exportBtn').addEventListener('click', exportFullData);
-        document.getElementById('importBtn').addEventListener('click', openImportModal);
-        document.getElementById('sortRankBtn').addEventListener('click', loadRanking);
-        document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
-        document.getElementById('refreshSubmissionsBtn').addEventListener('click', loadSubmissions);
-        document.getElementById('refreshNavBtn').addEventListener('click', async () => {
-            try {
-                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
-                showToast('导航缓存已刷新', 'success');
-            } catch (err) { showToast('刷新失败', 'error'); }
-        });
-        document.getElementById('annPublishBtn').addEventListener('click', saveAnnouncement);
-        document.getElementById('annClearBtn').addEventListener('click', clearAnnouncementForm);
-        document.getElementById('annCancelBtn').addEventListener('click', () => {
-            if (currentAnnouncement) loadAnnouncement();
-            else clearAnnouncementForm();
-        });
-        document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
-        document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
-        const importModal = document.getElementById('importModal');
-        if (importModal) {
-            document.getElementById('importCancelBtn').addEventListener('click', closeImportModal);
-            document.getElementById('importConfirmBtn').addEventListener('click', importData);
-            importModal.addEventListener('click', (e) => { if (e.target === importModal) closeImportModal(); });
-        }
-
-        // 验证码刷新
-        const captchaImg = document.getElementById('captchaImg');
-        if (captchaImg) captchaImg.addEventListener('click', refreshCaptcha);
-    }
-
     // ==================== CustomSelect 类 ====================
     class CustomSelect {
         constructor(selectElement, onChange) {
@@ -1225,9 +1188,85 @@
         }
     }
 
+    // ==================== 事件绑定与初始化 ====================
+    function setupEventDelegation() {
+        document.getElementById('catBar').addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (btn && btn.dataset.action === 'modifyCat') {
+                handleModifyCategory(parseInt(btn.dataset.id), btn.dataset.name);
+                return;
+            }
+            const item = e.target.closest('.cat-item');
+            if (item) selectCat(parseInt(item.dataset.cid));
+        });
+        document.getElementById('subList').addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (btn && btn.dataset.action === 'modifySub') {
+                handleModifySub(parseInt(btn.dataset.id), btn.dataset.name);
+                return;
+            }
+            const item = e.target.closest('.sub-item');
+            if (item) selectSub(parseInt(item.dataset.sid));
+        });
+        document.getElementById('siteList').addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            if (btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab;
+                if (!tabId) return;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+                const activePanel = document.getElementById(`${tabId}Tab`);
+                if (activePanel) activePanel.classList.remove('hidden');
+                if (tabId === 'rank') loadRanking();
+                if (tabId === 'feedback') loadFeedback();
+                if (tabId === 'submissions') loadSubmissions();
+                if (tabId === 'announcement') loadAnnouncement();
+            });
+        });
+
+        document.getElementById('loginBtn').addEventListener('click', login);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('addCategoryBtn').addEventListener('click', handleAddCategory);
+        document.getElementById('addSubBtn').addEventListener('click', handleAddSub);
+        document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
+        document.getElementById('exportBtn').addEventListener('click', exportFullData);
+        document.getElementById('importBtn').addEventListener('click', openImportModal);
+        document.getElementById('sortRankBtn').addEventListener('click', loadRanking);
+        document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
+        document.getElementById('refreshSubmissionsBtn').addEventListener('click', loadSubmissions);
+        document.getElementById('refreshNavBtn').addEventListener('click', async () => {
+            try {
+                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+                showToast('导航缓存已刷新', 'success');
+            } catch (err) { showToast('刷新失败', 'error'); }
+        });
+        document.getElementById('annPublishBtn').addEventListener('click', saveAnnouncement);
+        document.getElementById('annClearBtn').addEventListener('click', clearAnnouncementForm);
+        document.getElementById('annCancelBtn').addEventListener('click', () => {
+            if (currentAnnouncement) loadAnnouncement();
+            else clearAnnouncementForm();
+        });
+        document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+        document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+        const importModal = document.getElementById('importModal');
+        if (importModal) {
+            document.getElementById('importCancelBtn').addEventListener('click', closeImportModal);
+            document.getElementById('importConfirmBtn').addEventListener('click', importData);
+            importModal.addEventListener('click', (e) => { if (e.target === importModal) closeImportModal(); });
+        }
+
+        const captchaImg = document.getElementById('captchaImg');
+        if (captchaImg) captchaImg.addEventListener('click', refreshCaptcha);
+    }
+
     injectGlobalStyles();
-    
-    // 如果有存储的 token，尝试自动登录并加载验证码（页面加载后显示验证码）
+
     const storedToken = getStoredToken();
     if (storedToken) {
         token = storedToken;
@@ -1248,14 +1287,12 @@
         const mainContent = document.getElementById('mainContent');
         if (loginWrapper) loginWrapper.style.display = 'flex';
         if (mainContent) mainContent.classList.add('hidden');
-        // 显示登录页面时加载验证码，并设置定时刷新（每 4 分钟）
         loadCaptcha();
         setInterval(() => {
-            // 仅当验证码区域可见且当前未登录时刷新
             if (document.getElementById('captchaGroup')?.style.display !== 'none' && !token) {
                 loadCaptcha();
             }
-        }, 4 * 60 * 1000); // 4 分钟刷新一次，避免过期
+        }, 4 * 60 * 1000);
     }
 
     setInterval(() => {
