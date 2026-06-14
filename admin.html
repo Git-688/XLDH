@@ -137,6 +137,21 @@
             box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
 
+        .captcha-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .captcha-row input {
+            flex: 1;
+        }
+        .captcha-row img {
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #f1f5f9;
+        }
+
         .remember-checkbox {
             display: flex;
             align-items: center;
@@ -568,6 +583,13 @@
                     <label>管理Token</label>
                     <input type="password" id="tokenInput" placeholder="请输入管理Token" autocomplete="off">
                 </div>
+                <div class="input-group" id="captchaGroup" style="display: none;">
+                    <label>验证码</label>
+                    <div class="captcha-row">
+                        <input type="text" id="captchaInput" placeholder="请输入验证码" autocomplete="off">
+                        <img id="captchaImg" src="" alt="验证码" style="height: 36px; cursor: pointer;" title="点击刷新">
+                    </div>
+                </div>
                 <div class="remember-checkbox">
                     <input type="checkbox" id="rememberToken">
                     <label for="rememberToken">记住密码（1小时有效）</label>
@@ -713,6 +735,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/js/all.min.js" crossorigin="anonymous"></script>
 <script src="./js/admin.js"></script>
 </body>
