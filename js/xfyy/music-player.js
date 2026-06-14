@@ -1,5 +1,5 @@
 /**
- * 音乐播放器 - 星聚导航专用（完整修复版）
+ * 音乐播放器 - 星聚导航专用（进度条改为 width 方式，消除空白间隙）
  * 包含：精确进度条、下载进度（通过 Worker 代理）、搜索、播放列表、用户手势处理、歌词代理、歌单显示修复、倍速控件修复
  * 进度条点击和拖拽已优化，支持触摸设备
  * 修改：挂载到 window.Starlink.musicPlayer，支持单例，修复内存泄漏，添加歌单骨架屏
@@ -774,7 +774,6 @@ class MusicPlayer {
             }, 50);
             return;
         }
-        // 延迟一点再替换，让骨架屏可见（可选）
         setTimeout(() => {
             this.currentPlaylist = playlist;
             const fragment = document.createDocumentFragment();
@@ -790,7 +789,6 @@ class MusicPlayer {
         if (!el || !el.searchResults) return;
         const container = el.searchResults;
         
-        // 显示骨架屏
         container.innerHTML = this.generatePlaylistSkeleton();
         
         if (!results.length) { 
@@ -882,7 +880,6 @@ class MusicPlayer {
             this.audio.src = song.src;
             this.audio.load();
             this.elements.progress.style.width = '0%';
-            this.elements.progress.style.transform = 'scaleX(0)';
             this.elements.progressHandle.style.left = '0%';
             this.elements.currentTime.textContent = '00:00';
             this.audio.currentTime = 0;
@@ -1076,7 +1073,7 @@ class MusicPlayer {
         }
     }
 
-    // ==================== 进度条优化（精准点击和拖拽） ====================
+    // ==================== 进度条优化（精准点击和拖拽，使用 width 方式，消除空白间隙） ====================
     updateProgress() {
         if (this.isDraggingProgress || this.updateAnimationFrame) return;
         this.updateAnimationFrame = requestAnimationFrame(() => {
@@ -1085,7 +1082,6 @@ class MusicPlayer {
             if (duration && !isNaN(duration) && duration > 0) {
                 const percent = (currentTime / duration) * 100;
                 this.elements.progress.style.width = `${percent}%`;
-                this.elements.progress.style.transform = `scaleX(${percent / 100})`;
                 this.elements.progressHandle.style.left = `${percent}%`;
                 const now = Date.now();
                 if (!this.lastTimeUpdate || now - this.lastTimeUpdate > 500) {
@@ -1128,7 +1124,8 @@ class MusicPlayer {
             e.preventDefault();
             if (!this.audio.duration || isNaN(this.audio.duration) || this.audio.duration === Infinity) return;
             this.isDraggingProgress = true;
-            this.elements.progress.classList.add('no-transition');
+            // 拖拽时移除过渡动画
+            this.elements.progress.style.transition = 'none';
             this.updateSeek(e);
             if (e.type === 'touchstart') document.body.style.overflow = 'hidden';
         };
@@ -1146,13 +1143,13 @@ class MusicPlayer {
         const handleEnd = () => {
             if (!this.isDraggingProgress) return;
             this.isDraggingProgress = false;
-            this.elements.progress.classList.remove('no-transition');
+            // 恢复过渡动画
+            this.elements.progress.style.transition = '';
             const duration = this.audio.duration;
             if (duration && !isNaN(duration) && duration > 0) {
                 const seekTime = (this.dragPercent / 100) * duration;
                 this.audio.currentTime = seekTime;
                 this.elements.progress.style.width = `${this.dragPercent}%`;
-                this.elements.progress.style.transform = `scaleX(${this.dragPercent / 100})`;
                 this.elements.progressHandle.style.left = `${this.dragPercent}%`;
                 this.elements.currentTime.textContent = Utils.formatTime(seekTime);
             }
@@ -1181,7 +1178,6 @@ class MusicPlayer {
                 this.audio.currentTime = seekTime;
                 const percent = (seekTime / this.audio.duration) * 100;
                 this.elements.progress.style.width = `${percent}%`;
-                this.elements.progress.style.transform = `scaleX(${percent / 100})`;
                 this.elements.progressHandle.style.left = `${percent}%`;
                 this.elements.currentTime.textContent = Utils.formatTime(seekTime);
             }
@@ -1212,7 +1208,6 @@ class MusicPlayer {
         if (!isNaN(seekTime) && seekTime >= 0 && seekTime <= duration) {
             this.dragPercent = (seekTime / duration) * 100;
             this.elements.progress.style.width = `${this.dragPercent}%`;
-            this.elements.progress.style.transform = `scaleX(${this.dragPercent / 100})`;
             this.elements.progressHandle.style.left = `${this.dragPercent}%`;
             this.elements.currentTime.textContent = Utils.formatTime(seekTime);
         }
