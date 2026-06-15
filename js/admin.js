@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，支持添加链接后自动关闭模态框且不切换分类/子分类，增加验证码，死链反馈增加“忽略”按钮）
+// admin.js - 星聚导航后台管理（完整版，支持添加链接后自动关闭模态框且不切换分类/子分类，增加验证码，死链反馈增加“忽略”按钮，刷新图标）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -1051,6 +1051,32 @@
         } catch (err) { showToast('加载详情失败', 'error'); }
     }
 
+    // ==================== 刷新图标按钮 ====================
+    async function refreshIcons() {
+        const btn = document.getElementById('refreshIconsBtn');
+        if (!btn) return;
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = '刷新中...';
+        try {
+            const response = await fetch(`${API_BASE}/admin/refresh-icons`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (response.ok) {
+                showToast(data.message || '图标缓存已刷新，新图标将在下次加载时生效', 'success');
+            } else {
+                showToast(data.error || '刷新失败', 'error');
+            }
+        } catch (err) {
+            showToast('刷新失败: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    }
+
     // ==================== CustomSelect 类 ====================
     class CustomSelect {
         constructor(selectElement, onChange) {
@@ -1272,6 +1298,7 @@
                 showToast('导航缓存已刷新', 'success');
             } catch (err) { showToast('刷新失败', 'error'); }
         });
+        document.getElementById('refreshIconsBtn').addEventListener('click', refreshIcons);
         document.getElementById('annPublishBtn').addEventListener('click', saveAnnouncement);
         document.getElementById('annClearBtn').addEventListener('click', clearAnnouncementForm);
         document.getElementById('annCancelBtn').addEventListener('click', () => {
