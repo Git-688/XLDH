@@ -1,6 +1,3 @@
-/**
- * 音乐播放器核心类 - 修复倍速下拉框自定义样式
- */
 class MusicPlayer {
     constructor() {
         if (window.Starlink && window.Starlink.musicPlayer) return window.Starlink.musicPlayer;
@@ -976,25 +973,6 @@ class MusicPlayer {
         this.audio.addEventListener('play', () => { if (!this.updateAnimationFrame) this.updateProgress(); });
     }
 
-    /**
-     * 初始化自定义下拉框（倍速选择器）
-     */
-    initCustomSelects() {
-        const speedSelect = this.elements.speedSelect;
-        if (!speedSelect) return;
-        // 如果已经被转换过，跳过
-        if (speedSelect.parentElement.querySelector('.custom-select')) return;
-        // 确保 CustomSelect 类可用
-        if (typeof CustomSelect === 'undefined') {
-            console.warn('CustomSelect 类未定义，倍速下拉框将保持原生样式');
-            return;
-        }
-        new CustomSelect(speedSelect, (value) => {
-            this.setPlaybackSpeed(parseFloat(value));
-            this.savePlaybackSpeed(parseFloat(value));
-        });
-    }
-
     initializePlayer() {
         this.audio.src = '';
         this.audio.load();
@@ -1010,8 +988,19 @@ class MusicPlayer {
             this.elements.coverImg.onerror = () => { this.elements.coverImg.src = defaultLogo; };
         }
         this.loadApiPlaylist(this.currentApi);
-        // 延迟初始化自定义下拉框，等待 DOM 完全渲染
-        setTimeout(() => this.initCustomSelects(), 500);
+        const initCustomSelectsWithRetry = () => {
+            if (document.querySelector('.music-player.show')) {
+                if (typeof initCustomSelects === 'function') {
+                    initCustomSelects();
+                    console.log('CustomSelects initialized');
+                } else {
+                    console.warn('initCustomSelects not defined');
+                }
+            } else {
+                setTimeout(initCustomSelectsWithRetry, 300);
+            }
+        };
+        setTimeout(initCustomSelectsWithRetry, 500);
         setInterval(() => this.cacheManager.cleanup(), 30 * 60 * 1000);
         this.hasInitialized = true;
         if (this.isPlaying) {
@@ -1062,130 +1051,6 @@ class MusicPlayer {
         if (window.musicPlayer === this) window.musicPlayer = null;
         console.log('音乐播放器资源已清理');
     }
-}
-
-// 定义 CustomSelect 类（如果全局不存在）
-if (typeof CustomSelect === 'undefined') {
-    class CustomSelect {
-        constructor(selectElement, onChange) {
-            this.select = selectElement;
-            this.onChange = onChange;
-            this.wrapper = null;
-            this.trigger = null;
-            this.dropdown = null;
-            this.options = [];
-            this.value = this.select.value;
-            this.isOpen = false;
-            this.init();
-        }
-        init() {
-            this.select.style.display = 'none';
-            this.wrapper = document.createElement('div');
-            this.wrapper.className = 'custom-select';
-            this.trigger = document.createElement('div');
-            this.trigger.className = 'custom-select-trigger';
-            this.trigger.innerHTML = `<span class="custom-select-value">${this.getSelectedText()}</span><span class="arrow"></span>`;
-            this.dropdown = document.createElement('div');
-            this.dropdown.className = 'custom-select-dropdown';
-            this.wrapper.appendChild(this.trigger);
-            this.wrapper.appendChild(this.dropdown);
-            this.select.parentNode.insertBefore(this.wrapper, this.select.nextSibling);
-            this.populateOptions();
-            this.bindEvents();
-            this.select.addEventListener('change', () => this.setValue(this.select.value));
-        }
-        getSelectedText() {
-            const option = this.select.options[this.select.selectedIndex];
-            return option ? option.textContent : '';
-        }
-        populateOptions() {
-            this.dropdown.innerHTML = '';
-            this.options = [];
-            for (let i = 0; i < this.select.options.length; i++) {
-                const option = this.select.options[i];
-                const div = document.createElement('div');
-                div.className = 'custom-select-option';
-                if (i === this.select.selectedIndex) div.classList.add('selected');
-                div.textContent = option.textContent;
-                div.dataset.value = option.value;
-                div.dataset.index = i;
-                div.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.selectOption(i);
-                    this.close();
-                });
-                this.dropdown.appendChild(div);
-                this.options.push(div);
-            }
-        }
-        selectOption(index) {
-            if (index === this.select.selectedIndex) return;
-            this.select.selectedIndex = index;
-            this.value = this.select.value;
-            const valueSpan = this.trigger.querySelector('.custom-select-value');
-            if (valueSpan) valueSpan.textContent = this.select.options[index].textContent;
-            this.options.forEach((opt, i) => opt.classList.toggle('selected', i === index));
-            if (this.onChange) this.onChange(this.value);
-            const changeEvent = new Event('change', { bubbles: true });
-            this.select.dispatchEvent(changeEvent);
-        }
-        setValue(value) {
-            for (let i = 0; i < this.select.options.length; i++) {
-                if (this.select.options[i].value == value) {
-                    this.selectOption(i);
-                    break;
-                }
-            }
-        }
-        open() {
-            if (this.isOpen) return;
-            this.isOpen = true;
-            this.trigger.classList.add('open');
-            this.dropdown.classList.add('open');
-            this.positionDropdown();
-            this.handleOutsideClick = (e) => {
-                if (!this.wrapper.contains(e.target)) this.close();
-            };
-            setTimeout(() => document.addEventListener('click', this.handleOutsideClick), 0);
-        }
-        close() {
-            if (!this.isOpen) return;
-            this.isOpen = false;
-            this.trigger.classList.remove('open');
-            this.dropdown.classList.remove('open');
-            if (this.handleOutsideClick) document.removeEventListener('click', this.handleOutsideClick);
-        }
-        positionDropdown() {
-            const rect = this.trigger.getBoundingClientRect();
-            const dropdownHeight = this.dropdown.offsetHeight;
-            const viewportHeight = window.innerHeight;
-            let top = rect.bottom + 4;
-            if (top + dropdownHeight > viewportHeight - 10) top = rect.top - dropdownHeight - 4;
-            this.dropdown.style.position = 'fixed';
-            this.dropdown.style.top = `${top}px`;
-            this.dropdown.style.left = `${rect.left}px`;
-            this.dropdown.style.width = `${rect.width}px`;
-        }
-        bindEvents() {
-            this.trigger.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.isOpen ? this.close() : this.open();
-            });
-            window.addEventListener('resize', () => { if (this.isOpen) this.positionDropdown(); });
-            window.addEventListener('scroll', () => { if (this.isOpen) this.positionDropdown(); }, true);
-        }
-        refresh() {
-            this.populateOptions();
-            const valueSpan = this.trigger.querySelector('.custom-select-value');
-            if (valueSpan) valueSpan.textContent = this.getSelectedText();
-        }
-        destroy() {
-            this.close();
-            this.wrapper.remove();
-            this.select.style.display = '';
-        }
-    }
-    window.CustomSelect = CustomSelect;
 }
 
 window.MusicPlayer = MusicPlayer;
