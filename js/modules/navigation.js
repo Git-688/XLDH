@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 无限滚动加载版（优化底部空白）
+ * 优化分类导航系统 - 无限滚动加载版（底部无文字，改用 Toast 提示）
  */
 class OptimizedNavigation {
     constructor() {
@@ -28,6 +28,7 @@ class OptimizedNavigation {
         this.hasMore = true;
         this.currentSites = [];
         this.scrollListener = null;
+        this.lastNoMoreToastTime = 0; // 避免频繁弹窗
 
         this.autoRefreshTimer = null;
         this.autoRefreshInterval = 5 * 60 * 1000;
@@ -359,7 +360,7 @@ class OptimizedNavigation {
             pageSites.forEach((site,idx)=>fragment.appendChild(this.createSiteCard(site,idx,false,'')));
             container.appendChild(fragment);
             
-            // 创建触发器（仅在还有更多数据时显示，否则不添加）
+            // 只有当还有更多数据时才显示加载触发器
             if (hasMoreData) {
                 const loadingDiv = this.createLoadingTrigger(true);
                 container.appendChild(loadingDiv);
@@ -374,9 +375,11 @@ class OptimizedNavigation {
             pageSites.forEach((site,idx)=>fragment.appendChild(this.createSiteCard(site,idx,false,'')));
             container.appendChild(fragment);
             
-            // 重新创建触发器（根据是否有更多数据）
-            const newTrigger = this.createLoadingTrigger(hasMoreData);
-            container.appendChild(newTrigger);
+            // 只有当还有更多数据时才创建新的触发器
+            if (hasMoreData) {
+                const newTrigger = this.createLoadingTrigger(true);
+                container.appendChild(newTrigger);
+            }
         }
         
         this.preloadNearbyImages(container);
@@ -386,20 +389,14 @@ class OptimizedNavigation {
         const div = document.createElement('div');
         div.id = 'scroll-loading-trigger';
         div.className = 'scroll-loading-trigger';
-        if (!hasMore) {
-            div.classList.add('no-more');
-            div.innerHTML = '～ 到·底·了 ～';
-            div.style.padding = '12px';
-            div.style.fontSize = '12px';
-        } else {
-            div.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载更多...</span>';
-            div.style.padding = '16px';
-        }
+        // 只显示“加载更多”样式，不再显示“到底了”
+        div.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载更多...</span>';
         div.style.textAlign = 'center';
         div.style.display = 'flex';
         div.style.justifyContent = 'center';
         div.style.alignItems = 'center';
         div.style.gap = '8px';
+        div.style.padding = '16px';
         return div;
     }
 
@@ -420,11 +417,20 @@ class OptimizedNavigation {
     }
 
     checkScrollAndLoadMore() {
-        if (this.isLoadingMore || !this.hasMore || this.isSearching) return;
+        if (this.isLoadingMore || this.isSearching) return;
+        // 如果没有更多数据，直接弹 Toast 并返回
+        if (!this.hasMore) {
+            const now = Date.now();
+            if (now - this.lastNoMoreToastTime > 5000) { // 5秒内不重复弹窗
+                this.lastNoMoreToastTime = now;
+                if (window.toast && window.toast.show) {
+                    window.toast.show('没有更多数据了', 'info', 2000);
+                }
+            }
+            return;
+        }
         const trigger = document.getElementById('scroll-loading-trigger');
         if (!trigger) return;
-        // 只有触发器存在且包含“加载更多”文本时才触发（避免无数据时触发）
-        if (trigger.classList.contains('no-more')) return;
         const rect = trigger.getBoundingClientRect();
         if (rect.top <= window.innerHeight + 100) {
             this.loadMore();
@@ -435,7 +441,7 @@ class OptimizedNavigation {
         if (this.isLoadingMore || !this.hasMore) return;
         this.isLoadingMore = true;
         const trigger = document.getElementById('scroll-loading-trigger');
-        if (trigger && !trigger.classList.contains('no-more')) {
+        if (trigger) {
             trigger.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载中...</span>';
             trigger.style.padding = '16px';
         }
@@ -445,11 +451,12 @@ class OptimizedNavigation {
         if (start >= this.currentSites.length) {
             this.hasMore = false;
             if (trigger) {
-                trigger.innerHTML = '～ 到·底·了 ～';
-                trigger.classList.add('no-more');
-                trigger.style.padding = '12px';
-                trigger.style.fontSize = '12px';
-                trigger.style.gap = '0';
+                // 移除触发器，避免底部留白
+                trigger.remove();
+            }
+            // 弹窗提示
+            if (window.toast && window.toast.show) {
+                window.toast.show('没有更多数据了', 'info', 2000);
             }
             this.isLoadingMore = false;
             return;
