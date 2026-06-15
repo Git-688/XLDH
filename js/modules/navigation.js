@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 无限滚动加载版（无切换动画）
+ * 优化分类导航系统 - 无限滚动加载版（优化底部空白）
  */
 class OptimizedNavigation {
     constructor() {
@@ -349,52 +349,58 @@ class OptimizedNavigation {
         const end = start+this.pageSize;
         const pageSites = this.currentSites.slice(start,end);
         
+        // 判断是否还有更多数据
+        const hasMoreData = end < this.currentSites.length;
+        this.hasMore = hasMoreData;
+        
         if (this.currentPage === 1) {
             container.innerHTML = '';
             const fragment = document.createDocumentFragment();
             pageSites.forEach((site,idx)=>fragment.appendChild(this.createSiteCard(site,idx,false,'')));
             container.appendChild(fragment);
-            const loadingDiv = document.createElement('div');
-            loadingDiv.id = 'scroll-loading-trigger';
-            loadingDiv.className = 'scroll-loading-trigger';
-            loadingDiv.style.textAlign = 'center';
-            loadingDiv.style.padding = '20px';
-            loadingDiv.style.display = this.hasMore ? 'flex' : 'flex';
-            loadingDiv.style.justifyContent = 'center';
-            loadingDiv.style.alignItems = 'center';
-            loadingDiv.style.gap = '8px';
-            loadingDiv.innerHTML = this.hasMore ? '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载更多...</span>' : '～到·底·了～';
-            container.appendChild(loadingDiv);
+            
+            // 创建触发器（仅在还有更多数据时显示，否则不添加）
+            if (hasMoreData) {
+                const loadingDiv = this.createLoadingTrigger(true);
+                container.appendChild(loadingDiv);
+            }
         } else {
-            const loadingDiv = container.querySelector('#scroll-loading-trigger');
-            if (loadingDiv) loadingDiv.remove();
+            // 移除旧的触发器
+            const oldTrigger = container.querySelector('#scroll-loading-trigger');
+            if (oldTrigger) oldTrigger.remove();
+            
+            // 追加新卡片
             const fragment = document.createDocumentFragment();
             pageSites.forEach((site,idx)=>fragment.appendChild(this.createSiteCard(site,idx,false,'')));
             container.appendChild(fragment);
-            const newLoadingDiv = document.createElement('div');
-            newLoadingDiv.id = 'scroll-loading-trigger';
-            newLoadingDiv.className = 'scroll-loading-trigger';
-            newLoadingDiv.style.textAlign = 'center';
-            newLoadingDiv.style.padding = '20px';
-            newLoadingDiv.style.display = 'flex';
-            newLoadingDiv.style.justifyContent = 'center';
-            newLoadingDiv.style.alignItems = 'center';
-            newLoadingDiv.style.gap = '8px';
-            newLoadingDiv.innerHTML = this.hasMore ? '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载更多...</span>' : '～到·底·了～';
-            container.appendChild(newLoadingDiv);
+            
+            // 重新创建触发器（根据是否有更多数据）
+            const newTrigger = this.createLoadingTrigger(hasMoreData);
+            container.appendChild(newTrigger);
         }
         
-        if (end >= this.currentSites.length) {
-            this.hasMore = false;
-            const loadingDiv = container.querySelector('#scroll-loading-trigger');
-            if (loadingDiv) {
-                loadingDiv.innerHTML = '～到·底·了～';
-                loadingDiv.style.gap = '0';
-            }
-        } else {
-            this.hasMore = true;
-        }
         this.preloadNearbyImages(container);
+    }
+    
+    createLoadingTrigger(hasMore) {
+        const div = document.createElement('div');
+        div.id = 'scroll-loading-trigger';
+        div.className = 'scroll-loading-trigger';
+        if (!hasMore) {
+            div.classList.add('no-more');
+            div.innerHTML = '～ 到·底·了 ～';
+            div.style.padding = '12px';
+            div.style.fontSize = '12px';
+        } else {
+            div.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载更多...</span>';
+            div.style.padding = '16px';
+        }
+        div.style.textAlign = 'center';
+        div.style.display = 'flex';
+        div.style.justifyContent = 'center';
+        div.style.alignItems = 'center';
+        div.style.gap = '8px';
+        return div;
     }
 
     bindInfiniteScroll() {
@@ -417,6 +423,8 @@ class OptimizedNavigation {
         if (this.isLoadingMore || !this.hasMore || this.isSearching) return;
         const trigger = document.getElementById('scroll-loading-trigger');
         if (!trigger) return;
+        // 只有触发器存在且包含“加载更多”文本时才触发（避免无数据时触发）
+        if (trigger.classList.contains('no-more')) return;
         const rect = trigger.getBoundingClientRect();
         if (rect.top <= window.innerHeight + 100) {
             this.loadMore();
@@ -426,19 +434,22 @@ class OptimizedNavigation {
     async loadMore() {
         if (this.isLoadingMore || !this.hasMore) return;
         this.isLoadingMore = true;
-        const loadingDiv = document.getElementById('scroll-loading-trigger');
-        if (loadingDiv) {
-            loadingDiv.innerHTML = '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载中...</span>';
-            loadingDiv.style.display = 'flex';
+        const trigger = document.getElementById('scroll-loading-trigger');
+        if (trigger && !trigger.classList.contains('no-more')) {
+            trigger.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载中...</span>';
+            trigger.style.padding = '16px';
         }
         await new Promise(r => setTimeout(r, 200));
         this.currentPage++;
         const start = (this.currentPage-1)*this.pageSize;
         if (start >= this.currentSites.length) {
             this.hasMore = false;
-            if (loadingDiv) {
-                loadingDiv.innerHTML = '～到·底·了～';
-                loadingDiv.style.gap = '0';
+            if (trigger) {
+                trigger.innerHTML = '～ 到·底·了 ～';
+                trigger.classList.add('no-more');
+                trigger.style.padding = '12px';
+                trigger.style.fontSize = '12px';
+                trigger.style.gap = '0';
             }
             this.isLoadingMore = false;
             return;
