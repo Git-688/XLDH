@@ -240,20 +240,32 @@
             max-width: 300px;
         }
 
-        /* 操作按钮行：等宽按钮 */
+        /* 操作按钮行：可水平滚动，文字居中 */
         .action-buttons-row {
             display: flex;
             gap: 8px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 6px;
             margin-bottom: 12px;
+            scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch;
+        }
+        .action-buttons-row::-webkit-scrollbar {
+            display: none; /* 隐藏滚动条但保留滚动功能 */
         }
         .action-buttons-row button {
-            flex: 1;
-            min-width: 0;
+            flex-shrink: 0;
+            min-width: 80px;
             white-space: nowrap;
-            padding: 6px 8px;
-            font-size: 11px;
+            padding: 6px 12px;
+            font-size: 12px;
             border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.2;
         }
 
         /* 标签页按钮样式优化：非激活状态灰色背景深色文字，激活状态蓝色背景白色文字 */
@@ -550,7 +562,7 @@
             .login-card { padding: 24px 20px; max-width: 280px; }
             .content-layout { flex-direction: row !important; gap: 8px; }
             .sidebar, .main-content { min-width: 0; }
-            .action-buttons-row button { font-size: 10px; padding: 5px 6px; }
+            .action-buttons-row button { font-size: 11px; padding: 5px 10px; min-width: 70px; }
             .tab-btn { padding: 4px 10px; font-size: 11px; }
         }
     </style>
@@ -618,6 +630,7 @@
             <div class="search-row">
                 <input type="text" class="search-box" id="searchInput" placeholder="搜索标题...">
             </div>
+            <!-- 操作按钮行：支持水平滚动，文字居中 -->
             <div class="action-buttons-row">
                 <button class="logout-btn" id="logoutBtn">退出</button>
                 <button class="secondary" id="exportBtn">备份导出</button>
