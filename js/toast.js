@@ -1,5 +1,5 @@
 /**
- * Toast 管理器 - 全局统一提示（支持图标、可配置时长）
+ * Toast 管理器 - 全局统一提示（底部居中，简约现代风格）
  */
 class ToastManager {
     constructor() {
@@ -32,7 +32,6 @@ class ToastManager {
         toast.className = `toast-item toast-${type}`;
         toast.setAttribute('role', 'alert');
         
-        // 获取对应图标
         const icon = this.getIcon(type);
         
         toast.innerHTML = `
@@ -56,7 +55,6 @@ class ToastManager {
         this.container.appendChild(toast);
         this.toasts.set(id, { element: toast, timeoutId });
         
-        // 触发重绘以执行动画
         requestAnimationFrame(() => toast.classList.add('show'));
         return id;
     }
