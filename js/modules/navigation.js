@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 无限滚动加载版（底部无文字，改用 Toast 提示）
+ * 优化分类导航系统 - 无限滚动加载版（底部无文字，改用 Toast 提示，统计无加号）
  */
 class OptimizedNavigation {
     constructor() {
@@ -28,7 +28,7 @@ class OptimizedNavigation {
         this.hasMore = true;
         this.currentSites = [];
         this.scrollListener = null;
-        this.lastNoMoreToastTime = 0; // 避免频繁弹窗
+        this.lastNoMoreToastTime = 0;
 
         this.autoRefreshTimer = null;
         this.autoRefreshInterval = 5 * 60 * 1000;
@@ -296,7 +296,7 @@ class OptimizedNavigation {
     updateStatsDisplay() {
         const el1 = document.getElementById('siteCount');
         const el2 = document.getElementById('invalidCount');
-        if (el1) el1.textContent = `${this.stats.totalWebsites || 0}+`;
+        if (el1) el1.textContent = this.stats.totalWebsites || 0;
         if (el2) el2.textContent = this.stats.invalidCount || '0';
     }
     updateInvalidCount(increment) {
@@ -350,7 +350,6 @@ class OptimizedNavigation {
         const end = start+this.pageSize;
         const pageSites = this.currentSites.slice(start,end);
         
-        // 判断是否还有更多数据
         const hasMoreData = end < this.currentSites.length;
         this.hasMore = hasMoreData;
         
@@ -359,23 +358,16 @@ class OptimizedNavigation {
             const fragment = document.createDocumentFragment();
             pageSites.forEach((site,idx)=>fragment.appendChild(this.createSiteCard(site,idx,false,'')));
             container.appendChild(fragment);
-            
-            // 只有当还有更多数据时才显示加载触发器
             if (hasMoreData) {
                 const loadingDiv = this.createLoadingTrigger(true);
                 container.appendChild(loadingDiv);
             }
         } else {
-            // 移除旧的触发器
             const oldTrigger = container.querySelector('#scroll-loading-trigger');
             if (oldTrigger) oldTrigger.remove();
-            
-            // 追加新卡片
             const fragment = document.createDocumentFragment();
             pageSites.forEach((site,idx)=>fragment.appendChild(this.createSiteCard(site,idx,false,'')));
             container.appendChild(fragment);
-            
-            // 只有当还有更多数据时才创建新的触发器
             if (hasMoreData) {
                 const newTrigger = this.createLoadingTrigger(true);
                 container.appendChild(newTrigger);
@@ -389,7 +381,6 @@ class OptimizedNavigation {
         const div = document.createElement('div');
         div.id = 'scroll-loading-trigger';
         div.className = 'scroll-loading-trigger';
-        // 只显示“加载更多”样式，不再显示“到底了”
         div.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载更多...</span>';
         div.style.textAlign = 'center';
         div.style.display = 'flex';
@@ -418,10 +409,9 @@ class OptimizedNavigation {
 
     checkScrollAndLoadMore() {
         if (this.isLoadingMore || this.isSearching) return;
-        // 如果没有更多数据，直接弹 Toast 并返回
         if (!this.hasMore) {
             const now = Date.now();
-            if (now - this.lastNoMoreToastTime > 5000) { // 5秒内不重复弹窗
+            if (now - this.lastNoMoreToastTime > 5000) {
                 this.lastNoMoreToastTime = now;
                 if (window.toast && window.toast.show) {
                     window.toast.show('没有更多数据了', 'info', 2000);
@@ -451,10 +441,8 @@ class OptimizedNavigation {
         if (start >= this.currentSites.length) {
             this.hasMore = false;
             if (trigger) {
-                // 移除触发器，避免底部留白
                 trigger.remove();
             }
-            // 弹窗提示
             if (window.toast && window.toast.show) {
                 window.toast.show('没有更多数据了', 'info', 2000);
             }
