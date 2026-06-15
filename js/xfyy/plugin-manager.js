@@ -269,25 +269,30 @@ class PluginManager {
     }
 
     sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
     enablePlugin(pluginId) { const p = this.getPlugin(pluginId); if(p) { p.enabled = true; return true; } return false; }
     disablePlugin(pluginId) { const p = this.getPlugin(pluginId); if(p) { p.enabled = false; return true; } return false; }
     isPluginEnabled(pluginId) { const p = this.getPlugin(pluginId); return p ? p.enabled : false; }
+
     getPluginStats() {
         const stats = { total: this.plugins.size, enabled: 0, disabled: 0 };
         for(const p of this.plugins.values()) p.enabled ? stats.enabled++ : stats.disabled++;
         return stats;
     }
+
     async reloadPlugins() {
         const old = new Map(this.plugins);
         this.plugins.clear();
         try { this.initializePlugins(); return true; } catch(e) { this.plugins = old; return false; }
     }
+
     validatePluginCompatibility(plugin) {
         const required = ['getPlaylist', 'search'];
         const missing = required.filter(m => !plugin[m]);
         if(missing.length) throw new Error(`插件缺少必要方法: ${missing.join(', ')}`);
         return true;
     }
+
     getPluginInfo(pluginId) {
         const p = this.getPlugin(pluginId);
         if(!p) return null;
