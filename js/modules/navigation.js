@@ -1,6 +1,5 @@
 /**
- * 优化分类导航系统 - 无限滚动加载版（支持 WebP 图标、高清懒加载、智能预加载、点击计数优化、切换动画）
- * 新增：滚动到底部自动加载更多（无限滚动）、切换分类时的淡入淡出动画
+ * 优化分类导航系统 - 无限滚动加载版（修复白屏问题）
  */
 class OptimizedNavigation {
     constructor() {
@@ -23,7 +22,6 @@ class OptimizedNavigation {
         this.searchTimer = null;
         this.loadedLevel1Set = new Set();
 
-        // 分页与无限滚动相关
         this.currentPage = 1;
         this.pageSize = 30;
         this.isLoadingMore = false;
@@ -44,7 +42,6 @@ class OptimizedNavigation {
         
         // 动画相关
         this.isAnimating = false;
-        this.animationTimer = null;
         
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
@@ -331,12 +328,11 @@ class OptimizedNavigation {
         }
     }
 
-    // 动画：淡出 -> 加载 -> 淡入
+    // 动画过渡：仅在切换分类时使用，首次加载不使用动画
     async animateContentTransition(callback) {
         const container = document.getElementById('level3Content');
         if (!container) return callback();
         if (this.isAnimating) {
-            // 如果已有动画进行中，等待完成后再执行新动画
             await new Promise(resolve => {
                 const checkInterval = setInterval(() => {
                     if (!this.isAnimating) {
@@ -347,16 +343,11 @@ class OptimizedNavigation {
             });
         }
         this.isAnimating = true;
-        // 添加淡出类
         container.classList.add('fade-out');
-        // 等待淡出动画完成（约 150ms）
         await new Promise(resolve => setTimeout(resolve, 150));
-        // 执行内容更新
         await callback();
-        // 移除淡出，添加淡入
         container.classList.remove('fade-out');
         container.classList.add('fade-in');
-        // 等待淡入完成
         await new Promise(resolve => setTimeout(resolve, 150));
         container.classList.remove('fade-in');
         this.isAnimating = false;
@@ -366,23 +357,24 @@ class OptimizedNavigation {
         const container = document.getElementById('level3Content');
         if (!container) return;
         
-        // 重置分页状态
         this.currentPage = 1;
         this.hasMore = true;
         this.isLoadingMore = false;
         
-        // 加载数据
+        // 显示骨架屏（确保内容可见）
+        this.showSkeleton();
+        
         this.currentSites = await this.loadSites(subcategoryId);
         if (!this.currentSites.length) {
             this.renderEmptyState();
             return;
         }
-        this.renderSitesPage(true); // 强制重新渲染（重置滚动触发器）
+        this.renderSitesPage(true);
         this.observeLazyImages(container);
-        this.bindInfiniteScroll();  // 绑定无限滚动监听
+        this.bindInfiniteScroll();
         this.updateSubcategoryCountDisplay(subcategoryId, this.currentSites.filter(s=>s.valid!==false).length);
         
-        // 重置滚动位置到顶部（可选）
+        // 可选：滚动到导航区域顶部
         window.scrollTo({ top: container.offsetTop - 80, behavior: 'smooth' });
     }
 
@@ -394,12 +386,10 @@ class OptimizedNavigation {
         const pageSites = this.currentSites.slice(start,end);
         
         if (this.currentPage === 1) {
-            // 第一页：完全重新渲染
             container.innerHTML = '';
             const fragment = document.createDocumentFragment();
             pageSites.forEach((site,idx)=>fragment.appendChild(this.createSiteCard(site,idx,false,'')));
             container.appendChild(fragment);
-            // 添加滚动加载触发器（用于无限滚动）
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'scroll-loading-trigger';
             loadingDiv.className = 'scroll-loading-trigger';
@@ -412,7 +402,6 @@ class OptimizedNavigation {
             loadingDiv.innerHTML = this.hasMore ? '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载更多...</span>' : '～到·底·了～';
             container.appendChild(loadingDiv);
         } else {
-            // 后续页面：追加内容，并在最后更新触发器
             const loadingDiv = container.querySelector('#scroll-loading-trigger');
             if (loadingDiv) loadingDiv.remove();
             const fragment = document.createDocumentFragment();
@@ -444,12 +433,10 @@ class OptimizedNavigation {
         this.preloadNearbyImages(container);
     }
 
-    // 绑定无限滚动事件（节流）
     bindInfiniteScroll() {
         if (this.scrollListener) {
             window.removeEventListener('scroll', this.scrollListener);
         }
-        // 使用节流函数
         let ticking = false;
         this.scrollListener = () => {
             if (ticking) return;
@@ -462,13 +449,11 @@ class OptimizedNavigation {
         window.addEventListener('scroll', this.scrollListener, { passive: true });
     }
 
-    // 检查滚动位置，如果接近底部且未在加载中且有更多数据，则加载更多
     checkScrollAndLoadMore() {
         if (this.isLoadingMore || !this.hasMore || this.isSearching) return;
         const trigger = document.getElementById('scroll-loading-trigger');
         if (!trigger) return;
         const rect = trigger.getBoundingClientRect();
-        // 当触发器进入视口底部以上 100px 时触发加载
         if (rect.top <= window.innerHeight + 100) {
             this.loadMore();
         }
@@ -482,7 +467,6 @@ class OptimizedNavigation {
             loadingDiv.innerHTML = '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载中...</span>';
             loadingDiv.style.display = 'flex';
         }
-        // 模拟网络延迟，避免过快多次请求
         await new Promise(r => setTimeout(r, 200));
         this.currentPage++;
         const start = (this.currentPage-1)*this.pageSize;
@@ -497,7 +481,6 @@ class OptimizedNavigation {
         }
         this.renderSitesPage(false);
         this.isLoadingMore = false;
-        // 重新检查一次，以防在渲染后触发器位置变化导致需要立即再次加载
         this.checkScrollAndLoadMore();
     }
 
@@ -734,7 +717,6 @@ class OptimizedNavigation {
         await this.loadSubcategoryCountsForLevel1(level1);
         const firstSub = this.getFirstSubCategory(level1);
         if (firstSub) {
-            // 使用动画过渡切换内容
             await this.animateContentTransition(async () => {
                 await this.selectLevel2(firstSub.id, firstSub.name, isUserClick);
             });
@@ -749,7 +731,6 @@ class OptimizedNavigation {
         this.isNavigationClick = true;
         document.querySelectorAll('.level2-btn').forEach(b => b.classList.toggle('active', b.dataset.level2 == subcategoryId));
         this.selectedLevel2 = subcategoryId;
-        // 使用动画过渡
         await this.animateContentTransition(async () => {
             await this.renderLevel3(this.selectedLevel1, subcategoryId);
         });
@@ -797,7 +778,7 @@ class OptimizedNavigation {
 
     renderEmptyState() {
         const container = document.getElementById('level3Content');
-        if (container) container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-compass"></i></div><h3 class="empty-title">选择一个分类开始探索</h3><p class="empty-subtitle">点击左侧分类查看详细内容</p></div>`;
+        if (container) container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-compass"></i></div><h3 class="empty-title">暂无内容</h3><p class="empty-subtitle">请选择左侧分类查看详细内容</p></div>`;
     }
     showError() {
         const container = document.getElementById('level3Content');
