@@ -1,3 +1,7 @@
+/**
+ * 插件管理器 - 星聚导航音乐播放器专用（使用 Worker 代理解决跨域）
+ * 已移除歌词翻译插件
+ */
 class PluginManager {
     constructor(cacheManager) {
         this.cacheManager = cacheManager || new CacheManager();
@@ -6,17 +10,24 @@ class PluginManager {
         this.initializePlugins();
     }
 
+    // 通过 Worker 代理请求（返回 JSON 或文本）
     async proxyFetch(originalUrl) {
         const apiBase = Utils.getApiBase();
         const proxyUrl = `${apiBase}/music-proxy?url=${encodeURIComponent(originalUrl)}`;
         const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error(`代理请求失败: ${response.status}`);
+        if (!response.ok) {
+            throw new Error(`代理请求失败: ${response.status}`);
+        }
         const contentType = response.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) return await response.json();
-        else return await response.text();
+        if (contentType.includes('application/json')) {
+            return await response.json();
+        } else {
+            return await response.text();
+        }
     }
 
     initializePlugins() {
+        // 网易云音乐插件
         this.registerPlugin('netease', {
             name: '网易云音乐',
             version: '1.0.3',
@@ -52,9 +63,12 @@ class PluginManager {
                     throw new Error('搜索失败，请稍后重试');
                 }
             },
-            getDownloadUrl: async (songId) => `https://music.163.com/song/media/outer/url?id=${songId}.mp3`
+            getDownloadUrl: async (songId) => {
+                return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
+            }
         });
 
+        // QQ音乐插件
         this.registerPlugin('qq', {
             name: 'QQ音乐',
             version: '1.0.2',
@@ -90,9 +104,12 @@ class PluginManager {
                     throw new Error('搜索失败');
                 }
             },
-            getDownloadUrl: async (songId) => `https://dl.stream.qqmusic.qq.com/${songId}.mp3`
+            getDownloadUrl: async (songId) => {
+                return `https://dl.stream.qqmusic.qq.com/${songId}.mp3`;
+            }
         });
 
+        // 酷狗音乐插件
         this.registerPlugin('kg', {
             name: '酷狗音乐',
             version: '1.0.1',
@@ -128,9 +145,12 @@ class PluginManager {
                     return [];
                 }
             },
-            getDownloadUrl: async (songId) => `https://music.163.com/song/media/outer/url?id=${songId}.mp3`
+            getDownloadUrl: async (songId) => {
+                return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
+            }
         });
 
+        // 酷我音乐插件
         this.registerPlugin('kuwo', {
             name: '酷我音乐',
             version: '1.0.0',
@@ -156,9 +176,12 @@ class PluginManager {
                     return [];
                 }
             },
-            getDownloadUrl: async (songId) => `https://antiserver.kuwo.cn/anti.s?format=mp3&rid=${songId}&type=convert_url&response=url`
+            getDownloadUrl: async (songId) => {
+                return `https://antiserver.kuwo.cn/anti.s?format=mp3&rid=${songId}&type=convert_url&response=url`;
+            }
         });
 
+        // 抖音热歌榜插件
         this.registerPlugin('migu', {
             name: '抖音热歌榜',
             version: '1.0.0',
@@ -177,6 +200,7 @@ class PluginManager {
             getDownloadUrl: async (songId) => songId
         });
 
+        // 本地音乐插件
         this.registerPlugin('local', {
             name: '本地音乐',
             version: '1.0.1',
@@ -188,6 +212,8 @@ class PluginManager {
             search: async () => [],
             getDownloadUrl: async (songId) => songId
         });
+
+        // 注意：歌词翻译插件已移除
     }
 
     formatSong(song, source) {
@@ -269,6 +295,7 @@ class PluginManager {
     }
 
     sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
     enablePlugin(pluginId) { const p = this.getPlugin(pluginId); if(p) { p.enabled = true; return true; } return false; }
     disablePlugin(pluginId) { const p = this.getPlugin(pluginId); if(p) { p.enabled = false; return true; } return false; }
     isPluginEnabled(pluginId) { const p = this.getPlugin(pluginId); return p ? p.enabled : false; }
