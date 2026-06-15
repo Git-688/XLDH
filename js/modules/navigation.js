@@ -1,5 +1,6 @@
 /**
- * 优化分类导航系统 - 无限滚动加载版（修复白屏问题）
+ * 优化分类导航系统 - 无限滚动加载版（支持 WebP 图标、高清懒加载、智能预加载、点击计数优化、切换动画）
+ * 修复：动画类确保在异常时移除，骨架屏清空
  */
 class OptimizedNavigation {
     constructor() {
@@ -40,8 +41,8 @@ class OptimizedNavigation {
         this.preloadQueue = [];
         this.isPreloading = false;
         
-        // 动画相关
         this.isAnimating = false;
+        this.animationTimer = null;
         
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
@@ -56,18 +57,12 @@ class OptimizedNavigation {
 
     _getFullIconUrl(icon, siteUrl) {
         if (!icon) return '';
-        if (icon.startsWith('/icon?domain=')) {
-            return this.apiBase + icon;
-        }
-        if (icon.startsWith('http://') || icon.startsWith('https://')) {
-            return icon;
-        }
+        if (icon.startsWith('/icon?domain=')) return this.apiBase + icon;
+        if (icon.startsWith('http://') || icon.startsWith('https://')) return icon;
         try {
             const urlObj = new URL(siteUrl);
             const domain = urlObj.hostname;
-            if (domain) {
-                return this.apiBase + `/icon?domain=${encodeURIComponent(domain)}`;
-            }
+            if (domain) return this.apiBase + `/icon?domain=${encodeURIComponent(domain)}`;
         } catch(e) {}
         return '';
     }
@@ -328,29 +323,29 @@ class OptimizedNavigation {
         }
     }
 
-    // 动画过渡：仅在切换分类时使用，首次加载不使用动画
+    // 健壮的动画切换方法（确保类被正确移除）
     async animateContentTransition(callback) {
         const container = document.getElementById('level3Content');
-        if (!container) return callback();
-        if (this.isAnimating) {
-            await new Promise(resolve => {
-                const checkInterval = setInterval(() => {
-                    if (!this.isAnimating) {
-                        clearInterval(checkInterval);
-                        resolve();
-                    }
-                }, 50);
-            });
+        if (!container) {
+            await callback();
+            return;
+        }
+        // 等待前一个动画完成
+        while (this.isAnimating) {
+            await new Promise(resolve => setTimeout(resolve, 50));
         }
         this.isAnimating = true;
-        container.classList.add('fade-out');
-        await new Promise(resolve => setTimeout(resolve, 150));
-        await callback();
-        container.classList.remove('fade-out');
-        container.classList.add('fade-in');
-        await new Promise(resolve => setTimeout(resolve, 150));
-        container.classList.remove('fade-in');
-        this.isAnimating = false;
+        try {
+            container.classList.add('fade-out');
+            await new Promise(r => setTimeout(r, 150));
+            await callback();
+            container.classList.remove('fade-out');
+            container.classList.add('fade-in');
+            await new Promise(r => setTimeout(r, 150));
+        } finally {
+            container.classList.remove('fade-in', 'fade-out');
+            this.isAnimating = false;
+        }
     }
 
     async renderLevel3(level1, subcategoryId) {
@@ -361,75 +356,58 @@ class OptimizedNavigation {
         this.hasMore = true;
         this.isLoadingMore = false;
         
-        // 显示骨架屏（确保内容可见）
-        this.showSkeleton();
-        
-        this.currentSites = await this.loadSites(subcategoryId);
-        if (!this.currentSites.length) {
+        try {
+            this.currentSites = await this.loadSites(subcategoryId);
+            if (!this.currentSites.length) {
+                this.renderEmptyState();
+                return;
+            }
+            this.renderSitesPage(true);
+            this.observeLazyImages(container);
+            this.bindInfiniteScroll();
+            this.updateSubcategoryCountDisplay(subcategoryId, this.currentSites.filter(s=>s.valid!==false).length);
+            window.scrollTo({ top: container.offsetTop - 80, behavior: 'smooth' });
+        } catch (err) {
+            console.error('渲染三级分类失败:', err);
+            container.classList.remove('fade-out', 'fade-in');
             this.renderEmptyState();
-            return;
         }
-        this.renderSitesPage(true);
-        this.observeLazyImages(container);
-        this.bindInfiniteScroll();
-        this.updateSubcategoryCountDisplay(subcategoryId, this.currentSites.filter(s=>s.valid!==false).length);
-        
-        // 可选：滚动到导航区域顶部
-        window.scrollTo({ top: container.offsetTop - 80, behavior: 'smooth' });
     }
 
     renderSitesPage(resetTrigger = true) {
         const container = document.getElementById('level3Content');
         if (!container) return;
+        // 清空容器，移除骨架屏残留
+        container.innerHTML = '';
+        
         const start = (this.currentPage-1)*this.pageSize;
         const end = start+this.pageSize;
         const pageSites = this.currentSites.slice(start,end);
         
-        if (this.currentPage === 1) {
-            container.innerHTML = '';
-            const fragment = document.createDocumentFragment();
-            pageSites.forEach((site,idx)=>fragment.appendChild(this.createSiteCard(site,idx,false,'')));
-            container.appendChild(fragment);
-            const loadingDiv = document.createElement('div');
-            loadingDiv.id = 'scroll-loading-trigger';
-            loadingDiv.className = 'scroll-loading-trigger';
-            loadingDiv.style.textAlign = 'center';
-            loadingDiv.style.padding = '20px';
-            loadingDiv.style.display = this.hasMore ? 'flex' : 'flex';
-            loadingDiv.style.justifyContent = 'center';
-            loadingDiv.style.alignItems = 'center';
-            loadingDiv.style.gap = '8px';
-            loadingDiv.innerHTML = this.hasMore ? '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载更多...</span>' : '～到·底·了～';
-            container.appendChild(loadingDiv);
-        } else {
-            const loadingDiv = container.querySelector('#scroll-loading-trigger');
-            if (loadingDiv) loadingDiv.remove();
-            const fragment = document.createDocumentFragment();
-            pageSites.forEach((site,idx)=>fragment.appendChild(this.createSiteCard(site,idx,false,'')));
-            container.appendChild(fragment);
-            const newLoadingDiv = document.createElement('div');
-            newLoadingDiv.id = 'scroll-loading-trigger';
-            newLoadingDiv.className = 'scroll-loading-trigger';
-            newLoadingDiv.style.textAlign = 'center';
-            newLoadingDiv.style.padding = '20px';
-            newLoadingDiv.style.display = 'flex';
-            newLoadingDiv.style.justifyContent = 'center';
-            newLoadingDiv.style.alignItems = 'center';
-            newLoadingDiv.style.gap = '8px';
-            newLoadingDiv.innerHTML = this.hasMore ? '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载更多...</span>' : '～到·底·了～';
-            container.appendChild(newLoadingDiv);
-        }
+        const fragment = document.createDocumentFragment();
+        pageSites.forEach((site, idx) => fragment.appendChild(this.createSiteCard(site, idx, false, '')));
+        container.appendChild(fragment);
+        
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'scroll-loading-trigger';
+        loadingDiv.className = 'scroll-loading-trigger';
+        loadingDiv.style.textAlign = 'center';
+        loadingDiv.style.padding = '20px';
+        loadingDiv.style.display = 'flex';
+        loadingDiv.style.justifyContent = 'center';
+        loadingDiv.style.alignItems = 'center';
+        loadingDiv.style.gap = '8px';
         
         if (end >= this.currentSites.length) {
             this.hasMore = false;
-            const loadingDiv = container.querySelector('#scroll-loading-trigger');
-            if (loadingDiv) {
-                loadingDiv.innerHTML = '～到·底·了～';
-                loadingDiv.style.gap = '0';
-            }
+            loadingDiv.innerHTML = '～到·底·了～';
+            loadingDiv.style.gap = '0';
         } else {
             this.hasMore = true;
+            loadingDiv.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载更多...</span>';
         }
+        container.appendChild(loadingDiv);
+        
         this.preloadNearbyImages(container);
     }
 
@@ -464,7 +442,7 @@ class OptimizedNavigation {
         this.isLoadingMore = true;
         const loadingDiv = document.getElementById('scroll-loading-trigger');
         if (loadingDiv) {
-            loadingDiv.innerHTML = '<div class="loading-spinner" style="width:24px;height:24px;"></div><span>加载中...</span>';
+            loadingDiv.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载中...</span>';
             loadingDiv.style.display = 'flex';
         }
         await new Promise(r => setTimeout(r, 200));
@@ -582,9 +560,7 @@ class OptimizedNavigation {
                                 const cachedSites = this.siteCache.get(currentSubId);
                                 if (cachedSites) {
                                     const updatedSites = cachedSites.map(s => {
-                                        if (s.url === reportBtn.dataset.url) {
-                                            return { ...s, valid: false };
-                                        }
+                                        if (s.url === reportBtn.dataset.url) return { ...s, valid: false };
                                         return s;
                                     });
                                     this.siteCache.set(currentSubId, updatedSites);
@@ -595,9 +571,7 @@ class OptimizedNavigation {
                                 const freshSites = await this.loadSites(currentSubId, true);
                                 const validCount = freshSites.filter(s => s.valid !== false).length;
                                 this.updateSubcategoryCountDisplay(currentSubId, validCount);
-                                if (this.selectedLevel1) {
-                                    await this.loadSubcategoryCountsForLevel1(this.selectedLevel1);
-                                }
+                                if (this.selectedLevel1) await this.loadSubcategoryCountsForLevel1(this.selectedLevel1);
                                 await this.recalculateGlobalInvalidCount();
                             }
                         } else {
@@ -778,7 +752,7 @@ class OptimizedNavigation {
 
     renderEmptyState() {
         const container = document.getElementById('level3Content');
-        if (container) container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-compass"></i></div><h3 class="empty-title">暂无内容</h3><p class="empty-subtitle">请选择左侧分类查看详细内容</p></div>`;
+        if (container) container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-compass"></i></div><h3 class="empty-title">选择一个分类开始探索</h3><p class="empty-subtitle">点击左侧分类查看详细内容</p></div>`;
     }
     showError() {
         const container = document.getElementById('level3Content');
