@@ -1,10 +1,10 @@
 /**
  * 音乐播放器主入口文件 - 适配星聚导航
  * 修复移动端自动播放策略：等待用户首次交互后才允许播放
- * 修改：挂载到 window.Starlink.musicPlayer，确保 CustomSelect 初始化
+ * 修改：挂载到 window.Starlink.musicPlayer
  */
 let musicPlayer = null;
-let pendingPlay = false;
+let pendingPlay = false;      // 标记是否有待播放的歌曲
 let interactionHandler = null;
 
 function tryInitMusicPlayer(retry = 0) {
@@ -28,10 +28,12 @@ function tryInitMusicPlayer(retry = 0) {
         if (!window.Starlink.musicPlayer) {
             window.Starlink.musicPlayer = musicPlayer;
         }
+        // 保留旧全局变量以便兼容
         window.musicPlayer = window.Starlink.musicPlayer;
 
         if (typeof Utils !== 'undefined' && typeof Utils.isMobile === 'function' && Utils.isMobile()) {
             document.body.classList.add('mobile-device');
+            // 移动端：监听首次用户交互，解除 AudioContext 挂起并尝试播放待播歌曲
             if (musicPlayer && musicPlayer.waitingForUserGesture) {
                 const resumePlayback = () => {
                     if (musicPlayer && musicPlayer.waitingForUserGesture) {
