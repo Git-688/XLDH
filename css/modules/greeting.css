@@ -87,6 +87,7 @@
     display: flex;
     align-items: center;
     min-width: 0;
+    width: 100%;
 }
 .primary-holiday {
     display: flex;
@@ -95,6 +96,7 @@
     font-size: 1.5em;
     min-width: 0;
     flex-wrap: nowrap;
+    width: 100%;
 }
 .primary-holiday .holiday-icon {
     font-size: 1em;
@@ -106,7 +108,8 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 150px;
+    min-width: 0;
+    flex: 1 1 auto;
 }
 .primary-holiday .holiday-countdown {
     background: rgba(67,97,238,0.15);
@@ -304,7 +307,7 @@
     pointer-events: none;
 }
 
-/* 响应式设计 - 移动端节日名称省略号 */
+/* 响应式设计 - 节日名称自适应省略 */
 @media (max-width: 992px) {
     .greeting-main-card { padding: 6px; gap: 6px; }
     .greeting-top-row { gap: 6px; }
@@ -330,7 +333,6 @@
     .greeting-left-card { padding: 5px; gap: 5px; }
     .greeting-text h1 { font-size: 1.1em !important; }
     .primary-holiday { font-size: 1.1em; }
-    .primary-holiday .holiday-name { max-width: 100px; }
     .primary-holiday .holiday-countdown { padding: 2px 4px; font-size: 0.65em; }
     .datetime { padding: 5px; gap: 5px; min-width: 100px; }
     .datetime-row { gap: 5px; }
@@ -352,7 +354,6 @@
     .greeting-left-card { padding: 4px; gap: 4px; }
     .greeting-text h1 { font-size: 1em !important; }
     .primary-holiday { font-size: 1em; }
-    .primary-holiday .holiday-name { max-width: 80px; }
     .primary-holiday .holiday-countdown { padding: 2px 4px; font-size: 0.6em; }
     .datetime { padding: 4px; gap: 4px; min-width: 90px; }
     .datetime-row { gap: 4px; }
@@ -372,7 +373,6 @@
     .datetime { min-width: 85px; }
     .datetime-row { flex-wrap: wrap; justify-content: flex-end; }
     .expand-holiday-btn { order: 2; margin-top: 3px; }
-    .primary-holiday .holiday-name { max-width: 60px; }
     .secondary-name { max-width: 40px; }
 }
 
