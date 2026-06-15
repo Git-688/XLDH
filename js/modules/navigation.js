@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 无限滚动加载版（底部无文字，改用 Toast 提示，统计无加号）
+ * 优化分类导航系统 - 无限滚动加载版（总有效网址数量统计）
  */
 class OptimizedNavigation {
     constructor() {
@@ -174,6 +174,8 @@ class OptimizedNavigation {
             await this.loadNavigationStructure();
             this.calculateStats();
             this.renderNavigation();
+            // 计算总有效网址数量（所有分类）
+            await this.calculateTotalValidSites();
             const firstCategory = this.getFirstCategory();
             if (firstCategory) {
                 await this.loadSubcategoryCountsForLevel1(firstCategory);
@@ -190,6 +192,26 @@ class OptimizedNavigation {
             console.error('导航初始化失败:', error);
             this.showError();
         }
+    }
+
+    // 计算所有分类下有效网站的总数
+    async calculateTotalValidSites() {
+        if (!this.structure) return;
+        let total = 0;
+        for (const catName in this.structure) {
+            const subcategories = this.structure[catName].subcategories;
+            for (const sub of subcategories) {
+                // 从缓存或新加载站点列表
+                let sites = this.siteCache.get(sub.id);
+                if (!sites) {
+                    sites = await this.loadSites(sub.id, false);
+                }
+                const validCount = sites.filter(s => s.valid !== false).length;
+                total += validCount;
+            }
+        }
+        this.stats.totalWebsites = total;
+        this.updateStatsDisplay();
     }
 
     async recalculateGlobalInvalidCount() {
@@ -226,6 +248,8 @@ class OptimizedNavigation {
         this.siteCache.delete(this.selectedLevel2);
         await this.renderLevel3(this.selectedLevel1, this.selectedLevel2);
         await this.recalculateGlobalInvalidCount();
+        // 刷新后重新计算总有效站点数
+        await this.calculateTotalValidSites();
     }
 
     async loadNavigationStructure() {
@@ -262,16 +286,10 @@ class OptimizedNavigation {
             const counts = await Promise.all(promises);
             totalValidSites += counts.reduce((s,c)=>s+c,0);
         }
-        this.stats.totalWebsites = totalValidSites;
-        this.updateStatsDisplay();
+        // 注意：这里不覆盖全局 totalWebsites，仅用于更新子分类角标
+        // 全局总数由 calculateTotalValidSites 单独维护
+        this.updateStatsDisplay(); // 只刷新显示，不改变 totalWebsites 值
         this.loadedLevel1Set.add(level1);
-    }
-
-    async recalculateTotalWebsites() {
-        let total = 0;
-        for (const sites of this.siteCache.values()) total += sites.filter(s=>s.valid!==false).length;
-        this.stats.totalWebsites = total;
-        this.updateStatsDisplay();
     }
 
     updateSubcategoryCountDisplay(subcategoryId, count, retry=0) {
@@ -296,7 +314,7 @@ class OptimizedNavigation {
     updateStatsDisplay() {
         const el1 = document.getElementById('siteCount');
         const el2 = document.getElementById('invalidCount');
-        if (el1) el1.textContent = this.stats.totalWebsites || 0;
+        if (el1) el1.textContent = `${this.stats.totalWebsites || 0}+`;
         if (el2) el2.textContent = this.stats.invalidCount || '0';
     }
     updateInvalidCount(increment) {
@@ -340,6 +358,8 @@ class OptimizedNavigation {
         this.observeLazyImages(container);
         this.bindInfiniteScroll();
         this.updateSubcategoryCountDisplay(subcategoryId, this.currentSites.filter(s=>s.valid!==false).length);
+        // 刷新子分类后，重新计算总有效站点数（可能有新增无效站点影响总数）
+        await this.calculateTotalValidSites();
     }
 
     renderSitesPage(resetTrigger = true) {
@@ -373,7 +393,6 @@ class OptimizedNavigation {
                 container.appendChild(newTrigger);
             }
         }
-        
         this.preloadNearbyImages(container);
     }
     
@@ -440,9 +459,7 @@ class OptimizedNavigation {
         const start = (this.currentPage-1)*this.pageSize;
         if (start >= this.currentSites.length) {
             this.hasMore = false;
-            if (trigger) {
-                trigger.remove();
-            }
+            if (trigger) trigger.remove();
             if (window.toast && window.toast.show) {
                 window.toast.show('没有更多数据了', 'info', 2000);
             }
@@ -569,6 +586,7 @@ class OptimizedNavigation {
                                     await this.loadSubcategoryCountsForLevel1(this.selectedLevel1);
                                 }
                                 await this.recalculateGlobalInvalidCount();
+                                await this.calculateTotalValidSites();
                             }
                         } else {
                             const err = await res.json().catch(()=>({}));
@@ -767,6 +785,7 @@ class OptimizedNavigation {
                     if (currentSub) await this.renderLevel3(this.selectedLevel1, currentSub.dataset.level2);
                 }
                 await this.recalculateGlobalInvalidCount();
+                await this.calculateTotalValidSites();
             }
         } catch(e) { console.warn('后台更新失败:', e); }
     }
