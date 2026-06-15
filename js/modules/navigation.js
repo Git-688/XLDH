@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 无限滚动加载版（底部无文字，改用 Toast 提示，仅显示一次）
+ * 优化分类导航系统 - 无限滚动加载版（移除空白状态提示）
  */
 class OptimizedNavigation {
     constructor() {
@@ -28,7 +28,6 @@ class OptimizedNavigation {
         this.hasMore = true;
         this.currentSites = [];
         this.scrollListener = null;
-        // 新增：标记是否已经显示过“到底了”提示（每次加载子分类时重置）
         this.hasShownNoMoreToast = false;
 
         this.autoRefreshTimer = null;
@@ -180,6 +179,8 @@ class OptimizedNavigation {
             if (firstCategory) {
                 await this.loadSubcategoryCountsForLevel1(firstCategory);
                 this.selectLevel1(firstCategory, false);
+            } else {
+                this.renderEmptyState();
             }
             await this.recalculateGlobalInvalidCount();
             this.isInitialized = true;
@@ -319,7 +320,7 @@ class OptimizedNavigation {
         if (invalidEl) invalidEl.textContent = this.stats.invalidCount;
     }
 
-    renderNavigation() { this.renderLevel1(); this.renderEmptyState(); }
+    renderNavigation() { this.renderLevel1(); }
     renderLevel1() {
         const container = document.getElementById('level1Nav');
         if (!container || !this.structure) return;
@@ -330,7 +331,11 @@ class OptimizedNavigation {
         const container = document.getElementById('level2Nav');
         if (!container || !this.structure?.[level1]) return;
         const subCats = this.structure[level1].subcategories;
-        if (!subCats.length) { container.innerHTML = '<div style="padding:16px;color:var(--text-secondary);font-size:11px;text-align:center;">暂无子分类</div>'; return; }
+        if (!subCats.length) { 
+            container.innerHTML = '<div style="padding:16px;color:var(--text-secondary);font-size:11px;text-align:center;">暂无子分类</div>';
+            this.renderEmptyState();
+            return;
+        }
         container.innerHTML = subCats.map((sub,idx) => `<button class="level2-btn ${idx===0?'active':''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}" title="${this._escapeHtml(sub.name)}"><span class="level2-btn-text">${this._escapeHtml(sub.name)}</span><span class="level2-btn-count" style="display:none;">0</span></button>`).join('');
         for (const sub of subCats) {
             const cached = this.siteCache.get(sub.id);
@@ -341,11 +346,10 @@ class OptimizedNavigation {
     async renderLevel3(level1, subcategoryId) {
         const container = document.getElementById('level3Content');
         if (!container) return;
-        // 重置分页状态和“到底了”提示标志
         this.currentPage = 1;
         this.hasMore = true;
         this.isLoadingMore = false;
-        this.hasShownNoMoreToast = false;  // 重置提示标志
+        this.hasShownNoMoreToast = false;
         this.currentSites = await this.loadSites(subcategoryId);
         if (!this.currentSites.length) {
             this.renderEmptyState();
@@ -424,7 +428,6 @@ class OptimizedNavigation {
 
     checkScrollAndLoadMore() {
         if (this.isLoadingMore || this.isSearching) return;
-        // 如果没有更多数据，且尚未显示过提示，则显示一次
         if (!this.hasMore && !this.hasShownNoMoreToast) {
             this.hasShownNoMoreToast = true;
             if (window.toast && window.toast.show) {
@@ -454,7 +457,6 @@ class OptimizedNavigation {
         if (start >= this.currentSites.length) {
             this.hasMore = false;
             if (trigger) trigger.remove();
-            // 显示一次性提示
             if (!this.hasShownNoMoreToast && window.toast && window.toast.show) {
                 this.hasShownNoMoreToast = true;
                 window.toast.show('～ 到·底·了 ～', 'info', 2000);
@@ -713,7 +715,6 @@ class OptimizedNavigation {
         this.isNavigationClick = true;
         document.querySelectorAll('.level2-btn').forEach(b => b.classList.toggle('active', b.dataset.level2 == subcategoryId));
         this.selectedLevel2 = subcategoryId;
-        // 重置“到底了”提示标志，因为新分类可能有新数据
         this.hasShownNoMoreToast = false;
         await this.renderLevel3(this.selectedLevel1, subcategoryId);
         if (this.autoRefreshTimer) {
@@ -758,13 +759,17 @@ class OptimizedNavigation {
         return html;
     }
 
+    // 修改：移除所有提示文字，只显示空的容器
     renderEmptyState() {
         const container = document.getElementById('level3Content');
-        if (container) container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-compass"></i></div><h3 class="empty-title">选择一个分类开始探索</h3><p class="empty-subtitle">点击左侧分类查看详细内容</p></div>`;
+        if (container) {
+            container.innerHTML = '';
+        }
     }
+
     showError() {
         const container = document.getElementById('level3Content');
-        if (container) container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">导航数据加载失败</h3><p class="empty-subtitle">请检查网络或稍后重试</p></div>`;
+        if (container) container.innerHTML = '';
     }
     startBackgroundUpdates() {
         if (this.updateTimer) clearInterval(this.updateTimer);
