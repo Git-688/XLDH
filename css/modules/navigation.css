@@ -267,6 +267,38 @@
     grid-auto-rows: minmax(120px, auto);
     content-visibility: auto;
     contain-intrinsic-size: auto 120px;
+    /* 切换动画过渡 */
+    transition: opacity 0.15s ease-in-out;
+}
+.level3-content.fade-out {
+    opacity: 0;
+}
+.level3-content.fade-in {
+    opacity: 1;
+}
+
+/* ====================== 无限滚动加载触发器样式 ====================== */
+.scroll-loading-trigger {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+.scroll-loading-trigger .loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* ====================== 网站卡片 ====================== */
