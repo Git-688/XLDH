@@ -38,7 +38,7 @@
     <link rel="dns-prefetch" href="https://icon.horse">
     <link rel="dns-prefetch" href="https://www.google.com">
 
-    <!-- CSP 策略（已兼容明月浩空音乐播放器，保留 unsafe-eval 和 wss 连接） -->
+    <!-- CSP 策略（已兼容明月浩空音乐播放器） -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz https://myhkw.cn;
@@ -97,7 +97,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preload" href="./js/main.js" as="script">
 
-    <!-- 滚动进度条样式：由蓝渐变到红 -->
+    <!-- 滚动进度条样式 -->
     <style>
         .scroll-progress {
             position: fixed;
@@ -439,7 +439,20 @@
                     <div class="nav-header-left">
                         <h2 class="navigation-title">分类导航</h2>
                     </div>
-                    <div class="navigation-stats"><span class="stat-item"><span class="stat-number" id="siteCount">0+</span><span class="stat-label">网址</span></span><span class="stat-divider">•</span><span class="stat-item"><span class="stat-number" id="invalidCount">0</span><span class="stat-label">无效</span></span><a href="./pages/others/ck.html" class="repo-btn" title="查看仓库" target="_blank"><i class="fas fa-archive"></i><span>仓库</span></a></div>
+                    <div class="navigation-stats">
+                        <span class="stat-item">
+                            <span class="stat-number" id="siteCount">0</span>
+                            <span class="stat-label">总网站数量</span>
+                        </span>
+                        <span class="stat-divider">•</span>
+                        <span class="stat-item">
+                            <span class="stat-number" id="invalidCount">0</span>
+                            <span class="stat-label">无效</span>
+                        </span>
+                        <a href="./pages/others/ck.html" class="repo-btn" title="查看仓库" target="_blank">
+                            <i class="fas fa-archive"></i><span>仓库</span>
+                        </a>
+                    </div>
                 </div>
             </div>
             <div class="navigation-body">
@@ -747,10 +760,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
-
-<!-- 播放器脚本（明月浩空） -->
 <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
-
 <script>
     (function() {
         const progressBar = document.getElementById('scrollProgress');
