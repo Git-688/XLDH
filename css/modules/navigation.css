@@ -2,6 +2,7 @@
  * 优化分类导航样式
  * 性能优化：level3-content 增加 content-visibility，卡片添加 will-change
  * 深色模式统一使用 .dark-mode 类
+ * 移除了淡入淡出动画相关样式
  */
 
 /* ====================== 搜索框样式 ====================== */
@@ -267,14 +268,6 @@
     grid-auto-rows: minmax(120px, auto);
     content-visibility: auto;
     contain-intrinsic-size: auto 120px;
-    transition: opacity 0.15s ease-in-out;
-    opacity: 1;
-}
-.level3-content.fade-out {
-    opacity: 0;
-}
-.level3-content.fade-in {
-    opacity: 1;
 }
 
 /* ====================== 无限滚动加载触发器样式 ====================== */
