@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，修复 apiFetch 未定义错误）
+// admin.js - 星聚导航后台管理（完整版，修复退出后验证码不显示）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -44,7 +44,6 @@
         textarea.style.height = textarea.scrollHeight + 'px';
     }
 
-    // 获取设备 ID
     function getDeviceId() {
         let deviceId = localStorage.getItem('device_id');
         if (!deviceId) {
@@ -54,7 +53,7 @@
         return deviceId;
     }
 
-    // ==================== API 请求封装（必须定义在调用之前） ====================
+    // ==================== API 请求封装 ====================
     async function apiFetch(endpoint, opt = {}) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
         if (token) headers.Authorization = `Bearer ${token}`;
@@ -267,13 +266,14 @@
             token = '';
             recordLoginFailure();
             showToast(e.message === 'Unauthorized' ? 'Token无效或验证码错误' : e.message || '登录失败', 'error');
-            loadCaptcha(); // 刷新验证码
+            loadCaptcha();
         } finally {
             btn.disabled = false;
             btn.textContent = '登录';
         }
     }
 
+    // 修复退出后验证码不显示
     function logout() {
         token = '';
         clearToken();
@@ -285,6 +285,12 @@
         if (tokenInput) tokenInput.value = '';
         const captchaInput = document.getElementById('captchaInput');
         if (captchaInput) captchaInput.value = '';
+        
+        // 重置验证码相关显示并重新加载
+        const captchaGroup = document.getElementById('captchaGroup');
+        if (captchaGroup) captchaGroup.style.display = 'none';
+        currentCaptchaMd5key = null;
+        loadCaptcha();  // 重新加载验证码，会在成功时自动显示 captchaGroup
         showToast('已退出');
     }
 
