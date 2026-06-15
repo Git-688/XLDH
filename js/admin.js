@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，支持验证码、死链忽略、刷新图标、刷新缓存后同步导航统计）
+// admin.js - 星聚导航后台管理（完整版，修复获取信息功能）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -62,6 +62,57 @@
         if (res.status === 403) { showToast('IP不在白名单', 'error'); throw new Error('Forbidden'); }
         if (!res.ok) throw new Error(await res.text() || '请求失败');
         return res.json();
+    }
+
+    // ==================== 获取网站信息（新增） ====================
+    async function fetchSiteInfo(urlInputId, titleInputId, iconInputId, descInputId) {
+        const urlInput = document.getElementById(urlInputId);
+        const titleInput = document.getElementById(titleInputId);
+        const iconInput = document.getElementById(iconInputId);
+        const descInput = document.getElementById(descInputId);
+        if (!urlInput || !titleInput || !iconInput || !descInput) {
+            showToast('输入框元素未找到', 'error');
+            return;
+        }
+        let rawUrl = urlInput.value.trim();
+        if (!rawUrl) {
+            showToast('请先输入网址', 'warn');
+            return;
+        }
+        if (!/^https?:\/\//i.test(rawUrl)) {
+            rawUrl = 'https://' + rawUrl;
+        }
+        const btn = document.getElementById('fetchInfoBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '获取中...';
+        }
+        try {
+            const response = await fetch(`https://api.pearapi.ai/api/website/info/?url=${encodeURIComponent(rawUrl)}`);
+            if (!response.ok) throw new Error('请求失败');
+            const data = await response.json();
+            if (data.code === 200 && data.data) {
+                if (data.data.title) titleInput.value = data.data.title;
+                if (data.data.icon) iconInput.value = data.data.icon;
+                if (data.data.description) descInput.value = data.data.description;
+                showToast('获取成功', 'success');
+            } else {
+                showToast('未获取到信息，请手动填写', 'warn');
+            }
+        } catch (error) {
+            console.error('获取网站信息失败:', error);
+            showToast('获取失败，请手动填写', 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = '获取信息';
+            }
+        }
+    }
+
+    // 定义独立的事件处理函数，避免重复绑定
+    function fetchSiteInfoHandler() {
+        fetchSiteInfo('mUrl', 'mTitle', 'mIcon', 'mDesc');
     }
 
     // ==================== 会话管理 ====================
@@ -571,8 +622,11 @@
                 descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
             }
             const fetchBtn = document.getElementById('fetchInfoBtn');
-            if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
-        }, 50);
+            if (fetchBtn) {
+                fetchBtn.removeEventListener('click', fetchSiteInfoHandler);
+                fetchBtn.addEventListener('click', fetchSiteInfoHandler);
+            }
+        }, 150);
     }
 
     async function handleAddCategory() {
@@ -641,8 +695,11 @@
                 descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
             }
             const fetchBtn = document.getElementById('fetchInfoBtn');
-            if (fetchBtn) fetchBtn.addEventListener('click', () => fetchSiteInfo('mUrl','mTitle','mIcon','mDesc'));
-        }, 50);
+            if (fetchBtn) {
+                fetchBtn.removeEventListener('click', fetchSiteInfoHandler);
+                fetchBtn.addEventListener('click', fetchSiteInfoHandler);
+            }
+        }, 150);
     }
 
     async function loadAllDataButKeepSelection() {
@@ -744,7 +801,6 @@
                 await loadFeedback();
                 await loadAllData();
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
-                // 刷新前端导航统计
                 refreshNavigationStats();
                 closeModal();
             }
@@ -758,7 +814,6 @@
         }, 50);
     }
 
-    // 忽略死链报告
     async function ignoreLinkHandler(e) {
         const btn = e.currentTarget;
         const reportId = parseInt(btn.dataset.reportid);
@@ -1081,16 +1136,10 @@
         }
     }
 
-    // ==================== 刷新导航统计（调用前端模块） ====================
+    // ==================== 刷新导航统计 ====================
     function refreshNavigationStats() {
-        // 尝试调用前端 OptimizedNavigation 实例的方法重新计算总网站数
         if (window.optimizedNavigation && typeof window.optimizedNavigation.calculateTotalValidSites === 'function') {
             window.optimizedNavigation.calculateTotalValidSites().catch(e => console.warn('更新导航统计失败:', e));
-        }
-        // 也可直接强制刷新整个导航（会重新加载当前分类）
-        if (window.optimizedNavigation && typeof window.optimizedNavigation.refresh === 'function') {
-            // 如果希望完全刷新页面，可以调用 refresh，但可能会重置滚动位置等，谨慎使用
-            // window.optimizedNavigation.refresh();
         }
     }
 
@@ -1313,7 +1362,6 @@
             try {
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 showToast('导航缓存已刷新', 'success');
-                // 刷新前端导航统计
                 refreshNavigationStats();
             } catch (err) { 
                 showToast('刷新失败', 'error'); 
