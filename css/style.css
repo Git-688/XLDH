@@ -1,10 +1,3 @@
-/* ================================================
-   style.css - 星聚导航全局样式（纯色背景，无亚克力）
-   深色模式：通过 .dark-mode 类切换，统一变量管理
-   包含：骨架屏动画、过渡效果优化
-   ================================================ */
-
-/* 基础变量定义（亮色模式，默认） */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -56,7 +49,6 @@
     --acrylic-light-blur: blur(10px) saturate(110%);
 }
 
-/* 深色模式变量（通过 .dark-mode 类覆盖） */
 .dark-mode {
     --text-primary: #f8f9fa;
     --text-secondary: #adb5bd;
@@ -76,7 +68,6 @@
     --acrylic-light-bg: rgba(40, 40, 40, 0.7);
 }
 
-/* 深色模式下额外覆盖（确保所有模态框背景变深） */
 .dark-mode .weather-modal-content,
 .dark-mode .feedback-modal-content,
 .dark-mode .announcement-modal-container,
@@ -116,7 +107,6 @@
     color: var(--primary-color);
 }
 
-/* 基础重置 */
 * {
     margin: 0;
     padding: 0;
@@ -159,7 +149,6 @@ p {
     font-weight: 600;
 }
 
-/* 导航栏样式（与 navbar.css 互补） */
 .navbar {
     position: fixed;
     top: 0;
@@ -231,13 +220,11 @@ p {
     color: white;
 }
 
-/* 主内容区域 */
 .main-content {
     margin-top: 60px;
     min-height: calc(100vh - 120px);
 }
 
-/* 容器样式 */
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -250,7 +237,6 @@ p {
     padding: 0 var(--container-padding-xs);
 }
 
-/* 响应式容器边距 */
 @media (min-width: 576px) {
     .container, .container-fluid { padding: 0 var(--container-padding-sm); }
 }
@@ -264,7 +250,6 @@ p {
     .container, .container-fluid { padding: 0 var(--container-padding-xl); }
 }
 
-/* 浮动按钮 */
 .floating-buttons {
     position: fixed;
     bottom: 24px;
@@ -336,43 +321,18 @@ p {
 }
 
 @media (max-width: 768px) {
-    .floating-buttons {
-        bottom: 16px;
-        right: 16px;
-        gap: 10px;
-    }
-    .floating-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 18px;
-    }
+    .floating-buttons { bottom: 16px; right: 16px; gap: 10px; }
+    .floating-btn { width: 44px; height: 44px; font-size: 18px; }
 }
 @media (max-width: 480px) {
-    .floating-buttons {
-        bottom: 12px;
-        right: 12px;
-        gap: 8px;
-    }
-    .floating-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-    }
+    .floating-buttons { bottom: 12px; right: 12px; gap: 8px; }
+    .floating-btn { width: 40px; height: 40px; font-size: 16px; }
 }
-.floating-btn.submit-btn {
-    color: #06b6d4;
-}
-.floating-btn.submit-btn:hover {
-    color: #0891b2;
-}
-.floating-btn.comment-btn {
-    color: #f59e0b;
-}
-.floating-btn.comment-btn:hover {
-    color: #d97706;
-}
+.floating-btn.submit-btn { color: #06b6d4; }
+.floating-btn.submit-btn:hover { color: #0891b2; }
+.floating-btn.comment-btn { color: #f59e0b; }
+.floating-btn.comment-btn:hover { color: #d97706; }
 
-/* ========== 统一反馈模态框（纯色背景，无亚克力） ========== */
 .feedback-modal {
     position: fixed;
     top: 0;
@@ -461,7 +421,6 @@ p {
 }
 .feedback-modal-body::-webkit-scrollbar { display: none; }
 
-/* Toast 管理器容器 */
 .toast-manager-container {
     position: fixed;
     top: 20px;
@@ -519,7 +478,6 @@ p {
 }
 .toast-close:hover { color: #666; }
 
-/* 投稿表单特定样式 */
 #submitModal .form-row { margin-bottom: 10px; }
 #submitModal .form-row label {
     display: block;
@@ -636,7 +594,16 @@ p {
     border: 1px solid rgba(245,158,11,0.2);
 }
 
-/* ========== 星聚笔记模态框特殊样式 ========== */
+@media (max-width: 768px) {
+    #notebookModal .feedback-modal-content { height: 90%; max-height: 90%; }
+    #commentModal .feedback-modal-content { height: 90%; max-height: 90%; }
+    #submitModal .feedback-modal-content { max-height: 85vh; }
+    .notebook-item { padding: 8px 10px; }
+    .notebook-title { font-size: 14px; }
+    .notebook-content { font-size: 11px; }
+    .fetch-info-btn, .check-url-btn { padding: 6px 10px; font-size: 11px; }
+}
+
 #notebookModal {
     align-items: center;
     justify-content: flex-start;
@@ -644,58 +611,23 @@ p {
     box-sizing: border-box;
 }
 @media (min-width: 769px) {
-    #notebookModal {
-        display: flex;
-        flex-direction: column;
-    }
-    #notebookModal .feedback-modal-content {
-        margin: auto 0;
-        max-height: calc(100vh - 60px);
-        overflow-y: auto;
-        width: 100%;
-        max-width: 600px;
-    }
+    #notebookModal { display: flex; flex-direction: column; }
+    #notebookModal .feedback-modal-content { margin: auto 0; max-height: calc(100vh - 60px); overflow-y: auto; width: 100%; max-width: 600px; }
 }
 @media (max-width: 768px) {
-    #notebookModal {
-        padding-left: var(--container-padding-xs);
-        padding-right: var(--container-padding-xs);
-        padding-top: 60px;
-        display: flex;
-        flex-direction: column;
-    }
-    #notebookModal .feedback-modal-content {
-        margin: auto 0;
-        width: 100%;
-        max-width: 100%;
-        max-height: calc(100vh - 60px);
-        overflow-y: auto;
-    }
+    #notebookModal { padding-left: var(--container-padding-xs, 16px); padding-right: var(--container-padding-xs, 16px); padding-top: 60px; display: flex; flex-direction: column; }
+    #notebookModal .feedback-modal-content { margin: auto 0; width: 100%; max-width: 100%; max-height: calc(100vh - 60px); overflow-y: auto; }
 }
 @media (max-width: 480px) {
-    #notebookModal {
-        padding-left: var(--container-padding-xs);
-        padding-right: var(--container-padding-xs);
-    }
+    #notebookModal { padding-left: var(--container-padding-xs, 16px); padding-right: var(--container-padding-xs, 16px); }
 }
 @media (max-height: 500px) and (orientation: landscape) {
-    #notebookModal .feedback-modal-content {
-        max-height: calc(100vh - 70px);
-    }
+    #notebookModal .feedback-modal-content { max-height: calc(100vh - 70px); }
 }
-#notebookModal .feedback-modal-content::-webkit-scrollbar {
-    width: 4px;
-}
-#notebookModal .feedback-modal-content::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.05);
-    border-radius: 4px;
-}
-#notebookModal .feedback-modal-content::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0.2);
-    border-radius: 4px;
-}
+#notebookModal .feedback-modal-content::-webkit-scrollbar { width: 4px; }
+#notebookModal .feedback-modal-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
+#notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
 
-/* ========== 网站投稿模态框特殊定位 ========== */
 #submitModal {
     align-items: center;
     justify-content: flex-start;
@@ -703,47 +635,20 @@ p {
     box-sizing: border-box;
 }
 @media (min-width: 769px) {
-    #submitModal {
-        display: flex;
-        flex-direction: column;
-    }
-    #submitModal .feedback-modal-content {
-        margin: auto 0;
-        max-height: calc(100vh - 60px);
-        overflow-y: auto;
-        width: 100%;
-        max-width: 520px;
-    }
+    #submitModal { display: flex; flex-direction: column; }
+    #submitModal .feedback-modal-content { margin: auto 0; max-height: calc(100vh - 60px); overflow-y: auto; width: 100%; max-width: 520px; }
 }
 @media (max-width: 768px) {
-    #submitModal {
-        padding-left: var(--container-padding-xs);
-        padding-right: var(--container-padding-xs);
-        padding-top: 60px;
-        display: flex;
-        flex-direction: column;
-    }
-    #submitModal .feedback-modal-content {
-        margin: auto 0;
-        width: 100%;
-        max-width: 100%;
-        max-height: calc(100vh - 60px);
-        overflow-y: auto;
-    }
+    #submitModal { padding-left: var(--container-padding-xs, 16px); padding-right: var(--container-padding-xs, 16px); padding-top: 60px; display: flex; flex-direction: column; }
+    #submitModal .feedback-modal-content { margin: auto 0; width: 100%; max-width: 100%; max-height: calc(100vh - 60px); overflow-y: auto; }
 }
 @media (max-width: 480px) {
-    #submitModal {
-        padding-left: var(--container-padding-xs);
-        padding-right: var(--container-padding-xs);
-    }
+    #submitModal { padding-left: var(--container-padding-xs, 16px); padding-right: var(--container-padding-xs, 16px); }
 }
 @media (max-height: 500px) and (orientation: landscape) {
-    #submitModal .feedback-modal-content {
-        max-height: calc(100vh - 70px);
-    }
+    #submitModal .feedback-modal-content { max-height: calc(100vh - 70px); }
 }
 
-/* ==================== 星聚笔记深色模式优化 ==================== */
 .dark-mode .notebook-item {
     background: rgba(40, 40, 40, 0.8);
     border-color: rgba(255, 255, 255, 0.1);
@@ -779,7 +684,6 @@ p {
     color: var(--text-secondary);
 }
 
-/* ==================== 个人资料模态框深色模式优化 ==================== */
 .dark-mode #profileModal .profile-modal-card {
     background: var(--bg-card) !important;
     border-color: var(--border-color) !important;
@@ -832,7 +736,6 @@ p {
     background: var(--bg-secondary) !important;
 }
 
-/* ==================== 网站投稿深色模式优化 ==================== */
 .dark-mode #submitModal .feedback-modal-content {
     background: var(--bg-card);
     border-color: var(--border-color);
@@ -927,7 +830,6 @@ p {
     color: #c0c0c0;
 }
 
-/* ==================== 主页深色模式终极补丁 ==================== */
 .dark-mode body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
@@ -952,7 +854,6 @@ p {
     border-color: var(--border-color);
 }
 
-/* ==================== 骨架屏加载动画 ==================== */
 .skeleton {
     background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border-color) 50%, var(--bg-secondary) 75%);
     background-size: 200% 100%;
@@ -965,7 +866,6 @@ p {
     100% { background-position: -200% 0; }
 }
 
-/* 导航卡片骨架屏 */
 .skeleton-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -973,21 +873,18 @@ p {
     padding: 12px 10px 8px;
     min-height: 120px;
 }
-
 .skeleton-icon {
     width: 38px;
     height: 38px;
     border-radius: 8px;
     background: var(--bg-secondary);
 }
-
 .skeleton-views {
     width: 40px;
     height: 14px;
     border-radius: 4px;
     background: var(--bg-secondary);
 }
-
 .skeleton-title {
     width: 80%;
     height: 16px;
@@ -995,7 +892,6 @@ p {
     border-radius: 4px;
     background: var(--bg-secondary);
 }
-
 .skeleton-description {
     width: 95%;
     height: 12px;
@@ -1004,14 +900,6 @@ p {
     background: var(--bg-secondary);
 }
 
-/* 常用标签骨架屏 */
-.skeleton-tag {
-    height: 48px;
-    border-radius: 6px;
-    background: var(--bg-secondary);
-}
-
-/* 音乐播放器歌单骨架屏 */
 .skeleton-song-item {
     display: flex;
     align-items: center;
@@ -1019,19 +907,16 @@ p {
     padding: 8px 12px;
     margin-bottom: 4px;
 }
-
 .skeleton-song-cover {
     width: 32px;
     height: 32px;
     border-radius: 4px;
     background: var(--bg-secondary);
 }
-
 .skeleton-song-info {
     flex: 1;
     margin-left: 12px;
 }
-
 .skeleton-song-title {
     width: 60%;
     height: 14px;
@@ -1039,7 +924,6 @@ p {
     border-radius: 4px;
     background: var(--bg-secondary);
 }
-
 .skeleton-song-artist {
     width: 40%;
     height: 12px;
@@ -1047,7 +931,6 @@ p {
     background: var(--bg-secondary);
 }
 
-/* 笔记骨架屏 */
 .skeleton-notebook-item {
     height: 80px;
     margin-bottom: 10px;
@@ -1057,9 +940,6 @@ p {
     animation: skeleton-loading 1.5s infinite;
 }
 
-/* ==================== 动画效果优化 ==================== */
-/* 模态框动画增强（已在 .feedback-modal-content 中定义 transition） */
-/* 导航卡片 hover 增强 */
 .site-card {
     transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.2s ease, border-color 0.2s ease;
 }
@@ -1068,7 +948,6 @@ p {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
-/* 音乐播放器底部折叠动画 */
 .music-player .bottom-section {
     transition: max-height 0.3s ease-out;
     overflow: hidden;
