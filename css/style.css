@@ -1,3 +1,10 @@
+/* ================================================
+   style.css - 星聚导航全局样式（纯色背景，无亚克力）
+   深色模式：通过 .dark-mode 类切换，统一变量管理
+   包含：骨架屏动画、过渡效果优化
+   ================================================ */
+
+/* 基础变量定义（亮色模式，默认） */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -49,6 +56,7 @@
     --acrylic-light-blur: blur(10px) saturate(110%);
 }
 
+/* 深色模式变量（通过 .dark-mode 类覆盖） */
 .dark-mode {
     --text-primary: #f8f9fa;
     --text-secondary: #adb5bd;
@@ -68,6 +76,7 @@
     --acrylic-light-bg: rgba(40, 40, 40, 0.7);
 }
 
+/* 深色模式下额外覆盖（确保所有模态框背景变深） */
 .dark-mode .weather-modal-content,
 .dark-mode .feedback-modal-content,
 .dark-mode .announcement-modal-container,
@@ -78,7 +87,6 @@
     background: var(--bg-card);
     border-color: var(--border-color);
 }
-
 .dark-mode .weather-header,
 .dark-mode .feedback-modal-header,
 .dark-mode .announcement-header,
@@ -89,7 +97,6 @@
     background: var(--bg-secondary);
     border-color: var(--border-color);
 }
-
 .dark-mode .weather-title span:first-child,
 .dark-mode .weather-desc,
 .dark-mode .weather-detail .detail-value,
@@ -103,13 +110,13 @@
 .dark-mode .daily-quote-card p {
     color: var(--text-primary);
 }
-
 .dark-mode .weather-icon,
 .dark-mode .detail-icon,
 .dark-mode .forecast-day-icon {
     color: var(--primary-color);
 }
 
+/* 基础重置 */
 * {
     margin: 0;
     padding: 0;
@@ -152,6 +159,7 @@ p {
     font-weight: 600;
 }
 
+/* 导航栏样式（与 navbar.css 互补） */
 .navbar {
     position: fixed;
     top: 0;
@@ -223,11 +231,13 @@ p {
     color: white;
 }
 
+/* 主内容区域 */
 .main-content {
     margin-top: 60px;
     min-height: calc(100vh - 120px);
 }
 
+/* 容器样式 */
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -240,30 +250,21 @@ p {
     padding: 0 var(--container-padding-xs);
 }
 
+/* 响应式容器边距 */
 @media (min-width: 576px) {
-    .container, .container-fluid {
-        padding: 0 var(--container-padding-sm);
-    }
+    .container, .container-fluid { padding: 0 var(--container-padding-sm); }
 }
-
 @media (min-width: 768px) {
-    .container, .container-fluid {
-        padding: 0 var(--container-padding-md);
-    }
+    .container, .container-fluid { padding: 0 var(--container-padding-md); }
 }
-
 @media (min-width: 992px) {
-    .container, .container-fluid {
-        padding: 0 var(--container-padding-lg);
-    }
+    .container, .container-fluid { padding: 0 var(--container-padding-lg); }
 }
-
 @media (min-width: 1200px) {
-    .container, .container-fluid {
-        padding: 0 var(--container-padding-xl);
-    }
+    .container, .container-fluid { padding: 0 var(--container-padding-xl); }
 }
 
+/* 浮动按钮 */
 .floating-buttons {
     position: fixed;
     bottom: 24px;
@@ -301,45 +302,35 @@ p {
     visibility: hidden;
     transition: all 0.3s ease;
 }
-
 .back-to-top.visible {
     opacity: 1;
     transform: translateY(0);
     visibility: visible;
 }
-
 .back-to-top:hover {
     color: #ff3333;
 }
-
 .refresh-btn {
     color: #10b981;
 }
-
 .refresh-btn:hover {
     color: #059669;
 }
-
 .activity-btn {
     color: #ff6b35;
 }
-
 .activity-btn:hover {
     color: #ff5733;
 }
-
 .weather-btn {
     color: var(--primary-color);
 }
-
 .weather-btn:hover {
     color: #3a56d6;
 }
-
 .floating-btn.submit-btn {
     color: #06b6d4;
 }
-
 .floating-btn.submit-btn:hover {
     color: #0891b2;
 }
@@ -350,44 +341,38 @@ p {
         right: 16px;
         gap: 10px;
     }
-
     .floating-btn {
         width: 44px;
         height: 44px;
         font-size: 18px;
     }
 }
-
 @media (max-width: 480px) {
     .floating-buttons {
         bottom: 12px;
         right: 12px;
         gap: 8px;
     }
-
     .floating-btn {
         width: 40px;
         height: 40px;
         font-size: 16px;
     }
 }
-
 .floating-btn.submit-btn {
     color: #06b6d4;
 }
-
 .floating-btn.submit-btn:hover {
     color: #0891b2;
 }
-
 .floating-btn.comment-btn {
     color: #f59e0b;
 }
-
 .floating-btn.comment-btn:hover {
     color: #d97706;
 }
 
+/* ========== 统一反馈模态框（纯色背景，无亚克力） ========== */
 .feedback-modal {
     position: fixed;
     top: 0;
@@ -406,13 +391,11 @@ p {
     box-sizing: border-box;
     pointer-events: none;
 }
-
 .feedback-modal.active {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
 }
-
 .feedback-modal-content {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -427,12 +410,10 @@ p {
     transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.3s ease;
     overflow: hidden;
 }
-
 .feedback-modal.active .feedback-modal-content {
     transform: scale(1);
     opacity: 1;
 }
-
 .feedback-modal-header {
     display: flex;
     align-items: center;
@@ -442,7 +423,6 @@ p {
     color: var(--text-primary);
     flex-shrink: 0;
 }
-
 .feedback-modal-header h3 {
     font-size: 1.05rem;
     font-weight: 600;
@@ -450,12 +430,10 @@ p {
     align-items: center;
     margin: 0;
 }
-
 .feedback-modal-header h3 i {
     margin-right: 8px;
     margin-left: 0;
 }
-
 .feedback-modal-close {
     width: 32px;
     height: 32px;
@@ -470,12 +448,10 @@ p {
     cursor: pointer;
     transition: background 0.2s;
 }
-
 .feedback-modal-close:hover {
     background: rgba(0, 0, 0, 0.1);
     color: var(--text-primary);
 }
-
 .feedback-modal-body {
     padding: 10px 12px;
     overflow-y: auto;
@@ -483,106 +459,121 @@ p {
     background: transparent;
     -webkit-overflow-scrolling: touch;
 }
+.feedback-modal-body::-webkit-scrollbar { display: none; }
 
-.feedback-modal-body::-webkit-scrollbar {
-    display: none;
-}
-
+/* ==================== Toast 管理器（底部居中，简约现代） ==================== */
 .toast-manager-container {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 9999;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    align-items: center;
+    gap: 12px;
     pointer-events: none;
+    max-width: 90vw;
+    width: auto;
 }
 
 .toast-item {
-    background: var(--bg-card);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    padding: 12px 16px;
-    min-width: 280px;
-    max-width: 360px;
+    background: rgba(20, 20, 30, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 40px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding: 10px 20px;
+    min-width: 180px;
+    max-width: 400px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transform: translateX(120%);
-    transition: transform 0.3s ease;
+    gap: 16px;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.2s ease;
     pointer-events: auto;
-    border-left: 4px solid var(--primary-color);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .toast-item.show {
-    transform: translateX(0);
+    transform: translateY(0);
+    opacity: 1;
 }
 
 .toast-content {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 14px;
+    font-size: 0.9rem;
     line-height: 1.4;
-    color: var(--text-primary);
+    color: #ffffff;
+    font-weight: 500;
+    letter-spacing: 0.3px;
 }
 
 .toast-content i {
-    font-size: 18px;
+    font-size: 1.1rem;
 }
 
-.toast-info {
-    border-left-color: #3498db;
-}
-
-.toast-success {
-    border-left-color: var(--success-color);
-}
-
-.toast-warning {
-    border-left-color: var(--warning-color);
-}
-
-.toast-error {
-    border-left-color: var(--error-color);
-}
-
-.toast-info i {
-    color: #3498db;
-}
-
-.toast-success i {
-    color: var(--success-color);
-}
-
-.toast-warning i {
-    color: var(--warning-color);
-}
-
-.toast-error i {
-    color: var(--error-color);
-}
+.toast-success .toast-content i { color: #2ecc71; }
+.toast-warning .toast-content i { color: #f39c12; }
+.toast-error .toast-content i { color: #e74c3c; }
+.toast-info .toast-content i { color: #3498db; }
 
 .toast-close {
-    background: none;
+    background: rgba(255, 255, 255, 0.2);
     border: none;
-    font-size: 20px;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
     line-height: 1;
     cursor: pointer;
-    color: #999;
-    padding: 0 4px;
-    transition: color 0.2s;
+    color: #fff;
+    transition: background 0.2s;
+    margin-left: 4px;
+    flex-shrink: 0;
 }
 
 .toast-close:hover {
-    color: #666;
+    background: rgba(255, 255, 255, 0.35);
 }
 
-#submitModal .form-row {
-    margin-bottom: 10px;
+.dark-mode .toast-item {
+    background: rgba(40, 40, 50, 0.9);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
+@media (max-width: 640px) {
+    .toast-manager-container {
+        bottom: 16px;
+        gap: 8px;
+    }
+    .toast-item {
+        padding: 8px 16px;
+        min-width: 140px;
+        max-width: 85vw;
+        border-radius: 32px;
+    }
+    .toast-content {
+        font-size: 0.8rem;
+        gap: 8px;
+    }
+    .toast-close {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+    }
+}
+
+/* 投稿表单特定样式 */
+#submitModal .form-row { margin-bottom: 10px; }
 #submitModal .form-row label {
     display: block;
     font-size: 12px;
@@ -590,13 +581,8 @@ p {
     margin-bottom: 3px;
     font-weight: 500;
 }
-
-#submitModal .required-star {
-    color: var(--error-color);
-}
-
-#submitModal .form-row input,
-#submitModal .form-row textarea {
+#submitModal .required-star { color: var(--error-color); }
+#submitModal .form-row input, #submitModal .form-row textarea {
     width: 100%;
     padding: 8px 10px;
     border: 1px solid var(--border-color);
@@ -608,19 +594,11 @@ p {
     transition: border 0.2s;
     font-family: inherit;
 }
-
-#submitModal .form-row textarea {
-    min-height: 36px;
-    overflow-y: hidden;
-    resize: none;
-}
-
-#submitModal .form-row input:focus,
-#submitModal .form-row textarea:focus {
+#submitModal .form-row textarea { min-height: 36px; overflow-y: hidden; resize: none; }
+#submitModal .form-row input:focus, #submitModal .form-row textarea:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.08);
+    box-shadow: 0 0 0 3px rgba(67,97,238,0.08);
 }
-
 .submit-form-buttons {
     display: flex;
     justify-content: flex-end;
@@ -630,7 +608,6 @@ p {
     padding-top: 10px;
     border-top: 1px solid var(--border-color);
 }
-
 .submit-cancel-btn {
     padding: 6px 12px;
     border: 1px solid var(--border-color);
@@ -642,12 +619,10 @@ p {
     transition: all 0.2s;
     white-space: nowrap;
 }
-
 .submit-cancel-btn:hover {
     background: var(--bg-secondary);
     color: var(--text-primary);
 }
-
 .submit-save-btn {
     padding: 6px 16px;
     border: none;
@@ -660,19 +635,13 @@ p {
     transition: all 0.2s;
     white-space: nowrap;
 }
-
 .submit-save-btn:hover:not(:disabled) {
     background: var(--secondary-color);
     transform: translateY(-1px);
 }
+.submit-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.submit-save-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.fetch-info-btn,
-.check-url-btn {
+.fetch-info-btn, .check-url-btn {
     padding: 8px 14px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -686,25 +655,17 @@ p {
     align-items: center;
     gap: 4px;
 }
-
 .fetch-info-btn:hover {
     border-color: var(--primary-color);
     color: var(--primary-color);
-    background: rgba(67, 97, 238, 0.05);
+    background: rgba(67,97,238,0.05);
 }
-
 .check-url-btn:hover {
     border-color: var(--success-color);
     color: var(--success-color);
-    background: rgba(16, 185, 129, 0.05);
+    background: rgba(16,185,129,0.05);
 }
-
-.fetch-info-btn:disabled,
-.check-url-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
+.fetch-info-btn:disabled, .check-url-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .url-check-result {
     margin-top: 8px;
     padding: 8px 12px;
@@ -712,72 +673,34 @@ p {
     font-size: 12px;
     line-height: 1.4;
 }
-
 .url-check-result.safe {
-    background: rgba(16, 185, 129, 0.1);
+    background: rgba(16,185,129,0.1);
     color: #059669;
-    border: 1px solid rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(16,185,129,0.2);
 }
-
 .url-check-result.unsafe {
-    background: rgba(239, 68, 68, 0.1);
+    background: rgba(239,68,68,0.1);
     color: #dc2626;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239,68,68,0.2);
 }
-
 .url-check-result.checking {
-    background: rgba(245, 158, 11, 0.1);
+    background: rgba(245,158,11,0.1);
     color: #d97706;
-    border: 1px solid rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245,158,11,0.2);
 }
 
-@media (max-width: 768px) {
-    #notebookModal .feedback-modal-content {
-        height: 90%;
-        max-height: 90%;
-    }
-
-    #commentModal .feedback-modal-content {
-        height: 90%;
-        max-height: 90%;
-    }
-
-    #submitModal .feedback-modal-content {
-        max-height: 85vh;
-    }
-
-    .notebook-item {
-        padding: 8px 10px;
-    }
-
-    .notebook-title {
-        font-size: 14px;
-    }
-
-    .notebook-content {
-        font-size: 11px;
-    }
-
-    .fetch-info-btn,
-    .check-url-btn {
-        padding: 6px 10px;
-        font-size: 11px;
-    }
-}
-
+/* ========== 星聚笔记模态框特殊样式 ========== */
 #notebookModal {
     align-items: center;
     justify-content: flex-start;
     padding-top: 60px;
     box-sizing: border-box;
 }
-
 @media (min-width: 769px) {
     #notebookModal {
         display: flex;
         flex-direction: column;
     }
-
     #notebookModal .feedback-modal-content {
         margin: auto 0;
         max-height: calc(100vh - 60px);
@@ -786,16 +709,14 @@ p {
         max-width: 600px;
     }
 }
-
 @media (max-width: 768px) {
     #notebookModal {
-        padding-left: var(--container-padding-xs, 16px);
-        padding-right: var(--container-padding-xs, 16px);
+        padding-left: var(--container-padding-xs);
+        padding-right: var(--container-padding-xs);
         padding-top: 60px;
         display: flex;
         flex-direction: column;
     }
-
     #notebookModal .feedback-modal-content {
         margin: auto 0;
         width: 100%;
@@ -804,47 +725,41 @@ p {
         overflow-y: auto;
     }
 }
-
 @media (max-width: 480px) {
     #notebookModal {
-        padding-left: var(--container-padding-xs, 16px);
-        padding-right: var(--container-padding-xs, 16px);
+        padding-left: var(--container-padding-xs);
+        padding-right: var(--container-padding-xs);
     }
 }
-
 @media (max-height: 500px) and (orientation: landscape) {
     #notebookModal .feedback-modal-content {
         max-height: calc(100vh - 70px);
     }
 }
-
 #notebookModal .feedback-modal-content::-webkit-scrollbar {
     width: 4px;
 }
-
 #notebookModal .feedback-modal-content::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0,0,0,0.05);
     border-radius: 4px;
 }
-
 #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0,0,0,0.2);
     border-radius: 4px;
 }
 
+/* ========== 网站投稿模态框特殊定位 ========== */
 #submitModal {
     align-items: center;
     justify-content: flex-start;
     padding-top: 60px;
     box-sizing: border-box;
 }
-
 @media (min-width: 769px) {
     #submitModal {
         display: flex;
         flex-direction: column;
     }
-
     #submitModal .feedback-modal-content {
         margin: auto 0;
         max-height: calc(100vh - 60px);
@@ -853,16 +768,14 @@ p {
         max-width: 520px;
     }
 }
-
 @media (max-width: 768px) {
     #submitModal {
-        padding-left: var(--container-padding-xs, 16px);
-        padding-right: var(--container-padding-xs, 16px);
+        padding-left: var(--container-padding-xs);
+        padding-right: var(--container-padding-xs);
         padding-top: 60px;
         display: flex;
         flex-direction: column;
     }
-
     #submitModal .feedback-modal-content {
         margin: auto 0;
         width: 100%;
@@ -871,267 +784,220 @@ p {
         overflow-y: auto;
     }
 }
-
 @media (max-width: 480px) {
     #submitModal {
-        padding-left: var(--container-padding-xs, 16px);
-        padding-right: var(--container-padding-xs, 16px);
+        padding-left: var(--container-padding-xs);
+        padding-right: var(--container-padding-xs);
     }
 }
-
 @media (max-height: 500px) and (orientation: landscape) {
     #submitModal .feedback-modal-content {
         max-height: calc(100vh - 70px);
     }
 }
 
+/* ==================== 星聚笔记深色模式优化 ==================== */
 .dark-mode .notebook-item {
     background: rgba(40, 40, 40, 0.8);
     border-color: rgba(255, 255, 255, 0.1);
 }
-
 .dark-mode .notebook-item:hover {
     border-color: var(--primary-color);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
-
 .dark-mode .notebook-id {
     background: rgba(60, 60, 60, 0.9);
     color: var(--text-secondary);
 }
-
 .dark-mode .notebook-time {
     color: var(--text-secondary);
 }
-
 .dark-mode .notebook-title {
     color: var(--text-primary);
 }
-
 .dark-mode .notebook-content {
     background: rgba(50, 50, 50, 0.8);
     color: #c0c0c0;
     border-color: rgba(255, 255, 255, 0.05);
 }
-
 .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.05);
 }
-
 .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
 }
-
 .dark-mode #notebook-list .loading,
 .dark-mode #notebook-list .empty,
 .dark-mode #notebook-list .error {
     color: var(--text-secondary);
 }
 
+/* ==================== 个人资料模态框深色模式优化 ==================== */
 .dark-mode #profileModal .profile-modal-card {
     background: var(--bg-card) !important;
     border-color: var(--border-color) !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
 }
-
 .dark-mode #profileModal .profile-modal-card h3 {
     color: var(--text-primary) !important;
 }
-
-.dark-mode #profileModal .profile-modal-card>div:first-child {
+.dark-mode #profileModal .profile-modal-card > div:first-child {
     border-bottom-color: rgba(255, 255, 255, 0.08) !important;
 }
-
 .dark-mode #profileModal .profile-modal-card label {
     color: var(--text-secondary) !important;
 }
-
 .dark-mode #profileModal .profile-modal-card input {
     background: var(--bg-secondary) !important;
     border-color: var(--border-color) !important;
     color: var(--text-primary) !important;
 }
-
 .dark-mode #profileModal .profile-modal-card input:focus {
     border-color: var(--primary-color) !important;
     box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2) !important;
 }
-
 .dark-mode #profileModal .profile-modal-card input::placeholder {
     color: #8f9bb3 !important;
 }
-
 .dark-mode #profileModal .profile-modal-card #qqAvatarStatus {
     color: var(--text-secondary) !important;
 }
-
 .dark-mode #profileModal .profile-modal-card .profile-avatar-preview {
     background: var(--bg-secondary) !important;
 }
-
 .dark-mode #profileModal .profile-modal-card button#profileCancelBtn {
     background: var(--bg-secondary) !important;
     border-color: var(--border-color) !important;
     color: var(--text-primary) !important;
 }
-
 .dark-mode #profileModal .profile-modal-card button#profileCancelBtn:hover {
     background: #4a4a4a !important;
     color: #ffffff !important;
 }
-
 .dark-mode #profileModal .profile-modal-card button#profileSaveBtn {
     background: var(--primary-color) !important;
     color: white !important;
 }
-
 .dark-mode #profileModal .profile-modal-card button#profileSaveBtn:hover {
     background: #5a7aff !important;
 }
-
-.dark-mode #profileModal .profile-modal-card>div:first-child>div:last-child {
+.dark-mode #profileModal .profile-modal-card > div:first-child > div:last-child {
     background: var(--bg-secondary) !important;
 }
 
+/* ==================== 网站投稿深色模式优化 ==================== */
 .dark-mode #submitModal .feedback-modal-content {
     background: var(--bg-card);
     border-color: var(--border-color);
 }
-
 .dark-mode #submitModal .feedback-modal-header {
     border-bottom-color: rgba(255, 255, 255, 0.08);
 }
-
 .dark-mode #submitModal .feedback-modal-header h3 {
     color: var(--text-primary);
 }
-
 .dark-mode #submitModal .feedback-modal-header h3 i {
     color: var(--primary-color);
 }
-
 .dark-mode #submitModal .form-row label {
     color: var(--text-secondary);
 }
-
 .dark-mode #submitModal .form-row input,
 .dark-mode #submitModal .form-row textarea {
     background: var(--bg-secondary);
     border-color: var(--border-color);
     color: var(--text-primary);
 }
-
 .dark-mode #submitModal .form-row input:focus,
 .dark-mode #submitModal .form-row textarea:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
 }
-
 .dark-mode #submitModal .form-row input::placeholder,
 .dark-mode #submitModal .form-row textarea::placeholder {
     color: #8f9bb3;
 }
-
 .dark-mode .submit-cancel-btn {
     background: var(--bg-secondary);
     border-color: var(--border-color);
     color: var(--text-primary);
 }
-
 .dark-mode .submit-cancel-btn:hover {
     background: #4a4a4a;
     color: #ffffff;
 }
-
 .dark-mode .submit-save-btn {
     background: var(--primary-color);
     color: white;
 }
-
 .dark-mode .submit-save-btn:hover:not(:disabled) {
     background: #5a7aff;
 }
-
 .dark-mode .submit-save-btn:disabled {
     opacity: 0.5;
 }
-
 .dark-mode .submit-safe-hint {
     background: rgba(245, 158, 11, 0.15);
     color: #fbbf24;
 }
-
 .dark-mode .fetch-info-btn,
 .dark-mode .check-url-btn {
     background: var(--bg-secondary);
     border-color: var(--border-color);
     color: var(--text-secondary);
 }
-
 .dark-mode .fetch-info-btn:hover,
 .dark-mode .check-url-btn:hover {
     border-color: var(--primary-color);
     color: var(--primary-color);
     background: rgba(123, 156, 255, 0.1);
 }
-
 .dark-mode .url-check-result.safe {
     background: rgba(16, 185, 129, 0.15);
     color: #34d399;
     border-color: rgba(52, 211, 153, 0.3);
 }
-
 .dark-mode .url-check-result.unsafe {
     background: rgba(239, 68, 68, 0.15);
     color: #f87171;
     border-color: rgba(248, 113, 113, 0.3);
 }
-
 .dark-mode .url-check-result.checking {
     background: rgba(245, 158, 11, 0.15);
     color: #fbbf24;
     border-color: rgba(251, 191, 36, 0.3);
 }
-
 .dark-mode .security-report.safe {
     color: #34d399;
 }
-
 .dark-mode .security-report.unsafe {
     color: #f87171;
 }
-
 .dark-mode .security-detail {
     color: var(--text-secondary);
 }
-
 .dark-mode .security-hint {
     color: #c0c0c0;
 }
 
+/* ==================== 主页深色模式终极补丁 ==================== */
 .dark-mode body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
 }
-
 .dark-mode a:not(.site-card):not(.minimal-tag):not(.footer-btn):not(.nav-btn) {
     color: var(--primary-color);
 }
-
 .dark-mode a:not(.site-card):not(.minimal-tag):not(.footer-btn):not(.nav-btn):hover {
     color: #a0c0ff;
 }
-
-.dark-mode hr,
-.dark-mode .divider {
+.dark-mode hr, .dark-mode .divider {
     border-color: var(--border-color);
 }
-
 .dark-mode .loading-spinner {
     border-color: #333;
     border-top-color: var(--primary-color);
 }
-
 .dark-mode .card,
 .dark-mode .panel,
 .dark-mode .widget {
@@ -1139,6 +1005,7 @@ p {
     border-color: var(--border-color);
 }
 
+/* ==================== 骨架屏加载动画 ==================== */
 .skeleton {
     background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border-color) 50%, var(--bg-secondary) 75%);
     background-size: 200% 100%;
@@ -1147,15 +1014,11 @@ p {
 }
 
 @keyframes skeleton-loading {
-    0% {
-        background-position: 200% 0;
-    }
-
-    100% {
-        background-position: -200% 0;
-    }
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
+/* 导航卡片骨架屏 */
 .skeleton-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -1194,6 +1057,14 @@ p {
     background: var(--bg-secondary);
 }
 
+/* 常用标签骨架屏 */
+.skeleton-tag {
+    height: 48px;
+    border-radius: 6px;
+    background: var(--bg-secondary);
+}
+
+/* 音乐播放器歌单骨架屏 */
 .skeleton-song-item {
     display: flex;
     align-items: center;
@@ -1229,6 +1100,7 @@ p {
     background: var(--bg-secondary);
 }
 
+/* 笔记骨架屏 */
 .skeleton-notebook-item {
     height: 80px;
     margin-bottom: 10px;
@@ -1238,20 +1110,22 @@ p {
     animation: skeleton-loading 1.5s infinite;
 }
 
+/* ==================== 动画效果优化 ==================== */
+/* 模态框动画增强（已在 .feedback-modal-content 中定义 transition） */
+/* 导航卡片 hover 增强 */
 .site-card {
     transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.2s ease, border-color 0.2s ease;
 }
-
 .site-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
+/* 音乐播放器底部折叠动画 */
 .music-player .bottom-section {
     transition: max-height 0.3s ease-out;
     overflow: hidden;
 }
-
 .music-player.collapsed .bottom-section {
     max-height: 0 !important;
 }
