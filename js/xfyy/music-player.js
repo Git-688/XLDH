@@ -11,9 +11,28 @@ class MusicPlayer {
         this.initializePlayer();
         this.userGestureResolved = false;
         this.userGesturePromise = null;
+        this.initCustomSelectsOnShow(); // 监听播放器显示事件，确保选择器初始化
         if (!window.Starlink) window.Starlink = {};
         if (!window.Starlink.musicPlayer) window.Starlink.musicPlayer = this;
         window.musicPlayer = window.Starlink.musicPlayer;
+    }
+
+    // 监听播放器显示事件，初始化自定义选择器
+    initCustomSelectsOnShow() {
+        const player = document.getElementById('musicPlayer');
+        if (!player) return;
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class' && player.classList.contains('show')) {
+                    if (typeof initCustomSelects === 'function') {
+                        initCustomSelects();
+                    } else {
+                        console.warn('initCustomSelects not defined');
+                    }
+                }
+            });
+        });
+        observer.observe(player, { attributes: true });
     }
 
     waitForUserGesture() {
@@ -988,6 +1007,7 @@ class MusicPlayer {
             this.elements.coverImg.onerror = () => { this.elements.coverImg.src = defaultLogo; };
         }
         this.loadApiPlaylist(this.currentApi);
+        // 原有的重试初始化改为备用（同时 MutationObserver 已确保显示时初始化）
         const initCustomSelectsWithRetry = () => {
             if (document.querySelector('.music-player.show')) {
                 if (typeof initCustomSelects === 'function') {
