@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，支持添加链接后自动关闭模态框且不切换分类/子分类，增加验证码，死链反馈增加“忽略”按钮，刷新图标）
+// admin.js - 星聚导航后台管理（完整版，支持验证码、死链忽略、刷新图标、刷新缓存后同步导航统计）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -744,6 +744,8 @@
                 await loadFeedback();
                 await loadAllData();
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+                // 刷新前端导航统计
+                refreshNavigationStats();
                 closeModal();
             }
         );
@@ -827,6 +829,7 @@
                 showToast('导入成功', 'success');
                 await loadAllData();
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+                refreshNavigationStats();
                 closeImportModal();
             } else {
                 showToast(result.error || '导入失败', 'error');
@@ -1026,6 +1029,7 @@
                     await loadSubmissions();
                     await loadAllData();
                     await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+                    refreshNavigationStats();
                 } catch (err) {
                     showToast('操作失败', 'error');
                 }
@@ -1074,6 +1078,19 @@
         } finally {
             btn.disabled = false;
             btn.textContent = originalText;
+        }
+    }
+
+    // ==================== 刷新导航统计（调用前端模块） ====================
+    function refreshNavigationStats() {
+        // 尝试调用前端 OptimizedNavigation 实例的方法重新计算总网站数
+        if (window.optimizedNavigation && typeof window.optimizedNavigation.calculateTotalValidSites === 'function') {
+            window.optimizedNavigation.calculateTotalValidSites().catch(e => console.warn('更新导航统计失败:', e));
+        }
+        // 也可直接强制刷新整个导航（会重新加载当前分类）
+        if (window.optimizedNavigation && typeof window.optimizedNavigation.refresh === 'function') {
+            // 如果希望完全刷新页面，可以调用 refresh，但可能会重置滚动位置等，谨慎使用
+            // window.optimizedNavigation.refresh();
         }
     }
 
@@ -1296,7 +1313,11 @@
             try {
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 showToast('导航缓存已刷新', 'success');
-            } catch (err) { showToast('刷新失败', 'error'); }
+                // 刷新前端导航统计
+                refreshNavigationStats();
+            } catch (err) { 
+                showToast('刷新失败', 'error'); 
+            }
         });
         document.getElementById('refreshIconsBtn').addEventListener('click', refreshIcons);
         document.getElementById('annPublishBtn').addEventListener('click', saveAnnouncement);
