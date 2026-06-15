@@ -1,5 +1,5 @@
 /**
- * Toast 管理器 - 全局统一提示（底部居中，简约现代风格）
+ * Toast 管理器 - 纯文本简约版（无图标，无关闭按钮）
  */
 class ToastManager {
     constructor() {
@@ -22,29 +22,22 @@ class ToastManager {
     /**
      * 显示提示
      * @param {string} message 提示内容
-     * @param {string} type 类型：info, success, warning, error
+     * @param {string} type 类型（保留参数但不再影响样式）
      * @param {number} duration 显示时长（毫秒），默认3000
      * @returns {number} toast ID
      */
     show(message, type = 'info', duration = this.defaultDuration) {
         const id = ++this.counter;
         const toast = document.createElement('div');
-        toast.className = `toast-item toast-${type}`;
+        toast.className = `toast-item`;
         toast.setAttribute('role', 'alert');
-        
-        const icon = this.getIcon(type);
         
         toast.innerHTML = `
             <div class="toast-content">
-                <i class="fas fa-${icon}"></i>
                 <span>${Utils.escapeHtml(message)}</span>
             </div>
-            <button class="toast-close" aria-label="关闭">×</button>
         `;
 
-        const closeBtn = toast.querySelector('.toast-close');
-        closeBtn.addEventListener('click', () => this.remove(id));
-        
         const timeoutId = setTimeout(() => this.remove(id), duration);
 
         if (this.toasts.size >= this.maxToasts) {
@@ -73,16 +66,6 @@ class ToastManager {
 
     clearAll() {
         this.toasts.forEach((_, id) => this.remove(id));
-    }
-
-    getIcon(type) {
-        const icons = {
-            info: 'info-circle',
-            success: 'check-circle',
-            warning: 'exclamation-triangle',
-            error: 'times-circle'
-        };
-        return icons[type] || 'info-circle';
     }
 }
 
