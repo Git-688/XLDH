@@ -1,5 +1,5 @@
 /**
- * 优化分类导航系统 - 无限滚动加载版（总有效网址数量统计）
+ * 优化分类导航系统 - 无限滚动加载版（底部无文字，改用 Toast 提示，仅显示一次）
  */
 class OptimizedNavigation {
     constructor() {
@@ -28,7 +28,8 @@ class OptimizedNavigation {
         this.hasMore = true;
         this.currentSites = [];
         this.scrollListener = null;
-        this.lastNoMoreToastTime = 0;
+        // 新增：标记是否已经显示过“到底了”提示（每次加载子分类时重置）
+        this.hasShownNoMoreToast = false;
 
         this.autoRefreshTimer = null;
         this.autoRefreshInterval = 5 * 60 * 1000;
@@ -174,7 +175,6 @@ class OptimizedNavigation {
             await this.loadNavigationStructure();
             this.calculateStats();
             this.renderNavigation();
-            // 计算总有效网址数量（所有分类）
             await this.calculateTotalValidSites();
             const firstCategory = this.getFirstCategory();
             if (firstCategory) {
@@ -194,14 +194,12 @@ class OptimizedNavigation {
         }
     }
 
-    // 计算所有分类下有效网站的总数
     async calculateTotalValidSites() {
         if (!this.structure) return;
         let total = 0;
         for (const catName in this.structure) {
             const subcategories = this.structure[catName].subcategories;
             for (const sub of subcategories) {
-                // 从缓存或新加载站点列表
                 let sites = this.siteCache.get(sub.id);
                 if (!sites) {
                     sites = await this.loadSites(sub.id, false);
@@ -248,7 +246,6 @@ class OptimizedNavigation {
         this.siteCache.delete(this.selectedLevel2);
         await this.renderLevel3(this.selectedLevel1, this.selectedLevel2);
         await this.recalculateGlobalInvalidCount();
-        // 刷新后重新计算总有效站点数
         await this.calculateTotalValidSites();
     }
 
@@ -286,9 +283,7 @@ class OptimizedNavigation {
             const counts = await Promise.all(promises);
             totalValidSites += counts.reduce((s,c)=>s+c,0);
         }
-        // 注意：这里不覆盖全局 totalWebsites，仅用于更新子分类角标
-        // 全局总数由 calculateTotalValidSites 单独维护
-        this.updateStatsDisplay(); // 只刷新显示，不改变 totalWebsites 值
+        this.updateStatsDisplay();
         this.loadedLevel1Set.add(level1);
     }
 
@@ -346,9 +341,11 @@ class OptimizedNavigation {
     async renderLevel3(level1, subcategoryId) {
         const container = document.getElementById('level3Content');
         if (!container) return;
+        // 重置分页状态和“到底了”提示标志
         this.currentPage = 1;
         this.hasMore = true;
         this.isLoadingMore = false;
+        this.hasShownNoMoreToast = false;  // 重置提示标志
         this.currentSites = await this.loadSites(subcategoryId);
         if (!this.currentSites.length) {
             this.renderEmptyState();
@@ -358,7 +355,6 @@ class OptimizedNavigation {
         this.observeLazyImages(container);
         this.bindInfiniteScroll();
         this.updateSubcategoryCountDisplay(subcategoryId, this.currentSites.filter(s=>s.valid!==false).length);
-        // 刷新子分类后，重新计算总有效站点数（可能有新增无效站点影响总数）
         await this.calculateTotalValidSites();
     }
 
@@ -428,13 +424,11 @@ class OptimizedNavigation {
 
     checkScrollAndLoadMore() {
         if (this.isLoadingMore || this.isSearching) return;
-        if (!this.hasMore) {
-            const now = Date.now();
-            if (now - this.lastNoMoreToastTime > 5000) {
-                this.lastNoMoreToastTime = now;
-                if (window.toast && window.toast.show) {
-                    window.toast.show('没有更多数据了', 'info', 2000);
-                }
+        // 如果没有更多数据，且尚未显示过提示，则显示一次
+        if (!this.hasMore && !this.hasShownNoMoreToast) {
+            this.hasShownNoMoreToast = true;
+            if (window.toast && window.toast.show) {
+                window.toast.show('～ 到·底·了 ～', 'info', 2000);
             }
             return;
         }
@@ -460,8 +454,10 @@ class OptimizedNavigation {
         if (start >= this.currentSites.length) {
             this.hasMore = false;
             if (trigger) trigger.remove();
-            if (window.toast && window.toast.show) {
-                window.toast.show('没有更多数据了', 'info', 2000);
+            // 显示一次性提示
+            if (!this.hasShownNoMoreToast && window.toast && window.toast.show) {
+                this.hasShownNoMoreToast = true;
+                window.toast.show('～ 到·底·了 ～', 'info', 2000);
             }
             this.isLoadingMore = false;
             return;
@@ -717,6 +713,8 @@ class OptimizedNavigation {
         this.isNavigationClick = true;
         document.querySelectorAll('.level2-btn').forEach(b => b.classList.toggle('active', b.dataset.level2 == subcategoryId));
         this.selectedLevel2 = subcategoryId;
+        // 重置“到底了”提示标志，因为新分类可能有新数据
+        this.hasShownNoMoreToast = false;
         await this.renderLevel3(this.selectedLevel1, subcategoryId);
         if (this.autoRefreshTimer) {
             clearInterval(this.autoRefreshTimer);
