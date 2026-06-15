@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，修复退出后验证码不显示）
+// admin.js - 星聚导航后台管理（完整版，支持添加链接后自动关闭模态框且不切换分类/子分类，增加验证码，死链反馈增加“忽略”按钮）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -273,7 +273,6 @@
         }
     }
 
-    // 修复退出后验证码不显示
     function logout() {
         token = '';
         clearToken();
@@ -285,12 +284,10 @@
         if (tokenInput) tokenInput.value = '';
         const captchaInput = document.getElementById('captchaInput');
         if (captchaInput) captchaInput.value = '';
-        
-        // 重置验证码相关显示并重新加载
         const captchaGroup = document.getElementById('captchaGroup');
         if (captchaGroup) captchaGroup.style.display = 'none';
         currentCaptchaMd5key = null;
-        loadCaptcha();  // 重新加载验证码，会在成功时自动显示 captchaGroup
+        loadCaptcha();
         showToast('已退出');
     }
 
@@ -703,9 +700,13 @@
             let html = '';
             const renderItems = (items) => items.map(item => `
                 <div class="link-item">
-                    <div class="link-info"><strong>${escapeHtml(item.title||'无标题')}</strong><div style="font-size:10px;color:#999">于 ${new Date(item.report_time).toLocaleString()}</div></div>
+                    <div class="link-info">
+                        <strong>${escapeHtml(item.title||'无标题')}</strong>
+                        <div style="font-size:10px;color:#999">于 ${new Date(item.report_time).toLocaleString()}</div>
+                    </div>
                     <div class="link-actions">
                         <button class="sm primary" data-action="replaceLink" data-reportid="${item.id}" data-siteid="${item.site_id||0}" data-url="${escapeHtml(item.url)}" data-title="${escapeHtml(item.title||'')}">更换链接</button>
+                        <button class="sm danger" data-action="ignoreLink" data-reportid="${item.id}" style="margin-left:5px;">忽略</button>
                     </div>
                 </div>
             `).join('');
@@ -714,6 +715,7 @@
             if (groups.older.length) html += `<div class="feedback-date-group"><h4 style="font-size:12px;">📅 更早</h4>${renderItems(groups.older)}</div>`;
             list.innerHTML = html;
             list.querySelectorAll('[data-action="replaceLink"]').forEach(btn => btn.addEventListener('click', replaceLinkHandler));
+            list.querySelectorAll('[data-action="ignoreLink"]').forEach(btn => btn.addEventListener('click', ignoreLinkHandler));
         } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
@@ -752,6 +754,24 @@
                 descTextarea.addEventListener('input', function() { autoResizeTextarea(this); });
             }
         }, 50);
+    }
+
+    // 忽略死链报告
+    async function ignoreLinkHandler(e) {
+        const btn = e.currentTarget;
+        const reportId = parseInt(btn.dataset.reportid);
+        if (!reportId) {
+            showToast('无效的报告ID', 'error');
+            return;
+        }
+        if (!confirm('确定忽略此反馈吗？忽略后该链接仍为有效状态，且不再显示此反馈。')) return;
+        try {
+            await apiFetch(`/admin/dead-link-reports/${reportId}`, { method: 'DELETE' });
+            showToast('已忽略', 'success');
+            await loadFeedback();
+        } catch (err) {
+            showToast('忽略失败: ' + (err.message || '网络错误'), 'error');
+        }
     }
 
     async function exportFullData() {
