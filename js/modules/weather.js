@@ -2,6 +2,7 @@
  * 天气模块 - 基于 Worker 代理（密钥在服务端，安全）
  * 通过调用后端 /weather/proxy 接口获取天气数据，无需在前端暴露 API 密钥
  * 使用 Meteocons SVG 动画天气图标（支持昼夜切换，扩充天气类型）
+ * 新增：体感温度、气压、降水量、风速、日出日落、预警信息
  */
 class WeatherModule {
     static CONFIG = {
@@ -54,60 +55,36 @@ class WeatherModule {
 
     // 获取 Meteocons SVG 文件名（不含扩展名）- 扩充映射
     _getMeteoconIconName(condition, isDay = true) {
-        // 按优先级从高到低排列（长字符串优先）
         const weatherMap = [
-            // 冰雹
             { match: '冰雹', icon: 'hail' },
-            // 阴天细雨
             { match: '阴天细雨', icon: 'drizzle' },
-            // 阴雨
             { match: '阴雨', icon: 'rain' },
-            // 雷阵雨
             { match: '雷阵雨', icon: 'thunderstorm' },
-            // 暴雨
             { match: '暴雨', icon: 'thunderstorm' },
-            // 大雨
             { match: '大雨', icon: 'heavy-rain' },
-            // 中雨
             { match: '中雨', icon: 'rain' },
-            // 小雨
             { match: '小雨', icon: 'drizzle' },
-            // 阵雨
             { match: '阵雨', icon: 'showers' },
-            // 雨（通用）
             { match: '雨', icon: 'rain' },
-            // 大雪
             { match: '大雪', icon: 'snow' },
-            // 中雪
             { match: '中雪', icon: 'snow' },
-            // 小雪
             { match: '小雪', icon: 'snow' },
-            // 雪
             { match: '雪', icon: 'snow' },
-            // 雾
             { match: '雾', icon: 'fog' },
-            // 扬沙/沙尘暴
             { match: '沙尘暴', icon: 'wind' },
             { match: '扬沙', icon: 'wind' },
-            // 多云
             { match: '多云', icon: isDay ? 'partly-cloudy-day' : 'partly-cloudy-night' },
-            // 阴
             { match: '阴', icon: 'cloudy' },
-            // 晴
             { match: '晴', icon: isDay ? 'clear-day' : 'clear-night' }
         ];
-
-        // 遍历映射，找到第一个匹配的
         for (const entry of weatherMap) {
             if (condition.includes(entry.match)) {
                 return entry.icon;
             }
         }
-        // 默认
         return isDay ? 'clear-day' : 'clear-night';
     }
 
-    // 获取完整图标 URL
     _getMeteoconIconUrl(condition, isDay = true) {
         const name = this._getMeteoconIconName(condition, isDay);
         return `https://unpkg.com/@meteocons/svg/fill/${name}.svg`;
@@ -307,6 +284,29 @@ class WeatherModule {
         const nowInfo = data.nowinfo || {};
         const currentTemp = nowInfo.temperature;
         const currentHumidity = nowInfo.humidity;
+        const feelsLike = nowInfo.feelst;
+        const pressure = nowInfo.pressure;
+        const precipitation = nowInfo.precipitation;
+        const windSpeed = nowInfo.windSpeed;
+        const windDir = nowInfo.windDirection;
+        const windScale = nowInfo.windScale;
+
+        // 预警信息
+        const alarms = data.alarm && Array.isArray(data.alarm) ? data.alarm : [];
+
+        // 日出日落（取今天）
+        let sunTimes = null;
+        if (data.suntimes && Array.isArray(data.suntimes) && data.suntimes.length > 0) {
+            const today = new Date();
+            const todayStr = today.toISOString().slice(0, 10);
+            for (const item of data.suntimes) {
+                if (item.date === todayStr) {
+                    sunTimes = item;
+                    break;
+                }
+            }
+            if (!sunTimes) sunTimes = data.suntimes[0];
+        }
 
         // 未来几天预报
         const dayKeys = ['weatherday2', 'weatherday3', 'weatherday4', 'weatherday5', 'weatherday6', 'weatherday7'];
@@ -323,7 +323,7 @@ class WeatherModule {
             forecasts.push({
                 day: dayName,
                 weather: weather,
-                iconUrl: this._getMeteoconIconUrl(weather, true), // 预报统一用白天
+                iconUrl: this._getMeteoconIconUrl(weather, true),
                 dayTemp: dayData.wd1 ? dayData.wd1 + '°C' : '--',
                 nightTemp: dayData.wd2 ? dayData.wd2 + '°C' : '--',
                 wind: (dayData.winddirection1 || '') + (dayData.windleve1 ? ' ' + dayData.windleve1 : '')
@@ -334,6 +334,8 @@ class WeatherModule {
 
         return {
             city: cityName,
+            province: data.sheng || '',
+            country: data.guo || '',
             dayTemperature: todayTempDay ? todayTempDay + '°C' : '--',
             nightTemperature: todayTempNight ? todayTempNight + '°C' : '--',
             weather: todayWeather,
@@ -345,7 +347,16 @@ class WeatherModule {
             airQuality: nowInfo.air || '--',
             updateTime: data.uptime ? data.uptime : (nowInfo.uptime || '刚刚'),
             tips: tips,
-            forecasts: forecasts
+            forecasts: forecasts,
+            // 新增字段
+            feelsLike: feelsLike !== undefined ? feelsLike + '°C' : '--',
+            pressure: pressure !== undefined ? pressure + ' hPa' : '--',
+            precipitation: precipitation !== undefined ? precipitation + ' mm' : '--',
+            windSpeed: windSpeed !== undefined ? windSpeed + ' km/h' : '--',
+            windDir: windDir || '--',
+            windScale: windScale || '--',
+            alarms: alarms,
+            sunTimes: sunTimes
         };
     }
 
@@ -475,12 +486,41 @@ class WeatherModule {
             </div>
         ` : '';
         
+        // 预警信息渲染
+        let alarmsHtml = '';
+        if (weatherData.alarms && weatherData.alarms.length > 0) {
+            alarmsHtml = `<div class="weather-alarms">
+                <div class="alarms-title"><i class="fas fa-exclamation-triangle"></i> 天气预警</div>
+                ${weatherData.alarms.map(alarm => `
+                    <div class="alarm-item ${alarm.signallevel || ''}">
+                        <span class="alarm-level">${alarm.signallevel || '预警'}</span>
+                        <span class="alarm-title">${esc(alarm.title || '')}</span>
+                        <span class="alarm-time">${esc(alarm.effective || '')}</span>
+                    </div>
+                `).join('')}
+            </div>`;
+        }
+
+        // 日出日落信息
+        let sunHtml = '';
+        if (weatherData.sunTimes) {
+            const sun = weatherData.sunTimes;
+            sunHtml = `
+                <div class="weather-sun-times">
+                    <div class="sun-item"><span class="sun-label">🌅 日出</span><span class="sun-value">${esc(sun.sunrise || '--')}</span></div>
+                    <div class="sun-item"><span class="sun-label">🌇 日落</span><span class="sun-value">${esc(sun.sunset || '--')}</span></div>
+                    <div class="sun-item"><span class="sun-label">☀️ 昼长</span><span class="sun-value">${esc(sun.day_length || '--')}</span></div>
+                </div>
+            `;
+        }
+
         return `
             ${manualModeHint}
+            ${alarmsHtml}
             <div class="weather-current">
                 <div class="weather-city">
                     <i class="fas fa-location-dot"></i>
-                    ${esc(weatherData.city)}
+                    ${esc(weatherData.city)}${weatherData.province ? `, ${esc(weatherData.province)}` : ''}
                     <span class="weather-update-time">${esc(weatherData.updateTime)}更新</span>
                 </div>
                 <div class="weather-main">
@@ -492,7 +532,7 @@ class WeatherModule {
                         <div class="temp-details">
                             <div class="temp-item">
                                 <div class="temp-label">当前</div>
-                                <div class="temp-value day">${weatherData.currentTemp || weatherData.dayTemperature}</div>
+                                <div class="temp-value day">${weatherData.currentTemp}</div>
                             </div>
                             <div class="temp-separator">/</div>
                             <div class="temp-item">
@@ -515,19 +555,45 @@ class WeatherModule {
                 ` : ''}
             </div>
 
-            <div class="weather-details">
-                <div class="weather-detail">
-                    <div class="detail-icon"><i class="fas fa-wind"></i></div>
-                    <div class="detail-label">风向风力</div>
-                    <div class="detail-value">${esc(weatherData.wind)}</div>
-                </div>
-                <div class="weather-detail">
-                    <div class="detail-icon"><i class="fas fa-tint"></i></div>
-                    <div class="detail-label">湿度</div>
-                    <div class="detail-value">${esc(weatherData.humidity)}</div>
+            <div class="weather-extra-details">
+                <div class="extra-grid">
+                    <div class="extra-item">
+                        <span class="extra-label">体感温度</span>
+                        <span class="extra-value">${weatherData.feelsLike}</span>
+                    </div>
+                    <div class="extra-item">
+                        <span class="extra-label">气压</span>
+                        <span class="extra-value">${weatherData.pressure}</span>
+                    </div>
+                    <div class="extra-item">
+                        <span class="extra-label">降水量</span>
+                        <span class="extra-value">${weatherData.precipitation}</span>
+                    </div>
+                    <div class="extra-item">
+                        <span class="extra-label">风速</span>
+                        <span class="extra-value">${weatherData.windSpeed}</span>
+                    </div>
+                    <div class="extra-item">
+                        <span class="extra-label">风向</span>
+                        <span class="extra-value">${weatherData.windDir}</span>
+                    </div>
+                    <div class="extra-item">
+                        <span class="extra-label">风力</span>
+                        <span class="extra-value">${weatherData.windScale}</span>
+                    </div>
+                    <div class="extra-item">
+                        <span class="extra-label">湿度</span>
+                        <span class="extra-value">${weatherData.humidity}</span>
+                    </div>
+                    <div class="extra-item">
+                        <span class="extra-label">能见度</span>
+                        <span class="extra-value">${weatherData.visibility}</span>
+                    </div>
                 </div>
             </div>
-            
+
+            ${sunHtml}
+
             <div class="weather-forecast">
                 <div class="forecast-title">
                     <i class="fas fa-calendar-alt"></i> 未来几天预报
