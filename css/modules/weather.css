@@ -240,13 +240,16 @@
 }
 
 .weather-icon {
-    font-size: 32px;
-    color: var(--primary-color, #4361ee);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
-.weather-icon [class^="me-"] {
-    font-size: 2.8rem;
-    line-height: 1;
+.weather-icon-svg {
+    width: 56px;
+    height: 56px;
+    display: block;
 }
 
 .weather-temp-info {
@@ -384,14 +387,16 @@
 }
 
 .forecast-day-icon {
-    font-size: 14px;
-    color: var(--primary-color, #4361ee);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 4px;
 }
 
-.forecast-day-icon [class^="me-"] {
-    font-size: 1.8rem;
-    line-height: 1;
+.forecast-icon-svg {
+    width: 36px;
+    height: 36px;
+    display: block;
 }
 
 .forecast-day-weather {
@@ -659,8 +664,8 @@
 .dark-mode .weather-desc {
     color: var(--text-primary);
 }
-.dark-mode .weather-icon {
-    color: var(--primary-color);
+.dark-mode .weather-icon-svg {
+    filter: brightness(0.9);
 }
 .dark-mode .temp-value.day {
     color: #ff8c8c;
@@ -704,6 +709,9 @@
 }
 .dark-mode .forecast-day-icon {
     color: var(--primary-color);
+}
+.dark-mode .forecast-icon-svg {
+    filter: brightness(0.9);
 }
 .dark-mode .forecast-day-weather {
     color: var(--text-primary);
@@ -786,10 +794,12 @@
 }
 
 @media (max-width: 640px) {
-    .weather-icon [class^="me-"] {
-        font-size: 2.2rem;
+    .weather-icon-svg {
+        width: 44px;
+        height: 44px;
     }
-    .forecast-day-icon [class^="me-"] {
-        font-size: 1.5rem;
+    .forecast-icon-svg {
+        width: 30px;
+        height: 30px;
     }
 }
