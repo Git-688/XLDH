@@ -1,6 +1,7 @@
 /**
  * 天气模块 - 紧凑布局版本
  * 使用 Meteocons SVG 图标，支持昼夜切换
+ * 显示：体感温度、气压、降水量、风速、风向、风力、湿度、预警、日出日落
  */
 class WeatherModule {
     static CONFIG = {
@@ -490,18 +491,6 @@ class WeatherModule {
             </div>`;
         }
 
-        let sunHtml = '';
-        if (weatherData.sunTimes) {
-            const sun = weatherData.sunTimes;
-            sunHtml = `
-                <div class="weather-sun-times">
-                    <div class="sun-item"><span class="sun-label">🌅 日出</span><span class="sun-value">${esc(sun.sunrise || '--')}</span></div>
-                    <div class="sun-item"><span class="sun-label">🌇 日落</span><span class="sun-value">${esc(sun.sunset || '--')}</span></div>
-                    <div class="sun-item"><span class="sun-label">☀️ 昼长</span><span class="sun-value">${esc(sun.day_length || '--')}</span></div>
-                </div>
-            `;
-        }
-
         return `
             ${manualModeHint}
             ${alarmsHtml}
@@ -543,45 +532,51 @@ class WeatherModule {
                 ` : ''}
             </div>
 
-            <div class="weather-extra-details">
-                <div class="extra-grid">
-                    <div class="extra-item">
-                        <span class="extra-label">体感温度</span>
-                        <span class="extra-value">${weatherData.feelsLike}</span>
-                    </div>
-                    <div class="extra-item">
-                        <span class="extra-label">气压</span>
-                        <span class="extra-value">${weatherData.pressure}</span>
-                    </div>
-                    <div class="extra-item">
-                        <span class="extra-label">降水量</span>
-                        <span class="extra-value">${weatherData.precipitation}</span>
-                    </div>
+            <div class="weather-extra-row">
+                <div class="extra-item">
+                    <span class="extra-label">体感温度</span>
+                    <span class="extra-value">${weatherData.feelsLike}</span>
+                </div>
+                <div class="extra-item">
+                    <span class="extra-label">气压</span>
+                    <span class="extra-value">${weatherData.pressure}</span>
+                </div>
+                <div class="extra-item">
+                    <span class="extra-label">降水量</span>
+                    <span class="extra-value">${weatherData.precipitation}</span>
+                </div>
+                <div class="extra-item">
+                    <span class="extra-label">风速</span>
+                    <span class="extra-value">${weatherData.windSpeed}</span>
+                </div>
+                <div class="extra-item">
+                    <span class="extra-label">风向</span>
+                    <span class="extra-value">${weatherData.windDir}</span>
+                </div>
+                <div class="extra-item">
+                    <span class="extra-label">风力</span>
+                    <span class="extra-value">${weatherData.windScale}</span>
+                </div>
+                <div class="extra-item">
+                    <span class="extra-label">湿度</span>
+                    <span class="extra-value">${weatherData.humidity}</span>
                 </div>
             </div>
 
-            <div class="weather-extra-details2">
-                <div class="extra-grid">
-                    <div class="extra-item">
-                        <span class="extra-label">风速</span>
-                        <span class="extra-value">${weatherData.windSpeed}</span>
-                    </div>
-                    <div class="extra-item">
-                        <span class="extra-label">风向</span>
-                        <span class="extra-value">${weatherData.windDir}</span>
-                    </div>
-                    <div class="extra-item">
-                        <span class="extra-label">风力</span>
-                        <span class="extra-value">${weatherData.windScale}</span>
-                    </div>
-                    <div class="extra-item">
-                        <span class="extra-label">湿度</span>
-                        <span class="extra-value">${weatherData.humidity}</span>
-                    </div>
+            <div class="weather-sun-row">
+                <div class="sun-item">
+                    <span class="sun-label">🌅 日出</span>
+                    <span class="sun-value">${weatherData.sunTimes ? esc(weatherData.sunTimes.sunrise || '--') : '--'}</span>
+                </div>
+                <div class="sun-item">
+                    <span class="sun-label">🌇 日落</span>
+                    <span class="sun-value">${weatherData.sunTimes ? esc(weatherData.sunTimes.sunset || '--') : '--'}</span>
+                </div>
+                <div class="sun-item">
+                    <span class="sun-label">☀️ 昼长</span>
+                    <span class="sun-value">${weatherData.sunTimes ? esc(weatherData.sunTimes.day_length || '--') : '--'}</span>
                 </div>
             </div>
-
-            ${sunHtml}
 
             <div class="weather-forecast">
                 <div class="forecast-title">
