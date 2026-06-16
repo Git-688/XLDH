@@ -231,11 +231,12 @@
     margin-left: 3px;
 }
 
+/* 主天气图标 - 放大 */
 .weather-main {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 16px;
     margin-bottom: 8px;
 }
 
@@ -247,11 +248,12 @@
 }
 
 .weather-icon-svg {
-    width: 56px;
-    height: 56px;
+    width: 100px;
+    height: 100px;
     display: block;
 }
 
+/* 温度等信息微调以适应大图标 */
 .weather-temp-info {
     display: flex;
     flex-direction: column;
@@ -259,7 +261,7 @@
 }
 
 .weather-desc {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-primary, #333);
     font-weight: 500;
     margin-bottom: 2px;
@@ -282,7 +284,7 @@
 }
 
 .temp-value {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
 }
 
@@ -394,8 +396,8 @@
 }
 
 .forecast-icon-svg {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     display: block;
 }
 
@@ -793,13 +795,29 @@
     color: #f87171;
 }
 
+/* 移动端图标尺寸调整 */
 @media (max-width: 640px) {
     .weather-icon-svg {
-        width: 44px;
-        height: 44px;
+        width: 80px;
+        height: 80px;
     }
     .forecast-icon-svg {
-        width: 30px;
-        height: 30px;
+        width: 32px;
+        height: 32px;
+    }
+    .weather-main {
+        gap: 12px;
+    }
+}
+
+/* 小屏手机进一步缩小 */
+@media (max-width: 400px) {
+    .weather-icon-svg {
+        width: 64px;
+        height: 64px;
+    }
+    .forecast-icon-svg {
+        width: 28px;
+        height: 28px;
     }
 }
