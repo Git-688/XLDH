@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，修复获取信息功能）
+// admin.js - 星聚导航后台管理（完整版，添加链接时检查重复）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -53,6 +53,33 @@
         return deviceId;
     }
 
+    // 规范化 URL（用于比较，去除末尾斜杠、协议差异等）
+    function normalizeUrl(url) {
+        if (!url) return '';
+        try {
+            let normalized = url.toLowerCase().trim();
+            // 去除协议前缀
+            normalized = normalized.replace(/^https?:\/\//, '');
+            // 去除 www 前缀
+            normalized = normalized.replace(/^www\./, '');
+            // 去除末尾斜杠
+            normalized = normalized.replace(/\/$/, '');
+            return normalized;
+        } catch(e) {
+            return url;
+        }
+    }
+
+    // 检查 URL 是否已存在（排除指定站点 id）
+    function isUrlExists(url, excludeSiteId = null) {
+        const normalizedNew = normalizeUrl(url);
+        return sites.some(site => {
+            if (excludeSiteId !== null && site.id === excludeSiteId) return false;
+            const normalizedExisting = normalizeUrl(site.url);
+            return normalizedExisting === normalizedNew;
+        });
+    }
+
     // ==================== API 请求封装 ====================
     async function apiFetch(endpoint, opt = {}) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
@@ -64,7 +91,7 @@
         return res.json();
     }
 
-    // ==================== 获取网站信息（新增） ====================
+    // ==================== 获取网站信息 ====================
     async function fetchSiteInfo(urlInputId, titleInputId, iconInputId, descInputId) {
         const urlInput = document.getElementById(urlInputId);
         const titleInput = document.getElementById(titleInputId);
@@ -110,7 +137,6 @@
         }
     }
 
-    // 定义独立的事件处理函数，避免重复绑定
     function fetchSiteInfoHandler() {
         fetchSiteInfo('mUrl', 'mTitle', 'mIcon', 'mDesc');
     }
@@ -607,6 +633,11 @@
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
                 if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
+                // 编辑时检查重复（排除自身）
+                if (isUrlExists(url, id)) {
+                    showToast('该网址已存在，请勿重复添加', 'error');
+                    return;
+                }
                 await apiFetch(`/admin/sites/${id}`, { method:'PUT', body: JSON.stringify({
                     title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
@@ -672,6 +703,11 @@
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
                 if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
+                // 检查是否已存在相同网址
+                if (isUrlExists(url)) {
+                    showToast('该网址已存在，请勿重复添加', 'error');
+                    return;
+                }
                 await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
                     subcategory_id: currentSub, title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
@@ -793,6 +829,11 @@
                 const newUrl = document.getElementById('mUrl').value.trim();
                 if (!newTitle || !newUrl) { showToast('标题和网址不能为空', 'error'); return; }
                 if (!checkUrl(newUrl)) { showToast('网址格式错误', 'error'); return; }
+                // 更换链接时检查是否已存在（排除当前站点）
+                if (isUrlExists(newUrl, siteId)) {
+                    showToast('新网址已存在，请勿重复添加', 'error');
+                    return;
+                }
                 await apiFetch('/admin/replace-link', {
                     method: 'POST',
                     body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value })
