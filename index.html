@@ -30,7 +30,6 @@
         })();
     </script>
 
-    <!-- 性能优化：预连接关键域名 -->
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://myhkw.cn">
@@ -38,7 +37,6 @@
     <link rel="dns-prefetch" href="https://icon.horse">
     <link rel="dns-prefetch" href="https://www.google.com">
 
-    <!-- CSP 策略（已兼容明月浩空音乐播放器，保留 unsafe-eval 和 wss 连接） -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz https://myhkw.cn;
@@ -63,6 +61,9 @@
 
     <!-- 播放器所需样式 -->
     <link rel="stylesheet" href="https://myhkw.cn/api/playercss?id=178139989192">
+
+    <!-- Meteocons 动画天气图标库 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/meteocons@1.1.0/css/meteocons.css">
 
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -97,7 +98,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preload" href="./js/main.js" as="script">
 
-    <!-- 滚动进度条样式：由蓝渐变到红 -->
     <style>
         .scroll-progress {
             position: fixed;
@@ -748,7 +748,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
 
-<!-- 播放器脚本（明月浩空） -->
 <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
 <script>
