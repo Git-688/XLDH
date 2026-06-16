@@ -1,7 +1,7 @@
 /**
  * 天气模块 - 基于 Worker 代理（密钥在服务端，安全）
  * 通过调用后端 /weather/proxy 接口获取天气数据，无需在前端暴露 API 密钥
- * 修改：挂载到 window.Starlink.weather，修复 bindGlobalEvents 方法
+ * 使用 Meteocons 动画天气图标（支持昼夜切换）
  */
 class WeatherModule {
     static CONFIG = {
@@ -11,7 +11,6 @@ class WeatherModule {
     };
 
     constructor() {
-        // 避免重复实例化
         if (window.Starlink && window.Starlink.weather) return window.Starlink.weather;
         
         this.currentCity = '北京';
@@ -29,9 +28,7 @@ class WeatherModule {
         this.showModalBound = this.showModal.bind(this);
         this.gpsAttempted = false;
         
-        // 挂载到 Starlink
         if (window.Starlink) window.Starlink.weather = this;
-        // 保留旧全局变量以便兼容
         window.weatherModule = this;
     }
 
@@ -47,6 +44,49 @@ class WeatherModule {
             if (m === '"') return '&quot;';
             return '&#39;';
         });
+    }
+
+    // 判断当前是否为白天（6:00 - 17:59）
+    _isDay() {
+        const hour = new Date().getHours();
+        return hour >= 6 && hour < 18;
+    }
+
+    // 获取 Meteocons 图标（根据天气条件和昼夜）
+    _getMeteoconIcon(condition, isDay = true) {
+        const map = {
+            // 晴天
+            '晴': isDay ? 'me-sun-anim' : 'me-moon-anim',
+            // 多云
+            '多云': isDay ? 'me-cloud-sun-anim' : 'me-cloud-moon-anim',
+            // 阴天
+            '阴': 'me-cloud-anim',
+            // 雾
+            '雾': 'me-fog-anim',
+            // 雨
+            '小雨': 'me-drizzle-anim',
+            '中雨': 'me-rain-anim',
+            '大雨': 'me-rain-anim',
+            '暴雨': 'me-thunder-anim',
+            '雷阵雨': 'me-thunder-anim',
+            '阵雨': 'me-rain-anim',
+            '毛毛雨': 'me-drizzle-anim',
+            // 雪
+            '雪': 'me-snow-anim',
+            '小雪': 'me-snow-anim',
+            '中雪': 'me-snow-anim',
+            '大雪': 'me-snow-anim',
+            // 风沙
+            '扬沙': 'me-wind-anim',
+            '沙尘暴': 'me-wind-anim',
+            // 默认
+            'default': isDay ? 'me-cloud-sun-anim' : 'me-cloud-moon-anim'
+        };
+
+        for (const [key, icon] of Object.entries(map)) {
+            if (condition.includes(key)) return icon;
+        }
+        return map['default'];
     }
 
     async init() {
@@ -67,7 +107,6 @@ class WeatherModule {
     }
 
     bindGlobalEvents() {
-        // 绑定天气按钮事件
         const weatherBtn = document.getElementById('weatherBtn');
         if (weatherBtn && !weatherBtn._weatherBound) {
             weatherBtn._weatherBound = true;
@@ -200,7 +239,6 @@ class WeatherModule {
                 throw new Error(data.msg || '获取天气数据失败');
             }
             this.weatherData = this.parseWeatherData(data);
-            // 手动覆盖城市名为用户选择的城市（代理返回的可能不准确）
             this.weatherData.city = city;
             this.currentCity = city;
             this.saveCity(city, true, null);
@@ -223,38 +261,13 @@ class WeatherModule {
         return true;
     }
 
+    // 解析天气数据（使用 Meteocons 图标）
     parseWeatherData(data) {
         if (!data || data.code !== 200) {
             throw new Error(data?.msg || '天气数据格式错误');
         }
 
-        const getWeatherIcon = (condition) => {
-            if (!condition) return 'fas fa-cloud-sun';
-            const iconMap = {
-                '晴': 'fas fa-sun',
-                '多云': 'fas fa-cloud-sun',
-                '阴': 'fas fa-cloud',
-                '雾': 'fas fa-smog',
-                '雨': 'fas fa-cloud-rain',
-                '小雨': 'fas fa-cloud-rain',
-                '中雨': 'fas fa-cloud-showers-heavy',
-                '大雨': 'fas fa-cloud-showers-heavy',
-                '暴雨': 'fas fa-poo-storm',
-                '雪': 'fas fa-snowflake',
-                '小雪': 'fas fa-snowflake',
-                '中雪': 'fas fa-snowflake',
-                '大雪': 'fas fa-snowman',
-                '雷阵雨': 'fas fa-bolt',
-                '阵雨': 'fas fa-cloud-showers-heavy',
-                '毛毛雨': 'fas fa-cloud-rain',
-                '扬沙': 'fas fa-wind',
-                '沙尘暴': 'fas fa-wind'
-            };
-            for (const [key, icon] of Object.entries(iconMap)) {
-                if (condition.includes(key)) return icon;
-            }
-            return 'fas fa-cloud-sun';
-        };
+        const isDay = this._isDay();
 
         let cityName = '未知';
         if (data.name) cityName = data.name;
@@ -283,10 +296,11 @@ class WeatherModule {
             const forecastDate = new Date(today);
             forecastDate.setDate(today.getDate() + (i + 1));
             const dayName = i === 0 ? '明天' : weekdays[forecastDate.getDay()];
+            const weather = dayData.weather1 || '未知';
             forecasts.push({
                 day: dayName,
-                weather: dayData.weather1 || '未知',
-                icon: getWeatherIcon(dayData.weather1),
+                weather: weather,
+                icon: this._getMeteoconIcon(weather, true), // 预报统一用白天
                 dayTemp: dayData.wd1 ? dayData.wd1 + '°C' : '--',
                 nightTemp: dayData.wd2 ? dayData.wd2 + '°C' : '--',
                 wind: (dayData.winddirection1 || '') + (dayData.windleve1 ? ' ' + dayData.windleve1 : '')
@@ -300,7 +314,7 @@ class WeatherModule {
             dayTemperature: todayTempDay ? todayTempDay + '°C' : '--',
             nightTemperature: todayTempNight ? todayTempNight + '°C' : '--',
             weather: todayWeather,
-            weatherIcon: getWeatherIcon(todayWeather),
+            weatherIcon: this._getMeteoconIcon(todayWeather, isDay),
             currentTemp: currentTemp !== undefined ? currentTemp + '°C' : todayTempDay ? todayTempDay + '°C' : '--',
             humidity: currentHumidity !== undefined ? currentHumidity + '%' : '--',
             wind: (todayWindDir ? todayWindDir + ' ' : '') + todayWindScale,
@@ -343,7 +357,6 @@ class WeatherModule {
                 content.style.opacity = '1';
             }
         });
-        // 注册到应用
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
         else if (window.app) window.app.registerModal(this);
         
@@ -780,7 +793,6 @@ class WeatherModule {
                 document.removeEventListener('keydown', this.escHandler);
                 this.escHandler = null;
             }
-            // 从应用中注销
             if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
             else if (window.app) window.app.unregisterModal(this);
         }, 200);
