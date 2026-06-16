@@ -262,24 +262,25 @@
     color: var(--text-primary, #333);
 }
 
+/* ====== 天气主区域 ====== */
 .weather-current {
     padding: 6px 10px 4px;
     border-bottom: 1px solid var(--border-color, #e9ecef);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
 }
 
-.weather-city {
+/* 位置信息（上移） */
+.weather-location {
     font-size: 10px;
     color: var(--text-secondary, #666);
+    text-align: center;
+    margin-bottom: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
     flex-wrap: wrap;
 }
-.weather-city i {
+.weather-location i {
     font-size: 9px;
 }
 .weather-update-time {
@@ -288,8 +289,81 @@
     margin-left: 2px;
 }
 
+/* 两个对称卡片（强制不换行） */
+.weather-card-container {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin-bottom: 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.weather-card-left,
+.weather-card-right {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 6px;
+    padding: 4px;
+    overflow: hidden;
+}
+
+.weather-card-left {
+    background: rgba(67, 97, 238, 0.08);
+}
+.weather-card-left img {
+    width: 100%;
+    max-height: 80px;
+    object-fit: contain;
+    display: block;
+}
+
+.weather-card-right {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 6px;
+    background: rgba(67, 97, 238, 0.05);
+}
+.weather-condition {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary, #333);
+    margin-bottom: 2px;
+    white-space: nowrap;
+}
+.weather-temps {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary, #333);
+    white-space: nowrap;
+}
+.temp-current {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary-color, #4361ee);
+}
+.temp-day {
+    color: #ff6b6b;
+}
+.temp-night {
+    color: #4dabf7;
+}
+.temp-divider {
+    color: #ccc;
+    font-size: 12px;
+}
+
+/* 天气小贴士（提示语） */
 .weather-tips {
-    margin-top: 0;
+    margin-top: 4px;
     padding: 4px 8px;
     background: var(--bg-secondary, #f8f9fa);
     border-radius: 4px;
@@ -302,75 +376,7 @@
     margin-right: 3px;
 }
 
-/* 左右对称卡片 */
-.weather-main-cards {
-    display: flex;
-    gap: 8px;
-    margin-top: 4px;
-    align-items: stretch;
-}
-
-.weather-icon-card {
-    flex: 1;
-    background: var(--bg-secondary, #f8f9fa);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    min-height: 80px;
-}
-.weather-icon-large {
-    width: 100%;
-    max-width: 100px;
-    height: auto;
-    display: block;
-}
-
-.weather-info-card {
-    flex: 1;
-    background: var(--bg-secondary, #f8f9fa);
-    border-radius: 6px;
-    padding: 6px 8px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 80px;
-}
-.weather-title-large {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-primary, #333);
-    margin-bottom: 4px;
-}
-.weather-temp-detail {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 2px 6px;
-    font-size: 12px;
-}
-.weather-temp-detail .temp-label {
-    font-size: 10px;
-    color: var(--text-secondary, #666);
-}
-.weather-temp-detail .temp-value {
-    font-size: 14px;
-    font-weight: 600;
-}
-.weather-temp-detail .temp-value.day {
-    color: #ff6b6b;
-}
-.weather-temp-detail .temp-value.night {
-    color: #4dabf7;
-}
-.weather-temp-detail .temp-separator {
-    color: #ccc;
-    font-size: 9px;
-}
-
+/* ====== 指标行 ====== */
 .weather-extra-row {
     display: flex;
     flex-wrap: nowrap;
@@ -420,6 +426,7 @@
     }
 }
 
+/* ====== 日出日落行 ====== */
 .weather-sun-row {
     display: flex;
     flex-wrap: wrap;
@@ -447,6 +454,7 @@
     color: var(--text-primary, #333);
 }
 
+/* ====== 天气预报 ====== */
 .weather-forecast {
     padding: 0 10px 6px;
 }
@@ -516,6 +524,7 @@
     margin: 4px 10px;
 }
 
+/* ====== 城市选择弹窗 ====== */
 .city-prompt-modal {
     position: fixed;
     top: 0;
@@ -644,6 +653,7 @@
     background: var(--secondary-color, #3a56d6);
 }
 
+/* ====== 模态框位置 ====== */
 .weather-modal-card {
     align-items: center;
     justify-content: flex-start;
@@ -691,22 +701,15 @@
     }
 }
 
+/* ====== 日出日落小屏 ====== */
 @media (max-width: 480px) {
     .sun-item {
         font-size: 9px;
         min-width: 50px;
     }
-    .weather-title-large {
-        font-size: 16px;
-    }
-    .weather-temp-detail {
-        font-size: 11px;
-    }
-    .weather-temp-detail .temp-value {
-        font-size: 13px;
-    }
 }
 
+/* ====== 深色模式 ====== */
 .dark-mode .weather-modal-content {
     background: var(--bg-card);
     border-color: var(--border-color);
@@ -736,35 +739,40 @@
 .dark-mode .weather-current {
     border-bottom-color: var(--border-color);
 }
-.dark-mode .weather-city {
+.dark-mode .weather-location {
     color: var(--text-secondary);
 }
 .dark-mode .weather-update-time {
     color: #8f9bb3;
 }
+.dark-mode .weather-card-left {
+    background: rgba(123, 156, 255, 0.15);
+}
+.dark-mode .weather-card-right {
+    background: rgba(123, 156, 255, 0.08);
+}
+.dark-mode .weather-condition {
+    color: var(--text-primary);
+}
+.dark-mode .weather-temps {
+    color: var(--text-primary);
+}
+.dark-mode .temp-current {
+    color: var(--primary-color);
+}
+.dark-mode .temp-day {
+    color: #ff8c8c;
+}
+.dark-mode .temp-night {
+    color: #7bc8ff;
+}
+.dark-mode .temp-divider {
+    color: #666;
+}
 .dark-mode .weather-tips {
     background: var(--bg-secondary);
     color: #c0c0c0;
     border-left-color: var(--primary-color);
-}
-.dark-mode .weather-main-cards .weather-icon-card,
-.dark-mode .weather-main-cards .weather-info-card {
-    background: var(--bg-secondary);
-}
-.dark-mode .weather-title-large {
-    color: var(--text-primary);
-}
-.dark-mode .weather-temp-detail .temp-label {
-    color: var(--text-secondary);
-}
-.dark-mode .weather-temp-detail .temp-value.day {
-    color: #ff8c8c;
-}
-.dark-mode .weather-temp-detail .temp-value.night {
-    color: #7bc8ff;
-}
-.dark-mode .weather-temp-detail .temp-separator {
-    color: #666;
 }
 .dark-mode .weather-extra-row {
     border-bottom-color: var(--border-color);
