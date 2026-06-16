@@ -224,7 +224,7 @@
 .alarm-item {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     font-size: 9px;
     padding: 2px 0;
     flex-wrap: wrap;
@@ -236,13 +236,18 @@
     border-radius: 4px;
     font-size: 8px;
     font-weight: 600;
+    flex-shrink: 0;
 }
-.alarm-item .alarm-title {
+.alarm-title {
     flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-.alarm-item .alarm-time {
+.alarm-time {
     color: var(--text-secondary);
     font-size: 8px;
+    flex-shrink: 0;
 }
 
 .weather-current {
@@ -339,34 +344,39 @@
     margin-right: 3px;
 }
 
-.weather-extra-details {
+.weather-extra-details,
+.weather-extra-details2 {
     padding: 4px 10px;
     border-bottom: 1px solid var(--border-color, #e9ecef);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
 }
-.weather-extra-details::-webkit-scrollbar {
-    display: none;
+.weather-extra-details2 {
+    border-bottom: none;
 }
-.extra-scroll {
-    display: flex;
-    gap: 10px;
-    white-space: nowrap;
+.extra-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px 6px;
+}
+.weather-extra-details2 .extra-grid {
+    grid-template-columns: repeat(4, 1fr);
 }
 .extra-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 2px;
-    flex-shrink: 0;
+    padding: 2px 0;
 }
 .extra-label {
-    font-size: 8px;
+    font-size: 7px;
     color: var(--text-secondary, #999);
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
 }
 .extra-value {
     font-size: 10px;
     font-weight: 500;
     color: var(--text-primary, #333);
+    margin-top: 0;
 }
 
 .weather-sun-times {
@@ -689,7 +699,8 @@
     color: #c0c0c0;
     border-left-color: var(--primary-color);
 }
-.dark-mode .weather-extra-details {
+.dark-mode .weather-extra-details,
+.dark-mode .weather-extra-details2 {
     border-bottom-color: var(--border-color);
 }
 .dark-mode .extra-value {
@@ -810,6 +821,12 @@
     .weather-main {
         gap: 10px;
     }
+    .extra-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .weather-extra-details2 .extra-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }
 @media (max-width: 400px) {
     .weather-icon-svg {
@@ -819,5 +836,8 @@
     .forecast-icon-svg {
         width: 24px;
         height: 24px;
+    }
+    .weather-extra-details2 .extra-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
