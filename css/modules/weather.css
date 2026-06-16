@@ -1,6 +1,4 @@
-/* ==================== 天气模态框基础样式 - 纯色背景（无亚克力） ==================== */
-
-/* 遮罩层 - 无背景，纯透明 */
+/* 天气模态框基础样式 - 纯色背景（无亚克力） */
 .weather-modal-card {
     position: fixed;
     top: 0;
@@ -26,7 +24,6 @@
     pointer-events: auto;
 }
 
-/* 天气卡片内容 - 纯色背景，无亚克力效果，大小不变 */
 .weather-modal-content {
     max-width: 350px;
     width: 100%;
@@ -47,7 +44,6 @@
     opacity: 1;
 }
 
-/* 移动端保持缩放淡入，位置不变 */
 @media (max-width: 768px) {
     .weather-modal-card {
         align-items: center;
@@ -63,7 +59,6 @@
     }
 }
 
-/* ========== 头部样式 ========== */
 .weather-header {
     padding: 12px 16px;
     background: var(--bg-secondary, #f8f9fa);
@@ -138,14 +133,12 @@
     color: var(--primary-color, #4361ee);
 }
 
-/* ========== 内容区域 ========== */
 .weather-body {
     overflow: visible;
     flex: 1;
     padding: 0;
 }
 
-/* 加载状态 */
 .loading-state {
     padding: 30px 20px;
     text-align: center;
@@ -173,7 +166,6 @@
     margin-top: 8px;
 }
 
-/* 错误状态 */
 .error-state {
     padding: 30px 20px;
     text-align: center;
@@ -212,9 +204,6 @@
     transition: background-color 0.2s ease;
 }
 
-/* ==================== 天气数据展示 ==================== */
-
-/* 当前天气 */
 .weather-current {
     padding: 10px 12px 8px;
     border-bottom: 1px solid var(--border-color, #e9ecef);
@@ -253,6 +242,11 @@
 .weather-icon {
     font-size: 32px;
     color: var(--primary-color, #4361ee);
+}
+
+.weather-icon [class^="me-"] {
+    font-size: 2.8rem;
+    line-height: 1;
 }
 
 .weather-temp-info {
@@ -302,7 +296,6 @@
     font-size: 10px;
 }
 
-/* 天气提示 */
 .weather-tips {
     margin-top: 8px;
     padding: 6px 10px;
@@ -318,7 +311,6 @@
     margin-right: 4px;
 }
 
-/* 天气详情网格 */
 .weather-details {
     padding: 12px;
     display: grid;
@@ -352,7 +344,6 @@
     font-weight: 500;
 }
 
-/* 天气预报 */
 .weather-forecast {
     padding: 0 12px 12px;
 }
@@ -398,6 +389,11 @@
     margin-bottom: 4px;
 }
 
+.forecast-day-icon [class^="me-"] {
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
 .forecast-day-weather {
     font-size: 9px;
     color: var(--text-primary, #333);
@@ -423,12 +419,10 @@
     color: #4dabf7;
 }
 
-/* 手动模式提示条 */
 .manual-mode-hint {
     margin: 6px 12px;
 }
 
-/* ==================== 城市选择弹出框 ==================== */
 .city-prompt-modal {
     position: fixed;
     top: 0;
@@ -576,30 +570,6 @@
     background: var(--secondary-color, #3a56d6);
 }
 
-/* ==================== 移动端适配 ==================== */
-@media (max-width: 768px) {
-    .weather-modal-card {
-        padding: 12px var(--container-padding-xs, 16px);
-    }
-    .city-prompt-modal {
-        padding: 12px var(--container-padding-xs, 16px);
-    }
-}
-
-@media (max-width: 480px) {
-    .weather-modal-card {
-        padding: 12px var(--container-padding-xs, 16px);
-    }
-    .city-prompt-modal {
-        padding: 12px var(--container-padding-xs, 16px);
-    }
-    .city-prompt-content {
-        width: 260px;
-        padding: 14px;
-    }
-}
-
-/* ==================== 天气预报模态框特殊定位（导航栏下方，上下间距相等） ==================== */
 .weather-modal-card {
     align-items: center;
     justify-content: flex-start;
@@ -651,7 +621,6 @@
     }
 }
 
-/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
 .dark-mode .weather-modal-content {
     background: var(--bg-card);
     border-color: var(--border-color);
@@ -814,4 +783,13 @@
 }
 .dark-mode .error-icon {
     color: #f87171;
+}
+
+@media (max-width: 640px) {
+    .weather-icon [class^="me-"] {
+        font-size: 2.2rem;
+    }
+    .forecast-day-icon [class^="me-"] {
+        font-size: 1.5rem;
+    }
 }
