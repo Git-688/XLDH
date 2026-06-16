@@ -511,45 +511,48 @@ class WeatherModule {
         const civilDawn = sun.civil_twilight_begin || '--';
         const civilDusk = sun.civil_twilight_end || '--';
 
+        // 城市 + 更新时间（移动至提示上方）
+        const locationHtml = `
+            <div class="weather-city">
+                <i class="fas fa-location-dot"></i>
+                ${esc(weatherData.city)}${weatherData.province ? `, ${esc(weatherData.province)}` : ''}
+                <span class="weather-update-time">${esc(weatherData.updateTime)}更新</span>
+            </div>
+        `;
+
+        // 提示信息（放在城市信息下方）
+        const tipsHtml = weatherData.tips ? `
+            <div class="weather-tips">
+                <i class="fas fa-lightbulb"></i>
+                ${esc(weatherData.tips)}
+            </div>
+        ` : '';
+
         return `
             ${manualModeHint}
             ${alarmsHtml}
             <div class="weather-current">
-                <div class="weather-city">
-                    <i class="fas fa-location-dot"></i>
-                    ${esc(weatherData.city)}${weatherData.province ? `, ${esc(weatherData.province)}` : ''}
-                    <span class="weather-update-time">${esc(weatherData.updateTime)}更新</span>
-                </div>
-                <div class="weather-main">
-                    <div class="weather-icon">
-                        <img src="${weatherData.weatherIconUrl}" alt="${esc(weatherData.weather)}" class="weather-icon-svg" loading="lazy">
+                ${locationHtml}
+                ${tipsHtml}
+                <!-- 左右对称卡片：左图标，右天气与温度 -->
+                <div class="weather-main-cards">
+                    <div class="weather-icon-card">
+                        <img src="${weatherData.weatherIconUrl}" alt="${esc(weatherData.weather)}" class="weather-icon-large" loading="lazy">
                     </div>
-                    <div class="weather-temp-info">
-                        <div class="weather-desc">${weatherData.weather}</div>
-                        <div class="temp-details">
-                            <div class="temp-item">
-                                <div class="temp-label">当前</div>
-                                <div class="temp-value day">${weatherData.currentTemp}</div>
-                            </div>
-                            <div class="temp-separator">/</div>
-                            <div class="temp-item">
-                                <div class="temp-label">白天</div>
-                                <div class="temp-value day">${weatherData.dayTemperature}</div>
-                            </div>
-                            <div class="temp-separator">/</div>
-                            <div class="temp-item">
-                                <div class="temp-label">夜间</div>
-                                <div class="temp-value night">${weatherData.nightTemperature}</div>
-                            </div>
+                    <div class="weather-info-card">
+                        <div class="weather-title-large">${weatherData.weather}</div>
+                        <div class="weather-temp-detail">
+                            <span class="temp-label">当前</span>
+                            <span class="temp-value day">${weatherData.currentTemp}</span>
+                            <span class="temp-separator">/</span>
+                            <span class="temp-label">白天</span>
+                            <span class="temp-value day">${weatherData.dayTemperature}</span>
+                            <span class="temp-separator">/</span>
+                            <span class="temp-label">夜间</span>
+                            <span class="temp-value night">${weatherData.nightTemperature}</span>
                         </div>
                     </div>
                 </div>
-                ${weatherData.tips ? `
-                <div class="weather-tips">
-                    <i class="fas fa-lightbulb"></i>
-                    ${esc(weatherData.tips)}
-                </div>
-                ` : ''}
             </div>
 
             <div class="weather-extra-row">
