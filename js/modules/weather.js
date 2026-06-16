@@ -1,8 +1,7 @@
 /**
- * 天气模块 - 基于 Worker 代理（密钥在服务端，安全）
- * 通过调用后端 /weather/proxy 接口获取天气数据，无需在前端暴露 API 密钥
- * 使用 Meteocons SVG 动画天气图标（支持昼夜切换，扩充天气类型）
- * 新增：体感温度、气压、降水量、风速、日出日落、预警信息
+ * 天气模块 - 紧凑布局版本
+ * 使用 Meteocons SVG 图标，支持昼夜切换
+ * 显示：体感温度、气压、降水量、风速、风向、风力、湿度、预警、日出日落
  */
 class WeatherModule {
     static CONFIG = {
@@ -47,13 +46,11 @@ class WeatherModule {
         });
     }
 
-    // 判断当前是否为白天（6:00 - 17:59）
     _isDay() {
         const hour = new Date().getHours();
         return hour >= 6 && hour < 18;
     }
 
-    // 获取 Meteocons SVG 文件名（不含扩展名）- 扩充映射
     _getMeteoconIconName(condition, isDay = true) {
         const weatherMap = [
             { match: '冰雹', icon: 'hail' },
@@ -291,10 +288,8 @@ class WeatherModule {
         const windDir = nowInfo.windDirection;
         const windScale = nowInfo.windScale;
 
-        // 预警信息
         const alarms = data.alarm && Array.isArray(data.alarm) ? data.alarm : [];
 
-        // 日出日落（取今天）
         let sunTimes = null;
         if (data.suntimes && Array.isArray(data.suntimes) && data.suntimes.length > 0) {
             const today = new Date();
@@ -308,7 +303,6 @@ class WeatherModule {
             if (!sunTimes) sunTimes = data.suntimes[0];
         }
 
-        // 未来几天预报
         const dayKeys = ['weatherday2', 'weatherday3', 'weatherday4', 'weatherday5', 'weatherday6', 'weatherday7'];
         const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
         const forecasts = [];
@@ -344,11 +338,9 @@ class WeatherModule {
             humidity: currentHumidity !== undefined ? currentHumidity + '%' : '--',
             wind: (todayWindDir ? todayWindDir + ' ' : '') + todayWindScale,
             visibility: nowInfo.visibility || '--',
-            airQuality: nowInfo.air || '--',
             updateTime: data.uptime ? data.uptime : (nowInfo.uptime || '刚刚'),
             tips: tips,
             forecasts: forecasts,
-            // 新增字段
             feelsLike: feelsLike !== undefined ? feelsLike + '°C' : '--',
             pressure: pressure !== undefined ? pressure + ' hPa' : '--',
             precipitation: precipitation !== undefined ? precipitation + ' mm' : '--',
@@ -375,7 +367,6 @@ class WeatherModule {
         return tips.length > 0 ? tips.join('；') : '天气信息更新，请注意查看详情';
     }
 
-    // ========== UI 渲染与交互 ==========
     showModal() {
         if (this.isLoading) return;
         this.closeOtherModals();
@@ -480,13 +471,12 @@ class WeatherModule {
         const esc = this._escapeHtml.bind(this);
         
         const manualModeHint = !this.useAutoLocation ? `
-            <div class="manual-mode-hint" style="background:rgba(245,158,11,0.1); border-radius:8px; padding:8px 12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+            <div class="manual-mode-hint" style="background:rgba(245,158,11,0.1); border-radius:8px; padding:6px 10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-size:12px; color:#d97706;"><i class="fas fa-map-marker-alt"></i> 当前为手动选择城市</span>
                 <button id="switchToAutoBtn" class="weather-action-btn" style="background:#4361ee; color:white; border:none; border-radius:6px; padding:4px 12px; font-size:11px;">📍 GPS定位</button>
             </div>
         ` : '';
         
-        // 预警信息渲染
         let alarmsHtml = '';
         if (weatherData.alarms && weatherData.alarms.length > 0) {
             alarmsHtml = `<div class="weather-alarms">
@@ -501,7 +491,6 @@ class WeatherModule {
             </div>`;
         }
 
-        // 日出日落信息
         let sunHtml = '';
         if (weatherData.sunTimes) {
             const sun = weatherData.sunTimes;
@@ -584,10 +573,6 @@ class WeatherModule {
                     <div class="extra-item">
                         <span class="extra-label">湿度</span>
                         <span class="extra-value">${weatherData.humidity}</span>
-                    </div>
-                    <div class="extra-item">
-                        <span class="extra-label">能见度</span>
-                        <span class="extra-value">${weatherData.visibility}</span>
                     </div>
                 </div>
             </div>
