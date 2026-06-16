@@ -201,7 +201,6 @@
     transition: background-color 0.2s ease;
 }
 
-/* ====== 天气预警样式（标题+右上角时间） ====== */
 .weather-alarms {
     padding: 6px 10px;
     margin: 4px 10px 6px;
@@ -357,10 +356,9 @@
     margin-right: 3px;
 }
 
-/* ====== 指标行 - 等宽网格（填满整行） ====== */
 .weather-extra-row {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);  /* 7列等宽 */
+    grid-template-columns: repeat(7, 1fr);
     gap: 4px;
     padding: 4px 6px;
     border-bottom: 1px solid var(--border-color, #e9ecef);
@@ -371,7 +369,7 @@
     align-items: center;
     padding: 2px 0;
     text-align: center;
-    min-width: 0;  /* 防止溢出 */
+    min-width: 0;
 }
 .extra-label {
     font-size: 7px;
@@ -390,16 +388,22 @@
 
 .weather-sun-row {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-around;
     padding: 4px 10px;
     border-bottom: 1px solid var(--border-color, #e9ecef);
     background: var(--bg-secondary, #f8f9fa);
+    gap: 4px 8px;
 }
 .sun-item {
     display: flex;
     align-items: center;
     gap: 4px;
     font-size: 10px;
+    flex: 1 0 auto;
+    white-space: nowrap;
+    justify-content: center;
+    min-width: 60px;
 }
 .sun-label {
     color: var(--text-secondary, #666);
@@ -653,21 +657,25 @@
     }
 }
 
-/* ====== 移动端指标行列数自适应 ====== */
 @media (max-width: 640px) {
     .weather-extra-row {
-        grid-template-columns: repeat(4, 1fr);  /* 小屏换行，每行4个 */
+        grid-template-columns: repeat(4, 1fr);
         gap: 3px;
     }
 }
 @media (max-width: 400px) {
     .weather-extra-row {
-        grid-template-columns: repeat(3, 1fr);  /* 超小屏每行3个 */
+        grid-template-columns: repeat(3, 1fr);
         gap: 2px;
     }
 }
+@media (max-width: 480px) {
+    .sun-item {
+        font-size: 9px;
+        min-width: 50px;
+    }
+}
 
-/* ====== 深色模式 ====== */
 .dark-mode .weather-modal-content {
     background: var(--bg-card);
     border-color: var(--border-color);
@@ -744,9 +752,6 @@
 }
 .dark-mode .alarm-item .alarm-title {
     color: var(--text-primary);
-}
-.dark-mode .alarm-item .alarm-time {
-    color: var(--text-secondary);
 }
 .dark-mode .forecast-day {
     background: var(--bg-secondary);
