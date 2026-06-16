@@ -356,20 +356,26 @@
     margin-right: 3px;
 }
 
+/* ====== 指标行：始终一行，等宽自适应 ====== */
 .weather-extra-row {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    display: flex;
+    flex-wrap: nowrap;          /* 强制不换行 */
     gap: 4px;
     padding: 4px 6px;
     border-bottom: 1px solid var(--border-color, #e9ecef);
+    overflow: hidden;           /* 防止溢出容器，但可能会截断，可通过缩小字体解决 */
+    width: 100%;
+    box-sizing: border-box;
 }
 .extra-item {
+    flex: 1 1 0;               /* 等分剩余空间，允许收缩 */
+    min-width: 0;              /* 防止内容撑开 */
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 2px 0;
     text-align: center;
-    min-width: 0;
+    overflow: hidden;          /* 隐藏溢出内容 */
 }
 .extra-label {
     font-size: 7px;
@@ -377,6 +383,9 @@
     text-transform: uppercase;
     letter-spacing: 0.2px;
     white-space: nowrap;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .extra-value {
     font-size: 10px;
@@ -384,6 +393,19 @@
     color: var(--text-primary, #333);
     margin-top: 0;
     white-space: nowrap;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 超小屏时进一步缩小字体，保证一行显示 */
+@media (max-width: 360px) {
+    .extra-label {
+        font-size: 6px;
+    }
+    .extra-value {
+        font-size: 8px;
+    }
 }
 
 .weather-sun-row {
@@ -657,18 +679,7 @@
     }
 }
 
-@media (max-width: 640px) {
-    .weather-extra-row {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 3px;
-    }
-}
-@media (max-width: 400px) {
-    .weather-extra-row {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 2px;
-    }
-}
+/* 日出日落小屏优化 */
 @media (max-width: 480px) {
     .sun-item {
         font-size: 9px;
@@ -676,6 +687,7 @@
     }
 }
 
+/* ====== 深色模式 ====== */
 .dark-mode .weather-modal-content {
     background: var(--bg-card);
     border-color: var(--border-color);
