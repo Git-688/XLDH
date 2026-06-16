@@ -201,7 +201,7 @@
     transition: background-color 0.2s ease;
 }
 
-/* ====== 天气预警样式（修改部分） ====== */
+/* ====== 天气预警样式（标题+右上角时间） ====== */
 .weather-alarms {
     padding: 6px 10px;
     margin: 4px 10px 6px;
@@ -214,7 +214,6 @@
     border-left-color: #f39c12;
 }
 
-/* 新增：标题行 + 时间 Flex 布局 */
 .alarms-title-wrapper {
     display: flex;
     justify-content: space-between;
@@ -234,7 +233,6 @@
     font-size: 10px;
 }
 
-/* 右上角时间样式 */
 .alarms-time-header {
     font-size: 10px;
     color: var(--text-secondary, #666);
@@ -242,7 +240,6 @@
     white-space: nowrap;
 }
 
-/* 预警条目（时间已移除） */
 .alarm-item {
     display: flex;
     align-items: center;
@@ -360,22 +357,21 @@
     margin-right: 3px;
 }
 
-/* 等宽平分样式（修复左密右疏） */
+/* ====== 指标行 - 等宽网格（填满整行） ====== */
 .weather-extra-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);  /* 7列等宽 */
+    gap: 4px;
     padding: 4px 6px;
     border-bottom: 1px solid var(--border-color, #e9ecef);
-    flex-wrap: nowrap;
-    gap: 2px;
-    /* 去掉 justify-content，由 flex 自动分配 */
 }
 .extra-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 2px 0;
-    min-width: 0;
-    flex: 1 1 0; /* 等分剩余空间 */
+    text-align: center;
+    min-width: 0;  /* 防止溢出 */
 }
 .extra-label {
     font-size: 7px;
@@ -657,6 +653,21 @@
     }
 }
 
+/* ====== 移动端指标行列数自适应 ====== */
+@media (max-width: 640px) {
+    .weather-extra-row {
+        grid-template-columns: repeat(4, 1fr);  /* 小屏换行，每行4个 */
+        gap: 3px;
+    }
+}
+@media (max-width: 400px) {
+    .weather-extra-row {
+        grid-template-columns: repeat(3, 1fr);  /* 超小屏每行3个 */
+        gap: 2px;
+    }
+}
+
+/* ====== 深色模式 ====== */
 .dark-mode .weather-modal-content {
     background: var(--bg-card);
     border-color: var(--border-color);
@@ -825,45 +836,4 @@
 }
 .dark-mode .error-icon {
     color: #f87171;
-}
-
-@media (max-width: 640px) {
-    .weather-icon-svg {
-        width: 64px;
-        height: 64px;
-    }
-    .forecast-icon-svg {
-        width: 28px;
-        height: 28px;
-    }
-    .weather-main {
-        gap: 10px;
-    }
-    .weather-extra-row {
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        gap: 2px 8px;
-        padding: 4px 6px;
-    }
-    .extra-item {
-        flex: 0 0 auto;
-    }
-}
-@media (max-width: 400px) {
-    .weather-icon-svg {
-        width: 56px;
-        height: 56px;
-    }
-    .forecast-icon-svg {
-        width: 24px;
-        height: 24px;
-    }
-    .weather-extra-row {
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        gap: 2px 6px;
-    }
-    .extra-item {
-        flex: 0 0 auto;
-    }
 }
