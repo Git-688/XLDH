@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，添加链接时检查重复）
+// admin.js - 星聚导航后台管理（完整版，添加分类/子分类后保持当前选中）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -58,11 +58,8 @@
         if (!url) return '';
         try {
             let normalized = url.toLowerCase().trim();
-            // 去除协议前缀
             normalized = normalized.replace(/^https?:\/\//, '');
-            // 去除 www 前缀
             normalized = normalized.replace(/^www\./, '');
-            // 去除末尾斜杠
             normalized = normalized.replace(/\/$/, '');
             return normalized;
         } catch(e) {
@@ -387,6 +384,28 @@
         }
     }
 
+    async function loadAllDataButKeepSelection() {
+        try {
+            const [catData, subData, siteData] = await Promise.all([
+                apiFetch('/admin/categories'),
+                apiFetch('/admin/subcategories'),
+                apiFetch('/admin/sites')
+            ]);
+            categories = catData;
+            subcategories = subData;
+            sites = siteData;
+            renderCatBar();
+            // 恢复选中的分类和子分类
+            if (currentCat) {
+                selectCat(currentCat);
+                if (currentSub) selectSub(currentSub);
+            }
+        } catch (e) {
+            if (e.message === 'Unauthorized') logout();
+            else showToast('数据加载失败', 'error');
+        }
+    }
+
     function selectCat(cid) {
         currentCat = cid;
         currentSub = null;
@@ -594,10 +613,10 @@
             const order = parseInt(document.getElementById('mOrder').value) || 0;
             if (!name) { showToast('名称不能为空', 'error'); return; }
             await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
-            showToast('修改成功'); await loadAllData();
+            showToast('修改成功'); await loadAllDataButKeepSelection();
         }, true, async () => { 
             await apiFetch(`/admin/categories/${id}`, { method:'DELETE' }); 
-            showToast('分类已删除'); await loadAllData(); 
+            showToast('分类已删除'); await loadAllDataButKeepSelection(); 
         });
     }
 
@@ -612,10 +631,10 @@
             const order = parseInt(document.getElementById('mOrder').value) || 0;
             if (!name) { showToast('名称不能为空', 'error'); return; }
             await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
-            showToast('修改成功'); await loadAllData();
+            showToast('修改成功'); await loadAllDataButKeepSelection();
         }, true, async () => { 
             await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); 
-            showToast('子分类已删除'); await loadAllData(); 
+            showToast('子分类已删除'); await loadAllDataButKeepSelection(); 
         });
     }
 
@@ -633,7 +652,6 @@
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
                 if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
-                // 编辑时检查重复（排除自身）
                 if (isUrlExists(url, id)) {
                     showToast('该网址已存在，请勿重复添加', 'error');
                     return;
@@ -642,9 +660,9 @@
                     title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
-                showToast('修改成功'); await loadAllData();
+                showToast('修改成功'); await loadAllDataButKeepSelection();
             }, true,
-            async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); showToast('删除成功'); await loadAllData(); }
+            async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); showToast('删除成功'); await loadAllDataButKeepSelection(); }
         );
         setTimeout(() => {
             const descTextarea = document.getElementById('mDesc');
@@ -669,7 +687,9 @@
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/categories', { method:'POST', body: JSON.stringify({ name, display_order: +document.getElementById('mSort').value }) });
-                showToast('添加成功'); await loadAllData();
+                showToast('添加成功');
+                // 添加后重新加载数据但保持当前选中的分类和子分类
+                await loadAllDataButKeepSelection();
             }
         );
     }
@@ -684,7 +704,9 @@
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/subcategories', { method:'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('mSort').value }) });
-                showToast('添加成功'); await loadAllData();
+                showToast('添加成功');
+                // 添加后重新加载数据但保持当前选中的分类和子分类
+                await loadAllDataButKeepSelection();
             }
         );
     }
@@ -703,7 +725,6 @@
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
                 if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
-                // 检查是否已存在相同网址
                 if (isUrlExists(url)) {
                     showToast('该网址已存在，请勿重复添加', 'error');
                     return;
@@ -736,27 +757,6 @@
                 fetchBtn.addEventListener('click', fetchSiteInfoHandler);
             }
         }, 150);
-    }
-
-    async function loadAllDataButKeepSelection() {
-        try {
-            const [catData, subData, siteData] = await Promise.all([
-                apiFetch('/admin/categories'),
-                apiFetch('/admin/subcategories'),
-                apiFetch('/admin/sites')
-            ]);
-            categories = catData;
-            subcategories = subData;
-            sites = siteData;
-            renderCatBar();
-            if (currentCat) {
-                selectCat(currentCat);
-                if (currentSub) selectSub(currentSub);
-            }
-        } catch (e) {
-            if (e.message === 'Unauthorized') logout();
-            else showToast('数据加载失败', 'error');
-        }
     }
 
     // ==================== 辅助功能：排行、反馈等 ====================
@@ -829,7 +829,6 @@
                 const newUrl = document.getElementById('mUrl').value.trim();
                 if (!newTitle || !newUrl) { showToast('标题和网址不能为空', 'error'); return; }
                 if (!checkUrl(newUrl)) { showToast('网址格式错误', 'error'); return; }
-                // 更换链接时检查是否已存在（排除当前站点）
                 if (isUrlExists(newUrl, siteId)) {
                     showToast('新网址已存在，请勿重复添加', 'error');
                     return;
@@ -840,7 +839,7 @@
                 });
                 showToast('链接已更新', 'success');
                 await loadFeedback();
-                await loadAllData();
+                await loadAllDataButKeepSelection();
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 refreshNavigationStats();
                 closeModal();
@@ -923,7 +922,7 @@
             const result = await response.json();
             if (response.ok) {
                 showToast('导入成功', 'success');
-                await loadAllData();
+                await loadAllDataButKeepSelection();
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 refreshNavigationStats();
                 closeImportModal();
@@ -1123,7 +1122,7 @@
                     detailModal.classList.remove('show');
                     cleanupSelectors();
                     await loadSubmissions();
-                    await loadAllData();
+                    await loadAllDataButKeepSelection();
                     await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                     refreshNavigationStats();
                 } catch (err) {
