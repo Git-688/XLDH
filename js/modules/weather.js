@@ -1,7 +1,6 @@
 /**
- * 天气模块 - 紧凑一行布局版本
+ * 天气模块 - 紧凑布局版本
  * 使用 Meteocons SVG 图标，支持昼夜切换
- * 额外详情改为一行滚动显示
  */
 class WeatherModule {
     static CONFIG = {
@@ -337,6 +336,7 @@ class WeatherModule {
             currentTemp: currentTemp !== undefined ? currentTemp + '°C' : todayTempDay ? todayTempDay + '°C' : '--',
             humidity: currentHumidity !== undefined ? currentHumidity + '%' : '--',
             wind: (todayWindDir ? todayWindDir + ' ' : '') + todayWindScale,
+            visibility: nowInfo.visibility || '--',
             updateTime: data.uptime ? data.uptime : (nowInfo.uptime || '刚刚'),
             tips: tips,
             forecasts: forecasts,
@@ -481,7 +481,7 @@ class WeatherModule {
             alarmsHtml = `<div class="weather-alarms">
                 <div class="alarms-title"><i class="fas fa-exclamation-triangle"></i> 天气预警</div>
                 ${weatherData.alarms.map(alarm => `
-                    <div class="alarm-item ${alarm.signallevel || ''}">
+                    <div class="alarm-item">
                         <span class="alarm-level">${alarm.signallevel || '预警'}</span>
                         <span class="alarm-title">${esc(alarm.title || '')}</span>
                         <span class="alarm-time">${esc(alarm.effective || '')}</span>
@@ -544,7 +544,7 @@ class WeatherModule {
             </div>
 
             <div class="weather-extra-details">
-                <div class="extra-scroll">
+                <div class="extra-grid">
                     <div class="extra-item">
                         <span class="extra-label">体感温度</span>
                         <span class="extra-value">${weatherData.feelsLike}</span>
@@ -557,6 +557,11 @@ class WeatherModule {
                         <span class="extra-label">降水量</span>
                         <span class="extra-value">${weatherData.precipitation}</span>
                     </div>
+                </div>
+            </div>
+
+            <div class="weather-extra-details2">
+                <div class="extra-grid">
                     <div class="extra-item">
                         <span class="extra-label">风速</span>
                         <span class="extra-value">${weatherData.windSpeed}</span>
