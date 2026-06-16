@@ -1,7 +1,7 @@
 /**
  * 天气模块 - 基于 Worker 代理（密钥在服务端，安全）
  * 通过调用后端 /weather/proxy 接口获取天气数据，无需在前端暴露 API 密钥
- * 使用 Meteocons SVG 动画天气图标（支持昼夜切换）
+ * 使用 Meteocons SVG 图标（支持昼夜切换，加载失败自动降级为 Font Awesome）
  */
 class WeatherModule {
     static CONFIG = {
@@ -52,7 +52,7 @@ class WeatherModule {
         return hour >= 6 && hour < 18;
     }
 
-    // 获取 Meteocons SVG 文件名（不含扩展名）
+    // 获取 Meteocons SVG 文件名（不含扩展名），增加更精细的映射
     _getMeteoconIconName(condition, isDay = true) {
         const map = {
             // 晴天
@@ -63,7 +63,8 @@ class WeatherModule {
             '阴': 'cloudy',
             // 雾
             '雾': 'fog',
-            // 雨
+            '霾': 'fog',
+            // 雨 - 细化
             '小雨': 'drizzle',
             '中雨': 'rain',
             '大雨': 'heavy-rain',
@@ -71,28 +72,38 @@ class WeatherModule {
             '雷阵雨': 'thunderstorm',
             '阵雨': 'showers',
             '毛毛雨': 'drizzle',
+            '雨': 'rain',
             // 雪
             '雪': 'snow',
             '小雪': 'snow',
             '中雪': 'snow',
             '大雪': 'snow',
+            '暴雪': 'snow',
             // 风沙
             '扬沙': 'wind',
             '沙尘暴': 'wind',
-            // 默认
-            'default': isDay ? 'clear-day' : 'clear-night'
+            '浮尘': 'wind',
+            // 其他
+            '晴间多云': isDay ? 'partly-cloudy-day' : 'partly-cloudy-night',
+            '多云转晴': isDay ? 'partly-cloudy-day' : 'partly-cloudy-night',
         };
 
         for (const [key, icon] of Object.entries(map)) {
             if (condition.includes(key)) return icon;
         }
-        return map['default'];
+        return map['default'] || (isDay ? 'clear-day' : 'clear-night');
     }
 
-    // 获取完整图标 URL
+    // 获取完整图标 URL（使用 CDN）
     _getMeteoconIconUrl(condition, isDay = true) {
         const name = this._getMeteoconIconName(condition, isDay);
-        return `https://unpkg.com/@meteocons/svg/fill/${name}.svg`;
+        // 使用 jsdelivr CDN 更稳定
+        return `https://cdn.jsdelivr.net/npm/@meteocons/svg/fill/${name}.svg`;
+    }
+
+    // 生成图片标签，带 onerror 降级
+    _createIconImg(iconUrl, alt, className = 'weather-icon-svg') {
+        return `<img src="${iconUrl}" alt="${this._escapeHtml(alt)}" class="${className}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML = '<i class=\\'fas fa-cloud-sun\\' style=\\'font-size:inherit;\\'></i>';">`;
     }
 
     async init() {
@@ -458,6 +469,9 @@ class WeatherModule {
             </div>
         ` : '';
         
+        // 生成主图标 HTML（带降级）
+        const mainIconHtml = this._createIconImg(weatherData.weatherIconUrl, weatherData.weather, 'weather-icon-svg');
+        
         return `
             ${manualModeHint}
             <div class="weather-current">
@@ -467,9 +481,7 @@ class WeatherModule {
                     <span class="weather-update-time">${esc(weatherData.updateTime)}更新</span>
                 </div>
                 <div class="weather-main">
-                    <div class="weather-icon">
-                        <img src="${weatherData.weatherIconUrl}" alt="${esc(weatherData.weather)}" class="weather-icon-svg" loading="lazy">
-                    </div>
+                    <div class="weather-icon">${mainIconHtml}</div>
                     <div class="weather-temp-info">
                         <div class="weather-desc">${weatherData.weather}</div>
                         <div class="temp-details">
@@ -516,20 +528,21 @@ class WeatherModule {
                     <i class="fas fa-calendar-alt"></i> 未来几天预报
                 </div>
                 <div class="forecast-days">
-                    ${weatherData.forecasts.map(day => `
-                        <div class="forecast-day">
-                            <div class="forecast-day-name">${day.day}</div>
-                            <div class="forecast-day-icon">
-                                <img src="${day.iconUrl}" alt="${esc(day.weather)}" class="forecast-icon-svg" loading="lazy">
+                    ${weatherData.forecasts.map(day => {
+                        const iconHtml = this._createIconImg(day.iconUrl, day.weather, 'forecast-icon-svg');
+                        return `
+                            <div class="forecast-day">
+                                <div class="forecast-day-name">${day.day}</div>
+                                <div class="forecast-day-icon">${iconHtml}</div>
+                                <div class="forecast-day-weather">${day.weather}</div>
+                                <div class="forecast-day-temp">
+                                    <span class="day">${day.dayTemp}</span>
+                                    <span class="sep">/</span>
+                                    <span class="night">${day.nightTemp}</span>
+                                </div>
                             </div>
-                            <div class="forecast-day-weather">${day.weather}</div>
-                            <div class="forecast-day-temp">
-                                <span class="day">${day.dayTemp}</span>
-                                <span class="sep">/</span>
-                                <span class="night">${day.nightTemp}</span>
-                            </div>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             </div>
         `;
