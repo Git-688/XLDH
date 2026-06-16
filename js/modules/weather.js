@@ -1,7 +1,7 @@
 /**
- * 天气模块 - 紧凑布局版本
+ * 天气模块 - 紧凑一行布局版本
  * 使用 Meteocons SVG 图标，支持昼夜切换
- * 显示：体感温度、气压、降水量、风速、风向、风力、湿度、预警、日出日落
+ * 额外详情改为一行滚动显示
  */
 class WeatherModule {
     static CONFIG = {
@@ -337,7 +337,6 @@ class WeatherModule {
             currentTemp: currentTemp !== undefined ? currentTemp + '°C' : todayTempDay ? todayTempDay + '°C' : '--',
             humidity: currentHumidity !== undefined ? currentHumidity + '%' : '--',
             wind: (todayWindDir ? todayWindDir + ' ' : '') + todayWindScale,
-            visibility: nowInfo.visibility || '--',
             updateTime: data.uptime ? data.uptime : (nowInfo.uptime || '刚刚'),
             tips: tips,
             forecasts: forecasts,
@@ -545,7 +544,7 @@ class WeatherModule {
             </div>
 
             <div class="weather-extra-details">
-                <div class="extra-grid">
+                <div class="extra-scroll">
                     <div class="extra-item">
                         <span class="extra-label">体感温度</span>
                         <span class="extra-value">${weatherData.feelsLike}</span>
