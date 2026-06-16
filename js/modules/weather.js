@@ -2,6 +2,7 @@
  * 天气模块 - 紧凑布局版本
  * 使用 Meteocons SVG 图标，支持昼夜切换
  * 显示：体感温度、气压、降水量、风速、风向、风力、湿度、预警、日出日落
+ * 修改：预警时间移至标题行右上角
  */
 class WeatherModule {
     static CONFIG = {
@@ -477,15 +478,19 @@ class WeatherModule {
             </div>
         ` : '';
         
+        // ========== 修改点：预警标题行 + 右上角时间 ==========
         let alarmsHtml = '';
         if (weatherData.alarms && weatherData.alarms.length > 0) {
+            const firstAlarmTime = weatherData.alarms[0].effective || '';
             alarmsHtml = `<div class="weather-alarms">
-                <div class="alarms-title"><i class="fas fa-exclamation-triangle"></i> 天气预警</div>
+                <div class="alarms-title-wrapper">
+                    <div class="alarms-title"><i class="fas fa-exclamation-triangle"></i> 天气预警</div>
+                    ${firstAlarmTime ? `<span class="alarms-time-header">${esc(firstAlarmTime)}</span>` : ''}
+                </div>
                 ${weatherData.alarms.map(alarm => `
                     <div class="alarm-item">
-                        <span class="alarm-level">${alarm.signallevel || '预警'}</span>
+                        <span class="alarm-level">${esc(alarm.signallevel || '预警')}</span>
                         <span class="alarm-title">${esc(alarm.title || '')}</span>
-                        <span class="alarm-time">${esc(alarm.effective || '')}</span>
                     </div>
                 `).join('')}
             </div>`;
