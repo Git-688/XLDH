@@ -1,7 +1,7 @@
 /**
  * 天气模块 - 基于 Worker 代理（密钥在服务端，安全）
  * 通过调用后端 /weather/proxy 接口获取天气数据，无需在前端暴露 API 密钥
- * 使用 Meteocons SVG 图标（支持昼夜切换，加载失败自动降级为 Font Awesome）
+ * 使用 Meteocons SVG 动画天气图标（支持昼夜切换），并自动切换备用 CDN
  */
 class WeatherModule {
     static CONFIG = {
@@ -52,19 +52,13 @@ class WeatherModule {
         return hour >= 6 && hour < 18;
     }
 
-    // 获取 Meteocons SVG 文件名（不含扩展名），增加更精细的映射
+    // 获取 Meteocons SVG 文件名（不含扩展名）
     _getMeteoconIconName(condition, isDay = true) {
         const map = {
-            // 晴天
             '晴': isDay ? 'clear-day' : 'clear-night',
-            // 多云
             '多云': isDay ? 'partly-cloudy-day' : 'partly-cloudy-night',
-            // 阴天
             '阴': 'cloudy',
-            // 雾
             '雾': 'fog',
-            '霾': 'fog',
-            // 雨 - 细化
             '小雨': 'drizzle',
             '中雨': 'rain',
             '大雨': 'heavy-rain',
@@ -72,38 +66,36 @@ class WeatherModule {
             '雷阵雨': 'thunderstorm',
             '阵雨': 'showers',
             '毛毛雨': 'drizzle',
-            '雨': 'rain',
-            // 雪
             '雪': 'snow',
             '小雪': 'snow',
             '中雪': 'snow',
             '大雪': 'snow',
-            '暴雪': 'snow',
-            // 风沙
             '扬沙': 'wind',
             '沙尘暴': 'wind',
-            '浮尘': 'wind',
-            // 其他
-            '晴间多云': isDay ? 'partly-cloudy-day' : 'partly-cloudy-night',
-            '多云转晴': isDay ? 'partly-cloudy-day' : 'partly-cloudy-night',
+            'default': isDay ? 'clear-day' : 'clear-night'
         };
 
         for (const [key, icon] of Object.entries(map)) {
             if (condition.includes(key)) return icon;
         }
-        return map['default'] || (isDay ? 'clear-day' : 'clear-night');
+        return map['default'];
     }
 
-    // 获取完整图标 URL（使用 CDN）
+    // 获取完整图标 URL（主源）
     _getMeteoconIconUrl(condition, isDay = true) {
         const name = this._getMeteoconIconName(condition, isDay);
-        // 使用 jsdelivr CDN 更稳定
+        return `https://unpkg.com/@meteocons/svg/fill/${name}.svg`;
+    }
+
+    // 获取备用图标 URL（CDN 镜像）
+    _getFallbackIconUrl(condition, isDay = true) {
+        const name = this._getMeteoconIconName(condition, isDay);
         return `https://cdn.jsdelivr.net/npm/@meteocons/svg/fill/${name}.svg`;
     }
 
-    // 生成图片标签，带 onerror 降级
-    _createIconImg(iconUrl, alt, className = 'weather-icon-svg') {
-        return `<img src="${iconUrl}" alt="${this._escapeHtml(alt)}" class="${className}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML = '<i class=\\'fas fa-cloud-sun\\' style=\\'font-size:inherit;\\'></i>';">`;
+    // 生成带有备用源的 img 标签
+    _createIconImg(iconUrl, fallbackUrl, alt, className = 'weather-icon-svg') {
+        return `<img src="${iconUrl}" alt="${this._escapeHtml(alt)}" class="${className}" loading="lazy" data-fallback="${fallbackUrl}" onerror="this.onerror=null; this.src=this.dataset.fallback;">`;
     }
 
     async init() {
@@ -317,7 +309,8 @@ class WeatherModule {
             forecasts.push({
                 day: dayName,
                 weather: weather,
-                iconUrl: this._getMeteoconIconUrl(weather, true), // 预报统一用白天
+                iconUrl: this._getMeteoconIconUrl(weather, true),
+                fallbackUrl: this._getFallbackIconUrl(weather, true),
                 dayTemp: dayData.wd1 ? dayData.wd1 + '°C' : '--',
                 nightTemp: dayData.wd2 ? dayData.wd2 + '°C' : '--',
                 wind: (dayData.winddirection1 || '') + (dayData.windleve1 ? ' ' + dayData.windleve1 : '')
@@ -332,6 +325,7 @@ class WeatherModule {
             nightTemperature: todayTempNight ? todayTempNight + '°C' : '--',
             weather: todayWeather,
             weatherIconUrl: this._getMeteoconIconUrl(todayWeather, isDay),
+            weatherFallbackUrl: this._getFallbackIconUrl(todayWeather, isDay),
             currentTemp: currentTemp !== undefined ? currentTemp + '°C' : todayTempDay ? todayTempDay + '°C' : '--',
             humidity: currentHumidity !== undefined ? currentHumidity + '%' : '--',
             wind: (todayWindDir ? todayWindDir + ' ' : '') + todayWindScale,
@@ -468,9 +462,36 @@ class WeatherModule {
                 <button id="switchToAutoBtn" class="weather-action-btn" style="background:#4361ee; color:white; border:none; border-radius:6px; padding:4px 12px; font-size:11px;">📍 GPS定位</button>
             </div>
         ` : '';
-        
-        // 生成主图标 HTML（带降级）
-        const mainIconHtml = this._createIconImg(weatherData.weatherIconUrl, weatherData.weather, 'weather-icon-svg');
+
+        // 生成主图标 img
+        const mainIconImg = this._createIconImg(
+            weatherData.weatherIconUrl,
+            weatherData.weatherFallbackUrl,
+            weatherData.weather,
+            'weather-icon-svg'
+        );
+
+        // 生成预报图标 imgs
+        const forecastItems = weatherData.forecasts.map(day => {
+            const iconImg = this._createIconImg(
+                day.iconUrl,
+                day.fallbackUrl,
+                day.weather,
+                'forecast-icon-svg'
+            );
+            return `
+                <div class="forecast-day">
+                    <div class="forecast-day-name">${day.day}</div>
+                    <div class="forecast-day-icon">${iconImg}</div>
+                    <div class="forecast-day-weather">${day.weather}</div>
+                    <div class="forecast-day-temp">
+                        <span class="day">${day.dayTemp}</span>
+                        <span class="sep">/</span>
+                        <span class="night">${day.nightTemp}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
         
         return `
             ${manualModeHint}
@@ -481,7 +502,7 @@ class WeatherModule {
                     <span class="weather-update-time">${esc(weatherData.updateTime)}更新</span>
                 </div>
                 <div class="weather-main">
-                    <div class="weather-icon">${mainIconHtml}</div>
+                    <div class="weather-icon">${mainIconImg}</div>
                     <div class="weather-temp-info">
                         <div class="weather-desc">${weatherData.weather}</div>
                         <div class="temp-details">
@@ -528,21 +549,7 @@ class WeatherModule {
                     <i class="fas fa-calendar-alt"></i> 未来几天预报
                 </div>
                 <div class="forecast-days">
-                    ${weatherData.forecasts.map(day => {
-                        const iconHtml = this._createIconImg(day.iconUrl, day.weather, 'forecast-icon-svg');
-                        return `
-                            <div class="forecast-day">
-                                <div class="forecast-day-name">${day.day}</div>
-                                <div class="forecast-day-icon">${iconHtml}</div>
-                                <div class="forecast-day-weather">${day.weather}</div>
-                                <div class="forecast-day-temp">
-                                    <span class="day">${day.dayTemp}</span>
-                                    <span class="sep">/</span>
-                                    <span class="night">${day.nightTemp}</span>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
+                    ${forecastItems}
                 </div>
             </div>
         `;
