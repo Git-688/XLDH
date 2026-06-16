@@ -201,6 +201,7 @@
     transition: background-color 0.2s ease;
 }
 
+/* ====== 天气预警样式（修改部分） ====== */
 .weather-alarms {
     padding: 6px 10px;
     margin: 4px 10px 6px;
@@ -212,15 +213,36 @@
     background: #2d1f0e;
     border-left-color: #f39c12;
 }
+
+/* 新增：标题行 + 时间 Flex 布局 */
+.alarms-title-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
 .alarms-title {
     font-size: 10px;
     font-weight: 600;
     color: #e67e22;
-    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 .alarms-title i {
-    margin-right: 4px;
+    font-size: 10px;
 }
+
+/* 右上角时间样式 */
+.alarms-time-header {
+    font-size: 10px;
+    color: var(--text-secondary, #666);
+    font-weight: normal;
+    white-space: nowrap;
+}
+
+/* 预警条目（时间已移除） */
 .alarm-item {
     display: flex;
     align-items: center;
@@ -242,12 +264,6 @@
     flex: 1;
     font-size: 9px;
     color: var(--text-primary, #333);
-}
-.alarm-item .alarm-time {
-    color: var(--text-secondary);
-    font-size: 8px;
-    flex-shrink: 0;
-    white-space: nowrap;
 }
 
 .weather-current {
@@ -344,13 +360,14 @@
     margin-right: 3px;
 }
 
+/* 等宽平分样式（修复左密右疏） */
 .weather-extra-row {
     display: flex;
-    justify-content: space-around;
     padding: 4px 6px;
     border-bottom: 1px solid var(--border-color, #e9ecef);
     flex-wrap: nowrap;
     gap: 2px;
+    /* 去掉 justify-content，由 flex 自动分配 */
 }
 .extra-item {
     display: flex;
@@ -358,6 +375,7 @@
     align-items: center;
     padding: 2px 0;
     min-width: 0;
+    flex: 1 1 0; /* 等分剩余空间 */
 }
 .extra-label {
     font-size: 7px;
