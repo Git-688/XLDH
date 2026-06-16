@@ -63,7 +63,7 @@ class WeatherModule {
             '中雨': 'rain',
             '大雨': 'heavy-rain',
             '暴雨': 'thunderstorm',
-            '雷阵雨': 'thunderstorm',
+            '雷阵雨': 'thunderstorms-rain',
             '阵雨': 'showers',
             '毛毛雨': 'drizzle',
             '雪': 'snow',
