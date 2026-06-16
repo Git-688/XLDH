@@ -511,48 +511,46 @@ class WeatherModule {
         const civilDawn = sun.civil_twilight_begin || '--';
         const civilDusk = sun.civil_twilight_end || '--';
 
-        // 城市 + 更新时间（移动至提示上方）
-        const locationHtml = `
-            <div class="weather-city">
+        // 构建城市和更新时间（上移）
+        const locationInfo = `
+            <div class="weather-location">
                 <i class="fas fa-location-dot"></i>
                 ${esc(weatherData.city)}${weatherData.province ? `, ${esc(weatherData.province)}` : ''}
                 <span class="weather-update-time">${esc(weatherData.updateTime)}更新</span>
             </div>
         `;
 
-        // 提示信息（放在城市信息下方）
-        const tipsHtml = weatherData.tips ? `
-            <div class="weather-tips">
-                <i class="fas fa-lightbulb"></i>
-                ${esc(weatherData.tips)}
+        // 天气卡片（左右对称）
+        const weatherCard = `
+            <div class="weather-card-container">
+                <div class="weather-card-left">
+                    <img src="${weatherData.weatherIconUrl}" alt="${esc(weatherData.weather)}" class="weather-icon-big" loading="lazy">
+                </div>
+                <div class="weather-card-right">
+                    <div class="weather-condition">${esc(weatherData.weather)}</div>
+                    <div class="weather-temps">
+                        <span class="temp-current">${weatherData.currentTemp}</span>
+                        <span class="temp-divider">/</span>
+                        <span class="temp-day">${weatherData.dayTemperature}</span>
+                        <span class="temp-divider">/</span>
+                        <span class="temp-night">${weatherData.nightTemperature}</span>
+                    </div>
+                </div>
             </div>
-        ` : '';
+        `;
 
         return `
             ${manualModeHint}
             ${alarmsHtml}
             <div class="weather-current">
-                ${locationHtml}
-                ${tipsHtml}
-                <!-- 左右对称卡片：左图标，右天气与温度 -->
-                <div class="weather-main-cards">
-                    <div class="weather-icon-card">
-                        <img src="${weatherData.weatherIconUrl}" alt="${esc(weatherData.weather)}" class="weather-icon-large" loading="lazy">
-                    </div>
-                    <div class="weather-info-card">
-                        <div class="weather-title-large">${weatherData.weather}</div>
-                        <div class="weather-temp-detail">
-                            <span class="temp-label">当前</span>
-                            <span class="temp-value day">${weatherData.currentTemp}</span>
-                            <span class="temp-separator">/</span>
-                            <span class="temp-label">白天</span>
-                            <span class="temp-value day">${weatherData.dayTemperature}</span>
-                            <span class="temp-separator">/</span>
-                            <span class="temp-label">夜间</span>
-                            <span class="temp-value night">${weatherData.nightTemperature}</span>
-                        </div>
-                    </div>
+                ${locationInfo}
+                ${weatherCard}
+                ${weatherData.tips ? `
+                <div class="weather-tips">
+                    <i class="fas fa-lightbulb"></i>
+                    ${esc(weatherData.tips)}
                 </div>
+                ` : ''}
             </div>
 
             <div class="weather-extra-row">
