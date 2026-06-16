@@ -25,7 +25,7 @@
 }
 
 .weather-modal-content {
-    max-width: 350px;
+    max-width: 380px;
     width: 100%;
     background: var(--bg-card, #ffffff);
     border: 1px solid var(--border-color, #e0e0e0);
@@ -37,11 +37,28 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    max-height: 90vh;
 }
 
 .weather-modal-card.active .weather-modal-content {
     transform: scale(1);
     opacity: 1;
+}
+
+.weather-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 0 0 12px 0;
+}
+.weather-body::-webkit-scrollbar {
+    width: 4px;
+}
+.weather-body::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05);
+}
+.weather-body::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
 }
 
 @media (max-width: 768px) {
@@ -52,7 +69,8 @@
     .weather-modal-content {
         transform: scale(0.95);
         border-radius: 8px;
-        max-width: 350px;
+        max-width: 100%;
+        max-height: 85vh;
     }
     .weather-modal-card.active .weather-modal-content {
         transform: scale(1);
@@ -133,12 +151,6 @@
     color: var(--primary-color, #4361ee);
 }
 
-.weather-body {
-    overflow: visible;
-    flex: 1;
-    padding: 0;
-}
-
 .loading-state {
     padding: 30px 20px;
     text-align: center;
@@ -204,6 +216,52 @@
     transition: background-color 0.2s ease;
 }
 
+/* 预警信息 */
+.weather-alarms {
+    padding: 8px 12px;
+    margin: 4px 12px 8px;
+    background: #fff3e6;
+    border-radius: 6px;
+    border-left: 3px solid #f39c12;
+}
+.dark-mode .weather-alarms {
+    background: #2d1f0e;
+    border-left-color: #f39c12;
+}
+.alarms-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #e67e22;
+    margin-bottom: 4px;
+}
+.alarms-title i {
+    margin-right: 4px;
+}
+.alarm-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    padding: 2px 0;
+    flex-wrap: wrap;
+}
+.alarm-level {
+    background: #e67e22;
+    color: #fff;
+    padding: 0 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 600;
+}
+.alarm-item .alarm-title {
+    flex: 1;
+}
+.alarm-item .alarm-time {
+    color: var(--text-secondary);
+    font-size: 9px;
+}
+
+/* 天气当前 */
 .weather-current {
     padding: 10px 12px 8px;
     border-bottom: 1px solid var(--border-color, #e9ecef);
@@ -231,7 +289,6 @@
     margin-left: 3px;
 }
 
-/* 主天气图标 - 放大 */
 .weather-main {
     display: flex;
     align-items: center;
@@ -253,7 +310,6 @@
     display: block;
 }
 
-/* 温度等信息微调以适应大图标 */
 .weather-temp-info {
     display: flex;
     flex-direction: column;
@@ -316,41 +372,60 @@
     margin-right: 4px;
 }
 
-.weather-details {
-    padding: 12px;
+/* 额外天气详情 */
+.weather-extra-details {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color, #e9ecef);
+}
+.extra-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px 8px;
 }
-
-.weather-detail {
-    text-align: center;
-    padding: 8px;
-    background: var(--bg-secondary, #f8f9fa);
-    border-radius: 6px;
-    border: 1px solid var(--border-color, #e9ecef);
+.extra-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 0;
 }
-
-.detail-icon {
-    font-size: 14px;
-    color: var(--primary-color, #4361ee);
-    margin-bottom: 4px;
-}
-
-.detail-label {
-    font-size: 9px;
+.extra-label {
+    font-size: 8px;
     color: var(--text-secondary, #999);
-    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
-
-.detail-value {
-    font-size: 12px;
-    color: var(--text-primary, #333);
+.extra-value {
+    font-size: 11px;
     font-weight: 500;
+    color: var(--text-primary, #333);
+    margin-top: 1px;
 }
 
+/* 日出日落 */
+.weather-sun-times {
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color, #e9ecef);
+    background: var(--bg-secondary, #f8f9fa);
+}
+.sun-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+}
+.sun-label {
+    color: var(--text-secondary, #666);
+}
+.sun-value {
+    font-weight: 500;
+    color: var(--text-primary, #333);
+}
+
+/* 天气预报 */
 .weather-forecast {
-    padding: 0 12px 12px;
+    padding: 0 12px 8px;
 }
 
 .forecast-title {
@@ -430,6 +505,7 @@
     margin: 6px 12px;
 }
 
+/* 城市选择弹窗 */
 .city-prompt-modal {
     position: fixed;
     top: 0;
@@ -577,6 +653,7 @@
     background: var(--secondary-color, #3a56d6);
 }
 
+/* 定位调整 */
 .weather-modal-card {
     align-items: center;
     justify-content: flex-start;
@@ -594,7 +671,7 @@
         max-height: calc(100vh - 60px);
         overflow-y: auto;
         width: 100%;
-        max-width: 350px;
+        max-width: 380px;
     }
 }
 
@@ -628,6 +705,7 @@
     }
 }
 
+/* 深色模式 */
 .dark-mode .weather-modal-content {
     background: var(--bg-card);
     border-color: var(--border-color);
@@ -683,24 +761,24 @@
     color: #c0c0c0;
     border-left-color: var(--primary-color);
 }
-.dark-mode .weather-detail {
-    background: var(--bg-secondary);
-    border-color: var(--border-color);
+.dark-mode .weather-extra-details {
+    border-bottom-color: var(--border-color);
 }
-.dark-mode .detail-icon {
-    color: var(--primary-color);
-}
-.dark-mode .detail-label {
-    color: var(--text-secondary);
-}
-.dark-mode .detail-value {
+.dark-mode .extra-value {
     color: var(--text-primary);
 }
-.dark-mode .forecast-title {
+.dark-mode .extra-label {
     color: var(--text-secondary);
 }
-.dark-mode .forecast-title i {
-    color: var(--primary-color);
+.dark-mode .weather-sun-times {
+    background: var(--bg-secondary);
+    border-bottom-color: var(--border-color);
+}
+.dark-mode .sun-value {
+    color: var(--text-primary);
+}
+.dark-mode .sun-label {
+    color: var(--text-secondary);
 }
 .dark-mode .forecast-day {
     background: var(--bg-secondary);
@@ -708,12 +786,6 @@
 }
 .dark-mode .forecast-day-name {
     color: var(--text-secondary);
-}
-.dark-mode .forecast-day-icon {
-    color: var(--primary-color);
-}
-.dark-mode .forecast-icon-svg {
-    filter: brightness(0.9);
 }
 .dark-mode .forecast-day-weather {
     color: var(--text-primary);
@@ -726,6 +798,9 @@
 }
 .dark-mode .forecast-day-temp .sep {
     color: #666;
+}
+.dark-mode .forecast-icon-svg {
+    filter: brightness(0.9);
 }
 .dark-mode .manual-mode-hint {
     background: rgba(245, 158, 11, 0.15);
@@ -795,7 +870,7 @@
     color: #f87171;
 }
 
-/* 移动端图标尺寸调整 */
+/* 移动端适配图标大小 */
 @media (max-width: 640px) {
     .weather-icon-svg {
         width: 80px;
@@ -808,9 +883,11 @@
     .weather-main {
         gap: 12px;
     }
+    .extra-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }
 
-/* 小屏手机进一步缩小 */
 @media (max-width: 400px) {
     .weather-icon-svg {
         width: 64px;
@@ -819,5 +896,8 @@
     .forecast-icon-svg {
         width: 28px;
         height: 28px;
+    }
+    .extra-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
