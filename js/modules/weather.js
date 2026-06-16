@@ -1,7 +1,7 @@
 /**
  * 天气模块 - 基于 Worker 代理（密钥在服务端，安全）
  * 通过调用后端 /weather/proxy 接口获取天气数据，无需在前端暴露 API 密钥
- * 使用 Meteocons 动画天气图标（支持昼夜切换）
+ * 使用 Meteocons SVG 动画天气图标（支持昼夜切换）
  */
 class WeatherModule {
     static CONFIG = {
@@ -52,41 +52,47 @@ class WeatherModule {
         return hour >= 6 && hour < 18;
     }
 
-    // 获取 Meteocons 图标（根据天气条件和昼夜）
-    _getMeteoconIcon(condition, isDay = true) {
+    // 获取 Meteocons SVG 文件名（不含扩展名）
+    _getMeteoconIconName(condition, isDay = true) {
         const map = {
             // 晴天
-            '晴': isDay ? 'me-sun-anim' : 'me-moon-anim',
+            '晴': isDay ? 'clear-day' : 'clear-night',
             // 多云
-            '多云': isDay ? 'me-cloud-sun-anim' : 'me-cloud-moon-anim',
+            '多云': isDay ? 'partly-cloudy-day' : 'partly-cloudy-night',
             // 阴天
-            '阴': 'me-cloud-anim',
+            '阴': 'cloudy',
             // 雾
-            '雾': 'me-fog-anim',
+            '雾': 'fog',
             // 雨
-            '小雨': 'me-drizzle-anim',
-            '中雨': 'me-rain-anim',
-            '大雨': 'me-rain-anim',
-            '暴雨': 'me-thunder-anim',
-            '雷阵雨': 'me-thunder-anim',
-            '阵雨': 'me-rain-anim',
-            '毛毛雨': 'me-drizzle-anim',
+            '小雨': 'drizzle',
+            '中雨': 'rain',
+            '大雨': 'heavy-rain',
+            '暴雨': 'thunderstorm',
+            '雷阵雨': 'thunderstorm',
+            '阵雨': 'showers',
+            '毛毛雨': 'drizzle',
             // 雪
-            '雪': 'me-snow-anim',
-            '小雪': 'me-snow-anim',
-            '中雪': 'me-snow-anim',
-            '大雪': 'me-snow-anim',
+            '雪': 'snow',
+            '小雪': 'snow',
+            '中雪': 'snow',
+            '大雪': 'snow',
             // 风沙
-            '扬沙': 'me-wind-anim',
-            '沙尘暴': 'me-wind-anim',
+            '扬沙': 'wind',
+            '沙尘暴': 'wind',
             // 默认
-            'default': isDay ? 'me-cloud-sun-anim' : 'me-cloud-moon-anim'
+            'default': isDay ? 'clear-day' : 'clear-night'
         };
 
         for (const [key, icon] of Object.entries(map)) {
             if (condition.includes(key)) return icon;
         }
         return map['default'];
+    }
+
+    // 获取完整图标 URL
+    _getMeteoconIconUrl(condition, isDay = true) {
+        const name = this._getMeteoconIconName(condition, isDay);
+        return `https://unpkg.com/@meteocons/svg/fill/${name}.svg`;
     }
 
     async init() {
@@ -261,7 +267,7 @@ class WeatherModule {
         return true;
     }
 
-    // 解析天气数据（使用 Meteocons 图标）
+    // 解析天气数据（使用 Meteocons SVG 图标）
     parseWeatherData(data) {
         if (!data || data.code !== 200) {
             throw new Error(data?.msg || '天气数据格式错误');
@@ -300,7 +306,7 @@ class WeatherModule {
             forecasts.push({
                 day: dayName,
                 weather: weather,
-                icon: this._getMeteoconIcon(weather, true), // 预报统一用白天
+                iconUrl: this._getMeteoconIconUrl(weather, true), // 预报统一用白天
                 dayTemp: dayData.wd1 ? dayData.wd1 + '°C' : '--',
                 nightTemp: dayData.wd2 ? dayData.wd2 + '°C' : '--',
                 wind: (dayData.winddirection1 || '') + (dayData.windleve1 ? ' ' + dayData.windleve1 : '')
@@ -314,7 +320,7 @@ class WeatherModule {
             dayTemperature: todayTempDay ? todayTempDay + '°C' : '--',
             nightTemperature: todayTempNight ? todayTempNight + '°C' : '--',
             weather: todayWeather,
-            weatherIcon: this._getMeteoconIcon(todayWeather, isDay),
+            weatherIconUrl: this._getMeteoconIconUrl(todayWeather, isDay),
             currentTemp: currentTemp !== undefined ? currentTemp + '°C' : todayTempDay ? todayTempDay + '°C' : '--',
             humidity: currentHumidity !== undefined ? currentHumidity + '%' : '--',
             wind: (todayWindDir ? todayWindDir + ' ' : '') + todayWindScale,
@@ -461,7 +467,9 @@ class WeatherModule {
                     <span class="weather-update-time">${esc(weatherData.updateTime)}更新</span>
                 </div>
                 <div class="weather-main">
-                    <div class="weather-icon"><i class="${weatherData.weatherIcon}"></i></div>
+                    <div class="weather-icon">
+                        <img src="${weatherData.weatherIconUrl}" alt="${esc(weatherData.weather)}" class="weather-icon-svg" loading="lazy">
+                    </div>
                     <div class="weather-temp-info">
                         <div class="weather-desc">${weatherData.weather}</div>
                         <div class="temp-details">
@@ -511,7 +519,9 @@ class WeatherModule {
                     ${weatherData.forecasts.map(day => `
                         <div class="forecast-day">
                             <div class="forecast-day-name">${day.day}</div>
-                            <div class="forecast-day-icon"><i class="${day.icon}"></i></div>
+                            <div class="forecast-day-icon">
+                                <img src="${day.iconUrl}" alt="${esc(day.weather)}" class="forecast-icon-svg" loading="lazy">
+                            </div>
                             <div class="forecast-day-weather">${day.weather}</div>
                             <div class="forecast-day-temp">
                                 <span class="day">${day.dayTemp}</span>
