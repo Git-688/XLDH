@@ -1,8 +1,7 @@
 /**
  * 天气模块 - 紧凑布局版本
  * 使用 Meteocons SVG 图标，支持昼夜切换
- * 显示：体感温度、气压、降水量、风速、风向、风力、湿度、预警、日出日落
- * 修改：预警时间移至标题行右上角
+ * 显示：体感温度、气压、降水量、风速、风向、风力、湿度、预警、日出日落、天亮天黑
  */
 class WeatherModule {
     static CONFIG = {
@@ -478,7 +477,6 @@ class WeatherModule {
             </div>
         ` : '';
         
-        // ========== 修改点：预警标题行 + 右上角时间 ==========
         let alarmsHtml = '';
         if (weatherData.alarms && weatherData.alarms.length > 0) {
             const firstAlarmTime = weatherData.alarms[0].effective || '';
@@ -495,6 +493,23 @@ class WeatherModule {
                 `).join('')}
             </div>`;
         }
+
+        let precipitationDisplay = '--';
+        const precip = weatherData.precipitation || '0';
+        if (precip === '0' || precip === '0 mm' || precip === '0mm') {
+            precipitationDisplay = '无降水';
+        } else {
+            precipitationDisplay = precip;
+        }
+
+        const sun = weatherData.sunTimes || {};
+        const sunrise = sun.sunrise || '--';
+        const sunset = sun.sunset || '--';
+        const dayLength = sun.day_length || '--';
+        const dayPercent = sun.day_percentage !== undefined ? sun.day_percentage : '';
+        const dayLengthDisplay = dayPercent ? `${dayLength} (${dayPercent}%)` : dayLength;
+        const civilDawn = sun.civil_twilight_begin || '--';
+        const civilDusk = sun.civil_twilight_end || '--';
 
         return `
             ${manualModeHint}
@@ -548,7 +563,7 @@ class WeatherModule {
                 </div>
                 <div class="extra-item">
                     <span class="extra-label">降水量</span>
-                    <span class="extra-value">${weatherData.precipitation}</span>
+                    <span class="extra-value">${precipitationDisplay}</span>
                 </div>
                 <div class="extra-item">
                     <span class="extra-label">风速</span>
@@ -571,15 +586,23 @@ class WeatherModule {
             <div class="weather-sun-row">
                 <div class="sun-item">
                     <span class="sun-label">🌅 日出</span>
-                    <span class="sun-value">${weatherData.sunTimes ? esc(weatherData.sunTimes.sunrise || '--') : '--'}</span>
+                    <span class="sun-value">${esc(sunrise)}</span>
                 </div>
                 <div class="sun-item">
                     <span class="sun-label">🌇 日落</span>
-                    <span class="sun-value">${weatherData.sunTimes ? esc(weatherData.sunTimes.sunset || '--') : '--'}</span>
+                    <span class="sun-value">${esc(sunset)}</span>
                 </div>
                 <div class="sun-item">
                     <span class="sun-label">☀️ 昼长</span>
-                    <span class="sun-value">${weatherData.sunTimes ? esc(weatherData.sunTimes.day_length || '--') : '--'}</span>
+                    <span class="sun-value">${esc(dayLengthDisplay)}</span>
+                </div>
+                <div class="sun-item">
+                    <span class="sun-label">🌤 天亮</span>
+                    <span class="sun-value">${esc(civilDawn)}</span>
+                </div>
+                <div class="sun-item">
+                    <span class="sun-label">🌙 天黑</span>
+                    <span class="sun-value">${esc(civilDusk)}</span>
                 </div>
             </div>
 
@@ -617,7 +640,6 @@ class WeatherModule {
         if (changeCityBtn) {
             changeCityBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                console.log('手动选择城市按钮被点击');
                 this.showCityPrompt();
             });
         }
@@ -642,7 +664,6 @@ class WeatherModule {
     }
 
     showCityPrompt() {
-        console.log('showCityPrompt 被调用');
         try {
             const esc = this._escapeHtml.bind(this);
             const modal = document.createElement('div');
