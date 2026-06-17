@@ -520,7 +520,7 @@ class WeatherModule {
             </div>
         `;
 
-        // 天气卡片（左右对称，透明背景，右侧带标签且字体统一）
+        // 天气卡片（左右对称，透明背景，标签在温度上方，白天/夜间为图标）
         const weatherCard = `
             <div class="weather-card-container">
                 <div class="weather-card-left">
@@ -529,20 +529,20 @@ class WeatherModule {
                 <div class="weather-card-right">
                     <div class="weather-condition">${esc(weatherData.weather)}</div>
                     <div class="weather-temps">
-                        <span class="temp-item">
+                        <div class="temp-item">
                             <span class="temp-label">当前</span>
                             <span class="temp-value current">${weatherData.currentTemp}</span>
-                        </span>
+                        </div>
                         <span class="temp-divider">/</span>
-                        <span class="temp-item">
-                            <span class="temp-label">白天</span>
+                        <div class="temp-item">
+                            <span class="temp-label icon-label">☀️</span>
                             <span class="temp-value day">${weatherData.dayTemperature}</span>
-                        </span>
+                        </div>
                         <span class="temp-divider">/</span>
-                        <span class="temp-item">
-                            <span class="temp-label">夜间</span>
+                        <div class="temp-item">
+                            <span class="temp-label icon-label">🌙</span>
                             <span class="temp-value night">${weatherData.nightTemperature}</span>
-                        </span>
+                        </div>
                     </div>
                 </div>
             </div>
