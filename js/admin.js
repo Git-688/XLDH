@@ -88,7 +88,7 @@
         return res.json();
     }
 
-    // ==================== 获取网站信息 ====================
+    // ==================== 获取网站信息（修复乱码） ====================
     async function fetchSiteInfo(urlInputId, titleInputId, iconInputId, descInputId) {
         const urlInput = document.getElementById(urlInputId);
         const titleInput = document.getElementById(titleInputId);
@@ -114,7 +114,18 @@
         try {
             const response = await fetch(`https://api.pearapi.ai/api/website/info/?url=${encodeURIComponent(rawUrl)}`);
             if (!response.ok) throw new Error('请求失败');
-            const data = await response.json();
+            // 解决乱码：以 ArrayBuffer 获取，使用 GBK 解码
+            const buffer = await response.arrayBuffer();
+            let text = '';
+            try {
+                const decoder = new TextDecoder('gbk');
+                text = decoder.decode(buffer);
+            } catch (e) {
+                // 若浏览器不支持 GBK，回退 UTF-8
+                const decoder = new TextDecoder('utf-8');
+                text = decoder.decode(buffer);
+            }
+            const data = JSON.parse(text);
             if (data.code === 200 && data.data) {
                 if (data.data.title) titleInput.value = data.data.title;
                 if (data.data.icon) iconInput.value = data.data.icon;
@@ -688,7 +699,6 @@
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/categories', { method:'POST', body: JSON.stringify({ name, display_order: +document.getElementById('mSort').value }) });
                 showToast('添加成功');
-                // 添加后重新加载数据但保持当前选中的分类和子分类
                 await loadAllDataButKeepSelection();
             }
         );
@@ -705,7 +715,6 @@
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/subcategories', { method:'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('mSort').value }) });
                 showToast('添加成功');
-                // 添加后重新加载数据但保持当前选中的分类和子分类
                 await loadAllDataButKeepSelection();
             }
         );
