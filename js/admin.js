@@ -1,4 +1,4 @@
-// admin.js - 星聚导航后台管理（完整版，添加分类/子分类后保持当前选中）
+// admin.js - 星聚导航后台管理（完整版，修复获取信息乱码）
 (function() {
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
@@ -53,7 +53,6 @@
         return deviceId;
     }
 
-    // 规范化 URL（用于比较，去除末尾斜杠、协议差异等）
     function normalizeUrl(url) {
         if (!url) return '';
         try {
@@ -67,7 +66,6 @@
         }
     }
 
-    // 检查 URL 是否已存在（排除指定站点 id）
     function isUrlExists(url, excludeSiteId = null) {
         const normalizedNew = normalizeUrl(url);
         return sites.some(site => {
@@ -88,7 +86,7 @@
         return res.json();
     }
 
-    // ==================== 获取网站信息（修复乱码） ====================
+    // ==================== 获取网站信息（自动检测编码，修复乱码） ====================
     async function fetchSiteInfo(urlInputId, titleInputId, iconInputId, descInputId) {
         const urlInput = document.getElementById(urlInputId);
         const titleInput = document.getElementById(titleInputId);
@@ -114,17 +112,19 @@
         try {
             const response = await fetch(`https://api.pearapi.ai/api/website/info/?url=${encodeURIComponent(rawUrl)}`);
             if (!response.ok) throw new Error('请求失败');
-            // 解决乱码：以 ArrayBuffer 获取，使用 GBK 解码
             const buffer = await response.arrayBuffer();
+
+            // ---- 自动检测编码 ----
             let text = '';
-            try {
-                const decoder = new TextDecoder('gbk');
-                text = decoder.decode(buffer);
-            } catch (e) {
-                // 若浏览器不支持 GBK，回退 UTF-8
-                const decoder = new TextDecoder('utf-8');
+            // 先尝试 UTF-8
+            let decoder = new TextDecoder('utf-8');
+            text = decoder.decode(buffer);
+            // 如果包含 � 替换字符，则改用 GBK 解码
+            if (text.includes('�')) {
+                decoder = new TextDecoder('gbk');
                 text = decoder.decode(buffer);
             }
+
             const data = JSON.parse(text);
             if (data.code === 200 && data.data) {
                 if (data.data.title) titleInput.value = data.data.title;
@@ -406,7 +406,6 @@
             subcategories = subData;
             sites = siteData;
             renderCatBar();
-            // 恢复选中的分类和子分类
             if (currentCat) {
                 selectCat(currentCat);
                 if (currentSub) selectSub(currentSub);
