@@ -305,7 +305,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;  /* 透明 */
+    background: transparent;
     border-radius: 6px;
     padding: 4px;
     overflow: hidden;
@@ -333,7 +333,8 @@
 }
 .weather-temps {
     display: flex;
-    align-items: baseline;
+    align-items: center;
+    justify-content: center;
     gap: 4px;
     font-size: 13px;
     font-weight: 500;
@@ -342,19 +343,26 @@
     flex-wrap: nowrap;
 }
 .temp-item {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 2px;
+    display: flex;
+    flex-direction: column;      /* 标签在上，温度在下 */
+    align-items: center;
+    gap: 1px;
 }
 .temp-label {
     font-size: 9px;
     color: var(--text-secondary, #666);
     font-weight: 400;
+    line-height: 1;
+}
+.temp-label.icon-label {
+    font-size: 14px;            /* 图标稍大 */
+    line-height: 1;
 }
 .temp-value {
-    font-size: 13px;  /* 统一字体大小 */
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-primary, #333);
+    line-height: 1.2;
 }
 .temp-value.current { color: var(--primary-color, #4361ee); }
 .temp-value.day { color: #ff6b6b; }
@@ -362,6 +370,7 @@
 .temp-divider {
     color: #ccc;
     font-size: 12px;
+    align-self: center;
 }
 
 .weather-tips {
