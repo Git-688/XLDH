@@ -511,7 +511,7 @@ class WeatherModule {
         const civilDawn = sun.civil_twilight_begin || '--';
         const civilDusk = sun.civil_twilight_end || '--';
 
-        // 构建城市和更新时间（上移）
+        // 位置信息（上移）
         const locationInfo = `
             <div class="weather-location">
                 <i class="fas fa-location-dot"></i>
@@ -520,7 +520,7 @@ class WeatherModule {
             </div>
         `;
 
-        // 天气卡片（左右对称）
+        // 天气卡片（左右对称，透明背景，右侧带标签且字体统一）
         const weatherCard = `
             <div class="weather-card-container">
                 <div class="weather-card-left">
@@ -529,11 +529,20 @@ class WeatherModule {
                 <div class="weather-card-right">
                     <div class="weather-condition">${esc(weatherData.weather)}</div>
                     <div class="weather-temps">
-                        <span class="temp-current">${weatherData.currentTemp}</span>
+                        <span class="temp-item">
+                            <span class="temp-label">当前</span>
+                            <span class="temp-value current">${weatherData.currentTemp}</span>
+                        </span>
                         <span class="temp-divider">/</span>
-                        <span class="temp-day">${weatherData.dayTemperature}</span>
+                        <span class="temp-item">
+                            <span class="temp-label">白天</span>
+                            <span class="temp-value day">${weatherData.dayTemperature}</span>
+                        </span>
                         <span class="temp-divider">/</span>
-                        <span class="temp-night">${weatherData.nightTemperature}</span>
+                        <span class="temp-item">
+                            <span class="temp-label">夜间</span>
+                            <span class="temp-value night">${weatherData.nightTemperature}</span>
+                        </span>
                     </div>
                 </div>
             </div>
