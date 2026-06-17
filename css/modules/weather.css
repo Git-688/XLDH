@@ -268,7 +268,6 @@
     border-bottom: 1px solid var(--border-color, #e9ecef);
 }
 
-/* 位置信息（上移） */
 .weather-location {
     font-size: 10px;
     color: var(--text-secondary, #666);
@@ -289,7 +288,7 @@
     margin-left: 2px;
 }
 
-/* 两个对称卡片（强制不换行） */
+/* 左右对称卡片（透明背景，不换行） */
 .weather-card-container {
     display: flex;
     flex-wrap: nowrap;
@@ -306,15 +305,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-secondary, #f8f9fa);
+    background: transparent;  /* 透明 */
     border-radius: 6px;
     padding: 4px;
     overflow: hidden;
 }
 
-.weather-card-left {
-    background: rgba(67, 97, 238, 0.08);
-}
 .weather-card-left img {
     width: 100%;
     max-height: 80px;
@@ -327,7 +323,6 @@
     align-items: center;
     justify-content: center;
     padding: 4px 6px;
-    background: rgba(67, 97, 238, 0.05);
 }
 .weather-condition {
     font-size: 16px;
@@ -344,24 +339,31 @@
     font-weight: 500;
     color: var(--text-primary, #333);
     white-space: nowrap;
+    flex-wrap: nowrap;
 }
-.temp-current {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--primary-color, #4361ee);
+.temp-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
 }
-.temp-day {
-    color: #ff6b6b;
+.temp-label {
+    font-size: 9px;
+    color: var(--text-secondary, #666);
+    font-weight: 400;
 }
-.temp-night {
-    color: #4dabf7;
+.temp-value {
+    font-size: 13px;  /* 统一字体大小 */
+    font-weight: 600;
+    color: var(--text-primary, #333);
 }
+.temp-value.current { color: var(--primary-color, #4361ee); }
+.temp-value.day { color: #ff6b6b; }
+.temp-value.night { color: #4dabf7; }
 .temp-divider {
     color: #ccc;
     font-size: 12px;
 }
 
-/* 天气小贴士（提示语） */
 .weather-tips {
     margin-top: 4px;
     padding: 4px 8px;
@@ -745,11 +747,9 @@
 .dark-mode .weather-update-time {
     color: #8f9bb3;
 }
-.dark-mode .weather-card-left {
-    background: rgba(123, 156, 255, 0.15);
-}
+.dark-mode .weather-card-left,
 .dark-mode .weather-card-right {
-    background: rgba(123, 156, 255, 0.08);
+    background: transparent;
 }
 .dark-mode .weather-condition {
     color: var(--text-primary);
@@ -757,13 +757,13 @@
 .dark-mode .weather-temps {
     color: var(--text-primary);
 }
-.dark-mode .temp-current {
+.dark-mode .temp-value.current {
     color: var(--primary-color);
 }
-.dark-mode .temp-day {
+.dark-mode .temp-value.day {
     color: #ff8c8c;
 }
-.dark-mode .temp-night {
+.dark-mode .temp-value.night {
     color: #7bc8ff;
 }
 .dark-mode .temp-divider {
