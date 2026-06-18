@@ -1,8 +1,10 @@
 // 星聚导航 Service Worker - 缓存导航数据与静态资源，增强 API 响应缓存
-// 版本 v6（移除后台版本检查，优化缓存策略）
-const CACHE_NAME = 'starlink-v6';
-const NAVIGATION_CACHE_NAME = 'starlink-nav-v6';
-const API_CACHE_NAME = 'starlink-api-v6';
+// 版本 v7（增加字体缓存策略）
+
+const CACHE_NAME = 'starlink-v7';
+const NAVIGATION_CACHE_NAME = 'starlink-nav-v7';
+const API_CACHE_NAME = 'starlink-api-v7';
+const FONT_CACHE_NAME = 'starlink-fonts-v7';
 
 // 需要缓存的静态资源列表
 const STATIC_URLS = [
@@ -48,31 +50,39 @@ const STATIC_URLS = [
     '/data/local-music-data.js'
 ];
 
-// 需要缓存的导航 API 路径（缓存优先，用于结构）
-const NAV_API_PATTERNS = [
-    '/navigation/structure'
+// 字体文件 URL 模式
+const FONT_URL_PATTERNS = [
+    'cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free',
+    'cdn.jsdelivr.net/npm/katex',
+    'fonts.googleapis.com'
 ];
 
-// 网络优先、缓存后备的 API 列表（支持 TTL 校验）
+// 导航 API 路径
+const NAV_API_PATTERNS = ['/navigation/structure'];
+
+// 可缓存的 API
 const CACHED_API_PATTERNS = [
-    '/navigation/sites',          // 站点列表，TTL 5分钟
-    '/stats',                     // 统计数据，TTL 1小时
-    '/uptime',                    // 运行时间，TTL 1小时
-    '/global-submission-count',   // 投稿总数，TTL 1小时
-    '/notebook'                   // 笔记，TTL 1小时
+    '/navigation/sites',
+    '/stats',
+    '/uptime',
+    '/global-submission-count',
+    '/notebook'
 ];
 
-// 针对不同 API 的单独 TTL（毫秒）
 const API_TTL_MAP = {
-    '/navigation/sites': 5 * 60 * 1000,   // 5分钟
-    'default': 60 * 60 * 1000             // 默认1小时
+    '/navigation/sites': 5 * 60 * 1000,
+    'default': 60 * 60 * 1000
 };
 
 function getApiTtl(urlPath) {
     return API_TTL_MAP[urlPath] || API_TTL_MAP.default;
 }
 
-// 安装事件：缓存静态资源
+function isFontRequest(url) {
+    return FONT_URL_PATTERNS.some(pattern => url.href.includes(pattern));
+}
+
+// 安装事件
 self.addEventListener('install', event => {
     console.log('Service Worker 安装中...');
     event.waitUntil(
@@ -85,19 +95,19 @@ self.addEventListener('install', event => {
     self.skipWaiting();
 });
 
-// 激活事件：清理旧缓存，并通知客户端更新
+// 激活事件
 self.addEventListener('activate', event => {
     console.log('Service Worker 激活中...');
     event.waitUntil(
         caches.keys().then(keyList => {
             return Promise.all(keyList.map(key => {
-                if (key !== CACHE_NAME && key !== NAVIGATION_CACHE_NAME && key !== API_CACHE_NAME) {
+                if (key !== CACHE_NAME && key !== NAVIGATION_CACHE_NAME &&
+                    key !== API_CACHE_NAME && key !== FONT_CACHE_NAME) {
                     console.log('删除旧缓存:', key);
                     return caches.delete(key);
                 }
             }));
         }).then(() => {
-            // 通知所有客户端有新版本可用
             self.clients.matchAll().then(clients => {
                 clients.forEach(client => {
                     client.postMessage({
@@ -112,26 +122,25 @@ self.addEventListener('activate', event => {
     self.clients.claim();
 });
 
-// 监听来自客户端的消息
 self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
 });
 
-// 判断请求是否为导航 API（缓存优先）
+// 判断是否为导航 API
 function isNavigationApiRequest(url) {
     return NAV_API_PATTERNS.some(pattern => url.pathname.includes(pattern));
 }
 
-// 判断请求是否为可缓存的只读 API（网络优先，缓存后备）
+// 判断是否为可缓存 API
 function isCacheableApiRequest(request) {
     if (request.method !== 'GET') return false;
     const url = new URL(request.url);
     return CACHED_API_PATTERNS.some(pattern => url.pathname.includes(pattern));
 }
 
-// 处理导航 API 请求（缓存优先 + 后台更新）
+// 处理导航 API（缓存优先 + 后台更新）
 async function handleNavigationApi(request, event) {
     const cache = await caches.open(NAVIGATION_CACHE_NAME);
     const cachedResponse = await cache.match(request);
@@ -161,7 +170,7 @@ async function handleNavigationApi(request, event) {
     return fetchPromise;
 }
 
-// 处理其他只读 API（网络优先，缓存后备，带 TTL 校验）
+// 处理可缓存 API（网络优先，缓存后备，带 TTL）
 async function handleCacheableApi(request) {
     const url = new URL(request.url);
     const apiPath = url.pathname;
@@ -203,7 +212,35 @@ async function handleCacheableApi(request) {
     });
 }
 
-// 处理静态资源请求（缓存优先，无缓存则网络）
+// 处理字体请求（缓存优先，带跨域）
+async function handleFontRequest(request) {
+    const cache = await caches.open(FONT_CACHE_NAME);
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) {
+        return cachedResponse;
+    }
+    try {
+        const response = await fetch(request);
+        if (response && response.status === 200) {
+            const cloned = response.clone();
+            // 确保跨域字体缓存正确
+            const headers = new Headers(cloned.headers);
+            headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+            const cachedResponseWithHeaders = new Response(cloned.body, {
+                status: cloned.status,
+                statusText: cloned.statusText,
+                headers: headers
+            });
+            cache.put(request, cachedResponseWithHeaders);
+        }
+        return response;
+    } catch (err) {
+        console.warn('字体加载失败，返回缓存的版本（如果有）:', err);
+        return cachedResponse || new Response('', { status: 404 });
+    }
+}
+
+// 处理静态资源（缓存优先）
 async function handleStaticResource(request) {
     const cache = await caches.open(CACHE_NAME);
     const cachedResponse = await cache.match(request);
@@ -219,7 +256,7 @@ async function handleStaticResource(request) {
     });
 }
 
-// 其他请求（POST、非缓存API）使用网络优先，不缓存
+// 其他请求
 async function handleOtherRequest(request) {
     try {
         const response = await fetch(request);
@@ -233,27 +270,33 @@ async function handleOtherRequest(request) {
     }
 }
 
-// Fetch 事件：根据请求类型选择策略
+// Fetch 事件
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
-    // 仅处理本站请求
-    if (url.origin !== self.location.origin) return;
+    if (url.origin !== self.location.origin && !isFontRequest(url)) return;
     
+    // 字体请求
+    if (isFontRequest(url)) {
+        event.respondWith(handleFontRequest(event.request));
+        return;
+    }
+    
+    // 导航 API
     if (isNavigationApiRequest(url)) {
         event.respondWith(handleNavigationApi(event.request, event));
         return;
     }
     
+    // 可缓存 API
     if (isCacheableApiRequest(event.request)) {
         event.respondWith(handleCacheableApi(event.request));
         return;
     }
     
-    // 对静态资源（文档、脚本、样式、字体）使用缓存优先
+    // 静态资源
     if (event.request.destination === 'document' || 
         event.request.destination === 'script' || 
-        event.request.destination === 'style' ||
-        event.request.destination === 'font') {
+        event.request.destination === 'style') {
         event.respondWith(handleStaticResource(event.request));
         return;
     }
