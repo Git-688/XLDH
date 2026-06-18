@@ -8,23 +8,22 @@
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
 
-    <!-- CSP 策略（兼容明月浩空播放器，保留所有必要指令） -->
-    <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz https://myhkw.cn https://*.myhkw.cn;
-        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://myhkw.cn https://*.myhkw.cn;
-        img-src 'self' data: https://myhkw.cn https://*.myhkw.cn https:;
-        media-src 'self' https://myhkw.cn https://*.myhkw.cn https:;
-        connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz https://xiaodi.ykxbl.top https://myhkw.cn https://*.myhkw.cn wss://myhkw.cn;
-        font-src 'self' https://cdn.jsdelivr.net https://myhkw.cn https://*.myhkw.cn;
-        frame-src 'self' https://myhkw.cn https://*.myhkw.cn;
-        worker-src 'self' blob:;
-        frame-ancestors 'none';
-        base-uri 'none';
-        form-action 'self';
-        upgrade-insecure-requests;
-    ">
-
+<!-- 替换原有 CSP meta 标签 -->
+<meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'nonce-{{NONCE}}' 'strict-dynamic' https: 'unsafe-inline' 'unsafe-eval' http:;
+    style-src 'self' 'unsafe-inline' https:;
+    img-src * data: https:;
+    media-src * https:;
+    connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz https://xiaodi.ykxbl.top https://myhkw.cn wss://myhkw.cn;
+    font-src 'self' https:;
+    frame-src 'self' https:;
+    worker-src 'self' blob:;
+    frame-ancestors 'none';
+    base-uri 'none';
+    form-action 'self';
+    upgrade-insecure-requests;
+">
     <!-- 其他安全头 -->
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="theme-color" content="#4361ee">
@@ -33,10 +32,6 @@
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
 
-    <!-- jQuery 必须在播放器之前同步加载 -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
-
-    <!-- 应用配置 -->
     <script>
         (function() {
             let apiBase = '';
@@ -54,7 +49,7 @@
                 API_BASE: apiBase,
                 WALINE_SERVER: 'https://yy688.ccwu.cc'
             };
-            console.log('[Config] API_BASE:', apiBase);
+            console.log(`[Config] API_BASE: ${apiBase}`);
             window.Starlink = window.Starlink || {};
         })();
     </script>
@@ -74,7 +69,7 @@
     <link rel="dns-prefetch" href="https://api.kuleu.com">
     <link rel="dns-prefetch" href="https://api.injahow.cn">
 
-    <!-- 字体预加载 -->
+    <!-- 字体预加载（添加 crossorigin） -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -105,7 +100,7 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/regular.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 
-    <!-- 内联样式 -->
+    <!-- 内联样式（进度条、全局变量等） -->
     <style>
         .scroll-progress {
             position: fixed;
@@ -605,14 +600,14 @@
         .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
     </style>
 
+    <!-- 预加载主脚本 -->
     <link rel="preload" href="./js/main.js" as="script">
 </head>
 <body>
-
     <!-- 滚动进度条 -->
     <div class="scroll-progress" id="scrollProgress"></div>
 
-    <!-- ==================== 导航栏 ==================== -->
+    <!-- 导航栏 -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <div class="nav-brand">
@@ -628,7 +623,7 @@
         </div>
     </nav>
 
-    <!-- ==================== 侧边栏 ==================== -->
+    <!-- 侧边栏 -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-wallpaper" id="sidebarWallpaper">
             <div class="sidebar-wallpaper-overlay"></div>
@@ -657,9 +652,8 @@
         </div>
     </aside>
 
-    <!-- ==================== 主内容 ==================== -->
+    <!-- 主内容 -->
     <main class="main-content">
-
         <!-- 壁纸轮播 -->
         <section class="wallpaper-section">
             <div class="container">
@@ -807,7 +801,7 @@
             <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
         </div>
 
-        <!-- 自研音乐播放器 -->
+        <!-- 音乐播放器 -->
         <div class="music-player" id="musicPlayer">
             <div class="player-top">
                 <div class="cover-section">
@@ -1033,13 +1027,30 @@
                 </div>
             </div>
         </div>
-
     </main>
 
-    <!-- ==================== 明月浩空播放器（必须放在 body 最底部，且不加 defer/async） ==================== -->
-    <script type="text/javascript" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
+    <!-- ==================== 脚本加载 ==================== -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+    <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
-    <!-- ==================== 其他所有脚本（使用 defer） ==================== -->
+    <!-- 进度条控制 -->
+    <script>
+        (function() {
+            const progressBar = document.getElementById('scrollProgress');
+            if (!progressBar) return;
+            function updateScrollProgress() {
+                const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
+                const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                const scrolled = (winScroll / height) * 100;
+                progressBar.style.width = scrolled + '%';
+            }
+            window.addEventListener('scroll', updateScrollProgress);
+            window.addEventListener('resize', updateScrollProgress);
+            updateScrollProgress();
+        })();
+    </script>
+
+    <!-- 延迟加载脚本（使用 defer） -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js" crossorigin="anonymous"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
     <script defer src="./js/utils.js"></script>
@@ -1069,23 +1080,6 @@
     <script defer src="./js/modules/submit.js"></script>
     <script defer src="./js/modules/theme.js"></script>
     <script defer src="./js/cursor2.js"></script>
-
-    <!-- 进度条控制 -->
-    <script>
-        (function() {
-            const progressBar = document.getElementById('scrollProgress');
-            if (!progressBar) return;
-            function updateScrollProgress() {
-                const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
-                const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-                const scrolled = (winScroll / height) * 100;
-                progressBar.style.width = scrolled + '%';
-            }
-            window.addEventListener('scroll', updateScrollProgress);
-            window.addEventListener('resize', updateScrollProgress);
-            updateScrollProgress();
-        })();
-    </script>
 
     <!-- Service Worker -->
     <script>
