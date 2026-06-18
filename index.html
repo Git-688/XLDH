@@ -33,6 +33,9 @@
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
 
+    <!-- jQuery（必须在明月浩空播放器之前加载） -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+
     <!-- 应用配置 -->
     <script>
         (function() {
@@ -941,9 +944,6 @@
         </div>
         <audio id="audio-element" preload="metadata" style="display:none;"></audio>
 
-        <!-- 明月浩空音乐播放器（独立） -->
-        <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
-
         <!-- 搜索模态框 -->
         <div class="search-modal" id="searchModal">
             <div class="modal-content">
@@ -1034,9 +1034,10 @@
         </div>
     </main>
 
-    <!-- ==================== 脚本加载 ==================== -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+    <!-- ==================== 明月浩空音乐播放器（必须在 jQuery 之后加载） ==================== -->
+    <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
+    <!-- ==================== 其他脚本加载 ==================== -->
     <!-- 进度条控制 -->
     <script>
         (function() {
