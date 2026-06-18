@@ -7,23 +7,21 @@
     <meta name="description" content="星聚导航是一个现代化的个人导航网站，提供便捷的上网导航体验和各种实用工具">
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
-
-    <!-- CSP 策略（采用 nonce 方案，移除 unsafe-eval） -->
-    <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self';
-        script-src 'self' 'unsafe-inline' 'nonce-myhk-nonce-2026' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz https://myhkw.cn;
-        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://myhkw.cn;
-        img-src * data: https://myhkw.cn;
-        media-src * https://myhkw.cn;
-        connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz https://xiaodi.ykxbl.top https://myhkw.cn wss://myhkw.cn;
-        font-src 'self' https://cdn.jsdelivr.net https://myhkw.cn;
-        frame-src 'self' https://myhkw.cn;
-        worker-src 'self' blob:;
-        frame-ancestors 'none';
-        base-uri 'none';
-        form-action 'self';
-        upgrade-insecure-requests;
-    ">
+<meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz https://myhkw.cn;
+    style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://myhkw.cn;
+    img-src * data: https://myhkw.cn;
+    media-src * https://myhkw.cn;
+    connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz https://xiaodi.ykxbl.top https://myhkw.cn wss://myhkw.cn;
+    font-src 'self' https://cdn.jsdelivr.net https://myhkw.cn;
+    frame-src 'self' https://myhkw.cn;
+    worker-src 'self' blob:;
+    frame-ancestors 'none';
+    base-uri 'none';
+    form-action 'self';
+    upgrade-insecure-requests;
+">
 
     <!-- 其他安全头 -->
     <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -1032,9 +1030,7 @@
 
     <!-- ==================== 脚本加载 ==================== -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
-
-    <!-- myhk 播放器脚本 - 使用 nonce 授权 -->
-    <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1" nonce="myhk-nonce-2026"></script>
+    <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
     <!-- 进度条控制 -->
     <script>
