@@ -8,7 +8,7 @@
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
 
-    <!-- CSP 策略（兼容明月浩空播放器，临时放行 unsafe-eval） -->
+    <!-- CSP 策略（兼容明月浩空播放器，保留所有必要指令） -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz https://myhkw.cn https://*.myhkw.cn;
@@ -33,7 +33,7 @@
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
 
-    <!-- jQuery 必须在播放器之前加载（同步） -->
+    <!-- jQuery 必须在播放器之前同步加载 -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
 
     <!-- 应用配置 -->
@@ -54,7 +54,7 @@
                 API_BASE: apiBase,
                 WALINE_SERVER: 'https://yy688.ccwu.cc'
             };
-            console.log(`[Config] API_BASE: ${apiBase}`);
+            console.log('[Config] API_BASE:', apiBase);
             window.Starlink = window.Starlink || {};
         })();
     </script>
@@ -605,14 +605,14 @@
         .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
     </style>
 
-    <!-- 预加载主脚本 -->
     <link rel="preload" href="./js/main.js" as="script">
 </head>
 <body>
+
     <!-- 滚动进度条 -->
     <div class="scroll-progress" id="scrollProgress"></div>
 
-    <!-- 导航栏 -->
+    <!-- ==================== 导航栏 ==================== -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <div class="nav-brand">
@@ -628,7 +628,7 @@
         </div>
     </nav>
 
-    <!-- 侧边栏 -->
+    <!-- ==================== 侧边栏 ==================== -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-wallpaper" id="sidebarWallpaper">
             <div class="sidebar-wallpaper-overlay"></div>
@@ -657,8 +657,9 @@
         </div>
     </aside>
 
-    <!-- 主内容 -->
+    <!-- ==================== 主内容 ==================== -->
     <main class="main-content">
+
         <!-- 壁纸轮播 -->
         <section class="wallpaper-section">
             <div class="container">
@@ -1032,12 +1033,13 @@
                 </div>
             </div>
         </div>
+
     </main>
 
     <!-- ==================== 明月浩空播放器（必须放在 body 最底部，且不加 defer/async） ==================== -->
     <script type="text/javascript" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
-    <!-- ==================== 其他脚本（使用 defer） ==================== -->
+    <!-- ==================== 其他所有脚本（使用 defer） ==================== -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js" crossorigin="anonymous"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
     <script defer src="./js/utils.js"></script>
@@ -1068,7 +1070,7 @@
     <script defer src="./js/modules/theme.js"></script>
     <script defer src="./js/cursor2.js"></script>
 
-    <!-- 进度条控制（同步执行） -->
+    <!-- 进度条控制 -->
     <script>
         (function() {
             const progressBar = document.getElementById('scrollProgress');
