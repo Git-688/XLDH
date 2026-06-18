@@ -1,23 +1,24 @@
-// admin.js - 星聚导航后台管理（完整版，修复获取信息乱码）
+// admin.js - 星聚导航后台管理（安全增强版）
+// 包含：CSRF 防护、刷新令牌、登录锁定、统一错误处理
+
 (function() {
+    'use strict';
+
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
-    const TOKEN_EXPIRE_HOURS = 1;
-    const MAX_FAIL_COUNT = 5;
-    const LOCK_DURATION_MS = 10 * 60 * 1000;
-    const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
+    const TOKEN_EXPIRE_HOURS = 1;              // 会话有效期（小时）
+    const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000; // 提前5分钟刷新
 
     let token = '';
+    let refreshToken = '';                     // 刷新令牌
+    let csrfToken = '';                        // CSRF Token（从响应头获取）
     let categories = [], subcategories = [], sites = [];
     let currentCat = null, currentSub = null;
-    let failCount = parseInt(sessionStorage.getItem('login_fail_count') || '0', 10);
-    let lockUntil = parseInt(sessionStorage.getItem('login_lock_until') || '0', 10);
     let modalAction = null;
     let currentSubmissionId = null;
     let refreshTimer = null;
-    let customSelects = {};
-
     let currentAnnouncement = null;
     let currentCaptchaMd5key = null;
+    let loginLocked = false;                  // 前端锁定状态
 
     // ==================== 工具函数 ====================
     function escapeHtml(str) {
@@ -75,78 +76,77 @@
         });
     }
 
-    // ==================== API 请求封装 ====================
+    // ==================== API 请求封装（增强版） ====================
     async function apiFetch(endpoint, opt = {}) {
-        const headers = { 'Content-Type': 'application/json', ...opt.headers };
+        const headers = {
+            'Content-Type': 'application/json',
+            ...opt.headers
+        };
         if (token) headers.Authorization = `Bearer ${token}`;
-        const res = await fetch(API_BASE + endpoint, { ...opt, headers });
-        if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
-        if (res.status === 403) { showToast('IP不在白名单', 'error'); throw new Error('Forbidden'); }
-        if (!res.ok) throw new Error(await res.text() || '请求失败');
+        if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+
+        const res = await fetch(API_BASE + endpoint, {
+            ...opt,
+            headers
+        });
+
+        // 从响应头提取 CSRF Token（后端在响应中设置）
+        const newCsrf = res.headers.get('X-CSRF-Token');
+        if (newCsrf) csrfToken = newCsrf;
+
+        // 处理未授权
+        if (res.status === 401) {
+            // 尝试刷新令牌
+            if (refreshToken) {
+                const refreshed = await refreshSessionToken();
+                if (refreshed) {
+                    // 重试原请求
+                    return apiFetch(endpoint, opt);
+                }
+            }
+            logout();
+            throw new Error('Unauthorized');
+        }
+
+        if (res.status === 403) {
+            showToast('IP不在白名单或权限不足', 'error');
+            throw new Error('Forbidden');
+        }
+
+        if (!res.ok) {
+            const errText = await res.text().catch(() => '请求失败');
+            throw new Error(errText);
+        }
+
         return res.json();
     }
 
-    // ==================== 获取网站信息（自动检测编码，修复乱码） ====================
-    async function fetchSiteInfo(urlInputId, titleInputId, iconInputId, descInputId) {
-        const urlInput = document.getElementById(urlInputId);
-        const titleInput = document.getElementById(titleInputId);
-        const iconInput = document.getElementById(iconInputId);
-        const descInput = document.getElementById(descInputId);
-        if (!urlInput || !titleInput || !iconInput || !descInput) {
-            showToast('输入框元素未找到', 'error');
-            return;
-        }
-        let rawUrl = urlInput.value.trim();
-        if (!rawUrl) {
-            showToast('请先输入网址', 'warn');
-            return;
-        }
-        if (!/^https?:\/\//i.test(rawUrl)) {
-            rawUrl = 'https://' + rawUrl;
-        }
-        const btn = document.getElementById('fetchInfoBtn');
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = '获取中...';
-        }
+    // ==================== 刷新令牌 ====================
+    async function refreshSessionToken() {
+        if (!refreshToken) return false;
         try {
-            const response = await fetch(`https://api.pearapi.ai/api/website/info/?url=${encodeURIComponent(rawUrl)}`);
-            if (!response.ok) throw new Error('请求失败');
-            const buffer = await response.arrayBuffer();
-
-            // ---- 自动检测编码 ----
-            let text = '';
-            // 先尝试 UTF-8
-            let decoder = new TextDecoder('utf-8');
-            text = decoder.decode(buffer);
-            // 如果包含 � 替换字符，则改用 GBK 解码
-            if (text.includes('�')) {
-                decoder = new TextDecoder('gbk');
-                text = decoder.decode(buffer);
-            }
-
-            const data = JSON.parse(text);
-            if (data.code === 200 && data.data) {
-                if (data.data.title) titleInput.value = data.data.title;
-                if (data.data.icon) iconInput.value = data.data.icon;
-                if (data.data.description) descInput.value = data.data.description;
-                showToast('获取成功', 'success');
-            } else {
-                showToast('未获取到信息，请手动填写', 'warn');
-            }
-        } catch (error) {
-            console.error('获取网站信息失败:', error);
-            showToast('获取失败，请手动填写', 'error');
-        } finally {
-            if (btn) {
-                btn.disabled = false;
-                btn.textContent = '获取信息';
-            }
+            const res = await fetch(`${API_BASE}/admin/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken })
+            });
+            if (!res.ok) return false;
+            const data = await res.json();
+            token = data.token;
+            refreshToken = data.refreshToken;
+            // 更新存储
+            sessionStorage.setItem('admin_token', token);
+            sessionStorage.setItem('admin_refresh_token', refreshToken);
+            sessionStorage.setItem('admin_expires', Date.now() + TOKEN_EXPIRE_HOURS * 3600000 + '');
+            // 更新 CSRF Token（如果有）
+            if (data.csrfToken) csrfToken = data.csrfToken;
+            startSessionRefresh();
+            showToast('会话已续期', 'success');
+            return true;
+        } catch (e) {
+            console.warn('刷新令牌失败:', e);
+            return false;
         }
-    }
-
-    function fetchSiteInfoHandler() {
-        fetchSiteInfo('mUrl', 'mTitle', 'mIcon', 'mDesc');
     }
 
     // ==================== 会话管理 ====================
@@ -154,68 +154,69 @@
         let tk = sessionStorage.getItem('admin_token');
         if (tk) {
             const exp = sessionStorage.getItem('admin_expires');
-            if (exp && Date.now() < parseInt(exp, 10)) return tk;
-            sessionStorage.removeItem('admin_token'); sessionStorage.removeItem('admin_expires');
+            if (exp && Date.now() < parseInt(exp, 10)) {
+                refreshToken = sessionStorage.getItem('admin_refresh_token') || '';
+                return tk;
+            }
+            // 过期则清除
+            sessionStorage.removeItem('admin_token');
+            sessionStorage.removeItem('admin_refresh_token');
+            sessionStorage.removeItem('admin_expires');
         }
+        // 尝试从 localStorage 恢复（记住我）
         const rem = localStorage.getItem('admin_remember');
         if (rem === 'true') {
             tk = localStorage.getItem('admin_token_saved');
             const savedTime = localStorage.getItem('admin_saved_time');
             if (tk && savedTime && (Date.now() - parseInt(savedTime, 10) < TOKEN_EXPIRE_HOURS * 3600000)) {
+                refreshToken = localStorage.getItem('admin_refresh_saved') || '';
                 sessionStorage.setItem('admin_token', tk);
+                sessionStorage.setItem('admin_refresh_token', refreshToken);
                 sessionStorage.setItem('admin_expires', Date.now() + TOKEN_EXPIRE_HOURS * 3600000 + '');
                 return tk;
             } else {
-                localStorage.removeItem('admin_token_saved'); localStorage.removeItem('admin_saved_time'); localStorage.removeItem('admin_remember');
+                localStorage.removeItem('admin_token_saved');
+                localStorage.removeItem('admin_refresh_saved');
+                localStorage.removeItem('admin_saved_time');
+                localStorage.removeItem('admin_remember');
             }
         }
         return '';
     }
 
-    function saveToken(tk, remember) {
+    function saveToken(tk, rtk, remember) {
         const exp = Date.now() + TOKEN_EXPIRE_HOURS * 3600000;
         sessionStorage.setItem('admin_token', tk);
+        sessionStorage.setItem('admin_refresh_token', rtk);
         sessionStorage.setItem('admin_expires', exp + '');
         if (remember) {
             localStorage.setItem('admin_remember', 'true');
             localStorage.setItem('admin_token_saved', tk);
+            localStorage.setItem('admin_refresh_saved', rtk);
             localStorage.setItem('admin_saved_time', Date.now() + '');
         } else {
             localStorage.removeItem('admin_remember');
             localStorage.removeItem('admin_token_saved');
+            localStorage.removeItem('admin_refresh_saved');
             localStorage.removeItem('admin_saved_time');
         }
+        token = tk;
+        refreshToken = rtk;
         startSessionRefresh();
     }
 
     function clearToken() {
+        token = '';
+        refreshToken = '';
+        csrfToken = '';
         sessionStorage.removeItem('admin_token');
+        sessionStorage.removeItem('admin_refresh_token');
         sessionStorage.removeItem('admin_expires');
         localStorage.removeItem('admin_remember');
         localStorage.removeItem('admin_token_saved');
+        localStorage.removeItem('admin_refresh_saved');
         localStorage.removeItem('admin_saved_time');
         if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
-    }
-
-    async function refreshSession() {
-        if (!token) return false;
-        try {
-            const res = await fetch(`${API_BASE}/admin/refresh-session`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                token = data.sessionToken;
-                saveToken(token, false);
-                showToast('会话已续期', 'success');
-                return true;
-            } else if (res.status === 401) {
-                logout();
-                return false;
-            }
-        } catch (e) { console.warn('刷新 session 失败:', e); }
-        return false;
     }
 
     function startSessionRefresh() {
@@ -224,49 +225,25 @@
         const now = Date.now();
         const delay = expires - now - SESSION_REFRESH_BEFORE_MS;
         if (delay > 0 && delay < 3600000) {
-            refreshTimer = setTimeout(() => { refreshSession().then(() => startSessionRefresh()); }, delay);
-        } else if (delay <= 0) {
-            refreshSession().then(() => startSessionRefresh());
+            refreshTimer = setTimeout(() => {
+                refreshSessionToken().then(() => startSessionRefresh());
+            }, delay);
+        } else if (delay <= 0 && token) {
+            // 如果已过期，立即刷新
+            refreshSessionToken().then(() => startSessionRefresh());
         }
     }
 
-    // ==================== 登录锁定 ====================
-    function updateLockMessage() {
+    // ==================== 登录锁定显示 ====================
+    function updateLockMessage(locked) {
         const el = document.getElementById('loginLockMessage');
         if (!el) return;
-        if (Date.now() < lockUntil) el.textContent = `登录锁定中，剩余 ${Math.ceil((lockUntil - Date.now()) / 60000)} 分钟`;
-        else el.textContent = '';
-    }
-
-    function checkLock() {
-        if (Date.now() < lockUntil) { updateLockMessage(); showToast('登录失败过多，锁定10分钟', 'error'); return false; }
-        if (failCount >= MAX_FAIL_COUNT) {
-            lockUntil = Date.now() + LOCK_DURATION_MS;
-            sessionStorage.setItem('login_lock_until', lockUntil + '');
-            sessionStorage.setItem('login_fail_count', failCount + '');
-            updateLockMessage();
-            showToast('失败5次，锁定10分钟', 'error');
-            return false;
+        if (locked) {
+            el.textContent = '登录失败过多，请10分钟后重试';
+            el.style.display = 'block';
+        } else {
+            el.style.display = 'none';
         }
-        return true;
-    }
-
-    function recordLoginFailure() {
-        failCount++;
-        sessionStorage.setItem('login_fail_count', failCount + '');
-        if (failCount >= MAX_FAIL_COUNT) {
-            lockUntil = Date.now() + LOCK_DURATION_MS;
-            sessionStorage.setItem('login_lock_until', lockUntil + '');
-            updateLockMessage();
-        }
-    }
-
-    function resetLoginFailure() {
-        failCount = 0; lockUntil = 0;
-        sessionStorage.removeItem('login_fail_count');
-        sessionStorage.removeItem('login_lock_until');
-        const el = document.getElementById('loginLockMessage');
-        if (el) el.textContent = '';
     }
 
     // ==================== 验证码 ====================
@@ -303,13 +280,18 @@
 
     // ==================== 登录/登出 ====================
     async function login() {
-        if (!checkLock()) return;
         const rawToken = document.getElementById('tokenInput').value.trim();
         if (!rawToken) { showToast('请输入Token', 'error'); return; }
 
         const captchaCode = document.getElementById('captchaInput')?.value.trim() || '';
         if (!captchaCode) {
             showToast('请输入验证码', 'error');
+            return;
+        }
+
+        // 检查前端锁定状态（后端锁定状态通过接口返回）
+        if (loginLocked) {
+            showToast('登录已锁定，请10分钟后重试', 'error');
             return;
         }
 
@@ -331,25 +313,34 @@
             });
             const loginData = await loginRes.json().catch(() => ({}));
             if (!loginRes.ok) {
+                // 检查是否被锁定（后端返回特定错误码）
+                if (loginRes.status === 429) {
+                    loginLocked = true;
+                    updateLockMessage(true);
+                    showToast('登录失败过多，请10分钟后重试', 'error');
+                }
                 throw new Error(loginData.error || '登录失败');
             }
-            const sessionToken = loginData.sessionToken;
-            token = sessionToken;
-            resetLoginFailure();
+            // 登录成功
+            loginLocked = false;
+            updateLockMessage(false);
+            const sessionToken = loginData.token;
+            const rtk = loginData.refreshToken;
+            const csrf = loginData.csrfToken || '';
+            if (csrf) csrfToken = csrf;
             const remember = document.getElementById('rememberToken').checked;
-            saveToken(sessionToken, remember);
-            await apiFetch('/admin/categories');
+            saveToken(sessionToken, rtk, remember);
+            // 加载数据
+            await loadAllData();
             const loginWrapper = document.getElementById('loginWrapper');
             const mainContent = document.getElementById('mainContent');
             if (loginWrapper) loginWrapper.style.display = 'none';
             if (mainContent) mainContent.classList.remove('hidden');
             document.getElementById('tokenInput').value = '';
             document.getElementById('captchaInput').value = '';
-            await loadAllData();
             showToast('登录成功' + (remember ? '（已记住密码）' : ''));
         } catch (e) {
             token = '';
-            recordLoginFailure();
             showToast(e.message === 'Unauthorized' ? 'Token无效或验证码错误' : e.message || '登录失败', 'error');
             loadCaptcha();
         } finally {
@@ -360,6 +351,8 @@
 
     function logout() {
         token = '';
+        refreshToken = '';
+        csrfToken = '';
         clearToken();
         const loginWrapper = document.getElementById('loginWrapper');
         const mainContent = document.getElementById('mainContent');
@@ -374,6 +367,64 @@
         currentCaptchaMd5key = null;
         loadCaptcha();
         showToast('已退出');
+    }
+
+    // ==================== 获取网站信息（编码修复） ====================
+    async function fetchSiteInfo(urlInputId, titleInputId, iconInputId, descInputId) {
+        const urlInput = document.getElementById(urlInputId);
+        const titleInput = document.getElementById(titleInputId);
+        const iconInput = document.getElementById(iconInputId);
+        const descInput = document.getElementById(descInputId);
+        if (!urlInput || !titleInput || !iconInput || !descInput) {
+            showToast('输入框元素未找到', 'error');
+            return;
+        }
+        let rawUrl = urlInput.value.trim();
+        if (!rawUrl) {
+            showToast('请先输入网址', 'warn');
+            return;
+        }
+        if (!/^https?:\/\//i.test(rawUrl)) {
+            rawUrl = 'https://' + rawUrl;
+        }
+        const btn = document.getElementById('fetchInfoBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '获取中...';
+        }
+        try {
+            const response = await fetch(`https://api.pearapi.ai/api/website/info/?url=${encodeURIComponent(rawUrl)}`);
+            if (!response.ok) throw new Error('请求失败');
+            const buffer = await response.arrayBuffer();
+            let text = '';
+            let decoder = new TextDecoder('utf-8');
+            text = decoder.decode(buffer);
+            if (text.includes('�')) {
+                decoder = new TextDecoder('gbk');
+                text = decoder.decode(buffer);
+            }
+            const data = JSON.parse(text);
+            if (data.code === 200 && data.data) {
+                if (data.data.title) titleInput.value = data.data.title;
+                if (data.data.icon) iconInput.value = data.data.icon;
+                if (data.data.description) descInput.value = data.data.description;
+                showToast('获取成功', 'success');
+            } else {
+                showToast('未获取到信息，请手动填写', 'warn');
+            }
+        } catch (error) {
+            console.error('获取网站信息失败:', error);
+            showToast('获取失败，请手动填写', 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = '获取信息';
+            }
+        }
+    }
+
+    function fetchSiteInfoHandler() {
+        fetchSiteInfo('mUrl', 'mTitle', 'mIcon', 'mDesc');
     }
 
     // ==================== 数据加载与渲染 ====================
@@ -575,7 +626,7 @@
         } catch { return 0; }
     }
 
-    // ==================== 增删改查模态框 ====================
+    // ==================== 模态框 ====================
     function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null) {
         const modal = document.getElementById('modal');
         document.querySelector('#modal .modal-title').textContent = title;
@@ -767,7 +818,7 @@
         }, 150);
     }
 
-    // ==================== 辅助功能：排行、反馈等 ====================
+    // ==================== 辅助功能 ====================
     async function loadRanking() {
         const list = document.getElementById('rankList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -882,7 +933,10 @@
     async function exportFullData() {
         try {
             const response = await fetch(`${API_BASE}/admin/export`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'X-CSRF-Token': csrfToken
+                }
             });
             if (!response.ok) throw new Error('导出失败');
             const blob = await response.blob();
@@ -923,7 +977,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'X-CSRF-Token': csrfToken
                 },
                 body: JSON.stringify({ mode, data })
             });
@@ -1158,7 +1213,7 @@
         } catch (err) { showToast('加载详情失败', 'error'); }
     }
 
-    // ==================== 刷新图标按钮 ====================
+    // ==================== 刷新图标 ====================
     async function refreshIcons() {
         const btn = document.getElementById('refreshIconsBtn');
         if (!btn) return;
@@ -1168,7 +1223,10 @@
         try {
             const response = await fetch(`${API_BASE}/admin/refresh-icons`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'X-CSRF-Token': csrfToken
+                }
             });
             const data = await response.json();
             if (response.ok) {
@@ -1184,14 +1242,13 @@
         }
     }
 
-    // ==================== 刷新导航统计 ====================
     function refreshNavigationStats() {
         if (window.optimizedNavigation && typeof window.optimizedNavigation.calculateTotalValidSites === 'function') {
             window.optimizedNavigation.calculateTotalValidSites().catch(e => console.warn('更新导航统计失败:', e));
         }
     }
 
-    // ==================== CustomSelect 类 ====================
+    // ==================== CustomSelect 类（不变） ====================
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -1312,6 +1369,9 @@
         }
     }
 
+    let customSelects = {};
+
+    // ==================== 样式注入 ====================
     function injectGlobalStyles() {
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
@@ -1435,7 +1495,12 @@
         if (captchaImg) captchaImg.addEventListener('click', refreshCaptcha);
     }
 
+    // ==================== 启动 ====================
     injectGlobalStyles();
+
+    // 检查锁定状态（通过接口返回的锁定标志，此处简单从 localStorage 读取）
+    loginLocked = localStorage.getItem('login_locked') === 'true';
+    updateLockMessage(loginLocked);
 
     const storedToken = getStoredToken();
     if (storedToken) {
@@ -1470,6 +1535,10 @@
         if (exp && Date.now() > parseInt(exp, 10) - 60000) showToast('登录即将过期', 'warn');
     }, 30000);
 
-    updateLockMessage();
     setupEventDelegation();
+
+    // 在关闭页面时清除锁定状态（可选）
+    window.addEventListener('beforeunload', () => {
+        // 不主动清除，由后端控制锁定过期
+    });
 })();
