@@ -1,7 +1,6 @@
 /**
- * 轮播图模块 - 性能优化版（增强预加载策略）
- * 功能：7天必应壁纸轮播、自动切换、箭头导航、标题显示、预加载前后多张图片（限制并发）
- * 优化：增加空闲预加载、优先级队列
+ * 轮播图模块 - 性能优化版（增强预加载策略 + 懒加载背景）
+ * 功能：7天必应壁纸轮播、自动切换、箭头导航、标题显示、预加载前后多张图片
  */
 class CarouselModule {
     constructor() {
@@ -212,6 +211,7 @@ class CarouselModule {
         setTimeout(() => this.preloadAllIdle(), 3000);
     }
 
+    // ==================== 懒加载渲染 ====================
     renderSlides() {
         if (!this.track) return;
         this.track.innerHTML = '';
@@ -223,16 +223,16 @@ class CarouselModule {
             div.style.backgroundSize = 'cover';
             div.style.backgroundPosition = 'center';
 
-            if (slide.url) {
+            // 只有当前激活的 slide 才立即加载背景（索引为 1）
+            if (index === 1) {
                 const imageUrl = this.sanitizeImageUrl(slide.url);
-                if (index === 1) {
-                    const img = new Image();
-                    img.onload = () => {
-                        div.style.background = `url('${imageUrl}') center/cover no-repeat`;
-                    };
-                    img.src = imageUrl;
-                } else {
-                    div.setAttribute('data-bg', imageUrl);
+                if (imageUrl) {
+                    div.style.backgroundImage = `url('${imageUrl}')`;
+                }
+            } else {
+                // 存储 url 到 data 属性，供后续懒加载
+                if (slide.url) {
+                    div.dataset.bg = this.sanitizeImageUrl(slide.url);
                 }
             }
 
@@ -256,6 +256,7 @@ class CarouselModule {
         });
     }
 
+    // ==================== 切换时懒加载背景 ====================
     goToSlide(clonedIndex, animate = true) {
         if (this.isTransitioning) return;
         const total = this.clonedSlides.length;
@@ -264,17 +265,16 @@ class CarouselModule {
         this.isTransitioning = true;
         this.preloadNearbySlides(clonedIndex, 3);
 
-        const currentSlideDiv = this.track.children[clonedIndex];
-        if (currentSlideDiv && currentSlideDiv.getAttribute('data-bg')) {
-            const bgUrl = currentSlideDiv.getAttribute('data-bg');
-            if (bgUrl) {
-                const img = new Image();
-                img.onload = () => {
-                    currentSlideDiv.style.background = `url('${bgUrl}') center/cover no-repeat`;
-                    currentSlideDiv.removeAttribute('data-bg');
-                };
-                img.src = bgUrl;
-            }
+        // 加载目标 slide 的背景（懒加载）
+        const targetSlide = this.track.children[clonedIndex];
+        if (targetSlide && targetSlide.dataset.bg) {
+            const bgUrl = targetSlide.dataset.bg;
+            const img = new Image();
+            img.onload = () => {
+                targetSlide.style.backgroundImage = `url('${bgUrl}')`;
+                targetSlide.removeAttribute('data-bg');
+            };
+            img.src = bgUrl;
         }
 
         let realIndex = clonedIndex;
