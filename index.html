@@ -30,13 +30,40 @@
         })();
     </script>
 
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz https://myhkw.cn; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src * data:; media-src *; connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz https://xiaodi.ykxbl.top https://myhkw.cn; font-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'none'; form-action 'self';">
+    <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://myhkw.cn">
+    <link rel="dns-prefetch" href="https://favicon.yandex.net">
+    <link rel="dns-prefetch" href="https://icon.horse">
+    <link rel="dns-prefetch" href="https://www.google.com">
+
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz https://myhkw.cn;
+        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://myhkw.cn;
+        img-src * data: https://myhkw.cn;
+        media-src * https://myhkw.cn;
+        connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz https://xiaodi.ykxbl.top https://myhkw.cn wss://myhkw.cn;
+        font-src 'self' https://cdn.jsdelivr.net https://myhkw.cn;
+        frame-src 'self' https://myhkw.cn;
+        worker-src 'self' blob:;
+        frame-ancestors 'none';
+        base-uri 'none';
+        form-action 'self';
+        upgrade-insecure-requests;
+    ">
 
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
 
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
+
+    <!-- 播放器所需样式 -->
+    <link rel="stylesheet" href="https://myhkw.cn/api/playercss?id=178139989192">
+
+    <!-- Meteocons 动画天气图标库 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/meteocons@1.1.0/css/meteocons.css">
 
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -71,7 +98,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preload" href="./js/main.js" as="script">
 
-    <!-- 滚动进度条样式：由蓝渐变到红 -->
     <style>
         .scroll-progress {
             position: fixed;
@@ -708,7 +734,7 @@
                 </div>
                 <div class="submit-form-buttons" style="display: flex; justify-content: space-between; align-items: center;">
                     <div class="submit-hint" style="font-size: 11px; color: #f59e0b;">
-                        <i class="fas fa-circle-exclamation"></i> 检测稍缓，请稍等！！！
+                        <i class="fas fa-circle-exclamation"></i> 检测稍缓，请稍等待！
                     </div>
                     <div style="display: flex; gap: 8px;">
                         <button type="button" class="submit-cancel-btn">取消</button>
@@ -721,6 +747,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+
+<script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
 <script>
     (function() {
@@ -767,29 +795,24 @@
 <script defer src="./js/modules/submit.js"></script>
 <script defer src="./js/modules/theme.js"></script>
 
-<!-- 明月浩音乐播放器 -->
-<script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
-
 <script>
     if ('serviceWorker' in navigator) {
+        let swUpdateReloading = false;
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
                 console.log('Service Worker 注册成功，作用域:', registration.scope);
                 navigator.serviceWorker.addEventListener('message', function(event) {
-                    if (event.data && event.data.type === 'SW_UPDATED') {
-                        console.log('检测到新版本 Service Worker');
+                    if (event.data && event.data.type === 'SW_UPDATED' && !swUpdateReloading) {
+                        swUpdateReloading = true;
+                        console.log('检测到新版本 Service Worker，即将自动刷新');
                         if (window.toast) {
-                            window.toast.show('发现新版本，点击刷新获取最新内容', 'info', 10000);
+                            window.toast.show('发现新版本，自动刷新中...', 'info', 2000);
                             setTimeout(function() {
-                                if (confirm('发现新版本，是否刷新页面以获取最新功能？')) {
-                                    window.location.reload();
-                                }
-                            }, 500);
+                                window.location.reload();
+                            }, 1500);
                         } else {
                             setTimeout(function() {
-                                if (confirm('发现新版本，是否刷新页面以获取最新功能？')) {
-                                    window.location.reload();
-                                }
+                                window.location.reload();
                             }, 500);
                         }
                     }
