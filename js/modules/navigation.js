@@ -1,5 +1,6 @@
 /**
- * 优化分类导航系统 - 无限滚动加载版（移除空白状态提示）
+ * 优化分类导航系统 - 延迟加载子分类数据 + 计数接口
+ * 解决加载慢问题（完整版）
  */
 class OptimizedNavigation {
     constructor() {
@@ -177,7 +178,6 @@ class OptimizedNavigation {
             await this.calculateTotalValidSites();
             const firstCategory = this.getFirstCategory();
             if (firstCategory) {
-                await this.loadSubcategoryCountsForLevel1(firstCategory);
                 this.selectLevel1(firstCategory, false);
             } else {
                 this.renderEmptyState();
@@ -266,67 +266,70 @@ class OptimizedNavigation {
         return sites;
     }
 
-    async loadSubcategoryCountsForLevel1(level1) {
-        if (!this.structure?.[level1]) return;
-        const subcategories = this.structure[level1].subcategories;
-        let totalValidSites = 0;
-        const concurrency = 5;
-        const chunks = [];
-        for (let i=0; i<subcategories.length; i+=concurrency) chunks.push(subcategories.slice(i,i+concurrency));
-        for (const chunk of chunks) {
-            const promises = chunk.map(async (sub) => {
-                const subId = sub.id;
-                const sites = await this.loadSites(subId, true);
-                const validCount = sites.filter(s => s.valid !== false).length;
-                this.updateSubcategoryCountDisplay(subId, validCount);
-                return validCount;
-            });
-            const counts = await Promise.all(promises);
-            totalValidSites += counts.reduce((s,c)=>s+c,0);
+    async loadSubcategoryCounts(subcategoryIds) {
+        if (!subcategoryIds || subcategoryIds.length === 0) return {};
+        try {
+            const idsParam = subcategoryIds.join(',');
+            const response = await Utils.safeFetch(`${this.apiBase}/subcategory/counts?ids=${idsParam}`);
+            if (!response.ok) return {};
+            const counts = await response.json();
+            return counts;
+        } catch (e) {
+            console.warn('获取子分类计数失败:', e);
+            return {};
         }
-        this.updateStatsDisplay();
-        this.loadedLevel1Set.add(level1);
     }
 
-    updateSubcategoryCountDisplay(subcategoryId, count, retry=0) {
-        const btn = document.querySelector(`.level2-btn[data-level2="${subcategoryId}"]`);
-        if (btn) {
-            let countSpan = btn.querySelector('.level2-btn-count');
-            if (!countSpan) {
-                countSpan = document.createElement('span');
-                countSpan.className = 'level2-btn-count';
-                btn.appendChild(countSpan);
-            }
-            countSpan.textContent = count;
-            countSpan.style.display = 'inline-block';
-        } else if (retry < 5) setTimeout(() => this.updateSubcategoryCountDisplay(subcategoryId,count,retry+1),100);
+    updateSubcategoryCounts(counts) {
+        for (const [subId, count] of Object.entries(counts)) {
+            this.updateSubcategoryCountDisplay(parseInt(subId), count);
+        }
     }
 
-    calculateStats() {
-        const catCount = this.structure ? Object.keys(this.structure).length : 0;
-        this.stats.totalCategories = catCount;
-        this.updateStatsDisplay();
-    }
-    updateStatsDisplay() {
-        const el1 = document.getElementById('siteCount');
-        const el2 = document.getElementById('invalidCount');
-        if (el1) el1.textContent = `${this.stats.totalWebsites || 0}+`;
-        if (el2) el2.textContent = this.stats.invalidCount || '0';
-    }
-    updateInvalidCount(increment) {
-        if (!this.stats.invalidCount) this.stats.invalidCount = 0;
-        this.stats.invalidCount += increment;
-        const invalidEl = document.getElementById('invalidCount');
-        if (invalidEl) invalidEl.textContent = this.stats.invalidCount;
+    async selectLevel1(level1, isUserClick = false) {
+        if (this.selectedLevel1 === level1) return;
+        this.isNavigationClick = true;
+        document.querySelectorAll('.level1-btn').forEach(b => b.classList.toggle('active', b.dataset.level1 === level1));
+        this.selectedLevel1 = level1;
+        this.renderLevel2(level1);
+        this.showSkeleton();
+        const firstSub = this.getFirstSubCategory(level1);
+        if (firstSub) {
+            await this.loadSites(firstSub.id);
+            await this.selectLevel2(firstSub.id, firstSub.name, isUserClick);
+        } else {
+            this.renderEmptyState();
+        }
+        // 异步获取所有子分类计数
+        const subIds = this.structure[level1].subcategories.map(s => s.id);
+        if (subIds.length) {
+            this.loadSubcategoryCounts(subIds).then(counts => {
+                this.updateSubcategoryCounts(counts);
+            }).catch(() => {});
+        }
+        setTimeout(()=>{ this.isNavigationClick = false; },100);
     }
 
-    renderNavigation() { this.renderLevel1(); }
-    renderLevel1() {
-        const container = document.getElementById('level1Nav');
-        if (!container || !this.structure) return;
-        const categories = Object.keys(this.structure);
-        container.innerHTML = categories.map((cat,idx) => `<button class="level1-btn ${idx===0?'active':''}" data-level1="${cat}" title="${this.structure[cat].description||''}"><span class="level1-btn-text">${this._escapeHtml(cat)}</span></button>`).join('');
+    async selectLevel2(subcategoryId, subName, isUserClick = false) {
+        if (this.selectedLevel2 === subcategoryId) return;
+        this.isNavigationClick = true;
+        document.querySelectorAll('.level2-btn').forEach(b => b.classList.toggle('active', b.dataset.level2 == subcategoryId));
+        this.selectedLevel2 = subcategoryId;
+        this.hasShownNoMoreToast = false;
+        if (!this.siteCache.has(subcategoryId)) {
+            await this.loadSites(subcategoryId);
+        }
+        await this.renderLevel3(this.selectedLevel1, subcategoryId);
+        if (this.autoRefreshTimer) {
+            clearInterval(this.autoRefreshTimer);
+            this.startAutoRefresh();
+        }
+        setTimeout(()=>{ this.isNavigationClick = false; },100);
     }
+
+    getFirstCategory() { return this.structure ? Object.keys(this.structure)[0] : null; }
+    getFirstSubCategory(level1) { return this.structure?.[level1]?.subcategories[0] || null; }
+
     renderLevel2(level1) {
         const container = document.getElementById('level2Nav');
         if (!container || !this.structure?.[level1]) return;
@@ -336,11 +339,12 @@ class OptimizedNavigation {
             this.renderEmptyState();
             return;
         }
-        container.innerHTML = subCats.map((sub,idx) => `<button class="level2-btn ${idx===0?'active':''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}" title="${this._escapeHtml(sub.name)}"><span class="level2-btn-text">${this._escapeHtml(sub.name)}</span><span class="level2-btn-count" style="display:none;">0</span></button>`).join('');
-        for (const sub of subCats) {
-            const cached = this.siteCache.get(sub.id);
-            if (cached) this.updateSubcategoryCountDisplay(sub.id, cached.filter(s=>s.valid!==false).length);
-        }
+        container.innerHTML = subCats.map((sub,idx) => 
+            `<button class="level2-btn ${idx===0?'active':''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}" title="${this._escapeHtml(sub.name)}">
+                <span class="level2-btn-text">${this._escapeHtml(sub.name)}</span>
+                <span class="level2-btn-count" style="display:none;">0</span>
+            </button>`
+        ).join('');
     }
 
     async renderLevel3(level1, subcategoryId) {
@@ -358,7 +362,8 @@ class OptimizedNavigation {
         this.renderSitesPage(true);
         this.observeLazyImages(container);
         this.bindInfiniteScroll();
-        this.updateSubcategoryCountDisplay(subcategoryId, this.currentSites.filter(s=>s.valid!==false).length);
+        const validCount = this.currentSites.filter(s => s.valid !== false).length;
+        this.updateSubcategoryCountDisplay(subcategoryId, validCount);
         await this.calculateTotalValidSites();
     }
 
@@ -580,9 +585,6 @@ class OptimizedNavigation {
                                 const freshSites = await this.loadSites(currentSubId, true);
                                 const validCount = freshSites.filter(s => s.valid !== false).length;
                                 this.updateSubcategoryCountDisplay(currentSubId, validCount);
-                                if (this.selectedLevel1) {
-                                    await this.loadSubcategoryCountsForLevel1(this.selectedLevel1);
-                                }
                                 await this.recalculateGlobalInvalidCount();
                                 await this.calculateTotalValidSites();
                             }
@@ -693,39 +695,45 @@ class OptimizedNavigation {
         });
     }
 
-    async selectLevel1(level1, isUserClick = false) {
-        if (this.selectedLevel1 === level1) return;
-        this.isNavigationClick = true;
-        document.querySelectorAll('.level1-btn').forEach(b => b.classList.toggle('active', b.dataset.level1 === level1));
-        this.selectedLevel1 = level1;
-        this.renderLevel2(level1);
-        this.showSkeleton();
-        await this.loadSubcategoryCountsForLevel1(level1);
-        const firstSub = this.getFirstSubCategory(level1);
-        if (firstSub) {
-            await this.selectLevel2(firstSub.id, firstSub.name, isUserClick);
-        } else {
-            this.renderEmptyState();
-        }
-        setTimeout(()=>{ this.isNavigationClick = false; },100);
+    updateSubcategoryCountDisplay(subcategoryId, count, retry=0) {
+        const btn = document.querySelector(`.level2-btn[data-level2="${subcategoryId}"]`);
+        if (btn) {
+            let countSpan = btn.querySelector('.level2-btn-count');
+            if (!countSpan) {
+                countSpan = document.createElement('span');
+                countSpan.className = 'level2-btn-count';
+                btn.appendChild(countSpan);
+            }
+            countSpan.textContent = count;
+            countSpan.style.display = 'inline-block';
+        } else if (retry < 5) setTimeout(() => this.updateSubcategoryCountDisplay(subcategoryId,count,retry+1),100);
     }
 
-    async selectLevel2(subcategoryId, subName, isUserClick = false) {
-        if (this.selectedLevel2 === subcategoryId) return;
-        this.isNavigationClick = true;
-        document.querySelectorAll('.level2-btn').forEach(b => b.classList.toggle('active', b.dataset.level2 == subcategoryId));
-        this.selectedLevel2 = subcategoryId;
-        this.hasShownNoMoreToast = false;
-        await this.renderLevel3(this.selectedLevel1, subcategoryId);
-        if (this.autoRefreshTimer) {
-            clearInterval(this.autoRefreshTimer);
-            this.startAutoRefresh();
-        }
-        setTimeout(()=>{ this.isNavigationClick = false; },100);
+    calculateStats() {
+        const catCount = this.structure ? Object.keys(this.structure).length : 0;
+        this.stats.totalCategories = catCount;
+        this.updateStatsDisplay();
+    }
+    updateStatsDisplay() {
+        const el1 = document.getElementById('siteCount');
+        const el2 = document.getElementById('invalidCount');
+        if (el1) el1.textContent = `${this.stats.totalWebsites || 0}+`;
+        if (el2) el2.textContent = this.stats.invalidCount || '0';
+    }
+    updateInvalidCount(increment) {
+        if (!this.stats.invalidCount) this.stats.invalidCount = 0;
+        this.stats.invalidCount += increment;
+        const invalidEl = document.getElementById('invalidCount');
+        if (invalidEl) invalidEl.textContent = this.stats.invalidCount;
     }
 
-    getFirstCategory() { return this.structure ? Object.keys(this.structure)[0] : null; }
-    getFirstSubCategory(level1) { return this.structure?.[level1]?.subcategories[0] || null; }
+    renderNavigation() { this.renderLevel1(); }
+    renderLevel1() {
+        const container = document.getElementById('level1Nav');
+        if (!container || !this.structure) return;
+        const categories = Object.keys(this.structure);
+        container.innerHTML = categories.map((cat,idx) => `<button class="level1-btn ${idx===0?'active':''}" data-level1="${cat}" title="${this.structure[cat].description||''}"><span class="level1-btn-text">${this._escapeHtml(cat)}</span></button>`).join('');
+    }
 
     showSkeleton() {
         const container = document.getElementById('level3Content');
@@ -759,7 +767,6 @@ class OptimizedNavigation {
         return html;
     }
 
-    // 修改：移除所有提示文字，只显示空的容器
     renderEmptyState() {
         const container = document.getElementById('level3Content');
         if (container) {
