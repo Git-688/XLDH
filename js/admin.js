@@ -1,5 +1,4 @@
-// admin.js - 星聚导航后台管理（安全增强版）
-// 包含：CSRF 防护、刷新令牌、登录锁定、统一错误处理
+
 
 (function() {
     'use strict';
@@ -10,8 +9,10 @@
 
     let token = '';
     let refreshToken = '';                     // 刷新令牌
-    let csrfToken = '';                        // CSRF Token（从响应头获取）
+    let csrfToken = '';                        // CSRF Token
     let categories = [], subcategories = [], sites = [];
+    let submissionsData = [];                  // 待审核列表（用于统计）
+    let feedbackData = [];                     // 反馈列表（用于统计）
     let currentCat = null, currentSub = null;
     let modalAction = null;
     let currentSubmissionId = null;
@@ -76,6 +77,21 @@
         });
     }
 
+    // ==================== 统计更新 ====================
+    function updateStats() {
+        const totalSitesEl = document.getElementById('statTotalSites');
+        const invalidEl = document.getElementById('statInvalid');
+        const submissionsEl = document.getElementById('statSubmissions');
+        const feedbackEl = document.getElementById('statFeedback');
+        if (totalSitesEl) totalSitesEl.textContent = sites.length;
+        if (invalidEl) {
+            const invalidCount = sites.filter(s => s.is_valid === 0).length;
+            invalidEl.textContent = invalidCount;
+        }
+        if (submissionsEl) submissionsEl.textContent = submissionsData ? submissionsData.length : 0;
+        if (feedbackEl) feedbackEl.textContent = feedbackData ? feedbackData.length : 0;
+    }
+
     // ==================== API 请求封装（增强版） ====================
     async function apiFetch(endpoint, opt = {}) {
         const headers = {
@@ -90,17 +106,15 @@
             headers
         });
 
-        // 从响应头提取 CSRF Token（后端在响应中设置）
+        // 从响应头提取 CSRF Token
         const newCsrf = res.headers.get('X-CSRF-Token');
         if (newCsrf) csrfToken = newCsrf;
 
         // 处理未授权
         if (res.status === 401) {
-            // 尝试刷新令牌
             if (refreshToken) {
                 const refreshed = await refreshSessionToken();
                 if (refreshed) {
-                    // 重试原请求
                     return apiFetch(endpoint, opt);
                 }
             }
@@ -121,7 +135,7 @@
         return res.json();
     }
 
-    // ==================== 刷新令牌 ====================
+    // ==================== 刷新令牌（持久化 CSRF） ====================
     async function refreshSessionToken() {
         if (!refreshToken) return false;
         try {
@@ -134,12 +148,12 @@
             const data = await res.json();
             token = data.token;
             refreshToken = data.refreshToken;
-            // 更新存储
+            const csrf = data.csrfToken || '';
+            csrfToken = csrf;
             sessionStorage.setItem('admin_token', token);
             sessionStorage.setItem('admin_refresh_token', refreshToken);
+            sessionStorage.setItem('admin_csrf', csrf);
             sessionStorage.setItem('admin_expires', Date.now() + TOKEN_EXPIRE_HOURS * 3600000 + '');
-            // 更新 CSRF Token（如果有）
-            if (data.csrfToken) csrfToken = data.csrfToken;
             startSessionRefresh();
             showToast('会话已续期', 'success');
             return true;
@@ -149,34 +163,37 @@
         }
     }
 
-    // ==================== 会话管理 ====================
+    // ==================== 会话管理（持久化 CSRF） ====================
     function getStoredToken() {
         let tk = sessionStorage.getItem('admin_token');
         if (tk) {
             const exp = sessionStorage.getItem('admin_expires');
             if (exp && Date.now() < parseInt(exp, 10)) {
                 refreshToken = sessionStorage.getItem('admin_refresh_token') || '';
+                csrfToken = sessionStorage.getItem('admin_csrf') || '';
                 return tk;
             }
-            // 过期则清除
             sessionStorage.removeItem('admin_token');
             sessionStorage.removeItem('admin_refresh_token');
+            sessionStorage.removeItem('admin_csrf');
             sessionStorage.removeItem('admin_expires');
         }
-        // 尝试从 localStorage 恢复（记住我）
         const rem = localStorage.getItem('admin_remember');
         if (rem === 'true') {
             tk = localStorage.getItem('admin_token_saved');
             const savedTime = localStorage.getItem('admin_saved_time');
             if (tk && savedTime && (Date.now() - parseInt(savedTime, 10) < TOKEN_EXPIRE_HOURS * 3600000)) {
                 refreshToken = localStorage.getItem('admin_refresh_saved') || '';
+                csrfToken = localStorage.getItem('admin_csrf_saved') || '';
                 sessionStorage.setItem('admin_token', tk);
                 sessionStorage.setItem('admin_refresh_token', refreshToken);
+                sessionStorage.setItem('admin_csrf', csrfToken);
                 sessionStorage.setItem('admin_expires', Date.now() + TOKEN_EXPIRE_HOURS * 3600000 + '');
                 return tk;
             } else {
                 localStorage.removeItem('admin_token_saved');
                 localStorage.removeItem('admin_refresh_saved');
+                localStorage.removeItem('admin_csrf_saved');
                 localStorage.removeItem('admin_saved_time');
                 localStorage.removeItem('admin_remember');
             }
@@ -184,24 +201,28 @@
         return '';
     }
 
-    function saveToken(tk, rtk, remember) {
+    function saveToken(tk, rtk, csrf, remember) {
         const exp = Date.now() + TOKEN_EXPIRE_HOURS * 3600000;
         sessionStorage.setItem('admin_token', tk);
         sessionStorage.setItem('admin_refresh_token', rtk);
+        sessionStorage.setItem('admin_csrf', csrf);
         sessionStorage.setItem('admin_expires', exp + '');
         if (remember) {
             localStorage.setItem('admin_remember', 'true');
             localStorage.setItem('admin_token_saved', tk);
             localStorage.setItem('admin_refresh_saved', rtk);
+            localStorage.setItem('admin_csrf_saved', csrf);
             localStorage.setItem('admin_saved_time', Date.now() + '');
         } else {
             localStorage.removeItem('admin_remember');
             localStorage.removeItem('admin_token_saved');
             localStorage.removeItem('admin_refresh_saved');
+            localStorage.removeItem('admin_csrf_saved');
             localStorage.removeItem('admin_saved_time');
         }
         token = tk;
         refreshToken = rtk;
+        csrfToken = csrf;
         startSessionRefresh();
     }
 
@@ -211,10 +232,12 @@
         csrfToken = '';
         sessionStorage.removeItem('admin_token');
         sessionStorage.removeItem('admin_refresh_token');
+        sessionStorage.removeItem('admin_csrf');
         sessionStorage.removeItem('admin_expires');
         localStorage.removeItem('admin_remember');
         localStorage.removeItem('admin_token_saved');
         localStorage.removeItem('admin_refresh_saved');
+        localStorage.removeItem('admin_csrf_saved');
         localStorage.removeItem('admin_saved_time');
         if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
     }
@@ -229,12 +252,11 @@
                 refreshSessionToken().then(() => startSessionRefresh());
             }, delay);
         } else if (delay <= 0 && token) {
-            // 如果已过期，立即刷新
             refreshSessionToken().then(() => startSessionRefresh());
         }
     }
 
-    // ==================== 登录锁定显示 ====================
+    // ==================== 登录锁定 ====================
     function updateLockMessage(locked) {
         const el = document.getElementById('loginLockMessage');
         if (!el) return;
@@ -289,7 +311,6 @@
             return;
         }
 
-        // 检查前端锁定状态（后端锁定状态通过接口返回）
         if (loginLocked) {
             showToast('登录已锁定，请10分钟后重试', 'error');
             return;
@@ -313,7 +334,6 @@
             });
             const loginData = await loginRes.json().catch(() => ({}));
             if (!loginRes.ok) {
-                // 检查是否被锁定（后端返回特定错误码）
                 if (loginRes.status === 429) {
                     loginLocked = true;
                     updateLockMessage(true);
@@ -321,16 +341,13 @@
                 }
                 throw new Error(loginData.error || '登录失败');
             }
-            // 登录成功
             loginLocked = false;
             updateLockMessage(false);
             const sessionToken = loginData.token;
             const rtk = loginData.refreshToken;
             const csrf = loginData.csrfToken || '';
-            if (csrf) csrfToken = csrf;
             const remember = document.getElementById('rememberToken').checked;
-            saveToken(sessionToken, rtk, remember);
-            // 加载数据
+            saveToken(sessionToken, rtk, csrf, remember);
             await loadAllData();
             const loginWrapper = document.getElementById('loginWrapper');
             const mainContent = document.getElementById('mainContent');
@@ -369,7 +386,7 @@
         showToast('已退出');
     }
 
-    // ==================== 获取网站信息（编码修复） ====================
+    // ==================== 获取网站信息 ====================
     async function fetchSiteInfo(urlInputId, titleInputId, iconInputId, descInputId) {
         const urlInput = document.getElementById(urlInputId);
         const titleInput = document.getElementById(titleInputId);
@@ -427,19 +444,24 @@
         fetchSiteInfo('mUrl', 'mTitle', 'mIcon', 'mDesc');
     }
 
-    // ==================== 数据加载与渲染 ====================
+    // ==================== 数据加载与渲染（含统计） ====================
     async function loadAllData() {
         try {
-            const [catData, subData, siteData] = await Promise.all([
+            const [catData, subData, siteData, subDataList, feedbackDataList] = await Promise.all([
                 apiFetch('/admin/categories'),
                 apiFetch('/admin/subcategories'),
-                apiFetch('/admin/sites')
+                apiFetch('/admin/sites'),
+                apiFetch('/admin/submissions'),
+                apiFetch('/admin/dead-link-reports')
             ]);
             categories = catData;
             subcategories = subData;
             sites = siteData;
+            submissionsData = subDataList || [];
+            feedbackData = feedbackDataList || [];
             renderCatBar();
             if (categories.length > 0) selectCat(categories[0].id);
+            updateStats();
         } catch (e) {
             if (e.message === 'Unauthorized') logout();
             else showToast('数据加载失败', 'error');
@@ -448,19 +470,24 @@
 
     async function loadAllDataButKeepSelection() {
         try {
-            const [catData, subData, siteData] = await Promise.all([
+            const [catData, subData, siteData, subDataList, feedbackDataList] = await Promise.all([
                 apiFetch('/admin/categories'),
                 apiFetch('/admin/subcategories'),
-                apiFetch('/admin/sites')
+                apiFetch('/admin/sites'),
+                apiFetch('/admin/submissions'),
+                apiFetch('/admin/dead-link-reports')
             ]);
             categories = catData;
             subcategories = subData;
             sites = siteData;
+            submissionsData = subDataList || [];
+            feedbackData = feedbackDataList || [];
             renderCatBar();
             if (currentCat) {
                 selectCat(currentCat);
                 if (currentSub) selectSub(currentSub);
             }
+            updateStats();
         } catch (e) {
             if (e.message === 'Unauthorized') logout();
             else showToast('数据加载失败', 'error');
@@ -563,6 +590,14 @@
         const is_active = document.getElementById('annActive').checked ? 1 : 0;
         if (!title || !content) {
             showToast('标题和内容不能为空', 'error');
+            return;
+        }
+        if (title.length > 200) {
+            showToast('标题不能超过200个字符', 'error');
+            return;
+        }
+        if (content.length > 10000) {
+            showToast('内容不能超过10000个字符', 'error');
             return;
         }
         const payload = {
@@ -839,6 +874,8 @@
         list.innerHTML = '<div class="empty">加载中...</div>';
         try {
             const data = await apiFetch('/admin/dead-link-reports');
+            feedbackData = data || [];
+            updateStats();
             if (!data.length) { list.innerHTML = '<div class="empty">暂无反馈</div>'; return; }
             const today = new Date(); today.setHours(0,0,0,0);
             const yesterday = new Date(today); yesterday.setDate(yesterday.getDate()-1);
@@ -955,6 +992,10 @@
     async function importData() {
         const fileInput = document.getElementById('importFile');
         const mode = document.getElementById('importMode').value;
+        if (mode !== 'merge' && mode !== 'overwrite') {
+            showToast('无效的导入模式', 'error');
+            return;
+        }
         if (!fileInput.files || !fileInput.files[0]) {
             showToast('请选择 JSON 文件', 'warn');
             return;
@@ -1008,11 +1049,29 @@
         modal.classList.remove('show');
     }
 
+    // 投稿列表与审核（缓存）
+    let cachedSubmissions = null;
+    let submissionsCacheTime = 0;
+    const SUBMISSIONS_CACHE_TTL = 30000;
+
+    async function fetchSubmissions(forceRefresh = false) {
+        const now = Date.now();
+        if (!forceRefresh && cachedSubmissions && (now - submissionsCacheTime) < SUBMISSIONS_CACHE_TTL) {
+            return cachedSubmissions;
+        }
+        const data = await apiFetch('/admin/submissions');
+        cachedSubmissions = data;
+        submissionsCacheTime = now;
+        return data;
+    }
+
     async function loadSubmissions() {
         const list = document.getElementById('submissionsList');
         list.innerHTML = '<div class="empty">加载中...</div>';
         try {
-            const data = await apiFetch('/admin/submissions');
+            const data = await fetchSubmissions(true);
+            submissionsData = data || [];
+            updateStats();
             if (!data.length) {
                 list.innerHTML = '<div class="empty">暂无待审核网站</div>';
                 return;
@@ -1029,16 +1088,24 @@
         } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
+    // 自定义选择器管理
+    let customSelects = {};
+
+    function cleanupCustomSelects() {
+        for (const key in customSelects) {
+            if (customSelects[key] && typeof customSelects[key].destroy === 'function') {
+                customSelects[key].destroy();
+            }
+        }
+        customSelects = {};
+    }
+
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
         const contentDiv = document.getElementById('submissionDetailContent');
 
-        const cleanupSelectors = () => {
-            if (customSelects.cat) { customSelects.cat.destroy(); delete customSelects.cat; }
-            if (customSelects.sub) { customSelects.sub.destroy(); delete customSelects.sub; }
-        };
-        cleanupSelectors();
+        cleanupCustomSelects();
 
         const removeModalListeners = () => {
             const newCloseBtn = detailModal.querySelector('#closeDetailModalBtn');
@@ -1046,20 +1113,20 @@
                 const newClone = newCloseBtn.cloneNode(true);
                 newCloseBtn.parentNode.replaceChild(newClone, newCloseBtn);
                 newClone.onclick = () => {
-                    cleanupSelectors();
+                    cleanupCustomSelects();
                     detailModal.classList.remove('show');
                 };
             }
             detailModal.onclick = (e) => {
                 if (e.target === detailModal) {
-                    cleanupSelectors();
+                    cleanupCustomSelects();
                     detailModal.classList.remove('show');
                 }
             };
         };
 
         try {
-            const data = await apiFetch('/admin/submissions');
+            const data = await fetchSubmissions(false);
             const item = data.find(s => s.id == id);
             if (!item) { showToast('未找到该投稿', 'error'); return; }
             const vtColor = (item.vt_result || '').includes('安全') ? '#10b981' : '#ef4444';
@@ -1183,7 +1250,7 @@
                     });
                     showToast('已收录' + (sendEmail ? '，邮件已发送' : ''), 'success');
                     detailModal.classList.remove('show');
-                    cleanupSelectors();
+                    cleanupCustomSelects();
                     await loadSubmissions();
                     await loadAllDataButKeepSelection();
                     await apiFetch('/admin/refresh-navigation', { method: 'POST' });
@@ -1203,7 +1270,7 @@
                     });
                     showToast('已拒绝' + (sendEmail ? '，邮件已发送' : ''), 'success');
                     detailModal.classList.remove('show');
-                    cleanupSelectors();
+                    cleanupCustomSelects();
                     await loadSubmissions();
                 } catch (err) { showToast('操作失败', 'error'); }
             };
@@ -1248,7 +1315,7 @@
         }
     }
 
-    // ==================== CustomSelect 类（不变） ====================
+    // ==================== CustomSelect 类 ====================
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -1368,8 +1435,6 @@
             this.select.style.display = '';
         }
     }
-
-    let customSelects = {};
 
     // ==================== 样式注入 ====================
     function injectGlobalStyles() {
@@ -1498,7 +1563,6 @@
     // ==================== 启动 ====================
     injectGlobalStyles();
 
-    // 检查锁定状态（通过接口返回的锁定标志，此处简单从 localStorage 读取）
     loginLocked = localStorage.getItem('login_locked') === 'true';
     updateLockMessage(loginLocked);
 
@@ -1537,8 +1601,5 @@
 
     setupEventDelegation();
 
-    // 在关闭页面时清除锁定状态（可选）
-    window.addEventListener('beforeunload', () => {
-        // 不主动清除，由后端控制锁定过期
-    });
+    window.addEventListener('beforeunload', () => {});
 })();
