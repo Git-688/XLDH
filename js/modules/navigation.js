@@ -1,6 +1,6 @@
 /**
  * 优化分类导航系统 - 延迟加载子分类数据 + 计数接口
- * 解决加载慢问题（完整版）
+ * 修复点击计数视图更新问题
  */
 class OptimizedNavigation {
     constructor() {
@@ -300,7 +300,6 @@ class OptimizedNavigation {
         } else {
             this.renderEmptyState();
         }
-        // 异步获取所有子分类计数
         const subIds = this.structure[level1].subcategories.map(s => s.id);
         if (subIds.length) {
             this.loadSubcategoryCounts(subIds).then(counts => {
@@ -474,6 +473,7 @@ class OptimizedNavigation {
         this.checkScrollAndLoadMore();
     }
 
+    // ========== 修复点击计数 ==========
     createSiteCard(site, index, isSearchResult = false, keyword = '') {
         const card = document.createElement('a');
         card.className = `site-card ${site.valid === false ? 'invalid' : ''}`;
@@ -513,12 +513,32 @@ class OptimizedNavigation {
             </div>
         `;
 
+        // ---------- 点击事件 ----------
         card.addEventListener('click', async (e) => {
+            // 死链报告按钮不触发点击计数
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
             if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
 
             const viewEl = card.querySelector('.view-count');
+            if (!viewEl) {
+                // 找不到元素，仍发送请求但不更新视图
+                try {
+                    await Utils.safeFetch(`${this.apiBase}/click`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: site.id, url: site.url }),
+                        keepalive: true
+                    });
+                } catch (err) { /* 忽略 */ }
+                setTimeout(() => {
+                    this.isNavigationClick = false;
+                    if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
+                }, 100);
+                return;
+            }
+
+            // 乐观更新视图
             let oldViews = parseInt(viewEl.dataset.views) || 0;
             let newViews = oldViews + 1;
             viewEl.dataset.views = newViews;
@@ -526,16 +546,29 @@ class OptimizedNavigation {
             viewEl.classList.add('increasing');
             setTimeout(() => viewEl.classList.remove('increasing'), 300);
 
+            // 同步更新内存中的站点数据，防止重新渲染覆盖
+            const siteIndex = this.currentSites.findIndex(s => s.id === site.id);
+            if (siteIndex !== -1) {
+                this.currentSites[siteIndex].views = (this.currentSites[siteIndex].views || 0) + 1;
+            }
+
             try {
                 await Utils.safeFetch(`${this.apiBase}/click`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: site.id, url: site.url })
+                    body: JSON.stringify({ id: site.id, url: site.url }),
+                    keepalive: true
                 });
+                // 请求成功，保持新值
             } catch (err) {
                 console.warn('点击计数上报失败:', err);
+                // 回滚视图
                 viewEl.dataset.views = oldViews;
                 viewEl.textContent = this._formatViews(oldViews);
+                // 回滚内存数据
+                if (siteIndex !== -1) {
+                    this.currentSites[siteIndex].views = oldViews;
+                }
                 if (window.toast) window.toast.show('计数上报失败，请检查网络', 'warning');
             }
 
@@ -544,7 +577,9 @@ class OptimizedNavigation {
                 if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
             }, 100);
         });
+        // ---------- 结束点击事件 ----------
 
+        // 死链报告按钮逻辑
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
