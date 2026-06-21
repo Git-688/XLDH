@@ -375,30 +375,14 @@
         `).join('');
     }
 
-    function renderSiteList() {
-        if (!currentSub) { document.getElementById('siteList').innerHTML = '<div class="empty">选择子分类</div>'; return; }
-        const list = sites.filter(s => s.subcategory_id === currentSub);
-        if (!list.length) { document.getElementById('siteList').innerHTML = '<div class="empty">暂无链接</div>'; return; }
-        document.getElementById('siteList').innerHTML = list.map(s => `
-            <div class="link-item">
-                <div class="link-info"><strong>${escapeHtml(s.title)}</strong></div>
-                <div class="link-actions"><button class="primary" data-action="editSite" data-id="${s.id}">编辑</button></div>
-            </div>
-        `).join('');
-    }
-
-    // ===== 方向B 新增站点分页列表 =====
+    // ===== 站点分页列表（移除搜索和状态筛选） =====
     async function loadAdminSites(resetPage = true) {
         if (resetPage) sitePage = 1;
-        const keyword = document.getElementById('siteSearchKeyword')?.value || '';
-        const status = document.getElementById('siteStatusFilter')?.value || 'all';
         const subcategoryId = currentSub || '';
         const listEl = document.getElementById('siteList');
         listEl.innerHTML = '<div class="empty">加载中...</div>';
         try {
             let url = `/admin/sites-list?page=${sitePage}&limit=${SITE_PAGE_SIZE}`;
-            if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
-            if (status !== 'all') url += `&status=${status}`;
             if (subcategoryId) url += `&subcategory_id=${subcategoryId}`;
             const data = await apiFetch(url);
             const sitesData = data.sites || [];
@@ -1462,29 +1446,21 @@
         const captchaImg = document.getElementById('captchaImg');
         if (captchaImg) captchaImg.addEventListener('click', refreshCaptcha);
 
-        // ===== 方向B 事件绑定 =====
-        document.getElementById('siteSearchBtn')?.addEventListener('click', () => loadAdminSites(true));
-        document.getElementById('siteSearchKeyword')?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') loadAdminSites(true);
-        });
-        document.getElementById('siteClearFilterBtn')?.addEventListener('click', () => {
-            document.getElementById('siteSearchKeyword').value = '';
-            document.getElementById('siteStatusFilter').value = 'all';
-            loadAdminSites(true);
-        });
-        document.getElementById('siteStatusFilter')?.addEventListener('change', () => loadAdminSites(true));
-        document.getElementById('prevSitePage')?.addEventListener('click', () => {
-            if (sitePage > 1) { sitePage--; loadAdminSites(false); }
-        });
-        document.getElementById('nextSitePage')?.addEventListener('click', () => {
-            sitePage++; loadAdminSites(false);
-        });
+        // ===== 批量操作事件（已移至顶部） =====
         document.getElementById('batchSelectAll')?.addEventListener('click', toggleSelectAll);
         document.getElementById('batchClearSelection')?.addEventListener('click', clearSelection);
         document.getElementById('batchDeleteBtn')?.addEventListener('click', batchDeleteSites);
         document.getElementById('batchMoveBtn')?.addEventListener('click', batchMoveSites);
         document.getElementById('batchEnableBtn')?.addEventListener('click', batchEnableSites);
         document.getElementById('batchDisableBtn')?.addEventListener('click', batchDisableSites);
+
+        // 分页事件
+        document.getElementById('prevSitePage')?.addEventListener('click', () => {
+            if (sitePage > 1) { sitePage--; loadAdminSites(false); }
+        });
+        document.getElementById('nextSitePage')?.addEventListener('click', () => {
+            sitePage++; loadAdminSites(false);
+        });
     }
 
     injectGlobalStyles();
