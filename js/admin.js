@@ -20,6 +20,7 @@
     let loginLocked = false;
 
     let selectedSiteIds = new Set();
+    let customSelectInstances = [];
 
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     function showToast(msg, type = 'success') { const toast = document.getElementById('toast'); if (!toast) return; toast.textContent = msg; toast.className = `toast ${type} show`; clearTimeout(toast._timeout); toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300); }
@@ -373,13 +374,11 @@
         `).join('');
     }
 
-    // ===== 站点列表（无分页） =====
     async function loadAdminSites(resetPage = true) {
         const subcategoryId = currentSub || '';
         const listEl = document.getElementById('siteList');
         listEl.innerHTML = '<div class="empty">加载中...</div>';
         try {
-            // 请求所有站点（使用一个较大的 limit）
             let url = `/admin/sites-list?limit=9999`;
             if (subcategoryId) url += `&subcategory_id=${subcategoryId}`;
             const data = await apiFetch(url);
@@ -427,8 +426,6 @@
         document.getElementById('selectedCount').textContent = `已选 ${count} 个`;
         document.getElementById('batchDeleteBtn').disabled = count === 0;
         document.getElementById('batchMoveBtn').disabled = count === 0;
-        document.getElementById('batchEnableBtn').disabled = count === 0;
-        document.getElementById('batchDisableBtn').disabled = count === 0;
     }
 
     function toggleSelectAll() {
@@ -466,15 +463,36 @@
         } catch (e) { showToast('批量删除失败: ' + e.message, 'error'); }
     }
 
+    let batchMoveCustomSelect = null;
+
     async function batchMoveSites() {
         if (selectedSiteIds.size === 0) { showToast('请先选择要移动的站点', 'warning'); return; }
         const subcategoriesData = await apiFetch('/admin/subcategories');
         if (!subcategoriesData || !subcategoriesData.length) { showToast('暂无子分类可移动', 'error'); return; }
         const subOptions = subcategoriesData.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+
         openModal('批量移动站点',
-            `<div style="margin-bottom:12px;"><label style="display:block;font-size:12px;margin-bottom:6px;color:#475569;">选择目标子分类：</label><select id="batchMoveTarget" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">${subOptions}</select></div><div style="font-size:11px;color:#64748b;">将移动 ${selectedSiteIds.size} 个站点到选中的子分类</div>`,
+            `<div style="margin-bottom:12px;">
+                <label style="display:block;font-size:12px;margin-bottom:6px;color:#475569;">选择目标子分类：</label>
+                <div id="batchMoveTargetWrapper"></div>
+            </div>
+            <div style="font-size:11px;color:#64748b;">将移动 ${selectedSiteIds.size} 个站点到选中的子分类</div>`,
             async () => {
-                const targetId = parseInt(document.getElementById('batchMoveTarget').value);
+                const wrapper = document.getElementById('batchMoveTargetWrapper');
+                const trigger = wrapper?.querySelector('.custom-select-trigger');
+                let targetId = null;
+                if (trigger) {
+                    const valueSpan = trigger.querySelector('.custom-select-value');
+                    if (valueSpan) {
+                        const selectedText = valueSpan.textContent;
+                        const selectedOption = subcategoriesData.find(s => s.name === selectedText);
+                        if (selectedOption) targetId = selectedOption.id;
+                    }
+                }
+                if (!targetId) {
+                    const select = document.getElementById('batchMoveTarget');
+                    if (select) targetId = parseInt(select.value);
+                }
                 if (!targetId) { showToast('请选择目标子分类', 'error'); return; }
                 const ids = Array.from(selectedSiteIds);
                 const result = await apiFetch('/admin/sites/batch-move', {
@@ -487,43 +505,30 @@
                 await loadAllDataButKeepSelection();
                 closeModal();
             },
-            false
+            false,
+            null,
+            function() {
+                const wrapper = document.getElementById('batchMoveTargetWrapper');
+                if (!wrapper) return;
+                const select = document.createElement('select');
+                select.id = 'batchMoveTarget';
+                select.innerHTML = subOptions;
+                wrapper.appendChild(select);
+                if (batchMoveCustomSelect) {
+                    batchMoveCustomSelect.destroy();
+                    batchMoveCustomSelect = null;
+                }
+                batchMoveCustomSelect = new CustomSelect(select);
+            },
+            function() {
+                if (batchMoveCustomSelect) {
+                    batchMoveCustomSelect.destroy();
+                    batchMoveCustomSelect = null;
+                }
+            }
         );
     }
 
-    async function batchEnableSites() {
-        if (selectedSiteIds.size === 0) { showToast('请先选择要启用的站点', 'warning'); return; }
-        if (!confirm(`确定要启用选中的 ${selectedSiteIds.size} 个站点吗？`)) return;
-        const ids = Array.from(selectedSiteIds);
-        try {
-            const result = await apiFetch('/admin/sites/batch-toggle', {
-                method: 'POST',
-                body: JSON.stringify({ siteIds: ids, isValid: true })
-            });
-            showToast(result.message || '启用成功', 'success');
-            selectedSiteIds.clear();
-            await loadAdminSites(true);
-            await loadAllDataButKeepSelection();
-        } catch (e) { showToast('批量启用失败: ' + e.message, 'error'); }
-    }
-
-    async function batchDisableSites() {
-        if (selectedSiteIds.size === 0) { showToast('请先选择要禁用的站点', 'warning'); return; }
-        if (!confirm(`确定要禁用选中的 ${selectedSiteIds.size} 个站点吗？`)) return;
-        const ids = Array.from(selectedSiteIds);
-        try {
-            const result = await apiFetch('/admin/sites/batch-toggle', {
-                method: 'POST',
-                body: JSON.stringify({ siteIds: ids, isValid: false })
-            });
-            showToast(result.message || '禁用成功', 'success');
-            selectedSiteIds.clear();
-            await loadAdminSites(true);
-            await loadAllDataButKeepSelection();
-        } catch (e) { showToast('批量禁用失败: ' + e.message, 'error'); }
-    }
-
-    // ===== 原有功能 =====
     async function loadAnnouncement() {
         try {
             const data = await apiFetch('/admin/announcements');
@@ -602,7 +607,7 @@
         } catch { return 0; }
     }
 
-    function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null) {
+    function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null, onShow = null, onClose = null) {
         const modal = document.getElementById('modal');
         document.querySelector('#modal .modal-title').textContent = title;
         document.getElementById('modalForm').innerHTML = formHtml;
@@ -612,14 +617,18 @@
         if (showDelete && deleteCb) html += `<div class="modal-buttons-left" style="margin-right:auto;"><button class="danger" id="modalDeleteBtn">删除</button></div>`;
         html += `<button class="secondary" id="modalCancelBtn">取消</button><button class="primary" id="modalSubmit">确认</button>`;
         buttonsContainer.innerHTML = html;
-        document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+        document.getElementById('modalCancelBtn').addEventListener('click', function() {
+            closeModal();
+            if (onClose) onClose();
+        });
         document.getElementById('modalSubmit').addEventListener('click', handleModalSubmit);
         if (showDelete && deleteCb) {
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
-                if (confirm('确定删除？此操作不可恢复！')) { try { await deleteCb(); closeModal(); } catch (e) { showToast('删除失败', 'error'); } }
+                if (confirm('确定删除？此操作不可恢复！')) { try { await deleteCb(); closeModal(); if (onClose) onClose(); } catch (e) { showToast('删除失败', 'error'); } }
             });
         }
         modal.classList.add('show');
+        if (onShow) onShow();
     }
 
     async function handleModalSubmit() {
@@ -978,15 +987,13 @@
         } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    let customSelects = {};
-
     function cleanupCustomSelects() {
-        for (const key in customSelects) {
-            if (customSelects[key] && typeof customSelects[key].destroy === 'function') {
-                customSelects[key].destroy();
+        customSelectInstances.forEach(inst => {
+            if (inst && typeof inst.destroy === 'function') {
+                inst.destroy();
             }
-        }
-        customSelects = {};
+        });
+        customSelectInstances = [];
     }
 
     async function openSubmissionDetail(id) {
@@ -1082,7 +1089,11 @@
 
             let catCustomSelect = new CustomSelect(catSelect, async (value) => {
                 subSelect.innerHTML = '<option value="">加载中...</option>';
-                if (customSelects.sub) customSelects.sub.destroy();
+                if (customSelectInstances.includes(customSelects.sub)) {
+                    const idx = customSelectInstances.indexOf(customSelects.sub);
+                    if (idx > -1) customSelectInstances.splice(idx, 1);
+                    customSelects.sub.destroy();
+                }
                 if (value) {
                     try {
                         const subsData = await apiFetch(`/admin/subcategories?category_id=${value}`);
@@ -1094,16 +1105,22 @@
                 } else {
                     subSelect.innerHTML = '<option value="">先选择一级分类</option>';
                 }
-                customSelects.sub = new CustomSelect(subSelect);
+                const subInst = new CustomSelect(subSelect);
+                customSelectInstances.push(subInst);
+                customSelects.sub = subInst;
             });
             customSelects.cat = catCustomSelect;
-            customSelects.sub = new CustomSelect(subSelect);
+            customSelectInstances.push(catCustomSelect);
+            const subInst = new CustomSelect(subSelect);
+            customSelectInstances.push(subInst);
+            customSelects.sub = subInst;
 
             document.getElementById('doApproveBtn').onclick = async () => {
                 const catSelectEl = document.getElementById('approveCatSelect');
                 const subSelectEl = document.getElementById('approveSubSelect');
-                const catId = catSelectEl ? catSelectEl.value : '';
-                const subId = subSelectEl ? subSelectEl.value : '';
+                let catId = null, subId = null;
+                if (catSelectEl) catId = parseInt(catSelectEl.value);
+                if (subSelectEl) subId = parseInt(subSelectEl.value);
                 if (!catId || !subId) { showToast('请选择一级分类和二级分类', 'error'); return; }
                 const displayOrder = document.getElementById('approveOrder').value || 0;
                 const editedTitle = document.getElementById('editTitle').value.trim();
@@ -1197,6 +1214,7 @@
             this.isOpen = false;
             this.init();
         }
+
         init() {
             this.select.style.display = 'none';
             this.wrapper = document.createElement('div');
@@ -1213,10 +1231,12 @@
             this.bindEvents();
             this.select.addEventListener('change', () => this.setValue(this.select.value));
         }
+
         getSelectedText() {
             const option = this.select.options[this.select.selectedIndex];
             return option ? option.textContent : '';
         }
+
         populateOptions() {
             this.dropdown.innerHTML = '';
             this.options = [];
@@ -1237,6 +1257,7 @@
                 this.options.push(div);
             }
         }
+
         selectOption(index) {
             if (index === this.select.selectedIndex) return;
             this.select.selectedIndex = index;
@@ -1248,6 +1269,7 @@
             const changeEvent = new Event('change', { bubbles: true });
             this.select.dispatchEvent(changeEvent);
         }
+
         setValue(value) {
             for (let i = 0; i < this.select.options.length; i++) {
                 if (this.select.options[i].value == value) {
@@ -1256,6 +1278,7 @@
                 }
             }
         }
+
         open() {
             if (this.isOpen) return;
             this.isOpen = true;
@@ -1267,6 +1290,7 @@
             };
             setTimeout(() => document.addEventListener('click', this.handleOutsideClick), 0);
         }
+
         close() {
             if (!this.isOpen) return;
             this.isOpen = false;
@@ -1274,6 +1298,7 @@
             this.dropdown.classList.remove('open');
             if (this.handleOutsideClick) document.removeEventListener('click', this.handleOutsideClick);
         }
+
         positionDropdown() {
             const rect = this.trigger.getBoundingClientRect();
             const dropdownHeight = this.dropdown.offsetHeight;
@@ -1285,6 +1310,7 @@
             this.dropdown.style.left = `${rect.left}px`;
             this.dropdown.style.width = `${rect.width}px`;
         }
+
         bindEvents() {
             this.trigger.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -1293,15 +1319,24 @@
             window.addEventListener('resize', () => { if (this.isOpen) this.positionDropdown(); });
             window.addEventListener('scroll', () => { if (this.isOpen) this.positionDropdown(); }, true);
         }
+
         refresh() {
             this.populateOptions();
             const valueSpan = this.trigger.querySelector('.custom-select-value');
             if (valueSpan) valueSpan.textContent = this.getSelectedText();
         }
+
         destroy() {
             this.close();
-            this.wrapper.remove();
+            if (this.wrapper && this.wrapper.parentNode) {
+                this.wrapper.parentNode.removeChild(this.wrapper);
+            }
             this.select.style.display = '';
+            this.select = null;
+            this.wrapper = null;
+            this.trigger = null;
+            this.dropdown = null;
+            this.options = null;
         }
     }
 
@@ -1309,40 +1344,7 @@
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
             style.id = 'admin-global-styles';
-            style.textContent = `
-                .submission-title-truncate { display: inline-block; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
-                @media (max-width: 768px) { .submission-title-truncate { max-width: 180px; } }
-                @media (max-width: 480px) { .submission-title-truncate { max-width: 120px; } }
-                .form-input { width: 100%; padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; background: #fff; transition: all 0.2s; box-sizing: border-box; }
-                .form-input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
-                textarea.form-input { resize: vertical; font-family: inherit; }
-                .inline-select-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-                .custom-select-wrapper { position: relative; flex: 1; min-width: 110px; }
-                .custom-select-trigger { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; color: #1e293b; cursor: pointer; gap: 6px; }
-                .custom-select-trigger:hover { border-color: #3b82f6; }
-                .custom-select-trigger.open { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
-                .custom-select-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
-                .custom-select-arrow { width: 12px; height: 12px; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-size: contain; transition: transform 0.2s; }
-                .custom-select-trigger.open .custom-select-arrow { transform: rotate(180deg); }
-                .custom-select-dropdown { position: fixed; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 1000; max-height: 180px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-6px); transition: all 0.15s ease; scrollbar-width: none; }
-                .custom-select-dropdown::-webkit-scrollbar { display: none; }
-                .custom-select-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0); }
-                .custom-select-option { padding: 6px 10px; font-size: 11px; color: #1e293b; cursor: pointer; transition: background 0.1s; }
-                .custom-select-option:hover { background: #f1f5f9; }
-                .custom-select-option.selected { background: #e0f2fe; color: #0369a1; font-weight: 500; }
-                @media (prefers-color-scheme: dark) {
-                    .custom-select-trigger { background: #1e293b; border-color: #334155; color: #e2e8f0; }
-                    .custom-select-dropdown { background: #1e293b; border-color: #334155; }
-                    .custom-select-option { color: #e2e8f0; }
-                    .custom-select-option:hover { background: #334155; }
-                    .custom-select-option.selected { background: #0f172a; color: #38bdf8; }
-                    .form-input { background: #1e293b; border-color: #334155; color: #e2e8f0; }
-                }
-                @media (max-width: 640px) {
-                    .content-layout { flex-direction: row !important; }
-                    .action-buttons-row button { font-size: 10px; padding: 5px 6px; }
-                }
-            `;
+            style.textContent = ``;
             document.head.appendChild(style);
         }
     }
@@ -1425,13 +1427,10 @@
         const captchaImg = document.getElementById('captchaImg');
         if (captchaImg) captchaImg.addEventListener('click', refreshCaptcha);
 
-        // ===== 批量操作事件 =====
         document.getElementById('batchSelectAll')?.addEventListener('click', toggleSelectAll);
         document.getElementById('batchClearSelection')?.addEventListener('click', clearSelection);
         document.getElementById('batchDeleteBtn')?.addEventListener('click', batchDeleteSites);
         document.getElementById('batchMoveBtn')?.addEventListener('click', batchMoveSites);
-        document.getElementById('batchEnableBtn')?.addEventListener('click', batchEnableSites);
-        document.getElementById('batchDisableBtn')?.addEventListener('click', batchDisableSites);
     }
 
     injectGlobalStyles();
