@@ -1,11 +1,11 @@
 /**
  * 优化分类导航系统 - 延迟加载子分类数据 + 计数接口
- * 修复点击计数视图更新问题
+ * 第七步：增加批量加载站点数据，减少 D1 查询次数
  */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
-        
+
         this.structure = null;
         this.siteCache = new Map();
         this.selectedLevel1 = null;
@@ -41,15 +41,16 @@ class OptimizedNavigation {
         this.preloadQueue = [];
         this.isPreloading = false;
 
-        // ===== 第二步新增：计数缓存 + 请求取消控制器 =====
-        this.countsCache = new Map();              // 计数缓存 { key: { data, timestamp } }
-        this.currentAbortController = null;        // 用于取消进行中的计数请求
-        
+        // 第二步：计数缓存 + 请求取消控制器
+        this.countsCache = new Map();
+        this.currentAbortController = null;
+
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
     }
 
     _escapeHtml(str) { return Utils.escapeHtml(str); }
+
     _formatViews(views) {
         if (views >= 1000000) return `${(views/1000000).toFixed(1).replace('.0','')}M`;
         if (views >= 1000) return `${(views/1000).toFixed(1).replace('.0','')}K`;
@@ -116,12 +117,12 @@ class OptimizedNavigation {
         if (!container || !this.imgObserver) return;
         const images = container.querySelectorAll('img[data-src]');
         if (images.length === 0) return;
-        
+
         const preloadTask = () => {
             const viewportHeight = window.innerHeight;
             const scrollTop = window.scrollY || document.documentElement.scrollTop;
             const buffer = 500;
-            
+
             images.forEach(img => {
                 const rect = img.getBoundingClientRect();
                 const imgTop = rect.top + scrollTop;
@@ -136,7 +137,7 @@ class OptimizedNavigation {
                 }
             });
         };
-        
+
         if (window.requestIdleCallback) {
             requestIdleCallback(preloadTask, { timeout: 2000 });
         } else {
@@ -182,7 +183,7 @@ class OptimizedNavigation {
             await this.calculateTotalValidSites();
             const firstCategory = this.getFirstCategory();
             if (firstCategory) {
-                this.selectLevel1(firstCategory, false);
+                await this.selectLevel1(firstCategory, false);
             } else {
                 this.renderEmptyState();
             }
@@ -270,16 +271,72 @@ class OptimizedNavigation {
         return sites;
     }
 
-    // ===== 第二步：重构 loadSubcategoryCounts =====
+    // ===== 第七步新增：批量加载多个子分类的站点 =====
+    async loadBatchSites(subIds, forceRefresh = false) {
+        if (!subIds || !subIds.length) return {};
+
+        // 检查是否所有子分类都已缓存
+        if (!forceRefresh) {
+            const allCached = subIds.every(id => this.siteCache.has(id));
+            if (allCached) {
+                const result = {};
+                subIds.forEach(id => { result[id] = this.siteCache.get(id); });
+                return result;
+            }
+        }
+
+        // 过滤出未缓存的子分类
+        const uncachedIds = subIds.filter(id => !this.siteCache.has(id));
+        if (!uncachedIds.length) {
+            const result = {};
+            subIds.forEach(id => { result[id] = this.siteCache.get(id); });
+            return result;
+        }
+
+        try {
+            const idsParam = uncachedIds.join(',');
+            const response = await Utils.safeFetch(`${this.apiBase}/navigation/batch-sites?ids=${idsParam}`);
+            const data = await response.json();
+
+            if (data && data.data) {
+                // 存入缓存
+                for (const [subId, sites] of Object.entries(data.data)) {
+                    const id = parseInt(subId);
+                    if (!isNaN(id)) {
+                        this.siteCache.set(id, sites);
+                    }
+                }
+            }
+
+            // 返回所有请求的子分类数据
+            const result = {};
+            subIds.forEach(id => {
+                result[id] = this.siteCache.get(id) || [];
+            });
+            return result;
+
+        } catch (error) {
+            console.warn('批量加载站点失败，降级为逐个加载:', error);
+            // 降级：逐个加载
+            const result = {};
+            for (const id of subIds) {
+                if (!this.siteCache.has(id)) {
+                    result[id] = await this.loadSites(id, true);
+                } else {
+                    result[id] = this.siteCache.get(id);
+                }
+            }
+            return result;
+        }
+    }
+
     async loadSubcategoryCounts(subcategoryIds) {
         if (!subcategoryIds || subcategoryIds.length === 0) return {};
 
-        // 生成稳定的缓存键（排序后拼接）
         const sortedIds = [...subcategoryIds].sort((a, b) => a - b);
         const cacheKey = sortedIds.join(',');
         const now = Date.now();
 
-        // 1. 检查内存缓存（60秒有效期）
         const cached = this.countsCache.get(cacheKey);
         if (cached && (now - cached.timestamp) < 60000) {
             const counts = cached.data;
@@ -287,7 +344,6 @@ class OptimizedNavigation {
             return counts;
         }
 
-        // 2. 取消上一次未完成的请求（避免竞态条件）
         if (this.currentAbortController) {
             this.currentAbortController.abort();
         }
@@ -306,18 +362,15 @@ class OptimizedNavigation {
 
             const counts = await response.json();
 
-            // 3. 存入缓存
             this.countsCache.set(cacheKey, {
                 data: counts,
                 timestamp: now
             });
 
-            // 4. 更新 UI 显示
             this.updateSubcategoryCounts(counts);
             return counts;
 
         } catch (error) {
-            // 如果是用户主动取消的请求，静默处理
             if (error.name === 'AbortError') {
                 console.log('计数请求已取消（切换分类）');
                 return {};
@@ -337,9 +390,8 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 第二步：在 selectLevel1 开头加入取消逻辑 =====
+    // ===== 第七步修改：使用批量预加载 =====
     async selectLevel1(level1, isUserClick = false) {
-        // 切换分类时，取消上一次未完成的计数请求
         if (this.currentAbortController) {
             this.currentAbortController.abort();
             this.currentAbortController = null;
@@ -351,17 +403,31 @@ class OptimizedNavigation {
         this.selectedLevel1 = level1;
         this.renderLevel2(level1);
         this.showSkeleton();
+
         const firstSub = this.getFirstSubCategory(level1);
         if (firstSub) {
-            await this.loadSites(firstSub.id);
-            await this.selectLevel2(firstSub.id, firstSub.name, isUserClick);
+            // 批量加载当前一级分类下所有子分类的站点（预加载）
+            const allSubIds = this.structure[level1].subcategories.map(s => s.id);
+            const batchData = await this.loadBatchSites(allSubIds);
+
+            // 如果有数据，直接渲染第一个子分类
+            if (firstSub && batchData[firstSub.id]) {
+                this.currentSites = batchData[firstSub.id];
+                await this.renderLevel3(this.selectedLevel1, firstSub.id);
+            } else {
+                await this.loadSites(firstSub.id);
+                await this.selectLevel2(firstSub.id, firstSub.name, isUserClick);
+            }
         } else {
             this.renderEmptyState();
         }
+
+        // 加载计数
         const subIds = this.structure[level1].subcategories.map(s => s.id);
         if (subIds.length) {
             this.loadSubcategoryCounts(subIds).catch(() => {});
         }
+
         setTimeout(()=>{ this.isNavigationClick = false; },100);
     }
 
@@ -389,12 +455,12 @@ class OptimizedNavigation {
         const container = document.getElementById('level2Nav');
         if (!container || !this.structure?.[level1]) return;
         const subCats = this.structure[level1].subcategories;
-        if (!subCats.length) { 
+        if (!subCats.length) {
             container.innerHTML = '<div style="padding:16px;color:var(--text-secondary);font-size:11px;text-align:center;">暂无子分类</div>';
             this.renderEmptyState();
             return;
         }
-        container.innerHTML = subCats.map((sub,idx) => 
+        container.innerHTML = subCats.map((sub,idx) =>
             `<button class="level2-btn ${idx===0?'active':''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}" title="${this._escapeHtml(sub.name)}">
                 <span class="level2-btn-text">${this._escapeHtml(sub.name)}</span>
                 <span class="level2-btn-count" style="display:none;">0</span>
@@ -429,10 +495,10 @@ class OptimizedNavigation {
         const start = (this.currentPage-1)*this.pageSize;
         const end = start+this.pageSize;
         const pageSites = this.currentSites.slice(start,end);
-        
+
         const hasMoreData = end < this.currentSites.length;
         this.hasMore = hasMoreData;
-        
+
         if (this.currentPage === 1) {
             container.innerHTML = '';
             const fragment = document.createDocumentFragment();
@@ -455,7 +521,7 @@ class OptimizedNavigation {
         }
         this.preloadNearbyImages(container);
     }
-    
+
     createLoadingTrigger(hasMore) {
         const div = document.createElement('div');
         div.id = 'scroll-loading-trigger';
@@ -529,7 +595,6 @@ class OptimizedNavigation {
         this.checkScrollAndLoadMore();
     }
 
-    // ========== 修复点击计数 ==========
     createSiteCard(site, index, isSearchResult = false, keyword = '') {
         const card = document.createElement('a');
         card.className = `site-card ${site.valid === false ? 'invalid' : ''}`;
@@ -758,8 +823,9 @@ class OptimizedNavigation {
         this.isSearching = false;
         const hint = document.getElementById('navSearchHint');
         if (hint) hint.style.display = 'none';
-        if (this.selectedLevel1 && this.structure?.[this.selectedLevel1]) this.selectLevel1(this.selectedLevel1, false);
-        else {
+        if (this.selectedLevel1 && this.structure?.[this.selectedLevel1]) {
+            this.selectLevel1(this.selectedLevel1, false);
+        } else {
             const firstCat = this.getFirstCategory();
             if (firstCat) { this.selectedLevel1 = firstCat; this.selectLevel1(firstCat, false); }
             else this.loadNavigationStructure().then(()=>{ const newFirst=this.getFirstCategory(); if(newFirst) this.selectLevel1(newFirst,false); });
@@ -795,12 +861,14 @@ class OptimizedNavigation {
         this.stats.totalCategories = catCount;
         this.updateStatsDisplay();
     }
+
     updateStatsDisplay() {
         const el1 = document.getElementById('siteCount');
         const el2 = document.getElementById('invalidCount');
         if (el1) el1.textContent = `${this.stats.totalWebsites || 0}+`;
         if (el2) el2.textContent = this.stats.invalidCount || '0';
     }
+
     updateInvalidCount(increment) {
         if (!this.stats.invalidCount) this.stats.invalidCount = 0;
         this.stats.invalidCount += increment;
@@ -809,6 +877,7 @@ class OptimizedNavigation {
     }
 
     renderNavigation() { this.renderLevel1(); }
+
     renderLevel1() {
         const container = document.getElementById('level1Nav');
         if (!container || !this.structure) return;
@@ -859,11 +928,13 @@ class OptimizedNavigation {
         const container = document.getElementById('level3Content');
         if (container) container.innerHTML = '';
     }
+
     startBackgroundUpdates() {
         if (this.updateTimer) clearInterval(this.updateTimer);
         this.updateTimer = setInterval(()=>this.refreshStructure(), this.UPDATE_INTERVAL);
         document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) this.refreshStructure(); });
     }
+
     async refreshStructure() {
         try {
             const newStructure = await fetch(`${this.apiBase}/navigation/structure`).then(r=>r.json());
@@ -880,6 +951,7 @@ class OptimizedNavigation {
             }
         } catch(e) { console.warn('后台更新失败:', e); }
     }
+
     refresh() {
         this.structure = null;
         this.siteCache.clear();
@@ -889,6 +961,7 @@ class OptimizedNavigation {
         this.showSkeleton();
         this.init();
     }
+
     destroy() {
         if (this.updateTimer) clearInterval(this.updateTimer);
         if (this.autoRefreshTimer) clearInterval(this.autoRefreshTimer);
@@ -901,7 +974,6 @@ class OptimizedNavigation {
         this.iconCache.clear();
         this.iconLoadingSet.clear();
         this.iconFailedSet.clear();
-        // 第二步新增：清理计数缓存和取消未完成请求
         this.countsCache.clear();
         if (this.currentAbortController) {
             this.currentAbortController.abort();
