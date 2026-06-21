@@ -229,7 +229,37 @@
         }
         .nav-container { display: flex; justify-content: space-between; align-items: center; height: 100%; max-width: 1200px; margin: 0 auto; padding: 0 var(--container-padding-xs); }
         .nav-brand { display: flex; align-items: center; gap: 10px; }
-        .logo { width: 32px; height: 32px; border-radius: 8px; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #ffffff;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 2px;
+            box-sizing: border-box;
+        }
+        .logo picture {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo picture img,
+        .logo picture source {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            border-radius: 6px;
+        }
         .brand-text { font-size: 16px; font-weight: 600; color: var(--text-primary); }
         .nav-actions { display: flex; gap: 8px; }
         .nav-btn { width: 36px; height: 36px; border: none; border-radius: 6px; background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; font-size: 14px; }
@@ -599,7 +629,12 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <div class="nav-brand">
-                <div class="logo"><img src="./assets/logo.png" alt="星聚导航Logo" loading="lazy" class="js-img-fallback" data-fallback-type="hideAndShowIcon" data-fallback-icon-class="fas fa-rocket"></div>
+                <div class="logo">
+                    <picture>
+                        <source srcset="./assets/logo.webp" type="image/webp">
+                        <img src="./assets/logo.png" alt="星聚导航Logo" loading="lazy" class="js-img-fallback" data-fallback-type="hideAndShowIcon" data-fallback-icon-class="fas fa-rocket">
+                    </picture>
+                </div>
                 <div class="brand-text-container"><span class="brand-text">星聚导航</span><span class="brand-subtitle">启跃星门，航图绘星河</span></div>
             </div>
             <div class="nav-actions">
