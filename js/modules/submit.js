@@ -1,5 +1,6 @@
 /**
- * 网站投稿模块（异步安全检测 + 轮询状态）
+ * 网站投稿模块（异步安全检测 + 轮询状态 + 本地草稿自动保存）
+ * 第八步：增加表单草稿自动保存/恢复功能
  */
 class SubmitModule {
     constructor() {
@@ -30,6 +31,11 @@ class SubmitModule {
         this.pollingTimer = null;
         this.isVisible = false;
 
+        // ===== 第八步新增：草稿相关 =====
+        this.DRAFT_KEY = 'submit_draft';
+        this.draftSaveTimer = null;
+        this.isRestoringDraft = false;
+
         this.init();
         
         if (window.Starlink) window.Starlink.submit = this;
@@ -52,6 +58,70 @@ class SubmitModule {
         return deviceId;
     }
 
+    // ===== 第八步新增：草稿保存/恢复 =====
+    saveDraft() {
+        const draft = {
+            url: this.urlInput?.value || '',
+            title: this.titleInput?.value || '',
+            icon: this.iconInput?.value || '',
+            description: this.descInput?.value || '',
+            contact: this.contactInput?.value || '',
+            timestamp: Date.now()
+        };
+        try {
+            localStorage.setItem(this.DRAFT_KEY, JSON.stringify(draft));
+        } catch (e) { /* 忽略存储错误 */ }
+    }
+
+    loadDraft() {
+        try {
+            const raw = localStorage.getItem(this.DRAFT_KEY);
+            if (!raw) return false;
+            const draft = JSON.parse(raw);
+            // 检查草稿是否过期（24小时有效期）
+            if (Date.now() - draft.timestamp > 24 * 60 * 60 * 1000) {
+                localStorage.removeItem(this.DRAFT_KEY);
+                return false;
+            }
+            this.isRestoringDraft = true;
+            if (draft.url && this.urlInput) this.urlInput.value = draft.url;
+            if (draft.title && this.titleInput) this.titleInput.value = draft.title;
+            if (draft.icon && this.iconInput) {
+                this.iconInput.value = draft.icon;
+                this.updateIconPreview();
+            }
+            if (draft.description && this.descInput) {
+                this.descInput.value = draft.description;
+                this.autoResizeDesc();
+            }
+            if (draft.contact && this.contactInput) this.contactInput.value = draft.contact;
+            this.isRestoringDraft = false;
+            // 如果有草稿，自动触发一次安全检测（但仅当弹窗打开时）
+            if (draft.url && this.isVisible) {
+                setTimeout(() => this.fetchSiteInfo(), 500);
+            }
+            this.updateSubmitButton();
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    clearDraft() {
+        try {
+            localStorage.removeItem(this.DRAFT_KEY);
+        } catch (e) { /* 忽略 */ }
+    }
+
+    // ===== 第八步新增：自动保存草稿（防抖） =====
+    scheduleDraftSave() {
+        if (this.isRestoringDraft) return;
+        clearTimeout(this.draftSaveTimer);
+        this.draftSaveTimer = setTimeout(() => {
+            this.saveDraft();
+        }, 500);
+    }
+
     init() {
         if (!this.modal) {
             console.error('投稿模态框不存在');
@@ -60,13 +130,20 @@ class SubmitModule {
         this.bindEvents();
         if (this.descInput) this.descInput.maxLength = 200;
 
+        // 尝试恢复草稿
+        this.loadDraft();
+
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class' && this.modal.classList.contains('active')) {
                     this.isVisible = true;
                     this.ensureStatsBadge();
                     this.loadGlobalTotalCount();
-                    this.resetSecurityCheck();
+                    // 如果弹窗打开时没有草稿但有输入框内容，或者有草稿但未加载，尝试加载
+                    if (!this.loadDraft()) {
+                        this.resetSecurityCheck();
+                    }
+                    this.updateSubmitButton();
                 } else if (mutation.attributeName === 'class' && !this.modal.classList.contains('active')) {
                     this.isVisible = false;
                 }
@@ -125,29 +202,59 @@ class SubmitModule {
         const closeBtn = this.modal.querySelector('.feedback-modal-close');
         const cancelBtn = this.modal.querySelector('.submit-cancel-btn');
         const closeModal = () => {
+            // 关闭时保存草稿
+            this.saveDraft();
             this.hide();
         };
         closeBtn?.addEventListener('click', closeModal);
         cancelBtn?.addEventListener('click', closeModal);
         this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) closeModal();
+            if (e.target === this.modal) {
+                this.saveDraft();
+                closeModal();
+            }
         });
 
         this.fetchInfoBtn.addEventListener('click', () => this.fetchSiteInfo());
 
+        // ===== 第八步修改：输入事件增加草稿保存 =====
         this.urlInput.addEventListener('input', () => {
             this.resetSecurityCheck();
             this.updateSubmitButton();
+            this.scheduleDraftSave();
         });
-        this.iconInput.addEventListener('input', () => this.updateIconPreview());
-        this.titleInput.addEventListener('input', () => this.updateSubmitButton());
+        this.iconInput.addEventListener('input', () => {
+            this.updateIconPreview();
+            this.scheduleDraftSave();
+        });
+        this.titleInput.addEventListener('input', () => {
+            this.updateSubmitButton();
+            this.scheduleDraftSave();
+        });
         this.descInput.addEventListener('input', () => {
             this.autoResizeDesc();
             this.updateSubmitButton();
+            this.scheduleDraftSave();
         });
-        this.contactInput?.addEventListener('input', () => this.updateSubmitButton());
+        this.contactInput?.addEventListener('input', () => {
+            this.updateSubmitButton();
+            this.scheduleDraftSave();
+        });
+
+        // 页面关闭/刷新时保存草稿
+        window.addEventListener('beforeunload', () => {
+            if (this.isVisible || this.hasFormData()) {
+                this.saveDraft();
+            }
+        });
 
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+    }
+
+    // ===== 第八步新增：检查是否有表单数据 =====
+    hasFormData() {
+        const fields = [this.urlInput, this.titleInput, this.iconInput, this.descInput, this.contactInput];
+        return fields.some(el => el && el.value && el.value.trim() !== '');
     }
 
     stopPolling() {
@@ -258,6 +365,8 @@ class SubmitModule {
                 }
                 this.updateSubmitButton();
             }
+            // 获取信息后保存草稿
+            this.scheduleDraftSave();
         } catch (error) {
             Utils.handleApiError(error, '获取网站信息失败', true);
             this.urlCheckResult.className = 'url-check-result checking';
@@ -359,6 +468,7 @@ class SubmitModule {
             if (response.ok) {
                 window.toast.show('投稿成功！已通过安全检测，等待管理员审核', 'success');
                 this.updateGlobalTotalCountIncrement();
+                this.clearDraft(); // 提交成功清除草稿
                 this.hide();
                 this.resetForm();
             } else {
@@ -401,6 +511,7 @@ class SubmitModule {
         this.submitting = false;
         this.securityPassed = false;
         this.lastSecurityDetail = null;
+        // 清除草稿（保留在 clearDraft 中已做）
     }
 
     show() {
@@ -412,12 +523,17 @@ class SubmitModule {
         }
         this.modal.classList.add('active');
         this.isVisible = true;
+        // 弹窗打开时尝试加载草稿
+        this.loadDraft();
+        this.updateSubmitButton();
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
         else if (window.app) window.app.registerModal(this);
     }
 
     hide() {
         if (!this.modal || !this.isVisible) return;
+        // 隐藏前保存草稿
+        this.saveDraft();
         this.modal.classList.remove('active');
         const onTransitionEnd = () => {
             this.isVisible = false;
