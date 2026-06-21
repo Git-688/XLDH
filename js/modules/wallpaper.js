@@ -1,6 +1,6 @@
 /**
  * 轮播图模块 - 性能优化版（增强预加载策略 + 懒加载背景）
- * 功能：7天必应壁纸轮播、自动切换、箭头导航、标题显示、预加载前后多张图片
+ * 移除渐变色背景，使用纯色背景
  */
 class CarouselModule {
     constructor() {
@@ -211,7 +211,6 @@ class CarouselModule {
         setTimeout(() => this.preloadAllIdle(), 3000);
     }
 
-    // ==================== 懒加载渲染 ====================
     renderSlides() {
         if (!this.track) return;
         this.track.innerHTML = '';
@@ -219,21 +218,16 @@ class CarouselModule {
         this.clonedSlides.forEach((slide, index) => {
             const div = document.createElement('div');
             div.className = 'carousel-slide';
-            div.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-            div.style.backgroundSize = 'cover';
-            div.style.backgroundPosition = 'center';
-
-            // 只有当前激活的 slide 才立即加载背景（索引为 1）
-            if (index === 1) {
+            // 不再设置渐变背景，让容器背景纯色显示
+            // 仅当有图片且是当前激活的 slide 时加载背景
+            if (index === 1 && slide.url) {
                 const imageUrl = this.sanitizeImageUrl(slide.url);
                 if (imageUrl) {
                     div.style.backgroundImage = `url('${imageUrl}')`;
                 }
-            } else {
+            } else if (slide.url) {
                 // 存储 url 到 data 属性，供后续懒加载
-                if (slide.url) {
-                    div.dataset.bg = this.sanitizeImageUrl(slide.url);
-                }
+                div.dataset.bg = this.sanitizeImageUrl(slide.url);
             }
 
             div.setAttribute('data-index', index);
@@ -256,7 +250,6 @@ class CarouselModule {
         });
     }
 
-    // ==================== 切换时懒加载背景 ====================
     goToSlide(clonedIndex, animate = true) {
         if (this.isTransitioning) return;
         const total = this.clonedSlides.length;
@@ -265,7 +258,6 @@ class CarouselModule {
         this.isTransitioning = true;
         this.preloadNearbySlides(clonedIndex, 3);
 
-        // 加载目标 slide 的背景（懒加载）
         const targetSlide = this.track.children[clonedIndex];
         if (targetSlide && targetSlide.dataset.bg) {
             const bgUrl = targetSlide.dataset.bg;
