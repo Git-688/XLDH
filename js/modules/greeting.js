@@ -1,4 +1,4 @@
-// greeting.js - 问候区模块（包含木鱼、节日、时钟、展开/收起）
+// greeting.js - 问候区模块（含展开按钮左置）
 class GreetingModule {
     constructor() {
         if (window.Starlink && window.Starlink.greeting) return window.Starlink.greeting;
@@ -212,10 +212,10 @@ class GreetingModule {
         }
     }
 
+    // ========== 核心：更新节日显示，展开按钮置于左侧 ==========
     updateHolidayDisplay() {
         const primaryContainer = document.getElementById('primaryHolidayContainer');
         const secondaryContainer = document.getElementById('secondaryHolidaysList');
-        const expandBtn = document.getElementById('expandHolidayBtn');
         if (!primaryContainer) return;
 
         let mainHoliday = null;
@@ -230,23 +230,25 @@ class GreetingModule {
         } else {
             primaryContainer.innerHTML = `<span class="holiday-icon">🎉</span> 暂无节日信息`;
             if (secondaryContainer) secondaryContainer.innerHTML = '';
-            if (expandBtn) expandBtn.style.display = 'none';
             return;
         }
 
         const daysText = mainHoliday.days === 0 ? '今日' : (mainHoliday.days !== null ? `${mainHoliday.days}天` : '计算中...');
-        primaryContainer.innerHTML = `
+
+        // 构建主容器内容：按钮（如有额外节日）在左，节日信息在右
+        let html = '';
+        if (extraHolidays.length > 0) {
+            html += `<button class="expand-holiday-btn" id="expandHolidayBtn" style="margin-right: 8px;">${this.expanded ? '收起' : '展开'}</button>`;
+        }
+        html += `
             <span class="holiday-icon">${mainHoliday.icon}</span>
             <span class="holiday-name">${Utils.escapeHtml(mainHoliday.name)}</span>
             <span class="holiday-countdown ${mainHoliday.days === 0 ? 'active-countdown' : ''}">${daysText}</span>
         `;
+        primaryContainer.innerHTML = html;
 
+        // 处理额外节日列表
         if (extraHolidays.length > 0) {
-            if (expandBtn) {
-                expandBtn.style.display = 'inline-flex';
-                expandBtn.textContent = this.expanded ? '收起' : '展开';
-                this.bindExpandButton(expandBtn);
-            }
             if (secondaryContainer) {
                 if (this.expanded) {
                     secondaryContainer.innerHTML = extraHolidays.map(h => `
@@ -259,8 +261,10 @@ class GreetingModule {
                     secondaryContainer.style.display = 'none';
                 }
             }
+            // 绑定展开按钮事件
+            const expandBtn = document.getElementById('expandHolidayBtn');
+            if (expandBtn) this.bindExpandButton(expandBtn);
         } else {
-            if (expandBtn) expandBtn.style.display = 'none';
             if (secondaryContainer) {
                 secondaryContainer.innerHTML = '';
                 secondaryContainer.style.display = 'none';
@@ -309,6 +313,7 @@ class GreetingModule {
 
     bindEvents() {
         if (this.eventBound) return;
+        // 木鱼按钮
         document.querySelectorAll('.fish-btn').forEach(btn => {
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
@@ -317,6 +322,7 @@ class GreetingModule {
             btn.addEventListener('click', this.handleFishClick.bind(this), { once: false });
         });
 
+        // 键盘快捷键
         document.addEventListener('keydown', (e) => {
             if (e.altKey) {
                 const type = e.key === '1' ? 'merit' :
@@ -333,9 +339,6 @@ class GreetingModule {
                 }
             }
         });
-
-        const expandBtn = document.getElementById('expandHolidayBtn');
-        if (expandBtn) this.bindExpandButton(expandBtn);
 
         this.eventBound = true;
     }
