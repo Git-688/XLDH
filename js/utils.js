@@ -2,7 +2,6 @@
 (function(window) {
     const Utils = {};
 
-    // HTML 转义（防止 XSS）
     Utils.escapeHtml = function(str) {
         if (!str) return '';
         return String(str)
@@ -13,14 +12,12 @@
             .replace(/'/g, '&#39;');
     };
 
-    // 格式化浏览次数（K/M 单位）
     Utils.formatViews = function(views) {
         if (views >= 1000000) return (views / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
         if (views >= 1000) return (views / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
         return views.toString();
     };
 
-    // 格式化时间（秒 -> mm:ss）
     Utils.formatTime = function(seconds) {
         if (isNaN(seconds)) return '00:00';
         const mins = Math.floor(seconds / 60);
@@ -28,7 +25,6 @@
         return mins.toString().padStart(2, '0') + ':' + secs.toString().padStart(2, '0');
     };
 
-    // 防抖函数
     Utils.debounce = function(func, wait, immediate = false) {
         let timeout;
         return function() {
@@ -44,7 +40,6 @@
         };
     };
 
-    // 节流函数
     Utils.throttle = function(func, limit) {
         let inThrottle;
         return function() {
@@ -58,7 +53,6 @@
         };
     };
 
-    // 验证 URL 格式（仅 http/https）
     Utils.isValidUrl = function(url) {
         try {
             const testUrl = url.startsWith('http') ? url : 'https://' + url;
@@ -68,17 +62,14 @@
         }
     };
 
-    // 生成唯一 ID（用于临时标识）
     Utils.generateId = function() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
     };
 
-    // 检测是否为移动设备
     Utils.isMobile = function() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     };
 
-    // 获取设备 ID（持久化 localStorage）
     Utils.getDeviceId = function() {
         let deviceId = localStorage.getItem('device_id');
         if (!deviceId) {
@@ -88,12 +79,10 @@
         return deviceId;
     };
 
-    // 深拷贝对象（简化版，适用于 JSON 可序列化对象）
     Utils.deepClone = function(obj) {
         return JSON.parse(JSON.stringify(obj));
     };
 
-    // 设置 Cookie
     Utils.setCookie = function(name, value, days) {
         let expires = '';
         if (days) {
@@ -104,7 +93,6 @@
         document.cookie = name + '=' + (value || '') + expires + '; path=/';
     };
 
-    // 获取 Cookie
     Utils.getCookie = function(name) {
         const nameEQ = name + '=';
         const ca = document.cookie.split(';');
@@ -116,13 +104,79 @@
         return null;
     };
 
-    // ========== 统一错误处理 ==========
-    /**
-     * 统一处理 API 请求错误
-     * @param {Error} error - 错误对象
-     * @param {string} defaultMessage - 默认提示信息
-     * @param {boolean} showToast - 是否显示 toast 提示
-     */
+    // ===== WebP 检测 =====
+    let _webpSupported = null;
+    let _webpPromise = null;
+
+    Utils.isWebPSupported = function() {
+        if (_webpSupported !== null) return Promise.resolve(_webpSupported);
+        if (_webpPromise) return _webpPromise;
+        _webpPromise = new Promise((resolve) => {
+            if (!window.createImageBitmap) {
+                _webpSupported = false;
+                resolve(false);
+                return;
+            }
+            const webpData = 'data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA=';
+            fetch(webpData).then(response => response.blob()).then(blob => {
+                return createImageBitmap(blob);
+            }).then(() => {
+                _webpSupported = true;
+                resolve(true);
+            }).catch(() => {
+                _webpSupported = false;
+                resolve(false);
+            });
+        });
+        return _webpPromise;
+    };
+
+    Utils.isWebPSupportedSync = function() {
+        if (_webpSupported !== null) return _webpSupported;
+        const ua = navigator.userAgent;
+        if (/Chrome/.test(ua) && !/Edge/.test(ua)) {
+            const version = parseInt(ua.match(/Chrome\/(\d+)/)?.[1] || '0');
+            if (version >= 32) return true;
+        }
+        if (/Edge/.test(ua)) {
+            const version = parseInt(ua.match(/Edge\/(\d+)/)?.[1] || '0');
+            if (version >= 18) return true;
+        }
+        if (/Opera/.test(ua)) {
+            const version = parseInt(ua.match(/Opera\/(\d+)/)?.[1] || '0');
+            if (version >= 19) return true;
+        }
+        if (/Android/.test(ua)) {
+            const version = parseInt(ua.match(/Android\s(\d+)/)?.[1] || '0');
+            if (version >= 4.0) return true;
+        }
+        if (/Firefox/.test(ua)) {
+            const version = parseInt(ua.match(/Firefox\/(\d+)/)?.[1] || '0');
+            if (version >= 65) return true;
+        }
+        if (/Safari/.test(ua) && !/Chrome/.test(ua)) {
+            const version = parseInt(ua.match(/Version\/(\d+)/)?.[1] || '0');
+            if (version >= 14) return true;
+        }
+        return false;
+    };
+
+    Utils.toWebPUrl = function(originalUrl, quality = 80, width = null, height = null) {
+        if (!originalUrl) return originalUrl;
+        if (originalUrl.match(/\.webp$/i) || originalUrl.match(/\.svg$/i)) {
+            return originalUrl;
+        }
+        if (originalUrl.startsWith('data:')) {
+            return originalUrl;
+        }
+        const apiBase = Utils.getApiBase();
+        let params = `url=${encodeURIComponent(originalUrl)}&quality=${quality}`;
+        if (width) params += `&width=${width}`;
+        if (height) params += `&height=${height}`;
+        return `${apiBase}/image-proxy?${params}`;
+    };
+
+    // ===== 错误处理 =====
     Utils.handleApiError = function(error, defaultMessage = '操作失败，请稍后重试', showToast = true) {
         console.error('[API Error]', error);
         let message = defaultMessage;
@@ -140,7 +194,6 @@
         if (showToast && window.toast && typeof window.toast.show === 'function') {
             window.toast.show(message, 'error');
         }
-        // 可选：将错误上报到服务器
         const apiBase = Utils.getApiBase();
         if (apiBase) {
             fetch(`${apiBase}/log`, {
@@ -158,7 +211,6 @@
         }
     };
 
-    // 包装 fetch 请求，自动处理超时和网络错误
     Utils.safeFetch = async function(url, options = {}) {
         try {
             const controller = new AbortController();
@@ -178,16 +230,13 @@
         }
     };
 
-    // 获取后端 API 基础地址（统一入口）
     Utils.getApiBase = function() {
         return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     };
 
-    // 获取 Waline 评论服务器地址
     Utils.getWalineServer = function() {
         return (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc';
     };
 
-    // 导出到全局
     window.Utils = Utils;
 })(window);
