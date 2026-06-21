@@ -1,5 +1,6 @@
 /**
  * 星聚导航主应用程序（最终版，修复模态框动画，完善骨架屏）
+ * 新增：Service Worker 消息监听，自动刷新导航数据
  */
 class App {
     constructor() {
@@ -138,6 +139,33 @@ class App {
         }, true);
     }
 
+    // ===== 新增：Service Worker 消息监听 =====
+    initServiceWorkerMessageListener() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'NAV_UPDATED') {
+                    console.log('[App] 收到导航更新通知，刷新导航数据...');
+                    // 调用导航模块的刷新方法
+                    if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshStructure === 'function') {
+                        window.optimizedNavigation.refreshStructure().catch(err => {
+                            console.warn('[App] 自动刷新导航失败:', err);
+                        });
+                    } else {
+                        // 降级方案：如果导航模块未加载，则刷新整个页面（但尽可能避免）
+                        console.warn('[App] 导航模块未就绪，将刷新页面以应用更新');
+                        // 延迟刷新，避免频繁刷新
+                        setTimeout(() => {
+                            if (!document.hidden) {
+                                window.location.reload();
+                            }
+                        }, 3000);
+                    }
+                }
+            });
+            console.log('[App] Service Worker 消息监听已注册');
+        }
+    }
+
     init() {
         if (this.isInitialized) return;
         this.setupErrorHandling();
@@ -149,6 +177,8 @@ class App {
         this.setupGlobalEvents();
         this.initNotebookModalEvents();
         this.initFloatingButtonsEffect();
+        // 新增：注册 Service Worker 消息监听
+        this.initServiceWorkerMessageListener();
         this.isInitialized = true;
 
         window.showNotebookModal = this.showNotebookModal.bind(this);
