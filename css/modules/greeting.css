@@ -163,13 +163,13 @@
     flex-shrink: 0;
 }
 
-/* ===== 关键修改：时间在右，按钮在左 ===== */
+/* ===== 默认布局：按钮在左，时间在右 ===== */
 .datetime-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;  /* 按钮靠左，时间靠右 */
+    justify-content: space-between;  /* 左右两端对齐 */
     gap: 8px;
-    flex-wrap: nowrap;              /* 防止换行导致顺序错乱 */
+    flex-wrap: nowrap;              /* 禁止换行，始终在一行 */
 }
 #currentTime {
     font-size: 1.05em;
@@ -177,8 +177,8 @@
     color: var(--primary-color);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
-    order: 1;                       /* 确保时间在右侧（默认 order 为 0，但显式指定） */
-    text-align: right;              /* 文字右对齐，更符合右侧视觉 */
+    order: 1;                       /* 时间在右侧 */
+    text-align: right;
 }
 #currentDate {
     font-size: 0.75em;
@@ -202,7 +202,7 @@
     white-space: nowrap;
     flex-shrink: 0;
     line-height: 1.5;
-    order: 0;                       /* 确保按钮在最左侧 */
+    order: 0;                       /* 按钮在最左侧 */
 }
 .expand-holiday-btn:hover {
     background: rgba(67,97,238,0.1);
