@@ -1,10 +1,10 @@
 // 星聚导航 Service Worker - 缓存导航数据与静态资源，增强 API 响应缓存
-// 版本 v7（增加字体缓存策略）
+// 版本 v8（优化导航结构缓存策略：Stale-While-Revalidate + 版本比对）
 
-const CACHE_NAME = 'starlink-v7';
-const NAVIGATION_CACHE_NAME = 'starlink-nav-v7';
-const API_CACHE_NAME = 'starlink-api-v7';
-const FONT_CACHE_NAME = 'starlink-fonts-v7';
+const CACHE_NAME = 'starlink-v8';
+const NAVIGATION_CACHE_NAME = 'starlink-nav-v8';
+const API_CACHE_NAME = 'starlink-api-v8';
+const FONT_CACHE_NAME = 'starlink-fonts-v8';
 
 // 需要缓存的静态资源列表
 const STATIC_URLS = [
@@ -57,10 +57,10 @@ const FONT_URL_PATTERNS = [
     'fonts.googleapis.com'
 ];
 
-// 导航 API 路径
+// 导航 API 路径（使用 Stale-While-Revalidate 策略）
 const NAV_API_PATTERNS = ['/navigation/structure'];
 
-// 可缓存的 API
+// 可缓存的 API（普通缓存）
 const CACHED_API_PATTERNS = [
     '/navigation/sites',
     '/stats',
@@ -140,33 +140,67 @@ function isCacheableApiRequest(request) {
     return CACHED_API_PATTERNS.some(pattern => url.pathname.includes(pattern));
 }
 
-// 处理导航 API（缓存优先 + 后台更新）
+// ===== 第三步核心改动：导航 API 使用 Stale-While-Revalidate =====
 async function handleNavigationApi(request, event) {
     const cache = await caches.open(NAVIGATION_CACHE_NAME);
     const cachedResponse = await cache.match(request);
     
-    const fetchPromise = fetch(request).then(response => {
+    // 获取当前缓存的版本号（如果有）
+    let cachedVersion = null;
+    if (cachedResponse) {
+        cachedVersion = cachedResponse.headers.get('X-Nav-Version');
+    }
+
+    // 发起网络请求，更新缓存（不阻塞响应）
+    const fetchPromise = fetch(request).then(async response => {
         if (response && response.status === 200) {
             const cloned = response.clone();
+            // 从响应头或响应体中提取版本号（这里使用响应头的 ETag 或自定义头）
+            // 如果后端没有返回版本头，我们可以使用响应体内容的哈希
             const headers = new Headers(cloned.headers);
+            // 生成简单版本号：使用响应内容的长度 + 最后修改时间（如果有）
+            // 或者直接从响应头获取 ETag
+            const etag = headers.get('ETag') || headers.get('Last-Modified') || Date.now().toString();
+            headers.set('X-Nav-Version', etag);
             headers.set('X-SW-Cache-Version', CACHE_NAME);
+            
             const cachedResponseWithHeaders = new Response(cloned.body, {
                 status: cloned.status,
                 statusText: cloned.statusText,
                 headers: headers
             });
+            
+            // 如果版本发生变化，通知所有客户端刷新
+            if (cachedVersion && cachedVersion !== etag) {
+                console.log('导航结构已更新，通知客户端刷新');
+                self.clients.matchAll().then(clients => {
+                    clients.forEach(client => {
+                        client.postMessage({
+                            type: 'NAV_UPDATED',
+                            timestamp: Date.now()
+                        });
+                    });
+                });
+            }
+            
             event.waitUntil(cache.put(request, cachedResponseWithHeaders));
+            return response;
         }
         return response;
     }).catch(err => {
         console.warn('导航 API 网络请求失败:', err);
         return null;
     });
-    
+
+    // ===== Stale-While-Revalidate 核心逻辑 =====
+    // 如果有缓存，立即返回缓存（无论是否过期），同时后台更新
     if (cachedResponse) {
+        // 后台更新
         event.waitUntil(fetchPromise);
         return cachedResponse;
     }
+    
+    // 没有缓存，等待网络请求完成
     return fetchPromise;
 }
 
@@ -223,7 +257,6 @@ async function handleFontRequest(request) {
         const response = await fetch(request);
         if (response && response.status === 200) {
             const cloned = response.clone();
-            // 确保跨域字体缓存正确
             const headers = new Headers(cloned.headers);
             headers.set('Cache-Control', 'public, max-age=31536000, immutable');
             const cachedResponseWithHeaders = new Response(cloned.body, {
@@ -281,7 +314,7 @@ self.addEventListener('fetch', event => {
         return;
     }
     
-    // 导航 API
+    // 导航 API（Stale-While-Revalidate）
     if (isNavigationApiRequest(url)) {
         event.respondWith(handleNavigationApi(event.request, event));
         return;
