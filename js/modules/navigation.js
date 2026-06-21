@@ -1,5 +1,6 @@
 /**
  * 优化分类导航系统 - 延迟加载子分类数据 + 计数接口 + WebP 支持
+ * 修复默认选中第一个一级分类和第一个二级分类
  */
 class OptimizedNavigation {
     constructor() {
@@ -191,7 +192,14 @@ class OptimizedNavigation {
             await this.calculateTotalValidSites();
             const firstCategory = this.getFirstCategory();
             if (firstCategory) {
+                // 先选择一级分类
                 await this.selectLevel1(firstCategory, false);
+                // 保险：确保第一个子分类被选中并显示内容
+                const firstSub = this.getFirstSubCategory(firstCategory);
+                if (firstSub && !this.selectedLevel2) {
+                    await this.loadSites(firstSub.id);
+                    await this.selectLevel2(firstSub.id, firstSub.name, false);
+                }
             } else {
                 this.renderEmptyState();
             }
