@@ -7,23 +7,21 @@
     <meta name="description" content="星聚导航是一个现代化的个人导航网站，提供便捷的上网导航体验和各种实用工具">
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
-<meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz https://myhkw.cn;
-    style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://myhkw.cn;
-    img-src * data: https://myhkw.cn;
-    media-src * https://myhkw.cn;
-    connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz https://xiaodi.ykxbl.top https://myhkw.cn wss://myhkw.cn;
-    font-src 'self' https://cdn.jsdelivr.net https://myhkw.cn;
-    frame-src 'self' https://myhkw.cn;
-    worker-src 'self' blob:;
-    frame-ancestors 'none';
-    base-uri 'none';
-    form-action 'self';
-    upgrade-insecure-requests;
-">
-
-    <!-- 其他安全头 -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://*.ccwu.cc https://static.cloudflareinsights.com https://unpkg.com https://joe.deepakmt.xyz https://myhkw.cn;
+        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://myhkw.cn;
+        img-src * data: https://myhkw.cn;
+        media-src * https://myhkw.cn;
+        connect-src 'self' https://api.xjdh688.ccwu.cc https://yy688.ccwu.cc https://bing.biturl.top https://api.pearapi.ai https://api.kuleu.com https://api.injahow.cn https://yunzhiapi.cn https://api.sightengine.com https://safebrowsing.googleapis.com https://www.virustotal.com https://cn.apihz.cn https://oiapi.net https://unpkq.com https://joe.deepakmt.xyz https://xiaodi.ykxbl.top https://myhkw.cn wss://myhkw.cn;
+        font-src 'self' https://cdn.jsdelivr.net https://myhkw.cn;
+        frame-src 'self' https://myhkw.cn;
+        worker-src 'self' blob:;
+        frame-ancestors 'none';
+        base-uri 'none';
+        form-action 'self';
+        upgrade-insecure-requests;
+    ">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
@@ -53,14 +51,12 @@
         })();
     </script>
 
-    <!-- 预连接 -->
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://myhkw.cn">
     <link rel="preconnect" href="https://unpkg.com">
     <link rel="preconnect" href="https://oiapi.net">
 
-    <!-- DNS 预解析 -->
     <link rel="dns-prefetch" href="https://favicon.yandex.net">
     <link rel="dns-prefetch" href="https://icon.horse">
     <link rel="dns-prefetch" href="https://www.google.com">
@@ -68,12 +64,10 @@
     <link rel="dns-prefetch" href="https://api.kuleu.com">
     <link rel="dns-prefetch" href="https://api.injahow.cn">
 
-    <!-- 字体预加载（添加 crossorigin） -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 
-    <!-- 核心样式 -->
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
     <link rel="stylesheet" href="./css/modules/sidebar.css">
@@ -88,7 +82,6 @@
     <link rel="stylesheet" href="./css/modules/compact-tags.css">
     <link rel="stylesheet" href="./css/responsive.css">
 
-    <!-- 非关键样式延迟加载 -->
     <link rel="preload" href="./css/modules/compact-tags.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -99,7 +92,6 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/regular.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 
-    <!-- 内联样式（进度条、全局变量等） -->
     <style>
         .scroll-progress {
             position: fixed;
@@ -599,14 +591,11 @@
         .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
     </style>
 
-    <!-- 预加载主脚本 -->
     <link rel="preload" href="./js/main.js" as="script">
 </head>
 <body>
-    <!-- 滚动进度条 -->
     <div class="scroll-progress" id="scrollProgress"></div>
 
-    <!-- 导航栏 -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <div class="nav-brand">
@@ -622,7 +611,6 @@
         </div>
     </nav>
 
-    <!-- 侧边栏 -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-wallpaper" id="sidebarWallpaper">
             <div class="sidebar-wallpaper-overlay"></div>
@@ -651,9 +639,7 @@
         </div>
     </aside>
 
-    <!-- 主内容 -->
     <main class="main-content">
-        <!-- 壁纸轮播 -->
         <section class="wallpaper-section">
             <div class="container">
                 <div class="wallpaper-container" id="wallpaperCarousel">
@@ -668,7 +654,6 @@
             </div>
         </section>
 
-        <!-- 问候区 -->
         <section class="greeting-section">
             <div class="greeting-container">
                 <div class="greeting-main-card">
@@ -704,7 +689,6 @@
             </div>
         </section>
 
-        <!-- 常用标签 -->
         <section class="minimal-tags-section">
             <div class="container">
                 <div class="tags-header">
@@ -718,7 +702,6 @@
             </div>
         </section>
 
-        <!-- 分类导航 -->
         <section class="navigation-section">
             <div class="container">
                 <div class="navigation-header">
@@ -743,7 +726,6 @@
             </div>
         </section>
 
-        <!-- 页脚 -->
         <footer class="footer">
             <div class="footer-compact-container">
                 <div class="footer-disclaimer-card">
@@ -791,7 +773,6 @@
             </div>
         </footer>
 
-        <!-- 浮动按钮 -->
         <div class="floating-buttons">
             <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
             <button class="floating-btn theme-btn" id="themeToggleBtn" aria-label="切换主题"><i class="fas fa-moon"></i></button>
@@ -800,7 +781,6 @@
             <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
         </div>
 
-        <!-- 音乐播放器 -->
         <div class="music-player" id="musicPlayer">
             <div class="player-top">
                 <div class="cover-section">
@@ -938,7 +918,6 @@
         </div>
         <audio id="audio-element" preload="metadata" style="display:none;"></audio>
 
-        <!-- 搜索模态框 -->
         <div class="search-modal" id="searchModal">
             <div class="modal-content">
                 <div class="search-bar"><button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎"><i id="engineIcon" class="fas fa-search"></i></button><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off"><button class="search-submit-btn">搜索</button></div>
@@ -952,7 +931,6 @@
         </div>
         <div class="engine-tooltip" id="engineTooltip"></div>
 
-        <!-- 笔记本模态框 -->
         <div id="notebookModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
@@ -966,7 +944,6 @@
             </div>
         </div>
 
-        <!-- 评论模态框 -->
         <div id="commentModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
@@ -978,7 +955,6 @@
             </div>
         </div>
 
-        <!-- 投稿模态框 -->
         <div id="submitModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
@@ -1028,11 +1004,9 @@
         </div>
     </main>
 
-    <!-- ==================== 脚本加载 ==================== -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
     <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
-    <!-- 进度条控制 -->
     <script>
         (function() {
             const progressBar = document.getElementById('scrollProgress');
@@ -1049,7 +1023,6 @@
         })();
     </script>
 
-    <!-- 延迟加载脚本（使用 defer） -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js" crossorigin="anonymous"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
     <script defer src="./js/utils.js"></script>
@@ -1080,7 +1053,6 @@
     <script defer src="./js/modules/theme.js"></script>
     <script defer src="./js/cursor2.js"></script>
 
-    <!-- Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             let swUpdateReloading = false;
