@@ -1,141 +1,67 @@
-
-
 (function() {
     'use strict';
 
     const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
-    const TOKEN_EXPIRE_HOURS = 1;              // 会话有效期（小时）
-    const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000; // 提前5分钟刷新
+    const TOKEN_EXPIRE_HOURS = 1;
+    const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
 
     let token = '';
-    let refreshToken = '';                     // 刷新令牌
-    let csrfToken = '';                        // CSRF Token
+    let refreshToken = '';
+    let csrfToken = '';
     let categories = [], subcategories = [], sites = [];
-    let submissionsData = [];                  // 待审核列表（用于统计）
-    let feedbackData = [];                     // 反馈列表（用于统计）
+    let submissionsData = [];
+    let feedbackData = [];
     let currentCat = null, currentSub = null;
     let modalAction = null;
     let currentSubmissionId = null;
     let refreshTimer = null;
     let currentAnnouncement = null;
     let currentCaptchaMd5key = null;
-    let loginLocked = false;                  // 前端锁定状态
+    let loginLocked = false;
 
-    // ==================== 工具函数 ====================
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
+    let sitePage = 1;
+    const SITE_PAGE_SIZE = 20;
+    let selectedSiteIds = new Set();
 
-    function showToast(msg, type = 'success') {
-        const toast = document.getElementById('toast');
-        if (!toast) return;
-        toast.textContent = msg;
-        toast.className = `toast ${type} show`;
-        clearTimeout(toast._timeout);
-        toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300);
-    }
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    function showToast(msg, type = 'success') { const toast = document.getElementById('toast'); if (!toast) return; toast.textContent = msg; toast.className = `toast ${type} show`; clearTimeout(toast._timeout); toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300); }
+    function checkUrl(url) { try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; } }
+    function autoResizeTextarea(textarea) { if (!textarea) return; textarea.style.height = 'auto'; textarea.style.height = textarea.scrollHeight + 'px'; }
+    function getDeviceId() { let deviceId = localStorage.getItem('device_id'); if (!deviceId) { deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15); localStorage.setItem('device_id', deviceId); } return deviceId; }
+    function normalizeUrl(url) { if (!url) return ''; try { let normalized = url.toLowerCase().trim(); normalized = normalized.replace(/^https?:\/\//, ''); normalized = normalized.replace(/^www\./, ''); normalized = normalized.replace(/\/$/, ''); return normalized; } catch(e) { return url; } }
+    function isUrlExists(url, excludeSiteId = null) { const normalizedNew = normalizeUrl(url); return sites.some(site => { if (excludeSiteId !== null && site.id === excludeSiteId) return false; const normalizedExisting = normalizeUrl(site.url); return normalizedExisting === normalizedNew; }); }
 
-    function checkUrl(url) {
-        try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; }
-    }
-
-    function autoResizeTextarea(textarea) {
-        if (!textarea) return;
-        textarea.style.height = 'auto';
-        textarea.style.height = textarea.scrollHeight + 'px';
-    }
-
-    function getDeviceId() {
-        let deviceId = localStorage.getItem('device_id');
-        if (!deviceId) {
-            deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
-            localStorage.setItem('device_id', deviceId);
-        }
-        return deviceId;
-    }
-
-    function normalizeUrl(url) {
-        if (!url) return '';
-        try {
-            let normalized = url.toLowerCase().trim();
-            normalized = normalized.replace(/^https?:\/\//, '');
-            normalized = normalized.replace(/^www\./, '');
-            normalized = normalized.replace(/\/$/, '');
-            return normalized;
-        } catch(e) {
-            return url;
-        }
-    }
-
-    function isUrlExists(url, excludeSiteId = null) {
-        const normalizedNew = normalizeUrl(url);
-        return sites.some(site => {
-            if (excludeSiteId !== null && site.id === excludeSiteId) return false;
-            const normalizedExisting = normalizeUrl(site.url);
-            return normalizedExisting === normalizedNew;
-        });
-    }
-
-    // ==================== 统计更新 ====================
     function updateStats() {
         const totalSitesEl = document.getElementById('statTotalSites');
         const invalidEl = document.getElementById('statInvalid');
         const submissionsEl = document.getElementById('statSubmissions');
         const feedbackEl = document.getElementById('statFeedback');
         if (totalSitesEl) totalSitesEl.textContent = sites.length;
-        if (invalidEl) {
-            const invalidCount = sites.filter(s => s.is_valid === 0).length;
-            invalidEl.textContent = invalidCount;
-        }
+        if (invalidEl) { const invalidCount = sites.filter(s => s.is_valid === 0).length; invalidEl.textContent = invalidCount; }
         if (submissionsEl) submissionsEl.textContent = submissionsData ? submissionsData.length : 0;
         if (feedbackEl) feedbackEl.textContent = feedbackData ? feedbackData.length : 0;
     }
 
-    // ==================== API 请求封装（增强版） ====================
     async function apiFetch(endpoint, opt = {}) {
-        const headers = {
-            'Content-Type': 'application/json',
-            ...opt.headers
-        };
+        const headers = { 'Content-Type': 'application/json', ...opt.headers };
         if (token) headers.Authorization = `Bearer ${token}`;
         if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
-
-        const res = await fetch(API_BASE + endpoint, {
-            ...opt,
-            headers
-        });
-
-        // 从响应头提取 CSRF Token
+        const res = await fetch(API_BASE + endpoint, { ...opt, headers });
         const newCsrf = res.headers.get('X-CSRF-Token');
         if (newCsrf) csrfToken = newCsrf;
-
-        // 处理未授权
         if (res.status === 401) {
             if (refreshToken) {
                 const refreshed = await refreshSessionToken();
-                if (refreshed) {
-                    return apiFetch(endpoint, opt);
-                }
+                if (refreshed) return apiFetch(endpoint, opt);
             }
             logout();
             throw new Error('Unauthorized');
         }
-
-        if (res.status === 403) {
-            showToast('IP不在白名单或权限不足', 'error');
-            throw new Error('Forbidden');
-        }
-
-        if (!res.ok) {
-            const errText = await res.text().catch(() => '请求失败');
-            throw new Error(errText);
-        }
-
+        if (res.status === 403) { showToast('IP不在白名单或权限不足', 'error'); throw new Error('Forbidden'); }
+        if (!res.ok) { const errText = await res.text().catch(() => '请求失败'); throw new Error(errText); }
         return res.json();
     }
 
-    // ==================== 刷新令牌（持久化 CSRF） ====================
     async function refreshSessionToken() {
         if (!refreshToken) return false;
         try {
@@ -157,13 +83,9 @@
             startSessionRefresh();
             showToast('会话已续期', 'success');
             return true;
-        } catch (e) {
-            console.warn('刷新令牌失败:', e);
-            return false;
-        }
+        } catch (e) { console.warn('刷新令牌失败:', e); return false; }
     }
 
-    // ==================== 会话管理（持久化 CSRF） ====================
     function getStoredToken() {
         let tk = sessionStorage.getItem('admin_token');
         if (tk) {
@@ -248,27 +170,14 @@
         const now = Date.now();
         const delay = expires - now - SESSION_REFRESH_BEFORE_MS;
         if (delay > 0 && delay < 3600000) {
-            refreshTimer = setTimeout(() => {
-                refreshSessionToken().then(() => startSessionRefresh());
-            }, delay);
+            refreshTimer = setTimeout(() => { refreshSessionToken().then(() => startSessionRefresh()); }, delay);
         } else if (delay <= 0 && token) {
             refreshSessionToken().then(() => startSessionRefresh());
         }
     }
 
-    // ==================== 登录锁定 ====================
-    function updateLockMessage(locked) {
-        const el = document.getElementById('loginLockMessage');
-        if (!el) return;
-        if (locked) {
-            el.textContent = '登录失败过多，请10分钟后重试';
-            el.style.display = 'block';
-        } else {
-            el.style.display = 'none';
-        }
-    }
+    function updateLockMessage(locked) { const el = document.getElementById('loginLockMessage'); if (!el) return; if (locked) { el.textContent = '登录失败过多，请10分钟后重试'; el.style.display = 'block'; } else { el.style.display = 'none'; } }
 
-    // ==================== 验证码 ====================
     async function loadCaptcha() {
         const captchaGroup = document.getElementById('captchaGroup');
         const captchaImg = document.getElementById('captchaImg');
@@ -276,10 +185,7 @@
         try {
             const response = await fetch(`${API_BASE}/admin/captcha`, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'X-Device-Id': getDeviceId()
-                }
+                headers: { 'Content-Type': 'application/json', 'X-Device-Id': getDeviceId() }
             });
             const data = await response.json();
             if (data.imgurl && data.md5key) {
@@ -290,55 +196,29 @@
                 console.error('获取验证码失败:', data.error);
                 showToast('获取验证码失败，请刷新重试', 'error');
             }
-        } catch (err) {
-            console.error('加载验证码异常:', err);
-            showToast('验证码服务异常', 'error');
-        }
+        } catch (err) { console.error('加载验证码异常:', err); showToast('验证码服务异常', 'error'); }
     }
 
-    function refreshCaptcha() {
-        loadCaptcha();
-    }
+    function refreshCaptcha() { loadCaptcha(); }
 
-    // ==================== 登录/登出 ====================
     async function login() {
         const rawToken = document.getElementById('tokenInput').value.trim();
         if (!rawToken) { showToast('请输入Token', 'error'); return; }
-
         const captchaCode = document.getElementById('captchaInput')?.value.trim() || '';
-        if (!captchaCode) {
-            showToast('请输入验证码', 'error');
-            return;
-        }
-
-        if (loginLocked) {
-            showToast('登录已锁定，请10分钟后重试', 'error');
-            return;
-        }
-
+        if (!captchaCode) { showToast('请输入验证码', 'error'); return; }
+        if (loginLocked) { showToast('登录已锁定，请10分钟后重试', 'error'); return; }
         const btn = document.getElementById('loginBtn');
         btn.disabled = true;
         btn.textContent = '登录中…';
         try {
             const loginRes = await fetch(`${API_BASE}/admin/login`, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'X-Device-Id': getDeviceId()
-                },
-                body: JSON.stringify({
-                    token: rawToken,
-                    captchaCode: captchaCode,
-                    md5key: currentCaptchaMd5key
-                })
+                headers: { 'Content-Type': 'application/json', 'X-Device-Id': getDeviceId() },
+                body: JSON.stringify({ token: rawToken, captchaCode, md5key: currentCaptchaMd5key })
             });
             const loginData = await loginRes.json().catch(() => ({}));
             if (!loginRes.ok) {
-                if (loginRes.status === 429) {
-                    loginLocked = true;
-                    updateLockMessage(true);
-                    showToast('登录失败过多，请10分钟后重试', 'error');
-                }
+                if (loginRes.status === 429) { loginLocked = true; updateLockMessage(true); showToast('登录失败过多，请10分钟后重试', 'error'); }
                 throw new Error(loginData.error || '登录失败');
             }
             loginLocked = false;
@@ -360,17 +240,11 @@
             token = '';
             showToast(e.message === 'Unauthorized' ? 'Token无效或验证码错误' : e.message || '登录失败', 'error');
             loadCaptcha();
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '登录';
-        }
+        } finally { btn.disabled = false; btn.textContent = '登录'; }
     }
 
     function logout() {
-        token = '';
-        refreshToken = '';
-        csrfToken = '';
-        clearToken();
+        token = ''; refreshToken = ''; csrfToken = ''; clearToken();
         const loginWrapper = document.getElementById('loginWrapper');
         const mainContent = document.getElementById('mainContent');
         if (loginWrapper) loginWrapper.style.display = 'flex';
@@ -386,65 +260,39 @@
         showToast('已退出');
     }
 
-    // ==================== 获取网站信息 ====================
+    function fetchSiteInfoHandler() {
+        fetchSiteInfo('mUrl', 'mTitle', 'mIcon', 'mDesc');
+    }
+
     async function fetchSiteInfo(urlInputId, titleInputId, iconInputId, descInputId) {
         const urlInput = document.getElementById(urlInputId);
         const titleInput = document.getElementById(titleInputId);
         const iconInput = document.getElementById(iconInputId);
         const descInput = document.getElementById(descInputId);
-        if (!urlInput || !titleInput || !iconInput || !descInput) {
-            showToast('输入框元素未找到', 'error');
-            return;
-        }
+        if (!urlInput || !titleInput || !iconInput || !descInput) { showToast('输入框元素未找到', 'error'); return; }
         let rawUrl = urlInput.value.trim();
-        if (!rawUrl) {
-            showToast('请先输入网址', 'warn');
-            return;
-        }
-        if (!/^https?:\/\//i.test(rawUrl)) {
-            rawUrl = 'https://' + rawUrl;
-        }
+        if (!rawUrl) { showToast('请先输入网址', 'warn'); return; }
+        if (!/^https?:\/\//i.test(rawUrl)) rawUrl = 'https://' + rawUrl;
         const btn = document.getElementById('fetchInfoBtn');
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = '获取中...';
-        }
+        if (btn) { btn.disabled = true; btn.textContent = '获取中...'; }
         try {
             const response = await fetch(`https://api.pearapi.ai/api/website/info/?url=${encodeURIComponent(rawUrl)}`);
             if (!response.ok) throw new Error('请求失败');
             const buffer = await response.arrayBuffer();
-            let text = '';
             let decoder = new TextDecoder('utf-8');
-            text = decoder.decode(buffer);
-            if (text.includes('�')) {
-                decoder = new TextDecoder('gbk');
-                text = decoder.decode(buffer);
-            }
+            let text = decoder.decode(buffer);
+            if (text.includes('�')) { decoder = new TextDecoder('gbk'); text = decoder.decode(buffer); }
             const data = JSON.parse(text);
             if (data.code === 200 && data.data) {
                 if (data.data.title) titleInput.value = data.data.title;
                 if (data.data.icon) iconInput.value = data.data.icon;
                 if (data.data.description) descInput.value = data.data.description;
                 showToast('获取成功', 'success');
-            } else {
-                showToast('未获取到信息，请手动填写', 'warn');
-            }
-        } catch (error) {
-            console.error('获取网站信息失败:', error);
-            showToast('获取失败，请手动填写', 'error');
-        } finally {
-            if (btn) {
-                btn.disabled = false;
-                btn.textContent = '获取信息';
-            }
-        }
+            } else { showToast('未获取到信息，请手动填写', 'warn'); }
+        } catch (error) { console.error('获取网站信息失败:', error); showToast('获取失败，请手动填写', 'error'); }
+        finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
     }
 
-    function fetchSiteInfoHandler() {
-        fetchSiteInfo('mUrl', 'mTitle', 'mIcon', 'mDesc');
-    }
-
-    // ==================== 数据加载与渲染（含统计） ====================
     async function loadAllData() {
         try {
             const [catData, subData, siteData, subDataList, feedbackDataList] = await Promise.all([
@@ -462,10 +310,7 @@
             renderCatBar();
             if (categories.length > 0) selectCat(categories[0].id);
             updateStats();
-        } catch (e) {
-            if (e.message === 'Unauthorized') logout();
-            else showToast('数据加载失败', 'error');
-        }
+        } catch (e) { if (e.message === 'Unauthorized') logout(); else showToast('数据加载失败', 'error'); }
     }
 
     async function loadAllDataButKeepSelection() {
@@ -483,15 +328,9 @@
             submissionsData = subDataList || [];
             feedbackData = feedbackDataList || [];
             renderCatBar();
-            if (currentCat) {
-                selectCat(currentCat);
-                if (currentSub) selectSub(currentSub);
-            }
+            if (currentCat) { selectCat(currentCat); if (currentSub) selectSub(currentSub); }
             updateStats();
-        } catch (e) {
-            if (e.message === 'Unauthorized') logout();
-            else showToast('数据加载失败', 'error');
-        }
+        } catch (e) { if (e.message === 'Unauthorized') logout(); else showToast('数据加载失败', 'error'); }
     }
 
     function selectCat(cid) {
@@ -511,7 +350,7 @@
         document.querySelectorAll('.sub-item').forEach(el => el.classList.remove('active'));
         const target = document.querySelector(`.sub-item[data-sid="${sid}"]`);
         if (target) target.classList.add('active');
-        renderSiteList();
+        loadAdminSites(true);
     }
 
     function renderCatBar() {
@@ -548,7 +387,180 @@
         `).join('');
     }
 
-    // ==================== 公告管理 ====================
+    // ===== 方向B 新增站点分页列表 =====
+    async function loadAdminSites(resetPage = true) {
+        if (resetPage) sitePage = 1;
+        const keyword = document.getElementById('siteSearchKeyword')?.value || '';
+        const status = document.getElementById('siteStatusFilter')?.value || 'all';
+        const subcategoryId = currentSub || '';
+        const listEl = document.getElementById('siteList');
+        listEl.innerHTML = '<div class="empty">加载中...</div>';
+        try {
+            let url = `/admin/sites-list?page=${sitePage}&limit=${SITE_PAGE_SIZE}`;
+            if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+            if (status !== 'all') url += `&status=${status}`;
+            if (subcategoryId) url += `&subcategory_id=${subcategoryId}`;
+            const data = await apiFetch(url);
+            const sitesData = data.sites || [];
+            const pagination = data.pagination || { total: 0, totalPages: 0 };
+            if (!sitesData.length) {
+                listEl.innerHTML = '<div class="empty">暂无站点</div>';
+                document.getElementById('sitePaginationInfo').textContent = '';
+                return;
+            }
+            document.getElementById('sitePaginationInfo').textContent = `共 ${pagination.total} 个站点，第 ${sitePage}/${pagination.totalPages || 1} 页`;
+            const pageNumbersEl = document.getElementById('sitePageNumbers');
+            if (pageNumbersEl) {
+                const totalPages = pagination.totalPages || 1;
+                let pageHtml = '';
+                const startPage = Math.max(1, sitePage - 2);
+                const endPage = Math.min(totalPages, sitePage + 2);
+                for (let i = startPage; i <= endPage; i++) {
+                    pageHtml += `<button class="site-page-btn ${i === sitePage ? 'active' : ''}" data-page="${i}" style="padding:2px 8px;border-radius:4px;border:1px solid ${i === sitePage ? '#3b82f6' : '#e2e8f0'};background:${i === sitePage ? '#3b82f6' : 'transparent'};color:${i === sitePage ? '#fff' : '#475569'};cursor:pointer;font-size:11px;">${i}</button>`;
+                }
+                pageNumbersEl.innerHTML = pageHtml;
+                pageNumbersEl.querySelectorAll('.site-page-btn').forEach(btn => {
+                    btn.addEventListener('click', () => { sitePage = parseInt(btn.dataset.page); loadAdminSites(false); });
+                });
+            }
+            document.getElementById('prevSitePage').disabled = sitePage <= 1;
+            document.getElementById('nextSitePage').disabled = sitePage >= (pagination.totalPages || 1);
+            renderSitesWithCheckboxes(sitesData);
+            updateSelectedCount();
+        } catch (e) { listEl.innerHTML = '<div class="empty">加载失败</div>'; }
+    }
+
+    function renderSitesWithCheckboxes(sitesData) {
+        const listEl = document.getElementById('siteList');
+        listEl.innerHTML = sitesData.map(site => {
+            const checked = selectedSiteIds.has(site.id) ? 'checked' : '';
+            return `
+                <div class="link-item" style="display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" class="site-checkbox" data-id="${site.id}" ${checked} style="flex-shrink:0;width:16px;height:16px;cursor:pointer;">
+                    <div class="link-info" style="flex:1;min-width:0;">
+                        <strong>${escapeHtml(site.title)}</strong>
+                        <div style="font-size:10px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(site.url)}</div>
+                        <div style="font-size:10px;color:#94a3b8;">${escapeHtml(site.category_name || '')} → ${escapeHtml(site.subcategory_name || '')} ${site.is_valid === 1 ? ' <span style="color:#10b981;">✅ 有效</span>' : ' <span style="color:#ef4444;">❌ 无效</span>'}</div>
+                    </div>
+                    <div style="display:flex;gap:4px;flex-shrink:0;"><button class="primary sm" data-action="editSite" data-id="${site.id}">编辑</button></div>
+                </div>
+            `;
+        }).join('');
+        listEl.querySelectorAll('.site-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                const id = parseInt(this.dataset.id);
+                if (this.checked) selectedSiteIds.add(id);
+                else selectedSiteIds.delete(id);
+                updateSelectedCount();
+            });
+        });
+        listEl.querySelectorAll('[data-action="editSite"]').forEach(btn => {
+            btn.addEventListener('click', function() { handleEditSite(parseInt(this.dataset.id)); });
+        });
+    }
+
+    function updateSelectedCount() {
+        const count = selectedSiteIds.size;
+        document.getElementById('selectedCount').textContent = `已选 ${count} 个`;
+        document.getElementById('batchDeleteBtn').disabled = count === 0;
+        document.getElementById('batchMoveBtn').disabled = count === 0;
+        document.getElementById('batchEnableBtn').disabled = count === 0;
+        document.getElementById('batchDisableBtn').disabled = count === 0;
+    }
+
+    function toggleSelectAll() {
+        const checkboxes = document.querySelectorAll('.site-checkbox');
+        if (!checkboxes.length) return;
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        checkboxes.forEach(cb => {
+            cb.checked = !allChecked;
+            const id = parseInt(cb.dataset.id);
+            if (cb.checked) selectedSiteIds.add(id);
+            else selectedSiteIds.delete(id);
+        });
+        updateSelectedCount();
+    }
+
+    function clearSelection() {
+        selectedSiteIds.clear();
+        document.querySelectorAll('.site-checkbox').forEach(cb => cb.checked = false);
+        updateSelectedCount();
+    }
+
+    async function batchDeleteSites() {
+        if (selectedSiteIds.size === 0) { showToast('请先选择要删除的站点', 'warning'); return; }
+        if (!confirm(`确定要删除选中的 ${selectedSiteIds.size} 个站点吗？此操作不可恢复！`)) return;
+        const ids = Array.from(selectedSiteIds);
+        try {
+            const result = await apiFetch('/admin/sites/batch-delete', {
+                method: 'POST',
+                body: JSON.stringify({ siteIds: ids })
+            });
+            showToast(result.message || '删除成功', 'success');
+            selectedSiteIds.clear();
+            await loadAdminSites(true);
+            await loadAllDataButKeepSelection();
+        } catch (e) { showToast('批量删除失败: ' + e.message, 'error'); }
+    }
+
+    async function batchMoveSites() {
+        if (selectedSiteIds.size === 0) { showToast('请先选择要移动的站点', 'warning'); return; }
+        const subcategoriesData = await apiFetch('/admin/subcategories');
+        if (!subcategoriesData || !subcategoriesData.length) { showToast('暂无子分类可移动', 'error'); return; }
+        const subOptions = subcategoriesData.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+        openModal('批量移动站点',
+            `<div style="margin-bottom:12px;"><label style="display:block;font-size:12px;margin-bottom:6px;color:#475569;">选择目标子分类：</label><select id="batchMoveTarget" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">${subOptions}</select></div><div style="font-size:11px;color:#64748b;">将移动 ${selectedSiteIds.size} 个站点到选中的子分类</div>`,
+            async () => {
+                const targetId = parseInt(document.getElementById('batchMoveTarget').value);
+                if (!targetId) { showToast('请选择目标子分类', 'error'); return; }
+                const ids = Array.from(selectedSiteIds);
+                const result = await apiFetch('/admin/sites/batch-move', {
+                    method: 'POST',
+                    body: JSON.stringify({ siteIds: ids, targetSubcategoryId: targetId })
+                });
+                showToast(result.message || '移动成功', 'success');
+                selectedSiteIds.clear();
+                await loadAdminSites(true);
+                await loadAllDataButKeepSelection();
+                closeModal();
+            },
+            false
+        );
+    }
+
+    async function batchEnableSites() {
+        if (selectedSiteIds.size === 0) { showToast('请先选择要启用的站点', 'warning'); return; }
+        if (!confirm(`确定要启用选中的 ${selectedSiteIds.size} 个站点吗？`)) return;
+        const ids = Array.from(selectedSiteIds);
+        try {
+            const result = await apiFetch('/admin/sites/batch-toggle', {
+                method: 'POST',
+                body: JSON.stringify({ siteIds: ids, isValid: true })
+            });
+            showToast(result.message || '启用成功', 'success');
+            selectedSiteIds.clear();
+            await loadAdminSites(true);
+            await loadAllDataButKeepSelection();
+        } catch (e) { showToast('批量启用失败: ' + e.message, 'error'); }
+    }
+
+    async function batchDisableSites() {
+        if (selectedSiteIds.size === 0) { showToast('请先选择要禁用的站点', 'warning'); return; }
+        if (!confirm(`确定要禁用选中的 ${selectedSiteIds.size} 个站点吗？`)) return;
+        const ids = Array.from(selectedSiteIds);
+        try {
+            const result = await apiFetch('/admin/sites/batch-toggle', {
+                method: 'POST',
+                body: JSON.stringify({ siteIds: ids, isValid: false })
+            });
+            showToast(result.message || '禁用成功', 'success');
+            selectedSiteIds.clear();
+            await loadAdminSites(true);
+            await loadAllDataButKeepSelection();
+        } catch (e) { showToast('批量禁用失败: ' + e.message, 'error'); }
+    }
+
+    // ===== 原有功能 =====
     async function loadAnnouncement() {
         try {
             const data = await apiFetch('/admin/announcements');
@@ -588,47 +600,23 @@
         const content = document.getElementById('annContent').value.trim();
         const date = document.getElementById('annDate').value;
         const is_active = document.getElementById('annActive').checked ? 1 : 0;
-        if (!title || !content) {
-            showToast('标题和内容不能为空', 'error');
-            return;
-        }
-        if (title.length > 200) {
-            showToast('标题不能超过200个字符', 'error');
-            return;
-        }
-        if (content.length > 10000) {
-            showToast('内容不能超过10000个字符', 'error');
-            return;
-        }
-        const payload = {
-            title,
-            important: important || '',
-            content,
-            date: date || new Date().toISOString().slice(0,10),
-            is_active
-        };
+        if (!title || !content) { showToast('标题和内容不能为空', 'error'); return; }
+        if (title.length > 200) { showToast('标题不能超过200个字符', 'error'); return; }
+        if (content.length > 10000) { showToast('内容不能超过10000个字符', 'error'); return; }
+        const payload = { title, important: important || '', content, date: date || new Date().toISOString().slice(0,10), is_active };
         try {
             if (currentAnnouncement && currentAnnouncement.id) {
-                await apiFetch(`/admin/announcements/${currentAnnouncement.id}`, {
-                    method: 'PUT',
-                    body: JSON.stringify(payload)
-                });
+                await apiFetch(`/admin/announcements/${currentAnnouncement.id}`, { method: 'PUT', body: JSON.stringify(payload) });
                 showToast('公告已更新', 'success');
             } else {
-                const res = await apiFetch('/admin/announcements', {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
+                const res = await apiFetch('/admin/announcements', { method: 'POST', body: JSON.stringify(payload) });
                 currentAnnouncement = { id: res.id, ...payload };
                 showToast('公告已发布', 'success');
             }
             if (window.announcementModule && window.announcementModule.loadAnnouncement) {
                 window.announcementModule.loadAnnouncement();
             }
-        } catch (err) {
-            console.error('保存公告失败:', err);
-            showToast('保存失败: ' + (err.message || '网络错误'), 'error');
-        }
+        } catch (err) { console.error('保存公告失败:', err); showToast('保存失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
     function clearAnnouncementForm() {
@@ -641,27 +629,16 @@
         if (contentTextarea) autoResizeTextarea(contentTextarea);
     }
 
-    // ==================== 排序辅助 ====================
     async function getNextSortValue(type, parentId = null) {
         try {
             let maxOrder = 0;
-            if (type === 'category') {
-                const max = categories.reduce((max, c) => Math.max(max, c.display_order || 0), 0);
-                maxOrder = max;
-            } else if (type === 'subcategory' && parentId) {
-                const subs = subcategories.filter(s => s.category_id === parentId);
-                const max = subs.reduce((max, s) => Math.max(max, s.display_order || 0), 0);
-                maxOrder = max;
-            } else if (type === 'site' && parentId) {
-                const sitesList = sites.filter(s => s.subcategory_id === parentId);
-                const max = sitesList.reduce((max, s) => Math.max(max, s.display_order || 0), 0);
-                maxOrder = max;
-            }
+            if (type === 'category') { const max = categories.reduce((max, c) => Math.max(max, c.display_order || 0), 0); maxOrder = max; }
+            else if (type === 'subcategory' && parentId) { const subs = subcategories.filter(s => s.category_id === parentId); const max = subs.reduce((max, s) => Math.max(max, s.display_order || 0), 0); maxOrder = max; }
+            else if (type === 'site' && parentId) { const sitesList = sites.filter(s => s.subcategory_id === parentId); const max = sitesList.reduce((max, s) => Math.max(max, s.display_order || 0), 0); maxOrder = max; }
             return maxOrder + 1;
         } catch { return 0; }
     }
 
-    // ==================== 模态框 ====================
     function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null) {
         const modal = document.getElementById('modal');
         document.querySelector('#modal .modal-title').textContent = title;
@@ -692,46 +669,44 @@
         finally { btn.disabled = false; btn.textContent = '确认'; }
     }
 
-    function closeModal() { 
-        document.getElementById('modal').classList.remove('show'); 
-        modalAction = null; 
-    }
+    function closeModal() { document.getElementById('modal').classList.remove('show'); modalAction = null; }
 
-    // 分类/子分类/网站 管理
     function handleModifyCategory(id, currentName) {
         const cat = categories.find(c => c.id === id);
         const currentOrder = cat?.display_order || 0;
-        openModal('修改分类', `
-            <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>
-            <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1"></div>
-        `, async () => {
-            const name = document.getElementById('mName').value.trim();
-            const order = parseInt(document.getElementById('mOrder').value) || 0;
-            if (!name) { showToast('名称不能为空', 'error'); return; }
-            await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
-            showToast('修改成功'); await loadAllDataButKeepSelection();
-        }, true, async () => { 
-            await apiFetch(`/admin/categories/${id}`, { method:'DELETE' }); 
-            showToast('分类已删除'); await loadAllDataButKeepSelection(); 
-        });
+        openModal('修改分类',
+            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>
+             <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1"></div>`,
+            async () => {
+                const name = document.getElementById('mName').value.trim();
+                const order = parseInt(document.getElementById('mOrder').value) || 0;
+                if (!name) { showToast('名称不能为空', 'error'); return; }
+                await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
+                showToast('修改成功'); await loadAllDataButKeepSelection();
+            }, true, async () => {
+                await apiFetch(`/admin/categories/${id}`, { method:'DELETE' });
+                showToast('分类已删除'); await loadAllDataButKeepSelection();
+            }
+        );
     }
 
     function handleModifySub(id, currentName) {
         const sub = subcategories.find(s => s.id === id);
         const currentOrder = sub?.display_order || 0;
-        openModal('修改子分类', `
-            <div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>
-            <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1"></div>
-        `, async () => {
-            const name = document.getElementById('mName').value.trim();
-            const order = parseInt(document.getElementById('mOrder').value) || 0;
-            if (!name) { showToast('名称不能为空', 'error'); return; }
-            await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
-            showToast('修改成功'); await loadAllDataButKeepSelection();
-        }, true, async () => { 
-            await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' }); 
-            showToast('子分类已删除'); await loadAllDataButKeepSelection(); 
-        });
+        openModal('修改子分类',
+            `<div class="form-row" style="margin-bottom:12px;"><label style="font-size:11px;">名称</label><input id="mName" class="form-input" value="${escapeHtml(currentName)}"></div>
+             <div class="form-row"><label style="font-size:11px;">排序值（数字越小越靠前）</label><input type="number" id="mOrder" class="form-input" value="${currentOrder}" step="1"></div>`,
+            async () => {
+                const name = document.getElementById('mName').value.trim();
+                const order = parseInt(document.getElementById('mOrder').value) || 0;
+                if (!name) { showToast('名称不能为空', 'error'); return; }
+                await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
+                showToast('修改成功'); await loadAllDataButKeepSelection();
+            }, true, async () => {
+                await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' });
+                showToast('子分类已删除'); await loadAllDataButKeepSelection();
+            }
+        );
     }
 
     async function handleEditSite(id) {
@@ -748,17 +723,14 @@
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
                 if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
-                if (isUrlExists(url, id)) {
-                    showToast('该网址已存在，请勿重复添加', 'error');
-                    return;
-                }
+                if (isUrlExists(url, id)) { showToast('该网址已存在，请勿重复添加', 'error'); return; }
                 await apiFetch(`/admin/sites/${id}`, { method:'PUT', body: JSON.stringify({
                     title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
-                showToast('修改成功'); await loadAllDataButKeepSelection();
+                showToast('修改成功'); await loadAdminSites(true); await loadAllDataButKeepSelection();
             }, true,
-            async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); showToast('删除成功'); await loadAllDataButKeepSelection(); }
+            async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); showToast('删除成功'); await loadAdminSites(true); await loadAllDataButKeepSelection(); }
         );
         setTimeout(() => {
             const descTextarea = document.getElementById('mDesc');
@@ -819,24 +791,15 @@
                 const url = document.getElementById('mUrl').value.trim();
                 if (!title || !url) { showToast('标题和网址必填', 'error'); return; }
                 if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
-                if (isUrlExists(url)) {
-                    showToast('该网址已存在，请勿重复添加', 'error');
-                    return;
-                }
+                if (isUrlExists(url)) { showToast('该网址已存在，请勿重复添加', 'error'); return; }
                 await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
                     subcategory_id: currentSub, title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
                 showToast('添加成功', 'success');
                 closeModal();
-                const newSite = await apiFetch('/admin/sites?subcategory_id=' + currentSub);
-                if (newSite && newSite.length) {
-                    const otherSites = sites.filter(s => s.subcategory_id !== currentSub);
-                    sites = [...otherSites, ...newSite];
-                    renderSiteList();
-                } else {
-                    await loadAllDataButKeepSelection();
-                }
+                await loadAdminSites(true);
+                await loadAllDataButKeepSelection();
             }
         );
         setTimeout(() => {
@@ -853,7 +816,6 @@
         }, 150);
     }
 
-    // ==================== 辅助功能 ====================
     async function loadRanking() {
         const list = document.getElementById('rankList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -925,10 +887,7 @@
                 const newUrl = document.getElementById('mUrl').value.trim();
                 if (!newTitle || !newUrl) { showToast('标题和网址不能为空', 'error'); return; }
                 if (!checkUrl(newUrl)) { showToast('网址格式错误', 'error'); return; }
-                if (isUrlExists(newUrl, siteId)) {
-                    showToast('新网址已存在，请勿重复添加', 'error');
-                    return;
-                }
+                if (isUrlExists(newUrl, siteId)) { showToast('新网址已存在，请勿重复添加', 'error'); return; }
                 await apiFetch('/admin/replace-link', {
                     method: 'POST',
                     body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value })
@@ -953,27 +912,19 @@
     async function ignoreLinkHandler(e) {
         const btn = e.currentTarget;
         const reportId = parseInt(btn.dataset.reportid);
-        if (!reportId) {
-            showToast('无效的报告ID', 'error');
-            return;
-        }
+        if (!reportId) { showToast('无效的报告ID', 'error'); return; }
         if (!confirm('确定忽略此反馈吗？忽略后该链接仍为有效状态，且不再显示此反馈。')) return;
         try {
             await apiFetch(`/admin/dead-link-reports/${reportId}`, { method: 'DELETE' });
             showToast('已忽略', 'success');
             await loadFeedback();
-        } catch (err) {
-            showToast('忽略失败: ' + (err.message || '网络错误'), 'error');
-        }
+        } catch (err) { showToast('忽略失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
     async function exportFullData() {
         try {
             const response = await fetch(`${API_BASE}/admin/export`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-CSRF-Token': csrfToken
-                }
+                headers: { 'Authorization': `Bearer ${token}`, 'X-CSRF-Token': csrfToken }
             });
             if (!response.ok) throw new Error('导出失败');
             const blob = await response.blob();
@@ -984,43 +935,25 @@
             a.click();
             URL.revokeObjectURL(url);
             showToast('导出成功', 'success');
-        } catch (err) {
-            showToast('导出失败', 'error');
-        }
+        } catch (err) { showToast('导出失败', 'error'); }
     }
 
     async function importData() {
         const fileInput = document.getElementById('importFile');
         const mode = document.getElementById('importMode').value;
-        if (mode !== 'merge' && mode !== 'overwrite') {
-            showToast('无效的导入模式', 'error');
-            return;
-        }
-        if (!fileInput.files || !fileInput.files[0]) {
-            showToast('请选择 JSON 文件', 'warn');
-            return;
-        }
+        if (mode !== 'merge' && mode !== 'overwrite') { showToast('无效的导入模式', 'error'); return; }
+        if (!fileInput.files || !fileInput.files[0]) { showToast('请选择 JSON 文件', 'warn'); return; }
         const file = fileInput.files[0];
-        if (file.size > 10 * 1024 * 1024) {
-            showToast('文件不能超过 10MB', 'error');
-            return;
-        }
+        if (file.size > 10 * 1024 * 1024) { showToast('文件不能超过 10MB', 'error'); return; }
         try {
             const text = await file.text();
             const data = JSON.parse(text);
-            if (!data.categories || !data.subcategories || !data.sites) {
-                showToast('无效的导入文件格式', 'error');
-                return;
-            }
+            if (!data.categories || !data.subcategories || !data.sites) { showToast('无效的导入文件格式', 'error'); return; }
             const confirmMsg = mode === 'overwrite' ? '覆盖模式将清空现有数据，确定继续吗？' : '合并模式将更新/添加数据，确定继续吗？';
             if (!confirm(confirmMsg)) return;
             const response = await fetch(`${API_BASE}/admin/import`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                    'X-CSRF-Token': csrfToken
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'X-CSRF-Token': csrfToken },
                 body: JSON.stringify({ mode, data })
             });
             const result = await response.json();
@@ -1033,9 +966,7 @@
             } else {
                 showToast(result.error || '导入失败', 'error');
             }
-        } catch (err) {
-            showToast('导入失败: ' + err.message, 'error');
-        }
+        } catch (err) { showToast('导入失败: ' + err.message, 'error'); }
     }
 
     function openImportModal() {
@@ -1049,7 +980,6 @@
         modal.classList.remove('show');
     }
 
-    // 投稿列表与审核（缓存）
     let cachedSubmissions = null;
     let submissionsCacheTime = 0;
     const SUBMISSIONS_CACHE_TTL = 30000;
@@ -1072,10 +1002,7 @@
             const data = await fetchSubmissions(true);
             submissionsData = data || [];
             updateStats();
-            if (!data.length) {
-                list.innerHTML = '<div class="empty">暂无待审核网站</div>';
-                return;
-            }
+            if (!data.length) { list.innerHTML = '<div class="empty">暂无待审核网站</div>'; return; }
             list.innerHTML = data.map(item => `
                 <div class="link-item" style="display:flex; justify-content:space-between; align-items:center;">
                     <span><strong class="submission-title-truncate" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</strong></span>
@@ -1088,7 +1015,6 @@
         } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    // 自定义选择器管理
     let customSelects = {};
 
     function cleanupCustomSelects() {
@@ -1215,10 +1141,7 @@
                 const subSelectEl = document.getElementById('approveSubSelect');
                 const catId = catSelectEl ? catSelectEl.value : '';
                 const subId = subSelectEl ? subSelectEl.value : '';
-                if (!catId || !subId) {
-                    showToast('请选择一级分类和二级分类', 'error');
-                    return;
-                }
+                if (!catId || !subId) { showToast('请选择一级分类和二级分类', 'error'); return; }
                 const displayOrder = document.getElementById('approveOrder').value || 0;
                 const editedTitle = document.getElementById('editTitle').value.trim();
                 const editedUrl = document.getElementById('editUrl').value.trim();
@@ -1226,14 +1149,8 @@
                 const editedDesc = document.getElementById('editDesc').value.trim();
                 const editedContact = document.getElementById('editContact').value.trim();
                 const sendEmail = document.getElementById('sendEmailCheckbox').checked;
-                if (!editedTitle || !editedUrl) {
-                    showToast('标题和网址不能为空', 'error');
-                    return;
-                }
-                if (!checkUrl(editedUrl)) {
-                    showToast('网址格式错误', 'error');
-                    return;
-                }
+                if (!editedTitle || !editedUrl) { showToast('标题和网址不能为空', 'error'); return; }
+                if (!checkUrl(editedUrl)) { showToast('网址格式错误', 'error'); return; }
                 try {
                     await apiFetch(`/admin/submissions/${id}/approve`, {
                         method: 'POST',
@@ -1255,9 +1172,7 @@
                     await loadAllDataButKeepSelection();
                     await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                     refreshNavigationStats();
-                } catch (err) {
-                    showToast('操作失败', 'error');
-                }
+                } catch (err) { showToast('操作失败', 'error'); }
             };
 
             document.getElementById('doRejectBtn').onclick = async () => {
@@ -1280,7 +1195,6 @@
         } catch (err) { showToast('加载详情失败', 'error'); }
     }
 
-    // ==================== 刷新图标 ====================
     async function refreshIcons() {
         const btn = document.getElementById('refreshIconsBtn');
         if (!btn) return;
@@ -1290,10 +1204,7 @@
         try {
             const response = await fetch(`${API_BASE}/admin/refresh-icons`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'X-CSRF-Token': csrfToken
-                }
+                headers: { 'Authorization': `Bearer ${token}`, 'X-CSRF-Token': csrfToken }
             });
             const data = await response.json();
             if (response.ok) {
@@ -1301,12 +1212,8 @@
             } else {
                 showToast(data.error || '刷新失败', 'error');
             }
-        } catch (err) {
-            showToast('刷新失败: ' + err.message, 'error');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = originalText;
-        }
+        } catch (err) { showToast('刷新失败: ' + err.message, 'error'); }
+        finally { btn.disabled = false; btn.textContent = originalText; }
     }
 
     function refreshNavigationStats() {
@@ -1315,7 +1222,6 @@
         }
     }
 
-    // ==================== CustomSelect 类 ====================
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -1436,7 +1342,6 @@
         }
     }
 
-    // ==================== 样式注入 ====================
     function injectGlobalStyles() {
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
@@ -1479,7 +1384,6 @@
         }
     }
 
-    // ==================== 事件绑定与初始化 ====================
     function setupEventDelegation() {
         document.getElementById('catBar').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
@@ -1518,6 +1422,7 @@
                 if (tabId === 'feedback') loadFeedback();
                 if (tabId === 'submissions') loadSubmissions();
                 if (tabId === 'announcement') loadAnnouncement();
+                if (tabId === 'manage') loadAdminSites(true);
             });
         });
 
@@ -1536,9 +1441,7 @@
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 showToast('导航缓存已刷新', 'success');
                 refreshNavigationStats();
-            } catch (err) { 
-                showToast('刷新失败', 'error'); 
-            }
+            } catch (err) { showToast('刷新失败', 'error'); }
         });
         document.getElementById('refreshIconsBtn').addEventListener('click', refreshIcons);
         document.getElementById('annPublishBtn').addEventListener('click', saveAnnouncement);
@@ -1558,9 +1461,32 @@
 
         const captchaImg = document.getElementById('captchaImg');
         if (captchaImg) captchaImg.addEventListener('click', refreshCaptcha);
+
+        // ===== 方向B 事件绑定 =====
+        document.getElementById('siteSearchBtn')?.addEventListener('click', () => loadAdminSites(true));
+        document.getElementById('siteSearchKeyword')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') loadAdminSites(true);
+        });
+        document.getElementById('siteClearFilterBtn')?.addEventListener('click', () => {
+            document.getElementById('siteSearchKeyword').value = '';
+            document.getElementById('siteStatusFilter').value = 'all';
+            loadAdminSites(true);
+        });
+        document.getElementById('siteStatusFilter')?.addEventListener('change', () => loadAdminSites(true));
+        document.getElementById('prevSitePage')?.addEventListener('click', () => {
+            if (sitePage > 1) { sitePage--; loadAdminSites(false); }
+        });
+        document.getElementById('nextSitePage')?.addEventListener('click', () => {
+            sitePage++; loadAdminSites(false);
+        });
+        document.getElementById('batchSelectAll')?.addEventListener('click', toggleSelectAll);
+        document.getElementById('batchClearSelection')?.addEventListener('click', clearSelection);
+        document.getElementById('batchDeleteBtn')?.addEventListener('click', batchDeleteSites);
+        document.getElementById('batchMoveBtn')?.addEventListener('click', batchMoveSites);
+        document.getElementById('batchEnableBtn')?.addEventListener('click', batchEnableSites);
+        document.getElementById('batchDisableBtn')?.addEventListener('click', batchDisableSites);
     }
 
-    // ==================== 启动 ====================
     injectGlobalStyles();
 
     loginLocked = localStorage.getItem('login_locked') === 'true';
