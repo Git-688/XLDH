@@ -163,33 +163,15 @@
     flex-shrink: 0;
 }
 
-/* ===== 默认布局：按钮在左，时间在右 ===== */
+/* ===== 布局：按钮在左（可选），时间永久固定在右 ===== */
 .datetime-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;  /* 左右两端对齐 */
     gap: 8px;
-    flex-wrap: nowrap;              /* 禁止换行，始终在一行 */
-}
-#currentTime {
-    font-size: 1.05em;
-    font-weight: 600;
-    color: var(--primary-color);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    order: 1;                       /* 时间在右侧 */
-    text-align: right;
-}
-#currentDate {
-    font-size: 0.75em;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    text-align: right;
+    flex-wrap: nowrap;              /* 禁止换行，保持一行 */
 }
 
-/* 展开/收起按钮 - 位于左侧 */
+/* 展开/收起按钮 - 位于左侧（当存在时） */
 .expand-holiday-btn {
     background: transparent;
     border: 1px solid var(--border-color);
@@ -202,11 +184,31 @@
     white-space: nowrap;
     flex-shrink: 0;
     line-height: 1.5;
-    order: 0;                       /* 按钮在最左侧 */
+    order: 0;                       /* 确保在左边 */
 }
 .expand-holiday-btn:hover {
     background: rgba(67,97,238,0.1);
     border-color: var(--primary-color);
+}
+
+/* 时间 - 使用 margin-left: auto 永久固定在右侧 */
+#currentTime {
+    font-size: 1.05em;
+    font-weight: 600;
+    color: var(--primary-color);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    margin-left: auto;              /* 核心：自动占满剩余空间，将时间推到最右 */
+    order: 1;                       /* 位于按钮之后 */
+    text-align: right;
+}
+#currentDate {
+    font-size: 0.75em;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    text-align: right;
 }
 
 .fish-section {
@@ -367,7 +369,7 @@
     .primary-holiday { font-size: 1em; }
     .primary-holiday .holiday-countdown { padding: 2px 4px; font-size: 0.6em; }
     .datetime { padding: 4px; gap: 4px; min-width: 90px; }
-    .datetime-row { gap: 4px; flex-wrap: nowrap; }  /* 保持不换行 */
+    .datetime-row { gap: 4px; flex-wrap: nowrap; }
     #currentTime { font-size: 0.8em; }
     #currentDate { font-size: 0.6em; }
     .expand-holiday-btn { font-size: 7px; padding: 2px 4px; }
@@ -385,7 +387,6 @@
     .datetime-row {
         flex-wrap: nowrap;          /* 强制不换行，保证按钮与时间在一行 */
         gap: 4px;
-        justify-content: space-between; /* 保持按钮左，时间右 */
     }
     #currentTime { font-size: 0.75em; }  /* 进一步缩小字号避免溢出 */
     .expand-holiday-btn { font-size: 7px; padding: 1px 6px; }
