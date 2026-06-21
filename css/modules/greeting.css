@@ -162,19 +162,31 @@
     min-width: 120px;
     flex-shrink: 0;
 }
-
-/* ===== 修改点：强制展开按钮在时间左侧 ===== */
 .datetime-row {
     display: flex;
     align-items: center;
-    justify-content: flex-start;  /* 改为左对齐，不再两端对齐 */
+    justify-content: flex-start;
     gap: 8px;
     flex-wrap: nowrap;
 }
+#currentTime {
+    font-size: 1.05em;
+    font-weight: 600;
+    color: var(--primary-color);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+#currentDate {
+    font-size: 0.75em;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    text-align: right;
+}
 
+/* 展开/收起按钮样式 - 默认位于时间左侧 */
 .expand-holiday-btn {
-    order: 0;               /* 确保按钮在最前面 */
-    flex-shrink: 0;
     background: transparent;
     border: 1px solid var(--border-color);
     padding: 2px 8px;
@@ -184,33 +196,14 @@
     color: var(--primary-color);
     transition: all 0.2s;
     white-space: nowrap;
+    flex-shrink: 0;
     line-height: 1.5;
+    order: 0; /* 保证始终位于最左侧 */
 }
 .expand-holiday-btn:hover {
     background: rgba(67,97,238,0.1);
     border-color: var(--primary-color);
 }
-
-#currentTime {
-    order: 1;               /* 时间排在按钮之后 */
-    margin-left: auto;      /* 让时间自动靠右，保持与右侧日期的视觉平衡 */
-    font-size: 1.05em;
-    font-weight: 600;
-    color: var(--primary-color);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-}
-
-#currentDate {
-    font-size: 0.75em;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    text-align: right;
-    margin-top: 2px;
-}
-/* ===== 修改结束 ===== */
 
 .fish-section {
     display: grid;
@@ -340,7 +333,6 @@
     .fish-count { font-size: 0.85em; padding: 2px 5px; }
     .bookmark-btn { gap: 6px; }
 }
-
 @media (max-width: 768px) {
     .greeting-section { padding: var(--section-margin-sm) 0; }
     .greeting-main-card { padding: 5px; gap: 5px; }
@@ -362,7 +354,6 @@
     .secondary-name { max-width: 60px; }
     .bookmark-btn { gap: 5px; padding: 8px 12px; }
 }
-
 @media (max-width: 576px) {
     .greeting-section { padding: var(--section-margin-xs) 0; }
     .greeting-main-card { padding: 4px; gap: 4px; }
@@ -385,12 +376,15 @@
     .secondary-name { max-width: 50px; }
     .bookmark-btn { gap: 4px; padding: 6px 10px; }
 }
-
 @media (max-width: 400px) {
     .datetime { min-width: 85px; }
-    .datetime-row { flex-wrap: wrap; justify-content: flex-start; }  /* 修改：左对齐，避免换行错乱 */
-    .expand-holiday-btn { order: 0; }
-    #currentTime { order: 1; margin-left: auto; }
+    .datetime-row {
+        flex-wrap: wrap;
+        justify-content: flex-start;  /* 改为左对齐，保持按钮在左侧 */
+        gap: 4px;
+    }
+    /* 移除了对 .expand-holiday-btn 的 order 和 margin-top 覆盖，
+       确保按钮始终位于时间左侧 */
     .secondary-name { max-width: 40px; }
 }
 
