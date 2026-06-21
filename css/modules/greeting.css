@@ -162,12 +162,14 @@
     min-width: 120px;
     flex-shrink: 0;
 }
+
+/* ===== 关键修改：时间在右，按钮在左 ===== */
 .datetime-row {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;  /* 按钮靠左，时间靠右 */
     gap: 8px;
-    flex-wrap: nowrap;
+    flex-wrap: nowrap;              /* 防止换行导致顺序错乱 */
 }
 #currentTime {
     font-size: 1.05em;
@@ -175,6 +177,8 @@
     color: var(--primary-color);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+    order: 1;                       /* 确保时间在右侧（默认 order 为 0，但显式指定） */
+    text-align: right;              /* 文字右对齐，更符合右侧视觉 */
 }
 #currentDate {
     font-size: 0.75em;
@@ -185,7 +189,7 @@
     text-align: right;
 }
 
-/* 展开/收起按钮样式 - 默认位于时间左侧 */
+/* 展开/收起按钮 - 位于左侧 */
 .expand-holiday-btn {
     background: transparent;
     border: 1px solid var(--border-color);
@@ -198,7 +202,7 @@
     white-space: nowrap;
     flex-shrink: 0;
     line-height: 1.5;
-    order: 0; /* 保证始终位于最左侧 */
+    order: 0;                       /* 确保按钮在最左侧 */
 }
 .expand-holiday-btn:hover {
     background: rgba(67,97,238,0.1);
@@ -363,7 +367,7 @@
     .primary-holiday { font-size: 1em; }
     .primary-holiday .holiday-countdown { padding: 2px 4px; font-size: 0.6em; }
     .datetime { padding: 4px; gap: 4px; min-width: 90px; }
-    .datetime-row { gap: 4px; }
+    .datetime-row { gap: 4px; flex-wrap: nowrap; }  /* 保持不换行 */
     #currentTime { font-size: 0.8em; }
     #currentDate { font-size: 0.6em; }
     .expand-holiday-btn { font-size: 7px; padding: 2px 4px; }
@@ -379,12 +383,12 @@
 @media (max-width: 400px) {
     .datetime { min-width: 85px; }
     .datetime-row {
-        flex-wrap: wrap;
-        justify-content: flex-start;  /* 改为左对齐，保持按钮在左侧 */
+        flex-wrap: nowrap;          /* 强制不换行，保证按钮与时间在一行 */
         gap: 4px;
+        justify-content: space-between; /* 保持按钮左，时间右 */
     }
-    /* 移除了对 .expand-holiday-btn 的 order 和 margin-top 覆盖，
-       确保按钮始终位于时间左侧 */
+    #currentTime { font-size: 0.75em; }  /* 进一步缩小字号避免溢出 */
+    .expand-holiday-btn { font-size: 7px; padding: 1px 6px; }
     .secondary-name { max-width: 40px; }
 }
 
