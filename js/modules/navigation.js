@@ -40,6 +40,10 @@ class OptimizedNavigation {
 
         this.preloadQueue = [];
         this.isPreloading = false;
+
+        // ===== 第二步新增：计数缓存 + 请求取消控制器 =====
+        this.countsCache = new Map();              // 计数缓存 { key: { data, timestamp } }
+        this.currentAbortController = null;        // 用于取消进行中的计数请求
         
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
@@ -266,17 +270,64 @@ class OptimizedNavigation {
         return sites;
     }
 
+    // ===== 第二步：重构 loadSubcategoryCounts =====
     async loadSubcategoryCounts(subcategoryIds) {
         if (!subcategoryIds || subcategoryIds.length === 0) return {};
-        try {
-            const idsParam = subcategoryIds.join(',');
-            const response = await Utils.safeFetch(`${this.apiBase}/subcategory/counts?ids=${idsParam}`);
-            if (!response.ok) return {};
-            const counts = await response.json();
+
+        // 生成稳定的缓存键（排序后拼接）
+        const sortedIds = [...subcategoryIds].sort((a, b) => a - b);
+        const cacheKey = sortedIds.join(',');
+        const now = Date.now();
+
+        // 1. 检查内存缓存（60秒有效期）
+        const cached = this.countsCache.get(cacheKey);
+        if (cached && (now - cached.timestamp) < 60000) {
+            const counts = cached.data;
+            this.updateSubcategoryCounts(counts);
             return counts;
-        } catch (e) {
-            console.warn('获取子分类计数失败:', e);
+        }
+
+        // 2. 取消上一次未完成的请求（避免竞态条件）
+        if (this.currentAbortController) {
+            this.currentAbortController.abort();
+        }
+        this.currentAbortController = new AbortController();
+
+        try {
+            const idsParam = sortedIds.join(',');
+            const response = await fetch(`${this.apiBase}/subcategory/counts?ids=${idsParam}`, {
+                signal: this.currentAbortController.signal,
+                headers: { 'Cache-Control': 'no-cache' }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const counts = await response.json();
+
+            // 3. 存入缓存
+            this.countsCache.set(cacheKey, {
+                data: counts,
+                timestamp: now
+            });
+
+            // 4. 更新 UI 显示
+            this.updateSubcategoryCounts(counts);
+            return counts;
+
+        } catch (error) {
+            // 如果是用户主动取消的请求，静默处理
+            if (error.name === 'AbortError') {
+                console.log('计数请求已取消（切换分类）');
+                return {};
+            }
+            console.warn('获取子分类计数失败:', error);
             return {};
+        } finally {
+            if (this.currentAbortController) {
+                this.currentAbortController = null;
+            }
         }
     }
 
@@ -286,7 +337,14 @@ class OptimizedNavigation {
         }
     }
 
+    // ===== 第二步：在 selectLevel1 开头加入取消逻辑 =====
     async selectLevel1(level1, isUserClick = false) {
+        // 切换分类时，取消上一次未完成的计数请求
+        if (this.currentAbortController) {
+            this.currentAbortController.abort();
+            this.currentAbortController = null;
+        }
+
         if (this.selectedLevel1 === level1) return;
         this.isNavigationClick = true;
         document.querySelectorAll('.level1-btn').forEach(b => b.classList.toggle('active', b.dataset.level1 === level1));
@@ -302,9 +360,7 @@ class OptimizedNavigation {
         }
         const subIds = this.structure[level1].subcategories.map(s => s.id);
         if (subIds.length) {
-            this.loadSubcategoryCounts(subIds).then(counts => {
-                this.updateSubcategoryCounts(counts);
-            }).catch(() => {});
+            this.loadSubcategoryCounts(subIds).catch(() => {});
         }
         setTimeout(()=>{ this.isNavigationClick = false; },100);
     }
@@ -513,16 +569,13 @@ class OptimizedNavigation {
             </div>
         `;
 
-        // ---------- 点击事件 ----------
         card.addEventListener('click', async (e) => {
-            // 死链报告按钮不触发点击计数
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
             if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
 
             const viewEl = card.querySelector('.view-count');
             if (!viewEl) {
-                // 找不到元素，仍发送请求但不更新视图
                 try {
                     await Utils.safeFetch(`${this.apiBase}/click`, {
                         method: 'POST',
@@ -538,7 +591,6 @@ class OptimizedNavigation {
                 return;
             }
 
-            // 乐观更新视图
             let oldViews = parseInt(viewEl.dataset.views) || 0;
             let newViews = oldViews + 1;
             viewEl.dataset.views = newViews;
@@ -546,7 +598,6 @@ class OptimizedNavigation {
             viewEl.classList.add('increasing');
             setTimeout(() => viewEl.classList.remove('increasing'), 300);
 
-            // 同步更新内存中的站点数据，防止重新渲染覆盖
             const siteIndex = this.currentSites.findIndex(s => s.id === site.id);
             if (siteIndex !== -1) {
                 this.currentSites[siteIndex].views = (this.currentSites[siteIndex].views || 0) + 1;
@@ -559,13 +610,10 @@ class OptimizedNavigation {
                     body: JSON.stringify({ id: site.id, url: site.url }),
                     keepalive: true
                 });
-                // 请求成功，保持新值
             } catch (err) {
                 console.warn('点击计数上报失败:', err);
-                // 回滚视图
                 viewEl.dataset.views = oldViews;
                 viewEl.textContent = this._formatViews(oldViews);
-                // 回滚内存数据
                 if (siteIndex !== -1) {
                     this.currentSites[siteIndex].views = oldViews;
                 }
@@ -577,9 +625,7 @@ class OptimizedNavigation {
                 if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
             }, 100);
         });
-        // ---------- 结束点击事件 ----------
 
-        // 死链报告按钮逻辑
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
@@ -855,6 +901,12 @@ class OptimizedNavigation {
         this.iconCache.clear();
         this.iconLoadingSet.clear();
         this.iconFailedSet.clear();
+        // 第二步新增：清理计数缓存和取消未完成请求
+        this.countsCache.clear();
+        if (this.currentAbortController) {
+            this.currentAbortController.abort();
+            this.currentAbortController = null;
+        }
     }
 }
 
