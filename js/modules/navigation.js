@@ -1,6 +1,6 @@
 /**
  * 优化分类导航系统 - 延迟加载子分类数据 + 计数接口 + WebP 支持
- * 修复默认选中第一个一级分类和第一个二级分类
+ * 改进：优先加载第一个二级分类，快速显示，其余后台加载
  */
 class OptimizedNavigation {
     constructor() {
@@ -192,14 +192,7 @@ class OptimizedNavigation {
             await this.calculateTotalValidSites();
             const firstCategory = this.getFirstCategory();
             if (firstCategory) {
-                // 先选择一级分类
                 await this.selectLevel1(firstCategory, false);
-                // 保险：确保第一个子分类被选中并显示内容
-                const firstSub = this.getFirstSubCategory(firstCategory);
-                if (firstSub && !this.selectedLevel2) {
-                    await this.loadSites(firstSub.id);
-                    await this.selectLevel2(firstSub.id, firstSub.name, false);
-                }
             } else {
                 this.renderEmptyState();
             }
@@ -400,6 +393,7 @@ class OptimizedNavigation {
         }
     }
 
+    // ===== 改进：优先加载第一个子分类，其余后台加载 =====
     async selectLevel1(level1, isUserClick = false) {
         if (this.currentAbortController) {
             this.currentAbortController.abort();
@@ -415,20 +409,21 @@ class OptimizedNavigation {
 
         const firstSub = this.getFirstSubCategory(level1);
         if (firstSub) {
+            // 1. 立即加载并渲染第一个子分类（快速显示）
+            const firstSites = await this.loadSites(firstSub.id);
+            this.currentSites = firstSites;
+            await this.renderLevel3(this.selectedLevel1, firstSub.id);
+            // 2. 异步加载其余子分类的数据（不阻塞渲染）
             const allSubIds = this.structure[level1].subcategories.map(s => s.id);
-            const batchData = await this.loadBatchSites(allSubIds);
-
-            if (firstSub && batchData[firstSub.id]) {
-                this.currentSites = batchData[firstSub.id];
-                await this.renderLevel3(this.selectedLevel1, firstSub.id);
-            } else {
-                await this.loadSites(firstSub.id);
-                await this.selectLevel2(firstSub.id, firstSub.name, isUserClick);
+            const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
+            if (otherSubIds.length) {
+                this.loadBatchSites(otherSubIds).catch(err => console.warn('后台加载其他子分类失败:', err));
             }
         } else {
             this.renderEmptyState();
         }
 
+        // 加载计数（不影响渲染）
         const subIds = this.structure[level1].subcategories.map(s => s.id);
         if (subIds.length) {
             this.loadSubcategoryCounts(subIds).catch(() => {});
