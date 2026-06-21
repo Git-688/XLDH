@@ -19,8 +19,6 @@
     let currentCaptchaMd5key = null;
     let loginLocked = false;
 
-    let sitePage = 1;
-    const SITE_PAGE_SIZE = 20;
     let selectedSiteIds = new Set();
 
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -375,40 +373,21 @@
         `).join('');
     }
 
-    // ===== 站点分页列表（移除搜索和状态筛选） =====
+    // ===== 站点列表（无分页） =====
     async function loadAdminSites(resetPage = true) {
-        if (resetPage) sitePage = 1;
         const subcategoryId = currentSub || '';
         const listEl = document.getElementById('siteList');
         listEl.innerHTML = '<div class="empty">加载中...</div>';
         try {
-            let url = `/admin/sites-list?page=${sitePage}&limit=${SITE_PAGE_SIZE}`;
+            // 请求所有站点（使用一个较大的 limit）
+            let url = `/admin/sites-list?limit=9999`;
             if (subcategoryId) url += `&subcategory_id=${subcategoryId}`;
             const data = await apiFetch(url);
             const sitesData = data.sites || [];
-            const pagination = data.pagination || { total: 0, totalPages: 0 };
             if (!sitesData.length) {
                 listEl.innerHTML = '<div class="empty">暂无站点</div>';
-                document.getElementById('sitePaginationInfo').textContent = '';
                 return;
             }
-            document.getElementById('sitePaginationInfo').textContent = `共 ${pagination.total} 个站点，第 ${sitePage}/${pagination.totalPages || 1} 页`;
-            const pageNumbersEl = document.getElementById('sitePageNumbers');
-            if (pageNumbersEl) {
-                const totalPages = pagination.totalPages || 1;
-                let pageHtml = '';
-                const startPage = Math.max(1, sitePage - 2);
-                const endPage = Math.min(totalPages, sitePage + 2);
-                for (let i = startPage; i <= endPage; i++) {
-                    pageHtml += `<button class="site-page-btn ${i === sitePage ? 'active' : ''}" data-page="${i}" style="padding:2px 8px;border-radius:4px;border:1px solid ${i === sitePage ? '#3b82f6' : '#e2e8f0'};background:${i === sitePage ? '#3b82f6' : 'transparent'};color:${i === sitePage ? '#fff' : '#475569'};cursor:pointer;font-size:11px;">${i}</button>`;
-                }
-                pageNumbersEl.innerHTML = pageHtml;
-                pageNumbersEl.querySelectorAll('.site-page-btn').forEach(btn => {
-                    btn.addEventListener('click', () => { sitePage = parseInt(btn.dataset.page); loadAdminSites(false); });
-                });
-            }
-            document.getElementById('prevSitePage').disabled = sitePage <= 1;
-            document.getElementById('nextSitePage').disabled = sitePage >= (pagination.totalPages || 1);
             renderSitesWithCheckboxes(sitesData);
             updateSelectedCount();
         } catch (e) { listEl.innerHTML = '<div class="empty">加载失败</div>'; }
@@ -1446,21 +1425,13 @@
         const captchaImg = document.getElementById('captchaImg');
         if (captchaImg) captchaImg.addEventListener('click', refreshCaptcha);
 
-        // ===== 批量操作事件（已移至顶部） =====
+        // ===== 批量操作事件 =====
         document.getElementById('batchSelectAll')?.addEventListener('click', toggleSelectAll);
         document.getElementById('batchClearSelection')?.addEventListener('click', clearSelection);
         document.getElementById('batchDeleteBtn')?.addEventListener('click', batchDeleteSites);
         document.getElementById('batchMoveBtn')?.addEventListener('click', batchMoveSites);
         document.getElementById('batchEnableBtn')?.addEventListener('click', batchEnableSites);
         document.getElementById('batchDisableBtn')?.addEventListener('click', batchDisableSites);
-
-        // 分页事件
-        document.getElementById('prevSitePage')?.addEventListener('click', () => {
-            if (sitePage > 1) { sitePage--; loadAdminSites(false); }
-        });
-        document.getElementById('nextSitePage')?.addEventListener('click', () => {
-            sitePage++; loadAdminSites(false);
-        });
     }
 
     injectGlobalStyles();
