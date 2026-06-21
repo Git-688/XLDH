@@ -4,421 +4,81 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>星聚导航后台管理</title>
-    
-    <!-- CSP 严格策略（增强版） -->
-    <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self';
-        script-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai 'unsafe-inline' 'unsafe-eval';
-        style-src 'self' 'unsafe-inline';
-        img-src 'self' data: https:;
-        connect-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai;
-        font-src 'self';
-        frame-ancestors 'none';
-        base-uri 'none';
-        form-action 'self';
-        upgrade-insecure-requests;
-    ">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests;">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="theme-color" content="#4361ee">
-
     <style>
-        /* ========== 全局重置 ========== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; overflow: hidden; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: #f5f7fb;
-            font-size: 12px;
-            color: #1e293b;
-            display: flex;
-            flex-direction: column;
-            padding: 16px;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; background: #f5f7fb; font-size: 12px; color: #1e293b; display: flex; flex-direction: column; padding: 16px; }
         ::-webkit-scrollbar { display: none; }
         * { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        /* ========== 登录卡片 ========== */
-        .login-section {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100%;
-            flex: 1;
-        }
-        .login-card {
-            background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
-            padding: 28px 24px 32px;
-            width: 100%;
-            max-width: 320px;
-            border: 1px solid #eef2f6;
-        }
+        .container { flex: 1; display: flex; flex-direction: column; max-width: 1200px; margin: 0 auto; width: 100%; overflow: hidden; }
+        .login-section { display: flex; justify-content: center; align-items: center; min-height: 100%; flex: 1; }
+        .login-card { background: #ffffff; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); padding: 28px 24px 32px; width: 100%; max-width: 320px; border: 1px solid #eef2f6; }
         .login-header { text-align: center; margin-bottom: 24px; }
-        .login-logo {
-            width: 48px;
-            height: 48px;
-            margin: 0 auto 12px;
-            border-radius: 8px;
-            overflow: hidden;
-        }
+        .login-logo { width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 8px; overflow: hidden; }
         .login-logo img { width: 100%; height: 100%; object-fit: contain; }
         .login-header h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; color: #0f172a; }
         .login-header p { font-size: 11px; color: #64748b; }
         .login-form .input-group { margin-bottom: 16px; }
-        .login-form label {
-            display: block;
-            font-size: 11px;
-            font-weight: 500;
-            color: #475569;
-            margin-bottom: 6px;
-        }
-        .login-form input {
-            width: 100%;
-            padding: 8px 12px;
-            font-size: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            background: #fff;
-            transition: all 0.2s;
-            outline: none;
-        }
-        .login-form input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-        .captcha-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
+        .login-form label { display: block; font-size: 11px; font-weight: 500; color: #475569; margin-bottom: 6px; }
+        .login-form input { width: 100%; padding: 8px 12px; font-size: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; transition: all 0.2s; outline: none; }
+        .login-form input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .captcha-row { display: flex; gap: 8px; align-items: center; }
         .captcha-row input { flex: 1; }
-        .captcha-row img {
-            height: 36px;
-            border-radius: 8px;
-            cursor: pointer;
-            background: #f1f5f9;
-        }
-        .remember-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin: 12px 0 16px;
-            font-size: 11px;
-            color: #475569;
-        }
+        .captcha-row img { height: 36px; border-radius: 8px; cursor: pointer; background: #f1f5f9; }
+        .remember-checkbox { display: flex; align-items: center; gap: 6px; margin: 12px 0 16px; font-size: 11px; color: #475569; }
         .remember-checkbox input { width: 14px; height: 14px; margin: 0; }
-        .login-btn {
-            width: 100%;
-            background: #3b82f6;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 12px;
-            font-weight: 500;
-            color: white;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
+        .login-btn { width: 100%; background: #3b82f6; border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 500; color: white; cursor: pointer; transition: background 0.2s; }
         .login-btn:hover { background: #2563eb; }
-        .logout-btn {
-            background: #f1f5f9;
-            color: #1e293b;
-            border: 1px solid #e2e8f0;
-        }
+        .logout-btn { background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; }
         .logout-btn:hover { background: #e2e8f0; }
-        .lock-message {
-            font-size: 10px;
-            color: #ef4444;
-            text-align: center;
-            margin-top: 12px;
-            display: none;
-        }
-
-        /* ========== 统计卡片 ========== */
-        .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        .stat-card-mini {
-            background: #fff;
-            border-radius: 8px;
-            padding: 12px 16px;
-            border: 1px solid #eef2f6;
-            text-align: center;
-        }
-        .stat-card-mini .stat-number {
-            font-size: 20px;
-            font-weight: 700;
-            color: #0f172a;
-        }
-        .stat-card-mini .stat-label {
-            font-size: 10px;
-            color: #64748b;
-            margin-top: 2px;
-        }
+        .lock-message { font-size: 10px; color: #ef4444; text-align: center; margin-top: 12px; display: none; }
+        .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .stat-card-mini { background: #fff; border-radius: 8px; padding: 12px 16px; border: 1px solid #eef2f6; text-align: center; }
+        .stat-card-mini .stat-number { font-size: 20px; font-weight: 700; color: #0f172a; }
+        .stat-card-mini .stat-label { font-size: 10px; color: #64748b; margin-top: 2px; }
         .stat-card-mini .stat-number.blue { color: #3b82f6; }
         .stat-card-mini .stat-number.green { color: #10b981; }
         .stat-card-mini .stat-number.orange { color: #f59e0b; }
         .stat-card-mini .stat-number.red { color: #ef4444; }
-
-        /* ========== 主内容 ========== */
-        .main-card {
-            background: #fff;
-            border-radius: 8px;
-            padding: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            border: 1px solid #eef2f6;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .tabs-row {
-            margin-bottom: 12px;
-            flex-shrink: 0;
-            overflow-x: auto;
-            white-space: nowrap;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
+        .main-card { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #eef2f6; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .tabs-row { margin-bottom: 12px; flex-shrink: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none; }
         .tabs-row::-webkit-scrollbar { display: none; }
         .tabs-row .flex-row { display: inline-flex; gap: 8px; }
-
         .search-row { margin-bottom: 12px; }
-        .search-row .search-box {
-            width: 100%;
-            max-width: 300px;
-            padding: 6px 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 12px;
-            outline: none;
-        }
-        .search-row .search-box:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-
-        .action-buttons-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            padding-bottom: 6px;
-            margin-bottom: 12px;
-            scrollbar-width: thin;
-            -webkit-overflow-scrolling: touch;
-        }
+        .search-row .search-box { width: 100%; max-width: 300px; padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; outline: none; }
+        .search-row .search-box:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .action-buttons-row { display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
         .action-buttons-row::-webkit-scrollbar { display: none; }
-        .action-buttons-row button {
-            flex-shrink: 0;
-            min-width: 80px;
-            white-space: nowrap;
-            padding: 6px 12px;
-            font-size: 12px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            line-height: 1.2;
-        }
-
-        .tab-btn {
-            padding: 6px 14px;
-            border-radius: 8px;
-            background: #f1f5f9;
-            color: #1e293b;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
-            display: inline-block;
-            border: none;
-        }
+        .action-buttons-row button { flex-shrink: 0; min-width: 80px; white-space: nowrap; padding: 6px 12px; font-size: 12px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; text-align: center; line-height: 1.2; }
+        .tab-btn { padding: 6px 14px; border-radius: 8px; background: #f1f5f9; color: #1e293b; cursor: pointer; font-size: 12px; transition: all 0.2s; display: inline-block; border: none; }
         .tab-btn.active { background: #3b82f6; color: #fff; }
         .tab-btn:hover { background: #e2e8f0; }
-
-        .cat-bar {
-            width: 100%;
-            padding: 8px 12px;
-            background: #f8fafc;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            display: flex;
-            gap: 6px;
-            align-items: center;
-            overflow-x: auto;
-            flex-wrap: nowrap;
-            flex-shrink: 0;
-        }
-        .cat-item {
-            padding: 6px 12px;
-            border-radius: 8px;
-            background: #fff;
-            cursor: pointer;
-            white-space: nowrap;
-            font-size: 12px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-            border: 1px solid transparent;
-        }
-        .cat-item.active {
-            background: #3b82f6;
-            color: #fff;
-            border-color: #3b82f6;
-        }
-        .cat-item .rename-text-btn {
-            background: #e2e8f0;
-            border: none;
-            cursor: pointer;
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 8px;
-            color: #475569;
-        }
-        .cat-item.active .rename-text-btn {
-            background: rgba(255,255,255,0.2);
-            color: #fff;
-        }
-
-        .tab-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        #manageTab {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .content-layout {
-            display: flex;
-            gap: 12px;
-            flex: 1;
-            min-height: 0;
-            flex-direction: row !important;
-        }
-        .sidebar, .main-content {
-            background: #f8fafc;
-            border-radius: 8px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            min-width: 0;
-            flex: 1;
-            width: 50%;
-        }
-
-        .sub-list, .site-list, .rank-list, .feedback-list, .submissions-list {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 8px;
-        }
-
-        /* ========== 骨架屏 ========== */
-        .skeleton-item {
-            background: #f1f5f9;
-            border-radius: 8px;
-            height: 36px;
-            animation: skeleton-pulse 1.5s ease-in-out infinite;
-        }
-        @keyframes skeleton-pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .sub-item {
-            background: #fff;
-            border-radius: 8px;
-            padding: 8px 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-        }
-        .sub-item span {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        .sub-item .rename-text-btn {
-            flex-shrink: 0;
-            background: #e2e8f0;
-            border: none;
-            cursor: pointer;
-            font-size: 10px;
-            padding: 3px 10px;
-            border-radius: 8px;
-            color: #475569;
-        }
+        .cat-bar { width: 100%; padding: 8px 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 12px; display: flex; gap: 6px; align-items: center; overflow-x: auto; flex-wrap: nowrap; flex-shrink: 0; }
+        .cat-item { padding: 6px 12px; border-radius: 8px; background: #fff; cursor: pointer; white-space: nowrap; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); border: 1px solid transparent; }
+        .cat-item.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .cat-item .rename-text-btn { background: #e2e8f0; border: none; cursor: pointer; font-size: 10px; padding: 2px 8px; border-radius: 8px; color: #475569; }
+        .cat-item.active .rename-text-btn { background: rgba(255,255,255,0.2); color: #fff; }
+        .tab-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        #manageTab { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .content-layout { display: flex; gap: 12px; flex: 1; min-height: 0; flex-direction: row !important; }
+        .sidebar, .main-content { background: #f8fafc; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; overflow: hidden; min-width: 0; flex: 1; width: 50%; }
+        .sub-list, .site-list, .rank-list, .feedback-list, .submissions-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+        .skeleton-item { background: #f1f5f9; border-radius: 8px; height: 36px; animation: skeleton-pulse 1.5s ease-in-out infinite; }
+        @keyframes skeleton-pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+        .sub-item { background: #fff; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .sub-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; }
+        .sub-item .rename-text-btn { flex-shrink: 0; background: #e2e8f0; border: none; cursor: pointer; font-size: 10px; padding: 3px 10px; border-radius: 8px; color: #475569; }
         .sub-item.active { background: #e0f2fe; color: #0369a1; }
-
-        .link-item {
-            background: #fff;
-            border-radius: 8px;
-            padding: 8px 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-        }
-        .link-info {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+        .link-item { background: #fff; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .link-info { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .link-info strong { font-size: 12px; font-weight: 500; }
         .link-actions { flex-shrink: 0; }
-
-        #addSubBtn, #addSiteBtn {
-            width: 100%;
-            height: 36px;
-            margin-bottom: 8px;
-            font-size: 12px;
-            border-radius: 8px;
-            background: #3b82f6;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        button {
-            border: none;
-            border-radius: 8px;
-            padding: 5px 10px;
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+        #addSubBtn, #addSiteBtn { width: 100%; height: 36px; margin-bottom: 8px; font-size: 12px; border-radius: 8px; background: #3b82f6; color: #fff; border: none; cursor: pointer; font-weight: 500; }
+        button { border: none; border-radius: 8px; padding: 5px 10px; font-size: 11px; cursor: pointer; transition: all 0.2s; }
         button.primary { background: #3b82f6; color: #fff; }
         button.primary:hover { background: #2563eb; }
         button.danger { background: #ef4444; color: #fff; }
@@ -427,181 +87,53 @@
         button.secondary:hover { background: #475569; }
         button.sm { padding: 3px 8px; font-size: 10px; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        input, select, textarea, .form-input, .search-box, .date-input {
-            width: 100%;
-            padding: 6px 10px !important;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 12px;
-            background: #fff;
-            outline: none;
-            font-family: inherit;
-            box-sizing: border-box;
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59,130,246,0.1);
-        }
-
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 99;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s;
-            padding: 16px;
-        }
-        .modal.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-body {
-            background: #fff;
-            border-radius: 8px;
-            width: 100%;
-            max-width: 420px;
-            padding: 20px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1);
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translate(-50%, 12px);
-            padding: 6px 14px;
-            border-radius: 30px;
-            font-size: 11px;
-            color: #fff;
-            z-index: 999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        .toast.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translate(-50%, 0);
-        }
+        button.success { background: #10b981; color: #fff; }
+        button.success:hover { background: #059669; }
+        button.warning { background: #f59e0b; color: #fff; }
+        button.warning:hover { background: #d97706; }
+        input, select, textarea, .form-input, .search-box, .date-input { width: 100%; padding: 6px 10px !important; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; background: #fff; outline: none; font-family: inherit; box-sizing: border-box; }
+        input:focus, select:focus, textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; z-index: 99; opacity: 0; visibility: hidden; transition: all 0.2s; padding: 16px; }
+        .modal.show { opacity: 1; visibility: visible; }
+        .modal-body { background: #fff; border-radius: 8px; width: 100%; max-width: 420px; padding: 20px; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1); }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 12px); padding: 6px 14px; border-radius: 30px; font-size: 11px; color: #fff; z-index: 999; opacity: 0; visibility: hidden; transition: all 0.2s; white-space: nowrap; }
+        .toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
         .toast.success { background: #10b981; }
         .toast.error { background: #ef4444; }
         .toast.warn { background: #f59e0b; }
         .toast.info { background: #3b82f6; }
-
         .hidden { display: none !important; }
-
         .announcement-form-container { display: flex; flex-direction: column; gap: 12px; }
         .form-row { display: flex; flex-direction: column; gap: 4px; }
         .form-row label { font-size: 11px; font-weight: 500; color: #475569; }
-        #annContent {
-            resize: vertical;
-            min-height: 80px;
-            overflow-y: visible;
-        }
-        .announcement-actions-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 8px;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
+        #annContent { resize: vertical; min-height: 80px; overflow-y: visible; }
+        .announcement-actions-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 8px; }
         .announcement-checkbox { display: flex; align-items: center; gap: 6px; }
         .announcement-buttons { display: flex; gap: 8px; }
-
-        /* ========== 响应式 ========== */
-        @media (max-width: 768px) {
-            body { padding: 12px; }
-            .login-card { padding: 24px 20px; max-width: 280px; }
-            .content-layout { flex-direction: row !important; gap: 8px; }
-            .sidebar, .main-content { min-width: 0; padding: 8px; }
-            .action-buttons-row button { font-size: 10px; padding: 5px 8px; min-width: 60px; }
-            .tab-btn { padding: 4px 10px; font-size: 11px; }
-            .stats-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            .stat-card-mini .stat-number { font-size: 16px; }
-        }
-        @media (max-width: 480px) {
-            body { padding: 8px; }
-            .login-card { padding: 20px 16px; }
-            .stats-cards { grid-template-columns: 1fr 1fr; gap: 6px; }
-            .stat-card-mini { padding: 8px 12px; }
-            .stat-card-mini .stat-number { font-size: 14px; }
-            .action-buttons-row button { font-size: 9px; padding: 4px 6px; min-width: 50px; }
-            .cat-item { font-size: 10px; padding: 4px 8px; }
-        }
-
-        /* ========== 深色模式 ========== */
-        @media (prefers-color-scheme: dark) {
-            body { background: #0f172a; color: #e2e8f0; }
-            .login-card { background: #1e293b; border-color: #334155; }
-            .login-header h2 { color: #f1f5f9; }
-            .login-header p { color: #94a3b8; }
-            .login-form label { color: #94a3b8; }
-            .login-form input {
-                background: #0f172a;
-                border-color: #334155;
-                color: #e2e8f0;
-            }
-            .login-form input:focus {
-                border-color: #3b82f6;
-                box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
-            }
-            .login-btn { background: #3b82f6; }
-            .login-btn:hover { background: #2563eb; }
-            .main-card { background: #1e293b; border-color: #334155; }
-            .tab-btn { background: #334155; color: #94a3b8; }
-            .tab-btn.active { background: #3b82f6; color: #fff; }
-            .tab-btn:hover { background: #475569; }
-            .cat-bar { background: #0f172a; }
-            .cat-item { background: #1e293b; color: #e2e8f0; border-color: #334155; }
-            .cat-item.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
-            .cat-item .rename-text-btn { background: #334155; color: #94a3b8; }
-            .cat-item.active .rename-text-btn { background: rgba(255,255,255,0.2); color: #fff; }
-            .sidebar, .main-content { background: #0f172a; }
-            .sub-item, .link-item { background: #1e293b; border: 1px solid #334155; }
-            .sub-item.active { background: #1e3a5f; color: #60a5fa; }
-            .sub-item .rename-text-btn { background: #334155; color: #94a3b8; }
-            .link-info strong { color: #e2e8f0; }
-            button.secondary { background: #475569; color: #e2e8f0; }
-            button.secondary:hover { background: #334155; }
-            input, select, textarea, .form-input, .search-box, .date-input {
-                background: #0f172a;
-                border-color: #334155;
-                color: #e2e8f0;
-            }
-            input:focus, select:focus, textarea:focus {
-                border-color: #3b82f6;
-                box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
-            }
-            .modal-body { background: #1e293b; color: #e2e8f0; }
-            .modal-title { color: #f1f5f9; }
-            .stat-card-mini { background: #1e293b; border-color: #334155; }
-            .stat-card-mini .stat-number { color: #f1f5f9; }
-            .stat-card-mini .stat-label { color: #94a3b8; }
-            .skeleton-item { background: #334155; }
-            .toast { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; }
-            .toast.success { background: #065f46; }
-            .toast.error { background: #7f1d1d; }
-            .toast.warn { background: #78350f; }
-            .toast.info { background: #1e3a5f; }
-        }
-        .dark-mode .login-card { background: #1e293b; border-color: #334155; }
-        /* ... 其他深色模式类同 */
+        @media (max-width: 768px) { body { padding: 12px; } .login-card { padding: 24px 20px; max-width: 280px; } .content-layout { flex-direction: row !important; gap: 8px; } .sidebar, .main-content { min-width: 0; padding: 8px; } .action-buttons-row button { font-size: 10px; padding: 5px 8px; min-width: 60px; } .tab-btn { padding: 4px 10px; font-size: 11px; } .stats-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; } .stat-card-mini .stat-number { font-size: 16px; } }
+        @media (max-width: 480px) { body { padding: 8px; } .login-card { padding: 20px 16px; } .stats-cards { grid-template-columns: 1fr 1fr; gap: 6px; } .stat-card-mini { padding: 8px 12px; } .stat-card-mini .stat-number { font-size: 14px; } .action-buttons-row button { font-size: 9px; padding: 4px 6px; min-width: 50px; } .cat-item { font-size: 10px; padding: 4px 8px; } }
+        @media (prefers-color-scheme: dark) { body { background: #0f172a; color: #e2e8f0; } .login-card { background: #1e293b; border-color: #334155; } .login-header h2 { color: #f1f5f9; } .login-header p { color: #94a3b8; } .login-form label { color: #94a3b8; } .login-form input { background: #0f172a; border-color: #334155; color: #e2e8f0; } .login-form input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); } .login-btn { background: #3b82f6; } .login-btn:hover { background: #2563eb; } .main-card { background: #1e293b; border-color: #334155; } .tab-btn { background: #334155; color: #94a3b8; } .tab-btn.active { background: #3b82f6; color: #fff; } .tab-btn:hover { background: #475569; } .cat-bar { background: #0f172a; } .cat-item { background: #1e293b; color: #e2e8f0; border-color: #334155; } .cat-item.active { background: #3b82f6; color: #fff; border-color: #3b82f6; } .cat-item .rename-text-btn { background: #334155; color: #94a3b8; } .cat-item.active .rename-text-btn { background: rgba(255,255,255,0.2); color: #fff; } .sidebar, .main-content { background: #0f172a; } .sub-item, .link-item { background: #1e293b; border: 1px solid #334155; } .sub-item.active { background: #1e3a5f; color: #60a5fa; } .sub-item .rename-text-btn { background: #334155; color: #94a3b8; } .link-info strong { color: #e2e8f0; } button.secondary { background: #475569; color: #e2e8f0; } button.secondary:hover { background: #334155; } input, select, textarea, .form-input, .search-box, .date-input { background: #0f172a; border-color: #334155; color: #e2e8f0; } input:focus, select:focus, textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); } .modal-body { background: #1e293b; color: #e2e8f0; } .stat-card-mini { background: #1e293b; border-color: #334155; } .stat-card-mini .stat-number { color: #f1f5f9; } .stat-card-mini .stat-label { color: #94a3b8; } .skeleton-item { background: #334155; } .toast { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; } .toast.success { background: #065f46; } .toast.error { background: #7f1d1d; } .toast.warn { background: #78350f; } .toast.info { background: #1e3a5f; } }
+        .submission-title-truncate { display: inline-block; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+        .custom-select-wrapper { position: relative; flex: 1; min-width: 110px; }
+        .custom-select-trigger { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; color: #1e293b; cursor: pointer; gap: 6px; }
+        .custom-select-trigger:hover { border-color: #3b82f6; }
+        .custom-select-trigger.open { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
+        .custom-select-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+        .custom-select-arrow { width: 12px; height: 12px; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-size: contain; transition: transform 0.2s; }
+        .custom-select-trigger.open .custom-select-arrow { transform: rotate(180deg); }
+        .custom-select-dropdown { position: fixed; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 1000; max-height: 180px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-6px); transition: all 0.15s ease; scrollbar-width: none; }
+        .custom-select-dropdown::-webkit-scrollbar { display: none; }
+        .custom-select-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0); }
+        .custom-select-option { padding: 6px 10px; font-size: 11px; color: #1e293b; cursor: pointer; transition: background 0.1s; }
+        .custom-select-option:hover { background: #f1f5f9; }
+        .custom-select-option.selected { background: #e0f2fe; color: #0369a1; font-weight: 500; }
+        .site-page-btn.active { background: #3b82f6 !important; color: #fff !important; border-color: #3b82f6 !important; }
+        @media (prefers-color-scheme: dark) { .custom-select-trigger { background: #1e293b; border-color: #334155; color: #e2e8f0; } .custom-select-dropdown { background: #1e293b; border-color: #334155; } .custom-select-option { color: #e2e8f0; } .custom-select-option:hover { background: #334155; } .custom-select-option.selected { background: #0f172a; color: #38bdf8; } .form-input { background: #1e293b; border-color: #334155; color: #e2e8f0; } }
+        @media (max-width: 640px) { .content-layout { flex-direction: row !important; } .action-buttons-row button { font-size: 10px; padding: 5px 6px; } }
     </style>
 </head>
 <body>
     <div class="toast" id="toast"></div>
-
-    <!-- 通用模态框 -->
     <div class="modal" id="modal">
         <div class="modal-body">
             <div class="modal-title" style="font-size:14px; font-weight:600; margin-bottom:16px;"></div>
@@ -611,7 +143,6 @@
     </div>
 
     <div class="container">
-        <!-- 登录区域 -->
         <div id="loginWrapper" class="login-section">
             <div class="login-card">
                 <div class="login-header">
@@ -641,29 +172,14 @@
             </div>
         </div>
 
-        <!-- 主内容区域 -->
         <div id="mainContent" class="hidden main-card">
-            <!-- 统计卡片 -->
             <div class="stats-cards" id="statsCards">
-                <div class="stat-card-mini">
-                    <div class="stat-number blue" id="statTotalSites">0</div>
-                    <div class="stat-label">总站点</div>
-                </div>
-                <div class="stat-card-mini">
-                    <div class="stat-number green" id="statSubmissions">0</div>
-                    <div class="stat-label">待审核</div>
-                </div>
-                <div class="stat-card-mini">
-                    <div class="stat-number orange" id="statFeedback">0</div>
-                    <div class="stat-label">反馈数</div>
-                </div>
-                <div class="stat-card-mini">
-                    <div class="stat-number red" id="statInvalid">0</div>
-                    <div class="stat-label">无效链接</div>
-                </div>
+                <div class="stat-card-mini"><div class="stat-number blue" id="statTotalSites">0</div><div class="stat-label">总站点</div></div>
+                <div class="stat-card-mini"><div class="stat-number green" id="statSubmissions">0</div><div class="stat-label">待审核</div></div>
+                <div class="stat-card-mini"><div class="stat-number orange" id="statFeedback">0</div><div class="stat-label">反馈数</div></div>
+                <div class="stat-card-mini"><div class="stat-number red" id="statInvalid">0</div><div class="stat-label">无效链接</div></div>
             </div>
 
-            <!-- 标签页 -->
             <div class="tabs-row">
                 <div class="flex-row">
                     <button class="tab-btn active" data-tab="manage">数据管理</button>
@@ -674,7 +190,6 @@
                 </div>
             </div>
 
-            <!-- 数据管理 -->
             <div id="manageTab" class="tab-panel">
                 <div class="search-row">
                     <input type="text" class="search-box" id="searchInput" placeholder="搜索标题..." autocomplete="off">
@@ -686,7 +201,7 @@
                     <button class="primary" id="refreshNavBtn">🔄 刷新缓存</button>
                     <button class="primary" id="refreshIconsBtn" style="background:#8b5cf6;">🖼️ 刷新图标</button>
                     <button class="primary" id="addCategoryBtn">+ 一级分类</button>
-                    <button class="secondary" id="batchDeleteBtn" style="background:#ef4444;color:#fff;">🗑️ 批量删除</button>
+                    <button class="secondary" id="batchDeleteBtnOld" style="background:#ef4444;color:#fff;">🗑️ 批量删除</button>
                 </div>
                 <div class="cat-bar" id="catBar"></div>
                 <div class="content-layout">
@@ -695,125 +210,96 @@
                         <div class="sub-list" id="subList"></div>
                     </div>
                     <div class="main-content">
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center;">
+                            <input type="text" id="siteSearchKeyword" placeholder="搜索站点..." style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;flex:1;min-width:120px;">
+                            <select id="siteStatusFilter" style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;">
+                                <option value="all">全部状态</option>
+                                <option value="valid">✅ 有效</option>
+                                <option value="invalid">❌ 无效</option>
+                            </select>
+                            <button class="primary sm" id="siteSearchBtn">搜索</button>
+                            <button class="secondary sm" id="siteClearFilterBtn">清除筛选</button>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center;padding:6px 10px;background:#f8fafc;border-radius:8px;border:1px solid #eef2f6;">
+                            <span style="font-size:12px;font-weight:500;color:#475569;">批量操作：</span>
+                            <span id="selectedCount" style="font-size:12px;color:#3b82f6;font-weight:600;">已选 0 个</span>
+                            <button class="danger sm" id="batchDeleteBtn" style="background:#ef4444;color:#fff;padding:4px 12px;">🗑️ 删除</button>
+                            <button class="primary sm" id="batchMoveBtn" style="padding:4px 12px;">📦 移动</button>
+                            <button class="success sm" id="batchEnableBtn" style="background:#10b981;color:#fff;padding:4px 12px;">✅ 启用</button>
+                            <button class="warning sm" id="batchDisableBtn" style="background:#f59e0b;color:#fff;padding:4px 12px;">⛔ 禁用</button>
+                            <button class="secondary sm" id="batchClearSelection" style="padding:4px 12px;">清除选择</button>
+                            <button class="secondary sm" id="batchSelectAll" style="padding:4px 12px;">全选</button>
+                        </div>
                         <button class="primary" id="addSiteBtn">+ 添加链接</button>
-                        <div class="site-list" id="siteList"></div>
+                        <div class="site-list" id="siteList" style="flex:1;overflow-y:auto;"></div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #eef2f6;">
+                            <span id="sitePaginationInfo" style="font-size:11px;color:#64748b;"></span>
+                            <div style="display:flex;gap:6px;">
+                                <button class="secondary sm" id="prevSitePage">上一页</button>
+                                <span id="sitePageNumbers" style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:4px;"></span>
+                                <button class="secondary sm" id="nextSitePage">下一页</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 点击排行 -->
             <div id="rankTab" class="tab-panel hidden">
-                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-                    <button class="primary sm" id="sortRankBtn">按点击数降序</button>
-                    <button class="secondary sm" id="exportRankBtn">导出排行</button>
-                </div>
+                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;"><button class="primary sm" id="sortRankBtn">按点击数降序</button><button class="secondary sm" id="exportRankBtn">导出排行</button></div>
                 <div class="rank-list" id="rankList"></div>
             </div>
 
-            <!-- 用户反馈 -->
             <div id="feedbackTab" class="tab-panel hidden">
-                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-                    <button class="primary sm" id="refreshFeedbackBtn">刷新列表</button>
-                    <button class="secondary sm" id="clearAllFeedbackBtn" style="background:#ef4444;color:#fff;">清空全部</button>
-                </div>
+                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;"><button class="primary sm" id="refreshFeedbackBtn">刷新列表</button><button class="secondary sm" id="clearAllFeedbackBtn" style="background:#ef4444;color:#fff;">清空全部</button></div>
                 <div class="feedback-list" id="feedbackList"></div>
             </div>
 
-            <!-- 待审核 -->
             <div id="submissionsTab" class="tab-panel hidden">
-                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-                    <button class="primary sm" id="refreshSubmissionsBtn">刷新列表</button>
-                    <button class="secondary sm" id="batchApproveBtn" style="background:#10b981;color:#fff;">批量通过</button>
-                </div>
+                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;"><button class="primary sm" id="refreshSubmissionsBtn">刷新列表</button><button class="secondary sm" id="batchApproveBtn" style="background:#10b981;color:#fff;">批量通过</button></div>
                 <div class="submissions-list" id="submissionsList"></div>
             </div>
 
-            <!-- 公告编辑 -->
             <div id="announcementTab" class="tab-panel hidden">
                 <div class="announcement-form-container">
-                    <div class="form-row">
-                        <label>公告标题</label>
-                        <input type="text" id="annTitle" placeholder="请输入公告标题">
-                    </div>
-                    <div class="form-row">
-                        <label>重要内容（醒目提示）</label>
-                        <textarea id="annImportant" rows="2" placeholder="例如：系统升级通知、重要变更等..."></textarea>
-                    </div>
-                    <div class="form-row">
-                        <label>详细内容</label>
-                        <textarea id="annContent" rows="4" placeholder="详细公告内容..."></textarea>
-                    </div>
-                    <div class="form-row">
-                        <label>公告日期</label>
-                        <input type="date" id="annDate" class="date-input">
-                    </div>
+                    <div class="form-row"><label>公告标题</label><input type="text" id="annTitle" placeholder="请输入公告标题"></div>
+                    <div class="form-row"><label>重要内容（醒目提示）</label><textarea id="annImportant" rows="2" placeholder="例如：系统升级通知、重要变更等..."></textarea></div>
+                    <div class="form-row"><label>详细内容</label><textarea id="annContent" rows="4" placeholder="详细公告内容..."></textarea></div>
+                    <div class="form-row"><label>公告日期</label><input type="date" id="annDate" class="date-input"></div>
                     <div class="announcement-actions-row">
-                        <div class="announcement-checkbox">
-                            <input type="checkbox" id="annActive">
-                            <label>启用公告</label>
-                        </div>
-                        <div class="announcement-buttons">
-                            <button class="secondary" id="annClearBtn">清除</button>
-                            <button class="secondary" id="annCancelBtn">取消</button>
-                            <button class="primary" id="annPublishBtn">发布</button>
-                        </div>
+                        <div class="announcement-checkbox"><input type="checkbox" id="annActive"><label>启用公告</label></div>
+                        <div class="announcement-buttons"><button class="secondary" id="annClearBtn">清除</button><button class="secondary" id="annCancelBtn">取消</button><button class="primary" id="annPublishBtn">发布</button></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 投稿详情模态框 -->
     <div class="modal" id="submissionDetailModal">
         <div class="modal-body">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                <h3 style="font-size:14px;">📝 投稿详情</h3>
-                <button id="closeDetailModalBtn" style="background:none;border:none;font-size:18px;cursor:pointer;">&times;</button>
-            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3 style="font-size:14px;">📝 投稿详情</h3><button id="closeDetailModalBtn" style="background:none;border:none;font-size:18px;cursor:pointer;">&times;</button></div>
             <div id="submissionDetailContent"></div>
         </div>
     </div>
 
-    <!-- 导入数据模态框 -->
     <div class="modal" id="importModal">
         <div class="modal-body">
             <div class="modal-title" style="font-size:14px;margin-bottom:16px;">导入数据</div>
             <div id="importForm">
-                <div class="form-row" style="margin-bottom:12px;">
-                    <label>导入模式</label>
-                    <select id="importMode">
-                        <option value="merge">合并（更新已存在，添加新数据）</option>
-                        <option value="overwrite">覆盖（清空现有数据）</option>
-                    </select>
-                </div>
-                <div class="form-row" style="margin-bottom:12px;">
-                    <label>选择 JSON 文件</label>
-                    <input type="file" id="importFile" accept=".json">
-                </div>
+                <div class="form-row" style="margin-bottom:12px;"><label>导入模式</label><select id="importMode"><option value="merge">合并（更新已存在，添加新数据）</option><option value="overwrite">覆盖（清空现有数据）</option></select></div>
+                <div class="form-row" style="margin-bottom:12px;"><label>选择 JSON 文件</label><input type="file" id="importFile" accept=".json"></div>
             </div>
-            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
-                <button class="secondary" id="importCancelBtn">取消</button>
-                <button class="primary" id="importConfirmBtn">开始导入</button>
-            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;"><button class="secondary" id="importCancelBtn">取消</button><button class="primary" id="importConfirmBtn">开始导入</button></div>
         </div>
     </div>
 
-    <!-- 批量删除模态框 -->
     <div class="modal" id="batchDeleteModal">
         <div class="modal-body">
             <div class="modal-title" style="font-size:14px;margin-bottom:16px;">批量删除站点</div>
-            <div style="margin-bottom:12px;">
-                <label style="font-size:11px;color:#475569;">选择要删除的站点（按住 Ctrl 多选）</label>
-                <select id="batchDeleteSelect" multiple style="width:100%;height:150px;padding:6px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;background:#fff;"></select>
-            </div>
-            <div style="display:flex;justify-content:flex-end;gap:8px;">
-                <button class="secondary" id="batchDeleteCancelBtn">取消</button>
-                <button class="danger" id="batchDeleteConfirmBtn">确认删除</button>
-            </div>
+            <div style="margin-bottom:12px;"><label style="font-size:11px;color:#475569;">选择要删除的站点（按住 Ctrl 多选）</label><select id="batchDeleteSelect" multiple style="width:100%;height:150px;padding:6px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;background:#fff;"></select></div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;"><button class="secondary" id="batchDeleteCancelBtn">取消</button><button class="danger" id="batchDeleteConfirmBtn">确认删除</button></div>
         </div>
     </div>
 
-    <!-- 脚本 -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/js/all.min.js" crossorigin="anonymous"></script>
     <script src="./js/admin.js"></script>
