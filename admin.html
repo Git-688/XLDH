@@ -125,7 +125,6 @@
         .custom-select-option { padding: 6px 10px; font-size: 11px; color: #1e293b; cursor: pointer; transition: background 0.1s; }
         .custom-select-option:hover { background: #f1f5f9; }
         .custom-select-option.selected { background: #e0f2fe; color: #0369a1; font-weight: 500; }
-        .site-page-btn.active { background: #3b82f6 !important; color: #fff !important; border-color: #3b82f6 !important; }
         @media (prefers-color-scheme: dark) { .custom-select-trigger { background: #1e293b; border-color: #334155; color: #e2e8f0; } .custom-select-dropdown { background: #1e293b; border-color: #334155; } .custom-select-option { color: #e2e8f0; } .custom-select-option:hover { background: #334155; } .custom-select-option.selected { background: #0f172a; color: #38bdf8; } .form-input { background: #1e293b; border-color: #334155; color: #e2e8f0; } }
         @media (max-width: 640px) { .content-layout { flex-direction: row !important; } .action-buttons-row button { font-size: 10px; padding: 5px 6px; } }
         /* 批量操作工具栏 - 可滚动、隐藏滚动条 */
@@ -241,14 +240,6 @@
                     <div class="main-content">
                         <button class="primary" id="addSiteBtn">+ 添加链接</button>
                         <div class="site-list" id="siteList" style="flex:1;overflow-y:auto;"></div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #eef2f6;">
-                            <span id="sitePaginationInfo" style="font-size:11px;color:#64748b;"></span>
-                            <div style="display:flex;gap:6px;">
-                                <button class="secondary sm" id="prevSitePage">上一页</button>
-                                <span id="sitePageNumbers" style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:4px;"></span>
-                                <button class="secondary sm" id="nextSitePage">下一页</button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
