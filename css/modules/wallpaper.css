@@ -1,4 +1,4 @@
-/* 轮播图容器 */
+/* 轮播图容器 - 移除渐变，改为纯色背景 */
 .wallpaper-section {
     padding: var(--section-margin-sm, 20px) 0 0 !important;
     position: relative;
@@ -31,7 +31,6 @@
     .wallpaper-section { padding: var(--section-margin-lg, 28px) 0 0 !important; }
 }
 
-/* 轮播主容器 */
 .wallpaper-container {
     position: relative;
     width: 100% !important;
@@ -41,11 +40,10 @@
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     margin: 0 !important;
-    background: linear-gradient(135deg, var(--primary-color, #4361ee) 0%, var(--accent-color, #7209b7) 100%);
+    background: var(--bg-secondary, #f8f9fa); /* 改为纯色背景 */
     user-select: none;
 }
 
-/* 幻灯片轨道 —— 性能优化：transition 仅限 transform，改用 ease */
 .carousel-track {
     display: flex;
     width: 100%;
@@ -54,7 +52,6 @@
     will-change: transform;
 }
 
-/* 单张幻灯片 */
 .carousel-slide {
     flex: 0 0 100%;
     height: 100%;
@@ -62,9 +59,9 @@
     background-position: center;
     background-repeat: no-repeat;
     position: relative;
+    background-color: transparent; /* 确保透明，由容器背景提供底色 */
 }
 
-/* 左右箭头 */
 .carousel-arrow {
     position: absolute;
     top: 50%;
@@ -99,7 +96,6 @@
     right: 10px;
 }
 
-/* 底部信息栏：标题 + 圆点 */
 .wallpaper-info {
     position: absolute;
     bottom: 10px;
@@ -125,7 +121,6 @@
     line-height: 1.3;
 }
 
-/* 指示器圆点 */
 .carousel-dots {
     display: flex;
     gap: 8px;
@@ -147,7 +142,6 @@
     box-shadow: 0 0 4px rgba(0,0,0,0.3);
 }
 
-/* 移动端适配 */
 @media (max-width: 768px) {
     .wallpaper-section { padding: var(--section-margin-sm, 20px) 0 0 !important; }
     .wallpaper-container {
@@ -186,9 +180,9 @@
     .wallpaper-title { font-size: 12px; }
 }
 
-/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
+/* ==================== 深色模式优化 ==================== */
 .dark-mode .wallpaper-container {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    background: var(--bg-secondary, #1e1e1e); /* 深色纯色 */
 }
 .dark-mode .carousel-arrow {
     background: rgba(0, 0, 0, 0.3);
