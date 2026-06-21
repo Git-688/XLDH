@@ -1,4 +1,4 @@
-// 问候区模块 - 优化效果和显示（自制木鱼音效，复用 AudioContext）
+// greeting.js - 问候区模块（包含木鱼、节日、时钟、展开/收起）
 class GreetingModule {
     constructor() {
         if (window.Starlink && window.Starlink.greeting) return window.Starlink.greeting;
@@ -109,8 +109,6 @@ class GreetingModule {
     }
 
     getDefaultHolidays() {
-        const today = new Date();
-        const year = today.getFullYear();
         return [
             { name: '元旦', countdown: '计算中...', displayText: '计算中...', status: 'unknown', days: null, icon: '🎉', is_today: false },
             { name: '春节', countdown: '计算中...', displayText: '计算中...', status: 'unknown', days: null, icon: '🧧', is_today: false },
@@ -222,6 +220,7 @@ class GreetingModule {
 
         let mainHoliday = null;
         let extraHolidays = [];
+
         if (this.todayHolidays.length > 0) {
             mainHoliday = this.todayHolidays[0];
             extraHolidays = this.todayHolidays.slice(1);
@@ -246,10 +245,10 @@ class GreetingModule {
             if (expandBtn) {
                 expandBtn.style.display = 'inline-flex';
                 expandBtn.textContent = this.expanded ? '收起' : '展开';
+                this.bindExpandButton(expandBtn);
             }
             if (secondaryContainer) {
                 if (this.expanded) {
-                    // 只显示节日名称，不显示倒计时标签
                     secondaryContainer.innerHTML = extraHolidays.map(h => `
                         <div class="secondary-holiday-item">
                             <span class="secondary-name">${Utils.escapeHtml(h.name)}</span>
@@ -272,6 +271,16 @@ class GreetingModule {
     toggleHolidayExpand() {
         this.expanded = !this.expanded;
         this.updateHolidayDisplay();
+    }
+
+    bindExpandButton(btn) {
+        if (!btn) return;
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        newBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleHolidayExpand();
+        });
     }
 
     loadWoodenFishData() {
@@ -307,11 +316,12 @@ class GreetingModule {
         document.querySelectorAll('.fish-btn').forEach(btn => {
             btn.addEventListener('click', this.handleFishClick.bind(this), { once: false });
         });
+
         document.addEventListener('keydown', (e) => {
             if (e.altKey) {
-                const type = e.key === '1' ? 'merit' : 
-                            e.key === '2' ? 'luck' : 
-                            e.key === '3' ? 'wealth' : 
+                const type = e.key === '1' ? 'merit' :
+                            e.key === '2' ? 'luck' :
+                            e.key === '3' ? 'wealth' :
                             e.key === '4' ? 'health' : null;
                 if (type) {
                     this.incrementFishCount(type, 1);
@@ -323,10 +333,10 @@ class GreetingModule {
                 }
             }
         });
+
         const expandBtn = document.getElementById('expandHolidayBtn');
-        if (expandBtn) {
-            expandBtn.addEventListener('click', () => this.toggleHolidayExpand());
-        }
+        if (expandBtn) this.bindExpandButton(expandBtn);
+
         this.eventBound = true;
     }
 
@@ -447,8 +457,6 @@ class GreetingModule {
     async refreshHolidayData() {
         try {
             localStorage.removeItem('holidayDataCache');
-            const countdownEl = document.getElementById('holidayCountdown');
-            if (countdownEl) { countdownEl.textContent = "刷新中..."; countdownEl.classList.add('status-unknown'); }
             await this.setupHolidayCountdown();
             const toast = window.Starlink?.toast || window.toast;
             if (toast && toast.show) toast.show('节日数据已刷新', 'success');
@@ -460,6 +468,7 @@ class GreetingModule {
     }
 
     getFishStats() { return Storage.get('woodenFish') || { merit: 0, luck: 0, wealth: 0, health: 0 }; }
+
     resetFishData() {
         if (confirm('确定要重置所有木鱼计数吗？')) {
             const fishData = { merit: 0, luck: 0, wealth: 0, health: 0, lastUpdate: new Date().toDateString() };
@@ -469,6 +478,7 @@ class GreetingModule {
             if (toast && toast.show) toast.show('木鱼计数已重置', 'success');
         }
     }
+
     destroy() {
         if (this.holidayRefreshTimer) clearTimeout(this.holidayRefreshTimer);
         if (this.holidayCheckTimer) clearInterval(this.holidayCheckTimer);
