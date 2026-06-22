@@ -1,6 +1,6 @@
 /**
  * 优化分类导航系统 - 延迟加载子分类数据 + 计数接口 + WebP 支持
- * 改进：优先加载第一个二级分类，快速显示，其余后台加载
+ * 改进：页面加载自动显示第一个子分类的数据
  */
 class OptimizedNavigation {
     constructor() {
@@ -179,9 +179,11 @@ class OptimizedNavigation {
         this.bindScrollPreload(container);
     }
 
+    // ===== 核心改进：初始化时自动加载第一个子分类 =====
     async init() {
         if (this.isInitialized) return;
         this.initLazyLoadObserver();
+        // 显示骨架
         this.showSkeleton();
         this.bindEvents();
         this.createSearchBox();
@@ -190,12 +192,51 @@ class OptimizedNavigation {
             this.calculateStats();
             this.renderNavigation();
             await this.calculateTotalValidSites();
+
             const firstCategory = this.getFirstCategory();
             if (firstCategory) {
-                await this.selectLevel1(firstCategory, false);
+                // 手动设置选中状态
+                this.selectedLevel1 = firstCategory;
+                // 高亮一级导航
+                document.querySelectorAll('.level1-btn').forEach(el => {
+                    el.classList.toggle('active', el.dataset.level1 === firstCategory);
+                });
+                // 渲染二级导航
+                this.renderLevel2(firstCategory);
+
+                // 获取第一个子分类
+                const firstSub = this.getFirstSubCategory(firstCategory);
+                if (firstSub) {
+                    // 加载第一个子分类数据
+                    const sites = await this.loadSites(firstSub.id);
+                    this.currentSites = sites;
+                    this.selectedLevel2 = firstSub.id;
+
+                    // 高亮二级导航
+                    document.querySelectorAll('.level2-btn').forEach(el => {
+                        el.classList.toggle('active', parseInt(el.dataset.level2) === firstSub.id);
+                    });
+
+                    // 渲染站点
+                    await this.renderLevel3(firstCategory, firstSub.id);
+
+                    // 后台加载其余子分类数据
+                    const allSubIds = this.structure[firstCategory].subcategories.map(s => s.id);
+                    const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
+                    if (otherSubIds.length) {
+                        this.loadBatchSites(otherSubIds).catch(err => console.warn('后台加载其他子分类失败:', err));
+                    }
+                    // 加载计数
+                    if (allSubIds.length) {
+                        this.loadSubcategoryCounts(allSubIds).catch(() => {});
+                    }
+                } else {
+                    this.renderEmptyState();
+                }
             } else {
                 this.renderEmptyState();
             }
+
             await this.recalculateGlobalInvalidCount();
             this.isInitialized = true;
             this.startBackgroundUpdates();
@@ -393,7 +434,7 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 改进：优先加载第一个子分类，其余后台加载 =====
+    // 用户点击切换一级分类（保留原有交互）
     async selectLevel1(level1, isUserClick = false) {
         if (this.currentAbortController) {
             this.currentAbortController.abort();
@@ -409,11 +450,11 @@ class OptimizedNavigation {
 
         const firstSub = this.getFirstSubCategory(level1);
         if (firstSub) {
-            // 1. 立即加载并渲染第一个子分类（快速显示）
+            // 立即加载第一个子分类并渲染
             const firstSites = await this.loadSites(firstSub.id);
             this.currentSites = firstSites;
             await this.renderLevel3(this.selectedLevel1, firstSub.id);
-            // 2. 异步加载其余子分类的数据（不阻塞渲染）
+            // 后台加载其余子分类
             const allSubIds = this.structure[level1].subcategories.map(s => s.id);
             const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
             if (otherSubIds.length) {
@@ -423,7 +464,6 @@ class OptimizedNavigation {
             this.renderEmptyState();
         }
 
-        // 加载计数（不影响渲染）
         const subIds = this.structure[level1].subcategories.map(s => s.id);
         if (subIds.length) {
             this.loadSubcategoryCounts(subIds).catch(() => {});
