@@ -982,7 +982,7 @@
                 </div>
             `).join('');
             list.querySelectorAll('[data-action="viewSubmission"]').forEach(btn => {
-                btn.addEventListener('click', () => openSubmissionDetail(btn.dataset.id));
+                btn.addEventListener('click', () => openSubmissionDetail(parseInt(btn.dataset.id)));
             });
         } catch (e) { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
@@ -996,6 +996,7 @@
         customSelectInstances = [];
     }
 
+    // ===== 修复：openSubmissionDetail 加载详情 =====
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -1022,9 +1023,19 @@
         };
 
         try {
-            const data = await fetchSubmissions(false);
-            const item = data.find(s => s.id == id);
-            if (!item) { showToast('未找到该投稿', 'error'); return; }
+            // 确保数据最新：如果 submissionsData 为空或没有对应项，强制刷新
+            let data = submissionsData;
+            if (!data.length || !data.find(s => s.id === id)) {
+                // 强制从服务器获取最新数据
+                data = await fetchSubmissions(true);
+                submissionsData = data;
+                updateStats();
+            }
+            const item = data.find(s => s.id === id);
+            if (!item) {
+                showToast('未找到该投稿（可能已被删除）', 'error');
+                return;
+            }
             const vtColor = (item.vt_result || '').includes('安全') ? '#10b981' : '#ef4444';
 
             let html = `
@@ -1172,7 +1183,10 @@
 
             removeModalListeners();
             detailModal.classList.add('show');
-        } catch (err) { showToast('加载详情失败', 'error'); }
+        } catch (err) {
+            console.error('加载投稿详情失败:', err);
+            showToast('加载详情失败: ' + (err.message || '请检查网络'), 'error');
+        }
     }
 
     async function refreshIcons() {
