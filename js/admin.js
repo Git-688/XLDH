@@ -393,10 +393,9 @@
         } catch (e) { listEl.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    // ===== 修改：站点卡片布局（复选框左上角，编辑按钮右上角，名称底部居中） =====
+    // ===== 站点卡片布局：名称不加粗 =====
     function renderSitesWithCheckboxes(sitesData) {
         const listEl = document.getElementById('siteList');
-        // 使用网格布局，自动换行
         listEl.style.display = 'grid';
         listEl.style.gridTemplateColumns = 'repeat(auto-fill, minmax(140px, 1fr))';
         listEl.style.gap = '10px';
@@ -445,8 +444,9 @@
                         justify-content: center;
                         padding: 4px 0 2px;
                     ">
-                        <strong style="
+                        <span style="
                             font-size: 13px;
+                            font-weight: 500;
                             text-align: center;
                             color: #1e293b;
                             display: -webkit-box;
@@ -454,13 +454,12 @@
                             -webkit-box-orient: vertical;
                             overflow: hidden;
                             line-height: 1.3;
-                        ">${escapeHtml(site.title)}</strong>
+                        ">${escapeHtml(site.title)}</span>
                     </div>
                 </div>
             `;
         }).join('');
 
-        // 绑定复选框事件
         listEl.querySelectorAll('.site-checkbox').forEach(cb => {
             cb.addEventListener('change', function() {
                 const id = parseInt(this.dataset.id);
@@ -470,7 +469,6 @@
             });
         });
 
-        // 绑定编辑按钮事件
         listEl.querySelectorAll('[data-action="editSite"]').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
@@ -478,15 +476,12 @@
             });
         });
 
-        // 点击卡片空白区域也可以触发编辑
         listEl.querySelectorAll('.site-card-admin').forEach(card => {
             card.addEventListener('click', function(e) {
-                // 如果点击的是复选框或编辑按钮，不触发
                 if (e.target.closest('.site-checkbox') || e.target.closest('[data-action="editSite"]')) return;
                 const editBtn = this.querySelector('[data-action="editSite"]');
                 if (editBtn) editBtn.click();
             });
-            // 悬停效果
             card.addEventListener('mouseenter', function() {
                 this.style.borderColor = '#3b82f6';
                 this.style.boxShadow = '0 2px 8px rgba(59,130,246,0.12)';
@@ -777,9 +772,16 @@
                     title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
-                showToast('修改成功'); await loadAdminSites(true); await loadAllDataButKeepSelection();
+                showToast('修改成功');
+                await loadAdminSites(true);
+                await loadAllDataButKeepSelection();
             }, true,
-            async () => { await apiFetch(`/admin/sites/${id}`, { method:'DELETE' }); showToast('删除成功'); await loadAdminSites(true); await loadAllDataButKeepSelection(); }
+            async () => {
+                await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
+                showToast('删除成功');
+                await loadAdminSites(true);
+                await loadAllDataButKeepSelection();
+            }
         );
         setTimeout(() => {
             const descTextarea = document.getElementById('mDesc');
@@ -826,6 +828,7 @@
         );
     }
 
+    // ===== 修改：添加链接后不切换子分类，保持当前选中 =====
     async function handleAddSite() {
         if (!currentSub) { showToast('请先选择子分类', 'error'); return; }
         const nextOrder = await getNextSortValue('site', currentSub);
@@ -842,12 +845,18 @@
                 if (!checkUrl(url)) { showToast('网址格式错误', 'error'); return; }
                 if (isUrlExists(url)) { showToast('该网址已存在，请勿重复添加', 'error'); return; }
                 await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
-                    subcategory_id: currentSub, title, url, description: document.getElementById('mDesc').value,
-                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
+                    subcategory_id: currentSub,
+                    title,
+                    url,
+                    description: document.getElementById('mDesc').value,
+                    icon: document.getElementById('mIcon').value,
+                    display_order: +document.getElementById('mSort').value
                 })});
                 showToast('添加成功', 'success');
                 closeModal();
+                // 直接刷新当前子分类的站点列表，不切换选中
                 await loadAdminSites(true);
+                // 更新全局站点数据（用于统计）
                 await loadAllDataButKeepSelection();
             }
         );
@@ -1434,9 +1443,7 @@
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
             style.id = 'admin-global-styles';
-            style.textContent = `
-                /* 站点卡片样式已在 JS 中内联，无需额外样式 */
-            `;
+            style.textContent = ``;
             document.head.appendChild(style);
         }
     }
