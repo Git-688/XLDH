@@ -393,25 +393,74 @@
         } catch (e) { listEl.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    // ===== 修改：卡片布局简化（复选框左上角，编辑右上角，中间网站名称） =====
+    // ===== 修改：站点卡片布局（复选框左上角，编辑按钮右上角，名称底部居中） =====
     function renderSitesWithCheckboxes(sitesData) {
         const listEl = document.getElementById('siteList');
+        // 使用网格布局，自动换行
+        listEl.style.display = 'grid';
+        listEl.style.gridTemplateColumns = 'repeat(auto-fill, minmax(140px, 1fr))';
+        listEl.style.gap = '10px';
+        listEl.style.alignItems = 'stretch';
+
         listEl.innerHTML = sitesData.map(site => {
             const checked = selectedSiteIds.has(site.id) ? 'checked' : '';
             return `
-                <div class="link-item" style="position:relative;display:flex;flex-direction:column;padding:16px 12px;min-height:70px;border-radius:8px;background:#fff;border:1px solid #eef2f6;margin-bottom:6px;justify-content:center;">
-                    <div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);">
-                        <input type="checkbox" class="site-checkbox" data-id="${site.id}" ${checked} style="width:18px;height:18px;cursor:pointer;accent-color:#3b82f6;">
+                <div class="site-card-admin" style="
+                    background: #fff;
+                    border-radius: 8px;
+                    padding: 10px 10px 8px;
+                    border: 1px solid #eef2f6;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    min-height: 80px;
+                    transition: border-color 0.2s, box-shadow 0.2s;
+                    position: relative;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <input type="checkbox" class="site-checkbox" data-id="${site.id}" ${checked} style="
+                            width: 16px;
+                            height: 16px;
+                            cursor: pointer;
+                            flex-shrink: 0;
+                            margin-top: 2px;
+                            accent-color: #3b82f6;
+                        ">
+                        <button class="primary sm" data-action="editSite" data-id="${site.id}" style="
+                            flex-shrink: 0;
+                            padding: 2px 10px;
+                            font-size: 10px;
+                            border-radius: 6px;
+                            background: #3b82f6;
+                            color: #fff;
+                            border: none;
+                            cursor: pointer;
+                            transition: background 0.2s;
+                        ">编辑</button>
                     </div>
-                    <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);">
-                        <button class="primary sm" data-action="editSite" data-id="${site.id}" style="padding:4px 14px;font-size:11px;border-radius:6px;">编辑</button>
-                    </div>
-                    <div style="text-align:center;padding:0 70px;">
-                        <strong style="font-size:15px;font-weight:600;color:#1e293b;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(site.title)}</strong>
+                    <div style="
+                        flex: 1;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 4px 0 2px;
+                    ">
+                        <strong style="
+                            font-size: 13px;
+                            text-align: center;
+                            color: #1e293b;
+                            display: -webkit-box;
+                            -webkit-line-clamp: 2;
+                            -webkit-box-orient: vertical;
+                            overflow: hidden;
+                            line-height: 1.3;
+                        ">${escapeHtml(site.title)}</strong>
                     </div>
                 </div>
             `;
         }).join('');
+
+        // 绑定复选框事件
         listEl.querySelectorAll('.site-checkbox').forEach(cb => {
             cb.addEventListener('change', function() {
                 const id = parseInt(this.dataset.id);
@@ -420,8 +469,32 @@
                 updateSelectedCount();
             });
         });
+
+        // 绑定编辑按钮事件
         listEl.querySelectorAll('[data-action="editSite"]').forEach(btn => {
-            btn.addEventListener('click', function() { handleEditSite(parseInt(this.dataset.id)); });
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                handleEditSite(parseInt(this.dataset.id));
+            });
+        });
+
+        // 点击卡片空白区域也可以触发编辑
+        listEl.querySelectorAll('.site-card-admin').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // 如果点击的是复选框或编辑按钮，不触发
+                if (e.target.closest('.site-checkbox') || e.target.closest('[data-action="editSite"]')) return;
+                const editBtn = this.querySelector('[data-action="editSite"]');
+                if (editBtn) editBtn.click();
+            });
+            // 悬停效果
+            card.addEventListener('mouseenter', function() {
+                this.style.borderColor = '#3b82f6';
+                this.style.boxShadow = '0 2px 8px rgba(59,130,246,0.12)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.borderColor = '#eef2f6';
+                this.style.boxShadow = 'none';
+            });
         });
     }
 
@@ -1361,7 +1434,9 @@
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
             style.id = 'admin-global-styles';
-            style.textContent = ``;
+            style.textContent = `
+                /* 站点卡片样式已在 JS 中内联，无需额外样式 */
+            `;
             document.head.appendChild(style);
         }
     }
