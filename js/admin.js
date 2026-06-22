@@ -21,6 +21,8 @@
 
     let selectedSiteIds = new Set();
     let customSelectInstances = [];
+    // 修复：定义 customSelects 全局变量，用于投稿详情中的选择器管理
+    let customSelects = {};
 
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     function showToast(msg, type = 'success') { const toast = document.getElementById('toast'); if (!toast) return; toast.textContent = msg; toast.className = `toast ${type} show`; clearTimeout(toast._timeout); toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300); }
@@ -988,6 +990,16 @@
     }
 
     function cleanupCustomSelects() {
+        // 清理 customSelects 中的实例
+        if (customSelects.cat && typeof customSelects.cat.destroy === 'function') {
+            customSelects.cat.destroy();
+        }
+        if (customSelects.sub && typeof customSelects.sub.destroy === 'function') {
+            customSelects.sub.destroy();
+        }
+        customSelects = {};
+
+        // 清理 customSelectInstances 数组
         customSelectInstances.forEach(inst => {
             if (inst && typeof inst.destroy === 'function') {
                 inst.destroy();
@@ -996,7 +1008,6 @@
         customSelectInstances = [];
     }
 
-    // ===== 修复：openSubmissionDetail 加载详情 =====
     async function openSubmissionDetail(id) {
         currentSubmissionId = id;
         const detailModal = document.getElementById('submissionDetailModal');
@@ -1023,10 +1034,8 @@
         };
 
         try {
-            // 确保数据最新：如果 submissionsData 为空或没有对应项，强制刷新
             let data = submissionsData;
             if (!data.length || !data.find(s => s.id === id)) {
-                // 强制从服务器获取最新数据
                 data = await fetchSubmissions(true);
                 submissionsData = data;
                 updateStats();
@@ -1098,12 +1107,12 @@
             subWrapper.innerHTML = '';
             subWrapper.appendChild(subSelect);
 
-            let catCustomSelect = new CustomSelect(catSelect, async (value) => {
+            // 修复：使用 customSelects 存储实例
+            customSelects.cat = new CustomSelect(catSelect, async (value) => {
                 subSelect.innerHTML = '<option value="">加载中...</option>';
-                if (customSelectInstances.includes(customSelects.sub)) {
-                    const idx = customSelectInstances.indexOf(customSelects.sub);
-                    if (idx > -1) customSelectInstances.splice(idx, 1);
+                if (customSelects.sub) {
                     customSelects.sub.destroy();
+                    customSelects.sub = null;
                 }
                 if (value) {
                     try {
@@ -1116,15 +1125,13 @@
                 } else {
                     subSelect.innerHTML = '<option value="">先选择一级分类</option>';
                 }
-                const subInst = new CustomSelect(subSelect);
-                customSelectInstances.push(subInst);
-                customSelects.sub = subInst;
+                customSelects.sub = new CustomSelect(subSelect);
             });
-            customSelects.cat = catCustomSelect;
-            customSelectInstances.push(catCustomSelect);
-            const subInst = new CustomSelect(subSelect);
-            customSelectInstances.push(subInst);
-            customSelects.sub = subInst;
+            // 同时存储到 customSelectInstances 以便统一清理
+            customSelectInstances.push(customSelects.cat);
+            // 创建初始子分类选择器
+            customSelects.sub = new CustomSelect(subSelect);
+            customSelectInstances.push(customSelects.sub);
 
             document.getElementById('doApproveBtn').onclick = async () => {
                 const catSelectEl = document.getElementById('approveCatSelect');
