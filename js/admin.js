@@ -393,25 +393,21 @@
         } catch (e) { listEl.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    // ===== 修改：复选框移动到编辑按钮上方 =====
+    // ===== 修改：卡片布局简化（复选框左上角，编辑右上角，中间网站名称） =====
     function renderSitesWithCheckboxes(sitesData) {
         const listEl = document.getElementById('siteList');
         listEl.innerHTML = sitesData.map(site => {
             const checked = selectedSiteIds.has(site.id) ? 'checked' : '';
             return `
-                <div class="link-item" style="display:flex;flex-direction:column;gap:4px;padding:8px 12px;">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <input type="checkbox" class="site-checkbox" data-id="${site.id}" ${checked} style="flex-shrink:0;width:16px;height:16px;cursor:pointer;">
-                        <span style="font-size:11px;color:#94a3b8;">选择</span>
-                        <div style="flex:1;"></div>
+                <div class="link-item" style="position:relative;display:flex;flex-direction:column;padding:16px 12px;min-height:70px;border-radius:8px;background:#fff;border:1px solid #eef2f6;margin-bottom:6px;justify-content:center;">
+                    <div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);">
+                        <input type="checkbox" class="site-checkbox" data-id="${site.id}" ${checked} style="width:18px;height:18px;cursor:pointer;accent-color:#3b82f6;">
                     </div>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <div class="link-info" style="flex:1;min-width:0;">
-                            <strong>${escapeHtml(site.title)}</strong>
-                            <div style="font-size:10px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(site.url)}</div>
-                            <div style="font-size:10px;color:#94a3b8;">${escapeHtml(site.category_name || '')} → ${escapeHtml(site.subcategory_name || '')} ${site.is_valid === 1 ? ' <span style="color:#10b981;">✅ 有效</span>' : ' <span style="color:#ef4444;">❌ 无效</span>'}</div>
-                        </div>
-                        <div style="display:flex;gap:4px;flex-shrink:0;"><button class="primary sm" data-action="editSite" data-id="${site.id}">编辑</button></div>
+                    <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);">
+                        <button class="primary sm" data-action="editSite" data-id="${site.id}" style="padding:4px 14px;font-size:11px;border-radius:6px;">编辑</button>
+                    </div>
+                    <div style="text-align:center;padding:0 70px;">
+                        <strong style="font-size:15px;font-weight:600;color:#1e293b;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(site.title)}</strong>
                     </div>
                 </div>
             `;
@@ -1003,7 +999,6 @@
             customSelects.sub.destroy();
         }
         customSelects = {};
-
         customSelectInstances.forEach(inst => {
             if (inst && typeof inst.destroy === 'function') {
                 inst.destroy();
