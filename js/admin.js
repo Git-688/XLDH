@@ -21,7 +21,6 @@
 
     let selectedSiteIds = new Set();
     let customSelectInstances = [];
-    // 修复：定义 customSelects 全局变量，用于投稿详情中的选择器管理
     let customSelects = {};
 
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -394,19 +393,26 @@
         } catch (e) { listEl.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
+    // ===== 修改：复选框移动到编辑按钮上方 =====
     function renderSitesWithCheckboxes(sitesData) {
         const listEl = document.getElementById('siteList');
         listEl.innerHTML = sitesData.map(site => {
             const checked = selectedSiteIds.has(site.id) ? 'checked' : '';
             return `
-                <div class="link-item" style="display:flex;align-items:center;gap:10px;">
-                    <input type="checkbox" class="site-checkbox" data-id="${site.id}" ${checked} style="flex-shrink:0;width:16px;height:16px;cursor:pointer;">
-                    <div class="link-info" style="flex:1;min-width:0;">
-                        <strong>${escapeHtml(site.title)}</strong>
-                        <div style="font-size:10px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(site.url)}</div>
-                        <div style="font-size:10px;color:#94a3b8;">${escapeHtml(site.category_name || '')} → ${escapeHtml(site.subcategory_name || '')} ${site.is_valid === 1 ? ' <span style="color:#10b981;">✅ 有效</span>' : ' <span style="color:#ef4444;">❌ 无效</span>'}</div>
+                <div class="link-item" style="display:flex;flex-direction:column;gap:4px;padding:8px 12px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <input type="checkbox" class="site-checkbox" data-id="${site.id}" ${checked} style="flex-shrink:0;width:16px;height:16px;cursor:pointer;">
+                        <span style="font-size:11px;color:#94a3b8;">选择</span>
+                        <div style="flex:1;"></div>
                     </div>
-                    <div style="display:flex;gap:4px;flex-shrink:0;"><button class="primary sm" data-action="editSite" data-id="${site.id}">编辑</button></div>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div class="link-info" style="flex:1;min-width:0;">
+                            <strong>${escapeHtml(site.title)}</strong>
+                            <div style="font-size:10px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(site.url)}</div>
+                            <div style="font-size:10px;color:#94a3b8;">${escapeHtml(site.category_name || '')} → ${escapeHtml(site.subcategory_name || '')} ${site.is_valid === 1 ? ' <span style="color:#10b981;">✅ 有效</span>' : ' <span style="color:#ef4444;">❌ 无效</span>'}</div>
+                        </div>
+                        <div style="display:flex;gap:4px;flex-shrink:0;"><button class="primary sm" data-action="editSite" data-id="${site.id}">编辑</button></div>
+                    </div>
                 </div>
             `;
         }).join('');
@@ -990,7 +996,6 @@
     }
 
     function cleanupCustomSelects() {
-        // 清理 customSelects 中的实例
         if (customSelects.cat && typeof customSelects.cat.destroy === 'function') {
             customSelects.cat.destroy();
         }
@@ -999,7 +1004,6 @@
         }
         customSelects = {};
 
-        // 清理 customSelectInstances 数组
         customSelectInstances.forEach(inst => {
             if (inst && typeof inst.destroy === 'function') {
                 inst.destroy();
@@ -1107,7 +1111,6 @@
             subWrapper.innerHTML = '';
             subWrapper.appendChild(subSelect);
 
-            // 修复：使用 customSelects 存储实例
             customSelects.cat = new CustomSelect(catSelect, async (value) => {
                 subSelect.innerHTML = '<option value="">加载中...</option>';
                 if (customSelects.sub) {
@@ -1127,9 +1130,7 @@
                 }
                 customSelects.sub = new CustomSelect(subSelect);
             });
-            // 同时存储到 customSelectInstances 以便统一清理
             customSelectInstances.push(customSelects.cat);
-            // 创建初始子分类选择器
             customSelects.sub = new CustomSelect(subSelect);
             customSelectInstances.push(customSelects.sub);
 
