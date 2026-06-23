@@ -1,6 +1,4 @@
-// sidebar.js - 现代悬浮侧滑栏（支持触摸手势）
 (function() {
-    // 分类数据
     const CATEGORIES_DATA = [
         { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
             { icon: 'fas fa-mobile-alt', label: '手机软件', link: './pages/chl/手机软件.html' },
@@ -37,7 +35,6 @@
         ] }
     ];
 
-    // 底部按钮配置
     const FOOTER_BUTTONS = [
         { icon: 'fas fa-pen', action: 'notebook', color: '#8b5cf6' },
         { icon: 'fas fa-gift', action: 'gift', color: '#f97316' },
@@ -71,34 +68,23 @@
             window.addEventListener('resize', () => this.setFixedTop());
         }
 
-        // 触摸手势：左滑关闭侧边栏，右滑打开
         initTouchGestures() {
-            let touchStartX = 0;
-            let touchStartTime = 0;
-            const threshold = 50;      // 滑动最小距离（像素）
-            const edgeWidth = 30;       // 边缘检测宽度（像素）
-
+            let touchStartX = 0, touchStartTime = 0;
+            const threshold = 50, edgeWidth = 30;
             document.addEventListener('touchstart', (e) => {
                 touchStartX = e.touches[0].clientX;
                 touchStartTime = Date.now();
             }, { passive: true });
-
             document.addEventListener('touchend', (e) => {
                 const touchEndX = e.changedTouches[0].clientX;
                 const diffX = touchEndX - touchStartX;
                 const absDiff = Math.abs(diffX);
                 const duration = Date.now() - touchStartTime;
-                
-                // 快速滑动判断（时间<300ms，距离>threshold）
                 const isFastSwipe = duration < 300 && absDiff > threshold;
-                
-                // 左滑：从右侧向左滑动（diffX < -threshold），关闭侧边栏
                 if (isFastSwipe && diffX < -threshold && this.isOpen) {
                     this.hide();
                     e.preventDefault();
-                }
-                // 右滑：从左侧边缘向右滑动（touchStartX < edgeWidth && diffX > threshold），打开侧边栏
-                else if (isFastSwipe && diffX > threshold && touchStartX < edgeWidth && !this.isOpen) {
+                } else if (isFastSwipe && diffX > threshold && touchStartX < edgeWidth && !this.isOpen) {
                     this.show();
                     e.preventDefault();
                 }
@@ -187,15 +173,11 @@
                 const menuBtn = document.getElementById('menuBtn');
                 const isMenuBtn = menuBtn && menuBtn.contains(e.target);
                 const isSidebar = this.sidebarEl && this.sidebarEl.contains(e.target);
-                if (!isSidebar && !isMenuBtn) {
-                    this.hide();
-                }
+                if (!isSidebar && !isMenuBtn) this.hide();
             });
-
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && this.isOpen) this.hide();
             });
-
             const menuBtn = document.getElementById('menuBtn');
             if (menuBtn && !menuBtn._sidebarBound) {
                 menuBtn._sidebarBound = true;
@@ -212,14 +194,8 @@
                 const header = group.querySelector('.category-group-header');
                 const clickHandler = (e) => {
                     e.stopPropagation();
-                    const isExpanded = group.classList.contains('expanded');
-                    if (isExpanded) {
-                        group.classList.remove('expanded');
-                        this.categories[idx].expanded = false;
-                    } else {
-                        group.classList.add('expanded');
-                        this.categories[idx].expanded = true;
-                    }
+                    group.classList.toggle('expanded');
+                    this.categories[idx].expanded = group.classList.contains('expanded');
                     this.saveExpandedState();
                 };
                 if (header) header.addEventListener('click', clickHandler);
@@ -230,10 +206,7 @@
                 item.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const link = item.dataset.link;
-                    if (link) {
-                        window.open(link, '_blank');
-                        this.hide();
-                    }
+                    if (link) { window.open(link, '_blank'); this.hide(); }
                 });
             });
 
@@ -241,8 +214,7 @@
             footerBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const action = btn.dataset.action;
-                    this.handleFooterAction(action);
+                    this.handleFooterAction(btn.dataset.action);
                     this.hide();
                 });
             });
@@ -258,19 +230,10 @@
 
         handleFooterAction(action) {
             switch (action) {
-                case 'notebook':
-                    if (window.showNotebookModal) window.showNotebookModal();
-                    break;
-                case 'gift':
-                    window.open('./pages/tools/羊毛福利.html', '_blank');
-                    break;
-                case 'about':
-                    if (window.aboutModule && window.aboutModule.show) window.aboutModule.show();
-                    break;
-                case 'qq':
-                    window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
-                    break;
-                default: break;
+                case 'notebook': if (window.showNotebookModal) window.showNotebookModal(); break;
+                case 'gift': window.open('./pages/tools/羊毛福利.html', '_blank'); break;
+                case 'about': if (window.aboutModule?.show) window.aboutModule.show(); break;
+                case 'qq': window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank'); break;
             }
         }
 
@@ -286,7 +249,7 @@
                     avatarImg.src = this.userConfig.avatar;
                     avatarImg.onerror = () => { avatarImg.src = './assets/logo.png'; };
                 }
-            } catch (e) { console.warn('加载用户数据失败', e); }
+            } catch (e) {}
         }
 
         async loadDailyQuote() {
@@ -327,27 +290,12 @@
         }
 
         openProfileModal() {
-            const currentAvatar = (this.userConfig && this.userConfig.avatar) ? this.userConfig.avatar : './assets/logo.png';
+            const currentAvatar = (this.userConfig?.avatar) || './assets/logo.png';
             const containerPadding = getComputedStyle(document.documentElement).getPropertyValue('--container-padding-xs').trim() || '16px';
             const modalHtml = `
                 <div id="profileModal" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:10002;display:flex;align-items:center;justify-content:center;">
-                    <div class="profile-modal-card" style="
-                        background: #ffffff;
-                        border: 1px solid #e0e0e0;
-                        border-radius: 8px;
-                        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-                        width: 360px;
-                        max-width: calc(100% - 2 * ${containerPadding});
-                        padding: 0;
-                        overflow: hidden;
-                    ">
-                        <div style="
-                            padding: 10px 14px 8px;
-                            border-bottom: 1px solid rgba(0,0,0,0.08);
-                            display: flex;
-                            align-items: center;
-                            justify-content: space-between;
-                        ">
+                    <div class="profile-modal-card" style="background:#ffffff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.12);width:360px;max-width:calc(100% - 2 * ${containerPadding});padding:0;overflow:hidden;">
+                        <div style="padding:10px 14px 8px;border-bottom:1px solid rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:space-between;">
                             <h3 style="margin:0;font-size:16px;font-weight:600;color:var(--text-primary, #1e293b);">个人资料</h3>
                             <div style="width:32px;height:32px;border-radius:8px;overflow:hidden;background:#f0f0f0;flex-shrink:0;">
                                 <img id="profileAvatarPreview" src="${this.escapeHtml(currentAvatar)}" alt="头像预览" style="width:100%;height:100%;object-fit:cover;">
@@ -388,11 +336,7 @@
             const cancelBtn = document.getElementById('profileCancelBtn');
             const avatarPreview = document.getElementById('profileAvatarPreview');
 
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 
             if (qqInput) {
                 qqInput.addEventListener('blur', async () => {
@@ -442,9 +386,7 @@
                 if (window.toast) window.toast.show('个人信息已保存', 'success');
             });
 
-            cancelBtn?.addEventListener('click', () => {
-                modal?.remove();
-            });
+            cancelBtn?.addEventListener('click', () => { modal?.remove(); });
         }
 
         setFixedTop() {
@@ -461,28 +403,16 @@
         }
 
         closeOtherModals() {
-            if (window.Starlink?.search && typeof window.Starlink.search.hide === 'function') window.Starlink.search.hide();
-            else if (window.newSearchModule && typeof window.newSearchModule.hide === 'function') window.newSearchModule.hide();
-            
-            if (window.Starlink?.announcement && typeof window.Starlink.announcement.hide === 'function') window.Starlink.announcement.hide();
-            else if (window.announcementModule && typeof window.announcementModule.hide === 'function') window.announcementModule.hide();
-            
+            if (window.Starlink?.search?.hide) window.Starlink.search.hide();
+            if (window.announcementModule?.hide) window.announcementModule.hide();
             if (window.Starlink?.navbar?.hideMusicPlayer) window.Starlink.navbar.hideMusicPlayer();
-            else if (window.app?.components?.navbar) window.app.components.navbar.hideMusicPlayer();
-            
-            if (window.Starlink?.weather && typeof window.Starlink.weather.hide === 'function') window.Starlink.weather.hide();
-            else if (window.app?.modules?.weather && typeof window.app.modules.weather.hide === 'function') window.app.modules.weather.hide();
-            
-            if (window.Starlink?.about && typeof window.Starlink.about.hide === 'function') window.Starlink.about.hide();
-            else if (window.aboutModule && typeof window.aboutModule.hide === 'function') window.aboutModule.hide();
-            
-            if (window.Starlink?.app?.hideNotebookModal && typeof window.Starlink.app.hideNotebookModal === 'function') window.Starlink.app.hideNotebookModal();
-            else if (window.hideNotebookModal && typeof window.hideNotebookModal === 'function') window.hideNotebookModal();
-            
+            if (window.Starlink?.weather?.hide) window.Starlink.weather.hide();
+            if (window.aboutModule?.hide) window.aboutModule.hide();
+            if (window.Starlink?.app?.hideNotebookModal) window.Starlink.app.hideNotebookModal();
             const submitModal = document.getElementById('submitModal');
-            if (submitModal && submitModal.classList.contains('active')) submitModal.classList.remove('active');
+            if (submitModal?.classList.contains('active')) submitModal.classList.remove('active');
             const profileModal = document.getElementById('profileModal');
-            if (profileModal && profileModal.parentNode) profileModal.remove();
+            if (profileModal?.parentNode) profileModal.remove();
         }
 
         saveExpandedState() {
@@ -502,12 +432,7 @@
 
         escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
+            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
         }
 
         show() {
@@ -533,30 +458,18 @@
             }
         }
 
-        toggle() {
-            this.isOpen ? this.hide() : this.show();
-        }
-
-        isVisible() {
-            return this.isOpen;
-        }
-
-        destroy() {
-            this.hide();
-        }
+        toggle() { this.isOpen ? this.hide() : this.show(); }
+        isVisible() { return this.isOpen; }
+        destroy() { this.hide(); }
     }
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             if (!window.Starlink) window.Starlink = {};
-            if (!window.Starlink.sidebar) {
-                window.Starlink.sidebar = new ModernSidebar();
-            }
+            if (!window.Starlink.sidebar) window.Starlink.sidebar = new ModernSidebar();
         });
     } else {
         if (!window.Starlink) window.Starlink = {};
-        if (!window.Starlink.sidebar) {
-            window.Starlink.sidebar = new ModernSidebar();
-        }
+        if (!window.Starlink.sidebar) window.Starlink.sidebar = new ModernSidebar();
     }
 })();
