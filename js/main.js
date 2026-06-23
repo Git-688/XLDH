@@ -1,7 +1,3 @@
-/**
- * 星聚导航主应用程序（最终版，修复模态框动画，完善骨架屏）
- * 新增：Service Worker 消息监听，自动刷新导航数据
- */
 class App {
     constructor() {
         this.components = {};
@@ -18,11 +14,9 @@ class App {
         }
     }
 
-    // 加载星聚笔记数据（带骨架屏）
     async loadNotebookData() {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
-        // 显示骨架屏
         listEl.innerHTML = '<div class="skeleton-notebook-item"></div>'.repeat(5);
         
         const fetchNotebook = async (retry = 2) => {
@@ -44,30 +38,21 @@ class App {
                 return;
             }
             items.sort((a, b) => a.numid - b.numid);
-            const html = items.map(item => {
-                const title = Utils.escapeHtml((item.title || '').trim());
-                const time = Utils.escapeHtml(item.time || '--');
-                const words = Utils.escapeHtml((item.words || '').trim()).replace(/\n/g, '<br>');
-                const numid = item.numid;
-                return `
-                    <div class="notebook-item">
-                        <div class="notebook-header">
-                            <span class="notebook-id">#${numid}</span>
-                            <span class="notebook-time"><i class="far fa-calendar-alt"></i> ${time}</span>
-                        </div>
-                        <div class="notebook-title">${title}</div>
-                        <div class="notebook-content">${words}</div>
+            listEl.innerHTML = items.map(item => `
+                <div class="notebook-item">
+                    <div class="notebook-header">
+                        <span class="notebook-id">#${item.numid}</span>
+                        <span class="notebook-time"><i class="far fa-calendar-alt"></i> ${Utils.escapeHtml(item.time || '--')}</span>
                     </div>
-                `;
-            }).join('');
-            listEl.innerHTML = html;
+                    <div class="notebook-title">${Utils.escapeHtml((item.title || '').trim())}</div>
+                    <div class="notebook-content">${Utils.escapeHtml((item.words || '').trim()).replace(/\n/g, '<br>')}</div>
+                </div>
+            `).join('');
         } catch (error) {
-            console.error('加载星聚笔记失败:', error);
             listEl.innerHTML = `<div class="error">加载失败：${Utils.escapeHtml(error.message)}<br><small>可尝试刷新页面</small></div>`;
         }
     }
 
-    // 显示星聚笔记模态框
     showNotebookModal() {
         const modalEl = document.getElementById('notebookModal');
         if (!modalEl) return;
@@ -88,9 +73,7 @@ class App {
         modalEl.classList.remove('active');
         const onTransitionEnd = () => {
             modalEl.removeEventListener('transitionend', onTransitionEnd);
-            if (this.notebookModalHideRef) {
-                this.unregisterModal(this.notebookModalHideRef);
-            }
+            if (this.notebookModalHideRef) this.unregisterModal(this.notebookModalHideRef);
         };
         modalEl.addEventListener('transitionend', onTransitionEnd, { once: true });
         setTimeout(onTransitionEnd, 400);
@@ -100,15 +83,10 @@ class App {
         const modal = document.getElementById('notebookModal');
         const closeBtn = modal?.querySelector('.feedback-modal-close');
         if (!modal) return;
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) this.hideNotebookModal();
-        });
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.hideNotebookModal());
-        }
+        modal.addEventListener('click', (e) => { if (e.target === modal) this.hideNotebookModal(); });
+        if (closeBtn) closeBtn.addEventListener('click', () => this.hideNotebookModal());
     }
 
-    // 全局图片错误捕获
     initImageFallbackHandler() {
         document.addEventListener('error', (e) => {
             const img = e.target;
@@ -120,14 +98,12 @@ class App {
             if (fbType === 'hideAndShowIcon') {
                 img.style.display = 'none';
                 if (parent && !parent.querySelector('.js-fallback-icon')) {
-                    const iconClass = img.dataset.fallbackIconClass || 'fas fa-rocket';
                     const icon = document.createElement('i');
-                    icon.className = `${iconClass} js-fallback-icon`;
+                    icon.className = img.dataset.fallbackIconClass || 'fas fa-rocket';
                     parent.appendChild(icon);
                 }
             } else if (fbType === 'defaultAvatar') {
-                const defaultSvg = img.dataset.defaultSvg || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
-                img.src = defaultSvg;
+                img.src = img.dataset.defaultSvg || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
             } else if (fbType === 'icon') {
                 if (!parent.querySelector('i.fa-link')) {
                     img.style.display = 'none';
@@ -139,30 +115,17 @@ class App {
         }, true);
     }
 
-    // ===== 新增：Service Worker 消息监听 =====
     initServiceWorkerMessageListener() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('message', (event) => {
                 if (event.data && event.data.type === 'NAV_UPDATED') {
-                    console.log('[App] 收到导航更新通知，刷新导航数据...');
-                    // 调用导航模块的刷新方法
-                    if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshStructure === 'function') {
-                        window.optimizedNavigation.refreshStructure().catch(err => {
-                            console.warn('[App] 自动刷新导航失败:', err);
-                        });
+                    if (window.optimizedNavigation?.refreshStructure) {
+                        window.optimizedNavigation.refreshStructure().catch(() => {});
                     } else {
-                        // 降级方案：如果导航模块未加载，则刷新整个页面（但尽可能避免）
-                        console.warn('[App] 导航模块未就绪，将刷新页面以应用更新');
-                        // 延迟刷新，避免频繁刷新
-                        setTimeout(() => {
-                            if (!document.hidden) {
-                                window.location.reload();
-                            }
-                        }, 3000);
+                        setTimeout(() => { if (!document.hidden) window.location.reload(); }, 3000);
                     }
                 }
             });
-            console.log('[App] Service Worker 消息监听已注册');
         }
     }
 
@@ -177,7 +140,6 @@ class App {
         this.setupGlobalEvents();
         this.initNotebookModalEvents();
         this.initFloatingButtonsEffect();
-        // 新增：注册 Service Worker 消息监听
         this.initServiceWorkerMessageListener();
         this.isInitialized = true;
 
@@ -193,9 +155,7 @@ class App {
             floatingBtns.style.opacity = '0.4';
             floatingBtns.style.transition = 'opacity 0.3s ease';
             clearTimeout(scrollTimer);
-            scrollTimer = setTimeout(() => {
-                floatingBtns.style.opacity = '1';
-            }, 1000);
+            scrollTimer = setTimeout(() => { floatingBtns.style.opacity = '1'; }, 1000);
         }, { passive: true });
     }
 
@@ -204,16 +164,12 @@ class App {
             if (typeof CompactSidebar !== 'undefined') {
                 if (!window.sidebar || !window.sidebar.isInitialized) {
                     this.components.sidebar = new CompactSidebar();
-                    this.components.sidebar.init().catch(error => {
-                        console.error('侧边栏初始化失败:', error);
-                        this.showToast('侧边栏初始化失败，部分功能可能不可用', 'warning');
-                    });
+                    this.components.sidebar.init().catch(() => {});
                 } else {
                     this.components.sidebar = window.sidebar;
                 }
             }
         } catch (error) {
-            console.error('核心组件初始化失败:', error);
             this.showToast('核心组件初始化失败', 'error');
         }
     }
@@ -223,12 +179,8 @@ class App {
             const initPromises = [];
 
             if (typeof NewSearchModule !== 'undefined') {
-                if (!window.newSearchModule) {
-                    this.modules.search = new NewSearchModule();
-                    window.newSearchModule = this.modules.search;
-                } else {
-                    this.modules.search = window.newSearchModule;
-                }
+                this.modules.search = window.newSearchModule || new NewSearchModule();
+                window.newSearchModule = this.modules.search;
                 initPromises.push(this.modules.search.init?.());
             }
 
@@ -259,29 +211,18 @@ class App {
             }
 
             if (typeof AnnouncementModule !== 'undefined') {
-                if (!window.announcementModule) {
-                    this.modules.announcement = new AnnouncementModule();
-                    window.announcementModule = this.modules.announcement;
-                } else {
-                    this.modules.announcement = window.announcementModule;
-                }
+                this.modules.announcement = window.announcementModule || new AnnouncementModule();
+                window.announcementModule = this.modules.announcement;
             }
 
             if (typeof AboutModule !== 'undefined') {
-                if (!window.aboutModule) {
-                    this.modules.about = new AboutModule();
-                    window.aboutModule = this.modules.about;
-                    this.modules.about.init();
-                } else {
-                    this.modules.about = window.aboutModule;
-                }
+                this.modules.about = window.aboutModule || new AboutModule();
+                window.aboutModule = this.modules.about;
+                this.modules.about.init();
             }
 
-            Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {
-                console.log('所有模块初始化完成');
-            });
+            Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {});
         } catch (error) {
-            console.error('模块初始化失败:', error);
             this.showToast('部分模块初始化失败', 'warning');
         }
     }
@@ -291,9 +232,7 @@ class App {
             if (typeof Navbar !== 'undefined') {
                 this.components.navbar = new Navbar();
             }
-        } catch (error) {
-            console.error('依赖组件初始化失败:', error);
-        }
+        } catch (error) {}
     }
 
     setupErrorHandling() {
@@ -307,7 +246,6 @@ class App {
             const error = event.error || event.reason;
             const errorMessage = error?.message || msg || '未知错误';
             if (shouldIgnore(errorMessage)) return;
-            console.error('应用错误:', errorMessage);
             if (!document.hidden) this.showToast('页面遇到问题，建议刷新页面', 'error');
         };
         window.addEventListener('error', handleError);
@@ -316,7 +254,6 @@ class App {
 
     initStorage() {
         if (typeof Storage === 'undefined') {
-            console.error('浏览器不支持localStorage');
             this.showToast('浏览器不支持本地存储，部分功能可能受限', 'warning');
             return;
         }
@@ -324,9 +261,7 @@ class App {
     }
 
     initDefaultData() {
-        if (!Storage.get('first_visit_time')) {
-            Storage.set('first_visit_time', new Date().toISOString());
-        }
+        if (!Storage.get('first_visit_time')) Storage.set('first_visit_time', new Date().toISOString());
         this.updateVisitStats();
     }
 
@@ -336,9 +271,7 @@ class App {
             visitCount++;
             Storage.set('visit_count', visitCount);
             Storage.set('last_visit_time', new Date().toISOString());
-        } catch (error) {
-            console.warn('更新访问统计失败:', error);
-        }
+        } catch (error) {}
     }
 
     setupGlobalEvents() {
@@ -361,12 +294,10 @@ class App {
     }
 
     refreshOnVisibility() {
-        if (this.modules.greeting && this.modules.greeting.updateDateTime) {
-            this.modules.greeting.updateDateTime();
-        }
+        if (this.modules.greeting?.updateDateTime) this.modules.greeting.updateDateTime();
         const now = Date.now();
         if (this.lastWeatherUpdate && (now - this.lastWeatherUpdate > 10 * 60 * 1000)) {
-            if (this.modules.weather && this.modules.weather.loadWeatherData) {
+            if (this.modules.weather?.loadWeatherData) {
                 this.modules.weather.loadWeatherData();
                 this.lastWeatherUpdate = now;
             }
@@ -377,13 +308,10 @@ class App {
         if (!modal || typeof modal.hide !== 'function') return;
         if (!this.activeModals.includes(modal)) {
             if (this.activeModals.length > 0) {
-                const previous = this.activeModals[this.activeModals.length - 1];
-                previous.hide();
+                this.activeModals[this.activeModals.length - 1].hide();
             }
             this.activeModals.push(modal);
-            if (this.components.sidebar && this.components.sidebar.isVisible && this.components.sidebar.isVisible()) {
-                this.components.sidebar.hide();
-            }
+            if (this.components.sidebar?.isVisible?.()) this.components.sidebar.hide();
         }
     }
 
@@ -393,14 +321,10 @@ class App {
     }
 
     closeAllModals() {
-        const modals = [...this.activeModals];
-        modals.forEach(modal => {
-            if (modal && typeof modal.hide === 'function') {
-                modal.hide();
-            }
+        [...this.activeModals].forEach(modal => {
+            if (modal && typeof modal.hide === 'function') modal.hide();
         });
         this.activeModals = [];
-
         if (this.components.sidebar?.isVisible?.()) this.components.sidebar.hide();
         if (this.components.navbar?.hideMusicPlayer) this.components.navbar.hideMusicPlayer();
         if (this.modules.search?.isModalOpen && this.modules.search.hide) this.modules.search.hide();
@@ -408,32 +332,21 @@ class App {
         if (window.walineFeedback?.isVisible) window.walineFeedback.hide();
     }
 
-    showToast(message, type = 'info') {
-        window.toast.show(message, type);
-    }
+    showToast(message, type = 'info') { window.toast.show(message, type); }
 
     getVisitStats() {
         const visitCount = Storage.get('visit_count') || 0;
         const firstVisitTime = Storage.get('first_visit_time');
         const lastVisitTime = Storage.get('last_visit_time');
-        return {
-            count: visitCount,
-            firstVisit: firstVisitTime ? new Date(firstVisitTime) : null,
-            lastVisit: lastVisitTime ? new Date(lastVisitTime) : null,
-            formatted: `访问 ${visitCount} 次`
-        };
+        return { count: visitCount, firstVisit: firstVisitTime ? new Date(firstVisitTime) : null, lastVisit: lastVisitTime ? new Date(lastVisitTime) : null, formatted: `访问 ${visitCount} 次` };
     }
 
     updateAnnouncement(newContent) {
-        if (!this.modules.announcement || !newContent) return;
-        this.modules.announcement.updateAnnouncement(newContent);
+        if (this.modules.announcement && newContent) this.modules.announcement.updateAnnouncement(newContent);
     }
 
     refreshWallpaper() {
-        if (!this.modules.wallpaper) {
-            this.showToast('壁纸模块未初始化', 'warning');
-            return;
-        }
+        if (!this.modules.wallpaper) { this.showToast('壁纸模块未初始化', 'warning'); return; }
         this.modules.wallpaper.refreshWallpaper();
         this.showToast('正在刷新壁纸...', 'info');
     }
@@ -451,98 +364,51 @@ class App {
         }, 300);
     }
 
-    toggleSidebar() {
-        if (this.components.sidebar && this.components.sidebar.toggle) {
-            this.components.sidebar.toggle();
-        }
-    }
-
-    showSidebar() {
-        if (this.components.sidebar && this.components.sidebar.show) {
-            this.components.sidebar.show();
-        }
-    }
-
-    hideSidebar() {
-        if (this.components.sidebar && this.components.sidebar.hide) {
-            this.components.sidebar.hide();
-        }
-    }
+    toggleSidebar() { this.components.sidebar?.toggle?.(); }
+    showSidebar() { this.components.sidebar?.show?.(); }
+    hideSidebar() { this.components.sidebar?.hide?.(); }
 
     showSearch() {
-        if (this.modules.search && this.modules.search.showModal) {
-            this.modules.search.showModal();
-        } else {
-            this.showToast('搜索功能暂不可用', 'warning');
-        }
+        if (this.modules.search?.showModal) this.modules.search.showModal();
+        else this.showToast('搜索功能暂不可用', 'warning');
     }
 
     showAnnouncement() {
-        if (this.modules.announcement && this.modules.announcement.showModal) {
-            this.modules.announcement.showModal();
-        } else {
-            this.showToast('公告功能暂不可用', 'warning');
-        }
+        if (this.modules.announcement?.showModal) this.modules.announcement.showModal();
+        else this.showToast('公告功能暂不可用', 'warning');
     }
 
     showWeather() {
-        if (this.modules.weather && typeof this.modules.weather.showModal === 'function') {
-            this.modules.weather.showModal();
-        } else {
-            console.error('天气模块未正确初始化');
-            this.showToast('天气功能暂不可用', 'warning');
-        }
+        if (this.modules.weather?.showModal) this.modules.weather.showModal();
+        else this.showToast('天气功能暂不可用', 'warning');
     }
 
     showAbout() {
-        if (this.modules.about && this.modules.about.show) {
-            this.modules.about.show();
-        } else {
-            this.showToast('关于功能暂不可用', 'warning');
-        }
+        if (this.modules.about?.show) this.modules.about.show();
+        else this.showToast('关于功能暂不可用', 'warning');
     }
 
     toggleMusicPlayer() {
-        if (this.components.navbar && this.components.navbar.toggleMusicPlayer) {
-            this.components.navbar.toggleMusicPlayer();
-        } else {
-            this.showToast('音乐播放器暂不可用', 'warning');
-        }
+        if (this.components.navbar?.toggleMusicPlayer) this.components.navbar.toggleMusicPlayer();
+        else this.showToast('音乐播放器暂不可用', 'warning');
     }
 
     refreshAllModules() {
         this.showToast('开始刷新所有模块', 'info');
-        if (this.modules.wallpaper && this.modules.wallpaper.refreshWallpaper) {
-            this.modules.wallpaper.refreshWallpaper().catch(err => console.error('壁纸刷新失败:', err));
-        }
-        if (this.modules.weather && this.modules.weather.loadWeatherData) {
-            this.modules.weather.loadWeatherData().catch(err => console.error('天气刷新失败:', err));
-        }
-        if (this.modules.announcement && this.modules.announcement.loadAnnouncements) {
-            this.modules.announcement.loadAnnouncements();
-        }
+        if (this.modules.wallpaper?.refreshWallpaper) this.modules.wallpaper.refreshWallpaper().catch(() => {});
+        if (this.modules.weather?.loadWeatherData) this.modules.weather.loadWeatherData().catch(() => {});
+        if (this.modules.announcement?.loadAnnouncements) this.modules.announcement.loadAnnouncements();
         if (this.components.sidebar) {
             if (this.components.sidebar.loadWallpaperUserInfo) this.components.sidebar.loadWallpaperUserInfo();
             if (this.components.sidebar.loadDailyQuote) this.components.sidebar.loadDailyQuote();
         }
-        setTimeout(() => {
-            this.showToast('所有模块已刷新', 'success');
-        }, 1500);
+        setTimeout(() => this.showToast('所有模块已刷新', 'success'), 1500);
     }
 
     resetApp() {
-        if (!confirm('确定要重置应用状态吗？这将清除所有临时数据，但不会删除您的个人配置。')) return;
+        if (!confirm('确定要重置应用状态吗？')) return;
         this.closeAllModals();
-        const keysToRemove = [
-            'sidebar_categories_state',
-            'last_wallpaper_update',
-            'musicPlayer_volume',
-            'musicPlayer_playbackSpeed',
-            'musicPlayer_playMode',
-            'musicPlayer_playState',
-            'musicPlayer_lyricsMode'
-        ];
-        keysToRemove.forEach(key => Storage.remove(key));
+        ['sidebar_categories_state', 'last_wallpaper_update', 'musicPlayer_volume', 'musicPlayer_playbackSpeed', 'musicPlayer_playMode', 'musicPlayer_playState', 'musicPlayer_lyricsMode'].forEach(key => Storage.remove(key));
         setTimeout(() => this.refreshAllModules(), 500);
         this.showToast('应用状态已重置', 'success');
     }
@@ -550,14 +416,10 @@ class App {
     destroy() {
         this.closeAllModals();
         Object.entries(this.components).forEach(([name, component]) => {
-            if (component && typeof component.destroy === 'function') {
-                try { component.destroy(); } catch (error) { console.error(`销毁组件 ${name} 失败:`, error); }
-            }
+            if (component && typeof component.destroy === 'function') component.destroy();
         });
         Object.entries(this.modules).forEach(([name, module]) => {
-            if (module && typeof module.destroy === 'function') {
-                try { module.destroy(); } catch (error) { console.error(`销毁模块 ${name} 失败:`, error); }
-            }
+            if (module && typeof module.destroy === 'function') module.destroy();
         });
         this.components = {};
         this.modules = {};
@@ -566,18 +428,13 @@ class App {
     }
 }
 
-// 单例启动：挂载到 Starlink 命名空间，并保留旧别名
 if (!window.Starlink) window.Starlink = {};
-if (!window.Starlink.app) {
-    window.Starlink.app = new App();
-}
+if (!window.Starlink.app) window.Starlink.app = new App();
 window.app = window.Starlink.app;
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        if (window.app && !window.app.isInitialized) {
-            window.app.init();
-        }
+        if (window.app && !window.app.isInitialized) window.app.init();
     });
 }
 window.getApp = function() { return window.app; };
