@@ -1,21 +1,15 @@
-// ==================== 通用工具函数库 ====================
 (function(window) {
     const Utils = {};
 
     Utils.escapeHtml = function(str) {
         if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
+        return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     };
 
     Utils.formatViews = function(views) {
         if (views >= 1000000) return (views / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
         if (views >= 1000) return (views / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-        return views.toString();
+        return String(views);
     };
 
     Utils.formatTime = function(seconds) {
@@ -57,9 +51,7 @@
         try {
             const testUrl = url.startsWith('http') ? url : 'https://' + url;
             return ['http:', 'https:'].includes(new URL(testUrl).protocol);
-        } catch {
-            return false;
-        }
+        } catch { return false; }
     };
 
     Utils.generateId = function() {
@@ -83,56 +75,7 @@
         return JSON.parse(JSON.stringify(obj));
     };
 
-    Utils.setCookie = function(name, value, days) {
-        let expires = '';
-        if (days) {
-            const date = new Date();
-            date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-            expires = '; expires=' + date.toUTCString();
-        }
-        document.cookie = name + '=' + (value || '') + expires + '; path=/';
-    };
-
-    Utils.getCookie = function(name) {
-        const nameEQ = name + '=';
-        const ca = document.cookie.split(';');
-        for (let i = 0; i < ca.length; i++) {
-            let c = ca[i];
-            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-        }
-        return null;
-    };
-
-    // ===== WebP 检测 =====
-    let _webpSupported = null;
-    let _webpPromise = null;
-
-    Utils.isWebPSupported = function() {
-        if (_webpSupported !== null) return Promise.resolve(_webpSupported);
-        if (_webpPromise) return _webpPromise;
-        _webpPromise = new Promise((resolve) => {
-            if (!window.createImageBitmap) {
-                _webpSupported = false;
-                resolve(false);
-                return;
-            }
-            const webpData = 'data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA=';
-            fetch(webpData).then(response => response.blob()).then(blob => {
-                return createImageBitmap(blob);
-            }).then(() => {
-                _webpSupported = true;
-                resolve(true);
-            }).catch(() => {
-                _webpSupported = false;
-                resolve(false);
-            });
-        });
-        return _webpPromise;
-    };
-
     Utils.isWebPSupportedSync = function() {
-        if (_webpSupported !== null) return _webpSupported;
         const ua = navigator.userAgent;
         if (/Chrome/.test(ua) && !/Edge/.test(ua)) {
             const version = parseInt(ua.match(/Chrome\/(\d+)/)?.[1] || '0');
@@ -163,12 +106,7 @@
 
     Utils.toWebPUrl = function(originalUrl, quality = 80, width = null, height = null) {
         if (!originalUrl) return originalUrl;
-        if (originalUrl.match(/\.webp$/i) || originalUrl.match(/\.svg$/i)) {
-            return originalUrl;
-        }
-        if (originalUrl.startsWith('data:')) {
-            return originalUrl;
-        }
+        if (originalUrl.match(/\.webp$/i) || originalUrl.match(/\.svg$/i) || originalUrl.startsWith('data:')) return originalUrl;
         const apiBase = Utils.getApiBase();
         let params = `url=${encodeURIComponent(originalUrl)}&quality=${quality}`;
         if (width) params += `&width=${width}`;
@@ -176,39 +114,15 @@
         return `${apiBase}/image-proxy?${params}`;
     };
 
-    // ===== 错误处理 =====
     Utils.handleApiError = function(error, defaultMessage = '操作失败，请稍后重试', showToast = true) {
-        console.error('[API Error]', error);
         let message = defaultMessage;
-        if (error && error.message) {
-            if (error.message.includes('fetch') || error.message.includes('network')) {
-                message = '网络连接异常，请检查网络后重试';
-            } else if (error.message.includes('timeout')) {
-                message = '请求超时，请稍后重试';
-            } else if (error.message.includes('401') || error.message.includes('403')) {
-                message = '权限不足，请重新登录';
-            } else {
-                message = error.message;
-            }
+        if (error?.message) {
+            if (error.message.includes('fetch') || error.message.includes('network')) message = '网络连接异常，请检查网络后重试';
+            else if (error.message.includes('timeout')) message = '请求超时，请稍后重试';
+            else if (error.message.includes('401') || error.message.includes('403')) message = '权限不足，请重新登录';
+            else message = error.message;
         }
-        if (showToast && window.toast && typeof window.toast.show === 'function') {
-            window.toast.show(message, 'error');
-        }
-        const apiBase = Utils.getApiBase();
-        if (apiBase) {
-            fetch(`${apiBase}/log`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: 'api_error',
-                    message: message,
-                    stack: error?.stack,
-                    url: window.location.href,
-                    timestamp: Date.now()
-                }),
-                keepalive: true
-            }).catch(() => {});
-        }
+        if (showToast && window.toast?.show) window.toast.show(message, 'error');
     };
 
     Utils.safeFetch = async function(url, options = {}) {
@@ -223,19 +137,46 @@
             }
             return response;
         } catch (error) {
-            if (error.name === 'AbortError') {
-                throw new Error('请求超时');
-            }
+            if (error.name === 'AbortError') throw new Error('请求超时');
             throw error;
         }
     };
 
     Utils.getApiBase = function() {
-        return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
+        return (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     };
 
     Utils.getWalineServer = function() {
-        return (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc';
+        return (window.APP_CONFIG?.WALINE_SERVER) || 'https://yy688.ccwu.cc';
+    };
+
+    // 常用别名
+    Utils.showToast = function(msg, type = 'info') {
+        if (window.toast?.show) window.toast.show(msg, type);
+    };
+
+    Utils.checkUrl = function(url) {
+        try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; }
+    };
+
+    Utils.autoResizeTextarea = function(textarea) {
+        if (!textarea) return;
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    };
+
+    Utils.normalizeUrl = function(url) {
+        if (!url) return '';
+        try {
+            return url.toLowerCase().trim()
+                .replace(/^https?:\/\//, '')
+                .replace(/^www\./, '')
+                .replace(/\/$/, '');
+        } catch { return url; }
+    };
+
+    Utils.isValidEmail = function(email) {
+        return /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(email);
     };
 
     window.Utils = Utils;
