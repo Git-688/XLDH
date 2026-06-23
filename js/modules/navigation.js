@@ -1,7 +1,3 @@
-/**
- * 优化分类导航系统 - 延迟加载子分类数据 + 计数接口 + WebP 支持
- * 改进：页面加载自动显示第一个子分类的数据
- */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -49,7 +45,6 @@ class OptimizedNavigation {
     }
 
     _escapeHtml(str) { return Utils.escapeHtml(str); }
-
     _formatViews(views) {
         if (views >= 1000000) return (views / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
         if (views >= 1000) return (views / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
@@ -59,14 +54,12 @@ class OptimizedNavigation {
     _getFullIconUrl(icon, siteUrl) {
         if (!icon) return '';
         if (icon.startsWith('/icon?domain=')) {
-            if (window.Utils && window.Utils.isWebPSupportedSync()) {
-                return this.apiBase + icon + '&format=webp';
-            }
+            if (Utils.isWebPSupportedSync()) return this.apiBase + icon + '&format=webp';
             return this.apiBase + icon;
         }
         if (icon.startsWith('http://') || icon.startsWith('https://')) {
-            if (window.Utils && window.Utils.isWebPSupportedSync() && !icon.match(/\.svg$/i)) {
-                return window.Utils.toWebPUrl(icon, 80, 128, 128);
+            if (Utils.isWebPSupportedSync() && !icon.match(/\.svg$/i)) {
+                return Utils.toWebPUrl(icon, 80, 128, 128);
             }
             return icon;
         }
@@ -75,9 +68,7 @@ class OptimizedNavigation {
             const domain = urlObj.hostname;
             if (domain) {
                 const base = this.apiBase + `/icon?domain=${encodeURIComponent(domain)}`;
-                if (window.Utils && window.Utils.isWebPSupportedSync()) {
-                    return base + '&format=webp';
-                }
+                if (Utils.isWebPSupportedSync()) return base + '&format=webp';
                 return base;
             }
         } catch (e) {}
@@ -115,10 +106,7 @@ class OptimizedNavigation {
                         this.imgObserver.unobserve(img);
                     }
                 });
-            }, {
-                rootMargin: '300px 0px 300px 0px',
-                threshold: 0.01
-            });
+            }, { rootMargin: '300px 0px 300px 0px', threshold: 0.01 });
         }
     }
 
@@ -126,32 +114,22 @@ class OptimizedNavigation {
         if (!container || !this.imgObserver) return;
         const images = container.querySelectorAll('img[data-src]');
         if (images.length === 0) return;
-
-        const preloadTask = () => {
-            const viewportHeight = window.innerHeight;
-            const scrollTop = window.scrollY || document.documentElement.scrollTop;
-            const buffer = 500;
-
-            images.forEach(img => {
-                const rect = img.getBoundingClientRect();
-                const imgTop = rect.top + scrollTop;
-                const imgBottom = imgTop + rect.height;
-                if (imgBottom + buffer > scrollTop && imgTop - buffer < scrollTop + viewportHeight) {
-                    const src = img.dataset.src;
-                    if (src && !img.src) {
-                        img.src = src;
-                        img.removeAttribute('data-src');
-                        this.imgObserver.unobserve(img);
-                    }
+        const viewportHeight = window.innerHeight;
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        const buffer = 500;
+        images.forEach(img => {
+            const rect = img.getBoundingClientRect();
+            const imgTop = rect.top + scrollTop;
+            const imgBottom = imgTop + rect.height;
+            if (imgBottom + buffer > scrollTop && imgTop - buffer < scrollTop + viewportHeight) {
+                const src = img.dataset.src;
+                if (src && !img.src) {
+                    img.src = src;
+                    img.removeAttribute('data-src');
+                    this.imgObserver.unobserve(img);
                 }
-            });
-        };
-
-        if (window.requestIdleCallback) {
-            requestIdleCallback(preloadTask, { timeout: 2000 });
-        } else {
-            setTimeout(preloadTask, 200);
-        }
+            }
+        });
     }
 
     bindScrollPreload(container) {
@@ -159,9 +137,7 @@ class OptimizedNavigation {
         let scrollTimer = null;
         const scrollHandler = () => {
             if (scrollTimer) clearTimeout(scrollTimer);
-            scrollTimer = setTimeout(() => {
-                this.preloadNearbyImages(container);
-            }, 200);
+            scrollTimer = setTimeout(() => { this.preloadNearbyImages(container); }, 200);
         };
         window.addEventListener('scroll', scrollHandler, { passive: true });
         container.addEventListener('scroll', scrollHandler, { passive: true });
@@ -179,11 +155,9 @@ class OptimizedNavigation {
         this.bindScrollPreload(container);
     }
 
-    // ===== 核心改进：初始化时自动加载第一个子分类 =====
     async init() {
         if (this.isInitialized) return;
         this.initLazyLoadObserver();
-        // 显示骨架
         this.showSkeleton();
         this.bindEvents();
         this.createSearchBox();
@@ -195,38 +169,25 @@ class OptimizedNavigation {
 
             const firstCategory = this.getFirstCategory();
             if (firstCategory) {
-                // 手动设置选中状态
                 this.selectedLevel1 = firstCategory;
-                // 高亮一级导航
                 document.querySelectorAll('.level1-btn').forEach(el => {
                     el.classList.toggle('active', el.dataset.level1 === firstCategory);
                 });
-                // 渲染二级导航
                 this.renderLevel2(firstCategory);
-
-                // 获取第一个子分类
                 const firstSub = this.getFirstSubCategory(firstCategory);
                 if (firstSub) {
-                    // 加载第一个子分类数据
                     const sites = await this.loadSites(firstSub.id);
                     this.currentSites = sites;
                     this.selectedLevel2 = firstSub.id;
-
-                    // 高亮二级导航
                     document.querySelectorAll('.level2-btn').forEach(el => {
                         el.classList.toggle('active', parseInt(el.dataset.level2) === firstSub.id);
                     });
-
-                    // 渲染站点
                     await this.renderLevel3(firstCategory, firstSub.id);
-
-                    // 后台加载其余子分类数据
                     const allSubIds = this.structure[firstCategory].subcategories.map(s => s.id);
                     const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
                     if (otherSubIds.length) {
-                        this.loadBatchSites(otherSubIds).catch(err => console.warn('后台加载其他子分类失败:', err));
+                        this.loadBatchSites(otherSubIds).catch(() => {});
                     }
-                    // 加载计数
                     if (allSubIds.length) {
                         this.loadSubcategoryCounts(allSubIds).catch(() => {});
                     }
@@ -323,7 +284,6 @@ class OptimizedNavigation {
 
     async loadBatchSites(subIds, forceRefresh = false) {
         if (!subIds || !subIds.length) return {};
-
         if (!forceRefresh) {
             const allCached = subIds.every(id => this.siteCache.has(id));
             if (allCached) {
@@ -332,19 +292,16 @@ class OptimizedNavigation {
                 return result;
             }
         }
-
         const uncachedIds = subIds.filter(id => !this.siteCache.has(id));
         if (!uncachedIds.length) {
             const result = {};
             subIds.forEach(id => { result[id] = this.siteCache.get(id); });
             return result;
         }
-
         try {
             const idsParam = uncachedIds.join(',');
             const response = await Utils.safeFetch(`${this.apiBase}/navigation/batch-sites?ids=${idsParam}`);
             const data = await response.json();
-
             if (data && data.data) {
                 for (const [subId, sites] of Object.entries(data.data)) {
                     const id = parseInt(subId);
@@ -353,13 +310,9 @@ class OptimizedNavigation {
                     }
                 }
             }
-
             const result = {};
-            subIds.forEach(id => {
-                result[id] = this.siteCache.get(id) || [];
-            });
+            subIds.forEach(id => { result[id] = this.siteCache.get(id) || []; });
             return result;
-
         } catch (error) {
             console.warn('批量加载站点失败，降级为逐个加载:', error);
             const result = {};
@@ -376,55 +329,33 @@ class OptimizedNavigation {
 
     async loadSubcategoryCounts(subcategoryIds) {
         if (!subcategoryIds || subcategoryIds.length === 0) return {};
-
         const sortedIds = [...subcategoryIds].sort((a, b) => a - b);
         const cacheKey = sortedIds.join(',');
         const now = Date.now();
-
         const cached = this.countsCache.get(cacheKey);
         if (cached && (now - cached.timestamp) < 60000) {
-            const counts = cached.data;
-            this.updateSubcategoryCounts(counts);
-            return counts;
+            this.updateSubcategoryCounts(cached.data);
+            return cached.data;
         }
-
-        if (this.currentAbortController) {
-            this.currentAbortController.abort();
-        }
+        if (this.currentAbortController) this.currentAbortController.abort();
         this.currentAbortController = new AbortController();
-
         try {
             const idsParam = sortedIds.join(',');
             const response = await fetch(`${this.apiBase}/subcategory/counts?ids=${idsParam}`, {
                 signal: this.currentAbortController.signal,
                 headers: { 'Cache-Control': 'no-cache' }
             });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const counts = await response.json();
-
-            this.countsCache.set(cacheKey, {
-                data: counts,
-                timestamp: now
-            });
-
+            this.countsCache.set(cacheKey, { data: counts, timestamp: now });
             this.updateSubcategoryCounts(counts);
             return counts;
-
         } catch (error) {
-            if (error.name === 'AbortError') {
-                console.log('计数请求已取消（切换分类）');
-                return {};
-            }
+            if (error.name === 'AbortError') return {};
             console.warn('获取子分类计数失败:', error);
             return {};
         } finally {
-            if (this.currentAbortController) {
-                this.currentAbortController = null;
-            }
+            this.currentAbortController = null;
         }
     }
 
@@ -434,41 +365,34 @@ class OptimizedNavigation {
         }
     }
 
-    // 用户点击切换一级分类（保留原有交互）
     async selectLevel1(level1, isUserClick = false) {
         if (this.currentAbortController) {
             this.currentAbortController.abort();
             this.currentAbortController = null;
         }
-
         if (this.selectedLevel1 === level1) return;
         this.isNavigationClick = true;
         document.querySelectorAll('.level1-btn').forEach(b => b.classList.toggle('active', b.dataset.level1 === level1));
         this.selectedLevel1 = level1;
         this.renderLevel2(level1);
         this.showSkeleton();
-
         const firstSub = this.getFirstSubCategory(level1);
         if (firstSub) {
-            // 立即加载第一个子分类并渲染
             const firstSites = await this.loadSites(firstSub.id);
             this.currentSites = firstSites;
             await this.renderLevel3(this.selectedLevel1, firstSub.id);
-            // 后台加载其余子分类
             const allSubIds = this.structure[level1].subcategories.map(s => s.id);
             const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
             if (otherSubIds.length) {
-                this.loadBatchSites(otherSubIds).catch(err => console.warn('后台加载其他子分类失败:', err));
+                this.loadBatchSites(otherSubIds).catch(() => {});
             }
         } else {
             this.renderEmptyState();
         }
-
         const subIds = this.structure[level1].subcategories.map(s => s.id);
         if (subIds.length) {
             this.loadSubcategoryCounts(subIds).catch(() => {});
         }
-
         setTimeout(() => { this.isNavigationClick = false; }, 100);
     }
 
@@ -536,7 +460,6 @@ class OptimizedNavigation {
         const start = (this.currentPage - 1) * this.pageSize;
         const end = start + this.pageSize;
         const pageSites = this.currentSites.slice(start, end);
-
         const hasMoreData = end < this.currentSites.length;
         this.hasMore = hasMoreData;
 
@@ -568,19 +491,12 @@ class OptimizedNavigation {
         div.id = 'scroll-loading-trigger';
         div.className = 'scroll-loading-trigger';
         div.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载更多...</span>';
-        div.style.textAlign = 'center';
-        div.style.display = 'flex';
-        div.style.justifyContent = 'center';
-        div.style.alignItems = 'center';
-        div.style.gap = '8px';
-        div.style.padding = '16px';
+        div.style.cssText = 'text-align:center;display:flex;justify-content:center;align-items:center;gap:8px;padding:16px;';
         return div;
     }
 
     bindInfiniteScroll() {
-        if (this.scrollListener) {
-            window.removeEventListener('scroll', this.scrollListener);
-        }
+        if (this.scrollListener) window.removeEventListener('scroll', this.scrollListener);
         let ticking = false;
         this.scrollListener = () => {
             if (ticking) return;
@@ -597,9 +513,7 @@ class OptimizedNavigation {
         if (this.isLoadingMore || this.isSearching) return;
         if (!this.hasMore && !this.hasShownNoMoreToast) {
             this.hasShownNoMoreToast = true;
-            if (window.toast && window.toast.show) {
-                window.toast.show('～ 到·底·了 ～', 'info', 2000);
-            }
+            if (window.toast) window.toast.show('～ 到·底·了 ～', 'info', 2000);
             return;
         }
         const trigger = document.getElementById('scroll-loading-trigger');
@@ -624,7 +538,7 @@ class OptimizedNavigation {
         if (start >= this.currentSites.length) {
             this.hasMore = false;
             if (trigger) trigger.remove();
-            if (!this.hasShownNoMoreToast && window.toast && window.toast.show) {
+            if (!this.hasShownNoMoreToast && window.toast) {
                 this.hasShownNoMoreToast = true;
                 window.toast.show('～ 到·底·了 ～', 'info', 2000);
             }
@@ -859,7 +773,6 @@ class OptimizedNavigation {
                 hint.textContent = `找到 ${results.length} 个结果，关键词已高亮`;
             }
         } catch (e) {
-            console.error(e);
             container.innerHTML = '<div class="empty-state">搜索失败，请重试</div>';
         } finally {
             this.isSearching = false;
@@ -984,9 +897,7 @@ class OptimizedNavigation {
 
     renderEmptyState() {
         const container = document.getElementById('level3Content');
-        if (container) {
-            container.innerHTML = '';
-        }
+        if (container) container.innerHTML = '';
     }
 
     showError() {
