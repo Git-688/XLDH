@@ -1,13 +1,7 @@
 /**
- * 音乐播放器 - 星聚导航专用（进度条改为 width 方式，消除空白间隙）
- * 包含：精确进度条、下载进度（通过 Worker 代理）、搜索、播放列表、用户手势处理、歌词代理、歌单显示修复、倍速控件修复
- * 进度条点击和拖拽已优化，支持触摸设备
- * 修改：挂载到 window.Starlink.musicPlayer，支持单例，修复内存泄漏，添加歌单骨架屏
+ * 音乐播放器 - 星聚导航专用
  */
-
-// ==================== 自定义下拉选择器组件（必须在播放器类之前定义） ====================
 let currentOpenCustomSelect = null;
-let customSelectInstances = new Map();
 
 class CustomSelect {
     constructor(selectElement) {
@@ -20,44 +14,29 @@ class CustomSelect {
         this.value = selectElement.value;
         this.isSpeedControl = false;
         this.boundHandleOutsideClick = null;
-        this.boundScrollListener = null;
-        this.boundResizeListener = null;
         this.init();
-        const id = selectElement.id || selectElement.name || Math.random().toString(36);
-        customSelectInstances.set(id, this);
     }
 
     init() {
         this.selectElement.style.display = 'none';
         this.container = document.createElement('div');
         this.container.className = 'custom-select';
-        this.container.setAttribute('data-select-id', this.selectElement.id || '');
-
         this.trigger = document.createElement('div');
         this.trigger.className = 'custom-select-trigger';
-        this.trigger.innerHTML = `
-            <span class="custom-select-value">${this.getSelectedText()}</span>
-            <span class="arrow"></span>
-        `;
+        this.trigger.innerHTML = `<span class="custom-select-value">${this.getSelectedText()}</span><span class="arrow"></span>`;
         this.container.appendChild(this.trigger);
         this.selectElement.parentNode.insertBefore(this.container, this.selectElement.nextSibling);
-
-        this.isSpeedControl = this.container.closest('.speed-control') !== null;
-
+        this.isSpeedControl = !!this.container.closest('.speed-control');
         this.dropdown = document.createElement('div');
         this.dropdown.className = 'custom-select-dropdown';
-        this.populateOptions();
-
         if (this.isSpeedControl) {
             document.body.appendChild(this.dropdown);
         } else {
             this.container.appendChild(this.dropdown);
         }
-
+        this.populateOptions();
         this.bindEvents();
-        this.selectElement.addEventListener('change', () => {
-            this.setValue(this.selectElement.value, false);
-        });
+        this.selectElement.addEventListener('change', () => this.setValue(this.selectElement.value, false));
     }
 
     getSelectedText() {
@@ -68,7 +47,6 @@ class CustomSelect {
     populateOptions() {
         this.dropdown.innerHTML = '';
         this.options = [];
-
         for (let i = 0; i < this.selectElement.options.length; i++) {
             const option = this.selectElement.options[i];
             const optionDiv = document.createElement('div');
@@ -77,15 +55,13 @@ class CustomSelect {
                 optionDiv.classList.add('selected');
             }
             optionDiv.textContent = option.textContent;
-            optionDiv.setAttribute('data-value', option.value);
-            optionDiv.setAttribute('data-index', i);
-
+            optionDiv.dataset.value = option.value;
+            optionDiv.dataset.index = i;
             optionDiv.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.selectOption(i);
                 this.closeDropdown();
             });
-
             this.dropdown.appendChild(optionDiv);
             this.options.push(optionDiv);
         }
@@ -93,19 +69,15 @@ class CustomSelect {
 
     selectOption(index) {
         if (index === this.selectElement.selectedIndex) return;
-
         this.selectElement.selectedIndex = index;
         this.value = this.selectElement.value;
-
         const valueSpan = this.trigger.querySelector('.custom-select-value');
         if (valueSpan) {
             valueSpan.textContent = this.selectElement.options[index].textContent;
         }
-
         this.options.forEach((opt, i) => {
             opt.classList.toggle('selected', i === index);
         });
-
         const changeEvent = new Event('change', { bubbles: true });
         this.selectElement.dispatchEvent(changeEvent);
     }
@@ -149,11 +121,6 @@ class CustomSelect {
         this.dropdown.classList.add('open');
         currentOpenCustomSelect = this;
 
-        this.boundScrollListener = () => this.updateDropdownPosition();
-        this.boundResizeListener = () => this.updateDropdownPosition();
-        window.addEventListener('scroll', this.boundScrollListener, true);
-        window.addEventListener('resize', this.boundResizeListener);
-
         this.boundHandleOutsideClick = (e) => {
             if (!this.container.contains(e.target) && !this.dropdown.contains(e.target)) {
                 this.closeDropdown();
@@ -167,9 +134,9 @@ class CustomSelect {
         this.isOpen = false;
         this.trigger.classList.remove('open');
         this.dropdown.classList.remove('open');
-        if (this.boundScrollListener) window.removeEventListener('scroll', this.boundScrollListener, true);
-        if (this.boundResizeListener) window.removeEventListener('resize', this.boundResizeListener);
-        if (this.boundHandleOutsideClick) document.removeEventListener('click', this.boundHandleOutsideClick);
+        if (this.boundHandleOutsideClick) {
+            document.removeEventListener('click', this.boundHandleOutsideClick);
+        }
         if (currentOpenCustomSelect === this) {
             currentOpenCustomSelect = null;
         }
@@ -193,8 +160,6 @@ class CustomSelect {
         if (this.container && this.container.parentNode) this.container.remove();
         if (this.dropdown && this.dropdown.parentNode) this.dropdown.remove();
         this.selectElement.style.display = '';
-        const id = this.selectElement.id || this.selectElement.name || '';
-        if (id) customSelectInstances.delete(id);
         this.selectElement = null;
         this.container = null;
         this.trigger = null;
@@ -203,17 +168,6 @@ class CustomSelect {
     }
 }
 
-function initCustomSelects() {
-    const selects = document.querySelectorAll('.playlist-selector select, .speed-selector select');
-    selects.forEach(select => {
-        const existing = select.parentNode.querySelector('.custom-select');
-        if (!existing) {
-            new CustomSelect(select);
-        }
-    });
-}
-
-// ==================== 主播放器类 ====================
 class MusicPlayer {
     constructor() {
         if (window.Starlink && window.Starlink.musicPlayer) return window.Starlink.musicPlayer;
@@ -276,12 +230,12 @@ class MusicPlayer {
         this.consecutiveErrors = 0;
         this.maxConsecutiveErrors = 3;
         this.maxErrorShown = false;
-        
         this.dragPercent = 0;
         this.clickPending = false;
         this.dragRAF = null;
         this.updateAnimationFrame = null;
         this.lastTimeUpdate = 0;
+        this.scrollAnimationId = null;
         
         const apis = ['netease', 'qq', 'kg', 'kuwo', 'migu', 'local'];
         apis.forEach(api => this.isSearchMode.set(api, false));
@@ -309,8 +263,7 @@ class MusicPlayer {
             speedSelect: document.getElementById('speed-select'),
             lyricsContainer: document.getElementById('lyrics-container'),
             lyricsSection: document.querySelector('.lyrics-section'),
-            player: document.querySelector('.music-player'),
-            notification: document.getElementById('notification')
+            player: document.querySelector('.music-player')
         };
         if (this.elements.lyricsContainer) {
             this.elements.lyricsContainer.innerHTML = '';
@@ -526,8 +479,7 @@ class MusicPlayer {
             if (error.name === 'NotAllowedError') {
                 this.userGestureResolved = false;
                 this.userGesturePromise = null;
-                const toast = window.Starlink?.toast || window.toast;
-                if (toast && toast.show) toast.show('请在页面任意位置点击后再次播放', 'info');
+                if (window.toast) window.toast.show('请在页面任意位置点击后再次播放', 'info');
             } else {
                 this.handlePlaybackError(error);
             }
@@ -578,8 +530,7 @@ class MusicPlayer {
         this.playMode = (this.playMode + 1) % 3;
         this.savePlayMode(this.playMode);
         this.updateModeIcon();
-        const toast = window.Starlink?.toast || window.toast;
-        if (toast && toast.show) toast.show(`播放模式: ${this.getPlayModeText()}`, 'info');
+        if (window.toast) window.toast.show(`播放模式: ${this.getPlayModeText()}`, 'info');
     }
 
     getPlayModeText() { return ['顺序播放', '随机播放', '单曲循环'][this.playMode]; }
@@ -609,8 +560,7 @@ class MusicPlayer {
 
     toggleSearchMode(apiId) {
         if (apiId === 'migu' || apiId === 'local') {
-            const toast = window.Starlink?.toast || window.toast;
-            if (toast && toast.show) toast.show('该功能不支持搜索', 'info');
+            if (window.toast) window.toast.show('该功能不支持搜索', 'info');
             return;
         }
         const el = this.apiElements[apiId];
@@ -677,23 +627,20 @@ class MusicPlayer {
             if (apiId === 'local') {
                 playlist = await this.pluginManager.getPlaylist(apiId, 'local');
                 if (playlist.length && !this.hasNotifiedLocal) {
-                    const toast = window.Starlink?.toast || window.toast;
-                    if (toast && toast.show) toast.show(`已加载 ${playlist.length} 首本地歌曲`, 'info');
+                    if (window.toast) window.toast.show(`已加载 ${playlist.length} 首本地歌曲`, 'info');
                     this.hasNotifiedLocal = true;
                 }
             } else if (apiId === 'migu') {
                 playlist = await this.pluginManager.getPlaylist(apiId, 'hot');
                 if (playlist.length && !this.hasNotifiedQishui) {
-                    const toast = window.Starlink?.toast || window.toast;
-                    if (toast && toast.show) toast.show(`已加载 ${playlist.length} 首抖音热歌`, 'info');
+                    if (window.toast) window.toast.show(`已加载 ${playlist.length} 首抖音热歌`, 'info');
                     this.hasNotifiedQishui = true;
                 }
             } else {
                 const playlistId = el.playlistSelect?.value || '3778678';
                 playlist = await this.pluginManager.getPlaylist(apiId, playlistId);
                 if (playlist.length && !sessionStorage.getItem(`notified_${apiId}_${playlistId}`)) {
-                    const toast = window.Starlink?.toast || window.toast;
-                    if (toast && toast.show) toast.show(`已加载 ${playlist.length} 首歌曲`, 'info');
+                    if (window.toast) window.toast.show(`已加载 ${playlist.length} 首歌曲`, 'info');
                     sessionStorage.setItem(`notified_${apiId}_${playlistId}`, 'true');
                 }
             }
@@ -708,8 +655,7 @@ class MusicPlayer {
 
     async searchApi(apiId) {
         if (apiId === 'migu' || apiId === 'local') {
-            const toast = window.Starlink?.toast || window.toast;
-            if (toast && toast.show) toast.show('该功能不支持搜索', 'info');
+            if (window.toast) window.toast.show('该功能不支持搜索', 'info');
             return;
         }
         const el = this.apiElements[apiId];
@@ -734,8 +680,7 @@ class MusicPlayer {
             });
             this.renderSearchResults(apiId, processedResults);
             if (!processedResults.length) {
-                const toast = window.Starlink?.toast || window.toast;
-                if (toast && toast.show) toast.show(`未找到与"${Utils.escapeHtml(keyword)}"相关的歌曲`, 'info');
+                if (window.toast) window.toast.show(`未找到与"${Utils.escapeHtml(keyword)}"相关的歌曲`, 'info');
             }
         } catch (error) {
             Utils.handleApiError(error, '搜索失败', true);
@@ -743,7 +688,6 @@ class MusicPlayer {
         }
     }
 
-    // 骨架屏生成方法
     generatePlaylistSkeleton() {
         let html = '';
         for (let i = 0; i < 8; i++) {
@@ -765,7 +709,6 @@ class MusicPlayer {
         if (!el || !el.playlistContainer) return;
         const container = el.playlistContainer;
         
-        // 显示骨架屏
         container.innerHTML = this.generatePlaylistSkeleton();
         
         if (!playlist.length) {
@@ -912,8 +855,7 @@ class MusicPlayer {
         this.consecutiveErrors++;
         if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
             if (!this.maxErrorShown) {
-                const toast = window.Starlink?.toast || window.toast;
-                if (toast && toast.show) toast.show('连续多首资源失效，已停止自动播放', 'error');
+                if (window.toast) window.toast.show('连续多首资源失效，已停止自动播放', 'error');
                 this.maxErrorShown = true;
             }
             this.autoPlayNext = false;
@@ -939,11 +881,9 @@ class MusicPlayer {
         }
     }
 
-    // ==================== 下载功能（增强进度提示） ====================
     async downloadCurrentSong() {
         if (!this.currentPlaylist[this.currentIndex]) {
-            const toast = window.Starlink?.toast || window.toast;
-            if (toast && toast.show) toast.show('没有可下载的歌曲', 'warning');
+            if (window.toast) window.toast.show('没有可下载的歌曲', 'warning');
             return;
         }
         await this.downloadSong(this.currentPlaylist[this.currentIndex]);
@@ -956,8 +896,7 @@ class MusicPlayer {
         let indeterminate = false;
 
         try {
-            const toast = window.Starlink?.toast || window.toast;
-            if (toast && toast.show) toast.show(`正在获取下载地址: ${song.title}`, 'info');
+            if (window.toast) window.toast.show(`正在获取下载地址: ${song.title}`, 'info');
             
             let downloadUrl = null;
             if (song.id && (song.source === 'netease' || this.currentApi === 'netease')) {
@@ -970,7 +909,7 @@ class MusicPlayer {
                 throw new Error('无法获取有效的下载地址');
             }
             
-            if (toast && toast.show) toast.show(`开始下载: ${song.title}`, 'info');
+            if (window.toast) window.toast.show(`开始下载: ${song.title}`, 'info');
             progress = this.createDownloadProgress();
             
             const apiBase = Utils.getApiBase();
@@ -1012,12 +951,11 @@ class MusicPlayer {
             URL.revokeObjectURL(url);
             
             progress.remove();
-            if (toast && toast.show) toast.show(`下载完成: ${song.title}`, 'success');
+            if (window.toast) window.toast.show(`下载完成: ${song.title}`, 'success');
             
         } catch (err) {
             console.error('下载失败:', err);
-            const toast = window.Starlink?.toast || window.toast;
-            if (toast && toast.show) toast.show(`下载失败: ${song.title}，请稍后重试`, 'error');
+            if (window.toast) window.toast.show(`下载失败: ${song.title}，请稍后重试`, 'error');
             if (progress) progress.remove();
         }
     }
@@ -1073,7 +1011,6 @@ class MusicPlayer {
         }
     }
 
-    // ==================== 进度条优化（精准点击和拖拽，使用 width 方式，消除空白间隙） ====================
     updateProgress() {
         if (this.isDraggingProgress || this.updateAnimationFrame) return;
         this.updateAnimationFrame = requestAnimationFrame(() => {
@@ -1115,7 +1052,6 @@ class MusicPlayer {
     hideVolumeSlider() { this.elements.volumeSliderContainer.style.display = 'none'; this.isVolumeSliderVisible = false; }
     toggleVolumeSlider() { this.isVolumeSliderVisible ? this.hideVolumeSlider() : this.showVolumeSlider(); }
 
-    // 优化进度条事件绑定
     bindProgressEvents() {
         const progressBar = this.elements.progressBar;
         progressBar.style.touchAction = 'none';
@@ -1124,7 +1060,6 @@ class MusicPlayer {
             e.preventDefault();
             if (!this.audio.duration || isNaN(this.audio.duration) || this.audio.duration === Infinity) return;
             this.isDraggingProgress = true;
-            // 拖拽时移除过渡动画
             this.elements.progress.style.transition = 'none';
             this.updateSeek(e);
             if (e.type === 'touchstart') document.body.style.overflow = 'hidden';
@@ -1143,7 +1078,6 @@ class MusicPlayer {
         const handleEnd = () => {
             if (!this.isDraggingProgress) return;
             this.isDraggingProgress = false;
-            // 恢复过渡动画
             this.elements.progress.style.transition = '';
             const duration = this.audio.duration;
             if (duration && !isNaN(duration) && duration > 0) {
@@ -1253,12 +1187,7 @@ class MusicPlayer {
         
         const initCustomSelectsWithRetry = () => {
             if (document.querySelector('.music-player.show')) {
-                if (typeof initCustomSelects === 'function') {
-                    initCustomSelects();
-                    console.log('CustomSelects initialized');
-                } else {
-                    console.warn('initCustomSelects not defined');
-                }
+                this.initCustomSelects();
             } else {
                 setTimeout(initCustomSelectsWithRetry, 300);
             }
@@ -1272,9 +1201,18 @@ class MusicPlayer {
             this.savePlayState(false);
             this.userGestureResolved = false;
             this.updatePlayButton();
-            const toast = window.Starlink?.toast || window.toast;
-            if (toast && toast.show) toast.show('点击播放按钮开始音乐', 'info');
+            if (window.toast) window.toast.show('点击播放按钮开始音乐', 'info');
         }
+    }
+
+    initCustomSelects() {
+        const selects = document.querySelectorAll('.playlist-selector select, .speed-selector select');
+        selects.forEach(select => {
+            const existing = select.parentNode.querySelector('.custom-select');
+            if (!existing) {
+                new CustomSelect(select);
+            }
+        });
     }
 
     getApiName(apiId) {
@@ -1292,16 +1230,6 @@ class MusicPlayer {
         if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
         if (this.scrollAnimationId) cancelAnimationFrame(this.scrollAnimationId);
         
-        if (this.boundResizeListener) {
-            window.removeEventListener('resize', this.boundResizeListener);
-        }
-        if (this.boundScrollListener) {
-            window.removeEventListener('scroll', this.boundScrollListener, true);
-        }
-        if (this.boundHandleOutsideClick) {
-            document.removeEventListener('click', this.boundHandleOutsideClick);
-        }
-        
         if (this.audio) {
             this.audio.pause();
             this.audio.src = '';
@@ -1315,18 +1243,8 @@ class MusicPlayer {
         this.hasNotifiedLocal = false;
         this.hasNotifiedQishui = false;
         
-        if (typeof customSelectInstances !== 'undefined' && customSelectInstances) {
-            customSelectInstances.forEach((instance, id) => {
-                if (instance && typeof instance.destroy === 'function') {
-                    instance.destroy();
-                }
-            });
-            customSelectInstances.clear();
-        }
-        
         if (window.Starlink?.musicPlayer === this) window.Starlink.musicPlayer = null;
         if (window.musicPlayer === this) window.musicPlayer = null;
-        console.log('音乐播放器资源已清理');
     }
 }
 
