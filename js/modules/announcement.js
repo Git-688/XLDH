@@ -1,4 +1,3 @@
-// announcement.js - 简约公告模块（单公告模式，支持未读标记，保留原有样式并增加更新标题与绿色图标）
 class AnnouncementModule {
     constructor() {
         if (window.Starlink && window.Starlink.announcement) return window.Starlink.announcement;
@@ -71,7 +70,6 @@ class AnnouncementModule {
     markAsRead() {
         if (this.currentAnnouncement && this.currentAnnouncement.id) {
             localStorage.setItem('announcement_last_seen_id', this.currentAnnouncement.id);
-            localStorage.setItem('announcement_last_seen_time', Date.now());
             this.setUnreadFlag(false);
         }
     }
@@ -161,23 +159,17 @@ class AnnouncementModule {
         if (!this.modalElement) return;
         const closeBtn = this.modalElement.querySelector('#announcementClose');
         const ackBtn = this.modalElement.querySelector('#announcementAckBtn');
-        const closeHandler = () => {
-            this.hide();
-        };
+        const closeHandler = () => { this.hide(); };
         if (closeBtn) closeBtn.addEventListener('click', closeHandler);
         if (ackBtn) ackBtn.addEventListener('click', closeHandler);
         this.modalElement.addEventListener('click', (e) => {
-            if (e.target === this.modalElement) {
-                this.hide();
-            }
+            if (e.target === this.modalElement) this.hide();
         });
     }
 
     setupGlobalEvents() {
         this.escapeHandler = (e) => {
-            if (e.key === 'Escape' && this.isVisible) {
-                this.hide();
-            }
+            if (e.key === 'Escape' && this.isVisible) this.hide();
         };
         document.addEventListener('keydown', this.escapeHandler);
         
@@ -225,9 +217,7 @@ class AnnouncementModule {
         }, 400);
     }
 
-    toggleModal() {
-        this.isVisible ? this.hide() : this.showModal();
-    }
+    toggleModal() { this.isVisible ? this.hide() : this.showModal(); }
 
     closeOtherModals() {
         if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
@@ -255,12 +245,8 @@ class AnnouncementModule {
 
     destroy() {
         this.hide();
-        if (this.escapeHandler) {
-            document.removeEventListener('keydown', this.escapeHandler);
-        }
-        if (this.modalElement?.parentNode) {
-            this.modalElement.parentNode.removeChild(this.modalElement);
-        }
+        if (this.escapeHandler) document.removeEventListener('keydown', this.escapeHandler);
+        if (this.modalElement?.parentNode) this.modalElement.parentNode.removeChild(this.modalElement);
         this.modalElement = null;
     }
 }
@@ -268,15 +254,11 @@ class AnnouncementModule {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         if (!window.Starlink) window.Starlink = {};
-        if (!window.Starlink.announcement) {
-            window.Starlink.announcement = new AnnouncementModule();
-        }
+        if (!window.Starlink.announcement) window.Starlink.announcement = new AnnouncementModule();
         window.announcementModule = window.Starlink.announcement;
     });
 } else {
     if (!window.Starlink) window.Starlink = {};
-    if (!window.Starlink.announcement) {
-        window.Starlink.announcement = new AnnouncementModule();
-    }
+    if (!window.Starlink.announcement) window.Starlink.announcement = new AnnouncementModule();
     window.announcementModule = window.Starlink.announcement;
 }
