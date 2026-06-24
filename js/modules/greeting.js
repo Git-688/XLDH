@@ -1,12 +1,8 @@
-// greeting.js - 问候区模块（木鱼、节日、时钟、展开/收起）
 class GreetingModule {
     constructor() {
         if (window.Starlink && window.Starlink.greeting) return window.Starlink.greeting;
         this.initialized = false;
         this.eventBound = false;
-        this.holidayRefreshTimer = null;
-        this.holidayCheckTimer = null;
-        this.currentHoliday = null;
         this.audioCtx = null;
         this.todayHolidays = [];
         this.nextHoliday = null;
@@ -34,9 +30,7 @@ class GreetingModule {
                 if (this.audioCtx.state !== 'running') {
                     this.audioCtx.suspend();
                     const resumeCtx = () => {
-                        if (this.audioCtx && this.audioCtx.state === 'suspended') {
-                            this.audioCtx.resume();
-                        }
+                        if (this.audioCtx && this.audioCtx.state === 'suspended') this.audioCtx.resume();
                         document.removeEventListener('click', resumeCtx);
                         document.removeEventListener('touchstart', resumeCtx);
                     };
@@ -192,9 +186,7 @@ class GreetingModule {
                 expiresAt: Date.now() + 24 * 60 * 60 * 1000
             };
             localStorage.setItem('holidayDataCache', JSON.stringify(cache));
-        } catch (error) {
-            console.error('缓存节日数据失败:', error);
-        }
+        } catch (error) {}
     }
 
     getCachedHolidayData() {
@@ -207,9 +199,7 @@ class GreetingModule {
                 return null;
             }
             return cache;
-        } catch (error) {
-            return null;
-        }
+        } catch (error) { return null; }
     }
 
     updateHolidayDisplay() {
@@ -414,10 +404,7 @@ class GreetingModule {
     async checkAndUpdateHoliday() {
         try {
             const cached = this.getCachedHolidayData();
-            if (!cached) {
-                await this.setupHolidayCountdown();
-                return;
-            }
+            if (!cached) { await this.setupHolidayCountdown(); return; }
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             if (cached.timestamp && today > new Date(cached.timestamp)) {
@@ -428,9 +415,7 @@ class GreetingModule {
             if (cached.expiresAt - Date.now() < 10 * 60 * 1000) {
                 await this.setupHolidayCountdown();
             }
-        } catch (error) {
-            console.error('检查节日状态失败:', error);
-        }
+        } catch (error) {}
     }
 
     updateTime() {
@@ -458,12 +443,9 @@ class GreetingModule {
         try {
             localStorage.removeItem('holidayDataCache');
             await this.setupHolidayCountdown();
-            const toast = window.Starlink?.toast || window.toast;
-            if (toast && toast.show) toast.show('节日数据已刷新', 'success');
+            if (window.toast) window.toast.show('节日数据已刷新', 'success');
         } catch (error) {
-            console.error('手动刷新节日数据失败:', error);
-            const toast = window.Starlink?.toast || window.toast;
-            if (toast && toast.show) toast.show('刷新失败，请重试', 'error');
+            if (window.toast) window.toast.show('刷新失败，请重试', 'error');
         }
     }
 
@@ -474,14 +456,11 @@ class GreetingModule {
             const fishData = { merit: 0, luck: 0, wealth: 0, health: 0, lastUpdate: new Date().toDateString() };
             Storage.set('woodenFish', fishData);
             this.updateFishCounts(fishData);
-            const toast = window.Starlink?.toast || window.toast;
-            if (toast && toast.show) toast.show('木鱼计数已重置', 'success');
+            if (window.toast) window.toast.show('木鱼计数已重置', 'success');
         }
     }
 
     destroy() {
-        if (this.holidayRefreshTimer) clearTimeout(this.holidayRefreshTimer);
-        if (this.holidayCheckTimer) clearInterval(this.holidayCheckTimer);
         if (this.audioCtx) { this.audioCtx.close().catch(() => {}); this.audioCtx = null; }
         this.initialized = false;
         this.eventBound = false;
@@ -490,15 +469,7 @@ class GreetingModule {
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.Starlink) window.Starlink = {};
-    if (!window.Starlink.greeting) {
-        window.Starlink.greeting = new GreetingModule();
-    }
+    if (!window.Starlink.greeting) window.Starlink.greeting = new GreetingModule();
     window.greetingModule = window.Starlink.greeting;
-    const refreshBtn = document.getElementById('refreshHolidayBtn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => {
-            window.Starlink.greeting.refreshHolidayData();
-        });
-    }
 });
 window.GreetingModule = GreetingModule;
