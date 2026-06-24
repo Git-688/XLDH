@@ -1,3 +1,4 @@
+/* stats.js */
 const WORKER_URL = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
 
 function getDeviceId() {
@@ -44,10 +45,15 @@ async function postToWorker(endpoint, extraData = {}) {
     try {
         await fetch(`${WORKER_URL}${endpoint}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Device-Id': getDeviceId() },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Device-Id': getDeviceId()
+            },
             body: JSON.stringify(extraData)
         });
-    } catch (e) {}
+    } catch (e) {
+        console.error('请求失败:', e);
+    }
 }
 
 function sendOfflineSignal() {
@@ -72,15 +78,24 @@ async function refreshStats() {
         const onlineEl = document.getElementById('onlineCount');
         const todayEl = document.getElementById('todayCount');
         const totalEl = document.getElementById('totalCount');
+        const siteCountEl = document.getElementById('siteCount');
         if (onlineEl) onlineEl.textContent = data.online;
         if (todayEl) todayEl.textContent = data.today_uv;
         if (totalEl) totalEl.textContent = data.total_pv;
-    } catch (e) {}
+        if (siteCountEl && data.total_sites !== undefined) {
+            siteCountEl.textContent = data.total_sites;
+        }
+    } catch (e) {
+        console.error('获取统计失败:', e);
+    }
 }
 
 function handleVisibilityChange() {
     if (document.hidden) {
-        if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+        }
     } else {
         if (!heartbeatInterval) {
             postToWorker('/heartbeat');
