@@ -1,4 +1,4 @@
-/* 星聚导航全局样式 - 精简版 */
+/* style.css - 星聚导航全局样式 */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -753,9 +753,6 @@ p {
     border-color: var(--border-color);
 }
 
-/* ============================================================
-   统一骨架屏样式（第六步统一管理）
-   ============================================================ */
 .skeleton {
     background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border-color) 50%, var(--bg-secondary) 75%);
     background-size: 200% 100%;
@@ -767,15 +764,14 @@ p {
     100% { background-position: -200% 0; }
 }
 
-/* 卡片骨架 */
 .skeleton-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
     padding: 12px 10px 8px;
     min-height: 120px;
-    pointer-events: none;      /* === 第六步新增 === */
-    opacity: 0.7;              /* === 第六步新增 === */
+    pointer-events: none;
+    opacity: 0.7;
 }
 .skeleton-icon {
     width: 38px;
@@ -819,12 +815,10 @@ p {
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s infinite;
 }
-/* === 第六步新增：分割线骨架 === */
 .skeleton-divider {
     opacity: 0.3;
 }
 
-/* 标签骨架 */
 .skeleton-tag {
     height: 48px;
     border-radius: 6px;
@@ -833,7 +827,6 @@ p {
     animation: skeleton-loading 1.5s infinite;
 }
 
-/* 歌单骨架 */
 .skeleton-song-item {
     display: flex;
     align-items: center;
@@ -869,7 +862,6 @@ p {
     animation: skeleton-loading 1.5s infinite;
 }
 
-/* 笔记骨架 */
 .skeleton-notebook-item {
     height: 80px;
     margin-bottom: 10px;
