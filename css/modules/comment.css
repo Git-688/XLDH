@@ -1,4 +1,4 @@
-/* ========== 评论模块特化样式 ========== */
+/* comment.css */
 :root {
   --waline-theme-color: var(--primary-color, #4361ee);
 }
@@ -14,7 +14,6 @@
   --waline-text-color-light: var(--text-secondary, #666666);
 }
 
-/* 发布框样式 - 大卡片直角，紧贴模态框 */
 #waline-comment .wl-panel {
   border: none !important;
   box-shadow: none !important;
@@ -26,12 +25,10 @@
   border-radius: 0 !important;
 }
 
-/* 去除内容区多余留白 */
 #commentModal.feedback-modal .feedback-modal-body {
   padding-top: 0 !important;
 }
 
-/* 重置 Waline 内部间距 */
 #waline-comment .wl-header,
 #waline-comment .wl-comment-item,
 #waline-comment .wl-comment-item .wl-content,
@@ -40,7 +37,6 @@
   padding: 0 !important;
 }
 
-/* ===== 表情包选项卡样式 ===== */
 .wl-emoji-container {
   display: flex;
   flex-wrap: wrap;
@@ -102,7 +98,6 @@
   vertical-align: middle;
 }
 
-/* 表情搜索面板 */
 .wl-search {
   position: relative;
   margin-top: 8px;
@@ -133,7 +128,6 @@
   margin-top: 8px;
 }
 
-/* 修复表情弹窗被裁切的问题 */
 .wl-emoji-popup {
   overflow: visible !important;
 }
@@ -142,7 +136,6 @@
   overflow: visible !important;
 }
 
-/* 移动端适配 */
 @media (max-width: 600px) {
   #waline-comment { --waline-font-size: 0.9rem; }
   .wl-emoji-content { grid-template-columns: repeat(auto-fill, minmax(30px, 1fr)); }
@@ -150,7 +143,6 @@
   .wl-emoji-tab { padding: 2px 8px; font-size: 11px; }
 }
 
-/* 降级提示（Waline 未加载时的占位） */
 .waline-comment-fallback {
   padding: 20px;
   text-align: center;
@@ -158,7 +150,6 @@
   font-size: 13px;
 }
 
-/* ========== 模态框整体边距清零（与 style.css 互补） ========== */
 #commentModal.feedback-modal .feedback-modal-content {
   padding: 0;
 }
@@ -176,7 +167,6 @@
   margin: 0;
 }
 
-/* ========== 评论模态框特殊定位（导航栏下方，上下间距相等，移动端左右边距与主页一致） ========== */
 #commentModal {
   align-items: center;
   justify-content: flex-start;
@@ -184,7 +174,6 @@
   box-sizing: border-box;
 }
 
-/* 桌面端：内容区垂直居中（上下边距相等） */
 @media (min-width: 769px) {
   #commentModal {
     display: flex;
@@ -199,7 +188,6 @@
   }
 }
 
-/* 移动端：左右边距与主页容器一致，上下间距相等，高度自适应 */
 @media (max-width: 768px) {
   #commentModal {
     padding-left: var(--container-padding-xs, 16px);
@@ -218,7 +206,6 @@
   }
 }
 
-/* 小屏手机进一步优化（380px以下） */
 @media (max-width: 480px) {
   #commentModal {
     padding-left: var(--container-padding-xs, 16px);
@@ -226,14 +213,12 @@
   }
 }
 
-/* 横屏小高度时，限制最大高度防止溢出 */
 @media (max-height: 500px) and (orientation: landscape) {
   #commentModal .feedback-modal-content {
     max-height: calc(100vh - 70px);
   }
 }
 
-/* 滚动条美化（可选） */
 #commentModal .feedback-modal-content::-webkit-scrollbar {
   width: 4px;
 }
@@ -246,7 +231,6 @@
   border-radius: 4px;
 }
 
-/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
 .dark-mode #waline-comment {
   --waline-bgcolor: #2a2a2a;
   --waline-bgcolor-light: #3a3a3a;
