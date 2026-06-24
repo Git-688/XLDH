@@ -1,11 +1,13 @@
+/* search.js */
 class NewSearchModule {
     constructor() {
         if (window.Starlink && window.Starlink.search) return window.Starlink.search;
+        
         this.engines = [
-            { key: 'baidu', label: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'fas fa-search' },
-            { key: 'google', label: '谷歌', url: 'https://www.google.com/search?q=', icon: 'fab fa-google' },
-            { key: '360', label: '360', url: 'https://www.so.com/s?q=', icon: 'fas fa-shield-alt' },
-            { key: 'douyin', label: '抖音', url: 'https://www.douyin.com/search/', icon: 'fas fa-music' }
+            { key: 'baidu',   label: '百度',   url: 'https://www.baidu.com/s?wd=', icon: 'fas fa-search' },
+            { key: 'google',  label: '谷歌',   url: 'https://www.google.com/search?q=', icon: 'fab fa-google' },
+            { key: '360',     label: '360',    url: 'https://www.so.com/s?q=', icon: 'fas fa-shield-alt' },
+            { key: 'douyin',  label: '抖音',   url: 'https://www.douyin.com/search/', icon: 'fas fa-music' }
         ];
         this.currentEngine = this.loadSetting('currentEngine2', 'baidu');
         this.history = this.loadSetting('searchHistory2', []);
@@ -22,6 +24,7 @@ class NewSearchModule {
 
         this.isOpen = false;
         this.suggestTimer = null;
+
         this.updateModalPosition = this.updateModalPosition.bind(this);
         this.handleResize = this.handleResize.bind(this);
         this.isResizeListenerAdded = false;
@@ -31,15 +34,18 @@ class NewSearchModule {
             this.renderHistory();
             this.updateTriggerIcon();
             this.bindEvents();
+
             if (this.input) {
                 this.input.addEventListener('input', () => this.showSuggestions());
                 this.input.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') this.submitSearch();
                 });
             }
+
             const searchSubmit = this.modal.querySelector('.search-submit-btn');
             if (searchSubmit) searchSubmit.addEventListener('click', () => this.submitSearch());
         }
+        
         if (window.Starlink) window.Starlink.search = this;
         window.newSearchModule = this;
     }
@@ -47,7 +53,9 @@ class NewSearchModule {
     loadSetting(key, def) {
         try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : def; } catch { return def; }
     }
-    saveSetting(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
+    saveSetting(key, value) {
+        try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+    }
 
     renderDropdown() {
         if (!this.dropdown) return;
@@ -70,6 +78,7 @@ class NewSearchModule {
                 <i class="fas fa-times delete-history"></i>
             </div>`
         ).join('');
+
         this.historyList.querySelectorAll('.history-text').forEach(el => {
             el.addEventListener('click', () => {
                 this.input.value = el.textContent;
@@ -131,10 +140,16 @@ class NewSearchModule {
         }
         const topPos = navbarHeight + extraGap;
         const modalContent = this.modal.querySelector('.modal-content');
-        if (modalContent) modalContent.style.top = `${topPos}px`;
+        if (modalContent) {
+            modalContent.style.top = `${topPos}px`;
+        }
     }
 
-    handleResize() { if (this.isOpen) this.updateModalPosition(); }
+    handleResize() {
+        if (this.isOpen) {
+            this.updateModalPosition();
+        }
+    }
 
     toggle() { this.isOpen ? this.hide() : this.show(); }
 
@@ -145,8 +160,11 @@ class NewSearchModule {
             window.addEventListener('resize', this.handleResize);
             this.isResizeListenerAdded = true;
         }
-        if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
-        else if (window.sidebar?.isVisible?.()) window.sidebar.hide();
+        if (window.Starlink?.sidebar && typeof window.Starlink.sidebar.isVisible === 'function' && window.Starlink.sidebar.isVisible()) {
+            window.Starlink.sidebar.hide();
+        } else if (window.sidebar && typeof window.sidebar.isVisible === 'function' && window.sidebar.isVisible()) {
+            window.sidebar.hide();
+        }
         this.modal.classList.add('active');
         this.isOpen = true;
         this.input.value = '';
@@ -250,12 +268,16 @@ class NewSearchModule {
 
 if (document.readyState !== 'loading') {
     if (!window.Starlink) window.Starlink = {};
-    if (!window.Starlink.search) window.Starlink.search = new NewSearchModule();
+    if (!window.Starlink.search) {
+        window.Starlink.search = new NewSearchModule();
+    }
     window.newSearchModule = window.Starlink.search;
 } else {
     document.addEventListener('DOMContentLoaded', () => {
         if (!window.Starlink) window.Starlink = {};
-        if (!window.Starlink.search) window.Starlink.search = new NewSearchModule();
+        if (!window.Starlink.search) {
+            window.Starlink.search = new NewSearchModule();
+        }
         window.newSearchModule = window.Starlink.search;
     });
 }
