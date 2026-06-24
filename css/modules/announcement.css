@@ -1,4 +1,4 @@
-/* 公告模态框 - 纯色背景（无亚克力），统一缩放淡入动画，头部与星聚笔记一致 */
+/* announcement.css */
 .announcement-modal-simple {
     position: fixed;
     top: 60px;
@@ -95,7 +95,6 @@
     max-height: 350px;
 }
 
-/* 重要内容区域 - 浅红色平面背景 */
 .focus-section {
     background: #fff0f0;
     padding: 8px 12px;
@@ -109,7 +108,6 @@
     margin: 0;
 }
 
-/* 更新内容区域 */
 .updates-section {
     flex: 1;
     overflow-y: auto;
@@ -130,7 +128,6 @@
     align-items: center;
     gap: 6px;
 }
-/* 更新图标设置为绿色 */
 .updates-title i {
     color: #10b981;
     font-size: 13px;
