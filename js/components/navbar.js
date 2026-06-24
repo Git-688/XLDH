@@ -1,4 +1,3 @@
-// navbar.js - 导航栏模块（修复模态框动画，支持等待关闭完成）
 class Navbar {
     constructor() {
         if (window.Starlink && window.Starlink.navbar) return window.Starlink.navbar;
@@ -18,12 +17,8 @@ class Navbar {
     init() {
         try {
             this.bindEvents();
-            this.loadAnnouncements();
-            // 不再调用 updateNotificationBadge，因为公告未读徽章由 announcement.js 管理
             setTimeout(() => this.handleScroll(), 100);
-        } catch (e) {
-            console.error('导航栏初始化失败:', e);
-        }
+        } catch (e) {}
     }
 
     bindEvents() {
@@ -131,15 +126,9 @@ class Navbar {
                 const promise = new Promise((resolve) => {
                     modal.hide();
                     const interval = setInterval(() => {
-                        if (!modal.isVisible) {
-                            clearInterval(interval);
-                            resolve();
-                        }
+                        if (!modal.isVisible) { clearInterval(interval); resolve(); }
                     }, 50);
-                    setTimeout(() => {
-                        clearInterval(interval);
-                        resolve();
-                    }, 500);
+                    setTimeout(() => { clearInterval(interval); resolve(); }, 500);
                 });
                 closePromises.push(promise);
             }
@@ -150,37 +139,37 @@ class Navbar {
                 this.hideMusicPlayer();
             }
         }
-        if (!keep.includes('search') && window.Starlink?.search && window.Starlink.search.isOpen && window.Starlink.search.hide) {
+        if (!keep.includes('search') && window.Starlink?.search?.isOpen && window.Starlink.search.hide) {
             window.Starlink.search.hide();
-        } else if (!keep.includes('search') && window.newSearchModule && window.newSearchModule.isOpen && window.newSearchModule.hide) {
+        } else if (!keep.includes('search') && window.newSearchModule?.isOpen && window.newSearchModule.hide) {
             window.newSearchModule.hide();
         }
-        if (!keep.includes('sidebar') && window.Starlink?.sidebar && window.Starlink.sidebar.isVisible && window.Starlink.sidebar.isVisible()) {
+        if (!keep.includes('sidebar') && window.Starlink?.sidebar?.isVisible?.()) {
             window.Starlink.sidebar.hide();
-        } else if (!keep.includes('sidebar') && window.sidebar && window.sidebar.isVisible && window.sidebar.isVisible()) {
+        } else if (!keep.includes('sidebar') && window.sidebar?.isVisible?.()) {
             window.sidebar.hide();
         }
-        if (!keep.includes('announcement') && window.Starlink?.announcement && window.Starlink.announcement.isVisible && window.Starlink.announcement.hide) {
+        if (!keep.includes('announcement') && window.Starlink?.announcement?.isVisible && window.Starlink.announcement.hide) {
             window.Starlink.announcement.hide();
-        } else if (!keep.includes('announcement') && window.announcementModule && window.announcementModule.isVisible && window.announcementModule.hide) {
+        } else if (!keep.includes('announcement') && window.announcementModule?.isVisible && window.announcementModule.hide) {
             window.announcementModule.hide();
         }
-        if (!keep.includes('weather') && window.Starlink?.weather && window.Starlink.weather.isShowing && window.Starlink.weather.hide) {
+        if (!keep.includes('weather') && window.Starlink?.weather?.isShowing && window.Starlink.weather.hide) {
             window.Starlink.weather.hide();
-        } else if (!keep.includes('weather') && window.app?.modules?.weather && window.app.modules.weather.isShowing && window.app.modules.weather.hide) {
+        } else if (!keep.includes('weather') && window.app?.modules?.weather?.isShowing && window.app.modules.weather.hide) {
             window.app.modules.weather.hide();
         }
-        if (!keep.includes('about') && window.Starlink?.about && window.Starlink.about.isShowing && window.Starlink.about.hide) {
+        if (!keep.includes('about') && window.Starlink?.about?.isShowing && window.Starlink.about.hide) {
             window.Starlink.about.hide();
-        } else if (!keep.includes('about') && window.aboutModule && window.aboutModule.isShowing && window.aboutModule.hide) {
+        } else if (!keep.includes('about') && window.aboutModule?.isShowing && window.aboutModule.hide) {
             window.aboutModule.hide();
         }
-        if (!keep.includes('notebook') && window.Starlink?.app && window.Starlink.app.hideNotebookModal) {
+        if (!keep.includes('notebook') && window.Starlink?.app?.hideNotebookModal) {
             window.Starlink.app.hideNotebookModal();
         }
-        if (!keep.includes('submit') && window.Starlink?.submit && window.Starlink.submit.isVisible && window.Starlink.submit.hide) {
+        if (!keep.includes('submit') && window.Starlink?.submit?.isVisible && window.Starlink.submit.hide) {
             window.Starlink.submit.hide();
-        } else if (!keep.includes('submit') && window.submitModule && window.submitModule.isVisible && window.submitModule.hide) {
+        } else if (!keep.includes('submit') && window.submitModule?.isVisible && window.submitModule.hide) {
             window.submitModule.hide();
         }
         return Promise.all(closePromises);
@@ -189,16 +178,6 @@ class Navbar {
     async handleFeatureToggle(featureKey, toggleFn) {
         await this.closeAllModalsExcept([featureKey]);
         toggleFn();
-    }
-
-    isFeatureOpen(key) {
-        switch (key) {
-            case 'search': return window.Starlink?.search?.isOpen === true || window.newSearchModule?.isOpen === true;
-            case 'music': return document.getElementById('musicPlayer')?.classList.contains('show') === true;
-            case 'announcement': return window.Starlink?.announcement?.isVisible === true || window.announcementModule?.isVisible === true;
-            case 'sidebar': return (window.Starlink?.sidebar?.isVisible?.() === true) || (window.sidebar?.isVisible?.() === true);
-            default: return false;
-        }
     }
 
     toggleMusicPlayer() {
@@ -245,42 +224,17 @@ class Navbar {
         if (btt) btt.classList.toggle('visible', window.scrollY > 300);
     }
 
-    loadAnnouncements() {
-        // 保留原有加载公告数据逻辑（可能用于其他用途），但不再用于显示未读标记
-        this.announcements = Storage.get('announcements') || [{
-            id: 'single_announcement',
-            title: '星聚导航公告',
-            focus: '本站为纯前端静态资源导航站，不存储文件、不收集隐私、无服务器后台',
-            updates: ['全新界面设计', '音乐播放器', '个性化设置', '更多实用工具', '性能优化'],
-            time: new Date().toLocaleString('zh-CN'),
-            read: false
-        }];
-    }
-
-    // 此方法不再使用，保留空实现避免报错
-    updateNotificationBadge() {}
-
-    getUnreadAnnouncementCount() {
-        // 公告未读由 announcement.js 管理，这里返回 0 以避免冲突
-        return 0;
-    }
-
     destroy() {
         window.removeEventListener('scroll', this.handleScroll);
     }
 }
 
-// 初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         if (!window.Starlink) window.Starlink = {};
-        if (!window.Starlink.navbar) {
-            window.Starlink.navbar = new Navbar();
-        }
+        if (!window.Starlink.navbar) window.Starlink.navbar = new Navbar();
     });
 } else {
     if (!window.Starlink) window.Starlink = {};
-    if (!window.Starlink.navbar) {
-        window.Starlink.navbar = new Navbar();
-    }
+    if (!window.Starlink.navbar) window.Starlink.navbar = new Navbar();
 }
