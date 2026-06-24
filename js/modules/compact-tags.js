@@ -1,8 +1,6 @@
-// compact-tags.js - 彩虹浅色标签模块（所有链接在新标签页打开）
-// 修改：挂载到 window.Starlink.compactTags
+/* compact-tags.js */
 class CompactTagsModule {
     constructor() {
-        // 避免重复实例化
         if (window.Starlink && window.Starlink.compactTags) return window.Starlink.compactTags;
         
         this.tags = [
@@ -47,9 +45,7 @@ class CompactTagsModule {
 
         this.init();
         
-        // 挂载到 Starlink
         if (window.Starlink) window.Starlink.compactTags = this;
-        // 保留旧全局变量以便兼容
         window.compactTagsModule = this;
     }
 
