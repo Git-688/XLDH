@@ -1,4 +1,4 @@
-/* admin.js */
+/* admin.js - 优化添加链接后保持子分类选中 */
 (function() {
     'use strict';
 
@@ -329,21 +329,47 @@
             submissionsData = subDataList || [];
             feedbackData = feedbackDataList || [];
             renderCatBar();
-            if (currentCat) { selectCat(currentCat); if (currentSub) selectSub(currentSub); }
+            if (currentCat) {
+                selectCat(currentCat, false);
+                if (currentSub) {
+                    const subExists = subcategories.some(s => s.id === currentSub);
+                    if (subExists) {
+                        selectSub(currentSub);
+                    } else {
+                        const subs = subcategories.filter(s => s.category_id === currentCat);
+                        if (subs.length > 0) selectSub(subs[0].id);
+                    }
+                } else {
+                    const subs = subcategories.filter(s => s.category_id === currentCat);
+                    if (subs.length > 0) selectSub(subs[0].id);
+                }
+            }
             updateStats();
         } catch (e) { if (e.message === 'Unauthorized') logout(); else showToast('数据加载失败', 'error'); }
     }
 
-    function selectCat(cid) {
+    async function refreshSitesOnly() {
+        try {
+            const siteData = await apiFetch('/admin/sites');
+            sites = siteData;
+            updateStats();
+        } catch (e) {
+            console.warn('刷新站点数据失败:', e);
+        }
+    }
+
+    function selectCat(cid, selectFirst = true) {
         currentCat = cid;
         currentSub = null;
         document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
         const target = document.querySelector(`.cat-item[data-cid="${cid}"]`);
         if (target) target.classList.add('active');
         renderSubList();
-        const subs = subcategories.filter(s => s.category_id === cid);
-        if (subs.length > 0) selectSub(subs[0].id);
-        else document.getElementById('siteList').innerHTML = '<div class="empty">请先添加子分类</div>';
+        if (selectFirst) {
+            const subs = subcategories.filter(s => s.category_id === cid);
+            if (subs.length > 0) selectSub(subs[0].id);
+            else document.getElementById('siteList').innerHTML = '<div class="empty">请先添加子分类</div>';
+        }
     }
 
     function selectSub(sid) {
@@ -854,7 +880,7 @@
                 showToast('添加成功', 'success');
                 closeModal();
                 await loadAdminSites(true);
-                await loadAllDataButKeepSelection();
+                await refreshSitesOnly();
             }
         );
         setTimeout(() => {
