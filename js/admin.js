@@ -393,7 +393,6 @@
         } catch (e) { listEl.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    // ===== 站点卡片布局：名称不加粗 =====
     function renderSitesWithCheckboxes(sitesData) {
         const listEl = document.getElementById('siteList');
         listEl.style.display = 'grid';
@@ -828,7 +827,6 @@
         );
     }
 
-    // ===== 修改：添加链接后不切换子分类，保持当前选中 =====
     async function handleAddSite() {
         if (!currentSub) { showToast('请先选择子分类', 'error'); return; }
         const nextOrder = await getNextSortValue('site', currentSub);
@@ -854,9 +852,7 @@
                 })});
                 showToast('添加成功', 'success');
                 closeModal();
-                // 直接刷新当前子分类的站点列表，不切换选中
                 await loadAdminSites(true);
-                // 更新全局站点数据（用于统计）
                 await loadAllDataButKeepSelection();
             }
         );
