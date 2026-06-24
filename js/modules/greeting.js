@@ -1,8 +1,12 @@
+/* greeting.js */
 class GreetingModule {
     constructor() {
         if (window.Starlink && window.Starlink.greeting) return window.Starlink.greeting;
         this.initialized = false;
         this.eventBound = false;
+        this.holidayRefreshTimer = null;
+        this.holidayCheckTimer = null;
+        this.currentHoliday = null;
         this.audioCtx = null;
         this.todayHolidays = [];
         this.nextHoliday = null;
@@ -30,7 +34,9 @@ class GreetingModule {
                 if (this.audioCtx.state !== 'running') {
                     this.audioCtx.suspend();
                     const resumeCtx = () => {
-                        if (this.audioCtx && this.audioCtx.state === 'suspended') this.audioCtx.resume();
+                        if (this.audioCtx && this.audioCtx.state === 'suspended') {
+                            this.audioCtx.resume();
+                        }
                         document.removeEventListener('click', resumeCtx);
                         document.removeEventListener('touchstart', resumeCtx);
                     };
@@ -186,7 +192,9 @@ class GreetingModule {
                 expiresAt: Date.now() + 24 * 60 * 60 * 1000
             };
             localStorage.setItem('holidayDataCache', JSON.stringify(cache));
-        } catch (error) {}
+        } catch (error) {
+            console.error('缓存节日数据失败:', error);
+        }
     }
 
     getCachedHolidayData() {
@@ -199,7 +207,9 @@ class GreetingModule {
                 return null;
             }
             return cache;
-        } catch (error) { return null; }
+        } catch (error) {
+            return null;
+        }
     }
 
     updateHolidayDisplay() {
@@ -363,113 +373,3 @@ class GreetingModule {
         effect.style.cssText = `
             position: fixed;
             color: ${color};
-            font-weight: 800;
-            pointer-events: none;
-            z-index: 1000;
-            animation: floatUp 1.2s ease-out forwards;
-            font-size: 16px;
-            top: ${btnCenterY + offsetY}px;
-            left: ${btnCenterX + offsetX}px;
-            transform: translate(-50%, -50%);
-            text-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 0 16px ${color}80, 0 0 24px ${color}40;
-            opacity: 0;
-            white-space: nowrap;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 4px 8px;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        `;
-        document.body.appendChild(effect);
-        effect.offsetHeight;
-        effect.style.opacity = '1';
-        setTimeout(() => { if (effect.parentNode) effect.parentNode.removeChild(effect); }, 1200);
-    }
-
-    startTimers() {
-        this.updateTime();
-        this.updateGreeting();
-        setInterval(() => {
-            this.updateTime();
-            this.updateGreeting();
-        }, 1000);
-        setInterval(async () => {
-            await this.checkAndUpdateHoliday();
-        }, 5 * 60 * 1000);
-        setInterval(async () => {
-            const now = new Date();
-            if (now.getMinutes() === 0) await this.checkAndUpdateHoliday();
-        }, 60 * 1000);
-    }
-
-    async checkAndUpdateHoliday() {
-        try {
-            const cached = this.getCachedHolidayData();
-            if (!cached) { await this.setupHolidayCountdown(); return; }
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            if (cached.timestamp && today > new Date(cached.timestamp)) {
-                localStorage.removeItem('holidayDataCache');
-                await this.setupHolidayCountdown();
-                return;
-            }
-            if (cached.expiresAt - Date.now() < 10 * 60 * 1000) {
-                await this.setupHolidayCountdown();
-            }
-        } catch (error) {}
-    }
-
-    updateTime() {
-        const now = new Date();
-        const timeElement = document.getElementById('currentTime');
-        const dateElement = document.getElementById('currentDate');
-        if (timeElement) timeElement.textContent = now.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        if (dateElement) dateElement.textContent = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-    }
-
-    updateGreeting() {
-        const hour = new Date().getHours();
-        let greeting = '', emoji = '';
-        if (hour >= 5 && hour < 9) { greeting = '早上好，朋友！'; emoji = '🍞'; }
-        else if (hour >= 9 && hour < 12) { greeting = '上午好，朋友！'; emoji = '☀️'; }
-        else if (hour >= 12 && hour < 14) { greeting = '中午好，朋友！'; emoji = '🍱'; }
-        else if (hour >= 14 && hour < 18) { greeting = '下午好，朋友！'; emoji = '🌤️'; }
-        else if (hour >= 18 && hour < 22) { greeting = '晚上好，朋友！'; emoji = '🍻'; }
-        else { greeting = '夜深啦，朋友早点休息！'; emoji = '🌌'; }
-        const greetingElement = document.getElementById('greeting');
-        if (greetingElement) greetingElement.innerHTML = `<span class="greeting-emoji">${emoji}</span> <span class="greeting-text-content">${Utils.escapeHtml(greeting)}</span>`;
-    }
-
-    async refreshHolidayData() {
-        try {
-            localStorage.removeItem('holidayDataCache');
-            await this.setupHolidayCountdown();
-            if (window.toast) window.toast.show('节日数据已刷新', 'success');
-        } catch (error) {
-            if (window.toast) window.toast.show('刷新失败，请重试', 'error');
-        }
-    }
-
-    getFishStats() { return Storage.get('woodenFish') || { merit: 0, luck: 0, wealth: 0, health: 0 }; }
-
-    resetFishData() {
-        if (confirm('确定要重置所有木鱼计数吗？')) {
-            const fishData = { merit: 0, luck: 0, wealth: 0, health: 0, lastUpdate: new Date().toDateString() };
-            Storage.set('woodenFish', fishData);
-            this.updateFishCounts(fishData);
-            if (window.toast) window.toast.show('木鱼计数已重置', 'success');
-        }
-    }
-
-    destroy() {
-        if (this.audioCtx) { this.audioCtx.close().catch(() => {}); this.audioCtx = null; }
-        this.initialized = false;
-        this.eventBound = false;
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    if (!window.Starlink) window.Starlink = {};
-    if (!window.Starlink.greeting) window.Starlink.greeting = new GreetingModule();
-    window.greetingModule = window.Starlink.greeting;
-});
-window.GreetingModule = GreetingModule;
