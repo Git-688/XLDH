@@ -1,4 +1,4 @@
-/* ====== 超紧凑响应式页脚样式 ====== */
+/* stats.css */
 .footer-compact-container {
     width: 100%;
     max-width: 1200px;
@@ -7,7 +7,6 @@
     box-sizing: border-box;
 }
 
-/* 响应式调整边距 */
 @media (min-width: 576px) {
     .footer-compact-container {
         padding: calc(var(--section-margin-sm, 20px) * 0.6) var(--container-padding-sm, 20px);
@@ -29,7 +28,6 @@
     }
 }
 
-/* 顶部声明卡片 */
 .footer-disclaimer-card {
     background: var(--bg-card, #ffffff);
     border: 1px solid var(--border-color, #e9ecef);
@@ -84,26 +82,22 @@
     font-style: italic;
 }
 
-/* 统计卡片组 - 默认网格布局 */
 .footer-stats-cards {
     display: grid;
     gap: 10px;
 }
 
-/* 移动端：两列 */
 @media (max-width: 767px) {
     .footer-stats-cards {
         grid-template-columns: repeat(2, 1fr) !important;
         grid-auto-rows: auto;
     }
 }
-/* 平板端：四列 */
 @media (min-width: 768px) and (max-width: 1024px) {
     .footer-stats-cards {
         grid-template-columns: repeat(4, 1fr);
     }
 }
-/* 桌面端：一行四列 */
 @media (min-width: 1025px) {
     .footer-stats-cards {
         grid-template-columns: repeat(4, 1fr);
@@ -120,7 +114,6 @@
     }
 }
 
-/* 卡片样式 */
 .stat-card {
     background: var(--bg-card, #ffffff);
     border: 1px solid var(--border-color, #e9ecef);
@@ -142,7 +135,6 @@
     gap: 10px;
 }
 
-/* 圆形图标 */
 .stat-icon {
     width: 32px;
     height: 32px;
@@ -154,7 +146,6 @@
     background-color: transparent;
 }
 
-/* 运行时间图标 - 红色主题 */
 .running-icon {
     border: 1.5px solid var(--error-color, #ef4444);
 }
@@ -163,20 +154,16 @@
     font-size: 14px;
 }
 
-/* 在线图标 */
 .online-icon i {
     color: #ff9f4a;
 }
-/* 今日访客图标 */
 .today-icon i {
     color: #4cd964;
 }
-/* 总访问量图标 */
 .total-icon i {
     color: var(--primary-color, #4361ee);
 }
 
-/* 增强心跳动画 */
 .heartbeat-enhanced {
     animation: heartbeat-enhanced 1.2s ease-in-out infinite;
     transform-origin: center;
@@ -228,7 +215,6 @@
     text-overflow: ellipsis;
 }
 
-/* 统计数字独立颜色 */
 #onlineCount {
     color: #ff9f4a;
 }
@@ -239,7 +225,6 @@
     color: var(--primary-color, #4361ee);
 }
 
-/* 响应式细节优化 */
 @media (max-width: 767px) {
     .stat-number {
         font-size: 13px;
@@ -291,14 +276,12 @@
     }
 }
 
-/* 浮动按钮样式 */
 .floating-btn {
     width: 40px;
     height: 40px;
     font-size: 14px;
 }
 
-/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
 .dark-mode .footer-disclaimer-card {
     background: var(--bg-card);
     border-color: var(--border-color);
