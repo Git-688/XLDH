@@ -1,4 +1,4 @@
-/* weather.css */
+/* weather.css - 完整版（含和风天气新增样式） */
 .weather-modal-card {
     position: fixed;
     top: 0;
@@ -435,6 +435,94 @@
     }
 }
 
+/* ========== 新增：空气质量 ========== */
+.weather-air-quality {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border-color, #e9ecef);
+    background: var(--bg-secondary, #f8f9fa);
+}
+.air-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-primary, #333);
+}
+.air-title i {
+    margin-right: 4px;
+    color: var(--primary-color, #4361ee);
+}
+.air-value {
+    padding: 1px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+}
+.air-excellent {
+    background: #10b981;
+    color: #fff;
+}
+.air-good {
+    background: #34d399;
+    color: #fff;
+}
+.air-moderate {
+    background: #fbbf24;
+    color: #1a1a1a;
+}
+.air-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-top: 4px;
+    font-size: 9px;
+    color: var(--text-secondary, #666);
+}
+.air-details span {
+    white-space: nowrap;
+}
+
+/* ========== 新增：生活指数 ========== */
+.weather-indices {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border-color, #e9ecef);
+}
+.indices-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-primary, #333);
+    margin-bottom: 4px;
+}
+.indices-title i {
+    margin-right: 4px;
+    color: var(--primary-color, #4361ee);
+}
+.indices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 4px;
+}
+.index-item {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 4px;
+    padding: 4px 6px;
+    text-align: center;
+}
+.index-name {
+    font-size: 9px;
+    color: var(--text-secondary, #666);
+}
+.index-category {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-primary, #333);
+    margin-top: 1px;
+}
+
+/* ========== 修改：日出日落月升月落行 ========== */
 .weather-sun-row {
     display: flex;
     flex-wrap: wrap;
@@ -462,6 +550,7 @@
     color: var(--text-primary, #333);
 }
 
+/* ========== 天气预报 ========== */
 .weather-forecast {
     padding: 0 10px 6px;
 }
@@ -531,6 +620,7 @@
     margin: 4px 10px;
 }
 
+/* ========== 城市选择弹窗 ========== */
 .city-prompt-modal {
     position: fixed;
     top: 0;
@@ -659,6 +749,7 @@
     background: var(--secondary-color, #3a56d6);
 }
 
+/* ========== 模态框定位 ========== */
 .weather-modal-card {
     align-items: center;
     justify-content: flex-start;
@@ -713,6 +804,7 @@
     }
 }
 
+/* ========== 深色模式 ========== */
 .dark-mode .weather-modal-content {
     background: var(--bg-card);
     border-color: var(--border-color);
@@ -885,4 +977,48 @@
 }
 .dark-mode .error-icon {
     color: #f87171;
+}
+
+/* 新增样式深色模式适配 */
+.dark-mode .weather-air-quality {
+    background: var(--bg-secondary);
+    border-bottom-color: var(--border-color);
+}
+.dark-mode .air-header {
+    color: var(--text-primary);
+}
+.dark-mode .air-title i {
+    color: var(--primary-color);
+}
+.dark-mode .air-details {
+    color: var(--text-secondary);
+}
+.dark-mode .air-excellent {
+    background: #0da271;
+}
+.dark-mode .air-good {
+    background: #2a9d8f;
+}
+.dark-mode .air-moderate {
+    background: #e9b64a;
+    color: #1a1a1a;
+}
+
+.dark-mode .weather-indices {
+    border-bottom-color: var(--border-color);
+}
+.dark-mode .indices-title {
+    color: var(--text-primary);
+}
+.dark-mode .indices-title i {
+    color: var(--primary-color);
+}
+.dark-mode .index-item {
+    background: var(--bg-secondary);
+}
+.dark-mode .index-name {
+    color: var(--text-secondary);
+}
+.dark-mode .index-category {
+    color: var(--text-primary);
 }
