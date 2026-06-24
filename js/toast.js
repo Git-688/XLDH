@@ -1,6 +1,4 @@
-/**
- * Toast 管理器 - 纯文本简约版（无图标，无关闭按钮）
- */
+/* toast.js */
 class ToastManager {
     constructor() {
         this.container = null;
@@ -19,13 +17,6 @@ class ToastManager {
         document.body.appendChild(this.container);
     }
 
-    /**
-     * 显示提示
-     * @param {string} message 提示内容
-     * @param {string} type 类型（保留参数但不再影响样式）
-     * @param {number} duration 显示时长（毫秒），默认3000
-     * @returns {number} toast ID
-     */
     show(message, type = 'info', duration = this.defaultDuration) {
         const id = ++this.counter;
         const toast = document.createElement('div');
@@ -69,5 +60,4 @@ class ToastManager {
     }
 }
 
-// 单例
 window.toast = new ToastManager();
