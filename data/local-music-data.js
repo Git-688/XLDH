@@ -1,12 +1,4 @@
-/**
- * 本地音乐数据文件
- * 在此文件中管理本地音乐列表，方便添加和删除
- * 
- * 提示：您可以修改此文件中的数组，添加或删除歌曲对象。
- * 每首歌需要提供 id、title、artist、src（音频直链）、cover（封面图）、lrc（歌词链接）。
- */
-
-// 本地音乐数据
+/* local-music-data.js */
 window.localMusicData = [
     {
         id: 'local_001',
@@ -60,9 +52,6 @@ window.localMusicData = [
     }
 ];
 
-/**
- * 获取本地音乐列表
- */
 window.getLocalMusicList = function() {
     return window.localMusicData;
 };
