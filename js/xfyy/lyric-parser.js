@@ -1,6 +1,4 @@
-/**
- * 歌词解析器 - 修复毫秒精度问题
- */
+/* lyric-parser.js */
 class LyricParser {
     constructor() {
         this.lyrics = [];
@@ -23,10 +21,8 @@ class LyricParser {
                 if (!match) continue;
                 const minutes = parseInt(match[1]);
                 const seconds = parseInt(match[2]);
-                // 修复: 将毫秒字符串转为浮点数（0.xxx秒）
                 let milliseconds = 0;
                 if (match[3]) {
-                    // 确保三位数字，然后除以1000得到秒的小数部分
                     const msStr = match[3].padEnd(3, '0');
                     milliseconds = parseInt(msStr) / 1000;
                 }
@@ -36,7 +32,6 @@ class LyricParser {
         }
 
         this.lyrics.sort((a, b) => a.time - b.time);
-        // 去重
         this.lyrics = this.lyrics.filter((lyric, index, arr) => index === 0 || lyric.time !== arr[index-1].time);
         return this.lyrics;
     }
