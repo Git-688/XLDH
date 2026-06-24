@@ -1,4 +1,4 @@
-/* 导航栏样式 - 亚克力效果，圆角统一 8px（加强版，避免样式覆盖） */
+/* navbar.css */
 .navbar {
     position: fixed;
     top: 0;
@@ -53,11 +53,10 @@
     color: inherit;
 }
 
-/* 使用更高特异性选择器 + !important 确保不被其他样式覆盖 */
 .navbar .nav-brand .logo {
     width: 36px;
     height: 36px;
-    background: #ffffff !important;          /* 强制白色背景 */
+    background: #ffffff !important;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -73,7 +72,7 @@
 }
 
 .navbar .nav-brand .logo i {
-    color: var(--text-primary) !important;  /* 强制跟随文字颜色 */
+    color: var(--text-primary) !important;
     font-size: 18px;
 }
 
@@ -193,7 +192,6 @@
 }
 
 @media (prefers-color-scheme: dark) {
-    /* 深色模式下同样强制白色背景 */
     .navbar .nav-brand .logo {
         background: #ffffff !important;
         border-color: var(--border-color);
@@ -249,7 +247,6 @@
     .brand-text-container { gap: 5px; }
 }
 
-/* 公告按钮激活状态 */
 #announcementBtn.active {
     background: #3764F4 !important;
     color: #ffffff !important;
