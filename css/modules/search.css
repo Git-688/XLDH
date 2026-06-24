@@ -1,4 +1,4 @@
-/* 搜索模态框 - 纯色背景（无亚克力），统一缩放淡入动画 */
+/* search.css */
 .search-modal {
     position: fixed;
     top: 0;
@@ -19,7 +19,6 @@
 }
 .search-modal .modal-content {
     position: absolute;
-    /* 动态位置由 JS 设置 */
     right: 24px;
     width: 90%;
     max-width: 460px;
@@ -37,7 +36,6 @@
     opacity: 1;
 }
 
-/* 搜索栏 */
 .search-bar {
     display: flex;
     align-items: center;
@@ -96,7 +94,6 @@
     background: var(--secondary-color, #3a0ca3);
 }
 
-/* 引擎下拉菜单 */
 .engine-dropdown {
     position: absolute;
     top: calc(12px + 36px + 6px);
@@ -151,7 +148,6 @@
     color: var(--text-secondary, #6c757d);
 }
 
-/* 搜索建议 */
 .suggestions {
     max-height: 160px;
     overflow-y: auto;
@@ -186,7 +182,6 @@
     background: var(--bg-secondary, #f8f9fa);
 }
 
-/* 历史记录 */
 .history-panel {
     margin-top: 6px;
     padding: 8px 10px;
@@ -254,7 +249,6 @@
     margin: 0;
 }
 
-/* 移动端适配 */
 @media (max-width: 768px) {
     .search-modal .modal-content {
         top: 16px;
@@ -272,7 +266,6 @@
     }
 }
 
-/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
 .dark-mode .search-modal .modal-content {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
