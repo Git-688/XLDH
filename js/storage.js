@@ -1,4 +1,4 @@
-// storage.js - 统一本地存储管理（所有键名前缀 starlink_）
+/* storage.js */
 class Storage {
     static PREFIX = 'starlink_';
     
@@ -60,7 +60,6 @@ class Storage {
         return keys;
     }
 
-    // 别名方法，方便其他模块调用
     static getItem(key, defaultValue = null) {
         return this.get(key, defaultValue);
     }
@@ -69,7 +68,6 @@ class Storage {
         return this.set(key, value);
     }
 
-    // ==================== 网站统计功能 ====================
     static getSiteViews(url) {
         if (!url) return 0;
         try {
@@ -142,7 +140,6 @@ class Storage {
         }
     }
 
-    // ==================== 链接有效性缓存 ====================
     static getLinkValidity(url) {
         const normalizedUrl = this.normalizeUrl(url);
         const cacheKey = `link_validity_${normalizedUrl}`;
@@ -156,5 +153,4 @@ class Storage {
     }
 }
 
-// 确保全局可用
 window.Storage = Storage;
