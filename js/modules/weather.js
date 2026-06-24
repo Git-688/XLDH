@@ -1,4 +1,4 @@
-/* weather.js */
+/* weather.js - 合并 APIHz + 和风天气 */
 class WeatherModule {
     static CONFIG = {
         get API_BASE() {
@@ -8,7 +8,6 @@ class WeatherModule {
 
     constructor() {
         if (window.Starlink && window.Starlink.weather) return window.Starlink.weather;
-        
         this.currentCity = '北京';
         this.weatherData = null;
         this.modalElement = null;
@@ -21,9 +20,7 @@ class WeatherModule {
         this.manualCity = null;
         this.manualProvince = null;
         this.escHandler = null;
-        this.showModalBound = this.showModal.bind(this);
         this.gpsAttempted = false;
-        
         if (window.Starlink) window.Starlink.weather = this;
         window.weatherModule = this;
     }
@@ -204,7 +201,7 @@ class WeatherModule {
         try {
             const apiBase = Utils.getApiBase();
             const url = `${apiBase}/weather/proxy?lon=${lon}&lat=${lat}`;
-            const response = await Utils.safeFetch(url, { timeout: 10000 });
+            const response = await Utils.safeFetch(url, { timeout: 15000 });
             const data = await response.json();
             if (data.code !== 200) {
                 throw new Error(data.msg || '获取天气数据失败');
@@ -227,7 +224,7 @@ class WeatherModule {
         try {
             const apiBase = Utils.getApiBase();
             const url = `${apiBase}/weather/proxy?city=${encodeURIComponent(city)}`;
-            const response = await Utils.safeFetch(url, { timeout: 10000 });
+            const response = await Utils.safeFetch(url, { timeout: 15000 });
             const data = await response.json();
             if (data.code !== 200) {
                 throw new Error(data.msg || '获取天气数据失败');
@@ -261,44 +258,24 @@ class WeatherModule {
         }
 
         const isDay = this._isDay();
+        const qw = data.qweather || {};
 
+        // 城市信息
         let cityName = '未知';
         if (data.name) cityName = data.name;
         else if (data.shi) cityName = data.shi;
         else if (data.sheng) cityName = data.sheng;
         cityName = cityName.replace(/市$/, '').replace(/县$/, '').replace(/区$/, '');
 
+        // 来自 APIHz 的基础数据
         const todayWeather = data.weather1 || '未知';
         const todayTempDay = data.wd1 || '';
         const todayTempNight = data.wd2 || '';
-        const todayWindDir = data.winddirection1 || '';
-        const todayWindScale = data.windleve1 || '';
-
         const nowInfo = data.nowinfo || {};
-        const currentTemp = nowInfo.temperature;
-        const currentHumidity = nowInfo.humidity;
-        const feelsLike = nowInfo.feelst;
-        const pressure = nowInfo.pressure;
-        const precipitation = nowInfo.precipitation;
-        const windSpeed = nowInfo.windSpeed;
-        const windDir = nowInfo.windDirection;
-        const windScale = nowInfo.windScale;
-
+        const currentTemp = nowInfo.temperature || todayTempDay;
         const alarms = data.alarm && Array.isArray(data.alarm) ? data.alarm : [];
 
-        let sunTimes = null;
-        if (data.suntimes && Array.isArray(data.suntimes) && data.suntimes.length > 0) {
-            const today = new Date();
-            const todayStr = today.toISOString().slice(0, 10);
-            for (const item of data.suntimes) {
-                if (item.date === todayStr) {
-                    sunTimes = item;
-                    break;
-                }
-            }
-            if (!sunTimes) sunTimes = data.suntimes[0];
-        }
-
+        // 预报数据（从 APIHz）
         const dayKeys = ['weatherday2', 'weatherday3', 'weatherday4', 'weatherday5', 'weatherday6', 'weatherday7'];
         const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
         const forecasts = [];
@@ -320,6 +297,45 @@ class WeatherModule {
             });
         }
 
+        // ===== 和风天气数据 =====
+        const qwNow = qw;
+        const feelsLike = qwNow.feelsLike !== undefined ? qwNow.feelsLike + '°C' : '--';
+        const humidity = qwNow.humidity !== undefined ? qwNow.humidity + '%' : '--';
+        const precip = qwNow.precip !== undefined ? (qwNow.precip === '0' ? '无降水' : qwNow.precip + ' mm') : '--';
+        const pressure = qwNow.pressure !== undefined ? qwNow.pressure + ' hPa' : '--';
+        const vis = qwNow.vis !== undefined ? qwNow.vis + ' km' : '--';
+        const uvIndex = qwNow.uvIndex !== undefined ? qwNow.uvIndex : '--';
+
+        // 日出日落
+        const sunrise = qwNow.sunrise || '--';
+        const sunset = qwNow.sunset || '--';
+
+        // 月升月落
+        const moonrise = qwNow.moonrise || '--';
+        const moonset = qwNow.moonset || '--';
+
+        // 空气质量
+        let airQuality = null;
+        if (qwNow.airQuality) {
+            airQuality = {
+                aqi: qwNow.airQuality.aqi || '--',
+                category: qwNow.airQuality.category || '--',
+                pm25: qwNow.airQuality.pm25 || '--',
+                pm10: qwNow.airQuality.pm10 || '--'
+            };
+        }
+
+        // 生活指数
+        let lifeIndex = [];
+        if (qwNow.lifeIndex && Array.isArray(qwNow.lifeIndex)) {
+            lifeIndex = qwNow.lifeIndex.map(item => ({
+                name: item.name || '',
+                category: item.category || '',
+                level: item.level || '',
+                text: item.text || ''
+            }));
+        }
+
         const tips = this.generateWeatherTips(todayWeather, todayTempDay);
 
         return {
@@ -330,21 +346,25 @@ class WeatherModule {
             nightTemperature: todayTempNight ? todayTempNight + '°C' : '--',
             weather: todayWeather,
             weatherIconUrl: this._getMeteoconIconUrl(todayWeather, isDay),
-            currentTemp: currentTemp !== undefined ? currentTemp + '°C' : todayTempDay ? todayTempDay + '°C' : '--',
-            humidity: currentHumidity !== undefined ? currentHumidity + '%' : '--',
-            wind: (todayWindDir ? todayWindDir + ' ' : '') + todayWindScale,
-            visibility: nowInfo.visibility || '--',
+            currentTemp: currentTemp !== undefined ? currentTemp + '°C' : '--',
+            humidity: humidity,
+            wind: data.winddirection1 ? data.winddirection1 + ' ' + (data.windleve1 || '') : (data.windleve1 || '--'),
+            visibility: vis,
             updateTime: data.uptime ? data.uptime : (nowInfo.uptime || '刚刚'),
             tips: tips,
             forecasts: forecasts,
-            feelsLike: feelsLike !== undefined ? feelsLike + '°C' : '--',
-            pressure: pressure !== undefined ? pressure + ' hPa' : '--',
-            precipitation: precipitation !== undefined ? precipitation + ' mm' : '--',
-            windSpeed: windSpeed !== undefined ? windSpeed + ' km/h' : '--',
-            windDir: windDir || '--',
-            windScale: windScale || '--',
-            alarms: alarms,
-            sunTimes: sunTimes
+            // 新增和风字段
+            feelsLike: feelsLike,
+            pressure: pressure,
+            precipitation: precip,
+            uvIndex: uvIndex,
+            sunrise: sunrise,
+            sunset: sunset,
+            moonrise: moonrise,
+            moonset: moonset,
+            airQuality: airQuality,
+            lifeIndex: lifeIndex,
+            alarms: alarms
         };
     }
 
@@ -380,7 +400,6 @@ class WeatherModule {
         });
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
         else if (window.app) window.app.registerModal(this);
-        
         this.isLoading = true;
         this.loadWeatherData().then(() => {
             this.updateModalContent();
@@ -465,14 +484,16 @@ class WeatherModule {
 
         const { weatherData } = this;
         const esc = this._escapeHtml.bind(this);
-        
+        const isDay = this._isDay();
+        const dayIcon = isDay ? '☀️' : '🌙';
+
         const manualModeHint = !this.useAutoLocation ? `
             <div class="manual-mode-hint" style="background:rgba(245,158,11,0.1); border-radius:8px; padding:6px 10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-size:12px; color:#d97706;"><i class="fas fa-map-marker-alt"></i> 当前为手动选择城市</span>
                 <button id="switchToAutoBtn" class="weather-action-btn" style="background:#4361ee; color:white; border:none; border-radius:6px; padding:4px 12px; font-size:11px;">📍 GPS定位</button>
             </div>
         ` : '';
-        
+
         let alarmsHtml = '';
         if (weatherData.alarms && weatherData.alarms.length > 0) {
             const firstAlarmTime = weatherData.alarms[0].effective || '';
@@ -490,23 +511,43 @@ class WeatherModule {
             </div>`;
         }
 
-        let precipitationDisplay = '--';
-        const precip = weatherData.precipitation || '0';
-        if (precip === '0' || precip === '0 mm' || precip === '0mm') {
-            precipitationDisplay = '无降水';
-        } else {
-            precipitationDisplay = precip;
+        // 空气质量和生活指数模块（显示在预报上方）
+        let airQualityHtml = '';
+        if (weatherData.airQuality) {
+            const aq = weatherData.airQuality;
+            const aqiColor = aq.aqi <= 50 ? '#10b981' : aq.aqi <= 100 ? '#f59e0b' : aq.aqi <= 150 ? '#f97316' : '#ef4444';
+            airQualityHtml = `
+                <div class="weather-air-quality" style="background:rgba(0,0,0,0.03); border-radius:8px; padding:8px 10px; margin-bottom:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size:12px; font-weight:600;">空气质量</span>
+                            <span style="font-size:11px; color:#666;">AQI ${esc(aq.aqi)}</span>
+                            <span style="font-size:11px; color:${aqiColor}; font-weight:500;">${esc(aq.category)}</span>
+                        </div>
+                        <div style="display:flex; gap:8px; font-size:10px; color:#666;">
+                            <span>PM2.5 ${esc(aq.pm25)}</span>
+                            <span>PM10 ${esc(aq.pm10)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
-        const sun = weatherData.sunTimes || {};
-        const sunrise = sun.sunrise || '--';
-        const sunset = sun.sunset || '--';
-        const dayLength = sun.day_length || '--';
-        const dayPercent = sun.day_percentage !== undefined ? sun.day_percentage : '';
-        const dayLengthDisplay = dayPercent ? `${dayLength} (${dayPercent}%)` : dayLength;
-        const civilDawn = sun.civil_twilight_begin || '--';
-        const civilDusk = sun.civil_twilight_end || '--';
+        let lifeIndexHtml = '';
+        if (weatherData.lifeIndex && weatherData.lifeIndex.length > 0) {
+            lifeIndexHtml = `
+                <div class="weather-life-index" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(80px,1fr)); gap:6px; margin-bottom:8px;">
+                    ${weatherData.lifeIndex.map(item => `
+                        <div style="background:rgba(0,0,0,0.03); border-radius:6px; padding:6px 8px; text-align:center; font-size:10px;">
+                            <div style="font-weight:600; color:#333;">${esc(item.name)}</div>
+                            <div style="color:#666; font-size:9px;">${esc(item.level)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
 
+        // 位置信息
         const locationInfo = `
             <div class="weather-location">
                 <i class="fas fa-location-dot"></i>
@@ -515,6 +556,7 @@ class WeatherModule {
             </div>
         `;
 
+        // 天气卡片
         const weatherCard = `
             <div class="weather-card-container">
                 <div class="weather-card-left">
@@ -562,53 +604,48 @@ class WeatherModule {
                     <span class="extra-value">${weatherData.feelsLike}</span>
                 </div>
                 <div class="extra-item">
+                    <span class="extra-label">湿度</span>
+                    <span class="extra-value">${weatherData.humidity}</span>
+                </div>
+                <div class="extra-item">
+                    <span class="extra-label">降水量</span>
+                    <span class="extra-value">${weatherData.precipitation}</span>
+                </div>
+                <div class="extra-item">
                     <span class="extra-label">气压</span>
                     <span class="extra-value">${weatherData.pressure}</span>
                 </div>
                 <div class="extra-item">
-                    <span class="extra-label">降水量</span>
-                    <span class="extra-value">${precipitationDisplay}</span>
+                    <span class="extra-label">能见度</span>
+                    <span class="extra-value">${weatherData.visibility}</span>
                 </div>
                 <div class="extra-item">
-                    <span class="extra-label">风速</span>
-                    <span class="extra-value">${weatherData.windSpeed}</span>
-                </div>
-                <div class="extra-item">
-                    <span class="extra-label">风向</span>
-                    <span class="extra-value">${weatherData.windDir}</span>
-                </div>
-                <div class="extra-item">
-                    <span class="extra-label">风力</span>
-                    <span class="extra-value">${weatherData.windScale}</span>
-                </div>
-                <div class="extra-item">
-                    <span class="extra-label">湿度</span>
-                    <span class="extra-value">${weatherData.humidity}</span>
+                    <span class="extra-label">紫外线</span>
+                    <span class="extra-value">${weatherData.uvIndex}</span>
                 </div>
             </div>
 
             <div class="weather-sun-row">
                 <div class="sun-item">
                     <span class="sun-label">🌅 日出</span>
-                    <span class="sun-value">${esc(sunrise)}</span>
+                    <span class="sun-value">${esc(weatherData.sunrise)}</span>
                 </div>
                 <div class="sun-item">
                     <span class="sun-label">🌇 日落</span>
-                    <span class="sun-value">${esc(sunset)}</span>
+                    <span class="sun-value">${esc(weatherData.sunset)}</span>
                 </div>
                 <div class="sun-item">
-                    <span class="sun-label">☀️ 昼长</span>
-                    <span class="sun-value">${esc(dayLengthDisplay)}</span>
+                    <span class="sun-label">🌙 月升</span>
+                    <span class="sun-value">${esc(weatherData.moonrise)}</span>
                 </div>
                 <div class="sun-item">
-                    <span class="sun-label">🌤 天亮</span>
-                    <span class="sun-value">${esc(civilDawn)}</span>
-                </div>
-                <div class="sun-item">
-                    <span class="sun-label">🌙 天黑</span>
-                    <span class="sun-value">${esc(civilDusk)}</span>
+                    <span class="sun-label">🌙 月落</span>
+                    <span class="sun-value">${esc(weatherData.moonset)}</span>
                 </div>
             </div>
+
+            ${airQualityHtml}
+            ${lifeIndexHtml}
 
             <div class="weather-forecast">
                 <div class="forecast-title">
@@ -876,10 +913,8 @@ class WeatherModule {
     closeOtherModals() {
         if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible) window.Starlink.sidebar.hide();
         else if (window.sidebar && window.sidebar.isVisible) window.sidebar.hide();
-        
         if (window.Starlink?.search && window.Starlink.search.isModalOpen) window.Starlink.search.hide();
         else if (window.searchModule && window.searchModule.isModalOpen) window.searchModule.hide();
-        
         if (window.Starlink?.navbar?.hideMusicPlayer) window.Starlink.navbar.hideMusicPlayer();
         else if (window.app?.components?.navbar?.hideMusicPlayer) window.app.components.navbar.hideMusicPlayer();
     }
