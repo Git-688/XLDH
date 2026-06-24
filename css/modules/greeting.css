@@ -1,4 +1,4 @@
-/* 问候语区域 - 精简现代化设计 */
+/* greeting.css */
 .greeting-section {
     padding: var(--section-margin-sm) 0;
     position: relative;
@@ -163,15 +163,13 @@
     flex-shrink: 0;
 }
 
-/* ===== 布局：按钮在左（可选），时间永久固定在右 ===== */
 .datetime-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: nowrap;              /* 禁止换行，保持一行 */
+    flex-wrap: nowrap;
 }
 
-/* 展开/收起按钮 - 位于左侧（当存在时） */
 .expand-holiday-btn {
     background: transparent;
     border: 1px solid var(--border-color);
@@ -184,22 +182,21 @@
     white-space: nowrap;
     flex-shrink: 0;
     line-height: 1.5;
-    order: 0;                       /* 确保在左边 */
+    order: 0;
 }
 .expand-holiday-btn:hover {
     background: rgba(67,97,238,0.1);
     border-color: var(--primary-color);
 }
 
-/* 时间 - 使用 margin-left: auto 永久固定在右侧 */
 #currentTime {
     font-size: 1.05em;
     font-weight: 600;
     color: var(--primary-color);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
-    margin-left: auto;              /* 核心：自动占满剩余空间，将时间推到最右 */
-    order: 1;                       /* 位于按钮之后 */
+    margin-left: auto;
+    order: 1;
     text-align: right;
 }
 #currentDate {
@@ -320,7 +317,6 @@
     pointer-events: none;
 }
 
-/* 响应式设计 - 节日名称自适应省略 */
 @media (max-width: 992px) {
     .greeting-main-card { padding: 6px; gap: 6px; }
     .greeting-top-row { gap: 6px; }
@@ -385,10 +381,10 @@
 @media (max-width: 400px) {
     .datetime { min-width: 85px; }
     .datetime-row {
-        flex-wrap: nowrap;          /* 强制不换行，保证按钮与时间在一行 */
+        flex-wrap: nowrap;
         gap: 4px;
     }
-    #currentTime { font-size: 0.75em; }  /* 进一步缩小字号避免溢出 */
+    #currentTime { font-size: 0.75em; }
     .expand-holiday-btn { font-size: 7px; padding: 1px 6px; }
     .secondary-name { max-width: 40px; }
 }
