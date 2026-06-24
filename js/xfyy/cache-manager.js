@@ -1,6 +1,4 @@
-/**
- * 缓存管理器 - 增加 LRU 清理策略
- */
+/* cache-manager.js */
 class CacheManager {
     constructor() {
         this.prefix = 'music_player_';
@@ -8,7 +6,7 @@ class CacheManager {
         this.maxSize = 4 * 1024 * 1024;
         this.cacheStats = this.loadStats();
         this.activeCache = new Set();
-        this.accessOrder = []; // LRU 访问顺序
+        this.accessOrder = [];
     }
 
     loadStats() {
