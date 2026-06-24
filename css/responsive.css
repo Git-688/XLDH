@@ -1,12 +1,4 @@
-/* ================================================
-   responsive.css - 星聚导航响应式样式
-   包含：移动端、平板、大屏适配，横屏优化，
-   浮动按钮、侧滑栏、导航、音乐播放器等模块的响应式调整
-   深色模式统一使用 .dark-mode 类，变量已定义
-   ================================================ */
-
-/* ========== 全局响应式断点 ========== */
-/* 超大屏幕（≥1600px） */
+/* responsive.css - 星聚导航响应式样式 */
 @media (min-width: 1600px) {
     .container,
     .nav-container,
@@ -37,7 +29,6 @@
     }
 }
 
-/* 大屏桌面（1200px - 1599px） */
 @media (min-width: 1200px) and (max-width: 1599px) {
     .tags-grid {
         grid-template-columns: repeat(8, 1fr);
@@ -49,7 +40,6 @@
     }
 }
 
-/* 标准桌面（992px - 1199px） */
 @media (min-width: 992px) and (max-width: 1199px) {
     .tags-grid {
         grid-template-columns: repeat(7, 1fr);
@@ -65,9 +55,7 @@
     }
 }
 
-/* 平板横屏 / 小桌面（768px - 991px） */
 @media (min-width: 768px) and (max-width: 991px) {
-    /* 导航栏三列改为折叠 */
     .navigation-body {
         flex-direction: column;
     }
@@ -107,15 +95,12 @@
     .tag-label {
         font-size: 12px;
     }
-    /* 页脚统计卡片一行显示 */
     .footer-stats-cards {
         grid-template-columns: repeat(4, 1fr);
     }
 }
 
-/* 平板竖屏 / 大手机（576px - 767px） */
 @media (min-width: 576px) and (max-width: 767px) {
-    /* 导航主体折叠 */
     .navigation-body {
         flex-direction: column;
     }
@@ -175,7 +160,6 @@
     .tag-label {
         font-size: 11px;
     }
-    /* 问候区布局调整 */
     .greeting-container {
         flex-direction: column;
     }
@@ -192,20 +176,16 @@
     .bookmark-btn span {
         writing-mode: horizontal-tb;
     }
-    /* 页脚统计卡片两列显示 */
     .footer-stats-cards {
         grid-template-columns: repeat(2, 1fr);
     }
-    /* 侧边栏宽度调整 */
     .sidebar {
         width: 70vw;
         max-width: 280px;
     }
 }
 
-/* 手机（<576px） */
 @media (max-width: 575px) {
-    /* 导航主体折叠 */
     .navigation-body {
         flex-direction: column;
     }
@@ -271,7 +251,6 @@
     .tag-icon {
         font-size: 12px;
     }
-    /* 问候区 */
     .greeting-container {
         flex-direction: column;
     }
@@ -316,7 +295,6 @@
     .bookmark-btn span {
         writing-mode: horizontal-tb;
     }
-    /* 页脚统计卡片两列 */
     .footer-stats-cards {
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
@@ -330,7 +308,6 @@
     .stat-name {
         font-size: 9px;
     }
-    /* 侧边栏宽度 */
     .sidebar {
         width: 70vw;
         max-width: 280px;
@@ -348,7 +325,6 @@
     .daily-quote-card p {
         font-size: 11px;
     }
-    /* 音乐播放器全宽 */
     .music-player {
         left: 12px;
         right: 12px;
@@ -356,7 +332,6 @@
         max-width: none;
         bottom: 12px;
     }
-    /* 模态框全宽 */
     .feedback-modal-content {
         max-width: calc(100% - 24px);
     }
@@ -368,7 +343,6 @@
     }
 }
 
-/* 超小手机（<375px） */
 @media (max-width: 374px) {
     .tags-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -387,7 +361,7 @@
         font-size: 10px;
     }
     .site-description {
-        display: none; /* 超小屏隐藏描述以节省空间 */
+        display: none;
     }
     .greeting-text h1 {
         font-size: 1rem;
@@ -423,9 +397,7 @@
     }
 }
 
-/* ========== 横屏小高度适配（如折叠屏、平板横屏） ========== */
 @media (max-height: 600px) and (orientation: landscape) {
-    /* 侧边栏高度适应 */
     .sidebar {
         top: 60px !important;
         bottom: 10px;
@@ -435,17 +407,15 @@
         aspect-ratio: 21/9;
     }
     .daily-quote-card {
-        display: none; /* 节省空间 */
+        display: none;
     }
     .sidebar-categories {
         max-height: calc(100vh - 200px);
     }
-    /* 壁纸轮播高度减小 */
     .wallpaper-container {
         height: 30vh;
         min-height: 120px;
     }
-    /* 导航一级菜单行内 */
     .level1-nav,
     .level2-nav {
         max-height: 40px;
@@ -455,7 +425,6 @@
         height: 36px;
         line-height: 36px;
     }
-    /* 音乐播放器高度适配 */
     .music-player {
         max-height: 85vh;
         overflow-y: auto;
@@ -465,9 +434,7 @@
     }
 }
 
-/* ========== 触摸优化 ========== */
 @media (hover: none) and (pointer: coarse) {
-    /* 增大点击区域 */
     .nav-btn,
     .floating-btn,
     .footer-btn,
@@ -481,7 +448,6 @@
         cursor: default;
         -webkit-tap-highlight-color: transparent;
     }
-    /* 移除 hover 效果，改用 active */
     .site-card:active {
         transform: scale(0.98);
     }
@@ -490,7 +456,6 @@
     }
 }
 
-/* ========== 减少动画（用户偏好） ========== */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;
@@ -511,7 +476,6 @@
     }
 }
 
-/* ========== 打印样式 ========== */
 @media print {
     .navbar,
     .sidebar,
