@@ -1,7 +1,4 @@
-/**
- * 全局错误处理管理器（过滤第三方脚本错误，脱敏上报，支持重试）
- * 增强：资源错误捕获具体 src，添加域名忽略列表
- */
+/* error-handler.js */
 class ErrorHandler {
     constructor() {
         this.errors = [];
@@ -11,7 +8,6 @@ class ErrorHandler {
         this.init();
     }
 
-    // 脱敏函数：隐藏 IP 最后一段，过滤邮箱，截断过长字符串
     maskSensitive(str) {
         if (!str) return '';
         str = String(str);
@@ -22,13 +18,10 @@ class ErrorHandler {
         return str;
     }
 
-    // 判断是否应该忽略某个错误
     shouldIgnore(errorInfo) {
-        // 忽略空消息或信息不完整的资源错误
         if (errorInfo.type === 'resource' && !errorInfo.message && !errorInfo.stack && !errorInfo.src) {
             return true;
         }
-        // 忽略特定域名的资源加载失败（如外部图标、壁纸 API）
         if (errorInfo.type === 'resource' && errorInfo.src) {
             const ignoreDomains = [
                 'favicon.yandex.net',
@@ -47,9 +40,7 @@ class ErrorHandler {
     }
 
     init() {
-        // 捕获 JavaScript 运行时错误
         window.addEventListener('error', (event) => {
-            // 资源加载错误（IMG, SCRIPT, LINK 等）
             const target = event.target;
             if (target && (target.tagName === 'IMG' || target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
                 const src = target.src || target.href;
@@ -71,7 +62,6 @@ class ErrorHandler {
                 }
                 return;
             }
-            // 普通错误
             const { message, filename, lineno, colno, error } = event;
             if (message === 'Script error.' || message === 'Script error') return;
             this.handleError({
@@ -85,7 +75,6 @@ class ErrorHandler {
             });
         });
 
-        // 捕获未处理的 Promise 拒绝
         window.addEventListener('unhandledrejection', (event) => {
             const reason = event.reason;
             this.handleError({
@@ -97,7 +86,6 @@ class ErrorHandler {
         });
     }
 
-    // 手动上报错误（供模块调用）
     report(error, module = 'unknown') {
         let errorInfo;
         if (error instanceof Error) {
@@ -119,7 +107,6 @@ class ErrorHandler {
         this.handleError(errorInfo);
     }
 
-    // 统一错误处理
     handleError(errorInfo) {
         if (this.shouldIgnore(errorInfo)) return;
         if (this.errors.length >= this.maxErrors) this.errors.shift();
@@ -143,7 +130,6 @@ class ErrorHandler {
         } else if (errorInfo.type === 'unhandledrejection') {
             userMessage = '操作未能完成，请重试。';
         } else if (errorInfo.type === 'resource' && errorInfo.tag === 'IMG') {
-            // 图片加载失败通常不影响核心功能，不提示
             return;
         } else {
             return;
@@ -156,7 +142,6 @@ class ErrorHandler {
         }
     }
 
-    // 上报到服务器（增加重试和上下文）
     async reportToServer(errorInfo) {
         if (!this.reportUrl) return;
         const safeInfo = {
@@ -191,18 +176,15 @@ class ErrorHandler {
         send();
     }
 
-    // 获取已捕获的错误列表
     getErrors() {
         return [...this.errors];
     }
 
-    // 清空错误列表
     clearErrors() {
         this.errors = [];
     }
 }
 
-// 单例初始化
 if (!window.errorHandler) {
     window.errorHandler = new ErrorHandler();
 }
