@@ -1,4 +1,4 @@
-/* sidebar.css - 现代悬浮侧滑栏样式（纯色背景，无亚克力，深色模式优化） */
+/* sidebar.css */
 :root {
     --sidebar-width: 260px;
     --sidebar-mobile-width: 70vw;
@@ -10,7 +10,6 @@
     --sidebar-transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
 
-/* 侧滑栏容器 */
 .sidebar {
     position: fixed;
     left: var(--container-padding-xs, 16px);
@@ -33,7 +32,6 @@
     transform: translateX(0);
 }
 
-/* 壁纸头部区域 */
 .sidebar-wallpaper {
     position: relative;
     width: 100%;
@@ -109,7 +107,6 @@
     text-overflow: ellipsis;
 }
 
-/* 每日一言卡片 - 白色背景，无内边距，无阴影 */
 .daily-quote-card {
     margin: 12px 16px;
     padding: 0;
@@ -127,7 +124,6 @@
     font-style: italic;
 }
 
-/* 分类容器 - 隐藏滚动条 */
 .sidebar-categories {
     flex: 1;
     overflow-y: auto;
@@ -139,7 +135,6 @@
     display: none;
 }
 
-/* 分类分组 */
 .category-group {
     margin-bottom: 12px;
     background: var(--bg-card, #ffffff);
@@ -198,7 +193,6 @@
     transform: rotate(180deg);
 }
 
-/* 分类项列表 */
 .category-items {
     max-height: 0;
     overflow: hidden;
@@ -209,7 +203,6 @@
     overflow-y: auto;
 }
 
-/* 分类内容按钮 - 直角按钮（无圆角） */
 .category-item {
     display: flex;
     align-items: center;
@@ -237,7 +230,6 @@
     color: currentColor;
 }
 
-/* 底部按钮栏 */
 .sidebar-footer {
     padding: 12px 16px;
     border-top: 1px solid var(--border-color, #e0e0e0);
@@ -271,7 +263,6 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.12);
 }
 
-/* 各按钮独立颜色 - 保持原有，深色模式下略微调整亮度 */
 .footer-btn[data-action="notebook"] { color: #8b5cf6; }
 .footer-btn[data-action="notebook"]:hover { background: rgba(139, 92, 246, 0.15); color: #7c3aed; }
 .footer-btn[data-action="gift"] { color: #f97316; }
@@ -281,7 +272,6 @@
 .footer-btn[data-action="qq"] { color: #3b82f6; }
 .footer-btn[data-action="qq"]:hover { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
 
-/* 响应式：左右边距与主页一致 */
 @media (min-width: 576px) {
     .sidebar {
         left: var(--container-padding-sm, 20px);
@@ -307,7 +297,6 @@
     }
 }
 
-/* 移动端宽度调整 */
 @media (max-width: 768px) {
     .sidebar {
         width: var(--sidebar-mobile-width);
@@ -340,7 +329,6 @@
     }
 }
 
-/* 小屏手机 */
 @media (max-width: 480px) {
     .sidebar-wallpaper-user-info {
         left: 12px;
@@ -365,7 +353,6 @@
     }
 }
 
-/* 横屏小高度适配 */
 @media (max-height: 500px) and (orientation: landscape) {
     .sidebar {
         top: 60px !important;
@@ -379,7 +366,6 @@
     }
 }
 
-/* 减少动画 */
 @media (prefers-reduced-motion: reduce) {
     .sidebar,
     .category-group-header,
@@ -392,7 +378,6 @@
     }
 }
 
-/* ==================== 深色模式优化（仅 .dark-mode） ==================== */
 .dark-mode .sidebar {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
