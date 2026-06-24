@@ -1,4 +1,4 @@
-/* 轮播图容器 - 移除渐变，改为纯色背景 */
+/* wallpaper.css */
 .wallpaper-section {
     padding: var(--section-margin-sm, 20px) 0 0 !important;
     position: relative;
@@ -40,7 +40,7 @@
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     margin: 0 !important;
-    background: var(--bg-secondary, #f8f9fa); /* 改为纯色背景 */
+    background: var(--bg-secondary, #f8f9fa);
     user-select: none;
 }
 
@@ -59,7 +59,7 @@
     background-position: center;
     background-repeat: no-repeat;
     position: relative;
-    background-color: transparent; /* 确保透明，由容器背景提供底色 */
+    background-color: transparent;
 }
 
 .carousel-arrow {
@@ -180,9 +180,8 @@
     .wallpaper-title { font-size: 12px; }
 }
 
-/* ==================== 深色模式优化 ==================== */
 .dark-mode .wallpaper-container {
-    background: var(--bg-secondary, #1e1e1e); /* 深色纯色 */
+    background: var(--bg-secondary, #1e1e1e);
 }
 .dark-mode .carousel-arrow {
     background: rgba(0, 0, 0, 0.3);
