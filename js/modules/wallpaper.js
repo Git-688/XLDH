@@ -1,11 +1,6 @@
-/**
- * 轮播图模块 - 性能优化版（增强预加载策略 + 懒加载背景）
- * 移除渐变色背景，使用纯色背景
- */
 class CarouselModule {
     constructor() {
         if (window.Starlink && window.Starlink.carousel) return window.Starlink.carousel;
-        
         this.currentIndex = 1;
         this.slides = [];
         this.clonedSlides = [];
@@ -21,26 +16,17 @@ class CarouselModule {
         this.preloadQueue = [];
         this.idlePreloadQueue = [];
         this.init();
-        
         if (window.Starlink) window.Starlink.carousel = this;
         window.carouselModule = this;
     }
 
-    getResolutionForWidth() {
-        return 1920;
-    }
+    getResolutionForWidth() { return 1920; }
 
     sanitizeImageUrl(url) {
         if (!url) return '';
-        if (url.startsWith('http://') || url.startsWith('https://')) {
-            return url;
-        }
-        if (url.startsWith('//')) {
-            return 'https:' + url;
-        }
-        if (url.startsWith('/')) {
-            return 'https://cn.bing.com' + url;
-        }
+        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+        if (url.startsWith('//')) return 'https:' + url;
+        if (url.startsWith('/')) return 'https://cn.bing.com' + url;
         return url;
     }
 
@@ -48,25 +34,11 @@ class CarouselModule {
         if (!imageUrl) return Promise.resolve(false);
         if (this.preloadCache.has(imageUrl)) return Promise.resolve(true);
         if (this.activePreloads.has(imageUrl)) return this.activePreloads.get(imageUrl);
-
         const loadPromise = new Promise((resolve) => {
             const img = new Image();
-            const timeoutId = setTimeout(() => {
-                img.onload = null;
-                img.onerror = null;
-                resolve(false);
-            }, 5000);
-            img.onload = () => {
-                clearTimeout(timeoutId);
-                this.preloadCache.add(imageUrl);
-                this.activePreloads.delete(imageUrl);
-                resolve(true);
-            };
-            img.onerror = () => {
-                clearTimeout(timeoutId);
-                this.activePreloads.delete(imageUrl);
-                resolve(false);
-            };
+            const timeoutId = setTimeout(() => { img.onload = null; img.onerror = null; resolve(false); }, 5000);
+            img.onload = () => { clearTimeout(timeoutId); this.preloadCache.add(imageUrl); this.activePreloads.delete(imageUrl); resolve(true); };
+            img.onerror = () => { clearTimeout(timeoutId); this.activePreloads.delete(imageUrl); resolve(false); };
             img.src = imageUrl;
         });
         this.activePreloads.set(imageUrl, loadPromise);
@@ -78,16 +50,11 @@ class CarouselModule {
         if (!slide || !slide.url) return Promise.resolve(false);
         const imageUrl = this.sanitizeImageUrl(slide.url);
         if (!imageUrl || this.preloadCache.has(imageUrl)) return Promise.resolve(true);
-
         const task = () => this.preloadSingleImage(imageUrl);
-        
         return new Promise((resolve) => {
             if (this.activePreloads.size >= this.maxConcurrentPreloads) {
-                if (priority === 'high') {
-                    this.preloadQueue.unshift({ task, resolve });
-                } else {
-                    this.preloadQueue.push({ task, resolve });
-                }
+                if (priority === 'high') this.preloadQueue.unshift({ task, resolve });
+                else this.preloadQueue.push({ task, resolve });
             } else {
                 task().then(result => {
                     resolve(result);
@@ -107,9 +74,7 @@ class CarouselModule {
             indices.add((currentIndex + i) % total);
             indices.add((currentIndex - i + total) % total);
         }
-        indices.forEach(idx => {
-            this.preloadImage(idx, 'normal');
-        });
+        indices.forEach(idx => { this.preloadImage(idx, 'normal'); });
     }
 
     preloadAllIdle() {
@@ -139,9 +104,7 @@ class CarouselModule {
             const nextTask = this.idlePreloadQueue.shift();
             if (nextTask) {
                 Promise.resolve(nextTask()).finally(() => {
-                    if (this.idlePreloadQueue.length > 0) {
-                        setTimeout(processIdle, 100);
-                    }
+                    if (this.idlePreloadQueue.length > 0) setTimeout(processIdle, 100);
                 });
             }
         };
@@ -156,7 +119,6 @@ class CarouselModule {
         const days = 7;
         const bingImages = [];
         const resolution = this.getResolutionForWidth();
-
         for (let i = 0; i < days; i++) {
             try {
                 const url = `https://bing.biturl.top/?resolution=${resolution}&format=json&index=${i}`;
@@ -171,17 +133,12 @@ class CarouselModule {
                         bingImages.push({ url: imageUrl, title: title });
                     }
                 }
-            } catch (e) {
-                console.warn(`获取第${i}天壁纸失败`);
-            }
+            } catch (e) {}
         }
-
         if (bingImages.length === 0) {
             bingImages.push({ url: '', title: '星聚导航' });
         }
-
         this.slides = bingImages;
-
         if (this.slides.length > 1) {
             this.clonedSlides = [
                 { ...this.slides[this.slides.length - 1], clone: 'last' },
@@ -191,15 +148,12 @@ class CarouselModule {
         } else {
             this.clonedSlides = [...this.slides];
         }
-
         this.track = document.getElementById('carouselTrack');
         this.dotsContainer = document.getElementById('carouselDots');
         this.infoTitle = document.getElementById('wallpaperTitle');
         this.arrowLeft = document.getElementById('carouselArrowLeft');
         this.arrowRight = document.getElementById('carouselArrowRight');
-
         if (!this.track) return;
-
         this.renderSlides();
         this.renderDots();
         this.preloadImage(1, 'high');
@@ -207,30 +161,22 @@ class CarouselModule {
         this.goToSlide(1, false);
         this.bindEvents();
         this.startAutoplay();
-
         setTimeout(() => this.preloadAllIdle(), 3000);
     }
 
     renderSlides() {
         if (!this.track) return;
         this.track.innerHTML = '';
-
         this.clonedSlides.forEach((slide, index) => {
             const div = document.createElement('div');
             div.className = 'carousel-slide';
-            // 不再设置渐变背景，让容器背景纯色显示
-            // 仅当有图片且是当前激活的 slide 时加载背景
             if (index === 1 && slide.url) {
                 const imageUrl = this.sanitizeImageUrl(slide.url);
-                if (imageUrl) {
-                    div.style.backgroundImage = `url('${imageUrl}')`;
-                }
+                if (imageUrl) div.style.backgroundImage = `url('${imageUrl}')`;
             } else if (slide.url) {
-                // 存储 url 到 data 属性，供后续懒加载
                 div.dataset.bg = this.sanitizeImageUrl(slide.url);
             }
-
-            div.setAttribute('data-index', index);
+            div.dataset.index = index;
             this.track.appendChild(div);
         });
     }
@@ -241,7 +187,7 @@ class CarouselModule {
         this.slides.forEach((_, index) => {
             const dot = document.createElement('span');
             dot.className = 'carousel-dot';
-            dot.setAttribute('data-index', index);
+            dot.dataset.index = index;
             dot.addEventListener('click', () => {
                 this.goToSlide(index + 1, true);
                 this.resetAutoplay();
@@ -254,10 +200,8 @@ class CarouselModule {
         if (this.isTransitioning) return;
         const total = this.clonedSlides.length;
         if (clonedIndex < 0 || clonedIndex >= total) return;
-
         this.isTransitioning = true;
         this.preloadNearbySlides(clonedIndex, 3);
-
         const targetSlide = this.track.children[clonedIndex];
         if (targetSlide && targetSlide.dataset.bg) {
             const bgUrl = targetSlide.dataset.bg;
@@ -268,25 +212,19 @@ class CarouselModule {
             };
             img.src = bgUrl;
         }
-
         let realIndex = clonedIndex;
         if (clonedIndex === 0) realIndex = this.slides.length - 1;
         else if (clonedIndex === total - 1) realIndex = 0;
         else realIndex = clonedIndex - 1;
-
         const dots = this.dotsContainer ? this.dotsContainer.querySelectorAll('.carousel-dot') : [];
         dots.forEach((dot, i) => dot.classList.toggle('active', i === realIndex));
-
         const title = this.clonedSlides[clonedIndex].title || '';
         if (this.infoTitle) this.infoTitle.textContent = title;
-
         if (this.track) {
             this.track.style.transition = animate ? 'transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.2)' : 'none';
             this.track.style.transform = `translateX(-${clonedIndex * 100}%)`;
         }
-
         this.currentIndex = clonedIndex;
-
         setTimeout(() => {
             this.isTransitioning = false;
             if (clonedIndex === 0) {
@@ -319,10 +257,7 @@ class CarouselModule {
     }
 
     stopAutoplay() {
-        if (this.autoplayTimer) {
-            clearInterval(this.autoplayTimer);
-            this.autoplayTimer = null;
-        }
+        if (this.autoplayTimer) { clearInterval(this.autoplayTimer); this.autoplayTimer = null; }
     }
 
     resetAutoplay() {
@@ -332,18 +267,11 @@ class CarouselModule {
 
     bindEvents() {
         if (this.arrowLeft) {
-            this.arrowLeft.addEventListener('click', () => {
-                this.prev();
-                this.resetAutoplay();
-            });
+            this.arrowLeft.addEventListener('click', () => { this.prev(); this.resetAutoplay(); });
         }
         if (this.arrowRight) {
-            this.arrowRight.addEventListener('click', () => {
-                this.next();
-                this.resetAutoplay();
-            });
+            this.arrowRight.addEventListener('click', () => { this.next(); this.resetAutoplay(); });
         }
-
         if (this.track) {
             let startX = 0, startY = 0;
             this.track.addEventListener('touchstart', (e) => {
@@ -363,7 +291,6 @@ class CarouselModule {
                 this.startAutoplay();
             });
         }
-
         const container = document.getElementById('wallpaperCarousel');
         if (container) {
             container.addEventListener('mouseenter', () => this.stopAutoplay());
@@ -384,8 +311,6 @@ class CarouselModule {
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.Starlink) window.Starlink = {};
-    if (!window.Starlink.carousel) {
-        window.Starlink.carousel = new CarouselModule();
-    }
+    if (!window.Starlink.carousel) window.Starlink.carousel = new CarouselModule();
     window.carouselModule = window.Starlink.carousel;
 });
