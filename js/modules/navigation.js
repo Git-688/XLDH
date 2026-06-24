@@ -1,4 +1,4 @@
-/* navigation.js */
+/* navigation.js - 按需加载优化版 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -18,7 +18,6 @@ class OptimizedNavigation {
         this.isSearching = false;
         this.searchInput = null;
         this.searchTimer = null;
-        this.loadedLevel1Set = new Set();
 
         this.currentPage = 1;
         this.pageSize = 30;
@@ -35,11 +34,9 @@ class OptimizedNavigation {
         this.iconLoadingSet = new Set();
         this.iconFailedSet = new Set();
 
-        this.preloadQueue = [];
-        this.isPreloading = false;
-
         this.countsCache = new Map();
-        this.currentAbortController = null;
+        this.countsLoading = false;
+        this.countsPending = false;
 
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
@@ -209,14 +206,8 @@ class OptimizedNavigation {
                     await this.renderLevel3(firstCategory, firstSub.id);
 
                     const allSubIds = this.structure[firstCategory].subcategories.map(s => s.id);
-                    const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
-                    if (otherSubIds.length) {
-                        this.loadBatchSitesBatch(otherSubIds).catch(err => console.warn('后台加载其他子分类失败:', err));
-                    }
                     if (allSubIds.length) {
-                        setTimeout(() => {
-                            this.loadSubcategoryCountsWithRetry(allSubIds).catch(() => {});
-                        }, 500);
+                        this.scheduleCountsLoading(allSubIds);
                     }
                 } else {
                     this.renderEmptyState();
@@ -238,19 +229,29 @@ class OptimizedNavigation {
         }
     }
 
-    async loadBatchSitesBatch(subIds, batchSize = 8) {
-        if (!subIds || !subIds.length) return {};
-        const results = {};
-        const allIds = [...subIds];
-        for (let i = 0; i < allIds.length; i += batchSize) {
-            const batch = allIds.slice(i, i + batchSize);
-            const batchResult = await this.loadBatchSites(batch);
-            Object.assign(results, batchResult);
-            if (i + batchSize < allIds.length) {
-                await new Promise(r => setTimeout(r, 200));
-            }
+    scheduleCountsLoading(subIds) {
+        if (this.countsLoading) {
+            this.countsPending = true;
+            return;
         }
-        return results;
+        const load = () => {
+            if (this.countsLoading) return;
+            this.countsLoading = true;
+            this.countsPending = false;
+            this.loadSubcategoryCountsWithRetry(subIds, 2, 500)
+                .catch(() => {})
+                .finally(() => {
+                    this.countsLoading = false;
+                    if (this.countsPending) {
+                        this.scheduleCountsLoading(subIds);
+                    }
+                });
+        };
+        if (document.readyState === 'complete') {
+            setTimeout(load, 300);
+        } else {
+            window.addEventListener('load', () => setTimeout(load, 300));
+        }
     }
 
     async loadSubcategoryCountsWithRetry(subcategoryIds, retries = 2, delay = 500) {
@@ -336,59 +337,6 @@ class OptimizedNavigation {
         return sites;
     }
 
-    async loadBatchSites(subIds, forceRefresh = false) {
-        if (!subIds || !subIds.length) return {};
-
-        if (!forceRefresh) {
-            const allCached = subIds.every(id => this.siteCache.has(id));
-            if (allCached) {
-                const result = {};
-                subIds.forEach(id => { result[id] = this.siteCache.get(id); });
-                return result;
-            }
-        }
-
-        const uncachedIds = subIds.filter(id => !this.siteCache.has(id));
-        if (!uncachedIds.length) {
-            const result = {};
-            subIds.forEach(id => { result[id] = this.siteCache.get(id); });
-            return result;
-        }
-
-        try {
-            const idsParam = uncachedIds.join(',');
-            const response = await Utils.safeFetch(`${this.apiBase}/navigation/batch-sites?ids=${idsParam}`);
-            const data = await response.json();
-
-            if (data && data.data) {
-                for (const [subId, sites] of Object.entries(data.data)) {
-                    const id = parseInt(subId);
-                    if (!isNaN(id)) {
-                        this.siteCache.set(id, sites);
-                    }
-                }
-            }
-
-            const result = {};
-            subIds.forEach(id => {
-                result[id] = this.siteCache.get(id) || [];
-            });
-            return result;
-
-        } catch (error) {
-            console.warn('批量加载站点失败，降级为逐个加载:', error);
-            const result = {};
-            for (const id of subIds) {
-                if (!this.siteCache.has(id)) {
-                    result[id] = await this.loadSites(id, true);
-                } else {
-                    result[id] = this.siteCache.get(id);
-                }
-            }
-            return result;
-        }
-    }
-
     async loadSubcategoryCounts(subcategoryIds) {
         if (!subcategoryIds || subcategoryIds.length === 0) return {};
 
@@ -403,17 +351,15 @@ class OptimizedNavigation {
             return counts;
         }
 
-        if (this.currentAbortController) {
-            this.currentAbortController.abort();
-        }
-        this.currentAbortController = new AbortController();
-
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
             const idsParam = sortedIds.join(',');
             const response = await fetch(`${this.apiBase}/subcategory/counts?ids=${idsParam}`, {
-                signal: this.currentAbortController.signal,
+                signal: controller.signal,
                 headers: { 'Cache-Control': 'no-cache' }
             });
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
@@ -431,15 +377,11 @@ class OptimizedNavigation {
 
         } catch (error) {
             if (error.name === 'AbortError') {
-                console.log('计数请求已取消（切换分类）');
-                return {};
+                console.log('计数请求超时，已取消');
+            } else {
+                console.warn('获取子分类计数失败:', error);
             }
-            console.warn('获取子分类计数失败:', error);
             return {};
-        } finally {
-            if (this.currentAbortController) {
-                this.currentAbortController = null;
-            }
         }
     }
 
@@ -450,11 +392,6 @@ class OptimizedNavigation {
     }
 
     async selectLevel1(level1, isUserClick = false) {
-        if (this.currentAbortController) {
-            this.currentAbortController.abort();
-            this.currentAbortController = null;
-        }
-
         if (this.selectedLevel1 === level1) return;
         this.isNavigationClick = true;
         document.querySelectorAll('.level1-btn').forEach(b => b.classList.toggle('active', b.dataset.level1 === level1));
@@ -467,20 +404,13 @@ class OptimizedNavigation {
             const firstSites = await this.loadSites(firstSub.id);
             this.currentSites = firstSites;
             await this.renderLevel3(this.selectedLevel1, firstSub.id);
-            const allSubIds = this.structure[level1].subcategories.map(s => s.id);
-            const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
-            if (otherSubIds.length) {
-                this.loadBatchSitesBatch(otherSubIds).catch(err => console.warn('后台加载其他子分类失败:', err));
-            }
         } else {
             this.renderEmptyState();
         }
 
         const subIds = this.structure[level1].subcategories.map(s => s.id);
         if (subIds.length) {
-            setTimeout(() => {
-                this.loadSubcategoryCountsWithRetry(subIds).catch(() => {});
-            }, 300);
+            this.scheduleCountsLoading(subIds);
         }
 
         setTimeout(() => { this.isNavigationClick = false; }, 100);
@@ -1040,7 +970,6 @@ class OptimizedNavigation {
         this.siteCache.clear();
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
-        this.loadedLevel1Set.clear();
         this.showSkeleton();
         this.init();
     }
@@ -1058,10 +987,6 @@ class OptimizedNavigation {
         this.iconLoadingSet.clear();
         this.iconFailedSet.clear();
         this.countsCache.clear();
-        if (this.currentAbortController) {
-            this.currentAbortController.abort();
-            this.currentAbortController = null;
-        }
     }
 }
 
