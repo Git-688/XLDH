@@ -1,4 +1,4 @@
-/* navigation.js - 按需加载优化版 */
+/* navigation.js - 移除 counts API 依赖，改用本地计算 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -33,10 +33,6 @@ class OptimizedNavigation {
         this.iconCache = new Map();
         this.iconLoadingSet = new Set();
         this.iconFailedSet = new Set();
-
-        this.countsCache = new Map();
-        this.countsLoading = false;
-        this.countsPending = false;
 
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
@@ -206,8 +202,14 @@ class OptimizedNavigation {
                     await this.renderLevel3(firstCategory, firstSub.id);
 
                     const allSubIds = this.structure[firstCategory].subcategories.map(s => s.id);
-                    if (allSubIds.length) {
-                        this.scheduleCountsLoading(allSubIds);
+                    for (const subId of allSubIds) {
+                        if (!this.siteCache.has(subId)) {
+                            this.loadSites(subId).then(() => {
+                                this.updateSubcategoryCount(subId);
+                            }).catch(() => {});
+                        } else {
+                            this.updateSubcategoryCount(subId);
+                        }
                     }
                 } else {
                     this.renderEmptyState();
@@ -229,41 +231,11 @@ class OptimizedNavigation {
         }
     }
 
-    scheduleCountsLoading(subIds) {
-        if (this.countsLoading) {
-            this.countsPending = true;
-            return;
-        }
-        const load = () => {
-            if (this.countsLoading) return;
-            this.countsLoading = true;
-            this.countsPending = false;
-            this.loadSubcategoryCountsWithRetry(subIds, 2, 500)
-                .catch(() => {})
-                .finally(() => {
-                    this.countsLoading = false;
-                    if (this.countsPending) {
-                        this.scheduleCountsLoading(subIds);
-                    }
-                });
-        };
-        if (document.readyState === 'complete') {
-            setTimeout(load, 300);
-        } else {
-            window.addEventListener('load', () => setTimeout(load, 300));
-        }
-    }
-
-    async loadSubcategoryCountsWithRetry(subcategoryIds, retries = 2, delay = 500) {
-        try {
-            return await this.loadSubcategoryCounts(subcategoryIds);
-        } catch (error) {
-            if (retries > 0 && error.name !== 'AbortError') {
-                await new Promise(r => setTimeout(r, delay));
-                return this.loadSubcategoryCountsWithRetry(subcategoryIds, retries - 1, delay * 1.5);
-            }
-            throw error;
-        }
+    updateSubcategoryCount(subcategoryId) {
+        const sites = this.siteCache.get(subcategoryId);
+        if (!sites) return;
+        const count = sites.filter(s => s.valid !== false).length;
+        this.updateSubcategoryCountDisplay(subcategoryId, count);
     }
 
     async calculateTotalValidSites() {
@@ -337,60 +309,6 @@ class OptimizedNavigation {
         return sites;
     }
 
-    async loadSubcategoryCounts(subcategoryIds) {
-        if (!subcategoryIds || subcategoryIds.length === 0) return {};
-
-        const sortedIds = [...subcategoryIds].sort((a, b) => a - b);
-        const cacheKey = sortedIds.join(',');
-        const now = Date.now();
-
-        const cached = this.countsCache.get(cacheKey);
-        if (cached && (now - cached.timestamp) < 60000) {
-            const counts = cached.data;
-            this.updateSubcategoryCounts(counts);
-            return counts;
-        }
-
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000);
-            const idsParam = sortedIds.join(',');
-            const response = await fetch(`${this.apiBase}/subcategory/counts?ids=${idsParam}`, {
-                signal: controller.signal,
-                headers: { 'Cache-Control': 'no-cache' }
-            });
-            clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-
-            const counts = await response.json();
-
-            this.countsCache.set(cacheKey, {
-                data: counts,
-                timestamp: now
-            });
-
-            this.updateSubcategoryCounts(counts);
-            return counts;
-
-        } catch (error) {
-            if (error.name === 'AbortError') {
-                console.log('计数请求超时，已取消');
-            } else {
-                console.warn('获取子分类计数失败:', error);
-            }
-            return {};
-        }
-    }
-
-    updateSubcategoryCounts(counts) {
-        for (const [subId, count] of Object.entries(counts)) {
-            this.updateSubcategoryCountDisplay(parseInt(subId), count);
-        }
-    }
-
     async selectLevel1(level1, isUserClick = false) {
         if (this.selectedLevel1 === level1) return;
         this.isNavigationClick = true;
@@ -404,13 +322,18 @@ class OptimizedNavigation {
             const firstSites = await this.loadSites(firstSub.id);
             this.currentSites = firstSites;
             await this.renderLevel3(this.selectedLevel1, firstSub.id);
+            const allSubIds = this.structure[level1].subcategories.map(s => s.id);
+            for (const subId of allSubIds) {
+                if (!this.siteCache.has(subId)) {
+                    this.loadSites(subId).then(() => {
+                        this.updateSubcategoryCount(subId);
+                    }).catch(() => {});
+                } else {
+                    this.updateSubcategoryCount(subId);
+                }
+            }
         } else {
             this.renderEmptyState();
-        }
-
-        const subIds = this.structure[level1].subcategories.map(s => s.id);
-        if (subIds.length) {
-            this.scheduleCountsLoading(subIds);
         }
 
         setTimeout(() => { this.isNavigationClick = false; }, 100);
@@ -424,6 +347,7 @@ class OptimizedNavigation {
         this.hasShownNoMoreToast = false;
         if (!this.siteCache.has(subcategoryId)) {
             await this.loadSites(subcategoryId);
+            this.updateSubcategoryCount(subcategoryId);
         }
         await this.renderLevel3(this.selectedLevel1, subcategoryId);
         if (this.autoRefreshTimer) {
@@ -986,7 +910,6 @@ class OptimizedNavigation {
         this.iconCache.clear();
         this.iconLoadingSet.clear();
         this.iconFailedSet.clear();
-        this.countsCache.clear();
     }
 }
 
