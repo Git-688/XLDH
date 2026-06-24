@@ -211,10 +211,12 @@ class OptimizedNavigation {
                     const allSubIds = this.structure[firstCategory].subcategories.map(s => s.id);
                     const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
                     if (otherSubIds.length) {
-                        this.loadBatchSites(otherSubIds).catch(err => console.warn('后台加载其他子分类失败:', err));
+                        this.loadBatchSitesBatch(otherSubIds).catch(err => console.warn('后台加载其他子分类失败:', err));
                     }
                     if (allSubIds.length) {
-                        this.loadSubcategoryCounts(allSubIds).catch(() => {});
+                        setTimeout(() => {
+                            this.loadSubcategoryCountsWithRetry(allSubIds).catch(() => {});
+                        }, 500);
                     }
                 } else {
                     this.renderEmptyState();
@@ -233,6 +235,33 @@ class OptimizedNavigation {
         } catch (error) {
             console.error('导航初始化失败:', error);
             this.showError();
+        }
+    }
+
+    async loadBatchSitesBatch(subIds, batchSize = 8) {
+        if (!subIds || !subIds.length) return {};
+        const results = {};
+        const allIds = [...subIds];
+        for (let i = 0; i < allIds.length; i += batchSize) {
+            const batch = allIds.slice(i, i + batchSize);
+            const batchResult = await this.loadBatchSites(batch);
+            Object.assign(results, batchResult);
+            if (i + batchSize < allIds.length) {
+                await new Promise(r => setTimeout(r, 200));
+            }
+        }
+        return results;
+    }
+
+    async loadSubcategoryCountsWithRetry(subcategoryIds, retries = 2, delay = 500) {
+        try {
+            return await this.loadSubcategoryCounts(subcategoryIds);
+        } catch (error) {
+            if (retries > 0 && error.name !== 'AbortError') {
+                await new Promise(r => setTimeout(r, delay));
+                return this.loadSubcategoryCountsWithRetry(subcategoryIds, retries - 1, delay * 1.5);
+            }
+            throw error;
         }
     }
 
@@ -441,7 +470,7 @@ class OptimizedNavigation {
             const allSubIds = this.structure[level1].subcategories.map(s => s.id);
             const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
             if (otherSubIds.length) {
-                this.loadBatchSites(otherSubIds).catch(err => console.warn('后台加载其他子分类失败:', err));
+                this.loadBatchSitesBatch(otherSubIds).catch(err => console.warn('后台加载其他子分类失败:', err));
             }
         } else {
             this.renderEmptyState();
@@ -449,7 +478,9 @@ class OptimizedNavigation {
 
         const subIds = this.structure[level1].subcategories.map(s => s.id);
         if (subIds.length) {
-            this.loadSubcategoryCounts(subIds).catch(() => {});
+            setTimeout(() => {
+                this.loadSubcategoryCountsWithRetry(subIds).catch(() => {});
+            }, 300);
         }
 
         setTimeout(() => { this.isNavigationClick = false; }, 100);
