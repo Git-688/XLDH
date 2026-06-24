@@ -1,3 +1,4 @@
+/* admin.js */
 (function() {
     'use strict';
 
