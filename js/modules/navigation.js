@@ -337,7 +337,9 @@ class OptimizedNavigation {
             this.updateSubcategoryCounts(cached.data);
             return cached.data;
         }
-        if (this.currentAbortController) this.currentAbortController.abort();
+        if (this.currentAbortController) {
+            this.currentAbortController.abort();
+        }
         this.currentAbortController = new AbortController();
         try {
             const idsParam = sortedIds.join(',');
@@ -351,7 +353,9 @@ class OptimizedNavigation {
             this.updateSubcategoryCounts(counts);
             return counts;
         } catch (error) {
-            if (error.name === 'AbortError') return {};
+            if (error.name === 'AbortError') {
+                return {};
+            }
             console.warn('获取子分类计数失败:', error);
             return {};
         } finally {
@@ -391,7 +395,14 @@ class OptimizedNavigation {
         }
         const subIds = this.structure[level1].subcategories.map(s => s.id);
         if (subIds.length) {
-            this.loadSubcategoryCounts(subIds).catch(() => {});
+            try {
+                await this.loadSubcategoryCounts(subIds);
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    return;
+                }
+                console.warn('加载子分类计数失败:', error);
+            }
         }
         setTimeout(() => { this.isNavigationClick = false; }, 100);
     }
