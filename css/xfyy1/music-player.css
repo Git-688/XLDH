@@ -1,9 +1,8 @@
-/* 悬浮音乐播放器样式 - 纯色背景（无亚克力效果） */
+/* music-player.css */
 .music-player {
     position: fixed;
     bottom: 20px;
     right: 20px;
-
     background: var(--bg-card, #ffffff);
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
@@ -43,7 +42,6 @@
     transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
 }
 
-/* 音乐按钮动画 */
 #musicBtn { position: relative; transition: all 0.3s ease; }
 #musicBtn.active { background: var(--primary-color, #4361ee); color: white; transform: scale(1.1); }
 #musicBtn.active::after {
@@ -60,7 +58,6 @@
 @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
 @keyframes loading { 0% { left: -100%; } 100% { left: 100%; } }
 
-/* 内容入场动画（延迟出现） */
 .music-player .player-top,
 .music-player .progress-section,
 .music-player .lyrics-section,
@@ -115,7 +112,6 @@
 .time-text { background: rgba(67,97,238,0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
 .progress-bar { position: relative; height: 6px; background: var(--border-color, #e9ecef); border-radius: 3px; cursor: pointer; width: 100%; overflow: hidden; touch-action: none; }
 
-/* 进度条 - 使用 width 方式，消除空白间隙 */
 .progress {
     position: absolute;
     height: 100%;
@@ -127,7 +123,6 @@
     z-index: 2;
     box-shadow: 0 0 4px rgba(67, 97, 238, 0.5);
 }
-/* 拖拽时禁用过渡，提升实时性 */
 .progress.no-transition {
     transition: none !important;
 }
@@ -198,18 +193,17 @@
     min-width: 65px;
 }
 
-/* 歌词区域 - 调整垂直居中，容器高度合适 */
 .lyrics-section {
     padding: 0 15px;
     border-bottom: 1px solid rgba(0,0,0,0.08);
-    height: 56px;  /* 适中高度，容纳歌词和上下留白 */
+    height: 56px;
     display: flex;
     align-items: center;
     overflow: hidden;
 }
 .lyrics-container {
     width: 100%;
-    height: auto;  /* 高度由内容撑开，但不超过父容器 */
+    height: auto;
     max-height: 100%;
     overflow-x: auto;
     overflow-y: hidden;
@@ -217,7 +211,7 @@
     white-space: nowrap;
     cursor: grab;
     display: flex;
-    align-items: center;  /* 垂直居中内部歌词 */
+    align-items: center;
 }
 .lyrics-container::-webkit-scrollbar { display: none; }
 .lyrics-single-line {
@@ -294,7 +288,6 @@
 .download-btn:hover { background: rgba(67,97,238,0.1); color: var(--primary-color, #4361ee); transform: scale(1.05); }
 .download-btn svg { width: 18px; height: 18px; fill: currentColor; }
 
-/* 下载进度条样式（新增） */
 .download-progress {
     position: fixed;
     bottom: 80px;
@@ -326,7 +319,6 @@
 @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .album-cover.playing img { animation: rotate 20s linear infinite; }
 
-/* 移动端优化 */
 @media (max-width: 480px) {
     .music-player {
         width: auto;
@@ -357,7 +349,6 @@
     #search-toggle-btn .search-icon, #search-toggle-btn .back-icon { width: 16px; height: 16px; }
 }
 
-/* ==================== 深色模式优化（仅使用 .dark-mode 类，移除媒体查询） ==================== */
 .dark-mode .music-player {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
