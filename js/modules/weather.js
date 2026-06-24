@@ -1,4 +1,4 @@
-/* weather.js - 合并 APIHz + 和风天气 */
+/* weather.js - 整合和风天气 JWT 代理 */
 class WeatherModule {
     static CONFIG = {
         get API_BASE() {
@@ -8,6 +8,7 @@ class WeatherModule {
 
     constructor() {
         if (window.Starlink && window.Starlink.weather) return window.Starlink.weather;
+        
         this.currentCity = '北京';
         this.weatherData = null;
         this.modalElement = null;
@@ -20,7 +21,9 @@ class WeatherModule {
         this.manualCity = null;
         this.manualProvince = null;
         this.escHandler = null;
+        this.showModalBound = this.showModal.bind(this);
         this.gpsAttempted = false;
+        
         if (window.Starlink) window.Starlink.weather = this;
         window.weatherModule = this;
     }
@@ -77,6 +80,78 @@ class WeatherModule {
 
     _getMeteoconIconUrl(condition, isDay = true) {
         const name = this._getMeteoconIconName(condition, isDay);
+        return `https://unpkg.com/@meteocons/svg/fill/${name}.svg`;
+    }
+
+    _getQweatherIconName(code, isDay) {
+        const iconMap = {
+            '100': 'clear-day',
+            '101': 'partly-cloudy-day',
+            '102': 'partly-cloudy-day',
+            '103': 'partly-cloudy-day',
+            '104': 'cloudy',
+            '150': 'clear-day',
+            '151': 'clear-day',
+            '152': 'partly-cloudy-day',
+            '153': 'partly-cloudy-day',
+            '300': 'partly-cloudy-day-rain',
+            '301': 'rain',
+            '302': 'rain',
+            '303': 'rain',
+            '304': 'rain',
+            '305': 'rain',
+            '306': 'rain',
+            '307': 'rain',
+            '308': 'rain',
+            '309': 'rain',
+            '310': 'rain',
+            '311': 'rain',
+            '312': 'rain',
+            '313': 'rain',
+            '314': 'rain',
+            '315': 'rain',
+            '316': 'rain',
+            '317': 'rain',
+            '318': 'rain',
+            '350': 'rain',
+            '351': 'rain',
+            '399': 'rain',
+            '400': 'snow',
+            '401': 'snow',
+            '402': 'snow',
+            '403': 'snow',
+            '404': 'snow',
+            '405': 'snow',
+            '406': 'snow',
+            '407': 'snow',
+            '408': 'snow',
+            '409': 'snow',
+            '410': 'snow',
+            '456': 'snow',
+            '457': 'snow',
+            '499': 'snow',
+            '500': 'fog',
+            '501': 'fog',
+            '502': 'fog',
+            '503': 'fog',
+            '504': 'fog',
+            '507': 'fog',
+            '508': 'fog',
+            '509': 'fog',
+            '510': 'fog',
+            '511': 'fog',
+            '512': 'fog',
+            '513': 'fog',
+            '514': 'fog',
+            '515': 'fog',
+            '900': 'extreme-rain',
+            '901': 'thunderstorms-extreme-rain',
+            '902': 'thunderstorms-extreme-rain',
+            '903': 'extreme-snow',
+            '904': 'wind',
+            '999': 'unknown'
+        };
+        const name = iconMap[String(code)] || (isDay ? 'clear-day' : 'clear-night');
         return `https://unpkg.com/@meteocons/svg/fill/${name}.svg`;
     }
 
@@ -201,12 +276,13 @@ class WeatherModule {
         try {
             const apiBase = Utils.getApiBase();
             const url = `${apiBase}/weather/proxy?lon=${lon}&lat=${lat}`;
-            const response = await Utils.safeFetch(url, { timeout: 15000 });
+            const response = await Utils.safeFetch(url, { timeout: 10000 });
             const data = await response.json();
             if (data.code !== 200) {
                 throw new Error(data.msg || '获取天气数据失败');
             }
-            this.weatherData = this.parseWeatherData(data);
+            const qweatherData = await this.loadQweatherData(lat, lon);
+            this.weatherData = this.parseWeatherData(data, qweatherData);
             let cityName = this.weatherData.city;
             if (cityName) {
                 this.currentCity = cityName;
@@ -224,12 +300,13 @@ class WeatherModule {
         try {
             const apiBase = Utils.getApiBase();
             const url = `${apiBase}/weather/proxy?city=${encodeURIComponent(city)}`;
-            const response = await Utils.safeFetch(url, { timeout: 15000 });
+            const response = await Utils.safeFetch(url, { timeout: 10000 });
             const data = await response.json();
             if (data.code !== 200) {
                 throw new Error(data.msg || '获取天气数据失败');
             }
-            this.weatherData = this.parseWeatherData(data);
+            const qweatherData = await this.loadQweatherData(null, null, city);
+            this.weatherData = this.parseWeatherData(data, qweatherData);
             this.weatherData.city = city;
             this.currentCity = city;
             this.saveCity(city, true, null);
@@ -238,6 +315,41 @@ class WeatherModule {
             console.error('城市天气查询失败:', error);
             this.weatherData = null;
             throw error;
+        }
+    }
+
+    async loadQweatherData(lat, lon, city) {
+        try {
+            const apiBase = Utils.getApiBase();
+            let location = '';
+            if (lat && lon) location = `${lat},${lon}`;
+            else if (city) location = city;
+            else return null;
+
+            const [nowRes, dailyRes, airRes, indicesRes] = await Promise.allSettled([
+                fetch(`${apiBase}/weather/qweather?type=now&location=${encodeURIComponent(location)}`),
+                fetch(`${apiBase}/weather/qweather?type=daily&location=${encodeURIComponent(location)}`),
+                fetch(`${apiBase}/weather/qweather?type=air&location=${encodeURIComponent(location)}`),
+                fetch(`${apiBase}/weather/qweather?type=indices&location=${encodeURIComponent(location)}`)
+            ]);
+
+            const result = {};
+            if (nowRes.status === 'fulfilled' && nowRes.value.ok) {
+                result.now = await nowRes.value.json();
+            }
+            if (dailyRes.status === 'fulfilled' && dailyRes.value.ok) {
+                result.daily = await dailyRes.value.json();
+            }
+            if (airRes.status === 'fulfilled' && airRes.value.ok) {
+                result.air = await airRes.value.json();
+            }
+            if (indicesRes.status === 'fulfilled' && indicesRes.value.ok) {
+                result.indices = await indicesRes.value.json();
+            }
+            return result;
+        } catch (error) {
+            console.warn('获取和风天气数据失败:', error);
+            return null;
         }
     }
 
@@ -252,30 +364,90 @@ class WeatherModule {
         return true;
     }
 
-    parseWeatherData(data) {
+    parseWeatherData(data, qweather) {
         if (!data || data.code !== 200) {
             throw new Error(data?.msg || '天气数据格式错误');
         }
 
         const isDay = this._isDay();
-        const qw = data.qweather || {};
 
-        // 城市信息
         let cityName = '未知';
         if (data.name) cityName = data.name;
         else if (data.shi) cityName = data.shi;
         else if (data.sheng) cityName = data.sheng;
         cityName = cityName.replace(/市$/, '').replace(/县$/, '').replace(/区$/, '');
 
-        // 来自 APIHz 的基础数据
         const todayWeather = data.weather1 || '未知';
         const todayTempDay = data.wd1 || '';
         const todayTempNight = data.wd2 || '';
+        const todayWindDir = data.winddirection1 || '';
+        const todayWindScale = data.windleve1 || '';
+
         const nowInfo = data.nowinfo || {};
-        const currentTemp = nowInfo.temperature || todayTempDay;
+        const currentTemp = nowInfo.temperature;
+        const currentHumidity = nowInfo.humidity;
+        const feelsLike = nowInfo.feelst;
+        const pressure = nowInfo.pressure;
+        const precipitation = nowInfo.precipitation;
+        const windSpeed = nowInfo.windSpeed;
+        const windDir = nowInfo.windDirection;
+        const windScale = nowInfo.windScale;
+
         const alarms = data.alarm && Array.isArray(data.alarm) ? data.alarm : [];
 
-        // 预报数据（从 APIHz）
+        let sunTimes = null;
+        if (data.suntimes && Array.isArray(data.suntimes) && data.suntimes.length > 0) {
+            const today = new Date();
+            const todayStr = today.toISOString().slice(0, 10);
+            for (const item of data.suntimes) {
+                if (item.date === todayStr) {
+                    sunTimes = item;
+                    break;
+                }
+            }
+            if (!sunTimes) sunTimes = data.suntimes[0];
+        }
+
+        if (qweather && qweather.daily && qweather.daily.code === '200' && qweather.daily.daily) {
+            const daily = qweather.daily.daily;
+            if (daily.sunrise && daily.sunrise.length > 0) {
+                sunTimes = {
+                    sunrise: daily.sunrise[0] || '--',
+                    sunset: daily.sunset[0] || '--',
+                    moonrise: daily.moonrise ? daily.moonrise[0] : '--',
+                    moonset: daily.moonset ? daily.moonset[0] : '--',
+                    moon_phase: daily.moonPhase ? daily.moonPhase[0] : ''
+                };
+            }
+        }
+
+        let airQuality = null;
+        let airPm25 = null;
+        let airPm10 = null;
+        let airNo2 = null;
+        let airSo2 = null;
+        let airCo = null;
+        let airO3 = null;
+        if (qweather && qweather.air && qweather.air.code === '200' && qweather.air.now) {
+            const air = qweather.air.now;
+            airQuality = air.category || '--';
+            airPm25 = air.pm2p5 || '--';
+            airPm10 = air.pm10 || '--';
+            airNo2 = air.no2 || '--';
+            airSo2 = air.so2 || '--';
+            airCo = air.co || '--';
+            airO3 = air.o3 || '--';
+        }
+
+        let indicesList = [];
+        if (qweather && qweather.indices && qweather.indices.code === '200' && qweather.indices.daily) {
+            indicesList = qweather.indices.daily.map(item => ({
+                name: item.name || '--',
+                category: item.category || '--',
+                text: item.text || '--'
+            }));
+        }
+
         const dayKeys = ['weatherday2', 'weatherday3', 'weatherday4', 'weatherday5', 'weatherday6', 'weatherday7'];
         const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
         const forecasts = [];
@@ -297,45 +469,6 @@ class WeatherModule {
             });
         }
 
-        // ===== 和风天气数据 =====
-        const qwNow = qw;
-        const feelsLike = qwNow.feelsLike !== undefined ? qwNow.feelsLike + '°C' : '--';
-        const humidity = qwNow.humidity !== undefined ? qwNow.humidity + '%' : '--';
-        const precip = qwNow.precip !== undefined ? (qwNow.precip === '0' ? '无降水' : qwNow.precip + ' mm') : '--';
-        const pressure = qwNow.pressure !== undefined ? qwNow.pressure + ' hPa' : '--';
-        const vis = qwNow.vis !== undefined ? qwNow.vis + ' km' : '--';
-        const uvIndex = qwNow.uvIndex !== undefined ? qwNow.uvIndex : '--';
-
-        // 日出日落
-        const sunrise = qwNow.sunrise || '--';
-        const sunset = qwNow.sunset || '--';
-
-        // 月升月落
-        const moonrise = qwNow.moonrise || '--';
-        const moonset = qwNow.moonset || '--';
-
-        // 空气质量
-        let airQuality = null;
-        if (qwNow.airQuality) {
-            airQuality = {
-                aqi: qwNow.airQuality.aqi || '--',
-                category: qwNow.airQuality.category || '--',
-                pm25: qwNow.airQuality.pm25 || '--',
-                pm10: qwNow.airQuality.pm10 || '--'
-            };
-        }
-
-        // 生活指数
-        let lifeIndex = [];
-        if (qwNow.lifeIndex && Array.isArray(qwNow.lifeIndex)) {
-            lifeIndex = qwNow.lifeIndex.map(item => ({
-                name: item.name || '',
-                category: item.category || '',
-                level: item.level || '',
-                text: item.text || ''
-            }));
-        }
-
         const tips = this.generateWeatherTips(todayWeather, todayTempDay);
 
         return {
@@ -346,25 +479,29 @@ class WeatherModule {
             nightTemperature: todayTempNight ? todayTempNight + '°C' : '--',
             weather: todayWeather,
             weatherIconUrl: this._getMeteoconIconUrl(todayWeather, isDay),
-            currentTemp: currentTemp !== undefined ? currentTemp + '°C' : '--',
-            humidity: humidity,
-            wind: data.winddirection1 ? data.winddirection1 + ' ' + (data.windleve1 || '') : (data.windleve1 || '--'),
-            visibility: vis,
+            currentTemp: currentTemp !== undefined ? currentTemp + '°C' : todayTempDay ? todayTempDay + '°C' : '--',
+            humidity: currentHumidity !== undefined ? currentHumidity + '%' : '--',
+            wind: (todayWindDir ? todayWindDir + ' ' : '') + todayWindScale,
+            visibility: nowInfo.visibility || '--',
             updateTime: data.uptime ? data.uptime : (nowInfo.uptime || '刚刚'),
             tips: tips,
             forecasts: forecasts,
-            // 新增和风字段
-            feelsLike: feelsLike,
-            pressure: pressure,
-            precipitation: precip,
-            uvIndex: uvIndex,
-            sunrise: sunrise,
-            sunset: sunset,
-            moonrise: moonrise,
-            moonset: moonset,
+            feelsLike: feelsLike !== undefined ? feelsLike + '°C' : '--',
+            pressure: pressure !== undefined ? pressure + ' hPa' : '--',
+            precipitation: precipitation !== undefined ? precipitation + ' mm' : '--',
+            windSpeed: windSpeed !== undefined ? windSpeed + ' km/h' : '--',
+            windDir: windDir || '--',
+            windScale: windScale || '--',
+            alarms: alarms,
+            sunTimes: sunTimes,
             airQuality: airQuality,
-            lifeIndex: lifeIndex,
-            alarms: alarms
+            airPm25: airPm25,
+            airPm10: airPm10,
+            airNo2: airNo2,
+            airSo2: airSo2,
+            airCo: airCo,
+            airO3: airO3,
+            indices: indicesList
         };
     }
 
@@ -400,6 +537,7 @@ class WeatherModule {
         });
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
         else if (window.app) window.app.registerModal(this);
+        
         this.isLoading = true;
         this.loadWeatherData().then(() => {
             this.updateModalContent();
@@ -484,16 +622,14 @@ class WeatherModule {
 
         const { weatherData } = this;
         const esc = this._escapeHtml.bind(this);
-        const isDay = this._isDay();
-        const dayIcon = isDay ? '☀️' : '🌙';
-
+        
         const manualModeHint = !this.useAutoLocation ? `
             <div class="manual-mode-hint" style="background:rgba(245,158,11,0.1); border-radius:8px; padding:6px 10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-size:12px; color:#d97706;"><i class="fas fa-map-marker-alt"></i> 当前为手动选择城市</span>
                 <button id="switchToAutoBtn" class="weather-action-btn" style="background:#4361ee; color:white; border:none; border-radius:6px; padding:4px 12px; font-size:11px;">📍 GPS定位</button>
             </div>
         ` : '';
-
+        
         let alarmsHtml = '';
         if (weatherData.alarms && weatherData.alarms.length > 0) {
             const firstAlarmTime = weatherData.alarms[0].effective || '';
@@ -511,43 +647,29 @@ class WeatherModule {
             </div>`;
         }
 
-        // 空气质量和生活指数模块（显示在预报上方）
-        let airQualityHtml = '';
-        if (weatherData.airQuality) {
-            const aq = weatherData.airQuality;
-            const aqiColor = aq.aqi <= 50 ? '#10b981' : aq.aqi <= 100 ? '#f59e0b' : aq.aqi <= 150 ? '#f97316' : '#ef4444';
-            airQualityHtml = `
-                <div class="weather-air-quality" style="background:rgba(0,0,0,0.03); border-radius:8px; padding:8px 10px; margin-bottom:8px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:12px; font-weight:600;">空气质量</span>
-                            <span style="font-size:11px; color:#666;">AQI ${esc(aq.aqi)}</span>
-                            <span style="font-size:11px; color:${aqiColor}; font-weight:500;">${esc(aq.category)}</span>
-                        </div>
-                        <div style="display:flex; gap:8px; font-size:10px; color:#666;">
-                            <span>PM2.5 ${esc(aq.pm25)}</span>
-                            <span>PM10 ${esc(aq.pm10)}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
+        let precipitationDisplay = '--';
+        const precip = weatherData.precipitation || '0';
+        if (precip === '0' || precip === '0 mm' || precip === '0mm') {
+            precipitationDisplay = '无降水';
+        } else {
+            precipitationDisplay = precip;
         }
 
-        let lifeIndexHtml = '';
-        if (weatherData.lifeIndex && weatherData.lifeIndex.length > 0) {
-            lifeIndexHtml = `
-                <div class="weather-life-index" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(80px,1fr)); gap:6px; margin-bottom:8px;">
-                    ${weatherData.lifeIndex.map(item => `
-                        <div style="background:rgba(0,0,0,0.03); border-radius:6px; padding:6px 8px; text-align:center; font-size:10px;">
-                            <div style="font-weight:600; color:#333;">${esc(item.name)}</div>
-                            <div style="color:#666; font-size:9px;">${esc(item.level)}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
+        const sun = weatherData.sunTimes || {};
+        const sunrise = sun.sunrise || '--';
+        const sunset = sun.sunset || '--';
+        const moonrise = sun.moonrise || '--';
+        const moonset = sun.moonset || '--';
 
-        // 位置信息
+        const airQuality = weatherData.airQuality || '--';
+        const airPm25 = weatherData.airPm25 || '--';
+        const airPm10 = weatherData.airPm10 || '--';
+        const airNo2 = weatherData.airNo2 || '--';
+        const airSo2 = weatherData.airSo2 || '--';
+        const airCo = weatherData.airCo || '--';
+        const airO3 = weatherData.airO3 || '--';
+        const indices = weatherData.indices || [];
+
         const locationInfo = `
             <div class="weather-location">
                 <i class="fas fa-location-dot"></i>
@@ -556,7 +678,6 @@ class WeatherModule {
             </div>
         `;
 
-        // 天气卡片
         const weatherCard = `
             <div class="weather-card-container">
                 <div class="weather-card-left">
@@ -584,6 +705,43 @@ class WeatherModule {
             </div>
         `;
 
+        let airHtml = '';
+        if (airQuality !== '--') {
+            airHtml = `
+                <div class="weather-air-quality">
+                    <div class="air-header">
+                        <span class="air-title"><i class="fas fa-wind"></i> 空气质量</span>
+                        <span class="air-value ${airQuality === '优' ? 'air-excellent' : airQuality === '良' ? 'air-good' : 'air-moderate'}">${esc(airQuality)}</span>
+                    </div>
+                    <div class="air-details">
+                        <span>PM2.5: ${esc(airPm25)}</span>
+                        <span>PM10: ${esc(airPm10)}</span>
+                        <span>NO₂: ${esc(airNo2)}</span>
+                        <span>SO₂: ${esc(airSo2)}</span>
+                        <span>CO: ${esc(airCo)}</span>
+                        <span>O₃: ${esc(airO3)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        let indicesHtml = '';
+        if (indices.length > 0) {
+            indicesHtml = `
+                <div class="weather-indices">
+                    <div class="indices-title"><i class="fas fa-list"></i> 生活指数</div>
+                    <div class="indices-grid">
+                        ${indices.map(item => `
+                            <div class="index-item">
+                                <span class="index-name">${esc(item.name)}</span>
+                                <span class="index-category">${esc(item.category)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
         return `
             ${manualModeHint}
             ${alarmsHtml}
@@ -598,54 +756,59 @@ class WeatherModule {
                 ` : ''}
             </div>
 
+            ${airHtml}
+
             <div class="weather-extra-row">
                 <div class="extra-item">
                     <span class="extra-label">体感温度</span>
                     <span class="extra-value">${weatherData.feelsLike}</span>
                 </div>
                 <div class="extra-item">
-                    <span class="extra-label">湿度</span>
-                    <span class="extra-value">${weatherData.humidity}</span>
-                </div>
-                <div class="extra-item">
-                    <span class="extra-label">降水量</span>
-                    <span class="extra-value">${weatherData.precipitation}</span>
-                </div>
-                <div class="extra-item">
                     <span class="extra-label">气压</span>
                     <span class="extra-value">${weatherData.pressure}</span>
                 </div>
                 <div class="extra-item">
-                    <span class="extra-label">能见度</span>
-                    <span class="extra-value">${weatherData.visibility}</span>
+                    <span class="extra-label">降水量</span>
+                    <span class="extra-value">${precipitationDisplay}</span>
                 </div>
                 <div class="extra-item">
-                    <span class="extra-label">紫外线</span>
-                    <span class="extra-value">${weatherData.uvIndex}</span>
+                    <span class="extra-label">风速</span>
+                    <span class="extra-value">${weatherData.windSpeed}</span>
+                </div>
+                <div class="extra-item">
+                    <span class="extra-label">风向</span>
+                    <span class="extra-value">${weatherData.windDir}</span>
+                </div>
+                <div class="extra-item">
+                    <span class="extra-label">风力</span>
+                    <span class="extra-value">${weatherData.windScale}</span>
+                </div>
+                <div class="extra-item">
+                    <span class="extra-label">湿度</span>
+                    <span class="extra-value">${weatherData.humidity}</span>
                 </div>
             </div>
 
             <div class="weather-sun-row">
                 <div class="sun-item">
                     <span class="sun-label">🌅 日出</span>
-                    <span class="sun-value">${esc(weatherData.sunrise)}</span>
+                    <span class="sun-value">${esc(sunrise)}</span>
                 </div>
                 <div class="sun-item">
                     <span class="sun-label">🌇 日落</span>
-                    <span class="sun-value">${esc(weatherData.sunset)}</span>
+                    <span class="sun-value">${esc(sunset)}</span>
                 </div>
                 <div class="sun-item">
                     <span class="sun-label">🌙 月升</span>
-                    <span class="sun-value">${esc(weatherData.moonrise)}</span>
+                    <span class="sun-value">${esc(moonrise)}</span>
                 </div>
                 <div class="sun-item">
                     <span class="sun-label">🌙 月落</span>
-                    <span class="sun-value">${esc(weatherData.moonset)}</span>
+                    <span class="sun-value">${esc(moonset)}</span>
                 </div>
             </div>
 
-            ${airQualityHtml}
-            ${lifeIndexHtml}
+            ${indicesHtml}
 
             <div class="weather-forecast">
                 <div class="forecast-title">
@@ -913,8 +1076,10 @@ class WeatherModule {
     closeOtherModals() {
         if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible) window.Starlink.sidebar.hide();
         else if (window.sidebar && window.sidebar.isVisible) window.sidebar.hide();
+        
         if (window.Starlink?.search && window.Starlink.search.isModalOpen) window.Starlink.search.hide();
         else if (window.searchModule && window.searchModule.isModalOpen) window.searchModule.hide();
+        
         if (window.Starlink?.navbar?.hideMusicPlayer) window.Starlink.navbar.hideMusicPlayer();
         else if (window.app?.components?.navbar?.hideMusicPlayer) window.app.components.navbar.hideMusicPlayer();
     }
