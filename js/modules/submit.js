@@ -1,6 +1,8 @@
+/* submit.js */
 class SubmitModule {
     constructor() {
         if (window.Starlink && window.Starlink.submit) return window.Starlink.submit;
+        
         this.modal = document.getElementById('submitModal');
         this.form = document.getElementById('submitSiteForm');
         this.urlInput = document.getElementById('submitUrl');
@@ -31,12 +33,26 @@ class SubmitModule {
         this.isRestoringDraft = false;
 
         this.init();
+        
         if (window.Starlink) window.Starlink.submit = this;
         window.submitModule = this;
     }
 
-    escapeHtml(str) { return Utils.escapeHtml(str); }
-    getDeviceId() { return Utils.getDeviceId(); }
+    escapeHtml(str) {
+        return Utils.escapeHtml(str);
+    }
+
+    getDeviceId() {
+        if (typeof Utils.getDeviceId === 'function') {
+            return Utils.getDeviceId();
+        }
+        let deviceId = localStorage.getItem('device_id');
+        if (!deviceId) {
+            deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('device_id', deviceId);
+        }
+        return deviceId;
+    }
 
     saveDraft() {
         const draft = {
@@ -47,7 +63,9 @@ class SubmitModule {
             contact: this.contactInput?.value || '',
             timestamp: Date.now()
         };
-        try { localStorage.setItem(this.DRAFT_KEY, JSON.stringify(draft)); } catch (e) {}
+        try {
+            localStorage.setItem(this.DRAFT_KEY, JSON.stringify(draft));
+        } catch (e) {}
     }
 
     loadDraft() {
@@ -72,24 +90,38 @@ class SubmitModule {
             }
             if (draft.contact && this.contactInput) this.contactInput.value = draft.contact;
             this.isRestoringDraft = false;
-            if (draft.url && this.isVisible) setTimeout(() => this.fetchSiteInfo(), 500);
+            if (draft.url && this.isVisible) {
+                setTimeout(() => this.fetchSiteInfo(), 500);
+            }
             this.updateSubmitButton();
             return true;
-        } catch (e) { return false; }
+        } catch (e) {
+            return false;
+        }
     }
 
-    clearDraft() { try { localStorage.removeItem(this.DRAFT_KEY); } catch (e) {} }
+    clearDraft() {
+        try {
+            localStorage.removeItem(this.DRAFT_KEY);
+        } catch (e) {}
+    }
 
     scheduleDraftSave() {
         if (this.isRestoringDraft) return;
         clearTimeout(this.draftSaveTimer);
-        this.draftSaveTimer = setTimeout(() => { this.saveDraft(); }, 500);
+        this.draftSaveTimer = setTimeout(() => {
+            this.saveDraft();
+        }, 500);
     }
 
     init() {
-        if (!this.modal) return;
+        if (!this.modal) {
+            console.error('投稿模态框不存在');
+            return;
+        }
         this.bindEvents();
         if (this.descInput) this.descInput.maxLength = 200;
+
         this.loadDraft();
 
         const observer = new MutationObserver((mutations) => {
@@ -98,7 +130,9 @@ class SubmitModule {
                     this.isVisible = true;
                     this.ensureStatsBadge();
                     this.loadGlobalTotalCount();
-                    if (!this.loadDraft()) this.resetSecurityCheck();
+                    if (!this.loadDraft()) {
+                        this.resetSecurityCheck();
+                    }
                     this.updateSubmitButton();
                 } else if (mutation.attributeName === 'class' && !this.modal.classList.contains('active')) {
                     this.isVisible = false;
@@ -157,11 +191,17 @@ class SubmitModule {
     bindEvents() {
         const closeBtn = this.modal.querySelector('.feedback-modal-close');
         const cancelBtn = this.modal.querySelector('.submit-cancel-btn');
-        const closeModal = () => { this.saveDraft(); this.hide(); };
+        const closeModal = () => {
+            this.saveDraft();
+            this.hide();
+        };
         closeBtn?.addEventListener('click', closeModal);
         cancelBtn?.addEventListener('click', closeModal);
         this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) { this.saveDraft(); closeModal(); }
+            if (e.target === this.modal) {
+                this.saveDraft();
+                closeModal();
+            }
         });
 
         this.fetchInfoBtn.addEventListener('click', () => this.fetchSiteInfo());
@@ -190,7 +230,9 @@ class SubmitModule {
         });
 
         window.addEventListener('beforeunload', () => {
-            if (this.isVisible || this.hasFormData()) this.saveDraft();
+            if (this.isVisible || this.hasFormData()) {
+                this.saveDraft();
+            }
         });
 
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
@@ -202,7 +244,10 @@ class SubmitModule {
     }
 
     stopPolling() {
-        if (this.pollingTimer) { clearInterval(this.pollingTimer); this.pollingTimer = null; }
+        if (this.pollingTimer) {
+            clearInterval(this.pollingTimer);
+            this.pollingTimer = null;
+        }
     }
 
     resetSecurityCheck() {
@@ -264,7 +309,10 @@ class SubmitModule {
 
     async fetchSiteInfo() {
         const url = this.urlInput.value.trim();
-        if (!url || !Utils.isValidUrl(url)) { window.toast.show('请输入正确的网址', 'warning'); return; }
+        if (!url || !Utils.isValidUrl(url)) {
+            window.toast.show('请输入正确的网址', 'warning');
+            return;
+        }
         this.resetSecurityCheck();
         this.fetchInfoBtn.disabled = true;
         this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 获取信息...';
@@ -294,9 +342,13 @@ class SubmitModule {
             } else {
                 this.lastSecurityDetail = data;
                 this.displaySecurityReport(data);
-                if (data.alreadySubmitted) this.securityPassed = false;
-                else if (data.canSubmit === false) this.securityPassed = false;
-                else this.securityPassed = true;
+                if (data.alreadySubmitted) {
+                    this.securityPassed = false;
+                } else if (data.canSubmit === false) {
+                    this.securityPassed = false;
+                } else {
+                    this.securityPassed = true;
+                }
                 this.updateSubmitButton();
             }
             this.scheduleDraftSave();
@@ -323,7 +375,11 @@ class SubmitModule {
                     this.stopPolling();
                     this.lastSecurityDetail = status.result;
                     this.displaySecurityReport(status.result);
-                    this.securityPassed = status.result.canSubmit !== false;
+                    if (status.result.canSubmit !== false) {
+                        this.securityPassed = true;
+                    } else {
+                        this.securityPassed = false;
+                    }
                     this.updateSubmitButton();
                 } else if (status.status === 'failed') {
                     this.stopPolling();
@@ -334,7 +390,9 @@ class SubmitModule {
                 } else {
                     this.urlCheckResult.innerHTML = '安全检测进行中，请稍候...';
                 }
-            } catch (err) {}
+            } catch (err) {
+                console.warn('轮询安全检测状态失败:', err);
+            }
         }, 2000);
     }
 
@@ -352,24 +410,32 @@ class SubmitModule {
         e.preventDefault();
         if (this.submitting) return;
         if (!this.securityPassed) {
-            window.toast.show('请先点击"获取信息"完成安全检测，且检测通过后才能提交', 'warning');
+            window.toast.show('请先点击“获取信息”完成安全检测，且检测通过后才能提交', 'warning');
             return;
         }
         let title = this.titleInput.value.trim();
         let url = this.urlInput.value.trim();
         let contact = this.contactInput ? this.contactInput.value.trim() : '';
-        if (!title || !url) { window.toast.show('请填写网站名称和链接', 'warning'); return; }
-        if (!Utils.isValidUrl(url)) { window.toast.show('请输入正确的网址', 'warning'); return; }
+        if (!title || !url) {
+            window.toast.show('请填写网站名称和链接', 'warning');
+            return;
+        }
+        if (!Utils.isValidUrl(url)) {
+            window.toast.show('请输入正确的网址', 'warning');
+            return;
+        }
         if (!contact || !contact.includes('@')) {
             window.toast.show('请填写有效的邮箱地址，用于接收审核结果通知', 'warning');
             return;
         }
         const safeUrl = url.startsWith('http') ? url : `https://${url}`;
+        const deviceId = this.getDeviceId();
         const payload = {
-            title, url: safeUrl,
+            title: title,
+            url: safeUrl,
             description: this.descInput.value.trim(),
             icon: this.iconInput.value.trim(),
-            contact
+            contact: contact
         };
         this.submitting = true;
         this.submitSaveBtn.disabled = true;
@@ -377,7 +443,10 @@ class SubmitModule {
         try {
             const response = await Utils.safeFetch(`${this.apiBase}/submit-site`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Device-Id': this.getDeviceId() },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Device-Id': deviceId
+                },
                 body: JSON.stringify(payload)
             });
             const data = await response.json();
@@ -389,7 +458,9 @@ class SubmitModule {
                 this.resetForm();
             } else {
                 let errorMsg = data.error || '提交失败';
-                if (data.details && data.details.label) errorMsg = data.details.label;
+                if (data.details && data.details.label) {
+                    errorMsg = data.details.label;
+                }
                 window.toast.show(errorMsg, 'error');
                 if (this.urlCheckResult && data.details && data.details.label) {
                     this.displaySecurityReport(data.details);
@@ -429,8 +500,11 @@ class SubmitModule {
 
     show() {
         if (!this.modal) return;
-        if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
-        else if (window.sidebar?.isVisible?.()) window.sidebar.hide();
+        if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible?.()) {
+            window.Starlink.sidebar.hide();
+        } else if (window.sidebar && window.sidebar.isVisible?.()) {
+            window.sidebar.hide();
+        }
         this.modal.classList.add('active');
         this.isVisible = true;
         this.loadDraft();
@@ -457,6 +531,8 @@ class SubmitModule {
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.Starlink) window.Starlink = {};
-    if (!window.Starlink.submit) window.Starlink.submit = new SubmitModule();
+    if (!window.Starlink.submit) {
+        window.Starlink.submit = new SubmitModule();
+    }
     window.submitModule = window.Starlink.submit;
 });
