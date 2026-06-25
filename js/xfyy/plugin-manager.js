@@ -1,4 +1,4 @@
-/* plugin-manager.js */
+/* plugin-manager.js - 歌单缓存增加 TTL 检查和有效期管理 */
 class PluginManager {
     constructor(cacheManager) {
         this.cacheManager = cacheManager || new CacheManager();
@@ -29,7 +29,7 @@ class PluginManager {
             getPlaylist: async (playlistId) => {
                 const cacheKey = `netease_playlist_${playlistId}`;
                 const cached = this.cacheManager.get(cacheKey);
-                if (cached) return cached;
+                if (cached && this.isCacheValid(cached)) return cached;
                 try {
                     const originalUrl = `https://api.i-meto.com/meting/api?server=netease&type=playlist&id=${playlistId}`;
                     const data = await this.proxyFetch(originalUrl);
@@ -45,7 +45,7 @@ class PluginManager {
             search: async (keyword) => {
                 const cacheKey = `netease_search_${keyword}`;
                 const cached = this.cacheManager.get(cacheKey);
-                if (cached) return cached;
+                if (cached && this.isCacheValid(cached)) return cached;
                 try {
                     const originalUrl = `https://api.i-meto.com/meting/api?server=netease&type=search&id=${encodeURIComponent(keyword)}`;
                     const data = await this.proxyFetch(originalUrl);
@@ -69,7 +69,7 @@ class PluginManager {
             getPlaylist: async (playlistId) => {
                 const cacheKey = `qq_playlist_${playlistId}`;
                 const cached = this.cacheManager.get(cacheKey);
-                if (cached) return cached;
+                if (cached && this.isCacheValid(cached)) return cached;
                 try {
                     const originalUrl = `https://api.i-meto.com/meting/api?server=tencent&type=playlist&id=${playlistId}`;
                     const data = await this.proxyFetch(originalUrl);
@@ -85,7 +85,7 @@ class PluginManager {
             search: async (keyword) => {
                 const cacheKey = `qq_search_${keyword}`;
                 const cached = this.cacheManager.get(cacheKey);
-                if (cached) return cached;
+                if (cached && this.isCacheValid(cached)) return cached;
                 try {
                     const originalUrl = `https://api.i-meto.com/meting/api?server=tencent&type=search&id=${encodeURIComponent(keyword)}`;
                     const data = await this.proxyFetch(originalUrl);
@@ -109,7 +109,7 @@ class PluginManager {
             getPlaylist: async (playlistId) => {
                 const cacheKey = `kg_playlist_${playlistId}`;
                 const cached = this.cacheManager.get(cacheKey);
-                if (cached) return cached;
+                if (cached && this.isCacheValid(cached)) return cached;
                 try {
                     const originalUrl = `https://api.i-meto.com/meting/api?server=kugou&type=playlist&id=${playlistId}`;
                     const data = await this.proxyFetch(originalUrl);
@@ -125,7 +125,7 @@ class PluginManager {
             search: async (keyword) => {
                 const cacheKey = `kg_search_${keyword}`;
                 const cached = this.cacheManager.get(cacheKey);
-                if (cached) return cached;
+                if (cached && this.isCacheValid(cached)) return cached;
                 try {
                     const originalUrl = `https://api.i-meto.com/meting/api?server=kugou&type=search&id=${encodeURIComponent(keyword)}`;
                     const data = await this.proxyFetch(originalUrl);
@@ -202,6 +202,12 @@ class PluginManager {
             search: async () => [],
             getDownloadUrl: async (songId) => songId
         });
+    }
+
+    isCacheValid(cached) {
+        if (!cached || !Array.isArray(cached)) return false;
+        if (cached.length === 0) return false;
+        return true;
     }
 
     formatSong(song, source) {
