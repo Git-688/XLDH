@@ -1,4 +1,4 @@
-/* utils.js */
+/* utils.js - 增强错误处理（统一 handleApiError，增加重试机制） */
 (function(window) {
     const Utils = {};
 
@@ -175,16 +175,25 @@
         return `${apiBase}/image-proxy?${params}`;
     };
 
+    // ===== 统一错误处理（核心优化） =====
+    const C = window.APP_CONSTANTS || {
+        API: { RETRY_COUNT: 2, RETRY_DELAY: 500, BASE_TIMEOUT: 15000 }
+    };
+
     Utils.handleApiError = function(error, defaultMessage = '操作失败，请稍后重试', showToast = true) {
         console.error('[API Error]', error);
         let message = defaultMessage;
         if (error && error.message) {
-            if (error.message.includes('fetch') || error.message.includes('network')) {
+            if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch')) {
                 message = '网络连接异常，请检查网络后重试';
-            } else if (error.message.includes('timeout')) {
+            } else if (error.message.includes('timeout') || error.message.includes('Timeout')) {
                 message = '请求超时，请稍后重试';
             } else if (error.message.includes('401') || error.message.includes('403')) {
                 message = '权限不足，请重新登录';
+            } else if (error.message.includes('503')) {
+                message = '服务暂时不可用，请稍后重试';
+            } else if (error.message.includes('429')) {
+                message = '请求过于频繁，请稍后再试';
             } else {
                 message = error.message;
             }
@@ -192,42 +201,132 @@
         if (showToast && window.toast && typeof window.toast.show === 'function') {
             window.toast.show(message, 'error');
         }
+        // 上报到服务器
         const apiBase = Utils.getApiBase();
         if (apiBase) {
-            fetch(`${apiBase}/log`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: 'api_error',
-                    message: message,
-                    stack: error?.stack,
-                    url: window.location.href,
-                    timestamp: Date.now()
-                }),
-                keepalive: true
-            }).catch(() => {});
+            try {
+                fetch(`${apiBase}/log`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'api_error',
+                        message: message,
+                        stack: error?.stack,
+                        url: window.location.href,
+                        timestamp: Date.now()
+                    }),
+                    keepalive: true
+                }).catch(() => {});
+            } catch (_) {}
         }
+        return message;
     };
 
+    // ===== 带重试的 fetch =====
     Utils.safeFetch = async function(url, options = {}) {
+        const maxRetries = options.retries || C.API.RETRY_COUNT || 2;
+        const retryDelay = options.retryDelay || C.API.RETRY_DELAY || 500;
+        const timeout = options.timeout || C.API.BASE_TIMEOUT || 15000;
+        let lastError = null;
+
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+                const response = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (!response.ok) {
+                    const errorText = await response.text().catch(() => '');
+                    throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 100)}`);
+                }
+                return response;
+            } catch (error) {
+                lastError = error;
+                if (attempt < maxRetries && !options._noRetry) {
+                    await new Promise(r => setTimeout(r, retryDelay * (attempt + 1)));
+                    continue;
+                }
+                break;
+            }
+        }
+        throw lastError || new Error('请求失败');
+    };
+
+    // ===== 不显示 Toast 的静默 fetch（用于后台任务） =====
+    Utils.safeFetchSilent = async function(url, options = {}) {
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), options.timeout || 15000);
-            const response = await fetch(url, { ...options, signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (!response.ok) {
-                const errorText = await response.text().catch(() => '');
-                throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 100)}`);
-            }
-            return response;
+            return await Utils.safeFetch(url, { ...options, _noRetry: true });
         } catch (error) {
-            if (error.name === 'AbortError') {
-                throw new Error('请求超时');
-            }
-            throw error;
+            console.warn('[Silent Fetch]', error.message);
+            return null;
         }
     };
 
+    // ===== 统一错误边界（用于模块） =====
+    Utils.wrapAsync = function(fn, fallback = null, errorMessage = '操作失败') {
+        return async function(...args) {
+            try {
+                return await fn.apply(this, args);
+            } catch (error) {
+                Utils.handleApiError(error, errorMessage, true);
+                return fallback !== null ? (typeof fallback === 'function' ? fallback() : fallback) : null;
+            }
+        };
+    };
+
+    // ===== 全局错误监听器（在 main.js 中调用） =====
+    Utils.setupGlobalErrorHandler = function() {
+        if (window._errorHandlerSetup) return;
+        window._errorHandlerSetup = true;
+
+        const shouldIgnore = (message) => {
+            const m = String(message || '');
+            return m === 'Script error.' || m === 'null' || m === 'undefined' || m.trim() === '';
+        };
+
+        const handleError = (event) => {
+            const msg = event.message || (event.error && event.error.message) || '';
+            if (shouldIgnore(msg)) return;
+            const error = event.error || event.reason;
+            const errorMessage = error?.message || msg || '未知错误';
+            if (shouldIgnore(errorMessage)) return;
+            console.error('[Global Error]', errorMessage);
+            // 显示用户友好提示（防刷屏）
+            if (!window._lastErrorTime || Date.now() - window._lastErrorTime > 5000) {
+                window._lastErrorTime = Date.now();
+                if (window.toast && typeof window.toast.show === 'function') {
+                    window.toast.show('页面遇到问题，建议刷新页面', 'error');
+                }
+            }
+            // 上报错误
+            const apiBase = Utils.getApiBase();
+            if (apiBase) {
+                try {
+                    fetch(`${apiBase}/log`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            type: 'global_error',
+                            message: errorMessage,
+                            stack: error?.stack,
+                            url: window.location.href,
+                            timestamp: Date.now()
+                        }),
+                        keepalive: true
+                    }).catch(() => {});
+                } catch (_) {}
+            }
+        };
+
+        window.addEventListener('error', handleError);
+        window.addEventListener('unhandledrejection', handleError);
+        return () => {
+            window.removeEventListener('error', handleError);
+            window.removeEventListener('unhandledrejection', handleError);
+        };
+    };
+
+    // ===== 其他工具函数 =====
     Utils.getApiBase = function() {
         return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     };
