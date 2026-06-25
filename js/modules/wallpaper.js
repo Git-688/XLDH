@@ -1,4 +1,4 @@
-/* wallpaper.js - 壁纸响应式适配（使用 srcset） */
+/* wallpaper.js - 固定分辨率 1920px（移除动态适配和 Resize 监听） */
 class CarouselModule {
     constructor() {
         if (window.Starlink && window.Starlink.carousel) return window.Starlink.carousel;
@@ -21,14 +21,6 @@ class CarouselModule {
         
         if (window.Starlink) window.Starlink.carousel = this;
         window.carouselModule = this;
-    }
-
-    getResolutionForWidth() {
-        const width = window.innerWidth;
-        if (width >= 1920) return 1920;
-        if (width >= 1280) return 1280;
-        if (width >= 768) return 768;
-        return 480;
     }
 
     sanitizeImageUrl(url) {
@@ -153,18 +145,10 @@ class CarouselModule {
         }
     }
 
-    // ===== 响应式：窗口变化时重新加载 =====
-    handleResize() {
-        if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
-        this.resizeTimeout = setTimeout(() => {
-            this.refresh();
-        }, 1000);
-    }
-
     async init() {
         const days = 7;
         const bingImages = [];
-        const resolution = this.getResolutionForWidth();
+        const resolution = 1920;
 
         for (let i = 0; i < days; i++) {
             try {
@@ -218,8 +202,6 @@ class CarouselModule {
         this.startAutoplay();
 
         setTimeout(() => this.preloadAllIdle(), 3000);
-
-        window.addEventListener('resize', this.handleResize.bind(this));
     }
 
     renderSlides() {
@@ -391,7 +373,6 @@ class CarouselModule {
 
     destroy() {
         this.stopAutoplay();
-        window.removeEventListener('resize', this.handleResize);
         if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
         if (this.preloadQueue.length) this.preloadQueue = [];
         if (this.idlePreloadQueue.length) this.idlePreloadQueue = [];
