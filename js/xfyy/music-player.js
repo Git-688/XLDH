@@ -1,4 +1,4 @@
-/* music-player.js */
+/* music-player.js - 完整优化版（播放列表持久化、搜索防抖、导入导出） */
 let currentOpenCustomSelect = null;
 let customSelectInstances = new Map();
 
@@ -277,6 +277,108 @@ class MusicPlayer {
         
         const apis = ['netease', 'qq', 'kg', 'kuwo', 'migu', 'local'];
         apis.forEach(api => this.isSearchMode.set(api, false));
+
+        // ===== 播放列表持久化：恢复 =====
+        this.restorePlaylistState();
+    }
+
+    // ===== 播放列表持久化方法 =====
+    savePlaylistState() {
+        try {
+            const state = {
+                playlist: this.currentPlaylist,
+                index: this.currentIndex,
+                api: this.currentApi,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('music_player_playlist_state', JSON.stringify(state));
+        } catch (e) {}
+    }
+
+    restorePlaylistState() {
+        try {
+            const raw = localStorage.getItem('music_player_playlist_state');
+            if (!raw) return;
+            const state = JSON.parse(raw);
+            if (!state.playlist || !state.playlist.length) return;
+            if (Date.now() - state.timestamp > 24 * 60 * 60 * 1000) {
+                localStorage.removeItem('music_player_playlist_state');
+                return;
+            }
+            this.currentPlaylist = state.playlist;
+            this.currentIndex = state.index || 0;
+            this.currentApi = state.api || 'netease';
+            if (this.currentIndex >= this.currentPlaylist.length) {
+                this.currentIndex = 0;
+            }
+        } catch (e) {}
+    }
+
+    clearPlaylistState() {
+        try {
+            localStorage.removeItem('music_player_playlist_state');
+        } catch (e) {}
+    }
+
+    // ===== 播放列表导入/导出 =====
+    exportPlaylist() {
+        if (!this.currentPlaylist || !this.currentPlaylist.length) {
+            if (window.toast) window.toast.show('当前歌单为空，无法导出', 'warning');
+            return;
+        }
+        const data = {
+            name: `${this.currentApi}_playlist_${Date.now()}`,
+            source: this.currentApi,
+            songs: this.currentPlaylist.map(song => ({
+                id: song.id,
+                title: song.title,
+                artist: song.artist,
+                src: song.src,
+                cover: song.cover,
+                lrc: song.lrc,
+                source: song.source
+            })),
+            exportedAt: new Date().toISOString(),
+            version: '1.0'
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `playlist_${this.currentApi}_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        if (window.toast) window.toast.show(`成功导出 ${data.songs.length} 首歌曲`, 'success');
+    }
+
+    importPlaylist(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.songs || !Array.isArray(data.songs) || !data.songs.length) {
+                        reject(new Error('无效的歌单文件格式'));
+                        return;
+                    }
+                    const songs = data.songs.map(song => ({
+                        id: song.id || `import_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                        title: song.title || '未知歌曲',
+                        artist: song.artist || '未知歌手',
+                        src: song.src || '',
+                        cover: song.cover || '',
+                        lrc: song.lrc || '',
+                        source: song.source || 'imported',
+                        isOnline: true
+                    }));
+                    resolve(songs);
+                } catch (err) {
+                    reject(new Error('解析歌单文件失败: ' + err.message));
+                }
+            };
+            reader.onerror = () => reject(new Error('读取文件失败'));
+            reader.readAsText(file);
+        });
     }
 
     initializeElements() {
@@ -376,6 +478,49 @@ class MusicPlayer {
                 this.hideVolumeSlider();
             }
         });
+
+        // ===== 导入/导出快捷键 =====
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                this.exportPlaylist();
+            }
+        });
+
+        // ===== 导入按钮（在播放器界面添加） =====
+        this.addImportButton();
+    }
+
+    addImportButton() {
+        const controls = document.querySelector('.play-mode-controls');
+        if (!controls) return;
+        if (controls.querySelector('.import-playlist-btn')) return;
+        const importBtn = document.createElement('button');
+        importBtn.className = 'control-btn import-playlist-btn';
+        importBtn.title = '导入歌单 (JSON)';
+        importBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>`;
+        importBtn.style.transform = 'rotate(180deg)';
+        importBtn.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    const songs = await this.importPlaylist(file);
+                    this.currentPlaylist = songs;
+                    this.currentIndex = 0;
+                    this.renderPlaylist(this.currentApi, songs);
+                    this.savePlaylistState();
+                    if (window.toast) window.toast.show(`成功导入 ${songs.length} 首歌曲`, 'success');
+                } catch (err) {
+                    if (window.toast) window.toast.show(err.message, 'error');
+                }
+            };
+            input.click();
+        });
+        controls.appendChild(importBtn);
     }
 
     bindApiEvents() {
@@ -390,7 +535,7 @@ class MusicPlayer {
                 el.searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.searchApi(api); });
                 el.searchInput.addEventListener('input', Utils.debounce(() => {
                     if (el.searchInput.value.trim().length > 2) this.searchApi(api);
-                }, 500));
+                }, 300));
             }
         });
     }
@@ -542,6 +687,7 @@ class MusicPlayer {
         if (newIndex < 0) newIndex = this.currentPlaylist.length - 1;
         this.loadSong(newIndex, this.currentPlaylist);
         if (this.isPlaying) this.play();
+        this.savePlaylistState();
     }
 
     next() {
@@ -550,6 +696,7 @@ class MusicPlayer {
         if (newIndex >= this.currentPlaylist.length) newIndex = 0;
         this.loadSong(newIndex, this.currentPlaylist);
         if (this.isPlaying && this.autoPlayNext) this.play();
+        this.savePlaylistState();
     }
 
     updatePlayButton() {
@@ -690,6 +837,7 @@ class MusicPlayer {
                 }
             }
             this.renderPlaylist(apiId, playlist);
+            this.savePlaylistState();
         } catch (error) {
             Utils.handleApiError(error, `加载 ${apiId} 歌单失败`, true);
             if (el.playlistContainer) {
@@ -766,11 +914,13 @@ class MusicPlayer {
         }
         setTimeout(() => {
             this.currentPlaylist = playlist;
+            this.currentIndex = 0;
             const fragment = document.createDocumentFragment();
             playlist.forEach((song, idx) => fragment.appendChild(this.createSongItem(song, idx, playlist)));
             container.innerHTML = '';
             container.appendChild(fragment);
             this.updateActiveSongInList();
+            this.savePlaylistState();
         }, 50);
     }
 
@@ -889,6 +1039,7 @@ class MusicPlayer {
             this.consecutiveErrors = 0;
             this.maxErrorShown = false;
             if (this.isPlaying && !this.updateAnimationFrame) this.updateProgress();
+            this.savePlaylistState();
         } catch (error) {
             console.error('加载歌曲失败:', error);
             this.handlePlaybackError(error);
@@ -1252,6 +1403,10 @@ class MusicPlayer {
         
         setInterval(() => this.cacheManager.cleanup(), 30 * 60 * 1000);
         this.hasInitialized = true;
+
+        // ===== 恢复播放进度 =====
+        this.restorePlaybackProgress();
+
         if (this.isPlaying) {
             this.isPlaying = false;
             this.savePlayState(false);
@@ -1260,6 +1415,48 @@ class MusicPlayer {
             const toast = window.Starlink?.toast || window.toast;
             if (toast && toast.show) toast.show('点击播放按钮开始音乐', 'info');
         }
+    }
+
+    // ===== 恢复播放进度 =====
+    restorePlaybackProgress() {
+        try {
+            const progress = localStorage.getItem('music_player_progress');
+            if (progress) {
+                const data = JSON.parse(progress);
+                if (data.songId && data.currentTime) {
+                    // 如果有播放列表状态，等待加载完成后恢复进度
+                    const checkAndRestore = () => {
+                        if (this.currentPlaylist && this.currentPlaylist.length) {
+                            const song = this.currentPlaylist[this.currentIndex];
+                            if (song && song.id === data.songId) {
+                                this.audio.currentTime = data.currentTime;
+                                if (data.isPlaying) {
+                                    this.play();
+                                }
+                            }
+                        } else {
+                            setTimeout(checkAndRestore, 300);
+                        }
+                    };
+                    setTimeout(checkAndRestore, 500);
+                }
+            }
+        } catch (e) {}
+    }
+
+    // ===== 保存播放进度 =====
+    savePlaybackProgress() {
+        try {
+            const song = this.currentPlaylist[this.currentIndex];
+            if (!song) return;
+            const data = {
+                songId: song.id,
+                currentTime: this.audio.currentTime || 0,
+                isPlaying: this.isPlaying,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('music_player_progress', JSON.stringify(data));
+        } catch (e) {}
     }
 
     getApiName(apiId) {
@@ -1308,6 +1505,11 @@ class MusicPlayer {
             });
             customSelectInstances.clear();
         }
+        
+        this.clearPlaylistState();
+        try {
+            localStorage.removeItem('music_player_progress');
+        } catch (e) {}
         
         if (window.Starlink?.musicPlayer === this) window.Starlink.musicPlayer = null;
         if (window.musicPlayer === this) window.musicPlayer = null;
