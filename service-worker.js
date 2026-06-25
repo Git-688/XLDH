@@ -1,4 +1,4 @@
-/* service-worker.js */
+/* service-worker.js - 精细化缓存策略（差异化 TTL，三种缓存策略） */
 const CACHE_NAME = 'starlink-v8';
 const NAVIGATION_CACHE_NAME = 'starlink-nav-v8';
 const API_CACHE_NAME = 'starlink-api-v8';
@@ -53,36 +53,67 @@ const FONT_URL_PATTERNS = [
     'fonts.googleapis.com'
 ];
 
-const NAV_API_PATTERNS = ['/navigation/structure'];
-
-const CACHED_API_PATTERNS = [
-    '/navigation/sites',
-    '/stats',
-    '/uptime',
-    '/global-submission-count',
-    '/notebook'
-];
-
-const API_TTL_MAP = {
-    '/navigation/sites': 5 * 60 * 1000,
-    'default': 60 * 60 * 1000
+const CACHE_CONFIG = {
+    nav: {
+        patterns: ['/navigation/structure'],
+        strategy: 'stale-while-revalidate',
+        ttl: 3600 * 1000,
+        cacheName: NAVIGATION_CACHE_NAME
+    },
+    sites: {
+        patterns: ['/navigation/sites', '/navigation/batch-sites'],
+        strategy: 'network-first',
+        ttl: 5 * 60 * 1000,
+        cacheName: API_CACHE_NAME
+    },
+    stats: {
+        patterns: ['/stats', '/uptime', '/global-submission-count', '/subcategory/counts'],
+        strategy: 'network-first',
+        ttl: 30 * 1000,
+        cacheName: API_CACHE_NAME
+    },
+    weather: {
+        patterns: ['/weather/proxy'],
+        strategy: 'network-first',
+        ttl: 5 * 60 * 1000,
+        cacheName: API_CACHE_NAME
+    },
+    announcement: {
+        patterns: ['/announcement/active'],
+        strategy: 'network-first',
+        ttl: 60 * 60 * 1000,
+        cacheName: API_CACHE_NAME
+    },
+    notebook: {
+        patterns: ['/notebook'],
+        strategy: 'cache-first',
+        ttl: 10 * 60 * 1000,
+        cacheName: API_CACHE_NAME
+    },
+    icon: {
+        patterns: ['/icon'],
+        strategy: 'cache-first',
+        ttl: 7 * 24 * 60 * 60 * 1000,
+        cacheName: API_CACHE_NAME
+    }
 };
 
-function getApiTtl(urlPath) {
-    return API_TTL_MAP[urlPath] || API_TTL_MAP.default;
-}
-
-function isFontRequest(url) {
-    return FONT_URL_PATTERNS.some(pattern => url.href.includes(pattern));
+function getCacheConfig(url) {
+    const path = url.pathname;
+    for (const key in CACHE_CONFIG) {
+        const config = CACHE_CONFIG[key];
+        if (config.patterns.some(p => path.includes(p))) {
+            return config;
+        }
+    }
+    return null;
 }
 
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
             return cache.addAll(STATIC_URLS);
-        }).catch(err => {
-            console.error('静态资源缓存失败:', err);
-        })
+        }).catch(err => console.error('静态资源缓存失败:', err))
     );
     self.skipWaiting();
 });
@@ -118,140 +149,172 @@ self.addEventListener('message', event => {
     }
 });
 
-function isNavigationApiRequest(url) {
-    return NAV_API_PATTERNS.some(pattern => url.pathname.includes(pattern));
-}
-
-function isCacheableApiRequest(request) {
-    if (request.method !== 'GET') return false;
-    const url = new URL(request.url);
-    return CACHED_API_PATTERNS.some(pattern => url.pathname.includes(pattern));
-}
-
-async function handleNavigationApi(request, event) {
-    const cache = await caches.open(NAVIGATION_CACHE_NAME);
+async function handleStaleWhileRevalidate(request, config) {
+    const cache = await caches.open(config.cacheName);
     const cachedResponse = await cache.match(request);
-    
-    let cachedVersion = null;
-    if (cachedResponse) {
-        cachedVersion = cachedResponse.headers.get('X-Nav-Version');
-    }
-
     const fetchPromise = fetch(request).then(async response => {
         if (response && response.status === 200) {
             const cloned = response.clone();
             const headers = new Headers(cloned.headers);
-            const etag = headers.get('ETag') || headers.get('Last-Modified') || Date.now().toString();
-            headers.set('X-Nav-Version', etag);
-            headers.set('X-SW-Cache-Version', CACHE_NAME);
-            
-            const cachedResponseWithHeaders = new Response(cloned.body, {
+            headers.set('sw-cache-timestamp', Date.now());
+            headers.set('sw-cache-ttl', config.ttl);
+            const cached = new Response(cloned.body, {
                 status: cloned.status,
                 statusText: cloned.statusText,
                 headers: headers
             });
-            
-            if (cachedVersion && cachedVersion !== etag) {
-                self.clients.matchAll().then(clients => {
-                    clients.forEach(client => {
-                        client.postMessage({
-                            type: 'NAV_UPDATED',
-                            timestamp: Date.now()
-                        });
-                    });
-                });
-            }
-            
-            event.waitUntil(cache.put(request, cachedResponseWithHeaders));
-            return response;
+            cache.put(request, cached);
         }
         return response;
-    }).catch(err => {
-        console.warn('导航 API 网络请求失败:', err);
-        return null;
-    });
+    }).catch(() => null);
 
     if (cachedResponse) {
+        const timestamp = cachedResponse.headers.get('sw-cache-timestamp');
+        const ttl = cachedResponse.headers.get('sw-cache-ttl') || config.ttl;
+        if (timestamp && (Date.now() - parseInt(timestamp) < parseInt(ttl))) {
+            event.waitUntil(fetchPromise);
+            return cachedResponse;
+        }
         event.waitUntil(fetchPromise);
         return cachedResponse;
     }
-    
-    return fetchPromise;
+    return fetchPromise || new Response('', { status: 504 });
 }
 
-async function handleCacheableApi(request) {
-    const url = new URL(request.url);
-    const apiPath = url.pathname;
-    const ttl = getApiTtl(apiPath);
-    const cache = await caches.open(API_CACHE_NAME);
-    
+async function handleNetworkFirst(request, config) {
+    const cache = await caches.open(config.cacheName);
     try {
         const response = await fetch(request);
         if (response && response.status === 200) {
             const cloned = response.clone();
             const headers = new Headers(cloned.headers);
             headers.set('sw-cache-timestamp', Date.now());
-            headers.set('sw-cache-ttl', ttl);
-            const cachedResponse = new Response(cloned.body, {
+            headers.set('sw-cache-ttl', config.ttl);
+            const cached = new Response(cloned.body, {
                 status: cloned.status,
                 statusText: cloned.statusText,
                 headers: headers
             });
-            cache.put(request, cachedResponse);
-            return response;
+            cache.put(request, cached);
         }
+        return response;
     } catch (err) {
-        console.warn('网络请求失败，尝试从缓存获取:', err);
+        const cached = await cache.match(request);
+        if (cached) {
+            const timestamp = cached.headers.get('sw-cache-timestamp');
+            const ttl = cached.headers.get('sw-cache-ttl') || config.ttl;
+            if (timestamp && (Date.now() - parseInt(timestamp) < parseInt(ttl))) {
+                return cached;
+            }
+            return cached;
+        }
+        return new Response(JSON.stringify({ error: '离线状态下无法获取数据' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
-    
+}
+
+async function handleCacheFirst(request, config) {
+    const cache = await caches.open(config.cacheName);
     const cached = await cache.match(request);
     if (cached) {
         const timestamp = cached.headers.get('sw-cache-timestamp');
-        const cacheTtl = cached.headers.get('sw-cache-ttl') || ttl;
-        if (timestamp && (Date.now() - parseInt(timestamp) < parseInt(cacheTtl))) {
+        const ttl = cached.headers.get('sw-cache-ttl') || config.ttl;
+        if (timestamp && (Date.now() - parseInt(timestamp) < parseInt(ttl))) {
             return cached;
-        } else {
-            cache.delete(request);
         }
-    }
-    return new Response(JSON.stringify({ error: '离线状态下无法获取数据' }), {
-        status: 503,
-        headers: { 'Content-Type': 'application/json' }
-    });
-}
-
-async function handleFontRequest(request) {
-    const cache = await caches.open(FONT_CACHE_NAME);
-    const cachedResponse = await cache.match(request);
-    if (cachedResponse) {
-        return cachedResponse;
     }
     try {
         const response = await fetch(request);
         if (response && response.status === 200) {
             const cloned = response.clone();
             const headers = new Headers(cloned.headers);
-            headers.set('Cache-Control', 'public, max-age=31536000, immutable');
-            const cachedResponseWithHeaders = new Response(cloned.body, {
+            headers.set('sw-cache-timestamp', Date.now());
+            headers.set('sw-cache-ttl', config.ttl);
+            const cached = new Response(cloned.body, {
                 status: cloned.status,
                 statusText: cloned.statusText,
                 headers: headers
             });
-            cache.put(request, cachedResponseWithHeaders);
+            cache.put(request, cached);
         }
         return response;
     } catch (err) {
-        console.warn('字体加载失败，返回缓存的版本（如果有）:', err);
-        return cachedResponse || new Response('', { status: 404 });
+        const stale = await cache.match(request);
+        if (stale) return stale;
+        return new Response('', { status: 504 });
+    }
+}
+
+self.addEventListener('fetch', event => {
+    const url = new URL(event.request.url);
+    if (url.origin !== self.location.origin && !isFontRequest(url)) return;
+
+    if (isFontRequest(url)) {
+        event.respondWith(handleFontRequest(event.request));
+        return;
+    }
+
+    if (event.request.destination === 'document' ||
+        event.request.destination === 'script' ||
+        event.request.destination === 'style') {
+        event.respondWith(handleStaticResource(event.request));
+        return;
+    }
+
+    const config = getCacheConfig(url);
+    if (config) {
+        switch (config.strategy) {
+            case 'stale-while-revalidate':
+                event.respondWith(handleStaleWhileRevalidate(event.request, config));
+                break;
+            case 'network-first':
+                event.respondWith(handleNetworkFirst(event.request, config));
+                break;
+            case 'cache-first':
+                event.respondWith(handleCacheFirst(event.request, config));
+                break;
+            default:
+                event.respondWith(fetch(event.request));
+        }
+        return;
+    }
+
+    event.respondWith(handleOtherRequest(event.request));
+});
+
+function isFontRequest(url) {
+    return FONT_URL_PATTERNS.some(pattern => url.href.includes(pattern));
+}
+
+async function handleFontRequest(request) {
+    const cache = await caches.open(FONT_CACHE_NAME);
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    try {
+        const response = await fetch(request);
+        if (response && response.status === 200) {
+            const cloned = response.clone();
+            const headers = new Headers(cloned.headers);
+            headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+            const cached = new Response(cloned.body, {
+                status: cloned.status,
+                statusText: cloned.statusText,
+                headers: headers
+            });
+            cache.put(request, cached);
+        }
+        return response;
+    } catch (err) {
+        return cached || new Response('', { status: 404 });
     }
 }
 
 async function handleStaticResource(request) {
     const cache = await caches.open(CACHE_NAME);
-    const cachedResponse = await cache.match(request);
-    if (cachedResponse) {
-        return cachedResponse;
-    }
+    const cached = await cache.match(request);
+    if (cached) return cached;
     return fetch(request).then(response => {
         if (response && response.status === 200 && request.method === 'GET') {
             const cloned = response.clone();
@@ -273,32 +336,3 @@ async function handleOtherRequest(request) {
         throw err;
     }
 }
-
-self.addEventListener('fetch', event => {
-    const url = new URL(event.request.url);
-    if (url.origin !== self.location.origin && !isFontRequest(url)) return;
-    
-    if (isFontRequest(url)) {
-        event.respondWith(handleFontRequest(event.request));
-        return;
-    }
-    
-    if (isNavigationApiRequest(url)) {
-        event.respondWith(handleNavigationApi(event.request, event));
-        return;
-    }
-    
-    if (isCacheableApiRequest(event.request)) {
-        event.respondWith(handleCacheableApi(event.request));
-        return;
-    }
-    
-    if (event.request.destination === 'document' || 
-        event.request.destination === 'script' || 
-        event.request.destination === 'style') {
-        event.respondWith(handleStaticResource(event.request));
-        return;
-    }
-    
-    event.respondWith(handleOtherRequest(event.request));
-});
