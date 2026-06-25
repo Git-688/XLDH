@@ -1,4 +1,4 @@
-/* wallpaper.js - 固定分辨率 1920px（移除动态适配和 Resize 监听） */
+/* wallpaper.js - 修复壁纸偏移问题，增强预加载和响应式 */
 class CarouselModule {
     constructor() {
         if (window.Starlink && window.Starlink.carousel) return window.Starlink.carousel;
@@ -17,16 +17,32 @@ class CarouselModule {
         this.maxConcurrentPreloads = 3;
         this.preloadQueue = [];
         this.idlePreloadQueue = [];
+        this._lastWidth = 0;
+        this._lastResolution = 0;
+        this.resizeTimeout = null;
         this.init();
         
         if (window.Starlink) window.Starlink.carousel = this;
         window.carouselModule = this;
     }
 
+    getResolutionForWidth() {
+        const width = window.innerWidth;
+        if (width >= 1920) return 1920;
+        if (width >= 1280) return 1280;
+        if (width >= 768) return 768;
+        return 480;
+    }
+
     sanitizeImageUrl(url) {
         if (!url) return '';
         if (url.startsWith('http://') || url.startsWith('https://')) {
-            return url;
+            try {
+                const parsed = new URL(url);
+                return parsed.toString();
+            } catch (e) {
+                return url;
+            }
         }
         if (url.startsWith('//')) {
             return 'https:' + url;
@@ -145,10 +161,26 @@ class CarouselModule {
         }
     }
 
+    handleResize() {
+        if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
+        const newWidth = window.innerWidth;
+        const newResolution = this.getResolutionForWidth();
+        if (Math.abs(newWidth - this._lastWidth) < 100 && this._lastWidth > 0) {
+            return;
+        }
+        this._lastWidth = newWidth;
+        this._lastResolution = newResolution;
+        this.resizeTimeout = setTimeout(() => {
+            this.refresh();
+        }, 1000);
+    }
+
     async init() {
         const days = 7;
         const bingImages = [];
-        const resolution = 1920;
+        const resolution = this.getResolutionForWidth();
+        this._lastWidth = window.innerWidth;
+        this._lastResolution = resolution;
 
         for (let i = 0; i < days; i++) {
             try {
@@ -158,6 +190,9 @@ class CarouselModule {
                     const data = await response.json();
                     if (data.url) {
                         let imageUrl = this.sanitizeImageUrl(data.url);
+                        if (!imageUrl.startsWith('http')) {
+                            imageUrl = 'https://' + imageUrl;
+                        }
                         let title = data.copyright ? data.copyright : '';
                         title = title.replace(/^必应壁纸\s*·\s*/i, '').trim();
                         if (!title) title = i === 0 ? '今日壁纸' : `${i}天前壁纸`;
@@ -202,6 +237,8 @@ class CarouselModule {
         this.startAutoplay();
 
         setTimeout(() => this.preloadAllIdle(), 3000);
+
+        window.addEventListener('resize', this.handleResize.bind(this));
     }
 
     renderSlides() {
@@ -215,9 +252,12 @@ class CarouselModule {
                 const imageUrl = this.sanitizeImageUrl(slide.url);
                 if (imageUrl) {
                     div.style.backgroundImage = `url('${imageUrl}')`;
+                    div.style.opacity = '1';
                 }
             } else if (slide.url) {
                 div.dataset.bg = this.sanitizeImageUrl(slide.url);
+                div.style.opacity = '0';
+                div.style.transition = 'opacity 0.5s ease';
             }
 
             div.setAttribute('data-index', index);
@@ -254,9 +294,17 @@ class CarouselModule {
             const img = new Image();
             img.onload = () => {
                 targetSlide.style.backgroundImage = `url('${bgUrl}')`;
+                targetSlide.style.opacity = '1';
+                targetSlide.removeAttribute('data-bg');
+            };
+            img.onerror = () => {
+                targetSlide.style.backgroundImage = `url('${bgUrl}')`;
+                targetSlide.style.opacity = '1';
                 targetSlide.removeAttribute('data-bg');
             };
             img.src = bgUrl;
+            targetSlide.style.opacity = '0';
+            targetSlide.style.transition = 'opacity 0.5s ease';
         }
 
         let realIndex = clonedIndex;
@@ -373,6 +421,7 @@ class CarouselModule {
 
     destroy() {
         this.stopAutoplay();
+        window.removeEventListener('resize', this.handleResize);
         if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
         if (this.preloadQueue.length) this.preloadQueue = [];
         if (this.idlePreloadQueue.length) this.idlePreloadQueue = [];
