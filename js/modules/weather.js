@@ -1,4 +1,4 @@
-/* weather.js - 恢复原有天气预报（仅使用 APIHZ，移除和风天气） */
+/* weather.js - 完整版（使用 APIHZ 天气，移除和风天气，稳定运行） */
 class WeatherModule {
     static CONFIG = {
         get API_BASE() {
