@@ -1,4 +1,4 @@
-/* navigation.js - 移除 counts API 依赖，改用本地计算 */
+/* navigation.js - 导航数据加载策略优化（分批加载，减少并发，移除 counts API） */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -33,6 +33,11 @@ class OptimizedNavigation {
         this.iconCache = new Map();
         this.iconLoadingSet = new Set();
         this.iconFailedSet = new Set();
+
+        this.BATCH_SIZE = 8;
+        this.BATCH_DELAY = 200;
+
+        this.countsCache = new Map();
 
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
@@ -169,6 +174,95 @@ class OptimizedNavigation {
         this.bindScrollPreload(container);
     }
 
+    // ===== 核心优化：分批加载站点数据 =====
+    async loadBatchSitesBatch(subIds, batchSize = this.BATCH_SIZE) {
+        if (!subIds || !subIds.length) return {};
+        const results = {};
+        const allIds = [...subIds];
+        for (let i = 0; i < allIds.length; i += batchSize) {
+            const batch = allIds.slice(i, i + batchSize);
+            const batchResult = await this.loadBatchSites(batch);
+            Object.assign(results, batchResult);
+            for (const id of batch) {
+                this.updateSubcategoryCount(id);
+            }
+            if (i + batchSize < allIds.length) {
+                await new Promise(r => setTimeout(r, this.BATCH_DELAY));
+            }
+        }
+        return results;
+    }
+
+    async loadSites(subcategoryId, forceRefresh = false) {
+        if (!forceRefresh && this.siteCache.has(subcategoryId)) return this.siteCache.get(subcategoryId);
+        const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
+        if (!response.ok) throw new Error('Failed to load sites');
+        const sites = await response.json();
+        this.siteCache.set(subcategoryId, sites);
+        return sites;
+    }
+
+    async loadBatchSites(subIds, forceRefresh = false) {
+        if (!subIds || !subIds.length) return {};
+
+        if (!forceRefresh) {
+            const allCached = subIds.every(id => this.siteCache.has(id));
+            if (allCached) {
+                const result = {};
+                subIds.forEach(id => { result[id] = this.siteCache.get(id); });
+                return result;
+            }
+        }
+
+        const uncachedIds = subIds.filter(id => !this.siteCache.has(id));
+        if (!uncachedIds.length) {
+            const result = {};
+            subIds.forEach(id => { result[id] = this.siteCache.get(id); });
+            return result;
+        }
+
+        try {
+            const idsParam = uncachedIds.join(',');
+            const response = await Utils.safeFetch(`${this.apiBase}/navigation/batch-sites?ids=${idsParam}`);
+            const data = await response.json();
+
+            if (data && data.data) {
+                for (const [subId, sites] of Object.entries(data.data)) {
+                    const id = parseInt(subId);
+                    if (!isNaN(id)) {
+                        this.siteCache.set(id, sites);
+                    }
+                }
+            }
+
+            const result = {};
+            subIds.forEach(id => {
+                result[id] = this.siteCache.get(id) || [];
+            });
+            return result;
+
+        } catch (error) {
+            console.warn('批量加载站点失败，降级为逐个加载:', error);
+            const result = {};
+            for (const id of subIds) {
+                if (!this.siteCache.has(id)) {
+                    result[id] = await this.loadSites(id, true);
+                } else {
+                    result[id] = this.siteCache.get(id);
+                }
+            }
+            return result;
+        }
+    }
+
+    updateSubcategoryCount(subcategoryId) {
+        const sites = this.siteCache.get(subcategoryId);
+        if (!sites) return;
+        const count = sites.filter(s => s.valid !== false).length;
+        this.updateSubcategoryCountDisplay(subcategoryId, count);
+    }
+
+    // ===== 核心优化：初始化只加载第一个子分类，其余分批后台加载 =====
     async init() {
         if (this.isInitialized) return;
         this.initLazyLoadObserver();
@@ -200,15 +294,20 @@ class OptimizedNavigation {
                     });
 
                     await this.renderLevel3(firstCategory, firstSub.id);
+                    this.updateSubcategoryCount(firstSub.id);
 
                     const allSubIds = this.structure[firstCategory].subcategories.map(s => s.id);
-                    for (const subId of allSubIds) {
-                        if (!this.siteCache.has(subId)) {
-                            this.loadSites(subId).then(() => {
-                                this.updateSubcategoryCount(subId);
-                            }).catch(() => {});
+                    const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
+                    if (otherSubIds.length) {
+                        const loadRemaining = () => {
+                            this.loadBatchSitesBatch(otherSubIds).catch(err => {
+                                console.warn('后台加载其他子分类失败:', err);
+                            });
+                        };
+                        if (window.requestIdleCallback) {
+                            requestIdleCallback(loadRemaining, { timeout: 2000 });
                         } else {
-                            this.updateSubcategoryCount(subId);
+                            setTimeout(loadRemaining, 500);
                         }
                     }
                 } else {
@@ -229,13 +328,6 @@ class OptimizedNavigation {
             console.error('导航初始化失败:', error);
             this.showError();
         }
-    }
-
-    updateSubcategoryCount(subcategoryId) {
-        const sites = this.siteCache.get(subcategoryId);
-        if (!sites) return;
-        const count = sites.filter(s => s.valid !== false).length;
-        this.updateSubcategoryCountDisplay(subcategoryId, count);
     }
 
     async calculateTotalValidSites() {
@@ -300,15 +392,7 @@ class OptimizedNavigation {
         return this.structure;
     }
 
-    async loadSites(subcategoryId, forceRefresh = false) {
-        if (!forceRefresh && this.siteCache.has(subcategoryId)) return this.siteCache.get(subcategoryId);
-        const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
-        if (!response.ok) throw new Error('Failed to load sites');
-        const sites = await response.json();
-        this.siteCache.set(subcategoryId, sites);
-        return sites;
-    }
-
+    // ===== 核心优化：切换一级分类时同样分批加载 =====
     async selectLevel1(level1, isUserClick = false) {
         if (this.selectedLevel1 === level1) return;
         this.isNavigationClick = true;
@@ -322,20 +406,24 @@ class OptimizedNavigation {
             const firstSites = await this.loadSites(firstSub.id);
             this.currentSites = firstSites;
             await this.renderLevel3(this.selectedLevel1, firstSub.id);
+            this.updateSubcategoryCount(firstSub.id);
             const allSubIds = this.structure[level1].subcategories.map(s => s.id);
-            for (const subId of allSubIds) {
-                if (!this.siteCache.has(subId)) {
-                    this.loadSites(subId).then(() => {
-                        this.updateSubcategoryCount(subId);
-                    }).catch(() => {});
+            const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
+            if (otherSubIds.length) {
+                const loadRemaining = () => {
+                    this.loadBatchSitesBatch(otherSubIds).catch(err => {
+                        console.warn('后台加载其他子分类失败:', err);
+                    });
+                };
+                if (window.requestIdleCallback) {
+                    requestIdleCallback(loadRemaining, { timeout: 2000 });
                 } else {
-                    this.updateSubcategoryCount(subId);
+                    setTimeout(loadRemaining, 300);
                 }
             }
         } else {
             this.renderEmptyState();
         }
-
         setTimeout(() => { this.isNavigationClick = false; }, 100);
     }
 
@@ -910,6 +998,7 @@ class OptimizedNavigation {
         this.iconCache.clear();
         this.iconLoadingSet.clear();
         this.iconFailedSet.clear();
+        this.countsCache.clear();
     }
 }
 
