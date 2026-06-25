@@ -1,4 +1,4 @@
-/* weather.css - 恢复原有样式（移除和风天气新增样式） */
+/* weather.css - 完整版（APIHZ 天气样式，已移除和风天气相关样式） */
 .weather-modal-card {
     position: fixed;
     top: 0;
