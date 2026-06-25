@@ -1,4 +1,4 @@
-/* main.js */
+/* main.js - 增加全局错误边界和统一错误处理 */
 class App {
     constructor() {
         this.components = {};
@@ -7,6 +7,7 @@ class App {
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.notebookModalHideRef = null;
+        this._cleanupErrorHandler = null;
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => { this.init(); });
@@ -15,25 +16,65 @@ class App {
         }
     }
 
+    // ===== 设置全局错误处理 =====
+    setupGlobalErrorHandling() {
+        if (this._cleanupErrorHandler) return;
+        this._cleanupErrorHandler = Utils.setupGlobalErrorHandler();
+        console.log('[App] 全局错误处理已启用');
+    }
+
+    // ===== 显示友好错误降级 UI =====
+    showErrorFallback(message = '页面加载失败，请刷新重试') {
+        const container = document.querySelector('.main-content');
+        if (!container) return;
+        // 避免重复添加
+        if (document.getElementById('error-fallback-overlay')) return;
+        const overlay = document.createElement('div');
+        overlay.id = 'error-fallback-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary, #ffffff);
+            z-index: 99999;
+            padding: 20px;
+            text-align: center;
+        `;
+        overlay.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+            <h2 style="font-size: 18px; margin-bottom: 8px; color: var(--text-primary, #1e293b);">${Utils.escapeHtml(message)}</h2>
+            <p style="font-size: 13px; color: var(--text-secondary, #64748b); margin-bottom: 20px;">请检查网络连接后刷新页面</p>
+            <button onclick="window.location.reload()" style="
+                padding: 10px 24px;
+                background: var(--primary-color, #4361ee);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 14px;
+                cursor: pointer;
+            ">刷新页面</button>
+        `;
+        document.body.appendChild(overlay);
+    }
+
+    // ===== 隐藏错误降级 UI =====
+    hideErrorFallback() {
+        const overlay = document.getElementById('error-fallback-overlay');
+        if (overlay) overlay.remove();
+    }
+
     async loadNotebookData() {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
         listEl.innerHTML = '<div class="skeleton-notebook-item"></div>'.repeat(5);
-        
-        const fetchNotebook = async (retry = 2) => {
-            try {
-                const response = await fetch('https://api.xjdh688.ccwu.cc/notebook');
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
-                return data.items || [];
-            } catch (error) {
-                if (retry > 0) return fetchNotebook(retry - 1);
-                throw error;
-            }
-        };
-        
+
         try {
-            const items = await fetchNotebook(2);
+            const response = await Utils.safeFetch('https://api.xjdh688.ccwu.cc/notebook', { timeout: 8000 });
+            const data = await response.json();
+            const items = data.items || [];
             if (items.length === 0) {
                 listEl.innerHTML = '<div class="empty">暂无笔记记录<br><small style="color:#999">请稍后刷新页面或联系管理员</small></div>';
                 return;
@@ -157,20 +198,33 @@ class App {
 
     init() {
         if (this.isInitialized) return;
-        this.setupErrorHandling();
-        this.initImageFallbackHandler();
-        this.initStorage();
-        this.initCoreComponents();
-        this.initModules();
-        this.initDependentComponents();
-        this.setupGlobalEvents();
-        this.initNotebookModalEvents();
-        this.initFloatingButtonsEffect();
-        this.initServiceWorkerMessageListener();
-        this.isInitialized = true;
 
-        window.showNotebookModal = this.showNotebookModal.bind(this);
-        window.hideNotebookModal = this.hideNotebookModal.bind(this);
+        // ===== 设置全局错误处理 =====
+        this.setupGlobalErrorHandling();
+
+        // ===== 捕获未处理的 Promise 异常（已由 setupGlobalErrorHandling 处理） =====
+        // 额外捕获：如果页面加载失败，显示降级 UI
+        try {
+            this.initImageFallbackHandler();
+            this.initStorage();
+            this.initCoreComponents();
+            this.initModules();
+            this.initDependentComponents();
+            this.setupGlobalEvents();
+            this.initNotebookModalEvents();
+            this.initFloatingButtonsEffect();
+            this.initServiceWorkerMessageListener();
+            this.isInitialized = true;
+            this.hideErrorFallback();
+
+            window.showNotebookModal = this.showNotebookModal.bind(this);
+            window.hideNotebookModal = this.hideNotebookModal.bind(this);
+        } catch (error) {
+            console.error('[App] 初始化失败:', error);
+            this.showErrorFallback('应用初始化失败，请刷新重试');
+            // 仍然尝试标记为已初始化，避免死循环
+            this.isInitialized = true;
+        }
     }
 
     initFloatingButtonsEffect() {
@@ -265,7 +319,10 @@ class App {
                 }
             }
 
-            Promise.all(initPromises.map(p => p?.catch(() => {}))).then(() => {
+            Promise.all(initPromises.map(p => p?.catch((err) => {
+                console.warn('模块初始化警告:', err);
+                return null;
+            }))).then(() => {
                 console.log('所有模块初始化完成');
             });
         } catch (error) {
@@ -282,24 +339,6 @@ class App {
         } catch (error) {
             console.error('依赖组件初始化失败:', error);
         }
-    }
-
-    setupErrorHandling() {
-        const shouldIgnore = (message) => {
-            const m = String(message || '');
-            return m === 'Script error.' || m === 'null' || m === 'undefined' || m.trim() === '';
-        };
-        const handleError = (event) => {
-            const msg = event.message || (event.error && event.error.message) || '';
-            if (shouldIgnore(msg)) return;
-            const error = event.error || event.reason;
-            const errorMessage = error?.message || msg || '未知错误';
-            if (shouldIgnore(errorMessage)) return;
-            console.error('应用错误:', errorMessage);
-            if (!document.hidden) this.showToast('页面遇到问题，建议刷新页面', 'error');
-        };
-        window.addEventListener('error', handleError);
-        window.addEventListener('unhandledrejection', handleError);
     }
 
     initStorage() {
@@ -342,7 +381,26 @@ class App {
             }
         });
         window.addEventListener('online', () => this.showToast('网络已连接', 'success'));
-        window.addEventListener('offline', () => this.showToast('网络已断开，部分功能可能受限', 'warning'));
+        window.addEventListener('offline', () => {
+            this.showToast('网络已断开，部分功能可能受限', 'warning');
+            // 离线时显示提示
+            if (!document.getElementById('offline-indicator')) {
+                const indicator = document.createElement('div');
+                indicator.id = 'offline-indicator';
+                indicator.style.cssText = `
+                    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+                    background: var(--error-color, #ef4444); color: white;
+                    padding: 8px 16px; border-radius: 8px;
+                    font-size: 12px; z-index: 9999;
+                `;
+                indicator.textContent = '⚠️ 网络已断开，部分功能不可用';
+                document.body.appendChild(indicator);
+            }
+        });
+        window.addEventListener('online', () => {
+            const indicator = document.getElementById('offline-indicator');
+            if (indicator) indicator.remove();
+        });
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) this.refreshOnVisibility();
         });
@@ -537,6 +595,10 @@ class App {
 
     destroy() {
         this.closeAllModals();
+        if (this._cleanupErrorHandler) {
+            this._cleanupErrorHandler();
+            this._cleanupErrorHandler = null;
+        }
         Object.entries(this.components).forEach(([name, component]) => {
             if (component && typeof component.destroy === 'function') {
                 try { component.destroy(); } catch (error) { console.error(`销毁组件 ${name} 失败:`, error); }
@@ -566,5 +628,10 @@ if (document.readyState === 'loading') {
             window.app.init();
         }
     });
+} else {
+    // 如果 DOM 已加载，确保 App 已初始化
+    if (window.app && !window.app.isInitialized) {
+        window.app.init();
+    }
 }
 window.getApp = function() { return window.app; };
