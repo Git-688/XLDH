@@ -1,4 +1,4 @@
-/* weather.js - 整合和风天气 JWT 代理 */
+/* weather.js - 恢复原有天气预报（仅使用 APIHZ，移除和风天气） */
 class WeatherModule {
     static CONFIG = {
         get API_BASE() {
@@ -80,78 +80,6 @@ class WeatherModule {
 
     _getMeteoconIconUrl(condition, isDay = true) {
         const name = this._getMeteoconIconName(condition, isDay);
-        return `https://unpkg.com/@meteocons/svg/fill/${name}.svg`;
-    }
-
-    _getQweatherIconName(code, isDay) {
-        const iconMap = {
-            '100': 'clear-day',
-            '101': 'partly-cloudy-day',
-            '102': 'partly-cloudy-day',
-            '103': 'partly-cloudy-day',
-            '104': 'cloudy',
-            '150': 'clear-day',
-            '151': 'clear-day',
-            '152': 'partly-cloudy-day',
-            '153': 'partly-cloudy-day',
-            '300': 'partly-cloudy-day-rain',
-            '301': 'rain',
-            '302': 'rain',
-            '303': 'rain',
-            '304': 'rain',
-            '305': 'rain',
-            '306': 'rain',
-            '307': 'rain',
-            '308': 'rain',
-            '309': 'rain',
-            '310': 'rain',
-            '311': 'rain',
-            '312': 'rain',
-            '313': 'rain',
-            '314': 'rain',
-            '315': 'rain',
-            '316': 'rain',
-            '317': 'rain',
-            '318': 'rain',
-            '350': 'rain',
-            '351': 'rain',
-            '399': 'rain',
-            '400': 'snow',
-            '401': 'snow',
-            '402': 'snow',
-            '403': 'snow',
-            '404': 'snow',
-            '405': 'snow',
-            '406': 'snow',
-            '407': 'snow',
-            '408': 'snow',
-            '409': 'snow',
-            '410': 'snow',
-            '456': 'snow',
-            '457': 'snow',
-            '499': 'snow',
-            '500': 'fog',
-            '501': 'fog',
-            '502': 'fog',
-            '503': 'fog',
-            '504': 'fog',
-            '507': 'fog',
-            '508': 'fog',
-            '509': 'fog',
-            '510': 'fog',
-            '511': 'fog',
-            '512': 'fog',
-            '513': 'fog',
-            '514': 'fog',
-            '515': 'fog',
-            '900': 'extreme-rain',
-            '901': 'thunderstorms-extreme-rain',
-            '902': 'thunderstorms-extreme-rain',
-            '903': 'extreme-snow',
-            '904': 'wind',
-            '999': 'unknown'
-        };
-        const name = iconMap[String(code)] || (isDay ? 'clear-day' : 'clear-night');
         return `https://unpkg.com/@meteocons/svg/fill/${name}.svg`;
     }
 
@@ -281,8 +209,7 @@ class WeatherModule {
             if (data.code !== 200) {
                 throw new Error(data.msg || '获取天气数据失败');
             }
-            const qweatherData = await this.loadQweatherData(lat, lon);
-            this.weatherData = this.parseWeatherData(data, qweatherData);
+            this.weatherData = this.parseWeatherData(data);
             let cityName = this.weatherData.city;
             if (cityName) {
                 this.currentCity = cityName;
@@ -305,8 +232,7 @@ class WeatherModule {
             if (data.code !== 200) {
                 throw new Error(data.msg || '获取天气数据失败');
             }
-            const qweatherData = await this.loadQweatherData(null, null, city);
-            this.weatherData = this.parseWeatherData(data, qweatherData);
+            this.weatherData = this.parseWeatherData(data);
             this.weatherData.city = city;
             this.currentCity = city;
             this.saveCity(city, true, null);
@@ -315,41 +241,6 @@ class WeatherModule {
             console.error('城市天气查询失败:', error);
             this.weatherData = null;
             throw error;
-        }
-    }
-
-    async loadQweatherData(lat, lon, city) {
-        try {
-            const apiBase = Utils.getApiBase();
-            let location = '';
-            if (lat && lon) location = `${lat},${lon}`;
-            else if (city) location = city;
-            else return null;
-
-            const [nowRes, dailyRes, airRes, indicesRes] = await Promise.allSettled([
-                fetch(`${apiBase}/weather/qweather?type=now&location=${encodeURIComponent(location)}`),
-                fetch(`${apiBase}/weather/qweather?type=daily&location=${encodeURIComponent(location)}`),
-                fetch(`${apiBase}/weather/qweather?type=air&location=${encodeURIComponent(location)}`),
-                fetch(`${apiBase}/weather/qweather?type=indices&location=${encodeURIComponent(location)}`)
-            ]);
-
-            const result = {};
-            if (nowRes.status === 'fulfilled' && nowRes.value.ok) {
-                result.now = await nowRes.value.json();
-            }
-            if (dailyRes.status === 'fulfilled' && dailyRes.value.ok) {
-                result.daily = await dailyRes.value.json();
-            }
-            if (airRes.status === 'fulfilled' && airRes.value.ok) {
-                result.air = await airRes.value.json();
-            }
-            if (indicesRes.status === 'fulfilled' && indicesRes.value.ok) {
-                result.indices = await indicesRes.value.json();
-            }
-            return result;
-        } catch (error) {
-            console.warn('获取和风天气数据失败:', error);
-            return null;
         }
     }
 
@@ -364,7 +255,7 @@ class WeatherModule {
         return true;
     }
 
-    parseWeatherData(data, qweather) {
+    parseWeatherData(data) {
         if (!data || data.code !== 200) {
             throw new Error(data?.msg || '天气数据格式错误');
         }
@@ -406,46 +297,6 @@ class WeatherModule {
                 }
             }
             if (!sunTimes) sunTimes = data.suntimes[0];
-        }
-
-        if (qweather && qweather.daily && qweather.daily.code === '200' && qweather.daily.daily) {
-            const daily = qweather.daily.daily;
-            if (daily.sunrise && daily.sunrise.length > 0) {
-                sunTimes = {
-                    sunrise: daily.sunrise[0] || '--',
-                    sunset: daily.sunset[0] || '--',
-                    moonrise: daily.moonrise ? daily.moonrise[0] : '--',
-                    moonset: daily.moonset ? daily.moonset[0] : '--',
-                    moon_phase: daily.moonPhase ? daily.moonPhase[0] : ''
-                };
-            }
-        }
-
-        let airQuality = null;
-        let airPm25 = null;
-        let airPm10 = null;
-        let airNo2 = null;
-        let airSo2 = null;
-        let airCo = null;
-        let airO3 = null;
-        if (qweather && qweather.air && qweather.air.code === '200' && qweather.air.now) {
-            const air = qweather.air.now;
-            airQuality = air.category || '--';
-            airPm25 = air.pm2p5 || '--';
-            airPm10 = air.pm10 || '--';
-            airNo2 = air.no2 || '--';
-            airSo2 = air.so2 || '--';
-            airCo = air.co || '--';
-            airO3 = air.o3 || '--';
-        }
-
-        let indicesList = [];
-        if (qweather && qweather.indices && qweather.indices.code === '200' && qweather.indices.daily) {
-            indicesList = qweather.indices.daily.map(item => ({
-                name: item.name || '--',
-                category: item.category || '--',
-                text: item.text || '--'
-            }));
         }
 
         const dayKeys = ['weatherday2', 'weatherday3', 'weatherday4', 'weatherday5', 'weatherday6', 'weatherday7'];
@@ -493,15 +344,7 @@ class WeatherModule {
             windDir: windDir || '--',
             windScale: windScale || '--',
             alarms: alarms,
-            sunTimes: sunTimes,
-            airQuality: airQuality,
-            airPm25: airPm25,
-            airPm10: airPm10,
-            airNo2: airNo2,
-            airSo2: airSo2,
-            airCo: airCo,
-            airO3: airO3,
-            indices: indicesList
+            sunTimes: sunTimes
         };
     }
 
@@ -658,17 +501,11 @@ class WeatherModule {
         const sun = weatherData.sunTimes || {};
         const sunrise = sun.sunrise || '--';
         const sunset = sun.sunset || '--';
-        const moonrise = sun.moonrise || '--';
-        const moonset = sun.moonset || '--';
-
-        const airQuality = weatherData.airQuality || '--';
-        const airPm25 = weatherData.airPm25 || '--';
-        const airPm10 = weatherData.airPm10 || '--';
-        const airNo2 = weatherData.airNo2 || '--';
-        const airSo2 = weatherData.airSo2 || '--';
-        const airCo = weatherData.airCo || '--';
-        const airO3 = weatherData.airO3 || '--';
-        const indices = weatherData.indices || [];
+        const dayLength = sun.day_length || '--';
+        const dayPercent = sun.day_percentage !== undefined ? sun.day_percentage : '';
+        const dayLengthDisplay = dayPercent ? `${dayLength} (${dayPercent}%)` : dayLength;
+        const civilDawn = sun.civil_twilight_begin || '--';
+        const civilDusk = sun.civil_twilight_end || '--';
 
         const locationInfo = `
             <div class="weather-location">
@@ -705,43 +542,6 @@ class WeatherModule {
             </div>
         `;
 
-        let airHtml = '';
-        if (airQuality !== '--') {
-            airHtml = `
-                <div class="weather-air-quality">
-                    <div class="air-header">
-                        <span class="air-title"><i class="fas fa-wind"></i> 空气质量</span>
-                        <span class="air-value ${airQuality === '优' ? 'air-excellent' : airQuality === '良' ? 'air-good' : 'air-moderate'}">${esc(airQuality)}</span>
-                    </div>
-                    <div class="air-details">
-                        <span>PM2.5: ${esc(airPm25)}</span>
-                        <span>PM10: ${esc(airPm10)}</span>
-                        <span>NO₂: ${esc(airNo2)}</span>
-                        <span>SO₂: ${esc(airSo2)}</span>
-                        <span>CO: ${esc(airCo)}</span>
-                        <span>O₃: ${esc(airO3)}</span>
-                    </div>
-                </div>
-            `;
-        }
-
-        let indicesHtml = '';
-        if (indices.length > 0) {
-            indicesHtml = `
-                <div class="weather-indices">
-                    <div class="indices-title"><i class="fas fa-list"></i> 生活指数</div>
-                    <div class="indices-grid">
-                        ${indices.map(item => `
-                            <div class="index-item">
-                                <span class="index-name">${esc(item.name)}</span>
-                                <span class="index-category">${esc(item.category)}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
         return `
             ${manualModeHint}
             ${alarmsHtml}
@@ -755,8 +555,6 @@ class WeatherModule {
                 </div>
                 ` : ''}
             </div>
-
-            ${airHtml}
 
             <div class="weather-extra-row">
                 <div class="extra-item">
@@ -799,16 +597,18 @@ class WeatherModule {
                     <span class="sun-value">${esc(sunset)}</span>
                 </div>
                 <div class="sun-item">
-                    <span class="sun-label">🌙 月升</span>
-                    <span class="sun-value">${esc(moonrise)}</span>
+                    <span class="sun-label">☀️ 昼长</span>
+                    <span class="sun-value">${esc(dayLengthDisplay)}</span>
                 </div>
                 <div class="sun-item">
-                    <span class="sun-label">🌙 月落</span>
-                    <span class="sun-value">${esc(moonset)}</span>
+                    <span class="sun-label">🌤 天亮</span>
+                    <span class="sun-value">${esc(civilDawn)}</span>
+                </div>
+                <div class="sun-item">
+                    <span class="sun-label">🌙 天黑</span>
+                    <span class="sun-value">${esc(civilDusk)}</span>
                 </div>
             </div>
-
-            ${indicesHtml}
 
             <div class="weather-forecast">
                 <div class="forecast-title">
