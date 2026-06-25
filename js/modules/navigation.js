@@ -616,7 +616,7 @@ class OptimizedNavigation {
                 <div class="icon-container">${iconHtml}</div>
                 <div class="card-top-right">
                     <button class="report-dead-link-btn" data-url="${this._escapeHtml(site.url)}" data-title="${this._escapeHtml(site.title)}" title="报告死链">
-                        <i class="fas fa-exclamation-triangle"></i>
+                        <i class="fas fa-exclamation-circle"></i>
                     </button>
                     <div class="views-container">
                         <i class="fas fa-eye views-icon"></i>
