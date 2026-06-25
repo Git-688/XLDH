@@ -1,7 +1,10 @@
-/* navigation.js - 导航数据加载策略优化（分批加载，减少并发，移除 counts API） */
+/* navigation.js - 引用 constants.js 常量 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
+
+        // 从常量配置读取
+        const C = window.APP_CONSTANTS || APP_CONSTANTS;
 
         this.structure = null;
         this.siteCache = new Map();
@@ -10,9 +13,9 @@ class OptimizedNavigation {
         this.isInitialized = false;
         this.stats = { totalCategories: 0, totalWebsites: 0, invalidCount: 0 };
         this.isNavigationClick = false;
-        this.skeletonCount = 6;
+        this.skeletonCount = C.NAVIGATION.SKELETON_COUNT || 6;
         this.updateTimer = null;
-        this.UPDATE_INTERVAL = 5 * 60 * 1000;
+        this.UPDATE_INTERVAL = C.NAVIGATION.UPDATE_INTERVAL || (5 * 60 * 1000);
         this.apiBase = Utils.getApiBase();
         this.imgObserver = null;
         this.isSearching = false;
@@ -20,7 +23,7 @@ class OptimizedNavigation {
         this.searchTimer = null;
 
         this.currentPage = 1;
-        this.pageSize = 30;
+        this.pageSize = C.NAVIGATION.PAGE_SIZE || 30;
         this.isLoadingMore = false;
         this.hasMore = true;
         this.currentSites = [];
@@ -28,14 +31,14 @@ class OptimizedNavigation {
         this.hasShownNoMoreToast = false;
 
         this.autoRefreshTimer = null;
-        this.autoRefreshInterval = 5 * 60 * 1000;
+        this.autoRefreshInterval = C.NAVIGATION.AUTO_REFRESH_INTERVAL || (5 * 60 * 1000);
 
         this.iconCache = new Map();
         this.iconLoadingSet = new Set();
         this.iconFailedSet = new Set();
 
-        this.BATCH_SIZE = 8;
-        this.BATCH_DELAY = 200;
+        this.BATCH_SIZE = C.NAVIGATION.BATCH_SIZE || 8;
+        this.BATCH_DELAY = C.NAVIGATION.BATCH_DELAY || 200;
 
         this.countsCache = new Map();
 
@@ -174,7 +177,6 @@ class OptimizedNavigation {
         this.bindScrollPreload(container);
     }
 
-    // ===== 核心优化：分批加载站点数据 =====
     async loadBatchSitesBatch(subIds, batchSize = this.BATCH_SIZE) {
         if (!subIds || !subIds.length) return {};
         const results = {};
@@ -262,7 +264,6 @@ class OptimizedNavigation {
         this.updateSubcategoryCountDisplay(subcategoryId, count);
     }
 
-    // ===== 核心优化：初始化只加载第一个子分类，其余分批后台加载 =====
     async init() {
         if (this.isInitialized) return;
         this.initLazyLoadObserver();
@@ -392,7 +393,6 @@ class OptimizedNavigation {
         return this.structure;
     }
 
-    // ===== 核心优化：切换一级分类时同样分批加载 =====
     async selectLevel1(level1, isUserClick = false) {
         if (this.selectedLevel1 === level1) return;
         this.isNavigationClick = true;
