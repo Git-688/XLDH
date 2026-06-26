@@ -1,4 +1,4 @@
-/* service-worker.js - 精细化缓存策略（差异化 TTL，三种缓存策略） */
+/* service-worker.js - 精细化缓存策略（导航接口使用 network-only） */
 const CACHE_NAME = 'starlink-v8';
 const NAVIGATION_CACHE_NAME = 'starlink-nav-v8';
 const API_CACHE_NAME = 'starlink-api-v8';
@@ -53,6 +53,7 @@ const FONT_URL_PATTERNS = [
     'fonts.googleapis.com'
 ];
 
+/* ===== 核心修改：sites 策略改为 network-only ===== */
 const CACHE_CONFIG = {
     nav: {
         patterns: ['/navigation/structure'],
@@ -62,8 +63,8 @@ const CACHE_CONFIG = {
     },
     sites: {
         patterns: ['/navigation/sites', '/navigation/batch-sites'],
-        strategy: 'network-first',
-        ttl: 5 * 60 * 1000,
+        strategy: 'network-only',   // 强制网络请求，不返回缓存
+        ttl: 0,
         cacheName: API_CACHE_NAME
     },
     stats: {
@@ -247,6 +248,16 @@ async function handleCacheFirst(request, config) {
     }
 }
 
+/* ===== 新增：network-only 策略处理 ===== */
+async function handleNetworkOnly(request) {
+    try {
+        const response = await fetch(request);
+        return response;
+    } catch (err) {
+        return new Response('', { status: 504 });
+    }
+}
+
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
     if (url.origin !== self.location.origin && !isFontRequest(url)) return;
@@ -274,6 +285,9 @@ self.addEventListener('fetch', event => {
                 break;
             case 'cache-first':
                 event.respondWith(handleCacheFirst(event.request, config));
+                break;
+            case 'network-only':
+                event.respondWith(handleNetworkOnly(event.request));
                 break;
             default:
                 event.respondWith(fetch(event.request));
