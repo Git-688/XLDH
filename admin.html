@@ -106,7 +106,7 @@
         .form-row label { font-size: 11px; font-weight: 500; color: #475569; }
         #annContent { resize: vertical; min-height: 80px; overflow-y: visible; }
         .announcement-actions-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 8px; }
-        .announcement-checkbox { display: flex; align-items: center; gap: 6px; }
+        .announcement-checkbox { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
         .announcement-buttons { display: flex; gap: 8px; }
         @media (max-width: 768px) { body { padding: 12px; } .login-card { padding: 24px 20px; max-width: 280px; } .content-layout { flex-direction: row !important; gap: 8px; } .sidebar, .main-content { min-width: 0; padding: 8px; } .action-buttons-row button { font-size: 10px; padding: 5px 8px; min-width: 60px; } .tab-btn { padding: 4px 10px; font-size: 11px; } .stats-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; } .stat-card-mini .stat-number { font-size: 16px; } }
         @media (max-width: 480px) { body { padding: 8px; } .login-card { padding: 20px 16px; } .stats-cards { grid-template-columns: 1fr 1fr; gap: 6px; } .stat-card-mini { padding: 8px 12px; } .stat-card-mini .stat-number { font-size: 14px; } .action-buttons-row button { font-size: 9px; padding: 4px 6px; min-width: 50px; } .cat-item { font-size: 10px; padding: 4px 8px; } }
@@ -261,7 +261,7 @@
                     <button class="primary" id="refreshNavBtn">🔄 刷新缓存</button>
                     <button class="primary" id="refreshIconsBtn" style="background:#8b5cf6;">🖼️ 刷新图标</button>
                     <button class="primary" id="addCategoryBtn">+ 一级分类</button>
-                    <button class="secondary" id="batchDeleteBtnOld" style="background:#ef4444;color:#fff;">🗑️ 批量删除</button>
+                    <!-- 已移除顶部旧的批量删除按钮 -->
                 </div>
                 <div class="cat-bar" id="catBar"></div>
 
@@ -287,7 +287,7 @@
             </div>
 
             <div id="rankTab" class="tab-panel hidden">
-                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;"><button class="primary sm" id="sortRankBtn">按点击数降序</button><button class="secondary sm" id="exportRankBtn">导出排行</button></div>
+                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;"><button class="primary sm" id="sortRankBtn">按点击数降序</button></div>
                 <div class="rank-list" id="rankList"></div>
             </div>
 
@@ -308,7 +308,10 @@
                     <div class="form-row"><label>详细内容</label><textarea id="annContent" rows="4" placeholder="详细公告内容..."></textarea></div>
                     <div class="form-row"><label>公告日期</label><input type="date" id="annDate" class="date-input"></div>
                     <div class="announcement-actions-row">
-                        <div class="announcement-checkbox"><input type="checkbox" id="annActive"><label>启用公告</label></div>
+                        <div class="announcement-checkbox">
+                            <input type="checkbox" id="annActive">
+                            <label for="annActive" style="font-size:12px;">启用公告</label>
+                        </div>
                         <div class="announcement-buttons"><button class="secondary" id="annClearBtn">清除</button><button class="secondary" id="annCancelBtn">取消</button><button class="primary" id="annPublishBtn">发布</button></div>
                     </div>
                 </div>
