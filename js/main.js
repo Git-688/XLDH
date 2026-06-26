@@ -1,4 +1,4 @@
-/* main.js - 增加全局错误边界和统一错误处理 */
+/* main.js - 增加全局错误边界和统一错误处理，监听导航刷新信号 */
 class App {
     constructor() {
         this.components = {};
@@ -8,6 +8,7 @@ class App {
         this.lastWeatherUpdate = null;
         this.notebookModalHideRef = null;
         this._cleanupErrorHandler = null;
+        this._storageListenerBound = false;
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => { this.init(); });
@@ -178,10 +179,8 @@ class App {
             navigator.serviceWorker.addEventListener('message', (event) => {
                 if (event.data && event.data.type === 'NAV_UPDATED') {
                     console.log('[App] 收到导航更新通知，刷新导航数据...');
-                    if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshStructure === 'function') {
-                        window.optimizedNavigation.refreshStructure().catch(err => {
-                            console.warn('[App] 自动刷新导航失败:', err);
-                        });
+                    if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshCurrentSubcategory === 'function') {
+                        window.optimizedNavigation.refreshCurrentSubcategory();
                     } else {
                         console.warn('[App] 导航模块未就绪，将刷新页面以应用更新');
                         setTimeout(() => {
@@ -193,6 +192,67 @@ class App {
                 }
             });
             console.log('[App] Service Worker 消息监听已注册');
+        }
+    }
+
+    // ===== 监听 localStorage 变化，接收导航刷新信号 =====
+    setupNavRefreshListener() {
+        if (this._storageListenerBound) return;
+        this._storageListenerBound = true;
+
+        const handleStorageChange = (e) => {
+            if (e.key === 'nav_refresh_required' && e.newValue) {
+                console.log('[App] 收到导航刷新信号 (storage event)，刷新当前子分类');
+                this.refreshNavigationIfReady();
+            }
+        };
+
+        // 使用 polling 作为 backup，因为 storage 事件在跨标签页时可靠，但同标签页内修改 localStorage 不会触发 storage 事件
+        // 所以我们同时使用 MutationObserver 或事件监听 + 轮询
+        window.addEventListener('storage', handleStorageChange);
+
+        // 同标签页内使用自定义事件（admin.js 触发，main.js 监听）
+        document.addEventListener('navRefreshRequested', () => {
+            console.log('[App] 收到导航刷新信号 (custom event)，刷新当前子分类');
+            this.refreshNavigationIfReady();
+        });
+
+        // 额外轮询作为最后的保障（每 3 秒检查一次，仅在页面可见时进行）
+        let lastRefreshMark = localStorage.getItem('nav_refresh_required') || '';
+        this._navPollingTimer = setInterval(() => {
+            if (document.hidden) return;
+            const currentMark = localStorage.getItem('nav_refresh_required') || '';
+            if (currentMark !== lastRefreshMark && currentMark) {
+                lastRefreshMark = currentMark;
+                console.log('[App] 轮询检测到导航刷新信号，刷新当前子分类');
+                this.refreshNavigationIfReady();
+            }
+        }, 3000);
+
+        console.log('[App] 导航刷新监听已设置');
+    }
+
+    refreshNavigationIfReady() {
+        if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshCurrentSubcategory === 'function') {
+            window.optimizedNavigation.refreshCurrentSubcategory().catch(err => {
+                console.warn('[App] 刷新导航失败:', err);
+            });
+        } else {
+            console.warn('[App] 导航模块未就绪，延迟重试...');
+            // 延迟重试
+            setTimeout(() => {
+                if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshCurrentSubcategory === 'function') {
+                    window.optimizedNavigation.refreshCurrentSubcategory().catch(err => {
+                        console.warn('[App] 延迟刷新导航失败:', err);
+                    });
+                } else {
+                    // 最终降级：刷新页面
+                    console.warn('[App] 导航模块始终未就绪，刷新页面');
+                    if (!document.hidden) {
+                        window.location.reload();
+                    }
+                }
+            }, 1500);
         }
     }
 
@@ -214,6 +274,7 @@ class App {
             this.initNotebookModalEvents();
             this.initFloatingButtonsEffect();
             this.initServiceWorkerMessageListener();
+            this.setupNavRefreshListener();
             this.isInitialized = true;
             this.hideErrorFallback();
 
@@ -571,6 +632,8 @@ class App {
             if (this.components.sidebar.loadWallpaperUserInfo) this.components.sidebar.loadWallpaperUserInfo();
             if (this.components.sidebar.loadDailyQuote) this.components.sidebar.loadDailyQuote();
         }
+        // 刷新导航
+        this.refreshNavigationIfReady();
         setTimeout(() => {
             this.showToast('所有模块已刷新', 'success');
         }, 1500);
@@ -599,6 +662,10 @@ class App {
             this._cleanupErrorHandler();
             this._cleanupErrorHandler = null;
         }
+        if (this._navPollingTimer) {
+            clearInterval(this._navPollingTimer);
+            this._navPollingTimer = null;
+        }
         Object.entries(this.components).forEach(([name, component]) => {
             if (component && typeof component.destroy === 'function') {
                 try { component.destroy(); } catch (error) { console.error(`销毁组件 ${name} 失败:`, error); }
@@ -613,6 +680,7 @@ class App {
         this.modules = {};
         this.activeModals = [];
         this.isInitialized = false;
+        this._storageListenerBound = false;
     }
 }
 
