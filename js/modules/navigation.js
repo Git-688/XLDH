@@ -1,65 +1,49 @@
-/* navigation.js - 优化版：结构缓存、智能预加载、搜索状态记忆、内存管理 */
+/* navigation.js - 修复点击数实时更新、后台新增网站立即显示 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
 
-        // ===== 配置常量 =====
-        this.CONFIG = {
-            SKELETON_COUNT: 6,
-            PAGE_SIZE: 30,
-            UPDATE_INTERVAL: 5 * 60 * 1000,
-            AUTO_REFRESH_INTERVAL: 5 * 60 * 1000,
-            BATCH_SIZE: 8,
-            BATCH_DELAY: 200,
-            STRUCTURE_CACHE_TTL: 10 * 60 * 1000,  // 结构缓存10分钟
-            PRELOAD_DELAY: 300,
-            MAX_RETRY: 3,
-            RETRY_DELAY: 500,
-        };
+        const C = window.APP_CONSTANTS || APP_CONSTANTS;
 
-        // ===== 状态变量 =====
         this.structure = null;
-        this.structureCacheTime = 0;
         this.siteCache = new Map();
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
         this.isInitialized = false;
         this.stats = { totalCategories: 0, totalWebsites: 0, invalidCount: 0 };
         this.isNavigationClick = false;
+        this.skeletonCount = C.NAVIGATION.SKELETON_COUNT || 6;
+        this.updateTimer = null;
+        this.UPDATE_INTERVAL = C.NAVIGATION.UPDATE_INTERVAL || (5 * 60 * 1000);
+        this.apiBase = Utils.getApiBase();
+        this.imgObserver = null;
         this.isSearching = false;
         this.searchInput = null;
         this.searchTimer = null;
-        this.searchQuery = '';           // 保存当前搜索词，用于恢复
 
-        // ===== 分页状态 =====
         this.currentPage = 1;
+        this.pageSize = C.NAVIGATION.PAGE_SIZE || 30;
         this.isLoadingMore = false;
         this.hasMore = true;
         this.currentSites = [];
         this.scrollListener = null;
         this.hasShownNoMoreToast = false;
 
-        // ===== 计时器 =====
-        this.updateTimer = null;
         this.autoRefreshTimer = null;
+        this.autoRefreshInterval = C.NAVIGATION.AUTO_REFRESH_INTERVAL || (5 * 60 * 1000);
 
-        // ===== DOM 引用 =====
-        this.imgObserver = null;
-        this._scrollPreloadCleanup = null;
-
-        // ===== 图标缓存 =====
         this.iconCache = new Map();
         this.iconLoadingSet = new Set();
         this.iconFailedSet = new Set();
 
-        // ===== 组件挂载 =====
+        this.BATCH_SIZE = C.NAVIGATION.BATCH_SIZE || 8;
+        this.BATCH_DELAY = C.NAVIGATION.BATCH_DELAY || 200;
+
+        this.countsCache = new Map();
+
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
     }
-
-    // ========================================
-    // 工具方法
-    // ========================================
 
     _escapeHtml(str) { return Utils.escapeHtml(str); }
 
@@ -72,13 +56,13 @@ class OptimizedNavigation {
     _getFullIconUrl(icon, siteUrl) {
         if (!icon) return '';
         if (icon.startsWith('/icon?domain=')) {
-            if (window.Utils?.isWebPSupportedSync?.()) {
+            if (window.Utils && window.Utils.isWebPSupportedSync()) {
                 return this.apiBase + icon + '&format=webp';
             }
             return this.apiBase + icon;
         }
         if (icon.startsWith('http://') || icon.startsWith('https://')) {
-            if (window.Utils?.isWebPSupportedSync?.() && !icon.match(/\.svg$/i)) {
+            if (window.Utils && window.Utils.isWebPSupportedSync() && !icon.match(/\.svg$/i)) {
                 return window.Utils.toWebPUrl(icon, 80, 128, 128);
             }
             return icon;
@@ -88,7 +72,7 @@ class OptimizedNavigation {
             const domain = urlObj.hostname;
             if (domain) {
                 const base = this.apiBase + `/icon?domain=${encodeURIComponent(domain)}`;
-                if (window.Utils?.isWebPSupportedSync?.()) {
+                if (window.Utils && window.Utils.isWebPSupportedSync()) {
                     return base + '&format=webp';
                 }
                 return base;
@@ -101,8 +85,9 @@ class OptimizedNavigation {
         const fullIconUrl = this._getFullIconUrl(iconUrl, siteUrl);
         if (fullIconUrl) {
             return `<img class="lazy-icon" data-src="${this._escapeHtml(fullIconUrl)}" alt="" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML = '<i class=\\'fas fa-link\\'></i>';">`;
+        } else {
+            return '<i class="fas fa-link"></i>';
         }
-        return '<i class="fas fa-link"></i>';
     }
 
     _highlightText(text, keyword) {
@@ -113,37 +98,7 @@ class OptimizedNavigation {
         return escapedText.replace(regex, '<mark class="search-highlight">$1</mark>');
     }
 
-    _generateSkeletonHTML() {
-        let html = '';
-        for (let i = 0; i < this.CONFIG.SKELETON_COUNT; i++) {
-            html += `
-                <div class="site-card skeleton-card">
-                    <div class="card-top">
-                        <div class="icon-container skeleton-icon"></div>
-                        <div class="card-top-right">
-                            <div class="skeleton-btn skeleton" style="width:14px;height:14px;border-radius:3px;"></div>
-                            <div class="views-container">
-                                <div class="skeleton-views skeleton" style="width:30px;height:14px;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="divider-line skeleton-divider"></div>
-                    <div class="card-bottom">
-                        <div class="skeleton-title skeleton"></div>
-                        <div class="skeleton-description skeleton"></div>
-                    </div>
-                </div>
-            `;
-        }
-        return html;
-    }
-
-    // ========================================
-    // 懒加载 & 图片预加载
-    // ========================================
-
     initLazyLoadObserver() {
-        if (this.imgObserver) return;
         if ('IntersectionObserver' in window) {
             this.imgObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -169,42 +124,41 @@ class OptimizedNavigation {
         const images = container.querySelectorAll('img[data-src]');
         if (images.length === 0) return;
 
-        const viewportHeight = window.innerHeight;
-        const scrollTop = window.scrollY || document.documentElement.scrollTop;
-        const buffer = 500;
+        const preloadTask = () => {
+            const viewportHeight = window.innerHeight;
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const buffer = 500;
 
-        images.forEach(img => {
-            const rect = img.getBoundingClientRect();
-            const imgTop = rect.top + scrollTop;
-            const imgBottom = imgTop + rect.height;
-            if (imgBottom + buffer > scrollTop && imgTop - buffer < scrollTop + viewportHeight) {
-                const src = img.dataset.src;
-                if (src && !img.src) {
-                    img.src = src;
-                    img.removeAttribute('data-src');
-                    this.imgObserver.unobserve(img);
+            images.forEach(img => {
+                const rect = img.getBoundingClientRect();
+                const imgTop = rect.top + scrollTop;
+                const imgBottom = imgTop + rect.height;
+                if (imgBottom + buffer > scrollTop && imgTop - buffer < scrollTop + viewportHeight) {
+                    const src = img.dataset.src;
+                    if (src && !img.src) {
+                        img.src = src;
+                        img.removeAttribute('data-src');
+                        this.imgObserver.unobserve(img);
+                    }
                 }
-            }
-        });
-    }
+            });
+        };
 
-    observeLazyImages(container) {
-        if (!this.imgObserver) return;
-        const imgs = container.querySelectorAll('img[data-src]');
-        imgs.forEach(img => this.imgObserver.observe(img));
-        this.preloadNearbyImages(container);
-        this._bindScrollPreload(container);
-    }
-
-    _bindScrollPreload(container) {
-        if (this._scrollPreloadCleanup) {
-            this._scrollPreloadCleanup();
-            this._scrollPreloadCleanup = null;
+        if (window.requestIdleCallback) {
+            requestIdleCallback(preloadTask, { timeout: 2000 });
+        } else {
+            setTimeout(preloadTask, 200);
         }
+    }
+
+    bindScrollPreload(container) {
+        if (!container) return;
         let scrollTimer = null;
         const scrollHandler = () => {
             if (scrollTimer) clearTimeout(scrollTimer);
-            scrollTimer = setTimeout(() => this.preloadNearbyImages(container), 200);
+            scrollTimer = setTimeout(() => {
+                this.preloadNearbyImages(container);
+            }, 200);
         };
         window.addEventListener('scroll', scrollHandler, { passive: true });
         container.addEventListener('scroll', scrollHandler, { passive: true });
@@ -214,67 +168,41 @@ class OptimizedNavigation {
         };
     }
 
-    // ========================================
-    // 数据加载（含缓存 & 重试）
-    // ========================================
-
-    async _fetchWithRetry(url, options = {}, retries = this.CONFIG.MAX_RETRY) {
-        let lastError = null;
-        for (let attempt = 0; attempt < retries; attempt++) {
-            try {
-                const response = await Utils.safeFetch(url, {
-                    ...options,
-                    timeout: 15000,
-                    _noRetry: true,
-                });
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return response;
-            } catch (error) {
-                lastError = error;
-                if (attempt < retries - 1) {
-                    await new Promise(r => setTimeout(r, this.CONFIG.RETRY_DELAY * (attempt + 1)));
-                }
-            }
-        }
-        throw lastError || new Error('请求失败');
+    observeLazyImages(container) {
+        if (!this.imgObserver) return;
+        const imgs = container.querySelectorAll('img[data-src]');
+        imgs.forEach(img => this.imgObserver.observe(img));
+        this.preloadNearbyImages(container);
+        this.bindScrollPreload(container);
     }
 
-    async loadNavigationStructure(forceRefresh = false) {
-        const now = Date.now();
-        if (!forceRefresh && this.structure && (now - this.structureCacheTime) < this.CONFIG.STRUCTURE_CACHE_TTL) {
-            return this.structure;
-        }
-        try {
-            const response = await this._fetchWithRetry(`${this.apiBase}/navigation/structure`);
-            this.structure = await response.json();
-            this.structureCacheTime = now;
-            return this.structure;
-        } catch (error) {
-            if (this.structure) {
-                console.warn('获取结构失败，使用缓存结构:', error);
-                return this.structure;
+    async loadBatchSitesBatch(subIds, batchSize = this.BATCH_SIZE) {
+        if (!subIds || !subIds.length) return {};
+        const results = {};
+        const allIds = [...subIds];
+        for (let i = 0; i < allIds.length; i += batchSize) {
+            const batch = allIds.slice(i, i + batchSize);
+            const batchResult = await this.loadBatchSites(batch);
+            Object.assign(results, batchResult);
+            for (const id of batch) {
+                this.updateSubcategoryCount(id);
             }
-            throw error;
+            if (i + batchSize < allIds.length) {
+                await new Promise(r => setTimeout(r, this.BATCH_DELAY));
+            }
         }
+        return results;
     }
 
     async loadSites(subcategoryId, forceRefresh = false) {
         if (!forceRefresh && this.siteCache.has(subcategoryId)) {
             return this.siteCache.get(subcategoryId);
         }
-        try {
-            const response = await this._fetchWithRetry(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
-            const sites = await response.json();
-            this.siteCache.set(subcategoryId, sites);
-            return sites;
-        } catch (error) {
-            const cached = this.siteCache.get(subcategoryId);
-            if (cached) {
-                console.warn('加载站点失败，使用缓存:', error);
-                return cached;
-            }
-            throw error;
-        }
+        const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
+        if (!response.ok) throw new Error('Failed to load sites');
+        const sites = await response.json();
+        this.siteCache.set(subcategoryId, sites);
+        return sites;
     }
 
     async loadBatchSites(subIds, forceRefresh = false) {
@@ -298,13 +226,15 @@ class OptimizedNavigation {
 
         try {
             const idsParam = uncachedIds.join(',');
-            const response = await this._fetchWithRetry(`${this.apiBase}/navigation/batch-sites?ids=${idsParam}`);
+            const response = await Utils.safeFetch(`${this.apiBase}/navigation/batch-sites?ids=${idsParam}`);
             const data = await response.json();
 
-            if (data?.data) {
+            if (data && data.data) {
                 for (const [subId, sites] of Object.entries(data.data)) {
                     const id = parseInt(subId);
-                    if (!isNaN(id)) this.siteCache.set(id, sites);
+                    if (!isNaN(id)) {
+                        this.siteCache.set(id, sites);
+                    }
                 }
             }
 
@@ -313,86 +243,107 @@ class OptimizedNavigation {
                 result[id] = this.siteCache.get(id) || [];
             });
             return result;
+
         } catch (error) {
-            console.warn('批量加载失败，逐个加载:', error);
+            console.warn('批量加载站点失败，降级为逐个加载:', error);
             const result = {};
             for (const id of subIds) {
-                result[id] = await this.loadSites(id, true);
+                if (!this.siteCache.has(id)) {
+                    result[id] = await this.loadSites(id, true);
+                } else {
+                    result[id] = this.siteCache.get(id);
+                }
             }
             return result;
         }
-    }
-
-    async loadBatchSitesBatch(subIds, batchSize = this.CONFIG.BATCH_SIZE) {
-        if (!subIds || !subIds.length) return {};
-        const results = {};
-        for (let i = 0; i < subIds.length; i += batchSize) {
-            const batch = subIds.slice(i, i + batchSize);
-            const batchResult = await this.loadBatchSites(batch);
-            Object.assign(results, batchResult);
-            batch.forEach(id => this.updateSubcategoryCount(id));
-            if (i + batchSize < subIds.length) {
-                await new Promise(r => setTimeout(r, this.CONFIG.BATCH_DELAY));
-            }
-        }
-        return results;
-    }
-
-    // ========================================
-    // 导航状态管理
-    // ========================================
-
-    getFirstCategory() {
-        return this.structure ? Object.keys(this.structure)[0] : null;
-    }
-
-    getFirstSubCategory(level1) {
-        return this.structure?.[level1]?.subcategories?.[0] || null;
     }
 
     updateSubcategoryCount(subcategoryId) {
         const sites = this.siteCache.get(subcategoryId);
         if (!sites) return;
         const count = sites.filter(s => s.valid !== false).length;
-        this._updateSubcategoryCountDisplay(subcategoryId, count);
+        this.updateSubcategoryCountDisplay(subcategoryId, count);
     }
 
-    _updateSubcategoryCountDisplay(subcategoryId, count, retry = 0) {
-        const btn = document.querySelector(`.level2-btn[data-level2="${subcategoryId}"]`);
-        if (btn) {
-            let countSpan = btn.querySelector('.level2-btn-count');
-            if (!countSpan) {
-                countSpan = document.createElement('span');
-                countSpan.className = 'level2-btn-count';
-                btn.appendChild(countSpan);
+    async init() {
+        if (this.isInitialized) return;
+        this.initLazyLoadObserver();
+        this.showSkeleton();
+        this.bindEvents();
+        this.createSearchBox();
+        try {
+            await this.loadNavigationStructure();
+            this.calculateStats();
+            this.renderNavigation();
+            await this.calculateTotalValidSites();
+
+            const firstCategory = this.getFirstCategory();
+            if (firstCategory) {
+                this.selectedLevel1 = firstCategory;
+                document.querySelectorAll('.level1-btn').forEach(el => {
+                    el.classList.toggle('active', el.dataset.level1 === firstCategory);
+                });
+                this.renderLevel2(firstCategory);
+
+                const firstSub = this.getFirstSubCategory(firstCategory);
+                if (firstSub) {
+                    const sites = await this.loadSites(firstSub.id, true);
+                    this.currentSites = sites;
+                    this.selectedLevel2 = firstSub.id;
+
+                    document.querySelectorAll('.level2-btn').forEach(el => {
+                        el.classList.toggle('active', parseInt(el.dataset.level2) === firstSub.id);
+                    });
+
+                    await this.renderLevel3(firstCategory, firstSub.id);
+                    this.updateSubcategoryCount(firstSub.id);
+
+                    const allSubIds = this.structure[firstCategory].subcategories.map(s => s.id);
+                    const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
+                    if (otherSubIds.length) {
+                        const loadRemaining = () => {
+                            this.loadBatchSitesBatch(otherSubIds).catch(err => {
+                                console.warn('后台加载其他子分类失败:', err);
+                            });
+                        };
+                        if (window.requestIdleCallback) {
+                            requestIdleCallback(loadRemaining, { timeout: 2000 });
+                        } else {
+                            setTimeout(loadRemaining, 500);
+                        }
+                    }
+                } else {
+                    this.renderEmptyState();
+                }
+            } else {
+                this.renderEmptyState();
             }
-            countSpan.textContent = count;
-            countSpan.style.display = 'inline-block';
-        } else if (retry < 5) {
-            setTimeout(() => this._updateSubcategoryCountDisplay(subcategoryId, count, retry + 1), 100);
+
+            await this.recalculateGlobalInvalidCount();
+            this.isInitialized = true;
+            this.startBackgroundUpdates();
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && this.selectedLevel2) this.refreshCurrentSubcategory();
+            });
+            this.startAutoRefresh();
+        } catch (error) {
+            console.error('导航初始化失败:', error);
+            this.showError();
         }
-    }
-
-    updateStatsDisplay() {
-        const el1 = document.getElementById('siteCount');
-        const el2 = document.getElementById('invalidCount');
-        if (el1) el1.textContent = `${this.stats.totalWebsites || 0}+`;
-        if (el2) el2.textContent = this.stats.invalidCount || '0';
-    }
-
-    calculateStats() {
-        this.stats.totalCategories = this.structure ? Object.keys(this.structure).length : 0;
-        this.updateStatsDisplay();
     }
 
     async calculateTotalValidSites() {
         if (!this.structure) return;
         let total = 0;
         for (const catName in this.structure) {
-            for (const sub of this.structure[catName].subcategories) {
+            const subcategories = this.structure[catName].subcategories;
+            for (const sub of subcategories) {
                 let sites = this.siteCache.get(sub.id);
-                if (!sites) sites = await this.loadSites(sub.id, true);
-                total += sites.filter(s => s.valid !== false).length;
+                if (!sites) {
+                    sites = await this.loadSites(sub.id, true);
+                }
+                const validCount = sites.filter(s => s.valid !== false).length;
+                total += validCount;
             }
         }
         this.stats.totalWebsites = total;
@@ -406,7 +357,8 @@ class OptimizedNavigation {
         }
         if (this.structure) {
             for (const catName in this.structure) {
-                for (const sub of this.structure[catName].subcategories) {
+                const subcategories = this.structure[catName].subcategories;
+                for (const sub of subcategories) {
                     if (!this.siteCache.has(sub.id)) {
                         const sites = await this.loadSites(sub.id, true);
                         totalInvalid += sites.filter(s => s.valid === false).length;
@@ -418,24 +370,88 @@ class OptimizedNavigation {
         this.updateStatsDisplay();
     }
 
-    // ========================================
-    // 渲染方法
-    // ========================================
-
-    renderNavigation() {
-        this._renderLevel1();
+    startAutoRefresh() {
+        if (this.autoRefreshTimer) clearInterval(this.autoRefreshTimer);
+        this.autoRefreshTimer = setInterval(() => {
+            if (!document.hidden && !this.isSearching && this.selectedLevel2) {
+                this.refreshCurrentSubcategory();
+            }
+        }, this.autoRefreshInterval);
     }
 
-    _renderLevel1() {
-        const container = document.getElementById('level1Nav');
-        if (!container || !this.structure) return;
-        const categories = Object.keys(this.structure);
-        container.innerHTML = categories.map((cat, idx) =>
-            `<button class="level1-btn ${idx === 0 ? 'active' : ''}" data-level1="${cat}" title="${this.structure[cat].description || ''}">
-                <span class="level1-btn-text">${this._escapeHtml(cat)}</span>
-            </button>`
-        ).join('');
+    // 外部调用刷新当前子分类（用于后台新增后刷新）
+    async refreshCurrentSubcategory() {
+        if (!this.selectedLevel2) return;
+        await this.selectLevel2(this.selectedLevel2, null, false);
     }
+
+    async loadNavigationStructure() {
+        const response = await Utils.safeFetch(`${this.apiBase}/navigation/structure`);
+        if (!response.ok) throw new Error('Failed to load navigation structure');
+        this.structure = await response.json();
+        return this.structure;
+    }
+
+    // 强制刷新
+    async selectLevel1(level1, isUserClick = false) {
+        if (this.selectedLevel1 === level1) return;
+        this.isNavigationClick = true;
+        document.querySelectorAll('.level1-btn').forEach(b => b.classList.toggle('active', b.dataset.level1 === level1));
+        this.selectedLevel1 = level1;
+        this.renderLevel2(level1);
+        this.showSkeleton();
+
+        const firstSub = this.getFirstSubCategory(level1);
+        if (firstSub) {
+            const firstSites = await this.loadSites(firstSub.id, true);
+            this.currentSites = firstSites;
+            await this.renderLevel3(this.selectedLevel1, firstSub.id);
+            this.updateSubcategoryCount(firstSub.id);
+            const allSubIds = this.structure[level1].subcategories.map(s => s.id);
+            const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
+            if (otherSubIds.length) {
+                const loadRemaining = () => {
+                    this.loadBatchSitesBatch(otherSubIds).catch(err => {
+                        console.warn('后台加载其他子分类失败:', err);
+                    });
+                };
+                if (window.requestIdleCallback) {
+                    requestIdleCallback(loadRemaining, { timeout: 2000 });
+                } else {
+                    setTimeout(loadRemaining, 300);
+                }
+            }
+        } else {
+            this.renderEmptyState();
+        }
+        setTimeout(() => { this.isNavigationClick = false; }, 100);
+    }
+
+    async selectLevel2(subcategoryId, subName, isUserClick = false) {
+        if (this.selectedLevel2 === subcategoryId) return;
+        this.isNavigationClick = true;
+        document.querySelectorAll('.level2-btn').forEach(b => b.classList.toggle('active', b.dataset.level2 == subcategoryId));
+        this.selectedLevel2 = subcategoryId;
+        this.hasShownNoMoreToast = false;
+
+        // 强制从服务器获取最新数据（确保后台新增的站点显示）
+        const sites = await this.loadSites(subcategoryId, true);
+        this.currentSites = sites;
+        await this.renderLevel3(this.selectedLevel1, subcategoryId);
+
+        const validCount = sites.filter(s => s.valid !== false).length;
+        this.updateSubcategoryCountDisplay(subcategoryId, validCount);
+        await this.calculateTotalValidSites();
+
+        if (this.autoRefreshTimer) {
+            clearInterval(this.autoRefreshTimer);
+            this.startAutoRefresh();
+        }
+        setTimeout(() => { this.isNavigationClick = false; }, 100);
+    }
+
+    getFirstCategory() { return this.structure ? Object.keys(this.structure)[0] : null; }
+    getFirstSubCategory(level1) { return this.structure?.[level1]?.subcategories[0] || null; }
 
     renderLevel2(level1) {
         const container = document.getElementById('level2Nav');
@@ -443,7 +459,7 @@ class OptimizedNavigation {
         const subCats = this.structure[level1].subcategories;
         if (!subCats.length) {
             container.innerHTML = '<div style="padding:16px;color:var(--text-secondary);font-size:11px;text-align:center;">暂无子分类</div>';
-            this._renderEmptyState();
+            this.renderEmptyState();
             return;
         }
         container.innerHTML = subCats.map((sub, idx) =>
@@ -463,72 +479,125 @@ class OptimizedNavigation {
         this.hasShownNoMoreToast = false;
         this.currentSites = await this.loadSites(subcategoryId, true);
         if (!this.currentSites.length) {
-            this._renderEmptyState();
+            this.renderEmptyState();
             return;
         }
-        this._renderSitesPage(true);
+        this.renderSitesPage(true);
         this.observeLazyImages(container);
-        this._bindInfiniteScroll();
+        this.bindInfiniteScroll();
         const validCount = this.currentSites.filter(s => s.valid !== false).length;
-        this._updateSubcategoryCountDisplay(subcategoryId, validCount);
+        this.updateSubcategoryCountDisplay(subcategoryId, validCount);
         await this.calculateTotalValidSites();
     }
 
-    _renderSitesPage(resetTrigger = true) {
+    renderSitesPage(resetTrigger = true) {
         const container = document.getElementById('level3Content');
         if (!container) return;
         if (resetTrigger) container.innerHTML = '';
-        const start = (this.currentPage - 1) * this.CONFIG.PAGE_SIZE;
-        const end = start + this.CONFIG.PAGE_SIZE;
+        const start = (this.currentPage - 1) * this.pageSize;
+        const end = start + this.pageSize;
         const pageSites = this.currentSites.slice(start, end);
-        this.hasMore = end < this.currentSites.length;
+
+        const hasMoreData = end < this.currentSites.length;
+        this.hasMore = hasMoreData;
 
         if (this.currentPage === 1) {
             container.innerHTML = '';
             const fragment = document.createDocumentFragment();
-            pageSites.forEach((site, idx) => fragment.appendChild(this._createSiteCard(site, idx, false, '')));
+            pageSites.forEach((site, idx) => fragment.appendChild(this.createSiteCard(site, idx, false, '')));
             container.appendChild(fragment);
-            if (this.hasMore) container.appendChild(this._createLoadingTrigger(true));
+            if (hasMoreData) {
+                const loadingDiv = this.createLoadingTrigger(true);
+                container.appendChild(loadingDiv);
+            }
         } else {
             const oldTrigger = container.querySelector('#scroll-loading-trigger');
             if (oldTrigger) oldTrigger.remove();
             const fragment = document.createDocumentFragment();
-            pageSites.forEach((site, idx) => fragment.appendChild(this._createSiteCard(site, idx, false, '')));
+            pageSites.forEach((site, idx) => fragment.appendChild(this.createSiteCard(site, idx, false, '')));
             container.appendChild(fragment);
-            if (this.hasMore) container.appendChild(this._createLoadingTrigger(true));
+            if (hasMoreData) {
+                const newTrigger = this.createLoadingTrigger(true);
+                container.appendChild(newTrigger);
+            }
         }
         this.preloadNearbyImages(container);
     }
 
-    _createLoadingTrigger(hasMore) {
+    createLoadingTrigger(hasMore) {
         const div = document.createElement('div');
         div.id = 'scroll-loading-trigger';
         div.className = 'scroll-loading-trigger';
         div.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载更多...</span>';
-        Object.assign(div.style, { textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '16px' });
+        div.style.textAlign = 'center';
+        div.style.display = 'flex';
+        div.style.justifyContent = 'center';
+        div.style.alignItems = 'center';
+        div.style.gap = '8px';
+        div.style.padding = '16px';
         return div;
     }
 
-    _renderEmptyState() {
-        const container = document.getElementById('level3Content');
-        if (container) container.innerHTML = '';
+    bindInfiniteScroll() {
+        if (this.scrollListener) {
+            window.removeEventListener('scroll', this.scrollListener);
+        }
+        let ticking = false;
+        this.scrollListener = () => {
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(() => {
+                this.checkScrollAndLoadMore();
+                ticking = false;
+            });
+        };
+        window.addEventListener('scroll', this.scrollListener, { passive: true });
     }
 
-    showSkeleton() {
-        const container = document.getElementById('level3Content');
-        if (container) container.innerHTML = this._generateSkeletonHTML();
+    checkScrollAndLoadMore() {
+        if (this.isLoadingMore || this.isSearching) return;
+        if (!this.hasMore && !this.hasShownNoMoreToast) {
+            this.hasShownNoMoreToast = true;
+            if (window.toast && window.toast.show) {
+                window.toast.show('～ 到·底·了 ～', 'info', 2000);
+            }
+            return;
+        }
+        const trigger = document.getElementById('scroll-loading-trigger');
+        if (!trigger) return;
+        const rect = trigger.getBoundingClientRect();
+        if (rect.top <= window.innerHeight + 100) {
+            this.loadMore();
+        }
     }
 
-    showError() {
-        const container = document.getElementById('level3Content');
-        if (container) container.innerHTML = '<div class="empty-state">加载失败，请刷新重试</div>';
+    async loadMore() {
+        if (this.isLoadingMore || !this.hasMore) return;
+        this.isLoadingMore = true;
+        const trigger = document.getElementById('scroll-loading-trigger');
+        if (trigger) {
+            trigger.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载中...</span>';
+            trigger.style.padding = '16px';
+        }
+        await new Promise(r => setTimeout(r, 200));
+        this.currentPage++;
+        const start = (this.currentPage - 1) * this.pageSize;
+        if (start >= this.currentSites.length) {
+            this.hasMore = false;
+            if (trigger) trigger.remove();
+            if (!this.hasShownNoMoreToast && window.toast && window.toast.show) {
+                this.hasShownNoMoreToast = true;
+                window.toast.show('～ 到·底·了 ～', 'info', 2000);
+            }
+            this.isLoadingMore = false;
+            return;
+        }
+        this.renderSitesPage(false);
+        this.isLoadingMore = false;
+        this.checkScrollAndLoadMore();
     }
 
-    // ========================================
-    // 站点卡片创建（含点击计数、死链报告）
-    // ========================================
-
-    _createSiteCard(site, index, isSearchResult = false, keyword = '') {
+    createSiteCard(site, index, isSearchResult = false, keyword = '') {
         const card = document.createElement('a');
         card.className = `site-card ${site.valid === false ? 'invalid' : ''}`;
         card.href = site.url;
@@ -567,14 +636,15 @@ class OptimizedNavigation {
             </div>
         `;
 
-        // —— 点击计数 ——
+        // 点击事件：乐观更新 + 后端实时更新 + 回显修正
         card.addEventListener('click', async (e) => {
-            if (e.target.closest('.report-dead-link-btn')) return;
+            if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
             if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = true;
 
             const viewEl = card.querySelector('.view-count');
             if (!viewEl) {
+                // 如果找不到计数元素，只发送请求，不更新UI
                 try {
                     await Utils.safeFetch(`${this.apiBase}/click`, {
                         method: 'POST',
@@ -582,7 +652,7 @@ class OptimizedNavigation {
                         body: JSON.stringify({ id: site.id, url: site.url }),
                         keepalive: true
                     });
-                } catch {}
+                } catch (err) {}
                 setTimeout(() => {
                     this.isNavigationClick = false;
                     if (window.musicPlayer) window.musicPlayer.isHandlingNavigationClick = false;
@@ -590,13 +660,15 @@ class OptimizedNavigation {
                 return;
             }
 
-            const oldViews = parseInt(viewEl.dataset.views) || 0;
-            const newViews = oldViews + 1;
+            let oldViews = parseInt(viewEl.dataset.views) || 0;
+            let newViews = oldViews + 1;
+            // 乐观更新
             viewEl.dataset.views = newViews;
             viewEl.textContent = this._formatViews(newViews);
             viewEl.classList.add('increasing');
             setTimeout(() => viewEl.classList.remove('increasing'), 300);
 
+            // 发送请求，后端实时更新D1并返回新值
             try {
                 const response = await Utils.safeFetch(`${this.apiBase}/click`, {
                     method: 'POST',
@@ -607,17 +679,24 @@ class OptimizedNavigation {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.views !== undefined) {
-                        viewEl.dataset.views = data.views;
-                        viewEl.textContent = this._formatViews(data.views);
+                        newViews = data.views;
+                        viewEl.dataset.views = newViews;
+                        viewEl.textContent = this._formatViews(newViews);
                     }
                 }
-            } catch {
+            } catch (err) {
+                console.warn('点击计数上报失败:', err);
+                // 回退到旧值
                 viewEl.dataset.views = oldViews;
                 viewEl.textContent = this._formatViews(oldViews);
+                if (window.toast) window.toast.show('计数上报失败，请检查网络', 'warning');
             }
 
+            // 更新内部数据
             const siteIndex = this.currentSites.findIndex(s => s.id === site.id);
-            if (siteIndex !== -1) this.currentSites[siteIndex].views = parseInt(viewEl.dataset.views);
+            if (siteIndex !== -1) {
+                this.currentSites[siteIndex].views = newViews;
+            }
 
             setTimeout(() => {
                 this.isNavigationClick = false;
@@ -625,7 +704,6 @@ class OptimizedNavigation {
             }, 100);
         });
 
-        // —— 死链报告 ——
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
@@ -654,7 +732,9 @@ class OptimizedNavigation {
                                 const cachedSites = this.siteCache.get(currentSubId);
                                 if (cachedSites) {
                                     const updatedSites = cachedSites.map(s => {
-                                        if (s.url === reportBtn.dataset.url) return { ...s, valid: false };
+                                        if (s.url === reportBtn.dataset.url) {
+                                            return { ...s, valid: false };
+                                        }
                                         return s;
                                     });
                                     this.siteCache.set(currentSubId, updatedSites);
@@ -664,7 +744,7 @@ class OptimizedNavigation {
                                 }
                                 const freshSites = await this.loadSites(currentSubId, true);
                                 const validCount = freshSites.filter(s => s.valid !== false).length;
-                                this._updateSubcategoryCountDisplay(currentSubId, validCount);
+                                this.updateSubcategoryCountDisplay(currentSubId, validCount);
                                 await this.recalculateGlobalInvalidCount();
                                 await this.calculateTotalValidSites();
                             }
@@ -687,87 +767,9 @@ class OptimizedNavigation {
         return card;
     }
 
-    // ========================================
-    // 分类切换逻辑（核心优化点）
-    // ========================================
-
-    async selectLevel1(level1, isUserClick = false) {
-        if (this.selectedLevel1 === level1) return;
-        this.isNavigationClick = true;
-
-        // 更新一级按钮
-        document.querySelectorAll('.level1-btn').forEach(b => b.classList.toggle('active', b.dataset.level1 === level1));
-        this.selectedLevel1 = level1;
-        this.renderLevel2(level1);
-        this.showSkeleton();
-
-        const firstSub = this.getFirstSubCategory(level1);
-        if (firstSub) {
-            // —— 修复点1：同步更新状态和UI ——
-            this.selectedLevel2 = firstSub.id;
-            document.querySelectorAll('.level2-btn').forEach(el => {
-                el.classList.toggle('active', parseInt(el.dataset.level2) === firstSub.id);
-            });
-
-            const firstSites = await this.loadSites(firstSub.id, true);
-            this.currentSites = firstSites;
-            await this.renderLevel3(this.selectedLevel1, firstSub.id);
-            this.updateSubcategoryCount(firstSub.id);
-
-            // —— 优化：后台预加载该分类下所有子分类数据 ——
-            const allSubIds = this.structure[level1].subcategories.map(s => s.id);
-            const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
-            if (otherSubIds.length) {
-                const preload = () => {
-                    this.loadBatchSitesBatch(otherSubIds).catch(err => {
-                        console.warn('预加载子分类失败:', err);
-                    });
-                };
-                if (window.requestIdleCallback) {
-                    requestIdleCallback(preload, { timeout: this.CONFIG.PRELOAD_DELAY });
-                } else {
-                    setTimeout(preload, this.CONFIG.PRELOAD_DELAY);
-                }
-            }
-        } else {
-            this._renderEmptyState();
-        }
-        setTimeout(() => { this.isNavigationClick = false; }, 100);
-    }
-
-    async selectLevel2(subcategoryId, subName, isUserClick = false) {
-        if (this.selectedLevel2 === subcategoryId) return;
-        this.isNavigationClick = true;
-
-        document.querySelectorAll('.level2-btn').forEach(b => b.classList.toggle('active', b.dataset.level2 == subcategoryId));
-        this.selectedLevel2 = subcategoryId;
-        this.hasShownNoMoreToast = false;
-
-        // 强制刷新
-        const sites = await this.loadSites(subcategoryId, true);
-        this.currentSites = sites;
-        await this.renderLevel3(this.selectedLevel1, subcategoryId);
-
-        const validCount = sites.filter(s => s.valid !== false).length;
-        this._updateSubcategoryCountDisplay(subcategoryId, validCount);
-        await this.calculateTotalValidSites();
-
-        // 重置自动刷新计时器
-        if (this.autoRefreshTimer) {
-            clearInterval(this.autoRefreshTimer);
-            this.startAutoRefresh();
-        }
-        setTimeout(() => { this.isNavigationClick = false; }, 100);
-    }
-
-    // ========================================
-    // 搜索功能（含状态记忆）
-    // ========================================
-
     createSearchBox() {
         const navHeader = document.querySelector('.navigation-header');
         if (!navHeader || navHeader.querySelector('.nav-search-box')) return;
-
         const container = document.createElement('div');
         container.className = 'nav-search-box';
         container.innerHTML = `
@@ -779,30 +781,20 @@ class OptimizedNavigation {
             <span class="search-result-hint" id="navSearchHint" style="display:none;"></span>
         `;
         navHeader.appendChild(container);
-
         this.searchInput = container.querySelector('#navSearchInput');
         const clearBtn = container.querySelector('#navSearchClearBtn');
-
         this.searchInput.addEventListener('input', () => {
             const query = this.searchInput.value.trim();
             clearBtn.style.display = query ? 'flex' : 'none';
             clearTimeout(this.searchTimer);
-            this.searchTimer = setTimeout(() => {
-                if (query) {
-                    this.performSearch(query);
-                } else {
-                    this.clearSearch();
-                }
-            }, 300);
+            this.searchTimer = setTimeout(() => query ? this.performSearch(query) : this.clearSearch(), 300);
         });
-
         clearBtn.addEventListener('click', () => {
             this.searchInput.value = '';
             clearBtn.style.display = 'none';
             this.clearSearch();
             this.searchInput.focus();
         });
-
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
@@ -814,14 +806,12 @@ class OptimizedNavigation {
     async performSearch(query) {
         if (!query.trim()) return;
         this.isSearching = true;
-        this.searchQuery = query;
-
         const container = document.getElementById('level3Content');
         if (!container) return;
         this.showSkeleton();
-
         try {
-            const response = await this._fetchWithRetry(`${this.apiBase}/search?q=${encodeURIComponent(query)}`);
+            const searchUrl = `${this.apiBase}/search?q=${encodeURIComponent(query)}`;
+            const response = await Utils.safeFetch(searchUrl);
             const results = await response.json();
             container.innerHTML = '';
             if (results.length === 0) {
@@ -831,7 +821,7 @@ class OptimizedNavigation {
                 container.appendChild(emptyDiv);
             } else {
                 const fragment = document.createDocumentFragment();
-                results.forEach((site, idx) => fragment.appendChild(this._createSiteCard(site, idx, true, query)));
+                results.forEach((site, idx) => fragment.appendChild(this.createSiteCard(site, idx, true, query)));
                 container.appendChild(fragment);
                 this.observeLazyImages(container);
             }
@@ -848,100 +838,26 @@ class OptimizedNavigation {
         }
     }
 
-    // —— 修复点2：清除搜索后恢复之前状态 ——
     clearSearch() {
-        if (!this.isSearching && !this.searchQuery) return;
+        if (!this.isSearching) return;
         this.isSearching = false;
-        this.searchQuery = '';
         const hint = document.getElementById('navSearchHint');
         if (hint) hint.style.display = 'none';
-
-        // 恢复当前选中的子分类
-        if (this.selectedLevel2) {
-            this.selectLevel2(this.selectedLevel2, null, false);
-        } else if (this.selectedLevel1 && this.structure?.[this.selectedLevel1]) {
-            const firstSub = this.getFirstSubCategory(this.selectedLevel1);
-            if (firstSub) this.selectLevel2(firstSub.id, null, false);
+        if (this.selectedLevel1 && this.structure?.[this.selectedLevel1]) {
+            this.selectLevel1(this.selectedLevel1, false);
         } else {
             const firstCat = this.getFirstCategory();
             if (firstCat) {
                 this.selectedLevel1 = firstCat;
                 this.selectLevel1(firstCat, false);
             } else {
-                this.loadNavigationStructure(true).then(() => {
+                this.loadNavigationStructure().then(() => {
                     const newFirst = this.getFirstCategory();
                     if (newFirst) this.selectLevel1(newFirst, false);
                 });
             }
         }
     }
-
-    // ========================================
-    // 无限滚动
-    // ========================================
-
-    _bindInfiniteScroll() {
-        if (this.scrollListener) {
-            window.removeEventListener('scroll', this.scrollListener);
-            this.scrollListener = null;
-        }
-        let ticking = false;
-        this.scrollListener = () => {
-            if (ticking) return;
-            ticking = true;
-            requestAnimationFrame(() => {
-                this._checkScrollAndLoadMore();
-                ticking = false;
-            });
-        };
-        window.addEventListener('scroll', this.scrollListener, { passive: true });
-    }
-
-    _checkScrollAndLoadMore() {
-        if (this.isLoadingMore || this.isSearching) return;
-        if (!this.hasMore) {
-            if (!this.hasShownNoMoreToast) {
-                this.hasShownNoMoreToast = true;
-                window.toast?.show?.('～ 到·底·了 ～', 'info', 2000);
-            }
-            return;
-        }
-        const trigger = document.getElementById('scroll-loading-trigger');
-        if (!trigger) return;
-        const rect = trigger.getBoundingClientRect();
-        if (rect.top <= window.innerHeight + 100) {
-            this._loadMore();
-        }
-    }
-
-    async _loadMore() {
-        if (this.isLoadingMore || !this.hasMore) return;
-        this.isLoadingMore = true;
-        const trigger = document.getElementById('scroll-loading-trigger');
-        if (trigger) {
-            trigger.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载中...</span>';
-        }
-        await new Promise(r => setTimeout(r, 200));
-        this.currentPage++;
-        const start = (this.currentPage - 1) * this.CONFIG.PAGE_SIZE;
-        if (start >= this.currentSites.length) {
-            this.hasMore = false;
-            if (trigger) trigger.remove();
-            if (!this.hasShownNoMoreToast) {
-                this.hasShownNoMoreToast = true;
-                window.toast?.show?.('～ 到·底·了 ～', 'info', 2000);
-            }
-            this.isLoadingMore = false;
-            return;
-        }
-        this._renderSitesPage(false);
-        this.isLoadingMore = false;
-        this._checkScrollAndLoadMore();
-    }
-
-    // ========================================
-    // 事件绑定
-    // ========================================
 
     bindEvents() {
         document.addEventListener('click', (e) => {
@@ -959,40 +875,111 @@ class OptimizedNavigation {
         });
     }
 
-    // ========================================
-    // 定时任务
-    // ========================================
-
-    startAutoRefresh() {
-        if (this.autoRefreshTimer) clearInterval(this.autoRefreshTimer);
-        this.autoRefreshTimer = setInterval(() => {
-            if (!document.hidden && !this.isSearching && this.selectedLevel2) {
-                this.refreshCurrentSubcategory();
+    updateSubcategoryCountDisplay(subcategoryId, count, retry = 0) {
+        const btn = document.querySelector(`.level2-btn[data-level2="${subcategoryId}"]`);
+        if (btn) {
+            let countSpan = btn.querySelector('.level2-btn-count');
+            if (!countSpan) {
+                countSpan = document.createElement('span');
+                countSpan.className = 'level2-btn-count';
+                btn.appendChild(countSpan);
             }
-        }, this.CONFIG.AUTO_REFRESH_INTERVAL);
+            countSpan.textContent = count;
+            countSpan.style.display = 'inline-block';
+        } else if (retry < 5) {
+            setTimeout(() => this.updateSubcategoryCountDisplay(subcategoryId, count, retry + 1), 100);
+        }
     }
 
-    async refreshCurrentSubcategory() {
-        if (!this.selectedLevel2) return;
-        await this.selectLevel2(this.selectedLevel2, null, false);
+    calculateStats() {
+        const catCount = this.structure ? Object.keys(this.structure).length : 0;
+        this.stats.totalCategories = catCount;
+        this.updateStatsDisplay();
+    }
+
+    updateStatsDisplay() {
+        const el1 = document.getElementById('siteCount');
+        const el2 = document.getElementById('invalidCount');
+        if (el1) el1.textContent = `${this.stats.totalWebsites || 0}+`;
+        if (el2) el2.textContent = this.stats.invalidCount || '0';
+    }
+
+    updateInvalidCount(increment) {
+        if (!this.stats.invalidCount) this.stats.invalidCount = 0;
+        this.stats.invalidCount += increment;
+        const invalidEl = document.getElementById('invalidCount');
+        if (invalidEl) invalidEl.textContent = this.stats.invalidCount;
+    }
+
+    renderNavigation() { this.renderLevel1(); }
+
+    renderLevel1() {
+        const container = document.getElementById('level1Nav');
+        if (!container || !this.structure) return;
+        const categories = Object.keys(this.structure);
+        container.innerHTML = categories.map((cat, idx) =>
+            `<button class="level1-btn ${idx === 0 ? 'active' : ''}" data-level1="${cat}" title="${this.structure[cat].description || ''}"><span class="level1-btn-text">${this._escapeHtml(cat)}</span></button>`
+        ).join('');
+    }
+
+    showSkeleton() {
+        const container = document.getElementById('level3Content');
+        if (container) {
+            container.innerHTML = this.generateSkeletonHTML();
+        }
+    }
+
+    generateSkeletonHTML() {
+        let html = '';
+        for (let i = 0; i < this.skeletonCount; i++) {
+            html += `
+                <div class="site-card skeleton-card">
+                    <div class="card-top">
+                        <div class="icon-container skeleton-icon"></div>
+                        <div class="card-top-right">
+                            <div class="skeleton-btn skeleton" style="width:14px;height:14px;border-radius:3px;"></div>
+                            <div class="views-container">
+                                <div class="skeleton-views skeleton" style="width:30px;height:14px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="divider-line skeleton-divider"></div>
+                    <div class="card-bottom">
+                        <div class="skeleton-title skeleton"></div>
+                        <div class="skeleton-description skeleton"></div>
+                    </div>
+                </div>
+            `;
+        }
+        return html;
+    }
+
+    renderEmptyState() {
+        const container = document.getElementById('level3Content');
+        if (container) {
+            container.innerHTML = '';
+        }
+    }
+
+    showError() {
+        const container = document.getElementById('level3Content');
+        if (container) container.innerHTML = '';
     }
 
     startBackgroundUpdates() {
         if (this.updateTimer) clearInterval(this.updateTimer);
-        this.updateTimer = setInterval(() => this._refreshStructure(), this.CONFIG.UPDATE_INTERVAL);
+        this.updateTimer = setInterval(() => this.refreshStructure(), this.UPDATE_INTERVAL);
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) this._refreshStructure();
+            if (!document.hidden) this.refreshStructure();
         });
     }
 
-    async _refreshStructure() {
+    async refreshStructure() {
         try {
-            const response = await this._fetchWithRetry(`${this.apiBase}/navigation/structure`);
-            const newStructure = await response.json();
+            const newStructure = await fetch(`${this.apiBase}/navigation/structure`).then(r => r.json());
             if (JSON.stringify(newStructure) !== JSON.stringify(this.structure)) {
                 this.structure = newStructure;
-                this.structureCacheTime = Date.now();
-                this._renderLevel1();
+                this.renderNavigation();
                 if (this.selectedLevel1 && this.structure[this.selectedLevel1]) {
                     this.renderLevel2(this.selectedLevel1);
                     const currentSub = document.querySelector('.level2-btn.active');
@@ -1006,101 +993,8 @@ class OptimizedNavigation {
         }
     }
 
-    // ========================================
-    // 初始化 & 销毁
-    // ========================================
-
-    async init() {
-        if (this.isInitialized) return;
-        this.apiBase = Utils.getApiBase();
-        this.initLazyLoadObserver();
-        this.showSkeleton();
-        this.bindEvents();
-        this.createSearchBox();
-
-        try {
-            await this.loadNavigationStructure(true);
-            this.calculateStats();
-            this.renderNavigation();
-            await this.calculateTotalValidSites();
-
-            const firstCategory = this.getFirstCategory();
-            if (firstCategory) {
-                this.selectedLevel1 = firstCategory;
-                document.querySelectorAll('.level1-btn').forEach(el => {
-                    el.classList.toggle('active', el.dataset.level1 === firstCategory);
-                });
-                this.renderLevel2(firstCategory);
-
-                const firstSub = this.getFirstSubCategory(firstCategory);
-                if (firstSub) {
-                    const sites = await this.loadSites(firstSub.id, true);
-                    this.currentSites = sites;
-                    this.selectedLevel2 = firstSub.id;
-                    document.querySelectorAll('.level2-btn').forEach(el => {
-                        el.classList.toggle('active', parseInt(el.dataset.level2) === firstSub.id);
-                    });
-                    await this.renderLevel3(firstCategory, firstSub.id);
-                    this.updateSubcategoryCount(firstSub.id);
-
-                    const allSubIds = this.structure[firstCategory].subcategories.map(s => s.id);
-                    const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
-                    if (otherSubIds.length) {
-                        const preload = () => {
-                            this.loadBatchSitesBatch(otherSubIds).catch(err => {
-                                console.warn('初始预加载失败:', err);
-                            });
-                        };
-                        if (window.requestIdleCallback) {
-                            requestIdleCallback(preload, { timeout: 2000 });
-                        } else {
-                            setTimeout(preload, 500);
-                        }
-                    }
-                } else {
-                    this._renderEmptyState();
-                }
-            } else {
-                this._renderEmptyState();
-            }
-
-            await this.recalculateGlobalInvalidCount();
-            this.isInitialized = true;
-            this.startBackgroundUpdates();
-            document.addEventListener('visibilitychange', () => {
-                if (!document.hidden && this.selectedLevel2) this.refreshCurrentSubcategory();
-            });
-            this.startAutoRefresh();
-        } catch (error) {
-            console.error('导航初始化失败:', error);
-            this.showError();
-            // 降级：从缓存恢复结构
-            if (this.structure) {
-                this.renderNavigation();
-                const firstCat = this.getFirstCategory();
-                if (firstCat) {
-                    this.selectedLevel1 = firstCat;
-                    this.renderLevel2(firstCat);
-                    const firstSub = this.getFirstSubCategory(firstCat);
-                    if (firstSub) {
-                        this.selectedLevel2 = firstSub.id;
-                        this._renderEmptyState();
-                        // 延迟重试加载站点
-                        setTimeout(() => {
-                            this.loadSites(firstSub.id, true).then(sites => {
-                                this.currentSites = sites;
-                                this.renderLevel3(firstCat, firstSub.id);
-                            }).catch(() => {});
-                        }, 2000);
-                    }
-                }
-            }
-        }
-    }
-
     refresh() {
         this.structure = null;
-        this.structureCacheTime = 0;
         this.siteCache.clear();
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
@@ -1116,15 +1010,11 @@ class OptimizedNavigation {
             window.removeEventListener('scroll', this.scrollListener);
             this.scrollListener = null;
         }
-        if (this._scrollPreloadCleanup) {
-            this._scrollPreloadCleanup();
-            this._scrollPreloadCleanup = null;
-        }
+        if (this._scrollPreloadCleanup) this._scrollPreloadCleanup();
         this.iconCache.clear();
         this.iconLoadingSet.clear();
         this.iconFailedSet.clear();
-        this.siteCache.clear();
-        this.isInitialized = false;
+        this.countsCache.clear();
     }
 }
 
