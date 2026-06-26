@@ -1,4 +1,4 @@
-/* admin.js - 完整版（移除冗余按钮绑定，新增站点后刷新导航缓存） */
+/* admin.js - 优化添加链接后保持子分类选中，后台操作后通知前端刷新 */
 (function() {
     'use strict';
 
@@ -23,6 +23,13 @@
     let selectedSiteIds = new Set();
     let customSelectInstances = [];
     let customSelects = {};
+
+    // 通知前端刷新导航
+    function notifyNavRefresh() {
+        try {
+            localStorage.setItem('nav_refresh_required', Date.now());
+        } catch (e) {}
+    }
 
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     function showToast(msg, type = 'success') { const toast = document.getElementById('toast'); if (!toast) return; toast.textContent = msg; toast.className = `toast ${type} show`; clearTimeout(toast._timeout); toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300); }
@@ -343,6 +350,8 @@
                 }
             }
             updateStats();
+            // 通知前端刷新导航
+            notifyNavRefresh();
         } catch (e) { if (e.message === 'Unauthorized') logout(); else showToast('数据加载失败', 'error'); }
     }
 
@@ -351,6 +360,7 @@
             const siteData = await apiFetch('/admin/sites');
             sites = siteData;
             updateStats();
+            notifyNavRefresh();
         } catch (e) {
             console.warn('刷新站点数据失败:', e);
         }
@@ -556,6 +566,7 @@
             selectedSiteIds.clear();
             await loadAdminSites(true);
             await loadAllDataButKeepSelection();
+            notifyNavRefresh();
         } catch (e) { showToast('批量删除失败: ' + e.message, 'error'); }
     }
 
@@ -599,6 +610,7 @@
                 selectedSiteIds.clear();
                 await loadAdminSites(true);
                 await loadAllDataButKeepSelection();
+                notifyNavRefresh();
                 closeModal();
             },
             false,
@@ -680,6 +692,7 @@
             if (window.announcementModule && window.announcementModule.loadAnnouncement) {
                 window.announcementModule.loadAnnouncement();
             }
+            notifyNavRefresh();
         } catch (err) { console.error('保存公告失败:', err); showToast('保存失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
@@ -751,9 +764,11 @@
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
                 showToast('修改成功'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }, true, async () => {
                 await apiFetch(`/admin/categories/${id}`, { method:'DELETE' });
                 showToast('分类已删除'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
     }
@@ -770,9 +785,11 @@
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
                 showToast('修改成功'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }, true, async () => {
                 await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' });
                 showToast('子分类已删除'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
     }
@@ -799,12 +816,14 @@
                 showToast('修改成功');
                 await loadAdminSites(true);
                 await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }, true,
             async () => {
                 await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
                 showToast('删除成功');
                 await loadAdminSites(true);
                 await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
         setTimeout(() => {
@@ -832,6 +851,7 @@
                 await apiFetch('/admin/categories', { method:'POST', body: JSON.stringify({ name, display_order: +document.getElementById('mSort').value }) });
                 showToast('添加成功');
                 await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
     }
@@ -848,6 +868,7 @@
                 await apiFetch('/admin/subcategories', { method:'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('mSort').value }) });
                 showToast('添加成功');
                 await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
     }
@@ -875,12 +896,11 @@
                     icon: document.getElementById('mIcon').value,
                     display_order: +document.getElementById('mSort').value
                 })});
-                // 新增：刷新导航缓存，确保前台立即显示
-                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 showToast('添加成功', 'success');
                 closeModal();
                 await loadAdminSites(true);
                 await refreshSitesOnly();
+                notifyNavRefresh();
             }
         );
         setTimeout(() => {
@@ -978,6 +998,7 @@
                 await loadAllDataButKeepSelection();
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 refreshNavigationStats();
+                notifyNavRefresh();
                 closeModal();
             }
         );
@@ -999,6 +1020,7 @@
             await apiFetch(`/admin/dead-link-reports/${reportId}`, { method: 'DELETE' });
             showToast('已忽略', 'success');
             await loadFeedback();
+            notifyNavRefresh();
         } catch (err) { showToast('忽略失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
@@ -1043,6 +1065,7 @@
                 await loadAllDataButKeepSelection();
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 refreshNavigationStats();
+                notifyNavRefresh();
                 closeImportModal();
             } else {
                 showToast(result.error || '导入失败', 'error');
@@ -1271,6 +1294,7 @@
                     await loadAllDataButKeepSelection();
                     await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                     refreshNavigationStats();
+                    notifyNavRefresh();
                 } catch (err) { showToast('操作失败', 'error'); }
             };
 
@@ -1286,6 +1310,7 @@
                     detailModal.classList.remove('show');
                     cleanupCustomSelects();
                     await loadSubmissions();
+                    notifyNavRefresh();
                 } catch (err) { showToast('操作失败', 'error'); }
             };
 
@@ -1528,6 +1553,7 @@
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 showToast('导航缓存已刷新', 'success');
                 refreshNavigationStats();
+                notifyNavRefresh();
             } catch (err) { showToast('刷新失败', 'error'); }
         });
         document.getElementById('refreshIconsBtn').addEventListener('click', refreshIcons);
@@ -1553,9 +1579,6 @@
         document.getElementById('batchClearSelection')?.addEventListener('click', clearSelection);
         document.getElementById('batchDeleteBtn')?.addEventListener('click', batchDeleteSites);
         document.getElementById('batchMoveBtn')?.addEventListener('click', batchMoveSites);
-
-        // 移除“导出排行”和“批量删除旧按钮”的事件绑定（这些按钮已从HTML中移除）
-        // 无需额外操作
     }
 
     injectGlobalStyles();
