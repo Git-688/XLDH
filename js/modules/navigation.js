@@ -1,9 +1,8 @@
-/* navigation.js - 引用 constants.js 常量，强制 no-cache 保证新站点立即显示 */
+/* navigation.js - 修复点击数实时更新、后台新增网站立即显示 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
 
-        // 从常量配置读取
         const C = window.APP_CONSTANTS || APP_CONSTANTS;
 
         this.structure = null;
@@ -195,14 +194,11 @@ class OptimizedNavigation {
         return results;
     }
 
-    /* ===== 核心修改：添加 Cache-Control: no-cache 头，强制获取最新数据 ===== */
     async loadSites(subcategoryId, forceRefresh = false) {
         if (!forceRefresh && this.siteCache.has(subcategoryId)) {
             return this.siteCache.get(subcategoryId);
         }
-        const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`, {
-            headers: { 'Cache-Control': 'no-cache' }
-        });
+        const response = await Utils.safeFetch(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
         if (!response.ok) throw new Error('Failed to load sites');
         const sites = await response.json();
         this.siteCache.set(subcategoryId, sites);
@@ -230,9 +226,7 @@ class OptimizedNavigation {
 
         try {
             const idsParam = uncachedIds.join(',');
-            const response = await Utils.safeFetch(`${this.apiBase}/navigation/batch-sites?ids=${idsParam}`, {
-                headers: { 'Cache-Control': 'no-cache' }
-            });
+            const response = await Utils.safeFetch(`${this.apiBase}/navigation/batch-sites?ids=${idsParam}`);
             const data = await response.json();
 
             if (data && data.data) {
@@ -385,12 +379,10 @@ class OptimizedNavigation {
         }, this.autoRefreshInterval);
     }
 
+    // 外部调用刷新当前子分类（用于后台新增后刷新）
     async refreshCurrentSubcategory() {
         if (!this.selectedLevel2) return;
-        this.siteCache.delete(this.selectedLevel2);
-        await this.renderLevel3(this.selectedLevel1, this.selectedLevel2);
-        await this.recalculateGlobalInvalidCount();
-        await this.calculateTotalValidSites();
+        await this.selectLevel2(this.selectedLevel2, null, false);
     }
 
     async loadNavigationStructure() {
@@ -400,7 +392,7 @@ class OptimizedNavigation {
         return this.structure;
     }
 
-    /* ===== 核心修改：选择一级分类时强制刷新子分类数据 ===== */
+    // 强制刷新
     async selectLevel1(level1, isUserClick = false) {
         if (this.selectedLevel1 === level1) return;
         this.isNavigationClick = true;
@@ -435,17 +427,22 @@ class OptimizedNavigation {
         setTimeout(() => { this.isNavigationClick = false; }, 100);
     }
 
-    /* ===== 核心修改：选择二级分类时强制刷新站点数据 ===== */
     async selectLevel2(subcategoryId, subName, isUserClick = false) {
         if (this.selectedLevel2 === subcategoryId) return;
         this.isNavigationClick = true;
         document.querySelectorAll('.level2-btn').forEach(b => b.classList.toggle('active', b.dataset.level2 == subcategoryId));
         this.selectedLevel2 = subcategoryId;
         this.hasShownNoMoreToast = false;
-        // 强制刷新，忽略缓存
-        await this.loadSites(subcategoryId, true);
-        this.updateSubcategoryCount(subcategoryId);
+
+        // 强制从服务器获取最新数据（确保后台新增的站点显示）
+        const sites = await this.loadSites(subcategoryId, true);
+        this.currentSites = sites;
         await this.renderLevel3(this.selectedLevel1, subcategoryId);
+
+        const validCount = sites.filter(s => s.valid !== false).length;
+        this.updateSubcategoryCountDisplay(subcategoryId, validCount);
+        await this.calculateTotalValidSites();
+
         if (this.autoRefreshTimer) {
             clearInterval(this.autoRefreshTimer);
             this.startAutoRefresh();
@@ -639,6 +636,7 @@ class OptimizedNavigation {
             </div>
         `;
 
+        // 点击事件：乐观更新 + 后端实时更新 + 回显修正
         card.addEventListener('click', async (e) => {
             if (e.target.classList.contains('report-dead-link-btn') || e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
@@ -646,6 +644,7 @@ class OptimizedNavigation {
 
             const viewEl = card.querySelector('.view-count');
             if (!viewEl) {
+                // 如果找不到计数元素，只发送请求，不更新UI
                 try {
                     await Utils.safeFetch(`${this.apiBase}/click`, {
                         method: 'POST',
@@ -663,31 +662,40 @@ class OptimizedNavigation {
 
             let oldViews = parseInt(viewEl.dataset.views) || 0;
             let newViews = oldViews + 1;
+            // 乐观更新
             viewEl.dataset.views = newViews;
             viewEl.textContent = this._formatViews(newViews);
             viewEl.classList.add('increasing');
             setTimeout(() => viewEl.classList.remove('increasing'), 300);
 
-            const siteIndex = this.currentSites.findIndex(s => s.id === site.id);
-            if (siteIndex !== -1) {
-                this.currentSites[siteIndex].views = (this.currentSites[siteIndex].views || 0) + 1;
-            }
-
+            // 发送请求，后端实时更新D1并返回新值
             try {
-                await Utils.safeFetch(`${this.apiBase}/click`, {
+                const response = await Utils.safeFetch(`${this.apiBase}/click`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: site.id, url: site.url }),
                     keepalive: true
                 });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.views !== undefined) {
+                        newViews = data.views;
+                        viewEl.dataset.views = newViews;
+                        viewEl.textContent = this._formatViews(newViews);
+                    }
+                }
             } catch (err) {
                 console.warn('点击计数上报失败:', err);
+                // 回退到旧值
                 viewEl.dataset.views = oldViews;
                 viewEl.textContent = this._formatViews(oldViews);
-                if (siteIndex !== -1) {
-                    this.currentSites[siteIndex].views = oldViews;
-                }
                 if (window.toast) window.toast.show('计数上报失败，请检查网络', 'warning');
+            }
+
+            // 更新内部数据
+            const siteIndex = this.currentSites.findIndex(s => s.id === site.id);
+            if (siteIndex !== -1) {
+                this.currentSites[siteIndex].views = newViews;
             }
 
             setTimeout(() => {
