@@ -1,4 +1,4 @@
-/* greeting.css */
+/* greeting.css - 修复次要节日自适应显示完整 */
 .greeting-section {
     padding: var(--section-margin-sm) 0;
     position: relative;
@@ -127,11 +127,13 @@
     color: white;
 }
 
+/* ===== 次要节日列表 - 自适应完整显示 ===== */
 .secondary-holidays-list {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     padding: 0;
+    width: 100%;
 }
 .secondary-holiday-item {
     display: inline-flex;
@@ -142,12 +144,16 @@
     font-size: 11px;
     color: var(--text-primary);
     max-width: 100%;
+    flex-shrink: 0;
 }
 .secondary-name {
-    max-width: 80px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    /* 修改：移除宽度限制，允许文本完整显示并自动换行 */
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    word-break: break-word;
+    display: inline-block;
 }
 
 .datetime {
@@ -352,8 +358,8 @@
     .fish-btn { padding: 4px 6px; min-height: 36px; }
     .fish-btn i { font-size: 12px; }
     .fish-count { font-size: 0.8em; padding: 1px 4px; }
-    .secondary-holiday-item { padding: 2px 6px; font-size: 8px; }
-    .secondary-name { max-width: 60px; }
+    .secondary-holiday-item { padding: 2px 6px; font-size: 10px; }
+    .secondary-name { font-size: 10px; }
     .bookmark-btn { gap: 5px; padding: 8px 12px; }
 }
 @media (max-width: 576px) {
@@ -374,8 +380,8 @@
     .fish-btn i { font-size: 11px; }
     .fish-count { font-size: 0.75em; padding: 1px 3px; min-width: 22px; }
     .secondary-holidays-list { gap: 4px; }
-    .secondary-holiday-item { font-size: 7px; }
-    .secondary-name { max-width: 50px; }
+    .secondary-holiday-item { font-size: 9px; padding: 2px 6px; }
+    .secondary-name { font-size: 9px; }
     .bookmark-btn { gap: 4px; padding: 6px 10px; }
 }
 @media (max-width: 400px) {
@@ -386,7 +392,7 @@
     }
     #currentTime { font-size: 0.75em; }
     .expand-holiday-btn { font-size: 7px; padding: 1px 6px; }
-    .secondary-name { max-width: 40px; }
+    .secondary-name { max-width: none; } /* 确保完全显示 */
 }
 
 #holidayCountdown.active-countdown {
@@ -489,6 +495,9 @@
 }
 .dark-mode .secondary-holiday-item {
     background: rgba(123, 156, 255, 0.15);
+}
+.dark-mode .secondary-name {
+    color: var(--text-primary);
 }
 .dark-mode #holidayCountdown.active-countdown { background: #0da271 !important; }
 .dark-mode #holidayCountdown.status-3days { background: rgba(245, 158, 11, 0.8) !important; }
