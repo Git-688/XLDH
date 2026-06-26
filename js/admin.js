@@ -1,4 +1,4 @@
-/* admin.js - 优化添加链接后保持子分类选中 */
+/* admin.js - 完整版（移除冗余按钮绑定，新增站点后刷新导航缓存） */
 (function() {
     'use strict';
 
@@ -150,9 +150,7 @@
     }
 
     function clearToken() {
-        token = '';
-        refreshToken = '';
-        csrfToken = '';
+        token = ''; refreshToken = ''; csrfToken = '';
         sessionStorage.removeItem('admin_token');
         sessionStorage.removeItem('admin_refresh_token');
         sessionStorage.removeItem('admin_csrf');
@@ -877,6 +875,8 @@
                     icon: document.getElementById('mIcon').value,
                     display_order: +document.getElementById('mSort').value
                 })});
+                // 新增：刷新导航缓存，确保前台立即显示
+                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 showToast('添加成功', 'success');
                 closeModal();
                 await loadAdminSites(true);
@@ -1553,6 +1553,9 @@
         document.getElementById('batchClearSelection')?.addEventListener('click', clearSelection);
         document.getElementById('batchDeleteBtn')?.addEventListener('click', batchDeleteSites);
         document.getElementById('batchMoveBtn')?.addEventListener('click', batchMoveSites);
+
+        // 移除“导出排行”和“批量删除旧按钮”的事件绑定（这些按钮已从HTML中移除）
+        // 无需额外操作
     }
 
     injectGlobalStyles();
