@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（Cookie 横幅按钮左右分离） -->
+<!-- index.html - 完整版（Cookie 横幅布局：文字居中上，按钮左右下） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -1107,7 +1107,7 @@
     <script defer src="./js/cursor2.js"></script>
 
     <!-- ============================================================ -->
-    <!-- Cookie 使用声明横幅（内联版本，按钮左右分离）                  -->
+    <!-- Cookie 使用声明横幅（内联版本，布局：文字居中上，按钮左右下）    -->
     <!-- ============================================================ -->
     <script>
         (function() {
@@ -1156,104 +1156,60 @@
                     background: var(--bg-card, #ffffff);
                     border-top: 1px solid var(--border-color, #e0e0e0);
                     box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-                    padding: 12px 20px;
+                    padding: 14px 20px;
                     transform: translateY(100%);
                     transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
                     font-size: 13px;
                     line-height: 1.5;
                     color: var(--text-primary, #1e293b);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
                 `;
 
-                const inner = document.createElement('div');
-                inner.style.cssText = `
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    width: 100%;
-                    max-width: 1200px;
-                    flex-wrap: wrap;
-                    justify-content: space-between;
+                // 新布局：文字居中上，按钮左右下
+                banner.innerHTML = `
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:1200px;margin:0 auto;">
+                        <!-- 文字区域：居中 -->
+                        <div style="display:flex;align-items:center;gap:10px;justify-content:center;text-align:center;width:100%;flex-wrap:wrap;">
+                            <span style="font-size:22px;flex-shrink:0;">🍪</span>
+                            <span style="font-size:13px;color:var(--text-secondary, #475569);text-align:center;">
+                                我们以Cookie为您打造流畅舒心的浏览体验，详情可参考
+                                <a href="/pages/others/privacy-terms.html" style="color:var(--primary-color,#4361ee);text-decoration:none;font-weight:500;" target="_blank">隐私政策与用户协议</a>。
+                            </span>
+                        </div>
+                        <!-- 按钮区域：拒绝左，接受右 -->
+                        <div style="display:flex;justify-content:space-between;width:100%;gap:12px;">
+                            <button class="cookie-reject-btn" style="
+                                padding:6px 20px;
+                                border:1px solid var(--border-color, #e0e0e0);
+                                border-radius:8px;
+                                background:transparent;
+                                color:var(--text-secondary, #6c757d);
+                                cursor:pointer;
+                                font-size:13px;
+                                transition:all 0.2s;
+                                font-family:inherit;
+                                flex-shrink:0;
+                            ">拒绝</button>
+                            <button class="cookie-accept-btn" style="
+                                padding:6px 20px;
+                                border:none;
+                                border-radius:8px;
+                                background:var(--primary-color, #4361ee);
+                                color:#fff;
+                                cursor:pointer;
+                                font-size:13px;
+                                font-weight:500;
+                                transition:all 0.2s;
+                                font-family:inherit;
+                                flex-shrink:0;
+                            ">接受</button>
+                        </div>
+                    </div>
                 `;
-
-                // 拒绝按钮（左）
-                const rejectBtn = document.createElement('button');
-                rejectBtn.className = 'cookie-reject-btn';
-                rejectBtn.textContent = '拒绝';
-                rejectBtn.style.cssText = `
-                    padding: 6px 20px;
-                    border: 1px solid var(--border-color, #e0e0e0);
-                    border-radius: 8px;
-                    background: transparent;
-                    color: var(--text-secondary, #6c757d);
-                    cursor: pointer;
-                    font-size: 13px;
-                    transition: all 0.2s;
-                    font-family: inherit;
-                    flex-shrink: 0;
-                    order: 1;
-                `;
-                rejectBtn.addEventListener('mouseenter', function() {
-                    this.style.background = 'rgba(0,0,0,0.05)';
-                });
-                rejectBtn.addEventListener('mouseleave', function() {
-                    this.style.background = 'transparent';
-                });
-
-                // 文字区域（中间）
-                const textDiv = document.createElement('div');
-                textDiv.style.cssText = `
-                    flex: 1;
-                    text-align: center;
-                    min-width: 200px;
-                    order: 2;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                    flex-wrap: wrap;
-                `;
-                textDiv.innerHTML = `
-                    <span style="font-size:22px;flex-shrink:0;">🍪</span>
-                    <span style="font-size:13px;color:var(--text-secondary, #475569);">
-                        我们以Cookie为您打造流畅舒心的浏览体验，详情可参考
-                        <a href="/pages/others/privacy-terms.html" style="color:var(--primary-color,#4361ee);text-decoration:none;font-weight:500;" target="_blank">隐私政策与用户协议</a>。
-                    </span>
-                `;
-
-                // 接受按钮（右）
-                const acceptBtn = document.createElement('button');
-                acceptBtn.className = 'cookie-accept-btn';
-                acceptBtn.textContent = '接受';
-                acceptBtn.style.cssText = `
-                    padding: 6px 20px;
-                    border: none;
-                    border-radius: 8px;
-                    background: var(--primary-color, #4361ee);
-                    color: #fff;
-                    cursor: pointer;
-                    font-size: 13px;
-                    font-weight: 500;
-                    transition: all 0.2s;
-                    font-family: inherit;
-                    flex-shrink: 0;
-                    order: 3;
-                `;
-                acceptBtn.addEventListener('mouseenter', function() {
-                    this.style.background = '#3651d4';
-                });
-                acceptBtn.addEventListener('mouseleave', function() {
-                    this.style.background = 'var(--primary-color, #4361ee)';
-                });
-
-                inner.appendChild(rejectBtn);
-                inner.appendChild(textDiv);
-                inner.appendChild(acceptBtn);
-                banner.appendChild(inner);
                 document.body.appendChild(banner);
+
+                const acceptBtn = banner.querySelector('.cookie-accept-btn');
+                const rejectBtn = banner.querySelector('.cookie-reject-btn');
 
                 const accept = function() {
                     setConsented();
