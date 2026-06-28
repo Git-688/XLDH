@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（移除浮动投稿按钮） -->
+<!-- index.html - 完整版（添加排行榜按钮和模态框） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -263,8 +263,9 @@
         .activity-btn:hover { color: #ff5733; }
         .weather-btn { color: var(--primary-color); }
         .weather-btn:hover { color: #3a56d6; }
-        .floating-btn.submit-btn { color: #06b6d4; }
-        .floating-btn.submit-btn:hover { color: #0891b2; }
+        /* 排行榜按钮颜色 */
+        .rank-btn { color: #f59e0b; }
+        .rank-btn:hover { color: #d97706; }
         .floating-btn.comment-btn { color: #f59e0b; }
         .floating-btn.comment-btn:hover { color: #d97706; }
         @media (max-width: 768px) { .floating-buttons { bottom: 16px; right: 16px; gap: 10px; } .floating-btn { width: 44px; height: 44px; font-size: 18px; } }
@@ -278,10 +279,8 @@
             .refresh-btn:hover { color: var(--success-color); }
             .weather-btn { color: #6d8cff; }
             .weather-btn:hover { color: #5a7aff; }
-            .activity-btn { color: #ff8c5a; }
-            .activity-btn:hover { color: #ff7a47; }
-            .floating-btn.submit-btn { color: #22d3ee; }
-            .floating-btn.submit-btn:hover { color: #67e8f9; }
+            .rank-btn { color: #fbbf24; }
+            .rank-btn:hover { color: #f59e0b; }
         }
         .feedback-modal {
             position: fixed;
@@ -594,6 +593,75 @@
         #submitModal .feedback-modal-content { max-height: 90vh; max-width: 520px; }
         #submitModal .feedback-modal-body { overflow-y: auto; }
         #submitModal .feedback-modal-header h3 i { color: #4361ee; }
+
+        /* ===== 排行榜模态框专用样式 ===== */
+        #rankModal .feedback-modal-content { max-width: 500px; max-height: 80vh; }
+        .rank-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
+        .rank-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: var(--bg-secondary, #f8f9fa);
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .rank-item:hover {
+            background: rgba(67, 97, 238, 0.06);
+        }
+        .rank-number {
+            font-size: 16px;
+            font-weight: 700;
+            min-width: 32px;
+            text-align: center;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        .rank-number:first-child { color: #f59e0b; }
+        .rank-number:nth-child(2) { color: #94a3b8; }
+        .rank-number:nth-child(3) { color: #cd7f32; }
+        .rank-title {
+            flex: 1;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            text-decoration: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .rank-title:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+        .rank-count {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary-color);
+            flex-shrink: 0;
+            background: rgba(67, 97, 238, 0.1);
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+        #rankListContent .loading,
+        #rankListContent .empty,
+        #rankListContent .error {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .dark-mode .rank-item {
+            background: var(--bg-secondary, #1e1e1e);
+        }
+        .dark-mode .rank-item:hover {
+            background: rgba(124, 200, 255, 0.08);
+        }
+        .dark-mode .rank-count {
+            background: rgba(123, 156, 255, 0.15);
+            color: #7b9cff;
+        }
+
         #notebookModal .feedback-modal-content::-webkit-scrollbar { width: 4px; }
         #notebookModal .feedback-modal-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
         #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
@@ -618,7 +686,7 @@
     <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 
-    <!-- ===== 第三方样式（优化：仅加载 solid + brands） ===== -->
+    <!-- ===== 第三方样式 ===== -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
@@ -630,6 +698,7 @@
 <body>
     <div class="scroll-progress" id="scrollProgress"></div>
 
+    <!-- ===== 导航栏 ===== -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <div class="nav-brand">
@@ -650,6 +719,7 @@
         </div>
     </nav>
 
+    <!-- ===== 侧边栏 ===== -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-wallpaper" id="sidebarWallpaper">
             <div class="sidebar-wallpaper-overlay"></div>
@@ -678,7 +748,9 @@
         </div>
     </aside>
 
+    <!-- ===== 主要内容 ===== -->
     <main class="main-content">
+        <!-- 壁纸轮播 -->
         <section class="wallpaper-section">
             <div class="container">
                 <div class="wallpaper-container" id="wallpaperCarousel">
@@ -693,6 +765,7 @@
             </div>
         </section>
 
+        <!-- 问候与木鱼 -->
         <section class="greeting-section">
             <div class="greeting-container">
                 <div class="greeting-main-card">
@@ -728,6 +801,7 @@
             </div>
         </section>
 
+        <!-- 常用标签 -->
         <section class="minimal-tags-section">
             <div class="container">
                 <div class="tags-header">
@@ -741,6 +815,7 @@
             </div>
         </section>
 
+        <!-- 分类导航 -->
         <section class="navigation-section">
             <div class="container">
                 <div class="navigation-header">
@@ -765,6 +840,7 @@
             </div>
         </section>
 
+        <!-- 页脚 -->
         <footer class="footer">
             <div class="footer-compact-container">
                 <div class="footer-disclaimer-card">
@@ -812,14 +888,17 @@
             </div>
         </footer>
 
+        <!-- ===== 浮动按钮 ===== -->
         <div class="floating-buttons">
             <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
             <button class="floating-btn theme-btn" id="themeToggleBtn" aria-label="切换主题"><i class="fas fa-moon"></i></button>
+            <!-- ===== 新增排行榜按钮 ===== -->
+            <button class="floating-btn rank-btn" id="rankBtn" aria-label="点击排行榜"><i class="fas fa-trophy"></i></button>
             <button class="floating-btn comment-btn" id="commentBtn" aria-label="评论"><i class="fas fa-comments"></i></button>
-            <!-- 投稿按钮已移至侧滑底部，此处移除 -->
             <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
         </div>
 
+        <!-- ===== 音乐播放器 ===== -->
         <div class="music-player" id="musicPlayer">
             <div class="player-top">
                 <div class="cover-section">
@@ -958,6 +1037,7 @@
         </div>
         <audio id="audio-element" preload="metadata" style="display:none;"></audio>
 
+        <!-- ===== 搜索模态框 ===== -->
         <div class="search-modal" id="searchModal">
             <div class="modal-content">
                 <div class="search-bar"><button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎"><i id="engineIcon" class="fas fa-search"></i></button><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off"><button class="search-submit-btn">搜索</button></div>
@@ -971,6 +1051,7 @@
         </div>
         <div class="engine-tooltip" id="engineTooltip"></div>
 
+        <!-- ===== 星聚笔记 ===== -->
         <div id="notebookModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
@@ -984,6 +1065,7 @@
             </div>
         </div>
 
+        <!-- ===== 评论 ===== -->
         <div id="commentModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
@@ -995,6 +1077,7 @@
             </div>
         </div>
 
+        <!-- ===== 投稿 ===== -->
         <div id="submitModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
@@ -1042,10 +1125,28 @@
                 </div>
             </div>
         </div>
+
+        <!-- ============================================================ -->
+        <!-- ===== 排行榜模态框 ===== -->
+        <!-- ============================================================ -->
+        <div id="rankModal" class="feedback-modal">
+            <div class="feedback-modal-content">
+                <div class="feedback-modal-header">
+                    <h3><i class="fas fa-trophy"></i> 点击排行榜</h3>
+                    <button class="feedback-modal-close" id="rankModalClose">&times;</button>
+                </div>
+                <div class="feedback-modal-body">
+                    <div id="rankListContent">
+                        <div class="loading">加载中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- ============================================================ -->
-    <!-- 第三方 JavaScript（无 SRI）                                   -->
+    <!-- 第三方 JavaScript                                          -->
     <!-- ============================================================ -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
     <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
@@ -1105,7 +1206,7 @@
     <script defer src="./js/cursor2.js"></script>
 
     <!-- ============================================================ -->
-    <!-- Cookie 使用声明横幅（内联版本）                                -->
+    <!-- Cookie 使用声明横幅                                          -->
     <!-- ============================================================ -->
     <script>
         (function() {
@@ -1220,6 +1321,125 @@
         })();
     </script>
 
+    <!-- ============================================================ -->
+    <!-- 排行榜功能脚本                                               -->
+    <!-- ============================================================ -->
+    <script>
+        (function() {
+            'use strict';
+
+            const rankBtn = document.getElementById('rankBtn');
+            const rankModal = document.getElementById('rankModal');
+            const rankModalClose = document.getElementById('rankModalClose');
+            const rankListContent = document.getElementById('rankListContent');
+
+            if (!rankBtn || !rankModal || !rankModalClose || !rankListContent) return;
+
+            async function loadRankData() {
+                rankListContent.innerHTML = '<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div> 加载中...</div>';
+
+                try {
+                    const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
+                    const response = await fetch(`${apiBase}/topclicks?limit=20`);
+                    if (!response.ok) throw new Error('请求失败');
+                    const data = await response.json();
+
+                    if (!data || !data.length) {
+                        rankListContent.innerHTML = '<div class="empty">📊 暂无排行数据</div>';
+                        return;
+                    }
+
+                    let html = '<div class="rank-list">';
+                    data.forEach(function(item, index) {
+                        var medal = '';
+                        if (index === 0) medal = '🥇';
+                        else if (index === 1) medal = '🥈';
+                        else if (index === 2) medal = '🥉';
+                        else medal = (index + 1) + '.';
+
+                        var title = item.title || '未命名';
+                        var url = item.url || '#';
+                        var count = item.count || 0;
+
+                        html += `
+                            <div class="rank-item">
+                                <span class="rank-number">${medal}</span>
+                                <a href="${url}" target="_blank" rel="noopener noreferrer" class="rank-title">${title}</a>
+                                <span class="rank-count">${count}次</span>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    rankListContent.innerHTML = html;
+
+                } catch (error) {
+                    console.error('加载排行榜失败:', error);
+                    rankListContent.innerHTML = '<div class="error">❌ 加载失败，请稍后重试</div>';
+                }
+            }
+
+            // 打开排行榜
+            function openRankModal() {
+                rankModal.classList.add('active');
+                loadRankData();
+                if (window.Starlink && window.Starlink.app) {
+                    window.Starlink.app.registerModal({
+                        hide: function() {
+                            rankModal.classList.remove('active');
+                        },
+                        isVisible: function() {
+                            return rankModal.classList.contains('active');
+                        }
+                    });
+                }
+            }
+
+            // 关闭排行榜
+            function closeRankModal() {
+                rankModal.classList.remove('active');
+                if (window.Starlink && window.Starlink.app) {
+                    window.Starlink.app.unregisterModal({
+                        hide: function() {
+                            rankModal.classList.remove('active');
+                        },
+                        isVisible: function() {
+                            return rankModal.classList.contains('active');
+                        }
+                    });
+                }
+            }
+
+            // 事件绑定
+            rankBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                // 关闭其他可能打开的模态框
+                if (window.Starlink && window.Starlink.sidebar && window.Starlink.sidebar.isVisible && window.Starlink.sidebar.isVisible()) {
+                    window.Starlink.sidebar.hide();
+                }
+                openRankModal();
+            });
+
+            rankModalClose.addEventListener('click', function(e) {
+                e.stopPropagation();
+                closeRankModal();
+            });
+
+            rankModal.addEventListener('click', function(e) {
+                if (e.target === rankModal) {
+                    closeRankModal();
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && rankModal.classList.contains('active')) {
+                    closeRankModal();
+                }
+            });
+
+        })();
+    </script>
+
     <!-- ===== Service Worker 注册 ===== -->
     <script>
         if ('serviceWorker' in navigator) {
@@ -1245,5 +1465,6 @@
             });
         }
     </script>
+
 </body>
 </html>
