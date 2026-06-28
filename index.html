@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（Cookie 横幅布局：文字居中上，按钮左右下） -->
+<!-- index.html - 完整版（🍪图标在文字左侧） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -1107,7 +1107,8 @@
     <script defer src="./js/cursor2.js"></script>
 
     <!-- ============================================================ -->
-    <!-- Cookie 使用声明横幅（内联版本，布局：文字居中上，按钮左右下）    -->
+    <!-- Cookie 使用声明横幅（内联版本）                                -->
+    <!-- 布局：🍪在文字左侧，文字居中上，按钮左右下                      -->
     <!-- ============================================================ -->
     <script>
         (function() {
@@ -1165,13 +1166,13 @@
                     color: var(--text-primary, #1e293b);
                 `;
 
-                // 新布局：文字居中上，按钮左右下
+                // 布局：🍪在文字左侧，文字可换行；按钮左右下
                 banner.innerHTML = `
                     <div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:1200px;margin:0 auto;">
-                        <!-- 文字区域：居中 -->
-                        <div style="display:flex;align-items:center;gap:10px;justify-content:center;text-align:center;width:100%;flex-wrap:wrap;">
-                            <span style="font-size:22px;flex-shrink:0;">🍪</span>
-                            <span style="font-size:13px;color:var(--text-secondary, #475569);text-align:center;">
+                        <!-- 文字区域：🍪在左侧，文字可换行 -->
+                        <div style="display:flex;align-items:flex-start;gap:10px;justify-content:center;text-align:left;width:100%;">
+                            <span style="font-size:22px;flex-shrink:0;line-height:1.5;">🍪</span>
+                            <span style="font-size:13px;color:var(--text-secondary, #475569);text-align:left;line-height:1.6;word-break:break-word;flex:1;">
                                 我们以Cookie为您打造流畅舒心的浏览体验，详情可参考
                                 <a href="/pages/others/privacy-terms.html" style="color:var(--primary-color,#4361ee);text-decoration:none;font-weight:500;" target="_blank">隐私政策与用户协议</a>。
                             </span>
