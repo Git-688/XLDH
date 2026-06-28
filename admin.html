@@ -344,13 +344,10 @@
         </div>
     </div>
 
-    <!-- ===== 第三方资源：添加 SRI 完整性哈希 ===== -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"
-            integrity="sha384-aVQ/YIxqVnPn/ZQmmNw3YgJg1BqR5wrgKkfBz8S2eW/CbM1VRYf/3EyErFWm5vzY"
-            crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/js/all.min.js"
-            integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hdoQeKcVh6suU+CnLNuQYipLTR2ahZJgEOA+2E2m7y"
-            crossorigin="anonymous"></script>
+    <!-- ===== 第三方资源（优化：仅加载 solid + brands） ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/js/all.min.js"></script>
+    <!-- 注：JS 全量加载，但 CSS 已移除 regular，图标渲染由 JS 处理，不影响 -->
     <script src="./js/admin.js"></script>
 </body>
 </html>
