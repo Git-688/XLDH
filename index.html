@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（修复按钮颜色被覆盖问题） -->
+<!-- index.html - 完整版（模态框头部图标颜色匹配按钮） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -278,7 +278,7 @@
         .activity-btn { color: #ff6b35; }
         .activity-btn:hover { color: #ff5733; }
 
-        /* ===== 自定义浮动按钮颜色（使用更高优先级选择器） ===== */
+        /* ===== 自定义浮动按钮颜色 ===== */
         .floating-btn.weather-btn {
             color: #3764f4 !important;
         }
@@ -1102,11 +1102,12 @@
             </div>
         </div>
 
-        <!-- ===== 评论 ===== -->
+        <!-- ===== 评论模态框（图标颜色改为微信绿） ===== -->
         <div id="commentModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
-                    <h3><i class="fas fa-comments"></i> 网友评论</h3><button class="feedback-modal-close">&times;</button>
+                    <h3><i class="fas fa-comments" style="color: #07C160;"></i> 网友评论</h3>
+                    <button class="feedback-modal-close">&times;</button>
                 </div>
                 <div class="feedback-modal-body">
                     <div id="waline-comment"></div>
@@ -1164,12 +1165,12 @@
         </div>
 
         <!-- ============================================================ -->
-        <!-- ===== 排行榜模态框 ===== -->
+        <!-- ===== 排行榜模态框（标题已改为“访问排行榜”，图标金色） ===== -->
         <!-- ============================================================ -->
         <div id="rankModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
-                    <h3><i class="fas fa-trophy"></i> 访问排行榜</h3>
+                    <h3><i class="fas fa-trophy" style="color: #FFD700;"></i> 访问排行榜</h3>
                     <button class="feedback-modal-close" id="rankModalClose">&times;</button>
                 </div>
                 <div class="feedback-modal-body">
