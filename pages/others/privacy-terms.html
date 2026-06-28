@@ -193,46 +193,85 @@
         .footer-text a:hover {
             text-decoration: underline;
         }
+
+        /* ===== 目录样式（可收起/展开） ===== */
         .toc {
             background: var(--bg-primary);
             border-radius: 8px;
             padding: 16px 20px;
             margin-bottom: 24px;
             border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
         }
-        .toc h3 {
+        .toc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .toc-header h3 {
             font-size: 14px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin: 0;
             color: var(--text-primary);
         }
-        .toc ul {
+        .toc-toggle-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+            font-family: inherit;
+            font-weight: 500;
+        }
+        .toc-toggle-btn:hover {
+            background: rgba(67, 97, 238, 0.1);
+        }
+        .toc-body {
+            overflow: hidden;
+            max-height: 800px;
+            transition: max-height 0.4s ease, opacity 0.3s ease;
+            opacity: 1;
+        }
+        .toc-body.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            margin-top: 0;
+        }
+        .toc-body ul {
             display: flex;
             flex-wrap: wrap;
             gap: 6px 16px;
             padding-left: 0;
             list-style: none;
-            margin: 0;
+            margin: 12px 0 0 0;
         }
-        .toc ul li {
+        .toc-body ul li {
             font-size: 13px;
             color: var(--text-secondary);
             margin: 0;
         }
-        .toc ul li a {
+        .toc-body ul li a {
             color: var(--primary-color);
             text-decoration: none;
         }
-        .toc ul li a:hover {
+        .toc-body ul li a:hover {
             text-decoration: underline;
         }
+
         @media (max-width: 768px) {
             body { padding: 12px; }
             .container { padding: 24px 20px; }
             .header h1 { font-size: 24px; }
             .section h2 { font-size: 18px; }
             .section p, .section ul li { font-size: 14px; }
-            .toc ul { flex-direction: column; gap: 4px; }
+            .toc-body ul { flex-direction: column; gap: 4px; }
+            .toc { padding: 12px 16px; }
         }
         @media (max-width: 480px) {
             .container { padding: 18px 14px; border-radius: 8px; }
@@ -245,6 +284,8 @@
             .container { box-shadow: none; border: none; padding: 20px; }
             .back-link { display: none; }
             .toc { background: #f5f5f5; border: 1px solid #ddd; }
+            .toc-toggle-btn { display: none; }
+            .toc-body { max-height: none !important; opacity: 1 !important; }
         }
     </style>
 </head>
@@ -256,32 +297,37 @@
             </div>
             <h1>📋 隐私政策 · 用户协议</h1>
             <p class="subtitle">星聚导航 · 诚信服务，用心守护您的隐私</p>
-            <span class="effective-date">📅 生效日期：2026年6月28日</span>
+            <span class="effective-date">📅 生效日期：2026年04月02日</span>
         </div>
 
-        <!-- ===== 目录 ===== -->
-        <div class="toc">
-            <h3>📑 目录</h3>
-            <ul>
-                <li><a href="#intro">1. 引言</a></li>
-                <li><a href="#privacy">2. 隐私政策</a></li>
-                <li style="padding-left:20px;"><a href="#collect">2.1 信息收集</a></li>
-                <li style="padding-left:20px;"><a href="#use">2.2 信息使用</a></li>
-                <li style="padding-left:20px;"><a href="#share">2.3 信息共享</a></li>
-                <li style="padding-left:20px;"><a href="#storage">2.4 数据存储与安全</a></li>
-                <li style="padding-left:20px;"><a href="#cookies">2.5 Cookie 使用</a></li>
-                <li style="padding-left:20px;"><a href="#thirdparty">2.6 第三方服务</a></li>
-                <li style="padding-left:20px;"><a href="#rights">2.7 您的权利</a></li>
-                <li><a href="#terms">3. 用户协议</a></li>
-                <li style="padding-left:20px;"><a href="#accept">3.1 接受条款</a></li>
-                <li style="padding-left:20px;"><a href="#service">3.2 服务描述</a></li>
-                <li style="padding-left:20px;"><a href="#conduct">3.3 用户行为规范</a></li>
-                <li style="padding-left:20px;"><a href="#copyright">3.4 知识产权</a></li>
-                <li style="padding-left:20px;"><a href="#disclaimer">3.5 免责声明</a></li>
-                <li style="padding-left:20px;"><a href="#modification">3.6 协议修改</a></li>
-                <li style="padding-left:20px;"><a href="#law">3.7 适用法律</a></li>
-                <li><a href="#contact">4. 联系我们</a></li>
-            </ul>
+        <!-- ===== 目录（可收起/展开） ===== -->
+        <div class="toc" id="tocContainer">
+            <div class="toc-header" id="tocHeader">
+                <h3>📑 目录</h3>
+                <button class="toc-toggle-btn" id="tocToggleBtn" aria-label="收起/展开目录">收起目录</button>
+            </div>
+            <div class="toc-body" id="tocBody">
+                <ul>
+                    <li><a href="#intro">1. 引言</a></li>
+                    <li><a href="#privacy">2. 隐私政策</a></li>
+                    <li style="padding-left:20px;"><a href="#collect">2.1 信息收集</a></li>
+                    <li style="padding-left:20px;"><a href="#use">2.2 信息使用</a></li>
+                    <li style="padding-left:20px;"><a href="#share">2.3 信息共享</a></li>
+                    <li style="padding-left:20px;"><a href="#storage">2.4 数据存储与安全</a></li>
+                    <li style="padding-left:20px;"><a href="#cookies">2.5 Cookie 使用</a></li>
+                    <li style="padding-left:20px;"><a href="#thirdparty">2.6 第三方服务</a></li>
+                    <li style="padding-left:20px;"><a href="#rights">2.7 您的权利</a></li>
+                    <li><a href="#terms">3. 用户协议</a></li>
+                    <li style="padding-left:20px;"><a href="#accept">3.1 接受条款</a></li>
+                    <li style="padding-left:20px;"><a href="#service">3.2 服务描述</a></li>
+                    <li style="padding-left:20px;"><a href="#conduct">3.3 用户行为规范</a></li>
+                    <li style="padding-left:20px;"><a href="#copyright">3.4 知识产权</a></li>
+                    <li style="padding-left:20px;"><a href="#disclaimer">3.5 免责声明</a></li>
+                    <li style="padding-left:20px;"><a href="#modification">3.6 协议修改</a></li>
+                    <li style="padding-left:20px;"><a href="#law">3.7 适用法律</a></li>
+                    <li><a href="#contact">4. 联系我们</a></li>
+                </ul>
+            </div>
         </div>
 
         <!-- ============================================================ -->
@@ -510,9 +556,44 @@
                 <a href="mailto:1595126534@qq.com">联系我们</a>
             </p>
             <p style="font-size:12px;opacity:0.7;margin-top:4px;">
-                本页面最后更新：2026年6月28日
+                本页面最后更新：2026年04月02日
             </p>
         </div>
     </div>
+
+    <!-- ===== 目录收起/展开控制脚本 ===== -->
+    <script>
+        (function() {
+            const toggleBtn = document.getElementById('tocToggleBtn');
+            const tocBody = document.getElementById('tocBody');
+            if (!toggleBtn || !tocBody) return;
+
+            let isCollapsed = false;
+
+            toggleBtn.addEventListener('click', function() {
+                isCollapsed = !isCollapsed;
+                if (isCollapsed) {
+                    tocBody.classList.add('collapsed');
+                    toggleBtn.textContent = '展开目录';
+                } else {
+                    tocBody.classList.remove('collapsed');
+                    toggleBtn.textContent = '收起目录';
+                }
+            });
+
+            // 点击目录中的链接后自动收起（移动端方便）
+            const links = tocBody.querySelectorAll('a');
+            links.forEach(function(link) {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 768 && !isCollapsed) {
+                        // 在移动设备上点击后自动收起
+                        isCollapsed = true;
+                        tocBody.classList.add('collapsed');
+                        toggleBtn.textContent = '展开目录';
+                    }
+                });
+            });
+        })();
+    </script>
 </body>
 </html>
