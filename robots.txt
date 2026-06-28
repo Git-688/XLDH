@@ -1,0 +1,40 @@
+# robots.txt - 星聚导航爬虫规则
+
+User-agent: *
+Allow: /
+
+# 禁止爬取后台管理页面
+Disallow: /admin.html
+Disallow: /admin/
+
+# 禁止爬取敏感页面
+Disallow: /assets/
+Disallow: /pages/others/smkj.html
+
+# 禁止爬取动态API
+Disallow: /api/
+Disallow: /log
+
+# 禁止爬取临时文件和备份
+Disallow: /*.tmp$
+Disallow: /*.bak$
+Disallow: /*.old$
+
+# 允许爬取核心内容
+Allow: /pages/tools/
+Allow: /pages/chl/
+
+# 指定Sitemap位置
+Sitemap: https://xjdh688.ccwu.cc/sitemap.xml
+
+# 爬取延迟
+Crawl-delay: 1
+
+User-agent: Googlebot
+Crawl-delay: 2
+
+User-agent: Baiduspider
+Crawl-delay: 2
+
+User-agent: Bingbot
+Crawl-delay: 2
