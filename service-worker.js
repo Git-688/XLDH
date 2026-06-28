@@ -1,50 +1,14 @@
-/* service-worker.js - 精细化缓存策略：HTML 使用 network-first，确保用户总是获取最新版本 */
+/* service-worker.js - 按需缓存策略（首次访问时缓存，而非预缓存全部） */
 const CACHE_NAME = 'starlink-v8';
 const NAVIGATION_CACHE_NAME = 'starlink-nav-v8';
 const API_CACHE_NAME = 'starlink-api-v8';
 const FONT_CACHE_NAME = 'starlink-fonts-v8';
 
-const STATIC_URLS = [
+// 只缓存核心离线页面，其他资源按需缓存
+const CORE_URLS = [
     '/',
     '/index.html',
-    '/css/style.css',
-    '/css/modules/navbar.css',
-    '/css/modules/sidebar.css',
-    '/css/modules/announcement.css',
-    '/css/modules/search.css',
-    '/css/modules/weather.css',
-    '/css/modules/about.css',
-    '/css/modules/navigation.css',
-    '/css/modules/wallpaper.css',
-    '/css/modules/greeting.css',
-    '/css/modules/stats.css',
-    '/css/modules/compact-tags.css',
-    '/css/responsive.css',
-    '/css/xfyy1/music-player.css',
-    '/js/main.js',
-    '/js/utils.js',
-    '/js/toast.js',
-    '/js/error-handler.js',
-    '/js/storage.js',
-    '/js/components/navbar.js',
-    '/js/components/sidebar.js',
-    '/js/modules/announcement.js',
-    '/js/modules/search.js',
-    '/js/modules/weather.js',
-    '/js/modules/about.js',
-    '/js/modules/navigation.js',
-    '/js/modules/wallpaper.js',
-    '/js/modules/greeting.js',
-    '/js/modules/stats.js',
-    '/js/modules/compact-tags.js',
-    '/js/xfyy/cache-manager.js',
-    '/js/xfyy/lyric-parser.js',
-    '/js/xfyy/plugin-manager.js',
-    '/js/xfyy/music-player.js',
-    '/js/xfyy/music-main.js',
-    '/js/modules/comment.js',
-    '/js/modules/submit.js',
-    '/data/local-music-data.js'
+    '/offline.html'  // 如果有离线页面的话
 ];
 
 const FONT_URL_PATTERNS = [
@@ -110,10 +74,11 @@ function getCacheConfig(url) {
 }
 
 self.addEventListener('install', event => {
+    // ===== 按需缓存：只缓存核心离线页面 =====
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
-            return cache.addAll(STATIC_URLS);
-        }).catch(err => console.error('静态资源缓存失败:', err))
+            return cache.addAll(CORE_URLS);
+        }).catch(err => console.error('核心资源缓存失败:', err))
     );
     self.skipWaiting();
 });
@@ -256,11 +221,10 @@ async function handleCacheFirst(request, config) {
     }
 }
 
-// ===== HTML 文档专用：network-first（确保总是获取最新版本） =====
+// ===== HTML 文档：network-first =====
 async function handleDocumentRequest(request) {
     const cache = await caches.open(CACHE_NAME);
     try {
-        // 优先从网络获取最新版本
         const response = await fetch(request);
         if (response && response.status === 200) {
             const cloned = response.clone();
@@ -277,17 +241,8 @@ async function handleDocumentRequest(request) {
         }
         throw new Error('Network response not ok');
     } catch (err) {
-        // 网络失败时使用缓存兜底
         const cached = await cache.match(request);
-        if (cached) {
-            const timestamp = cached.headers.get('sw-cache-timestamp');
-            const ttl = cached.headers.get('sw-cache-ttl') || 3600 * 1000;
-            if (timestamp && (Date.now() - parseInt(timestamp) < parseInt(ttl))) {
-                return cached;
-            }
-            return cached;
-        }
-        // 连缓存都没有，返回离线提示
+        if (cached) return cached;
         return new Response(
             '<!DOCTYPE html><html><head><title>离线</title><meta charset="UTF-8"></head><body style="font-family:sans-serif;padding:20px;text-align:center;background:#f5f5f5;"><h1>📡 网络未连接</h1><p>请检查网络后刷新页面</p></body></html>',
             {
@@ -295,6 +250,40 @@ async function handleDocumentRequest(request) {
                 headers: { 'Content-Type': 'text/html; charset=utf-8' }
             }
         );
+    }
+}
+
+// ===== 按需缓存：静态资源（脚本/样式）使用 cache-first =====
+async function handleStaticResource(request) {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(request);
+    if (cached) {
+        // 检查是否过期（1小时）
+        const timestamp = cached.headers.get('sw-cache-timestamp');
+        const ttl = cached.headers.get('sw-cache-ttl') || 3600 * 1000;
+        if (timestamp && (Date.now() - parseInt(timestamp) < parseInt(ttl))) {
+            return cached;
+        }
+        // 过期了，删除并重新获取
+        await cache.delete(request);
+    }
+    try {
+        const response = await fetch(request);
+        if (response && response.status === 200 && request.method === 'GET') {
+            const cloned = response.clone();
+            const headers = new Headers(cloned.headers);
+            headers.set('sw-cache-timestamp', Date.now());
+            headers.set('sw-cache-ttl', 3600 * 1000);
+            const cached = new Response(cloned.body, {
+                status: cloned.status,
+                statusText: cloned.statusText,
+                headers: headers
+            });
+            cache.put(request, cached);
+        }
+        return response;
+    } catch (err) {
+        return cached || new Response('', { status: 504 });
     }
 }
 
@@ -307,13 +296,13 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // ===== 核心优化：HTML 文档使用 network-first =====
+    // HTML 文档使用 network-first
     if (event.request.destination === 'document') {
         event.respondWith(handleDocumentRequest(event.request));
         return;
     }
 
-    // 静态资源（脚本/样式）使用 cache-first
+    // 静态资源（脚本/样式）使用 cache-first（按需缓存）
     if (event.request.destination === 'script' || event.request.destination === 'style') {
         event.respondWith(handleStaticResource(event.request));
         return;
@@ -367,19 +356,6 @@ async function handleFontRequest(request) {
     } catch (err) {
         return cached || new Response('', { status: 404 });
     }
-}
-
-async function handleStaticResource(request) {
-    const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(request);
-    if (cached) return cached;
-    return fetch(request).then(response => {
-        if (response && response.status === 200 && request.method === 'GET') {
-            const cloned = response.clone();
-            cache.put(request, cloned);
-        }
-        return response;
-    });
 }
 
 async function handleOtherRequest(request) {
