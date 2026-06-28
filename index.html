@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（SRI + Cookie横幅 + 按需加载） -->
+<!-- index.html - 完整版（无 SRI） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -619,25 +619,13 @@
     <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 
-    <!-- ===== 第三方样式（添加 SRI） ===== -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css"
-          integrity="sha384-YUXmEBS2I1E4aG2/JpyJS8cHcX/egXc91lKb/5PzR0h9NWgQJsFXo6Chp5hpYlbh"
-          crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css"
-          integrity="sha384-SI3GtV4+KcBnC5YfX2CJo6d//AP4O6PeKZQ48mfy7zuydU8KJnGZ6LbICMq8LkZy"
-          crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css"
-          integrity="sha384-K7zPWiK1kvlzM8A+dVK2aNktJ+Qf2+WIMJQD+7wQQOb5LSS06Z5S7N9L7SFlI3xY"
-          crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css"
-          integrity="sha384-9FTpXIgG3KgEGu8SWf/OhxE6fjN8GfRBRHBD0M8Q8ytyLAd5FUsl5XY6TG9UgwC6"
-          crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/regular.min.css"
-          integrity="sha384-9f+8t81DVAfY2eHhGRQsc7YnLR4+8YCc1g6CwP1k8B9TSkEo5FClpOZol1+1UywE"
-          crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css"
-          integrity="sha384-FtRcU2BzNSn3nz8mCe5uMqSCJhCK5t0jlsfQVBTuSqnvMx5xP4RBC1Kd2orPRbPT"
-          crossorigin="anonymous">
+    <!-- ===== 第三方样式（无 SRI） ===== -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/regular.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
 
     <link rel="preload" href="./js/main.js" as="script">
 </head>
@@ -1059,11 +1047,9 @@
     </main>
 
     <!-- ============================================================ -->
-    <!-- 第三方 JavaScript（添加 SRI）                                   -->
+    <!-- 第三方 JavaScript（无 SRI）                                   -->
     <!-- ============================================================ -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"
-            integrity="sha384-aVQ/YIxqVnPn/ZQmmNw3YgJg1BqR5wrgKkfBz8S2eW/CbM1VRYf/3EyErFWm5vzY"
-            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
     <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
     <!-- ===== 滚动进度条 ===== -->
@@ -1084,12 +1070,8 @@
     </script>
 
     <!-- ===== KaTeX ===== -->
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"
-            integrity="sha384-EqE63i/iP+U4F9VrQBsNwSUxKArDGrWpcxdW2RlDVGzNb8T3ObM7aaRhJ9sKQe18"
-            crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"
-            integrity="sha384-Kk1K6D3bR3xHWH1FkCgvL6F6GHSsPJhxN7ddvFvcn+8PBK4TVOL0w1pYuvqZusNx"
-            crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
     <!-- ===== 核心 JavaScript 模块 ===== -->
     <script defer src="./js/constants.js"></script>
@@ -1117,9 +1099,7 @@
     <script defer src="./js/xfyy/music-main.js"></script>
 
     <!-- ===== Waline 评论 ===== -->
-    <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"
-            integrity="sha384-3FNBbRc6n08e7JxP2hLs0jzA/FRO6gQYRl9wAWNfgyhYgPxKv2e6lB3d4hJw9c6P"
-            crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
 
     <script defer src="./js/modules/comment.js"></script>
     <script defer src="./js/modules/submit.js"></script>
