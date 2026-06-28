@@ -1,4 +1,4 @@
-/* wallpaper.css */
+/* wallpaper.css - 壁纸轮播样式（已清理冗余） */
 .wallpaper-section {
     padding: var(--section-margin-sm, 20px) 0 0 !important;
     position: relative;
@@ -6,30 +6,7 @@
     margin-bottom: 0 !important;
 }
 
-.wallpaper-section .container {
-    padding-left: var(--container-padding-xs, 16px) !important;
-    padding-right: var(--container-padding-xs, 16px) !important;
-    max-width: 1200px !important;
-    width: 100% !important;
-    margin: 0 auto !important;
-}
-
-@media (min-width: 576px) {
-    .wallpaper-section .container { padding-left: var(--container-padding-sm, 20px) !important; padding-right: var(--container-padding-sm, 20px) !important; }
-    .wallpaper-section { padding: var(--section-margin-md, 24px) 0 0 !important; }
-}
-@media (min-width: 768px) {
-    .wallpaper-section .container { padding-left: var(--container-padding-md, 24px) !important; padding-right: var(--container-padding-md, 24px) !important; }
-    .wallpaper-section { padding: var(--section-margin-md, 24px) 0 0 !important; }
-}
-@media (min-width: 992px) {
-    .wallpaper-section .container { padding-left: var(--container-padding-lg, 28px) !important; padding-right: var(--container-padding-lg, 28px) !important; }
-    .wallpaper-section { padding: var(--section-margin-lg, 28px) 0 0 !important; }
-}
-@media (min-width: 1200px) {
-    .wallpaper-section .container { padding-left: var(--container-padding-xl, 32px) !important; padding-right: var(--container-padding-xl, 32px) !important; }
-    .wallpaper-section { padding: var(--section-margin-lg, 28px) 0 0 !important; }
-}
+/* 容器样式由 style.css 统一管理，此处不再重复定义 */
 
 .wallpaper-container {
     position: relative;
