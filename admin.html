@@ -261,7 +261,6 @@
                     <button class="primary" id="refreshNavBtn">🔄 刷新缓存</button>
                     <button class="primary" id="refreshIconsBtn" style="background:#8b5cf6;">🖼️ 刷新图标</button>
                     <button class="primary" id="addCategoryBtn">+ 一级分类</button>
-                    <!-- 已移除顶部旧的批量删除按钮 -->
                 </div>
                 <div class="cat-bar" id="catBar"></div>
 
@@ -345,8 +344,13 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/js/all.min.js" crossorigin="anonymous"></script>
+    <!-- ===== 第三方资源：添加 SRI 完整性哈希 ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"
+            integrity="sha384-aVQ/YIxqVnPn/ZQmmNw3YgJg1BqR5wrgKkfBz8S2eW/CbM1VRYf/3EyErFWm5vzY"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/js/all.min.js"
+            integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hdoQeKcVh6suU+CnLNuQYipLTR2ahZJgEOA+2E2m7y"
+            crossorigin="anonymous"></script>
     <script src="./js/admin.js"></script>
 </body>
 </html>
