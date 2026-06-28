@@ -7,6 +7,11 @@
     <meta name="description" content="星聚导航隐私政策与用户协议 - 了解我们如何保护您的隐私以及使用本网站的条款">
     <meta name="robots" content="index, follow">
     <link rel="icon" type="image/png" href="/assets/logo.png">
+
+    <!-- ===== FontAwesome（用于图标） ===== -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -194,7 +199,7 @@
             text-decoration: underline;
         }
 
-        /* ===== 目录样式（可收起/展开） ===== */
+        /* ===== 目录样式（图标控制 + 默认收起） ===== */
         .toc {
             background: var(--bg-primary);
             border-radius: 8px;
@@ -220,27 +225,37 @@
             background: none;
             border: none;
             color: var(--primary-color);
-            font-size: 13px;
+            font-size: 16px;
             cursor: pointer;
-            padding: 4px 12px;
+            padding: 4px 8px;
             border-radius: 6px;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.3s ease;
             font-family: inherit;
-            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
         }
         .toc-toggle-btn:hover {
             background: rgba(67, 97, 238, 0.1);
         }
+        .toc-toggle-btn .fa-chevron-down {
+            transition: transform 0.3s ease;
+        }
+        .toc-toggle-btn .fa-chevron-up {
+            transition: transform 0.3s ease;
+        }
         .toc-body {
             overflow: hidden;
             max-height: 800px;
-            transition: max-height 0.4s ease, opacity 0.3s ease;
+            transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
             opacity: 1;
+            margin-top: 12px;
         }
         .toc-body.collapsed {
             max-height: 0;
             opacity: 0;
-            padding-top: 0;
             margin-top: 0;
         }
         .toc-body ul {
@@ -249,7 +264,7 @@
             gap: 6px 16px;
             padding-left: 0;
             list-style: none;
-            margin: 12px 0 0 0;
+            margin: 0;
         }
         .toc-body ul li {
             font-size: 13px;
@@ -285,7 +300,7 @@
             .back-link { display: none; }
             .toc { background: #f5f5f5; border: 1px solid #ddd; }
             .toc-toggle-btn { display: none; }
-            .toc-body { max-height: none !important; opacity: 1 !important; }
+            .toc-body { max-height: none !important; opacity: 1 !important; margin-top: 12px !important; }
         }
     </style>
 </head>
@@ -300,13 +315,15 @@
             <span class="effective-date">📅 生效日期：2026年04月02日</span>
         </div>
 
-        <!-- ===== 目录（可收起/展开） ===== -->
+        <!-- ===== 目录（默认收起，图标控制） ===== -->
         <div class="toc" id="tocContainer">
             <div class="toc-header" id="tocHeader">
                 <h3>📑 目录</h3>
-                <button class="toc-toggle-btn" id="tocToggleBtn" aria-label="收起/展开目录">收起目录</button>
+                <button class="toc-toggle-btn" id="tocToggleBtn" aria-label="展开/收起目录">
+                    <i class="fas fa-chevron-down" id="tocIcon"></i>
+                </button>
             </div>
-            <div class="toc-body" id="tocBody">
+            <div class="toc-body collapsed" id="tocBody">
                 <ul>
                     <li><a href="#intro">1. 引言</a></li>
                     <li><a href="#privacy">2. 隐私政策</a></li>
@@ -561,23 +578,25 @@
         </div>
     </div>
 
-    <!-- ===== 目录收起/展开控制脚本 ===== -->
+    <!-- ===== 目录图标控制脚本（默认收起） ===== -->
     <script>
         (function() {
             const toggleBtn = document.getElementById('tocToggleBtn');
             const tocBody = document.getElementById('tocBody');
-            if (!toggleBtn || !tocBody) return;
+            const tocIcon = document.getElementById('tocIcon');
+            if (!toggleBtn || !tocBody || !tocIcon) return;
 
-            let isCollapsed = false;
+            // 默认收起
+            let isCollapsed = true;
 
             toggleBtn.addEventListener('click', function() {
                 isCollapsed = !isCollapsed;
                 if (isCollapsed) {
                     tocBody.classList.add('collapsed');
-                    toggleBtn.textContent = '展开目录';
+                    tocIcon.className = 'fas fa-chevron-down';
                 } else {
                     tocBody.classList.remove('collapsed');
-                    toggleBtn.textContent = '收起目录';
+                    tocIcon.className = 'fas fa-chevron-up';
                 }
             });
 
@@ -586,10 +605,9 @@
             links.forEach(function(link) {
                 link.addEventListener('click', function() {
                     if (window.innerWidth <= 768 && !isCollapsed) {
-                        // 在移动设备上点击后自动收起
                         isCollapsed = true;
                         tocBody.classList.add('collapsed');
-                        toggleBtn.textContent = '展开目录';
+                        tocIcon.className = 'fas fa-chevron-down';
                     }
                 });
             });
