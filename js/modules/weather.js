@@ -1,4 +1,4 @@
-/* weather.js - 完整版（使用 APIHZ 天气，移除和风天气，稳定运行） */
+/* weather.js - 完整版（移除头部标签：手动选择、10分钟刷新） */
 class WeatherModule {
     static CONFIG = {
         get API_BASE() {
@@ -410,14 +410,6 @@ class WeatherModule {
                     <div class="weather-title-container">
                         <div class="weather-title">
                             <span>天气小贴士</span>
-                            ${this.useAutoLocation ? 
-                                '<span class="weather-auto-location-badge">GPS定位</span>' : 
-                                '<span class="weather-auto-location-badge">手动选择</span>'
-                            }
-                            <span class="auto-refresh-label">
-                                <i class="fas fa-sync-alt"></i>
-                                10分钟刷新
-                            </span>
                         </div>
                     </div>
                     <div class="weather-header-actions">
