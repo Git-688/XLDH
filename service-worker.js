@@ -1,4 +1,4 @@
-/* service-worker.js - 精细化缓存策略（差异化 TTL，三种缓存策略） */
+/* service-worker.js - 精细化缓存策略：HTML 使用 network-first，确保用户总是获取最新版本 */
 const CACHE_NAME = 'starlink-v8';
 const NAVIGATION_CACHE_NAME = 'starlink-nav-v8';
 const API_CACHE_NAME = 'starlink-api-v8';
@@ -129,7 +129,6 @@ self.addEventListener('activate', event => {
                 }
             }));
         }).then(() => {
-            // 通知所有客户端新版本已激活
             self.clients.matchAll().then(clients => {
                 clients.forEach(client => {
                     client.postMessage({
@@ -148,11 +147,9 @@ self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
-    // 可以处理其他消息，如强制刷新缓存
     if (event.data && event.data.type === 'INVALIDATE_NAV_CACHE') {
         caches.delete(NAVIGATION_CACHE_NAME).then(() => {
             console.log('导航缓存已清除');
-            // 可选：回复客户端
             if (event.ports && event.ports[0]) {
                 event.ports[0].postMessage({ success: true });
             }
@@ -160,6 +157,7 @@ self.addEventListener('message', event => {
     }
 });
 
+// ===== 策略实现 =====
 async function handleStaleWhileRevalidate(request, config) {
     const cache = await caches.open(config.cacheName);
     const cachedResponse = await cache.match(request);
@@ -258,22 +256,70 @@ async function handleCacheFirst(request, config) {
     }
 }
 
+// ===== HTML 文档专用：network-first（确保总是获取最新版本） =====
+async function handleDocumentRequest(request) {
+    const cache = await caches.open(CACHE_NAME);
+    try {
+        // 优先从网络获取最新版本
+        const response = await fetch(request);
+        if (response && response.status === 200) {
+            const cloned = response.clone();
+            const headers = new Headers(cloned.headers);
+            headers.set('sw-cache-timestamp', Date.now());
+            headers.set('sw-cache-ttl', 3600 * 1000);
+            const cached = new Response(cloned.body, {
+                status: cloned.status,
+                statusText: cloned.statusText,
+                headers: headers
+            });
+            cache.put(request, cached);
+            return response;
+        }
+        throw new Error('Network response not ok');
+    } catch (err) {
+        // 网络失败时使用缓存兜底
+        const cached = await cache.match(request);
+        if (cached) {
+            const timestamp = cached.headers.get('sw-cache-timestamp');
+            const ttl = cached.headers.get('sw-cache-ttl') || 3600 * 1000;
+            if (timestamp && (Date.now() - parseInt(timestamp) < parseInt(ttl))) {
+                return cached;
+            }
+            return cached;
+        }
+        // 连缓存都没有，返回离线提示
+        return new Response(
+            '<!DOCTYPE html><html><head><title>离线</title><meta charset="UTF-8"></head><body style="font-family:sans-serif;padding:20px;text-align:center;background:#f5f5f5;"><h1>📡 网络未连接</h1><p>请检查网络后刷新页面</p></body></html>',
+            {
+                status: 503,
+                headers: { 'Content-Type': 'text/html; charset=utf-8' }
+            }
+        );
+    }
+}
+
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
-    if (url.origin !== self.location.origin && !isFontRequest(url)) return;
 
-    if (isFontRequest(url)) {
+    // 跨域字体请求特殊处理
+    if (url.origin !== self.location.origin && isFontRequest(url)) {
         event.respondWith(handleFontRequest(event.request));
         return;
     }
 
-    if (event.request.destination === 'document' ||
-        event.request.destination === 'script' ||
-        event.request.destination === 'style') {
+    // ===== 核心优化：HTML 文档使用 network-first =====
+    if (event.request.destination === 'document') {
+        event.respondWith(handleDocumentRequest(event.request));
+        return;
+    }
+
+    // 静态资源（脚本/样式）使用 cache-first
+    if (event.request.destination === 'script' || event.request.destination === 'style') {
         event.respondWith(handleStaticResource(event.request));
         return;
     }
 
+    // API 请求根据配置选择策略
     const config = getCacheConfig(url);
     if (config) {
         switch (config.strategy) {
@@ -292,6 +338,7 @@ self.addEventListener('fetch', event => {
         return;
     }
 
+    // 其他请求
     event.respondWith(handleOtherRequest(event.request));
 });
 
