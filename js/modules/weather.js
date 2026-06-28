@@ -1,4 +1,4 @@
-/* weather.js - 完整版（移除头部标签：手动选择、10分钟刷新） */
+/* weather.js - 完整版（天气模态框头部添加图标并匹配颜色） */
 class WeatherModule {
     static CONFIG = {
         get API_BASE() {
@@ -398,6 +398,7 @@ class WeatherModule {
         });
     }
 
+    // ===== 修改：天气模态框头部添加图标并匹配颜色 #3764f4 =====
     createModal() {
         if (this.modalElement && this.modalElement.parentNode) {
             this.modalElement.parentNode.removeChild(this.modalElement);
@@ -409,6 +410,7 @@ class WeatherModule {
                 <div class="weather-header">
                     <div class="weather-title-container">
                         <div class="weather-title">
+                            <i class="fas fa-cloud-sun" style="color: #3764f4; margin-right: 8px;"></i>
                             <span>天气小贴士</span>
                         </div>
                     </div>
