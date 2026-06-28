@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（颜色与标题已修改） -->
+<!-- index.html - 完整版（修复按钮颜色被覆盖问题） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -252,8 +252,24 @@
         @media (min-width: 992px) { .container, .container-fluid { padding: 0 var(--container-padding-lg); } }
         @media (min-width: 1200px) { .container, .container-fluid { padding: 0 var(--container-padding-xl); } }
         .floating-buttons { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 12px; z-index: var(--z-floating); }
-        .floating-btn { width: 50px; height: 50px; border: none; border-radius: 50%; background: var(--bg-card); color: var(--text-secondary); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-        .floating-btn:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .floating-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .floating-btn:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
         .back-to-top { color: var(--error-color); opacity: 0; transform: translateY(10px); visibility: hidden; transition: all 0.3s ease; }
         .back-to-top.visible { opacity: 1; transform: translateY(0); visibility: visible; }
         .back-to-top:hover { color: #ff3333; }
@@ -261,28 +277,46 @@
         .refresh-btn:hover { color: #059669; }
         .activity-btn { color: #ff6b35; }
         .activity-btn:hover { color: #ff5733; }
-        /* ===== 自定义浮动按钮颜色 ===== */
-        .weather-btn { color: #3764f4; }
-        .weather-btn:hover { color: #2a52d4; }
-        .comment-btn { color: #07C160; }
-        .comment-btn:hover { color: #06ad56; }
-        .rank-btn { color: #FFD700; }
-        .rank-btn:hover { color: #e6c200; }
-        /* 适配深色模式 */
-        @media (prefers-color-scheme: dark) {
-            .weather-btn { color: #5a7aff; }
-            .weather-btn:hover { color: #7b9cff; }
-            .comment-btn { color: #34d399; }
-            .comment-btn:hover { color: #6ee7b7; }
-            .rank-btn { color: #fbbf24; }
-            .rank-btn:hover { color: #fcd34d; }
+
+        /* ===== 自定义浮动按钮颜色（使用更高优先级选择器） ===== */
+        .floating-btn.weather-btn {
+            color: #3764f4 !important;
         }
-        .dark-mode .weather-btn { color: #5a7aff; }
-        .dark-mode .weather-btn:hover { color: #7b9cff; }
-        .dark-mode .comment-btn { color: #34d399; }
-        .dark-mode .comment-btn:hover { color: #6ee7b7; }
-        .dark-mode .rank-btn { color: #fbbf24; }
-        .dark-mode .rank-btn:hover { color: #fcd34d; }
+        .floating-btn.weather-btn:hover {
+            color: #2a52d4 !important;
+        }
+        .floating-btn.comment-btn {
+            color: #07C160 !important;
+        }
+        .floating-btn.comment-btn:hover {
+            color: #06ad56 !important;
+        }
+        .floating-btn.rank-btn {
+            color: #FFD700 !important;
+        }
+        .floating-btn.rank-btn:hover {
+            color: #e6c200 !important;
+        }
+
+        /* 深色模式适配 */
+        .dark-mode .floating-btn.weather-btn {
+            color: #5a7aff !important;
+        }
+        .dark-mode .floating-btn.weather-btn:hover {
+            color: #7b9cff !important;
+        }
+        .dark-mode .floating-btn.comment-btn {
+            color: #34d399 !important;
+        }
+        .dark-mode .floating-btn.comment-btn:hover {
+            color: #6ee7b7 !important;
+        }
+        .dark-mode .floating-btn.rank-btn {
+            color: #fbbf24 !important;
+        }
+        .dark-mode .floating-btn.rank-btn:hover {
+            color: #fcd34d !important;
+        }
 
         @media (max-width: 768px) { .floating-buttons { bottom: 16px; right: 16px; gap: 10px; } .floating-btn { width: 44px; height: 44px; font-size: 18px; } }
         @media (max-width: 480px) { .floating-buttons { bottom: 12px; right: 12px; gap: 8px; } .floating-btn { width: 40px; height: 40px; font-size: 16px; } }
@@ -896,11 +930,8 @@
         <div class="floating-buttons">
             <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
             <button class="floating-btn theme-btn" id="themeToggleBtn" aria-label="切换主题"><i class="fas fa-moon"></i></button>
-            <!-- 排行榜按钮 -->
             <button class="floating-btn rank-btn" id="rankBtn" aria-label="访问排行榜"><i class="fas fa-trophy"></i></button>
-            <!-- 评论按钮 -->
             <button class="floating-btn comment-btn" id="commentBtn" aria-label="评论"><i class="fas fa-comments"></i></button>
-            <!-- 天气按钮 -->
             <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
         </div>
 
@@ -1133,7 +1164,7 @@
         </div>
 
         <!-- ============================================================ -->
-        <!-- ===== 排行榜模态框（标题已改为“访问排行榜”） ===== -->
+        <!-- ===== 排行榜模态框 ===== -->
         <!-- ============================================================ -->
         <div id="rankModal" class="feedback-modal">
             <div class="feedback-modal-content">
@@ -1419,7 +1450,6 @@
             rankBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                // 关闭其他可能打开的模态框
                 if (window.Starlink && window.Starlink.sidebar && window.Starlink.sidebar.isVisible && window.Starlink.sidebar.isVisible()) {
                     window.Starlink.sidebar.hide();
                 }
