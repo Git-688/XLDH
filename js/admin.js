@@ -1,4 +1,4 @@
-/* admin.js - 优化添加链接后保持子分类选中，后台操作后通知前端刷新 */
+/* admin.js - 移除点击排行榜功能 */
 (function() {
     'use strict';
 
@@ -24,7 +24,6 @@
     let customSelectInstances = [];
     let customSelects = {};
 
-    // 通知前端刷新导航
     function notifyNavRefresh() {
         try {
             localStorage.setItem('nav_refresh_required', Date.now());
@@ -350,7 +349,6 @@
                 }
             }
             updateStats();
-            // 通知前端刷新导航
             notifyNavRefresh();
         } catch (e) { if (e.message === 'Unauthorized') logout(); else showToast('数据加载失败', 'error'); }
     }
@@ -915,21 +913,6 @@
                 fetchBtn.addEventListener('click', fetchSiteInfoHandler);
             }
         }, 150);
-    }
-
-    async function loadRanking() {
-        const list = document.getElementById('rankList');
-        list.innerHTML = '<div class="empty">加载中...</div>';
-        try {
-            const data = await apiFetch('/admin/topclicks?limit=20');
-            if (!data.length) { list.innerHTML = '<div class="empty">暂无数据</div>'; return; }
-            list.innerHTML = data.map(item => `
-                <div class="link-item">
-                    <div class="link-info"><strong>${escapeHtml(item.title)}</strong></div>
-                    <span class="badge badge-blue">${item.count}次</span>
-                </div>
-            `).join('');
-        } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
     async function loadFeedback() {
@@ -1530,7 +1513,6 @@
                 document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
                 const activePanel = document.getElementById(`${tabId}Tab`);
                 if (activePanel) activePanel.classList.remove('hidden');
-                if (tabId === 'rank') loadRanking();
                 if (tabId === 'feedback') loadFeedback();
                 if (tabId === 'submissions') loadSubmissions();
                 if (tabId === 'announcement') loadAnnouncement();
@@ -1545,7 +1527,6 @@
         document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
         document.getElementById('exportBtn').addEventListener('click', exportFullData);
         document.getElementById('importBtn').addEventListener('click', openImportModal);
-        document.getElementById('sortRankBtn').addEventListener('click', loadRanking);
         document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
         document.getElementById('refreshSubmissionsBtn').addEventListener('click', loadSubmissions);
         document.getElementById('refreshNavBtn').addEventListener('click', async () => {
