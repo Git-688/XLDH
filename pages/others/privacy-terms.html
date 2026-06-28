@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隐私政策与用户协议 - 星聚导航</title>
+    <meta name="description" content="星聚导航隐私政策与用户协议 - 了解我们如何保护您的隐私以及使用本网站的条款">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" type="image/png" href="/assets/logo.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary, #f8f9fa);
+            color: var(--text-primary, #1e293b);
+            line-height: 1.7;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        :root {
+            --bg-primary: #f8f9fa;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --primary-color: #4361ee;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #0f172a;
+                --bg-card: #1e293b;
+                --text-primary: #e2e8f0;
+                --text-secondary: #94a3b8;
+                --border-color: #334155;
+                --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            }
+        }
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 40px 48px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 24px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 28px;
+        }
+        .logo {
+            display: inline-block;
+            width: 56px;
+            height: 56px;
+            margin-bottom: 12px;
+        }
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .header .effective-date {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 16px;
+            background: rgba(67, 97, 238, 0.12);
+            color: var(--primary-color);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .section {
+            margin-bottom: 28px;
+        }
+        .section h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 16px 0 8px;
+        }
+        .section p {
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+        .section ul {
+            padding-left: 24px;
+            margin-bottom: 12px;
+        }
+        .section ul li {
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+        .section ul li strong {
+            color: var(--text-primary);
+        }
+        .section .badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .badge-privacy {
+            background: rgba(67, 97, 238, 0.12);
+            color: var(--primary-color);
+        }
+        .badge-terms {
+            background: rgba(245, 158, 11, 0.12);
+            color: #d97706;
+        }
+        .highlight-box {
+            padding: 16px 20px;
+            border-radius: 6px;
+            margin: 16px 0;
+        }
+        .highlight-box.info {
+            background: rgba(67, 97, 238, 0.06);
+            border-left: 4px solid var(--primary-color);
+        }
+        .highlight-box.warning {
+            background: rgba(245, 158, 11, 0.06);
+            border-left: 4px solid var(--warning-color);
+        }
+        .highlight-box.danger {
+            background: rgba(239, 68, 68, 0.06);
+            border-left: 4px solid var(--error-color);
+        }
+        .highlight-box p {
+            margin-bottom: 0;
+            font-size: 14px;
+        }
+        .divider {
+            height: 2px;
+            background: linear-gradient(to right, transparent, var(--border-color), transparent);
+            margin: 32px 0;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .back-link:hover {
+            background: #3651d4;
+        }
+        .footer-text {
+            margin-top: 32px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .footer-text a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        .footer-text a:hover {
+            text-decoration: underline;
+        }
+        .toc {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+        .toc h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .toc ul {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 16px;
+            padding-left: 0;
+            list-style: none;
+            margin: 0;
+        }
+        .toc ul li {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        .toc ul li a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        .toc ul li a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .container { padding: 24px 20px; }
+            .header h1 { font-size: 24px; }
+            .section h2 { font-size: 18px; }
+            .section p, .section ul li { font-size: 14px; }
+            .toc ul { flex-direction: column; gap: 4px; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 18px 14px; border-radius: 8px; }
+            .header h1 { font-size: 20px; }
+            .section h2 { font-size: 16px; }
+            .highlight-box { padding: 12px 16px; }
+        }
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border: none; padding: 20px; }
+            .back-link { display: none; }
+            .toc { background: #f5f5f5; border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <img src="/assets/logo.png" alt="星聚导航">
+            </div>
+            <h1>📋 隐私政策 · 用户协议</h1>
+            <p class="subtitle">星聚导航 · 诚信服务，用心守护您的隐私</p>
+            <span class="effective-date">📅 生效日期：2026年6月28日</span>
+        </div>
+
+        <!-- ===== 目录 ===== -->
+        <div class="toc">
+            <h3>📑 目录</h3>
+            <ul>
+                <li><a href="#intro">1. 引言</a></li>
+                <li><a href="#privacy">2. 隐私政策</a></li>
+                <li style="padding-left:20px;"><a href="#collect">2.1 信息收集</a></li>
+                <li style="padding-left:20px;"><a href="#use">2.2 信息使用</a></li>
+                <li style="padding-left:20px;"><a href="#share">2.3 信息共享</a></li>
+                <li style="padding-left:20px;"><a href="#storage">2.4 数据存储与安全</a></li>
+                <li style="padding-left:20px;"><a href="#cookies">2.5 Cookie 使用</a></li>
+                <li style="padding-left:20px;"><a href="#thirdparty">2.6 第三方服务</a></li>
+                <li style="padding-left:20px;"><a href="#rights">2.7 您的权利</a></li>
+                <li><a href="#terms">3. 用户协议</a></li>
+                <li style="padding-left:20px;"><a href="#accept">3.1 接受条款</a></li>
+                <li style="padding-left:20px;"><a href="#service">3.2 服务描述</a></li>
+                <li style="padding-left:20px;"><a href="#conduct">3.3 用户行为规范</a></li>
+                <li style="padding-left:20px;"><a href="#copyright">3.4 知识产权</a></li>
+                <li style="padding-left:20px;"><a href="#disclaimer">3.5 免责声明</a></li>
+                <li style="padding-left:20px;"><a href="#modification">3.6 协议修改</a></li>
+                <li style="padding-left:20px;"><a href="#law">3.7 适用法律</a></li>
+                <li><a href="#contact">4. 联系我们</a></li>
+            </ul>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 第一部分：引言 -->
+        <!-- ============================================================ -->
+        <div class="section" id="intro">
+            <h2>1. 引言</h2>
+            <p>欢迎使用星聚导航（以下简称「我们」或「本网站」）。本页面整合了 <strong>隐私政策</strong> 和 <strong>用户协议</strong>，旨在向您清晰、透明地说明我们如何收集、使用、保护您的个人信息，以及您在使用本网站时应遵守的条款。</p>
+            <p><strong>使用本网站即表示您已阅读、理解并同意遵守本页面所载的所有条款。</strong> 如果您不同意任何部分，请勿使用本网站。</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ============================================================ -->
+        <!-- 第二部分：隐私政策 -->
+        <!-- ============================================================ -->
+        <div class="section" id="privacy">
+            <h2>2. 隐私政策 <span class="badge badge-privacy">隐私</span></h2>
+            <p>我们高度重视您的隐私权，并致力于保护您的个人信息。以下内容说明我们如何收集、使用、披露和保护您的信息。</p>
+        </div>
+
+        <!-- 2.1 信息收集 -->
+        <div class="section" id="collect">
+            <h3>2.1 我们收集的信息</h3>
+            <p><strong>自动收集的信息：</strong>当您访问本网站时，我们会自动收集以下信息：</p>
+            <ul>
+                <li><strong>访问日志</strong> — 您的 IP 地址、访问时间、访问页面、浏览器类型和版本、操作系统、设备类型。</li>
+                <li><strong>设备标识</strong> — 通过 Cookie 或 localStorage 生成的设备唯一标识（Device ID）。</li>
+                <li><strong>浏览行为</strong> — 您点击的链接、浏览的分类、停留时间等。</li>
+            </ul>
+            <p><strong>您主动提供的信息：</strong></p>
+            <ul>
+                <li><strong>网站投稿</strong> — 网站标题、URL、描述、图标以及您的联系方式（QQ邮箱）。</li>
+                <li><strong>死链报告</strong> — 报告的 URL 和您的 IP 地址。</li>
+                <li><strong>评论内容</strong> — 昵称、邮箱、评论内容（由 Waline 服务处理）。</li>
+            </ul>
+        </div>
+
+        <!-- 2.2 信息使用 -->
+        <div class="section" id="use">
+            <h3>2.2 我们如何使用您的信息</h3>
+            <ul>
+                <li><strong>提供和优化服务</strong> — 改善网站性能、优化导航结构、提升用户体验。</li>
+                <li><strong>统计分析</strong> — 计算访问量（PV）、独立访客数（UV）、在线人数等。</li>
+                <li><strong>安全防护</strong> — 检测和防止恶意访问、滥用行为和攻击。</li>
+                <li><strong>审核通知</strong> — 投稿通过或拒绝时，通过邮箱发送通知。</li>
+                <li><strong>个性化体验</strong> — 记住您的偏好设置（主题、音量等）。</li>
+            </ul>
+        </div>
+
+        <!-- 2.3 信息共享 -->
+        <div class="section" id="share">
+            <h3>2.3 信息共享与披露</h3>
+            <p><strong>我们不会出售、交易或出租您的个人信息给第三方。</strong></p>
+            <p>在以下情况下，我们可能会共享您的信息：</p>
+            <ul>
+                <li><strong>法律要求</strong> — 当法律、法规或司法程序要求时。</li>
+                <li><strong>服务提供商</strong> — 使用第三方服务（如 Cloudflare、Waline）处理数据，这些服务提供商承担数据保护义务。</li>
+                <li><strong>安全保护</strong> — 为保护本网站、用户或公众的权利、财产或安全。</li>
+            </ul>
+        </div>
+
+        <!-- 2.4 数据存储与安全 -->
+        <div class="section" id="storage">
+            <h3>2.4 数据存储与安全</h3>
+            <ul>
+                <li><strong>存储位置</strong> — 数据存储在 Cloudflare D1 数据库中，位于全球分布式云基础设施。</li>
+                <li><strong>数据保留</strong> — 访问日志保留 7 天，投稿记录保留 90 天。</li>
+                <li><strong>安全措施</strong> — 采用 HTTPS 加密、访问控制、速率限制等安全措施。</li>
+                <li><strong>数据删除</strong> — 您可以通过下方联系方式要求删除您的相关数据。</li>
+            </ul>
+        </div>
+
+        <!-- 2.5 Cookie 使用 -->
+        <div class="section" id="cookies">
+            <h3>2.5 Cookie 使用声明 <span class="badge badge-privacy">🍪</span></h3>
+            <p>我们使用 Cookie 和 localStorage 来：</p>
+            <ul>
+                <li>记住您的主题偏好（深色/浅色模式）。</li>
+                <li>记录您的访问状态和会话信息。</li>
+                <li>统计访问量和用户行为。</li>
+                <li>保存您的个性化设置（如音乐播放器音量、播放模式等）。</li>
+            </ul>
+            <div class="highlight-box info">
+                <p><strong>🍪 Cookie 管理：</strong>您可以通过浏览器设置拒绝或删除 Cookie。但请注意，这可能会影响本网站的部分功能正常使用。</p>
+            </div>
+        </div>
+
+        <!-- 2.6 第三方服务 -->
+        <div class="section" id="thirdparty">
+            <h3>2.6 第三方服务</h3>
+            <p>本网站使用以下第三方服务，这些服务可能有独立的隐私政策：</p>
+            <ul>
+                <li><strong>Cloudflare</strong> — CDN、D1 数据库、Workers、KV 存储。</li>
+                <li><strong>Waline</strong> — 评论系统服务。</li>
+                <li><strong>APIHZ</strong> — 天气、验证码、邮件发送等服务。</li>
+                <li><strong>VirusTotal &amp; Google SafeBrowsing</strong> — 网站安全检测。</li>
+                <li><strong>PearAPI</strong> — 网站信息自动获取。</li>
+            </ul>
+        </div>
+
+        <!-- 2.7 您的权利 -->
+        <div class="section" id="rights">
+            <h3>2.7 您的权利</h3>
+            <ul>
+                <li><strong>访问权</strong> — 查询我们持有的您的个人信息。</li>
+                <li><strong>更正权</strong> — 更正不准确的信息。</li>
+                <li><strong>删除权</strong> — 删除您的个人信息（包括投稿记录、评论等）。</li>
+                <li><strong>撤回同意</strong> — 通过浏览器设置撤回对 Cookie 的同意。</li>
+            </ul>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ============================================================ -->
+        <!-- 第三部分：用户协议 -->
+        <!-- ============================================================ -->
+        <div class="section" id="terms">
+            <h2>3. 用户协议 <span class="badge badge-terms">条款</span></h2>
+        </div>
+
+        <!-- 3.1 接受条款 -->
+        <div class="section" id="accept">
+            <h3>3.1 接受条款</h3>
+            <p><strong>使用本网站即表示您已阅读、理解并同意遵守本协议的所有条款。</strong> 如果您不同意本协议的任何部分，请勿使用本网站。</p>
+        </div>
+
+        <!-- 3.2 服务描述 -->
+        <div class="section" id="service">
+            <h3>3.2 服务描述</h3>
+            <p>星聚导航提供以下服务：</p>
+            <ul>
+                <li><strong>分类导航</strong> — 按分类整理的优质网站链接。</li>
+                <li><strong>搜索功能</strong> — 多引擎搜索和站内搜索。</li>
+                <li><strong>音乐播放器</strong> — 在线音乐播放和歌单管理。</li>
+                <li><strong>天气查询</strong> — 实时天气和天气预报。</li>
+                <li><strong>网站投稿</strong> — 用户提交网站链接供收录。</li>
+                <li><strong>评论系统</strong> — 用户交流和反馈。</li>
+                <li><strong>实用工具集</strong> — 各类在线小工具。</li>
+            </ul>
+            <p>我们保留随时修改、暂停或终止任何服务的权利，恕不另行通知。</p>
+        </div>
+
+        <!-- 3.3 用户行为规范 -->
+        <div class="section" id="conduct">
+            <h3>3.3 用户行为规范</h3>
+            <p>您同意在使用本网站时遵守以下规范：</p>
+            <ul>
+                <li><strong>不得</strong> 发布违法、色情、暴力、欺诈、侵权或其他不当内容。</li>
+                <li><strong>不得</strong> 利用本网站进行任何非法活动或侵犯他人权益。</li>
+                <li><strong>不得</strong> 恶意提交垃圾链接或虚假信息。</li>
+                <li><strong>不得</strong> 试图破坏、干扰或攻击本网站的系统和安全。</li>
+                <li><strong>不得</strong> 滥用报告功能（如虚假报告死链）。</li>
+                <li><strong>不得</strong> 使用自动化程序（爬虫、机器人）大量访问本网站。</li>
+            </ul>
+            <div class="highlight-box danger">
+                <p><strong>⚠️ 违规处理：</strong>违反上述规范的用户，我们有权拒绝其投稿、删除其评论、屏蔽其 IP 地址，并保留追究法律责任的权利。</p>
+            </div>
+        </div>
+
+        <!-- 3.4 知识产权 -->
+        <div class="section" id="copyright">
+            <h3>3.4 内容版权与知识产权</h3>
+            <ul>
+                <li><strong>网站内容</strong> — 本网站的设计、代码、文字、图标等知识产权归星聚导航所有。</li>
+                <li><strong>用户内容</strong> — 您投稿的内容授予本网站非排他性、免版税的展示权。</li>
+                <li><strong>第三方内容</strong> — 导航链接指向的第三方网站，其内容版权归原作者所有。</li>
+                <li><strong>音乐版权</strong> — 歌曲来自公开 API，仅供个人学习欣赏，请勿用于商业用途。</li>
+            </ul>
+            <div class="highlight-box info">
+                <p><strong>📌 版权声明：</strong>如果您认为本网站的内容侵犯了您的版权，请通过下方联系方式联系我们，我们将在核实后及时处理。</p>
+            </div>
+        </div>
+
+        <!-- 3.5 免责声明 -->
+        <div class="section" id="disclaimer">
+            <h3>3.5 免责声明</h3>
+            <ul>
+                <li><strong>链接免责</strong> — 导航链接仅供参考，不保证可用性、安全性和准确性。访问第三方网站的风险由您自行承担。</li>
+                <li><strong>服务免责</strong> — 本网站按「现状」提供，不保证服务无中断、无错误或绝对安全。</li>
+                <li><strong>内容免责</strong> — 用户投稿的内容不代表本网站观点，本网站不对用户内容的准确性、合法性负责。</li>
+                <li><strong>技术免责</strong> — 因技术故障、网络中断、数据丢失等造成的损失，我们不承担责任。</li>
+            </ul>
+            <div class="highlight-box warning">
+                <p><strong>⚠️ 责任限制：</strong>在法律允许的最大范围内，星聚导航不对任何间接、偶然、特殊或惩罚性损害赔偿承担责任。</p>
+            </div>
+        </div>
+
+        <!-- 3.6 协议修改 -->
+        <div class="section" id="modification">
+            <h3>3.6 协议修改</h3>
+            <p>我们可能随时修改本协议。修改后的版本将在本页面发布，并更新生效日期。继续使用本网站即表示您接受修改后的协议。</p>
+        </div>
+
+        <!-- 3.7 适用法律 -->
+        <div class="section" id="law">
+            <h3>3.7 适用法律与争议解决</h3>
+            <p>本协议适用中华人民共和国法律。因本协议引起的任何争议，双方应首先友好协商解决；协商不成的，任何一方可向本网站运营者所在地有管辖权的人民法院提起诉讼。</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ============================================================ -->
+        <!-- 第四部分：联系我们 -->
+        <!-- ============================================================ -->
+        <div class="section" id="contact">
+            <h2>4. 联系我们</h2>
+            <p>如果您对本隐私政策或用户协议有任何疑问、意见或请求，请通过以下方式联系我们：</p>
+            <ul>
+                <li><strong>📧 邮箱：</strong> <a href="mailto:1595126534@qq.com" style="color:var(--primary-color);">1595126534@qq.com</a></li>
+                <li><strong>🌐 网站：</strong> <a href="https://xjdh688.ccwu.cc" style="color:var(--primary-color);">https://xjdh688.ccwu.cc</a></li>
+            </ul>
+            <p>我们会在 <strong>3 个工作日内</strong> 回复您的请求。</p>
+        </div>
+
+        <!-- ===== 返回首页 ===== -->
+        <div style="text-align: center; margin-top: 8px;">
+            <a href="/" class="back-link">← 返回首页</a>
+        </div>
+
+        <!-- ===== 页脚 ===== -->
+        <div class="footer-text">
+            <p>© 2026 星聚导航 · 诚信服务，用心守护您的隐私</p>
+            <p>
+                <a href="/pages/others/privacy-terms.html">隐私政策与用户协议</a> ·
+                <a href="mailto:1595126534@qq.com">联系我们</a>
+            </p>
+            <p style="font-size:12px;opacity:0.7;margin-top:4px;">
+                本页面最后更新：2026年6月28日
+            </p>
+        </div>
+    </div>
+</body>
+</html>
