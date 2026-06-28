@@ -1,4 +1,4 @@
-<!-- index.html - 字体加载优化（仅加载 solid + brands） -->
+<!-- index.html - 完整版（移除浮动投稿按钮） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -618,18 +618,16 @@
     <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 
-    <!-- ===== 第三方样式（优化：仅加载 solid + brands，移除 regular） ===== -->
+    <!-- ===== 第三方样式（优化：仅加载 solid + brands） ===== -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
-    <!-- 已移除 regular.min.css -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
 
     <link rel="preload" href="./js/main.js" as="script">
 </head>
 <body>
-    <!-- ===== 页面结构 ===== -->
     <div class="scroll-progress" id="scrollProgress"></div>
 
     <nav class="navbar" id="navbar">
@@ -673,16 +671,14 @@
             </div>
             <div class="sidebar-footer">
                 <button class="footer-btn" id="sidebarNotebookBtn" aria-label="星聚笔记"><i class="fas fa-pen"></i></button>
-                <button class="footer-btn" onclick="window.open('./pages/tools/羊毛福利.html', '_blank')" aria-label="羊毛福利"><i class="fas fa-gift"></i></button>
+                <button class="footer-btn" id="sidebarSubmitBtn" aria-label="网站投稿"><i class="fas fa-paper-plane"></i></button>
                 <button class="footer-btn" id="aboutBtn" aria-label="关于网站"><i class="fas fa-info-circle"></i></button>
                 <button class="footer-btn" onclick="window.open('https://qm.qq.com/example', '_blank')" aria-label="加入QQ群"><i class="fab fa-qq"></i></button>
             </div>
         </div>
     </aside>
 
-    <!-- ===== 主要内容 ===== -->
     <main class="main-content">
-        <!-- 壁纸轮播 -->
         <section class="wallpaper-section">
             <div class="container">
                 <div class="wallpaper-container" id="wallpaperCarousel">
@@ -697,7 +693,6 @@
             </div>
         </section>
 
-        <!-- 问候与木鱼 -->
         <section class="greeting-section">
             <div class="greeting-container">
                 <div class="greeting-main-card">
@@ -733,7 +728,6 @@
             </div>
         </section>
 
-        <!-- 常用标签 -->
         <section class="minimal-tags-section">
             <div class="container">
                 <div class="tags-header">
@@ -747,7 +741,6 @@
             </div>
         </section>
 
-        <!-- 分类导航 -->
         <section class="navigation-section">
             <div class="container">
                 <div class="navigation-header">
@@ -772,7 +765,6 @@
             </div>
         </section>
 
-        <!-- 页脚 -->
         <footer class="footer">
             <div class="footer-compact-container">
                 <div class="footer-disclaimer-card">
@@ -820,16 +812,14 @@
             </div>
         </footer>
 
-        <!-- 浮动按钮 -->
         <div class="floating-buttons">
             <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
             <button class="floating-btn theme-btn" id="themeToggleBtn" aria-label="切换主题"><i class="fas fa-moon"></i></button>
             <button class="floating-btn comment-btn" id="commentBtn" aria-label="评论"><i class="fas fa-comments"></i></button>
-            <button class="floating-btn submit-btn" id="floatingSubmitBtn" aria-label="网站投稿"><i class="fas fa-paper-plane"></i></button>
+            <!-- 投稿按钮已移至侧滑底部，此处移除 -->
             <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
         </div>
 
-        <!-- 音乐播放器 -->
         <div class="music-player" id="musicPlayer">
             <div class="player-top">
                 <div class="cover-section">
@@ -968,7 +958,6 @@
         </div>
         <audio id="audio-element" preload="metadata" style="display:none;"></audio>
 
-        <!-- 搜索模态框 -->
         <div class="search-modal" id="searchModal">
             <div class="modal-content">
                 <div class="search-bar"><button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎"><i id="engineIcon" class="fas fa-search"></i></button><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off"><button class="search-submit-btn">搜索</button></div>
@@ -982,7 +971,6 @@
         </div>
         <div class="engine-tooltip" id="engineTooltip"></div>
 
-        <!-- 星聚笔记 -->
         <div id="notebookModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
@@ -996,7 +984,6 @@
             </div>
         </div>
 
-        <!-- 评论 -->
         <div id="commentModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
@@ -1008,7 +995,6 @@
             </div>
         </div>
 
-        <!-- 投稿 -->
         <div id="submitModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
@@ -1179,7 +1165,6 @@
 
                 banner.innerHTML = `
                     <div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:1200px;margin:0 auto;">
-                        <!-- 文字区域：🍪在左侧 -->
                         <div style="display:flex;align-items:flex-start;gap:10px;justify-content:center;text-align:left;width:100%;">
                             <span style="font-size:22px;flex-shrink:0;line-height:1.5;">🍪</span>
                             <span style="font-size:13px;color:var(--text-secondary, #475569);text-align:left;line-height:1.6;word-break:break-word;flex:1;">
@@ -1187,7 +1172,6 @@
                                 <a href="/pages/others/privacy-terms.html" style="color:var(--primary-color,#4361ee);text-decoration:none;font-weight:500;" target="_blank">隐私政策与用户协议</a>。
                             </span>
                         </div>
-                        <!-- 按钮区域 -->
                         <div style="display:flex;justify-content:space-between;width:100%;gap:12px;">
                             <button class="cookie-reject-btn" style="padding:6px 20px;border:1px solid var(--border-color,#e0e0e0);border-radius:8px;background:transparent;color:var(--text-secondary,#6c757d);cursor:pointer;font-size:13px;transition:all 0.2s;font-family:inherit;flex-shrink:0;">拒绝</button>
                             <button class="cookie-accept-btn" style="padding:6px 20px;border:none;border-radius:8px;background:var(--primary-color,#4361ee);color:#fff;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s;font-family:inherit;flex-shrink:0;">接受</button>
