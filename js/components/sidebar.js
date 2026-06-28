@@ -1,4 +1,4 @@
-/* sidebar.js */
+/* sidebar.js - 侧边栏底部福利替换为投稿 */
 (function() {
     const CATEGORIES_DATA = [
         { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
@@ -36,9 +36,10 @@
         ] }
     ];
 
+    // ===== 底部按钮配置：移除 gift（羊毛福利），替换为 submit（网站投稿） =====
     const FOOTER_BUTTONS = [
         { icon: 'fas fa-pen', action: 'notebook', color: '#8b5cf6' },
-        { icon: 'fas fa-gift', action: 'gift', color: '#f97316' },
+        { icon: 'fas fa-paper-plane', action: 'submit', color: '#06b6d4' },  // 替换福利为投稿
         { icon: 'fas fa-info-circle', action: 'about', color: '#ec4899' },
         { icon: 'fab fa-qq', action: 'qq', color: '#3b82f6' }
     ];
@@ -249,13 +250,35 @@
             }
         }
 
+        // ===== 底部按钮动作：移除 gift，新增 submit =====
         handleFooterAction(action) {
             switch (action) {
                 case 'notebook':
                     if (window.showNotebookModal) window.showNotebookModal();
                     break;
-                case 'gift':
-                    window.open('./pages/tools/羊毛福利.html', '_blank');
+                case 'submit':
+                    // 打开网站投稿弹窗
+                    if (window.submitModule && typeof window.submitModule.show === 'function') {
+                        window.submitModule.show();
+                    } else if (window.Starlink && window.Starlink.submit && typeof window.Starlink.submit.show === 'function') {
+                        window.Starlink.submit.show();
+                    } else {
+                        // 降级：直接显示投稿模态框
+                        const submitModal = document.getElementById('submitModal');
+                        if (submitModal) {
+                            submitModal.classList.add('active');
+                            if (window.Starlink && window.Starlink.app) {
+                                window.Starlink.app.registerModal({
+                                    hide: function() {
+                                        submitModal.classList.remove('active');
+                                    },
+                                    isVisible: function() {
+                                        return submitModal.classList.contains('active');
+                                    }
+                                });
+                            }
+                        }
+                    }
                     break;
                 case 'about':
                     if (window.aboutModule && window.aboutModule.show) window.aboutModule.show();
@@ -263,7 +286,8 @@
                 case 'qq':
                     window.open('https://qm.qq.com/q/HxcjhEclyM', '_blank');
                     break;
-                default: break;
+                default:
+                    break;
             }
         }
 
