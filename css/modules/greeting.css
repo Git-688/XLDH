@@ -1,4 +1,4 @@
-/* greeting.css - 修复次要节日自适应显示完整 */
+/* greeting.css - 问候与木鱼样式（已清理冗余） */
 .greeting-section {
     padding: var(--section-margin-sm) 0;
     position: relative;
@@ -127,7 +127,7 @@
     color: white;
 }
 
-/* ===== 次要节日列表 - 自适应完整显示 ===== */
+/* ===== 次要节日列表 ===== */
 .secondary-holidays-list {
     display: flex;
     flex-wrap: wrap;
@@ -147,12 +147,6 @@
     flex-shrink: 0;
 }
 .secondary-name {
-    /* 修改：移除宽度限制，允许文本完整显示并自动换行 */
-    max-width: none;
-    overflow: visible;
-    text-overflow: clip;
-    white-space: normal;
-    word-break: break-word;
     display: inline-block;
 }
 
@@ -392,7 +386,7 @@
     }
     #currentTime { font-size: 0.75em; }
     .expand-holiday-btn { font-size: 7px; padding: 1px 6px; }
-    .secondary-name { max-width: none; } /* 确保完全显示 */
+    .secondary-name { max-width: none; }
 }
 
 #holidayCountdown.active-countdown {
