@@ -64,7 +64,7 @@
         .content-layout { display: flex; gap: 12px; flex: 1; min-height: 0; flex-direction: row !important; }
         .sidebar, .main-content { background: #f8fafc; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; overflow: hidden; min-width: 0; flex: 1; width: 50%; }
         .sub-list, .site-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-        .rank-list, .feedback-list, .submissions-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+        .feedback-list, .submissions-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
         .skeleton-item { background: #f1f5f9; border-radius: 8px; height: 36px; animation: skeleton-pulse 1.5s ease-in-out infinite; }
         @keyframes skeleton-pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
         .sub-item { background: #fff; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -246,7 +246,6 @@
             <div class="tabs-row">
                 <div class="flex-row">
                     <button class="tab-btn active" data-tab="manage">数据管理</button>
-                    <button class="tab-btn" data-tab="rank">点击排行</button>
                     <button class="tab-btn" data-tab="feedback">用户反馈</button>
                     <button class="tab-btn" data-tab="submissions">待审核</button>
                     <button class="tab-btn" data-tab="announcement">公告编辑</button>
@@ -283,11 +282,6 @@
                         <div class="site-list" id="siteList" style="flex:1;overflow-y:auto;"></div>
                     </div>
                 </div>
-            </div>
-
-            <div id="rankTab" class="tab-panel hidden">
-                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;"><button class="primary sm" id="sortRankBtn">按点击数降序</button></div>
-                <div class="rank-list" id="rankList"></div>
             </div>
 
             <div id="feedbackTab" class="tab-panel hidden">
@@ -344,10 +338,9 @@
         </div>
     </div>
 
-    <!-- ===== 第三方资源（优化：仅加载 solid + brands） ===== -->
+    <!-- ===== 第三方资源 ===== -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/js/all.min.js"></script>
-    <!-- 注：JS 全量加载，但 CSS 已移除 regular，图标渲染由 JS 处理，不影响 -->
     <script src="./js/admin.js"></script>
 </body>
 </html>
