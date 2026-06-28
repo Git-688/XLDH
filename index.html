@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（添加 SRI 完整性哈希） -->
+<!-- index.html - 完整版（SRI + Cookie横幅 + 按需加载） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -70,7 +70,7 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 
-    <!-- ===== 基础样式（内联） ===== -->
+    <!-- ===== 核心样式内联（防止闪烁） ===== -->
     <style>
         .scroll-progress {
             position: fixed;
@@ -1058,12 +1058,15 @@
         </div>
     </main>
 
-    <!-- ===== 第三方 JavaScript（添加 SRI） ===== -->
+    <!-- ============================================================ -->
+    <!-- 第三方 JavaScript（添加 SRI）                                   -->
+    <!-- ============================================================ -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"
             integrity="sha384-aVQ/YIxqVnPn/ZQmmNw3YgJg1BqR5wrgKkfBz8S2eW/CbM1VRYf/3EyErFWm5vzY"
             crossorigin="anonymous"></script>
     <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
+    <!-- ===== 滚动进度条 ===== -->
     <script>
         (function() {
             const progressBar = document.getElementById('scrollProgress');
@@ -1080,6 +1083,7 @@
         })();
     </script>
 
+    <!-- ===== KaTeX ===== -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"
             integrity="sha384-EqE63i/iP+U4F9VrQBsNwSUxKArDGrWpcxdW2RlDVGzNb8T3ObM7aaRhJ9sKQe18"
             crossorigin="anonymous"></script>
@@ -1087,6 +1091,7 @@
             integrity="sha384-Kk1K6D3bR3xHWH1FkCgvL6F6GHSsPJhxN7ddvFvcn+8PBK4TVOL0w1pYuvqZusNx"
             crossorigin="anonymous"></script>
 
+    <!-- ===== 核心 JavaScript 模块 ===== -->
     <script defer src="./js/constants.js"></script>
     <script defer src="./js/utils.js"></script>
     <script defer src="./js/toast.js"></script>
@@ -1111,6 +1116,7 @@
     <script defer src="./js/xfyy/music-player.js"></script>
     <script defer src="./js/xfyy/music-main.js"></script>
 
+    <!-- ===== Waline 评论 ===== -->
     <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"
             integrity="sha384-3FNBbRc6n08e7JxP2hLs0jzA/FRO6gQYRl9wAWNfgyhYgPxKv2e6lB3d4hJw9c6P"
             crossorigin="anonymous"></script>
@@ -1120,6 +1126,148 @@
     <script defer src="./js/modules/theme.js"></script>
     <script defer src="./js/cursor2.js"></script>
 
+    <!-- ============================================================ -->
+    <!-- Cookie 使用声明横幅（内联版本）                                -->
+    <!-- ============================================================ -->
+    <script>
+        (function() {
+            'use strict';
+            const CONSENT_KEY = 'cookie_consent';
+            const CONSENT_VALUE = 'accepted';
+
+            function hasConsented() {
+                try {
+                    return localStorage.getItem(CONSENT_KEY) === CONSENT_VALUE;
+                } catch { return false; }
+            }
+
+            function setConsented() {
+                try {
+                    localStorage.setItem(CONSENT_KEY, CONSENT_VALUE);
+                    const expiry = new Date();
+                    expiry.setDate(expiry.getDate() + 365);
+                    document.cookie = CONSENT_KEY + '=' + CONSENT_VALUE + '; expires=' + expiry.toUTCString() + '; path=/; SameSite=Lax';
+                } catch(e) {}
+            }
+
+            function rejectConsent() {
+                try {
+                    localStorage.setItem(CONSENT_KEY, 'rejected');
+                    document.cookie = CONSENT_KEY + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                } catch(e) {}
+            }
+
+            function createBanner() {
+                if (hasConsented()) return;
+                try {
+                    if (localStorage.getItem(CONSENT_KEY) === 'rejected') return;
+                } catch(e) {}
+
+                const banner = document.createElement('div');
+                banner.id = 'cookieBanner';
+                banner.setAttribute('role', 'dialog');
+                banner.setAttribute('aria-label', 'Cookie 使用声明');
+                banner.style.cssText = `
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    z-index: 99999;
+                    background: var(--bg-card, #ffffff);
+                    border-top: 1px solid var(--border-color, #e0e0e0);
+                    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+                    padding: 12px 20px;
+                    transform: translateY(100%);
+                    transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                    font-size: 13px;
+                    line-height: 1.5;
+                    color: var(--text-primary, #1e293b);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 10px;
+                `;
+                banner.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:12px;width:100%;max-width:1200px;flex-wrap:wrap;justify-content:center;">
+                        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:200px;">
+                            <span style="font-size:22px;flex-shrink:0;">🍪</span>
+                            <span style="font-size:13px;color:var(--text-secondary, #475569);">
+                                我们使用 Cookie 来优化您的浏览体验。
+                                <a href="/pages/others/privacy-terms.html" style="color:var(--primary-color,#4361ee);text-decoration:none;font-weight:500;" target="_blank">隐私政策与用户协议</a>
+                            </span>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;">
+                            <button class="cookie-reject-btn" style="
+                                padding:6px 16px;
+                                border:1px solid var(--border-color, #e0e0e0);
+                                border-radius:8px;
+                                background:transparent;
+                                color:var(--text-secondary, #6c757d);
+                                cursor:pointer;
+                                font-size:13px;
+                                transition:all 0.2s;
+                                font-family:inherit;
+                            ">拒绝</button>
+                            <button class="cookie-accept-btn" style="
+                                padding:6px 20px;
+                                border:none;
+                                border-radius:8px;
+                                background:var(--primary-color, #4361ee);
+                                color:#fff;
+                                cursor:pointer;
+                                font-size:13px;
+                                font-weight:500;
+                                transition:all 0.2s;
+                                font-family:inherit;
+                            ">接受</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(banner);
+
+                const acceptBtn = banner.querySelector('.cookie-accept-btn');
+                const rejectBtn = banner.querySelector('.cookie-reject-btn');
+
+                const accept = function() {
+                    setConsented();
+                    banner.style.transform = 'translateY(100%)';
+                    setTimeout(function() { if (banner.parentNode) banner.parentNode.removeChild(banner); }, 400);
+                    if (window.toast) window.toast.show('✅ 已接受 Cookie 使用', 'success', 2000);
+                };
+
+                const reject = function() {
+                    rejectConsent();
+                    banner.style.transform = 'translateY(100%)';
+                    setTimeout(function() { if (banner.parentNode) banner.parentNode.removeChild(banner); }, 400);
+                    if (window.toast) window.toast.show('已拒绝 Cookie，部分功能可能受限', 'info', 3000);
+                };
+
+                acceptBtn.addEventListener('click', accept);
+                rejectBtn.addEventListener('click', reject);
+
+                // 键盘支持
+                acceptBtn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); accept(); }
+                });
+                rejectBtn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reject(); }
+                });
+
+                requestAnimationFrame(function() {
+                    banner.style.transform = 'translateY(0)';
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', createBanner);
+            } else {
+                createBanner();
+            }
+        })();
+    </script>
+
+    <!-- ===== Service Worker 注册 ===== -->
     <script>
         if ('serviceWorker' in navigator) {
             let swUpdateReloading = false;
