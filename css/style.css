@@ -1,4 +1,4 @@
-/* style.css - 星聚导航全局样式（完整版，含壁纸偏移修复、aspect-ratio、懒加载优化） */
+/* style.css - 星聚导航全局样式（完整版，已清理冗余） */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -50,6 +50,7 @@
     --acrylic-light-blur: blur(10px) saturate(110%);
 }
 
+/* ===== 深色模式（统一使用 .dark-mode 类，已移除重复的 @media 块） ===== */
 .dark-mode {
     --text-primary: #f8f9fa;
     --text-secondary: #adb5bd;
@@ -107,6 +108,7 @@ p {
     font-weight: 600;
 }
 
+/* ===== Navbar ===== */
 .navbar {
     position: fixed;
     top: 0;
@@ -153,11 +155,7 @@ p {
     color: var(--text-primary);
 }
 
-.nav-actions {
-    display: flex;
-    gap: 8px;
-}
-
+/* ===== Nav 按钮（仅布局，交互样式由 navbar.css 负责） ===== */
 .nav-btn {
     width: 36px;
     height: 36px;
@@ -166,18 +164,18 @@ p {
     background: var(--bg-secondary);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 14px;
 }
 
-.nav-btn:hover {
-    background: var(--primary-color);
-    color: white;
+.nav-actions {
+    display: flex;
+    gap: 8px;
 }
 
+/* ===== 主体内容 ===== */
 .main-content {
     margin-top: 60px;
     min-height: calc(100vh - 120px);
@@ -208,6 +206,7 @@ p {
     .container, .container-fluid { padding: 0 var(--container-padding-xl); }
 }
 
+/* ===== 浮动按钮 ===== */
 .floating-buttons {
     position: fixed;
     bottom: 24px;
@@ -274,19 +273,29 @@ p {
     .floating-btn { width: 40px; height: 40px; font-size: 16px; }
 }
 
-@media (prefers-color-scheme: dark) {
-    .floating-btn { background: #2d2d2d; color: rgba(255,255,255,0.9); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-    .floating-btn:hover { background: #383838; }
-    .back-to-top { color: #ff6b6b; }
-    .back-to-top:hover { color: #ff5252; }
-    .refresh-btn { color: #34d399; }
-    .weather-btn { color: #6d8cff; }
-    .weather-btn:hover { color: #5a7aff; }
-    .activity-btn { color: #ff8c5a; }
-    .floating-btn.submit-btn { color: #22d3ee; }
-    .floating-btn.submit-btn:hover { color: #67e8f9; }
+/* ===== 深色模式浮动按钮 ===== */
+.dark-mode .floating-btn {
+    background: #2d2d2d;
+    color: rgba(255,255,255,0.9);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
+.dark-mode .floating-btn:hover {
+    background: #383838;
+}
+.dark-mode .back-to-top {
+    color: #ff6b6b;
+}
+.dark-mode .back-to-top:hover {
+    color: #ff5252;
+}
+.dark-mode .refresh-btn { color: #34d399; }
+.dark-mode .weather-btn { color: #6d8cff; }
+.dark-mode .weather-btn:hover { color: #5a7aff; }
+.dark-mode .activity-btn { color: #ff8c5a; }
+.dark-mode .floating-btn.submit-btn { color: #22d3ee; }
+.dark-mode .floating-btn.submit-btn:hover { color: #67e8f9; }
 
+/* ===== Feedback Modal ===== */
 .feedback-modal {
     position: fixed;
     top: 0;
@@ -371,6 +380,7 @@ p {
 }
 .feedback-modal-body::-webkit-scrollbar { display: none; }
 
+/* ===== Toast ===== */
 .toast-manager-container {
     position: fixed;
     bottom: 20px;
@@ -427,6 +437,7 @@ p {
     .toast-content { font-size: 0.7rem; white-space: normal; word-break: keep-all; }
 }
 
+/* ===== Submit Modal ===== */
 #submitModal .form-row { margin-bottom: 10px; }
 #submitModal .form-row label {
     display: block;
@@ -494,6 +505,7 @@ p {
     transform: translateY(-1px);
 }
 .submit-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .fetch-info-btn, .check-url-btn {
     padding: 8px 14px;
     border: 1px solid var(--border-color);
@@ -541,6 +553,7 @@ p {
     border: 1px solid rgba(245,158,11,0.2);
 }
 
+/* ===== Notebook Modal ===== */
 #notebookModal {
     align-items: center;
     justify-content: flex-start;
@@ -626,6 +639,7 @@ p {
     #submitModal .feedback-modal-content { max-height: calc(100vh - 70px); }
 }
 
+/* ===== Dark Mode - Notebook & Submit ===== */
 .dark-mode .notebook-item {
     background: rgba(40,40,40,0.8);
     border-color: rgba(255,255,255,0.1);
@@ -740,6 +754,7 @@ p {
 .dark-mode .security-detail { color: var(--text-secondary); }
 .dark-mode .security-hint { color: #c0c0c0; }
 
+/* ===== Dark Mode - General ===== */
 .dark-mode body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
@@ -753,6 +768,7 @@ p {
     border-color: var(--border-color);
 }
 
+/* ===== Skeleton ===== */
 .skeleton {
     background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border-color) 50%, var(--bg-secondary) 75%);
     background-size: 200% 100%;
@@ -935,7 +951,7 @@ p {
 }
 .dark-mode .icon-container { border-color: var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
-/* ===== 图片优化：aspect-ratio 防布局偏移 ===== */
+/* ===== 图片优化 ===== */
 img:not(.lazy-icon):not(.js-img-fallback) {
     max-width: 100%;
     height: auto;
@@ -1014,7 +1030,6 @@ img:not(.lazy-icon):not(.js-img-fallback) {
     user-select: none;
 }
 
-/* 修复壁纸偏移：carousel-track 和 slide 使用 flex 无间距 */
 .carousel-track {
     display: flex;
     flex-wrap: nowrap;
@@ -1090,7 +1105,7 @@ img:not(.lazy-icon):not(.js-img-fallback) {
     opacity: 1;
 }
 
-/* ===== 轮播图箭头 ===== */
+/* ===== 轮播箭头 ===== */
 .carousel-arrow {
     position: absolute;
     top: 50%;
