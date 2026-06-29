@@ -1,4 +1,4 @@
-/* about.js */
+/* about.js - 私密空间链接已替换为 https://zzzskj.ccwu.cc */
 if (typeof Utils === 'undefined') {
     window.Utils = {
         escapeHtml: function(str) {
@@ -153,7 +153,7 @@ class AboutModule {
                             </button>
                             <button class="about-social-btn space-btn tooltip" id="aboutPrivateSpaceBtn">
                                 <i class="fas fa-user-secret"></i>
-                                <span class="tooltip-text">私密空间</span>
+                                <span class="tooltip-text">站长专属空间</span>
                             </button>
                         </div>
                         <button class="about-close-btn" id="aboutCloseBtn">关闭</button>
@@ -210,11 +210,14 @@ class AboutModule {
                 setTimeout(() => { this.showDonateModal(); }, 300);
             });
         }
+        // ===== 修改：私密空间链接替换为 https://zzzskj.ccwu.cc =====
         const privateSpaceBtn = document.getElementById('aboutPrivateSpaceBtn');
         if (privateSpaceBtn) {
             privateSpaceBtn.addEventListener('click', () => {
                 this.hide();
-                setTimeout(() => { window.location.href = './pages/others/smkj.html'; }, 300);
+                setTimeout(() => { 
+                    window.open('https://zzzskj.ccwu.cc', '_blank');
+                }, 300);
             });
         }
         const closeBtn = document.getElementById('aboutCloseBtn');
