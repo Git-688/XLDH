@@ -1,4 +1,4 @@
-/* navigation.js - 优化版：结构缓存、智能预加载、搜索状态记忆、内存管理 */
+/* navigation.js - 完整版（增加重试与错误降级） */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -11,10 +11,11 @@ class OptimizedNavigation {
             AUTO_REFRESH_INTERVAL: 5 * 60 * 1000,
             BATCH_SIZE: 8,
             BATCH_DELAY: 200,
-            STRUCTURE_CACHE_TTL: 10 * 60 * 1000,  // 结构缓存10分钟
+            STRUCTURE_CACHE_TTL: 10 * 60 * 1000,
             PRELOAD_DELAY: 300,
             MAX_RETRY: 3,
             RETRY_DELAY: 500,
+            RETRY_BACKOFF: 2,
         };
 
         // ===== 状态变量 =====
@@ -29,30 +30,21 @@ class OptimizedNavigation {
         this.isSearching = false;
         this.searchInput = null;
         this.searchTimer = null;
-        this.searchQuery = '';           // 保存当前搜索词，用于恢复
-
-        // ===== 分页状态 =====
+        this.searchQuery = '';
         this.currentPage = 1;
         this.isLoadingMore = false;
         this.hasMore = true;
         this.currentSites = [];
         this.scrollListener = null;
         this.hasShownNoMoreToast = false;
-
-        // ===== 计时器 =====
         this.updateTimer = null;
         this.autoRefreshTimer = null;
-
-        // ===== DOM 引用 =====
         this.imgObserver = null;
         this._scrollPreloadCleanup = null;
-
-        // ===== 图标缓存 =====
         this.iconCache = new Map();
         this.iconLoadingSet = new Set();
         this.iconFailedSet = new Set();
 
-        // ===== 组件挂载 =====
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
     }
@@ -215,11 +207,12 @@ class OptimizedNavigation {
     }
 
     // ========================================
-    // 数据加载（含缓存 & 重试）
+    // 数据加载（含重试）
     // ========================================
 
     async _fetchWithRetry(url, options = {}, retries = this.CONFIG.MAX_RETRY) {
         let lastError = null;
+        let delay = this.CONFIG.RETRY_DELAY;
         for (let attempt = 0; attempt < retries; attempt++) {
             try {
                 const response = await Utils.safeFetch(url, {
@@ -232,7 +225,8 @@ class OptimizedNavigation {
             } catch (error) {
                 lastError = error;
                 if (attempt < retries - 1) {
-                    await new Promise(r => setTimeout(r, this.CONFIG.RETRY_DELAY * (attempt + 1)));
+                    const waitTime = delay * Math.pow(this.CONFIG.RETRY_BACKOFF, attempt);
+                    await new Promise(r => setTimeout(r, waitTime));
                 }
             }
         }
@@ -279,7 +273,6 @@ class OptimizedNavigation {
 
     async loadBatchSites(subIds, forceRefresh = false) {
         if (!subIds || !subIds.length) return {};
-
         if (!forceRefresh) {
             const allCached = subIds.every(id => this.siteCache.has(id));
             if (allCached) {
@@ -288,26 +281,22 @@ class OptimizedNavigation {
                 return result;
             }
         }
-
         const uncachedIds = subIds.filter(id => !this.siteCache.has(id));
         if (!uncachedIds.length) {
             const result = {};
             subIds.forEach(id => { result[id] = this.siteCache.get(id); });
             return result;
         }
-
         try {
             const idsParam = uncachedIds.join(',');
             const response = await this._fetchWithRetry(`${this.apiBase}/navigation/batch-sites?ids=${idsParam}`);
             const data = await response.json();
-
             if (data?.data) {
                 for (const [subId, sites] of Object.entries(data.data)) {
                     const id = parseInt(subId);
                     if (!isNaN(id)) this.siteCache.set(id, sites);
                 }
             }
-
             const result = {};
             subIds.forEach(id => {
                 result[id] = this.siteCache.get(id) || [];
@@ -519,13 +508,31 @@ class OptimizedNavigation {
         if (container) container.innerHTML = this._generateSkeletonHTML();
     }
 
-    showError() {
+    showError(message = '加载失败，请刷新重试') {
         const container = document.getElementById('level3Content');
-        if (container) container.innerHTML = '<div class="empty-state">加载失败，请刷新重试</div>';
+        if (container) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <h3 class="empty-title">${this._escapeHtml(message)}</h3>
+                    <p class="empty-subtitle">点击下方按钮重试</p>
+                    <button onclick="window.optimizedNavigation?.refresh()" style="
+                        margin-top: 12px;
+                        padding: 8px 20px;
+                        background: var(--primary-color);
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 13px;
+                    ">重新加载</button>
+                </div>
+            `;
+        }
     }
 
     // ========================================
-    // 站点卡片创建（含点击计数、死链报告）
+    // 站点卡片创建
     // ========================================
 
     _createSiteCard(site, index, isSearchResult = false, keyword = '') {
@@ -567,7 +574,7 @@ class OptimizedNavigation {
             </div>
         `;
 
-        // —— 点击计数 ——
+        // 点击计数
         card.addEventListener('click', async (e) => {
             if (e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
@@ -625,7 +632,7 @@ class OptimizedNavigation {
             }, 100);
         });
 
-        // —— 死链报告 ——
+        // 死链报告
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
@@ -688,14 +695,13 @@ class OptimizedNavigation {
     }
 
     // ========================================
-    // 分类切换逻辑（核心优化点）
+    // 分类切换逻辑
     // ========================================
 
     async selectLevel1(level1, isUserClick = false) {
         if (this.selectedLevel1 === level1) return;
         this.isNavigationClick = true;
 
-        // 更新一级按钮
         document.querySelectorAll('.level1-btn').forEach(b => b.classList.toggle('active', b.dataset.level1 === level1));
         this.selectedLevel1 = level1;
         this.renderLevel2(level1);
@@ -703,7 +709,6 @@ class OptimizedNavigation {
 
         const firstSub = this.getFirstSubCategory(level1);
         if (firstSub) {
-            // —— 修复点1：同步更新状态和UI ——
             this.selectedLevel2 = firstSub.id;
             document.querySelectorAll('.level2-btn').forEach(el => {
                 el.classList.toggle('active', parseInt(el.dataset.level2) === firstSub.id);
@@ -714,7 +719,6 @@ class OptimizedNavigation {
             await this.renderLevel3(this.selectedLevel1, firstSub.id);
             this.updateSubcategoryCount(firstSub.id);
 
-            // —— 优化：后台预加载该分类下所有子分类数据 ——
             const allSubIds = this.structure[level1].subcategories.map(s => s.id);
             const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
             if (otherSubIds.length) {
@@ -743,7 +747,6 @@ class OptimizedNavigation {
         this.selectedLevel2 = subcategoryId;
         this.hasShownNoMoreToast = false;
 
-        // 强制刷新
         const sites = await this.loadSites(subcategoryId, true);
         this.currentSites = sites;
         await this.renderLevel3(this.selectedLevel1, subcategoryId);
@@ -752,7 +755,6 @@ class OptimizedNavigation {
         this._updateSubcategoryCountDisplay(subcategoryId, validCount);
         await this.calculateTotalValidSites();
 
-        // 重置自动刷新计时器
         if (this.autoRefreshTimer) {
             clearInterval(this.autoRefreshTimer);
             this.startAutoRefresh();
@@ -761,7 +763,7 @@ class OptimizedNavigation {
     }
 
     // ========================================
-    // 搜索功能（含状态记忆）
+    // 搜索功能
     // ========================================
 
     createSearchBox() {
@@ -848,7 +850,6 @@ class OptimizedNavigation {
         }
     }
 
-    // —— 修复点2：清除搜索后恢复之前状态 ——
     clearSearch() {
         if (!this.isSearching && !this.searchQuery) return;
         this.isSearching = false;
@@ -856,7 +857,6 @@ class OptimizedNavigation {
         const hint = document.getElementById('navSearchHint');
         if (hint) hint.style.display = 'none';
 
-        // 恢复当前选中的子分类
         if (this.selectedLevel2) {
             this.selectLevel2(this.selectedLevel2, null, false);
         } else if (this.selectedLevel1 && this.structure?.[this.selectedLevel1]) {
@@ -1073,8 +1073,7 @@ class OptimizedNavigation {
             this.startAutoRefresh();
         } catch (error) {
             console.error('导航初始化失败:', error);
-            this.showError();
-            // 降级：从缓存恢复结构
+            this.showError('导航数据加载失败，请检查网络后刷新重试');
             if (this.structure) {
                 this.renderNavigation();
                 const firstCat = this.getFirstCategory();
@@ -1084,17 +1083,27 @@ class OptimizedNavigation {
                     const firstSub = this.getFirstSubCategory(firstCat);
                     if (firstSub) {
                         this.selectedLevel2 = firstSub.id;
-                        this._renderEmptyState();
-                        // 延迟重试加载站点
-                        setTimeout(() => {
-                            this.loadSites(firstSub.id, true).then(sites => {
+                        try {
+                            const sites = this.siteCache.get(firstSub.id) || [];
+                            if (sites.length) {
                                 this.currentSites = sites;
-                                this.renderLevel3(firstCat, firstSub.id);
-                            }).catch(() => {});
-                        }, 2000);
+                                await this.renderLevel3(firstCat, firstSub.id);
+                            } else {
+                                this._renderEmptyState();
+                                setTimeout(() => {
+                                    this.loadSites(firstSub.id, true).then(s => {
+                                        this.currentSites = s;
+                                        this.renderLevel3(firstCat, firstSub.id);
+                                    }).catch(() => {});
+                                }, 3000);
+                            }
+                        } catch (e2) {
+                            this._renderEmptyState();
+                        }
                     }
                 }
             }
+            this.isInitialized = true;
         }
     }
 
