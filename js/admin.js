@@ -1,4 +1,4 @@
-/* admin.js - 移除点击排行榜功能 */
+/* admin.js - 完整版（含导出类型选择） */
 (function() {
     'use strict';
 
@@ -27,6 +27,7 @@
     function notifyNavRefresh() {
         try {
             localStorage.setItem('nav_refresh_required', Date.now());
+            document.dispatchEvent(new CustomEvent('navRefreshRequested'));
         } catch (e) {}
     }
 
@@ -1007,21 +1008,29 @@
         } catch (err) { showToast('忽略失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
+    // ===== 修改：导出功能支持类型选择 =====
     async function exportFullData() {
+        const exportType = document.getElementById('exportType')?.value || 'navigation';
         try {
-            const response = await fetch(`${API_BASE}/admin/export`, {
-                headers: { 'Authorization': `Bearer ${token}`, 'X-CSRF-Token': csrfToken }
+            const response = await fetch(`${API_BASE}/admin/export?type=${exportType}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'X-CSRF-Token': csrfToken
+                }
             });
             if (!response.ok) throw new Error('导出失败');
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `navigation_full_${Date.now()}.json`;
+            const filename = exportType === 'all' ? 'navigation_full' : 'navigation_data';
+            a.download = `${filename}_${Date.now()}.json`;
             a.click();
             URL.revokeObjectURL(url);
             showToast('导出成功', 'success');
-        } catch (err) { showToast('导出失败', 'error'); }
+        } catch (err) {
+            showToast('导出失败: ' + err.message, 'error');
+        }
     }
 
     async function importData() {
@@ -1474,7 +1483,7 @@
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
             style.id = 'admin-global-styles';
-            style.textContent = ``;
+            style.textContent = '';
             document.head.appendChild(style);
         }
     }
