@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（后台管理链接替换书签） -->
+<!-- index.html - 完整版（后台管理链接替换书签，已移除 Service Worker 注册） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -1476,32 +1476,6 @@
             });
 
         })();
-    </script>
-
-    <!-- ===== Service Worker 注册 ===== -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            let swUpdateReloading = false;
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
-                    console.log('Service Worker 注册成功，作用域:', registration.scope);
-                    navigator.serviceWorker.addEventListener('message', function(event) {
-                        if (event.data && event.data.type === 'SW_UPDATED' && !swUpdateReloading) {
-                            swUpdateReloading = true;
-                            console.log('检测到新版本 Service Worker，即将自动刷新');
-                            if (window.toast) {
-                                window.toast.show('发现新版本，自动刷新中...', 'info', 2000);
-                                setTimeout(function() { window.location.reload(); }, 1500);
-                            } else {
-                                setTimeout(function() { window.location.reload(); }, 500);
-                            }
-                        }
-                    });
-                }).catch(function(error) {
-                    console.error('Service Worker 注册失败:', error);
-                });
-            });
-        }
     </script>
 
 </body>
