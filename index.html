@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（模态框头部图标颜色匹配按钮） -->
+<!-- index.html - 完整版（后台管理链接替换书签） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -832,9 +832,10 @@
                         <button class="fish-btn" data-type="health" aria-label="健康"><i class="fas fa-heart"></i><span class="fish-count" id="healthCount">0</span></button>
                     </div>
                 </div>
-                <a href="./pages/others/sq.html" class="bookmark-btn" aria-label="我的书签" target="_blank">
-                    <i class="fas fa-bookmark"></i>
-                    <span>我的书签</span>
+                <!-- ===== 修改：我的书签 → 后台管理 ===== -->
+                <a href="/admin.html" class="bookmark-btn" aria-label="后台管理" target="_blank">
+                    <i class="fas fa-cog"></i>
+                    <span>后台管理</span>
                 </a>
             </div>
         </section>
@@ -1102,7 +1103,7 @@
             </div>
         </div>
 
-        <!-- ===== 评论模态框（图标颜色改为微信绿） ===== -->
+        <!-- ===== 评论模态框 ===== -->
         <div id="commentModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
@@ -1165,7 +1166,7 @@
         </div>
 
         <!-- ============================================================ -->
-        <!-- ===== 排行榜模态框（标题已改为“访问排行榜”，图标金色） ===== -->
+        <!-- ===== 排行榜模态框 ===== -->
         <!-- ============================================================ -->
         <div id="rankModal" class="feedback-modal">
             <div class="feedback-modal-content">
