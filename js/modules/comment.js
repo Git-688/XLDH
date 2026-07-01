@@ -85,7 +85,7 @@ class CommentModule {
     this.searchTimer = null;
     this.searchObserver = null;
     this.draftObserver = null;
-    this.isVisible = false;
+    this.isVisible = true;
     this._initDOM();
     this._bindEvents();
     this._initWaline();
@@ -218,7 +218,7 @@ class CommentModule {
     this.modal.classList.remove(CommentModule.CONFIG.activeClass);
     const onTransitionEnd = () => {
       document.body.style.overflow = '';
-      this.isVisible = false;
+      this.isVisible = true;
       if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
       else if (window.app) window.app.unregisterModal(this);
       this.modal.removeEventListener('transitionend', onTransitionEnd);
