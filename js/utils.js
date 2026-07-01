@@ -1,4 +1,4 @@
-/* utils.js - 增强错误处理（统一 handleApiError，增加重试机制） */
+/* utils.js - 移除重试机制，使用简单 fetch */
 (function(window) {
     const Utils = {};
 
@@ -175,9 +175,9 @@
         return `${apiBase}/image-proxy?${params}`;
     };
 
-    // ===== 统一错误处理（核心优化） =====
+    // ===== 统一错误处理 =====
     const C = window.APP_CONSTANTS || {
-        API: { RETRY_COUNT: 2, RETRY_DELAY: 500, BASE_TIMEOUT: 15000 }
+        API: { BASE_TIMEOUT: 15000 }
     };
 
     Utils.handleApiError = function(error, defaultMessage = '操作失败，请稍后重试', showToast = true) {
@@ -222,47 +222,36 @@
         return message;
     };
 
-    // ===== 带重试的 fetch =====
+    // ===== 简单 fetch（无重试） =====
     Utils.safeFetch = async function(url, options = {}) {
-        const maxRetries = options.retries || C.API.RETRY_COUNT || 2;
-        const retryDelay = options.retryDelay || C.API.RETRY_DELAY || 500;
         const timeout = options.timeout || C.API.BASE_TIMEOUT || 15000;
-        let lastError = null;
-
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), timeout);
-                const response = await fetch(url, { ...options, signal: controller.signal });
-                clearTimeout(timeoutId);
-                if (!response.ok) {
-                    const errorText = await response.text().catch(() => '');
-                    throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 100)}`);
-                }
-                return response;
-            } catch (error) {
-                lastError = error;
-                if (attempt < maxRetries && !options._noRetry) {
-                    await new Promise(r => setTimeout(r, retryDelay * (attempt + 1)));
-                    continue;
-                }
-                break;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        try {
+            const response = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (!response.ok) {
+                const errorText = await response.text().catch(() => '');
+                throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 100)}`);
             }
+            return response;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            throw error;
         }
-        throw lastError || new Error('请求失败');
     };
 
-    // ===== 不显示 Toast 的静默 fetch（用于后台任务） =====
+    // ===== 静默 fetch（不抛错，不显示 Toast） =====
     Utils.safeFetchSilent = async function(url, options = {}) {
         try {
-            return await Utils.safeFetch(url, { ...options, _noRetry: true });
+            return await Utils.safeFetch(url, options);
         } catch (error) {
             console.warn('[Silent Fetch]', error.message);
             return null;
         }
     };
 
-    // ===== 统一错误边界（用于模块） =====
+    // ===== 统一错误边界 =====
     Utils.wrapAsync = function(fn, fallback = null, errorMessage = '操作失败') {
         return async function(...args) {
             try {
@@ -274,7 +263,7 @@
         };
     };
 
-    // ===== 全局错误监听器（在 main.js 中调用） =====
+    // ===== 全局错误监听器 =====
     Utils.setupGlobalErrorHandler = function() {
         if (window._errorHandlerSetup) return;
         window._errorHandlerSetup = true;
@@ -291,14 +280,12 @@
             const errorMessage = error?.message || msg || '未知错误';
             if (shouldIgnore(errorMessage)) return;
             console.error('[Global Error]', errorMessage);
-            // 显示用户友好提示（防刷屏）
             if (!window._lastErrorTime || Date.now() - window._lastErrorTime > 5000) {
                 window._lastErrorTime = Date.now();
                 if (window.toast && typeof window.toast.show === 'function') {
                     window.toast.show('页面遇到问题，建议刷新页面', 'error');
                 }
             }
-            // 上报错误
             const apiBase = Utils.getApiBase();
             if (apiBase) {
                 try {
