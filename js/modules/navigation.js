@@ -1,4 +1,4 @@
-/* navigation.js - 完整版（增加重试与错误降级） */
+/* navigation.js - 移除重试机制，改为直接请求 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -13,9 +13,6 @@ class OptimizedNavigation {
             BATCH_DELAY: 200,
             STRUCTURE_CACHE_TTL: 10 * 60 * 1000,
             PRELOAD_DELAY: 300,
-            MAX_RETRY: 3,
-            RETRY_DELAY: 500,
-            RETRY_BACKOFF: 2,
         };
 
         // ===== 状态变量 =====
@@ -207,30 +204,20 @@ class OptimizedNavigation {
     }
 
     // ========================================
-    // 数据加载（含重试）
+    // 数据加载（无重试）
     // ========================================
 
-    async _fetchWithRetry(url, options = {}, retries = this.CONFIG.MAX_RETRY) {
-        let lastError = null;
-        let delay = this.CONFIG.RETRY_DELAY;
-        for (let attempt = 0; attempt < retries; attempt++) {
-            try {
-                const response = await Utils.safeFetch(url, {
-                    ...options,
-                    timeout: 15000,
-                    _noRetry: true,
-                });
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return response;
-            } catch (error) {
-                lastError = error;
-                if (attempt < retries - 1) {
-                    const waitTime = delay * Math.pow(this.CONFIG.RETRY_BACKOFF, attempt);
-                    await new Promise(r => setTimeout(r, waitTime));
-                }
-            }
+    async _fetchDirect(url, options = {}) {
+        try {
+            const response = await Utils.safeFetch(url, {
+                ...options,
+                timeout: 15000,
+            });
+            return response;
+        } catch (error) {
+            console.error('请求失败:', error);
+            throw error;
         }
-        throw lastError || new Error('请求失败');
     }
 
     async loadNavigationStructure(forceRefresh = false) {
@@ -239,7 +226,7 @@ class OptimizedNavigation {
             return this.structure;
         }
         try {
-            const response = await this._fetchWithRetry(`${this.apiBase}/navigation/structure`);
+            const response = await this._fetchDirect(`${this.apiBase}/navigation/structure`);
             this.structure = await response.json();
             this.structureCacheTime = now;
             return this.structure;
@@ -257,7 +244,7 @@ class OptimizedNavigation {
             return this.siteCache.get(subcategoryId);
         }
         try {
-            const response = await this._fetchWithRetry(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
+            const response = await this._fetchDirect(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
             const sites = await response.json();
             this.siteCache.set(subcategoryId, sites);
             return sites;
@@ -289,7 +276,7 @@ class OptimizedNavigation {
         }
         try {
             const idsParam = uncachedIds.join(',');
-            const response = await this._fetchWithRetry(`${this.apiBase}/navigation/batch-sites?ids=${idsParam}`);
+            const response = await this._fetchDirect(`${this.apiBase}/navigation/batch-sites?ids=${idsParam}`);
             const data = await response.json();
             if (data?.data) {
                 for (const [subId, sites] of Object.entries(data.data)) {
@@ -823,7 +810,7 @@ class OptimizedNavigation {
         this.showSkeleton();
 
         try {
-            const response = await this._fetchWithRetry(`${this.apiBase}/search?q=${encodeURIComponent(query)}`);
+            const response = await this._fetchDirect(`${this.apiBase}/search?q=${encodeURIComponent(query)}`);
             const results = await response.json();
             container.innerHTML = '';
             if (results.length === 0) {
@@ -987,7 +974,7 @@ class OptimizedNavigation {
 
     async _refreshStructure() {
         try {
-            const response = await this._fetchWithRetry(`${this.apiBase}/navigation/structure`);
+            const response = await this._fetchDirect(`${this.apiBase}/navigation/structure`);
             const newStructure = await response.json();
             if (JSON.stringify(newStructure) !== JSON.stringify(this.structure)) {
                 this.structure = newStructure;
