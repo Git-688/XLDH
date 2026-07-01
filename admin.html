@@ -257,16 +257,6 @@
             <div id="manageTab" class="tab-panel">
                 <div class="action-buttons-row">
                     <button class="logout-btn" id="logoutBtn">退出</button>
-                    <div class="export-select-group">
-                        <button class="secondary" id="exportBtn">📥 导出</button>
-                        <select id="exportType" style="padding:4px 8px; border-radius:6px; border:1px solid #e2e8f0; font-size:12px; background:var(--bg-card, #fff);">
-                            <option value="navigation">仅导航</option>
-                            <option value="all">全部数据</option>
-                        </select>
-                    </div>
-                    <button class="secondary" id="importBtn">📤 导入</button>
-                    <button class="primary" id="refreshNavBtn">🔄 刷新缓存</button>
-                    <button class="primary" id="refreshIconsBtn" style="background:#8b5cf6;">🖼️ 刷新图标</button>
                     <button class="primary" id="addCategoryBtn">+ 一级分类</button>
                 </div>
                 <div class="cat-bar" id="catBar"></div>
@@ -324,17 +314,6 @@
         <div class="modal-body">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3 style="font-size:14px;">📝 投稿详情</h3><button id="closeDetailModalBtn" style="background:none;border:none;font-size:18px;cursor:pointer;">&times;</button></div>
             <div id="submissionDetailContent"></div>
-        </div>
-    </div>
-
-    <div class="modal" id="importModal">
-        <div class="modal-body">
-            <div class="modal-title" style="font-size:14px;margin-bottom:16px;">导入数据</div>
-            <div id="importForm">
-                <div class="form-row" style="margin-bottom:12px;"><label>导入模式</label><select id="importMode"><option value="merge">合并（更新已存在，添加新数据）</option><option value="overwrite">覆盖（清空现有数据）</option></select></div>
-                <div class="form-row" style="margin-bottom:12px;"><label>选择 JSON 文件</label><input type="file" id="importFile" accept=".json"></div>
-            </div>
-            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;"><button class="secondary" id="importCancelBtn">取消</button><button class="primary" id="importConfirmBtn">开始导入</button></div>
         </div>
     </div>
 
