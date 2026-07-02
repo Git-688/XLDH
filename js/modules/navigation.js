@@ -1,4 +1,4 @@
-/* navigation.js - 支持分页、重试、缓存延长、精准刷新 */
+/* navigation.js - 支持分页、重试、缓存延长，移除子分类计数和骨架卡片，移除自动刷新通知 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -18,7 +18,7 @@ class OptimizedNavigation {
 
         this.structure = null;
         this.structureCacheTime = 0;
-        this.siteCache = new Map();      // key: subcategoryId, value: { sites, total, timestamp }
+        this.siteCache = new Map();      // key: subcategoryId_page_limit, value: { sites, total, timestamp }
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
         this.isInitialized = false;
@@ -92,29 +92,12 @@ class OptimizedNavigation {
         const regex = new RegExp(`(${escapedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
         return escapedText.replace(regex, '<mark class="search-highlight">$1</mark>');
     }
-    _generateSkeletonHTML() {
-        let html = '';
-        for (let i = 0; i < this.CONFIG.SKELETON_COUNT; i++) {
-            html += `
-                <div class="site-card skeleton-card">
-                    <div class="card-top">
-                        <div class="icon-container skeleton-icon"></div>
-                        <div class="card-top-right">
-                            <div class="skeleton-btn skeleton" style="width:14px;height:14px;border-radius:3px;"></div>
-                            <div class="views-container">
-                                <div class="skeleton-views skeleton" style="width:30px;height:14px;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="divider-line skeleton-divider"></div>
-                    <div class="card-bottom">
-                        <div class="skeleton-title skeleton"></div>
-                        <div class="skeleton-description skeleton"></div>
-                    </div>
-                </div>
-            `;
+    // 简化的骨架：显示加载中状态（移除卡片骨架）
+    showSkeleton() {
+        const container = document.getElementById('level3Content');
+        if (container) {
+            container.innerHTML = `<div class="loading-state"><div class="loading-spinner"></div><p>加载中...</p></div>`;
         }
-        return html;
     }
 
     // ===== 懒加载 & 图片预加载 =====
@@ -288,29 +271,14 @@ class OptimizedNavigation {
     getFirstCategory() { return this.structure ? Object.keys(this.structure)[0] : null; }
     getFirstSubCategory(level1) { return this.structure?.[level1]?.subcategories?.[0] || null; }
 
+    // 移除子分类计数功能，此方法保留为空（不执行任何操作）
     updateSubcategoryCount(subcategoryId) {
-        const pageKey = `${subcategoryId}_page_1_${this.CONFIG.PAGE_SIZE}`;
-        const cached = this.siteCache.get(pageKey);
-        if (!cached) return;
-        const count = cached.sites ? cached.sites.filter(s => s.valid !== false).length : 0;
-        this._updateSubcategoryCountDisplay(subcategoryId, count);
+        // 不再更新计数显示
+        return;
     }
 
-    _updateSubcategoryCountDisplay(subcategoryId, count, retry = 0) {
-        const btn = document.querySelector(`.level2-btn[data-level2="${subcategoryId}"]`);
-        if (btn) {
-            let countSpan = btn.querySelector('.level2-btn-count');
-            if (!countSpan) {
-                countSpan = document.createElement('span');
-                countSpan.className = 'level2-btn-count';
-                btn.appendChild(countSpan);
-            }
-            countSpan.textContent = count;
-            countSpan.style.display = 'inline-block';
-        } else if (retry < 5) {
-            setTimeout(() => this._updateSubcategoryCountDisplay(subcategoryId, count, retry + 1), 100);
-        }
-    }
+    // 移除原有的计数显示更新方法，不再使用
+    // _updateSubcategoryCountDisplay 已删除
 
     updateStatsDisplay() {
         const el1 = document.getElementById('siteCount');
@@ -382,10 +350,10 @@ class OptimizedNavigation {
             this._renderEmptyState();
             return;
         }
+        // 移除计数 span
         container.innerHTML = subCats.map((sub, idx) =>
             `<button class="level2-btn ${idx === 0 ? 'active' : ''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}" title="${this._escapeHtml(sub.name)}">
                 <span class="level2-btn-text">${this._escapeHtml(sub.name)}</span>
-                <span class="level2-btn-count" style="display:none;">0</span>
             </button>`
         ).join('');
     }
@@ -409,8 +377,7 @@ class OptimizedNavigation {
             this._renderSitesPage(true);
             this.observeLazyImages(container);
             this._bindInfiniteScroll();
-            const validCount = this.currentSites.filter(s => s.valid !== false).length;
-            this._updateSubcategoryCountDisplay(subcategoryId, validCount);
+            // 不再更新计数
             await this.calculateTotalValidSites();
             return;
         }
@@ -424,8 +391,6 @@ class OptimizedNavigation {
             this._renderSitesPage(true);
             this.observeLazyImages(container);
             this._bindInfiniteScroll();
-            const validCount = this.currentSites.filter(s => s.valid !== false).length;
-            this._updateSubcategoryCountDisplay(subcategoryId, validCount);
             await this.calculateTotalValidSites();
         } catch (error) {
             console.error('加载站点失败:', error);
@@ -471,11 +436,6 @@ class OptimizedNavigation {
     _renderEmptyState() {
         const container = document.getElementById('level3Content');
         if (container) container.innerHTML = '';
-    }
-
-    showSkeleton() {
-        const container = document.getElementById('level3Content');
-        if (container) container.innerHTML = this._generateSkeletonHTML();
     }
 
     showError(message = '加载失败，请刷新重试') {
@@ -541,7 +501,7 @@ class OptimizedNavigation {
             </div>
         `;
 
-        // 点击计数（不变）
+        // 点击计数
         card.addEventListener('click', async (e) => {
             if (e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
@@ -599,7 +559,7 @@ class OptimizedNavigation {
             }, 100);
         });
 
-        // 死链报告（不变）
+        // 死链报告
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
@@ -625,13 +585,15 @@ class OptimizedNavigation {
                             card.classList.add('invalid');
                             const currentSubId = this.selectedLevel2;
                             if (currentSubId) {
-                                // 刷新该子分类缓存
-                                const pageKey = `${currentSubId}_page_1_${this.CONFIG.PAGE_SIZE}`;
-                                this.siteCache.delete(pageKey);
+                                // 清除该子分类的分页缓存
+                                for (const key of this.siteCache.keys()) {
+                                    if (key.startsWith(`${currentSubId}_page_`)) {
+                                        this.siteCache.delete(key);
+                                    }
+                                }
                                 await this.renderLevel3(this.selectedLevel1, currentSubId);
                                 const freshData = await this.loadSitesPage(currentSubId, 1, this.CONFIG.PAGE_SIZE, true);
-                                const validCount = freshData.sites.filter(s => s.valid !== false).length;
-                                this._updateSubcategoryCountDisplay(currentSubId, validCount);
+                                // 更新计数（但计数已移除，仅刷新数据）
                                 await this.recalculateGlobalInvalidCount();
                                 await this.calculateTotalValidSites();
                             }
@@ -671,14 +633,13 @@ class OptimizedNavigation {
                 el.classList.toggle('active', parseInt(el.dataset.level2) === firstSub.id);
             });
             await this.renderLevel3(this.selectedLevel1, firstSub.id);
-            this.updateSubcategoryCount(firstSub.id);
+            // 不再更新计数
 
             // 预加载该分类下其他子分类的第一页
             const allSubIds = this.structure[level1].subcategories.map(s => s.id);
             const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
             if (otherSubIds.length) {
                 const preload = () => {
-                    // 逐个加载其他子分类的第一页
                     for (const subId of otherSubIds) {
                         this.loadSitesPage(subId, 1, this.CONFIG.PAGE_SIZE, true).catch(err => {
                             console.warn('预加载子分类失败:', err);
@@ -706,7 +667,6 @@ class OptimizedNavigation {
         this.hasShownNoMoreToast = false;
 
         await this.renderLevel3(this.selectedLevel1, subcategoryId);
-        this.updateSubcategoryCount(subcategoryId);
         await this.calculateTotalValidSites();
 
         if (this.autoRefreshTimer) {
@@ -869,7 +829,6 @@ class OptimizedNavigation {
         if (trigger) {
             trigger.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载中...</span>';
         }
-        // 模拟延迟
         await new Promise(r => setTimeout(r, 200));
         this.currentPage++;
         const start = (this.currentPage - 1) * this.CONFIG.PAGE_SIZE;
@@ -885,7 +844,6 @@ class OptimizedNavigation {
         }
         // 如果当前页数据尚未在 this.currentSites 中，需要从缓存或服务器加载
         if (this.currentSites.length < start + this.CONFIG.PAGE_SIZE) {
-            // 尝试从缓存获取，若没有则请求
             const pageKey = `${this.currentSubcategoryId}_page_${this.currentPage}_${this.CONFIG.PAGE_SIZE}`;
             let pageData = this.siteCache.get(pageKey);
             if (!pageData) {
@@ -933,17 +891,24 @@ class OptimizedNavigation {
         }, this.CONFIG.AUTO_REFRESH_INTERVAL);
     }
 
+    // 手动刷新当前子分类（用于后台点击刷新导航后，由外部调用）
     async refreshCurrentSubcategory() {
         if (!this.selectedLevel2) return;
-        // 清除该子分类的分页缓存，重新加载
         const subId = this.selectedLevel2;
-        // 清除所有该子分类的分页缓存
+        // 清除该子分类的所有分页缓存
         for (const key of this.siteCache.keys()) {
             if (key.startsWith(`${subId}_page_`)) {
                 this.siteCache.delete(key);
             }
         }
+        // 也清除批量缓存（可能包含该子分类）
+        for (const key of this.siteCache.keys()) {
+            if (key.startsWith('batch_') && key.includes(String(subId))) {
+                this.siteCache.delete(key);
+            }
+        }
         await this.renderLevel3(this.selectedLevel1, subId);
+        await this.calculateTotalValidSites();
     }
 
     startBackgroundUpdates() {
@@ -1005,7 +970,6 @@ class OptimizedNavigation {
                         el.classList.toggle('active', parseInt(el.dataset.level2) === firstSub.id);
                     });
                     await this.renderLevel3(firstCategory, firstSub.id);
-                    this.updateSubcategoryCount(firstSub.id);
 
                     // 预加载其他子分类
                     const allSubIds = this.structure[firstCategory].subcategories.map(s => s.id);
