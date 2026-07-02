@@ -1,4 +1,4 @@
-/* admin.js - 完整版（移除自动缓存刷新，增加手动刷新导航按钮，优化批量操作和待审核功能） */
+/* admin.js - 完整版（手动刷新导航，移除自动同步，优化批量操作和待审核功能） */
 (function() {
     'use strict';
 
@@ -364,6 +364,10 @@
             showToast('导航缓存已刷新，前端将获取最新数据', 'success');
             // 刷新当前数据列表
             await loadAllDataButKeepSelection();
+            // 若前端导航模块存在，刷新其当前子分类缓存
+            if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshCurrentSubcategory === 'function') {
+                window.optimizedNavigation.refreshCurrentSubcategory();
+            }
         } catch (e) {
             showToast('刷新失败: ' + e.message, 'error');
         }
