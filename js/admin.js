@@ -1,4 +1,4 @@
-/* admin.js - 完整版（移除批量操作、移除设备ID/IP、待审核详情可编辑） */
+/* admin.js - 完整版（待审核详情：自定义下拉、排序自动计算、toast优化） */
 (function() {
     'use strict';
 
@@ -25,7 +25,17 @@
     let customSelects = {};
 
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-    function showToast(msg, type = 'success') { const toast = document.getElementById('toast'); if (!toast) return; toast.textContent = msg; toast.className = `toast ${type} show`; clearTimeout(toast._timeout); toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300); }
+    
+    function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+        toast.innerHTML = `${icons[type] || ''} ${msg}`;
+        toast.className = `toast ${type} show`;
+        clearTimeout(toast._timeout);
+        toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300);
+    }
+
     function checkUrl(url) { try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; } }
     function autoResizeTextarea(textarea) { if (!textarea) return; textarea.style.height = 'auto'; textarea.style.height = textarea.scrollHeight + 'px'; }
     function getDeviceId() { let deviceId = localStorage.getItem('device_id'); if (!deviceId) { deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15); localStorage.setItem('device_id', deviceId); } return deviceId; }
@@ -1027,7 +1037,7 @@
         } catch (err) { showToast('忽略失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
-    // ===== 待审核管理（重写） =====
+    // ===== 待审核管理 =====
     async function loadSubmissions() {
         const list = document.getElementById('submissionsList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -1077,10 +1087,37 @@
         } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
+    // 获取指定子分类的最大排序值+1
+    async function getMaxOrderForSubcategory(subcategoryId) {
+        try {
+            const result = await apiFetch(`/admin/sites?subcategory_id=${subcategoryId}`);
+            if (result && Array.isArray(result)) {
+                const maxOrder = result.reduce((max, site) => Math.max(max, site.display_order || 0), 0);
+                return maxOrder + 1;
+            }
+            return 1;
+        } catch (e) {
+            console.warn('获取排序值失败:', e);
+            return 1;
+        }
+    }
+
+    // 更新排序值输入框
+    async function updateSortOrder(subcategoryId, orderInput) {
+        if (!subcategoryId || !orderInput) return;
+        const newOrder = await getMaxOrderForSubcategory(subcategoryId);
+        orderInput.value = newOrder;
+    }
+
     function showSubmissionDetail(item) {
         const modal = document.getElementById('submissionDetailModal');
         const content = document.getElementById('submissionDetailContent');
-        const subOptions = subcategories.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+        
+        // 构建自定义下拉选项（完全摒弃原生select）
+        const subOptionsHtml = subcategories.map(s => 
+            `<div class="custom-option" data-value="${s.id}" data-label="${escapeHtml(s.name)}">${escapeHtml(s.name)}</div>`
+        ).join('');
+
         content.innerHTML = `
             <form id="submissionEditForm">
                 <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">标题</label><input type="text" id="editTitle" value="${escapeHtml(item.title)}" class="form-input"></div>
@@ -1088,12 +1125,22 @@
                 <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">描述</label><textarea id="editDesc" rows="2" class="form-input">${escapeHtml(item.description || '')}</textarea></div>
                 <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">图标</label><input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" class="form-input"></div>
                 <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">联系方式</label><input type="text" id="editContact" value="${escapeHtml(item.contact || '')}" class="form-input"></div>
-                <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">目标子分类</label>
-                    <select id="editSubcategory" class="form-input">
-                        ${subOptions}
-                    </select>
+                <div style="margin-bottom:8px;">
+                    <label style="font-weight:500;display:block;">目标子分类</label>
+                    <div id="customSubcategorySelect" class="custom-select-wrapper" style="position:relative;width:100%;">
+                        <div class="custom-select-trigger" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;background:#fff;transition:border 0.2s;">
+                            <span class="custom-select-value" style="color:#1e293b;font-size:12px;">${escapeHtml(subcategories.length ? subcategories[0].name : '请选择')}</span>
+                            <span class="custom-select-arrow" style="transition:transform 0.25s ease;display:inline-block;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid #64748b;margin-left:8px;"></span>
+                        </div>
+                        <div class="custom-select-dropdown" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e2e8f0;border-radius:8px;max-height:200px;overflow-y:auto;z-index:1000;display:none;box-shadow:0 4px 16px rgba(0,0,0,0.1);margin-top:4px;scrollbar-width:none;">
+                            ${subOptionsHtml}
+                        </div>
+                    </div>
                 </div>
-                <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">排序值</label><input type="number" id="editOrder" value="0" class="form-input"></div>
+                <div style="margin-bottom:8px;">
+                    <label style="font-weight:500;display:block;">排序值</label>
+                    <input type="number" id="editOrder" value="${await getMaxOrderForSubcategory(subcategories.length ? subcategories[0].id : 0)}" class="form-input" step="1">
+                </div>
                 <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
                     <button type="button" class="secondary" id="editCancelBtn">取消</button>
                     <button type="button" class="primary" id="editSaveBtn">保存修改</button>
@@ -1102,17 +1149,86 @@
         `;
         modal.classList.add('show');
 
-        document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => modal.classList.remove('show'));
-        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
-        document.getElementById('editCancelBtn')?.addEventListener('click', () => modal.classList.remove('show'));
+        // 初始化自定义下拉
+        const trigger = document.querySelector('#customSubcategorySelect .custom-select-trigger');
+        const dropdown = document.querySelector('#customSubcategorySelect .custom-select-dropdown');
+        const valueSpan = trigger.querySelector('.custom-select-value');
+        const arrow = trigger.querySelector('.custom-select-arrow');
+        const orderInput = document.getElementById('editOrder');
+        let selectedId = subcategories.length ? subcategories[0].id : null;
 
+        // 绑定下拉展开/折叠
+        trigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isOpen = dropdown.style.display === 'block';
+            dropdown.style.display = isOpen ? 'none' : 'block';
+            arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+        });
+
+        // 选项点击
+        dropdown.querySelectorAll('.custom-option').forEach(opt => {
+            opt.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const value = this.dataset.value;
+                const label = this.dataset.label;
+                selectedId = parseInt(value);
+                valueSpan.textContent = label;
+                dropdown.style.display = 'none';
+                arrow.style.transform = 'rotate(0deg)';
+                // 更新排序值
+                updateSortOrder(selectedId, orderInput);
+                // 高亮选中项
+                dropdown.querySelectorAll('.custom-option').forEach(o => o.style.background = '');
+                this.style.background = '#e0f2fe';
+            });
+        });
+
+        // 点击外部关闭下拉
+        document.addEventListener('click', function closeDropdown(e) {
+            const wrapper = document.querySelector('#customSubcategorySelect');
+            if (wrapper && !wrapper.contains(e.target)) {
+                dropdown.style.display = 'none';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        });
+
+        // 默认选中第一项并高亮
+        const firstOpt = dropdown.querySelector('.custom-option');
+        if (firstOpt) {
+            firstOpt.style.background = '#e0f2fe';
+            selectedId = parseInt(firstOpt.dataset.value);
+            valueSpan.textContent = firstOpt.dataset.label;
+            // 异步获取排序值
+            updateSortOrder(selectedId, orderInput);
+        }
+
+        // 关闭模态框
+        document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => {
+            modal.classList.remove('show');
+            dropdown.style.display = 'none';
+            arrow.style.transform = 'rotate(0deg)';
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('show');
+                dropdown.style.display = 'none';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        });
+        document.getElementById('editCancelBtn')?.addEventListener('click', () => {
+            modal.classList.remove('show');
+            dropdown.style.display = 'none';
+            arrow.style.transform = 'rotate(0deg)';
+        });
+
+        // 保存修改
         document.getElementById('editSaveBtn')?.addEventListener('click', async function() {
             const title = document.getElementById('editTitle').value.trim();
             const url = document.getElementById('editUrl').value.trim();
             const description = document.getElementById('editDesc').value.trim();
             const icon = document.getElementById('editIcon').value.trim();
             const contact = document.getElementById('editContact').value.trim();
-            const subcategoryId = parseInt(document.getElementById('editSubcategory').value);
+            const subcategoryId = selectedId;
             const displayOrder = parseInt(document.getElementById('editOrder').value) || 0;
             if (!title || !url) { showToast('标题和网址不能为空', 'error'); return; }
             try {
@@ -1135,6 +1251,8 @@
                 });
                 showToast('修改并通过审核成功', 'success');
                 modal.classList.remove('show');
+                dropdown.style.display = 'none';
+                arrow.style.transform = 'rotate(0deg)';
                 await loadSubmissions();
                 await loadAllDataButKeepSelection();
             } catch (e) {
@@ -1162,7 +1280,7 @@
         } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
     }
 
-    // ===== 自定义Select =====
+    // ===== 自定义Select（辅助） =====
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -1307,7 +1425,19 @@
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
             style.id = 'admin-global-styles';
-            style.textContent = '';
+            style.textContent = `
+                .custom-select-dropdown::-webkit-scrollbar { display: none; }
+                .custom-select-dropdown { scrollbar-width: none; -ms-overflow-style: none; }
+                .custom-select-option { padding: 8px 12px; font-size: 12px; cursor: pointer; transition: background 0.15s; }
+                .custom-select-option:hover { background: #f1f5f9; }
+                .custom-select-option.selected { background: #e0f2fe; font-weight: 500; }
+                .dark-mode .custom-select-trigger { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+                .dark-mode .custom-select-dropdown { background: #1e293b; border-color: #334155; }
+                .dark-mode .custom-select-option { color: #e2e8f0; }
+                .dark-mode .custom-select-option:hover { background: #334155; }
+                .dark-mode .custom-select-option.selected { background: #0f172a; color: #38bdf8; }
+                .dark-mode .custom-select-arrow { border-top-color: #94a3b8; }
+            `;
             document.head.appendChild(style);
         }
     }
@@ -1360,7 +1490,7 @@
         document.getElementById('addSubBtn').addEventListener('click', handleAddSub);
         document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
         document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
-        document.getElementById('refreshSubmissionsBtn')?.removeEventListener('click', loadSubmissions); // 移除旧绑定，但admin.html中已删除该按钮
+        document.getElementById('refreshSubmissionsBtn')?.removeEventListener('click', loadSubmissions);
         document.getElementById('annPublishBtn').addEventListener('click', saveAnnouncement);
         document.getElementById('annClearBtn').addEventListener('click', clearAnnouncementForm);
         document.getElementById('annCancelBtn').addEventListener('click', () => {
