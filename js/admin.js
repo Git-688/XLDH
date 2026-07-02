@@ -1,4 +1,4 @@
-/* admin.js - 完整版（手动刷新导航，移除自动同步，优化批量操作和待审核功能） */
+/* admin.js - 完整版（移除批量操作、移除设备ID/IP、待审核详情可编辑） */
 (function() {
     'use strict';
 
@@ -356,15 +356,12 @@
         }
     }
 
-    // ===== 手动刷新导航缓存（新增） =====
     async function refreshNavigationManually() {
         try {
             showToast('正在刷新导航缓存，请稍候...', 'info');
             await apiFetch('/admin/refresh-navigation', { method: 'POST' });
             showToast('导航缓存已刷新，前端将获取最新数据', 'success');
-            // 刷新当前数据列表
             await loadAllDataButKeepSelection();
-            // 若前端导航模块存在，刷新其当前子分类缓存
             if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshCurrentSubcategory === 'function') {
                 window.optimizedNavigation.refreshCurrentSubcategory();
             }
@@ -1030,7 +1027,7 @@
         } catch (err) { showToast('忽略失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
-    // ===== 待审核管理 =====
+    // ===== 待审核管理（重写） =====
     async function loadSubmissions() {
         const list = document.getElementById('submissionsList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -1038,26 +1035,26 @@
             const data = await apiFetch('/admin/submissions');
             submissionsData = data || [];
             updateStats();
-            if (!data.length) { list.innerHTML = '<div class="empty">暂无待审核投稿</div>'; return; }
-            // 倒序排列（最新的在前）
+            if (!data.length) {
+                list.innerHTML = '<div class="empty">暂无待审核投稿</div>';
+                return;
+            }
             data.sort((a,b) => b.submit_time - a.submit_time);
             list.innerHTML = data.map(item => `
                 <div class="link-item" style="display:flex; gap:8px; align-items:center;">
-                    <input type="checkbox" class="submission-checkbox" data-id="${item.id}" style="margin-right:4px;">
                     <div class="link-info" style="flex:1; min-width:0;">
                         <strong>${escapeHtml(item.title)}</strong>
                         <span style="font-size:10px;color:#999;margin-left:8px;">${new Date(item.submit_time).toLocaleString()}</span>
                         <span style="font-size:10px;color:#999;margin-left:8px;">${escapeHtml(item.url)}</span>
                     </div>
                     <div class="link-actions" style="display:flex; gap:4px; flex-shrink:0;">
-                        <button class="sm primary" data-action="viewSubmission" data-id="${item.id}">详情</button>
+                        <button class="sm primary" data-action="viewSubmission" data-id="${item.id}">详情/编辑</button>
                         <button class="sm success" data-action="approveSubmission" data-id="${item.id}">通过</button>
                         <button class="sm danger" data-action="rejectSubmission" data-id="${item.id}">拒绝</button>
                     </div>
                 </div>
             `).join('');
 
-            // 绑定事件
             list.querySelectorAll('[data-action="viewSubmission"]').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const id = parseInt(this.dataset.id);
@@ -1083,20 +1080,67 @@
     function showSubmissionDetail(item) {
         const modal = document.getElementById('submissionDetailModal');
         const content = document.getElementById('submissionDetailContent');
+        const subOptions = subcategories.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
         content.innerHTML = `
-            <div style="margin-bottom:8px;"><strong>标题：</strong>${escapeHtml(item.title)}</div>
-            <div style="margin-bottom:8px;"><strong>网址：</strong><a href="${escapeHtml(item.url)}" target="_blank">${escapeHtml(item.url)}</a></div>
-            <div style="margin-bottom:8px;"><strong>描述：</strong>${escapeHtml(item.description || '无')}</div>
-            <div style="margin-bottom:8px;"><strong>图标：</strong>${item.icon ? `<img src="${escapeHtml(item.icon)}" style="max-height:32px;">` : '无'}</div>
-            <div style="margin-bottom:8px;"><strong>提交者IP：</strong>${escapeHtml(item.submitter_ip)}</div>
-            <div style="margin-bottom:8px;"><strong>设备ID：</strong>${escapeHtml(item.device_id)}</div>
-            <div style="margin-bottom:8px;"><strong>提交时间：</strong>${new Date(item.submit_time).toLocaleString()}</div>
-            <div style="margin-bottom:8px;"><strong>联系方式：</strong>${escapeHtml(item.contact || '无')}</div>
-            <div style="margin-bottom:8px;"><strong>安全检测结果：</strong>${escapeHtml(item.vt_result || '无')}</div>
+            <form id="submissionEditForm">
+                <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">标题</label><input type="text" id="editTitle" value="${escapeHtml(item.title)}" class="form-input"></div>
+                <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">网址</label><input type="text" id="editUrl" value="${escapeHtml(item.url)}" class="form-input"></div>
+                <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">描述</label><textarea id="editDesc" rows="2" class="form-input">${escapeHtml(item.description || '')}</textarea></div>
+                <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">图标</label><input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" class="form-input"></div>
+                <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">联系方式</label><input type="text" id="editContact" value="${escapeHtml(item.contact || '')}" class="form-input"></div>
+                <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">目标子分类</label>
+                    <select id="editSubcategory" class="form-input">
+                        ${subOptions}
+                    </select>
+                </div>
+                <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">排序值</label><input type="number" id="editOrder" value="0" class="form-input"></div>
+                <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+                    <button type="button" class="secondary" id="editCancelBtn">取消</button>
+                    <button type="button" class="primary" id="editSaveBtn">保存修改</button>
+                </div>
+            </form>
         `;
         modal.classList.add('show');
-        document.getElementById('closeDetailModalBtn').addEventListener('click', () => modal.classList.remove('show'));
+
+        document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => modal.classList.remove('show'));
         modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
+        document.getElementById('editCancelBtn')?.addEventListener('click', () => modal.classList.remove('show'));
+
+        document.getElementById('editSaveBtn')?.addEventListener('click', async function() {
+            const title = document.getElementById('editTitle').value.trim();
+            const url = document.getElementById('editUrl').value.trim();
+            const description = document.getElementById('editDesc').value.trim();
+            const icon = document.getElementById('editIcon').value.trim();
+            const contact = document.getElementById('editContact').value.trim();
+            const subcategoryId = parseInt(document.getElementById('editSubcategory').value);
+            const displayOrder = parseInt(document.getElementById('editOrder').value) || 0;
+            if (!title || !url) { showToast('标题和网址不能为空', 'error'); return; }
+            try {
+                await apiFetch(`/admin/submissions/${item.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ title, description, icon })
+                });
+                await apiFetch(`/admin/submissions/${item.id}/approve`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        subcategory_id: subcategoryId,
+                        display_order: displayOrder,
+                        title,
+                        url,
+                        description,
+                        icon,
+                        contact,
+                        sendEmail: true
+                    })
+                });
+                showToast('修改并通过审核成功', 'success');
+                modal.classList.remove('show');
+                await loadSubmissions();
+                await loadAllDataButKeepSelection();
+            } catch (e) {
+                showToast('操作失败: ' + e.message, 'error');
+            }
+        });
     }
 
     async function approveSubmission(id) {
@@ -1118,52 +1162,7 @@
         } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
     }
 
-    async function batchApproveSubmissions() {
-        const checked = document.querySelectorAll('#submissionsList input[type="checkbox"]:checked');
-        if (!checked.length) { showToast('请选择要通过的投稿', 'warning'); return; }
-        if (!confirm(`确定通过 ${checked.length} 个投稿？`)) return;
-        const ids = Array.from(checked).map(cb => parseInt(cb.dataset.id));
-        const btn = document.getElementById('batchApproveBtn');
-        btn.disabled = true;
-        btn.textContent = '通过中...';
-        try {
-            for (const id of ids) {
-                await apiFetch(`/admin/submissions/${id}/approve`, { method: 'POST', body: JSON.stringify({ sendEmail: true }) });
-            }
-            showToast(`已通过 ${ids.length} 个投稿`, 'success');
-            await loadSubmissions();
-            await loadAllDataButKeepSelection();
-        } catch (e) {
-            showToast('批量通过失败: ' + e.message, 'error');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '✅ 批量通过';
-        }
-    }
-
-    async function batchDeleteSubmissions() {
-        const checked = document.querySelectorAll('#submissionsList input[type="checkbox"]:checked');
-        if (!checked.length) { showToast('请选择要删除的投稿', 'warning'); return; }
-        if (!confirm(`确定删除 ${checked.length} 个投稿？此操作不可恢复！`)) return;
-        const ids = Array.from(checked).map(cb => parseInt(cb.dataset.id));
-        const btn = document.getElementById('batchDeleteSubmissionsBtn');
-        btn.disabled = true;
-        btn.textContent = '删除中...';
-        try {
-            for (const id of ids) {
-                await apiFetch(`/admin/submissions/${id}`, { method: 'DELETE', body: JSON.stringify({ sendEmail: false }) });
-            }
-            showToast(`已删除 ${ids.length} 个投稿`, 'success');
-            await loadSubmissions();
-        } catch (e) {
-            showToast('批量删除失败: ' + e.message, 'error');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '🗑️ 批量删除';
-        }
-    }
-
-    // ===== 自定义Select（辅助） =====
+    // ===== 自定义Select =====
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -1361,9 +1360,7 @@
         document.getElementById('addSubBtn').addEventListener('click', handleAddSub);
         document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
         document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
-        document.getElementById('refreshSubmissionsBtn').addEventListener('click', loadSubmissions);
-        document.getElementById('batchApproveBtn').addEventListener('click', batchApproveSubmissions);
-        document.getElementById('batchDeleteSubmissionsBtn').addEventListener('click', batchDeleteSubmissions);
+        document.getElementById('refreshSubmissionsBtn')?.removeEventListener('click', loadSubmissions); // 移除旧绑定，但admin.html中已删除该按钮
         document.getElementById('annPublishBtn').addEventListener('click', saveAnnouncement);
         document.getElementById('annClearBtn').addEventListener('click', clearAnnouncementForm);
         document.getElementById('annCancelBtn').addEventListener('click', () => {
