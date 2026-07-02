@@ -1,4 +1,4 @@
-/* admin.js - 完整版（投稿详情排序自动计算，自定义下拉，Toast优化） */
+/* admin.js - 完整版（自定义下拉、排序自动计算、移除设备ID/IP） */
 (function() {
     'use strict';
 
@@ -22,69 +22,9 @@
 
     let selectedSiteIds = new Set();
     let customSelectInstances = [];
-    let customSelects = {};
 
-    // ===== Toast 优化 =====
-    function showToast(msg, type = 'success', duration = 3000) {
-        const container = document.getElementById('toastContainer');
-        if (!container) {
-            // 降级：创建临时容器
-            const div = document.createElement('div');
-            div.className = 'toast-container';
-            div.id = 'toastContainer';
-            document.body.appendChild(div);
-            return showToast(msg, type, duration);
-        }
-        const icons = {
-            success: 'fa-check-circle',
-            error: 'fa-exclamation-circle',
-            warning: 'fa-exclamation-triangle',
-            info: 'fa-info-circle'
-        };
-        const icon = icons[type] || icons.info;
-        const item = document.createElement('div');
-        item.className = `toast-item ${type}`;
-        item.innerHTML = `
-            <span class="toast-icon"><i class="fas ${icon}"></i></span>
-            <span>${escapeHtml(msg)}</span>
-            <button class="toast-close">&times;</button>
-        `;
-        container.appendChild(item);
-        // 触发进入动画
-        requestAnimationFrame(() => {
-            item.classList.add('show');
-        });
-        // 关闭按钮
-        item.querySelector('.toast-close').addEventListener('click', () => {
-            removeToast(item);
-        });
-        // 自动消失
-        let timer = setTimeout(() => {
-            removeToast(item);
-        }, duration);
-        // 鼠标悬停暂停
-        item.addEventListener('mouseenter', () => clearTimeout(timer));
-        item.addEventListener('mouseleave', () => {
-            timer = setTimeout(() => removeToast(item), duration);
-        });
-        // 限制最大显示数量
-        const items = container.querySelectorAll('.toast-item');
-        if (items.length > 5) {
-            removeToast(items[0]);
-        }
-    }
-
-    function removeToast(item) {
-        if (!item || !item.parentNode) return;
-        item.classList.remove('show');
-        item.classList.add('hide');
-        setTimeout(() => {
-            if (item.parentNode) item.parentNode.removeChild(item);
-        }, 300);
-    }
-
-    // ===== 工具函数 =====
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    function showToast(msg, type = 'success') { const toast = document.getElementById('toast'); if (!toast) return; toast.textContent = msg; toast.className = `toast ${type} show`; clearTimeout(toast._timeout); toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300); }
     function checkUrl(url) { try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; } }
     function autoResizeTextarea(textarea) { if (!textarea) return; textarea.style.height = 'auto'; textarea.style.height = textarea.scrollHeight + 'px'; }
     function getDeviceId() { let deviceId = localStorage.getItem('device_id'); if (!deviceId) { deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15); localStorage.setItem('device_id', deviceId); } return deviceId; }
@@ -102,7 +42,6 @@
         if (feedbackEl) feedbackEl.textContent = feedbackData ? feedbackData.length : 0;
     }
 
-    // ===== API 请求 =====
     async function apiFetch(endpoint, opt = {}) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
         if (token) headers.Authorization = `Bearer ${token}`;
@@ -237,7 +176,6 @@
 
     function updateLockMessage(locked) { const el = document.getElementById('loginLockMessage'); if (!el) return; if (locked) { el.textContent = '登录失败过多，请10分钟后重试'; el.style.display = 'block'; } else { el.style.display = 'none'; } }
 
-    // ===== 验证码 =====
     async function loadCaptcha() {
         const captchaGroup = document.getElementById('captchaGroup');
         const captchaImg = document.getElementById('captchaImg');
@@ -261,7 +199,6 @@
 
     function refreshCaptcha() { loadCaptcha(); }
 
-    // ===== 登录 =====
     async function login() {
         const rawToken = document.getElementById('tokenInput').value.trim();
         if (!rawToken) { showToast('请输入Token', 'error'); return; }
@@ -296,7 +233,7 @@
             if (mainContent) mainContent.classList.remove('hidden');
             document.getElementById('tokenInput').value = '';
             document.getElementById('captchaInput').value = '';
-            showToast('登录成功' + (remember ? '（已记住密码）' : ''), 'success');
+            showToast('登录成功' + (remember ? '（已记住密码）' : ''));
         } catch (e) {
             token = '';
             showToast(e.message === 'Unauthorized' ? 'Token无效或验证码错误' : e.message || '登录失败', 'error');
@@ -318,7 +255,7 @@
         if (captchaGroup) captchaGroup.style.display = 'none';
         currentCaptchaMd5key = null;
         loadCaptcha();
-        showToast('已退出', 'info');
+        showToast('已退出');
     }
 
     function fetchSiteInfoHandler() {
@@ -332,7 +269,7 @@
         const descInput = document.getElementById(descInputId);
         if (!urlInput || !titleInput || !iconInput || !descInput) { showToast('输入框元素未找到', 'error'); return; }
         let rawUrl = urlInput.value.trim();
-        if (!rawUrl) { showToast('请先输入网址', 'warning'); return; }
+        if (!rawUrl) { showToast('请先输入网址', 'warn'); return; }
         if (!/^https?:\/\//i.test(rawUrl)) rawUrl = 'https://' + rawUrl;
         const btn = document.getElementById('fetchInfoBtn');
         if (btn) { btn.disabled = true; btn.textContent = '获取中...'; }
@@ -349,12 +286,11 @@
                 if (data.data.icon) iconInput.value = data.data.icon;
                 if (data.data.description) descInput.value = data.data.description;
                 showToast('获取成功', 'success');
-            } else { showToast('未获取到信息，请手动填写', 'warning'); }
+            } else { showToast('未获取到信息，请手动填写', 'warn'); }
         } catch (error) { console.error('获取网站信息失败:', error); showToast('获取失败，请手动填写', 'error'); }
         finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
     }
 
-    // ===== 数据加载 =====
     async function loadAllData() {
         try {
             const [catData, subData, siteData, subDataList, feedbackDataList] = await Promise.all([
@@ -433,7 +369,6 @@
         }
     }
 
-    // ===== 分类与子分类操作 =====
     function selectCat(cid, selectFirst = true) {
         currentCat = cid;
         currentSub = null;
@@ -478,7 +413,6 @@
         `).join('');
     }
 
-    // ===== 站点列表（带复选框） =====
     async function loadAdminSites(resetPage = true) {
         const subcategoryId = currentSub || '';
         const listEl = document.getElementById('siteList');
@@ -622,7 +556,6 @@
         updateSelectedCount();
     }
 
-    // ===== 批量操作 =====
     async function batchDeleteSites() {
         if (selectedSiteIds.size === 0) { showToast('请先选择要删除的站点', 'warning'); return; }
         if (!confirm(`确定要删除选中的 ${selectedSiteIds.size} 个站点吗？此操作不可恢复！`)) return;
@@ -736,7 +669,6 @@
         }
     }
 
-    // ===== 公告管理 =====
     async function loadAnnouncement() {
         try {
             const data = await apiFetch('/admin/announcements');
@@ -805,7 +737,6 @@
         if (contentTextarea) autoResizeTextarea(contentTextarea);
     }
 
-    // ===== 通用模态框 =====
     async function getNextSortValue(type, parentId = null) {
         try {
             let maxOrder = 0;
@@ -852,7 +783,6 @@
 
     function closeModal() { document.getElementById('modal').classList.remove('show'); modalAction = null; }
 
-    // ===== 分类、子分类、站点的增删改 =====
     function handleModifyCategory(id, currentName) {
         const cat = categories.find(c => c.id === id);
         const currentOrder = cat?.display_order || 0;
@@ -864,12 +794,10 @@
                 const order = parseInt(document.getElementById('mOrder').value) || 0;
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
-                showToast('修改成功', 'success');
-                await loadAllDataButKeepSelection();
+                showToast('修改成功'); await loadAllDataButKeepSelection();
             }, true, async () => {
                 await apiFetch(`/admin/categories/${id}`, { method:'DELETE' });
-                showToast('分类已删除', 'success');
-                await loadAllDataButKeepSelection();
+                showToast('分类已删除'); await loadAllDataButKeepSelection();
             }
         );
     }
@@ -885,12 +813,10 @@
                 const order = parseInt(document.getElementById('mOrder').value) || 0;
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
-                showToast('修改成功', 'success');
-                await loadAllDataButKeepSelection();
+                showToast('修改成功'); await loadAllDataButKeepSelection();
             }, true, async () => {
                 await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' });
-                showToast('子分类已删除', 'success');
-                await loadAllDataButKeepSelection();
+                showToast('子分类已删除'); await loadAllDataButKeepSelection();
             }
         );
     }
@@ -914,13 +840,13 @@
                     title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
-                showToast('修改成功', 'success');
+                showToast('修改成功');
                 await loadAdminSites(true);
                 await loadAllDataButKeepSelection();
             }, true,
             async () => {
                 await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
-                showToast('删除成功', 'success');
+                showToast('删除成功');
                 await loadAdminSites(true);
                 await loadAllDataButKeepSelection();
             }
@@ -948,8 +874,7 @@
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/categories', { method:'POST', body: JSON.stringify({ name, display_order: +document.getElementById('mSort').value }) });
-                showToast('添加成功', 'success');
-                await loadAllDataButKeepSelection();
+                showToast('添加成功'); await loadAllDataButKeepSelection();
             }
         );
     }
@@ -964,8 +889,7 @@
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/subcategories', { method:'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('mSort').value }) });
-                showToast('添加成功', 'success');
-                await loadAllDataButKeepSelection();
+                showToast('添加成功'); await loadAllDataButKeepSelection();
             }
         );
     }
@@ -1102,7 +1026,173 @@
         } catch (err) { showToast('忽略失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
-    // ===== 待审核管理（核心修改） =====
+    // ============================================================
+    // 自定义下拉选择器组件（完全替代原生 select）
+    // ============================================================
+    class CustomDropdown {
+        constructor(container, options, selectedValue, onChange) {
+            this.container = container;
+            this.options = options; // [{value, label}]
+            this.selectedValue = selectedValue || (options.length ? options[0].value : null);
+            this.onChange = onChange;
+            this.isOpen = false;
+            this.dropdownEl = null;
+            this.triggerEl = null;
+            this.optionsEl = null;
+            this._outsideClickHandler = null;
+            this._scrollHandler = null;
+            this.render();
+        }
+
+        render() {
+            // 清空容器
+            this.container.innerHTML = '';
+            // 创建触发器
+            const trigger = document.createElement('div');
+            trigger.className = 'custom-dropdown-trigger';
+            trigger.innerHTML = `
+                <span class="custom-dropdown-value">${this.getSelectedLabel()}</span>
+                <span class="custom-dropdown-arrow"></span>
+            `;
+            this.container.appendChild(trigger);
+            this.triggerEl = trigger;
+
+            // 创建下拉列表容器
+            const dropdown = document.createElement('div');
+            dropdown.className = 'custom-dropdown-list';
+            const listWrapper = document.createElement('div');
+            listWrapper.className = 'custom-dropdown-options-wrapper';
+            this.options.forEach(opt => {
+                const item = document.createElement('div');
+                item.className = 'custom-dropdown-option' + (opt.value === this.selectedValue ? ' selected' : '');
+                item.textContent = opt.label;
+                item.dataset.value = opt.value;
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.selectValue(opt.value);
+                    this.close();
+                });
+                listWrapper.appendChild(item);
+            });
+            dropdown.appendChild(listWrapper);
+            this.container.appendChild(dropdown);
+            this.dropdownEl = dropdown;
+            this.optionsEl = listWrapper;
+
+            // 事件绑定
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggle();
+            });
+
+            // 设置初始值
+            this.updateTriggerText();
+
+            // 确保下拉列表宽度与触发器一致
+            this.syncWidth();
+            window.addEventListener('resize', () => this.syncWidth());
+
+            // 滚动同步
+            this._scrollHandler = () => this.syncWidth();
+            document.addEventListener('scroll', this._scrollHandler, true);
+
+            // 点击外部关闭
+            this._outsideClickHandler = (e) => {
+                if (!this.container.contains(e.target)) {
+                    this.close();
+                }
+            };
+            document.addEventListener('click', this._outsideClickHandler);
+        }
+
+        syncWidth() {
+            if (this.triggerEl && this.dropdownEl) {
+                this.dropdownEl.style.minWidth = this.triggerEl.offsetWidth + 'px';
+            }
+        }
+
+        getSelectedLabel() {
+            const opt = this.options.find(o => o.value === this.selectedValue);
+            return opt ? opt.label : '';
+        }
+
+        updateTriggerText() {
+            const valueSpan = this.triggerEl.querySelector('.custom-dropdown-value');
+            if (valueSpan) valueSpan.textContent = this.getSelectedLabel();
+        }
+
+        selectValue(value) {
+            if (this.selectedValue === value) return;
+            this.selectedValue = value;
+            this.updateTriggerText();
+            // 更新选中样式
+            const items = this.optionsEl.querySelectorAll('.custom-dropdown-option');
+            items.forEach(item => {
+                item.classList.toggle('selected', item.dataset.value === value);
+            });
+            if (this.onChange) this.onChange(value);
+        }
+
+        toggle() {
+            this.isOpen ? this.close() : this.open();
+        }
+
+        open() {
+            if (this.isOpen) return;
+            this.isOpen = true;
+            this.dropdownEl.classList.add('open');
+            // 计算位置（防止溢出视口）
+            const rect = this.triggerEl.getBoundingClientRect();
+            const dropdownHeight = this.dropdownEl.scrollHeight;
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            // 默认向下，如果下方空间不足则向上
+            if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+                this.dropdownEl.style.bottom = '100%';
+                this.dropdownEl.style.top = 'auto';
+            } else {
+                this.dropdownEl.style.top = '100%';
+                this.dropdownEl.style.bottom = 'auto';
+            }
+            // 左对齐
+            this.dropdownEl.style.left = '0';
+            this.dropdownEl.style.right = 'auto';
+            // 确保宽度
+            this.syncWidth();
+            // 滚动到选中项
+            const selectedItem = this.optionsEl.querySelector('.custom-dropdown-option.selected');
+            if (selectedItem) {
+                selectedItem.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }
+        }
+
+        close() {
+            if (!this.isOpen) return;
+            this.isOpen = false;
+            this.dropdownEl.classList.remove('open');
+        }
+
+        destroy() {
+            if (this._outsideClickHandler) {
+                document.removeEventListener('click', this._outsideClickHandler);
+            }
+            if (this._scrollHandler) {
+                document.removeEventListener('scroll', this._scrollHandler, true);
+            }
+            window.removeEventListener('resize', this.syncWidth);
+            this.container.innerHTML = '';
+        }
+
+        setValue(value) {
+            this.selectValue(value);
+        }
+
+        getValue() {
+            return this.selectedValue;
+        }
+    }
+
+    // ===== 待审核管理 =====
     async function loadSubmissions() {
         const list = document.getElementById('submissionsList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -1152,41 +1242,15 @@
         } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    // ===== 投稿详情编辑（含自动计算排序和自定义下拉） =====
+    // 显示投稿详情（可编辑） - 使用自定义下拉
     function showSubmissionDetail(item) {
         const modal = document.getElementById('submissionDetailModal');
         const content = document.getElementById('submissionDetailContent');
 
-        // 获取当前子分类 ID（如果有的话，从提交的站点中提取，或默认第一个）
-        let defaultSubId = subcategories.length > 0 ? subcategories[0].id : 1;
-        // 尝试从 item 中获取已有的子分类（如果已审核过可能会有记录，但投稿本身没有，我们用默认）
+        // 准备子分类选项
+        const subOptions = subcategories.map(s => ({ value: s.id, label: s.name }));
 
-        // 构建自定义下拉选项数据
-        const subOptions = subcategories.map(s => ({ id: s.id, name: s.name }));
-
-        // 生成自定义下拉 HTML
-        let dropdownHtml = `
-            <div class="custom-dropdown" id="subCategoryDropdown">
-                <div class="dropdown-trigger" id="dropdownTrigger">
-                    <span class="dropdown-value">${escapeHtml(subOptions.find(s => s.id === defaultSubId)?.name || '请选择')}</span>
-                    <span class="dropdown-arrow"></span>
-                </div>
-                <div class="dropdown-list" id="dropdownList">
-                    ${subOptions.map(s => `<div class="dropdown-item ${s.id === defaultSubId ? 'selected' : ''}" data-id="${s.id}">${escapeHtml(s.name)}</div>`).join('')}
-                </div>
-            </div>
-        `;
-
-        // 自动计算排序值（基于当前选中的子分类）
-        function calculateOrder(subId) {
-            const subSites = sites.filter(s => s.subcategory_id === subId);
-            let maxOrder = 0;
-            subSites.forEach(s => { if (s.display_order > maxOrder) maxOrder = s.display_order; });
-            return maxOrder + 1;
-        }
-
-        const initialOrder = calculateOrder(defaultSubId);
-
+        // 构建表单HTML
         content.innerHTML = `
             <form id="submissionEditForm">
                 <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">标题</label><input type="text" id="editTitle" value="${escapeHtml(item.title)}" class="form-input"></div>
@@ -1195,11 +1259,11 @@
                 <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">图标</label><input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" class="form-input"></div>
                 <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">联系方式</label><input type="text" id="editContact" value="${escapeHtml(item.contact || '')}" class="form-input"></div>
                 <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">目标子分类</label>
-                    ${dropdownHtml}
+                    <div id="subcategoryDropdownContainer" class="custom-dropdown-container"></div>
                 </div>
-                <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">排序值（自动计算）</label>
-                    <input type="number" id="editOrder" value="${initialOrder}" class="form-input" readonly style="background:#f1f5f9;cursor:not-allowed;">
-                    <span style="font-size:10px;color:#64748b;">* 基于当前子分类自动计算</span>
+                <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">排序值</label>
+                    <input type="number" id="editOrder" value="0" class="form-input" step="1" min="0">
+                    <span style="font-size:10px;color:#999;">自动计算，可手动修改</span>
                 </div>
                 <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
                     <button type="button" class="secondary" id="editCancelBtn">取消</button>
@@ -1209,113 +1273,54 @@
         `;
         modal.classList.add('show');
 
-        // ---------- 自定义下拉交互 ----------
-        const trigger = document.getElementById('dropdownTrigger');
-        const list = document.getElementById('dropdownList');
-        const valueSpan = trigger.querySelector('.dropdown-value');
-        const orderInput = document.getElementById('editOrder');
+        // 关闭事件
+        document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => modal.classList.remove('show'));
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
+        document.getElementById('editCancelBtn')?.addEventListener('click', () => modal.classList.remove('show'));
 
-        // 点击触发切换
-        trigger.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const isOpen = list.classList.contains('open');
-            list.classList.toggle('open');
-            trigger.classList.toggle('open');
-            if (!isOpen) {
-                // 定位下拉在视口中
-                const rect = trigger.getBoundingClientRect();
-                const listRect = list.getBoundingClientRect();
-                const spaceBelow = window.innerHeight - rect.bottom;
-                const spaceAbove = rect.top;
-                if (spaceBelow < listRect.height && spaceAbove > listRect.height) {
-                    list.style.top = 'auto';
-                    list.style.bottom = 'calc(100% + 4px)';
-                } else {
-                    list.style.top = 'calc(100% + 4px)';
-                    list.style.bottom = 'auto';
-                }
-            }
+        // ----- 初始化自定义下拉 -----
+        const dropdownContainer = document.getElementById('subcategoryDropdownContainer');
+        // 默认选中第一个子分类
+        const defaultSubId = subOptions.length ? subOptions[0].value : null;
+        let dropdown = new CustomDropdown(dropdownContainer, subOptions, defaultSubId, function(value) {
+            // 当选中的子分类变化时，重新计算排序值
+            updateOrderValue(value);
         });
 
-        // 选项点击
-        list.querySelectorAll('.dropdown-item').forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const id = parseInt(this.dataset.id);
-                const name = this.textContent;
-                // 更新显示
-                valueSpan.textContent = name;
-                // 更新选中样式
-                list.querySelectorAll('.dropdown-item').forEach(el => el.classList.remove('selected'));
-                this.classList.add('selected');
-                // 关闭下拉
-                list.classList.remove('open');
-                trigger.classList.remove('open');
-                // 自动计算排序值
-                const newOrder = calculateOrder(id);
-                orderInput.value = newOrder;
-                // 存储选中 ID 以便保存时使用（存储在 data 属性）
-                trigger.dataset.selectedId = id;
+        // 计算排序值函数
+        function updateOrderValue(subcategoryId) {
+            const orderInput = document.getElementById('editOrder');
+            if (!orderInput) return;
+            // 计算该子分类下的最大排序值
+            const subSites = sites.filter(s => s.subcategory_id === subcategoryId);
+            let maxOrder = 0;
+            subSites.forEach(s => {
+                if (s.display_order > maxOrder) maxOrder = s.display_order;
             });
-        });
+            const nextOrder = maxOrder + 1;
+            orderInput.value = nextOrder;
+        }
 
-        // 点击外部关闭
-        const closeDropdown = function(e) {
-            if (!trigger.contains(e.target) && !list.contains(e.target)) {
-                list.classList.remove('open');
-                trigger.classList.remove('open');
-            }
-        };
-        document.addEventListener('click', closeDropdown);
+        // 初始计算
+        if (defaultSubId) updateOrderValue(defaultSubId);
 
-        // 窗口变化时重新定位
-        const repositionDropdown = function() {
-            if (list.classList.contains('open')) {
-                const rect = trigger.getBoundingClientRect();
-                const listRect = list.getBoundingClientRect();
-                const spaceBelow = window.innerHeight - rect.bottom;
-                const spaceAbove = rect.top;
-                if (spaceBelow < listRect.height && spaceAbove > listRect.height) {
-                    list.style.top = 'auto';
-                    list.style.bottom = 'calc(100% + 4px)';
-                } else {
-                    list.style.top = 'calc(100% + 4px)';
-                    list.style.bottom = 'auto';
-                }
-            }
-        };
-        window.addEventListener('resize', repositionDropdown);
-        window.addEventListener('scroll', repositionDropdown, true);
-
-        // 保存当前选中的子分类 ID（用于保存时获取）
-        trigger.dataset.selectedId = defaultSubId;
-
-        // ---------- 关闭模态框 ----------
-        const closeModalHandler = () => {
-            modal.classList.remove('show');
-            document.removeEventListener('click', closeDropdown);
-            window.removeEventListener('resize', repositionDropdown);
-            window.removeEventListener('scroll', repositionDropdown);
-        };
-        document.getElementById('closeDetailModalBtn')?.addEventListener('click', closeModalHandler);
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModalHandler(); });
-        document.getElementById('editCancelBtn')?.addEventListener('click', closeModalHandler);
-
-        // ---------- 保存修改 ----------
+        // ----- 保存修改 -----
         document.getElementById('editSaveBtn')?.addEventListener('click', async function() {
             const title = document.getElementById('editTitle').value.trim();
             const url = document.getElementById('editUrl').value.trim();
             const description = document.getElementById('editDesc').value.trim();
             const icon = document.getElementById('editIcon').value.trim();
             const contact = document.getElementById('editContact').value.trim();
-            const subcategoryId = parseInt(trigger.dataset.selectedId) || 1;
-            const displayOrder = parseInt(orderInput.value) || 0;
+            const subcategoryId = dropdown.getValue();
+            const displayOrder = parseInt(document.getElementById('editOrder').value) || 0;
             if (!title || !url) { showToast('标题和网址不能为空', 'error'); return; }
             try {
+                // 先更新投稿信息
                 await apiFetch(`/admin/submissions/${item.id}`, {
                     method: 'PUT',
                     body: JSON.stringify({ title, description, icon })
                 });
+                // 然后通过审核（传入编辑后的信息）
                 await apiFetch(`/admin/submissions/${item.id}/approve`, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -1330,16 +1335,57 @@
                     })
                 });
                 showToast('修改并通过审核成功', 'success');
-                closeModalHandler();
+                modal.classList.remove('show');
+                dropdown.destroy();
                 await loadSubmissions();
                 await loadAllDataButKeepSelection();
             } catch (e) {
                 showToast('操作失败: ' + e.message, 'error');
             }
         });
+
+        // 当模态框关闭时销毁下拉组件
+        const originalClose = modal.classList.remove.bind(modal.classList, 'show');
+        const closeInterceptor = function() {
+            if (dropdown) {
+                dropdown.destroy();
+                dropdown = null;
+            }
+            originalClose();
+        };
+        // 由于无法直接拦截 classList.remove，我们使用 MutationObserver 监听 class 变化
+        // 或者直接覆盖 close 事件
+        const closeModalHandler = function() {
+            if (dropdown) {
+                dropdown.destroy();
+                dropdown = null;
+            }
+            modal.classList.remove('show');
+        };
+        document.getElementById('editCancelBtn')?.addEventListener('click', closeModalHandler);
+        document.getElementById('closeDetailModalBtn')?.addEventListener('click', closeModalHandler);
+        // 点击背景关闭
+        modal._closeHandler = function(e) {
+            if (e.target === modal) {
+                if (dropdown) {
+                    dropdown.destroy();
+                    dropdown = null;
+                }
+                modal.classList.remove('show');
+            }
+        };
+        modal.addEventListener('click', modal._closeHandler);
+        // 保存原关闭方式并替换
+        const origRemove = modal.classList.remove.bind(modal.classList);
+        modal.classList.remove = function(className) {
+            if (className === 'show' && dropdown) {
+                dropdown.destroy();
+                dropdown = null;
+            }
+            origRemove(className);
+        };
     }
 
-    // 单独通过
     async function approveSubmission(id) {
         if (!confirm('确定通过此投稿？')) return;
         try {
@@ -1350,7 +1396,6 @@
         } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
     }
 
-    // 单独拒绝
     async function rejectSubmission(id) {
         if (!confirm('确定拒绝此投稿？')) return;
         try {
@@ -1360,7 +1405,7 @@
         } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
     }
 
-    // ===== 自定义Select（用于批量操作，保留原有实现） =====
+    // ===== 自定义Select（用于其他批量操作，保留原有） =====
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -1501,12 +1546,139 @@
         }
     }
 
-    // ===== 事件绑定 =====
     function injectGlobalStyles() {
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
             style.id = 'admin-global-styles';
-            style.textContent = '';
+            style.textContent = `
+                /* 自定义下拉样式（用于投稿详情） */
+                .custom-dropdown-container {
+                    position: relative;
+                    width: 100%;
+                }
+                .custom-dropdown-trigger {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 8px 12px;
+                    background: #fff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    color: #1e293b;
+                    transition: border-color 0.2s, box-shadow 0.2s;
+                    user-select: none;
+                    min-height: 36px;
+                }
+                .custom-dropdown-trigger:hover {
+                    border-color: #3b82f6;
+                }
+                .custom-dropdown-trigger.open {
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+                }
+                .custom-dropdown-value {
+                    flex: 1;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .custom-dropdown-arrow {
+                    width: 12px;
+                    height: 12px;
+                    flex-shrink: 0;
+                    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+                    background-size: contain;
+                    background-repeat: no-repeat;
+                    transition: transform 0.25s ease;
+                }
+                .custom-dropdown-trigger.open .custom-dropdown-arrow {
+                    transform: rotate(180deg);
+                }
+                .custom-dropdown-list {
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    right: 0;
+                    background: #fff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+                    z-index: 1000;
+                    max-height: 200px;
+                    overflow: hidden;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: scaleY(0.95);
+                    transform-origin: top center;
+                    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+                    margin-top: 4px;
+                    min-width: 100%;
+                }
+                .custom-dropdown-list.open {
+                    opacity: 1;
+                    visibility: visible;
+                    transform: scaleY(1);
+                }
+                .custom-dropdown-options-wrapper {
+                    max-height: 200px;
+                    overflow-y: auto;
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+                .custom-dropdown-options-wrapper::-webkit-scrollbar {
+                    display: none;
+                }
+                .custom-dropdown-option {
+                    padding: 8px 12px;
+                    font-size: 12px;
+                    color: #1e293b;
+                    cursor: pointer;
+                    transition: background 0.15s, color 0.15s;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .custom-dropdown-option:hover {
+                    background: #f1f5f9;
+                }
+                .custom-dropdown-option.selected {
+                    background: #e0f2fe;
+                    color: #0369a1;
+                    font-weight: 500;
+                }
+                .dark-mode .custom-dropdown-trigger {
+                    background: #1e293b;
+                    border-color: #334155;
+                    color: #e2e8f0;
+                }
+                .dark-mode .custom-dropdown-trigger:hover {
+                    border-color: #3b82f6;
+                }
+                .dark-mode .custom-dropdown-trigger.open {
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+                }
+                .dark-mode .custom-dropdown-list {
+                    background: #1e293b;
+                    border-color: #334155;
+                    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+                }
+                .dark-mode .custom-dropdown-option {
+                    color: #e2e8f0;
+                }
+                .dark-mode .custom-dropdown-option:hover {
+                    background: #334155;
+                }
+                .dark-mode .custom-dropdown-option.selected {
+                    background: #0f172a;
+                    color: #38bdf8;
+                }
+                .dark-mode .custom-dropdown-arrow {
+                    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2394a3b8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+                }
+            `;
             document.head.appendChild(style);
         }
     }
@@ -1559,7 +1731,7 @@
         document.getElementById('addSubBtn').addEventListener('click', handleAddSub);
         document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
         document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
-        // 移除旧的事件绑定（已删除的按钮不再绑定）
+        document.getElementById('refreshSubmissionsBtn')?.removeEventListener('click', loadSubmissions);
         document.getElementById('annPublishBtn').addEventListener('click', saveAnnouncement);
         document.getElementById('annClearBtn').addEventListener('click', clearAnnouncementForm);
         document.getElementById('annCancelBtn').addEventListener('click', () => {
@@ -1578,8 +1750,8 @@
         document.getElementById('batchMoveBtn')?.addEventListener('click', batchMoveSites);
     }
 
-    // ===== 初始化 =====
     injectGlobalStyles();
+
     loginLocked = localStorage.getItem('login_locked') === 'true';
     updateLockMessage(loginLocked);
 
@@ -1613,7 +1785,7 @@
 
     setInterval(() => {
         const exp = sessionStorage.getItem('admin_expires');
-        if (exp && Date.now() > parseInt(exp, 10) - 60000) showToast('登录即将过期', 'warning');
+        if (exp && Date.now() > parseInt(exp, 10) - 60000) showToast('登录即将过期', 'warn');
     }, 30000);
 
     setupEventDelegation();
