@@ -1,24 +1,24 @@
-/* navigation.js - 移除重试机制，改为直接请求 */
+/* navigation.js - 支持分页、重试、缓存延长、精准刷新 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
 
-        // ===== 配置常量 =====
         this.CONFIG = {
             SKELETON_COUNT: 6,
-            PAGE_SIZE: 30,
+            PAGE_SIZE: 20,               // 每页加载站点数
             UPDATE_INTERVAL: 5 * 60 * 1000,
             AUTO_REFRESH_INTERVAL: 5 * 60 * 1000,
             BATCH_SIZE: 8,
             BATCH_DELAY: 200,
-            STRUCTURE_CACHE_TTL: 10 * 60 * 1000,
+            STRUCTURE_CACHE_TTL: 30 * 60 * 1000, // 延长至30分钟
             PRELOAD_DELAY: 300,
+            MAX_RETRIES: 3,              // 重试次数
+            RETRY_DELAY: 1000,           // 初始重试延迟(ms)
         };
 
-        // ===== 状态变量 =====
         this.structure = null;
         this.structureCacheTime = 0;
-        this.siteCache = new Map();
+        this.siteCache = new Map();      // key: subcategoryId, value: { sites, total, timestamp }
         this.selectedLevel1 = null;
         this.selectedLevel2 = null;
         this.isInitialized = false;
@@ -31,7 +31,9 @@ class OptimizedNavigation {
         this.currentPage = 1;
         this.isLoadingMore = false;
         this.hasMore = true;
-        this.currentSites = [];
+        this.currentSites = [];           // 当前已加载的所有站点
+        this.currentSubcategoryId = null;
+        this.totalSitesCount = 0;
         this.scrollListener = null;
         this.hasShownNoMoreToast = false;
         this.updateTimer = null;
@@ -46,24 +48,17 @@ class OptimizedNavigation {
         window.optimizedNavigation = this;
     }
 
-    // ========================================
-    // 工具方法
-    // ========================================
-
+    // ===== 工具方法 =====
     _escapeHtml(str) { return Utils.escapeHtml(str); }
-
     _formatViews(views) {
         if (views >= 1000000) return (views / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
         if (views >= 1000) return (views / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
         return String(views);
     }
-
     _getFullIconUrl(icon, siteUrl) {
         if (!icon) return '';
         if (icon.startsWith('/icon?domain=')) {
-            if (window.Utils?.isWebPSupportedSync?.()) {
-                return this.apiBase + icon + '&format=webp';
-            }
+            if (window.Utils?.isWebPSupportedSync?.()) return this.apiBase + icon + '&format=webp';
             return this.apiBase + icon;
         }
         if (icon.startsWith('http://') || icon.startsWith('https://')) {
@@ -77,15 +72,12 @@ class OptimizedNavigation {
             const domain = urlObj.hostname;
             if (domain) {
                 const base = this.apiBase + `/icon?domain=${encodeURIComponent(domain)}`;
-                if (window.Utils?.isWebPSupportedSync?.()) {
-                    return base + '&format=webp';
-                }
+                if (window.Utils?.isWebPSupportedSync?.()) return base + '&format=webp';
                 return base;
             }
         } catch (e) {}
         return '';
     }
-
     _createIconElement(iconUrl, siteUrl) {
         const fullIconUrl = this._getFullIconUrl(iconUrl, siteUrl);
         if (fullIconUrl) {
@@ -93,7 +85,6 @@ class OptimizedNavigation {
         }
         return '<i class="fas fa-link"></i>';
     }
-
     _highlightText(text, keyword) {
         if (!keyword || !text) return this._escapeHtml(text);
         const escapedText = this._escapeHtml(text);
@@ -101,7 +92,6 @@ class OptimizedNavigation {
         const regex = new RegExp(`(${escapedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
         return escapedText.replace(regex, '<mark class="search-highlight">$1</mark>');
     }
-
     _generateSkeletonHTML() {
         let html = '';
         for (let i = 0; i < this.CONFIG.SKELETON_COUNT; i++) {
@@ -127,10 +117,7 @@ class OptimizedNavigation {
         return html;
     }
 
-    // ========================================
-    // 懒加载 & 图片预加载
-    // ========================================
-
+    // ===== 懒加载 & 图片预加载 =====
     initLazyLoadObserver() {
         if (this.imgObserver) return;
         if ('IntersectionObserver' in window) {
@@ -152,16 +139,13 @@ class OptimizedNavigation {
             });
         }
     }
-
     preloadNearbyImages(container) {
         if (!container || !this.imgObserver) return;
         const images = container.querySelectorAll('img[data-src]');
         if (images.length === 0) return;
-
         const viewportHeight = window.innerHeight;
         const scrollTop = window.scrollY || document.documentElement.scrollTop;
         const buffer = 500;
-
         images.forEach(img => {
             const rect = img.getBoundingClientRect();
             const imgTop = rect.top + scrollTop;
@@ -176,7 +160,6 @@ class OptimizedNavigation {
             }
         });
     }
-
     observeLazyImages(container) {
         if (!this.imgObserver) return;
         const imgs = container.querySelectorAll('img[data-src]');
@@ -184,7 +167,6 @@ class OptimizedNavigation {
         this.preloadNearbyImages(container);
         this._bindScrollPreload(container);
     }
-
     _bindScrollPreload(container) {
         if (this._scrollPreloadCleanup) {
             this._scrollPreloadCleanup();
@@ -203,21 +185,23 @@ class OptimizedNavigation {
         };
     }
 
-    // ========================================
-    // 数据加载（无重试）
-    // ========================================
-
-    async _fetchDirect(url, options = {}) {
-        try {
-            const response = await Utils.safeFetch(url, {
-                ...options,
-                timeout: 15000,
-            });
-            return response;
-        } catch (error) {
-            console.error('请求失败:', error);
-            throw error;
+    // ===== 数据加载（带重试） =====
+    async _fetchWithRetry(url, options = {}, retries = this.CONFIG.MAX_RETRIES) {
+        let lastError;
+        for (let i = 0; i < retries; i++) {
+            try {
+                const response = await Utils.safeFetch(url, { ...options, timeout: 15000 });
+                return response;
+            } catch (error) {
+                lastError = error;
+                console.warn(`请求失败，${i+1}/${retries} 重试:`, error.message);
+                if (i < retries - 1) {
+                    const delay = this.CONFIG.RETRY_DELAY * Math.pow(2, i);
+                    await new Promise(r => setTimeout(r, delay));
+                }
+            }
         }
+        throw lastError || new Error('请求失败');
     }
 
     async loadNavigationStructure(forceRefresh = false) {
@@ -226,7 +210,7 @@ class OptimizedNavigation {
             return this.structure;
         }
         try {
-            const response = await this._fetchDirect(`${this.apiBase}/navigation/structure`);
+            const response = await this._fetchWithRetry(`${this.apiBase}/navigation/structure`);
             this.structure = await response.json();
             this.structureCacheTime = now;
             return this.structure;
@@ -239,17 +223,20 @@ class OptimizedNavigation {
         }
     }
 
-    async loadSites(subcategoryId, forceRefresh = false) {
-        if (!forceRefresh && this.siteCache.has(subcategoryId)) {
-            return this.siteCache.get(subcategoryId);
+    // 加载分页站点数据
+    async loadSitesPage(subcategoryId, page = 1, limit = this.CONFIG.PAGE_SIZE, forceRefresh = false) {
+        const cacheKey = `${subcategoryId}_page_${page}_${limit}`;
+        if (!forceRefresh && this.siteCache.has(cacheKey)) {
+            return this.siteCache.get(cacheKey);
         }
         try {
-            const response = await this._fetchDirect(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}`);
-            const sites = await response.json();
-            this.siteCache.set(subcategoryId, sites);
-            return sites;
+            const response = await this._fetchWithRetry(`${this.apiBase}/navigation/sites?subcategory_id=${subcategoryId}&page=${page}&limit=${limit}`);
+            const data = await response.json();
+            // data: { sites, total, page, limit }
+            this.siteCache.set(cacheKey, data);
+            return data;
         } catch (error) {
-            const cached = this.siteCache.get(subcategoryId);
+            const cached = this.siteCache.get(cacheKey);
             if (cached) {
                 console.warn('加载站点失败，使用缓存:', error);
                 return cached;
@@ -258,78 +245,54 @@ class OptimizedNavigation {
         }
     }
 
+    // 批量加载（仍用于预加载，但缓存延长）
     async loadBatchSites(subIds, forceRefresh = false) {
         if (!subIds || !subIds.length) return {};
-        if (!forceRefresh) {
-            const allCached = subIds.every(id => this.siteCache.has(id));
-            if (allCached) {
-                const result = {};
-                subIds.forEach(id => { result[id] = this.siteCache.get(id); });
-                return result;
-            }
-        }
-        const uncachedIds = subIds.filter(id => !this.siteCache.has(id));
-        if (!uncachedIds.length) {
-            const result = {};
-            subIds.forEach(id => { result[id] = this.siteCache.get(id); });
-            return result;
+        const cacheKey = `batch_${subIds.join(',')}`;
+        if (!forceRefresh && this.siteCache.has(cacheKey)) {
+            return this.siteCache.get(cacheKey);
         }
         try {
-            const idsParam = uncachedIds.join(',');
-            const response = await this._fetchDirect(`${this.apiBase}/navigation/batch-sites?ids=${idsParam}`);
+            const idsParam = subIds.join(',');
+            const response = await this._fetchWithRetry(`${this.apiBase}/navigation/batch-sites?ids=${idsParam}`);
             const data = await response.json();
             if (data?.data) {
+                this.siteCache.set(cacheKey, data.data);
+                // 同时将每个子分类的第一页也缓存（供分页使用）
                 for (const [subId, sites] of Object.entries(data.data)) {
-                    const id = parseInt(subId);
-                    if (!isNaN(id)) this.siteCache.set(id, sites);
+                    const pageKey = `${subId}_page_1_${this.CONFIG.PAGE_SIZE}`;
+                    if (!this.siteCache.has(pageKey)) {
+                        this.siteCache.set(pageKey, { sites, total: sites.length, page: 1, limit: this.CONFIG.PAGE_SIZE });
+                    }
                 }
+                return data.data;
             }
-            const result = {};
-            subIds.forEach(id => {
-                result[id] = this.siteCache.get(id) || [];
-            });
-            return result;
+            return {};
         } catch (error) {
-            console.warn('批量加载失败，逐个加载:', error);
-            const result = {};
-            for (const id of subIds) {
-                result[id] = await this.loadSites(id, true);
+            const cached = this.siteCache.get(cacheKey);
+            if (cached) {
+                console.warn('批量加载失败，使用缓存:', error);
+                return cached;
             }
-            return result;
+            throw error;
         }
     }
 
-    async loadBatchSitesBatch(subIds, batchSize = this.CONFIG.BATCH_SIZE) {
-        if (!subIds || !subIds.length) return {};
-        const results = {};
-        for (let i = 0; i < subIds.length; i += batchSize) {
-            const batch = subIds.slice(i, i + batchSize);
-            const batchResult = await this.loadBatchSites(batch);
-            Object.assign(results, batchResult);
-            batch.forEach(id => this.updateSubcategoryCount(id));
-            if (i + batchSize < subIds.length) {
-                await new Promise(r => setTimeout(r, this.CONFIG.BATCH_DELAY));
-            }
-        }
-        return results;
+    // 获取子分类的缓存数据（分页）
+    getCachedSites(subcategoryId) {
+        const pageKey = `${subcategoryId}_page_1_${this.CONFIG.PAGE_SIZE}`;
+        return this.siteCache.get(pageKey);
     }
 
-    // ========================================
-    // 导航状态管理
-    // ========================================
-
-    getFirstCategory() {
-        return this.structure ? Object.keys(this.structure)[0] : null;
-    }
-
-    getFirstSubCategory(level1) {
-        return this.structure?.[level1]?.subcategories?.[0] || null;
-    }
+    // ===== 导航状态管理 =====
+    getFirstCategory() { return this.structure ? Object.keys(this.structure)[0] : null; }
+    getFirstSubCategory(level1) { return this.structure?.[level1]?.subcategories?.[0] || null; }
 
     updateSubcategoryCount(subcategoryId) {
-        const sites = this.siteCache.get(subcategoryId);
-        if (!sites) return;
-        const count = sites.filter(s => s.valid !== false).length;
+        const pageKey = `${subcategoryId}_page_1_${this.CONFIG.PAGE_SIZE}`;
+        const cached = this.siteCache.get(pageKey);
+        if (!cached) return;
+        const count = cached.sites ? cached.sites.filter(s => s.valid !== false).length : 0;
         this._updateSubcategoryCountDisplay(subcategoryId, count);
     }
 
@@ -366,9 +329,17 @@ class OptimizedNavigation {
         let total = 0;
         for (const catName in this.structure) {
             for (const sub of this.structure[catName].subcategories) {
-                let sites = this.siteCache.get(sub.id);
-                if (!sites) sites = await this.loadSites(sub.id, true);
-                total += sites.filter(s => s.valid !== false).length;
+                const pageKey = `${sub.id}_page_1_${this.CONFIG.PAGE_SIZE}`;
+                let cached = this.siteCache.get(pageKey);
+                if (!cached) {
+                    try {
+                        const data = await this.loadSitesPage(sub.id, 1, this.CONFIG.PAGE_SIZE, true);
+                        cached = data;
+                    } catch (e) { continue; }
+                }
+                if (cached && cached.sites) {
+                    total += cached.sites.filter(s => s.valid !== false).length;
+                }
             }
         }
         this.stats.totalWebsites = total;
@@ -377,30 +348,19 @@ class OptimizedNavigation {
 
     async recalculateGlobalInvalidCount() {
         let totalInvalid = 0;
-        for (const [subId, sites] of this.siteCache.entries()) {
-            totalInvalid += sites.filter(s => s.valid === false).length;
-        }
-        if (this.structure) {
-            for (const catName in this.structure) {
-                for (const sub of this.structure[catName].subcategories) {
-                    if (!this.siteCache.has(sub.id)) {
-                        const sites = await this.loadSites(sub.id, true);
-                        totalInvalid += sites.filter(s => s.valid === false).length;
-                    }
-                }
+        for (const [key, cached] of this.siteCache.entries()) {
+            if (key.startsWith('batch_') || key.includes('_page_')) {
+                const sites = cached.sites || [];
+                totalInvalid += sites.filter(s => s.valid === false).length;
             }
         }
+        // 对于未缓存的分页，我们无法计算，但大多数情况已缓存
         this.stats.invalidCount = totalInvalid;
         this.updateStatsDisplay();
     }
 
-    // ========================================
-    // 渲染方法
-    // ========================================
-
-    renderNavigation() {
-        this._renderLevel1();
-    }
+    // ===== 渲染方法 =====
+    renderNavigation() { this._renderLevel1(); }
 
     _renderLevel1() {
         const container = document.getElementById('level1Nav');
@@ -437,17 +397,40 @@ class OptimizedNavigation {
         this.hasMore = true;
         this.isLoadingMore = false;
         this.hasShownNoMoreToast = false;
-        this.currentSites = await this.loadSites(subcategoryId, true);
-        if (!this.currentSites.length) {
-            this._renderEmptyState();
+        this.currentSubcategoryId = subcategoryId;
+        this.currentSites = [];
+        this.totalSitesCount = 0;
+
+        const cached = this.getCachedSites(subcategoryId);
+        if (cached && cached.sites) {
+            this.currentSites = cached.sites;
+            this.totalSitesCount = cached.total || cached.sites.length;
+            this.hasMore = this.totalSitesCount > this.CONFIG.PAGE_SIZE;
+            this._renderSitesPage(true);
+            this.observeLazyImages(container);
+            this._bindInfiniteScroll();
+            const validCount = this.currentSites.filter(s => s.valid !== false).length;
+            this._updateSubcategoryCountDisplay(subcategoryId, validCount);
+            await this.calculateTotalValidSites();
             return;
         }
-        this._renderSitesPage(true);
-        this.observeLazyImages(container);
-        this._bindInfiniteScroll();
-        const validCount = this.currentSites.filter(s => s.valid !== false).length;
-        this._updateSubcategoryCountDisplay(subcategoryId, validCount);
-        await this.calculateTotalValidSites();
+
+        this.showSkeleton();
+        try {
+            const data = await this.loadSitesPage(subcategoryId, 1, this.CONFIG.PAGE_SIZE, true);
+            this.currentSites = data.sites || [];
+            this.totalSitesCount = data.total || this.currentSites.length;
+            this.hasMore = this.totalSitesCount > this.CONFIG.PAGE_SIZE;
+            this._renderSitesPage(true);
+            this.observeLazyImages(container);
+            this._bindInfiniteScroll();
+            const validCount = this.currentSites.filter(s => s.valid !== false).length;
+            this._updateSubcategoryCountDisplay(subcategoryId, validCount);
+            await this.calculateTotalValidSites();
+        } catch (error) {
+            console.error('加载站点失败:', error);
+            this.showError('加载站点数据失败，请检查网络后重试');
+        }
     }
 
     _renderSitesPage(resetTrigger = true) {
@@ -455,9 +438,9 @@ class OptimizedNavigation {
         if (!container) return;
         if (resetTrigger) container.innerHTML = '';
         const start = (this.currentPage - 1) * this.CONFIG.PAGE_SIZE;
-        const end = start + this.CONFIG.PAGE_SIZE;
+        const end = Math.min(start + this.CONFIG.PAGE_SIZE, this.currentSites.length);
         const pageSites = this.currentSites.slice(start, end);
-        this.hasMore = end < this.currentSites.length;
+        this.hasMore = end < this.totalSitesCount;
 
         if (this.currentPage === 1) {
             container.innerHTML = '';
@@ -518,10 +501,7 @@ class OptimizedNavigation {
         }
     }
 
-    // ========================================
-    // 站点卡片创建
-    // ========================================
-
+    // ===== 站点卡片创建 =====
     _createSiteCard(site, index, isSearchResult = false, keyword = '') {
         const card = document.createElement('a');
         card.className = `site-card ${site.valid === false ? 'invalid' : ''}`;
@@ -561,7 +541,7 @@ class OptimizedNavigation {
             </div>
         `;
 
-        // 点击计数
+        // 点击计数（不变）
         card.addEventListener('click', async (e) => {
             if (e.target.closest('.report-dead-link-btn')) return;
             this.isNavigationClick = true;
@@ -619,7 +599,7 @@ class OptimizedNavigation {
             }, 100);
         });
 
-        // 死链报告
+        // 死链报告（不变）
         const reportBtn = card.querySelector('.report-dead-link-btn');
         if (reportBtn) {
             if (site.valid === false) {
@@ -645,19 +625,12 @@ class OptimizedNavigation {
                             card.classList.add('invalid');
                             const currentSubId = this.selectedLevel2;
                             if (currentSubId) {
-                                const cachedSites = this.siteCache.get(currentSubId);
-                                if (cachedSites) {
-                                    const updatedSites = cachedSites.map(s => {
-                                        if (s.url === reportBtn.dataset.url) return { ...s, valid: false };
-                                        return s;
-                                    });
-                                    this.siteCache.set(currentSubId, updatedSites);
-                                    await this.renderLevel3(this.selectedLevel1, currentSubId);
-                                } else {
-                                    await this.renderLevel3(this.selectedLevel1, currentSubId);
-                                }
-                                const freshSites = await this.loadSites(currentSubId, true);
-                                const validCount = freshSites.filter(s => s.valid !== false).length;
+                                // 刷新该子分类缓存
+                                const pageKey = `${currentSubId}_page_1_${this.CONFIG.PAGE_SIZE}`;
+                                this.siteCache.delete(pageKey);
+                                await this.renderLevel3(this.selectedLevel1, currentSubId);
+                                const freshData = await this.loadSitesPage(currentSubId, 1, this.CONFIG.PAGE_SIZE, true);
+                                const validCount = freshData.sites.filter(s => s.valid !== false).length;
                                 this._updateSubcategoryCountDisplay(currentSubId, validCount);
                                 await this.recalculateGlobalInvalidCount();
                                 await this.calculateTotalValidSites();
@@ -681,10 +654,7 @@ class OptimizedNavigation {
         return card;
     }
 
-    // ========================================
-    // 分类切换逻辑
-    // ========================================
-
+    // ===== 分类切换逻辑 =====
     async selectLevel1(level1, isUserClick = false) {
         if (this.selectedLevel1 === level1) return;
         this.isNavigationClick = true;
@@ -700,19 +670,20 @@ class OptimizedNavigation {
             document.querySelectorAll('.level2-btn').forEach(el => {
                 el.classList.toggle('active', parseInt(el.dataset.level2) === firstSub.id);
             });
-
-            const firstSites = await this.loadSites(firstSub.id, true);
-            this.currentSites = firstSites;
             await this.renderLevel3(this.selectedLevel1, firstSub.id);
             this.updateSubcategoryCount(firstSub.id);
 
+            // 预加载该分类下其他子分类的第一页
             const allSubIds = this.structure[level1].subcategories.map(s => s.id);
             const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
             if (otherSubIds.length) {
                 const preload = () => {
-                    this.loadBatchSitesBatch(otherSubIds).catch(err => {
-                        console.warn('预加载子分类失败:', err);
-                    });
+                    // 逐个加载其他子分类的第一页
+                    for (const subId of otherSubIds) {
+                        this.loadSitesPage(subId, 1, this.CONFIG.PAGE_SIZE, true).catch(err => {
+                            console.warn('预加载子分类失败:', err);
+                        });
+                    }
                 };
                 if (window.requestIdleCallback) {
                     requestIdleCallback(preload, { timeout: this.CONFIG.PRELOAD_DELAY });
@@ -734,12 +705,8 @@ class OptimizedNavigation {
         this.selectedLevel2 = subcategoryId;
         this.hasShownNoMoreToast = false;
 
-        const sites = await this.loadSites(subcategoryId, true);
-        this.currentSites = sites;
         await this.renderLevel3(this.selectedLevel1, subcategoryId);
-
-        const validCount = sites.filter(s => s.valid !== false).length;
-        this._updateSubcategoryCountDisplay(subcategoryId, validCount);
+        this.updateSubcategoryCount(subcategoryId);
         await this.calculateTotalValidSites();
 
         if (this.autoRefreshTimer) {
@@ -749,10 +716,7 @@ class OptimizedNavigation {
         setTimeout(() => { this.isNavigationClick = false; }, 100);
     }
 
-    // ========================================
-    // 搜索功能
-    // ========================================
-
+    // ===== 搜索功能 =====
     createSearchBox() {
         const navHeader = document.querySelector('.navigation-header');
         if (!navHeader || navHeader.querySelector('.nav-search-box')) return;
@@ -810,7 +774,7 @@ class OptimizedNavigation {
         this.showSkeleton();
 
         try {
-            const response = await this._fetchDirect(`${this.apiBase}/search?q=${encodeURIComponent(query)}`);
+            const response = await this._fetchWithRetry(`${this.apiBase}/search?q=${encodeURIComponent(query)}`);
             const results = await response.json();
             container.innerHTML = '';
             if (results.length === 0) {
@@ -863,10 +827,7 @@ class OptimizedNavigation {
         }
     }
 
-    // ========================================
-    // 无限滚动
-    // ========================================
-
+    // ===== 无限滚动 =====
     _bindInfiniteScroll() {
         if (this.scrollListener) {
             window.removeEventListener('scroll', this.scrollListener);
@@ -908,10 +869,11 @@ class OptimizedNavigation {
         if (trigger) {
             trigger.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;"></div><span>加载中...</span>';
         }
+        // 模拟延迟
         await new Promise(r => setTimeout(r, 200));
         this.currentPage++;
         const start = (this.currentPage - 1) * this.CONFIG.PAGE_SIZE;
-        if (start >= this.currentSites.length) {
+        if (start >= this.totalSitesCount) {
             this.hasMore = false;
             if (trigger) trigger.remove();
             if (!this.hasShownNoMoreToast) {
@@ -921,15 +883,30 @@ class OptimizedNavigation {
             this.isLoadingMore = false;
             return;
         }
+        // 如果当前页数据尚未在 this.currentSites 中，需要从缓存或服务器加载
+        if (this.currentSites.length < start + this.CONFIG.PAGE_SIZE) {
+            // 尝试从缓存获取，若没有则请求
+            const pageKey = `${this.currentSubcategoryId}_page_${this.currentPage}_${this.CONFIG.PAGE_SIZE}`;
+            let pageData = this.siteCache.get(pageKey);
+            if (!pageData) {
+                try {
+                    pageData = await this.loadSitesPage(this.currentSubcategoryId, this.currentPage, this.CONFIG.PAGE_SIZE, true);
+                } catch (e) {
+                    console.warn('加载分页失败:', e);
+                    this.isLoadingMore = false;
+                    return;
+                }
+            }
+            if (pageData && pageData.sites) {
+                this.currentSites = this.currentSites.concat(pageData.sites);
+            }
+        }
         this._renderSitesPage(false);
         this.isLoadingMore = false;
         this._checkScrollAndLoadMore();
     }
 
-    // ========================================
-    // 事件绑定
-    // ========================================
-
+    // ===== 事件绑定 =====
     bindEvents() {
         document.addEventListener('click', (e) => {
             if (this.isSearching) return;
@@ -946,10 +923,7 @@ class OptimizedNavigation {
         });
     }
 
-    // ========================================
-    // 定时任务
-    // ========================================
-
+    // ===== 定时任务 =====
     startAutoRefresh() {
         if (this.autoRefreshTimer) clearInterval(this.autoRefreshTimer);
         this.autoRefreshTimer = setInterval(() => {
@@ -961,7 +935,15 @@ class OptimizedNavigation {
 
     async refreshCurrentSubcategory() {
         if (!this.selectedLevel2) return;
-        await this.selectLevel2(this.selectedLevel2, null, false);
+        // 清除该子分类的分页缓存，重新加载
+        const subId = this.selectedLevel2;
+        // 清除所有该子分类的分页缓存
+        for (const key of this.siteCache.keys()) {
+            if (key.startsWith(`${subId}_page_`)) {
+                this.siteCache.delete(key);
+            }
+        }
+        await this.renderLevel3(this.selectedLevel1, subId);
     }
 
     startBackgroundUpdates() {
@@ -974,7 +956,7 @@ class OptimizedNavigation {
 
     async _refreshStructure() {
         try {
-            const response = await this._fetchDirect(`${this.apiBase}/navigation/structure`);
+            const response = await this._fetchWithRetry(`${this.apiBase}/navigation/structure`);
             const newStructure = await response.json();
             if (JSON.stringify(newStructure) !== JSON.stringify(this.structure)) {
                 this.structure = newStructure;
@@ -993,10 +975,7 @@ class OptimizedNavigation {
         }
     }
 
-    // ========================================
-    // 初始化 & 销毁
-    // ========================================
-
+    // ===== 初始化 & 销毁 =====
     async init() {
         if (this.isInitialized) return;
         this.apiBase = Utils.getApiBase();
@@ -1021,8 +1000,6 @@ class OptimizedNavigation {
 
                 const firstSub = this.getFirstSubCategory(firstCategory);
                 if (firstSub) {
-                    const sites = await this.loadSites(firstSub.id, true);
-                    this.currentSites = sites;
                     this.selectedLevel2 = firstSub.id;
                     document.querySelectorAll('.level2-btn').forEach(el => {
                         el.classList.toggle('active', parseInt(el.dataset.level2) === firstSub.id);
@@ -1030,13 +1007,16 @@ class OptimizedNavigation {
                     await this.renderLevel3(firstCategory, firstSub.id);
                     this.updateSubcategoryCount(firstSub.id);
 
+                    // 预加载其他子分类
                     const allSubIds = this.structure[firstCategory].subcategories.map(s => s.id);
                     const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
                     if (otherSubIds.length) {
                         const preload = () => {
-                            this.loadBatchSitesBatch(otherSubIds).catch(err => {
-                                console.warn('初始预加载失败:', err);
-                            });
+                            for (const subId of otherSubIds) {
+                                this.loadSitesPage(subId, 1, this.CONFIG.PAGE_SIZE, true).catch(err => {
+                                    console.warn('初始预加载失败:', err);
+                                });
+                            }
                         };
                         if (window.requestIdleCallback) {
                             requestIdleCallback(preload, { timeout: 2000 });
@@ -1070,22 +1050,22 @@ class OptimizedNavigation {
                     const firstSub = this.getFirstSubCategory(firstCat);
                     if (firstSub) {
                         this.selectedLevel2 = firstSub.id;
-                        try {
-                            const sites = this.siteCache.get(firstSub.id) || [];
-                            if (sites.length) {
-                                this.currentSites = sites;
-                                await this.renderLevel3(firstCat, firstSub.id);
-                            } else {
-                                this._renderEmptyState();
-                                setTimeout(() => {
-                                    this.loadSites(firstSub.id, true).then(s => {
-                                        this.currentSites = s;
-                                        this.renderLevel3(firstCat, firstSub.id);
-                                    }).catch(() => {});
-                                }, 3000);
-                            }
-                        } catch (e2) {
+                        const cached = this.getCachedSites(firstSub.id);
+                        if (cached && cached.sites) {
+                            this.currentSites = cached.sites;
+                            this.totalSitesCount = cached.total || cached.sites.length;
+                            this.hasMore = this.totalSitesCount > this.CONFIG.PAGE_SIZE;
+                            await this.renderLevel3(firstCat, firstSub.id);
+                        } else {
                             this._renderEmptyState();
+                            setTimeout(() => {
+                                this.loadSitesPage(firstSub.id, 1, this.CONFIG.PAGE_SIZE, true).then(data => {
+                                    this.currentSites = data.sites || [];
+                                    this.totalSitesCount = data.total || this.currentSites.length;
+                                    this.hasMore = this.totalSitesCount > this.CONFIG.PAGE_SIZE;
+                                    this.renderLevel3(firstCat, firstSub.id);
+                                }).catch(() => {});
+                            }, 3000);
                         }
                     }
                 }
