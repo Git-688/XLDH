@@ -1,4 +1,4 @@
-/* admin.js - 完整版（移除导入、导出、刷新缓存、刷新图标功能） */
+/* admin.js - 完整版（支持精准刷新子分类缓存） */
 (function() {
     'use strict';
 
@@ -365,6 +365,20 @@
         }
     }
 
+    // ===== 精准刷新子分类缓存 =====
+    async function refreshSubcategoryCache(subcategoryIds) {
+        if (!subcategoryIds || !subcategoryIds.length) return;
+        try {
+            await apiFetch('/admin/refresh-subcategory', {
+                method: 'POST',
+                body: JSON.stringify({ subcategoryIds })
+            });
+            console.log('已刷新子分类缓存:', subcategoryIds);
+        } catch (e) {
+            console.warn('精准刷新子分类缓存失败:', e);
+        }
+    }
+
     function selectCat(cid, selectFirst = true) {
         currentCat = cid;
         currentSub = null;
@@ -562,6 +576,10 @@
                 body: JSON.stringify({ siteIds: ids })
             });
             showToast(result.message || '删除成功', 'success');
+            // 精准刷新这些子分类
+            const subIds = ids.map(id => sites.find(s => s.id === id)?.subcategory_id).filter(id => id);
+            const uniqueSubIds = [...new Set(subIds)];
+            if (uniqueSubIds.length) await refreshSubcategoryCache(uniqueSubIds);
             selectedSiteIds.clear();
             await loadAdminSites(true);
             await loadAllDataButKeepSelection();
@@ -606,6 +624,10 @@
                     body: JSON.stringify({ siteIds: ids, targetSubcategoryId: targetId })
                 });
                 showToast(result.message || '移动成功', 'success');
+                // 刷新源子分类和目标子分类
+                const sourceSubIds = ids.map(id => sites.find(s => s.id === id)?.subcategory_id).filter(id => id);
+                const uniqueSubIds = [...new Set([...sourceSubIds, targetId])];
+                if (uniqueSubIds.length) await refreshSubcategoryCache(uniqueSubIds);
                 selectedSiteIds.clear();
                 await loadAdminSites(true);
                 await loadAllDataButKeepSelection();
@@ -813,13 +835,17 @@
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
                 showToast('修改成功');
+                // 精准刷新该子分类
+                await refreshSubcategoryCache([site.subcategory_id]);
                 await loadAdminSites(true);
                 await loadAllDataButKeepSelection();
                 notifyNavRefresh();
             }, true,
             async () => {
+                const subId = site.subcategory_id;
                 await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
                 showToast('删除成功');
+                await refreshSubcategoryCache([subId]);
                 await loadAdminSites(true);
                 await loadAllDataButKeepSelection();
                 notifyNavRefresh();
@@ -896,6 +922,8 @@
                     display_order: +document.getElementById('mSort').value
                 })});
                 showToast('添加成功', 'success');
+                // 精准刷新该子分类
+                await refreshSubcategoryCache([currentSub]);
                 closeModal();
                 await loadAdminSites(true);
                 await refreshSitesOnly();
@@ -978,9 +1006,10 @@
                     body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value })
                 });
                 showToast('链接已更新', 'success');
+                await refreshSubcategoryCache([site.subcategory_id]);
                 await loadFeedback();
                 await loadAllDataButKeepSelection();
-                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+                await apiFetch('/admin/refresh-navigation', { method: 'POST' }); // 保留全量刷新作为后备
                 refreshNavigationStats();
                 notifyNavRefresh();
                 closeModal();
@@ -1025,6 +1054,8 @@
             this.value = this.select.value;
             this.isOpen = false;
             this.init();
+            const id = selectElement.id || selectElement.name || Math.random().toString(36);
+            customSelectInstances.set(id, this);
         }
 
         init() {
