@@ -257,6 +257,8 @@
             <div id="manageTab" class="tab-panel">
                 <div class="action-buttons-row">
                     <button class="logout-btn" id="logoutBtn">退出</button>
+                    <!-- 新增：刷新导航按钮 -->
+                    <button class="primary" id="refreshNavBtn">🔄 刷新导航</button>
                     <button class="primary" id="addCategoryBtn">+ 一级分类</button>
                 </div>
                 <div class="cat-bar" id="catBar"></div>
@@ -288,7 +290,12 @@
             </div>
 
             <div id="submissionsTab" class="tab-panel hidden">
-                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;"><button class="primary sm" id="refreshSubmissionsBtn">刷新列表</button><button class="secondary sm" id="batchApproveBtn" style="background:#10b981;color:#fff;">批量通过</button></div>
+                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                    <button class="primary sm" id="refreshSubmissionsBtn">刷新列表</button>
+                    <!-- 新增：批量通过按钮 -->
+                    <button class="success sm" id="batchApproveBtn">✅ 批量通过</button>
+                    <button class="danger sm" id="batchDeleteSubmissionsBtn">🗑️ 批量删除</button>
+                </div>
                 <div class="submissions-list" id="submissionsList"></div>
             </div>
 
