@@ -1,4 +1,4 @@
-/* admin.js - 完整版（待审核详情：自定义下拉、排序自动计算、toast优化） */
+/* admin.js - 完整版（投稿详情排序自动计算，自定义下拉，Toast优化） */
 (function() {
     'use strict';
 
@@ -24,18 +24,67 @@
     let customSelectInstances = [];
     let customSelects = {};
 
-    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-    
-    function showToast(msg, type = 'success') {
-        const toast = document.getElementById('toast');
-        if (!toast) return;
-        const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-        toast.innerHTML = `${icons[type] || ''} ${msg}`;
-        toast.className = `toast ${type} show`;
-        clearTimeout(toast._timeout);
-        toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300);
+    // ===== Toast 优化 =====
+    function showToast(msg, type = 'success', duration = 3000) {
+        const container = document.getElementById('toastContainer');
+        if (!container) {
+            // 降级：创建临时容器
+            const div = document.createElement('div');
+            div.className = 'toast-container';
+            div.id = 'toastContainer';
+            document.body.appendChild(div);
+            return showToast(msg, type, duration);
+        }
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+        const icon = icons[type] || icons.info;
+        const item = document.createElement('div');
+        item.className = `toast-item ${type}`;
+        item.innerHTML = `
+            <span class="toast-icon"><i class="fas ${icon}"></i></span>
+            <span>${escapeHtml(msg)}</span>
+            <button class="toast-close">&times;</button>
+        `;
+        container.appendChild(item);
+        // 触发进入动画
+        requestAnimationFrame(() => {
+            item.classList.add('show');
+        });
+        // 关闭按钮
+        item.querySelector('.toast-close').addEventListener('click', () => {
+            removeToast(item);
+        });
+        // 自动消失
+        let timer = setTimeout(() => {
+            removeToast(item);
+        }, duration);
+        // 鼠标悬停暂停
+        item.addEventListener('mouseenter', () => clearTimeout(timer));
+        item.addEventListener('mouseleave', () => {
+            timer = setTimeout(() => removeToast(item), duration);
+        });
+        // 限制最大显示数量
+        const items = container.querySelectorAll('.toast-item');
+        if (items.length > 5) {
+            removeToast(items[0]);
+        }
     }
 
+    function removeToast(item) {
+        if (!item || !item.parentNode) return;
+        item.classList.remove('show');
+        item.classList.add('hide');
+        setTimeout(() => {
+            if (item.parentNode) item.parentNode.removeChild(item);
+        }, 300);
+    }
+
+    // ===== 工具函数 =====
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     function checkUrl(url) { try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; } }
     function autoResizeTextarea(textarea) { if (!textarea) return; textarea.style.height = 'auto'; textarea.style.height = textarea.scrollHeight + 'px'; }
     function getDeviceId() { let deviceId = localStorage.getItem('device_id'); if (!deviceId) { deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15); localStorage.setItem('device_id', deviceId); } return deviceId; }
@@ -53,6 +102,7 @@
         if (feedbackEl) feedbackEl.textContent = feedbackData ? feedbackData.length : 0;
     }
 
+    // ===== API 请求 =====
     async function apiFetch(endpoint, opt = {}) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
         if (token) headers.Authorization = `Bearer ${token}`;
@@ -187,6 +237,7 @@
 
     function updateLockMessage(locked) { const el = document.getElementById('loginLockMessage'); if (!el) return; if (locked) { el.textContent = '登录失败过多，请10分钟后重试'; el.style.display = 'block'; } else { el.style.display = 'none'; } }
 
+    // ===== 验证码 =====
     async function loadCaptcha() {
         const captchaGroup = document.getElementById('captchaGroup');
         const captchaImg = document.getElementById('captchaImg');
@@ -210,6 +261,7 @@
 
     function refreshCaptcha() { loadCaptcha(); }
 
+    // ===== 登录 =====
     async function login() {
         const rawToken = document.getElementById('tokenInput').value.trim();
         if (!rawToken) { showToast('请输入Token', 'error'); return; }
@@ -244,7 +296,7 @@
             if (mainContent) mainContent.classList.remove('hidden');
             document.getElementById('tokenInput').value = '';
             document.getElementById('captchaInput').value = '';
-            showToast('登录成功' + (remember ? '（已记住密码）' : ''));
+            showToast('登录成功' + (remember ? '（已记住密码）' : ''), 'success');
         } catch (e) {
             token = '';
             showToast(e.message === 'Unauthorized' ? 'Token无效或验证码错误' : e.message || '登录失败', 'error');
@@ -266,7 +318,7 @@
         if (captchaGroup) captchaGroup.style.display = 'none';
         currentCaptchaMd5key = null;
         loadCaptcha();
-        showToast('已退出');
+        showToast('已退出', 'info');
     }
 
     function fetchSiteInfoHandler() {
@@ -280,7 +332,7 @@
         const descInput = document.getElementById(descInputId);
         if (!urlInput || !titleInput || !iconInput || !descInput) { showToast('输入框元素未找到', 'error'); return; }
         let rawUrl = urlInput.value.trim();
-        if (!rawUrl) { showToast('请先输入网址', 'warn'); return; }
+        if (!rawUrl) { showToast('请先输入网址', 'warning'); return; }
         if (!/^https?:\/\//i.test(rawUrl)) rawUrl = 'https://' + rawUrl;
         const btn = document.getElementById('fetchInfoBtn');
         if (btn) { btn.disabled = true; btn.textContent = '获取中...'; }
@@ -297,11 +349,12 @@
                 if (data.data.icon) iconInput.value = data.data.icon;
                 if (data.data.description) descInput.value = data.data.description;
                 showToast('获取成功', 'success');
-            } else { showToast('未获取到信息，请手动填写', 'warn'); }
+            } else { showToast('未获取到信息，请手动填写', 'warning'); }
         } catch (error) { console.error('获取网站信息失败:', error); showToast('获取失败，请手动填写', 'error'); }
         finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
     }
 
+    // ===== 数据加载 =====
     async function loadAllData() {
         try {
             const [catData, subData, siteData, subDataList, feedbackDataList] = await Promise.all([
@@ -380,6 +433,7 @@
         }
     }
 
+    // ===== 分类与子分类操作 =====
     function selectCat(cid, selectFirst = true) {
         currentCat = cid;
         currentSub = null;
@@ -424,6 +478,7 @@
         `).join('');
     }
 
+    // ===== 站点列表（带复选框） =====
     async function loadAdminSites(resetPage = true) {
         const subcategoryId = currentSub || '';
         const listEl = document.getElementById('siteList');
@@ -567,6 +622,7 @@
         updateSelectedCount();
     }
 
+    // ===== 批量操作 =====
     async function batchDeleteSites() {
         if (selectedSiteIds.size === 0) { showToast('请先选择要删除的站点', 'warning'); return; }
         if (!confirm(`确定要删除选中的 ${selectedSiteIds.size} 个站点吗？此操作不可恢复！`)) return;
@@ -680,6 +736,7 @@
         }
     }
 
+    // ===== 公告管理 =====
     async function loadAnnouncement() {
         try {
             const data = await apiFetch('/admin/announcements');
@@ -748,6 +805,7 @@
         if (contentTextarea) autoResizeTextarea(contentTextarea);
     }
 
+    // ===== 通用模态框 =====
     async function getNextSortValue(type, parentId = null) {
         try {
             let maxOrder = 0;
@@ -794,6 +852,7 @@
 
     function closeModal() { document.getElementById('modal').classList.remove('show'); modalAction = null; }
 
+    // ===== 分类、子分类、站点的增删改 =====
     function handleModifyCategory(id, currentName) {
         const cat = categories.find(c => c.id === id);
         const currentOrder = cat?.display_order || 0;
@@ -805,10 +864,12 @@
                 const order = parseInt(document.getElementById('mOrder').value) || 0;
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
-                showToast('修改成功'); await loadAllDataButKeepSelection();
+                showToast('修改成功', 'success');
+                await loadAllDataButKeepSelection();
             }, true, async () => {
                 await apiFetch(`/admin/categories/${id}`, { method:'DELETE' });
-                showToast('分类已删除'); await loadAllDataButKeepSelection();
+                showToast('分类已删除', 'success');
+                await loadAllDataButKeepSelection();
             }
         );
     }
@@ -824,10 +885,12 @@
                 const order = parseInt(document.getElementById('mOrder').value) || 0;
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
-                showToast('修改成功'); await loadAllDataButKeepSelection();
+                showToast('修改成功', 'success');
+                await loadAllDataButKeepSelection();
             }, true, async () => {
                 await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' });
-                showToast('子分类已删除'); await loadAllDataButKeepSelection();
+                showToast('子分类已删除', 'success');
+                await loadAllDataButKeepSelection();
             }
         );
     }
@@ -851,13 +914,13 @@
                     title, url, description: document.getElementById('mDesc').value,
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
-                showToast('修改成功');
+                showToast('修改成功', 'success');
                 await loadAdminSites(true);
                 await loadAllDataButKeepSelection();
             }, true,
             async () => {
                 await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
-                showToast('删除成功');
+                showToast('删除成功', 'success');
                 await loadAdminSites(true);
                 await loadAllDataButKeepSelection();
             }
@@ -885,7 +948,8 @@
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/categories', { method:'POST', body: JSON.stringify({ name, display_order: +document.getElementById('mSort').value }) });
-                showToast('添加成功'); await loadAllDataButKeepSelection();
+                showToast('添加成功', 'success');
+                await loadAllDataButKeepSelection();
             }
         );
     }
@@ -900,7 +964,8 @@
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/subcategories', { method:'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('mSort').value }) });
-                showToast('添加成功'); await loadAllDataButKeepSelection();
+                showToast('添加成功', 'success');
+                await loadAllDataButKeepSelection();
             }
         );
     }
@@ -1037,7 +1102,7 @@
         } catch (err) { showToast('忽略失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
-    // ===== 待审核管理 =====
+    // ===== 待审核管理（核心修改） =====
     async function loadSubmissions() {
         const list = document.getElementById('submissionsList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -1087,36 +1152,40 @@
         } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    // 获取指定子分类的最大排序值+1
-    async function getMaxOrderForSubcategory(subcategoryId) {
-        try {
-            const result = await apiFetch(`/admin/sites?subcategory_id=${subcategoryId}`);
-            if (result && Array.isArray(result)) {
-                const maxOrder = result.reduce((max, site) => Math.max(max, site.display_order || 0), 0);
-                return maxOrder + 1;
-            }
-            return 1;
-        } catch (e) {
-            console.warn('获取排序值失败:', e);
-            return 1;
-        }
-    }
-
-    // 更新排序值输入框
-    async function updateSortOrder(subcategoryId, orderInput) {
-        if (!subcategoryId || !orderInput) return;
-        const newOrder = await getMaxOrderForSubcategory(subcategoryId);
-        orderInput.value = newOrder;
-    }
-
+    // ===== 投稿详情编辑（含自动计算排序和自定义下拉） =====
     function showSubmissionDetail(item) {
         const modal = document.getElementById('submissionDetailModal');
         const content = document.getElementById('submissionDetailContent');
-        
-        // 构建自定义下拉选项（完全摒弃原生select）
-        const subOptionsHtml = subcategories.map(s => 
-            `<div class="custom-option" data-value="${s.id}" data-label="${escapeHtml(s.name)}">${escapeHtml(s.name)}</div>`
-        ).join('');
+
+        // 获取当前子分类 ID（如果有的话，从提交的站点中提取，或默认第一个）
+        let defaultSubId = subcategories.length > 0 ? subcategories[0].id : 1;
+        // 尝试从 item 中获取已有的子分类（如果已审核过可能会有记录，但投稿本身没有，我们用默认）
+
+        // 构建自定义下拉选项数据
+        const subOptions = subcategories.map(s => ({ id: s.id, name: s.name }));
+
+        // 生成自定义下拉 HTML
+        let dropdownHtml = `
+            <div class="custom-dropdown" id="subCategoryDropdown">
+                <div class="dropdown-trigger" id="dropdownTrigger">
+                    <span class="dropdown-value">${escapeHtml(subOptions.find(s => s.id === defaultSubId)?.name || '请选择')}</span>
+                    <span class="dropdown-arrow"></span>
+                </div>
+                <div class="dropdown-list" id="dropdownList">
+                    ${subOptions.map(s => `<div class="dropdown-item ${s.id === defaultSubId ? 'selected' : ''}" data-id="${s.id}">${escapeHtml(s.name)}</div>`).join('')}
+                </div>
+            </div>
+        `;
+
+        // 自动计算排序值（基于当前选中的子分类）
+        function calculateOrder(subId) {
+            const subSites = sites.filter(s => s.subcategory_id === subId);
+            let maxOrder = 0;
+            subSites.forEach(s => { if (s.display_order > maxOrder) maxOrder = s.display_order; });
+            return maxOrder + 1;
+        }
+
+        const initialOrder = calculateOrder(defaultSubId);
 
         content.innerHTML = `
             <form id="submissionEditForm">
@@ -1125,21 +1194,12 @@
                 <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">描述</label><textarea id="editDesc" rows="2" class="form-input">${escapeHtml(item.description || '')}</textarea></div>
                 <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">图标</label><input type="text" id="editIcon" value="${escapeHtml(item.icon || '')}" class="form-input"></div>
                 <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">联系方式</label><input type="text" id="editContact" value="${escapeHtml(item.contact || '')}" class="form-input"></div>
-                <div style="margin-bottom:8px;">
-                    <label style="font-weight:500;display:block;">目标子分类</label>
-                    <div id="customSubcategorySelect" class="custom-select-wrapper" style="position:relative;width:100%;">
-                        <div class="custom-select-trigger" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;background:#fff;transition:border 0.2s;">
-                            <span class="custom-select-value" style="color:#1e293b;font-size:12px;">${escapeHtml(subcategories.length ? subcategories[0].name : '请选择')}</span>
-                            <span class="custom-select-arrow" style="transition:transform 0.25s ease;display:inline-block;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid #64748b;margin-left:8px;"></span>
-                        </div>
-                        <div class="custom-select-dropdown" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e2e8f0;border-radius:8px;max-height:200px;overflow-y:auto;z-index:1000;display:none;box-shadow:0 4px 16px rgba(0,0,0,0.1);margin-top:4px;scrollbar-width:none;">
-                            ${subOptionsHtml}
-                        </div>
-                    </div>
+                <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">目标子分类</label>
+                    ${dropdownHtml}
                 </div>
-                <div style="margin-bottom:8px;">
-                    <label style="font-weight:500;display:block;">排序值</label>
-                    <input type="number" id="editOrder" value="${await getMaxOrderForSubcategory(subcategories.length ? subcategories[0].id : 0)}" class="form-input" step="1">
+                <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">排序值（自动计算）</label>
+                    <input type="number" id="editOrder" value="${initialOrder}" class="form-input" readonly style="background:#f1f5f9;cursor:not-allowed;">
+                    <span style="font-size:10px;color:#64748b;">* 基于当前子分类自动计算</span>
                 </div>
                 <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
                     <button type="button" class="secondary" id="editCancelBtn">取消</button>
@@ -1149,87 +1209,107 @@
         `;
         modal.classList.add('show');
 
-        // 初始化自定义下拉
-        const trigger = document.querySelector('#customSubcategorySelect .custom-select-trigger');
-        const dropdown = document.querySelector('#customSubcategorySelect .custom-select-dropdown');
-        const valueSpan = trigger.querySelector('.custom-select-value');
-        const arrow = trigger.querySelector('.custom-select-arrow');
+        // ---------- 自定义下拉交互 ----------
+        const trigger = document.getElementById('dropdownTrigger');
+        const list = document.getElementById('dropdownList');
+        const valueSpan = trigger.querySelector('.dropdown-value');
         const orderInput = document.getElementById('editOrder');
-        let selectedId = subcategories.length ? subcategories[0].id : null;
 
-        // 绑定下拉展开/折叠
+        // 点击触发切换
         trigger.addEventListener('click', function(e) {
             e.stopPropagation();
-            const isOpen = dropdown.style.display === 'block';
-            dropdown.style.display = isOpen ? 'none' : 'block';
-            arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+            const isOpen = list.classList.contains('open');
+            list.classList.toggle('open');
+            trigger.classList.toggle('open');
+            if (!isOpen) {
+                // 定位下拉在视口中
+                const rect = trigger.getBoundingClientRect();
+                const listRect = list.getBoundingClientRect();
+                const spaceBelow = window.innerHeight - rect.bottom;
+                const spaceAbove = rect.top;
+                if (spaceBelow < listRect.height && spaceAbove > listRect.height) {
+                    list.style.top = 'auto';
+                    list.style.bottom = 'calc(100% + 4px)';
+                } else {
+                    list.style.top = 'calc(100% + 4px)';
+                    list.style.bottom = 'auto';
+                }
+            }
         });
 
         // 选项点击
-        dropdown.querySelectorAll('.custom-option').forEach(opt => {
-            opt.addEventListener('click', function(e) {
+        list.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
                 e.stopPropagation();
-                const value = this.dataset.value;
-                const label = this.dataset.label;
-                selectedId = parseInt(value);
-                valueSpan.textContent = label;
-                dropdown.style.display = 'none';
-                arrow.style.transform = 'rotate(0deg)';
-                // 更新排序值
-                updateSortOrder(selectedId, orderInput);
-                // 高亮选中项
-                dropdown.querySelectorAll('.custom-option').forEach(o => o.style.background = '');
-                this.style.background = '#e0f2fe';
+                const id = parseInt(this.dataset.id);
+                const name = this.textContent;
+                // 更新显示
+                valueSpan.textContent = name;
+                // 更新选中样式
+                list.querySelectorAll('.dropdown-item').forEach(el => el.classList.remove('selected'));
+                this.classList.add('selected');
+                // 关闭下拉
+                list.classList.remove('open');
+                trigger.classList.remove('open');
+                // 自动计算排序值
+                const newOrder = calculateOrder(id);
+                orderInput.value = newOrder;
+                // 存储选中 ID 以便保存时使用（存储在 data 属性）
+                trigger.dataset.selectedId = id;
             });
         });
 
-        // 点击外部关闭下拉
-        document.addEventListener('click', function closeDropdown(e) {
-            const wrapper = document.querySelector('#customSubcategorySelect');
-            if (wrapper && !wrapper.contains(e.target)) {
-                dropdown.style.display = 'none';
-                arrow.style.transform = 'rotate(0deg)';
+        // 点击外部关闭
+        const closeDropdown = function(e) {
+            if (!trigger.contains(e.target) && !list.contains(e.target)) {
+                list.classList.remove('open');
+                trigger.classList.remove('open');
             }
-        });
+        };
+        document.addEventListener('click', closeDropdown);
 
-        // 默认选中第一项并高亮
-        const firstOpt = dropdown.querySelector('.custom-option');
-        if (firstOpt) {
-            firstOpt.style.background = '#e0f2fe';
-            selectedId = parseInt(firstOpt.dataset.value);
-            valueSpan.textContent = firstOpt.dataset.label;
-            // 异步获取排序值
-            updateSortOrder(selectedId, orderInput);
-        }
-
-        // 关闭模态框
-        document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => {
-            modal.classList.remove('show');
-            dropdown.style.display = 'none';
-            arrow.style.transform = 'rotate(0deg)';
-        });
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('show');
-                dropdown.style.display = 'none';
-                arrow.style.transform = 'rotate(0deg)';
+        // 窗口变化时重新定位
+        const repositionDropdown = function() {
+            if (list.classList.contains('open')) {
+                const rect = trigger.getBoundingClientRect();
+                const listRect = list.getBoundingClientRect();
+                const spaceBelow = window.innerHeight - rect.bottom;
+                const spaceAbove = rect.top;
+                if (spaceBelow < listRect.height && spaceAbove > listRect.height) {
+                    list.style.top = 'auto';
+                    list.style.bottom = 'calc(100% + 4px)';
+                } else {
+                    list.style.top = 'calc(100% + 4px)';
+                    list.style.bottom = 'auto';
+                }
             }
-        });
-        document.getElementById('editCancelBtn')?.addEventListener('click', () => {
-            modal.classList.remove('show');
-            dropdown.style.display = 'none';
-            arrow.style.transform = 'rotate(0deg)';
-        });
+        };
+        window.addEventListener('resize', repositionDropdown);
+        window.addEventListener('scroll', repositionDropdown, true);
 
-        // 保存修改
+        // 保存当前选中的子分类 ID（用于保存时获取）
+        trigger.dataset.selectedId = defaultSubId;
+
+        // ---------- 关闭模态框 ----------
+        const closeModalHandler = () => {
+            modal.classList.remove('show');
+            document.removeEventListener('click', closeDropdown);
+            window.removeEventListener('resize', repositionDropdown);
+            window.removeEventListener('scroll', repositionDropdown);
+        };
+        document.getElementById('closeDetailModalBtn')?.addEventListener('click', closeModalHandler);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModalHandler(); });
+        document.getElementById('editCancelBtn')?.addEventListener('click', closeModalHandler);
+
+        // ---------- 保存修改 ----------
         document.getElementById('editSaveBtn')?.addEventListener('click', async function() {
             const title = document.getElementById('editTitle').value.trim();
             const url = document.getElementById('editUrl').value.trim();
             const description = document.getElementById('editDesc').value.trim();
             const icon = document.getElementById('editIcon').value.trim();
             const contact = document.getElementById('editContact').value.trim();
-            const subcategoryId = selectedId;
-            const displayOrder = parseInt(document.getElementById('editOrder').value) || 0;
+            const subcategoryId = parseInt(trigger.dataset.selectedId) || 1;
+            const displayOrder = parseInt(orderInput.value) || 0;
             if (!title || !url) { showToast('标题和网址不能为空', 'error'); return; }
             try {
                 await apiFetch(`/admin/submissions/${item.id}`, {
@@ -1250,9 +1330,7 @@
                     })
                 });
                 showToast('修改并通过审核成功', 'success');
-                modal.classList.remove('show');
-                dropdown.style.display = 'none';
-                arrow.style.transform = 'rotate(0deg)';
+                closeModalHandler();
                 await loadSubmissions();
                 await loadAllDataButKeepSelection();
             } catch (e) {
@@ -1261,6 +1339,7 @@
         });
     }
 
+    // 单独通过
     async function approveSubmission(id) {
         if (!confirm('确定通过此投稿？')) return;
         try {
@@ -1271,6 +1350,7 @@
         } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
     }
 
+    // 单独拒绝
     async function rejectSubmission(id) {
         if (!confirm('确定拒绝此投稿？')) return;
         try {
@@ -1280,7 +1360,7 @@
         } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
     }
 
-    // ===== 自定义Select（辅助） =====
+    // ===== 自定义Select（用于批量操作，保留原有实现） =====
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -1421,23 +1501,12 @@
         }
     }
 
+    // ===== 事件绑定 =====
     function injectGlobalStyles() {
         if (!document.getElementById('admin-global-styles')) {
             const style = document.createElement('style');
             style.id = 'admin-global-styles';
-            style.textContent = `
-                .custom-select-dropdown::-webkit-scrollbar { display: none; }
-                .custom-select-dropdown { scrollbar-width: none; -ms-overflow-style: none; }
-                .custom-select-option { padding: 8px 12px; font-size: 12px; cursor: pointer; transition: background 0.15s; }
-                .custom-select-option:hover { background: #f1f5f9; }
-                .custom-select-option.selected { background: #e0f2fe; font-weight: 500; }
-                .dark-mode .custom-select-trigger { background: #1e293b; border-color: #334155; color: #e2e8f0; }
-                .dark-mode .custom-select-dropdown { background: #1e293b; border-color: #334155; }
-                .dark-mode .custom-select-option { color: #e2e8f0; }
-                .dark-mode .custom-select-option:hover { background: #334155; }
-                .dark-mode .custom-select-option.selected { background: #0f172a; color: #38bdf8; }
-                .dark-mode .custom-select-arrow { border-top-color: #94a3b8; }
-            `;
+            style.textContent = '';
             document.head.appendChild(style);
         }
     }
@@ -1490,7 +1559,7 @@
         document.getElementById('addSubBtn').addEventListener('click', handleAddSub);
         document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
         document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
-        document.getElementById('refreshSubmissionsBtn')?.removeEventListener('click', loadSubmissions);
+        // 移除旧的事件绑定（已删除的按钮不再绑定）
         document.getElementById('annPublishBtn').addEventListener('click', saveAnnouncement);
         document.getElementById('annClearBtn').addEventListener('click', clearAnnouncementForm);
         document.getElementById('annCancelBtn').addEventListener('click', () => {
@@ -1509,8 +1578,8 @@
         document.getElementById('batchMoveBtn')?.addEventListener('click', batchMoveSites);
     }
 
+    // ===== 初始化 =====
     injectGlobalStyles();
-
     loginLocked = localStorage.getItem('login_locked') === 'true';
     updateLockMessage(loginLocked);
 
@@ -1544,7 +1613,7 @@
 
     setInterval(() => {
         const exp = sessionStorage.getItem('admin_expires');
-        if (exp && Date.now() > parseInt(exp, 10) - 60000) showToast('登录即将过期', 'warn');
+        if (exp && Date.now() > parseInt(exp, 10) - 60000) showToast('登录即将过期', 'warning');
     }, 30000);
 
     setupEventDelegation();
