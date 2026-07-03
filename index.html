@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（修复排行榜模态框二次打开问题） -->
+<!-- index.html - 完整版（构建时自动添加版本号，排行榜模态框已修复） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -443,36 +443,33 @@
         .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
     </style>
 
-    <!-- ===== 外部样式（不加版本号，构建时自动添加） ===== -->
-    <link rel="preload" href="./css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/navbar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/sidebar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/announcement.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/search.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/weather.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/about.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/navigation.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/wallpaper.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/greeting.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/stats.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/compact-tags.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/responsive.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'>
+    <link rel="preload" href="./css/style.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/navbar.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/sidebar.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/announcement.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/search.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/weather.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/about.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/navigation.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/wallpaper.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/greeting.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/stats.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/compact-tags.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/responsive.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/xfyy1/music-player.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/comment.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
 
-    <!-- ===== 第三方样式 ===== -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
 
-    <link rel="preload" href="./js/main.js" as="script">
+    <link rel="preload" href="./js/main.js?__VERSION__" as="script">
 </head>
 <body>
     <div class="scroll-progress" id="scrollProgress"></div>
 
-    <!-- ===== 导航栏 ===== -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <div class="nav-brand">
@@ -493,7 +490,6 @@
         </div>
     </nav>
 
-    <!-- ===== 侧边栏 ===== -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-wallpaper" id="sidebarWallpaper">
             <div class="sidebar-wallpaper-overlay"></div>
@@ -522,9 +518,7 @@
         </div>
     </aside>
 
-    <!-- ===== 主要内容 ===== -->
     <main class="main-content">
-        <!-- 壁纸轮播 -->
         <section class="wallpaper-section">
             <div class="container">
                 <div class="wallpaper-container" id="wallpaperCarousel">
@@ -539,7 +533,6 @@
             </div>
         </section>
 
-        <!-- 问候与木鱼 -->
         <section class="greeting-section">
             <div class="greeting-container">
                 <div class="greeting-main-card">
@@ -572,7 +565,6 @@
             </div>
         </section>
 
-        <!-- 常用标签 -->
         <section class="minimal-tags-section">
             <div class="container">
                 <div class="tags-header">
@@ -584,7 +576,6 @@
             </div>
         </section>
 
-        <!-- 分类导航 -->
         <section class="navigation-section">
             <div class="container">
                 <div class="navigation-header">
@@ -606,7 +597,6 @@
             </div>
         </section>
 
-        <!-- 页脚 -->
         <footer class="footer">
             <div class="footer-compact-container">
                 <div class="footer-disclaimer-card">
@@ -622,7 +612,6 @@
             </div>
         </footer>
 
-        <!-- ===== 浮动按钮 ===== -->
         <div class="floating-buttons">
             <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
             <button class="floating-btn theme-btn" id="themeToggleBtn" aria-label="切换主题"><i class="fas fa-moon"></i></button>
@@ -631,7 +620,6 @@
             <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
         </div>
 
-        <!-- ===== 音乐播放器 ===== -->
         <div class="music-player" id="musicPlayer">
             <div class="player-top">
                 <div class="cover-section">
@@ -684,7 +672,6 @@
         </div>
         <audio id="audio-element" preload="metadata" style="display:none;"></audio>
 
-        <!-- ===== 搜索模态框 ===== -->
         <div class="search-modal" id="searchModal">
             <div class="modal-content">
                 <div class="search-bar"><button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎"><i id="engineIcon" class="fas fa-search"></i></button><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off"><button class="search-submit-btn">搜索</button></div>
@@ -695,7 +682,6 @@
         </div>
         <div class="engine-tooltip" id="engineTooltip"></div>
 
-        <!-- ===== 星聚笔记 ===== -->
         <div id="notebookModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header"><h3><i class="fas fa-pen-fancy"></i> 星聚笔记</h3><button class="feedback-modal-close">&times;</button></div>
@@ -703,7 +689,6 @@
             </div>
         </div>
 
-        <!-- ===== 评论模态框 ===== -->
         <div id="commentModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header"><h3><i class="fas fa-comments" style="color: #07C160;"></i> 网友评论</h3><button class="feedback-modal-close">&times;</button></div>
@@ -711,7 +696,6 @@
             </div>
         </div>
 
-        <!-- ===== 投稿模态框 ===== -->
         <div id="submitModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header"><h3><i class="fas fa-paper-plane"></i> 网站投稿</h3><button class="feedback-modal-close">&times;</button></div>
@@ -731,7 +715,6 @@
             </div>
         </div>
 
-        <!-- ===== 排行榜模态框 ===== -->
         <div id="rankModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header"><h3><i class="fas fa-trophy" style="color: #FFD700;"></i> 访问排行榜</h3><button class="feedback-modal-close" id="rankModalClose">&times;</button></div>
@@ -740,13 +723,9 @@
         </div>
     </main>
 
-    <!-- ============================================================ -->
-    <!-- 第三方 JavaScript                                          -->
-    <!-- ============================================================ -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
     <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
-    <!-- ===== 滚动进度条 ===== -->
     <script>
         (function() {
             const progressBar = document.getElementById('scrollProgress');
@@ -763,46 +742,40 @@
         })();
     </script>
 
-    <!-- ===== KaTeX ===== -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
-    <!-- ===== 核心 JavaScript 模块（不加版本号，构建时自动添加） ===== -->
-    <script defer src="./js/constants.js"></script>
-    <script defer src="./js/utils.js"></script>
-    <script defer src="./js/toast.js"></script>
-    <script defer src="./js/error-handler.js"></script>
-    <script defer src="./js/storage.js"></script>
-    <script defer src="./js/components/navbar.js"></script>
-    <script defer src="./js/components/sidebar.js"></script>
-    <script defer src="./js/modules/announcement.js"></script>
-    <script defer src="./js/modules/search.js"></script>
-    <script defer src="./js/modules/weather.js"></script>
-    <script defer src="./js/modules/about.js"></script>
-    <script defer src="./js/modules/navigation.js"></script>
-    <script defer src="./js/modules/wallpaper.js"></script>
-    <script defer src="./js/modules/greeting.js"></script>
-    <script defer src="./js/modules/stats.js"></script>
-    <script defer src="./js/modules/compact-tags.js"></script>
-    <script defer src="./js/main.js"></script>
-    <script defer src="./js/xfyy/cache-manager.js"></script>
-    <script defer src="./js/xfyy/lyric-parser.js"></script>
-    <script defer src="./data/local-music-data.js"></script>
-    <script defer src="./js/xfyy/plugin-manager.js"></script>
-    <script defer src="./js/xfyy/music-player.js"></script>
-    <script defer src="./js/xfyy/music-main.js"></script>
+    <script defer src="./js/constants.js?__VERSION__"></script>
+    <script defer src="./js/utils.js?__VERSION__"></script>
+    <script defer src="./js/toast.js?__VERSION__"></script>
+    <script defer src="./js/error-handler.js?__VERSION__"></script>
+    <script defer src="./js/storage.js?__VERSION__"></script>
+    <script defer src="./js/components/navbar.js?__VERSION__"></script>
+    <script defer src="./js/components/sidebar.js?__VERSION__"></script>
+    <script defer src="./js/modules/announcement.js?__VERSION__"></script>
+    <script defer src="./js/modules/search.js?__VERSION__"></script>
+    <script defer src="./js/modules/weather.js?__VERSION__"></script>
+    <script defer src="./js/modules/about.js?__VERSION__"></script>
+    <script defer src="./js/modules/navigation.js?__VERSION__"></script>
+    <script defer src="./js/modules/wallpaper.js?__VERSION__"></script>
+    <script defer src="./js/modules/greeting.js?__VERSION__"></script>
+    <script defer src="./js/modules/stats.js?__VERSION__"></script>
+    <script defer src="./js/modules/compact-tags.js?__VERSION__"></script>
+    <script defer src="./js/main.js?__VERSION__"></script>
+    <script defer src="./js/xfyy/cache-manager.js?__VERSION__"></script>
+    <script defer src="./js/xfyy/lyric-parser.js?__VERSION__"></script>
+    <script defer src="./data/local-music-data.js?__VERSION__"></script>
+    <script defer src="./js/xfyy/plugin-manager.js?__VERSION__"></script>
+    <script defer src="./js/xfyy/music-player.js?__VERSION__"></script>
+    <script defer src="./js/xfyy/music-main.js?__VERSION__"></script>
 
-    <!-- ===== Waline 评论 ===== -->
     <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
 
-    <script defer src="./js/modules/comment.js"></script>
-    <script defer src="./js/modules/submit.js"></script>
-    <script defer src="./js/modules/theme.js"></script>
-    <script defer src="./js/cursor2.js"></script>
+    <script defer src="./js/modules/comment.js?__VERSION__"></script>
+    <script defer src="./js/modules/submit.js?__VERSION__"></script>
+    <script defer src="./js/modules/theme.js?__VERSION__"></script>
+    <script defer src="./js/cursor2.js?__VERSION__"></script>
 
-    <!-- ============================================================ -->
-    <!-- Cookie 使用声明横幅                                          -->
-    <!-- ============================================================ -->
     <script>
         (function() {
             'use strict';
@@ -907,9 +880,6 @@
         })();
     </script>
 
-    <!-- ============================================================ -->
-    <!-- 排行榜功能脚本（修复二次打开问题） -->
-    <!-- ============================================================ -->
     <script>
         (function() {
             'use strict';
@@ -967,20 +937,26 @@
             }
 
             function openRankModal() {
+                if (rankModalRef) {
+                    if (window.Starlink && window.Starlink.app) {
+                        window.Starlink.app.unregisterModal(rankModalRef);
+                    }
+                    rankModalRef = null;
+                }
+
                 rankModal.classList.add('active');
                 loadRankData();
-                if (!rankModalRef) {
-                    rankModalRef = {
-                        hide: function() {
-                            rankModal.classList.remove('active');
-                        },
-                        isVisible: function() {
-                            return rankModal.classList.contains('active');
-                        }
-                    };
-                    if (window.Starlink && window.Starlink.app) {
-                        window.Starlink.app.registerModal(rankModalRef);
+
+                rankModalRef = {
+                    hide: function() {
+                        rankModal.classList.remove('active');
+                    },
+                    isVisible: function() {
+                        return rankModal.classList.contains('active');
                     }
+                };
+                if (window.Starlink && window.Starlink.app) {
+                    window.Starlink.app.registerModal(rankModalRef);
                 }
             }
 
