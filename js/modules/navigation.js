@@ -1,4 +1,4 @@
-/* navigation.js - 全部加载、无分页、无懒加载、无加载提示 */
+/* navigation.js - 全部加载、无分页、无懒加载、无加载提示，已增加错误上报 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -117,6 +117,9 @@ class OptimizedNavigation {
             this.structureCacheTime = now;
             return this.structure;
         } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'navigation.loadNavigationStructure');
+            }
             if (this.structure) {
                 console.warn('获取结构失败，使用缓存结构:', error);
                 return this.structure;
@@ -136,6 +139,9 @@ class OptimizedNavigation {
             this.siteCache.set(subcategoryId, sites);
             return sites;
         } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'navigation.loadAllSites');
+            }
             const cached = this.siteCache.get(subcategoryId);
             if (cached) {
                 console.warn('加载站点失败，使用缓存:', error);
@@ -165,6 +171,9 @@ class OptimizedNavigation {
             }
             return {};
         } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'navigation.loadBatchSites');
+            }
             const cached = this.siteCache.get(cacheKey);
             if (cached) {
                 console.warn('批量加载失败，使用缓存:', error);
@@ -188,6 +197,9 @@ class OptimizedNavigation {
                     try {
                         sites = await this.loadAllSites(sub.id, true);
                     } catch (e) {
+                        if (window.errorHandler) {
+                            window.errorHandler.report(e, 'navigation.calculateTotalValidSites');
+                        }
                         continue;
                     }
                 }
@@ -249,6 +261,9 @@ class OptimizedNavigation {
             try {
                 sites = await this.loadAllSites(subcategoryId, true);
             } catch (error) {
+                if (window.errorHandler) {
+                    window.errorHandler.report(error, 'navigation.renderLevel3');
+                }
                 console.error('加载站点失败:', error);
                 this.showError('加载站点数据失败，请刷新页面重试');
                 return;
@@ -327,7 +342,11 @@ class OptimizedNavigation {
                         body: JSON.stringify({ id: site.id, url: site.url }),
                         keepalive: true
                     });
-                } catch {}
+                } catch (err) {
+                    if (window.errorHandler) {
+                        window.errorHandler.report(err, 'navigation.clickWithoutView');
+                    }
+                }
                 return;
             }
             const oldViews = parseInt(viewEl.dataset.views) || 0;
@@ -350,7 +369,10 @@ class OptimizedNavigation {
                         viewEl.textContent = this._formatViews(data.views);
                     }
                 }
-            } catch {
+            } catch (err) {
+                if (window.errorHandler) {
+                    window.errorHandler.report(err, 'navigation.clickUpdate');
+                }
                 viewEl.dataset.views = oldViews;
                 viewEl.textContent = this._formatViews(oldViews);
             }
@@ -392,7 +414,10 @@ class OptimizedNavigation {
                             reportBtn.style.opacity = '';
                             reportBtn.style.cursor = '';
                         }
-                    } catch {
+                    } catch (err) {
+                        if (window.errorHandler) {
+                            window.errorHandler.report(err, 'navigation.reportDeadLink');
+                        }
                         window.toast.show('网络错误', 'error');
                         reportBtn.disabled = false;
                         reportBtn.style.opacity = '';
@@ -417,7 +442,13 @@ class OptimizedNavigation {
             document.querySelectorAll('.level2-btn').forEach(el => {
                 el.classList.toggle('active', parseInt(el.dataset.level2) === firstSub.id);
             });
-            await this.renderLevel3(this.selectedLevel1, firstSub.id);
+            try {
+                await this.renderLevel3(this.selectedLevel1, firstSub.id);
+            } catch (error) {
+                if (window.errorHandler) {
+                    window.errorHandler.report(error, 'navigation.selectLevel1.renderLevel3');
+                }
+            }
 
             const allSubIds = this.structure[level1].subcategories.map(s => s.id);
             const otherSubIds = allSubIds.filter(id => id !== firstSub.id);
@@ -425,6 +456,9 @@ class OptimizedNavigation {
                 const preload = () => {
                     for (const subId of otherSubIds) {
                         this.loadAllSites(subId, true).catch(err => {
+                            if (window.errorHandler) {
+                                window.errorHandler.report(err, 'navigation.selectLevel1.preload');
+                            }
                             console.warn('预加载子分类失败:', err);
                         });
                     }
@@ -444,7 +478,13 @@ class OptimizedNavigation {
         if (this.selectedLevel2 === subcategoryId) return;
         this.selectedLevel2 = subcategoryId;
         document.querySelectorAll('.level2-btn').forEach(b => b.classList.toggle('active', b.dataset.level2 == subcategoryId));
-        await this.renderLevel3(this.selectedLevel1, subcategoryId);
+        try {
+            await this.renderLevel3(this.selectedLevel1, subcategoryId);
+        } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'navigation.selectLevel2.renderLevel3');
+            }
+        }
         if (this.autoRefreshTimer) {
             clearInterval(this.autoRefreshTimer);
             this.startAutoRefresh();
@@ -516,8 +556,11 @@ class OptimizedNavigation {
                 hint.style.display = 'block';
                 hint.textContent = `找到 ${results.length} 个结果`;
             }
-        } catch (e) {
-            console.error(e);
+        } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'navigation.performSearch');
+            }
+            console.error(error);
             container.innerHTML = '<div class="empty-state">搜索失败，请重试</div>';
         } finally {
             this.isSearching = false;
@@ -544,6 +587,10 @@ class OptimizedNavigation {
                 this.loadNavigationStructure(true).then(() => {
                     const newFirst = this.getFirstCategory();
                     if (newFirst) this.selectLevel1(newFirst, false);
+                }).catch(err => {
+                    if (window.errorHandler) {
+                        window.errorHandler.report(err, 'navigation.clearSearch');
+                    }
                 });
             }
         }
@@ -578,8 +625,14 @@ class OptimizedNavigation {
         if (!this.selectedLevel2) return;
         const subId = this.selectedLevel2;
         this.siteCache.delete(subId);
-        await this.renderLevel3(this.selectedLevel1, subId);
-        await this.calculateTotalValidSites();
+        try {
+            await this.renderLevel3(this.selectedLevel1, subId);
+            await this.calculateTotalValidSites();
+        } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'navigation.refreshCurrentSubcategory');
+            }
+        }
     }
 
     startBackgroundUpdates() {
@@ -605,8 +658,11 @@ class OptimizedNavigation {
                 }
                 await this.calculateTotalValidSites();
             }
-        } catch (e) {
-            console.warn('后台更新失败:', e);
+        } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'navigation._refreshStructure');
+            }
+            console.warn('后台更新失败:', error);
         }
     }
 
@@ -638,6 +694,9 @@ class OptimizedNavigation {
                         const preload = () => {
                             for (const subId of otherSubIds) {
                                 this.loadAllSites(subId, true).catch(err => {
+                                    if (window.errorHandler) {
+                                        window.errorHandler.report(err, 'navigation.init.preload');
+                                    }
                                     console.warn('初始预加载失败:', err);
                                 });
                             }
@@ -662,6 +721,9 @@ class OptimizedNavigation {
             });
             this.startAutoRefresh();
         } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'navigation.init');
+            }
             console.error('导航初始化失败:', error);
             this.showError('导航数据加载失败，请刷新页面重试');
             if (this.structure) {
@@ -683,7 +745,11 @@ class OptimizedNavigation {
                                 this.loadAllSites(firstSub.id, true).then(s => {
                                     this.currentSites = s;
                                     this._renderSites(s);
-                                }).catch(() => {});
+                                }).catch(err => {
+                                    if (window.errorHandler) {
+                                        window.errorHandler.report(err, 'navigation.init.retry');
+                                    }
+                                });
                             }, 3000);
                         }
                     }
