@@ -1,4 +1,4 @@
-/* submit.js */
+/* submit.js - 已增加错误上报 */
 class SubmitModule {
     constructor() {
         if (window.Starlink && window.Starlink.submit) return window.Starlink.submit;
@@ -173,6 +173,9 @@ class SubmitModule {
             this.cachedTotalCountTime = now;
             this.statsBadge.textContent = `总投稿 ${total} 次`;
         } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'submit.loadGlobalTotalCount');
+            }
             Utils.handleApiError(error, '获取投稿总数失败', false);
             this.statsBadge.textContent = '总投稿 ? 次';
         }
@@ -353,6 +356,9 @@ class SubmitModule {
             }
             this.scheduleDraftSave();
         } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'submit.fetchSiteInfo');
+            }
             Utils.handleApiError(error, '获取网站信息失败', true);
             this.urlCheckResult.className = 'url-check-result checking';
             this.urlCheckResult.innerHTML = '获取信息失败，请手动填写并重试检测';
@@ -391,6 +397,9 @@ class SubmitModule {
                     this.urlCheckResult.innerHTML = '安全检测进行中，请稍候...';
                 }
             } catch (err) {
+                if (window.errorHandler) {
+                    window.errorHandler.report(err, 'submit.startPolling');
+                }
                 console.warn('轮询安全检测状态失败:', err);
             }
         }, 2000);
@@ -469,6 +478,9 @@ class SubmitModule {
                 }
             }
         } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'submit.handleSubmit');
+            }
             Utils.handleApiError(error, '提交失败，请重试', true);
         } finally {
             this.submitting = false;
