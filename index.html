@@ -1,4 +1,3 @@
-<!-- index.html - 完整版（含全新排行榜功能） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -262,7 +261,6 @@
         .floating-btn.weather-btn:hover { color: #2a52d4 !important; }
         .floating-btn.comment-btn { color: #07C160 !important; }
         .floating-btn.comment-btn:hover { color: #06ad56 !important; }
-        /* 排行榜按钮样式 */
         .floating-btn.rank-btn { color: #FFD700 !important; }
         .floating-btn.rank-btn:hover { color: #e6c200 !important; }
         .dark-mode .floating-btn.rank-btn { color: #fbbf24 !important; }
@@ -274,7 +272,6 @@
         @media (max-width: 768px) { .floating-buttons { bottom: 16px; right: 16px; gap: 10px; } .floating-btn { width: 44px; height: 44px; font-size: 18px; } }
         @media (max-width: 480px) { .floating-buttons { bottom: 12px; right: 12px; gap: 8px; } .floating-btn { width: 40px; height: 40px; font-size: 16px; } }
 
-        /* 排行榜模态框及列表样式 */
         .rank-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
         .rank-item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: var(--bg-secondary, #f8f9fa); border-radius: 8px; transition: background 0.2s; }
         .rank-item:hover { background: rgba(67, 97, 238, 0.06); }
@@ -609,7 +606,6 @@
         <div class="floating-buttons">
             <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
             <button class="floating-btn theme-btn" id="themeToggleBtn" aria-label="切换主题"><i class="fas fa-moon"></i></button>
-            <!-- 新增排行榜按钮 -->
             <button class="floating-btn rank-btn" id="rankBtn" aria-label="访问排行榜"><i class="fas fa-trophy"></i></button>
             <button class="floating-btn comment-btn" id="commentBtn" aria-label="评论"><i class="fas fa-comments"></i></button>
             <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
@@ -710,7 +706,6 @@
             </div>
         </div>
 
-        <!-- 排行榜模态框 -->
         <div id="rankModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
@@ -882,9 +877,6 @@
         })();
     </script>
 
-    <!-- ============================================================ -->
-    <!-- 排行榜功能脚本（全新实现）                                     -->
-    <!-- ============================================================ -->
     <script>
         (function() {
             'use strict';
@@ -893,17 +885,27 @@
             const rankModal = document.getElementById('rankModal');
             const rankModalClose = document.getElementById('rankModalClose');
             const rankListContent = document.getElementById('rankListContent');
-            let rankModalRef = null;
 
-            if (!rankBtn || !rankModal || !rankModalClose || !rankListContent) return;
+            if (!rankBtn || !rankModal || !rankModalClose || !rankListContent) {
+                console.warn('[排行榜] 缺少必要 DOM 元素');
+                return;
+            }
+
+            if (rankBtn._rankBound) return;
+            rankBtn._rankBound = true;
 
             async function loadRankData() {
-                rankListContent.innerHTML = '<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div> 加载中...</div>';
+                rankListContent.innerHTML = `
+                    <div class="loading">
+                        <div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+                        加载中...
+                    </div>
+                `;
 
                 try {
                     const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
                     const response = await fetch(`${apiBase}/topclicks?limit=20`);
-                    if (!response.ok) throw new Error('请求失败');
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const data = await response.json();
 
                     if (!data || !data.length) {
@@ -913,15 +915,15 @@
 
                     let html = '<div class="rank-list">';
                     data.forEach(function(item, index) {
-                        var medal = '';
+                        let medal = '';
                         if (index === 0) medal = '🥇';
                         else if (index === 1) medal = '🥈';
                         else if (index === 2) medal = '🥉';
                         else medal = (index + 1) + '.';
 
-                        var title = item.title || '未命名';
-                        var url = item.url || '#';
-                        var count = item.count || 0;
+                        const title = item.title || '未命名';
+                        const url = item.url || '#';
+                        const count = item.count || 0;
 
                         html += `
                             <div class="rank-item">
@@ -935,41 +937,37 @@
                     rankListContent.innerHTML = html;
 
                 } catch (error) {
-                    console.error('加载排行榜失败:', error);
-                    rankListContent.innerHTML = '<div class="error">❌ 加载失败，请稍后重试</div>';
+                    console.error('[排行榜] 加载失败:', error);
+                    rankListContent.innerHTML = `
+                        <div class="error">
+                            ❌ 加载失败：${error.message || '请稍后重试'}
+                            <br><button id="rankRetryBtn" style="margin-top:10px;padding:6px 16px;background:var(--primary-color);color:white;border:none;border-radius:6px;cursor:pointer;">重试</button>
+                        </div>
+                    `;
+                    const retryBtn = document.getElementById('rankRetryBtn');
+                    if (retryBtn) {
+                        retryBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            loadRankData();
+                        });
+                    }
                 }
             }
 
             function openRankModal() {
-                if (rankModalRef && window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.unregisterModal(rankModalRef);
-                    rankModalRef = null;
-                }
-
-                if (window.Starlink?.sidebar?.isVisible?.()) {
-                    window.Starlink.sidebar.hide();
-                } else if (window.sidebar?.isVisible?.()) {
-                    window.sidebar.hide();
-                }
+                try {
+                    if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
+                    if (window.sidebar?.isVisible?.()) window.sidebar.hide();
+                    if (window.Starlink?.search?.isOpen) window.Starlink.search.hide();
+                    if (window.newSearchModule?.isOpen) window.newSearchModule.hide();
+                } catch (e) {}
 
                 rankModal.classList.add('active');
                 loadRankData();
-
-                rankModalRef = {
-                    hide: function() { rankModal.classList.remove('active'); },
-                    isVisible: function() { return rankModal.classList.contains('active'); }
-                };
-                if (window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.registerModal(rankModalRef);
-                }
             }
 
             function closeRankModal() {
                 rankModal.classList.remove('active');
-                if (rankModalRef && window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.unregisterModal(rankModalRef);
-                    rankModalRef = null;
-                }
             }
 
             rankBtn.addEventListener('click', function(e) {
@@ -999,6 +997,7 @@
                 }
             });
 
+            console.log('[排行榜] 初始化完成');
         })();
     </script>
 
