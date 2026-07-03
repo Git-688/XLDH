@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（构建时自动添加版本号，排行榜模态框已修复） -->
+<!-- index.html - 完整版（修复排行榜模态框第二次无法打开问题） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -443,21 +443,21 @@
         .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
     </style>
 
-    <link rel="preload" href="./css/style.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/navbar.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/sidebar.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/announcement.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/search.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/weather.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/about.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/navigation.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/wallpaper.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/greeting.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/stats.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/compact-tags.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/responsive.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/xfyy1/music-player.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/comment.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/navbar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/sidebar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/announcement.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/search.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/weather.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/about.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/navigation.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/wallpaper.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/greeting.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/stats.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/compact-tags.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/responsive.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
@@ -465,7 +465,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
 
-    <link rel="preload" href="./js/main.js?__VERSION__" as="script">
+    <link rel="preload" href="./js/main.js" as="script">
 </head>
 <body>
     <div class="scroll-progress" id="scrollProgress"></div>
@@ -745,36 +745,36 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
-    <script defer src="./js/constants.js?__VERSION__"></script>
-    <script defer src="./js/utils.js?__VERSION__"></script>
-    <script defer src="./js/toast.js?__VERSION__"></script>
-    <script defer src="./js/error-handler.js?__VERSION__"></script>
-    <script defer src="./js/storage.js?__VERSION__"></script>
-    <script defer src="./js/components/navbar.js?__VERSION__"></script>
-    <script defer src="./js/components/sidebar.js?__VERSION__"></script>
-    <script defer src="./js/modules/announcement.js?__VERSION__"></script>
-    <script defer src="./js/modules/search.js?__VERSION__"></script>
-    <script defer src="./js/modules/weather.js?__VERSION__"></script>
-    <script defer src="./js/modules/about.js?__VERSION__"></script>
-    <script defer src="./js/modules/navigation.js?__VERSION__"></script>
-    <script defer src="./js/modules/wallpaper.js?__VERSION__"></script>
-    <script defer src="./js/modules/greeting.js?__VERSION__"></script>
-    <script defer src="./js/modules/stats.js?__VERSION__"></script>
-    <script defer src="./js/modules/compact-tags.js?__VERSION__"></script>
-    <script defer src="./js/main.js?__VERSION__"></script>
-    <script defer src="./js/xfyy/cache-manager.js?__VERSION__"></script>
-    <script defer src="./js/xfyy/lyric-parser.js?__VERSION__"></script>
-    <script defer src="./data/local-music-data.js?__VERSION__"></script>
-    <script defer src="./js/xfyy/plugin-manager.js?__VERSION__"></script>
-    <script defer src="./js/xfyy/music-player.js?__VERSION__"></script>
-    <script defer src="./js/xfyy/music-main.js?__VERSION__"></script>
+    <script defer src="./js/constants.js"></script>
+    <script defer src="./js/utils.js"></script>
+    <script defer src="./js/toast.js"></script>
+    <script defer src="./js/error-handler.js"></script>
+    <script defer src="./js/storage.js"></script>
+    <script defer src="./js/components/navbar.js"></script>
+    <script defer src="./js/components/sidebar.js"></script>
+    <script defer src="./js/modules/announcement.js"></script>
+    <script defer src="./js/modules/search.js"></script>
+    <script defer src="./js/modules/weather.js"></script>
+    <script defer src="./js/modules/about.js"></script>
+    <script defer src="./js/modules/navigation.js"></script>
+    <script defer src="./js/modules/wallpaper.js"></script>
+    <script defer src="./js/modules/greeting.js"></script>
+    <script defer src="./js/modules/stats.js"></script>
+    <script defer src="./js/modules/compact-tags.js"></script>
+    <script defer src="./js/main.js"></script>
+    <script defer src="./js/xfyy/cache-manager.js"></script>
+    <script defer src="./js/xfyy/lyric-parser.js"></script>
+    <script defer src="./data/local-music-data.js"></script>
+    <script defer src="./js/xfyy/plugin-manager.js"></script>
+    <script defer src="./js/xfyy/music-player.js"></script>
+    <script defer src="./js/xfyy/music-main.js"></script>
 
     <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
 
-    <script defer src="./js/modules/comment.js?__VERSION__"></script>
-    <script defer src="./js/modules/submit.js?__VERSION__"></script>
-    <script defer src="./js/modules/theme.js?__VERSION__"></script>
-    <script defer src="./js/cursor2.js?__VERSION__"></script>
+    <script defer src="./js/modules/comment.js"></script>
+    <script defer src="./js/modules/submit.js"></script>
+    <script defer src="./js/modules/theme.js"></script>
+    <script defer src="./js/cursor2.js"></script>
 
     <script>
         (function() {
@@ -880,6 +880,9 @@
         })();
     </script>
 
+    <!-- ============================================================ -->
+    <!-- 排行榜功能脚本（修复第二次无法打开问题）                     -->
+    <!-- ============================================================ -->
     <script>
         (function() {
             'use strict';
@@ -888,10 +891,9 @@
             const rankModal = document.getElementById('rankModal');
             const rankModalClose = document.getElementById('rankModalClose');
             const rankListContent = document.getElementById('rankListContent');
+            let rankModalRef = null;
 
             if (!rankBtn || !rankModal || !rankModalClose || !rankListContent) return;
-
-            let rankModalRef = null;
 
             async function loadRankData() {
                 rankListContent.innerHTML = '<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div> 加载中...</div>';
@@ -937,11 +939,15 @@
             }
 
             function openRankModal() {
-                if (rankModalRef) {
-                    if (window.Starlink && window.Starlink.app) {
-                        window.Starlink.app.unregisterModal(rankModalRef);
-                    }
+                if (rankModalRef && window.Starlink && window.Starlink.app) {
+                    window.Starlink.app.unregisterModal(rankModalRef);
                     rankModalRef = null;
+                }
+
+                if (window.Starlink && window.Starlink.sidebar && window.Starlink.sidebar.isVisible && window.Starlink.sidebar.isVisible()) {
+                    window.Starlink.sidebar.hide();
+                } else if (window.sidebar && window.sidebar.isVisible && window.sidebar.isVisible()) {
+                    window.sidebar.hide();
                 }
 
                 rankModal.classList.add('active');
@@ -971,10 +977,11 @@
             rankBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                if (window.Starlink && window.Starlink.sidebar && window.Starlink.sidebar.isVisible && window.Starlink.sidebar.isVisible()) {
-                    window.Starlink.sidebar.hide();
+                if (rankModal.classList.contains('active')) {
+                    closeRankModal();
+                } else {
+                    openRankModal();
                 }
-                openRankModal();
             });
 
             rankModalClose.addEventListener('click', function(e) {
