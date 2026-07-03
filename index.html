@@ -887,22 +887,21 @@
         (function() {
             'use strict';
 
-            // 获取元素
-            var rankBtn = document.getElementById('rankBtn');
-            var rankModal = document.getElementById('rankModal');
-            var rankListContent = document.getElementById('rankListContent');
-            var rankModalClose = document.getElementById('rankModalClose');
-
-            if (!rankBtn || !rankModal || !rankListContent) {
-                console.error('[Rank] 排行榜元素未找到');
-                return;
+            // 获取元素（每次都实时获取，避免引用失效）
+            function getElements() {
+                return {
+                    rankBtn: document.getElementById('rankBtn'),
+                    rankModal: document.getElementById('rankModal'),
+                    rankListContent: document.getElementById('rankListContent'),
+                    rankModalClose: document.getElementById('rankModalClose')
+                };
             }
-
-            console.log('[Rank] 排行榜模块已加载');
 
             // ========== 加载数据 ==========
             async function loadRankData() {
-                rankListContent.innerHTML = '<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div> 加载中...</div>';
+                var els = getElements();
+                if (!els.rankListContent) return;
+                els.rankListContent.innerHTML = '<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div> 加载中...</div>';
 
                 try {
                     var apiBase = window.APP_CONFIG && window.APP_CONFIG.API_BASE 
@@ -915,7 +914,7 @@
                     var data = await response.json();
 
                     if (!data || !data.length) {
-                        rankListContent.innerHTML = '<div class="empty">📊 暂无排行数据</div>';
+                        els.rankListContent.innerHTML = '<div class="empty">📊 暂无排行数据</div>';
                         return;
                     }
 
@@ -939,18 +938,21 @@
                         html += '</div>';
                     }
                     html += '</div>';
-                    rankListContent.innerHTML = html;
+                    els.rankListContent.innerHTML = html;
 
                 } catch (error) {
                     console.error('[Rank] 加载失败:', error);
-                    rankListContent.innerHTML = '<div class="error">❌ 加载失败，请稍后重试</div>';
+                    els.rankListContent.innerHTML = '<div class="error">❌ 加载失败，请稍后重试</div>';
                 }
             }
 
             // ========== 打开模态框 ==========
             function openRankModal() {
+                var els = getElements();
+                if (!els.rankModal || !els.rankListContent) return;
+
                 // 如果已经打开，不重复操作
-                if (rankModal.classList.contains('active')) {
+                if (els.rankModal.classList.contains('active')) {
                     return;
                 }
 
@@ -964,85 +966,108 @@
                 } catch (e) {}
 
                 // 添加 active 类
-                rankModal.classList.add('active');
+                els.rankModal.classList.add('active');
                 console.log('[Rank] 模态框已打开');
 
-                // 加载数据（如果内容为空或显示错误）
-                var currentContent = rankListContent.innerHTML || '';
-                if (currentContent.includes('loading') || currentContent.includes('加载中') || 
-                    currentContent.includes('error') || currentContent.includes('暂无排行')) {
-                    loadRankData();
-                } else {
-                    // 如果已有数据，也刷新一下（保证数据最新）
-                    loadRankData();
-                }
+                // 加载数据
+                loadRankData();
             }
 
             // ========== 关闭模态框 ==========
             function closeRankModal() {
-                if (!rankModal.classList.contains('active')) {
+                var els = getElements();
+                if (!els.rankModal) return;
+                if (!els.rankModal.classList.contains('active')) {
                     return;
                 }
-                rankModal.classList.remove('active');
+                els.rankModal.classList.remove('active');
                 console.log('[Rank] 模态框已关闭');
             }
 
             // ========== 切换模态框 ==========
             function toggleRankModal() {
-                if (rankModal.classList.contains('active')) {
+                var els = getElements();
+                if (!els.rankModal) return;
+                if (els.rankModal.classList.contains('active')) {
                     closeRankModal();
                 } else {
                     openRankModal();
                 }
             }
 
-            // ========== 绑定事件 ==========
+            // ========== 绑定事件（使用委托，确保按钮即使被替换也能响应） ==========
+            function bindEvents() {
+                // 使用事件委托监听点击 #rankBtn
+                document.addEventListener('click', function(e) {
+                    var target = e.target.closest('#rankBtn');
+                    if (target) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[Rank] 按钮被点击 (委托)');
+                        toggleRankModal();
+                    }
+                });
 
-            // 1. 排行榜按钮点击（直接绑定，确保可靠）
-            rankBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('[Rank] 按钮被点击');
-                toggleRankModal();
-            });
+                // 关闭按钮
+                document.addEventListener('click', function(e) {
+                    var closeBtn = e.target.closest('#rankModalClose');
+                    if (closeBtn) {
+                        e.stopPropagation();
+                        console.log('[Rank] 关闭按钮被点击');
+                        closeRankModal();
+                    }
+                });
 
-            // 2. 关闭按钮
-            if (rankModalClose) {
-                rankModalClose.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    console.log('[Rank] 关闭按钮被点击');
-                    closeRankModal();
+                // 点击背景关闭
+                document.addEventListener('click', function(e) {
+                    var modal = e.target.closest('#rankModal');
+                    if (modal && e.target === modal) {
+                        console.log('[Rank] 点击背景关闭');
+                        closeRankModal();
+                    }
+                });
+
+                // ESC 键关闭
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        var els = getElements();
+                        if (els.rankModal && els.rankModal.classList.contains('active')) {
+                            console.log('[Rank] ESC 键关闭');
+                            closeRankModal();
+                        }
+                    }
                 });
             }
 
-            // 3. 点击背景关闭
-            rankModal.addEventListener('click', function(e) {
-                if (e.target === rankModal) {
-                    console.log('[Rank] 点击背景关闭');
-                    closeRankModal();
+            // ========== 初始化 ==========
+            function init() {
+                var els = getElements();
+                if (!els.rankBtn || !els.rankModal || !els.rankListContent) {
+                    console.error('[Rank] 排行榜元素未找到');
+                    return;
                 }
-            });
+                console.log('[Rank] 排行榜模块已加载');
+                bindEvents();
 
-            // 4. ESC 键关闭
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && rankModal.classList.contains('active')) {
-                    console.log('[Rank] ESC 键关闭');
-                    closeRankModal();
-                }
-            });
+                // 暴露全局方法（便于调试）
+                window.__rankModal = {
+                    open: openRankModal,
+                    close: closeRankModal,
+                    toggle: toggleRankModal,
+                    isOpen: function() {
+                        var els = getElements();
+                        return els.rankModal ? els.rankModal.classList.contains('active') : false;
+                    },
+                    refresh: loadRankData
+                };
+            }
 
-            // ========== 暴露方法（供其他模块调用） ==========
-            window.__rankModal = {
-                open: openRankModal,
-                close: closeRankModal,
-                toggle: toggleRankModal,
-                isOpen: function() {
-                    return rankModal.classList.contains('active');
-                },
-                refresh: loadRankData
-            };
-
-            console.log('[Rank] 排行榜模块初始化完成');
+            // DOM 就绪后初始化
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
 
         })();
     </script>
