@@ -1,4 +1,4 @@
-/* admin.js - 完整版（实时同步，移除手动刷新） */
+/* admin.js - 完整版（实时同步，notifyNavRefresh 增加防抖） */
 (function() {
     'use strict';
 
@@ -31,12 +31,19 @@
     function normalizeUrl(url) { if (!url) return ''; try { let normalized = url.toLowerCase().trim(); normalized = normalized.replace(/^https?:\/\//, ''); normalized = normalized.replace(/^www\./, ''); normalized = normalized.replace(/\/$/, ''); return normalized; } catch(e) { return url; } }
     function isUrlExists(url, excludeSiteId = null) { const normalizedNew = normalizeUrl(url); return sites.some(site => { if (excludeSiteId !== null && site.id === excludeSiteId) return false; const normalizedExisting = normalizeUrl(site.url); return normalizedExisting === normalizedNew; }); }
 
-    function notifyNavRefresh() {
-        try {
-            localStorage.setItem('nav_refresh_required', Date.now());
-            document.dispatchEvent(new CustomEvent('navRefreshRequested'));
-        } catch (e) {}
-    }
+    // ===== 防抖版本：批量操作时只触发最后一次 =====
+    const notifyNavRefresh = (function() {
+        let timeoutId = null;
+        return function() {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                try {
+                    localStorage.setItem('nav_refresh_required', Date.now());
+                    document.dispatchEvent(new CustomEvent('navRefreshRequested'));
+                } catch (e) {}
+            }, 300); // 300ms 防抖延迟
+        };
+    })();
 
     function updateStats() {
         const totalSitesEl = document.getElementById('statTotalSites');
