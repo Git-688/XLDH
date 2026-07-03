@@ -1,4 +1,4 @@
-/* admin.js - 完整版（自定义下拉、排序自动计算、移除设备ID/IP） */
+/* admin.js - 完整版（实时同步，移除手动刷新） */
 (function() {
     'use strict';
 
@@ -30,6 +30,13 @@
     function getDeviceId() { let deviceId = localStorage.getItem('device_id'); if (!deviceId) { deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15); localStorage.setItem('device_id', deviceId); } return deviceId; }
     function normalizeUrl(url) { if (!url) return ''; try { let normalized = url.toLowerCase().trim(); normalized = normalized.replace(/^https?:\/\//, ''); normalized = normalized.replace(/^www\./, ''); normalized = normalized.replace(/\/$/, ''); return normalized; } catch(e) { return url; } }
     function isUrlExists(url, excludeSiteId = null) { const normalizedNew = normalizeUrl(url); return sites.some(site => { if (excludeSiteId !== null && site.id === excludeSiteId) return false; const normalizedExisting = normalizeUrl(site.url); return normalizedExisting === normalizedNew; }); }
+
+    function notifyNavRefresh() {
+        try {
+            localStorage.setItem('nav_refresh_required', Date.now());
+            document.dispatchEvent(new CustomEvent('navRefreshRequested'));
+        } catch (e) {}
+    }
 
     function updateStats() {
         const totalSitesEl = document.getElementById('statTotalSites');
@@ -308,6 +315,7 @@
             renderCatBar();
             if (categories.length > 0) selectCat(categories[0].id);
             updateStats();
+            notifyNavRefresh();
         } catch (e) { if (e.message === 'Unauthorized') logout(); else showToast('数据加载失败', 'error'); }
     }
 
@@ -342,6 +350,7 @@
                 }
             }
             updateStats();
+            notifyNavRefresh();
         } catch (e) { if (e.message === 'Unauthorized') logout(); else showToast('数据加载失败', 'error'); }
     }
 
@@ -350,22 +359,9 @@
             const siteData = await apiFetch('/admin/sites');
             sites = siteData;
             updateStats();
+            notifyNavRefresh();
         } catch (e) {
             console.warn('刷新站点数据失败:', e);
-        }
-    }
-
-    async function refreshNavigationManually() {
-        try {
-            showToast('正在刷新导航缓存，请稍候...', 'info');
-            await apiFetch('/admin/refresh-navigation', { method: 'POST' });
-            showToast('导航缓存已刷新，前端将获取最新数据', 'success');
-            await loadAllDataButKeepSelection();
-            if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshCurrentSubcategory === 'function') {
-                window.optimizedNavigation.refreshCurrentSubcategory();
-            }
-        } catch (e) {
-            showToast('刷新失败: ' + e.message, 'error');
         }
     }
 
@@ -572,6 +568,7 @@
             selectedSiteIds.clear();
             await loadAdminSites(true);
             await loadAllDataButKeepSelection();
+            notifyNavRefresh();
         } catch (e) {
             showToast('批量删除失败: ' + e.message, 'error');
         } finally {
@@ -620,6 +617,7 @@
                 selectedSiteIds.clear();
                 await loadAdminSites(true);
                 await loadAllDataButKeepSelection();
+                notifyNavRefresh();
                 closeModal();
             },
             false,
@@ -662,6 +660,7 @@
             selectedSiteIds.clear();
             await loadAdminSites(true);
             await loadAllDataButKeepSelection();
+            notifyNavRefresh();
         } catch (e) {
             showToast('操作失败: ' + e.message, 'error');
         } finally {
@@ -724,6 +723,7 @@
             if (window.announcementModule && window.announcementModule.loadAnnouncement) {
                 window.announcementModule.loadAnnouncement();
             }
+            notifyNavRefresh();
         } catch (err) { console.error('保存公告失败:', err); showToast('保存失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
@@ -795,9 +795,11 @@
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
                 showToast('修改成功'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }, true, async () => {
                 await apiFetch(`/admin/categories/${id}`, { method:'DELETE' });
                 showToast('分类已删除'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
     }
@@ -814,9 +816,11 @@
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
                 showToast('修改成功'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }, true, async () => {
                 await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' });
                 showToast('子分类已删除'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
     }
@@ -843,12 +847,15 @@
                 showToast('修改成功');
                 await loadAdminSites(true);
                 await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }, true,
             async () => {
+                const subId = site.subcategory_id;
                 await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
                 showToast('删除成功');
                 await loadAdminSites(true);
                 await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
         setTimeout(() => {
@@ -875,6 +882,7 @@
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/categories', { method:'POST', body: JSON.stringify({ name, display_order: +document.getElementById('mSort').value }) });
                 showToast('添加成功'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
     }
@@ -890,6 +898,7 @@
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/subcategories', { method:'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('mSort').value }) });
                 showToast('添加成功'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
     }
@@ -921,6 +930,7 @@
                 closeModal();
                 await loadAdminSites(true);
                 await refreshSitesOnly();
+                notifyNavRefresh();
             }
         );
         setTimeout(() => {
@@ -1002,6 +1012,7 @@
                 showToast('链接已更新', 'success');
                 await loadFeedback();
                 await loadAllDataButKeepSelection();
+                notifyNavRefresh();
                 closeModal();
             }
         );
@@ -1023,16 +1034,17 @@
             await apiFetch(`/admin/dead-link-reports/${reportId}`, { method: 'DELETE' });
             showToast('已忽略', 'success');
             await loadFeedback();
+            notifyNavRefresh();
         } catch (err) { showToast('忽略失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
     // ============================================================
-    // 自定义下拉选择器组件（完全替代原生 select）
+    // 自定义下拉选择器组件（用于投稿详情）
     // ============================================================
     class CustomDropdown {
         constructor(container, options, selectedValue, onChange) {
             this.container = container;
-            this.options = options; // [{value, label}]
+            this.options = options;
             this.selectedValue = selectedValue || (options.length ? options[0].value : null);
             this.onChange = onChange;
             this.isOpen = false;
@@ -1045,9 +1057,7 @@
         }
 
         render() {
-            // 清空容器
             this.container.innerHTML = '';
-            // 创建触发器
             const trigger = document.createElement('div');
             trigger.className = 'custom-dropdown-trigger';
             trigger.innerHTML = `
@@ -1057,7 +1067,6 @@
             this.container.appendChild(trigger);
             this.triggerEl = trigger;
 
-            // 创建下拉列表容器
             const dropdown = document.createElement('div');
             dropdown.className = 'custom-dropdown-list';
             const listWrapper = document.createElement('div');
@@ -1079,24 +1088,18 @@
             this.dropdownEl = dropdown;
             this.optionsEl = listWrapper;
 
-            // 事件绑定
             trigger.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.toggle();
             });
 
-            // 设置初始值
             this.updateTriggerText();
-
-            // 确保下拉列表宽度与触发器一致
             this.syncWidth();
             window.addEventListener('resize', () => this.syncWidth());
 
-            // 滚动同步
             this._scrollHandler = () => this.syncWidth();
             document.addEventListener('scroll', this._scrollHandler, true);
 
-            // 点击外部关闭
             this._outsideClickHandler = (e) => {
                 if (!this.container.contains(e.target)) {
                     this.close();
@@ -1125,7 +1128,6 @@
             if (this.selectedValue === value) return;
             this.selectedValue = value;
             this.updateTriggerText();
-            // 更新选中样式
             const items = this.optionsEl.querySelectorAll('.custom-dropdown-option');
             items.forEach(item => {
                 item.classList.toggle('selected', item.dataset.value === value);
@@ -1141,12 +1143,10 @@
             if (this.isOpen) return;
             this.isOpen = true;
             this.dropdownEl.classList.add('open');
-            // 计算位置（防止溢出视口）
             const rect = this.triggerEl.getBoundingClientRect();
             const dropdownHeight = this.dropdownEl.scrollHeight;
             const spaceBelow = window.innerHeight - rect.bottom;
             const spaceAbove = rect.top;
-            // 默认向下，如果下方空间不足则向上
             if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
                 this.dropdownEl.style.bottom = '100%';
                 this.dropdownEl.style.top = 'auto';
@@ -1154,12 +1154,9 @@
                 this.dropdownEl.style.top = '100%';
                 this.dropdownEl.style.bottom = 'auto';
             }
-            // 左对齐
             this.dropdownEl.style.left = '0';
             this.dropdownEl.style.right = 'auto';
-            // 确保宽度
             this.syncWidth();
-            // 滚动到选中项
             const selectedItem = this.optionsEl.querySelector('.custom-dropdown-option.selected');
             if (selectedItem) {
                 selectedItem.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -1242,15 +1239,12 @@
         } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    // 显示投稿详情（可编辑） - 使用自定义下拉
     function showSubmissionDetail(item) {
         const modal = document.getElementById('submissionDetailModal');
         const content = document.getElementById('submissionDetailContent');
 
-        // 准备子分类选项
         const subOptions = subcategories.map(s => ({ value: s.id, label: s.name }));
 
-        // 构建表单HTML
         content.innerHTML = `
             <form id="submissionEditForm">
                 <div style="margin-bottom:8px;"><label style="font-weight:500;display:block;">标题</label><input type="text" id="editTitle" value="${escapeHtml(item.title)}" class="form-input"></div>
@@ -1273,25 +1267,19 @@
         `;
         modal.classList.add('show');
 
-        // 关闭事件
         document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => modal.classList.remove('show'));
         modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
         document.getElementById('editCancelBtn')?.addEventListener('click', () => modal.classList.remove('show'));
 
-        // ----- 初始化自定义下拉 -----
         const dropdownContainer = document.getElementById('subcategoryDropdownContainer');
-        // 默认选中第一个子分类
         const defaultSubId = subOptions.length ? subOptions[0].value : null;
         let dropdown = new CustomDropdown(dropdownContainer, subOptions, defaultSubId, function(value) {
-            // 当选中的子分类变化时，重新计算排序值
             updateOrderValue(value);
         });
 
-        // 计算排序值函数
         function updateOrderValue(subcategoryId) {
             const orderInput = document.getElementById('editOrder');
             if (!orderInput) return;
-            // 计算该子分类下的最大排序值
             const subSites = sites.filter(s => s.subcategory_id === subcategoryId);
             let maxOrder = 0;
             subSites.forEach(s => {
@@ -1301,10 +1289,8 @@
             orderInput.value = nextOrder;
         }
 
-        // 初始计算
         if (defaultSubId) updateOrderValue(defaultSubId);
 
-        // ----- 保存修改 -----
         document.getElementById('editSaveBtn')?.addEventListener('click', async function() {
             const title = document.getElementById('editTitle').value.trim();
             const url = document.getElementById('editUrl').value.trim();
@@ -1315,12 +1301,10 @@
             const displayOrder = parseInt(document.getElementById('editOrder').value) || 0;
             if (!title || !url) { showToast('标题和网址不能为空', 'error'); return; }
             try {
-                // 先更新投稿信息
                 await apiFetch(`/admin/submissions/${item.id}`, {
                     method: 'PUT',
                     body: JSON.stringify({ title, description, icon })
                 });
-                // 然后通过审核（传入编辑后的信息）
                 await apiFetch(`/admin/submissions/${item.id}/approve`, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -1339,22 +1323,12 @@
                 dropdown.destroy();
                 await loadSubmissions();
                 await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             } catch (e) {
                 showToast('操作失败: ' + e.message, 'error');
             }
         });
 
-        // 当模态框关闭时销毁下拉组件
-        const originalClose = modal.classList.remove.bind(modal.classList, 'show');
-        const closeInterceptor = function() {
-            if (dropdown) {
-                dropdown.destroy();
-                dropdown = null;
-            }
-            originalClose();
-        };
-        // 由于无法直接拦截 classList.remove，我们使用 MutationObserver 监听 class 变化
-        // 或者直接覆盖 close 事件
         const closeModalHandler = function() {
             if (dropdown) {
                 dropdown.destroy();
@@ -1364,7 +1338,6 @@
         };
         document.getElementById('editCancelBtn')?.addEventListener('click', closeModalHandler);
         document.getElementById('closeDetailModalBtn')?.addEventListener('click', closeModalHandler);
-        // 点击背景关闭
         modal._closeHandler = function(e) {
             if (e.target === modal) {
                 if (dropdown) {
@@ -1375,7 +1348,6 @@
             }
         };
         modal.addEventListener('click', modal._closeHandler);
-        // 保存原关闭方式并替换
         const origRemove = modal.classList.remove.bind(modal.classList);
         modal.classList.remove = function(className) {
             if (className === 'show' && dropdown) {
@@ -1393,6 +1365,7 @@
             showToast('已通过', 'success');
             await loadSubmissions();
             await loadAllDataButKeepSelection();
+            notifyNavRefresh();
         } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
     }
 
@@ -1402,10 +1375,11 @@
             await apiFetch(`/admin/submissions/${id}`, { method: 'DELETE', body: JSON.stringify({ sendEmail: true }) });
             showToast('已拒绝', 'success');
             await loadSubmissions();
+            notifyNavRefresh();
         } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
     }
 
-    // ===== 自定义Select（用于其他批量操作，保留原有） =====
+    // ===== 自定义Select（用于批量移动等，保持原样） =====
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -1551,7 +1525,6 @@
             const style = document.createElement('style');
             style.id = 'admin-global-styles';
             style.textContent = `
-                /* 自定义下拉样式（用于投稿详情） */
                 .custom-dropdown-container {
                     position: relative;
                     width: 100%;
@@ -1726,12 +1699,10 @@
 
         document.getElementById('loginBtn').addEventListener('click', login);
         document.getElementById('logoutBtn').addEventListener('click', logout);
-        document.getElementById('refreshNavBtn').addEventListener('click', refreshNavigationManually);
         document.getElementById('addCategoryBtn').addEventListener('click', handleAddCategory);
         document.getElementById('addSubBtn').addEventListener('click', handleAddSub);
         document.getElementById('addSiteBtn').addEventListener('click', handleAddSite);
         document.getElementById('refreshFeedbackBtn').addEventListener('click', loadFeedback);
-        document.getElementById('refreshSubmissionsBtn')?.removeEventListener('click', loadSubmissions);
         document.getElementById('annPublishBtn').addEventListener('click', saveAnnouncement);
         document.getElementById('annClearBtn').addEventListener('click', clearAnnouncementForm);
         document.getElementById('annCancelBtn').addEventListener('click', () => {
