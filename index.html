@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（构建时自动添加版本号，无需手动维护） -->
+<!-- index.html - 完整版（修复排行榜模态框二次打开问题） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -69,7 +69,6 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 
     <style>
-        /* ===== Scroll Progress ===== */
         .scroll-progress {
             position: fixed;
             top: 0;
@@ -92,7 +91,6 @@
             box-shadow: 0 0 6px rgba(123, 156, 255, 0.5);
         }
 
-        /* ===== CSS Variables ===== */
         :root {
             --primary-color: #4361ee;
             --secondary-color: #3a0ca3;
@@ -182,7 +180,6 @@
             --acrylic-light-bg: rgba(40, 40, 40, 0.7);
         }
 
-        /* ===== Reset ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; font-size: 16px; -webkit-overflow-scrolling: touch; }
         body {
@@ -203,7 +200,6 @@
             font-weight: 600;
         }
 
-        /* ===== Navbar ===== */
         .navbar {
             position: fixed; top: 0; left: 0; width: 100%; height: 60px;
             background: var(--bg-primary); border-bottom: 1px solid var(--border-color);
@@ -234,7 +230,6 @@
         }
         .nav-btn:hover { background: var(--primary-color); color: white; }
 
-        /* ===== Main Content ===== */
         .main-content { margin-top: 60px; min-height: calc(100vh - 120px); }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 var(--container-padding-xs); width: 100%; }
         .container-fluid { width: 100%; padding: 0 var(--container-padding-xs); }
@@ -243,7 +238,6 @@
         @media (min-width: 992px) { .container, .container-fluid { padding: 0 var(--container-padding-lg); } }
         @media (min-width: 1200px) { .container, .container-fluid { padding: 0 var(--container-padding-xl); } }
 
-        /* ===== Floating Buttons ===== */
         .floating-buttons {
             position: fixed; bottom: 24px; right: 24px;
             display: flex; flex-direction: column; gap: 12px;
@@ -279,7 +273,6 @@
         @media (max-width: 768px) { .floating-buttons { bottom: 16px; right: 16px; gap: 10px; } .floating-btn { width: 44px; height: 44px; font-size: 18px; } }
         @media (max-width: 480px) { .floating-buttons { bottom: 12px; right: 12px; gap: 8px; } .floating-btn { width: 40px; height: 40px; font-size: 16px; } }
 
-        /* ===== Feedback Modal ===== */
         .feedback-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: transparent; z-index: 10002;
@@ -316,7 +309,6 @@
         .feedback-modal-body { padding: 10px 12px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
         .feedback-modal-body::-webkit-scrollbar { display: none; }
 
-        /* ===== Toast ===== */
         .toast-manager-container {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             z-index: 9999; display: flex; flex-direction: column;
@@ -342,7 +334,6 @@
             .toast-content { font-size: 0.7rem; white-space: normal; word-break: keep-all; }
         }
 
-        /* ===== Submit Modal ===== */
         #submitModal .form-row { margin-bottom: 10px; }
         #submitModal .form-row label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 3px; font-weight: 500; }
         #submitModal .required-star { color: var(--error-color); }
@@ -389,7 +380,6 @@
         .url-check-result.unsafe { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
         .url-check-result.checking { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
 
-        /* ===== Notebook Modal ===== */
         #notebookModal .feedback-modal-content { max-height: 75vh; max-width: 600px; }
         #notebookModal .feedback-modal-header h3 i { color: #4361ee; }
         .notebook-list { padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -416,16 +406,13 @@
         .dark-mode .notebook-title { color: var(--text-primary); }
         .dark-mode .notebook-content { background: rgba(50,50,50,0.8); color: #c0c0c0; border-color: rgba(255,255,255,0.05); }
 
-        /* ===== Comment Modal ===== */
         #commentModal .feedback-modal-content { max-height: 75vh; max-width: 700px; }
         #commentModal .feedback-modal-header h3 i { color: #f59e0b; }
 
-        /* ===== Submit Modal ===== */
         #submitModal .feedback-modal-content { max-height: 90vh; max-width: 520px; }
         #submitModal .feedback-modal-body { overflow-y: auto; }
         #submitModal .feedback-modal-header h3 i { color: #4361ee; }
 
-        /* ===== Rank Modal ===== */
         #rankModal .feedback-modal-content { max-width: 500px; max-height: 80vh; }
         .rank-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
         .rank-item {
@@ -471,7 +458,7 @@
     <link rel="preload" href="./css/modules/compact-tags.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/responsive.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'>
 
     <!-- ===== 第三方样式 ===== -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
@@ -511,7 +498,7 @@
         <div class="sidebar-wallpaper" id="sidebarWallpaper">
             <div class="sidebar-wallpaper-overlay"></div>
             <div class="sidebar-wallpaper-user-info">
-                <div class="sidebar-wallpaper-avatar"><img id="sidebarWallpaperAvatar" src="" alt="用户头像" loading="lazy" width="56" height="56" class="js-img-fallback" data-fallback-type="defaultAvatar" data-default-svg="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo="></div>
+                <div class="sidebar-wallpaper-avatar"><img id="sidebarWallpaperAvatar" src="" alt="用户头像" loading="lazy" width="56" height="56" class="js-img-fallback" data-fallback-type="defaultAvatar" data-default-svg="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik40MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo="></div>
                 <div class="sidebar-wallpaper-user-text">
                     <div class="sidebar-wallpaper-nickname" id="sidebarWallpaperNickname">访客用户</div>
                     <div class="sidebar-wallpaper-signature" id="sidebarWallpaperSignature">探索无限可能</div>
@@ -921,7 +908,7 @@
     </script>
 
     <!-- ============================================================ -->
-    <!-- 排行榜功能脚本                                               -->
+    <!-- 排行榜功能脚本（修复二次打开问题） -->
     <!-- ============================================================ -->
     <script>
         (function() {
@@ -933,6 +920,8 @@
             const rankListContent = document.getElementById('rankListContent');
 
             if (!rankBtn || !rankModal || !rankModalClose || !rankListContent) return;
+
+            let rankModalRef = null;
 
             async function loadRankData() {
                 rankListContent.innerHTML = '<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div> 加载中...</div>';
@@ -980,29 +969,26 @@
             function openRankModal() {
                 rankModal.classList.add('active');
                 loadRankData();
-                if (window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.registerModal({
+                if (!rankModalRef) {
+                    rankModalRef = {
                         hide: function() {
                             rankModal.classList.remove('active');
                         },
                         isVisible: function() {
                             return rankModal.classList.contains('active');
                         }
-                    });
+                    };
+                    if (window.Starlink && window.Starlink.app) {
+                        window.Starlink.app.registerModal(rankModalRef);
+                    }
                 }
             }
 
             function closeRankModal() {
                 rankModal.classList.remove('active');
-                if (window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.unregisterModal({
-                        hide: function() {
-                            rankModal.classList.remove('active');
-                        },
-                        isVisible: function() {
-                            return rankModal.classList.contains('active');
-                        }
-                    });
+                if (rankModalRef && window.Starlink && window.Starlink.app) {
+                    window.Starlink.app.unregisterModal(rankModalRef);
+                    rankModalRef = null;
                 }
             }
 
