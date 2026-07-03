@@ -894,6 +894,8 @@
             if (rankBtn._rankBound) return;
             rankBtn._rankBound = true;
 
+            let rankModalRef = null;
+
             async function loadRankData() {
                 rankListContent.innerHTML = `
                     <div class="loading">
@@ -955,19 +957,44 @@
             }
 
             function openRankModal() {
+                if (rankModalRef && window.Starlink && window.Starlink.app) {
+                    window.Starlink.app.unregisterModal(rankModalRef);
+                    rankModalRef = null;
+                }
+
                 try {
                     if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
                     if (window.sidebar?.isVisible?.()) window.sidebar.hide();
                     if (window.Starlink?.search?.isOpen) window.Starlink.search.hide();
                     if (window.newSearchModule?.isOpen) window.newSearchModule.hide();
+                    if (window.Starlink?.announcement?.isVisible) window.Starlink.announcement.hide();
+                    if (window.announcementModule?.isVisible) window.announcementModule.hide();
+                    if (window.Starlink?.weather?.isShowing) window.Starlink.weather.hide();
+                    if (window.app?.modules?.weather?.isShowing) window.app.modules.weather.hide();
+                    if (window.Starlink?.about?.isShowing) window.Starlink.about.hide();
+                    if (window.aboutModule?.isShowing) window.aboutModule.hide();
+                    if (window.Starlink?.app?.hideNotebookModal) window.Starlink.app.hideNotebookModal();
+                    if (window.submitModule?.isVisible) window.submitModule.hide();
                 } catch (e) {}
 
                 rankModal.classList.add('active');
                 loadRankData();
+
+                rankModalRef = {
+                    hide: function() { rankModal.classList.remove('active'); },
+                    isVisible: function() { return rankModal.classList.contains('active'); }
+                };
+                if (window.Starlink && window.Starlink.app) {
+                    window.Starlink.app.registerModal(rankModalRef);
+                }
             }
 
             function closeRankModal() {
                 rankModal.classList.remove('active');
+                if (rankModalRef && window.Starlink && window.Starlink.app) {
+                    window.Starlink.app.unregisterModal(rankModalRef);
+                    rankModalRef = null;
+                }
             }
 
             rankBtn.addEventListener('click', function(e) {
