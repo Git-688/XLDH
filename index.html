@@ -946,6 +946,11 @@
 
             show() {
                 if (this.isVisible) return;
+                this.modal.style.display = '';
+                if (this.modalRef) {
+                    if (window.Starlink?.app) window.Starlink.app.unregisterModal(this.modalRef);
+                    this.modalRef = null;
+                }
                 this.closeOtherModals();
                 this.modal.classList.add('active');
                 this.isVisible = true;
