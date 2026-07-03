@@ -1,4 +1,4 @@
-/* main.js - 增加全局错误边界和统一错误处理，监听导航刷新信号 */
+/* main.js - 增加全局错误边界和统一错误处理，监听导航刷新信号，轮询间隔10秒 */
 class App {
     constructor() {
         this.components = {};
@@ -28,7 +28,6 @@ class App {
     showErrorFallback(message = '页面加载失败，请刷新重试') {
         const container = document.querySelector('.main-content');
         if (!container) return;
-        // 避免重复添加
         if (document.getElementById('error-fallback-overlay')) return;
         const overlay = document.createElement('div');
         overlay.id = 'error-fallback-overlay';
@@ -161,7 +160,7 @@ class App {
                     parent.appendChild(icon);
                 }
             } else if (fbType === 'defaultAvatar') {
-                const defaultSvg = img.dataset.defaultSvg || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
+                const defaultSvg = img.dataset.defaultSvg || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik40MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=';
                 img.src = defaultSvg;
             } else if (fbType === 'icon') {
                 if (!parent.querySelector('i.fa-link')) {
@@ -195,7 +194,7 @@ class App {
         }
     }
 
-    // ===== 监听 localStorage 变化，接收导航刷新信号 =====
+    // ===== 监听 localStorage 变化，接收导航刷新信号（轮询间隔改为10秒） =====
     setupNavRefreshListener() {
         if (this._storageListenerBound) return;
         this._storageListenerBound = true;
@@ -207,17 +206,14 @@ class App {
             }
         };
 
-        // 使用 polling 作为 backup，因为 storage 事件在跨标签页时可靠，但同标签页内修改 localStorage 不会触发 storage 事件
-        // 所以我们同时使用 MutationObserver 或事件监听 + 轮询
         window.addEventListener('storage', handleStorageChange);
 
-        // 同标签页内使用自定义事件（admin.js 触发，main.js 监听）
         document.addEventListener('navRefreshRequested', () => {
             console.log('[App] 收到导航刷新信号 (custom event)，刷新当前子分类');
             this.refreshNavigationIfReady();
         });
 
-        // 额外轮询作为最后的保障（每 3 秒检查一次，仅在页面可见时进行）
+        // ★★★ 修改：轮询间隔从 3000 改为 10000 毫秒（10秒）★★★
         let lastRefreshMark = localStorage.getItem('nav_refresh_required') || '';
         this._navPollingTimer = setInterval(() => {
             if (document.hidden) return;
@@ -227,9 +223,40 @@ class App {
                 console.log('[App] 轮询检测到导航刷新信号，刷新当前子分类');
                 this.refreshNavigationIfReady();
             }
-        }, 3000);
+        }, 10000); // 10秒
 
-        console.log('[App] 导航刷新监听已设置');
+        // ===== 页面可见性变化时优化轮询 =====
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // 页面隐藏时，清除轮询以减少资源消耗
+                if (this._navPollingTimer) {
+                    clearInterval(this._navPollingTimer);
+                    this._navPollingTimer = null;
+                    console.log('[App] 页面隐藏，暂停导航刷新轮询');
+                }
+            } else {
+                // 页面可见时，立即检查一次刷新信号，并重新启动轮询
+                console.log('[App] 页面可见，恢复导航刷新轮询');
+                const currentMark = localStorage.getItem('nav_refresh_required') || '';
+                if (currentMark !== lastRefreshMark && currentMark) {
+                    lastRefreshMark = currentMark;
+                    this.refreshNavigationIfReady();
+                }
+                if (!this._navPollingTimer) {
+                    this._navPollingTimer = setInterval(() => {
+                        if (document.hidden) return;
+                        const mark = localStorage.getItem('nav_refresh_required') || '';
+                        if (mark !== lastRefreshMark && mark) {
+                            lastRefreshMark = mark;
+                            console.log('[App] 轮询检测到导航刷新信号，刷新当前子分类');
+                            this.refreshNavigationIfReady();
+                        }
+                    }, 10000);
+                }
+            }
+        });
+
+        console.log('[App] 导航刷新监听已设置（轮询间隔10秒）');
     }
 
     refreshNavigationIfReady() {
@@ -239,14 +266,12 @@ class App {
             });
         } else {
             console.warn('[App] 导航模块未就绪，延迟重试...');
-            // 延迟重试
             setTimeout(() => {
                 if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshCurrentSubcategory === 'function') {
                     window.optimizedNavigation.refreshCurrentSubcategory().catch(err => {
                         console.warn('[App] 延迟刷新导航失败:', err);
                     });
                 } else {
-                    // 最终降级：刷新页面
                     console.warn('[App] 导航模块始终未就绪，刷新页面');
                     if (!document.hidden) {
                         window.location.reload();
@@ -259,11 +284,8 @@ class App {
     init() {
         if (this.isInitialized) return;
 
-        // ===== 设置全局错误处理 =====
         this.setupGlobalErrorHandling();
 
-        // ===== 捕获未处理的 Promise 异常（已由 setupGlobalErrorHandling 处理） =====
-        // 额外捕获：如果页面加载失败，显示降级 UI
         try {
             this.initImageFallbackHandler();
             this.initStorage();
@@ -283,7 +305,6 @@ class App {
         } catch (error) {
             console.error('[App] 初始化失败:', error);
             this.showErrorFallback('应用初始化失败，请刷新重试');
-            // 仍然尝试标记为已初始化，避免死循环
             this.isInitialized = true;
         }
     }
@@ -444,7 +465,6 @@ class App {
         window.addEventListener('online', () => this.showToast('网络已连接', 'success'));
         window.addEventListener('offline', () => {
             this.showToast('网络已断开，部分功能可能受限', 'warning');
-            // 离线时显示提示
             if (!document.getElementById('offline-indicator')) {
                 const indicator = document.createElement('div');
                 indicator.id = 'offline-indicator';
@@ -632,7 +652,6 @@ class App {
             if (this.components.sidebar.loadWallpaperUserInfo) this.components.sidebar.loadWallpaperUserInfo();
             if (this.components.sidebar.loadDailyQuote) this.components.sidebar.loadDailyQuote();
         }
-        // 刷新导航
         this.refreshNavigationIfReady();
         setTimeout(() => {
             this.showToast('所有模块已刷新', 'success');
@@ -697,7 +716,6 @@ if (document.readyState === 'loading') {
         }
     });
 } else {
-    // 如果 DOM 已加载，确保 App 已初始化
     if (window.app && !window.app.isInitialized) {
         window.app.init();
     }
