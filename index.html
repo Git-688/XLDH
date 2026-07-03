@@ -894,6 +894,8 @@
             if (rankBtn._rankBound) return;
             rankBtn._rankBound = true;
 
+            let rankModalRef = null;
+
             async function loadRankData() {
                 rankListContent.innerHTML = `
                     <div class="loading">
@@ -954,50 +956,69 @@
                 }
             }
 
-            function openRankModal() {
-                try {
-                    if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
-                    if (window.sidebar?.isVisible?.()) window.sidebar.hide();
-                    if (window.Starlink?.search?.isOpen) window.Starlink.search.hide();
-                    if (window.newSearchModule?.isOpen) window.newSearchModule.hide();
-                } catch (e) {}
-
+            function showRankModal() {
+                if (!rankModal) return;
+                if (!rankModalRef) {
+                    rankModalRef = {
+                        hide: hideRankModal,
+                        isVisible: function() { return rankModal.classList.contains('active'); }
+                    };
+                }
+                if (window.app) {
+                    window.app.registerModal(rankModalRef);
+                }
                 rankModal.classList.add('active');
                 loadRankData();
             }
 
-            function closeRankModal() {
+            function hideRankModal() {
+                if (!rankModal) return;
                 rankModal.classList.remove('active');
+                const onTransitionEnd = function() {
+                    rankModal.removeEventListener('transitionend', onTransitionEnd);
+                    if (rankModalRef && window.app) {
+                        window.app.unregisterModal(rankModalRef);
+                    }
+                };
+                rankModal.addEventListener('transitionend', onTransitionEnd, { once: true });
+                setTimeout(function() {
+                    if (rankModalRef && window.app) {
+                        window.app.unregisterModal(rankModalRef);
+                    }
+                }, 400);
             }
+
+            window.showRankModal = showRankModal;
+            window.hideRankModal = hideRankModal;
 
             rankBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 if (rankModal.classList.contains('active')) {
-                    closeRankModal();
+                    hideRankModal();
                 } else {
-                    openRankModal();
+                    showRankModal();
                 }
             });
 
             rankModalClose.addEventListener('click', function(e) {
                 e.stopPropagation();
-                closeRankModal();
+                hideRankModal();
             });
 
             rankModal.addEventListener('click', function(e) {
                 if (e.target === rankModal) {
-                    closeRankModal();
+                    hideRankModal();
                 }
             });
 
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && rankModal.classList.contains('active')) {
-                    closeRankModal();
+                    hideRankModal();
                 }
             });
 
-            console.log('[排行榜] 初始化完成');
+            console.log('[排行榜] 初始化完成，交互与笔记模态框一致');
         })();
     </script>
 
