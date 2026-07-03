@@ -939,11 +939,9 @@
             }
 
             function openRankModal() {
-                // ★★★ 修复：显式设置 display: flex，确保第二次能正常显示 ★★★
-                rankModal.style.display = 'flex';
-
-                if (rankModalRef && window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.unregisterModal(rankModalRef);
+                // 如果已存在引用，先彻底关闭
+                if (rankModalRef) {
+                    closeRankModal();
                     rankModalRef = null;
                 }
 
@@ -958,7 +956,7 @@
 
                 rankModalRef = {
                     hide: function() {
-                        rankModal.classList.remove('active');
+                        closeRankModal();
                     },
                     isVisible: function() {
                         return rankModal.classList.contains('active');
