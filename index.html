@@ -938,21 +938,31 @@
                 }
             }
 
+            // ★★★★★ 修复后的打开函数 ★★★★★
             function openRankModal() {
-                if (rankModalRef && window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.unregisterModal(rankModalRef);
+                // 1. 清理可能残留的模态框引用
+                if (rankModalRef) {
+                    if (window.Starlink && window.Starlink.app) {
+                        window.Starlink.app.unregisterModal(rankModalRef);
+                    }
                     rankModalRef = null;
                 }
 
+                // 2. 强制移除 active 类，确保干净状态
+                rankModal.classList.remove('active');
+
+                // 3. 关闭其他可能冲突的模态框（侧边栏等）
                 if (window.Starlink && window.Starlink.sidebar && window.Starlink.sidebar.isVisible && window.Starlink.sidebar.isVisible()) {
                     window.Starlink.sidebar.hide();
                 } else if (window.sidebar && window.sidebar.isVisible && window.sidebar.isVisible()) {
                     window.sidebar.hide();
                 }
 
+                // 4. 打开模态框
                 rankModal.classList.add('active');
                 loadRankData();
 
+                // 5. 注册新的模态框引用
                 rankModalRef = {
                     hide: function() {
                         rankModal.classList.remove('active');
@@ -974,14 +984,15 @@
                 }
             }
 
+            // ★★★★★ 修改点击事件：始终强制重新打开 ★★★★★
             rankBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                // 如果当前已打开，先关闭再重新打开，确保状态重置
                 if (rankModal.classList.contains('active')) {
                     closeRankModal();
-                } else {
-                    openRankModal();
                 }
+                openRankModal();
             });
 
             rankModalClose.addEventListener('click', function(e) {
