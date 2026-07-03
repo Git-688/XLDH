@@ -1,0 +1,19 @@
+{
+  "name": "starlink-navigation",
+  "version": "1.0.0",
+  "description": "星聚导航 - 个人导航网站",
+  "main": "index.html",
+  "scripts": {
+    "build": "node build.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "navigation",
+    "bookmarks",
+    "personal"
+  ],
+  "author": "神木Ai",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}
