@@ -878,90 +878,104 @@
     </script>
 
     <script>
-        (function() {
-            'use strict';
-
-            const rankBtn = document.getElementById('rankBtn');
-            const rankModal = document.getElementById('rankModal');
-            const rankModalClose = document.getElementById('rankModalClose');
-            const rankListContent = document.getElementById('rankListContent');
-
-            if (!rankBtn || !rankModal || !rankModalClose || !rankListContent) {
-                console.warn('[排行榜] 缺少必要 DOM 元素');
-                return;
+        class RankModule {
+            constructor() {
+                if (window.Starlink && window.Starlink.rank) return window.Starlink.rank;
+                this.modal = document.getElementById('rankModal');
+                this.btn = document.getElementById('rankBtn');
+                this.closeBtn = document.getElementById('rankModalClose');
+                this.content = document.getElementById('rankListContent');
+                this.isVisible = false;
+                this.modalRef = null;
+                if (!this.modal || !this.btn || !this.closeBtn || !this.content) return;
+                this.bindEvents();
+                if (window.Starlink) window.Starlink.rank = this;
+                window.rankModule = this;
             }
 
-            if (rankBtn._rankBound) return;
-            rankBtn._rankBound = true;
+            bindEvents() {
+                this.btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.toggle();
+                });
+                this.closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.hide();
+                });
+                this.modal.addEventListener('click', (e) => {
+                    if (e.target === this.modal) this.hide();
+                });
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && this.isVisible) this.hide();
+                });
+            }
 
-            let rankModalRef = null;
-
-            async function loadRankData() {
-                rankListContent.innerHTML = `
-                    <div class="loading">
-                        <div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-                        加载中...
-                    </div>
-                `;
-
+            async loadData() {
+                this.content.innerHTML = `<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div>加载中...</div>`;
                 try {
                     const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
-                    const response = await fetch(`${apiBase}/topclicks?limit=20`);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
-
+                    const resp = await fetch(`${apiBase}/topclicks?limit=20`);
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                    const data = await resp.json();
                     if (!data || !data.length) {
-                        rankListContent.innerHTML = '<div class="empty">📊 暂无排行数据</div>';
+                        this.content.innerHTML = '<div class="empty">📊 暂无排行数据</div>';
                         return;
                     }
-
                     let html = '<div class="rank-list">';
-                    data.forEach(function(item, index) {
+                    data.forEach((item, index) => {
                         let medal = '';
                         if (index === 0) medal = '🥇';
                         else if (index === 1) medal = '🥈';
                         else if (index === 2) medal = '🥉';
                         else medal = (index + 1) + '.';
-
                         const title = item.title || '未命名';
                         const url = item.url || '#';
                         const count = item.count || 0;
-
-                        html += `
-                            <div class="rank-item">
-                                <span class="rank-number">${medal}</span>
-                                <a href="${url}" target="_blank" rel="noopener noreferrer" class="rank-title">${title}</a>
-                                <span class="rank-count">${count}次</span>
-                            </div>
-                        `;
+                        html += `<div class="rank-item"><span class="rank-number">${medal}</span><a href="${url}" target="_blank" rel="noopener noreferrer" class="rank-title">${title}</a><span class="rank-count">${count}次</span></div>`;
                     });
                     html += '</div>';
-                    rankListContent.innerHTML = html;
-
+                    this.content.innerHTML = html;
                 } catch (error) {
-                    console.error('[排行榜] 加载失败:', error);
-                    rankListContent.innerHTML = `
-                        <div class="error">
-                            ❌ 加载失败：${error.message || '请稍后重试'}
-                            <br><button id="rankRetryBtn" style="margin-top:10px;padding:6px 16px;background:var(--primary-color);color:white;border:none;border-radius:6px;cursor:pointer;">重试</button>
-                        </div>
-                    `;
+                    console.error('[RankModule] 加载失败:', error);
+                    this.content.innerHTML = `<div class="error">❌ 加载失败：${error.message || '请稍后重试'}<br><button id="rankRetryBtn" style="margin-top:10px;padding:6px 16px;background:var(--primary-color);color:white;border:none;border-radius:6px;cursor:pointer;">重试</button></div>`;
                     const retryBtn = document.getElementById('rankRetryBtn');
-                    if (retryBtn) {
-                        retryBtn.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            loadRankData();
-                        });
-                    }
+                    if (retryBtn) retryBtn.addEventListener('click', () => this.loadData());
                 }
             }
 
-            function openRankModal() {
-                if (rankModalRef && window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.unregisterModal(rankModalRef);
-                    rankModalRef = null;
-                }
+            show() {
+                if (this.isVisible) return;
+                this.closeOtherModals();
+                this.modal.classList.add('active');
+                this.isVisible = true;
+                this.loadData();
+                this.modalRef = {
+                    hide: () => this.hide(),
+                    isVisible: () => this.isVisible
+                };
+                if (window.Starlink?.app) window.Starlink.app.registerModal(this.modalRef);
+            }
 
+            hide() {
+                if (!this.isVisible) return;
+                this.modal.classList.remove('active');
+                this.isVisible = false;
+                if (this.modalRef && window.Starlink?.app) {
+                    window.Starlink.app.unregisterModal(this.modalRef);
+                    this.modalRef = null;
+                }
+            }
+
+            toggle() {
+                this.isVisible ? this.hide() : this.show();
+            }
+
+            isVisible() {
+                return this.isVisible;
+            }
+
+            closeOtherModals() {
                 try {
                     if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
                     if (window.sidebar?.isVisible?.()) window.sidebar.hide();
@@ -976,56 +990,20 @@
                     if (window.Starlink?.app?.hideNotebookModal) window.Starlink.app.hideNotebookModal();
                     if (window.submitModule?.isVisible) window.submitModule.hide();
                 } catch (e) {}
-
-                rankModal.classList.add('active');
-                loadRankData();
-
-                rankModalRef = {
-                    hide: function() { rankModal.classList.remove('active'); },
-                    isVisible: function() { return rankModal.classList.contains('active'); }
-                };
-                if (window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.registerModal(rankModalRef);
-                }
             }
 
-            function closeRankModal() {
-                rankModal.classList.remove('active');
-                if (rankModalRef && window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.unregisterModal(rankModalRef);
-                    rankModalRef = null;
-                }
+            destroy() {
+                this.hide();
             }
+        }
 
-            rankBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (rankModal.classList.contains('active')) {
-                    closeRankModal();
-                } else {
-                    openRankModal();
-                }
-            });
-
-            rankModalClose.addEventListener('click', function(e) {
-                e.stopPropagation();
-                closeRankModal();
-            });
-
-            rankModal.addEventListener('click', function(e) {
-                if (e.target === rankModal) {
-                    closeRankModal();
-                }
-            });
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && rankModal.classList.contains('active')) {
-                    closeRankModal();
-                }
-            });
-
-            console.log('[排行榜] 初始化完成');
-        })();
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!window.Starlink) window.Starlink = {};
+            if (!window.Starlink.rank) {
+                window.Starlink.rank = new RankModule();
+            }
+            window.rankModule = window.Starlink.rank;
+        });
     </script>
 
 </body>
