@@ -1,3 +1,4 @@
+<!-- index.html - 完整版（已移除排行榜功能） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -261,31 +262,13 @@
         .floating-btn.weather-btn:hover { color: #2a52d4 !important; }
         .floating-btn.comment-btn { color: #07C160 !important; }
         .floating-btn.comment-btn:hover { color: #06ad56 !important; }
-        .floating-btn.rank-btn { color: #FFD700 !important; }
-        .floating-btn.rank-btn:hover { color: #e6c200 !important; }
-        .dark-mode .floating-btn.rank-btn { color: #fbbf24 !important; }
-        .dark-mode .floating-btn.rank-btn:hover { color: #fcd34d !important; }
+        /* 已移除 .floating-btn.rank-btn 相关样式 */
         .dark-mode .floating-btn.weather-btn { color: #5a7aff !important; }
         .dark-mode .floating-btn.weather-btn:hover { color: #7b9cff !important; }
         .dark-mode .floating-btn.comment-btn { color: #34d399 !important; }
         .dark-mode .floating-btn.comment-btn:hover { color: #6ee7b7 !important; }
         @media (max-width: 768px) { .floating-buttons { bottom: 16px; right: 16px; gap: 10px; } .floating-btn { width: 44px; height: 44px; font-size: 18px; } }
         @media (max-width: 480px) { .floating-buttons { bottom: 12px; right: 12px; gap: 8px; } .floating-btn { width: 40px; height: 40px; font-size: 16px; } }
-
-        .rank-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
-        .rank-item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: var(--bg-secondary, #f8f9fa); border-radius: 8px; transition: background 0.2s; }
-        .rank-item:hover { background: rgba(67, 97, 238, 0.06); }
-        .rank-number { font-size: 16px; font-weight: 700; min-width: 32px; text-align: center; color: var(--text-secondary); flex-shrink: 0; }
-        .rank-number:first-child { color: #f59e0b; }
-        .rank-number:nth-child(2) { color: #94a3b8; }
-        .rank-number:nth-child(3) { color: #cd7f32; }
-        .rank-title { flex: 1; font-size: 13px; font-weight: 500; color: var(--text-primary); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .rank-title:hover { color: var(--primary-color); text-decoration: underline; }
-        .rank-count { font-size: 12px; font-weight: 600; color: var(--primary-color); flex-shrink: 0; background: rgba(67, 97, 238, 0.1); padding: 2px 10px; border-radius: 20px; }
-        #rankListContent .loading, #rankListContent .empty, #rankListContent .error { text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 13px; }
-        .dark-mode .rank-item { background: var(--bg-secondary, #1e1e1e); }
-        .dark-mode .rank-item:hover { background: rgba(124, 200, 255, 0.08); }
-        .dark-mode .rank-count { background: rgba(123, 156, 255, 0.15); color: #7b9cff; }
 
         .feedback-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -426,6 +409,8 @@
         #submitModal .feedback-modal-content { max-height: 90vh; max-width: 520px; }
         #submitModal .feedback-modal-body { overflow-y: auto; }
         #submitModal .feedback-modal-header h3 i { color: #4361ee; }
+
+        /* 已移除 #rankModal 相关样式 */
 
         #notebookModal .feedback-modal-content::-webkit-scrollbar { width: 4px; }
         #notebookModal .feedback-modal-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
@@ -606,7 +591,7 @@
         <div class="floating-buttons">
             <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
             <button class="floating-btn theme-btn" id="themeToggleBtn" aria-label="切换主题"><i class="fas fa-moon"></i></button>
-            <button class="floating-btn rank-btn" id="rankBtn" aria-label="访问排行榜"><i class="fas fa-trophy"></i></button>
+            <!-- 已移除排行榜按钮 -->
             <button class="floating-btn comment-btn" id="commentBtn" aria-label="评论"><i class="fas fa-comments"></i></button>
             <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
         </div>
@@ -706,18 +691,7 @@
             </div>
         </div>
 
-        <div id="rankModal" class="feedback-modal">
-            <div class="feedback-modal-content">
-                <div class="feedback-modal-header">
-                    <h3><i class="fas fa-trophy" style="color: #FFD700;"></i> 访问排行榜</h3>
-                    <button class="feedback-modal-close" id="rankModalClose">&times;</button>
-                </div>
-                <div class="feedback-modal-body">
-                    <div id="rankListContent"><div class="loading">加载中...</div></div>
-                </div>
-            </div>
-        </div>
-
+        <!-- 已删除 #rankModal  -->
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
@@ -877,139 +851,7 @@
         })();
     </script>
 
-    <script>
-        class RankModule {
-            constructor() {
-                if (window.Starlink && window.Starlink.rank) return window.Starlink.rank;
-                this.modal = document.getElementById('rankModal');
-                this.btn = document.getElementById('rankBtn');
-                this.closeBtn = document.getElementById('rankModalClose');
-                this.content = document.getElementById('rankListContent');
-                this.isVisible = false;
-                this.modalRef = null;
-                if (!this.modal || !this.btn || !this.closeBtn || !this.content) return;
-                this.bindEvents();
-                if (window.Starlink) window.Starlink.rank = this;
-                window.rankModule = this;
-            }
-
-            bindEvents() {
-                this.btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.toggle();
-                });
-                this.closeBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.hide();
-                });
-                this.modal.addEventListener('click', (e) => {
-                    if (e.target === this.modal) this.hide();
-                });
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape' && this.isVisible) this.hide();
-                });
-            }
-
-            async loadData() {
-                this.content.innerHTML = `<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div>加载中...</div>`;
-                try {
-                    const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
-                    const resp = await fetch(`${apiBase}/topclicks?limit=20`);
-                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                    const data = await resp.json();
-                    if (!data || !data.length) {
-                        this.content.innerHTML = '<div class="empty">📊 暂无排行数据</div>';
-                        return;
-                    }
-                    let html = '<div class="rank-list">';
-                    data.forEach((item, index) => {
-                        let medal = '';
-                        if (index === 0) medal = '🥇';
-                        else if (index === 1) medal = '🥈';
-                        else if (index === 2) medal = '🥉';
-                        else medal = (index + 1) + '.';
-                        const title = item.title || '未命名';
-                        const url = item.url || '#';
-                        const count = item.count || 0;
-                        html += `<div class="rank-item"><span class="rank-number">${medal}</span><a href="${url}" target="_blank" rel="noopener noreferrer" class="rank-title">${title}</a><span class="rank-count">${count}次</span></div>`;
-                    });
-                    html += '</div>';
-                    this.content.innerHTML = html;
-                } catch (error) {
-                    console.error('[RankModule] 加载失败:', error);
-                    this.content.innerHTML = `<div class="error">❌ 加载失败：${error.message || '请稍后重试'}<br><button id="rankRetryBtn" style="margin-top:10px;padding:6px 16px;background:var(--primary-color);color:white;border:none;border-radius:6px;cursor:pointer;">重试</button></div>`;
-                    const retryBtn = document.getElementById('rankRetryBtn');
-                    if (retryBtn) retryBtn.addEventListener('click', () => this.loadData());
-                }
-            }
-
-            show() {
-                if (this.isVisible) return;
-                if (this.modalRef) {
-                    if (window.Starlink?.app) window.Starlink.app.unregisterModal(this.modalRef);
-                    this.modalRef = null;
-                }
-                this.modal.style.display = '';
-                this.closeOtherModals();
-                this.modal.classList.add('active');
-                this.isVisible = true;
-                this.loadData();
-                this.modalRef = {
-                    hide: () => this.hide(),
-                    isVisible: () => this.isVisible
-                };
-                if (window.Starlink?.app) window.Starlink.app.registerModal(this.modalRef);
-            }
-
-            hide() {
-                if (!this.isVisible) return;
-                this.modal.classList.remove('active');
-                this.isVisible = false;
-                if (this.modalRef && window.Starlink?.app) {
-                    window.Starlink.app.unregisterModal(this.modalRef);
-                    this.modalRef = null;
-                }
-            }
-
-            toggle() {
-                this.isVisible ? this.hide() : this.show();
-            }
-
-            isVisible() {
-                return this.isVisible;
-            }
-
-            closeOtherModals() {
-                try {
-                    if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
-                    if (window.sidebar?.isVisible?.()) window.sidebar.hide();
-                    if (window.Starlink?.search?.isOpen) window.Starlink.search.hide();
-                    if (window.newSearchModule?.isOpen) window.newSearchModule.hide();
-                    if (window.Starlink?.announcement?.isVisible) window.Starlink.announcement.hide();
-                    if (window.announcementModule?.isVisible) window.announcementModule.hide();
-                    if (window.Starlink?.weather?.isShowing) window.Starlink.weather.hide();
-                    if (window.app?.modules?.weather?.isShowing) window.app.modules.weather.hide();
-                    if (window.Starlink?.about?.isShowing) window.Starlink.about.hide();
-                    if (window.aboutModule?.isShowing) window.aboutModule.hide();
-                    if (window.Starlink?.app?.hideNotebookModal) window.Starlink.app.hideNotebookModal();
-                    if (window.submitModule?.isVisible) window.submitModule.hide();
-                } catch (e) {}
-            }
-
-            destroy() {
-                this.hide();
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!window.Starlink) window.Starlink = {};
-            if (!window.Starlink.rank) {
-                window.Starlink.rank = new RankModule();
-            }
-            window.rankModule = window.Starlink.rank;
-        });
-    </script>
+    <!-- 已删除排行榜功能脚本 -->
 
 </body>
 </html>
