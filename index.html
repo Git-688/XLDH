@@ -761,7 +761,7 @@
             </div>
         </div>
 
-        <!-- 排行榜模态框（全新结构） -->
+        <!-- 排行榜模态框 -->
         <div id="rankModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
@@ -938,7 +938,7 @@
         })();
     </script>
 
-    <!-- 访问排行榜功能（全新实现，稳定可靠） -->
+    <!-- 访问排行榜功能（稳定版，纯类控制） -->
     <script>
         (function() {
             'use strict';
@@ -1035,10 +1035,8 @@
                     abortController.abort();
                     abortController = null;
                 }
-
                 if (isLoading) return;
                 isLoading = true;
-
                 renderLoading();
 
                 const controller = new AbortController();
@@ -1054,16 +1052,11 @@
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status} ${response.statusText}`);
                     }
-
                     const data = await response.json();
-
                     if (signal.aborted) return;
-
                     renderList(data);
                 } catch (error) {
-                    if (error.name === 'AbortError') {
-                        return;
-                    }
+                    if (error.name === 'AbortError') return;
                     console.error('排行榜加载失败:', error);
                     renderError(error.message || '网络异常，请检查连接');
                 } finally {
@@ -1080,18 +1073,20 @@
                     return;
                 }
 
+                // 关闭侧边栏等
                 try {
                     if (window.Starlink?.sidebar?.isVisible?.()) {
                         window.Starlink.sidebar.hide();
                     } else if (window.sidebar?.isVisible?.()) {
                         window.sidebar.hide();
                     }
-                } catch (e) {
-                    // ignore
-                }
+                } catch (e) {}
 
+                // 清除内联样式干扰，由 CSS 类控制
+                rankModal.style.display = '';
+                rankModal.style.opacity = '';
+                rankModal.style.visibility = '';
                 rankModal.classList.add('active');
-                rankModal.style.display = 'flex';
                 isOpen = true;
 
                 loadRankData();
@@ -1102,23 +1097,19 @@
                         isVisible: function() { return isOpen; }
                     });
                 }
-
                 document.body.style.overflow = 'hidden';
             }
 
             function closeRankModal() {
                 if (!isOpen) return;
-
                 if (abortController) {
                     abortController.abort();
                     abortController = null;
                 }
-
                 rankModal.classList.remove('active');
-                rankModal.style.display = 'none';
+                // 不移除 display，由 CSS 默认控制
                 isOpen = false;
                 isLoading = false;
-
                 document.body.style.overflow = '';
             }
 
@@ -1157,7 +1148,11 @@
                     return;
                 }
                 bindEvents();
-                rankModal.style.display = 'none';
+                // 确保初始隐藏：移除 active，清空内联样式
+                rankModal.classList.remove('active');
+                rankModal.style.display = '';
+                rankModal.style.opacity = '';
+                rankModal.style.visibility = '';
             }
 
             if (document.readyState === 'loading') {
