@@ -1,4 +1,4 @@
-/* weather.js - 完整版（天气模态框头部添加图标并匹配颜色） */
+/* weather.js - 完整版（增加错误上报，修复天气模态框头部图标颜色） */
 class WeatherModule {
     static CONFIG = {
         get API_BASE() {
@@ -134,6 +134,9 @@ class WeatherModule {
                 this.currentCity = '北京';
             }
         } catch (e) {
+            if (window.errorHandler) {
+                window.errorHandler.report(e, 'weather.loadSavedCity');
+            }
             console.error('加载城市设置失败:', e);
         }
     }
@@ -159,6 +162,9 @@ class WeatherModule {
             this.currentCity = city;
             console.log('城市已保存:', city, isManual ? '(手动)' : '(GPS)');
         } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'weather.saveCity');
+            }
             console.error('保存城市失败:', error);
         }
     }
@@ -172,6 +178,9 @@ class WeatherModule {
             console.log(`GPS 定位成功: 经度 ${longitude}, 纬度 ${latitude}`);
             await this.loadWeatherDataByLonLat(longitude, latitude);
         } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'weather.tryGpsLocation');
+            }
             console.error('GPS 定位失败:', error.message);
             this.useAutoLocation = false;
             const toast = window.Starlink?.toast || window.toast;
@@ -217,6 +226,9 @@ class WeatherModule {
             }
             return true;
         } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'weather.loadWeatherDataByLonLat');
+            }
             console.error('经纬度天气查询失败:', error);
             this.weatherData = null;
             throw error;
@@ -238,6 +250,9 @@ class WeatherModule {
             this.saveCity(city, true, null);
             return true;
         } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'weather.loadWeatherDataByCity');
+            }
             console.error('城市天气查询失败:', error);
             this.weatherData = null;
             throw error;
@@ -385,6 +400,9 @@ class WeatherModule {
         this.loadWeatherData().then(() => {
             this.updateModalContent();
         }).catch(error => {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'weather.showModal');
+            }
             console.error('加载天气数据失败:', error);
             this.updateModalContent();
             const toast = window.Starlink?.toast || window.toast;
@@ -398,7 +416,6 @@ class WeatherModule {
         });
     }
 
-    // ===== 修改：天气模态框头部添加图标并匹配颜色 #3764f4 =====
     createModal() {
         if (this.modalElement && this.modalElement.parentNode) {
             this.modalElement.parentNode.removeChild(this.modalElement);
@@ -748,6 +765,9 @@ class WeatherModule {
                         window.app.showToast(`已切换到: ${newCity}`, 'success');
                     }
                 } catch (error) {
+                    if (window.errorHandler) {
+                        window.errorHandler.report(error, 'weather.showCityPrompt.confirm');
+                    }
                     console.error('切换城市失败:', error);
                     confirmBtn.innerHTML = '确认切换';
                     confirmBtn.disabled = false;
@@ -776,6 +796,9 @@ class WeatherModule {
             cityInput.focus();
             cityInput.select();
         } catch (err) {
+            if (window.errorHandler) {
+                window.errorHandler.report(err, 'weather.showCityPrompt');
+            }
             console.error('showCityPrompt 出错:', err);
         }
     }
@@ -802,6 +825,9 @@ class WeatherModule {
             if (toast && toast.show) toast.show('位置已更新', 'success');
             else if (window.app && window.app.showToast) window.app.showToast('位置已更新', 'success');
         } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'weather.handleGpsRefresh');
+            }
             console.error('GPS 刷新失败:', error);
             const toast = window.Starlink?.toast || window.toast;
             if (toast && toast.show) toast.show('定位失败，请手动选择城市', 'error');
@@ -818,7 +844,12 @@ class WeatherModule {
             try {
                 await this.loadWeatherData();
                 if (this.isShowing && this.modalElement) this.updateModalContent();
-            } catch (error) { console.warn('自动刷新天气数据失败:', error); }
+            } catch (error) {
+                if (window.errorHandler) {
+                    window.errorHandler.report(error, 'weather.startAutoRefresh');
+                }
+                console.warn('自动刷新天气数据失败:', error);
+            }
         }, this.autoRefreshTime);
     }
 
@@ -837,6 +868,9 @@ class WeatherModule {
                         await this.loadWeatherData();
                         this.updateModalContent();
                     } catch (error) {
+                        if (window.errorHandler) {
+                            window.errorHandler.report(error, 'weather.updateModalContent.retry');
+                        }
                         console.error('重试加载天气数据失败:', error);
                         retryBtn.innerHTML = '<i class="fas fa-redo"></i> 重新加载';
                         retryBtn.disabled = false;
@@ -852,6 +886,9 @@ class WeatherModule {
                     try {
                         await this.handleGpsRefresh();
                     } catch (error) {
+                        if (window.errorHandler) {
+                            window.errorHandler.report(error, 'weather.updateModalContent.manualLocation');
+                        }
                         manualLocationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> 重新定位';
                         manualLocationBtn.disabled = false;
                     }
@@ -904,6 +941,9 @@ class WeatherModule {
             await this.loadWeatherData();
             return true;
         } catch (error) {
+            if (window.errorHandler) {
+                window.errorHandler.report(error, 'weather.refreshWeather');
+            }
             console.error('手动刷新天气数据失败:', error);
             return false;
         }
