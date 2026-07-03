@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（后台管理链接替换书签，已移除 Service Worker 注册，已添加版本号） -->
+<!-- index.html - 完整版（构建时自动添加版本号，无需手动维护） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -29,24 +29,6 @@
 
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
-
-    <!-- ===== 版本号控制（每次发布时修改） ===== -->
-    <script>
-        (function() {
-            // ★★★ 每次发布新版本时，修改这里 ★★★
-            // 格式：YYYYMMDD 或 1.0.x
-            // 例如：'20260703' 或 '1.0.2'
-            const VERSION = '20260703';
-
-            // 将版本号暴露到全局，供其他脚本使用
-            window.APP_VERSION = VERSION;
-
-            // 同时设置为构建变量，方便资源加载
-            document.documentElement.setAttribute('data-version', VERSION);
-
-            console.log('[App] 当前版本: v' + VERSION);
-        })();
-    </script>
 
     <script>
         (function() {
@@ -725,22 +707,22 @@
         .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
     </style>
 
-    <!-- ===== 外部样式（按需加载，加版本号） ===== -->
-    <link rel="preload" href="./css/style.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/navbar.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/sidebar.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/announcement.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/search.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/weather.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/about.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/navigation.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/wallpaper.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/greeting.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/stats.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/compact-tags.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/responsive.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/xfyy1/music-player.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/comment.css?__VERSION__" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <!-- ===== 外部样式（不加版本号，构建时自动添加） ===== -->
+    <link rel="preload" href="./css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/navbar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/sidebar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/announcement.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/search.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/weather.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/about.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/navigation.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/wallpaper.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/greeting.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/stats.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/compact-tags.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/responsive.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 
     <!-- ===== 第三方样式（不变） ===== -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
@@ -749,7 +731,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
 
-    <link rel="preload" href="./js/main.js?__VERSION__" as="script">
+    <link rel="preload" href="./js/main.js" as="script">
 </head>
 <body>
     <div class="scroll-progress" id="scrollProgress"></div>
@@ -780,7 +762,7 @@
         <div class="sidebar-wallpaper" id="sidebarWallpaper">
             <div class="sidebar-wallpaper-overlay"></div>
             <div class="sidebar-wallpaper-user-info">
-                <div class="sidebar-wallpaper-avatar"><img id="sidebarWallpaperAvatar" src="" alt="用户头像" loading="lazy" width="56" height="56" class="js-img-fallback" data-fallback-type="defaultAvatar" data-default-svg="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo="></div>
+                <div class="sidebar-wallpaper-avatar"><img id="sidebarWallpaperAvatar" src="" alt="用户头像" loading="lazy" width="56" height="56" class="js-img-fallback" data-fallback-type="defaultAvatar" data-default-svg="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik40MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo="></div>
                 <div class="sidebar-wallpaper-user-text">
                     <div class="sidebar-wallpaper-nickname" id="sidebarWallpaperNickname">访客用户</div>
                     <div class="sidebar-wallpaper-signature" id="sidebarWallpaperSignature">探索无限可能</div>
@@ -850,7 +832,6 @@
                         <button class="fish-btn" data-type="health" aria-label="健康"><i class="fas fa-heart"></i><span class="fish-count" id="healthCount">0</span></button>
                     </div>
                 </div>
-                <!-- ===== 修改：我的书签 → 后台管理 ===== -->
                 <a href="https://xjdh688.ccwu.cc/admin" class="bookmark-btn" aria-label="后台管理" target="_blank">
                     <i class="fas fa-cog"></i>
                     <span>后台管理</span>
@@ -1183,9 +1164,7 @@
             </div>
         </div>
 
-        <!-- ============================================================ -->
         <!-- ===== 排行榜模态框 ===== -->
-        <!-- ============================================================ -->
         <div id="rankModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
@@ -1229,38 +1208,38 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
-    <!-- ===== 核心 JavaScript 模块（加版本号） ===== -->
-    <script defer src="./js/constants.js?__VERSION__"></script>
-    <script defer src="./js/utils.js?__VERSION__"></script>
-    <script defer src="./js/toast.js?__VERSION__"></script>
-    <script defer src="./js/error-handler.js?__VERSION__"></script>
-    <script defer src="./js/storage.js?__VERSION__"></script>
-    <script defer src="./js/components/navbar.js?__VERSION__"></script>
-    <script defer src="./js/components/sidebar.js?__VERSION__"></script>
-    <script defer src="./js/modules/announcement.js?__VERSION__"></script>
-    <script defer src="./js/modules/search.js?__VERSION__"></script>
-    <script defer src="./js/modules/weather.js?__VERSION__"></script>
-    <script defer src="./js/modules/about.js?__VERSION__"></script>
-    <script defer src="./js/modules/navigation.js?__VERSION__"></script>
-    <script defer src="./js/modules/wallpaper.js?__VERSION__"></script>
-    <script defer src="./js/modules/greeting.js?__VERSION__"></script>
-    <script defer src="./js/modules/stats.js?__VERSION__"></script>
-    <script defer src="./js/modules/compact-tags.js?__VERSION__"></script>
-    <script defer src="./js/main.js?__VERSION__"></script>
-    <script defer src="./js/xfyy/cache-manager.js?__VERSION__"></script>
-    <script defer src="./js/xfyy/lyric-parser.js?__VERSION__"></script>
-    <script defer src="./data/local-music-data.js?__VERSION__"></script>
-    <script defer src="./js/xfyy/plugin-manager.js?__VERSION__"></script>
-    <script defer src="./js/xfyy/music-player.js?__VERSION__"></script>
-    <script defer src="./js/xfyy/music-main.js?__VERSION__"></script>
+    <!-- ===== 核心 JavaScript 模块（不加版本号，构建时自动添加） ===== -->
+    <script defer src="./js/constants.js"></script>
+    <script defer src="./js/utils.js"></script>
+    <script defer src="./js/toast.js"></script>
+    <script defer src="./js/error-handler.js"></script>
+    <script defer src="./js/storage.js"></script>
+    <script defer src="./js/components/navbar.js"></script>
+    <script defer src="./js/components/sidebar.js"></script>
+    <script defer src="./js/modules/announcement.js"></script>
+    <script defer src="./js/modules/search.js"></script>
+    <script defer src="./js/modules/weather.js"></script>
+    <script defer src="./js/modules/about.js"></script>
+    <script defer src="./js/modules/navigation.js"></script>
+    <script defer src="./js/modules/wallpaper.js"></script>
+    <script defer src="./js/modules/greeting.js"></script>
+    <script defer src="./js/modules/stats.js"></script>
+    <script defer src="./js/modules/compact-tags.js"></script>
+    <script defer src="./js/main.js"></script>
+    <script defer src="./js/xfyy/cache-manager.js"></script>
+    <script defer src="./js/xfyy/lyric-parser.js"></script>
+    <script defer src="./data/local-music-data.js"></script>
+    <script defer src="./js/xfyy/plugin-manager.js"></script>
+    <script defer src="./js/xfyy/music-player.js"></script>
+    <script defer src="./js/xfyy/music-main.js"></script>
 
     <!-- ===== Waline 评论 ===== -->
     <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
 
-    <script defer src="./js/modules/comment.js?__VERSION__"></script>
-    <script defer src="./js/modules/submit.js?__VERSION__"></script>
-    <script defer src="./js/modules/theme.js?__VERSION__"></script>
-    <script defer src="./js/cursor2.js?__VERSION__"></script>
+    <script defer src="./js/modules/comment.js"></script>
+    <script defer src="./js/modules/submit.js"></script>
+    <script defer src="./js/modules/theme.js"></script>
+    <script defer src="./js/cursor2.js"></script>
 
     <!-- ============================================================ -->
     <!-- Cookie 使用声明横幅                                          -->
@@ -1435,7 +1414,6 @@
                 }
             }
 
-            // 打开排行榜
             function openRankModal() {
                 rankModal.classList.add('active');
                 loadRankData();
@@ -1451,7 +1429,6 @@
                 }
             }
 
-            // 关闭排行榜
             function closeRankModal() {
                 rankModal.classList.remove('active');
                 if (window.Starlink && window.Starlink.app) {
@@ -1466,7 +1443,6 @@
                 }
             }
 
-            // 事件绑定
             rankBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1493,26 +1469,6 @@
                 }
             });
 
-        })();
-    </script>
-
-    <!-- ===== 版本号替换逻辑（将 __VERSION__ 替换为实际版本号） ===== -->
-    <script>
-        (function() {
-            // ★★★ 每次发布时，将下面的 VERSION 改为你想要的版本号 ★★★
-            // 必须与 <head> 中的 VERSION 保持一致
-            const VERSION = '20260703';
-
-            // 替换所有带有 ?__VERSION__ 的资源链接
-            document.querySelectorAll('link[href*="__VERSION__"], script[src*="__VERSION__"]').forEach(el => {
-                const attr = el.tagName === 'LINK' ? 'href' : 'src';
-                const original = el.getAttribute(attr);
-                if (original && original.includes('__VERSION__')) {
-                    el.setAttribute(attr, original.replace('__VERSION__', VERSION));
-                }
-            });
-
-            console.log('[App] 资源版本号已应用: v' + VERSION);
         })();
     </script>
 
