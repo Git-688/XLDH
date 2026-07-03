@@ -881,21 +881,76 @@
     </script>
 
     <!-- ============================================================ -->
-    <!-- 排行榜功能脚本（修复第二次无法打开问题）                     -->
+    <!-- 排行榜功能脚本（修复第二次无法打开问题 - 事件委托 + 简化管理）-->
     <!-- ============================================================ -->
     <script>
         (function() {
             'use strict';
 
-            const rankBtn = document.getElementById('rankBtn');
-            const rankModal = document.getElementById('rankModal');
-            const rankModalClose = document.getElementById('rankModalClose');
-            const rankListContent = document.getElementById('rankListContent');
-            let rankModalRef = null;
+            // 使用事件委托监听点击，避免按钮被替换导致事件丢失
+            document.addEventListener('click', function(e) {
+                const rankBtn = e.target.closest('#rankBtn');
+                if (!rankBtn) return;
 
-            if (!rankBtn || !rankModal || !rankModalClose || !rankListContent) return;
+                e.preventDefault();
+                e.stopPropagation();
 
-            async function loadRankData() {
+                const rankModal = document.getElementById('rankModal');
+                const rankListContent = document.getElementById('rankListContent');
+                if (!rankModal || !rankListContent) return;
+
+                // 如果模态框已打开则关闭，否则打开
+                if (rankModal.classList.contains('active')) {
+                    closeRankModal(rankModal);
+                } else {
+                    openRankModal(rankModal, rankListContent);
+                }
+            });
+
+            // 关闭按钮和模态框背景点击关闭
+            document.addEventListener('click', function(e) {
+                const closeBtn = e.target.closest('#rankModalClose');
+                if (closeBtn) {
+                    const rankModal = document.getElementById('rankModal');
+                    if (rankModal) closeRankModal(rankModal);
+                    return;
+                }
+
+                const modal = e.target.closest('#rankModal');
+                if (modal && e.target === modal) {
+                    closeRankModal(modal);
+                }
+            });
+
+            // ESC 键关闭
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const rankModal = document.getElementById('rankModal');
+                    if (rankModal && rankModal.classList.contains('active')) {
+                        closeRankModal(rankModal);
+                    }
+                }
+            });
+
+            function openRankModal(rankModal, rankListContent) {
+                // 关闭其他可能打开的模态（侧边栏、搜索等）
+                if (window.Starlink && window.Starlink.sidebar && window.Starlink.sidebar.isVisible && window.Starlink.sidebar.isVisible()) {
+                    window.Starlink.sidebar.hide();
+                } else if (window.sidebar && window.sidebar.isVisible && window.sidebar.isVisible()) {
+                    window.sidebar.hide();
+                }
+
+                // 显示模态框
+                rankModal.classList.add('active');
+                loadRankData(rankListContent);
+            }
+
+            function closeRankModal(rankModal) {
+                rankModal.classList.remove('active');
+                // 不需要再注销 App 引用，因为我们不再注册
+            }
+
+            async function loadRankData(rankListContent) {
                 rankListContent.innerHTML = '<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div> 加载中...</div>';
 
                 try {
@@ -937,80 +992,6 @@
                     rankListContent.innerHTML = '<div class="error">❌ 加载失败，请稍后重试</div>';
                 }
             }
-
-            // ===== 修改 openRankModal：先清理旧引用，定义 hide 调用完整清理 =====
-            function openRankModal() {
-                // 如果已有引用，先清理（防止状态残留）
-                if (rankModalRef) {
-                    if (window.Starlink && window.Starlink.app) {
-                        window.Starlink.app.unregisterModal(rankModalRef);
-                    }
-                    rankModalRef = null;
-                }
-
-                // 关闭其他可能打开的侧边栏
-                if (window.Starlink && window.Starlink.sidebar && window.Starlink.sidebar.isVisible && window.Starlink.sidebar.isVisible()) {
-                    window.Starlink.sidebar.hide();
-                } else if (window.sidebar && window.sidebar.isVisible && window.sidebar.isVisible()) {
-                    window.sidebar.hide();
-                }
-
-                // 显示模态框
-                rankModal.classList.add('active');
-                loadRankData();
-
-                // 创建新的模态框引用，hide 方法调用 closeRankModal 保证完整清理
-                rankModalRef = {
-                    hide: function() {
-                        closeRankModal();  // 调用关闭函数
-                    },
-                    isVisible: function() {
-                        return rankModal.classList.contains('active');
-                    }
-                };
-                if (window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.registerModal(rankModalRef);
-                }
-            }
-
-            // ===== 修改 closeRankModal：确保清理并置 null =====
-            function closeRankModal() {
-                rankModal.classList.remove('active');
-                if (rankModalRef) {
-                    if (window.Starlink && window.Starlink.app) {
-                        window.Starlink.app.unregisterModal(rankModalRef);
-                    }
-                    rankModalRef = null;
-                }
-            }
-
-            // 绑定按钮事件
-            rankBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (rankModal.classList.contains('active')) {
-                    closeRankModal();
-                } else {
-                    openRankModal();
-                }
-            });
-
-            rankModalClose.addEventListener('click', function(e) {
-                e.stopPropagation();
-                closeRankModal();
-            });
-
-            rankModal.addEventListener('click', function(e) {
-                if (e.target === rankModal) {
-                    closeRankModal();
-                }
-            });
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && rankModal.classList.contains('active')) {
-                    closeRankModal();
-                }
-            });
 
         })();
     </script>
