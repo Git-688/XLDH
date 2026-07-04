@@ -176,7 +176,7 @@ class CarouselModule {
                     }
                 }
             } catch (e) {
-                console.warn(`获取第${i}天壁纸失败`);
+                // 静默处理获取失败
             }
         }
 
@@ -204,7 +204,6 @@ class CarouselModule {
 
         if (!this.track) return;
 
-        // 获取 slide 宽度
         this.updateSlideWidth();
 
         this.renderSlides();
@@ -254,7 +253,6 @@ class CarouselModule {
         });
     }
 
-    // ===== 核心修复：使用像素值计算偏移，避免百分比舍入误差 =====
     goToSlide(clonedIndex, animate = true) {
         if (this.isTransitioning) return;
         const total = this.clonedSlides.length;
@@ -263,7 +261,6 @@ class CarouselModule {
         this.isTransitioning = true;
         this.preloadNearbySlides(clonedIndex, 3);
 
-        // 确保 slideWidth 是最新的
         this.updateSlideWidth();
 
         const targetSlide = this.track.children[clonedIndex];
@@ -288,7 +285,6 @@ class CarouselModule {
         const title = this.clonedSlides[clonedIndex].title || '';
         if (this.infoTitle) this.infoTitle.textContent = title;
 
-        // ===== 使用像素值：偏移 = -clonedIndex * slideWidth =====
         const offset = -clonedIndex * this.slideWidth;
         if (this.track) {
             this.track.style.transition = animate ? 'transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1.2)' : 'none';
@@ -297,18 +293,15 @@ class CarouselModule {
 
         this.currentIndex = clonedIndex;
 
-        // ===== 修复：跳转逻辑也使用像素值 =====
         setTimeout(() => {
             this.isTransitioning = false;
             if (clonedIndex === 0) {
-                // 跳到克隆的最后一张（即真实最后一张）
                 const lastRealIndex = this.slides.length;
                 const newOffset = -lastRealIndex * this.slideWidth;
                 this.track.style.transition = 'none';
                 this.track.style.transform = `translateX(${newOffset}px)`;
                 this.currentIndex = lastRealIndex;
             } else if (clonedIndex === total - 1) {
-                // 跳到克隆的第一张（即真实第一张）
                 const newOffset = -1 * this.slideWidth;
                 this.track.style.transition = 'none';
                 this.track.style.transform = `translateX(${newOffset}px)`;
@@ -386,10 +379,8 @@ class CarouselModule {
             container.addEventListener('mouseleave', () => this.startAutoplay());
         }
 
-        // 窗口变化时更新 slideWidth（但不会自动刷新壁纸）
         window.addEventListener('resize', () => {
             this.updateSlideWidth();
-            // 如果当前处于停止状态，可以立即重新定位
             if (!this.isTransitioning) {
                 const offset = -this.currentIndex * this.slideWidth;
                 this.track.style.transition = 'none';
