@@ -1,4 +1,4 @@
-/* navigation.js - 全部加载、无分页、无懒加载、无加载提示，已增加错误上报，新布局：图标占1/4 */
+/* navigation.js - 全部加载、无分页、无懒加载、无加载提示，已增加错误上报，布局调整 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -306,14 +306,15 @@ class OptimizedNavigation {
             descHtml = this._highlightText(site.description || '暂无描述', keyword);
         }
 
+        // 新布局：图标左 | 点击数+感叹号(同行) + 标题在右侧
         card.innerHTML = `
-            <div class="card-layout">
-                <div class="card-left">
-                    <div class="icon-container">${iconHtml}</div>
-                </div>
-                <div class="card-right">
-                    <div class="card-top-row">
-                        <span class="view-count" data-views="${views}">${formattedViews}</span>
+            <div class="card-top">
+                <div class="icon-container">${iconHtml}</div>
+                <div class="card-top-right">
+                    <div class="top-row">
+                        <div class="views-container">
+                            <span class="view-count" data-views="${views}">${formattedViews}</span>
+                        </div>
                         <button class="report-dead-link-btn" data-url="${this._escapeHtml(site.url)}" data-title="${this._escapeHtml(site.title)}" title="报告死链">
                             <i class="fas fa-exclamation-circle"></i>
                         </button>
