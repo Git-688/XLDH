@@ -1,4 +1,4 @@
-/* main.js - 全局应用管理，统一模态框控制 */
+/* main.js - 增加全局错误边界和统一错误处理，监听导航刷新信号，轮询间隔10秒 */
 class App {
     constructor() {
         this.components = {};
@@ -7,7 +7,6 @@ class App {
         this.isInitialized = false;
         this.lastWeatherUpdate = null;
         this.notebookModalHideRef = null;
-        this.rankModalHideRef = null;
         this._cleanupErrorHandler = null;
         this._storageListenerBound = false;
 
@@ -30,15 +29,30 @@ class App {
         const overlay = document.createElement('div');
         overlay.id = 'error-fallback-overlay';
         overlay.style.cssText = `
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: var(--bg-primary, #ffffff); z-index: 99999; padding: 20px; text-align: center;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary, #ffffff);
+            z-index: 99999;
+            padding: 20px;
+            text-align: center;
         `;
         overlay.innerHTML = `
             <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
             <h2 style="font-size: 18px; margin-bottom: 8px; color: var(--text-primary, #1e293b);">${Utils.escapeHtml(message)}</h2>
             <p style="font-size: 13px; color: var(--text-secondary, #64748b); margin-bottom: 20px;">请检查网络连接后刷新页面</p>
-            <button onclick="window.location.reload()" style="padding: 10px 24px; background: var(--primary-color, #4361ee); color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;">刷新页面</button>
+            <button onclick="window.location.reload()" style="
+                padding: 10px 24px;
+                background: var(--primary-color, #4361ee);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 14px;
+                cursor: pointer;
+            ">刷新页面</button>
         `;
         document.body.appendChild(overlay);
     }
@@ -48,11 +62,11 @@ class App {
         if (overlay) overlay.remove();
     }
 
-    // ===== 笔记本模态框 =====
     async loadNotebookData() {
         const listEl = document.getElementById('notebook-list');
         if (!listEl) return;
         listEl.innerHTML = '<div class="skeleton-notebook-item"></div>'.repeat(5);
+
         try {
             const response = await Utils.safeFetch('https://api.xjdh688.ccwu.cc/notebook', { timeout: 8000 });
             const data = await response.json();
@@ -115,89 +129,16 @@ class App {
 
     initNotebookModalEvents() {
         const modal = document.getElementById('notebookModal');
-        const closeBtn = document.getElementById('notebookCloseBtn');
+        const closeBtn = modal?.querySelector('.feedback-modal-close');
         if (!modal) return;
-        modal.addEventListener('click', (e) => { if (e.target === modal) this.hideNotebookModal(); });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) this.hideNotebookModal();
+        });
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.hideNotebookModal());
         }
     }
 
-    // ===== 排行榜模态框 =====
-    async loadRankData() {
-        const container = document.getElementById('rankListContent');
-        if (!container) return;
-        container.innerHTML = '<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div> 加载中...</div>';
-        try {
-            const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
-            const response = await fetch(`${apiBase}/topclicks?limit=20`);
-            if (!response.ok) throw new Error('请求失败');
-            const data = await response.json();
-            if (!data || !data.length) {
-                container.innerHTML = '<div class="empty">📊 暂无排行数据</div>';
-                return;
-            }
-            let html = '<div class="rank-list">';
-            data.forEach((item, index) => {
-                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1) + '.';
-                const title = item.title || '未命名';
-                const url = item.url || '#';
-                const count = item.count || 0;
-                html += `
-                    <div class="rank-item">
-                        <span class="rank-number">${medal}</span>
-                        <a href="${url}" target="_blank" rel="noopener noreferrer" class="rank-title">${title}</a>
-                        <span class="rank-count">${count}次</span>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            container.innerHTML = html;
-        } catch (error) {
-            console.error('加载排行榜失败:', error);
-            container.innerHTML = '<div class="error">❌ 加载失败，请稍后重试</div>';
-        }
-    }
-
-    showRankModal() {
-        const modalEl = document.getElementById('rankModal');
-        if (!modalEl) return;
-        if (!this.rankModalHideRef) {
-            this.rankModalHideRef = {
-                hide: () => this.hideRankModal(),
-                isVisible: () => modalEl.classList.contains('active')
-            };
-        }
-        this.registerModal(this.rankModalHideRef);
-        modalEl.classList.add('active');
-        this.loadRankData();
-    }
-
-    hideRankModal() {
-        const modalEl = document.getElementById('rankModal');
-        if (!modalEl) return;
-        modalEl.classList.remove('active');
-        const onTransitionEnd = () => {
-            modalEl.removeEventListener('transitionend', onTransitionEnd);
-            if (this.rankModalHideRef) {
-                this.unregisterModal(this.rankModalHideRef);
-            }
-        };
-        modalEl.addEventListener('transitionend', onTransitionEnd, { once: true });
-        setTimeout(onTransitionEnd, 400);
-    }
-
-    initRankModalEvents() {
-        const modal = document.getElementById('rankModal');
-        const closeBtn = document.getElementById('rankCloseBtn');
-        if (!modal) return;
-        modal.addEventListener('click', (e) => { if (e.target === modal) this.hideRankModal(); });
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.hideRankModal());
-        }
-    }
-
-    // ===== 其他方法 =====
     initImageFallbackHandler() {
         document.addEventListener('error', (e) => {
             const img = e.target;
@@ -235,7 +176,11 @@ class App {
                     if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshCurrentSubcategory === 'function') {
                         window.optimizedNavigation.refreshCurrentSubcategory();
                     } else {
-                        setTimeout(() => { if (!document.hidden) window.location.reload(); }, 3000);
+                        setTimeout(() => {
+                            if (!document.hidden) {
+                                window.location.reload();
+                            }
+                        }, 3000);
                     }
                 }
             });
@@ -245,11 +190,18 @@ class App {
     setupNavRefreshListener() {
         if (this._storageListenerBound) return;
         this._storageListenerBound = true;
+
         const handleStorageChange = (e) => {
-            if (e.key === 'nav_refresh_required' && e.newValue) this.refreshNavigationIfReady();
+            if (e.key === 'nav_refresh_required' && e.newValue) {
+                this.refreshNavigationIfReady();
+            }
         };
+
         window.addEventListener('storage', handleStorageChange);
-        document.addEventListener('navRefreshRequested', () => this.refreshNavigationIfReady());
+
+        document.addEventListener('navRefreshRequested', () => {
+            this.refreshNavigationIfReady();
+        });
 
         let lastRefreshMark = localStorage.getItem('nav_refresh_required') || '';
         this._navPollingTimer = setInterval(() => {
@@ -263,7 +215,10 @@ class App {
 
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                if (this._navPollingTimer) { clearInterval(this._navPollingTimer); this._navPollingTimer = null; }
+                if (this._navPollingTimer) {
+                    clearInterval(this._navPollingTimer);
+                    this._navPollingTimer = null;
+                }
             } else {
                 const currentMark = localStorage.getItem('nav_refresh_required') || '';
                 if (currentMark !== lastRefreshMark && currentMark) {
@@ -286,13 +241,19 @@ class App {
 
     refreshNavigationIfReady() {
         if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshCurrentSubcategory === 'function') {
-            window.optimizedNavigation.refreshCurrentSubcategory().catch(err => { console.warn('[App] 刷新导航失败:', err); });
+            window.optimizedNavigation.refreshCurrentSubcategory().catch(err => {
+                console.warn('[App] 刷新导航失败:', err);
+            });
         } else {
             setTimeout(() => {
                 if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshCurrentSubcategory === 'function') {
-                    window.optimizedNavigation.refreshCurrentSubcategory().catch(err => console.warn('[App] 延迟刷新导航失败:', err));
+                    window.optimizedNavigation.refreshCurrentSubcategory().catch(err => {
+                        console.warn('[App] 延迟刷新导航失败:', err);
+                    });
                 } else {
-                    if (!document.hidden) window.location.reload();
+                    if (!document.hidden) {
+                        window.location.reload();
+                    }
                 }
             }, 1500);
         }
@@ -300,7 +261,9 @@ class App {
 
     init() {
         if (this.isInitialized) return;
+
         this.setupGlobalErrorHandling();
+
         try {
             this.initImageFallbackHandler();
             this.initStorage();
@@ -309,16 +272,14 @@ class App {
             this.initDependentComponents();
             this.setupGlobalEvents();
             this.initNotebookModalEvents();
-            this.initRankModalEvents();
             this.initFloatingButtonsEffect();
             this.initServiceWorkerMessageListener();
             this.setupNavRefreshListener();
             this.isInitialized = true;
             this.hideErrorFallback();
+
             window.showNotebookModal = this.showNotebookModal.bind(this);
             window.hideNotebookModal = this.hideNotebookModal.bind(this);
-            window.showRankModal = this.showRankModal.bind(this);
-            window.hideRankModal = this.hideRankModal.bind(this);
         } catch (error) {
             console.error('[App] 初始化失败:', error);
             this.showErrorFallback('应用初始化失败，请刷新重试');
@@ -334,7 +295,9 @@ class App {
             floatingBtns.style.opacity = '0.4';
             floatingBtns.style.transition = 'opacity 0.3s ease';
             clearTimeout(scrollTimer);
-            scrollTimer = setTimeout(() => { floatingBtns.style.opacity = '1'; }, 1000);
+            scrollTimer = setTimeout(() => {
+                floatingBtns.style.opacity = '1';
+            }, 1000);
         }, { passive: true });
     }
 
@@ -360,6 +323,7 @@ class App {
     initModules() {
         try {
             const initPromises = [];
+
             if (typeof NewSearchModule !== 'undefined') {
                 if (!window.newSearchModule) {
                     this.modules.search = new NewSearchModule();
@@ -369,27 +333,33 @@ class App {
                 }
                 initPromises.push(this.modules.search.init?.());
             }
+
             if (typeof WallpaperModule !== 'undefined') {
                 this.modules.wallpaper = new WallpaperModule();
                 initPromises.push(this.modules.wallpaper.init?.());
             }
+
             if (typeof GreetingModule !== 'undefined') {
                 this.modules.greeting = new GreetingModule();
                 initPromises.push(this.modules.greeting.init?.());
             }
+
             if (typeof OptimizedNavigation !== 'undefined') {
                 this.modules.navigation = new OptimizedNavigation();
                 window.optimizedNavigation = this.modules.navigation;
                 initPromises.push(this.modules.navigation.init?.());
             }
+
             if (typeof FooterModule !== 'undefined') {
                 this.modules.footer = new FooterModule();
                 initPromises.push(this.modules.footer.init?.());
             }
+
             if (typeof WeatherModule !== 'undefined') {
                 this.modules.weather = new WeatherModule();
                 initPromises.push(this.modules.weather.init?.());
             }
+
             if (typeof AnnouncementModule !== 'undefined') {
                 if (!window.announcementModule) {
                     this.modules.announcement = new AnnouncementModule();
@@ -398,6 +368,7 @@ class App {
                     this.modules.announcement = window.announcementModule;
                 }
             }
+
             if (typeof AboutModule !== 'undefined') {
                 if (!window.aboutModule) {
                     this.modules.about = new AboutModule();
@@ -407,10 +378,13 @@ class App {
                     this.modules.about = window.aboutModule;
                 }
             }
+
             Promise.all(initPromises.map(p => p?.catch((err) => {
                 console.warn('模块初始化警告:', err);
                 return null;
-            }))).then(() => {});
+            }))).then(() => {
+                // 所有模块初始化完成
+            });
         } catch (error) {
             console.error('模块初始化失败:', error);
             this.showToast('部分模块初始化失败', 'warning');
@@ -457,7 +431,10 @@ class App {
     setupGlobalEvents() {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') this.closeAllModals();
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); this.showSearch(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                this.showSearch();
+            }
             if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key === 'r')) {
                 e.preventDefault();
                 this.refreshPageWithAnimation();
@@ -472,7 +449,8 @@ class App {
                 indicator.style.cssText = `
                     position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
                     background: var(--error-color, #ef4444); color: white;
-                    padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 9999;
+                    padding: 8px 16px; border-radius: 8px;
+                    font-size: 12px; z-index: 9999;
                 `;
                 indicator.textContent = '⚠️ 网络已断开，部分功能不可用';
                 document.body.appendChild(indicator);
@@ -527,11 +505,11 @@ class App {
             }
         });
         this.activeModals = [];
+
         if (this.components.sidebar?.isVisible?.()) this.components.sidebar.hide();
         if (this.components.navbar?.hideMusicPlayer) this.components.navbar.hideMusicPlayer();
         if (this.modules.search?.isModalOpen && this.modules.search.hide) this.modules.search.hide();
         this.hideNotebookModal();
-        this.hideRankModal();
         if (window.walineFeedback?.isVisible) window.walineFeedback.hide();
     }
 
@@ -662,8 +640,13 @@ class App {
         if (!confirm('确定要重置应用状态吗？这将清除所有临时数据，但不会删除您的个人配置。')) return;
         this.closeAllModals();
         const keysToRemove = [
-            'sidebar_categories_state', 'last_wallpaper_update', 'musicPlayer_volume',
-            'musicPlayer_playbackSpeed', 'musicPlayer_playMode', 'musicPlayer_playState', 'musicPlayer_lyricsMode'
+            'sidebar_categories_state',
+            'last_wallpaper_update',
+            'musicPlayer_volume',
+            'musicPlayer_playbackSpeed',
+            'musicPlayer_playMode',
+            'musicPlayer_playState',
+            'musicPlayer_lyricsMode'
         ];
         keysToRemove.forEach(key => Storage.remove(key));
         setTimeout(() => this.refreshAllModules(), 500);
