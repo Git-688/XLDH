@@ -54,7 +54,6 @@ class CacheManager {
             this.saveStats();
             return true;
         } catch (error) {
-            console.warn('缓存设置失败:', error);
             return false;
         }
     }
@@ -81,7 +80,6 @@ class CacheManager {
             this.saveStats();
             return cacheItem.data;
         } catch (error) {
-            console.warn('缓存获取失败:', error);
             this.cacheStats.misses++;
             this.saveStats();
             return null;
