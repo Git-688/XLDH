@@ -96,7 +96,6 @@ class OptimizedNavigation {
                 return response;
             } catch (error) {
                 lastError = error;
-                console.warn(`请求失败，${i+1}/${retries} 重试:`, error.message);
                 if (i < retries - 1) {
                     const delay = this.CONFIG.RETRY_DELAY * Math.pow(2, i);
                     await new Promise(r => setTimeout(r, delay));
@@ -121,7 +120,6 @@ class OptimizedNavigation {
                 window.errorHandler.report(error, 'navigation.loadNavigationStructure');
             }
             if (this.structure) {
-                console.warn('获取结构失败，使用缓存结构:', error);
                 return this.structure;
             }
             throw error;
@@ -144,7 +142,6 @@ class OptimizedNavigation {
             }
             const cached = this.siteCache.get(subcategoryId);
             if (cached) {
-                console.warn('加载站点失败，使用缓存:', error);
                 return cached;
             }
             throw error;
@@ -176,7 +173,6 @@ class OptimizedNavigation {
             }
             const cached = this.siteCache.get(cacheKey);
             if (cached) {
-                console.warn('批量加载失败，使用缓存:', error);
                 return cached;
             }
             throw error;
@@ -264,7 +260,6 @@ class OptimizedNavigation {
                 if (window.errorHandler) {
                     window.errorHandler.report(error, 'navigation.renderLevel3');
                 }
-                console.error('加载站点失败:', error);
                 this.showError('加载站点数据失败，请刷新页面重试');
                 return;
             }
@@ -319,7 +314,6 @@ class OptimizedNavigation {
                         <i class="fas fa-exclamation-circle"></i>
                     </button>
                     <div class="views-container">
-                        <i class="fas fa-eye views-icon"></i>
                         <span class="view-count" data-views="${views}">${formattedViews}</span>
                     </div>
                 </div>
@@ -459,7 +453,6 @@ class OptimizedNavigation {
                             if (window.errorHandler) {
                                 window.errorHandler.report(err, 'navigation.selectLevel1.preload');
                             }
-                            console.warn('预加载子分类失败:', err);
                         });
                     }
                 };
@@ -560,7 +553,6 @@ class OptimizedNavigation {
             if (window.errorHandler) {
                 window.errorHandler.report(error, 'navigation.performSearch');
             }
-            console.error(error);
             container.innerHTML = '<div class="empty-state">搜索失败，请重试</div>';
         } finally {
             this.isSearching = false;
@@ -662,7 +654,6 @@ class OptimizedNavigation {
             if (window.errorHandler) {
                 window.errorHandler.report(error, 'navigation._refreshStructure');
             }
-            console.warn('后台更新失败:', error);
         }
     }
 
@@ -697,7 +688,6 @@ class OptimizedNavigation {
                                     if (window.errorHandler) {
                                         window.errorHandler.report(err, 'navigation.init.preload');
                                     }
-                                    console.warn('初始预加载失败:', err);
                                 });
                             }
                         };
@@ -724,7 +714,6 @@ class OptimizedNavigation {
             if (window.errorHandler) {
                 window.errorHandler.report(error, 'navigation.init');
             }
-            console.error('导航初始化失败:', error);
             this.showError('导航数据加载失败，请刷新页面重试');
             if (this.structure) {
                 this.renderNavigation();
