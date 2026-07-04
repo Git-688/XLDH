@@ -20,6 +20,7 @@
     opacity: 1;
     visibility: visible;
 }
+
 .announcement-modal-container {
     width: 100%;
     max-width: 480px;
@@ -66,14 +67,12 @@
     font-size: 1.05rem;
     margin: 0;
 }
-.announcement-title i {
-    margin-right: 0;
-}
+.announcement-title i { margin-right: 0; }
 .announcement-close {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0,0,0,0.05);
     border: none;
     color: var(--text-secondary, #64748b);
     font-size: 1rem;
@@ -84,7 +83,7 @@
     transition: background 0.2s;
 }
 .announcement-close:hover {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(0,0,0,0.1);
     color: var(--text-primary, #334155);
 }
 
@@ -94,7 +93,6 @@
     flex-direction: column;
     max-height: 350px;
 }
-
 .focus-section {
     background: #fff0f0;
     padding: 8px 12px;
@@ -115,9 +113,7 @@
     -ms-overflow-style: none;
     margin-bottom: 8px;
 }
-.updates-section::-webkit-scrollbar {
-    display: none;
-}
+.updates-section::-webkit-scrollbar { display: none; }
 .updates-title {
     font-size: 13px;
     font-weight: 600;
@@ -173,42 +169,19 @@
 }
 
 @media (max-width: 600px) {
-    .announcement-header {
-        padding: 8px 12px 6px;
-    }
-    .announcement-title {
-        font-size: 1rem;
-    }
-    .announcement-body {
-        padding: 14px 18px 10px;
-    }
-    .focus-content {
-        font-size: 0.8rem;
-    }
-    .announcement-footer {
-        padding: 10px 18px 14px;
-    }
-    .announcement-date {
-        font-size: 0.73rem;
-    }
-    .announcement-ack-btn {
-        padding: 4px 14px;
-        font-size: 0.78rem;
-    }
+    .announcement-header { padding: 8px 12px 6px; }
+    .announcement-title { font-size: 1rem; }
+    .announcement-body { padding: 14px 18px 10px; }
+    .focus-content { font-size: 0.8rem; }
+    .announcement-footer { padding: 10px 18px 14px; }
+    .announcement-date { font-size: 0.73rem; }
+    .announcement-ack-btn { padding: 4px 14px; font-size: 0.78rem; }
 }
 @media (max-width: 400px) {
-    .announcement-modal-container {
-        border-radius: 6px;
-    }
-    .announcement-header {
-        padding: 6px 10px 4px;
-    }
-    .announcement-body {
-        padding: 12px 14px 8px;
-    }
-    .focus-content {
-        font-size: 0.78rem;
-    }
+    .announcement-modal-container { border-radius: 6px; }
+    .announcement-header { padding: 6px 10px 4px; }
+    .announcement-body { padding: 12px 14px 8px; }
+    .focus-content { font-size: 0.78rem; }
 }
 @media (prefers-reduced-motion: reduce) {
     .announcement-modal-simple,
@@ -217,14 +190,11 @@
     .announcement-ack-btn {
         transition: none !important;
     }
-    .announcement-modal-container {
-        transform: scale(1);
-    }
-    .announcement-modal-simple.active .announcement-modal-container {
-        transform: scale(1);
-    }
+    .announcement-modal-container { transform: scale(1); }
+    .announcement-modal-simple.active .announcement-modal-container { transform: scale(1); }
 }
 
+/* ===== 深色模式 ===== */
 .dark-mode .announcement-modal-container {
     background: var(--bg-card);
     border-color: var(--border-color);
@@ -235,11 +205,11 @@
     color: var(--text-primary);
 }
 .dark-mode .announcement-close {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255,255,255,0.08);
     color: var(--text-secondary);
 }
 .dark-mode .announcement-close:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255,255,255,0.15);
     color: var(--text-primary);
 }
 .dark-mode .focus-section {
