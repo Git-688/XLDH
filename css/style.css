@@ -140,7 +140,7 @@ p { margin-bottom: 1em; }
 .dark-mode .back-to-top { color: #ff6b6b; }
 .dark-mode .back-to-top:hover { color: #ff5252; }
 
-/* ===== 模态框统一样式 ===== */
+/* ===== 模态框统一样式（所有模态框复用，无独立覆盖） ===== */
 .feedback-modal {
     position: fixed;
     top: 60px;
@@ -188,7 +188,7 @@ p { margin-bottom: 1em; }
     align-items: center;
     justify-content: space-between;
     padding: 10px 14px 8px;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     color: var(--text-primary);
 }
 .feedback-modal-header h3 {
@@ -203,7 +203,7 @@ p { margin-bottom: 1em; }
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.05);
+    background: rgba(0, 0, 0, 0.05);
     border: none;
     color: var(--text-secondary);
     font-size: 1rem;
@@ -214,7 +214,7 @@ p { margin-bottom: 1em; }
     transition: background 0.2s;
 }
 .feedback-modal-close:hover {
-    background: rgba(0,0,0,0.1);
+    background: rgba(0, 0, 0, 0.1);
     color: var(--text-primary);
 }
 .feedback-modal-body {
@@ -225,14 +225,7 @@ p { margin-bottom: 1em; }
 }
 .feedback-modal-body::-webkit-scrollbar { display: none; }
 
-/* 统一所有模态框尺寸 - 使用 !important 确保覆盖 */
-#notebookModal .feedback-modal-content,
-#commentModal .feedback-modal-content,
-#rankModal .feedback-modal-content,
-#submitModal .feedback-modal-content {
-    max-width: 560px !important;
-    max-height: calc(100% - 24px) !important;
-}
+/* 星聚笔记、排行榜、评论、投稿 完全复用上述样式，无任何独立覆盖 */
 
 .toast-manager-container {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
