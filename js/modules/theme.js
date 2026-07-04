@@ -20,13 +20,11 @@ class ThemeModule {
         if (this.isInitialized) return;
         this.themeToggleBtn = document.getElementById('themeToggleBtn');
         if (!this.themeToggleBtn) {
-            console.warn('未找到主题切换按钮 #themeToggleBtn');
             return;
         }
         this.loadThemePreference();
         this.bindEvents();
         this.isInitialized = true;
-        console.log('主题模块初始化完成，当前主题:', this.currentTheme);
     }
 
     loadThemePreference() {
