@@ -108,8 +108,6 @@
         .announcement-actions-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 8px; }
         .announcement-checkbox { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
         .announcement-buttons { display: flex; gap: 8px; }
-        .export-select-group { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-        .export-select-group select { padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 12px; background: var(--bg-card, #fff); color: var(--text-primary, #1e293b); height: 32px; }
         @media (max-width: 768px) { body { padding: 12px; } .login-card { padding: 24px 20px; max-width: 280px; } .content-layout { flex-direction: row !important; gap: 8px; } .sidebar, .main-content { min-width: 0; padding: 8px; } .action-buttons-row button { font-size: 10px; padding: 5px 8px; min-width: 60px; } .tab-btn { padding: 4px 10px; font-size: 11px; } .stats-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; } .stat-card-mini .stat-number { font-size: 16px; } }
         @media (max-width: 480px) { body { padding: 8px; } .login-card { padding: 20px 16px; } .stats-cards { grid-template-columns: 1fr 1fr; gap: 6px; } .stat-card-mini { padding: 8px 12px; } .stat-card-mini .stat-number { font-size: 14px; } .action-buttons-row button { font-size: 9px; padding: 4px 6px; min-width: 50px; } .cat-item { font-size: 10px; padding: 4px 8px; } }
         @media (prefers-color-scheme: dark) { body { background: #0f172a; color: #e2e8f0; } .login-card { background: #1e293b; border-color: #334155; } .login-header h2 { color: #f1f5f9; } .login-header p { color: #94a3b8; } .login-form label { color: #94a3b8; } .login-form input { background: #0f172a; border-color: #334155; color: #e2e8f0; } .login-form input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); } .login-btn { background: #3b82f6; } .login-btn:hover { background: #2563eb; } .main-card { background: #1e293b; border-color: #334155; } .tab-btn { background: #334155; color: #94a3b8; } .tab-btn.active { background: #3b82f6; color: #fff; } .tab-btn:hover { background: #475569; } .cat-bar { background: #0f172a; } .cat-item { background: #1e293b; color: #e2e8f0; border-color: #334155; } .cat-item.active { background: #3b82f6; color: #fff; border-color: #3b82f6; } .cat-item .rename-text-btn { background: #334155; color: #94a3b8; } .cat-item.active .rename-text-btn { background: rgba(255,255,255,0.2); color: #fff; } .sidebar, .main-content { background: #0f172a; } .sub-item, .link-item { background: #1e293b; border: 1px solid #334155; } .sub-item.active { background: #1e3a5f; color: #60a5fa; } .sub-item .rename-text-btn { background: #334155; color: #94a3b8; } .link-info strong { color: #e2e8f0; } button.secondary { background: #475569; color: #e2e8f0; } button.secondary:hover { background: #334155; } input, select, textarea, .form-input { background: #0f172a; border-color: #334155; color: #e2e8f0; } input:focus, select:focus, textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); } .modal-body { background: #1e293b; color: #e2e8f0; } .stat-card-mini { background: #1e293b; border-color: #334155; } .stat-card-mini .stat-number { color: #f1f5f9; } .stat-card-mini .stat-label { color: #94a3b8; } .skeleton-item { background: #334155; } .toast { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; } .toast.success { background: #065f46; } .toast.error { background: #7f1d1d; } .toast.warn { background: #78350f; } .toast.info { background: #1e3a5f; } }
@@ -257,7 +255,6 @@
             <div id="manageTab" class="tab-panel">
                 <div class="action-buttons-row">
                     <button class="logout-btn" id="logoutBtn">退出</button>
-                    <!-- 已移除刷新导航按钮 -->
                     <button class="primary" id="addCategoryBtn">+ 一级分类</button>
                 </div>
                 <div class="cat-bar" id="catBar"></div>
@@ -317,7 +314,6 @@
         </div>
     </div>
 
-    <!-- ===== 第三方资源 ===== -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/js/all.min.js"></script>
     <script src="./js/admin.js"></script>
