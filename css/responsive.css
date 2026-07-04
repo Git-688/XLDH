@@ -397,6 +397,14 @@
     }
 }
 
+/* 排行榜模态框移动端左右间距与壁纸一致 */
+@media (max-width: 768px) {
+    #rankModal.feedback-modal {
+        padding-left: var(--container-padding-xs, 16px) !important;
+        padding-right: var(--container-padding-xs, 16px) !important;
+    }
+}
+
 @media (max-height: 600px) and (orientation: landscape) {
     .sidebar {
         top: 60px !important;
