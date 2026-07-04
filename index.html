@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（所有模态框复用统一的 feedback-modal 结构） -->
+<!-- index.html - 完整版（修复排行榜模态框第二次无法打开问题） -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -47,6 +47,7 @@
                 API_BASE: apiBase,
                 WALINE_SERVER: 'https://yy688.ccwu.cc'
             };
+            console.log('[Config] API_BASE:', apiBase);
             window.Starlink = window.Starlink || {};
         })();
     </script>
@@ -110,6 +111,8 @@
             --radius-sm: 6px;
             --radius-lg: 12px;
             --transition: all 0.2s ease;
+            --transition-fast: all 0.1s ease;
+            --transition-slow: all 0.3s ease;
             --z-navbar: 999;
             --z-floating: 100;
             --z-toast: 1100;
@@ -271,87 +274,39 @@
         @media (max-width: 480px) { .floating-buttons { bottom: 12px; right: 12px; gap: 8px; } .floating-btn { width: 40px; height: 40px; font-size: 16px; } }
 
         .feedback-modal {
-            position: fixed;
-            top: 60px;
-            left: 0;
-            width: 100%;
-            height: calc(100% - 60px);
-            background: transparent;
-            z-index: 10002;
-            opacity: 0;
-            visibility: hidden;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: transparent; z-index: 10002;
+            opacity: 0; visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            pointer-events: none;
-            box-sizing: border-box;
+            display: flex; align-items: center; justify-content: center;
+            padding: 12px; pointer-events: none;
         }
-        .feedback-modal.active {
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-        }
+        .feedback-modal.active { opacity: 1; visibility: visible; pointer-events: auto; }
         .feedback-modal-content {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-            width: 100%;
-            max-width: 560px;
-            display: flex;
-            flex-direction: column;
-            transform: scale(0.95);
-            opacity: 0;
-            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity 0.3s ease;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 8px; box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+            width: 100%; max-width: 600px; display: flex; flex-direction: column;
+            transform: scale(0.95); opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.2,0.9,0.4,1.1), opacity 0.3s ease;
             overflow: hidden;
-            max-height: calc(100% - 24px);
         }
-        .feedback-modal.active .feedback-modal-content {
-            transform: scale(1);
-            opacity: 1;
-        }
+        .feedback-modal.active .feedback-modal-content { transform: scale(1); opacity: 1; }
         .feedback-modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 14px 8px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px 8px; border-bottom: 1px solid rgba(0,0,0,0.05);
             color: var(--text-primary);
         }
-        .feedback-modal-header h3 {
-            font-size: 1.05rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            margin: 0;
-        }
+        .feedback-modal-header h3 { font-size: 1.05rem; font-weight: 600; display: flex; align-items: center; margin: 0; }
         .feedback-modal-header h3 i { margin-right: 8px; }
         .feedback-modal-close {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.05);
-            border: none;
-            color: var(--text-secondary);
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background 0.2s;
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(0,0,0,0.05); border: none;
+            color: var(--text-secondary); font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.2s;
         }
-        .feedback-modal-close:hover {
-            background: rgba(0, 0, 0, 0.1);
-            color: var(--text-primary);
-        }
-        .feedback-modal-body {
-            padding: 10px 12px;
-            overflow-y: auto;
-            flex: 1;
-            -webkit-overflow-scrolling: touch;
-        }
+        .feedback-modal-close:hover { background: rgba(0,0,0,0.1); color: var(--text-primary); }
+        .feedback-modal-body { padding: 10px 12px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
         .feedback-modal-body::-webkit-scrollbar { display: none; }
 
         .toast-manager-container {
@@ -727,41 +682,23 @@
         </div>
         <div class="engine-tooltip" id="engineTooltip"></div>
 
-        <!-- ===== 星聚笔记模态框（复用 feedback-modal 结构） ===== -->
         <div id="notebookModal" class="feedback-modal">
             <div class="feedback-modal-content">
-                <div class="feedback-modal-header">
-                    <h3><i class="fas fa-pen-fancy"></i> 星聚笔记</h3>
-                    <button class="feedback-modal-close" id="notebookCloseBtn">&times;</button>
-                </div>
-                <div class="feedback-modal-body">
-                    <div id="notebook-list" class="notebook-list">
-                        <div class="loading">加载笔记中...</div>
-                    </div>
-                </div>
+                <div class="feedback-modal-header"><h3><i class="fas fa-pen-fancy"></i> 星聚笔记</h3><button class="feedback-modal-close">&times;</button></div>
+                <div class="feedback-modal-body"><div id="notebook-list" class="notebook-list"><div class="loading">加载笔记中...</div></div></div>
             </div>
         </div>
 
-        <!-- ===== 网友评论模态框（复用 feedback-modal 结构） ===== -->
         <div id="commentModal" class="feedback-modal">
             <div class="feedback-modal-content">
-                <div class="feedback-modal-header">
-                    <h3><i class="fas fa-comments" style="color: #07C160;"></i> 网友评论</h3>
-                    <button class="feedback-modal-close" id="commentCloseBtn">&times;</button>
-                </div>
-                <div class="feedback-modal-body">
-                    <div id="waline-comment"></div>
-                </div>
+                <div class="feedback-modal-header"><h3><i class="fas fa-comments" style="color: #07C160;"></i> 网友评论</h3><button class="feedback-modal-close">&times;</button></div>
+                <div class="feedback-modal-body"><div id="waline-comment"></div></div>
             </div>
         </div>
 
-        <!-- ===== 网站投稿模态框（复用 feedback-modal 结构） ===== -->
         <div id="submitModal" class="feedback-modal">
             <div class="feedback-modal-content">
-                <div class="feedback-modal-header">
-                    <h3><i class="fas fa-paper-plane"></i> 网站投稿</h3>
-                    <button class="feedback-modal-close" id="submitCloseBtn">&times;</button>
-                </div>
+                <div class="feedback-modal-header"><h3><i class="fas fa-paper-plane"></i> 网站投稿</h3><button class="feedback-modal-close">&times;</button></div>
                 <div class="feedback-modal-body">
                     <form id="submitSiteForm">
                         <div class="form-row"><label>网站链接 <span class="required-star">*</span></label><div style="display:flex;gap:8px;align-items:center;"><input type="url" id="submitUrl" placeholder="https://xjdh688.ccwu.cc" required style="flex:1;"><button type="button" id="fetchSiteInfoBtn" class="fetch-info-btn" title="自动获取信息"><i class="fas fa-magic"></i> 获取信息</button></div><div id="urlCheckResult" class="url-check-result" style="display:none;"></div></div>
@@ -778,21 +715,12 @@
             </div>
         </div>
 
-        <!-- ===== 访问排行榜模态框（复用 feedback-modal 结构） ===== -->
         <div id="rankModal" class="feedback-modal">
             <div class="feedback-modal-content">
-                <div class="feedback-modal-header">
-                    <h3><i class="fas fa-trophy" style="color: #FFD700;"></i> 访问排行榜</h3>
-                    <button class="feedback-modal-close" id="rankCloseBtn">&times;</button>
-                </div>
-                <div class="feedback-modal-body">
-                    <div id="rankListContent">
-                        <div class="loading">加载中...</div>
-                    </div>
-                </div>
+                <div class="feedback-modal-header"><h3><i class="fas fa-trophy" style="color: #FFD700;"></i> 访问排行榜</h3><button class="feedback-modal-close" id="rankModalClose">&times;</button></div>
+                <div class="feedback-modal-body"><div id="rankListContent"><div class="loading">加载中...</div></div></div>
             </div>
         </div>
-
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
@@ -951,20 +879,125 @@
         })();
     </script>
 
-    <!-- 排行榜按钮绑定（由 main.js 统一管理） -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        (function() {
+            'use strict';
+
             const rankBtn = document.getElementById('rankBtn');
-            if (rankBtn) {
-                rankBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (window.app && typeof window.app.showRankModal === 'function') {
-                        window.app.showRankModal();
+            const rankModal = document.getElementById('rankModal');
+            const rankModalClose = document.getElementById('rankModalClose');
+            const rankListContent = document.getElementById('rankListContent');
+            let rankModalRef = null;
+
+            if (!rankBtn || !rankModal || !rankModalClose || !rankListContent) return;
+
+            async function loadRankData() {
+                rankListContent.innerHTML = '<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div> 加载中...</div>';
+
+                try {
+                    const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
+                    const response = await fetch(`${apiBase}/topclicks?limit=20`);
+                    if (!response.ok) throw new Error('请求失败');
+                    const data = await response.json();
+
+                    if (!data || !data.length) {
+                        rankListContent.innerHTML = '<div class="empty">📊 暂无排行数据</div>';
+                        return;
                     }
-                });
+
+                    let html = '<div class="rank-list">';
+                    data.forEach(function(item, index) {
+                        var medal = '';
+                        if (index === 0) medal = '🥇';
+                        else if (index === 1) medal = '🥈';
+                        else if (index === 2) medal = '🥉';
+                        else medal = (index + 1) + '.';
+
+                        var title = item.title || '未命名';
+                        var url = item.url || '#';
+                        var count = item.count || 0;
+
+                        html += `
+                            <div class="rank-item">
+                                <span class="rank-number">${medal}</span>
+                                <a href="${url}" target="_blank" rel="noopener noreferrer" class="rank-title">${title}</a>
+                                <span class="rank-count">${count}次</span>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    rankListContent.innerHTML = html;
+
+                } catch (error) {
+                    console.error('加载排行榜失败:', error);
+                    rankListContent.innerHTML = '<div class="error">❌ 加载失败，请稍后重试</div>';
+                }
             }
-        });
+
+            function openRankModal() {
+                if (rankModalRef && window.Starlink && window.Starlink.app) {
+                    window.Starlink.app.unregisterModal(rankModalRef);
+                    rankModalRef = null;
+                }
+
+                if (window.Starlink && window.Starlink.sidebar && window.Starlink.sidebar.isVisible && window.Starlink.sidebar.isVisible()) {
+                    window.Starlink.sidebar.hide();
+                } else if (window.sidebar && window.sidebar.isVisible && window.sidebar.isVisible()) {
+                    window.sidebar.hide();
+                }
+
+                rankModal.classList.add('active');
+                loadRankData();
+
+                rankModalRef = {
+                    hide: function() {
+                        rankModal.classList.remove('active');
+                    },
+                    isVisible: function() {
+                        return rankModal.classList.contains('active');
+                    }
+                };
+                if (window.Starlink && window.Starlink.app) {
+                    window.Starlink.app.registerModal(rankModalRef);
+                }
+            }
+
+            function closeRankModal() {
+                rankModal.classList.remove('active');
+                if (rankModalRef && window.Starlink && window.Starlink.app) {
+                    window.Starlink.app.unregisterModal(rankModalRef);
+                    rankModalRef = null;
+                }
+            }
+
+            rankBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (rankModal.classList.contains('active')) {
+                    closeRankModal();
+                } else {
+                    openRankModal();
+                }
+            });
+
+            rankModalClose.addEventListener('click', function(e) {
+                e.stopPropagation();
+                closeRankModal();
+            });
+
+            rankModal.addEventListener('click', function(e) {
+                if (e.target === rankModal) {
+                    closeRankModal();
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && rankModal.classList.contains('active')) {
+                    closeRankModal();
+                }
+            });
+
+        })();
     </script>
 
 </body>
