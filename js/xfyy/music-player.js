@@ -281,7 +281,6 @@ class MusicPlayer {
         this.restorePlaylistState();
     }
 
-    // ===== 播放列表持久化（保留） =====
     savePlaylistState() {
         try {
             const state = {
@@ -319,7 +318,6 @@ class MusicPlayer {
         } catch (e) {}
     }
 
-    // ===== 播放进度持久化（保留） =====
     savePlaybackProgress() {
         try {
             const song = this.currentPlaylist[this.currentIndex];
@@ -1326,8 +1324,6 @@ class MusicPlayer {
             if (document.querySelector('.music-player.show')) {
                 if (typeof initCustomSelects === 'function') {
                     initCustomSelects();
-                } else {
-                    console.warn('initCustomSelects not defined');
                 }
             } else {
                 setTimeout(initCustomSelectsWithRetry, 300);
@@ -1404,7 +1400,6 @@ class MusicPlayer {
         
         if (window.Starlink?.musicPlayer === this) window.Starlink.musicPlayer = null;
         if (window.musicPlayer === this) window.musicPlayer = null;
-        console.log('音乐播放器资源已清理');
     }
 }
 
