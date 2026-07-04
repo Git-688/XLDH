@@ -175,7 +175,6 @@
         return `${apiBase}/image-proxy?${params}`;
     };
 
-    // ===== 统一错误处理 =====
     const C = window.APP_CONSTANTS || {
         API: { BASE_TIMEOUT: 15000 }
     };
@@ -201,7 +200,6 @@
         if (showToast && window.toast && typeof window.toast.show === 'function') {
             window.toast.show(message, 'error');
         }
-        // 上报到服务器
         const apiBase = Utils.getApiBase();
         if (apiBase) {
             try {
@@ -222,7 +220,6 @@
         return message;
     };
 
-    // ===== 简单 fetch（无重试） =====
     Utils.safeFetch = async function(url, options = {}) {
         const timeout = options.timeout || C.API.BASE_TIMEOUT || 15000;
         const controller = new AbortController();
@@ -241,17 +238,14 @@
         }
     };
 
-    // ===== 静默 fetch（不抛错，不显示 Toast） =====
     Utils.safeFetchSilent = async function(url, options = {}) {
         try {
             return await Utils.safeFetch(url, options);
         } catch (error) {
-            console.warn('[Silent Fetch]', error.message);
             return null;
         }
     };
 
-    // ===== 统一错误边界 =====
     Utils.wrapAsync = function(fn, fallback = null, errorMessage = '操作失败') {
         return async function(...args) {
             try {
@@ -263,7 +257,6 @@
         };
     };
 
-    // ===== 全局错误监听器 =====
     Utils.setupGlobalErrorHandler = function() {
         if (window._errorHandlerSetup) return;
         window._errorHandlerSetup = true;
@@ -313,7 +306,6 @@
         };
     };
 
-    // ===== 其他工具函数 =====
     Utils.getApiBase = function() {
         return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     };
