@@ -334,7 +334,7 @@
     }
 }
 
-/* 移动端模态框间距统一（合并选择器，移除冗余） */
+/* 移动端模态框间距统一 */
 @media (max-width: 768px) {
     #notebookModal.feedback-modal,
     #rankModal.feedback-modal,
