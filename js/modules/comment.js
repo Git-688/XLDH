@@ -118,7 +118,6 @@ class CommentModule {
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
     if (typeof Waline === 'undefined') {
-      console.warn('[评论] Waline 库未加载，评论功能不可用');
       const container = document.querySelector(el);
       if (container) {
         container.innerHTML = '<div class="waline-comment-fallback" style="padding: 20px; text-align: center; color: #999;">评论系统加载中，请稍后再试...</div>';
@@ -129,7 +128,6 @@ class CommentModule {
     if (!container) return;
     try {
       this.instance = Waline.init({ el, serverURL, ...walineOptions });
-      console.log('[评论] Waline 初始化成功');
     } catch (err) {
       console.error('[评论] 初始化失败', err);
       if (container) {
