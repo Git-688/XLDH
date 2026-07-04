@@ -18,7 +18,7 @@ class CommentModule {
       ],
       // ===== 官方 emoji 配置（显示笑脸图标） =====
       emoji: [
-        'https://tc688.ccwu.cc/file/评论系统/1783182083594_owo_beau.json',
+        'https://tc688.ccwu.cc/评论系统/Q_emoji/',
         'https://unpkg.com/@waline/emojis@1.4.0/bmoji',
         'https://unpkg.com/@waline/emojis@1.4.0/qq',
         'https://unpkg.com/@waline/emojis@1.4.0/tieba'
