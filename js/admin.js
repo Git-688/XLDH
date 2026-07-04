@@ -31,7 +31,6 @@
     function normalizeUrl(url) { if (!url) return ''; try { let normalized = url.toLowerCase().trim(); normalized = normalized.replace(/^https?:\/\//, ''); normalized = normalized.replace(/^www\./, ''); normalized = normalized.replace(/\/$/, ''); return normalized; } catch(e) { return url; } }
     function isUrlExists(url, excludeSiteId = null) { const normalizedNew = normalizeUrl(url); return sites.some(site => { if (excludeSiteId !== null && site.id === excludeSiteId) return false; const normalizedExisting = normalizeUrl(site.url); return normalizedExisting === normalizedNew; }); }
 
-    // ===== 防抖版本：批量操作时只触发最后一次 =====
     const notifyNavRefresh = (function() {
         let timeoutId = null;
         return function() {
@@ -41,7 +40,7 @@
                     localStorage.setItem('nav_refresh_required', Date.now());
                     document.dispatchEvent(new CustomEvent('navRefreshRequested'));
                 } catch (e) {}
-            }, 300); // 300ms 防抖延迟
+            }, 300);
         };
     })();
 
@@ -651,30 +650,6 @@
         );
     }
 
-    async function batchToggleSites() {
-        if (selectedSiteIds.size === 0) { showToast('请先选择要修改的站点', 'warning'); return; }
-        const enable = confirm('点击"确定"启用选中的站点，点击"取消"禁用它们。');
-        const isValid = enable;
-        const ids = Array.from(selectedSiteIds);
-        const btn = document.getElementById('batchToggleBtn');
-        if (btn) { btn.disabled = true; btn.textContent = '修改中...'; }
-        try {
-            const result = await apiFetch('/admin/sites/batch-toggle', {
-                method: 'POST',
-                body: JSON.stringify({ siteIds: ids, isValid })
-            });
-            showToast(result.message || `已${isValid?'启用':'禁用'}成功`, 'success');
-            selectedSiteIds.clear();
-            await loadAdminSites(true);
-            await loadAllDataButKeepSelection();
-            notifyNavRefresh();
-        } catch (e) {
-            showToast('操作失败: ' + e.message, 'error');
-        } finally {
-            if (btn) { btn.disabled = false; btn.textContent = '启用/禁用'; }
-        }
-    }
-
     async function loadAnnouncement() {
         try {
             const data = await apiFetch('/admin/announcements');
@@ -954,7 +929,6 @@
         }, 150);
     }
 
-    // ===== 反馈管理 =====
     async function loadFeedback() {
         const list = document.getElementById('feedbackList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -1045,9 +1019,6 @@
         } catch (err) { showToast('忽略失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
-    // ============================================================
-    // 自定义下拉选择器组件（用于投稿详情）
-    // ============================================================
     class CustomDropdown {
         constructor(container, options, selectedValue, onChange) {
             this.container = container;
@@ -1196,7 +1167,6 @@
         }
     }
 
-    // ===== 待审核管理 =====
     async function loadSubmissions() {
         const list = document.getElementById('submissionsList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -1386,7 +1356,6 @@
         } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
     }
 
-    // ===== 自定义Select（用于批量移动等，保持原样） =====
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
