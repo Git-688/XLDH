@@ -306,7 +306,6 @@ class OptimizedNavigation {
             descHtml = this._highlightText(site.description || '暂无描述', keyword);
         }
 
-        // 正方形卡片紧凑布局：图标+标题一行，描述一行，分割线，点击数+感叹号一行
         card.innerHTML = `
             <div class="card-top">
                 <div class="icon-container">${iconHtml}</div>
