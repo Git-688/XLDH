@@ -823,7 +823,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 .lazy-icon[src] { opacity: 1; }
 
 /* ================================================================ */
-/* ===== 新增：星聚笔记模态框独立样式（与评论模态框一致） ===== */
+/* ===== 星聚笔记模态框独立样式（与评论模态框间距完全一致） ===== */
 #notebookModal {
     position: fixed;
     top: 0;
@@ -837,7 +837,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     transition: opacity 0.3s ease, visibility 0.3s ease;
     align-items: center;
     justify-content: flex-start;
-    padding-top: 60px;
+    padding-top: 60px;          /* 顶部避开导航栏 */
     box-sizing: border-box;
     pointer-events: none;
 }
@@ -865,21 +865,22 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     opacity: 1;
 }
 
-/* 桌面端 (≥769px) */
+/* 桌面端 (≥769px) —— 增加左右 12px 间距，与评论模态框一致 */
 @media (min-width: 769px) {
     #notebookModal {
         display: flex;
         flex-direction: column;
+        padding: 60px 12px 12px;   /* 上 60px，左右 12px，下 12px */
     }
     #notebookModal .feedback-modal-content {
-        margin: auto 0;
-        max-height: calc(100vh - 60px);
+        margin: auto 0;            /* 垂直居中 */
+        max-height: calc(100vh - 60px - 24px); /* 减去上下 padding */
         overflow-y: auto;
         max-width: 600px;
     }
 }
 
-/* 移动端 (≤768px) */
+/* 移动端 (≤768px) —— 使用与评论模态框相同的左右边距 */
 @media (max-width: 768px) {
     #notebookModal {
         padding-left: var(--container-padding-xs, 16px);
