@@ -400,7 +400,6 @@ class SubmitModule {
                 if (window.errorHandler) {
                     window.errorHandler.report(err, 'submit.startPolling');
                 }
-                console.warn('轮询安全检测状态失败:', err);
             }
         }, 2000);
     }
@@ -419,7 +418,7 @@ class SubmitModule {
         e.preventDefault();
         if (this.submitting) return;
         if (!this.securityPassed) {
-            window.toast.show('请先点击“获取信息”完成安全检测，且检测通过后才能提交', 'warning');
+            window.toast.show('请先点击"获取信息"完成安全检测，且检测通过后才能提交', 'warning');
             return;
         }
         let title = this.titleInput.value.trim();
