@@ -334,15 +334,12 @@
     }
 }
 
-/* 移动端模态框间距统一（与壁纸一致，且所有模态框统一） */
+/* 移动端模态框间距统一（仅 comment 和 submit 使用通用，rank 和 notebook 已独立） */
 @media (max-width: 768px) {
-    /* 只保留 rank、comment、submit，不包含 notebook */
-    #rankModal.feedback-modal,
     #commentModal.feedback-modal,
     #submitModal.feedback-modal {
         padding: var(--container-padding-xs, 16px) !important;
     }
-    #rankModal .feedback-modal-content,
     #commentModal .feedback-modal-content,
     #submitModal .feedback-modal-content {
         max-width: 100% !important;
@@ -350,7 +347,7 @@
         margin: 0 !important;
         border-radius: 8px !important;
     }
-    /* 笔记模态框由自身的独立样式控制，不受干扰 */
+    /* #rankModal 和 #notebookModal 由各自独立样式控制，不受干扰 */
 }
 
 @media (max-width: 374px) {
