@@ -823,7 +823,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 .lazy-icon[src] { opacity: 1; }
 
 /* ================================================================ */
-/* ===== 星聚笔记模态框独立样式（与评论模态框间距完全一致） ===== */
+/* ===== 星聚笔记模态框独立样式（移动端间距已改为与主页一致） ===== */
 #notebookModal {
     position: fixed;
     top: 0;
@@ -837,7 +837,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     transition: opacity 0.3s ease, visibility 0.3s ease;
     align-items: center;
     justify-content: flex-start;
-    padding-top: 60px;          /* 顶部避开导航栏 */
+    padding-top: 60px;          /* 桌面端保留，移动端将被覆盖 */
     box-sizing: border-box;
     pointer-events: none;
 }
@@ -865,7 +865,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     opacity: 1;
 }
 
-/* 桌面端 (≥769px) —— 增加左右 12px 间距，与评论模态框一致 */
+/* 桌面端 (≥769px) */
 @media (min-width: 769px) {
     #notebookModal {
         display: flex;
@@ -874,18 +874,17 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     }
     #notebookModal .feedback-modal-content {
         margin: auto 0;            /* 垂直居中 */
-        max-height: calc(100vh - 60px - 24px); /* 减去上下 padding */
+        max-height: calc(100vh - 60px - 24px);
         overflow-y: auto;
         max-width: 600px;
     }
 }
 
-/* 移动端 (≤768px) —— 使用与评论模态框相同的左右边距 */
+/* 移动端 (≤768px) —— 四周间距与主页内容到屏幕边缘一致 (16px) */
 @media (max-width: 768px) {
     #notebookModal {
-        padding-left: var(--container-padding-xs, 16px);
-        padding-right: var(--container-padding-xs, 16px);
-        padding-top: 60px;
+        padding: var(--container-padding-xs, 16px);
+        padding-top: calc(60px + var(--container-padding-xs, 16px));
         display: flex;
         flex-direction: column;
     }
@@ -893,7 +892,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
         margin: auto 0;
         width: 100%;
         max-width: 100%;
-        max-height: calc(100vh - 60px);
+        max-height: calc(100vh - 60px - 2 * var(--container-padding-xs, 16px));
         overflow-y: auto;
     }
 }
