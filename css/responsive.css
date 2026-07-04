@@ -334,53 +334,17 @@
     }
 }
 
-/* ===== 移动端模态框间距统一修改 ===== */
+/* 移动端模态框间距统一（合并选择器，移除冗余） */
 @media (max-width: 768px) {
-    /* 星聚笔记模态框 - 上下左右间距与壁纸一致 */
-    #notebookModal.feedback-modal {
-        padding: var(--container-padding-xs, 16px) !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-    #notebookModal .feedback-modal-content {
-        max-width: 100% !important;
-        max-height: calc(100vh - 32px) !important;
-        margin: 0 !important;
-        border-radius: 8px !important;
-    }
-
-    /* 访问排行榜模态框 - 上下左右间距与壁纸一致 */
-    #rankModal.feedback-modal {
-        padding: var(--container-padding-xs, 16px) !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-    #rankModal .feedback-modal-content {
-        max-width: 100% !important;
-        max-height: calc(100vh - 32px) !important;
-        margin: 0 !important;
-        border-radius: 8px !important;
-    }
-
-    /* 网友评论模态框 - 上下左右间距与壁纸一致 */
-    #commentModal.feedback-modal {
-        padding: var(--container-padding-xs, 16px) !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-    #commentModal .feedback-modal-content {
-        max-width: 100% !important;
-        max-height: calc(100vh - 32px) !important;
-        margin: 0 !important;
-        border-radius: 8px !important;
-    }
-
-    /* 投稿模态框同样处理，保持一致性 */
+    #notebookModal.feedback-modal,
+    #rankModal.feedback-modal,
+    #commentModal.feedback-modal,
     #submitModal.feedback-modal {
         padding: var(--container-padding-xs, 16px) !important;
-        align-items: center !important;
-        justify-content: center !important;
     }
+    #notebookModal .feedback-modal-content,
+    #rankModal .feedback-modal-content,
+    #commentModal .feedback-modal-content,
     #submitModal .feedback-modal-content {
         max-width: 100% !important;
         max-height: calc(100vh - 32px) !important;
