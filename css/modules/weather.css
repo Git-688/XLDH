@@ -1,4 +1,4 @@
-/* weather.css - 完整版（APIHZ 天气样式，已移除和风天气相关样式） */
+/* weather.css - 完整版（APIHZ 天气样式） */
 .weather-modal-card {
     position: fixed;
     top: 0;
@@ -17,7 +17,6 @@
     box-sizing: border-box;
     pointer-events: none;
 }
-
 .weather-modal-card.active {
     opacity: 1;
     visibility: visible;
@@ -39,7 +38,6 @@
     overflow: hidden;
     max-height: 90vh;
 }
-
 .weather-modal-card.active .weather-modal-content {
     transform: scale(1);
     opacity: 1;
@@ -86,12 +84,10 @@
     align-items: center;
     flex-shrink: 0;
 }
-
 .weather-title-container {
     flex: 1;
     min-width: 0;
 }
-
 .weather-title {
     display: flex;
     align-items: center;
@@ -220,7 +216,6 @@
     align-items: center;
     margin-bottom: 4px;
 }
-
 .alarms-title {
     font-size: 10px;
     font-weight: 600;
@@ -232,14 +227,12 @@
 .alarms-title i {
     font-size: 10px;
 }
-
 .alarms-time-header {
     font-size: 10px;
     color: var(--text-secondary, #666);
     font-weight: normal;
     white-space: nowrap;
 }
-
 .alarm-item {
     display: flex;
     align-items: center;
@@ -267,7 +260,6 @@
     padding: 6px 10px 4px;
     border-bottom: 1px solid var(--border-color, #e9ecef);
 }
-
 .weather-location {
     font-size: 10px;
     color: var(--text-secondary, #666);
@@ -296,7 +288,6 @@
     width: 100%;
     box-sizing: border-box;
 }
-
 .weather-card-left,
 .weather-card-right {
     flex: 1 1 0;
@@ -309,14 +300,12 @@
     padding: 4px;
     overflow: hidden;
 }
-
 .weather-card-left img {
     width: 100%;
     max-height: 80px;
     object-fit: contain;
     display: block;
 }
-
 .weather-card-right {
     flex-direction: column;
     align-items: center;
@@ -427,12 +416,8 @@
     text-overflow: ellipsis;
 }
 @media (max-width: 360px) {
-    .extra-label {
-        font-size: 6px;
-    }
-    .extra-value {
-        font-size: 8px;
-    }
+    .extra-label { font-size: 6px; }
+    .extra-value { font-size: 8px; }
 }
 
 .weather-sun-row {
@@ -517,20 +502,15 @@
     gap: 2px;
     font-size: 9px;
 }
-.forecast-day-temp .day {
-    color: #ff6b6b;
-}
-.forecast-day-temp .sep {
-    color: #ccc;
-}
-.forecast-day-temp .night {
-    color: #4dabf7;
-}
+.forecast-day-temp .day { color: #ff6b6b; }
+.forecast-day-temp .sep { color: #ccc; }
+.forecast-day-temp .night { color: #4dabf7; }
 
 .manual-mode-hint {
     margin: 4px 10px;
 }
 
+/* 城市选择弹窗 */
 .city-prompt-modal {
     position: fixed;
     top: 0;
@@ -666,10 +646,7 @@
     box-sizing: border-box;
 }
 @media (min-width: 769px) {
-    .weather-modal-card {
-        display: flex;
-        flex-direction: column;
-    }
+    .weather-modal-card { display: flex; flex-direction: column; }
     .weather-modal-card .weather-modal-content {
         margin: auto 0;
         max-height: calc(100vh - 60px);
@@ -705,14 +682,11 @@
         max-height: calc(100vh - 70px);
     }
 }
-
 @media (max-width: 480px) {
-    .sun-item {
-        font-size: 9px;
-        min-width: 50px;
-    }
+    .sun-item { font-size: 9px; min-width: 50px; }
 }
 
+/* ===== 深色模式 ===== */
 .dark-mode .weather-modal-content {
     background: var(--bg-card);
     border-color: var(--border-color);
