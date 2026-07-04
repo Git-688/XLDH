@@ -1,12 +1,9 @@
-/* wallpaper.css - 壁纸轮播样式（已清理冗余） */
+/* wallpaper.css - 壁纸轮播样式 */
 .wallpaper-section {
     padding: var(--section-margin-sm, 20px) 0 0 !important;
     position: relative;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
+    margin: 0 !important;
 }
-
-/* 容器样式由 style.css 统一管理，此处不再重复定义 */
 
 .wallpaper-container {
     position: relative;
@@ -57,21 +54,14 @@
     cursor: pointer;
     transition: background 0.3s ease, color 0.3s ease;
     z-index: 10;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
-
 .carousel-arrow:hover {
     background: rgba(255, 255, 255, 0.45);
     color: #fff;
 }
-
-.carousel-arrow-left {
-    left: 10px;
-}
-
-.carousel-arrow-right {
-    right: 10px;
-}
+.carousel-arrow-left { left: 10px; }
+.carousel-arrow-right { right: 10px; }
 
 .wallpaper-info {
     position: absolute;
@@ -103,7 +93,6 @@
     gap: 8px;
     flex-shrink: 0;
 }
-
 .carousel-dot {
     width: 8px;
     height: 8px;
@@ -112,13 +101,13 @@
     cursor: pointer;
     transition: transform 0.3s ease, background 0.3s ease;
 }
-
 .carousel-dot.active {
     background: #fff;
     transform: scale(1.3);
-    box-shadow: 0 0 4px rgba(0,0,0,0.3);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
 }
 
+/* 响应式 */
 @media (max-width: 768px) {
     .wallpaper-section { padding: var(--section-margin-sm, 20px) 0 0 !important; }
     .wallpaper-container {
@@ -141,7 +130,6 @@
         max-width: calc(100% - 60px);
     }
 }
-
 @media (max-width: 480px) {
     .wallpaper-section { padding: var(--section-margin-xs, 16px) 0 0 !important; }
     .wallpaper-container {
@@ -157,6 +145,7 @@
     .wallpaper-title { font-size: 12px; }
 }
 
+/* 深色模式 */
 .dark-mode .wallpaper-container {
     background: var(--bg-secondary, #1e1e1e);
 }
