@@ -1,4 +1,4 @@
-<!-- index.html - 完整版（修复排行榜模态框第二次无法打开问题） -->
+<!-- index.html - 星聚导航主页面，所有模态框复用统一的 feedback-modal 结构 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -47,7 +47,6 @@
                 API_BASE: apiBase,
                 WALINE_SERVER: 'https://yy688.ccwu.cc'
             };
-            console.log('[Config] API_BASE:', apiBase);
             window.Starlink = window.Starlink || {};
         })();
     </script>
@@ -69,6 +68,7 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 
     <style>
+        /* 基础样式已由 style.css 和 responsive.css 管理，此处仅保留内联关键样式 */
         .scroll-progress {
             position: fixed;
             top: 0;
@@ -91,358 +91,25 @@
             box-shadow: 0 0 6px rgba(123, 156, 255, 0.5);
         }
 
+        /* 以下变量和样式已由外部 CSS 管理，此处仅作占位 */
         :root {
             --primary-color: #4361ee;
-            --secondary-color: #3a0ca3;
-            --accent-color: #7209b7;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --error-color: #ef4444;
-            --text-primary: #2b2d42;
-            --text-secondary: #6c757d;
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8f9fa;
             --bg-card: #ffffff;
             --border-color: #e9ecef;
-            --shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.07);
-            --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.1);
-            --radius: 8px;
-            --radius-sm: 6px;
-            --radius-lg: 12px;
-            --transition: all 0.2s ease;
-            --transition-fast: all 0.1s ease;
-            --transition-slow: all 0.3s ease;
-            --z-navbar: 999;
-            --z-floating: 100;
-            --z-toast: 1100;
-            --z-modal: 1000;
-            --z-music-player: 10000;
-            --container-padding-xs: 16px;
-            --container-padding-sm: 20px;
-            --container-padding-md: 24px;
-            --container-padding-lg: 28px;
-            --container-padding-xl: 32px;
-            --section-margin-xs: 16px;
-            --section-margin-sm: 20px;
-            --section-margin-md: 24px;
-            --section-margin-lg: 28px;
-            --section-margin-xl: 32px;
-            --nav-level1-active: #5dade2;
-            --nav-level2-active: #ff7043;
-            --stat-site-color: #81c784;
-            --stat-invalid-color: #e57373;
-            --card-hover-bg-start: rgba(67, 97, 238, 0.02);
-            --card-hover-bg-end: rgba(67, 97, 238, 0.05);
-            --acrylic-bg: rgba(255, 255, 255, 0.6);
-            --acrylic-blur: blur(24px) saturate(125%);
-            --acrylic-border: 1px solid rgba(255, 255, 255, 0.5);
-            --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-            --acrylic-light-bg: rgba(255, 255, 255, 0.8);
-            --acrylic-light-blur: blur(10px) saturate(110%);
-        }
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --text-primary: #f8f9fa;
-                --text-secondary: #adb5bd;
-                --bg-primary: #121212;
-                --bg-secondary: #1e1e1e;
-                --bg-card: #2d2d2d;
-                --border-color: #404040;
-                --nav-level1-active: #7bc8ff;
-                --nav-level2-active: #ff8a65;
-                --stat-site-color: #a5d6a7;
-                --stat-invalid-color: #ef9a9a;
-                --card-hover-bg-start: rgba(124, 200, 255, 0.05);
-                --card-hover-bg-end: rgba(124, 200, 255, 0.1);
-                --acrylic-bg: rgba(30, 30, 30, 0.7);
-                --acrylic-border: 1px solid rgba(255, 255, 255, 0.15);
-                --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-                --acrylic-light-bg: rgba(40, 40, 40, 0.7);
-            }
+            --text-primary: #2b2d42;
+            --text-secondary: #6c757d;
+            --error-color: #ef4444;
         }
         .dark-mode {
-            --text-primary: #f8f9fa;
-            --text-secondary: #adb5bd;
-            --bg-primary: #121212;
-            --bg-secondary: #1e1e1e;
             --bg-card: #2d2d2d;
             --border-color: #404040;
-            --nav-level1-active: #7bc8ff;
-            --nav-level2-active: #ff8a65;
-            --stat-site-color: #a5d6a7;
-            --stat-invalid-color: #ef9a9a;
-            --card-hover-bg-start: rgba(124, 200, 255, 0.05);
-            --card-hover-bg-end: rgba(124, 200, 255, 0.1);
-            --acrylic-bg: rgba(30, 30, 30, 0.7);
-            --acrylic-border: 1px solid rgba(255, 255, 255, 0.15);
-            --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            --acrylic-light-bg: rgba(40, 40, 40, 0.7);
+            --text-primary: #f8f9fa;
+            --text-secondary: #adb5bd;
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; font-size: 16px; -webkit-overflow-scrolling: touch; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-            font-size: 13px;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background-color: var(--bg-primary);
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            text-rendering: optimizeLegibility;
-        }
-        h1, h2, h3, h4, h5, h6 { font-weight: 600; line-height: 1.3; margin-top: 0; margin-bottom: 0.5em; }
-        p { margin-bottom: 1em; }
-        .stat-number, .view-count, .time-text {
-            font-family: 'SF Mono', 'Roboto Mono', Consolas, 'Courier New', monospace;
-            font-weight: 600;
-        }
-
-        .navbar {
-            position: fixed; top: 0; left: 0; width: 100%; height: 60px;
-            background: var(--bg-primary); border-bottom: 1px solid var(--border-color);
-            z-index: var(--z-navbar); box-shadow: var(--shadow);
-        }
-        .nav-container { display: flex; justify-content: space-between; align-items: center; height: 100%; max-width: 1200px; margin: 0 auto; padding: 0 var(--container-padding-xs); }
-        .nav-brand { display: flex; align-items: center; gap: 10px; }
-        .logo {
-            width: 32px; height: 32px; border-radius: 8px;
-            background: #ffffff; color: var(--text-primary);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px; border: 1px solid var(--border-color);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            overflow: hidden; padding: 2px; box-sizing: border-box;
-            flex-shrink: 0; aspect-ratio: 1 / 1;
-        }
-        .logo picture { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-        .logo picture img, .logo picture source {
-            width: 100%; height: 100%; object-fit: contain; display: block; border-radius: 6px;
-        }
-        .brand-text { font-size: 16px; font-weight: 600; color: var(--text-primary); }
-        .nav-actions { display: flex; gap: 8px; }
-        .nav-btn {
-            width: 36px; height: 36px; border: none; border-radius: 6px;
-            background: var(--bg-secondary); color: var(--text-secondary);
-            cursor: pointer; transition: var(--transition);
-            display: flex; align-items: center; justify-content: center; font-size: 14px;
-        }
-        .nav-btn:hover { background: var(--primary-color); color: white; }
-
-        .main-content { margin-top: 60px; min-height: calc(100vh - 120px); }
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 var(--container-padding-xs); width: 100%; }
-        .container-fluid { width: 100%; padding: 0 var(--container-padding-xs); }
-        @media (min-width: 576px) { .container, .container-fluid { padding: 0 var(--container-padding-sm); } }
-        @media (min-width: 768px) { .container, .container-fluid { padding: 0 var(--container-padding-md); } }
-        @media (min-width: 992px) { .container, .container-fluid { padding: 0 var(--container-padding-lg); } }
-        @media (min-width: 1200px) { .container, .container-fluid { padding: 0 var(--container-padding-xl); } }
-
-        .floating-buttons {
-            position: fixed; bottom: 24px; right: 24px;
-            display: flex; flex-direction: column; gap: 12px;
-            z-index: var(--z-floating);
-        }
-        .floating-btn {
-            width: 50px; height: 50px; border: none; border-radius: 50%;
-            background: var(--bg-card); color: var(--text-secondary);
-            cursor: pointer; transition: var(--transition);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        .floating-btn:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        .back-to-top { color: var(--error-color); opacity: 0; transform: translateY(10px); visibility: hidden; transition: all 0.3s ease; }
-        .back-to-top.visible { opacity: 1; transform: translateY(0); visibility: visible; }
-        .back-to-top:hover { color: #ff3333; }
-        .refresh-btn { color: #10b981; }
-        .refresh-btn:hover { color: #059669; }
-        .activity-btn { color: #ff6b35; }
-        .activity-btn:hover { color: #ff5733; }
-        .floating-btn.weather-btn { color: #3764f4 !important; }
-        .floating-btn.weather-btn:hover { color: #2a52d4 !important; }
-        .floating-btn.comment-btn { color: #07C160 !important; }
-        .floating-btn.comment-btn:hover { color: #06ad56 !important; }
-        .floating-btn.rank-btn { color: #FFD700 !important; }
-        .floating-btn.rank-btn:hover { color: #e6c200 !important; }
-        .dark-mode .floating-btn.weather-btn { color: #5a7aff !important; }
-        .dark-mode .floating-btn.weather-btn:hover { color: #7b9cff !important; }
-        .dark-mode .floating-btn.comment-btn { color: #34d399 !important; }
-        .dark-mode .floating-btn.comment-btn:hover { color: #6ee7b7 !important; }
-        .dark-mode .floating-btn.rank-btn { color: #fbbf24 !important; }
-        .dark-mode .floating-btn.rank-btn:hover { color: #fcd34d !important; }
-        @media (max-width: 768px) { .floating-buttons { bottom: 16px; right: 16px; gap: 10px; } .floating-btn { width: 44px; height: 44px; font-size: 18px; } }
-        @media (max-width: 480px) { .floating-buttons { bottom: 12px; right: 12px; gap: 8px; } .floating-btn { width: 40px; height: 40px; font-size: 16px; } }
-
-        .feedback-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: transparent; z-index: 10002;
-            opacity: 0; visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-            display: flex; align-items: center; justify-content: center;
-            padding: 12px; pointer-events: none;
-        }
-        .feedback-modal.active { opacity: 1; visibility: visible; pointer-events: auto; }
-        .feedback-modal-content {
-            background: var(--bg-card); border: 1px solid var(--border-color);
-            border-radius: 8px; box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-            width: 100%; max-width: 600px; display: flex; flex-direction: column;
-            transform: scale(0.95); opacity: 0;
-            transition: transform 0.3s cubic-bezier(0.2,0.9,0.4,1.1), opacity 0.3s ease;
-            overflow: hidden;
-        }
-        .feedback-modal.active .feedback-modal-content { transform: scale(1); opacity: 1; }
-        .feedback-modal-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 14px 8px; border-bottom: 1px solid rgba(0,0,0,0.05);
-            color: var(--text-primary);
-        }
-        .feedback-modal-header h3 { font-size: 1.05rem; font-weight: 600; display: flex; align-items: center; margin: 0; }
-        .feedback-modal-header h3 i { margin-right: 8px; }
-        .feedback-modal-close {
-            width: 32px; height: 32px; border-radius: 50%;
-            background: rgba(0,0,0,0.05); border: none;
-            color: var(--text-secondary); font-size: 1rem;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: background 0.2s;
-        }
-        .feedback-modal-close:hover { background: rgba(0,0,0,0.1); color: var(--text-primary); }
-        .feedback-modal-body { padding: 10px 12px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
-        .feedback-modal-body::-webkit-scrollbar { display: none; }
-
-        .toast-manager-container {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 9999; display: flex; flex-direction: column;
-            align-items: center; gap: 8px; pointer-events: none;
-            max-width: 90vw; width: auto;
-        }
-        .toast-item {
-            background: rgba(20, 20, 30, 0.7); backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px); border-radius: 24px;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-            padding: 5px 12px; min-width: 80px; max-width: 300px;
-            display: flex; align-items: center; justify-content: center;
-            transform: translateY(16px); opacity: 0;
-            transition: transform 0.2s cubic-bezier(0.2,0.9,0.4,1.1), opacity 0.15s ease;
-            pointer-events: auto; border: 1px solid rgba(255,255,255,0.15);
-        }
-        .toast-item.show { transform: translateY(0); opacity: 1; }
-        .toast-content { font-size: 0.75rem; line-height: 1.3; color: #ffffff; font-weight: 500; letter-spacing: 0.2px; text-align: center; white-space: nowrap; }
-        .dark-mode .toast-item { background: rgba(40, 40, 50, 0.75); border-color: rgba(255,255,255,0.1); }
-        @media (max-width: 640px) {
-            .toast-manager-container { bottom: 16px; gap: 6px; }
-            .toast-item { padding: 4px 10px; min-width: 70px; max-width: 85vw; border-radius: 20px; }
-            .toast-content { font-size: 0.7rem; white-space: normal; word-break: keep-all; }
-        }
-
-        #submitModal .form-row { margin-bottom: 10px; }
-        #submitModal .form-row label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 3px; font-weight: 500; }
-        #submitModal .required-star { color: var(--error-color); }
-        #submitModal .form-row input, #submitModal .form-row textarea {
-            width: 100%; padding: 8px 10px; border: 1px solid var(--border-color);
-            border-radius: 8px; background: var(--bg-card); color: var(--text-primary);
-            font-size: 13px; outline: none; transition: border 0.2s; font-family: inherit;
-        }
-        #submitModal .form-row textarea { min-height: 36px; overflow-y: hidden; resize: none; }
-        #submitModal .form-row input:focus, #submitModal .form-row textarea:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(67,97,238,0.08);
-        }
-        .submit-form-buttons {
-            display: flex; justify-content: flex-end; align-items: center; gap: 8px;
-            margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color);
-        }
-        .submit-cancel-btn {
-            padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 8px;
-            background: var(--bg-card); color: var(--text-secondary); cursor: pointer;
-            font-size: 13px; transition: all 0.2s; white-space: nowrap;
-        }
-        .submit-cancel-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
-        .submit-save-btn {
-            padding: 6px 16px; border: none; border-radius: 8px;
-            background: var(--primary-color); color: white; cursor: pointer;
-            font-size: 13px; font-weight: 500; transition: all 0.2s; white-space: nowrap;
-        }
-        .submit-save-btn:hover:not(:disabled) { background: var(--secondary-color); transform: translateY(-1px); }
-        .submit-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .fetch-info-btn, .check-url-btn {
-            padding: 8px 14px; border: 1px solid var(--border-color); border-radius: 8px;
-            background: var(--bg-card); color: var(--text-secondary); cursor: pointer;
-            font-size: 12px; white-space: nowrap; transition: all 0.2s;
-            display: inline-flex; align-items: center; gap: 4px;
-        }
-        .fetch-info-btn:hover { border-color: var(--primary-color); color: var(--primary-color); background: rgba(67,97,238,0.05); }
-        .check-url-btn:hover { border-color: var(--success-color); color: var(--success-color); background: rgba(16,185,129,0.05); }
-        .url-check-result {
-            margin-top: 8px; padding: 8px 12px; border-radius: 8px;
-            font-size: 12px; line-height: 1.4;
-        }
-        .url-check-result.safe { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
-        .url-check-result.unsafe { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
-        .url-check-result.checking { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
-
-        #notebookModal .feedback-modal-content { max-height: 75vh; max-width: 600px; }
-        #notebookModal .feedback-modal-header h3 i { color: #4361ee; }
-        .notebook-list { padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-        .notebook-item {
-            background: rgba(255,255,255,0.5); backdrop-filter: blur(5px);
-            border-radius: 8px; padding: 8px 12px;
-            border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s ease;
-        }
-        .notebook-item:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .notebook-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .notebook-id { font-size: 10px; color: var(--text-secondary); background: rgba(255,255,255,0.7); padding: 2px 8px; border-radius: 20px; font-weight: 500; }
-        .notebook-time { font-size: 10px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
-        .notebook-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-        .notebook-content {
-            font-size: 12px; color: var(--text-secondary); line-height: 1.5;
-            word-break: break-word; white-space: pre-wrap;
-            background: rgba(255,255,255,0.4); padding: 8px 10px; border-radius: 6px;
-            backdrop-filter: blur(4px); border: 1px solid rgba(0,0,0,0.03);
-        }
-        .dark-mode .notebook-item { background: rgba(40,40,40,0.8); border-color: rgba(255,255,255,0.1); }
-        .dark-mode .notebook-item:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-        .dark-mode .notebook-id { background: rgba(60,60,60,0.9); color: var(--text-secondary); }
-        .dark-mode .notebook-time { color: var(--text-secondary); }
-        .dark-mode .notebook-title { color: var(--text-primary); }
-        .dark-mode .notebook-content { background: rgba(50,50,50,0.8); color: #c0c0c0; border-color: rgba(255,255,255,0.05); }
-
-        #commentModal .feedback-modal-content { max-height: 75vh; max-width: 700px; }
-        #commentModal .feedback-modal-header h3 i { color: #f59e0b; }
-
-        #submitModal .feedback-modal-content { max-height: 90vh; max-width: 520px; }
-        #submitModal .feedback-modal-body { overflow-y: auto; }
-        #submitModal .feedback-modal-header h3 i { color: #4361ee; }
-
-        #rankModal .feedback-modal-content { max-width: 500px; max-height: 80vh; }
-        .rank-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
-        .rank-item {
-            display: flex; align-items: center; gap: 12px;
-            padding: 8px 12px; background: var(--bg-secondary, #f8f9fa);
-            border-radius: 8px; transition: background 0.2s;
-        }
-        .rank-item:hover { background: rgba(67, 97, 238, 0.06); }
-        .rank-number { font-size: 16px; font-weight: 700; min-width: 32px; text-align: center; color: var(--text-secondary); flex-shrink: 0; }
-        .rank-number:first-child { color: #f59e0b; }
-        .rank-number:nth-child(2) { color: #94a3b8; }
-        .rank-number:nth-child(3) { color: #cd7f32; }
-        .rank-title {
-            flex: 1; font-size: 13px; font-weight: 500; color: var(--text-primary);
-            text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        }
-        .rank-title:hover { color: var(--primary-color); text-decoration: underline; }
-        .rank-count { font-size: 12px; font-weight: 600; color: var(--primary-color); flex-shrink: 0; background: rgba(67, 97, 238, 0.1); padding: 2px 10px; border-radius: 20px; }
-        #rankListContent .loading, #rankListContent .empty, #rankListContent .error { text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 13px; }
-        .dark-mode .rank-item { background: var(--bg-secondary, #1e1e1e); }
-        .dark-mode .rank-item:hover { background: rgba(124, 200, 255, 0.08); }
-        .dark-mode .rank-count { background: rgba(123, 156, 255, 0.15); color: #7b9cff; }
-
-        #notebookModal .feedback-modal-content::-webkit-scrollbar { width: 4px; }
-        #notebookModal .feedback-modal-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
-        #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
-        .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
-        .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+        /* 其他样式全部由外部文件管理 */
     </style>
 
+    <!-- 外部 CSS 资源 -->
     <link rel="preload" href="./css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/modules/navbar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/modules/sidebar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -470,6 +137,7 @@
 <body>
     <div class="scroll-progress" id="scrollProgress"></div>
 
+    <!-- 导航栏 -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <div class="nav-brand">
@@ -490,6 +158,7 @@
         </div>
     </nav>
 
+    <!-- 侧边栏 -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-wallpaper" id="sidebarWallpaper">
             <div class="sidebar-wallpaper-overlay"></div>
@@ -519,6 +188,7 @@
     </aside>
 
     <main class="main-content">
+        <!-- 壁纸部分 -->
         <section class="wallpaper-section">
             <div class="container">
                 <div class="wallpaper-container" id="wallpaperCarousel">
@@ -533,6 +203,7 @@
             </div>
         </section>
 
+        <!-- 问候部分 -->
         <section class="greeting-section">
             <div class="greeting-container">
                 <div class="greeting-main-card">
@@ -565,6 +236,7 @@
             </div>
         </section>
 
+        <!-- 常用标签 -->
         <section class="minimal-tags-section">
             <div class="container">
                 <div class="tags-header">
@@ -576,6 +248,7 @@
             </div>
         </section>
 
+        <!-- 导航部分 -->
         <section class="navigation-section">
             <div class="container">
                 <div class="navigation-header">
@@ -597,6 +270,7 @@
             </div>
         </section>
 
+        <!-- 页脚 -->
         <footer class="footer">
             <div class="footer-compact-container">
                 <div class="footer-disclaimer-card">
@@ -612,6 +286,7 @@
             </div>
         </footer>
 
+        <!-- 浮动按钮 -->
         <div class="floating-buttons">
             <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
             <button class="floating-btn theme-btn" id="themeToggleBtn" aria-label="切换主题"><i class="fas fa-moon"></i></button>
@@ -620,6 +295,7 @@
             <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
         </div>
 
+        <!-- 音乐播放器 -->
         <div class="music-player" id="musicPlayer">
             <div class="player-top">
                 <div class="cover-section">
@@ -672,6 +348,7 @@
         </div>
         <audio id="audio-element" preload="metadata" style="display:none;"></audio>
 
+        <!-- 搜索模态框 -->
         <div class="search-modal" id="searchModal">
             <div class="modal-content">
                 <div class="search-bar"><button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎"><i id="engineIcon" class="fas fa-search"></i></button><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off"><button class="search-submit-btn">搜索</button></div>
@@ -682,23 +359,41 @@
         </div>
         <div class="engine-tooltip" id="engineTooltip"></div>
 
+        <!-- ===== 星聚笔记模态框（复用 feedback-modal 结构） ===== -->
         <div id="notebookModal" class="feedback-modal">
             <div class="feedback-modal-content">
-                <div class="feedback-modal-header"><h3><i class="fas fa-pen-fancy"></i> 星聚笔记</h3><button class="feedback-modal-close">&times;</button></div>
-                <div class="feedback-modal-body"><div id="notebook-list" class="notebook-list"><div class="loading">加载笔记中...</div></div></div>
+                <div class="feedback-modal-header">
+                    <h3><i class="fas fa-pen-fancy"></i> 星聚笔记</h3>
+                    <button class="feedback-modal-close" id="notebookCloseBtn">&times;</button>
+                </div>
+                <div class="feedback-modal-body">
+                    <div id="notebook-list" class="notebook-list">
+                        <div class="loading">加载笔记中...</div>
+                    </div>
+                </div>
             </div>
         </div>
 
+        <!-- ===== 网友评论模态框（复用 feedback-modal 结构） ===== -->
         <div id="commentModal" class="feedback-modal">
             <div class="feedback-modal-content">
-                <div class="feedback-modal-header"><h3><i class="fas fa-comments" style="color: #07C160;"></i> 网友评论</h3><button class="feedback-modal-close">&times;</button></div>
-                <div class="feedback-modal-body"><div id="waline-comment"></div></div>
+                <div class="feedback-modal-header">
+                    <h3><i class="fas fa-comments" style="color: #07C160;"></i> 网友评论</h3>
+                    <button class="feedback-modal-close" id="commentCloseBtn">&times;</button>
+                </div>
+                <div class="feedback-modal-body">
+                    <div id="waline-comment"></div>
+                </div>
             </div>
         </div>
 
+        <!-- ===== 网站投稿模态框（复用 feedback-modal 结构） ===== -->
         <div id="submitModal" class="feedback-modal">
             <div class="feedback-modal-content">
-                <div class="feedback-modal-header"><h3><i class="fas fa-paper-plane"></i> 网站投稿</h3><button class="feedback-modal-close">&times;</button></div>
+                <div class="feedback-modal-header">
+                    <h3><i class="fas fa-paper-plane"></i> 网站投稿</h3>
+                    <button class="feedback-modal-close" id="submitCloseBtn">&times;</button>
+                </div>
                 <div class="feedback-modal-body">
                     <form id="submitSiteForm">
                         <div class="form-row"><label>网站链接 <span class="required-star">*</span></label><div style="display:flex;gap:8px;align-items:center;"><input type="url" id="submitUrl" placeholder="https://xjdh688.ccwu.cc" required style="flex:1;"><button type="button" id="fetchSiteInfoBtn" class="fetch-info-btn" title="自动获取信息"><i class="fas fa-magic"></i> 获取信息</button></div><div id="urlCheckResult" class="url-check-result" style="display:none;"></div></div>
@@ -715,17 +410,28 @@
             </div>
         </div>
 
+        <!-- ===== 访问排行榜模态框（复用 feedback-modal 结构） ===== -->
         <div id="rankModal" class="feedback-modal">
             <div class="feedback-modal-content">
-                <div class="feedback-modal-header"><h3><i class="fas fa-trophy" style="color: #FFD700;"></i> 访问排行榜</h3><button class="feedback-modal-close" id="rankModalClose">&times;</button></div>
-                <div class="feedback-modal-body"><div id="rankListContent"><div class="loading">加载中...</div></div></div>
+                <div class="feedback-modal-header">
+                    <h3><i class="fas fa-trophy" style="color: #FFD700;"></i> 访问排行榜</h3>
+                    <button class="feedback-modal-close" id="rankCloseBtn">&times;</button>
+                </div>
+                <div class="feedback-modal-body">
+                    <div id="rankListContent">
+                        <div class="loading">加载中...</div>
+                    </div>
+                </div>
             </div>
         </div>
+
     </main>
 
+    <!-- 外部脚本 -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
     <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
+    <!-- 进度条脚本 -->
     <script>
         (function() {
             const progressBar = document.getElementById('scrollProgress');
@@ -745,6 +451,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
+    <!-- 应用主脚本 -->
     <script defer src="./js/constants.js"></script>
     <script defer src="./js/utils.js"></script>
     <script defer src="./js/toast.js"></script>
@@ -768,13 +475,12 @@
     <script defer src="./js/xfyy/plugin-manager.js"></script>
     <script defer src="./js/xfyy/music-player.js"></script>
     <script defer src="./js/xfyy/music-main.js"></script>
-
     <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
-
     <script defer src="./js/modules/comment.js"></script>
     <script defer src="./js/modules/submit.js"></script>
     <script defer src="./js/modules/theme.js"></script>
 
+    <!-- Cookie 同意横幅脚本 -->
     <script>
         (function() {
             'use strict';
@@ -784,7 +490,6 @@
             function hasConsented() {
                 try { return localStorage.getItem(CONSENT_KEY) === CONSENT_VALUE; } catch { return false; }
             }
-
             function setConsented() {
                 try {
                     localStorage.setItem(CONSENT_KEY, CONSENT_VALUE);
@@ -793,7 +498,6 @@
                     document.cookie = CONSENT_KEY + '=' + CONSENT_VALUE + '; expires=' + expiry.toUTCString() + '; path=/; SameSite=Lax';
                 } catch(e) {}
             }
-
             function rejectConsent() {
                 try {
                     localStorage.setItem(CONSENT_KEY, 'rejected');
@@ -803,10 +507,7 @@
 
             function createBanner() {
                 if (hasConsented()) return;
-                try {
-                    if (localStorage.getItem(CONSENT_KEY) === 'rejected') return;
-                } catch(e) {}
-
+                try { if (localStorage.getItem(CONSENT_KEY) === 'rejected') return; } catch(e) {}
                 const banner = document.createElement('div');
                 banner.id = 'cookieBanner';
                 banner.setAttribute('role', 'dialog');
@@ -821,7 +522,6 @@
                     font-size: 13px; line-height: 1.5;
                     color: var(--text-primary, #1e293b);
                 `;
-
                 banner.innerHTML = `
                     <div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:1200px;margin:0 auto;">
                         <div style="display:flex;align-items:flex-start;gap:10px;justify-content:center;text-align:left;width:100%;">
@@ -841,34 +541,27 @@
 
                 const acceptBtn = banner.querySelector('.cookie-accept-btn');
                 const rejectBtn = banner.querySelector('.cookie-reject-btn');
-
                 const accept = function() {
                     setConsented();
                     banner.style.transform = 'translateY(100%)';
                     setTimeout(function() { if (banner.parentNode) banner.parentNode.removeChild(banner); }, 400);
                     if (window.toast) window.toast.show('✅ 已接受 Cookie 使用', 'success', 2000);
                 };
-
                 const reject = function() {
                     rejectConsent();
                     banner.style.transform = 'translateY(100%)';
                     setTimeout(function() { if (banner.parentNode) banner.parentNode.removeChild(banner); }, 400);
                     if (window.toast) window.toast.show('已拒绝 Cookie，部分功能可能受限', 'info', 3000);
                 };
-
                 acceptBtn.addEventListener('click', accept);
                 rejectBtn.addEventListener('click', reject);
-
                 acceptBtn.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); accept(); }
                 });
                 rejectBtn.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reject(); }
                 });
-
-                requestAnimationFrame(function() {
-                    banner.style.transform = 'translateY(0)';
-                });
+                requestAnimationFrame(function() { banner.style.transform = 'translateY(0)'; });
             }
 
             if (document.readyState === 'loading') {
@@ -879,125 +572,20 @@
         })();
     </script>
 
+    <!-- 排行榜按钮绑定（由 main.js 统一管理） -->
     <script>
-        (function() {
-            'use strict';
-
+        document.addEventListener('DOMContentLoaded', function() {
             const rankBtn = document.getElementById('rankBtn');
-            const rankModal = document.getElementById('rankModal');
-            const rankModalClose = document.getElementById('rankModalClose');
-            const rankListContent = document.getElementById('rankListContent');
-            let rankModalRef = null;
-
-            if (!rankBtn || !rankModal || !rankModalClose || !rankListContent) return;
-
-            async function loadRankData() {
-                rankListContent.innerHTML = '<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div> 加载中...</div>';
-
-                try {
-                    const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
-                    const response = await fetch(`${apiBase}/topclicks?limit=20`);
-                    if (!response.ok) throw new Error('请求失败');
-                    const data = await response.json();
-
-                    if (!data || !data.length) {
-                        rankListContent.innerHTML = '<div class="empty">📊 暂无排行数据</div>';
-                        return;
+            if (rankBtn) {
+                rankBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (window.app && typeof window.app.showRankModal === 'function') {
+                        window.app.showRankModal();
                     }
-
-                    let html = '<div class="rank-list">';
-                    data.forEach(function(item, index) {
-                        var medal = '';
-                        if (index === 0) medal = '🥇';
-                        else if (index === 1) medal = '🥈';
-                        else if (index === 2) medal = '🥉';
-                        else medal = (index + 1) + '.';
-
-                        var title = item.title || '未命名';
-                        var url = item.url || '#';
-                        var count = item.count || 0;
-
-                        html += `
-                            <div class="rank-item">
-                                <span class="rank-number">${medal}</span>
-                                <a href="${url}" target="_blank" rel="noopener noreferrer" class="rank-title">${title}</a>
-                                <span class="rank-count">${count}次</span>
-                            </div>
-                        `;
-                    });
-                    html += '</div>';
-                    rankListContent.innerHTML = html;
-
-                } catch (error) {
-                    console.error('加载排行榜失败:', error);
-                    rankListContent.innerHTML = '<div class="error">❌ 加载失败，请稍后重试</div>';
-                }
+                });
             }
-
-            function openRankModal() {
-                if (rankModalRef && window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.unregisterModal(rankModalRef);
-                    rankModalRef = null;
-                }
-
-                if (window.Starlink && window.Starlink.sidebar && window.Starlink.sidebar.isVisible && window.Starlink.sidebar.isVisible()) {
-                    window.Starlink.sidebar.hide();
-                } else if (window.sidebar && window.sidebar.isVisible && window.sidebar.isVisible()) {
-                    window.sidebar.hide();
-                }
-
-                rankModal.classList.add('active');
-                loadRankData();
-
-                rankModalRef = {
-                    hide: function() {
-                        rankModal.classList.remove('active');
-                    },
-                    isVisible: function() {
-                        return rankModal.classList.contains('active');
-                    }
-                };
-                if (window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.registerModal(rankModalRef);
-                }
-            }
-
-            function closeRankModal() {
-                rankModal.classList.remove('active');
-                if (rankModalRef && window.Starlink && window.Starlink.app) {
-                    window.Starlink.app.unregisterModal(rankModalRef);
-                    rankModalRef = null;
-                }
-            }
-
-            rankBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (rankModal.classList.contains('active')) {
-                    closeRankModal();
-                } else {
-                    openRankModal();
-                }
-            });
-
-            rankModalClose.addEventListener('click', function(e) {
-                e.stopPropagation();
-                closeRankModal();
-            });
-
-            rankModal.addEventListener('click', function(e) {
-                if (e.target === rankModal) {
-                    closeRankModal();
-                }
-            });
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && rankModal.classList.contains('active')) {
-                    closeRankModal();
-                }
-            });
-
-        })();
+        });
     </script>
 
 </body>
