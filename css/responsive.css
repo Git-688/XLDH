@@ -332,14 +332,60 @@
         max-width: none;
         bottom: 12px;
     }
-    .feedback-modal-content {
-        max-width: calc(100% - 24px);
+}
+
+/* ===== 移动端模态框间距统一修改 ===== */
+@media (max-width: 768px) {
+    /* 星聚笔记模态框 - 上下左右间距与壁纸一致 */
+    #notebookModal.feedback-modal {
+        padding: var(--container-padding-xs, 16px) !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
-    .weather-modal-content {
-        max-width: calc(100% - 24px);
+    #notebookModal .feedback-modal-content {
+        max-width: 100% !important;
+        max-height: calc(100vh - 32px) !important;
+        margin: 0 !important;
+        border-radius: 8px !important;
     }
-    .about-modal-content {
-        max-width: calc(100% - 24px);
+
+    /* 访问排行榜模态框 - 上下左右间距与壁纸一致 */
+    #rankModal.feedback-modal {
+        padding: var(--container-padding-xs, 16px) !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    #rankModal .feedback-modal-content {
+        max-width: 100% !important;
+        max-height: calc(100vh - 32px) !important;
+        margin: 0 !important;
+        border-radius: 8px !important;
+    }
+
+    /* 网友评论模态框 - 上下左右间距与壁纸一致 */
+    #commentModal.feedback-modal {
+        padding: var(--container-padding-xs, 16px) !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    #commentModal .feedback-modal-content {
+        max-width: 100% !important;
+        max-height: calc(100vh - 32px) !important;
+        margin: 0 !important;
+        border-radius: 8px !important;
+    }
+
+    /* 投稿模态框同样处理，保持一致性 */
+    #submitModal.feedback-modal {
+        padding: var(--container-padding-xs, 16px) !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    #submitModal .feedback-modal-content {
+        max-width: 100% !important;
+        max-height: calc(100vh - 32px) !important;
+        margin: 0 !important;
+        border-radius: 8px !important;
     }
 }
 
@@ -394,14 +440,6 @@
     }
     .stat-number {
         font-size: 12px;
-    }
-}
-
-/* 排行榜模态框移动端左右间距与壁纸一致 */
-@media (max-width: 768px) {
-    #rankModal.feedback-modal {
-        padding-left: var(--container-padding-xs, 16px) !important;
-        padding-right: var(--container-padding-xs, 16px) !important;
     }
 }
 
