@@ -336,7 +336,7 @@
 
 /* 移动端模态框间距统一（与壁纸一致，且所有模态框统一） */
 @media (max-width: 768px) {
-    /* 注意：只保留 rank、comment、submit，不包含 notebook */
+    /* 只保留 rank、comment、submit，不包含 notebook */
     #rankModal.feedback-modal,
     #commentModal.feedback-modal,
     #submitModal.feedback-modal {
