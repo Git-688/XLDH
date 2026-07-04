@@ -334,7 +334,7 @@
     }
 }
 
-/* 移动端模态框间距统一 */
+/* 移动端模态框间距统一（与壁纸一致，且所有模态框统一） */
 @media (max-width: 768px) {
     #notebookModal.feedback-modal,
     #rankModal.feedback-modal,
