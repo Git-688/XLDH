@@ -1,4 +1,4 @@
-/* navigation.js - 全部加载、无分页、无懒加载、无加载提示，已增加错误上报，新布局 */
+/* navigation.js - 全部加载、无分页、无懒加载、无加载提示，已增加错误上报，正方形卡片紧凑布局 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -287,7 +287,6 @@ class OptimizedNavigation {
         if (container) container.innerHTML = '';
     }
 
-    // ===== 修改后的 _createSiteCard 方法（新布局） =====
     _createSiteCard(site, index, isSearchResult = false, keyword = '') {
         const card = document.createElement('a');
         card.className = `site-card ${site.valid === false ? 'invalid' : ''}`;
@@ -307,29 +306,22 @@ class OptimizedNavigation {
             descHtml = this._highlightText(site.description || '暂无描述', keyword);
         }
 
-        // 新布局：
-        // 第一行：图标 + 标题（标题省略）
-        // 分割线
-        // 第二行：描述（两行省略）
-        // 第三行：点击数（左下） + 感叹号（右下）
+        // 正方形卡片紧凑布局：图标+标题一行，描述一行，分割线，点击数+感叹号一行
         card.innerHTML = `
             <div class="card-top">
                 <div class="icon-container">${iconHtml}</div>
                 <div class="site-title">${titleHtml}</div>
             </div>
+            <div class="site-description">${descHtml}</div>
             <div class="divider-line"></div>
             <div class="card-bottom">
-                <div class="site-description">${descHtml}</div>
-                <div class="card-footer">
-                    <span class="view-count" data-views="${views}">${formattedViews}</span>
-                    <button class="report-dead-link-btn" data-url="${this._escapeHtml(site.url)}" data-title="${this._escapeHtml(site.title)}" title="报告死链">
-                        <i class="fas fa-exclamation-circle"></i>
-                    </button>
-                </div>
+                <span class="view-count" data-views="${views}">${formattedViews}</span>
+                <button class="report-dead-link-btn" data-url="${this._escapeHtml(site.url)}" data-title="${this._escapeHtml(site.title)}" title="报告死链">
+                    <i class="fas fa-exclamation-circle"></i>
+                </button>
             </div>
         `;
 
-        // 点击事件处理（同前，但需要重新绑定）
         card.addEventListener('click', async (e) => {
             if (e.target.closest('.report-dead-link-btn')) return;
             const viewEl = card.querySelector('.view-count');
