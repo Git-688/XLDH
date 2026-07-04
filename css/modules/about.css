@@ -36,22 +36,12 @@
     transform: scale(1);
 }
 @media (max-width: 768px) {
-    .about-modal {
-        align-items: center;
-        padding: 12px var(--container-padding-xs, 16px);
-    }
-    .about-modal-content {
-        transform: scale(0.95);
-        border-radius: 8px;
-    }
-    .about-modal.active .about-modal-content {
-        transform: scale(1);
-    }
+    .about-modal { align-items: center; padding: 12px var(--container-padding-xs, 16px); }
+    .about-modal-content { transform: scale(0.95); border-radius: 8px; }
+    .about-modal.active .about-modal-content { transform: scale(1); }
 }
 @media (max-width: 480px) {
-    .about-modal {
-        padding: 12px var(--container-padding-xs, 16px);
-    }
+    .about-modal { padding: 12px var(--container-padding-xs, 16px); }
 }
 
 .about-header {
@@ -124,12 +114,12 @@
 }
 .about-header-right.logo-card {
     flex: 1;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 1/1;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0,0,0,0.3);
     border-radius: 8px;
     backdrop-filter: blur(4px);
     padding: 12px 0;
@@ -140,7 +130,7 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255,255,255,0.2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -191,12 +181,12 @@
     background: var(--bg-card, #ffffff);
     border-radius: 8px;
     border: 1px solid var(--border-color, #e9ecef);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     transition: all 0.2s ease;
 }
 .about-card.white-bg:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.07);
 }
 .card-icon {
     width: 24px;
@@ -210,16 +200,9 @@
     margin-top: 2px;
     color: white;
 }
-.intro-icon {
-    background: #4361ee;
-}
-.disclaimer-icon {
-    background: #ef4444;
-}
-.card-content {
-    flex: 1;
-    min-width: 0;
-}
+.intro-icon { background: #4361ee; }
+.disclaimer-icon { background: #ef4444; }
+.card-content { flex: 1; min-width: 0; }
 .card-content h3 {
     font-size: 12px;
     margin-bottom: 6px;
@@ -262,32 +245,21 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     font-size: 14px;
     color: white;
 }
 .about-social-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.07);
 }
-.qq-btn {
-    background: #6BC5FF;
-}
-.qq-btn:hover {
-    background: #5AB5EF;
-}
-.donate-btn {
-    background: #ef4444;
-}
-.donate-btn:hover {
-    background: #FF6B6B;
-}
-.space-btn {
-    background: #f59e0b;
-}
-.space-btn:hover {
-    background: #FFC952;
-}
+.qq-btn { background: #6BC5FF; }
+.qq-btn:hover { background: #5AB5EF; }
+.donate-btn { background: #ef4444; }
+.donate-btn:hover { background: #FF6B6B; }
+.space-btn { background: #f59e0b; }
+.space-btn:hover { background: #FFC952; }
+
 .about-social-btn .tooltip-text {
     visibility: hidden;
     width: 60px;
@@ -334,100 +306,52 @@
     justify-content: center;
     gap: 4px;
     min-width: 70px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 .about-close-btn:hover {
     background: #6EC312;
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.07);
 }
 
 @media (min-width: 768px) {
-    .about-modal {
-        padding: 0 24px;
-    }
-    .about-header {
-        padding: 16px;
-    }
-    .about-header-content {
-        gap: 16px;
-    }
-    .info-card {
-        font-size: 13px;
-        padding: 0 16px;
-    }
-    .about-brand-logo {
-        width: 72px;
-        height: 72px;
-        padding: 8px;
-    }
-    .about-brand-title {
-        font-size: 18px;
-    }
-    .about-brand-subtitle {
-        font-size: 12px;
-    }
-    .about-header-right.logo-card {
-        padding: 16px 0;
-    }
-    .about-main-content {
-        padding: 16px;
-    }
-    .about-card.white-bg {
-        padding: 12px;
-    }
-    .card-icon {
-        width: 26px;
-        height: 26px;
-        font-size: 12px;
-    }
-    .card-content h3 {
-        font-size: 13px;
-    }
-    .card-content p {
-        font-size: 11px;
-    }
-    .about-footer {
-        padding: 12px 16px 16px;
-    }
-    .about-social-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-    }
-    .about-close-btn {
-        padding: 8px 16px;
-        font-size: 12px;
-        min-width: 80px;
-    }
+    .about-modal { padding: 0 24px; }
+    .about-header { padding: 16px; }
+    .about-header-content { gap: 16px; }
+    .info-card { font-size: 13px; padding: 0 16px; }
+    .about-brand-logo { width: 72px; height: 72px; padding: 8px; }
+    .about-brand-title { font-size: 18px; }
+    .about-brand-subtitle { font-size: 12px; }
+    .about-header-right.logo-card { padding: 16px 0; }
+    .about-main-content { padding: 16px; }
+    .about-card.white-bg { padding: 12px; }
+    .card-icon { width: 26px; height: 26px; font-size: 12px; }
+    .card-content h3 { font-size: 13px; }
+    .card-content p { font-size: 11px; }
+    .about-footer { padding: 12px 16px 16px; }
+    .about-social-btn { width: 40px; height: 40px; font-size: 16px; }
+    .about-close-btn { padding: 8px 16px; font-size: 12px; min-width: 80px; }
 }
-
 @media (max-width: 600px) {
-    .info-card {
-        font-size: 9px;
-        padding: 0 8px;
-    }
-    .about-brand-logo {
-        width: 54px;
-        height: 54px;
-    }
-    .about-brand-title {
-        font-size: 13px;
-    }
-    .about-brand-subtitle {
-        font-size: 9px;
-    }
-    .about-header-right.logo-card {
-        padding: 10px 0;
-    }
-    .about-header-content {
-        gap: 12px;
-    }
-    .about-header {
-        padding: 12px;
+    .info-card { font-size: 9px; padding: 0 8px; }
+    .about-brand-logo { width: 54px; height: 54px; }
+    .about-brand-title { font-size: 13px; }
+    .about-brand-subtitle { font-size: 9px; }
+    .about-header-right.logo-card { padding: 10px 0; }
+    .about-header-content { gap: 12px; }
+    .about-header { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .about-modal,
+    .about-modal-content,
+    .about-card,
+    .about-social-btn,
+    .about-close-btn {
+        transition: none;
     }
 }
 
+/* ===== 深色模式 ===== */
 .dark-mode .about-modal-content {
     background: var(--bg-card);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -473,14 +397,4 @@
 }
 .dark-mode .about-social-btn .tooltip-text::after {
     border-color: #e0e0e0 transparent transparent transparent;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .about-modal,
-    .about-modal-content,
-    .about-card,
-    .about-social-btn,
-    .about-close-btn {
-        transition: none;
-    }
 }
