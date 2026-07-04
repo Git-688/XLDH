@@ -1,4 +1,4 @@
-/* comment.js - 完整版（含 emoji 选项卡及搜索，已优化 CSP 兼容） */
+/* comment.js - 完整版（同时启用 emoji 和 search） */
 class CommentModule {
   static CONFIG = {
     serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
@@ -16,15 +16,15 @@ class CommentModule {
         'bold', 'italic', 'link', 'image', 'code', 'blockquote',
         'heading', 'ul', 'ol', 'hr', 'strike', 'spoiler'
       ],
-      // ===== emoji 配置（使用 unpkg 镜像，确保可用） =====
+      // ===== 官方 emoji 配置（显示笑脸图标） =====
+      // 使用官方示例中的微博和哔哩小黄脸，您也可以添加更多
       emoji: [
-        'https://unpkg.com/@waline/emojis@1.4.0/qq',
-        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
-        'https://unpkg.com/@waline/emojis@1.4.0/tieba',
         'https://unpkg.com/@waline/emojis@1.4.0/weibo',
-        'https://unpkg.com/@waline/emojis@1.4.0/alus'
+        'https://unpkg.com/@waline/emojis@1.4.0/bmoji',
+        'https://unpkg.com/@waline/emojis@1.4.0/qq',
+        'https://unpkg.com/@waline/emojis@1.4.0/tieba'
       ],
-      // ===== 外部表情搜索 =====
+      // ===== 表情包 GIF 搜索（显示搜索图标） =====
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
@@ -78,7 +78,7 @@ class CommentModule {
     }
   };
 
-  // ===== 以下为模块核心方法（保持不变） =====
+  // ===== 以下是模块核心方法（保持不变） =====
   constructor() {
     if (window.Starlink && window.Starlink.comment) return window.Starlink.comment;
     this.instance = null;
