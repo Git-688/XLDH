@@ -153,7 +153,7 @@ class AboutModule {
                             </button>
                             <button class="about-social-btn space-btn tooltip" id="aboutPrivateSpaceBtn">
                                 <i class="fas fa-user-secret"></i>
-                                <span class="tooltip-text">站长专属空间</span>
+                                <span class="tooltip-text">站长の空间</span>
                             </button>
                         </div>
                         <button class="about-close-btn" id="aboutCloseBtn">关闭</button>
@@ -210,7 +210,6 @@ class AboutModule {
                 setTimeout(() => { this.showDonateModal(); }, 300);
             });
         }
-        // ===== 修改：私密空间链接替换为 https://zzzskj.ccwu.cc =====
         const privateSpaceBtn = document.getElementById('aboutPrivateSpaceBtn');
         if (privateSpaceBtn) {
             privateSpaceBtn.addEventListener('click', () => {
