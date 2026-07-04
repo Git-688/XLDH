@@ -17,7 +17,6 @@ class CommentModule {
         'heading', 'ul', 'ol', 'hr', 'strike', 'spoiler'
       ],
       // ===== 官方 emoji 配置（显示笑脸图标） =====
-      // 使用官方示例中的微博和哔哩小黄脸，您也可以添加更多
       emoji: [
         'https://unpkg.com/@waline/emojis@1.4.0/weibo',
         'https://unpkg.com/@waline/emojis@1.4.0/bmoji',
