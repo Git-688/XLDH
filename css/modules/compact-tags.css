@@ -4,14 +4,12 @@
     margin-bottom: var(--section-margin-xs, 16px);
     width: 100%;
 }
-
 .minimal-tags-section .container {
     padding: 0 var(--container-padding-xs, 16px);
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
 }
-
 @media (min-width: 576px) {
     .minimal-tags-section .container { padding: 0 var(--container-padding-sm, 20px); }
     .minimal-tags-section { padding: 0 0 var(--section-margin-sm, 20px); margin-bottom: var(--section-margin-sm, 20px); }
@@ -37,7 +35,6 @@
     position: relative;
     padding-left: 8px;
 }
-
 .tags-header::before {
     content: '';
     position: absolute;
@@ -59,6 +56,7 @@
     align-items: center;
     gap: 8px;
 }
+.tags-title i { color: var(--primary-color, #4361ee); font-size: 14px; }
 
 .tags-subtitle-right {
     font-size: 11px;
@@ -69,8 +67,6 @@
     text-align: right;
     white-space: nowrap;
 }
-
-.tags-title i { color: var(--primary-color, #4361ee); font-size: 14px; }
 
 .tags-grid {
     display: grid;
@@ -95,18 +91,17 @@
     position: relative;
     overflow: hidden;
     min-height: 48px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     opacity: 1;
     visibility: visible;
+    animation: tagFadeIn 0.3s ease forwards;
 }
-
 .minimal-tag .tag-icon {
     display: flex;
     align-items: center;
     justify-content: center;
     color: inherit;
 }
-
 .minimal-tag .tag-label { display: block; color: inherit; }
 
 .minimal-tag::before {
@@ -122,28 +117,24 @@
     transition: all 0.2s ease;
     z-index: 1;
 }
-
 .minimal-tag:hover::before {
     width: 5px;
     height: 24px;
 }
-
 .minimal-tag.active::before {
     width: 5px;
     height: 28px;
 }
-
 .minimal-tag:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     border-color: var(--tag-color, #4361ee);
     background: var(--bg-card, #ffffff);
 }
-
 .minimal-tag.active {
     border: 2px solid var(--tag-color, #4361ee);
     background: var(--bg-card, #ffffff);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
     padding: 11px 15px;
 }
 
@@ -158,7 +149,6 @@
     flex-shrink: 0;
     transition: all 0.2s ease;
 }
-
 .minimal-tag:hover .tag-icon { transform: scale(1.1); color: var(--tag-color, #4361ee); }
 .minimal-tag.active .tag-icon { transform: scale(1.1); color: var(--tag-color, #4361ee); }
 
@@ -171,21 +161,43 @@
     text-overflow: ellipsis;
     transition: none;
 }
-
 .minimal-tag:hover .tag-label,
 .minimal-tag.active .tag-label {
     color: var(--text-primary, #2b2d42);
     font-weight: 500;
 }
 
-.tag-color-1 { --tag-color: #FF3D3D; --tag-color-rgb: 255, 179, 179; }
-.tag-color-2 { --tag-color: #FFA334; --tag-color-rgb: 255, 214, 165; }
-.tag-color-3 { --tag-color: #F9FF2C; --tag-color-rgb: 253, 255, 182; }
-.tag-color-4 { --tag-color: #59FF36; --tag-color-rgb: 202, 255, 191; }
-.tag-color-5 { --tag-color: #32ECFF; --tag-color-rgb: 155, 246, 255; }
-.tag-color-6 { --tag-color: #3A84FC; --tag-color-rgb: 160, 196, 255; }
-.tag-color-7 { --tag-color: #9F34FF; --tag-color-rgb: 226, 194, 255; }
+.tag-color-1 { --tag-color: #FF3D3D; }
+.tag-color-2 { --tag-color: #FFA334; }
+.tag-color-3 { --tag-color: #F9FF2C; }
+.tag-color-4 { --tag-color: #59FF36; }
+.tag-color-5 { --tag-color: #32ECFF; }
+.tag-color-6 { --tag-color: #3A84FC; }
+.tag-color-7 { --tag-color: #9F34FF; }
 
+@keyframes tagFadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tags-loading {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100px;
+}
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color, #e9ecef);
+    border-top-color: var(--primary-color, #4361ee);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== 响应式 ===== */
 @media (min-width: 1600px) {
     .minimal-tags-section .container { max-width: 1600px; }
     .tags-grid { grid-template-columns: repeat(10, 1fr); gap: 12px; }
@@ -287,18 +299,22 @@
     .tag-label { font-size: 11px; }
     .tag-icon { font-size: 13px; width: 18px; height: 18px; }
 }
-
-@keyframes tagFadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
+@media (max-width: 767px) {
+    .tags-grid { overflow-x: visible; }
 }
-.minimal-tag {
-    animation: tagFadeIn 0.3s ease forwards;
-    opacity: 0;
+@media (prefers-reduced-motion: reduce) {
+    .minimal-tag { animation: none; opacity: 1; transition: none; }
+    .minimal-tag:hover { transform: none; }
+    .minimal-tag:hover .tag-icon { transform: none; }
+    .minimal-tag.active .tag-icon { transform: none; }
 }
-.minimal-tag:nth-child(1) { animation-delay: 0.01s; }
-.minimal-tag:nth-child(2) { animation-delay: 0.02s; }
 
+.minimal-tag:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+}
+
+/* ===== 深色模式 ===== */
 .dark-mode .minimal-tag {
     background: var(--bg-card);
     border-color: var(--border-color);
@@ -309,9 +325,7 @@
 .dark-mode .minimal-tag.active {
     background: var(--bg-card);
 }
-.dark-mode .tags-header::before {
-    opacity: 0.9;
-}
+.dark-mode .tags-header::before { opacity: 0.9; }
 .dark-mode .tags-subtitle-right {
     color: var(--text-secondary);
 }
@@ -321,38 +335,4 @@
 .dark-mode .minimal-tag:hover .tag-label,
 .dark-mode .minimal-tag.active .tag-label {
     color: var(--text-primary);
-}
-
-.minimal-tag:focus {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 1px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .minimal-tag { animation: none; opacity: 1; transition: none; }
-    .minimal-tag:hover { transform: none; }
-    .minimal-tag:hover .tag-icon { transform: none; }
-    .minimal-tag.active .tag-icon { transform: none; }
-}
-
-.tags-loading {
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100px;
-}
-.loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--border-color, #e9ecef);
-    border-top-color: var(--primary-color, #4361ee);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-@media (max-width: 767px) {
-    .tags-grid { overflow-x: visible; }
 }
