@@ -140,7 +140,7 @@ p { margin-bottom: 1em; }
 .dark-mode .back-to-top { color: #ff6b6b; }
 .dark-mode .back-to-top:hover { color: #ff5252; }
 
-/* ===== 模态框统一定位：从导航栏下方开始，垂直居中 ===== */
+/* ===== 通用模态框（仅用于 comment 和 submit，rank 和 notebook 已独立） ===== */
 .feedback-modal {
     position: fixed;
     top: 60px;
@@ -225,14 +225,9 @@ p { margin-bottom: 1em; }
 }
 .feedback-modal-body::-webkit-scrollbar { display: none; }
 
-/* 子模态框特有样式（仅调整尺寸，不改变定位） */
-#notebookModal .feedback-modal-content { max-height: 75vh; max-width: 600px; }
+/* 子模态框尺寸（仅 comment 和 submit 使用通用，rank 和 notebook 已独立） */
 #commentModal .feedback-modal-content { max-height: 75vh; max-width: 700px; }
 #submitModal .feedback-modal-content { max-height: 90vh; max-width: 520px; }
-#rankModal .feedback-modal-content { max-width: 500px; max-height: 80vh; }
-
-/* 确保笔记模态框没有额外定位覆盖（已移除） */
-/* 所有 .feedback-modal 子级都继承统一的定位，无需额外声明 */
 
 /* Toast */
 .toast-manager-container {
@@ -823,7 +818,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 .lazy-icon[src] { opacity: 1; }
 
 /* ================================================================ */
-/* ===== 星聚笔记模态框独立样式（移动端间距已改为与主页一致） ===== */
+/* ===== 星聚笔记模态框独立样式（移动端间距与主页一致） ===== */
 #notebookModal {
     position: fixed;
     top: 0;
@@ -837,7 +832,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     transition: opacity 0.3s ease, visibility 0.3s ease;
     align-items: center;
     justify-content: flex-start;
-    padding-top: 60px;          /* 桌面端保留，移动端将被覆盖 */
+    padding-top: 60px;
     box-sizing: border-box;
     pointer-events: none;
 }
@@ -865,22 +860,22 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     opacity: 1;
 }
 
-/* 桌面端 (≥769px) */
+/* 桌面端 */
 @media (min-width: 769px) {
     #notebookModal {
         display: flex;
         flex-direction: column;
-        padding: 60px 12px 12px;   /* 上 60px，左右 12px，下 12px */
+        padding: 60px 12px 12px;
     }
     #notebookModal .feedback-modal-content {
-        margin: auto 0;            /* 垂直居中 */
+        margin: auto 0;
         max-height: calc(100vh - 60px - 24px);
         overflow-y: auto;
         max-width: 600px;
     }
 }
 
-/* 移动端 (≤768px) —— 四周间距与主页内容到屏幕边缘一致 (16px) */
+/* 移动端 */
 @media (max-width: 768px) {
     #notebookModal {
         padding: var(--container-padding-xs, 16px);
@@ -896,4 +891,78 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
         overflow-y: auto;
     }
 }
+
 /* ================================================================ */
+/* ===== 访问排行榜模态框独立样式（与评论模态框间距一致） ===== */
+#rankModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: 10002;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 60px;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+#rankModal.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+#rankModal .feedback-modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.95);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.2,0.9,0.4,1.1), opacity 0.3s ease;
+    overflow: hidden;
+}
+#rankModal.active .feedback-modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* 桌面端 */
+@media (min-width: 769px) {
+    #rankModal {
+        display: flex;
+        flex-direction: column;
+        padding: 60px 12px 12px;
+    }
+    #rankModal .feedback-modal-content {
+        margin: auto 0;
+        max-height: calc(100vh - 60px - 24px);
+        overflow-y: auto;
+        max-width: 600px;
+    }
+}
+
+/* 移动端 */
+@media (max-width: 768px) {
+    #rankModal {
+        padding: var(--container-padding-xs, 16px);
+        padding-top: calc(60px + var(--container-padding-xs, 16px));
+        display: flex;
+        flex-direction: column;
+    }
+    #rankModal .feedback-modal-content {
+        margin: auto 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: calc(100vh - 60px - 2 * var(--container-padding-xs, 16px));
+        overflow-y: auto;
+    }
+}
