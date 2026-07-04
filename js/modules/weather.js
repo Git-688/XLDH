@@ -85,7 +85,6 @@ class WeatherModule {
 
     async init() {
         if (this.initialized) return;
-        console.log('天气模块开始初始化...');
         this.bindGlobalEvents();
         this.startAutoRefresh();
         await this.loadSavedCity();
@@ -97,7 +96,6 @@ class WeatherModule {
             await this.tryGpsLocation();
         }
         this.initialized = true;
-        console.log('天气模块初始化完成');
     }
 
     bindGlobalEvents() {
@@ -122,14 +120,12 @@ class WeatherModule {
                 this.manualCity = manual;
                 this.manualProvince = manualProv || null;
                 this.useAutoLocation = false;
-                console.log('使用手动选择的城市:', manual);
                 return;
             }
             this.useAutoLocation = true;
             const savedAutoCity = localStorage.getItem('weather_city');
             if (savedAutoCity) {
                 this.currentCity = savedAutoCity;
-                console.log('使用上次 GPS 定位的城市:', savedAutoCity);
             } else {
                 this.currentCity = '北京';
             }
@@ -160,7 +156,6 @@ class WeatherModule {
                 localStorage.removeItem('weather_manual_province');
             }
             this.currentCity = city;
-            console.log('城市已保存:', city, isManual ? '(手动)' : '(GPS)');
         } catch (error) {
             if (window.errorHandler) {
                 window.errorHandler.report(error, 'weather.saveCity');
@@ -175,7 +170,6 @@ class WeatherModule {
         try {
             const position = await this.getCurrentPosition();
             const { latitude, longitude } = position.coords;
-            console.log(`GPS 定位成功: 经度 ${longitude}, 纬度 ${latitude}`);
             await this.loadWeatherDataByLonLat(longitude, latitude);
         } catch (error) {
             if (window.errorHandler) {
