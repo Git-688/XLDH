@@ -140,6 +140,7 @@ p { margin-bottom: 1em; }
 .dark-mode .back-to-top { color: #ff6b6b; }
 .dark-mode .back-to-top:hover { color: #ff5252; }
 
+/* ===== 模态框统一定位：从导航栏下方开始，垂直居中 ===== */
 .feedback-modal {
     position: fixed;
     top: 60px;
@@ -224,11 +225,16 @@ p { margin-bottom: 1em; }
 }
 .feedback-modal-body::-webkit-scrollbar { display: none; }
 
+/* 子模态框特有样式（仅调整尺寸，不改变定位） */
 #notebookModal .feedback-modal-content { max-height: 75vh; max-width: 600px; }
 #commentModal .feedback-modal-content { max-height: 75vh; max-width: 700px; }
 #submitModal .feedback-modal-content { max-height: 90vh; max-width: 520px; }
 #rankModal .feedback-modal-content { max-width: 500px; max-height: 80vh; }
 
+/* 确保笔记模态框没有额外定位覆盖（已移除） */
+/* 所有 .feedback-modal 子级都继承统一的定位，无需额外声明 */
+
+/* Toast */
 .toast-manager-container {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
     z-index: 9999; display: flex; flex-direction: column;
