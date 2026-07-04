@@ -17,14 +17,11 @@ class App {
         }
     }
 
-    // ===== 设置全局错误处理 =====
     setupGlobalErrorHandling() {
         if (this._cleanupErrorHandler) return;
         this._cleanupErrorHandler = Utils.setupGlobalErrorHandler();
-        console.log('[App] 全局错误处理已启用');
     }
 
-    // ===== 显示友好错误降级 UI =====
     showErrorFallback(message = '页面加载失败，请刷新重试') {
         const container = document.querySelector('.main-content');
         if (!container) return;
@@ -60,7 +57,6 @@ class App {
         document.body.appendChild(overlay);
     }
 
-    // ===== 隐藏错误降级 UI =====
     hideErrorFallback() {
         const overlay = document.getElementById('error-fallback-overlay');
         if (overlay) overlay.remove();
@@ -177,11 +173,9 @@ class App {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('message', (event) => {
                 if (event.data && event.data.type === 'NAV_UPDATED') {
-                    console.log('[App] 收到导航更新通知，刷新导航数据...');
                     if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshCurrentSubcategory === 'function') {
                         window.optimizedNavigation.refreshCurrentSubcategory();
                     } else {
-                        console.warn('[App] 导航模块未就绪，将刷新页面以应用更新');
                         setTimeout(() => {
                             if (!document.hidden) {
                                 window.location.reload();
@@ -190,18 +184,15 @@ class App {
                     }
                 }
             });
-            console.log('[App] Service Worker 消息监听已注册');
         }
     }
 
-    // ===== 监听 localStorage 变化，接收导航刷新信号（轮询间隔改为10秒） =====
     setupNavRefreshListener() {
         if (this._storageListenerBound) return;
         this._storageListenerBound = true;
 
         const handleStorageChange = (e) => {
             if (e.key === 'nav_refresh_required' && e.newValue) {
-                console.log('[App] 收到导航刷新信号 (storage event)，刷新当前子分类');
                 this.refreshNavigationIfReady();
             }
         };
@@ -209,34 +200,26 @@ class App {
         window.addEventListener('storage', handleStorageChange);
 
         document.addEventListener('navRefreshRequested', () => {
-            console.log('[App] 收到导航刷新信号 (custom event)，刷新当前子分类');
             this.refreshNavigationIfReady();
         });
 
-        // ★★★ 修改：轮询间隔从 3000 改为 10000 毫秒（10秒）★★★
         let lastRefreshMark = localStorage.getItem('nav_refresh_required') || '';
         this._navPollingTimer = setInterval(() => {
             if (document.hidden) return;
             const currentMark = localStorage.getItem('nav_refresh_required') || '';
             if (currentMark !== lastRefreshMark && currentMark) {
                 lastRefreshMark = currentMark;
-                console.log('[App] 轮询检测到导航刷新信号，刷新当前子分类');
                 this.refreshNavigationIfReady();
             }
-        }, 10000); // 10秒
+        }, 10000);
 
-        // ===== 页面可见性变化时优化轮询 =====
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                // 页面隐藏时，清除轮询以减少资源消耗
                 if (this._navPollingTimer) {
                     clearInterval(this._navPollingTimer);
                     this._navPollingTimer = null;
-                    console.log('[App] 页面隐藏，暂停导航刷新轮询');
                 }
             } else {
-                // 页面可见时，立即检查一次刷新信号，并重新启动轮询
-                console.log('[App] 页面可见，恢复导航刷新轮询');
                 const currentMark = localStorage.getItem('nav_refresh_required') || '';
                 if (currentMark !== lastRefreshMark && currentMark) {
                     lastRefreshMark = currentMark;
@@ -248,15 +231,12 @@ class App {
                         const mark = localStorage.getItem('nav_refresh_required') || '';
                         if (mark !== lastRefreshMark && mark) {
                             lastRefreshMark = mark;
-                            console.log('[App] 轮询检测到导航刷新信号，刷新当前子分类');
                             this.refreshNavigationIfReady();
                         }
                     }, 10000);
                 }
             }
         });
-
-        console.log('[App] 导航刷新监听已设置（轮询间隔10秒）');
     }
 
     refreshNavigationIfReady() {
@@ -265,14 +245,12 @@ class App {
                 console.warn('[App] 刷新导航失败:', err);
             });
         } else {
-            console.warn('[App] 导航模块未就绪，延迟重试...');
             setTimeout(() => {
                 if (window.optimizedNavigation && typeof window.optimizedNavigation.refreshCurrentSubcategory === 'function') {
                     window.optimizedNavigation.refreshCurrentSubcategory().catch(err => {
                         console.warn('[App] 延迟刷新导航失败:', err);
                     });
                 } else {
-                    console.warn('[App] 导航模块始终未就绪，刷新页面');
                     if (!document.hidden) {
                         window.location.reload();
                     }
@@ -405,7 +383,7 @@ class App {
                 console.warn('模块初始化警告:', err);
                 return null;
             }))).then(() => {
-                console.log('所有模块初始化完成');
+                // 所有模块初始化完成
             });
         } catch (error) {
             console.error('模块初始化失败:', error);
