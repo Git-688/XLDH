@@ -237,7 +237,6 @@ class PluginManager {
     registerPlugin(id, plugin) {
         if (this.plugins.has(id)) console.warn(`插件 ${id} 已存在，将被替换`);
         this.plugins.set(id, { id, type: 'builtin', ...plugin, enabled: true });
-        console.log(`插件 ${id} 注册成功`);
     }
 
     getPlugin(id) { return this.plugins.get(id); }
