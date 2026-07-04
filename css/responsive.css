@@ -336,13 +336,12 @@
 
 /* 移动端模态框间距统一（与壁纸一致，且所有模态框统一） */
 @media (max-width: 768px) {
-    #notebookModal.feedback-modal,
+    /* 移除对笔记模态框的通用限制，由 style.css 中 #notebookModal 专用规则控制 */
     #rankModal.feedback-modal,
     #commentModal.feedback-modal,
     #submitModal.feedback-modal {
         padding: var(--container-padding-xs, 16px) !important;
     }
-    #notebookModal .feedback-modal-content,
     #rankModal .feedback-modal-content,
     #commentModal .feedback-modal-content,
     #submitModal .feedback-modal-content {
@@ -351,6 +350,7 @@
         margin: 0 !important;
         border-radius: 8px !important;
     }
+    /* 笔记模态框不再受此影响 */
 }
 
 @media (max-width: 374px) {
