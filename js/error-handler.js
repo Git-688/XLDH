@@ -15,7 +15,6 @@ class ErrorHandler {
         window._errorHandlerInstance = this;
     }
 
-    // ===== 生成错误指纹用于去重 =====
     _getErrorHash(errorInfo) {
         const key = `${errorInfo.type}|${errorInfo.message}|${errorInfo.filename || ''}|${errorInfo.lineno || ''}`;
         let hash = 0;
@@ -26,7 +25,6 @@ class ErrorHandler {
         return `err_${hash}`;
     }
 
-    // ===== 判断是否应忽略该错误 =====
     shouldIgnore(errorInfo) {
         if (errorInfo.type === 'resource' && !errorInfo.message && !errorInfo.stack && !errorInfo.src) {
             return true;
@@ -47,11 +45,9 @@ class ErrorHandler {
         if (errorInfo.type === 'error' && (errorInfo.message === 'Script error.' || errorInfo.message === 'Script error')) {
             return true;
         }
-        // 忽略空消息
         if (!errorInfo.message && !errorInfo.stack) {
             return true;
         }
-        // 去重检查（5秒内相同错误不重复上报）
         const hash = this._getErrorHash(errorInfo);
         const now = Date.now();
         if (this.reportedHashes.has(hash)) {
@@ -61,7 +57,6 @@ class ErrorHandler {
             }
         }
         this.reportedHashes.set(hash, now);
-        // 限制哈希集合大小，防止内存泄漏
         if (this.reportedHashes.size > 200) {
             const keys = this.reportedHashes.keys();
             for (let i = 0; i < 50; i++) {
@@ -71,7 +66,6 @@ class ErrorHandler {
         return false;
     }
 
-    // ===== 脱敏 =====
     maskSensitive(str) {
         if (!str) return '';
         str = String(str);
@@ -82,11 +76,9 @@ class ErrorHandler {
         return str;
     }
 
-    // ===== 初始化 =====
     init() {
         this._bindGlobalEvents();
         this._setupOfflineQueue();
-        console.log('[ErrorHandler] 已初始化');
     }
 
     _bindGlobalEvents() {
@@ -137,14 +129,11 @@ class ErrorHandler {
     }
 
     _setupOfflineQueue() {
-        // 监听在线状态，恢复时重试队列
         window.addEventListener('online', () => {
             if (this.retryQueue.length > 0) {
-                console.log(`[ErrorHandler] 网络恢复，重试 ${this.retryQueue.length} 个错误上报`);
                 this._processQueue();
             }
         });
-        // 页面关闭前尽量上报
         window.addEventListener('beforeunload', () => {
             if (this.retryQueue.length > 0) {
                 this._flushQueue();
@@ -152,7 +141,6 @@ class ErrorHandler {
         });
     }
 
-    // ===== 上报错误（支持重试） =====
     report(error, module = 'unknown') {
         let errorInfo;
         if (error instanceof Error) {
@@ -183,7 +171,6 @@ class ErrorHandler {
         this.enqueueReport(errorInfo);
     }
 
-    // ===== 用户友好提示 =====
     showUserFriendlyMessage(errorInfo) {
         if (window._lastErrorTime && Date.now() - window._lastErrorTime < 5000) return;
         window._lastErrorTime = Date.now();
@@ -205,12 +192,9 @@ class ErrorHandler {
 
         if (window.toast && typeof window.toast.show === 'function') {
             window.toast.show(userMessage, 'error', 5000);
-        } else {
-            console.warn('[ErrorHandler] toast not available, message:', userMessage);
         }
     }
 
-    // ===== 上报队列管理 =====
     enqueueReport(errorInfo) {
         if (!this.reportUrl) return;
         const safeInfo = this._preparePayload(errorInfo);
@@ -228,7 +212,6 @@ class ErrorHandler {
                 if (success) {
                     this.retryQueue.shift();
                 } else {
-                    // 失败时停止处理，保留队列，等网络恢复后重试
                     break;
                 }
             }
@@ -236,7 +219,6 @@ class ErrorHandler {
             console.warn('[ErrorHandler] 处理队列异常:', e);
         } finally {
             this.isProcessing = false;
-            // 如果队列还有剩余，且网络在线，继续处理
             if (this.retryQueue.length > 0 && navigator.onLine) {
                 setTimeout(() => this._processQueue(), 2000);
             }
@@ -248,7 +230,6 @@ class ErrorHandler {
             if (navigator.sendBeacon) {
                 const sent = navigator.sendBeacon(this.reportUrl, JSON.stringify(payload));
                 if (sent) return true;
-                // sendBeacon 失败则降级到 fetch
             }
             const response = await fetch(this.reportUrl, {
                 method: 'POST',
@@ -280,7 +261,6 @@ class ErrorHandler {
     }
 
     _flushQueue() {
-        // 页面关闭时尝试同步发送所有剩余队列
         while (this.retryQueue.length > 0) {
             const item = this.retryQueue.shift();
             if (navigator.sendBeacon) {
@@ -296,7 +276,6 @@ class ErrorHandler {
         }
     }
 
-    // ===== 获取错误列表 =====
     getErrors() {
         return [...this.errors];
     }
@@ -308,7 +287,6 @@ class ErrorHandler {
     }
 }
 
-// ===== 单例初始化 =====
 if (!window.errorHandler) {
     window.errorHandler = new ErrorHandler();
 }
