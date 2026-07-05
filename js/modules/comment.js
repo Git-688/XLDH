@@ -1,4 +1,4 @@
-/* comment.js - 已移除表情包搜索，改用 ES Module 导入 Waline */
+/* comment.js - 移除表情包搜索，改用 ES Module 导入 Waline */
 class CommentModule {
   static CONFIG = {
     serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
