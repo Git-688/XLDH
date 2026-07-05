@@ -1,4 +1,4 @@
-/* error-handler.js - 增强版：离线队列、重试、去重 */
+/* error-handler.js - 修复版：正确初始化 reportedHashes 为 Set */
 class ErrorHandler {
     constructor() {
         if (window._errorHandlerInstance) {
@@ -10,6 +10,7 @@ class ErrorHandler {
                          `${window.APP_CONFIG.API_BASE}/log` : null;
         this.retryQueue = [];
         this.isProcessing = false;
+        // ===== 修复：确保 reportedHashes 是 Set 实例 =====
         this.reportedHashes = new Set();
         this.init();
         window._errorHandlerInstance = this;
@@ -50,6 +51,10 @@ class ErrorHandler {
         }
         const hash = this._getErrorHash(errorInfo);
         const now = Date.now();
+        // ===== 防御性检查：确保 reportedHashes 是 Set =====
+        if (!(this.reportedHashes instanceof Set)) {
+            this.reportedHashes = new Set();
+        }
         if (this.reportedHashes.has(hash)) {
             const lastReport = this.reportedHashes.get(hash);
             if (now - lastReport < 5000) {
