@@ -19,7 +19,15 @@ class CommentModule {
       // ===== 使用官方 CDN 确保可用（同时保留自定义） =====
       emoji: [
         'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo',   // 官方微博表情
-        'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji'    // B站小黄脸
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji',   // B站小黄脸
+        'https://unpkg.com/@waline/emojis@1.4.0/alus',   // Alus
+        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',   // 哔哩哔哩
+        'https://unpkg.com/@waline/emojis@1.4.0/bmoji',   // 哔哩哔哩小黄脸
+        'https://unpkg.com/@waline/emojis@1.4.0/qq',   // QQ
+        'https://unpkg.com/@waline/emojis@1.4.0/tieba',
+        'https://unpkg.com/@waline/emojis@1.4.0/tw-emoji',
+        'https://unpkg.com/@waline/emojis@1.4.0/soul-emoji',
+        'https://tc688.ccwu.cc/file/plxt/Q_emoji/',
       ],
       // ===== 保留 GIF 搜索 =====
       search: {
