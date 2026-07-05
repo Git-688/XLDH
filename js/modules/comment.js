@@ -18,10 +18,10 @@ class CommentModule {
       ],
       // ===== 官方 emoji 配置（显示笑脸图标） =====
       emoji: [
-        'https://tc688.ccwu.cc/file/评论系统/Q_emoji/',
-        'https://unpkg.com/@waline/emojis@1.4.0/bmoji',
-        'https://unpkg.com/@waline/emojis@1.4.0/qq',
-        'https://unpkg.com/@waline/emojis@1.4.0/tieba'
+        'https://tc688.ccwu.cc/file/plxt/Q_emoji/',
+        'https://unpkg.com/@waline/emojis@1.4.0/bmoji/',
+        'https://unpkg.com/@waline/emojis@1.4.0/qq/',
+        'https://unpkg.com/@waline/emojis@1.4.0/tieba/'
       ],
       // ===== 表情包 GIF 搜索（显示搜索图标） =====
       search: {
