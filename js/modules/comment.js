@@ -18,7 +18,7 @@ class CommentModule {
       ],
       // ===== 自定义表情包（替换为您的部署地址） =====
       emoji: [
-        'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo/'
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo'
       ],
       // ===== 搜索功能已移除 =====
       locale: {
