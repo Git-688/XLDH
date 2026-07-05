@@ -1,4 +1,4 @@
-/* comment.js - 完整版（同时启用 emoji 和 search） */
+/* comment.js - 已移除表情包搜索，仅保留自定义 emoji */
 class CommentModule {
   static CONFIG = {
     serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
@@ -16,49 +16,11 @@ class CommentModule {
         'bold', 'italic', 'link', 'image', 'code', 'blockquote',
         'heading', 'ul', 'ol', 'hr', 'strike', 'spoiler'
       ],
-      // ===== 官方 emoji 配置（显示笑脸图标） =====
+      // ===== 自定义表情包（替换为您的部署地址） =====
       emoji: [
-        'https://tc688.ccwu.cc/file/plxt/Q_emoji/',
-        'https://unpkg.com/@waline/emojis@1.4.0/bmoji/',
-        'https://unpkg.com/@waline/emojis@1.4.0/qq/',
-        'https://unpkg.com/@waline/emojis@1.4.0/tieba/'
+        'https://cdn.jsdelivr.net/gh/您的用户名/twikoo-magic@master/emojis/'
       ],
-      // ===== 表情包 GIF 搜索（显示搜索图标） =====
-      search: {
-        default() {
-          return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
-            .then(r => r.json())
-            .then(json => {
-              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({ src: item.url, title: item.id || '', preview: item.url }));
-              }
-              return [];
-            })
-            .catch(() => []);
-        },
-        search(word) {
-          return fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`)
-            .then(r => r.json())
-            .then(json => {
-              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({ src: item.url, title: item.id || word, preview: item.url }));
-              }
-              return [];
-            })
-            .catch(() => []);
-        },
-        more(word, pageNumber) {
-          return fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`)
-            .then(r => r.json())
-            .then(json => {
-              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
-                return json.data.map(item => ({ src: item.url, title: item.id || word, preview: item.url }));
-              }
-              return [];
-            })
-            .catch(() => []);
-        }
-      },
+      // ===== 搜索功能已移除 =====
       locale: {
         level0: '初来乍到',
         level1: '偶尔光临',
@@ -77,20 +39,18 @@ class CommentModule {
     }
   };
 
-  // ===== 以下是模块核心方法（保持不变） =====
+  // ===== 核心方法 =====
   constructor() {
     if (window.Starlink && window.Starlink.comment) return window.Starlink.comment;
     this.instance = null;
     this.modal = null;
     this.openBtn = null;
     this.searchTimer = null;
-    this.searchObserver = null;
     this.draftObserver = null;
     this.isVisible = false;
     this._initDOM();
     this._bindEvents();
     this._initWaline();
-    this._watchSearchPanel();
     this._initDraftAutoSave();
     if (window.Starlink) window.Starlink.comment = this;
     window.commentModule = this;
@@ -134,40 +94,6 @@ class CommentModule {
         container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">评论系统暂时不可用，请稍后再试。</div>';
       }
     }
-  }
-
-  _watchSearchPanel() {
-    const container = document.querySelector(CommentModule.CONFIG.el);
-    if (!container) return;
-    this.searchObserver = new MutationObserver(mutations => {
-      for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) {
-          if (node.nodeType === 1) {
-            const panel = node.matches('.wl-search') ? node : node.querySelector('.wl-search');
-            if (panel) { this._bindAutoSearch(panel); return; }
-          }
-        }
-      }
-    });
-    this.searchObserver.observe(container, { childList: true, subtree: true });
-  }
-
-  _bindAutoSearch(panel) {
-    const input = panel.querySelector('input');
-    const btn = panel.querySelector('button');
-    if (!input || !btn || input.dataset.auto === 'true') return;
-    input.dataset.auto = 'true';
-    const trigger = () => {
-      clearTimeout(this.searchTimer);
-      if (input.value.trim()) btn.click();
-    };
-    input.addEventListener('input', () => {
-      clearTimeout(this.searchTimer);
-      this.searchTimer = setTimeout(trigger, 500);
-    });
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { clearTimeout(this.searchTimer); trigger(); }
-    });
   }
 
   _initDraftAutoSave() {
@@ -227,7 +153,6 @@ class CommentModule {
 
   destroy() {
     clearTimeout(this.searchTimer);
-    this.searchObserver?.disconnect();
     this.draftObserver?.disconnect();
     this.instance?.destroy?.();
     this.instance = null;
