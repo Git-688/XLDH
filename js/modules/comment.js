@@ -22,7 +22,6 @@ class CommentModule {
         'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji',   // B站小黄脸
         'https://unpkg.com/@waline/emojis@1.4.0/alus',   // Alus
         'https://unpkg.com/@waline/emojis@1.4.0/bilibili',   // 哔哩哔哩
-        'https://unpkg.com/@waline/emojis@1.4.0/bmoji',   // 哔哩哔哩小黄脸
         'https://unpkg.com/@waline/emojis@1.4.0/qq',   // QQ
         'https://unpkg.com/@waline/emojis@1.4.0/tieba',
         'https://unpkg.com/@waline/emojis@1.4.0/tw-emoji',
