@@ -1,4 +1,4 @@
-/* comment.js - 已移除表情包搜索，仅保留自定义 emoji */
+/* comment.js - 已移除表情包搜索，改用 ES Module 导入 Waline */
 class CommentModule {
   static CONFIG = {
     serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
@@ -19,6 +19,7 @@ class CommentModule {
       // ===== 自定义表情包（替换为您的部署地址） =====
       emoji: [
         'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo'
+        // 或使用官方测试：'https://unpkg.com/@waline/emojis@1.4.0/weibo'
       ],
       // ===== 搜索功能已移除 =====
       locale: {
@@ -45,12 +46,12 @@ class CommentModule {
     this.instance = null;
     this.modal = null;
     this.openBtn = null;
-    this.searchTimer = null;
     this.draftObserver = null;
     this.isVisible = false;
+    this._initializing = null; // 用于防止重复初始化
     this._initDOM();
     this._bindEvents();
-    this._initWaline();
+    // 不再立即初始化 Waline，改为懒加载
     this._initDraftAutoSave();
     if (window.Starlink) window.Starlink.comment = this;
     window.commentModule = this;
@@ -75,25 +76,33 @@ class CommentModule {
     });
   }
 
-  _initWaline() {
-    const { el, serverURL, walineOptions } = CommentModule.CONFIG;
-    if (typeof Waline === 'undefined') {
+  // ===== 改为异步 ES Module 初始化 =====
+  async _initWaline() {
+    // 如果已经初始化或正在初始化，直接返回
+    if (this.instance) return this.instance;
+    if (this._initializing) return this._initializing;
+
+    this._initializing = (async () => {
+      const { el, serverURL, walineOptions } = CommentModule.CONFIG;
       const container = document.querySelector(el);
-      if (container) {
-        container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">评论系统加载中，请稍后再试...</div>';
+      if (!container) throw new Error('Waline 容器不存在');
+
+      try {
+        // 动态导入 Waline（ES Module 方式）
+        const { init } = await import('https://unpkg.com/@waline/client@v3/dist/waline.js');
+        const instance = init({ el, serverURL, ...walineOptions });
+        this.instance = instance;
+        return instance;
+      } catch (err) {
+        console.error('[评论] 初始化失败', err);
+        container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">评论系统加载失败，请稍后再试。</div>';
+        throw err;
+      } finally {
+        this._initializing = null;
       }
-      return;
-    }
-    const container = document.querySelector(el);
-    if (!container) return;
-    try {
-      this.instance = Waline.init({ el, serverURL, ...walineOptions });
-    } catch (err) {
-      console.error('[评论] 初始化失败', err);
-      if (container) {
-        container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">评论系统暂时不可用，请稍后再试。</div>';
-      }
-    }
+    })();
+
+    return this._initializing;
   }
 
   _initDraftAutoSave() {
@@ -122,9 +131,18 @@ class CommentModule {
     this.draftObserver.observe(container, { childList: true, subtree: true });
   }
 
-  open() {
+  async open() {
     if (!this.modal) return;
-    if (!this.instance) { this._initWaline(); if (!this.instance) return; }
+    // 确保 Waline 已初始化
+    if (!this.instance) {
+      try {
+        await this._initWaline();
+      } catch (err) {
+        // 初始化失败，仍打开模态框但显示错误信息
+        // 已经由 _initWaline 渲染了错误信息
+      }
+    }
+    // 如果 instance 仍然为空，可能是初始化失败，但模态框可以打开显示错误信息
     if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible?.()) {
       window.Starlink.sidebar.hide();
     } else if (window.sidebar && window.sidebar.isVisible?.()) {
@@ -152,7 +170,6 @@ class CommentModule {
   }
 
   destroy() {
-    clearTimeout(this.searchTimer);
     this.draftObserver?.disconnect();
     this.instance?.destroy?.();
     this.instance = null;
