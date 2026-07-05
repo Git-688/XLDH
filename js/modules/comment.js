@@ -1,4 +1,4 @@
-/* comment.js - 完整版（同时启用 emoji 和 search，显示笑脸和搜索图标） */
+/* comment.js - 修复版（带调试日志，确保 emoji 可用） */
 class CommentModule {
   static CONFIG = {
     serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
@@ -16,15 +16,12 @@ class CommentModule {
         'bold', 'italic', 'link', 'image', 'code', 'blockquote',
         'heading', 'ul', 'ol', 'hr', 'strike', 'spoiler'
       ],
-      // ===== 关键配置1：emoji 表情包（显示笑脸图标） =====
-      // 使用官方 CDN，确保可用
+      // ===== 使用官方 CDN 确保可用（同时保留自定义） =====
       emoji: [
-        'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo',
-        'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji',
-        'https://cdn.jsdelivr.net/gh/walinejs/emojis/qq',
-        'https://cdn.jsdelivr.net/gh/walinejs/emojis/tieba'
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo',   // 官方微博表情
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji'    // B站小黄脸
       ],
-      // ===== 关键配置2：外部表情 GIF 搜索（显示搜索图标） =====
+      // ===== 保留 GIF 搜索 =====
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
@@ -78,7 +75,7 @@ class CommentModule {
     }
   };
 
-  // ===== 以下是模块核心方法（保持不变） =====
+  // ===== 模块核心方法 =====
   constructor() {
     if (window.Starlink && window.Starlink.comment) return window.Starlink.comment;
     this.instance = null;
@@ -118,6 +115,10 @@ class CommentModule {
 
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
+    
+    // 输出调试信息
+    console.log('[评论] 初始化 Waline，emoji 配置:', walineOptions.emoji);
+
     if (typeof Waline === 'undefined') {
       const container = document.querySelector(el);
       if (container) {
@@ -129,6 +130,7 @@ class CommentModule {
     if (!container) return;
     try {
       this.instance = Waline.init({ el, serverURL, ...walineOptions });
+      console.log('[评论] Waline 初始化成功');
     } catch (err) {
       console.error('[评论] 初始化失败', err);
       if (container) {
