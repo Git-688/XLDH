@@ -1,4 +1,4 @@
-/* comment.js - 移除表情包搜索，改用 ES Module 导入 Waline */
+/* comment.js - 完整版（同时启用 emoji 和 search，显示笑脸和搜索图标） */
 class CommentModule {
   static CONFIG = {
     serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
@@ -16,12 +16,50 @@ class CommentModule {
         'bold', 'italic', 'link', 'image', 'code', 'blockquote',
         'heading', 'ul', 'ol', 'hr', 'strike', 'spoiler'
       ],
-      // ===== 自定义表情包（替换为您的部署地址） =====
+      // ===== 关键配置1：emoji 表情包（显示笑脸图标） =====
+      // 使用官方 CDN，确保可用
       emoji: [
-        'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo'
-        // 或使用官方测试：'https://unpkg.com/@waline/emojis@1.4.0/weibo'
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo',
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji',
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/qq',
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/tieba'
       ],
-      // ===== 搜索功能已移除 =====
+      // ===== 关键配置2：外部表情 GIF 搜索（显示搜索图标） =====
+      search: {
+        default() {
+          return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
+            .then(r => r.json())
+            .then(json => {
+              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
+                return json.data.map(item => ({ src: item.url, title: item.id || '', preview: item.url }));
+              }
+              return [];
+            })
+            .catch(() => []);
+        },
+        search(word) {
+          return fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&limit=40`)
+            .then(r => r.json())
+            .then(json => {
+              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
+                return json.data.map(item => ({ src: item.url, title: item.id || word, preview: item.url }));
+              }
+              return [];
+            })
+            .catch(() => []);
+        },
+        more(word, pageNumber) {
+          return fetch(`https://oiapi.net/api/EmoticonPack?keyword=${encodeURIComponent(word)}&page=${pageNumber}&limit=40`)
+            .then(r => r.json())
+            .then(json => {
+              if ((json.code === 200 || json.code === 1) && Array.isArray(json.data)) {
+                return json.data.map(item => ({ src: item.url, title: item.id || word, preview: item.url }));
+              }
+              return [];
+            })
+            .catch(() => []);
+        }
+      },
       locale: {
         level0: '初来乍到',
         level1: '偶尔光临',
@@ -40,18 +78,20 @@ class CommentModule {
     }
   };
 
-  // ===== 核心方法 =====
+  // ===== 以下是模块核心方法（保持不变） =====
   constructor() {
     if (window.Starlink && window.Starlink.comment) return window.Starlink.comment;
     this.instance = null;
     this.modal = null;
     this.openBtn = null;
+    this.searchTimer = null;
+    this.searchObserver = null;
     this.draftObserver = null;
     this.isVisible = false;
-    this._initializing = null; // 用于防止重复初始化
     this._initDOM();
     this._bindEvents();
-    // 不再立即初始化 Waline，改为懒加载
+    this._initWaline();
+    this._watchSearchPanel();
     this._initDraftAutoSave();
     if (window.Starlink) window.Starlink.comment = this;
     window.commentModule = this;
@@ -76,33 +116,59 @@ class CommentModule {
     });
   }
 
-  // ===== 改为异步 ES Module 初始化 =====
-  async _initWaline() {
-    // 如果已经初始化或正在初始化，直接返回
-    if (this.instance) return this.instance;
-    if (this._initializing) return this._initializing;
-
-    this._initializing = (async () => {
-      const { el, serverURL, walineOptions } = CommentModule.CONFIG;
+  _initWaline() {
+    const { el, serverURL, walineOptions } = CommentModule.CONFIG;
+    if (typeof Waline === 'undefined') {
       const container = document.querySelector(el);
-      if (!container) throw new Error('Waline 容器不存在');
-
-      try {
-        // 动态导入 Waline（ES Module 方式）
-        const { init } = await import('https://unpkg.com/@waline/client@v3/dist/waline.js');
-        const instance = init({ el, serverURL, ...walineOptions });
-        this.instance = instance;
-        return instance;
-      } catch (err) {
-        console.error('[评论] 初始化失败', err);
-        container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">评论系统加载失败，请稍后再试。</div>';
-        throw err;
-      } finally {
-        this._initializing = null;
+      if (container) {
+        container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">评论系统加载中，请稍后再试...</div>';
       }
-    })();
+      return;
+    }
+    const container = document.querySelector(el);
+    if (!container) return;
+    try {
+      this.instance = Waline.init({ el, serverURL, ...walineOptions });
+    } catch (err) {
+      console.error('[评论] 初始化失败', err);
+      if (container) {
+        container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">评论系统暂时不可用，请稍后再试。</div>';
+      }
+    }
+  }
 
-    return this._initializing;
+  _watchSearchPanel() {
+    const container = document.querySelector(CommentModule.CONFIG.el);
+    if (!container) return;
+    this.searchObserver = new MutationObserver(mutations => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType === 1) {
+            const panel = node.matches('.wl-search') ? node : node.querySelector('.wl-search');
+            if (panel) { this._bindAutoSearch(panel); return; }
+          }
+        }
+      }
+    });
+    this.searchObserver.observe(container, { childList: true, subtree: true });
+  }
+
+  _bindAutoSearch(panel) {
+    const input = panel.querySelector('input');
+    const btn = panel.querySelector('button');
+    if (!input || !btn || input.dataset.auto === 'true') return;
+    input.dataset.auto = 'true';
+    const trigger = () => {
+      clearTimeout(this.searchTimer);
+      if (input.value.trim()) btn.click();
+    };
+    input.addEventListener('input', () => {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = setTimeout(trigger, 500);
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { clearTimeout(this.searchTimer); trigger(); }
+    });
   }
 
   _initDraftAutoSave() {
@@ -131,18 +197,9 @@ class CommentModule {
     this.draftObserver.observe(container, { childList: true, subtree: true });
   }
 
-  async open() {
+  open() {
     if (!this.modal) return;
-    // 确保 Waline 已初始化
-    if (!this.instance) {
-      try {
-        await this._initWaline();
-      } catch (err) {
-        // 初始化失败，仍打开模态框但显示错误信息
-        // 已经由 _initWaline 渲染了错误信息
-      }
-    }
-    // 如果 instance 仍然为空，可能是初始化失败，但模态框可以打开显示错误信息
+    if (!this.instance) { this._initWaline(); if (!this.instance) return; }
     if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible?.()) {
       window.Starlink.sidebar.hide();
     } else if (window.sidebar && window.sidebar.isVisible?.()) {
@@ -170,6 +227,8 @@ class CommentModule {
   }
 
   destroy() {
+    clearTimeout(this.searchTimer);
+    this.searchObserver?.disconnect();
     this.draftObserver?.disconnect();
     this.instance?.destroy?.();
     this.instance = null;
