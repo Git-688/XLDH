@@ -1,4 +1,4 @@
-/* comment.js - 显示中文地点名称（完整版） */
+/* comment.js - 完整版（含用户信息显示） */
 class CommentModule {
   static CONFIG = {
     serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
@@ -70,12 +70,46 @@ class CommentModule {
         level4: '论坛元老',
         level5: '至尊传说'
       },
-      // 原有 comment 钩子（成就徽章）
       comment: (comment) => {
+        // 1. 成就徽章（保留原逻辑）
         const achievement = comment.meta?.achievement;
         if (achievement) {
           comment.nick = `${comment.nick} <span class="achievement-badge">${achievement}</span>`;
         }
+
+        // 2. 用户信息卡片（从 meta.userInfo 读取）
+        const userInfo = comment.meta?.userInfo || {};
+        if (userInfo.ip || userInfo.browser || userInfo.os || userInfo.geo) {
+          // IP 脱敏（IPv4 仅显示前两段）
+          let ipDisplay = '';
+          if (userInfo.ip) {
+            const parts = userInfo.ip.split('.');
+            if (parts.length === 4) {
+              ipDisplay = parts.slice(0, 2).join('.') + '.***.***';
+            } else {
+              ipDisplay = userInfo.ip; // IPv6 直接显示（可自行调整）
+            }
+          }
+
+          // 地理位置组合
+          const geo = userInfo.geo || {};
+          let geoDisplay = '';
+          if (geo.city) geoDisplay = geo.city;
+          if (geo.province && geo.city) geoDisplay += `, ${geo.province}`;
+          else if (geo.province) geoDisplay = geo.province;
+
+          // 构建 HTML 卡片（内联样式，亦可通过 CSS 类控制）
+          let infoHtml = `<div class="comment-user-info" style="font-size: 12px; color: #888; margin-top: 6px; display: flex; gap: 14px; flex-wrap: wrap; border-top: 1px solid #eee; padding-top: 6px;">`;
+          if (ipDisplay) infoHtml += `<span><i class="fas fa-network-wired"></i> ${ipDisplay}</span>`;
+          if (userInfo.browser) infoHtml += `<span><i class="fas fa-compass"></i> ${userInfo.browser}</span>`;
+          if (userInfo.os) infoHtml += `<span><i class="fas fa-desktop"></i> ${userInfo.os}</span>`;
+          if (geoDisplay) infoHtml += `<span><i class="fas fa-map-marker-alt"></i> ${geoDisplay}</span>`;
+          infoHtml += `</div>`;
+
+          // 追加到评论内容末尾
+          comment.content = comment.content + infoHtml;
+        }
+
         return comment;
       }
     }
@@ -119,45 +153,8 @@ class CommentModule {
     });
   }
 
-  // ----- 核心修改：显示中文地点 -----
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
-
-    const originalComment = walineOptions.comment;
-
-    const enhancedComment = (comment) => {
-      let modified = comment;
-      if (typeof originalComment === 'function') {
-        modified = originalComment(comment);
-      }
-
-      // 显示中文地点（优先 location，若无则显示 IP）
-      if (modified?.meta) {
-        const { ip, location, browser, os } = modified.meta;
-        let info = '';
-        if (location) {
-          info = `📍 归属地：${location}`;
-        } else if (ip && ip !== '未知') {
-          info = `📍 IP：${ip}`;
-        }
-        if (browser || os) {
-          info += ` | 浏览器：${browser || '未知'} | 系统：${os || '未知'}`;
-        }
-        if (info) {
-          modified.content += `\n\n${info}`;
-        }
-      }
-
-      return modified;
-    };
-
-    const options = {
-      ...walineOptions,
-      comment: enhancedComment,
-    };
-
-    console.log('[评论] 初始化 Waline，emoji 配置:', options.emoji);
-
     if (typeof Waline === 'undefined') {
       const container = document.querySelector(el);
       if (container) {
@@ -168,7 +165,7 @@ class CommentModule {
     const container = document.querySelector(el);
     if (!container) return;
     try {
-      this.instance = Waline.init({ el, serverURL, ...options });
+      this.instance = Waline.init({ el, serverURL, ...walineOptions });
       console.log('[评论] Waline 初始化成功');
     } catch (err) {
       console.error('[评论] 初始化失败', err);
