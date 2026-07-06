@@ -1,4 +1,4 @@
-/* comment.js - 完整版（含用户信息显示） */
+/* comment.js - 修复版（带调试日志，确保 emoji 可用） */
 class CommentModule {
   static CONFIG = {
     serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
@@ -16,17 +16,19 @@ class CommentModule {
         'bold', 'italic', 'link', 'image', 'code', 'blockquote',
         'heading', 'ul', 'ol', 'hr', 'strike', 'spoiler'
       ],
+      // ===== 使用官方 CDN 确保可用（同时保留自定义） =====
       emoji: [
-        'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo',
-        'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji',
-        'https://unpkg.com/@waline/emojis@1.4.0/alus',
-        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
-        'https://unpkg.com/@waline/emojis@1.4.0/qq',
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo',   // 官方微博表情
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji',   // B站小黄脸
+        'https://unpkg.com/@waline/emojis@1.4.0/alus',   // Alus
+        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',   // 哔哩哔哩
+        'https://unpkg.com/@waline/emojis@1.4.0/qq',   // QQ
         'https://unpkg.com/@waline/emojis@1.4.0/tieba',
         'https://unpkg.com/@waline/emojis@1.4.0/tw-emoji',
         'https://unpkg.com/@waline/emojis@1.4.0/soul-emoji',
         'https://tc688.ccwu.cc/file/plxt/Q_emoji/',
       ],
+      // ===== 保留 GIF 搜索 =====
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
@@ -71,47 +73,15 @@ class CommentModule {
         level5: '至尊传说'
       },
       comment: (comment) => {
-        // 1. 成就徽章（保留原逻辑）
         const achievement = comment.meta?.achievement;
         if (achievement) {
           comment.nick = `${comment.nick} <span class="achievement-badge">${achievement}</span>`;
-        }
-        // 2. 用户信息卡片（从 meta.userInfo 读取）
-        const userInfo = comment.meta?.userInfo || {};
-        if (userInfo.ip || userInfo.browser || userInfo.os || userInfo.geo) {
-          // IP 脱敏（IPv4 仅显示前两段）
-          let ipDisplay = '';
-          if (userInfo.ip) {
-            const parts = userInfo.ip.split('.');
-            if (parts.length === 4) {
-              ipDisplay = parts.slice(0, 2).join('.') + '.***.***';
-            } else {
-              ipDisplay = userInfo.ip; // IPv6 直接显示（可自行调整）
-            }
-          }
-          // 地理位置组合（修正顺序：省 · 市 · 运营商）
-          const geo = userInfo.geo || {};
-          let geoDisplay = '';
-          const geoParts = [];
-          if (geo.province) geoParts.push(geo.province);
-          if (geo.city && geo.city !== geo.province) geoParts.push(geo.city);
-          if (geo.isp) geoParts.push(geo.isp);
-          geoDisplay = geoParts.join(' · ');
-
-          // 构建 HTML 卡片
-          let infoHtml = `<div class="comment-user-info" style="font-size: 12px; color: #888; margin-top: 6px; display: flex; gap: 14px; flex-wrap: wrap; border-top: 1px solid #eee; padding-top: 6px;">`;
-          if (ipDisplay) infoHtml += `<span><i class="fas fa-network-wired"></i> ${ipDisplay}</span>`;
-          if (userInfo.os) infoHtml += `<span><i class="fas fa-desktop"></i> ${userInfo.os}</span>`;
-          if (userInfo.browser) infoHtml += `<span><i class="fas fa-compass"></i> ${userInfo.browser}</span>`;
-          if (geoDisplay) infoHtml += `<span><i class="fas fa-map-marker-alt"></i> ${geoDisplay}</span>`;
-          infoHtml += `</div>`;
-          // 追加到评论内容末尾
-          comment.content = comment.content + infoHtml;
         }
         return comment;
       }
     }
   };
+
   // ===== 模块核心方法 =====
   constructor() {
     if (window.Starlink && window.Starlink.comment) return window.Starlink.comment;
@@ -130,11 +100,13 @@ class CommentModule {
     if (window.Starlink) window.Starlink.comment = this;
     window.commentModule = this;
   }
+
   _initDOM() {
     const { modalId, openBtnId } = CommentModule.CONFIG;
     this.modal = document.getElementById(modalId);
     this.openBtn = document.getElementById(openBtnId);
   }
+
   _bindEvents() {
     if (this.openBtn) this.openBtn.addEventListener('click', () => this.open());
     if (this.modal) {
@@ -147,8 +119,13 @@ class CommentModule {
       if (e.key === 'Escape' && this.isVisible) this.close();
     });
   }
+
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
+    
+    // 输出调试信息
+    console.log('[评论] 初始化 Waline，emoji 配置:', walineOptions.emoji);
+
     if (typeof Waline === 'undefined') {
       const container = document.querySelector(el);
       if (container) {
@@ -168,6 +145,7 @@ class CommentModule {
       }
     }
   }
+
   _watchSearchPanel() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
@@ -183,6 +161,7 @@ class CommentModule {
     });
     this.searchObserver.observe(container, { childList: true, subtree: true });
   }
+
   _bindAutoSearch(panel) {
     const input = panel.querySelector('input');
     const btn = panel.querySelector('button');
@@ -200,6 +179,7 @@ class CommentModule {
       if (e.key === 'Enter') { clearTimeout(this.searchTimer); trigger(); }
     });
   }
+
   _initDraftAutoSave() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
@@ -225,6 +205,7 @@ class CommentModule {
     });
     this.draftObserver.observe(container, { childList: true, subtree: true });
   }
+
   open() {
     if (!this.modal) return;
     if (!this.instance) { this._initWaline(); if (!this.instance) return; }
@@ -239,6 +220,7 @@ class CommentModule {
     if (window.Starlink?.app) window.Starlink.app.registerModal(this);
     else if (window.app) window.app.registerModal(this);
   }
+
   close() {
     if (!this.modal || !this.isVisible) return;
     this.modal.classList.remove(CommentModule.CONFIG.activeClass);
@@ -252,6 +234,7 @@ class CommentModule {
     this.modal.addEventListener('transitionend', onTransitionEnd, { once: true });
     setTimeout(onTransitionEnd, 400);
   }
+
   destroy() {
     clearTimeout(this.searchTimer);
     this.searchObserver?.disconnect();
@@ -260,6 +243,7 @@ class CommentModule {
     this.instance = null;
   }
 }
+
 // 自动初始化
 document.addEventListener('DOMContentLoaded', () => {
   if (!window.Starlink) window.Starlink = {};
