@@ -1,4 +1,4 @@
-/* comment.js - 修复版（带调试日志，确保 emoji 可用） */
+/* comment.js - 修复版 + 元数据图标（完整代码） */
 class CommentModule {
   static CONFIG = {
     serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
@@ -16,19 +16,17 @@ class CommentModule {
         'bold', 'italic', 'link', 'image', 'code', 'blockquote',
         'heading', 'ul', 'ol', 'hr', 'strike', 'spoiler'
       ],
-      // ===== 使用官方 CDN 确保可用（同时保留自定义） =====
       emoji: [
-        'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo',   // 官方微博表情
-        'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji',   // B站小黄脸
-        'https://unpkg.com/@waline/emojis@1.4.0/alus',   // Alus
-        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',   // 哔哩哔哩
-        'https://unpkg.com/@waline/emojis@1.4.0/qq',   // QQ
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo',
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji',
+        'https://unpkg.com/@waline/emojis@1.4.0/alus',
+        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
+        'https://unpkg.com/@waline/emojis@1.4.0/qq',
         'https://unpkg.com/@waline/emojis@1.4.0/tieba',
         'https://unpkg.com/@waline/emojis@1.4.0/tw-emoji',
         'https://unpkg.com/@waline/emojis@1.4.0/soul-emoji',
         'https://tc688.ccwu.cc/file/plxt/Q_emoji/',
       ],
-      // ===== 保留 GIF 搜索 =====
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
@@ -78,11 +76,16 @@ class CommentModule {
           comment.nick = `${comment.nick} <span class="achievement-badge">${achievement}</span>`;
         }
         return comment;
+      },
+      // ========== 新增 after 钩子，用于添加图标 ==========
+      after: function() {
+        if (window.commentModule && window.commentModule._addMetaIcons) {
+          window.commentModule._addMetaIcons();
+        }
       }
     }
   };
 
-  // ===== 模块核心方法 =====
   constructor() {
     if (window.Starlink && window.Starlink.comment) return window.Starlink.comment;
     this.instance = null;
@@ -122,9 +125,14 @@ class CommentModule {
 
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
-    
-    // 输出调试信息
-    console.log('[评论] 初始化 Waline，emoji 配置:', walineOptions.emoji);
+    // 合并 after 回调
+    const options = {
+      ...walineOptions,
+      after: () => {
+        if (walineOptions.after) walineOptions.after();
+        this._addMetaIcons();
+      }
+    };
 
     if (typeof Waline === 'undefined') {
       const container = document.querySelector(el);
@@ -136,7 +144,7 @@ class CommentModule {
     const container = document.querySelector(el);
     if (!container) return;
     try {
-      this.instance = Waline.init({ el, serverURL, ...walineOptions });
+      this.instance = Waline.init({ el, serverURL, ...options });
       console.log('[评论] Waline 初始化成功');
     } catch (err) {
       console.error('[评论] 初始化失败', err);
@@ -204,6 +212,88 @@ class CommentModule {
       }
     });
     this.draftObserver.observe(container, { childList: true, subtree: true });
+  }
+
+  // ===== 解析 UA 字符串 =====
+  _parseUA(uaString) {
+    if (!uaString) return { os: '', browser: '', device: '' };
+    const ua = uaString.toLowerCase();
+
+    let os = '';
+    if (ua.includes('windows')) os = 'Windows';
+    else if (ua.includes('mac os')) os = 'macOS';
+    else if (ua.includes('linux')) os = 'Linux';
+    else if (ua.includes('android')) os = 'Android';
+    else if (ua.includes('iphone') || ua.includes('ipad')) os = 'iOS';
+    else if (ua.includes('chrome os')) os = 'Chrome OS';
+
+    let browser = '';
+    if (ua.includes('edg')) browser = 'Edge';
+    else if (ua.includes('opr') || ua.includes('opera')) browser = 'Opera';
+    else if (ua.includes('chrome') && !ua.includes('edg')) browser = 'Chrome';
+    else if (ua.includes('firefox')) browser = 'Firefox';
+    else if (ua.includes('safari') && !ua.includes('chrome')) browser = 'Safari';
+
+    let device = '';
+    if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) device = 'mobile';
+    else if (ua.includes('tablet') || ua.includes('ipad')) device = 'tablet';
+    else device = 'desktop';
+
+    return { os, browser, device };
+  }
+
+  // ===== 为每条评论的 meta 添加图标 =====
+  _addMetaIcons() {
+    const container = document.querySelector(CommentModule.CONFIG.el);
+    if (!container) return;
+
+    const items = container.querySelectorAll('.wl-comment-item');
+    items.forEach(item => {
+      const metaEl = item.querySelector('.wl-meta');
+      if (!metaEl) return;
+      if (metaEl.dataset.iconed === 'true') return;
+      metaEl.dataset.iconed = 'true';
+
+      const spans = metaEl.querySelectorAll('span');
+      let uaText = '';
+      let ipText = '';
+      spans.forEach(span => {
+        const txt = span.textContent.trim();
+        // 识别 UA（包含 "on" 或常见系统/浏览器关键词）
+        if (txt.includes('on') || /Windows|macOS|Linux|Android|iOS/i.test(txt)) {
+          uaText = txt;
+        }
+        // 识别 IP（IPv4 或 IPv6）
+        if (/^(\d{1,3}\.){3}\d{1,3}$/.test(txt) || txt.includes(':')) {
+          ipText = txt;
+        }
+      });
+
+      // 处理 UA 图标
+      if (uaText) {
+        const { os, browser, device } = this._parseUA(uaText);
+        let icon = '';
+        if (device === 'mobile') icon = '📱 ';
+        else if (device === 'tablet') icon = '📟 ';
+        else icon = '🖥️ ';
+        if (browser) icon += `🌐 ${browser} `;
+        if (os) icon += `💻 ${os} `;
+        if (icon) {
+          const uaSpan = Array.from(spans).find(s => s.textContent.includes('on') || /Windows|macOS|Linux|Android|iOS/i.test(s.textContent));
+          if (uaSpan) {
+            uaSpan.innerHTML = `<span style="margin-right:4px;">${icon}</span>${uaSpan.textContent}`;
+          }
+        }
+      }
+
+      // 处理 IP 图标
+      if (ipText) {
+        const ipSpan = Array.from(spans).find(s => /^(\d{1,3}\.){3}\d{1,3}$/.test(s.textContent.trim()) || s.textContent.includes(':'));
+        if (ipSpan) {
+          ipSpan.innerHTML = `<span style="margin-right:4px;">🌍</span>${ipSpan.textContent}`;
+        }
+      }
+    });
   }
 
   open() {
