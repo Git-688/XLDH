@@ -76,7 +76,6 @@ class CommentModule {
         if (achievement) {
           comment.nick = `${comment.nick} <span class="achievement-badge">${achievement}</span>`;
         }
-
         // 2. 用户信息卡片（从 meta.userInfo 读取）
         const userInfo = comment.meta?.userInfo || {};
         if (userInfo.ip || userInfo.browser || userInfo.os || userInfo.geo) {
@@ -90,31 +89,29 @@ class CommentModule {
               ipDisplay = userInfo.ip; // IPv6 直接显示（可自行调整）
             }
           }
-
-          // 地理位置组合
+          // 地理位置组合（修正顺序：省 · 市 · 运营商）
           const geo = userInfo.geo || {};
           let geoDisplay = '';
-          if (geo.city) geoDisplay = geo.city;
-          if (geo.province && geo.city) geoDisplay += `, ${geo.province}`;
-          else if (geo.province) geoDisplay = geo.province;
+          const geoParts = [];
+          if (geo.province) geoParts.push(geo.province);
+          if (geo.city && geo.city !== geo.province) geoParts.push(geo.city);
+          if (geo.isp) geoParts.push(geo.isp);
+          geoDisplay = geoParts.join(' · ');
 
-          // 构建 HTML 卡片（内联样式，亦可通过 CSS 类控制）
+          // 构建 HTML 卡片
           let infoHtml = `<div class="comment-user-info" style="font-size: 12px; color: #888; margin-top: 6px; display: flex; gap: 14px; flex-wrap: wrap; border-top: 1px solid #eee; padding-top: 6px;">`;
           if (ipDisplay) infoHtml += `<span><i class="fas fa-network-wired"></i> ${ipDisplay}</span>`;
-          if (userInfo.browser) infoHtml += `<span><i class="fas fa-compass"></i> ${userInfo.browser}</span>`;
           if (userInfo.os) infoHtml += `<span><i class="fas fa-desktop"></i> ${userInfo.os}</span>`;
+          if (userInfo.browser) infoHtml += `<span><i class="fas fa-compass"></i> ${userInfo.browser}</span>`;
           if (geoDisplay) infoHtml += `<span><i class="fas fa-map-marker-alt"></i> ${geoDisplay}</span>`;
           infoHtml += `</div>`;
-
           // 追加到评论内容末尾
           comment.content = comment.content + infoHtml;
         }
-
         return comment;
       }
     }
   };
-
   // ===== 模块核心方法 =====
   constructor() {
     if (window.Starlink && window.Starlink.comment) return window.Starlink.comment;
@@ -133,13 +130,11 @@ class CommentModule {
     if (window.Starlink) window.Starlink.comment = this;
     window.commentModule = this;
   }
-
   _initDOM() {
     const { modalId, openBtnId } = CommentModule.CONFIG;
     this.modal = document.getElementById(modalId);
     this.openBtn = document.getElementById(openBtnId);
   }
-
   _bindEvents() {
     if (this.openBtn) this.openBtn.addEventListener('click', () => this.open());
     if (this.modal) {
@@ -152,7 +147,6 @@ class CommentModule {
       if (e.key === 'Escape' && this.isVisible) this.close();
     });
   }
-
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
     if (typeof Waline === 'undefined') {
@@ -174,7 +168,6 @@ class CommentModule {
       }
     }
   }
-
   _watchSearchPanel() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
@@ -190,7 +183,6 @@ class CommentModule {
     });
     this.searchObserver.observe(container, { childList: true, subtree: true });
   }
-
   _bindAutoSearch(panel) {
     const input = panel.querySelector('input');
     const btn = panel.querySelector('button');
@@ -208,7 +200,6 @@ class CommentModule {
       if (e.key === 'Enter') { clearTimeout(this.searchTimer); trigger(); }
     });
   }
-
   _initDraftAutoSave() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
@@ -234,7 +225,6 @@ class CommentModule {
     });
     this.draftObserver.observe(container, { childList: true, subtree: true });
   }
-
   open() {
     if (!this.modal) return;
     if (!this.instance) { this._initWaline(); if (!this.instance) return; }
@@ -249,7 +239,6 @@ class CommentModule {
     if (window.Starlink?.app) window.Starlink.app.registerModal(this);
     else if (window.app) window.app.registerModal(this);
   }
-
   close() {
     if (!this.modal || !this.isVisible) return;
     this.modal.classList.remove(CommentModule.CONFIG.activeClass);
@@ -263,7 +252,6 @@ class CommentModule {
     this.modal.addEventListener('transitionend', onTransitionEnd, { once: true });
     setTimeout(onTransitionEnd, 400);
   }
-
   destroy() {
     clearTimeout(this.searchTimer);
     this.searchObserver?.disconnect();
@@ -272,7 +260,6 @@ class CommentModule {
     this.instance = null;
   }
 }
-
 // 自动初始化
 document.addEventListener('DOMContentLoaded', () => {
   if (!window.Starlink) window.Starlink = {};
