@@ -1,4 +1,4 @@
-/* comment.js - 修复版（带调试日志，确保 emoji 可用） */
+/* comment.js - 显示中文地点名称（完整版） */
 class CommentModule {
   static CONFIG = {
     serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
@@ -16,19 +16,17 @@ class CommentModule {
         'bold', 'italic', 'link', 'image', 'code', 'blockquote',
         'heading', 'ul', 'ol', 'hr', 'strike', 'spoiler'
       ],
-      // ===== 使用官方 CDN 确保可用（同时保留自定义） =====
       emoji: [
-        'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo',   // 官方微博表情
-        'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji',   // B站小黄脸
-        'https://unpkg.com/@waline/emojis@1.4.0/alus',   // Alus
-        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',   // 哔哩哔哩
-        'https://unpkg.com/@waline/emojis@1.4.0/qq',   // QQ
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo',
+        'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji',
+        'https://unpkg.com/@waline/emojis@1.4.0/alus',
+        'https://unpkg.com/@waline/emojis@1.4.0/bilibili',
+        'https://unpkg.com/@waline/emojis@1.4.0/qq',
         'https://unpkg.com/@waline/emojis@1.4.0/tieba',
         'https://unpkg.com/@waline/emojis@1.4.0/tw-emoji',
         'https://unpkg.com/@waline/emojis@1.4.0/soul-emoji',
         'https://tc688.ccwu.cc/file/plxt/Q_emoji/',
       ],
-      // ===== 保留 GIF 搜索 =====
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
@@ -72,6 +70,7 @@ class CommentModule {
         level4: '论坛元老',
         level5: '至尊传说'
       },
+      // 原有 comment 钩子（成就徽章）
       comment: (comment) => {
         const achievement = comment.meta?.achievement;
         if (achievement) {
@@ -120,11 +119,44 @@ class CommentModule {
     });
   }
 
+  // ----- 核心修改：显示中文地点 -----
   _initWaline() {
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
-    
-    // 输出调试信息
-    console.log('[评论] 初始化 Waline，emoji 配置:', walineOptions.emoji);
+
+    const originalComment = walineOptions.comment;
+
+    const enhancedComment = (comment) => {
+      let modified = comment;
+      if (typeof originalComment === 'function') {
+        modified = originalComment(comment);
+      }
+
+      // 显示中文地点（优先 location，若无则显示 IP）
+      if (modified?.meta) {
+        const { ip, location, browser, os } = modified.meta;
+        let info = '';
+        if (location) {
+          info = `📍 归属地：${location}`;
+        } else if (ip && ip !== '未知') {
+          info = `📍 IP：${ip}`;
+        }
+        if (browser || os) {
+          info += ` | 浏览器：${browser || '未知'} | 系统：${os || '未知'}`;
+        }
+        if (info) {
+          modified.content += `\n\n${info}`;
+        }
+      }
+
+      return modified;
+    };
+
+    const options = {
+      ...walineOptions,
+      comment: enhancedComment,
+    };
+
+    console.log('[评论] 初始化 Waline，emoji 配置:', options.emoji);
 
     if (typeof Waline === 'undefined') {
       const container = document.querySelector(el);
@@ -136,7 +168,7 @@ class CommentModule {
     const container = document.querySelector(el);
     if (!container) return;
     try {
-      this.instance = Waline.init({ el, serverURL, ...walineOptions });
+      this.instance = Waline.init({ el, serverURL, ...options });
       console.log('[评论] Waline 初始化成功');
     } catch (err) {
       console.error('[评论] 初始化失败', err);
