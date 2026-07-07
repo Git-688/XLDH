@@ -8,6 +8,63 @@
     <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站主页.webp" alt="主页" width="130" style="border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;">
     <div style="font-size: 12px; color: #555; margin-top: 4px;">🏠 主页</div>
   </div>
+  <div style="display: inline-block; margin: 0 8px; text-align: center; width: 130px;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/分类导航.webp" alt="分类导航" width="130" style="border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;">
+    <div style="font-size: 12px; color: #555; margin-top: 4px;">📂 分类导航</div>
+  </div>
+  <div style="display: inline-block; margin: 0 8px; text-align: center; width: 130px;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站页脚.webp" alt="网站页脚" width="130" style="border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;">
+    <div style="font-size: 12px; color: #555; margin-top: 4px;">📌 页脚</div>
+  </div>
+  <div style="display: inline-block; margin: 0 8px; text-align: center; width: 130px;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/侧滑栏.webp" alt="侧滑栏" width="130" style="border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;">
+    <div style="font-size: 12px; color: #555; margin-top: 4px;">📱 侧滑栏</div>
+  </div>
+  <div style="display: inline-block; margin: 0 8px; text-align: center; width: 130px;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/内部音乐.webp" alt="内部音乐" width="130" style="border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;">
+    <div style="font-size: 12px; color: #555; margin-top: 4px;">🎵 内置音乐</div>
+  </div>
+  <div style="display: inline-block; margin: 0 8px; text-align: center; width: 130px;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/外部音乐.webp" alt="外部音乐" width="130" style="border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;">
+    <div style="font-size: 12px; color: #555; margin-top: 4px;">🔗 外部音乐</div>
+  </div>
+  <div style="display: inline-block; margin: 0 8px; text-align: center; width: 130px;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/排行榜.webp" alt="排行榜" width="130" style="border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;">
+    <div style="font-size: 12px; color: #555; margin-top: 4px;">📊 排行榜</div>
+  </div>
+  <div style="display: inline-block; margin: 0 8px; text-align: center; width: 130px;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/评论系统.webp" alt="评论系统" width="130" style="border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;">
+    <div style="font-size: 12px; color: #555; margin-top: 4px;">💬 评论系统</div>
+  </div>
+  <div style="display: inline-block; margin: 0 8px; text-align: center; width: 130px;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/天气预报.webp" alt="天气预报" width="130" style="border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;">
+    <div style="font-size: 12px; color: #555; margin-top: 4px;">☁️ 天气预报</div>
+  </div>
+  <div style="display: inline-block; margin: 0 8px; text-align: center; width: 130px;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站投稿.webp" alt="网站投稿" width="130" style="border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;">
+    <div style="font-size: 12px; color: #555; margin-top: 4px;">📝 网站投稿</div>
+  </div>
+  <div style="display: inline-block; margin: 0 8px; text-align: center; width: 130px;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/关于网站.webp" alt="关于网站" width="130" style="border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;">
+    <div style="font-size: 12px; color: #555; margin-top: 4px;">ℹ️ 关于网站</div>
+  </div>
+</div>
+
+</details>
+
+<div align="center">
+  <p>📸 横向滚动查看更多，实际效果请访问 <a href="https://xjdh688.ccwu.cc" target="_blank">在线体验</a></p>
+</div>
+## 🖼️ 效果展示
+
+<details>
+<summary><b>📸 点击展开全功能预览（共 11 张，横向滚动）</b></summary>
+
+<div style="overflow-x: auto; white-space: nowrap; padding: 10px 0; text-align: center;">
+  <div style="display: inline-block; margin: 0 8px; text-align: center; width: 130px;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站主页.webp" alt="主页" width="130" style="border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: block;">
+    <div style="font-size: 12px; color: #555; margin-top: 4px;">🏠 主页</div>
+  </div>
   <!-- 同理重复添加其他 10 张，只需复制上面 div 并修改 src 和文字 -->
   <!-- 为节省篇幅，这里只展示一个示例，实际使用时请补全全部 11 个 div -->
 </div>
