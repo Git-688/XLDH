@@ -149,32 +149,34 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 ## 🖼️ 效果展示
 
-<p align="center">👆 左右滑动或滚动查看核心界面</p>
+<p align="center">👆 左右滑动查看核心界面（始终单行横向滚动）</p>
 
-<div align="center" style="display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 16px; padding: 12px 0; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
-  <div style="flex: 0 0 auto; scroll-snap-align: start; text-align: center; min-width: 160px;">
-    <img src="./assets/screenshots/home.png" alt="首页" style="width: 70vw; max-width: 260px; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
-    <p style="margin: 6px 0 0; font-size: 14px; color: #555;">首页全景</p>
-  </div>
-  <div style="flex: 0 0 auto; scroll-snap-align: start; text-align: center; min-width: 160px;">
-    <img src="./assets/screenshots/dark.png" alt="深色模式" style="width: 70vw; max-width: 260px; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
-    <p style="margin: 6px 0 0; font-size: 14px; color: #555;">深色模式</p>
-  </div>
-  <div style="flex: 0 0 auto; scroll-snap-align: start; text-align: center; min-width: 160px;">
-    <img src="./assets/screenshots/nav.png" alt="导航分类" style="width: 70vw; max-width: 260px; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
-    <p style="margin: 6px 0 0; font-size: 14px; color: #555;">导航分类</p>
-  </div>
-  <div style="flex: 0 0 auto; scroll-snap-align: start; text-align: center; min-width: 160px;">
-    <img src="./assets/screenshots/music.png" alt="音乐播放器" style="width: 70vw; max-width: 260px; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
-    <p style="margin: 6px 0 0; font-size: 14px; color: #555;">音乐播放器</p>
-  </div>
-  <div style="flex: 0 0 auto; scroll-snap-align: start; text-align: center; min-width: 160px;">
-    <img src="./assets/screenshots/weather.png" alt="天气木鱼" style="width: 70vw; max-width: 260px; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
-    <p style="margin: 6px 0 0; font-size: 14px; color: #555;">天气 & 木鱼</p>
-  </div>
-  <div style="flex: 0 0 auto; scroll-snap-align: start; text-align: center; min-width: 160px;">
-    <img src="./assets/screenshots/admin.png" alt="管理后台" style="width: 70vw; max-width: 260px; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
-    <p style="margin: 6px 0 0; font-size: 14px; color: #555;">管理后台</p>
+<div align="center" style="overflow-x: auto; overflow-y: hidden; white-space: nowrap; -webkit-overflow-scrolling: touch; padding: 12px 0; scrollbar-width: thin; scrollbar-color: #ccc transparent;">
+  <div style="display: flex; flex-wrap: nowrap; gap: 16px; width: max-content; margin: 0 auto;">
+    <div style="flex: 0 0 auto; text-align: center;">
+      <img src="./assets/screenshots/home.png" alt="首页" height="160" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+      <span style="font-size: 13px; color: #555; display: block; margin-top: 4px;">首页全景</span>
+    </div>
+    <div style="flex: 0 0 auto; text-align: center;">
+      <img src="./assets/screenshots/dark.png" alt="深色模式" height="160" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+      <span style="font-size: 13px; color: #555; display: block; margin-top: 4px;">深色模式</span>
+    </div>
+    <div style="flex: 0 0 auto; text-align: center;">
+      <img src="./assets/screenshots/nav.png" alt="导航分类" height="160" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+      <span style="font-size: 13px; color: #555; display: block; margin-top: 4px;">导航分类</span>
+    </div>
+    <div style="flex: 0 0 auto; text-align: center;">
+      <img src="./assets/screenshots/music.png" alt="音乐播放器" height="160" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+      <span style="font-size: 13px; color: #555; display: block; margin-top: 4px;">音乐播放器</span>
+    </div>
+    <div style="flex: 0 0 auto; text-align: center;">
+      <img src="./assets/screenshots/weather.png" alt="天气木鱼" height="160" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+      <span style="font-size: 13px; color: #555; display: block; margin-top: 4px;">天气 & 木鱼</span>
+    </div>
+    <div style="flex: 0 0 auto; text-align: center;">
+      <img src="./assets/screenshots/admin.png" alt="管理后台" height="160" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+      <span style="font-size: 13px; color: #555; display: block; margin-top: 4px;">管理后台</span>
+    </div>
   </div>
 </div>
 
@@ -182,7 +184,6 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
   <p>📸 截图仅示意，实际效果请访问 <a href="https://xjdh688.ccwu.cc">在线体验</a></p>
 </div>
 
----
 ## 💰 赞赏项目
 
 如果觉得这个项目对你有帮助，欢迎请我喝咖啡 ☕️
