@@ -149,59 +149,75 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 ## 🖼️ 效果展示
 
-<table align="center" style="width: 100%; border-collapse: collapse; text-align: center;">
-  <tr>
-    <td style="padding: 10px; width: 180px;">
-      <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站主页.webp" alt="网站主页" style="width: 100%; border-radius: 8px;">
-      <div style="font-weight: bold; font-size: 15px; color: #333; margin-top: 6px;">网站主页</div>
-    </td>
-    <td style="padding: 10px; width: 180px;">
-      <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/分类导航.webp" alt="分类导航" style="width: 100%; border-radius: 8px;">
-      <div style="font-weight: bold; font-size: 15px; color: #333; margin-top: 6px;">分类导航</div>
-    </td>
-    <td style="padding: 10px; width: 180px;">
-      <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站页脚.webp" alt="网站页脚" style="width: 100%; border-radius: 8px;">
-      <div style="font-weight: bold; font-size: 15px; color: #333; margin-top: 6px;">网站页脚</div>
-    </td>
-    <td style="padding: 10px; width: 180px;">
-      <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/侧滑栏.webp" alt="侧滑栏" style="width: 100%; border-radius: 8px;">
-      <div style="font-weight: bold; font-size: 15px; color: #333; margin-top: 6px;">侧滑栏</div>
-    </td>
-  </tr>
-  <tr>
-    <td style="padding: 10px; width: 180px;">
-      <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/内部音乐.webp" alt="内部音乐" style="width: 100%; border-radius: 8px;">
-      <div style="font-weight: bold; font-size: 15px; color: #333; margin-top: 6px;">内部音乐</div>
-    </td>
-    <td style="padding: 10px; width: 180px;">
-      <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/外部音乐.webp" alt="外部音乐" style="width: 100%; border-radius: 8px;">
-      <div style="font-weight: bold; font-size: 15px; color: #333; margin-top: 6px;">外部音乐</div>
-    </td>
-    <td style="padding: 10px; width: 180px;">
-      <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/排行榜.webp" alt="排行榜" style="width: 100%; border-radius: 8px;">
-      <div style="font-weight: bold; font-size: 15px; color: #333; margin-top: 6px;">排行榜</div>
-    </td>
-    <td style="padding: 10px; width: 180px;">
-      <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/评论系统.webp" alt="评论系统" style="width: 100%; border-radius: 8px;">
-      <div style="font-weight: bold; font-size: 15px; color: #333; margin-top: 6px;">评论系统</div>
-    </td>
-  </tr>
-  <tr>
-    <td style="padding: 10px; width: 180px;">
-      <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/天气预报.webp" alt="天气预报" style="width: 100%; border-radius: 8px;">
-      <div style="font-weight: bold; font-size: 15px; color: #333; margin-top: 6px;">天气预报</div>
-    </td>
-    <td style="padding: 10px; width: 180px;">
-      <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站投稿.webp" alt="网站投稿" style="width: 100%; border-radius: 8px;">
-      <div style="font-weight: bold; font-size: 15px; color: #333; margin-top: 6px;">网站投稿</div>
-    </td>
-    <td style="padding: 10px; width: 180px;">
-      <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/关于网站.webp" alt="关于网站" style="width: 100%; border-radius: 8px;">
-      <div style="font-weight: bold; font-size: 15px; color: #333; margin-top: 6px;">关于网站</div>
-    </td>
-    <td style="padding: 10px; width: 180px;"></td>  <!-- 空白占位保持对齐 -->
-  </tr>
-</table>
+<div style="overflow-x: auto; overflow-y: hidden; white-space: nowrap; padding: 16px 0 20px 0; -webkit-overflow-scrolling: touch; border-bottom: 1px solid #e5e7eb;">
+
+  <!-- 卡片 1 -->
+  <div style="display: inline-block; width: 200px; margin-right: 20px; text-align: center; vertical-align: top; white-space: normal;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站主页.webp" alt="网站主页" style="width: 100%; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="font-weight: 600; font-size: 15px; color: #1e293b; margin-top: 8px;">网站主页</div>
+  </div>
+
+  <!-- 卡片 2 -->
+  <div style="display: inline-block; width: 200px; margin-right: 20px; text-align: center; vertical-align: top; white-space: normal;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/分类导航.webp" alt="分类导航" style="width: 100%; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="font-weight: 600; font-size: 15px; color: #1e293b; margin-top: 8px;">分类导航</div>
+  </div>
+
+  <!-- 卡片 3 -->
+  <div style="display: inline-block; width: 200px; margin-right: 20px; text-align: center; vertical-align: top; white-space: normal;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站页脚.webp" alt="网站页脚" style="width: 100%; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="font-weight: 600; font-size: 15px; color: #1e293b; margin-top: 8px;">网站页脚</div>
+  </div>
+
+  <!-- 卡片 4 -->
+  <div style="display: inline-block; width: 200px; margin-right: 20px; text-align: center; vertical-align: top; white-space: normal;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/侧滑栏.webp" alt="侧滑栏" style="width: 100%; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="font-weight: 600; font-size: 15px; color: #1e293b; margin-top: 8px;">侧滑栏</div>
+  </div>
+
+  <!-- 卡片 5 -->
+  <div style="display: inline-block; width: 200px; margin-right: 20px; text-align: center; vertical-align: top; white-space: normal;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/内部音乐.webp" alt="内部音乐" style="width: 100%; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="font-weight: 600; font-size: 15px; color: #1e293b; margin-top: 8px;">内部音乐</div>
+  </div>
+
+  <!-- 卡片 6 -->
+  <div style="display: inline-block; width: 200px; margin-right: 20px; text-align: center; vertical-align: top; white-space: normal;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/外部音乐.webp" alt="外部音乐" style="width: 100%; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="font-weight: 600; font-size: 15px; color: #1e293b; margin-top: 8px;">外部音乐</div>
+  </div>
+
+  <!-- 卡片 7 -->
+  <div style="display: inline-block; width: 200px; margin-right: 20px; text-align: center; vertical-align: top; white-space: normal;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/排行榜.webp" alt="排行榜" style="width: 100%; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="font-weight: 600; font-size: 15px; color: #1e293b; margin-top: 8px;">排行榜</div>
+  </div>
+
+  <!-- 卡片 8 -->
+  <div style="display: inline-block; width: 200px; margin-right: 20px; text-align: center; vertical-align: top; white-space: normal;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/评论系统.webp" alt="评论系统" style="width: 100%; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="font-weight: 600; font-size: 15px; color: #1e293b; margin-top: 8px;">评论系统</div>
+  </div>
+
+  <!-- 卡片 9 -->
+  <div style="display: inline-block; width: 200px; margin-right: 20px; text-align: center; vertical-align: top; white-space: normal;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/天气预报.webp" alt="天气预报" style="width: 100%; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="font-weight: 600; font-size: 15px; color: #1e293b; margin-top: 8px;">天气预报</div>
+  </div>
+
+  <!-- 卡片 10 -->
+  <div style="display: inline-block; width: 200px; margin-right: 20px; text-align: center; vertical-align: top; white-space: normal;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站投稿.webp" alt="网站投稿" style="width: 100%; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="font-weight: 600; font-size: 15px; color: #1e293b; margin-top: 8px;">网站投稿</div>
+  </div>
+
+  <!-- 卡片 11 -->
+  <div style="display: inline-block; width: 200px; margin-right: 0; text-align: center; vertical-align: top; white-space: normal;">
+    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/关于网站.webp" alt="关于网站" style="width: 100%; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="font-weight: 600; font-size: 15px; color: #1e293b; margin-top: 8px;">关于网站</div>
+  </div>
+
+</div>
 
 <div align="center">
   <p>📸 截图仅示意，实际效果请访问 <a href="shturl.cc/30XQNKS3hf9de">在线体验</a></p>
