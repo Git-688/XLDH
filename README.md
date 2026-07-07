@@ -150,49 +150,49 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 ## 🖼️ 效果展示
 
-<!-- 修改为 Flex 布局，强制卡片固定宽度，横向滚动，不再压缩 -->
-<div style="overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; padding: 10px 0; width: 100%; display: flex; gap: 12px;">
-  <div style="flex-shrink: 0; text-align: center; width: 150px;">
+<!-- 使用 inline-block + white-space:nowrap 实现可靠的横向滚动，卡片永不换行 -->
+<div style="overflow-x: auto; overflow-y: hidden; white-space: nowrap; padding: 10px 0; width: 100%; -webkit-overflow-scrolling: touch;">
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 12px; vertical-align: top;">
     <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站主页.webp" alt="网站主页" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
     <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站主页</div>
   </div>
-  <div style="flex-shrink: 0; text-align: center; width: 150px;">
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 12px; vertical-align: top;">
     <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/分类导航.webp" alt="分类导航" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
     <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">分类导航</div>
   </div>
-  <div style="flex-shrink: 0; text-align: center; width: 150px;">
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 12px; vertical-align: top;">
     <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站页脚.webp" alt="网站页脚" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
     <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站页脚</div>
   </div>
-  <div style="flex-shrink: 0; text-align: center; width: 150px;">
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 12px; vertical-align: top;">
     <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/侧滑栏.webp" alt="侧滑栏" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
     <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">侧滑栏</div>
   </div>
-  <div style="flex-shrink: 0; text-align: center; width: 150px;">
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 12px; vertical-align: top;">
     <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/内部音乐.webp" alt="内部音乐" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
     <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">内部音乐</div>
   </div>
-  <div style="flex-shrink: 0; text-align: center; width: 150px;">
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 12px; vertical-align: top;">
     <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/外部音乐.webp" alt="外部音乐" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
     <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">外部音乐</div>
   </div>
-  <div style="flex-shrink: 0; text-align: center; width: 150px;">
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 12px; vertical-align: top;">
     <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/排行榜.webp" alt="排行榜" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
     <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">排行榜</div>
   </div>
-  <div style="flex-shrink: 0; text-align: center; width: 150px;">
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 12px; vertical-align: top;">
     <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/评论系统.webp" alt="评论系统" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
     <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">评论系统</div>
   </div>
-  <div style="flex-shrink: 0; text-align: center; width: 150px;">
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 12px; vertical-align: top;">
     <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/天气预报.webp" alt="天气预报" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
     <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">天气预报</div>
   </div>
-  <div style="flex-shrink: 0; text-align: center; width: 150px;">
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 12px; vertical-align: top;">
     <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站投稿.webp" alt="网站投稿" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
     <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站投稿</div>
   </div>
-  <div style="flex-shrink: 0; text-align: center; width: 150px;">
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 12px; vertical-align: top;">
     <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/关于网站.webp" alt="关于网站" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
     <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">关于网站</div>
   </div>
