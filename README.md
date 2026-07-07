@@ -1,4 +1,53 @@
-
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="170">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站主页.webp" alt="网站主页" width="150"><br>
+        <b>网站主页</b>
+      </td>
+      <td align="center" width="170">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/分类导航.webp" alt="分类导航" width="150"><br>
+        <b>分类导航</b>
+      </td>
+      <td align="center" width="170">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站页脚.webp" alt="网站页脚" width="150"><br>
+        <b>网站页脚</b>
+      </td>
+      <td align="center" width="170">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/侧滑栏.webp" alt="侧滑栏" width="150"><br>
+        <b>侧滑栏</b>
+      </td>
+      <td align="center" width="170">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/内部音乐.webp" alt="内部音乐" width="150"><br>
+        <b>内部音乐</b>
+      </td>
+      <td align="center" width="170">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/外部音乐.webp" alt="外部音乐" width="150"><br>
+        <b>外部音乐</b>
+      </td>
+      <td align="center" width="170">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/排行榜.webp" alt="排行榜" width="150"><br>
+        <b>排行榜</b>
+      </td>
+      <td align="center" width="170">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/评论系统.webp" alt="评论系统" width="150"><br>
+        <b>评论系统</b>
+      </td>
+      <td align="center" width="170">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/天气预报.webp" alt="天气预报" width="150"><br>
+        <b>天气预报</b>
+      </td>
+      <td align="center" width="170">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站投稿.webp" alt="网站投稿" width="150"><br>
+        <b>网站投稿</b>
+      </td>
+      <td align="center" width="170">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/关于网站.webp" alt="关于网站" width="150"><br>
+        <b>关于网站</b>
+      </td>
+    </tr>
+  </table>
+</div>
 <div align="center">
   <table>
     <tr>
