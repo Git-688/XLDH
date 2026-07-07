@@ -1,5 +1,54 @@
 
-内容安全策略 (CSP)
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站主页.webp" alt="网站主页" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"><br>
+        <strong>网站主页</strong>
+      </td>
+      <td align="center">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/分类导航.webp" alt="分类导航" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"><br>
+        <strong>分类导航</strong>
+      </td>
+      <td align="center">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站页脚.webp" alt="网站页脚" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"><br>
+        <strong>网站页脚</strong>
+      </td>
+      <td align="center">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/侧滑栏.webp" alt="侧滑栏" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"><br>
+        <strong>侧滑栏</strong>
+      </td>
+      <td align="center">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/内部音乐.webp" alt="内部音乐" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"><br>
+        <strong>内部音乐</strong>
+      </td>
+      <td align="center">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/外部音乐.webp" alt="外部音乐" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"><br>
+        <strong>外部音乐</strong>
+      </td>
+      <td align="center">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/排行榜.webp" alt="排行榜" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"><br>
+        <strong>排行榜</strong>
+      </td>
+      <td align="center">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/评论系统.webp" alt="评论系统" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"><br>
+        <strong>评论系统</strong>
+      </td>
+      <td align="center">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/天气预报.webp" alt="天气预报" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"><br>
+        <strong>天气预报</strong>
+      </td>
+      <td align="center">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站投稿.webp" alt="网站投稿" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"><br>
+        <strong>网站投稿</strong>
+      </td>
+      <td align="center">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/关于网站.webp" alt="关于网站" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"><br>
+        <strong>关于网站</strong>
+      </td>
+    </tr>
+  </table>
+</div>
 
 已为 index.html 和 admin.html 分别配置严格的CSP，限制脚本、样式、连接来源。若添加新第三方资源，请同步更新 meta 标签。
 
