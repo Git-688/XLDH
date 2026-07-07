@@ -345,6 +345,7 @@ class OptimizedNavigation {
             viewEl.textContent = this._formatViews(newViews);
             viewEl.classList.add('increasing');
             setTimeout(() => viewEl.classList.remove('increasing'), 300);
+
             try {
                 const response = await Utils.safeFetch(`${this.apiBase}/click`, {
                     method: 'POST',
@@ -355,16 +356,28 @@ class OptimizedNavigation {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.views !== undefined) {
+                        // 🆕 修改点：更新 DOM
                         viewEl.dataset.views = data.views;
                         viewEl.textContent = this._formatViews(data.views);
+                        
+                        // 🆕 修改点：同步更新 siteCache
+                        const currentSubId = this.selectedLevel2;
+                        if (currentSubId && this.siteCache.has(currentSubId)) {
+                            const cachedSites = this.siteCache.get(currentSubId);
+                            const targetSite = cachedSites.find(s => s.id === site.id);
+                            if (targetSite) {
+                                targetSite.views = data.views;
+                                this.siteCache.set(currentSubId, cachedSites);
+                            }
+                        }
                     }
                 }
             } catch (err) {
                 if (window.errorHandler) {
                     window.errorHandler.report(err, 'navigation.clickUpdate');
                 }
-                viewEl.dataset.views = oldViews;
-                viewEl.textContent = this._formatViews(oldViews);
+                // 如果请求失败，回退到乐观更新值（但不要回退到旧 views）
+                // 此处不处理，因为已经乐观更新了，如果后端失败则保留乐观值
             }
         });
 
