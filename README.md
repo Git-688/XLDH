@@ -151,40 +151,39 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 <p align="center">👆 左右滑动查看核心界面（表格强制单行，绝不换行）</p>
 
-<!-- 外层容器仅开启横向滚动，隐藏竖向溢出 -->
-<div align="center" style="overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; padding: 10px 0; max-width: 100%;">
-  <table style="border-collapse: collapse; white-space: nowrap; margin: 0 auto;">
+<div style="overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; padding: 10px 0; width: 100%;">
+  <table style="border-collapse: collapse; white-space: nowrap;">
     <tr>
       <td style="padding: 0 12px; text-align: center; vertical-align: top;">
         <img src="./assets/screenshots/home.png" alt="首页全景" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
-        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">首页全景</div>
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">首页全景</div>
       </td>
       <td style="padding: 0 12px; text-align: center; vertical-align: top;">
         <img src="./assets/screenshots/dark.png" alt="深色模式" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
-        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">深色模式</div>
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">深色模式</div>
       </td>
       <td style="padding: 0 12px; text-align: center; vertical-align: top;">
         <img src="./assets/screenshots/nav.png" alt="导航分类" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
-        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">导航分类</div>
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">导航分类</div>
       </td>
       <td style="padding: 0 12px; text-align: center; vertical-align: top;">
         <img src="./assets/screenshots/music.png" alt="音乐播放器" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
-        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">音乐播放器</div>
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">音乐播放器</div>
       </td>
       <td style="padding: 0 12px; text-align: center; vertical-align: top;">
         <img src="./assets/screenshots/weather.png" alt="天气木鱼" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
-        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">天气 & 木鱼</div>
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">天气 & 木鱼</div>
       </td>
       <td style="padding: 0 12px; text-align: center; vertical-align: top;">
         <img src="./assets/screenshots/admin.png" alt="管理后台" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
-        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">管理后台</div>
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">管理后台</div>
       </td>
     </tr>
   </table>
 </div>
 
 <div align="center">
-  <p>📸 截图仅示意，实际效果请访问 <a href="shturl.cc/bMQGCiAhqVIZp">在线体验</a></p>
+  <p>📸 截图仅示意，实际效果请访问 <a href="shturl.cc/sa5bMynCg8YE8">在线体验</a></p>
 </div>
 
 ---
