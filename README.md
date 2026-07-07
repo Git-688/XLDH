@@ -149,32 +149,32 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 ## 🖼️ 效果展示
 
-<p align="center">左右滑动查看核心界面（点击图片可放大）</p>
+<p align="center">👆 左右滑动或滚动查看核心界面</p>
 
-<div align="center" style="overflow-x: auto; white-space: nowrap; padding: 10px 0; scroll-behavior: smooth;">
-  <div style="display: inline-block; margin-right: 16px;">
-    <img src="./assets/screenshots/home.png" alt="首页" height="180" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-    <p style="margin: 4px 0 0; font-size: 14px; color: #555;">首页全景</p>
+<div align="center" style="display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 16px; padding: 12px 0; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
+  <div style="flex: 0 0 auto; scroll-snap-align: start; text-align: center; min-width: 160px;">
+    <img src="./assets/screenshots/home.png" alt="首页" style="width: 70vw; max-width: 260px; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
+    <p style="margin: 6px 0 0; font-size: 14px; color: #555;">首页全景</p>
   </div>
-  <div style="display: inline-block; margin-right: 16px;">
-    <img src="./assets/screenshots/dark.png" alt="深色模式" height="180" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-    <p style="margin: 4px 0 0; font-size: 14px; color: #555;">深色模式</p>
+  <div style="flex: 0 0 auto; scroll-snap-align: start; text-align: center; min-width: 160px;">
+    <img src="./assets/screenshots/dark.png" alt="深色模式" style="width: 70vw; max-width: 260px; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
+    <p style="margin: 6px 0 0; font-size: 14px; color: #555;">深色模式</p>
   </div>
-  <div style="display: inline-block; margin-right: 16px;">
-    <img src="./assets/screenshots/nav.png" alt="导航分类" height="180" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-    <p style="margin: 4px 0 0; font-size: 14px; color: #555;">导航分类</p>
+  <div style="flex: 0 0 auto; scroll-snap-align: start; text-align: center; min-width: 160px;">
+    <img src="./assets/screenshots/nav.png" alt="导航分类" style="width: 70vw; max-width: 260px; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
+    <p style="margin: 6px 0 0; font-size: 14px; color: #555;">导航分类</p>
   </div>
-  <div style="display: inline-block; margin-right: 16px;">
-    <img src="./assets/screenshots/music.png" alt="音乐播放器" height="180" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-    <p style="margin: 4px 0 0; font-size: 14px; color: #555;">音乐播放器</p>
+  <div style="flex: 0 0 auto; scroll-snap-align: start; text-align: center; min-width: 160px;">
+    <img src="./assets/screenshots/music.png" alt="音乐播放器" style="width: 70vw; max-width: 260px; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
+    <p style="margin: 6px 0 0; font-size: 14px; color: #555;">音乐播放器</p>
   </div>
-  <div style="display: inline-block; margin-right: 16px;">
-    <img src="./assets/screenshots/weather.png" alt="天气木鱼" height="180" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-    <p style="margin: 4px 0 0; font-size: 14px; color: #555;">天气 & 木鱼</p>
+  <div style="flex: 0 0 auto; scroll-snap-align: start; text-align: center; min-width: 160px;">
+    <img src="./assets/screenshots/weather.png" alt="天气木鱼" style="width: 70vw; max-width: 260px; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
+    <p style="margin: 6px 0 0; font-size: 14px; color: #555;">天气 & 木鱼</p>
   </div>
-  <div style="display: inline-block; margin-right: 16px;">
-    <img src="./assets/screenshots/admin.png" alt="管理后台" height="180" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-    <p style="margin: 4px 0 0; font-size: 14px; color: #555;">管理后台</p>
+  <div style="flex: 0 0 auto; scroll-snap-align: start; text-align: center; min-width: 160px;">
+    <img src="./assets/screenshots/admin.png" alt="管理后台" style="width: 70vw; max-width: 260px; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: block;">
+    <p style="margin: 6px 0 0; font-size: 14px; color: #555;">管理后台</p>
   </div>
 </div>
 
@@ -183,7 +183,6 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 </div>
 
 ---
-
 ## 💰 赞赏项目
 
 如果觉得这个项目对你有帮助，欢迎请我喝咖啡 ☕️
