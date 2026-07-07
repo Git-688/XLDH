@@ -149,6 +149,44 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 ## 🖼️ 效果展示
 
+<p align="center">👆 左右滑动查看核心界面（图片+名称一一对应，强制单行，绝不换行）</p>
+
+<div align="center" style="overflow-x: auto; overflow-y: hidden; white-space: nowrap; -webkit-overflow-scrolling: touch; padding: 12px 0;">
+  <!-- 所有图片组用 inline-block 排成一行 -->
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 20px; vertical-align: top;">
+    <img src="./assets/screenshots/home.png" alt="首页全景" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">首页全景</div>
+  </div>
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 20px; vertical-align: top;">
+    <img src="./assets/screenshots/dark.png" alt="深色模式" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">深色模式</div>
+  </div>
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 20px; vertical-align: top;">
+    <img src="./assets/screenshots/nav.png" alt="导航分类" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">导航分类</div>
+  </div>
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 20px; vertical-align: top;">
+    <img src="./assets/screenshots/music.png" alt="音乐播放器" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">音乐播放器</div>
+  </div>
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 20px; vertical-align: top;">
+    <img src="./assets/screenshots/weather.png" alt="天气木鱼" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">天气 & 木鱼</div>
+  </div>
+  <div style="display: inline-block; text-align: center; width: 150px; margin-right: 20px; vertical-align: top;">
+    <img src="./assets/screenshots/admin.png" alt="管理后台" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">管理后台</div>
+  </div>
+</div>
+
+<div align="center">
+  <p>📸 截图仅示意，实际效果请访问 <a href="https://xjdh688.ccwu.cc">在线体验</a></p>
+</div>
+
+---
+
+## 🖼️ 效果展示
+
 <div align="center" style="overflow-x: auto; overflow-y: hidden; white-space: nowrap; -webkit-overflow-scrolling: touch; padding: 12px 0; scrollbar-width: thin; scrollbar-color: #ccc transparent;">
   <div style="display: flex; flex-wrap: nowrap; gap: 20px; width: max-content; margin: 0 auto;">
     <!-- 每组：图片 + 下方名称 -->
