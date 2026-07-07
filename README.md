@@ -205,12 +205,6 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 </div>
 
 
-## 💰 赞赏项目
-
-如果觉得这个项目对你有帮助，欢迎请我喝咖啡 ☕️
-
-> 采取**自愿**原则, 收到的赞赏将用于提高开发者积极性和开发环境。
-
 <div align="center">
   <table>
     <tr>
@@ -225,6 +219,36 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
       <td align="center">
         <strong>支付宝</strong><br>
         <img src="./assets/images/zfb.png" width="150" alt="支付宝收款码">
+      </td>
+    </tr>
+  </table>
+  <p>⭐️ 感谢您的支持！ ⭐️</p>
+</div>
+
+## 💰 赞赏项目
+
+如果觉得这个项目对你有帮助，欢迎请我喝咖啡 ☕️
+
+> 采取**自愿**原则, 收到的赞赏将用于提高开发者积极性和开发环境。
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <strong>QQ 支付</strong><br>
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站投稿.webp" width="150" alt="QQ收款码">
+      </td>
+<td align="center">
+        <strong>QQ 支付</strong><br>
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站投稿.webp" width="150" alt="QQ收款码">
+      </td>
+      <td align="center">
+        <strong>微信支付</strong><br>
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/分类导航.webp" width="150" alt="微信收款码">
+      </td>
+      <td align="center">
+        <strong>支付宝</strong><br>
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/评论系统.webp" width="150" alt="支付宝收款码">
       </td>
     </tr>
   </table>
