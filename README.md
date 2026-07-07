@@ -233,8 +233,7 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
   <source media="(prefers-color-scheme: light)"
           srcset="https://raw.githubusercontent.com/Git-688/Git-688/output/github-contribution-grid-snake.svg">
 
-  <img
-      src="https://raw.githubusercontent.com/Git-688/Git-688/output/github-contribution-grid-snake.svg"
+  <img src="https://raw.githubusercontent.com/Git-688/Git-688/output/github-contribution-grid-snake.svg"
       width="100%">
 </picture>
 </div>
