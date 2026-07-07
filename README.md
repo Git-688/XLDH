@@ -149,43 +149,40 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 ## 🖼️ 效果展示
 
-> 以下为星聚导航主要界面的实际截图，让您快速了解整体外观与交互。
+<p align="center">左右滑动查看核心界面（点击图片可放大）</p>
+
+<div align="center" style="overflow-x: auto; white-space: nowrap; padding: 10px 0; scroll-behavior: smooth;">
+  <div style="display: inline-block; margin-right: 16px;">
+    <img src="./assets/screenshots/home.png" alt="首页" height="180" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+    <p style="margin: 4px 0 0; font-size: 14px; color: #555;">首页全景</p>
+  </div>
+  <div style="display: inline-block; margin-right: 16px;">
+    <img src="./assets/screenshots/dark.png" alt="深色模式" height="180" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+    <p style="margin: 4px 0 0; font-size: 14px; color: #555;">深色模式</p>
+  </div>
+  <div style="display: inline-block; margin-right: 16px;">
+    <img src="./assets/screenshots/nav.png" alt="导航分类" height="180" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+    <p style="margin: 4px 0 0; font-size: 14px; color: #555;">导航分类</p>
+  </div>
+  <div style="display: inline-block; margin-right: 16px;">
+    <img src="./assets/screenshots/music.png" alt="音乐播放器" height="180" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+    <p style="margin: 4px 0 0; font-size: 14px; color: #555;">音乐播放器</p>
+  </div>
+  <div style="display: inline-block; margin-right: 16px;">
+    <img src="./assets/screenshots/weather.png" alt="天气木鱼" height="180" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+    <p style="margin: 4px 0 0; font-size: 14px; color: #555;">天气 & 木鱼</p>
+  </div>
+  <div style="display: inline-block; margin-right: 16px;">
+    <img src="./assets/screenshots/admin.png" alt="管理后台" height="180" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+    <p style="margin: 4px 0 0; font-size: 14px; color: #555;">管理后台</p>
+  </div>
+</div>
 
 <div align="center">
-  <table>
-    <tr>
-      <td align="center">
-        <strong>首页全景</strong><br>
-        <img src="./assets/screenshots/home.png" alt="首页" width="300">
-      </td>
-      <td align="center">
-        <strong>深色模式</strong><br>
-        <img src="./assets/screenshots/dark.png" alt="深色模式" width="300">
-      </td>
-    </tr>
-    <tr>
-      <td align="center">
-        <strong>导航分类</strong><br>
-        <img src="./assets/screenshots/nav.png" alt="导航分类" width="300">
-      </td>
-      <td align="center">
-        <strong>音乐播放器</strong><br>
-        <img src="./assets/screenshots/music.png" alt="音乐播放器" width="300">
-      </td>
-    </tr>
-    <tr>
-      <td align="center">
-        <strong>天气卡片 & 木鱼</strong><br>
-        <img src="./assets/screenshots/weather.png" alt="天气木鱼" width="300">
-      </td>
-      <td align="center">
-        <strong>后台管理</strong><br>
-        <img src="./assets/screenshots/admin.png" alt="管理后台" width="300">
-      </td>
-    </tr>
-  </table>
   <p>📸 截图仅示意，实际效果请访问 <a href="https://xjdh688.ccwu.cc">在线体验</a></p>
 </div>
+
+---
 
 ## 💰 赞赏项目
 
