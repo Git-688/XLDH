@@ -246,4 +246,4 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 ---
 
-星聚导航 — 启跃星门，航图绘星河
+星聚导航 — 跃启星门，航绘星河
