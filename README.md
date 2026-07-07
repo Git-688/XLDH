@@ -149,7 +149,7 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 ## 🖼️ 效果展示
 
-<div style="overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; padding: 10px 0; width: 100%;">
+<div style="overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; padding: 100px 0; width: 100%;">
   <table style="border-collapse: collapse; white-space: nowrap;">
     <tr>
       <td style="padding: 0 12px; text-align: center; vertical-align: top;">
