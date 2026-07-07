@@ -1,7 +1,7 @@
 <div align="center">
   <img src="./assets/logo.png" alt="星聚导航 Logo" width="100">
   <h1>⭐️ 星聚导航</h1>
-  <p>基于免费公开的（Git开源项目、接口、轻量数据库）基础上所建设的一款极简的现代个人导航</p>
+  <p>一款极简的现代个人导航（集合免费Git开源项目）</p>
 
   ![GitHub Repo stars](https://img.shields.io/github/stars/Git-688/XLDH?style=social)
   ![GitHub forks](https://img.shields.io/github/forks/Git-688/XLDH?style=social)
@@ -188,7 +188,7 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 </details>
 
 <div align="center">
-  <p>📸 实际效果请访问 <ahref="https://xjdh688.ccwu.cc" target="_blank">在线体验</a></p>
+  <p>📸 实际效果请访问 <a href="https://xjdh688.ccwu.cc" target="_blank">在线体验</a></p>
 </div>
 
 ## 💰 赞赏项目
