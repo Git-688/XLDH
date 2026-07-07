@@ -149,33 +149,32 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 ## 🖼️ 效果展示
 
-<p align="center">👆 左右滑动查看核心界面（始终单行横向滚动）</p>
-
 <div align="center" style="overflow-x: auto; overflow-y: hidden; white-space: nowrap; -webkit-overflow-scrolling: touch; padding: 12px 0; scrollbar-width: thin; scrollbar-color: #ccc transparent;">
-  <div style="display: flex; flex-wrap: nowrap; gap: 16px; width: max-content; margin: 0 auto;">
-    <div style="flex: 0 0 auto; text-align: center;">
-      <img src="./assets/screenshots/home.png" alt="首页" height="160" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
-      <span style="font-size: 13px; color: #555; display: block; margin-top: 4px;">首页全景</span>
+  <div style="display: flex; flex-wrap: nowrap; gap: 20px; width: max-content; margin: 0 auto;">
+    <!-- 每组：图片 + 下方名称 -->
+    <div style="flex: 0 0 auto; text-align: center; width: 150px;">
+      <img src="./assets/screenshots/home.png" alt="首页全景" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+      <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">首页全景</div>
     </div>
-    <div style="flex: 0 0 auto; text-align: center;">
-      <img src="./assets/screenshots/dark.png" alt="深色模式" height="160" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
-      <span style="font-size: 13px; color: #555; display: block; margin-top: 4px;">深色模式</span>
+    <div style="flex: 0 0 auto; text-align: center; width: 150px;">
+      <img src="./assets/screenshots/dark.png" alt="深色模式" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+      <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">深色模式</div>
     </div>
-    <div style="flex: 0 0 auto; text-align: center;">
-      <img src="./assets/screenshots/nav.png" alt="导航分类" height="160" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
-      <span style="font-size: 13px; color: #555; display: block; margin-top: 4px;">导航分类</span>
+    <div style="flex: 0 0 auto; text-align: center; width: 150px;">
+      <img src="./assets/screenshots/nav.png" alt="导航分类" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+      <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">导航分类</div>
     </div>
-    <div style="flex: 0 0 auto; text-align: center;">
-      <img src="./assets/screenshots/music.png" alt="音乐播放器" height="160" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
-      <span style="font-size: 13px; color: #555; display: block; margin-top: 4px;">音乐播放器</span>
+    <div style="flex: 0 0 auto; text-align: center; width: 150px;">
+      <img src="./assets/screenshots/music.png" alt="音乐播放器" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+      <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">音乐播放器</div>
     </div>
-    <div style="flex: 0 0 auto; text-align: center;">
-      <img src="./assets/screenshots/weather.png" alt="天气木鱼" height="160" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
-      <span style="font-size: 13px; color: #555; display: block; margin-top: 4px;">天气 & 木鱼</span>
+    <div style="flex: 0 0 auto; text-align: center; width: 150px;">
+      <img src="./assets/screenshots/weather.png" alt="天气木鱼" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+      <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">天气 & 木鱼</div>
     </div>
-    <div style="flex: 0 0 auto; text-align: center;">
-      <img src="./assets/screenshots/admin.png" alt="管理后台" height="160" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
-      <span style="font-size: 13px; color: #555; display: block; margin-top: 4px;">管理后台</span>
+    <div style="flex: 0 0 auto; text-align: center; width: 150px;">
+      <img src="./assets/screenshots/admin.png" alt="管理后台" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+      <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px;">管理后台</div>
     </div>
   </div>
 </div>
