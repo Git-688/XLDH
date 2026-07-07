@@ -150,7 +150,7 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 ## 🖼️ 效果展示
 
 <details open>
-<summary><b>📸 点击可收起/展开所有截图</b>（共 10 张）</summary>
+<summary><b>📸 点击可收起/展开所有效果图</b>（共 10 张）</summary>
 
 <div align="center" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px 0;">
   <a href="https://tc688.ccwu.cc/file/星聚导航/zstp/网站主页.webp" target="_blank">
@@ -188,7 +188,7 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 </details>
 
 <div align="center">
-  <p>📸 点击任意图片可放大查看 · 实际效果请访问 <a href="https://xjdh688.ccwu.cc" target="_blank">在线体验</a></p>
+  <p>📸 实际效果请访问 <ahref="https://xjdh688.ccwu.cc" target="_blank">在线体验</a></p>
 </div>
 
 ## 💰 赞赏项目
