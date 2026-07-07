@@ -149,6 +149,8 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 ## 🖼️ 效果展示
 
+> 聚合内外部音乐、访问排行榜、评论系统、天气预报、网站投稿、站长空间、站长笔记...
+
 <details open>
 <summary><b>📸 点击可收起/展开所有效果图</b>（共 10 张）</summary>
 
