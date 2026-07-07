@@ -10,115 +10,6 @@
   [![群](https://img.shields.io/badge/%E4%BC%81%E9%B9%85%E7%BE%A4-187780263-6BC5FF)](https://qun.qq.com/universal-share/share?ac=1&authKey=%2BP3qVBuKJpn3kIn5jBnlVFWx7S3Z%2Be0sD4KKmK4KTqqqQYjD8uQoNyhFMYRx3EXO&busi_data=eyJncm91cENvZGUiOiIxODc3ODAyNjMiLCJ0b2tlbiI6IlBkYzZ3TGlCK0ZLTWdyWEZLNExwOVZodHVycFRhT1A0L2swWUgxNDZrZ0c1WTFXL29jcVhJWk9uMWcwbnVPK3MiLCJ1aW4iOiIxNTk1MTI2NTM0In0%3D&data=b2ypnWVy3QPJUZq7msse4tlsICKy2GqgCLKOnfNwgdSHGsUxqHTfLoQmkwpQ2q61yXoOfKJsGRJ9DnG5cad8dA&svctype=4&tempid=h5_group_info)
 </div>
 
-内容安全策略 (CSP)
-
-已为 index.html 和 admin.html 分别配置严格的CSP，限制脚本、样式、连接来源。若添加新第三方资源，请同步更新 meta 标签。
-
-## 🖼️ 效果展示
-
-<!-- 替换为新的水平横向滚动固定卡片布局 -->
-<div style="display: flex; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: 16px; padding: 10px 0; width: 100%; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
-  
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站主页.webp" alt="网站主页" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站主页</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/分类导航.webp" alt="分类导航" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">分类导航</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站页脚.webp" alt="网站页脚" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站页脚</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/侧滑栏.webp" alt="侧滑栏" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">侧滑栏</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/内部音乐.webp" alt="内部音乐" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">内部音乐</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/外部音乐.webp" alt="外部音乐" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">外部音乐</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/排行榜.webp" alt="排行榜" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">排行榜</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/评论系统.webp" alt="评论系统" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">评论系统</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/天气预报.webp" alt="天气预报" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">天气预报</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站投稿.webp" alt="网站投稿" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站投稿</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/关于网站.webp" alt="关于网站" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">关于网站</div>
-  </div>
-
-</div>
-
-<div align="center">
-  <p>📸 截图仅示意，实际效果请访问 <a href="shturl.cc/30XQNKS3hf9de">在线体验</a></p>
-</div>
-
-
-## 💰 赞赏项目
-
-如果觉得这个项目对你有帮助，欢迎请我喝咖啡 ☕️
-
-> 采取**自愿**原则, 收到的赞赏将用于提高开发者积极性和开发环境。
-
-<div align="center">
-  <table>
-    <tr>
-      <td align="center">
-        <strong>QQ 支付</strong><br>
-        <img src="./assets/images/qq.png" width="150" alt="QQ收款码">
-      </td>
-      <td align="center">
-        <strong>微信支付</strong><br>
-        <img src="./assets/images/wx.png" width="150" alt="微信收款码">
-      </td>
-      <td align="center">
-        <strong>支付宝</strong><br>
-        <img src="./assets/images/zfb.png" width="150" alt="支付宝收款码">
-      </td>
-    </tr>
-  </table>
-  <p>⭐️ 感谢您的支持！ ⭐️</p>
-</div>
-
-## 📈 Star 历史
-
-[![Star History Chart](https://api.star-history.com/svg?repos=Git-688/XLDH&type=Date)](https://star-history.com/#Git-688/XLDH&Date)
-
-
-📄 许可证
-
-本项目基于 [MIT](license) License 开源，© 2025-PRESENT Viki。
-
----
-
-星聚导航 — 启跃星门，航图绘星河
 ---
 
 ## ✨ 特性
@@ -139,64 +30,7 @@
 - ⚡ **性能优化**：三级缓存（边缘缓存 + KV + 内存），静态资源 CDN 化，图片懒加载
 - 🛡️ **后台验证码**：星空动态星星云验证码，防止暴力破解
 
-<div style="display: flex; overflow-x: auto; overflow-y: hidden; gap: 16px; padding: 10px 0; width: 100%; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
-  
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站主页.webp" alt="网站主页" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站主页</div>
-  </div>
 
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/分类导航.webp" alt="分类导航" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">分类导航</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站页脚.webp" alt="网站页脚" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站页脚</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/侧滑栏.webp" alt="侧滑栏" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">侧滑栏</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/内部音乐.webp" alt="内部音乐" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">内部音乐</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/外部音乐.webp" alt="外部音乐" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">外部音乐</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/排行榜.webp" alt="排行榜" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">排行榜</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/评论系统.webp" alt="评论系统" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">评论系统</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/天气预报.webp" alt="天气预报" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">天气预报</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站投稿.webp" alt="网站投稿" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站投稿</div>
-  </div>
-
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/关于网站.webp" alt="关于网站" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">关于网站</div>
-  </div>
-
-</div>
 ## 🌐 在线体验
 
 ✅️星聚导航：`https://xjdh688.ccwu.cc`  
@@ -225,54 +59,7 @@
 | `APIHZ_KEY` | APIHz 密钥 |
 | `VT_API_KEY` | VirusTotal API 密钥 |
 | `SAFE_BROWSING_KEY` | Google Safe Browsing API 密钥 |
-<div style="display: flex; overflow-x: auto; overflow-y: hidden; gap: 16px; padding: 10px 0; width: 100%; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
-  <!-- 每张卡片固定宽度 160px，高度自适应但图片固定 -->
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站主页.webp" alt="网站主页" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站主页</div>
-  </div>
-  <!-- 重复以下结构，共11个 -->
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/分类导航.webp" alt="分类导航" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">分类导航</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站页脚.webp" alt="网站页脚" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站页脚</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/侧滑栏.webp" alt="侧滑栏" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">侧滑栏</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/内部音乐.webp" alt="内部音乐" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">内部音乐</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/外部音乐.webp" alt="外部音乐" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">外部音乐</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/排行榜.webp" alt="排行榜" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">排行榜</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/评论系统.webp" alt="评论系统" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">评论系统</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/天气预报.webp" alt="天气预报" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">天气预报</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站投稿.webp" alt="网站投稿" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站投稿</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/关于网站.webp" alt="关于网站" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">关于网站</div>
-  </div>
-</div>
+
 ## 📁 目录结构
 ```
 XLDH/
@@ -356,62 +143,61 @@ XLDH/
 javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 ```
 
-
 内容安全策略 (CSP)
 
 已为 index.html 和 admin.html 分别配置严格的CSP，限制脚本、样式、连接来源。若添加新第三方资源，请同步更新 meta 标签。
 
 ## 🖼️ 效果展示
 
-<!-- 使用 inline-block + white-space:nowrap 实现可靠的横向滚动，卡片永不换行 -->
-<div style="overflow-x: auto; overflow-y: hidden; white-space: nowrap; padding: 10px 0; width: 100%; -webkit-overflow-scrolling: touch;">
- <div style="display: flex; overflow-x: auto; overflow-y: hidden; gap: 16px; padding: 10px 0; width: 100%; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
-  <!-- 每张卡片固定宽度 160px，高度自适应但图片固定 -->
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站主页.webp" alt="网站主页" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站主页</div>
-  </div>
-  <!-- 重复以下结构，共11个 -->
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/分类导航.webp" alt="分类导航" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">分类导航</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站页脚.webp" alt="网站页脚" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站页脚</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/侧滑栏.webp" alt="侧滑栏" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">侧滑栏</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/内部音乐.webp" alt="内部音乐" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">内部音乐</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/外部音乐.webp" alt="外部音乐" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">外部音乐</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/排行榜.webp" alt="排行榜" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">排行榜</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/评论系统.webp" alt="评论系统" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">评论系统</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/天气预报.webp" alt="天气预报" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">天气预报</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站投稿.webp" alt="网站投稿" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站投稿</div>
-  </div>
-  <div style="flex: 0 0 160px; text-align: center; scroll-snap-align: start;">
-    <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/关于网站.webp" alt="关于网站" width="160" height="110" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block; object-fit: cover; width: 100%; height: 110px;">
-    <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">关于网站</div>
-  </div>
+<div style="overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; padding: 10px 0; width: 100%;">
+  <table style="border-collapse: collapse; white-space: nowrap;">
+    <tr>
+      <td style="padding: 0 12px; text-align: center; vertical-align: top;">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站主页.webp" alt="网站主页" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站主页</div>
+      </td>
+      <td style="padding: 0 12px; text-align: center; vertical-align: top;">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/分类导航.webp" alt="分类导航" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">分类导航</div>
+      </td>
+      <td style="padding: 0 12px; text-align: center; vertical-align: top;">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站页脚.webp" alt="网站页脚" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站页脚</div>
+      </td>
+      <td style="padding: 0 12px; text-align: center; vertical-align: top;">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/侧滑栏.webp" alt="侧滑栏" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">侧滑栏</div>
+      </td>
+      <td style="padding: 0 12px; text-align: center; vertical-align: top;">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/内部音乐.webp" alt="内部音乐" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">内部音乐</div>
+      </td>
+      <td style="padding: 0 12px; text-align: center; vertical-align: top;">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/外部音乐.webp" alt="外部音乐" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">外部音乐</div>
+      </td>
+      <td style="padding: 0 12px; text-align: center; vertical-align: top;">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/排行榜.webp" alt="排行榜" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">排行榜</div>
+      </td>
+      <td style="padding: 0 12px; text-align: center; vertical-align: top;">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/评论系统.webp" alt="评论系统" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">评论系统</div>
+      </td>
+      <td style="padding: 0 12px; text-align: center; vertical-align: top;">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/天气预报.webp" alt="天气预报" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">天气预报</div>
+      </td>
+      <td style="padding: 0 12px; text-align: center; vertical-align: top;">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/网站投稿.webp" alt="网站投稿" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">网站投稿</div>
+      </td>
+      <td style="padding: 0 12px; text-align: center; vertical-align: top;">
+        <img src="https://tc688.ccwu.cc/file/星聚导航/zstp/关于网站.webp" alt="关于网站" width="150" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: block;">
+        <div style="font-weight: bold; font-size: 14px; color: #333; margin-top: 6px; white-space: nowrap;">关于网站</div>
+      </td>
+    </tr>
+  </table>
 </div>
 
 <div align="center">
