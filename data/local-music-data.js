@@ -33,7 +33,7 @@ window.localMusicData = [
     {
         id: 'local_004',
         title: '光年之外',
-        artist: 'G.E.M.邓紫棋',
+        artist: 'G.E.M.邓紫',
         src: 'https://music.163.com/song/media/outer/url?id=449818741.mp3',
         cover: 'https://p1.music.126.net/fkqFqMaEt0CzxYS-0NpCog==/18587244069235039.jpg',
         lrc: '',
