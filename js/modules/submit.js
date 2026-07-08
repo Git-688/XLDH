@@ -1,4 +1,4 @@
-/* submit.js - 已增加错误上报 */
+/* submit.js - 完整修改版（符合4点需求） */
 class SubmitModule {
     constructor() {
         if (window.Starlink && window.Starlink.submit) return window.Starlink.submit;
@@ -28,7 +28,11 @@ class SubmitModule {
         this.pollingTimer = null;
         this.isVisible = false;
 
+        // 【新增】标志：是否已成功获取过信息（用于避免重复自动获取）
+        this.hasFetchedInfo = false;
+
         this.DRAFT_KEY = 'submit_draft';
+        this.CONTACT_KEY = 'submit_contact'; // 独立保存联系方式
         this.draftSaveTimer = null;
         this.isRestoringDraft = false;
 
@@ -89,8 +93,11 @@ class SubmitModule {
                 this.autoResizeDesc();
             }
             if (draft.contact && this.contactInput) this.contactInput.value = draft.contact;
+            // 单独保存的联系方式也同步
+            if (draft.contact) localStorage.setItem(this.CONTACT_KEY, draft.contact);
             this.isRestoringDraft = false;
-            if (draft.url && this.isVisible) {
+            // 【修改】只有在未获取过信息时才自动获取
+            if (draft.url && this.isVisible && !this.hasFetchedInfo) {
                 setTimeout(() => this.fetchSiteInfo(), 500);
             }
             this.updateSubmitButton();
@@ -103,6 +110,7 @@ class SubmitModule {
     clearDraft() {
         try {
             localStorage.removeItem(this.DRAFT_KEY);
+            localStorage.removeItem(this.CONTACT_KEY);
         } catch (e) {}
     }
 
@@ -122,6 +130,12 @@ class SubmitModule {
         this.bindEvents();
         if (this.descInput) this.descInput.maxLength = 200;
 
+        // 尝试恢复独立的联系方式
+        const savedContact = localStorage.getItem(this.CONTACT_KEY);
+        if (savedContact && this.contactInput) {
+            this.contactInput.value = savedContact;
+        }
+
         this.loadDraft();
 
         const observer = new MutationObserver((mutations) => {
@@ -132,6 +146,11 @@ class SubmitModule {
                     this.loadGlobalTotalCount();
                     if (!this.loadDraft()) {
                         this.resetSecurityCheck();
+                        // 如果有独立的联系方式，恢复
+                        const savedContact = localStorage.getItem(this.CONTACT_KEY);
+                        if (savedContact && this.contactInput) {
+                            this.contactInput.value = savedContact;
+                        }
                     }
                     this.updateSubmitButton();
                 } else if (mutation.attributeName === 'class' && !this.modal.classList.contains('active')) {
@@ -211,6 +230,7 @@ class SubmitModule {
 
         this.urlInput.addEventListener('input', () => {
             this.resetSecurityCheck();
+            this.hasFetchedInfo = false; // 修改URL后标记为未获取
             this.updateSubmitButton();
             this.scheduleDraftSave();
         });
@@ -230,6 +250,8 @@ class SubmitModule {
         this.contactInput?.addEventListener('input', () => {
             this.updateSubmitButton();
             this.scheduleDraftSave();
+            // 单独保存联系方式
+            localStorage.setItem(this.CONTACT_KEY, this.contactInput.value);
         });
 
         window.addEventListener('beforeunload', () => {
@@ -316,7 +338,16 @@ class SubmitModule {
             window.toast.show('请输入正确的网址', 'warning');
             return;
         }
+
+        // 【修改】清除旧信息（标题、描述、图标），但保留联系方式
+        this.titleInput.value = '';
+        this.descInput.value = '';
+        this.iconInput.value = '';
+        this.iconPreview.style.display = 'none';
+        // 联系方式不清除，保留
+
         this.resetSecurityCheck();
+        this.hasFetchedInfo = false; // 重新获取时重置标志
         this.fetchInfoBtn.disabled = true;
         this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 获取信息...';
         this.urlCheckResult.style.display = 'block';
@@ -351,6 +382,7 @@ class SubmitModule {
                     this.securityPassed = false;
                 } else {
                     this.securityPassed = true;
+                    this.hasFetchedInfo = true; // 标记已获取成功
                 }
                 this.updateSubmitButton();
             }
@@ -363,6 +395,7 @@ class SubmitModule {
             this.urlCheckResult.className = 'url-check-result checking';
             this.urlCheckResult.innerHTML = '获取信息失败，请手动填写并重试检测';
             this.securityPassed = false;
+            this.hasFetchedInfo = false;
             this.updateSubmitButton();
         } finally {
             this.fetchInfoBtn.disabled = false;
@@ -383,8 +416,10 @@ class SubmitModule {
                     this.displaySecurityReport(status.result);
                     if (status.result.canSubmit !== false) {
                         this.securityPassed = true;
+                        this.hasFetchedInfo = true; // 标记已获取
                     } else {
                         this.securityPassed = false;
+                        this.hasFetchedInfo = false;
                     }
                     this.updateSubmitButton();
                 } else if (status.status === 'failed') {
@@ -392,14 +427,23 @@ class SubmitModule {
                     this.urlCheckResult.className = 'url-check-result unsafe';
                     this.urlCheckResult.innerHTML = '安全检测失败，请稍后重试';
                     this.securityPassed = false;
+                    this.hasFetchedInfo = false;
                     this.updateSubmitButton();
                 } else {
+                    // 仍在进行中
                     this.urlCheckResult.innerHTML = '安全检测进行中，请稍候...';
                 }
             } catch (err) {
                 if (window.errorHandler) {
                     window.errorHandler.report(err, 'submit.startPolling');
                 }
+                // 网络错误时停止轮询并提示
+                this.stopPolling();
+                this.urlCheckResult.className = 'url-check-result checking';
+                this.urlCheckResult.innerHTML = '网络错误，请重试';
+                this.securityPassed = false;
+                this.hasFetchedInfo = false;
+                this.updateSubmitButton();
             }
         }, 2000);
     }
@@ -473,6 +517,7 @@ class SubmitModule {
                 if (this.urlCheckResult && data.details && data.details.label) {
                     this.displaySecurityReport(data.details);
                     this.securityPassed = false;
+                    this.hasFetchedInfo = false;
                     this.updateSubmitButton();
                 }
             }
@@ -507,6 +552,8 @@ class SubmitModule {
         this.submitting = false;
         this.securityPassed = false;
         this.lastSecurityDetail = null;
+        this.hasFetchedInfo = false; // 重置标志
+        // 不清除联系方式，让草稿或独立存储保留
     }
 
     show() {
@@ -518,6 +565,7 @@ class SubmitModule {
         }
         this.modal.classList.add('active');
         this.isVisible = true;
+        // 加载草稿，但不会自动获取（由 hasFetchedInfo 控制）
         this.loadDraft();
         this.updateSubmitButton();
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
@@ -533,7 +581,7 @@ class SubmitModule {
             if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
             else if (window.app) window.app.unregisterModal(this);
             this.modal.removeEventListener('transitionend', onTransitionEnd);
-            this.resetForm();
+            // 不重置表单，保留数据
         };
         this.modal.addEventListener('transitionend', onTransitionEnd, { once: true });
         setTimeout(onTransitionEnd, 400);
