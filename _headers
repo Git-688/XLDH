@@ -1,14 +1,15 @@
-/assets/*
+# 全局安全头
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# 静态资源强缓存（图片、CSS、JS）
+/assets/*.png
   Cache-Control: public, max-age=31536000, immutable
-
-/css/*
+/assets/*.webp
+  Cache-Control: public, max-age=31536000, immutable
+/css/*.css
   Cache-Control: public, max-age=86400
-
-/js/*
+/js/*.js
   Cache-Control: public, max-age=86400
-
-/favicon.ico
-  Cache-Control: public, max-age=86400
-
-/*.html
-  Cache-Control: public, max-age=60
