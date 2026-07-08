@@ -1,4 +1,4 @@
-/* compact-tags.css */
+/* compact-tags.css - 移动端统一 3 列 */
 .minimal-tags-section {
     padding: 0 0 var(--section-margin-xs, 16px);
     margin-bottom: var(--section-margin-xs, 16px);
@@ -247,61 +247,48 @@
     .minimal-tag::before { height: 16px; width: 4px; }
     .tag-icon { font-size: 14px; width: 20px; height: 20px; }
 }
+
+/* ===== 移动端统一 3 列（<576px） ===== */
 @media (max-width: 575px) {
     .minimal-tags-section { padding: 0 0 var(--section-margin-xs, 16px); }
-    .tags-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .tags-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 10px; }
     .tags-title { font-size: 14px; }
     .tags-subtitle-right { font-size: 9px; max-width: 120px; white-space: normal; text-align: right; line-height: 1.2; margin-left: 8px; }
     .tag-label { font-size: 12px; }
-    .minimal-tag { padding: 9px 12px; min-height: 40px; gap: 7px; border-radius: 6px; }
-    .minimal-tag.active { padding: 8px 11px; }
-    .minimal-tag::before { height: 16px; width: 3px; }
-    .tag-icon { font-size: 14px; width: 20px; height: 20px; }
-}
-@media (max-width: 374px) {
-    .tags-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .tag-label { font-size: 11px; }
-    .tags-title { font-size: 13px; }
-    .tags-subtitle-right { font-size: 8px; max-width: 100px; line-height: 1.1; }
-    .minimal-tag { padding: 8px 11px; min-height: 38px; gap: 6px; border-radius: 6px; }
-    .minimal-tag.active { padding: 7px 10px; }
-    .minimal-tag::before { height: 14px; width: 3px; }
-    .tag-icon { font-size: 13px; width: 18px; height: 18px; }
-}
-@media (max-width: 319px) {
-    .tags-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .tags-header { flex-direction: column; align-items: flex-start; gap: 4px; }
-    .tag-label { font-size: 11px; }
-    .tags-title { font-size: 13px; }
-    .tags-subtitle-right { font-size: 8px; max-width: 100%; text-align: left; padding-left: 4px; margin-left: 0; line-height: 1.2; }
-    .minimal-tag { padding: 8px 10px; min-height: 36px; border-radius: 6px; }
+    .minimal-tag { padding: 8px 10px; min-height: 38px; gap: 6px; border-radius: 6px; }
     .minimal-tag.active { padding: 7px 9px; }
     .minimal-tag::before { height: 14px; width: 3px; }
     .tag-icon { font-size: 13px; width: 18px; height: 18px; }
 }
-@media (min-width: 1920px) {
-    .minimal-tags-section .container { max-width: 1800px; }
-    .tags-grid { grid-template-columns: repeat(12, 1fr); gap: 12px; }
-    .tag-label { font-size: 14px; }
-    .tags-title { font-size: 18px; }
-    .tags-subtitle-right { font-size: 14px; }
-    .minimal-tag { padding: 14px 18px; min-height: 52px; gap: 10px; border-radius: 6px; }
-    .minimal-tag.active { padding: 13px 17px; }
-    .minimal-tag::before { width: 5px; height: 24px; }
-    .tag-icon { font-size: 18px; width: 26px; height: 26px; }
-}
-@media (max-height: 500px) and (orientation: landscape) {
-    .minimal-tags-section { padding: 0 0; }
-    .tags-grid { grid-template-columns: repeat(8, 1fr); gap: 6px; }
-    .tags-subtitle-right { font-size: 9px; margin-bottom: 4px; }
-    .minimal-tag { min-height: 36px; padding: 7px 10px; border-radius: 6px; }
-    .minimal-tag.active { padding: 6px 9px; }
+
+/* 移除极端小屏的 2 列设置，统一 3 列 */
+@media (max-width: 374px) {
+    .tags-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 8px; }
     .tag-label { font-size: 11px; }
-    .tag-icon { font-size: 13px; width: 18px; height: 18px; }
+    .tags-title { font-size: 13px; }
+    .tags-subtitle-right { font-size: 8px; max-width: 100px; line-height: 1.1; }
+    .minimal-tag { padding: 7px 9px; min-height: 36px; gap: 5px; border-radius: 6px; }
+    .minimal-tag.active { padding: 6px 8px; }
+    .minimal-tag::before { height: 12px; width: 3px; }
+    .tag-icon { font-size: 12px; width: 16px; height: 16px; }
 }
+
+/* 320px 以下仍保持 3 列，但进一步缩小 */
+@media (max-width: 319px) {
+    .tags-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 6px; }
+    .tag-label { font-size: 10px; }
+    .tags-title { font-size: 12px; }
+    .tags-subtitle-right { font-size: 7px; max-width: 100%; text-align: left; padding-left: 4px; margin-left: 0; line-height: 1.2; }
+    .minimal-tag { padding: 6px 8px; min-height: 34px; border-radius: 6px; }
+    .minimal-tag.active { padding: 5px 7px; }
+    .minimal-tag::before { height: 12px; width: 3px; }
+    .tag-icon { font-size: 11px; width: 14px; height: 14px; }
+}
+
 @media (max-width: 767px) {
     .tags-grid { overflow-x: visible; }
 }
+
 @media (prefers-reduced-motion: reduce) {
     .minimal-tag { animation: none; opacity: 1; transition: none; }
     .minimal-tag:hover { transform: none; }
