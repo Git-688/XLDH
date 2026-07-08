@@ -39,7 +39,7 @@
 
 ## 🚀 快速部署
 
-> 准备一个免费域名、Cloudflare账号
+> 准备一个免费域名、Cloudflare账号、Netlify（可选）
 
 1. **Fork 本仓库** 并克隆到本地
 2. 部署前端到 **Cloudflare Pages**（直接连接仓库自动部署）
@@ -225,11 +225,21 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Git-688/XLDH&type=Date)](https://star-history.com/#Git-688/XLDH&Date)
 
+<div align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)"
+          srcset="https://raw.githubusercontent.com/Git-688/Git-688/output/github-contribution-grid-snake-dark.svg">
+
+  <source media="(prefers-color-scheme: light)"
+          srcset="https://raw.githubusercontent.com/Git-688/Git-688/output/github-contribution-grid-snake.svg">
+
+  <img
+      src="https://raw.githubusercontent.com/Git-688/Git-688/output/github-contribution-grid-snake.svg"
+      width="100%">
+</picture>
+</div>
+
 
 📄 许可证
 
 本项目基于 [MIT](license) License 开源，© 2025-PRESENT Viki。
-
----
-
-星聚导航 — 启跃星门，航图绘星河
