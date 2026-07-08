@@ -42,7 +42,7 @@
 > 准备一个免费域名、Cloudflare账号
 
 1. **Fork 本仓库** 并克隆到本地
-2. 部署前端到 **Cloudflare Pages**（直接连接仓库自动部署）
+2. 部署前端到 **Cloudflare**（直接连接仓库自动部署）
 3. 配置后端 **Cloudflare Workers**：
    - 创建 D1 数据库和 KV 命名空间
    - 在 Workers 设置中绑定 `DB`（D1）和 `STATS_KV`（KV）
@@ -229,3 +229,7 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
 📄 许可证
 
 本项目基于 [MIT](license) License 开源，© 2025-PRESENT Viki。
+
+---
+
+星聚导航 — 启跃星门，航图绘星河
