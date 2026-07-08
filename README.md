@@ -1,7 +1,7 @@
 <div align="center">
   <img src="./assets/logo.png" alt="星聚导航 Logo" width="100">
   <h1>⭐️ 星聚导航</h1>
-  <p>一款极简的现代个人导航（集合Git开源项目1）</p>
+  <p>一款极简的现代个人导航（集合Git开源项目）</p>
 
   ![GitHub Repo stars](https://img.shields.io/github/stars/Git-688/XLDH?style=social)
   ![GitHub forks](https://img.shields.io/github/forks/Git-688/XLDH?style=social)
@@ -221,9 +221,6 @@ javascript window.APP_CONFIG={API_BASE:'https://api.xjdh688.ccwu.cc'};
   <p>⭐️ 感谢您的支持！ ⭐️</p>
 </div>
 
-## 📈 Star 历史
-
-[![Star History Chart](https://api.star-history.com/svg?repos=Git-688/XLDH&type=Date)](https://star-history.com/#Git-688/XLDH&Date)
 
 
 📄 许可证
