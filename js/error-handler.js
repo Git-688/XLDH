@@ -1,16 +1,22 @@
-/* error-handler.js - 修复版：正确初始化 reportedHashes 为 Set */
+/* error-handler.js - 修复版：确保 reportedHashes 始终为 Set */
 class ErrorHandler {
     constructor() {
+        // 确保单例
         if (window._errorHandlerInstance) {
+            // 如果旧实例存在，但 reportedHashes 不是 Set，则修复
+            if (!(window._errorHandlerInstance.reportedHashes instanceof Set)) {
+                window._errorHandlerInstance.reportedHashes = new Set();
+            }
             return window._errorHandlerInstance;
         }
+        
         this.errors = [];
         this.maxErrors = 50;
         this.reportUrl = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) ? 
                          `${window.APP_CONFIG.API_BASE}/log` : null;
         this.retryQueue = [];
         this.isProcessing = false;
-        // ===== 修复：确保 reportedHashes 是 Set 实例 =====
+        // ===== 强制初始化为 Set =====
         this.reportedHashes = new Set();
         this.init();
         window._errorHandlerInstance = this;
@@ -49,12 +55,15 @@ class ErrorHandler {
         if (!errorInfo.message && !errorInfo.stack) {
             return true;
         }
-        const hash = this._getErrorHash(errorInfo);
-        const now = Date.now();
-        // ===== 防御性检查：确保 reportedHashes 是 Set =====
+        
+        // ===== 防御性检查 =====
         if (!(this.reportedHashes instanceof Set)) {
             this.reportedHashes = new Set();
         }
+        
+        const hash = this._getErrorHash(errorInfo);
+        const now = Date.now();
+        
         if (this.reportedHashes.has(hash)) {
             const lastReport = this.reportedHashes.get(hash);
             if (now - lastReport < 5000) {
@@ -65,7 +74,8 @@ class ErrorHandler {
         if (this.reportedHashes.size > 200) {
             const keys = this.reportedHashes.keys();
             for (let i = 0; i < 50; i++) {
-                this.reportedHashes.delete(keys.next().value);
+                const key = keys.next().value;
+                if (key) this.reportedHashes.delete(key);
             }
         }
         return false;
