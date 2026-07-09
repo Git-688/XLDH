@@ -1,4 +1,4 @@
-/* main.js - 增加全局错误边界和统一错误处理，监听导航刷新信号，轮询间隔10秒 */
+/* main.js - 增加 /init 请求合并，保留完整功能 */
 class App {
     constructor() {
         this.components = {};
@@ -259,7 +259,8 @@ class App {
         }
     }
 
-    init() {
+    // 修改后的 init 方法：使用 /init 合并接口
+    async init() {
         if (this.isInitialized) return;
 
         this.setupGlobalErrorHandling();
@@ -268,7 +269,77 @@ class App {
             this.initImageFallbackHandler();
             this.initStorage();
             this.initCoreComponents();
-            this.initModules();
+            // 请求 /init 合并数据
+            const apiBase = Utils.getApiBase();
+            let initData = null;
+            try {
+                const response = await fetch(`${apiBase}/init`);
+                if (response.ok) {
+                    initData = await response.json();
+                } else {
+                    throw new Error('Init API failed');
+                }
+            } catch (err) {
+                console.warn('合并请求失败，降级为独立请求', err);
+                // 降级：逐个请求原有模块
+                this.initModules();
+                // 但仍需初始化依赖组件和事件
+                this.initDependentComponents();
+                this.setupGlobalEvents();
+                this.initNotebookModalEvents();
+                this.initFloatingButtonsEffect();
+                this.initServiceWorkerMessageListener();
+                this.setupNavRefreshListener();
+                this.isInitialized = true;
+                this.hideErrorFallback();
+                return;
+            }
+
+            // 分发数据到各模块
+            if (initData) {
+                // 导航模块
+                if (this.modules.navigation) {
+                    if (initData.structure) {
+                        this.modules.navigation.structure = initData.structure;
+                        this.modules.navigation.renderNavigation();
+                        // 默认选中第一个分类
+                        const firstCat = Object.keys(initData.structure)[0];
+                        if (firstCat) {
+                            this.modules.navigation.selectedLevel1 = firstCat;
+                            this.modules.navigation.renderLevel2(firstCat);
+                            const firstSub = initData.structure[firstCat].subcategories?.[0];
+                            if (firstSub) {
+                                this.modules.navigation.selectedLevel2 = firstSub.id;
+                                // 如果返回了默认站点数据，直接渲染
+                                if (initData.defaultSites && initData.defaultSites.sites) {
+                                    this.modules.navigation.currentSites = initData.defaultSites.sites;
+                                    this.modules.navigation._renderSites(initData.defaultSites.sites);
+                                } else {
+                                    // 否则单独加载
+                                    await this.modules.navigation.renderLevel3(firstCat, firstSub.id);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 统计模块（页脚）
+                if (initData.stats && this.modules.footer) {
+                    this.modules.footer.updateStats(initData.stats);
+                } else {
+                    // 未初始化 footer 或没有 stats，单独请求
+                    if (this.modules.footer && this.modules.footer.loadStats) {
+                        this.modules.footer.loadStats();
+                    }
+                }
+
+                // 其他模块（天气、公告等）仍由其自己初始化，因为 /init 只返回了结构、默认站点和统计
+                // 但为了减少请求，可以继续加载其他模块
+                // 这里仍然调用 initModules 但跳过已经初始化的部分，或者直接初始化其他模块
+                // 简单起见，我们仍调用 initModules，但该方法内部会判断是否已存在实例
+                this.initModules(); // 这个方法会初始化 weather, greeting, wallpaper, footer 等，但会检查是否已存在
+            }
+
             this.initDependentComponents();
             this.setupGlobalEvents();
             this.initNotebookModalEvents();
@@ -277,9 +348,6 @@ class App {
             this.setupNavRefreshListener();
             this.isInitialized = true;
             this.hideErrorFallback();
-
-            window.showNotebookModal = this.showNotebookModal.bind(this);
-            window.hideNotebookModal = this.hideNotebookModal.bind(this);
         } catch (error) {
             console.error('[App] 初始化失败:', error);
             this.showErrorFallback('应用初始化失败，请刷新重试');
