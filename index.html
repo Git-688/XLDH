@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -52,7 +53,6 @@
         })();
     </script>
 
-    <!-- 预连接关键域名 -->
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://myhkw.cn">
@@ -66,31 +66,8 @@
     <link rel="dns-prefetch" href="https://api.kuleu.com">
     <link rel="dns-prefetch" href="https://api.injahow.cn">
 
-    <!-- 预加载关键字体 -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
-
-    <!-- 关键样式使用 preload 非阻塞加载 -->
-    <link rel="preload" href="./css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/navbar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/sidebar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/announcement.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/search.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/weather.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/about.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/navigation.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/wallpaper.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/greeting.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/stats.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/compact-tags.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/responsive.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-
-    <!-- 非关键 CSS 延迟加载（FontAwesome） -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css" media="print" onload="this.media='all'">
 
     <style>
         .scroll-progress {
@@ -466,11 +443,28 @@
         .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
     </style>
 
-    <link rel="preload" href="./js/constants.js" as="script">
-    <link rel="preload" href="./js/utils.js" as="script">
-    <link rel="preload" href="./js/toast.js" as="script">
-    <link rel="preload" href="./js/error-handler.js" as="script">
-    <link rel="preload" href="./js/storage.js" as="script">
+    <link rel="preload" href="./css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/navbar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/sidebar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/announcement.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/search.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/weather.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/about.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/navigation.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/wallpaper.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/greeting.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/stats.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/compact-tags.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/responsive.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
+
     <link rel="preload" href="./js/main.js" as="script">
 </head>
 <body>
@@ -729,21 +723,33 @@
         </div>
     </main>
 
-    <!-- ===== 关键库加载（使用 defer，不阻塞渲染） ===== -->
-    <!-- jQuery（供 cursor2.js 点击特效使用） -->
-    <script defer src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
-    <!-- Waline（评论系统，由 comment.js 初始化） -->
-    <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+    <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
-    <!-- ===== 核心 JS ===== -->
+    <script>
+        (function() {
+            const progressBar = document.getElementById('scrollProgress');
+            if (!progressBar) return;
+            function updateScrollProgress() {
+                const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
+                const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                const scrolled = (winScroll / height) * 100;
+                progressBar.style.width = scrolled + '%';
+            }
+            window.addEventListener('scroll', updateScrollProgress);
+            window.addEventListener('resize', updateScrollProgress);
+            updateScrollProgress();
+        })();
+    </script>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
+
     <script defer src="./js/constants.js"></script>
     <script defer src="./js/utils.js"></script>
     <script defer src="./js/toast.js"></script>
     <script defer src="./js/error-handler.js"></script>
     <script defer src="./js/storage.js"></script>
-    <script defer src="./js/main.js"></script>
-
-    <!-- ===== 功能模块（使用 defer，按依赖顺序加载） ===== -->
     <script defer src="./js/components/navbar.js"></script>
     <script defer src="./js/components/sidebar.js"></script>
     <script defer src="./js/modules/announcement.js"></script>
@@ -755,11 +761,7 @@
     <script defer src="./js/modules/greeting.js"></script>
     <script defer src="./js/modules/stats.js"></script>
     <script defer src="./js/modules/compact-tags.js"></script>
-    <script defer src="./js/modules/comment.js"></script>
-    <script defer src="./js/modules/submit.js"></script>
-    <script defer src="./js/modules/theme.js"></script>
-
-    <!-- ===== 音乐播放器 ===== -->
+    <script defer src="./js/main.js"></script>
     <script defer src="./js/xfyy/cache-manager.js"></script>
     <script defer src="./js/xfyy/lyric-parser.js"></script>
     <script defer src="./data/local-music-data.js"></script>
@@ -767,10 +769,14 @@
     <script defer src="./js/xfyy/music-player.js"></script>
     <script defer src="./js/xfyy/music-main.js"></script>
 
-    <!-- ===== 点击特效（依赖 jQuery，放在最后） ===== -->
-    <script defer src="./js/cursor2.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
 
-    <!-- ===== Cookie 同意横幅 ===== -->
+    <script defer src="./js/modules/comment.js"></script>
+    <script defer src="./js/modules/submit.js"></script>
+    <script defer src="./js/modules/theme.js"></script>
+<script defer src="./js/cursor2.js"></script>
+
+
     <script>
         (function() {
             'use strict';
@@ -875,7 +881,6 @@
         })();
     </script>
 
-    <!-- ===== 排行榜内联逻辑 ===== -->
     <script>
         (function() {
             'use strict';
