@@ -1,24 +1,26 @@
-/* error-handler.js - 修复版：确保 reportedHashes 始终为 Set，单例安全 */
+/* error-handler.js - 最终修复版 */
 class ErrorHandler {
     constructor() {
-        // 强制单例，且确保 reportedHashes 为 Set
+        // 单例模式，但强制修复已存在的实例
         if (window._errorHandlerInstance) {
             const inst = window._errorHandlerInstance;
-            // 若 reportedHashes 不是 Set，则修复
+            // 确保 reportedHashes 是 Set
             if (!(inst.reportedHashes instanceof Set)) {
                 inst.reportedHashes = new Set();
             }
+            // 确保其他属性存在
+            inst.errors = inst.errors || [];
+            inst.maxErrors = inst.maxErrors || 50;
             return inst;
         }
-        
+
         this.errors = [];
         this.maxErrors = 50;
-        this.reportUrl = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) ? 
+        this.reportUrl = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) ?
                          `${window.APP_CONFIG.API_BASE}/log` : null;
         this.retryQueue = [];
         this.isProcessing = false;
-        // 确保初始化为 Set
-        this.reportedHashes = new Set();
+        this.reportedHashes = new Set(); // 强制 Set
         this.init();
         window._errorHandlerInstance = this;
     }
@@ -34,31 +36,45 @@ class ErrorHandler {
     }
 
     shouldIgnore(errorInfo) {
-        // 忽略某些无意义错误
-        if (errorInfo.type === 'resource' && !errorInfo.message && !errorInfo.stack && !errorInfo.src) return true;
-        if (errorInfo.type === 'resource' && errorInfo.src) {
-            const ignoreDomains = [
-                'favicon.yandex.net', 'icon.horse', 'api.71xk.com', 'bing.biturl.top',
-                'pearapi.ai', 'yunzhiapi.cn'
-            ];
-            if (ignoreDomains.some(d => errorInfo.src.includes(d))) return true;
-        }
-        if (errorInfo.type === 'error' && (errorInfo.message === 'Script error.' || errorInfo.message === 'Script error')) return true;
-        if (!errorInfo.message && !errorInfo.stack) return true;
-        
-        // 防御：确保 reportedHashes 是 Set
+        // ===== 关键修复：每次调用都确保 reportedHashes 是 Set =====
         if (!(this.reportedHashes instanceof Set)) {
             this.reportedHashes = new Set();
         }
-        
+
+        // 原有的过滤逻辑
+        if (errorInfo.type === 'resource' && !errorInfo.message && !errorInfo.stack && !errorInfo.src) {
+            return true;
+        }
+        if (errorInfo.type === 'resource' && errorInfo.src) {
+            const ignoreDomains = [
+                'favicon.yandex.net',
+                'icon.horse',
+                'api.71xk.com',
+                'bing.biturl.top',
+                'pearapi.ai',
+                'yunzhiapi.cn'
+            ];
+            if (ignoreDomains.some(domain => errorInfo.src.includes(domain))) {
+                return true;
+            }
+        }
+        if (errorInfo.type === 'error' && (errorInfo.message === 'Script error.' || errorInfo.message === 'Script error')) {
+            return true;
+        }
+        if (!errorInfo.message && !errorInfo.stack) {
+            return true;
+        }
+
         const hash = this._getErrorHash(errorInfo);
         const now = Date.now();
+
         if (this.reportedHashes.has(hash)) {
             const lastReport = this.reportedHashes.get(hash);
-            if (now - lastReport < 5000) return true;
+            if (now - lastReport < 5000) {
+                return true;
+            }
         }
         this.reportedHashes.set(hash, now);
-        // 限制大小防止内存泄漏
         if (this.reportedHashes.size > 200) {
             const keys = this.reportedHashes.keys();
             for (let i = 0; i < 50; i++) {
@@ -133,10 +149,14 @@ class ErrorHandler {
 
     _setupOfflineQueue() {
         window.addEventListener('online', () => {
-            if (this.retryQueue.length > 0) this._processQueue();
+            if (this.retryQueue.length > 0) {
+                this._processQueue();
+            }
         });
         window.addEventListener('beforeunload', () => {
-            if (this.retryQueue.length > 0) this._flushQueue();
+            if (this.retryQueue.length > 0) {
+                this._flushQueue();
+            }
         });
     }
 
@@ -286,6 +306,13 @@ class ErrorHandler {
     }
 }
 
+// 确保全局单例
 if (!window.errorHandler) {
     window.errorHandler = new ErrorHandler();
+} else {
+    // 修复已存在的实例
+    const inst = window.errorHandler;
+    if (!(inst.reportedHashes instanceof Set)) {
+        inst.reportedHashes = new Set();
+    }
 }
