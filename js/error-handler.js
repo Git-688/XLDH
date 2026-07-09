@@ -1,26 +1,17 @@
-/* error-handler.js - 最终修复版 */
+/* error-handler.js - 修复版：正确初始化 reportedHashes 为 Set */
 class ErrorHandler {
     constructor() {
-        // 单例模式，但强制修复已存在的实例
         if (window._errorHandlerInstance) {
-            const inst = window._errorHandlerInstance;
-            // 确保 reportedHashes 是 Set
-            if (!(inst.reportedHashes instanceof Set)) {
-                inst.reportedHashes = new Set();
-            }
-            // 确保其他属性存在
-            inst.errors = inst.errors || [];
-            inst.maxErrors = inst.maxErrors || 50;
-            return inst;
+            return window._errorHandlerInstance;
         }
-
         this.errors = [];
         this.maxErrors = 50;
-        this.reportUrl = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) ?
+        this.reportUrl = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) ? 
                          `${window.APP_CONFIG.API_BASE}/log` : null;
         this.retryQueue = [];
         this.isProcessing = false;
-        this.reportedHashes = new Set(); // 强制 Set
+        // ===== 修复：确保 reportedHashes 是 Set 实例 =====
+        this.reportedHashes = new Set();
         this.init();
         window._errorHandlerInstance = this;
     }
@@ -36,12 +27,6 @@ class ErrorHandler {
     }
 
     shouldIgnore(errorInfo) {
-        // ===== 关键修复：每次调用都确保 reportedHashes 是 Set =====
-        if (!(this.reportedHashes instanceof Set)) {
-            this.reportedHashes = new Set();
-        }
-
-        // 原有的过滤逻辑
         if (errorInfo.type === 'resource' && !errorInfo.message && !errorInfo.stack && !errorInfo.src) {
             return true;
         }
@@ -64,10 +49,12 @@ class ErrorHandler {
         if (!errorInfo.message && !errorInfo.stack) {
             return true;
         }
-
         const hash = this._getErrorHash(errorInfo);
         const now = Date.now();
-
+        // ===== 防御性检查：确保 reportedHashes 是 Set =====
+        if (!(this.reportedHashes instanceof Set)) {
+            this.reportedHashes = new Set();
+        }
         if (this.reportedHashes.has(hash)) {
             const lastReport = this.reportedHashes.get(hash);
             if (now - lastReport < 5000) {
@@ -78,8 +65,7 @@ class ErrorHandler {
         if (this.reportedHashes.size > 200) {
             const keys = this.reportedHashes.keys();
             for (let i = 0; i < 50; i++) {
-                const key = keys.next().value;
-                if (key) this.reportedHashes.delete(key);
+                this.reportedHashes.delete(keys.next().value);
             }
         }
         return false;
@@ -306,13 +292,6 @@ class ErrorHandler {
     }
 }
 
-// 确保全局单例
 if (!window.errorHandler) {
     window.errorHandler = new ErrorHandler();
-} else {
-    // 修复已存在的实例
-    const inst = window.errorHandler;
-    if (!(inst.reportedHashes instanceof Set)) {
-        inst.reportedHashes = new Set();
-    }
 }
