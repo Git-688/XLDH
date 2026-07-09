@@ -1,4 +1,4 @@
-/* comment.js - 完整版（支持自定义表情、GIF搜索、草稿保存、弹窗控制，Waline 动态加载） */
+/* comment.js - 完整版（支持自定义表情、GIF搜索、草稿保存、弹窗控制，动态加载 Waline） */
 class CommentModule {
   static CONFIG = {
     serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
@@ -16,7 +16,6 @@ class CommentModule {
         'bold', 'italic', 'link', 'image', 'code', 'blockquote',
         'heading', 'ul', 'ol', 'hr', 'strike', 'spoiler'
       ],
-      // 表情包列表（CDN 和自定义）
       emoji: [
         'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo',
         'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji',
@@ -28,7 +27,6 @@ class CommentModule {
         'https://unpkg.com/@waline/emojis@1.4.0/soul-emoji',
         'https://tc688.ccwu.cc/file/plxt/Q_emoji/',
       ],
-      // GIF 搜索配置
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
@@ -72,9 +70,7 @@ class CommentModule {
         level4: '论坛元老',
         level5: '至尊传说'
       },
-      // 评论预处理（可添加成就徽章等，现已移除后端成就，此处保留为空）
       comment: (comment) => {
-        // 如需前端展示成就，可在此处添加逻辑
         return comment;
       }
     }
@@ -91,10 +87,7 @@ class CommentModule {
     this.isVisible = false;
     this._initDOM();
     this._bindEvents();
-    // 移除同步初始化 Waline，改为 open 时动态加载
-    // 但搜索面板和草稿观察器仍可提前绑定，因为 DOM 存在
-    this._watchSearchPanel();
-    this._initDraftAutoSave();
+    // 不在这里初始化 Waline，由 open() 方法动态加载
     if (window.Starlink) window.Starlink.comment = this;
     window.commentModule = this;
   }
@@ -118,30 +111,27 @@ class CommentModule {
     });
   }
 
-  // Waline 动态加载
   async _initWaline() {
-    if (this.instance) return;
+    const { el, serverURL, walineOptions } = CommentModule.CONFIG;
+    const container = document.querySelector(el);
+    if (!container) return null;
+
     try {
+      // 动态导入 Waline
       const Waline = await import('https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js');
-      const container = document.querySelector(CommentModule.CONFIG.el);
-      if (container) {
-        // 如果容器内已有 fallback 内容，先清空
-        container.innerHTML = '';
-        this.instance = Waline.init({
-          el: CommentModule.CONFIG.el,
-          serverURL: CommentModule.CONFIG.serverURL,
-          ...CommentModule.CONFIG.walineOptions
-        });
-        console.log('[评论] Waline 初始化成功');
-      } else {
-        console.error('[评论] 容器元素不存在');
-      }
+      const instance = Waline.init({ 
+        el, 
+        serverURL, 
+        ...walineOptions 
+      });
+      console.log('[评论] Waline 初始化成功');
+      return instance;
     } catch (err) {
-      console.error('[评论] Waline 加载失败', err);
-      const container = document.querySelector(CommentModule.CONFIG.el);
+      console.error('[评论] 初始化失败', err);
       if (container) {
-        container.innerHTML = '<div class="waline-comment-fallback">评论系统加载失败，请刷新重试</div>';
+        container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">评论系统暂时不可用，请稍后再试。</div>';
       }
+      return null;
     }
   }
 
@@ -207,16 +197,31 @@ class CommentModule {
 
   async open() {
     if (!this.modal) return;
-    // 如果 Waline 尚未初始化，则动态加载
+    
+    // 首次打开时初始化 Waline
     if (!this.instance) {
-      await this._initWaline();
-      // 如果加载后仍无实例，可能出错，但不阻塞打开弹窗
+      // 显示加载状态
+      const container = document.querySelector(CommentModule.CONFIG.el);
+      if (container) {
+        container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">加载评论系统中...</div>';
+      }
+      this.instance = await this._initWaline();
+      if (this.instance) {
+        // 绑定搜索和草稿功能（需要等 DOM 渲染完成后）
+        setTimeout(() => {
+          this._watchSearchPanel();
+          this._initDraftAutoSave();
+        }, 500);
+      }
     }
+    
+    // 关闭其他弹窗
     if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible?.()) {
       window.Starlink.sidebar.hide();
     } else if (window.sidebar && window.sidebar.isVisible?.()) {
       window.sidebar.hide();
     }
+    
     this.modal.classList.add(CommentModule.CONFIG.activeClass);
     this.isVisible = true;
     document.body.style.overflow = 'hidden';
@@ -242,12 +247,14 @@ class CommentModule {
     clearTimeout(this.searchTimer);
     this.searchObserver?.disconnect();
     this.draftObserver?.disconnect();
-    this.instance?.destroy?.();
+    if (this.instance && typeof this.instance.destroy === 'function') {
+      this.instance.destroy();
+    }
     this.instance = null;
   }
 }
 
-// 自动初始化
+// 自动初始化（只初始化 DOM 和事件，不加载 Waline）
 document.addEventListener('DOMContentLoaded', () => {
   if (!window.Starlink) window.Starlink = {};
   if (!window.Starlink.comment) {
