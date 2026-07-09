@@ -1,4 +1,4 @@
-/* main.js - 增加 /init 请求合并，优化模块加载 */
+/* main.js - 增加全局错误边界和统一错误处理，监听导航刷新信号，轮询间隔10秒 */
 class App {
     constructor() {
         this.components = {};
@@ -259,7 +259,7 @@ class App {
         }
     }
 
-    async init() {
+    init() {
         if (this.isInitialized) return;
 
         this.setupGlobalErrorHandling();
@@ -268,13 +268,7 @@ class App {
             this.initImageFallbackHandler();
             this.initStorage();
             this.initCoreComponents();
-            
-            // 使用合并接口 /init 一次性获取数据
-            await this.initWithMergedRequest();
-            
-            // 延迟加载非核心模块
-            this.scheduleLazyModules();
-            
+            this.initModules();
             this.initDependentComponents();
             this.setupGlobalEvents();
             this.initNotebookModalEvents();
@@ -289,166 +283,7 @@ class App {
         } catch (error) {
             console.error('[App] 初始化失败:', error);
             this.showErrorFallback('应用初始化失败，请刷新重试');
-            // 降级：尝试独立加载
-            try {
-                await this.initWithFallback();
-            } catch (fallbackError) {
-                console.error('[App] 降级加载也失败:', fallbackError);
-            }
             this.isInitialized = true;
-        }
-    }
-
-    async initWithMergedRequest() {
-        try {
-            const response = await fetch(`${Utils.getApiBase()}/init`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            
-            // 分发数据到各个模块
-            if (data.structure) {
-                // 初始化导航模块
-                if (typeof OptimizedNavigation !== 'undefined') {
-                    if (!this.modules.navigation) {
-                        this.modules.navigation = new OptimizedNavigation();
-                        window.optimizedNavigation = this.modules.navigation;
-                    }
-                    // 直接使用返回的结构数据
-                    this.modules.navigation.structure = data.structure;
-                    this.modules.navigation.structureCacheTime = Date.now();
-                    this.modules.navigation.renderNavigation();
-                    
-                    // 默认选中第一个分类并渲染站点
-                    const firstCat = Object.keys(data.structure)[0];
-                    if (firstCat) {
-                        this.modules.navigation.selectedLevel1 = firstCat;
-                        this.modules.navigation.renderLevel2(firstCat);
-                        const firstSub = data.structure[firstCat].subcategories[0];
-                        if (firstSub) {
-                            this.modules.navigation.selectedLevel2 = firstSub.id;
-                            // 使用返回的站点数据
-                            if (data.defaultSites && data.defaultSites.sites) {
-                                this.modules.navigation.currentSites = data.defaultSites.sites;
-                                this.modules.navigation._renderSites(data.defaultSites.sites);
-                                // 更新缓存
-                                this.modules.navigation.siteCache.set(firstSub.id, data.defaultSites.sites);
-                            }
-                        }
-                    }
-                    
-                    // 更新统计数据
-                    if (data.stats) {
-                        this.modules.navigation.stats.totalWebsites = data.stats.total_sites || 0;
-                        this.modules.navigation.stats.invalidCount = data.stats.invalid_count || 0;
-                        this.modules.navigation.updateStatsDisplay();
-                    }
-                }
-            }
-            
-            // 更新页脚统计
-            if (data.stats && this.modules.footer) {
-                this.modules.footer.updateStats(data.stats);
-            }
-            
-            // 预加载其他子分类数据（后台静默）
-            if (data.structure) {
-                const firstCat = Object.keys(data.structure)[0];
-                if (firstCat && data.structure[firstCat]) {
-                    const allSubIds = data.structure[firstCat].subcategories.map(s => s.id);
-                    const otherSubIds = allSubIds.slice(1); // 跳过第一个已加载的
-                    if (otherSubIds.length > 0 && this.modules.navigation) {
-                        // 使用 requestIdleCallback 或 setTimeout 延迟预加载
-                        const preloadFn = () => {
-                            for (const subId of otherSubIds) {
-                                this.modules.navigation.loadAllSites(subId, true).catch(err => {
-                                    if (window.errorHandler) {
-                                        window.errorHandler.report(err, 'navigation.init.preload');
-                                    }
-                                });
-                            }
-                        };
-                        if (window.requestIdleCallback) {
-                            requestIdleCallback(preloadFn, { timeout: 3000 });
-                        } else {
-                            setTimeout(preloadFn, 1000);
-                        }
-                    }
-                }
-            }
-            
-        } catch (error) {
-            console.error('[App] 合并请求失败，使用降级方案:', error);
-            await this.initWithFallback();
-        }
-    }
-
-    async initWithFallback() {
-        // 降级方案：逐个加载模块（原有逻辑）
-        await this.initModules();
-    }
-
-    scheduleLazyModules() {
-        // 延迟加载非关键模块
-        const lazyModules = [
-            { id: 'weather', load: () => this.loadWeatherModule() },
-            { id: 'about', load: () => this.loadAboutModule() },
-            { id: 'compactTags', load: () => this.loadCompactTagsModule() },
-            { id: 'greeting', load: () => this.loadGreetingModule() },
-            { id: 'wallpaper', load: () => this.loadWallpaperModule() }
-        ];
-        
-        // 使用 requestIdleCallback 或 setTimeout 延迟加载
-        const loadFn = () => {
-            for (const mod of lazyModules) {
-                try {
-                    mod.load();
-                } catch (e) {
-                    console.warn(`[App] 加载模块 ${mod.id} 失败:`, e);
-                }
-            }
-        };
-        
-        if (window.requestIdleCallback) {
-            requestIdleCallback(loadFn, { timeout: 2000 });
-        } else {
-            setTimeout(loadFn, 500);
-        }
-    }
-
-    loadWeatherModule() {
-        if (typeof WeatherModule !== 'undefined' && !this.modules.weather) {
-            this.modules.weather = new WeatherModule();
-            window.weatherModule = this.modules.weather;
-            this.modules.weather.init();
-        }
-    }
-
-    loadAboutModule() {
-        if (typeof AboutModule !== 'undefined' && !this.modules.about) {
-            this.modules.about = new AboutModule();
-            window.aboutModule = this.modules.about;
-            this.modules.about.init();
-        }
-    }
-
-    loadCompactTagsModule() {
-        if (typeof CompactTagsModule !== 'undefined' && !this.modules.compactTags) {
-            this.modules.compactTags = new CompactTagsModule();
-            window.compactTagsModule = this.modules.compactTags;
-        }
-    }
-
-    loadGreetingModule() {
-        if (typeof GreetingModule !== 'undefined' && !this.modules.greeting) {
-            this.modules.greeting = new GreetingModule();
-            window.greetingModule = this.modules.greeting;
-        }
-    }
-
-    loadWallpaperModule() {
-        if (typeof CarouselModule !== 'undefined' && !this.modules.wallpaper) {
-            this.modules.wallpaper = new CarouselModule();
-            window.carouselModule = this.modules.wallpaper;
         }
     }
 
