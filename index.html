@@ -92,8 +92,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css" media="print" onload="this.media='all'">
 
-    <!-- 移除 Katex 和 Waline 的同步加载，改为按需加载 -->
-
     <style>
         .scroll-progress {
             position: fixed;
@@ -731,10 +729,13 @@
         </div>
     </main>
 
-    <!-- 移除 jQuery 和 FontAwesome 的同步加载，它们已在 CSS 中延迟加载，JS 中若需使用 jQuery，可改为原生 -->
-    <!-- 移除 Waline 和 Katex 的 script 加载，改为动态 import -->
+    <!-- ===== 关键库加载（使用 defer，不阻塞渲染） ===== -->
+    <!-- jQuery（供 cursor2.js 点击特效使用） -->
+    <script defer src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+    <!-- Waline（评论系统，由 comment.js 初始化） -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
 
-    <!-- 核心 JS 使用 defer 加载，不阻塞渲染 -->
+    <!-- ===== 核心 JS ===== -->
     <script defer src="./js/constants.js"></script>
     <script defer src="./js/utils.js"></script>
     <script defer src="./js/toast.js"></script>
@@ -742,7 +743,7 @@
     <script defer src="./js/storage.js"></script>
     <script defer src="./js/main.js"></script>
 
-    <!-- 非核心模块使用 defer，但 main.js 会按需加载，此处仅作为备份，但可移除或保留 defer -->
+    <!-- ===== 功能模块（使用 defer，按依赖顺序加载） ===== -->
     <script defer src="./js/components/navbar.js"></script>
     <script defer src="./js/components/sidebar.js"></script>
     <script defer src="./js/modules/announcement.js"></script>
@@ -754,18 +755,22 @@
     <script defer src="./js/modules/greeting.js"></script>
     <script defer src="./js/modules/stats.js"></script>
     <script defer src="./js/modules/compact-tags.js"></script>
+    <script defer src="./js/modules/comment.js"></script>
+    <script defer src="./js/modules/submit.js"></script>
+    <script defer src="./js/modules/theme.js"></script>
+
+    <!-- ===== 音乐播放器 ===== -->
     <script defer src="./js/xfyy/cache-manager.js"></script>
     <script defer src="./js/xfyy/lyric-parser.js"></script>
     <script defer src="./data/local-music-data.js"></script>
     <script defer src="./js/xfyy/plugin-manager.js"></script>
     <script defer src="./js/xfyy/music-player.js"></script>
     <script defer src="./js/xfyy/music-main.js"></script>
-    <script defer src="./js/modules/comment.js"></script>
-    <script defer src="./js/modules/submit.js"></script>
-    <script defer src="./js/modules/theme.js"></script>
+
+    <!-- ===== 点击特效（依赖 jQuery，放在最后） ===== -->
     <script defer src="./js/cursor2.js"></script>
 
-    <!-- Cookie 同意横幅和内联脚本保留 -->
+    <!-- ===== Cookie 同意横幅 ===== -->
     <script>
         (function() {
             'use strict';
@@ -870,6 +875,7 @@
         })();
     </script>
 
+    <!-- ===== 排行榜内联逻辑 ===== -->
     <script>
         (function() {
             'use strict';
