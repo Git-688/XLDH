@@ -1,7 +1,7 @@
 /* comment.js - 完整版（支持自定义表情、GIF搜索、草稿保存、弹窗控制） */
 class CommentModule {
   static CONFIG = {
-    serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc',
+    serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://pl688.ccwu.cc',
     el: '#waline-comment',
     modalId: 'commentModal',
     openBtnId: 'commentBtn',
