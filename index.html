@@ -8,21 +8,6 @@
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
    
-    <!-- ========== 暗色模式记忆（避免闪烁） ========== -->
-    <script>
-        (function() {
-            try {
-                const theme = localStorage.getItem('starlink_theme');
-                if (theme === 'dark') {
-                    document.documentElement.classList.add('dark-mode');
-                } else if (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    document.documentElement.classList.add('dark-mode');
-                }
-                // 如果 theme 为 'light' 或不存在，保持默认（无 dark-mode 类）
-            } catch (e) {}
-        })();
-    </script>
-
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:;
@@ -455,6 +440,137 @@
         #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
         .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
         .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+
+        /* ===== 合作伙伴按钮和模态框 ===== */
+        .partner-trigger-btn {
+            background: none;
+            border: none;
+            font-size: 11px;
+            color: var(--text-secondary, #6c757d);
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(67, 97, 238, 0.08);
+            transition: all 0.2s ease;
+            font-weight: 400;
+            white-space: nowrap;
+        }
+        .partner-trigger-btn:hover {
+            background: rgba(67, 97, 238, 0.18);
+            color: var(--primary-color, #4361ee);
+            transform: translateY(-1px);
+        }
+
+        .partner-intro {
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            background: rgba(67, 97, 238, 0.06);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary-color, #4361ee);
+        }
+        .partner-intro p {
+            font-size: 12px;
+            color: var(--text-secondary, #6c757d);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .partner-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .partner-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .partner-list::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+        }
+        .partner-list::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+        }
+
+        .partner-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: var(--bg-secondary, #f8f9fa);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        .partner-item:hover {
+            border-color: var(--primary-color, #4361ee);
+            background: rgba(67, 97, 238, 0.04);
+        }
+
+        .partner-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            border: 1px solid var(--border-color, #e9ecef);
+            overflow: hidden;
+            font-size: 18px;
+            color: var(--primary-color, #4361ee);
+        }
+        .partner-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .partner-name {
+            flex: 1;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary, #2b2d42);
+        }
+        .partner-link-btn {
+            padding: 4px 14px;
+            border: none;
+            border-radius: 6px;
+            background: var(--primary-color, #4361ee);
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .partner-link-btn:hover {
+            background: var(--secondary-color, #3a0ca3);
+            transform: translateY(-1px);
+        }
+
+        .dark-mode .partner-intro {
+            background: rgba(123, 156, 255, 0.1);
+        }
+        .dark-mode .partner-item {
+            background: var(--bg-secondary, #1e1e1e);
+        }
+        .dark-mode .partner-item:hover {
+            background: rgba(123, 156, 255, 0.08);
+        }
+        .dark-mode .partner-icon {
+            background: var(--bg-card, #2d2d2d);
+            border-color: var(--border-color, #404040);
+        }
+        .dark-mode .partner-list::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        .dark-mode .partner-list::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+        }
     </style>
 
     <link rel="preload" href="./css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -582,7 +698,9 @@
         <section class="minimal-tags-section">
             <div class="container">
                 <div class="tags-header">
-                    <h2 class="tags-title">常用标签</h2><span class="tags-subtitle-right">基于免费公开接口制作❗️</span>
+                    <h2 class="tags-title">常用标签</h2>
+                    <!-- 替换为合作伙伴按钮 -->
+                    <button class="partner-trigger-btn" id="partnerTriggerBtn">🤝 合作伙伴</button>
                 </div>
                 <div class="tags-grid" id="tagsGrid">
                     <div class="tags-loading" id="tagsLoading"><div class="loading-spinner"></div></div>
@@ -735,6 +853,24 @@
                 <div class="feedback-modal-body"><div id="rankListContent"><div class="loading">加载中...</div></div></div>
             </div>
         </div>
+
+        <!-- ===== 合作伙伴模态框（新增） ===== -->
+        <div id="partnerModal" class="feedback-modal">
+            <div class="feedback-modal-content">
+                <div class="feedback-modal-header">
+                    <h3><i class="fas fa-handshake" style="color: #4361ee;"></i> 合作伙伴</h3>
+                    <button class="feedback-modal-close" id="partnerModalClose">&times;</button>
+                </div>
+                <div class="feedback-modal-body">
+                    <div class="partner-intro">
+                        <p>以下合作伙伴与本站建立了友好合作关系，点击跳转访问。</p>
+                    </div>
+                    <div class="partner-list" id="partnerList">
+                        <!-- 由 JS 动态渲染 -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
@@ -776,6 +912,7 @@
     <script defer src="./js/modules/stats.js"></script>
     <script defer src="./js/modules/compact-tags.js"></script>
     <script defer src="./js/main.js"></script>
+    <script defer src="./js/partner.js"></script>
     <script defer src="./js/xfyy/cache-manager.js"></script>
     <script defer src="./js/xfyy/lyric-parser.js"></script>
     <script defer src="./data/local-music-data.js"></script>
@@ -788,8 +925,7 @@
     <script defer src="./js/modules/comment.js"></script>
     <script defer src="./js/modules/submit.js"></script>
     <script defer src="./js/modules/theme.js"></script>
-<script defer src="./js/cursor2.js"></script>
-
+    <script defer src="./js/cursor2.js"></script>
 
     <script>
         (function() {
