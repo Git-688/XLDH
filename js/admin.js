@@ -1,4 +1,4 @@
-/* admin.js - 完整版（实时同步，notifyNavRefresh 增加防抖） */
+/* admin.js - 完整版（实时同步，notifyNavRefresh 增加防抖 + 刷新缓存按钮） */
 (function() {
     'use strict';
 
@@ -1632,6 +1632,9 @@
         }
     }
 
+    // ============================================================
+    // 核心：设置事件代理（包含刷新缓存按钮）
+    // ============================================================
     function setupEventDelegation() {
         document.getElementById('catBar').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
@@ -1695,6 +1698,48 @@
         document.getElementById('batchClearSelection')?.addEventListener('click', clearSelection);
         document.getElementById('batchDeleteBtn')?.addEventListener('click', batchDeleteSites);
         document.getElementById('batchMoveBtn')?.addEventListener('click', batchMoveSites);
+
+        // ===== 新增：刷新缓存按钮 =====
+        document.getElementById('refreshCacheBtn')?.addEventListener('click', async function() {
+            const btn = this;
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '刷新中...';
+
+            try {
+                // 1. 调用后端刷新接口
+                await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+
+                // 2. 清除前端本地缓存（navigation.js 中使用的 localStorage 缓存）
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('nav_data_')) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+
+                // 3. 同时清除导航缓存版本标记（如果有）
+                localStorage.removeItem('nav_cache_version');
+
+                // 4. 触发前端刷新信号
+                try {
+                    localStorage.setItem('nav_refresh_required', Date.now());
+                    document.dispatchEvent(new CustomEvent('navRefreshRequested'));
+                } catch (e) {}
+
+                // 5. 重新加载当前数据
+                await loadAllDataButKeepSelection();
+
+                showToast('所有缓存已刷新，数据已更新', 'success');
+            } catch (e) {
+                showToast('刷新失败：' + (e.message || '网络错误'), 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
     }
 
     injectGlobalStyles();
