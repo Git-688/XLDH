@@ -1,4 +1,4 @@
-/* style.css - 星聚导航全局样式（含合作伙伴模块 + 模态框边距优化 + 导航区域边距归零） */
+/* style.css - 星聚导航全局样式（含合作伙伴模块 + 模态框边距优化 + 导航区域边距归零 + 上下边距统一） */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -679,6 +679,13 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     object-position: center;
 }
 
+/* ===== 壁纸区域：上下边距相等 ===== */
+.wallpaper-section {
+    padding: var(--section-margin-sm, 20px) 0 !important;
+    position: relative;
+    margin: 0 !important;
+}
+
 .wallpaper-container {
     position: relative;
     width: 100% !important;
@@ -1172,3 +1179,235 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     margin-top: 0;
     padding-top: 0;
 }
+
+/* ===== 常用标签区域 ===== */
+.minimal-tags-section {
+    padding: 0 0 var(--section-margin-xs, 12px);
+    margin-bottom: 0;
+    width: 100%;
+}
+.minimal-tags-section .container {
+    padding: 0 var(--container-padding-xs, 16px);
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ===== 常用标签标题：上下边距相等 ===== */
+.tags-header {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    padding-left: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+.tags-header::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 16px;
+    background: var(--primary-color, #4361ee);
+    border-radius: 2px;
+}
+.tags-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary, #2b2d42);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.tags-title i { color: var(--primary-color, #4361ee); font-size: 14px; }
+
+/* ===== 分类导航标题：上下边距相等 ===== */
+.navigation-header {
+    margin-bottom: 12px;
+    padding: 0;
+}
+.header-content {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+    padding-left: 8px;
+    padding-right: 0;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+.header-content::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 16px;
+    background: var(--primary-color);
+    border-radius: 2px;
+}
+.nav-header-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.navigation-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    white-space: nowrap;
+}
+.navigation-stats { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; justify-content: flex-end; white-space: nowrap; }
+.stat-item { display: flex; align-items: baseline; gap: 3px; white-space: nowrap; font-size: 12px; }
+.stat-number { font-size: 14px; font-weight: 800; color: var(--text-primary); }
+.stat-item:nth-child(1) .stat-number { color: var(--stat-site-color) !important; font-weight: 900; }
+.stat-item:nth-child(3) .stat-number { color: var(--stat-invalid-color) !important; font-weight: 900; }
+.stat-label { font-size: 12px; color: var(--text-secondary); opacity: 0.8; }
+.stat-divider { color: var(--border-color); opacity: 0.5; font-size: 12px; }
+
+.repo-btn {
+    display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; background: var(--bg-card);
+    color: var(--text-secondary); text-decoration: none; border-radius: 4px; font-size: 10px;
+    font-weight: 500; transition: all 0.2s ease; white-space: nowrap; border: 1px solid var(--border-color);
+    cursor: pointer; margin-left: 4px; height: 22px; line-height: 18px;
+}
+.repo-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+.repo-btn i { font-size: 9px; transition: color 0.2s ease; }
+
+/* ===== 问候语卡片：上下边距相等 ===== */
+.greeting-section {
+    padding: var(--section-margin-sm) 0;
+    position: relative;
+}
+.greeting-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--container-padding-xs);
+}
+@media (min-width: 576px) { .greeting-container { padding: 0 var(--container-padding-sm); } }
+@media (min-width: 768px) {
+    .greeting-container { padding: 0 var(--container-padding-md); gap: 24px; }
+    .greeting-section { padding: var(--section-margin-md) 0; }
+}
+@media (min-width: 992px) {
+    .greeting-container { padding: 0 var(--container-padding-lg); gap: 24px; }
+    .greeting-section { padding: var(--section-margin-lg) 0; }
+}
+@media (min-width: 1200px) {
+    .greeting-container { padding: 0 var(--container-padding-xl); }
+    .greeting-section { padding: var(--section-margin-lg) 0; }
+}
+
+.greeting-main-card {
+    background: var(--bg-card);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    padding: 8px;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+}
+.greeting-main-card:hover { transform: translateY(-2px); }
+
+/* ===== 后台管理按钮：上下边距相等 ===== */
+.bookmark-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 16px;
+    text-decoration: none;
+    color: #9575CD;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    font-size: 12px;
+    font-weight: 500;
+}
+.bookmark-btn:hover {
+    transform: translateY(-2px);
+    background: var(--bg-card);
+    color: #7E57C2;
+    border-color: #7E57C2;
+    box-shadow: 0 4px 12px rgba(149,117,205,0.2);
+}
+.bookmark-btn i { font-size: 16px; }
+.bookmark-btn span { font-size: 12px; }
+
+/* ===== 免责声明卡片：上下边距相等 ===== */
+.footer-disclaimer-card {
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e9ecef);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow, 0 2px 4px rgba(0, 0, 0, 0.05));
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ===== 响应式：常用标签 ===== */
+@media (min-width: 576px) {
+    .minimal-tags-section .container { padding: 0 var(--container-padding-sm, 20px); }
+    .minimal-tags-section { padding: 0 0 var(--section-margin-sm, 16px); margin-bottom: 0; }
+}
+@media (min-width: 768px) {
+    .minimal-tags-section .container { padding: 0 var(--container-padding-md, 24px); }
+    .minimal-tags-section { padding: 0 0 var(--section-margin-sm, 16px); margin-bottom: 0; }
+}
+@media (min-width: 992px) {
+    .minimal-tags-section .container { padding: 0 var(--container-padding-lg, 28px); }
+    .minimal-tags-section { padding: 0 0 var(--section-margin-md, 20px); margin-bottom: 0; }
+}
+@media (min-width: 1200px) {
+    .minimal-tags-section .container { padding: 0 var(--container-padding-xl, 32px); }
+    .minimal-tags-section { padding: 0 0 var(--section-margin-md, 20px); margin-bottom: 0; }
+}
+
+/* ===== 响应式：导航标题 ===== */
+@media (max-width: 768px) {
+    .header-content { flex-wrap: wrap; gap: 8px; }
+    .navigation-title { font-size: 15px; }
+    .navigation-stats { flex: 1; justify-content: flex-end; }
+}
+@media (max-width: 480px) {
+    .navigation-title { font-size: 14px; }
+    .stat-item { font-size: 10px; }
+    .stat-number { font-size: 12px; }
+    .stat-label { font-size: 10px; }
+    .repo-btn { padding: 2px 5px; font-size: 9px; gap: 3px; height: 20px; line-height: 16px; }
+    .repo-btn i { font-size: 8px; }
+}
+
+/* ===== 深色模式适配 ===== */
+.dark-mode .tags-header::before { opacity: 0.9; }
+.dark-mode .header-content::before { opacity: 0.9; }
+.dark-mode .bookmark-btn {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: #a78bfa;
+}
+.dark-mode .bookmark-btn:hover {
+    background: var(--bg-secondary);
+    color: #8b5cf6;
+    border-color: #8b5cf6;
+}
+.dark-mode .footer-disclaimer-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+.dark-mode .stat-number { color: var(--text-primary); }
+.dark-mode .navigation-title { color: var(--text-primary); }
+.dark-mode .tags-title { color: var(--text-primary); }
