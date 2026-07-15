@@ -249,11 +249,11 @@
                     <button class="tab-btn" data-tab="feedback">用户反馈</button>
                     <button class="tab-btn" data-tab="submissions">待审核</button>
                     <button class="tab-btn" data-tab="announcement">公告编辑</button>
+                    <button class="tab-btn" data-tab="partners">合作伙伴</button>
                 </div>
             </div>
 
             <div id="manageTab" class="tab-panel">
-                <!-- ===== 操作按钮行：新增刷新缓存按钮 ===== -->
                 <div class="action-buttons-row">
                     <button class="logout-btn" id="logoutBtn">退出</button>
                     <button class="primary" id="addCategoryBtn">+ 一级分类</button>
@@ -303,6 +303,48 @@
                             <label for="annActive" style="font-size:12px;">启用公告</label>
                         </div>
                         <div class="announcement-buttons"><button class="secondary" id="annClearBtn">清除</button><button class="secondary" id="annCancelBtn">取消</button><button class="primary" id="annPublishBtn">发布</button></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== 合作伙伴管理面板 ===== -->
+            <div id="partnersTab" class="tab-panel hidden">
+                <div class="partner-admin-container" style="display:flex;flex-direction:column;gap:16px;height:100%;overflow:hidden;padding:4px 0;">
+                    <!-- 合作协议区域 -->
+                    <div class="partner-intro-edit" style="background:var(--bg-secondary, #f8fafc);border-radius:8px;padding:12px;border:1px solid var(--border-color, #e2e8f0);flex-shrink:0;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <label style="font-size:12px;font-weight:600;color:var(--text-primary);">🤝 合作协议（前端显示文字）</label>
+                            <button class="primary sm" id="savePartnerIntroBtn" style="padding:4px 14px;font-size:11px;">保存</button>
+                        </div>
+                        <textarea id="partnerIntroInput" rows="2" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;resize:vertical;font-family:inherit;box-sizing:border-box;"></textarea>
+                    </div>
+
+                    <!-- 添加合作伙伴表单 -->
+                    <div class="partner-add-form" style="background:var(--bg-secondary, #f8fafc);border-radius:8px;padding:12px;border:1px solid var(--border-color, #e2e8f0);flex-shrink:0;">
+                        <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">➕ 添加合作伙伴</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;">
+                            <div style="display:flex;flex-direction:column;gap:4px;">
+                                <label style="font-size:10px;color:var(--text-secondary);">网站链接 *</label>
+                                <input type="text" id="partnerUrlInput" placeholder="https://example.com" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;">
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:4px;">
+                                <label style="font-size:10px;color:var(--text-secondary);">网站标题 *</label>
+                                <input type="text" id="partnerNameInput" placeholder="合作伙伴名称" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;">
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:4px;">
+                                <label style="font-size:10px;color:var(--text-secondary);">图标链接</label>
+                                <input type="text" id="partnerIconInput" placeholder="https://example.com/icon.png" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;">
+                            </div>
+                            <button class="primary sm" id="addPartnerBtn" style="padding:6px 16px;font-size:12px;white-space:nowrap;height:34px;">添加</button>
+                        </div>
+                    </div>
+
+                    <!-- 合作伙伴列表 -->
+                    <div class="partner-list-admin" style="flex:1;min-height:0;background:var(--bg-secondary, #f8fafc);border-radius:8px;padding:8px 12px;border:1px solid var(--border-color, #e2e8f0);overflow:hidden;display:flex;flex-direction:column;">
+                        <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:6px;flex-shrink:0;">📋 合作伙伴列表</div>
+                        <div id="partnerAdminList" style="flex:1;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;padding-right:4px;">
+                            <div style="text-align:center;padding:30px 20px;color:var(--text-secondary);font-size:14px;">🎉 期待你的加入...</div>
+                        </div>
                     </div>
                 </div>
             </div>
