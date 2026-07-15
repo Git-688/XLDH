@@ -1,4 +1,4 @@
-/* navigation.js - 按一级分类加载全部数据，缓存到 localStorage，图标优化高清加载+首字母降级，点击访问量同步校正 */
+/* navigation.js - 按一级分类加载全部数据，缓存到 localStorage，图标优化高清加载+首字母降级，点击访问量同步校正，总站点数从后端获取并显示为 数字+ */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -9,7 +9,7 @@ class OptimizedNavigation {
         this.currentLevel2 = null;
         this.currentSites = [];
         this.isInitialized = false;
-        this.stats = { totalWebsites: 0, invalidCount: 0 };
+        this.totalSites = 0;          // 从后端获取的总站点数
         this.searchQuery = '';
         this.isSearching = false;
 
@@ -18,9 +18,6 @@ class OptimizedNavigation {
         this.level3Content = document.getElementById('level3Content');
         this.siteCountEl = document.getElementById('siteCount');
         this.invalidCountEl = document.getElementById('invalidCount');
-
-        // 移除 this.bindEvents()，因为该方法不存在，事件绑定由其他方式完成
-        // this.bindEvents();  // <--- 删除此行
 
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
@@ -311,6 +308,7 @@ class OptimizedNavigation {
             this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3 class="empty-title">该分类下暂无子分类</h3></div>`;
         }
 
+        // 刷新总站点数（虽然总数不变，但保持一致性）
         this.updateStats();
     }
 
@@ -357,17 +355,30 @@ class OptimizedNavigation {
         this._renderSites(sites);
     }
 
-    // ---------- 更新统计 ----------
-    updateStats() {
-        let total = 0;
-        for (const catName in this.categoryCache) {
-            const subs = this.categoryCache[catName];
-            for (const sub of subs) {
-                total += (sub.sites || []).length;
+    // ---------- 从后端获取总站点数并更新显示（显示为 数字+） ----------
+    async fetchTotalSitesCount() {
+        try {
+            const response = await Utils.safeFetch(`${this.apiBase}/total-sites-count`, { timeout: 5000 });
+            const data = await response.json();
+            if (data.total !== undefined) {
+                this.totalSites = data.total;
+                if (this.siteCountEl) {
+                    // 显示为 数字+ （例如 "123+"）
+                    this.siteCountEl.textContent = this.totalSites + '+';
+                }
+            }
+        } catch (error) {
+            console.warn('获取总站点数失败:', error);
+            if (this.siteCountEl && !this.siteCountEl.textContent) {
+                this.siteCountEl.textContent = '?+';
             }
         }
-        this.stats.totalWebsites = total;
-        if (this.siteCountEl) this.siteCountEl.textContent = `${total}+`;
+    }
+
+    // ---------- 更新统计：从后端获取总数并显示 ----------
+    async updateStats() {
+        await this.fetchTotalSitesCount();
+        // 无效链接数暂不更新（无接口）
     }
 
     // ---------- 搜索功能 ----------
@@ -473,6 +484,10 @@ class OptimizedNavigation {
             const firstCat = categories[0];
             await this.selectLevel1(firstCat, false);
             this.createSearchBox();
+
+            // 获取总站点数并显示（数字+）
+            await this.updateStats();
+
             this.isInitialized = true;
         } catch (error) {
             console.error('导航初始化失败:', error);
@@ -485,7 +500,8 @@ class OptimizedNavigation {
         if (!this.currentLevel1 || !this.currentLevel2) return;
         await this.loadCategoryData(this.currentLevel1, true);
         this.renderLevel3(this.currentLevel2);
-        this.updateStats();
+        // 刷新总数（也许管理员新增了站点）
+        await this.updateStats();
     }
 
     // ---------- 销毁 ----------
