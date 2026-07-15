@@ -1,7 +1,6 @@
-/* compact-tags.css - 移动端统一 3 列，优化间距刚好填满 */
+/* compact-tags.css - 移动端统一 3 列，优化间距刚好填满，上下留白对称 */
 .minimal-tags-section {
-    padding: 0 0 var(--section-margin-xs, 12px);
-    margin-bottom: 0;  /* 底部间距改为 0 */
+    padding: var(--section-margin-xs, 16px) 0;
     width: 100%;
 }
 .minimal-tags-section .container {
@@ -12,19 +11,19 @@
 }
 @media (min-width: 576px) {
     .minimal-tags-section .container { padding: 0 var(--container-padding-sm, 20px); }
-    .minimal-tags-section { padding: 0 0 var(--section-margin-sm, 16px); margin-bottom: 0; }
+    .minimal-tags-section { padding: var(--section-margin-sm, 20px) 0; }
 }
 @media (min-width: 768px) {
     .minimal-tags-section .container { padding: 0 var(--container-padding-md, 24px); }
-    .minimal-tags-section { padding: 0 0 var(--section-margin-sm, 16px); margin-bottom: 0; }
+    .minimal-tags-section { padding: var(--section-margin-sm, 20px) 0; }
 }
 @media (min-width: 992px) {
     .minimal-tags-section .container { padding: 0 var(--container-padding-lg, 28px); }
-    .minimal-tags-section { padding: 0 0 var(--section-margin-md, 20px); margin-bottom: 0; }
+    .minimal-tags-section { padding: var(--section-margin-md, 24px) 0; }
 }
 @media (min-width: 1200px) {
     .minimal-tags-section .container { padding: 0 var(--container-padding-xl, 32px); }
-    .minimal-tags-section { padding: 0 0 var(--section-margin-md, 20px); margin-bottom: 0; }
+    .minimal-tags-section { padding: var(--section-margin-md, 24px) 0; }
 }
 
 .tags-header {
@@ -226,7 +225,7 @@
     .minimal-tag.active { padding: 8px 11px; }
 }
 @media (min-width: 768px) and (max-width: 991px) {
-    .minimal-tags-section { padding: 0 0 var(--section-margin-xs, 12px); }
+    .minimal-tags-section { padding: var(--section-margin-xs, 16px) 0; }
     .tags-grid { grid-template-columns: repeat(6, 1fr); gap: 8px; }
     .tags-title { font-size: 14px; }
     .tags-subtitle-right { font-size: 10px; max-width: 180px; white-space: normal; text-align: right; line-height: 1.2; }
@@ -237,7 +236,7 @@
     .tag-icon { font-size: 13px; width: 18px; height: 18px; }
 }
 @media (min-width: 576px) and (max-width: 767px) {
-    .minimal-tags-section { padding: 0 0 var(--section-margin-xs, 12px); }
+    .minimal-tags-section { padding: var(--section-margin-xs, 16px) 0; }
     .tags-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .tags-title { font-size: 14px; }
     .tags-subtitle-right { font-size: 9px; max-width: 150px; white-space: normal; text-align: right; line-height: 1.2; }
@@ -249,7 +248,7 @@
 }
 
 @media (max-width: 575px) {
-    .minimal-tags-section { padding: 0 0 var(--section-margin-xs, 10px); }
+    .minimal-tags-section { padding: var(--section-margin-xs, 16px) 0; }
     .tags-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 8px; }
     .tags-title { font-size: 13px; }
     .tags-subtitle-right { font-size: 9px; max-width: 120px; white-space: normal; text-align: right; line-height: 1.2; margin-left: 6px; }
