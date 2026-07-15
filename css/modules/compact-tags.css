@@ -1,7 +1,7 @@
 /* compact-tags.css - 移动端统一 3 列，优化间距刚好填满 */
 .minimal-tags-section {
     padding: 0 0 var(--section-margin-xs, 12px);
-    margin-bottom: 8px;  /* 缩减底部边距 */
+    margin-bottom: 0;  /* 底部间距改为 0 */
     width: 100%;
 }
 .minimal-tags-section .container {
@@ -12,19 +12,19 @@
 }
 @media (min-width: 576px) {
     .minimal-tags-section .container { padding: 0 var(--container-padding-sm, 20px); }
-    .minimal-tags-section { padding: 0 0 var(--section-margin-sm, 16px); margin-bottom: 8px; }
+    .minimal-tags-section { padding: 0 0 var(--section-margin-sm, 16px); margin-bottom: 0; }
 }
 @media (min-width: 768px) {
     .minimal-tags-section .container { padding: 0 var(--container-padding-md, 24px); }
-    .minimal-tags-section { padding: 0 0 var(--section-margin-sm, 16px); margin-bottom: 8px; }
+    .minimal-tags-section { padding: 0 0 var(--section-margin-sm, 16px); margin-bottom: 0; }
 }
 @media (min-width: 992px) {
     .minimal-tags-section .container { padding: 0 var(--container-padding-lg, 28px); }
-    .minimal-tags-section { padding: 0 0 var(--section-margin-md, 20px); margin-bottom: 8px; }
+    .minimal-tags-section { padding: 0 0 var(--section-margin-md, 20px); margin-bottom: 0; }
 }
 @media (min-width: 1200px) {
     .minimal-tags-section .container { padding: 0 var(--container-padding-xl, 32px); }
-    .minimal-tags-section { padding: 0 0 var(--section-margin-md, 20px); margin-bottom: 8px; }
+    .minimal-tags-section { padding: 0 0 var(--section-margin-md, 20px); margin-bottom: 0; }
 }
 
 .tags-header {
