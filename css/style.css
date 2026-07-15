@@ -1165,9 +1165,9 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     }
 }
 
-/* ===== 各区域留白统一（与左右边距一致） ===== */
+/* ===== 各区域留白统一 ===== */
 
-/* 壁纸区域：上下边距与左右边距一致 */
+/* 壁纸区域：四周边距与左右边距一致 */
 .wallpaper-section {
     padding: var(--container-padding-xs) var(--container-padding-xs) var(--container-padding-xs) var(--container-padding-xs) !important;
     position: relative;
@@ -1194,33 +1194,38 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     }
 }
 
-/* 问候语区域：上下边距与左右边距一致 */
+/* 问候语区域：顶部与左右一致，底部减小（8px/12px） */
 .greeting-section {
-    padding: var(--container-padding-xs) 0;
+    padding-top: var(--container-padding-xs);
+    padding-bottom: 8px;
     position: relative;
 }
 @media (min-width: 576px) {
     .greeting-section {
-        padding: var(--container-padding-sm) 0;
+        padding-top: var(--container-padding-sm);
+        padding-bottom: 10px;
     }
 }
 @media (min-width: 768px) {
     .greeting-section {
-        padding: var(--container-padding-md) 0;
+        padding-top: var(--container-padding-md);
+        padding-bottom: 12px;
     }
 }
 @media (min-width: 992px) {
     .greeting-section {
-        padding: var(--container-padding-lg) 0;
+        padding-top: var(--container-padding-lg);
+        padding-bottom: 12px;
     }
 }
 @media (min-width: 1200px) {
     .greeting-section {
-        padding: var(--container-padding-xl) 0;
+        padding-top: var(--container-padding-xl);
+        padding-bottom: 12px;
     }
 }
 
-/* 问候语容器内部间距：上下与左右一致 */
+/* 问候语容器内部间距：与左右一致 */
 .greeting-container {
     display: flex;
     flex-direction: column;
@@ -1254,7 +1259,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     }
 }
 
-/* 后台管理按钮：与上方卡片间距由容器 gap 控制，无需额外 margin */
+/* 后台管理按钮 */
 .bookmark-btn {
     display: flex;
     align-items: center;
@@ -1282,8 +1287,8 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 .bookmark-btn i { font-size: 16px; }
 .bookmark-btn span { font-size: 12px; }
 
-/* 常用标签区域：上下边距与左右边距一致（由 compact-tags.css 控制，此处保留协调） */
-/* 注意：minimal-tags-section 的 padding 在 compact-tags.css 中已设置为与左右一致 */
+/* 常用标签区域：上下边距与左右一致（由 compact-tags.css 控制） */
+/* 此处无需额外样式 */
 
 /* 分类导航区域：顶部间距与标题下边距一致，底部与免责声明一致 */
 .navigation-section {
