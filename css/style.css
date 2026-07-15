@@ -1,4 +1,4 @@
-/* style.css - 星聚导航全局样式（含合作伙伴模块 + 图标降级样式） */
+/* style.css - 星聚导航全局样式（含合作伙伴模块 + 模态框边距优化） */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -978,10 +978,10 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     border-left: 3px solid var(--primary-color, #4361ee);
 }
 .partner-intro p {
-    font-size: 12px;
+    font-size: 13px;
+    line-height: 1.6;
     color: var(--text-secondary, #6c757d);
     margin: 0;
-    line-height: 1.5;
 }
 
 .partner-list {
@@ -1064,6 +1064,9 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 .dark-mode .partner-intro {
     background: rgba(123, 156, 255, 0.1);
 }
+.dark-mode .partner-intro p {
+    color: var(--text-secondary, #adb5bd);
+}
 .dark-mode .partner-item {
     background: var(--bg-secondary, #1e1e1e);
 }
@@ -1112,4 +1115,52 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 .dark-mode .icon-fallback-text {
     background: rgba(123, 156, 255, 0.15);
     color: var(--primary-color, #7b9cff);
+}
+
+/* ===== 合作伙伴模态框移动端边距优化 ===== */
+#partnerModal {
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 60px;
+    box-sizing: border-box;
+}
+@media (min-width: 769px) {
+    #partnerModal {
+        display: flex;
+        flex-direction: column;
+        padding: 60px 12px 12px;
+    }
+    #partnerModal .feedback-modal-content {
+        margin: auto 0;
+        max-height: calc(100vh - 60px - 24px);
+        overflow-y: auto;
+        max-width: 600px;
+    }
+}
+@media (max-width: 768px) {
+    #partnerModal {
+        padding-left: var(--container-padding-xs, 16px);
+        padding-right: var(--container-padding-xs, 16px);
+        padding-top: 60px;
+        display: flex;
+        flex-direction: column;
+    }
+    #partnerModal .feedback-modal-content {
+        margin: auto 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: calc(100vh - 60px - 2 * var(--container-padding-xs, 16px));
+        overflow-y: auto;
+    }
+}
+@media (max-width: 480px) {
+    #partnerModal {
+        padding-left: var(--container-padding-xs, 16px);
+        padding-right: var(--container-padding-xs, 16px);
+    }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+    #partnerModal .feedback-modal-content {
+        max-height: calc(100vh - 70px);
+    }
 }
