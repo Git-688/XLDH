@@ -19,7 +19,8 @@ class OptimizedNavigation {
         this.siteCountEl = document.getElementById('siteCount');
         this.invalidCountEl = document.getElementById('invalidCount');
 
-        this.bindEvents();
+        // 移除 this.bindEvents()，因为该方法不存在，事件绑定由其他方式完成
+        // this.bindEvents();  // <--- 删除此行
 
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
@@ -52,7 +53,6 @@ class OptimizedNavigation {
 
         const domain = this._getDomain(site.url);
 
-        // 图标源优先级：1. 站点自定义图标 2. icon.horse 高清 3. icon.horse 标准 4. google 5. yandex
         const iconSources = [];
         if (site.icon && (site.icon.startsWith('http://') || site.icon.startsWith('https://'))) {
             iconSources.push(site.icon);
@@ -176,13 +176,11 @@ class OptimizedNavigation {
 
             // ===== 点击事件：乐观更新 + 同步校正 =====
             card.addEventListener('click', async (e) => {
-                // 阻止点击报告死链按钮时触发
                 if (e.target.closest('.report-dead-link-btn')) return;
 
                 const viewEl = card.querySelector('.view-count');
                 if (!viewEl) return;
 
-                // 1. 乐观更新：立即 +1 显示
                 const oldViews = parseInt(viewEl.dataset.views) || 0;
                 const optimisticViews = oldViews + 1;
                 viewEl.dataset.views = optimisticViews;
@@ -191,7 +189,6 @@ class OptimizedNavigation {
                 setTimeout(() => viewEl.classList.remove('increasing'), 300);
 
                 try {
-                    // 2. 发送请求到后端
                     const response = await Utils.safeFetch(`${this.apiBase}/click`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -200,15 +197,12 @@ class OptimizedNavigation {
                     });
 
                     if (response.ok) {
-                        // 3. ===== 同步校正：以后端返回的 views 为准 =====
                         const data = await response.json();
                         if (data.views !== undefined) {
-                            // 3a. 覆盖前端显示
                             const correctedViews = data.views;
                             viewEl.dataset.views = correctedViews;
                             viewEl.textContent = this._formatViews(correctedViews);
 
-                            // 3b. 同时更新内存缓存（siteCache）中的 views
                             const currentSubId = this.selectedLevel2;
                             if (currentSubId && this.siteCache.has(currentSubId)) {
                                 const cachedSites = this.siteCache.get(currentSubId);
@@ -220,20 +214,15 @@ class OptimizedNavigation {
                             }
                         }
                     } else {
-                        // 如果后端返回错误，尝试回退到原来的值（可选）
-                        // 但为了体验，保持乐观值
                         console.warn('[导航] 点击统计请求失败，保持乐观值');
                     }
                 } catch (err) {
-                    // 网络错误时，保持乐观值即可
                     if (window.errorHandler) {
                         window.errorHandler.report(err, 'navigation.clickUpdate');
                     }
-                    // 可选：如果有必要，可以在这里回退
                 }
             });
 
-            // 死链上报
             const reportBtn = card.querySelector('.report-dead-link-btn');
             if (reportBtn) {
                 reportBtn.addEventListener('click', async (e) => {
