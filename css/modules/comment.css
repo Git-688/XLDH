@@ -1,4 +1,4 @@
-/* comment.css */
+/* comment.css - 完整版（增加表情包缩小样式） */
 :root {
   --waline-theme-color: var(--primary-color, #4361ee);
 }
@@ -261,4 +261,38 @@
 }
 .dark-mode #commentModal .feedback-modal-content::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.2);
+}
+
+/* ===== 新增：缩小评论中的表情包 ===== */
+#waline-comment .wl-emoji-item img,
+#waline-comment .wl-emoji-img,
+#waline-comment img.wl-emoji {
+  width: 24px !important;
+  height: 24px !important;
+  object-fit: contain;
+}
+
+/* 在评论正文中的表情（可能以图片形式出现） */
+#waline-comment .wl-comment-text img[src*="emoji"],
+#waline-comment .wl-comment-text img.wl-emoji {
+  width: 24px !important;
+  height: 24px !important;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* 输入框中的表情预览 */
+#waline-comment .wl-editor img.wl-emoji {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+/* 移动端适配 */
+@media (max-width: 600px) {
+  #waline-comment .wl-emoji-item img,
+  #waline-comment .wl-emoji-img,
+  #waline-comment img.wl-emoji {
+    width: 20px !important;
+    height: 20px !important;
+  }
 }
