@@ -1,4 +1,4 @@
-/* music-player.js - 移除导入/导出歌单功能（保留播放列表持久化） */
+/* music-player.js - 移除导入/导出歌单功能（保留播放列表持久化 + 本地音乐缓存） */
 let currentOpenCustomSelect = null;
 let customSelectInstances = new Map();
 
@@ -715,27 +715,7 @@ class MusicPlayer {
         }
     }
 
-    async switchApiTab(apiId) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        const tabBtn = document.querySelector(`.tab-btn[data-tab="${apiId}"]`);
-        const tabContent = document.getElementById(`${apiId}-content`);
-        if (tabBtn) tabBtn.classList.add('active');
-        if (tabContent) tabContent.classList.add('active');
-        this.currentApi = apiId;
-        this.updateSearchToggleButton();
-        
-        this.isSearchMode.set(apiId, false);
-        const el = this.apiElements[apiId];
-        if (el) {
-            if (el.playlistContainer) el.playlistContainer.style.display = 'block';
-            if (el.searchContainer) el.searchContainer.style.display = 'none';
-        }
-        
-        await this.loadApiPlaylist(apiId);
-        this.updateActiveSongInList();
-    }
-
+    // ===== 核心修改：loadApiPlaylist 增加本地音乐缓存 =====
     async loadApiPlaylist(apiId) {
         const el = this.apiElements[apiId];
         if (!el) return;
@@ -746,12 +726,46 @@ class MusicPlayer {
         if (el.searchContainer) el.searchContainer.style.display = 'none';
         try {
             let playlist;
+
+            // ===== 本地音乐缓存逻辑 =====
             if (apiId === 'local') {
-                playlist = await this.pluginManager.getPlaylist(apiId, 'local');
-                if (playlist.length && !this.hasNotifiedLocal) {
-                    const toast = window.Starlink?.toast || window.toast;
-                    if (toast && toast.show) toast.show(`已加载 ${playlist.length} 首本地歌曲`, 'info');
-                    this.hasNotifiedLocal = true;
+                const cacheKey = 'local_music_cache';
+                const cached = localStorage.getItem(cacheKey);
+                const now = Date.now();
+                if (cached) {
+                    try {
+                        const data = JSON.parse(cached);
+                        // 缓存有效期 24 小时
+                        if (now - data.timestamp < 24 * 60 * 60 * 1000) {
+                            playlist = data.songs;
+                            if (playlist && playlist.length && !this.hasNotifiedLocal) {
+                                const toast = window.Starlink?.toast || window.toast;
+                                if (toast && toast.show) toast.show(`已从缓存加载 ${playlist.length} 首本地歌曲`, 'info');
+                                this.hasNotifiedLocal = true;
+                            }
+                        } else {
+                            localStorage.removeItem(cacheKey);
+                        }
+                    } catch (e) {
+                        localStorage.removeItem(cacheKey);
+                    }
+                }
+                // 如果缓存不存在或已过期，从插件获取
+                if (!playlist) {
+                    playlist = await this.pluginManager.getPlaylist(apiId, 'local');
+                    if (playlist && playlist.length) {
+                        // 存入缓存
+                        const cacheData = {
+                            songs: playlist,
+                            timestamp: now
+                        };
+                        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+                        if (!this.hasNotifiedLocal) {
+                            const toast = window.Starlink?.toast || window.toast;
+                            if (toast && toast.show) toast.show(`已加载 ${playlist.length} 首本地歌曲并缓存`, 'info');
+                            this.hasNotifiedLocal = true;
+                        }
+                    }
                 }
             } else if (apiId === 'migu') {
                 playlist = await this.pluginManager.getPlaylist(apiId, 'hot');
@@ -769,13 +783,26 @@ class MusicPlayer {
                     sessionStorage.setItem(`notified_${apiId}_${playlistId}`, 'true');
                 }
             }
-            this.renderPlaylist(apiId, playlist);
+
+            this.renderPlaylist(apiId, playlist || []);
             this.savePlaylistState();
         } catch (error) {
             Utils.handleApiError(error, `加载 ${apiId} 歌单失败`, true);
             if (el.playlistContainer) {
                 el.playlistContainer.innerHTML = `<div class="error-message"><p>加载失败: ${Utils.escapeHtml(error.message)}</p><button class="retry-btn" onclick="window.Starlink?.musicPlayer?.loadApiPlaylist('${apiId}')">重试</button></div>`;
             }
+        }
+    }
+
+    // ===== 新增：清除本地音乐缓存 =====
+    clearLocalMusicCache() {
+        try {
+            localStorage.removeItem('local_music_cache');
+            const toast = window.Starlink?.toast || window.toast;
+            if (toast && toast.show) toast.show('本地音乐缓存已清除', 'success');
+            return true;
+        } catch (e) {
+            return false;
         }
     }
 
@@ -1383,6 +1410,10 @@ class MusicPlayer {
         if (this.cacheManager) this.cacheManager.cleanup();
         this.hasNotifiedLocal = false;
         this.hasNotifiedQishui = false;
+        
+        // 清除本地音乐缓存（可选，但为了干净退出不删除缓存，保留供下次使用）
+        // 如果需要清除，取消注释下面一行
+        // this.clearLocalMusicCache();
         
         if (typeof customSelectInstances !== 'undefined' && customSelectInstances) {
             customSelectInstances.forEach((instance, id) => {
