@@ -1,4 +1,4 @@
-/* error-handler.js - 修复版：正确初始化 reportedHashes 为 Set */
+/* error-handler.js - 优化版：节流上报、过滤无关错误、批量上报 */
 class ErrorHandler {
     constructor() {
         if (window._errorHandlerInstance) {
@@ -10,8 +10,12 @@ class ErrorHandler {
                          `${window.APP_CONFIG.API_BASE}/log` : null;
         this.retryQueue = [];
         this.isProcessing = false;
-        // ===== 修复：确保 reportedHashes 是 Set 实例 =====
-        this.reportedHashes = new Set();
+        this.reportedHashes = new Map(); // 存储错误hash和上次上报时间
+        this.batchQueue = [];
+        this.batchTimer = null;
+        this.BATCH_INTERVAL = 5000; // 5秒批量上报一次
+        this.BATCH_MAX_SIZE = 10;   // 最大批量上报数量
+        this.HASH_EXPIRE_TIME = 30000; // 30秒内相同错误不再上报
         this.init();
         window._errorHandlerInstance = this;
     }
@@ -26,10 +30,24 @@ class ErrorHandler {
         return `err_${hash}`;
     }
 
+    // ===== 优化：更严格的忽略规则 =====
     shouldIgnore(errorInfo) {
+        // 1. 忽略空的资源错误
         if (errorInfo.type === 'resource' && !errorInfo.message && !errorInfo.stack && !errorInfo.src) {
             return true;
         }
+
+        // 2. 忽略图片加载错误（最常见，无意义）
+        if (errorInfo.type === 'resource' && errorInfo.tag === 'IMG') {
+            return true;
+        }
+
+        // 3. 忽略 CSS/字体/图标加载错误
+        if (errorInfo.type === 'resource' && (errorInfo.tag === 'LINK' || errorInfo.tag === 'STYLE')) {
+            return true;
+        }
+
+        // 4. 忽略图标相关域名错误
         if (errorInfo.type === 'resource' && errorInfo.src) {
             const ignoreDomains = [
                 'favicon.yandex.net',
@@ -37,37 +55,56 @@ class ErrorHandler {
                 'api.71xk.com',
                 'bing.biturl.top',
                 'pearapi.ai',
-                'yunzhiapi.cn'
+                'yunzhiapi.cn',
+                'google.com/s2/favicons',
+                'cdn.jsdelivr.net',
+                'unpkg.com',
+                'fonts.googleapis.com',
+                'fonts.gstatic.com'
             ];
             if (ignoreDomains.some(domain => errorInfo.src.includes(domain))) {
                 return true;
             }
         }
+
+        // 5. 忽略 Script error.（跨域脚本错误）
         if (errorInfo.type === 'error' && (errorInfo.message === 'Script error.' || errorInfo.message === 'Script error')) {
             return true;
         }
+
+        // 6. 忽略空错误
         if (!errorInfo.message && !errorInfo.stack) {
             return true;
         }
+
+        // 7. 忽略网络错误（已由用户自行处理）
+        if (errorInfo.message && (
+            errorInfo.message.includes('NetworkError') ||
+            errorInfo.message.includes('Failed to fetch') ||
+            errorInfo.message.includes('Network request failed')
+        )) {
+            return true;
+        }
+
+        // ===== 节流：相同错误30秒内不再上报 =====
         const hash = this._getErrorHash(errorInfo);
         const now = Date.now();
-        // ===== 防御性检查：确保 reportedHashes 是 Set =====
-        if (!(this.reportedHashes instanceof Set)) {
-            this.reportedHashes = new Set();
-        }
         if (this.reportedHashes.has(hash)) {
             const lastReport = this.reportedHashes.get(hash);
-            if (now - lastReport < 5000) {
+            if (now - lastReport < this.HASH_EXPIRE_TIME) {
                 return true;
             }
         }
         this.reportedHashes.set(hash, now);
+
+        // 限制 Map 大小
         if (this.reportedHashes.size > 200) {
             const keys = this.reportedHashes.keys();
             for (let i = 0; i < 50; i++) {
                 this.reportedHashes.delete(keys.next().value);
             }
         }
+
         return false;
     }
 
@@ -84,6 +121,8 @@ class ErrorHandler {
     init() {
         this._bindGlobalEvents();
         this._setupOfflineQueue();
+        // 启动批量上报定时器
+        this._startBatchTimer();
     }
 
     _bindGlobalEvents() {
@@ -91,22 +130,14 @@ class ErrorHandler {
             const target = event.target;
             if (target && (target.tagName === 'IMG' || target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
                 const src = target.src || target.href;
-                if (src) {
-                    this.handleError({
-                        type: 'resource',
-                        tag: target.tagName,
-                        src: this.maskSensitive(src),
-                        message: `Failed to load ${target.tagName}: ${src}`,
-                        timestamp: Date.now()
-                    });
-                } else {
-                    this.handleError({
-                        type: 'resource',
-                        tag: target.tagName,
-                        message: 'Resource load failed (no src/href)',
-                        timestamp: Date.now()
-                    });
-                }
+                const errorInfo = {
+                    type: 'resource',
+                    tag: target.tagName,
+                    src: src ? this.maskSensitive(src) : '',
+                    message: `Failed to load ${target.tagName}: ${src || 'unknown'}`,
+                    timestamp: Date.now()
+                };
+                this.handleError(errorInfo);
                 return;
             }
             const { message, filename, lineno, colno, error } = event;
@@ -124,6 +155,8 @@ class ErrorHandler {
 
         window.addEventListener('unhandledrejection', (event) => {
             const reason = event.reason;
+            // 忽略空拒绝
+            if (!reason) return;
             this.handleError({
                 type: 'unhandledrejection',
                 message: reason?.message ? this.maskSensitive(reason.message) : this.maskSensitive(String(reason)),
@@ -138,12 +171,32 @@ class ErrorHandler {
             if (this.retryQueue.length > 0) {
                 this._processQueue();
             }
+            // 恢复批量上报
+            this._startBatchTimer();
+        });
+        window.addEventListener('offline', () => {
+            this._stopBatchTimer();
         });
         window.addEventListener('beforeunload', () => {
-            if (this.retryQueue.length > 0) {
-                this._flushQueue();
-            }
+            this._flushQueue();
+            this._flushBatchQueue();
         });
+    }
+
+    _startBatchTimer() {
+        if (this.batchTimer) return;
+        this.batchTimer = setInterval(() => {
+            if (this.batchQueue.length > 0 && navigator.onLine) {
+                this._flushBatchQueue();
+            }
+        }, this.BATCH_INTERVAL);
+    }
+
+    _stopBatchTimer() {
+        if (this.batchTimer) {
+            clearInterval(this.batchTimer);
+            this.batchTimer = null;
+        }
     }
 
     report(error, module = 'unknown') {
@@ -169,27 +222,83 @@ class ErrorHandler {
 
     handleError(errorInfo) {
         if (this.shouldIgnore(errorInfo)) return;
+
+        // 限制内存中的错误数量
         if (this.errors.length >= this.maxErrors) this.errors.shift();
         this.errors.push(errorInfo);
-        console.error('[ErrorHandler]', errorInfo);
+
+        // 控制台输出（仅开发环境或调试模式）
+        if (window.location.search.includes('debug=1') || localStorage.getItem('debug_mode') === 'true') {
+            console.error('[ErrorHandler]', errorInfo);
+        }
+
         this.showUserFriendlyMessage(errorInfo);
-        this.enqueueReport(errorInfo);
+        this.addToBatchQueue(errorInfo);
+    }
+
+    // ===== 批量上报队列 =====
+    addToBatchQueue(errorInfo) {
+        if (!this.reportUrl) return;
+        const safeInfo = this._preparePayload(errorInfo);
+        this.batchQueue.push(safeInfo);
+        
+        if (this.batchQueue.length >= this.BATCH_MAX_SIZE) {
+            this._flushBatchQueue();
+        }
+    }
+
+    async _flushBatchQueue() {
+        if (this.batchQueue.length === 0 || !navigator.onLine) return;
+        const batch = [...this.batchQueue];
+        this.batchQueue = [];
+        
+        try {
+            const payload = {
+                errors: batch,
+                count: batch.length,
+                timestamp: Date.now(),
+                url: window.location.href,
+                userAgent: navigator.userAgent
+            };
+            
+            if (navigator.sendBeacon) {
+                const sent = navigator.sendBeacon(this.reportUrl, JSON.stringify(payload));
+                if (sent) return;
+            }
+            
+            const response = await fetch(this.reportUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                keepalive: true
+            });
+            
+            if (!response.ok) {
+                // 如果失败，放回队列
+                this.batchQueue = [...batch, ...this.batchQueue];
+                if (this.batchQueue.length > this.BATCH_MAX_SIZE * 3) {
+                    this.batchQueue = this.batchQueue.slice(-this.BATCH_MAX_SIZE * 2);
+                }
+            }
+        } catch (e) {
+            // 失败时放回队列
+            this.batchQueue = [...batch, ...this.batchQueue];
+            if (this.batchQueue.length > this.BATCH_MAX_SIZE * 3) {
+                this.batchQueue = this.batchQueue.slice(-this.BATCH_MAX_SIZE * 2);
+            }
+        }
     }
 
     showUserFriendlyMessage(errorInfo) {
-        if (window._lastErrorTime && Date.now() - window._lastErrorTime < 5000) return;
+        // 减少用户提示频率
+        if (window._lastErrorTime && Date.now() - window._lastErrorTime < 10000) return;
         window._lastErrorTime = Date.now();
 
         let userMessage = '';
         if (errorInfo.type === 'resource' && errorInfo.tag === 'SCRIPT') {
             userMessage = '加载脚本失败，请检查网络后重试。';
-        } else if (errorInfo.message && errorInfo.message.includes('NetworkError')) {
-            userMessage = '网络连接异常，请检查网络后重试。';
-        } else if (errorInfo.message && errorInfo.message.includes('Failed to fetch')) {
-            userMessage = '请求后端服务失败，请稍后重试。';
         } else if (errorInfo.type === 'unhandledrejection') {
-            userMessage = '操作未能完成，请重试。';
-        } else if (errorInfo.type === 'resource' && errorInfo.tag === 'IMG') {
+            // 不显示用户提示，静默处理
             return;
         } else {
             return;
@@ -201,36 +310,19 @@ class ErrorHandler {
     }
 
     enqueueReport(errorInfo) {
-        if (!this.reportUrl) return;
-        const safeInfo = this._preparePayload(errorInfo);
-        this.retryQueue.push(safeInfo);
-        this._processQueue();
+        // 已改用批量上报，此方法保留兼容
+        this.addToBatchQueue(errorInfo);
     }
 
     async _processQueue() {
-        if (this.isProcessing || this.retryQueue.length === 0) return;
-        this.isProcessing = true;
-        try {
-            while (this.retryQueue.length > 0) {
-                const item = this.retryQueue[0];
-                const success = await this._sendReport(item);
-                if (success) {
-                    this.retryQueue.shift();
-                } else {
-                    break;
-                }
-            }
-        } catch (e) {
-            console.warn('[ErrorHandler] 处理队列异常:', e);
-        } finally {
-            this.isProcessing = false;
-            if (this.retryQueue.length > 0 && navigator.onLine) {
-                setTimeout(() => this._processQueue(), 2000);
-            }
+        // 批量上报已替代队列处理，此方法保留兼容
+        if (this.batchQueue.length > 0) {
+            this._flushBatchQueue();
         }
     }
 
     async _sendReport(payload, retries = 3) {
+        // 已改用批量上报，此方法保留兼容
         try {
             if (navigator.sendBeacon) {
                 const sent = navigator.sendBeacon(this.reportUrl, JSON.stringify(payload));
@@ -266,19 +358,8 @@ class ErrorHandler {
     }
 
     _flushQueue() {
-        while (this.retryQueue.length > 0) {
-            const item = this.retryQueue.shift();
-            if (navigator.sendBeacon) {
-                navigator.sendBeacon(this.reportUrl, JSON.stringify(item));
-            } else {
-                fetch(this.reportUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(item),
-                    keepalive: true
-                }).catch(() => {});
-            }
-        }
+        // 已改用批量上报，此方法保留兼容
+        this._flushBatchQueue();
     }
 
     getErrors() {
@@ -289,9 +370,57 @@ class ErrorHandler {
         this.errors = [];
         this.reportedHashes.clear();
         this.retryQueue = [];
+        this.batchQueue = [];
+        this._stopBatchTimer();
+    }
+
+    // ===== 调试方法 =====
+    getStats() {
+        return {
+            totalErrors: this.errors.length,
+            reportedHashes: this.reportedHashes.size,
+            batchQueueSize: this.batchQueue.length,
+            isProcessing: this.isProcessing,
+            reportUrl: this.reportUrl
+        };
+    }
+
+    // ===== 强制刷新上报 =====
+    forceReport() {
+        this._flushBatchQueue();
+    }
+
+    // ===== 设置调试模式 =====
+    setDebugMode(enabled) {
+        if (enabled) {
+            localStorage.setItem('debug_mode', 'true');
+        } else {
+            localStorage.removeItem('debug_mode');
+        }
     }
 }
 
+// 单例初始化
 if (!window.errorHandler) {
     window.errorHandler = new ErrorHandler();
 }
+
+// 暴露全局方法
+window.getErrorStats = function() {
+    if (window.errorHandler) {
+        return window.errorHandler.getStats();
+    }
+    return null;
+};
+
+window.forceReportErrors = function() {
+    if (window.errorHandler) {
+        window.errorHandler.forceReport();
+    }
+};
+
+window.clearErrorLogs = function() {
+    if (window.errorHandler) {
+        window.errorHandler.clearErrors();
+    }
+};
