@@ -1542,8 +1542,7 @@
                     height: 12px;
                     flex-shrink: 0;
                     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-                    background-size: contain;
-                    background-repeat: no-repeat;
+                    background-size: contain; background-repeat: no-repeat;
                     transition: transform 0.25s ease;
                 }
                 .custom-dropdown-trigger.open .custom-dropdown-arrow {
@@ -1644,7 +1643,7 @@
             partnerIntroText = data.intro || '';
             document.getElementById('partnerIntroInput').value = partnerIntroText;
         } catch (e) {
-            console.warn('加载合作协议失败:', e);
+            console.warn('加载合作公告失败:', e);
         }
     }
 
@@ -1660,7 +1659,8 @@
                 body: JSON.stringify({ intro })
             });
             partnerIntroText = intro;
-            showToast('合作协议已保存', 'success');
+            // ===== 修改 Toast 文字 =====
+            showToast('合作公告已保存', 'success');
             if (window.partnerModule && typeof window.partnerModule.refresh === 'function') {
                 window.partnerModule.refresh();
             }
