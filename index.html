@@ -4,7 +4,6 @@
     <!-- ===== 暗色模式记忆 - 必须在最前面执行，避免闪烁 ===== -->
     <script>
         (function() {
-            // 暗色模式记忆 - 在页面渲染前应用主题，避免闪烁
             try {
                 const theme = localStorage.getItem('starlink_theme');
                 if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -482,10 +481,10 @@
             border-left: 3px solid var(--primary-color, #4361ee);
         }
         .partner-intro p {
-            font-size: 12px;
+            font-size: 13px;
+            line-height: 1.6;
             color: var(--text-secondary, #6c757d);
             margin: 0;
-            line-height: 1.5;
         }
 
         .partner-list {
@@ -568,6 +567,9 @@
         .dark-mode .partner-intro {
             background: rgba(123, 156, 255, 0.1);
         }
+        .dark-mode .partner-intro p {
+            color: var(--text-secondary, #adb5bd);
+        }
         .dark-mode .partner-item {
             background: var(--bg-secondary, #1e1e1e);
         }
@@ -583,6 +585,39 @@
         }
         .dark-mode .partner-list::-webkit-scrollbar-thumb {
             background: rgba(255,255,255,0.2);
+        }
+
+        /* ===== 图标降级样式（首字母降级） ===== */
+        .icon-fallback-text {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary-color, #4361ee);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            text-transform: uppercase;
+            background: rgba(67, 97, 238, 0.08);
+            border-radius: 6px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            letter-spacing: 0.5px;
+        }
+
+        .site-icon-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+            transition: opacity 0.2s ease;
+        }
+        .site-icon-img[data-failed="true"] {
+            display: none !important;
+        }
+
+        .dark-mode .icon-fallback-text {
+            background: rgba(123, 156, 255, 0.15);
+            color: var(--primary-color, #7b9cff);
         }
     </style>
 
@@ -712,6 +747,7 @@
             <div class="container">
                 <div class="tags-header">
                     <h2 class="tags-title">常用标签</h2>
+                    <!-- 合作伙伴按钮 -->
                     <button class="partner-trigger-btn" id="partnerTriggerBtn">🤝 合作伙伴</button>
                 </div>
                 <div class="tags-grid" id="tagsGrid">
@@ -875,7 +911,7 @@
                 </div>
                 <div class="feedback-modal-body">
                     <div class="partner-intro">
-                        <p>这是我们的优质合作伙伴名录，点击即可访问对应站点。后续将持续更新名录补充优质资源</p>
+                        <p>加载中...</p>
                     </div>
                     <div class="partner-list" id="partnerList">
                         <!-- 由 JS 动态渲染 -->
