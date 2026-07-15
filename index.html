@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <!-- ===== 暗色模式记忆 - 必须在最前面执行，避免闪烁 ===== -->
+    <script>
+        (function() {
+            // 暗色模式记忆 - 在页面渲染前应用主题，避免闪烁
+            try {
+                const theme = localStorage.getItem('starlink_theme');
+                if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark-mode');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>星聚导航 - 您的个人导航中心</title>
@@ -699,7 +712,6 @@
             <div class="container">
                 <div class="tags-header">
                     <h2 class="tags-title">常用标签</h2>
-                    <!-- 替换为合作伙伴按钮 -->
                     <button class="partner-trigger-btn" id="partnerTriggerBtn">🤝 合作伙伴</button>
                 </div>
                 <div class="tags-grid" id="tagsGrid">
@@ -854,7 +866,7 @@
             </div>
         </div>
 
-        <!-- ===== 合作伙伴模态框（新增） ===== -->
+        <!-- ===== 合作伙伴模态框 ===== -->
         <div id="partnerModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header">
