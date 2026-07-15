@@ -31,6 +31,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;  /* 新增：标题与按钮之间的水平间距 = 标题下边距 10px */
     position: relative;
     padding-left: 8px;
 }
