@@ -1,4 +1,4 @@
-/* main.js - 增加全局错误边界和统一错误处理，监听导航刷新信号，轮询间隔10秒 */
+/* main.js - 增加全局错误边界和统一错误处理，监听导航刷新信号，轮询间隔10秒，集成合作伙伴模块 */
 class App {
     constructor() {
         this.components = {};
@@ -259,6 +259,30 @@ class App {
         }
     }
 
+    // ===== 新增：初始化合作伙伴模块 =====
+    initPartnerModule() {
+        // partner.js 会自动初始化，这里只需确保 window.Starlink.partner 存在
+        // 但为了兼容，如果 partner.js 未加载，可以手动创建
+        if (!window.Starlink) window.Starlink = {};
+        if (!window.Starlink.partner) {
+            // 如果 partner.js 未加载，等待加载完成后再初始化
+            if (typeof PartnerModule !== 'undefined') {
+                window.Starlink.partner = new PartnerModule();
+            } else {
+                // 如果 partner.js 尚未加载，监听加载完成
+                const checkPartner = () => {
+                    if (typeof PartnerModule !== 'undefined') {
+                        window.Starlink.partner = new PartnerModule();
+                    } else {
+                        setTimeout(checkPartner, 200);
+                    }
+                };
+                checkPartner();
+            }
+        }
+        window.partnerModule = window.Starlink.partner;
+    }
+
     init() {
         if (this.isInitialized) return;
 
@@ -275,6 +299,8 @@ class App {
             this.initFloatingButtonsEffect();
             this.initServiceWorkerMessageListener();
             this.setupNavRefreshListener();
+            // ===== 初始化合作伙伴模块 =====
+            this.initPartnerModule();
             this.isInitialized = true;
             this.hideErrorFallback();
 
@@ -511,6 +537,10 @@ class App {
         if (this.modules.search?.isModalOpen && this.modules.search.hide) this.modules.search.hide();
         this.hideNotebookModal();
         if (window.walineFeedback?.isVisible) window.walineFeedback.hide();
+        // 关闭合作伙伴模态框
+        if (window.partnerModule && window.partnerModule.isVisible) {
+            window.partnerModule.close();
+        }
     }
 
     showToast(message, type = 'info') {
