@@ -1,4 +1,4 @@
-/* style.css - 星聚导航全局样式（含合作伙伴模块 + 模态框边距优化 + 各区域留白统一） */
+/* style.css - 星聚导航全局样式（各区域留白协调，无 !important 覆盖） */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -1169,32 +1169,32 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 
 /* 壁纸区域：四周边距与左右边距一致 */
 .wallpaper-section {
-    padding: var(--container-padding-xs) var(--container-padding-xs) var(--container-padding-xs) var(--container-padding-xs) !important;
+    padding: var(--container-padding-xs) var(--container-padding-xs) var(--container-padding-xs) var(--container-padding-xs);
     position: relative;
-    margin: 0 !important;
+    margin: 0;
 }
 @media (min-width: 576px) {
     .wallpaper-section {
-        padding: var(--container-padding-sm) var(--container-padding-sm) var(--container-padding-sm) var(--container-padding-sm) !important;
+        padding: var(--container-padding-sm) var(--container-padding-sm) var(--container-padding-sm) var(--container-padding-sm);
     }
 }
 @media (min-width: 768px) {
     .wallpaper-section {
-        padding: var(--container-padding-md) var(--container-padding-md) var(--container-padding-md) var(--container-padding-md) !important;
+        padding: var(--container-padding-md) var(--container-padding-md) var(--container-padding-md) var(--container-padding-md);
     }
 }
 @media (min-width: 992px) {
     .wallpaper-section {
-        padding: var(--container-padding-lg) var(--container-padding-lg) var(--container-padding-lg) var(--container-padding-lg) !important;
+        padding: var(--container-padding-lg) var(--container-padding-lg) var(--container-padding-lg) var(--container-padding-lg);
     }
 }
 @media (min-width: 1200px) {
     .wallpaper-section {
-        padding: var(--container-padding-xl) var(--container-padding-xl) var(--container-padding-xl) var(--container-padding-xl) !important;
+        padding: var(--container-padding-xl) var(--container-padding-xl) var(--container-padding-xl) var(--container-padding-xl);
     }
 }
 
-/* 问候语区域：顶部与左右一致，底部减小（8px/12px） */
+/* 问候语区域：顶部与左右一致，底部减小 */
 .greeting-section {
     padding-top: var(--container-padding-xs);
     padding-bottom: 8px;
@@ -1225,36 +1225,36 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     }
 }
 
-/* 问候语容器内部间距：与左右一致 */
+/* 问候语容器：内部间距与左右一致，但稍小一点以控制按钮间距 */
 .greeting-container {
     display: flex;
     flex-direction: column;
-    gap: var(--container-padding-xs);
+    gap: 10px;
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 var(--container-padding-xs);
 }
 @media (min-width: 576px) {
     .greeting-container {
-        gap: var(--container-padding-sm);
+        gap: 12px;
         padding: 0 var(--container-padding-sm);
     }
 }
 @media (min-width: 768px) {
     .greeting-container {
-        gap: var(--container-padding-md);
+        gap: 12px;
         padding: 0 var(--container-padding-md);
     }
 }
 @media (min-width: 992px) {
     .greeting-container {
-        gap: var(--container-padding-lg);
+        gap: 12px;
         padding: 0 var(--container-padding-lg);
     }
 }
 @media (min-width: 1200px) {
     .greeting-container {
-        gap: var(--container-padding-xl);
+        gap: 12px;
         padding: 0 var(--container-padding-xl);
     }
 }
@@ -1288,9 +1288,8 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 .bookmark-btn span { font-size: 12px; }
 
 /* 常用标签区域：上下边距与左右一致（由 compact-tags.css 控制） */
-/* 此处无需额外样式 */
 
-/* 分类导航区域：顶部间距与标题下边距一致，底部与免责声明一致 */
+/* 分类导航区域：顶部与标题下边距一致，底部与免责声明一致 */
 .navigation-section {
     padding-top: 12px;
     padding-bottom: calc(var(--section-margin-xs) * 0.6);
