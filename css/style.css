@@ -1,4 +1,4 @@
-/* style.css - 星聚导航全局样式（调整导航与免责声明间距，使其与底部统计卡片间距一致） */
+/* style.css - 星聚导航全局样式（直接调整导航与页脚间距，使两者间距等于底部统计卡片间距） */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -1197,43 +1197,48 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     }
 }
 
-/* ===== 调整导航与免责声明间距（底部padding清零，footer顶部改为10px） ===== */
 .navigation-section {
     padding: calc(var(--section-margin-xs) * 0.5) 0 0 0;
     width: 100%;
     margin-top: 0;
+    margin-bottom: 0;
 }
 @media (max-width: 768px) {
     .navigation-section {
         padding: var(--section-margin-xs) 0 0 0;
+        margin-bottom: 0;
     }
 }
 
-/* ===== 页脚容器：顶部padding固定为10px（与免责声明底部margin一致） ===== */
+/* ===== 页脚元素顶部外边距 10px（与免责声明底部间距一致） ===== */
+footer {
+    margin-top: 10px;
+}
+
 .footer-compact-container {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 10px var(--container-padding-xs, 16px) calc(var(--section-margin-xs, 16px) * 0.6) var(--container-padding-xs, 16px);
+    padding: 0 var(--container-padding-xs, 16px) calc(var(--section-margin-xs, 16px) * 0.6) var(--container-padding-xs, 16px);
     box-sizing: border-box;
 }
 @media (min-width: 576px) {
     .footer-compact-container {
-        padding: 10px var(--container-padding-sm, 20px) calc(var(--section-margin-sm, 20px) * 0.6) var(--container-padding-sm, 20px);
+        padding: 0 var(--container-padding-sm, 20px) calc(var(--section-margin-sm, 20px) * 0.6) var(--container-padding-sm, 20px);
     }
 }
 @media (min-width: 768px) {
     .footer-compact-container {
-        padding: 10px var(--container-padding-md, 24px) calc(var(--section-margin-md, 24px) * 0.6) var(--container-padding-md, 24px);
+        padding: 0 var(--container-padding-md, 24px) calc(var(--section-margin-md, 24px) * 0.6) var(--container-padding-md, 24px);
     }
 }
 @media (min-width: 992px) {
     .footer-compact-container {
-        padding: 10px var(--container-padding-lg, 28px) calc(var(--section-margin-lg, 28px) * 0.6) var(--container-padding-lg, 28px);
+        padding: 0 var(--container-padding-lg, 28px) calc(var(--section-margin-lg, 28px) * 0.6) var(--container-padding-lg, 28px);
     }
 }
 @media (min-width: 1200px) {
     .footer-compact-container {
-        padding: 10px var(--container-padding-xl, 32px) calc(var(--section-margin-lg, 28px) * 0.6) var(--container-padding-xl, 32px);
+        padding: 0 var(--container-padding-xl, 32px) calc(var(--section-margin-lg, 28px) * 0.6) var(--container-padding-xl, 32px);
     }
 }
