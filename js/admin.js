@@ -1,4 +1,4 @@
-/* admin.js - 完整版（实时同步，notifyNavRefresh 增加防抖 + 刷新缓存按钮） */
+/* admin.js - 完整版（实时同步，notifyNavRefresh 增加防抖 + 刷新缓存按钮 + 合作伙伴管理） */
 (function() {
     'use strict';
 
@@ -22,6 +22,10 @@
 
     let selectedSiteIds = new Set();
     let customSelectInstances = [];
+
+    // ===== 合作伙伴管理变量 =====
+    let partnersData = [];
+    let partnerIntroText = '';
 
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     function showToast(msg, type = 'success') { const toast = document.getElementById('toast'); if (!toast) return; toast.textContent = msg; toast.className = `toast ${type} show`; clearTimeout(toast._timeout); toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300); }
@@ -1632,8 +1636,136 @@
         }
     }
 
+    // ===== 合作伙伴管理函数 =====
+
+    async function loadPartnerSettings() {
+        try {
+            const data = await apiFetch('/admin/partner-settings');
+            partnerIntroText = data.intro || '';
+            document.getElementById('partnerIntroInput').value = partnerIntroText;
+        } catch (e) {
+            console.warn('加载合作协议失败:', e);
+        }
+    }
+
+    async function savePartnerIntro() {
+        const intro = document.getElementById('partnerIntroInput').value.trim();
+        const btn = document.getElementById('savePartnerIntroBtn');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = '保存中...';
+        try {
+            await apiFetch('/admin/partner-settings', {
+                method: 'PUT',
+                body: JSON.stringify({ intro })
+            });
+            partnerIntroText = intro;
+            showToast('合作协议已保存', 'success');
+            if (window.partnerModule && typeof window.partnerModule.refresh === 'function') {
+                window.partnerModule.refresh();
+            }
+        } catch (e) {
+            showToast('保存失败: ' + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    }
+
+    async function loadPartnersAdmin() {
+        const list = document.getElementById('partnerAdminList');
+        list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:12px;">加载中...</div>';
+        try {
+            const data = await apiFetch('/admin/partners');
+            partnersData = data || [];
+            renderPartnerListAdmin();
+        } catch (e) {
+            list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:12px;">加载失败，请刷新重试</div>';
+            console.error('加载合作伙伴列表失败:', e);
+        }
+    }
+
+    function renderPartnerListAdmin() {
+        const list = document.getElementById('partnerAdminList');
+        if (!partnersData || !partnersData.length) {
+            list.innerHTML = '<div style="text-align:center;padding:30px 20px;color:var(--text-secondary);font-size:14px;">🎉 期待你的加入...</div>';
+            return;
+        }
+        list.style.cssText = 'flex:1;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;padding-right:4px;';
+        const html = partnersData.map(p => `
+            <div class="partner-admin-item" style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--bg-card);border-radius:6px;margin-bottom:4px;border:1px solid var(--border-color);transition:all 0.2s;">
+                <div class="partner-admin-icon" style="width:28px;height:28px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--border-color);overflow:hidden;font-size:12px;color:var(--primary-color);">
+                    ${p.icon ? `<img src="${escapeHtml(p.icon)}" alt="" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fas fa-link\\'></i>';">` : '<i class="fas fa-link"></i>'}
+                </div>
+                <span class="partner-admin-name" style="flex:1;font-size:12px;font-weight:500;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(p.name)}</span>
+                <button class="danger sm partner-delete-btn" data-id="${p.id}" data-name="${escapeHtml(p.name)}" style="padding:2px 10px;font-size:10px;flex-shrink:0;">删除</button>
+            </div>
+        `).join('');
+        list.innerHTML = html;
+
+        list.querySelectorAll('.partner-delete-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = parseInt(this.dataset.id);
+                const name = this.dataset.name;
+                deletePartner(id, name);
+            });
+        });
+    }
+
+    async function deletePartner(id, name) {
+        if (!confirm(`确定要删除合作伙伴「${name}」吗？此操作不可恢复！`)) return;
+        try {
+            await apiFetch(`/admin/partners/${id}`, { method: 'DELETE' });
+            showToast(`已删除「${name}」`, 'success');
+            await loadPartnersAdmin();
+            if (window.partnerModule && typeof window.partnerModule.refresh === 'function') {
+                window.partnerModule.refresh();
+            }
+        } catch (e) {
+            showToast('删除失败: ' + e.message, 'error');
+        }
+    }
+
+    async function addPartner() {
+        const url = document.getElementById('partnerUrlInput').value.trim();
+        const name = document.getElementById('partnerNameInput').value.trim();
+        const icon = document.getElementById('partnerIconInput').value.trim();
+
+        if (!url) { showToast('请输入网站链接', 'error'); return; }
+        if (!name) { showToast('请输入网站标题', 'error'); return; }
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            showToast('链接格式不正确，请以 http:// 或 https:// 开头', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('addPartnerBtn');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = '添加中...';
+
+        try {
+            await apiFetch('/admin/partners', {
+                method: 'POST',
+                body: JSON.stringify({ name, url, icon })
+            });
+            showToast('添加成功', 'success');
+            document.getElementById('partnerUrlInput').value = '';
+            document.getElementById('partnerNameInput').value = '';
+            document.getElementById('partnerIconInput').value = '';
+            await loadPartnersAdmin();
+            if (window.partnerModule && typeof window.partnerModule.refresh === 'function') {
+                window.partnerModule.refresh();
+            }
+        } catch (e) {
+            showToast('添加失败: ' + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    }
+
     // ============================================================
-    // 核心：设置事件代理（包含刷新缓存按钮）
+    // 核心：设置事件代理（包含刷新缓存按钮 + 合作伙伴管理）
     // ============================================================
     function setupEventDelegation() {
         document.getElementById('catBar').addEventListener('click', e => {
@@ -1673,6 +1805,10 @@
                 if (tabId === 'submissions') loadSubmissions();
                 if (tabId === 'announcement') loadAnnouncement();
                 if (tabId === 'manage') loadAdminSites(true);
+                if (tabId === 'partners') {
+                    loadPartnerSettings();
+                    loadPartnersAdmin();
+                }
             });
         });
 
@@ -1699,7 +1835,7 @@
         document.getElementById('batchDeleteBtn')?.addEventListener('click', batchDeleteSites);
         document.getElementById('batchMoveBtn')?.addEventListener('click', batchMoveSites);
 
-        // ===== 新增：刷新缓存按钮 =====
+        // ===== 刷新缓存按钮 =====
         document.getElementById('refreshCacheBtn')?.addEventListener('click', async function() {
             const btn = this;
             const originalText = btn.textContent;
@@ -1707,10 +1843,7 @@
             btn.textContent = '刷新中...';
 
             try {
-                // 1. 调用后端刷新接口
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
-
-                // 2. 清除前端本地缓存（navigation.js 中使用的 localStorage 缓存）
                 const keysToRemove = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
@@ -1719,25 +1852,35 @@
                     }
                 }
                 keysToRemove.forEach(key => localStorage.removeItem(key));
-
-                // 3. 同时清除导航缓存版本标记（如果有）
                 localStorage.removeItem('nav_cache_version');
-
-                // 4. 触发前端刷新信号
                 try {
                     localStorage.setItem('nav_refresh_required', Date.now());
                     document.dispatchEvent(new CustomEvent('navRefreshRequested'));
                 } catch (e) {}
-
-                // 5. 重新加载当前数据
                 await loadAllDataButKeepSelection();
-
                 showToast('所有缓存已刷新，数据已更新', 'success');
             } catch (e) {
                 showToast('刷新失败：' + (e.message || '网络错误'), 'error');
             } finally {
                 btn.disabled = false;
                 btn.textContent = originalText;
+            }
+        });
+
+        // ===== 合作伙伴管理事件 =====
+        document.getElementById('savePartnerIntroBtn')?.addEventListener('click', savePartnerIntro);
+        document.getElementById('addPartnerBtn')?.addEventListener('click', addPartner);
+
+        document.getElementById('partnerNameInput')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('addPartnerBtn')?.click();
+            }
+        });
+        document.getElementById('partnerUrlInput')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('addPartnerBtn')?.click();
             }
         });
     }
