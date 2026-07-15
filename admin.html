@@ -310,19 +310,20 @@
             <!-- ===== 合作伙伴管理面板 ===== -->
             <div id="partnersTab" class="tab-panel hidden">
                 <div class="partner-admin-container" style="display:flex;flex-direction:column;gap:16px;height:100%;overflow:hidden;padding:4px 0;">
-                    <!-- 合作协议区域 -->
+                    <!-- 合作公告区域 -->
                     <div class="partner-intro-edit" style="background:var(--bg-secondary, #f8fafc);border-radius:8px;padding:12px;border:1px solid var(--border-color, #e2e8f0);flex-shrink:0;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                            <label style="font-size:12px;font-weight:600;color:var(--text-primary);">🤝 合作协议（前端显示文字）</label>
+                            <label style="font-size:12px;font-weight:600;color:var(--text-primary);">📢 合作公告</label>
                             <button class="primary sm" id="savePartnerIntroBtn" style="padding:4px 14px;font-size:11px;">保存</button>
                         </div>
                         <textarea id="partnerIntroInput" rows="2" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;resize:vertical;font-family:inherit;box-sizing:border-box;"></textarea>
                     </div>
 
-                    <!-- 添加合作伙伴表单 -->
+                    <!-- 合作伙伴表单 -->
                     <div class="partner-add-form" style="background:var(--bg-secondary, #f8fafc);border-radius:8px;padding:12px;border:1px solid var(--border-color, #e2e8f0);flex-shrink:0;">
-                        <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">➕ 添加合作伙伴</div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;">
+                        <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">🤝 合作伙伴</div>
+                        <!-- 第一行：网站链接 + 网站标题 -->
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
                             <div style="display:flex;flex-direction:column;gap:4px;">
                                 <label style="font-size:10px;color:var(--text-secondary);">网站链接 *</label>
                                 <input type="text" id="partnerUrlInput" placeholder="https://example.com" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;">
@@ -331,11 +332,14 @@
                                 <label style="font-size:10px;color:var(--text-secondary);">网站标题 *</label>
                                 <input type="text" id="partnerNameInput" placeholder="合作伙伴名称" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;">
                             </div>
+                        </div>
+                        <!-- 第二行：完整图标 + 添加按钮 -->
+                        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;">
                             <div style="display:flex;flex-direction:column;gap:4px;">
-                                <label style="font-size:10px;color:var(--text-secondary);">图标链接</label>
+                                <label style="font-size:10px;color:var(--text-secondary);">完整图标</label>
                                 <input type="text" id="partnerIconInput" placeholder="https://example.com/icon.png" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;">
                             </div>
-                            <button class="primary sm" id="addPartnerBtn" style="padding:6px 16px;font-size:12px;white-space:nowrap;height:34px;">添加</button>
+                            <button class="primary sm" id="addPartnerBtn" style="padding:6px 16px;font-size:12px;white-space:nowrap;height:34px;flex-shrink:0;">添加</button>
                         </div>
                     </div>
 
