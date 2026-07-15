@@ -35,7 +35,6 @@
         }
 
         loadPartners() {
-            // 从 localStorage 读取或使用默认
             try {
                 const cached = localStorage.getItem('partner_list');
                 if (cached) {
@@ -47,7 +46,6 @@
                 }
             } catch (e) {}
             this.partners = DEFAULT_PARTNERS;
-            // 缓存到本地
             try {
                 localStorage.setItem('partner_list', JSON.stringify(this.partners));
             } catch (e) {}
@@ -76,7 +74,6 @@
 
         open() {
             if (this.isVisible) return;
-            // 关闭其他模态框
             this.closeOtherModals();
             this.renderList();
             this.modal.classList.add('active');
@@ -135,7 +132,6 @@
         }
     }
 
-    // 自动初始化
     document.addEventListener('DOMContentLoaded', () => {
         if (!window.Starlink) window.Starlink = {};
         if (!window.Starlink.partner) {
