@@ -1,26 +1,24 @@
-/* navigation.js - 按一级分类加载全部数据，缓存到 localStorage */
+/* navigation.js - 按一级分类加载全部数据，缓存到 localStorage，图标优化高清加载+首字母降级 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
 
         this.apiBase = Utils.getApiBase();
-        this.categoryCache = {};          // 内存缓存：{ categoryName: subcategories[] }
-        this.currentLevel1 = null;        // 当前选中的一级分类名
-        this.currentLevel2 = null;        // 当前选中的子分类ID
-        this.currentSites = [];           // 当前显示的站点列表
+        this.categoryCache = {};
+        this.currentLevel1 = null;
+        this.currentLevel2 = null;
+        this.currentSites = [];
         this.isInitialized = false;
         this.stats = { totalWebsites: 0, invalidCount: 0 };
         this.searchQuery = '';
         this.isSearching = false;
 
-        // DOM 引用
         this.level1Nav = document.getElementById('level1Nav');
         this.level2Nav = document.getElementById('level2Nav');
         this.level3Content = document.getElementById('level3Content');
         this.siteCountEl = document.getElementById('siteCount');
         this.invalidCountEl = document.getElementById('invalidCount');
 
-        // 绑定事件
         this.bindEvents();
 
         if (window.Starlink) window.Starlink.navigation = this;
@@ -35,16 +33,7 @@ class OptimizedNavigation {
         try { return new URL(url).hostname; } catch { return ''; }
     }
 
-    _getFullIconUrl(icon, siteUrl) {
-        if (!icon) return '';
-        if (icon.startsWith('/icon?domain=')) return this.apiBase + icon;
-        if (icon.startsWith('http://') || icon.startsWith('https://')) return icon;
-        const domain = this._getDomain(siteUrl);
-        if (domain) return this.apiBase + `/icon?domain=${encodeURIComponent(domain)}`;
-        return '';
-    }
-
-    // ---------- 图标生成（含降级方案） ----------
+    // ---------- 图标加载（高清 + 首字母降级） ----------
     _createIconElement(site) {
         const container = document.createElement('span');
         container.className = 'icon-container';
@@ -59,54 +48,91 @@ class OptimizedNavigation {
         img.loading = 'lazy';
         img.alt = '';
         img.style.display = 'block';
+        img.className = 'site-icon-img';
 
-        // 主要图标源（高清）
         const domain = this._getDomain(site.url);
-        let primaryUrl = '';
-        if (domain) {
-            primaryUrl = `https://icon.horse/icon/${domain}?size=512&format=webp`;
-        }
-        // 若站点自带图标且为http，则优先使用
+
+        // 图标源优先级：1. 站点自定义图标 2. icon.horse 高清 3. icon.horse 标准 4. google 5. yandex
+        const iconSources = [];
         if (site.icon && (site.icon.startsWith('http://') || site.icon.startsWith('https://'))) {
-            primaryUrl = site.icon;
+            iconSources.push(site.icon);
         }
-        // 若还是空，则使用 yandex 备用
-        if (!primaryUrl && domain) {
-            primaryUrl = `https://favicon.yandex.net/favicon/${domain}`;
-        }
-        // 若仍然空，则用 google 兜底
-        if (!primaryUrl && domain) {
-            primaryUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+        if (domain) {
+            iconSources.push(
+                `https://icon.horse/icon/${domain}?size=256&format=webp`,
+                `https://icon.horse/icon/${domain}?size=128`,
+                `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+                `https://favicon.yandex.net/favicon/${domain}`
+            );
         }
 
-        img.src = primaryUrl || '';
+        let currentSourceIndex = 0;
+        let retryCount = 0;
+        const maxRetries = iconSources.length;
 
-        img.onerror = () => {
-            img.style.display = 'none';
-            fallbackText.style.display = 'flex';
-            // 尝试从备用源重新加载（仅当 primaryUrl 不是 google 或 yandex 时）
-            if (domain && !primaryUrl.includes('google.com') && !primaryUrl.includes('yandex.net')) {
-                const backupUrl = `https://favicon.yandex.net/favicon/${domain}`;
-                const backupImg = new Image();
-                backupImg.onload = () => {
-                    img.src = backupUrl;
-                    img.style.display = 'block';
-                    fallbackText.style.display = 'none';
-                };
-                backupImg.onerror = () => {
-                    // 最后尝试 google
-                    const googleUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-                    const googleImg = new Image();
-                    googleImg.onload = () => {
-                        img.src = googleUrl;
-                        img.style.display = 'block';
-                        fallbackText.style.display = 'none';
-                    };
-                    googleImg.src = googleUrl;
-                };
-                backupImg.src = backupUrl;
+        const loadIcon = (src) => {
+            if (!src) {
+                this._showFallback();
+                return;
+            }
+            img.src = src;
+        };
+
+        const tryNextSource = () => {
+            currentSourceIndex++;
+            if (currentSourceIndex < iconSources.length) {
+                retryCount = 0;
+                loadIcon(iconSources[currentSourceIndex]);
+            } else {
+                this._showFallback();
             }
         };
+
+        const _showFallback = () => {
+            img.style.display = 'none';
+            fallbackText.style.display = 'flex';
+            // 记录失败，避免重复尝试
+            img.dataset.failed = 'true';
+        };
+
+        img.onerror = function() {
+            retryCount++;
+            // 如果当前源失败，尝试下一个
+            if (currentSourceIndex < iconSources.length - 1) {
+                // 延迟后尝试下一个源，避免频繁请求
+                setTimeout(() => {
+                    currentSourceIndex++;
+                    const nextSrc = iconSources[currentSourceIndex];
+                    if (nextSrc) {
+                        img.src = nextSrc;
+                    } else {
+                        _showFallback();
+                    }
+                }, 300);
+            } else {
+                _showFallback();
+            }
+        };
+
+        img.onload = function() {
+            img.style.display = 'block';
+            fallbackText.style.display = 'none';
+            img.dataset.failed = 'false';
+            // 如果加载成功，但图片很小或空白，也视为失败（通过自然尺寸判断）
+            setTimeout(() => {
+                if (img.naturalWidth <= 1 && img.naturalHeight <= 1) {
+                    // 可能是空白图，触发重试
+                    img.onerror();
+                }
+            }, 100);
+        };
+
+        // 开始加载第一个源
+        if (iconSources.length > 0) {
+            loadIcon(iconSources[0]);
+        } else {
+            _showFallback();
+        }
 
         container.appendChild(img);
         container.appendChild(fallbackText);
@@ -123,7 +149,7 @@ class OptimizedNavigation {
         }
 
         const fragment = document.createDocumentFragment();
-        sites.forEach((site, index) => {
+        sites.forEach((site) => {
             const card = document.createElement('a');
             card.className = 'site-card';
             card.href = site.url;
@@ -147,7 +173,6 @@ class OptimizedNavigation {
                 </div>
             `;
 
-            // 将图标插入 card-top
             const cardTop = card.querySelector('.card-top');
             cardTop.appendChild(iconEl);
             const titleSpan = document.createElement('span');
@@ -225,18 +250,16 @@ class OptimizedNavigation {
         if (!forceRefresh && cached) {
             try {
                 const data = JSON.parse(cached);
-                if (now - data.timestamp < 30 * 60 * 1000) { // 30分钟缓存
+                if (now - data.timestamp < 30 * 60 * 1000) {
                     return data.data;
                 }
             } catch (e) {}
         }
 
-        // 请求接口
         const response = await Utils.safeFetch(`${this.apiBase}/navigation/category-sites?category=${encodeURIComponent(categoryName)}`);
         const json = await response.json();
         if (!json.subcategories) throw new Error('Invalid response');
 
-        // 存入缓存
         const cacheData = { data: json, timestamp: now };
         localStorage.setItem(cacheKey, JSON.stringify(cacheData));
         return json;
@@ -247,25 +270,20 @@ class OptimizedNavigation {
         if (this.currentLevel1 === categoryName && !isUserClick) return;
         this.currentLevel1 = categoryName;
 
-        // 更新一级按钮状态
         document.querySelectorAll('.level1-btn').forEach(b => {
             b.classList.toggle('active', b.dataset.level1 === categoryName);
         });
 
-        // 加载数据
         const data = await this.loadCategoryData(categoryName);
         this.categoryCache[categoryName] = data.subcategories || [];
 
-        // 渲染二级导航
         this.renderLevel2(categoryName);
 
-        // 默认选中第一个子分类
         const subs = this.categoryCache[categoryName];
         if (subs && subs.length) {
             const firstSub = subs[0];
             this.currentLevel2 = firstSub.id;
             this.renderLevel3(firstSub.id);
-            // 高亮二级按钮
             document.querySelectorAll('.level2-btn').forEach(b => {
                 b.classList.toggle('active', parseInt(b.dataset.level2) === firstSub.id);
             });
@@ -273,7 +291,6 @@ class OptimizedNavigation {
             this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3 class="empty-title">该分类下暂无子分类</h3></div>`;
         }
 
-        // 更新统计（如果已有缓存，可快速计算）
         this.updateStats();
     }
 
@@ -290,7 +307,6 @@ class OptimizedNavigation {
             </button>`
         ).join('');
 
-        // 绑定二级点击事件（使用事件委托）
         this.level2Nav.querySelectorAll('.level2-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = parseInt(btn.dataset.level2);
@@ -305,7 +321,6 @@ class OptimizedNavigation {
     // ---------- 渲染三级内容（根据子分类ID） ----------
     renderLevel3(subcategoryId) {
         let sites = null;
-        // 从缓存中查找
         for (const catName in this.categoryCache) {
             const subs = this.categoryCache[catName];
             const found = subs.find(sub => sub.id === subcategoryId);
@@ -322,7 +337,7 @@ class OptimizedNavigation {
         this._renderSites(sites);
     }
 
-    // ---------- 更新统计（总站点数、无效数） ----------
+    // ---------- 更新统计 ----------
     updateStats() {
         let total = 0;
         for (const catName in this.categoryCache) {
@@ -332,9 +347,7 @@ class OptimizedNavigation {
             }
         }
         this.stats.totalWebsites = total;
-        // 无效数无法从缓存获取，可忽略或单独请求
         if (this.siteCountEl) this.siteCountEl.textContent = `${total}+`;
-        // invalidCount 暂不更新，或通过额外接口获取
     }
 
     // ---------- 搜索功能 ----------
@@ -419,19 +432,16 @@ class OptimizedNavigation {
     async init() {
         if (this.isInitialized) return;
 
-        // 获取一级分类列表（从 structure 接口获取分类名）
         try {
             const resp = await Utils.safeFetch(`${this.apiBase}/navigation/structure`);
             const structure = await resp.json();
             const categories = Object.keys(structure);
             if (!categories.length) throw new Error('No categories');
 
-            // 渲染一级导航
             this.level1Nav.innerHTML = categories.map((cat, idx) =>
                 `<button class="level1-btn ${idx === 0 ? 'active' : ''}" data-level1="${cat}">${this._escapeHtml(cat)}</button>`
             ).join('');
 
-            // 绑定一级点击事件（事件委托）
             this.level1Nav.addEventListener('click', (e) => {
                 const btn = e.target.closest('.level1-btn');
                 if (btn) {
@@ -440,7 +450,6 @@ class OptimizedNavigation {
                 }
             });
 
-            // 默认加载第一个分类
             const firstCat = categories[0];
             await this.selectLevel1(firstCat, false);
             this.createSearchBox();
@@ -454,9 +463,7 @@ class OptimizedNavigation {
     // ---------- 对外刷新接口 ----------
     async refreshCurrentSubcategory() {
         if (!this.currentLevel1 || !this.currentLevel2) return;
-        // 强制刷新当前分类的缓存
         await this.loadCategoryData(this.currentLevel1, true);
-        // 重新渲染当前子分类
         this.renderLevel3(this.currentLevel2);
         this.updateStats();
     }
@@ -467,5 +474,4 @@ class OptimizedNavigation {
     }
 }
 
-// 导出（用于全局）
 window.OptimizedNavigation = OptimizedNavigation;
