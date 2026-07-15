@@ -1201,15 +1201,17 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     }
 }
 
-/* ===== 分类导航区域：上下间距统一为与免责声明一致 ===== */
+/* ===== 分类导航区域：顶部间距 = 标题下边距(12px/10px)，底部间距 = 免责声明一致 ===== */
 .navigation-section {
-    padding: calc(var(--section-margin-xs) * 0.6) 0 calc(var(--section-margin-xs) * 0.6) 0;
+    padding-top: 12px;
+    padding-bottom: calc(var(--section-margin-xs) * 0.6);
     width: 100%;
     margin-top: 0;
 }
 @media (max-width: 768px) {
     .navigation-section {
-        padding: calc(var(--section-margin-xs) * 0.6) 0;
+        padding-top: 10px;
+        padding-bottom: calc(var(--section-margin-xs) * 0.6);
     }
 }
 
