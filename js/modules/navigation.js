@@ -1,4 +1,4 @@
-/* navigation.js - 按一级分类加载全部数据，缓存到 localStorage，图标优化高清加载+首字母降级 */
+/* navigation.js - 按一级分类加载全部数据，缓存到 localStorage，图标优化高清加载+首字母降级，点击访问量同步校正 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -91,15 +91,12 @@ class OptimizedNavigation {
         const _showFallback = () => {
             img.style.display = 'none';
             fallbackText.style.display = 'flex';
-            // 记录失败，避免重复尝试
             img.dataset.failed = 'true';
         };
 
         img.onerror = function() {
             retryCount++;
-            // 如果当前源失败，尝试下一个
             if (currentSourceIndex < iconSources.length - 1) {
-                // 延迟后尝试下一个源，避免频繁请求
                 setTimeout(() => {
                     currentSourceIndex++;
                     const nextSrc = iconSources[currentSourceIndex];
@@ -118,16 +115,13 @@ class OptimizedNavigation {
             img.style.display = 'block';
             fallbackText.style.display = 'none';
             img.dataset.failed = 'false';
-            // 如果加载成功，但图片很小或空白，也视为失败（通过自然尺寸判断）
             setTimeout(() => {
                 if (img.naturalWidth <= 1 && img.naturalHeight <= 1) {
-                    // 可能是空白图，触发重试
                     img.onerror();
                 }
             }, 100);
         };
 
-        // 开始加载第一个源
         if (iconSources.length > 0) {
             loadIcon(iconSources[0]);
         } else {
@@ -180,26 +174,63 @@ class OptimizedNavigation {
             titleSpan.textContent = site.title;
             cardTop.appendChild(titleSpan);
 
-            // 点击事件（增加浏览量）
+            // ===== 点击事件：乐观更新 + 同步校正 =====
             card.addEventListener('click', async (e) => {
+                // 阻止点击报告死链按钮时触发
                 if (e.target.closest('.report-dead-link-btn')) return;
+
                 const viewEl = card.querySelector('.view-count');
                 if (!viewEl) return;
+
+                // 1. 乐观更新：立即 +1 显示
                 const oldViews = parseInt(viewEl.dataset.views) || 0;
-                const newViews = oldViews + 1;
-                viewEl.dataset.views = newViews;
-                viewEl.textContent = this._formatViews(newViews);
+                const optimisticViews = oldViews + 1;
+                viewEl.dataset.views = optimisticViews;
+                viewEl.textContent = this._formatViews(optimisticViews);
                 viewEl.classList.add('increasing');
                 setTimeout(() => viewEl.classList.remove('increasing'), 300);
 
                 try {
-                    await Utils.safeFetch(`${this.apiBase}/click`, {
+                    // 2. 发送请求到后端
+                    const response = await Utils.safeFetch(`${this.apiBase}/click`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ id: site.id, url: site.url }),
                         keepalive: true
                     });
-                } catch (err) { /* 静默处理 */ }
+
+                    if (response.ok) {
+                        // 3. ===== 同步校正：以后端返回的 views 为准 =====
+                        const data = await response.json();
+                        if (data.views !== undefined) {
+                            // 3a. 覆盖前端显示
+                            const correctedViews = data.views;
+                            viewEl.dataset.views = correctedViews;
+                            viewEl.textContent = this._formatViews(correctedViews);
+
+                            // 3b. 同时更新内存缓存（siteCache）中的 views
+                            const currentSubId = this.selectedLevel2;
+                            if (currentSubId && this.siteCache.has(currentSubId)) {
+                                const cachedSites = this.siteCache.get(currentSubId);
+                                const targetSite = cachedSites.find(s => s.id === site.id);
+                                if (targetSite) {
+                                    targetSite.views = correctedViews;
+                                    this.siteCache.set(currentSubId, cachedSites);
+                                }
+                            }
+                        }
+                    } else {
+                        // 如果后端返回错误，尝试回退到原来的值（可选）
+                        // 但为了体验，保持乐观值
+                        console.warn('[导航] 点击统计请求失败，保持乐观值');
+                    }
+                } catch (err) {
+                    // 网络错误时，保持乐观值即可
+                    if (window.errorHandler) {
+                        window.errorHandler.report(err, 'navigation.clickUpdate');
+                    }
+                    // 可选：如果有必要，可以在这里回退
+                }
             });
 
             // 死链上报
