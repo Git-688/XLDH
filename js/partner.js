@@ -1,15 +1,6 @@
-/* partner.js - 合作伙伴模块 */
+/* partner.js - 合作伙伴模块（从接口获取数据，空状态显示🎉期待你的加入...） */
 (function() {
     'use strict';
-
-    // 合作伙伴数据（可改为从接口获取）
-    const DEFAULT_PARTNERS = [
-        { name: '星聚图床', icon: 'https://tc688.ccwu.cc/logo.png', url: 'https://tc688.ccwu.cc' },
-        { name: '星聚影视', icon: 'https://ys688.ccwu.cc/favicon.ico', url: 'https://ys688.ccwu.cc' },
-        { name: '神木Ai', icon: '', url: 'https://smai.cc' },
-        { name: '极光工具', icon: '', url: 'https://jiguang.cc' },
-        { name: '星聚导航', icon: '/assets/logo.png', url: 'https://xjdh688.ccwu.cc' }
-    ];
 
     class PartnerModule {
         constructor() {
@@ -18,8 +9,10 @@
             this.triggerBtn = document.getElementById('partnerTriggerBtn');
             this.closeBtn = document.getElementById('partnerModalClose');
             this.listContainer = document.getElementById('partnerList');
+            this.introContainer = document.querySelector('.partner-intro p');
             this.isVisible = false;
             this.partners = [];
+            this.apiBase = Utils.getApiBase();
             this.init();
             if (window.Starlink) window.Starlink.partner = this;
             window.partnerModule = this;
@@ -31,30 +24,45 @@
                 return;
             }
             this.bindEvents();
-            this.loadPartners();
+            this.loadData();
         }
 
-        loadPartners() {
+        async loadData() {
             try {
-                const cached = localStorage.getItem('partner_list');
-                if (cached) {
-                    const data = JSON.parse(cached);
-                    if (Array.isArray(data) && data.length) {
-                        this.partners = data;
-                        return;
+                const [partnersRes, settingsRes] = await Promise.all([
+                    Utils.safeFetch(`${this.apiBase}/partners`, { timeout: 8000 }),
+                    Utils.safeFetch(`${this.apiBase}/partner-settings`, { timeout: 8000 })
+                ]);
+
+                if (partnersRes.ok) {
+                    this.partners = await partnersRes.json();
+                } else {
+                    this.partners = [];
+                }
+
+                if (settingsRes.ok) {
+                    const settings = await settingsRes.json();
+                    if (settings.intro && this.introContainer) {
+                        this.introContainer.textContent = settings.intro;
                     }
                 }
-            } catch (e) {}
-            this.partners = DEFAULT_PARTNERS;
-            try {
-                localStorage.setItem('partner_list', JSON.stringify(this.partners));
-            } catch (e) {}
+
+                if (this.isVisible) {
+                    this.renderList();
+                }
+            } catch (error) {
+                console.warn('加载合作伙伴数据失败:', error);
+                if (this.isVisible) {
+                    this.listContainer.innerHTML = '<div class="empty">加载失败，请刷新重试</div>';
+                }
+            }
         }
 
         renderList() {
             if (!this.listContainer) return;
             if (!this.partners || !this.partners.length) {
-                this.listContainer.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);">暂无合作伙伴</div>';
+                // ===== 修改：空状态显示 🎉期待你的加入... =====
+                this.listContainer.innerHTML = '<div style="text-align:center;padding:30px 20px;color:var(--text-secondary);font-size:14px;">🎉 期待你的加入...</div>';
                 return;
             }
             const html = this.partners.map(p => {
@@ -121,6 +129,11 @@
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && this.isVisible) this.close();
             });
+        }
+
+        async refresh() {
+            await this.loadData();
+            if (this.isVisible) this.renderList();
         }
 
         destroy() {
