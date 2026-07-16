@@ -1,6 +1,6 @@
 /* wallpaper.css - 壁纸轮播样式 */
 .wallpaper-section {
-    padding: var(--section-margin-sm, 20px) 0 0 !important;
+    padding: 0 !important;              /* 修改：顶部边距归零，紧贴导航栏 */
     position: relative;
     margin: 0 !important;
 }
@@ -109,7 +109,7 @@
 
 /* 响应式 */
 @media (max-width: 768px) {
-    .wallpaper-section { padding: var(--section-margin-sm, 20px) 0 0 !important; }
+    .wallpaper-section { padding: 0 !important; }   /* 响应式也归零 */
     .wallpaper-container {
         height: 26vh;
         min-height: 130px;
@@ -131,7 +131,7 @@
     }
 }
 @media (max-width: 480px) {
-    .wallpaper-section { padding: var(--section-margin-xs, 16px) 0 0 !important; }
+    .wallpaper-section { padding: 0 !important; }
     .wallpaper-container {
         height: 26vh;
         min-height: 130px;
