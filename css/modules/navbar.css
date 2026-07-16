@@ -4,18 +4,16 @@
     top: 0;
     left: 0;
     right: 0;
-    background: var(--bg-primary);           /* 改为纯色背景，移除毛玻璃 */
-    /* backdrop-filter 和 -webkit-backdrop-filter 已移除 */
-    border-bottom: none;                      /* 移除导航栏下方边框线 */
-    /* box-shadow 已移除 */
+    background: var(--bg-primary);
+    border-bottom: none;
+    box-shadow: none !important;          /* 强制移除所有阴影 */
     z-index: 1000;
     height: 60px;
     transition: all 0.3s ease;
 }
 .navbar.scrolled {
-    background: var(--bg-primary);           /* 滚动时保持纯色 */
-    /* backdrop-filter 已移除 */
-    /* box-shadow 已移除 */
+    background: var(--bg-primary);
+    box-shadow: none !important;          /* 滚动时也无阴影 */
 }
 @media (prefers-color-scheme: dark) {
     .navbar { background: var(--bg-primary); }
