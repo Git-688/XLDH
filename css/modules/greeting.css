@@ -39,10 +39,9 @@
     gap: 8px;
     overflow: hidden;
 }
-/* ★★★ 移除 hover 悬浮效果 ★★★ */
+/* 移除 hover 悬浮效果 */
 .greeting-main-card:hover {
-    /* transform: translateY(-2px); 已移除 */
-    /* 任何其他 transform 效果均已移除 */
+    /* transform 已移除 */
 }
 
 .greeting-top-row {
@@ -270,6 +269,7 @@
     text-shadow: 0 1px 1px rgba(0,0,0,0.1);
 }
 
+/* ===== ★★★ 后台管理按钮：移除悬浮效果和阴影 ★★★ ===== */
 .bookmark-btn {
     display: flex;
     align-items: center;
@@ -281,21 +281,23 @@
     padding: 10px 16px;
     text-decoration: none;
     color: #9575CD;
-    transition: all 0.3s ease;
+    /* 移除 transition，不再有动画 */
     width: 100%;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    /* 移除 box-shadow，不再有阴影 */
     font-size: 12px;
     font-weight: 500;
 }
+/* ★★★ 移除 hover 悬浮效果和阴影变化 ★★★ */
 .bookmark-btn:hover {
-    transform: translateY(-2px);
-    background: var(--bg-card);
-    color: #7E57C2;
-    border-color: #7E57C2;
-    box-shadow: 0 4px 12px rgba(149,117,205,0.2);
+    /* transform: translateY(-2px); 已移除 */
+    /* box-shadow: 已移除 */
+    /* 背景色变化已移除 */
+    /* 边框颜色变化已移除 */
+    /* 颜色变化已移除 */
 }
 .bookmark-btn i { font-size: 16px; }
 .bookmark-btn span { font-size: 12px; }
+/* ======================================================== */
 
 @keyframes floatUp {
     from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -386,16 +388,19 @@
     background: var(--bg-secondary);
     border-color: var(--border-color);
 }
+
+/* ★★★ 深色模式：后台管理按钮移除所有动态效果 ★★★ */
 .dark-mode .bookmark-btn {
     background: var(--bg-secondary);
     border-color: var(--border-color);
     color: #a78bfa;
+    /* 移除阴影 */
 }
 .dark-mode .bookmark-btn:hover {
-    background: var(--bg-secondary);
-    color: #8b5cf6;
-    border-color: #8b5cf6;
+    /* 所有变化均已移除 */
 }
+/* ========================================================= */
+
 .dark-mode .fish-btn {
     background: var(--bg-secondary);
     border-color: var(--border-color);
