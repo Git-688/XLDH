@@ -1,6 +1,6 @@
 
 .greeting-section {
-    padding: var(--section-margin-sm) 0 10px 0;
+    padding: 10px 0 10px 0;
     position: relative;
 }
 
@@ -17,15 +17,15 @@
 }
 @media (min-width: 768px) {
     .greeting-container { padding: 0 var(--container-padding-md); gap: 10px; }
-    .greeting-section { padding: var(--section-margin-md) 0 10px 0; }
+    .greeting-section { padding: 10px 0 10px 0; }
 }
 @media (min-width: 992px) {
     .greeting-container { padding: 0 var(--container-padding-lg); gap: 10px; }
-    .greeting-section { padding: var(--section-margin-lg) 0 10px 0; }
+    .greeting-section { padding: 10px 0 10px 0; }
 }
 @media (min-width: 1200px) {
     .greeting-container { padding: 0 var(--container-padding-xl); }
-    .greeting-section { padding: var(--section-margin-lg) 0 10px 0; }
+    .greeting-section { padding: 10px 0 10px 0; }
 }
 
 .greeting-main-card {
@@ -321,7 +321,7 @@
     .bookmark-btn { gap: 6px; }
 }
 @media (max-width: 768px) {
-    .greeting-section { padding: var(--section-margin-sm) 0 10px 0; }
+    .greeting-section { padding: 10px 0 10px 0; }
     .greeting-main-card { padding: 5px; gap: 5px; }
     .greeting-top-row { gap: 5px; }
     .greeting-left-card { padding: 5px; gap: 5px; }
@@ -340,7 +340,7 @@
     .bookmark-btn { gap: 5px; padding: 8px 12px; }
 }
 @media (max-width: 576px) {
-    .greeting-section { padding: var(--section-margin-xs) 0 10px 0; }
+    .greeting-section { padding: 10px 0 10px 0; }
     .greeting-main-card { padding: 4px; gap: 4px; }
     .greeting-top-row { gap: 4px; }
     .greeting-left-card { padding: 4px; gap: 4px; }
