@@ -1,13 +1,13 @@
-
 .greeting-section {
     padding: 10px 0 10px 0;
+    margin-top: 12px;                    /* 新增：壁纸与问候语卡片的间距改为12px */
     position: relative;
 }
 
 .greeting-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;                           /* 修改：后台按钮与上方卡片的间距改为12px */
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 var(--container-padding-xs);
@@ -16,11 +16,11 @@
     .greeting-container { padding: 0 var(--container-padding-sm); }
 }
 @media (min-width: 768px) {
-    .greeting-container { padding: 0 var(--container-padding-md); gap: 10px; }
+    .greeting-container { padding: 0 var(--container-padding-md); gap: 12px; }
     .greeting-section { padding: 10px 0 10px 0; }
 }
 @media (min-width: 992px) {
-    .greeting-container { padding: 0 var(--container-padding-lg); gap: 10px; }
+    .greeting-container { padding: 0 var(--container-padding-lg); gap: 12px; }
     .greeting-section { padding: 10px 0 10px 0; }
 }
 @media (min-width: 1200px) {
