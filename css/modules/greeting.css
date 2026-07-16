@@ -1,12 +1,12 @@
 .greeting-section {
-    padding: 12px 0 10px 0;           /* 修改：顶部内边距从 10px 改为 12px */
+    padding: 12px 0 10px 0;
     position: relative;
 }
 
 .greeting-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;                        /* 修改：间距从 10px 改为 12px */
+    gap: 12px;
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 var(--container-padding-xs);
@@ -27,18 +27,23 @@
     .greeting-section { padding: 12px 0 10px 0; }
 }
 
+/* ===== 卡片：移除悬浮效果 ===== */
 .greeting-main-card {
     background: var(--bg-card);
     border-radius: 10px;
     border: 1px solid var(--border-color);
     padding: 8px;
-    transition: transform 0.3s ease;
+    /* 移除 transition，不再有动画 */
     display: flex;
     flex-direction: column;
     gap: 8px;
     overflow: hidden;
 }
-.greeting-main-card:hover { transform: translateY(-2px); }
+/* ★★★ 移除 hover 悬浮效果 ★★★ */
+.greeting-main-card:hover {
+    /* transform: translateY(-2px); 已移除 */
+    /* 任何其他 transform 效果均已移除 */
+}
 
 .greeting-top-row {
     display: flex;
@@ -200,7 +205,9 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     padding: 0;
+    margin-top: 12px;
 }
+
 .fish-btn {
     position: relative;
     display: flex;
@@ -313,7 +320,7 @@
     #currentTime { font-size: 0.95em; }
     #currentDate { font-size: 0.7em; }
     .expand-holiday-btn { font-size: 9px; padding: 2px 6px; }
-    .fish-section { gap: 6px; }
+    .fish-section { gap: 6px; margin-top: 10px; }
     .fish-btn { padding: 5px 8px; min-height: 40px; }
     .fish-btn i { font-size: 14px; }
     .fish-count { font-size: 0.85em; padding: 2px 5px; }
@@ -331,7 +338,7 @@
     #currentTime { font-size: 0.85em; }
     #currentDate { font-size: 0.65em; }
     .expand-holiday-btn { font-size: 8px; padding: 2px 5px; }
-    .fish-section { gap: 5px; }
+    .fish-section { gap: 5px; margin-top: 10px; }
     .fish-btn { padding: 4px 6px; min-height: 36px; }
     .fish-btn i { font-size: 12px; }
     .fish-count { font-size: 0.8em; padding: 1px 4px; }
@@ -350,7 +357,7 @@
     #currentTime { font-size: 0.8em; }
     #currentDate { font-size: 0.6em; }
     .expand-holiday-btn { font-size: 7px; padding: 2px 4px; }
-    .fish-section { gap: 4px; }
+    .fish-section { gap: 4px; margin-top: 8px; }
     .fish-btn { padding: 4px 5px; min-height: 34px; }
     .fish-btn i { font-size: 11px; }
     .fish-count { font-size: 0.75em; padding: 1px 3px; min-width: 22px; }
@@ -363,6 +370,7 @@
     .datetime-row { flex-wrap: nowrap; gap: 4px; }
     #currentTime { font-size: 0.75em; }
     .expand-holiday-btn { font-size: 7px; padding: 1px 6px; }
+    .fish-section { margin-top: 6px; }
 }
 
 /* ===== 深色模式 ===== */
