@@ -679,6 +679,13 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     object-position: center;
 }
 
+/* ===== 壁纸区域：顶部内边距改为 0，与导航栏间距为 0 ===== */
+.wallpaper-section {
+    padding: 0 0 0 0;
+    position: relative;
+    margin: 0;
+}
+
 .wallpaper-container {
     position: relative;
     width: 100% !important;
@@ -1167,30 +1174,13 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 
 /* ===== 各区域上下留白对称 ===== */
 
-/* 壁纸区域：上下 padding 一致 */
-.wallpaper-section {
-    padding: var(--section-margin-sm) 0 0 !important;
-    position: relative;
-    margin: 0 !important;
-}
-@media (max-width: 768px) {
-    .wallpaper-section {
-        padding: var(--section-margin-xs) 0 0 !important;
-    }
-}
-
-/* ===== 问候语区域：底部内边距改为 10px（与常用标签保持10px间距） ===== */
+/* 问候语区域 */
 .greeting-section {
-    padding: var(--section-margin-sm) 0 10px 0;
+    padding: 10px 0 10px 0;
     position: relative;
 }
-@media (max-width: 768px) {
-    .greeting-section {
-        padding: var(--section-margin-xs) 0 10px 0;
-    }
-}
 
-/* 常用标签区域：上下 padding 一致 */
+/* 常用标签区域 */
 .minimal-tags-section {
     padding: var(--section-margin-xs) 0 10px 0;
     width: 100%;
@@ -1201,7 +1191,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     }
 }
 
-/* ===== 分类导航区域：上下 padding 一致，底部 margin 设为 10px（与页脚保持10px间距） ===== */
+/* 分类导航区域 */
 .navigation-section {
     padding: 0 0 0 0;
     width: 100%;
@@ -1215,7 +1205,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     }
 }
 
-/* 页脚区域：上下 padding 由容器控制，已对称 */
+/* 页脚区域 */
 .footer-compact-container {
     width: 100%;
     max-width: 1200px;
