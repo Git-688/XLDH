@@ -91,7 +91,7 @@ p { margin-bottom: 1em; }
     height: 60px;
     background: var(--bg-primary);
     border-bottom: none;
-    box-shadow: none !important;          /* 强制移除所有阴影 */
+    box-shadow: none !important;
     z-index: var(--z-navbar);
 }
 .nav-container {
@@ -1273,14 +1273,14 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 /* ===== 各区域上下留白对称 ===== */
 
 /* 壁纸区域：padding 已在上方统一设为 0 */
-/* 问候语区域：顶部内边距 10px */
+/* 问候语区域：顶部内边距 12px（已在 greeting.css 中设置） */
 .greeting-section {
-    padding: 10px 0 10px 0;
+    padding: 12px 0 10px 0;            /* 修改：顶部内边距 12px */
     position: relative;
 }
 @media (max-width: 768px) {
     .greeting-section {
-        padding: 10px 0 10px 0;
+        padding: 12px 0 10px 0;
     }
 }
 
