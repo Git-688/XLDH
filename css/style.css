@@ -1179,25 +1179,25 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     }
 }
 
-/* 问候语区域：上下 padding 已经一致，保持原样 */
+/* ===== 问候语区域：底部内边距改为 10px（与常用标签保持10px间距） ===== */
 .greeting-section {
-    padding: var(--section-margin-sm) 0;
+    padding: var(--section-margin-sm) 0 10px 0;
     position: relative;
 }
 @media (max-width: 768px) {
     .greeting-section {
-        padding: var(--section-margin-xs) 0;
+        padding: var(--section-margin-xs) 0 10px 0;
     }
 }
 
 /* 常用标签区域：上下 padding 一致 */
 .minimal-tags-section {
-    padding: var(--section-margin-xs) 0;
+    padding: var(--section-margin-xs) 0 10px 0;
     width: 100%;
 }
 @media (max-width: 768px) {
     .minimal-tags-section {
-        padding: var(--section-margin-xs) 0;
+        padding: var(--section-margin-xs) 0 10px 0;
     }
 }
 
