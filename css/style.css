@@ -772,7 +772,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     object-position: center;
 }
 
-/* ===== 壁纸区域：顶部内边距为 0 ===== */
+/* ===== 壁纸区域：顶部内边距为 0，无阴影 ===== */
 .wallpaper-container {
     position: relative;
     width: 100% !important;
@@ -780,7 +780,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     min-height: 130px;
     border-radius: 12px !important;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    /* box-shadow 已移除 */
     margin: 0 !important;
     background: var(--bg-secondary, #f8f9fa);
     user-select: none;
@@ -1272,10 +1272,10 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 
 /* ===== 各区域上下留白对称 ===== */
 
-/* 壁纸区域：padding 已在上方统一设为 0 */
-/* 问候语区域：顶部内边距 12px（已在 greeting.css 中设置） */
+/* 壁纸区域：padding 已在上方统一设为 0，无阴影 */
+/* 问候语区域：顶部内边距 12px */
 .greeting-section {
-    padding: 12px 0 10px 0;            /* 修改：顶部内边距 12px */
+    padding: 12px 0 10px 0;            /* 顶部内边距 12px */
     position: relative;
 }
 @media (max-width: 768px) {
