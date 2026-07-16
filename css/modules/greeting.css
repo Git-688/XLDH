@@ -1,13 +1,12 @@
 .greeting-section {
-    padding: 10px 0 10px 0;
-    margin-top: 12px;                    /* 新增：壁纸与问候语卡片的间距改为12px */
+    padding: 12px 0 10px 0;           /* 修改：顶部内边距从 10px 改为 12px */
     position: relative;
 }
 
 .greeting-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;                           /* 修改：后台按钮与上方卡片的间距改为12px */
+    gap: 12px;                        /* 修改：间距从 10px 改为 12px */
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 var(--container-padding-xs);
@@ -17,15 +16,15 @@
 }
 @media (min-width: 768px) {
     .greeting-container { padding: 0 var(--container-padding-md); gap: 12px; }
-    .greeting-section { padding: 10px 0 10px 0; }
+    .greeting-section { padding: 12px 0 10px 0; }
 }
 @media (min-width: 992px) {
     .greeting-container { padding: 0 var(--container-padding-lg); gap: 12px; }
-    .greeting-section { padding: 10px 0 10px 0; }
+    .greeting-section { padding: 12px 0 10px 0; }
 }
 @media (min-width: 1200px) {
     .greeting-container { padding: 0 var(--container-padding-xl); }
-    .greeting-section { padding: 10px 0 10px 0; }
+    .greeting-section { padding: 12px 0 10px 0; }
 }
 
 .greeting-main-card {
@@ -321,7 +320,7 @@
     .bookmark-btn { gap: 6px; }
 }
 @media (max-width: 768px) {
-    .greeting-section { padding: 10px 0 10px 0; }
+    .greeting-section { padding: 12px 0 10px 0; }
     .greeting-main-card { padding: 5px; gap: 5px; }
     .greeting-top-row { gap: 5px; }
     .greeting-left-card { padding: 5px; gap: 5px; }
@@ -340,7 +339,7 @@
     .bookmark-btn { gap: 5px; padding: 8px 12px; }
 }
 @media (max-width: 576px) {
-    .greeting-section { padding: 10px 0 10px 0; }
+    .greeting-section { padding: 12px 0 10px 0; }
     .greeting-main-card { padding: 4px; gap: 4px; }
     .greeting-top-row { gap: 4px; }
     .greeting-left-card { padding: 4px; gap: 4px; }
