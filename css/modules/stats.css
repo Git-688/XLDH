@@ -3,20 +3,20 @@
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: calc(var(--section-margin-xs, 16px) * 0.6) var(--container-padding-xs, 16px);
+    padding: 0 var(--container-padding-xs, 16px);
     box-sizing: border-box;
 }
 @media (min-width: 576px) {
-    .footer-compact-container { padding: calc(var(--section-margin-sm, 20px) * 0.6) var(--container-padding-sm, 20px); }
+    .footer-compact-container { padding: 0 var(--container-padding-sm, 20px); }
 }
 @media (min-width: 768px) {
-    .footer-compact-container { padding: calc(var(--section-margin-md, 24px) * 0.6) var(--container-padding-md, 24px); }
+    .footer-compact-container { padding: 0 var(--container-padding-md, 24px); }
 }
 @media (min-width: 992px) {
-    .footer-compact-container { padding: calc(var(--section-margin-lg, 28px) * 0.6) var(--container-padding-lg, 28px); }
+    .footer-compact-container { padding: 0 var(--container-padding-lg, 28px); }
 }
 @media (min-width: 1200px) {
-    .footer-compact-container { padding: calc(var(--section-margin-lg, 28px) * 0.6) var(--container-padding-xl, 32px); }
+    .footer-compact-container { padding: 0 var(--container-padding-xl, 32px); }
 }
 
 .footer-disclaimer-card {
@@ -175,10 +175,10 @@
     .stat-name { font-size: 9px; }
 }
 @media (max-width: 767px) {
-    .footer-compact-container { padding-top: calc(var(--section-margin-xs, 16px) * 0.5); }
+    .footer-compact-container { padding-top: 0; }
 }
 @media (min-width: 1025px) {
-    .footer-compact-container { padding-top: calc(var(--section-margin-lg, 28px) * 0.6); }
+    .footer-compact-container { padding-top: 0; }
 }
 
 .floating-btn {
