@@ -1296,16 +1296,17 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 }
 
 /* 分类导航区域 */
+/* ★★★ 修改：margin-bottom 从 10px 改为 2px，使总间距从 20px 变为 12px ★★★ */
 .navigation-section {
     padding: 0 0 0 0;
     width: 100%;
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 2px;                 /* 修改：10px → 2px */
 }
 @media (max-width: 768px) {
     .navigation-section {
         padding: var(--section-margin-xs) 0;
-        margin-bottom: 10px;
+        margin-bottom: 2px;             /* 修改：10px → 2px */
     }
 }
 
