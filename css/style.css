@@ -1,4 +1,4 @@
-/* style.css - 星聚导航全局样式（含合作伙伴模块 + 模态框边距优化 + 导航区域边距归零 + 各区域上下留白对称 + 免责声明间距10px） */
+/* style.css - 星聚导航全局样式（含合作伙伴模块 + 模态框边距优化 + 导航区域边距归零 + 各区域上下留白对称） */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -1179,7 +1179,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     }
 }
 
-/* 问候语区域：上下 padding 一致 */
+/* 问候语区域：上下 padding 已经一致，保持原样 */
 .greeting-section {
     padding: var(--section-margin-sm) 0;
     position: relative;
@@ -1201,35 +1201,37 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     }
 }
 
-/* 分类导航区域：上下 padding 一致，底部为 0 以便与免责声明精确控制间距 */
+/* ===== 分类导航区域：上下 padding 一致，底部 margin 设为 10px（与页脚保持10px间距） ===== */
 .navigation-section {
-    padding: calc(var(--section-margin-xs) * 0.5) 0 0 0;
+    padding: 0 0 0 0;
     width: 100%;
     margin-top: 0;
+    margin-bottom: 10px;
 }
 @media (max-width: 768px) {
     .navigation-section {
-        padding: var(--section-margin-xs) 0 0 0;
+        padding: var(--section-margin-xs) 0;
+        margin-bottom: 10px;
     }
 }
 
-/* 页脚区域：顶部内边距固定为 10px，确保与分类导航间距为 10px */
+/* 页脚区域：上下 padding 由容器控制，已对称 */
 .footer-compact-container {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 10px var(--container-padding-xs, 16px) calc(var(--section-margin-xs, 16px) * 0.6) var(--container-padding-xs, 16px);
+    padding: calc(var(--section-margin-xs, 16px) * 0.6) var(--container-padding-xs, 16px);
     box-sizing: border-box;
 }
 @media (min-width: 576px) {
-    .footer-compact-container { padding: 10px var(--container-padding-sm, 20px) calc(var(--section-margin-sm, 20px) * 0.6) var(--container-padding-sm, 20px); }
+    .footer-compact-container { padding: calc(var(--section-margin-sm, 20px) * 0.6) var(--container-padding-sm, 20px); }
 }
 @media (min-width: 768px) {
-    .footer-compact-container { padding: 10px var(--container-padding-md, 24px) calc(var(--section-margin-md, 24px) * 0.6) var(--container-padding-md, 24px); }
+    .footer-compact-container { padding: calc(var(--section-margin-md, 24px) * 0.6) var(--container-padding-md, 24px); }
 }
 @media (min-width: 992px) {
-    .footer-compact-container { padding: 10px var(--container-padding-lg, 28px) calc(var(--section-margin-lg, 28px) * 0.6) var(--container-padding-lg, 28px); }
+    .footer-compact-container { padding: calc(var(--section-margin-lg, 28px) * 0.6) var(--container-padding-lg, 28px); }
 }
 @media (min-width: 1200px) {
-    .footer-compact-container { padding: 10px var(--container-padding-xl, 32px) calc(var(--section-margin-lg, 28px) * 0.6) var(--container-padding-xl, 32px); }
+    .footer-compact-container { padding: calc(var(--section-margin-lg, 28px) * 0.6) var(--container-padding-xl, 32px); }
 }
