@@ -1,4 +1,4 @@
-/* music-player.js - 移除导入/导出歌单功能（保留播放列表持久化 + 本地音乐缓存） */
+/* music-player.js - 移除导入/导出歌单功能（保留播放列表持久化 + 本地音乐缓存 + 修复 switchApiTab） */
 let currentOpenCustomSelect = null;
 let customSelectInstances = new Map();
 
@@ -440,12 +440,17 @@ class MusicPlayer {
         });
         this.elements.downloadBtn.addEventListener('click', () => this.downloadCurrentSong());
         this.elements.searchToggleBtn.addEventListener('click', () => this.toggleSearchMode(this.currentApi));
+        
+        // ===== 修复：绑定 tab 切换事件，调用 switchApiTab =====
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const api = e.target.getAttribute('data-tab');
-                this.switchApiTab(api);
+                if (api) {
+                    this.switchApiTab(api);
+                }
             });
         });
+        
         this.bindProgressEvents();
         this.bindAudioEvents();
         this.bindApiEvents();
@@ -454,6 +459,29 @@ class MusicPlayer {
                 this.hideVolumeSlider();
             }
         });
+    }
+
+    // ===== 新增：切换 API 标签的方法 =====
+    switchApiTab(api) {
+        if (this.currentApi === api) return;
+        this.currentApi = api;
+        // 更新标签高亮
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === api);
+        });
+        // 重置各 API 的搜索状态（只保留当前 API 的搜索模式可启用）
+        this.isSearchMode.forEach((val, key) => {
+            if (key !== api) this.isSearchMode.set(key, false);
+        });
+        // 更新搜索按钮图标
+        this.updateSearchToggleButton();
+        // 隐藏所有搜索容器，显示播放列表
+        Object.values(this.apiElements).forEach(el => {
+            if (el.searchContainer) el.searchContainer.style.display = 'none';
+            if (el.playlistContainer) el.playlistContainer.style.display = 'block';
+        });
+        // 加载对应歌单
+        this.loadApiPlaylist(api);
     }
 
     bindApiEvents() {
