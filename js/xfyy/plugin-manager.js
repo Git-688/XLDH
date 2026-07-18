@@ -1,4 +1,4 @@
-/* plugin-manager.js - 歌单缓存增加 TTL 检查和有效期管理 */
+/* plugin-manager.js - 歌单缓存增加 TTL 检查和有效期管理（移除汽水音乐 migu） */
 class PluginManager {
     constructor(cacheManager) {
         this.cacheManager = cacheManager || new CacheManager();
@@ -173,23 +173,8 @@ class PluginManager {
             }
         });
 
-        this.registerPlugin('migu', {
-            name: '抖音热歌榜',
-            version: '1.0.0',
-            getPlaylist: async () => {
-                try {
-                    const response = await fetch('https://api.injahow.cn/meting/?type=playlist&id=2809513713');
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
-                    return this.formatDouyinResponse(data);
-                } catch (error) {
-                    console.error('抖音热歌榜加载失败:', error);
-                    return [];
-                }
-            },
-            search: async () => [],
-            getDownloadUrl: async (songId) => songId
-        });
+        // ===== 移除 migu（汽水音乐/抖音热歌榜）插件 =====
+        // 原 migu 插件已移除
 
         this.registerPlugin('local', {
             name: '本地音乐',
@@ -221,17 +206,6 @@ class PluginManager {
             isOnline: true,
             source: source
         };
-    }
-
-    formatDouyinResponse(data) {
-        if (!data) return [];
-        if (data.code === 200 && data.data && Array.isArray(data.data)) {
-            return data.data.map(song => this.formatSong(song, 'migu')).filter(s => s.src);
-        }
-        if (Array.isArray(data)) {
-            return data.map(song => this.formatSong(song, 'migu')).filter(s => s.src);
-        }
-        return [];
     }
 
     registerPlugin(id, plugin) {
