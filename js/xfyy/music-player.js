@@ -1,4 +1,4 @@
-/* music-player.js - 移除导入/导出歌单功能（保留播放列表持久化 + 本地音乐缓存 + 修复 switchApiTab） */
+/* music-player.js - 移除导入/导出歌单功能（保留播放列表持久化 + 本地音乐缓存 + 移除汽水音乐） */
 let currentOpenCustomSelect = null;
 let customSelectInstances = new Map();
 
@@ -264,7 +264,6 @@ class MusicPlayer {
         this.isSearchMode = new Map();
         this.isVolumeSliderVisible = false;
         this.hasNotifiedLocal = false;
-        this.hasNotifiedQishui = false;
         this.consecutiveErrors = 0;
         this.maxConsecutiveErrors = 3;
         this.maxErrorShown = false;
@@ -275,7 +274,8 @@ class MusicPlayer {
         this.updateAnimationFrame = null;
         this.lastTimeUpdate = 0;
         
-        const apis = ['netease', 'qq', 'kg', 'kuwo', 'migu', 'local'];
+        // 移除 migu（汽水音乐）
+        const apis = ['netease', 'qq', 'kg', 'kuwo', 'local'];
         apis.forEach(api => this.isSearchMode.set(api, false));
 
         this.restorePlaylistState();
@@ -305,7 +305,12 @@ class MusicPlayer {
             }
             this.currentPlaylist = state.playlist;
             this.currentIndex = state.index || 0;
-            this.currentApi = state.api || 'netease';
+            // 如果存储的 api 是 migu，则重置为 netease
+            if (state.api === 'migu') {
+                this.currentApi = 'netease';
+            } else {
+                this.currentApi = state.api || 'netease';
+            }
             if (this.currentIndex >= this.currentPlaylist.length) {
                 this.currentIndex = 0;
             }
@@ -393,7 +398,8 @@ class MusicPlayer {
     }
 
     initializeApiElements() {
-        const apis = ['netease', 'qq', 'kg', 'kuwo', 'migu', 'local'];
+        // 移除 migu
+        const apis = ['netease', 'qq', 'kg', 'kuwo', 'local'];
         this.apiElements = {};
         apis.forEach(api => {
             this.apiElements[api] = {
@@ -441,7 +447,7 @@ class MusicPlayer {
         this.elements.downloadBtn.addEventListener('click', () => this.downloadCurrentSong());
         this.elements.searchToggleBtn.addEventListener('click', () => this.toggleSearchMode(this.currentApi));
         
-        // ===== 修复：绑定 tab 切换事件，调用 switchApiTab =====
+        // 绑定 tab 切换事件，调用 switchApiTab
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const api = e.target.getAttribute('data-tab');
@@ -461,8 +467,13 @@ class MusicPlayer {
         });
     }
 
-    // ===== 新增：切换 API 标签的方法 =====
+    // 切换 API 标签（增加存在性检查）
     switchApiTab(api) {
+        // 如果 api 不在 apiElements 中（例如残留的 migu 标签），则忽略
+        if (!this.apiElements[api]) {
+            console.warn(`[MusicPlayer] 未知的 API: ${api}，已忽略切换`);
+            return;
+        }
         if (this.currentApi === api) return;
         this.currentApi = api;
         // 更新标签高亮
@@ -485,7 +496,8 @@ class MusicPlayer {
     }
 
     bindApiEvents() {
-        const apis = ['netease', 'qq', 'kg', 'kuwo', 'migu', 'local'];
+        // 移除 migu
+        const apis = ['netease', 'qq', 'kg', 'kuwo', 'local'];
         apis.forEach(api => {
             const el = this.apiElements[api];
             if (!el) return;
@@ -708,7 +720,8 @@ class MusicPlayer {
     }
 
     toggleSearchMode(apiId) {
-        if (apiId === 'migu' || apiId === 'local') {
+        // 仅 local 不支持搜索（migu 已移除）
+        if (apiId === 'local') {
             const toast = window.Starlink?.toast || window.toast;
             if (toast && toast.show) toast.show('该功能不支持搜索', 'info');
             return;
@@ -743,7 +756,6 @@ class MusicPlayer {
         }
     }
 
-    // ===== 核心修改：loadApiPlaylist 增加本地音乐缓存 =====
     async loadApiPlaylist(apiId) {
         const el = this.apiElements[apiId];
         if (!el) return;
@@ -755,7 +767,7 @@ class MusicPlayer {
         try {
             let playlist;
 
-            // ===== 本地音乐缓存逻辑 =====
+            // 本地音乐缓存逻辑
             if (apiId === 'local') {
                 const cacheKey = 'local_music_cache';
                 const cached = localStorage.getItem(cacheKey);
@@ -795,13 +807,6 @@ class MusicPlayer {
                         }
                     }
                 }
-            } else if (apiId === 'migu') {
-                playlist = await this.pluginManager.getPlaylist(apiId, 'hot');
-                if (playlist.length && !this.hasNotifiedQishui) {
-                    const toast = window.Starlink?.toast || window.toast;
-                    if (toast && toast.show) toast.show(`已加载 ${playlist.length} 首抖音热歌`, 'info');
-                    this.hasNotifiedQishui = true;
-                }
             } else {
                 const playlistId = el.playlistSelect?.value || '3778678';
                 playlist = await this.pluginManager.getPlaylist(apiId, playlistId);
@@ -822,7 +827,7 @@ class MusicPlayer {
         }
     }
 
-    // ===== 新增：清除本地音乐缓存 =====
+    // 清除本地音乐缓存
     clearLocalMusicCache() {
         try {
             localStorage.removeItem('local_music_cache');
@@ -835,7 +840,8 @@ class MusicPlayer {
     }
 
     async searchApi(apiId) {
-        if (apiId === 'migu' || apiId === 'local') {
+        // local 不支持搜索（migu 已移除）
+        if (apiId === 'local') {
             const toast = window.Starlink?.toast || window.toast;
             if (toast && toast.show) toast.show('该功能不支持搜索', 'info');
             return;
@@ -985,7 +991,8 @@ class MusicPlayer {
     }
 
     clearAllActiveIndicators() {
-        ['netease', 'qq', 'kg', 'kuwo', 'migu', 'local'].forEach(api => {
+        // 移除 migu
+        ['netease', 'qq', 'kg', 'kuwo', 'local'].forEach(api => {
             const el = this.apiElements[api];
             if (el?.playlistContainer) el.playlistContainer.querySelectorAll('.song-item').forEach(item => item.classList.remove('active'));
             if (el?.searchResults) el.searchResults.querySelectorAll('.song-item').forEach(item => item.classList.remove('active'));
@@ -1402,7 +1409,8 @@ class MusicPlayer {
     }
 
     getApiName(apiId) {
-        const names = { netease: '网易云音乐', qq: 'QQ音乐', kg: '酷狗音乐', kuwo: '酷我音乐', migu: '抖音热歌榜', local: '本地音乐' };
+        // 移除 migu 映射
+        const names = { netease: '网易云音乐', qq: 'QQ音乐', kg: '酷狗音乐', kuwo: '酷我音乐', local: '本地音乐' };
         return names[apiId] || apiId;
     }
 
@@ -1437,11 +1445,6 @@ class MusicPlayer {
         
         if (this.cacheManager) this.cacheManager.cleanup();
         this.hasNotifiedLocal = false;
-        this.hasNotifiedQishui = false;
-        
-        // 清除本地音乐缓存（可选，但为了干净退出不删除缓存，保留供下次使用）
-        // 如果需要清除，取消注释下面一行
-        // this.clearLocalMusicCache();
         
         if (typeof customSelectInstances !== 'undefined' && customSelectInstances) {
             customSelectInstances.forEach((instance, id) => {
