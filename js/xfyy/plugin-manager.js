@@ -1,4 +1,4 @@
-/* plugin-manager.js - 歌单缓存增加 TTL 检查和有效期管理（移除汽水音乐 migu） */
+/* plugin-manager.js - 歌单缓存增加 TTL 检查和有效期管理（仅保留网易云、QQ、本地音乐） */
 class PluginManager {
     constructor(cacheManager) {
         this.cacheManager = cacheManager || new CacheManager();
@@ -102,79 +102,6 @@ class PluginManager {
                 return `https://dl.stream.qqmusic.qq.com/${songId}.mp3`;
             }
         });
-
-        this.registerPlugin('kg', {
-            name: '酷狗音乐',
-            version: '1.0.1',
-            getPlaylist: async (playlistId) => {
-                const cacheKey = `kg_playlist_${playlistId}`;
-                const cached = this.cacheManager.get(cacheKey);
-                if (cached && this.isCacheValid(cached)) return cached;
-                try {
-                    const originalUrl = `https://api.i-meto.com/meting/api?server=kugou&type=playlist&id=${playlistId}`;
-                    const data = await this.proxyFetch(originalUrl);
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    const formatted = data.map(song => this.formatSong(song, 'kg'));
-                    this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
-                    return formatted;
-                } catch (error) {
-                    console.error('酷狗歌单加载失败:', error);
-                    return [];
-                }
-            },
-            search: async (keyword) => {
-                const cacheKey = `kg_search_${keyword}`;
-                const cached = this.cacheManager.get(cacheKey);
-                if (cached && this.isCacheValid(cached)) return cached;
-                try {
-                    const originalUrl = `https://api.i-meto.com/meting/api?server=kugou&type=search&id=${encodeURIComponent(keyword)}`;
-                    const data = await this.proxyFetch(originalUrl);
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    const formatted = data.map(song => this.formatSong(song, 'kg'));
-                    this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
-                    return formatted;
-                } catch (error) {
-                    console.error('酷狗搜索失败:', error);
-                    return [];
-                }
-            },
-            getDownloadUrl: async (songId) => {
-                return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
-            }
-        });
-
-        this.registerPlugin('kuwo', {
-            name: '酷我音乐',
-            version: '1.0.0',
-            getPlaylist: async (playlistId) => {
-                try {
-                    const originalUrl = `https://api.i-meto.com/meting/api?server=kuwo&type=playlist&id=${playlistId}`;
-                    const data = await this.proxyFetch(originalUrl);
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    return data.map(song => this.formatSong(song, 'kuwo'));
-                } catch (error) {
-                    console.error('酷我歌单加载失败:', error);
-                    return [];
-                }
-            },
-            search: async (keyword) => {
-                try {
-                    const originalUrl = `https://api.i-meto.com/meting/api?server=kuwo&type=search&id=${encodeURIComponent(keyword)}`;
-                    const data = await this.proxyFetch(originalUrl);
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    return data.map(song => this.formatSong(song, 'kuwo'));
-                } catch (error) {
-                    console.error('酷我搜索失败:', error);
-                    return [];
-                }
-            },
-            getDownloadUrl: async (songId) => {
-                return `https://antiserver.kuwo.cn/anti.s?format=mp3&rid=${songId}&type=convert_url&response=url`;
-            }
-        });
-
-        // ===== 移除 migu（汽水音乐/抖音热歌榜）插件 =====
-        // 原 migu 插件已移除
 
         this.registerPlugin('local', {
             name: '本地音乐',
