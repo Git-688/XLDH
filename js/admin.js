@@ -1,4 +1,4 @@
-/* admin.js - 完整版（实时同步，notifyNavRefresh 增加防抖 + 刷新缓存按钮 + 合作伙伴管理） */
+/* admin.js - 完整版（实时同步，notifyNavRefresh 增加防抖 + 刷新缓存按钮 + 合作伙伴管理 + 修复自定义下拉内存泄漏 + 批量操作刷新页面） */
 (function() {
     'use strict';
 
@@ -733,6 +733,7 @@
         } catch { return 0; }
     }
 
+    // ===== 修改 openModal 增加 onClose 参数 =====
     function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null, onShow = null, onClose = null) {
         const modal = document.getElementById('modal');
         document.querySelector('#modal .modal-title').textContent = title;
@@ -743,10 +744,13 @@
         if (showDelete && deleteCb) html += `<div class="modal-buttons-left" style="margin-right:auto;"><button class="danger" id="modalDeleteBtn">删除</button></div>`;
         html += `<button class="secondary" id="modalCancelBtn">取消</button><button class="primary" id="modalSubmit">确认</button>`;
         buttonsContainer.innerHTML = html;
-        document.getElementById('modalCancelBtn').addEventListener('click', function() {
+
+        const closeModalHandler = function() {
             closeModal();
             if (onClose) onClose();
-        });
+        };
+
+        document.getElementById('modalCancelBtn').addEventListener('click', closeModalHandler);
         document.getElementById('modalSubmit').addEventListener('click', handleModalSubmit);
         if (showDelete && deleteCb) {
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
@@ -1248,13 +1252,27 @@
         `;
         modal.classList.add('show');
 
-        document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => modal.classList.remove('show'));
-        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
-        document.getElementById('editCancelBtn')?.addEventListener('click', () => modal.classList.remove('show'));
+        // 存储 dropdown 引用以便销毁
+        let dropdown = null;
+
+        document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => {
+            if (dropdown) { dropdown.destroy(); dropdown = null; }
+            modal.classList.remove('show');
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                if (dropdown) { dropdown.destroy(); dropdown = null; }
+                modal.classList.remove('show');
+            }
+        });
+        document.getElementById('editCancelBtn')?.addEventListener('click', () => {
+            if (dropdown) { dropdown.destroy(); dropdown = null; }
+            modal.classList.remove('show');
+        });
 
         const dropdownContainer = document.getElementById('subcategoryDropdownContainer');
         const defaultSubId = subOptions.length ? subOptions[0].value : null;
-        let dropdown = new CustomDropdown(dropdownContainer, subOptions, defaultSubId, function(value) {
+        dropdown = new CustomDropdown(dropdownContainer, subOptions, defaultSubId, function(value) {
             updateOrderValue(value);
         });
 
@@ -1301,7 +1319,7 @@
                 });
                 showToast('修改并通过审核成功', 'success');
                 modal.classList.remove('show');
-                dropdown.destroy();
+                if (dropdown) { dropdown.destroy(); dropdown = null; }
                 await loadSubmissions();
                 await loadAllDataButKeepSelection();
                 notifyNavRefresh();
@@ -1310,33 +1328,23 @@
             }
         });
 
-        const closeModalHandler = function() {
-            if (dropdown) {
-                dropdown.destroy();
-                dropdown = null;
-            }
-            modal.classList.remove('show');
-        };
-        document.getElementById('editCancelBtn')?.addEventListener('click', closeModalHandler);
-        document.getElementById('closeDetailModalBtn')?.addEventListener('click', closeModalHandler);
-        modal._closeHandler = function(e) {
-            if (e.target === modal) {
-                if (dropdown) {
-                    dropdown.destroy();
-                    dropdown = null;
+        // 额外清理：当modal通过其他方式关闭时（如点击外部或ESC），我们已有处理。
+        // 但还需处理当modal class被移除时（例如调用 closeModal？没有，但我们可以监听 transitionend 来清理）
+        // 但此处我们已经通过事件绑定销毁，在取消、关闭按钮、点击外部都已处理。
+        // 为了安全，当modal隐藏时，确保dropdown被销毁。
+        const observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                if (mutation.attributeName === 'class' && !modal.classList.contains('show')) {
+                    if (dropdown) {
+                        dropdown.destroy();
+                        dropdown = null;
+                    }
+                    observer.disconnect();
+                    break;
                 }
-                modal.classList.remove('show');
             }
-        };
-        modal.addEventListener('click', modal._closeHandler);
-        const origRemove = modal.classList.remove.bind(modal.classList);
-        modal.classList.remove = function(className) {
-            if (className === 'show' && dropdown) {
-                dropdown.destroy();
-                dropdown = null;
-            }
-            origRemove(className);
-        };
+        });
+        observer.observe(modal, { attributes: true });
     }
 
     async function approveSubmission(id) {
@@ -1659,7 +1667,6 @@
                 body: JSON.stringify({ intro })
             });
             partnerIntroText = intro;
-            // ===== 修改 Toast 文字 =====
             showToast('合作公告已保存', 'success');
             if (window.partnerModule && typeof window.partnerModule.refresh === 'function') {
                 window.partnerModule.refresh();
