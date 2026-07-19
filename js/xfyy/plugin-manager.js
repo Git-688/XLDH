@@ -1,4 +1,4 @@
-/* plugin-manager.js - 歌单缓存增加 TTL 检查和有效期管理（仅保留网易云、QQ、本地音乐） */
+/* plugin-manager.js - 精简版（歌单缓存 + TTL 管理，仅保留网易云、QQ、本地音乐） */
 class PluginManager {
     constructor(cacheManager) {
         this.cacheManager = cacheManager || new CacheManager();
@@ -7,122 +7,41 @@ class PluginManager {
         this.initializePlugins();
     }
 
+    // ---------- 代理请求 ----------
     async proxyFetch(originalUrl) {
         const apiBase = Utils.getApiBase();
         const proxyUrl = `${apiBase}/music-proxy?url=${encodeURIComponent(originalUrl)}`;
         const response = await fetch(proxyUrl);
-        if (!response.ok) {
-            throw new Error(`代理请求失败: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`代理请求失败: ${response.status}`);
         const contentType = response.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-            return await response.json();
-        } else {
-            return await response.text();
+        return contentType.includes('application/json') ? await response.json() : await response.text();
+    }
+
+    // ---------- 公共请求方法（减少重复代码） ----------
+    async _fetchFromMeting(server, type, id) {
+        const cacheKey = `${server}_${type}_${id}`;
+        const cached = this.cacheManager.get(cacheKey);
+        if (cached && this._isCacheValid(cached)) return cached;
+
+        try {
+            const originalUrl = `https://api.i-meto.com/meting/api?server=${server}&type=${type}&id=${encodeURIComponent(id)}`;
+            const data = await this.proxyFetch(originalUrl);
+            if (!Array.isArray(data)) throw new Error('数据格式错误');
+            const formatted = data.map(song => this._formatSong(song, server));
+            const ttl = type === 'search' ? 10 * 60 * 1000 : 30 * 60 * 1000;
+            this.cacheManager.set(cacheKey, formatted, ttl);
+            return formatted;
+        } catch (error) {
+            console.error(`${server} ${type} 请求失败:`, error);
+            return [];
         }
     }
 
-    initializePlugins() {
-        this.registerPlugin('netease', {
-            name: '网易云音乐',
-            version: '1.0.3',
-            getPlaylist: async (playlistId) => {
-                const cacheKey = `netease_playlist_${playlistId}`;
-                const cached = this.cacheManager.get(cacheKey);
-                if (cached && this.isCacheValid(cached)) return cached;
-                try {
-                    const originalUrl = `https://api.i-meto.com/meting/api?server=netease&type=playlist&id=${playlistId}`;
-                    const data = await this.proxyFetch(originalUrl);
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    const formatted = data.map(song => this.formatSong(song, 'netease'));
-                    this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
-                    return formatted;
-                } catch (error) {
-                    console.error('网易云歌单加载失败:', error);
-                    throw new Error('获取歌单失败');
-                }
-            },
-            search: async (keyword) => {
-                const cacheKey = `netease_search_${keyword}`;
-                const cached = this.cacheManager.get(cacheKey);
-                if (cached && this.isCacheValid(cached)) return cached;
-                try {
-                    const originalUrl = `https://api.i-meto.com/meting/api?server=netease&type=search&id=${encodeURIComponent(keyword)}`;
-                    const data = await this.proxyFetch(originalUrl);
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    const formatted = data.map(song => this.formatSong(song, 'netease'));
-                    this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
-                    return formatted;
-                } catch (error) {
-                    console.error('网易云搜索失败:', error);
-                    throw new Error('搜索失败，请稍后重试');
-                }
-            },
-            getDownloadUrl: async (songId) => {
-                return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
-            }
-        });
-
-        this.registerPlugin('qq', {
-            name: 'QQ音乐',
-            version: '1.0.2',
-            getPlaylist: async (playlistId) => {
-                const cacheKey = `qq_playlist_${playlistId}`;
-                const cached = this.cacheManager.get(cacheKey);
-                if (cached && this.isCacheValid(cached)) return cached;
-                try {
-                    const originalUrl = `https://api.i-meto.com/meting/api?server=tencent&type=playlist&id=${playlistId}`;
-                    const data = await this.proxyFetch(originalUrl);
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    const formatted = data.map(song => this.formatSong(song, 'qq'));
-                    this.cacheManager.set(cacheKey, formatted, 30 * 60 * 1000);
-                    return formatted;
-                } catch (error) {
-                    console.error('QQ音乐歌单加载失败:', error);
-                    throw new Error('获取歌单失败');
-                }
-            },
-            search: async (keyword) => {
-                const cacheKey = `qq_search_${keyword}`;
-                const cached = this.cacheManager.get(cacheKey);
-                if (cached && this.isCacheValid(cached)) return cached;
-                try {
-                    const originalUrl = `https://api.i-meto.com/meting/api?server=tencent&type=search&id=${encodeURIComponent(keyword)}`;
-                    const data = await this.proxyFetch(originalUrl);
-                    if (!Array.isArray(data)) throw new Error('数据格式错误');
-                    const formatted = data.map(song => this.formatSong(song, 'qq'));
-                    this.cacheManager.set(cacheKey, formatted, 10 * 60 * 1000);
-                    return formatted;
-                } catch (error) {
-                    console.error('QQ音乐搜索失败:', error);
-                    throw new Error('搜索失败');
-                }
-            },
-            getDownloadUrl: async (songId) => {
-                return `https://dl.stream.qqmusic.qq.com/${songId}.mp3`;
-            }
-        });
-
-        this.registerPlugin('local', {
-            name: '本地音乐',
-            version: '1.0.1',
-            getPlaylist: async () => {
-                if (window.localMusicData && Array.isArray(window.localMusicData)) return window.localMusicData;
-                if (typeof window.getLocalMusicList === 'function') return window.getLocalMusicList();
-                return [];
-            },
-            search: async () => [],
-            getDownloadUrl: async (songId) => songId
-        });
+    _isCacheValid(cached) {
+        return cached && Array.isArray(cached) && cached.length > 0;
     }
 
-    isCacheValid(cached) {
-        if (!cached || !Array.isArray(cached)) return false;
-        if (cached.length === 0) return false;
-        return true;
-    }
-
-    formatSong(song, source) {
+    _formatSong(song, source) {
         return {
             id: song.id,
             title: song.title,
@@ -135,26 +54,56 @@ class PluginManager {
         };
     }
 
-    registerPlugin(id, plugin) {
-        if (this.plugins.has(id)) console.warn(`插件 ${id} 已存在，将被替换`);
+    // ---------- 插件初始化 ----------
+    initializePlugins() {
+        this._registerPlugin('netease', {
+            name: '网易云音乐',
+            version: '1.0.3',
+            getPlaylist: (id) => this._fetchFromMeting('netease', 'playlist', id),
+            search: (keyword) => this._fetchFromMeting('netease', 'search', keyword),
+            getDownloadUrl: (songId) => `https://music.163.com/song/media/outer/url?id=${songId}.mp3`
+        });
+
+        this._registerPlugin('qq', {
+            name: 'QQ音乐',
+            version: '1.0.2',
+            getPlaylist: (id) => this._fetchFromMeting('tencent', 'playlist', id),
+            search: (keyword) => this._fetchFromMeting('tencent', 'search', keyword),
+            getDownloadUrl: (songId) => `https://dl.stream.qqmusic.qq.com/${songId}.mp3`
+        });
+
+        this._registerPlugin('local', {
+            name: '本地音乐',
+            version: '1.0.1',
+            getPlaylist: async () => {
+                if (window.localMusicData && Array.isArray(window.localMusicData)) return window.localMusicData;
+                if (typeof window.getLocalMusicList === 'function') return window.getLocalMusicList();
+                return [];
+            },
+            search: async () => [],
+            getDownloadUrl: (songId) => songId
+        });
+    }
+
+    _registerPlugin(id, plugin) {
         this.plugins.set(id, { id, type: 'builtin', ...plugin, enabled: true });
     }
 
+    // ---------- 公共 API ----------
     getPlugin(id) { return this.plugins.get(id); }
-    getAllPlugins() { return Array.from(this.plugins.values()); }
     setCurrentApi(apiId) { if (this.plugins.has(apiId)) { this.currentApi = apiId; return true; } return false; }
     getCurrentApi() { return this.currentApi; }
 
     async getPlaylist(apiId, playlistId) {
         const plugin = this.getPlugin(apiId);
-        if (!plugin || !plugin.getPlaylist) throw new Error(`插件 ${apiId} 不支持获取歌单`);
+        if (!plugin?.getPlaylist) throw new Error(`插件 ${apiId} 不支持获取歌单`);
         if (!plugin.enabled) throw new Error(`插件 ${apiId} 已被禁用`);
         return await plugin.getPlaylist(playlistId);
     }
 
     async search(apiId, keyword) {
         const plugin = this.getPlugin(apiId);
-        if (!plugin || !plugin.search) throw new Error(`插件 ${apiId} 不支持搜索`);
+        if (!plugin?.search) throw new Error(`插件 ${apiId} 不支持搜索`);
         if (!plugin.enabled) throw new Error(`插件 ${apiId} 已被禁用`);
         try {
             return await plugin.search(keyword);
@@ -164,17 +113,18 @@ class PluginManager {
         }
     }
 
+    async getDownloadUrl(apiId, songId) {
+        const plugin = this.getPlugin(apiId);
+        if (!plugin?.getDownloadUrl) throw new Error(`插件 ${apiId} 不支持下载`);
+        return await plugin.getDownloadUrl(songId);
+    }
+
+    // ---------- 预加载 ----------
     async preloadSong(song) {
         const promises = [];
         if (song.src) promises.push(this.cacheManager.preloadResource(song.src, 'audio'));
         if (song.cover) promises.push(this.cacheManager.preloadResource(song.cover, 'image'));
         try { await Promise.all(promises); return true; } catch(e) { return false; }
-    }
-
-    async getDownloadUrl(apiId, songId) {
-        const plugin = this.getPlugin(apiId);
-        if (!plugin || !plugin.getDownloadUrl) throw new Error(`插件 ${apiId} 不支持下载`);
-        return await plugin.getDownloadUrl(songId);
     }
 
     async preloadMultiple(songs, concurrent = 3) {
@@ -190,25 +140,17 @@ class PluginManager {
 
     sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+    // ---------- 插件管理（精简） ----------
     enablePlugin(pluginId) { const p = this.getPlugin(pluginId); if(p) { p.enabled = true; return true; } return false; }
     disablePlugin(pluginId) { const p = this.getPlugin(pluginId); if(p) { p.enabled = false; return true; } return false; }
     isPluginEnabled(pluginId) { const p = this.getPlugin(pluginId); return p ? p.enabled : false; }
-    getPluginStats() {
-        const stats = { total: this.plugins.size, enabled: 0, disabled: 0 };
-        for(const p of this.plugins.values()) p.enabled ? stats.enabled++ : stats.disabled++;
-        return stats;
-    }
+
     async reloadPlugins() {
         const old = new Map(this.plugins);
         this.plugins.clear();
         try { this.initializePlugins(); return true; } catch(e) { this.plugins = old; return false; }
     }
-    validatePluginCompatibility(plugin) {
-        const required = ['getPlaylist', 'search'];
-        const missing = required.filter(m => !plugin[m]);
-        if(missing.length) throw new Error(`插件缺少必要方法: ${missing.join(', ')}`);
-        return true;
-    }
+
     getPluginInfo(pluginId) {
         const p = this.getPlugin(pluginId);
         if(!p) return null;
