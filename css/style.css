@@ -1,4 +1,4 @@
-/* style.css - 精简版（移除重复样式） */
+/* style.css - 精简版（修复星聚笔记模态框移动端间距） */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -253,8 +253,67 @@ p { margin-bottom: 1em; }
 .url-check-result.checking { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
 
 /* ===== 笔记 ===== */
-#notebookModal .feedback-modal-content { max-height: 75vh; max-width: 600px; }
+#notebookModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: 10002;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 60px;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+#notebookModal.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+#notebookModal .feedback-modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.95);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.2,0.9,0.4,1.1), opacity 0.3s ease;
+    overflow: hidden;
+    margin: auto 0;
+}
+#notebookModal.active .feedback-modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
 #notebookModal .feedback-modal-header h3 i { color: #4361ee; }
+
+@media (max-width: 768px) {
+    #notebookModal {
+        padding-left: var(--container-padding-xs, 16px);
+        padding-right: var(--container-padding-xs, 16px);
+        padding-top: calc(60px + var(--container-padding-xs, 16px));
+        padding-bottom: var(--container-padding-xs, 16px);
+        display: flex;
+        flex-direction: column;
+    }
+    #notebookModal .feedback-modal-content {
+        margin: auto 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: calc(100vh - 60px - 2 * var(--container-padding-xs, 16px));
+        overflow-y: auto;
+    }
+}
+
 .notebook-list { padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
 .notebook-item {
     background: rgba(255,255,255,0.5); backdrop-filter: blur(5px);
