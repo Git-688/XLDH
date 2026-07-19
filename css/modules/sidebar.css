@@ -1,4 +1,4 @@
-/* sidebar.css */
+/* sidebar.css - 精简版 */
 :root {
     --sidebar-width: 260px;
     --sidebar-mobile-width: 70vw;
@@ -33,17 +33,13 @@
     aspect-ratio: 16/9;
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
     border-radius: 8px 8px 0 0;
     flex-shrink: 0;
     overflow: hidden;
 }
 .sidebar-wallpaper-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.2) 100%);
     pointer-events: none;
 }
@@ -54,7 +50,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    color: white;
+    color: #fff;
     text-shadow: 0 1px 3px rgba(0,0,0,0.4);
     z-index: 2;
     max-width: calc(100% - 32px);
@@ -226,20 +222,12 @@
 .footer-btn[data-action="qq"]:hover { background: rgba(59,130,246,0.15); color: #2563eb; }
 
 /* 位置响应式 */
-@media (min-width: 576px) {
-    .sidebar { left: var(--container-padding-sm, 20px); transform: translateX(calc(-100% - var(--container-padding-sm, 20px))); }
-}
-@media (min-width: 768px) {
-    .sidebar { left: var(--container-padding-md, 24px); transform: translateX(calc(-100% - var(--container-padding-md, 24px))); }
-}
-@media (min-width: 992px) {
-    .sidebar { left: var(--container-padding-lg, 28px); transform: translateX(calc(-100% - var(--container-padding-lg, 28px))); }
-}
-@media (min-width: 1200px) {
-    .sidebar { left: var(--container-padding-xl, 32px); transform: translateX(calc(-100% - var(--container-padding-xl, 32px))); }
-}
+@media (min-width:576px) { .sidebar { left: var(--container-padding-sm, 20px); transform: translateX(calc(-100% - var(--container-padding-sm, 20px))); } }
+@media (min-width:768px) { .sidebar { left: var(--container-padding-md, 24px); transform: translateX(calc(-100% - var(--container-padding-md, 24px))); } }
+@media (min-width:992px) { .sidebar { left: var(--container-padding-lg, 28px); transform: translateX(calc(-100% - var(--container-padding-lg, 28px))); } }
+@media (min-width:1200px) { .sidebar { left: var(--container-padding-xl, 32px); transform: translateX(calc(-100% - var(--container-padding-xl, 32px))); } }
 
-@media (max-width: 768px) {
+@media (max-width:768px) {
     .sidebar {
         width: var(--sidebar-mobile-width);
         max-width: var(--sidebar-max-mobile);
@@ -254,7 +242,7 @@
     .footer-btn i { font-size: 18px; }
     .footer-btn { padding: 6px 0; }
 }
-@media (max-width: 480px) {
+@media (max-width:480px) {
     .sidebar-wallpaper-user-info { left: 12px; bottom: 12px; gap: 8px; }
     .sidebar-wallpaper-avatar { width: 42px; height: 42px; }
     .daily-quote-card { margin: 8px 12px; }
@@ -262,13 +250,13 @@
     .sidebar-wallpaper-nickname { font-size: 14px; }
     .sidebar-wallpaper-signature { font-size: 10px; }
 }
-@media (max-height: 500px) and (orientation: landscape) {
+@media (max-height:500px) and (orientation:landscape) {
     .sidebar { top: 60px !important; bottom: 10px; }
     .sidebar-wallpaper { aspect-ratio: 21/9; }
     .daily-quote-card { display: none; }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion:reduce) {
     .sidebar, .category-group-header, .category-item, .footer-btn, .category-toggle, .category-items {
         transition: none; animation: none;
     }
@@ -278,14 +266,14 @@
 .dark-mode .sidebar {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
 }
 .dark-mode .daily-quote-card { background: var(--bg-secondary); }
 .dark-mode .daily-quote-card p { color: var(--text-primary); }
 .dark-mode .category-group {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 .dark-mode .category-group-header:hover { background: rgba(67,97,238,0.2); }
 .dark-mode .category-name { color: var(--text-primary); }
@@ -301,7 +289,7 @@
 .dark-mode .footer-btn {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 .dark-mode .footer-btn:hover { background: rgba(67,97,238,0.2); }
 .dark-mode .footer-btn[data-action="notebook"] { color: #a78bfa; }
