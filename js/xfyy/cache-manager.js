@@ -1,22 +1,25 @@
-/* cache-manager.js */
+/* cache-manager.js - 精简版（缓存管理） */
 class CacheManager {
     constructor() {
         this.prefix = 'music_player_';
         this.defaultTTL = 24 * 60 * 60 * 1000;
         this.maxSize = 4 * 1024 * 1024;
         this.cacheStats = this.loadStats();
-        this.activeCache = new Set();
         this.accessOrder = [];
     }
 
     loadStats() {
         try {
             return JSON.parse(localStorage.getItem(this.prefix + 'cache_stats')) || { hits: 0, misses: 0, size: 0 };
-        } catch { return { hits: 0, misses: 0, size: 0 }; }
+        } catch {
+            return { hits: 0, misses: 0, size: 0 };
+        }
     }
 
     saveStats() {
-        try { localStorage.setItem(this.prefix + 'cache_stats', JSON.stringify(this.cacheStats)); } catch(e) {}
+        try {
+            localStorage.setItem(this.prefix + 'cache_stats', JSON.stringify(this.cacheStats));
+        } catch (e) {}
     }
 
     estimateTotalSize() {
@@ -31,7 +34,9 @@ class CacheManager {
         return total;
     }
 
-    generateKey(type, id) { return `${this.prefix}${type}_${id}`; }
+    generateKey(type, id) {
+        return `${this.prefix}${type}_${id}`;
+    }
 
     set(key, data, ttl = this.defaultTTL) {
         try {
@@ -39,6 +44,7 @@ class CacheManager {
             const cacheItem = { data, timestamp: Date.now(), ttl };
             const serialized = JSON.stringify(cacheItem);
             const itemSize = serialized.length * 2;
+
             let totalSize = this.estimateTotalSize();
             if (totalSize + itemSize > this.maxSize) {
                 this.cleanup(true);
@@ -47,8 +53,8 @@ class CacheManager {
                     this.evictLRU(5);
                 }
             }
+
             localStorage.setItem(storageKey, serialized);
-            this.activeCache.add(storageKey);
             this.updateAccessOrder(storageKey);
             this.cacheStats.size += itemSize;
             this.saveStats();
@@ -67,6 +73,7 @@ class CacheManager {
                 this.saveStats();
                 return null;
             }
+
             const cacheItem = JSON.parse(cached);
             if (Date.now() - cacheItem.timestamp > cacheItem.ttl) {
                 this.remove(key);
@@ -74,8 +81,8 @@ class CacheManager {
                 this.saveStats();
                 return null;
             }
+
             this.updateAccessOrder(storageKey);
-            this.activeCache.add(storageKey);
             this.cacheStats.hits++;
             this.saveStats();
             return cacheItem.data;
@@ -95,10 +102,9 @@ class CacheManager {
     evictLRU(count = 5) {
         const toRemove = this.accessOrder.splice(0, Math.min(count, this.accessOrder.length));
         for (const key of toRemove) {
-            localStorage.removeItem(key);
-            this.activeCache.delete(key);
             const item = localStorage.getItem(key);
             if (item) this.cacheStats.size -= item.length * 2;
+            localStorage.removeItem(key);
         }
         this.saveStats();
     }
@@ -109,20 +115,22 @@ class CacheManager {
             const cached = localStorage.getItem(storageKey);
             if (cached) this.cacheStats.size -= cached.length * 2;
             localStorage.removeItem(storageKey);
-            this.activeCache.delete(storageKey);
             const idx = this.accessOrder.indexOf(storageKey);
             if (idx !== -1) this.accessOrder.splice(idx, 1);
             this.saveStats();
             return true;
-        } catch { return false; }
+        } catch {
+            return false;
+        }
     }
 
     cleanup(force = false) {
         const now = Date.now();
         const toRemove = [];
+
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && key.startsWith(this.prefix + 'data_')) {
+            if (key?.startsWith(this.prefix + 'data_')) {
                 try {
                     const cached = localStorage.getItem(key);
                     const cacheItem = JSON.parse(cached);
@@ -130,15 +138,18 @@ class CacheManager {
                         toRemove.push(key);
                         this.cacheStats.size -= cached.length * 2;
                     }
-                } catch { toRemove.push(key); }
+                } catch {
+                    toRemove.push(key);
+                }
             }
         }
-        toRemove.forEach(key => {
+
+        for (const key of toRemove) {
             localStorage.removeItem(key);
-            this.activeCache.delete(key);
             const idx = this.accessOrder.indexOf(key);
             if (idx !== -1) this.accessOrder.splice(idx, 1);
-        });
+        }
+
         if (toRemove.length) this.saveStats();
         return toRemove.length;
     }
@@ -149,8 +160,7 @@ class CacheManager {
             const key = localStorage.key(i);
             if (key?.startsWith(this.prefix)) keys.push(key);
         }
-        keys.forEach(k => localStorage.removeItem(k));
-        this.activeCache.clear();
+        for (const key of keys) localStorage.removeItem(key);
         this.accessOrder = [];
         this.cacheStats = { hits: 0, misses: 0, size: 0 };
         this.saveStats();
@@ -158,7 +168,12 @@ class CacheManager {
     }
 
     getStats() {
-        return { ...this.cacheStats, hitRate: this.cacheStats.hits / (this.cacheStats.hits+this.cacheStats.misses) || 0, activeCacheCount: this.activeCache.size };
+        const total = this.cacheStats.hits + this.cacheStats.misses;
+        return {
+            ...this.cacheStats,
+            hitRate: total > 0 ? this.cacheStats.hits / total : 0,
+            activeCacheCount: this.accessOrder.length
+        };
     }
 
     preloadResource(url, type = 'audio') {
