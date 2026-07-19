@@ -1,4 +1,4 @@
-/* weather.js - 精简版（天气查询 + GPS定位 + 城市切换 + 7天预报） */
+/* weather.js - 精简版（修复 todayWindDir 未定义） */
 class WeatherModule {
     static CONFIG = { get API_BASE() { return Utils.getApiBase(); } };
 
@@ -173,6 +173,7 @@ class WeatherModule {
         return true;
     }
 
+    // ===== 修复：定义所有需要的变量 =====
     parseWeatherData(data) {
         if (!data || data.code !== 200) throw new Error(data?.msg || '天气数据格式错误');
         const isDay = this._isDay();
@@ -180,6 +181,8 @@ class WeatherModule {
         const todayWeather = data.weather1 || '未知';
         const todayTempDay = data.wd1 || '';
         const todayTempNight = data.wd2 || '';
+        const todayWindDir = data.winddirection1 || '';   // 修复：定义 todayWindDir
+        const todayWindScale = data.windleve1 || '';      // 修复：定义 todayWindScale
 
         const nowInfo = data.nowinfo || {};
         const currentTemp = nowInfo.temperature;
