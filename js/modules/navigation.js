@@ -1,7 +1,7 @@
-/* navigation.js - 精简版（修复分类导航空白问题，增强错误处理） */
+/* navigation.js - 按一级分类加载全部数据，缓存到 localStorage，图标优化高清加载+首字母降级，点击访问量同步校正，总站点数从后端获取并显示为 数字+ */
 class OptimizedNavigation {
     constructor() {
-        if (window.Starlink?.navigation) return window.Starlink.navigation;
+        if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
 
         this.apiBase = Utils.getApiBase();
         this.categoryCache = {};
@@ -9,10 +9,9 @@ class OptimizedNavigation {
         this.currentLevel2 = null;
         this.currentSites = [];
         this.isInitialized = false;
-        this.totalSites = 0;
+        this.totalSites = 0;          // 从后端获取的总站点数
         this.searchQuery = '';
         this.isSearching = false;
-        this.searchTimer = null;
 
         this.level1Nav = document.getElementById('level1Nav');
         this.level2Nav = document.getElementById('level2Nav');
@@ -24,12 +23,15 @@ class OptimizedNavigation {
         window.optimizedNavigation = this;
     }
 
-    // ---------- 工具 ----------
+    // ---------- 工具方法 ----------
     _escapeHtml(str) { return Utils.escapeHtml(str); }
     _formatViews(views) { return Utils.formatViews ? Utils.formatViews(views) : String(views || 0); }
-    _getDomain(url) { try { return new URL(url).hostname; } catch { return ''; } }
 
-    // ---------- 图标 ----------
+    _getDomain(url) {
+        try { return new URL(url).hostname; } catch { return ''; }
+    }
+
+    // ---------- 图标加载（高清 + 首字母降级） ----------
     _createIconElement(site) {
         const container = document.createElement('span');
         container.className = 'icon-container';
@@ -43,11 +45,15 @@ class OptimizedNavigation {
         const img = document.createElement('img');
         img.loading = 'lazy';
         img.alt = '';
+        img.style.display = 'block';
         img.className = 'site-icon-img';
 
         const domain = this._getDomain(site.url);
+
         const iconSources = [];
-        if (site.icon && (site.icon.startsWith('http://') || site.icon.startsWith('https://'))) iconSources.push(site.icon);
+        if (site.icon && (site.icon.startsWith('http://') || site.icon.startsWith('https://'))) {
+            iconSources.push(site.icon);
+        }
         if (domain) {
             iconSources.push(
                 `https://icon.horse/icon/${domain}?size=256&format=webp`,
@@ -57,27 +63,67 @@ class OptimizedNavigation {
             );
         }
 
-        let currentIndex = 0;
-        const loadIcon = (src) => { if (src) img.src = src; else this._showFallback(); };
-        const _showFallback = () => { img.style.display = 'none'; fallbackText.style.display = 'flex'; img.dataset.failed = 'true'; };
+        let currentSourceIndex = 0;
+        let retryCount = 0;
+        const maxRetries = iconSources.length;
+
+        const loadIcon = (src) => {
+            if (!src) {
+                this._showFallback();
+                return;
+            }
+            img.src = src;
+        };
+
+        const tryNextSource = () => {
+            currentSourceIndex++;
+            if (currentSourceIndex < iconSources.length) {
+                retryCount = 0;
+                loadIcon(iconSources[currentSourceIndex]);
+            } else {
+                this._showFallback();
+            }
+        };
+
+        const _showFallback = () => {
+            img.style.display = 'none';
+            fallbackText.style.display = 'flex';
+            img.dataset.failed = 'true';
+        };
 
         img.onerror = function() {
-            currentIndex++;
-            if (currentIndex < iconSources.length) {
-                setTimeout(() => { img.src = iconSources[currentIndex]; }, 300);
+            retryCount++;
+            if (currentSourceIndex < iconSources.length - 1) {
+                setTimeout(() => {
+                    currentSourceIndex++;
+                    const nextSrc = iconSources[currentSourceIndex];
+                    if (nextSrc) {
+                        img.src = nextSrc;
+                    } else {
+                        _showFallback();
+                    }
+                }, 300);
             } else {
                 _showFallback();
             }
         };
+
         img.onload = function() {
             img.style.display = 'block';
             fallbackText.style.display = 'none';
             img.dataset.failed = 'false';
-            setTimeout(() => { if (img.naturalWidth <= 1 && img.naturalHeight <= 1) img.onerror(); }, 100);
+            setTimeout(() => {
+                if (img.naturalWidth <= 1 && img.naturalHeight <= 1) {
+                    img.onerror();
+                }
+            }, 100);
         };
 
-        if (iconSources.length > 0) loadIcon(iconSources[0]);
-        else _showFallback();
+        if (iconSources.length > 0) {
+            loadIcon(iconSources[0]);
+        } else {
+            _showFallback();
+        }
 
         container.appendChild(img);
         container.appendChild(fallbackText);
@@ -88,7 +134,7 @@ class OptimizedNavigation {
     _renderSites(sites) {
         const container = this.level3Content;
         if (!container) return;
-        if (!sites?.length) {
+        if (!sites || !sites.length) {
             container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3 class="empty-title">暂无站点</h3></div>`;
             return;
         }
@@ -125,11 +171,13 @@ class OptimizedNavigation {
             titleSpan.textContent = site.title;
             cardTop.appendChild(titleSpan);
 
-            // 点击统计
+            // ===== 点击事件：乐观更新 + 同步校正 =====
             card.addEventListener('click', async (e) => {
                 if (e.target.closest('.report-dead-link-btn')) return;
+
                 const viewEl = card.querySelector('.view-count');
                 if (!viewEl) return;
+
                 const oldViews = parseInt(viewEl.dataset.views) || 0;
                 const optimisticViews = oldViews + 1;
                 viewEl.dataset.views = optimisticViews;
@@ -144,55 +192,65 @@ class OptimizedNavigation {
                         body: JSON.stringify({ id: site.id, url: site.url }),
                         keepalive: true
                     });
-                    if (response?.ok) {
+
+                    if (response.ok) {
                         const data = await response.json();
                         if (data.views !== undefined) {
-                            viewEl.dataset.views = data.views;
-                            viewEl.textContent = this._formatViews(data.views);
-                            const subId = this.currentLevel2;
-                            if (subId && this.categoryCache[this.currentLevel1]) {
-                                const subs = this.categoryCache[this.currentLevel1];
-                                const sub = subs.find(s => s.id === subId);
-                                if (sub) {
-                                    const target = sub.sites.find(s => s.id === site.id);
-                                    if (target) target.views = data.views;
+                            const correctedViews = data.views;
+                            viewEl.dataset.views = correctedViews;
+                            viewEl.textContent = this._formatViews(correctedViews);
+
+                            const currentSubId = this.selectedLevel2;
+                            if (currentSubId && this.siteCache.has(currentSubId)) {
+                                const cachedSites = this.siteCache.get(currentSubId);
+                                const targetSite = cachedSites.find(s => s.id === site.id);
+                                if (targetSite) {
+                                    targetSite.views = correctedViews;
+                                    this.siteCache.set(currentSubId, cachedSites);
                                 }
                             }
                         }
+                    } else {
+                        console.warn('[导航] 点击统计请求失败，保持乐观值');
                     }
-                } catch (err) { /* 静默处理 */ }
+                } catch (err) {
+                    if (window.errorHandler) {
+                        window.errorHandler.report(err, 'navigation.clickUpdate');
+                    }
+                }
             });
 
-            // 报告死链
             const reportBtn = card.querySelector('.report-dead-link-btn');
-            reportBtn?.addEventListener('click', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (reportBtn.disabled) return;
-                reportBtn.disabled = true;
-                reportBtn.style.opacity = '0.5';
-                try {
-                    const res = await Utils.safeFetch(`${this.apiBase}/report-dead-link`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url: reportBtn.dataset.url, title: reportBtn.dataset.title })
-                    });
-                    if (res?.ok) {
-                        window.toast.show('已反馈，管理员将处理', 'success');
-                        reportBtn.style.display = 'none';
-                        card.classList.add('invalid');
-                    } else {
-                        const err = await res.json().catch(() => ({}));
-                        window.toast.show(err.error || '反馈失败', 'error');
+            if (reportBtn) {
+                reportBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (reportBtn.disabled) return;
+                    reportBtn.disabled = true;
+                    reportBtn.style.opacity = '0.5';
+                    try {
+                        const res = await Utils.safeFetch(`${this.apiBase}/report-dead-link`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: reportBtn.dataset.url, title: reportBtn.dataset.title })
+                        });
+                        if (res.ok) {
+                            window.toast.show('已反馈，管理员将处理', 'success');
+                            reportBtn.style.display = 'none';
+                            card.classList.add('invalid');
+                        } else {
+                            const err = await res.json().catch(() => ({}));
+                            window.toast.show(err.error || '反馈失败', 'error');
+                            reportBtn.disabled = false;
+                            reportBtn.style.opacity = '';
+                        }
+                    } catch (err) {
+                        window.toast.show('网络错误', 'error');
                         reportBtn.disabled = false;
                         reportBtn.style.opacity = '';
                     }
-                } catch (err) {
-                    window.toast.show('网络错误', 'error');
-                    reportBtn.disabled = false;
-                    reportBtn.style.opacity = '';
-                }
-            });
+                });
+            }
 
             fragment.appendChild(card);
         });
@@ -201,7 +259,7 @@ class OptimizedNavigation {
         container.appendChild(fragment);
     }
 
-    // ---------- 加载分类数据 ----------
+    // ---------- 加载一级分类数据（含缓存） ----------
     async loadCategoryData(categoryName, forceRefresh = false) {
         const cacheKey = `nav_data_${categoryName}`;
         const cached = localStorage.getItem(cacheKey);
@@ -209,51 +267,49 @@ class OptimizedNavigation {
         if (!forceRefresh && cached) {
             try {
                 const data = JSON.parse(cached);
-                if (now - data.timestamp < 30 * 60 * 1000) return data.data;
+                if (now - data.timestamp < 30 * 60 * 1000) {
+                    return data.data;
+                }
             } catch (e) {}
         }
-        try {
-            const response = await Utils.safeFetch(`${this.apiBase}/navigation/category-sites?category=${encodeURIComponent(categoryName)}`);
-            if (!response) throw new Error('No response');
-            const json = await response.json();
-            if (!json.subcategories) throw new Error('Invalid response');
-            localStorage.setItem(cacheKey, JSON.stringify({ data: json, timestamp: now }));
-            return json;
-        } catch (error) {
-            console.error('加载分类数据失败:', error);
-            // 返回空数据，但保留缓存（如果有）
-            if (cached) {
-                try { return JSON.parse(cached).data; } catch(e) {}
-            }
-            throw error;
-        }
+
+        const response = await Utils.safeFetch(`${this.apiBase}/navigation/category-sites?category=${encodeURIComponent(categoryName)}`);
+        const json = await response.json();
+        if (!json.subcategories) throw new Error('Invalid response');
+
+        const cacheData = { data: json, timestamp: now };
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+        return json;
     }
 
     // ---------- 切换一级分类 ----------
     async selectLevel1(categoryName, isUserClick = false) {
         if (this.currentLevel1 === categoryName && !isUserClick) return;
         this.currentLevel1 = categoryName;
-        document.querySelectorAll('.level1-btn').forEach(b => b.classList.toggle('active', b.dataset.level1 === categoryName));
 
-        try {
-            const data = await this.loadCategoryData(categoryName);
-            this.categoryCache[categoryName] = data.subcategories || [];
-            this.renderLevel2(categoryName);
+        document.querySelectorAll('.level1-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.level1 === categoryName);
+        });
 
-            const subs = this.categoryCache[categoryName];
-            if (subs?.length) {
-                const firstSub = subs[0];
-                this.currentLevel2 = firstSub.id;
-                this.renderLevel3(firstSub.id);
-                document.querySelectorAll('.level2-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.level2) === firstSub.id));
-            } else {
-                this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3 class="empty-title">该分类下暂无子分类</h3></div>`;
-            }
-            this.updateStats();
-        } catch (error) {
-            console.error('切换分类失败:', error);
-            this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">加载失败，请重试</h3><button onclick="window.optimizedNavigation?.refreshCurrentSubcategory()" style="margin-top:10px;padding:6px 16px;background:var(--primary-color);color:#fff;border:none;border-radius:6px;cursor:pointer;">重试</button></div>`;
+        const data = await this.loadCategoryData(categoryName);
+        this.categoryCache[categoryName] = data.subcategories || [];
+
+        this.renderLevel2(categoryName);
+
+        const subs = this.categoryCache[categoryName];
+        if (subs && subs.length) {
+            const firstSub = subs[0];
+            this.currentLevel2 = firstSub.id;
+            this.renderLevel3(firstSub.id);
+            document.querySelectorAll('.level2-btn').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.level2) === firstSub.id);
+            });
+        } else {
+            this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3 class="empty-title">该分类下暂无子分类</h3></div>`;
         }
+
+        // 刷新总站点数（虽然总数不变，但保持一致性）
+        this.updateStats();
     }
 
     // ---------- 渲染二级导航 ----------
@@ -264,7 +320,7 @@ class OptimizedNavigation {
             return;
         }
         this.level2Nav.innerHTML = subs.map((sub, idx) =>
-            `<button class="level2-btn ${idx === 0 ? 'active' : ''}" data-level2="${sub.id}">
+            `<button class="level2-btn ${idx === 0 ? 'active' : ''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}">
                 <span class="level2-btn-text">${this._escapeHtml(sub.name)}</span>
             </button>`
         ).join('');
@@ -280,13 +336,16 @@ class OptimizedNavigation {
         });
     }
 
-    // ---------- 渲染三级内容 ----------
+    // ---------- 渲染三级内容（根据子分类ID） ----------
     renderLevel3(subcategoryId) {
         let sites = null;
         for (const catName in this.categoryCache) {
             const subs = this.categoryCache[catName];
             const found = subs.find(sub => sub.id === subcategoryId);
-            if (found) { sites = found.sites || []; break; }
+            if (found) {
+                sites = found.sites || [];
+                break;
+            }
         }
         if (!sites) {
             this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">数据未加载</h3></div>`;
@@ -296,26 +355,33 @@ class OptimizedNavigation {
         this._renderSites(sites);
     }
 
-    // ---------- 获取总站点数 ----------
+    // ---------- 从后端获取总站点数并更新显示（显示为 数字+） ----------
     async fetchTotalSitesCount() {
         try {
             const response = await Utils.safeFetch(`${this.apiBase}/total-sites-count`, { timeout: 5000 });
             const data = await response.json();
             if (data.total !== undefined) {
                 this.totalSites = data.total;
-                if (this.siteCountEl) this.siteCountEl.textContent = this.totalSites + '+';
+                if (this.siteCountEl) {
+                    // 显示为 数字+ （例如 "123+"）
+                    this.siteCountEl.textContent = this.totalSites + '+';
+                }
             }
         } catch (error) {
             console.warn('获取总站点数失败:', error);
-            if (this.siteCountEl && !this.siteCountEl.textContent) this.siteCountEl.textContent = '?+';
+            if (this.siteCountEl && !this.siteCountEl.textContent) {
+                this.siteCountEl.textContent = '?+';
+            }
         }
     }
 
+    // ---------- 更新统计：从后端获取总数并显示 ----------
     async updateStats() {
         await this.fetchTotalSitesCount();
+        // 无效链接数暂不更新（无接口）
     }
 
-    // ---------- 搜索 ----------
+    // ---------- 搜索功能 ----------
     createSearchBox() {
         const navHeader = document.querySelector('.navigation-header');
         if (!navHeader || navHeader.querySelector('.nav-search-box')) return;
@@ -325,7 +391,7 @@ class OptimizedNavigation {
             <div class="search-input-wrapper">
                 <i class="fas fa-search search-icon-prefix"></i>
                 <input type="text" id="navSearchInput" placeholder="搜索本站链接..." autocomplete="off">
-                <button class="search-clear-btn" id="navSearchClearBtn"><i class="fas fa-times"></i></button>
+                <button class="search-clear-btn" id="navSearchClearBtn" aria-label="清除搜索"><i class="fas fa-times"></i></button>
             </div>
             <span class="search-result-hint" id="navSearchHint" style="display:none;"></span>
         `;
@@ -351,7 +417,10 @@ class OptimizedNavigation {
             input.focus();
         });
         document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); input?.focus(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                input?.focus();
+            }
         });
     }
 
@@ -368,8 +437,8 @@ class OptimizedNavigation {
             } else {
                 this._renderSites(results);
             }
-            hint.style.display = 'block';
-            hint.textContent = `找到 ${results.length} 个结果`;
+            document.getElementById('navSearchHint').style.display = 'block';
+            document.getElementById('navSearchHint').textContent = `找到 ${results.length} 个结果`;
         } catch (e) {
             this.level3Content.innerHTML = '<div class="empty-state">搜索失败，请重试</div>';
         } finally {
@@ -393,9 +462,9 @@ class OptimizedNavigation {
     // ---------- 初始化 ----------
     async init() {
         if (this.isInitialized) return;
+
         try {
             const resp = await Utils.safeFetch(`${this.apiBase}/navigation/structure`);
-            if (!resp) throw new Error('No response from structure API');
             const structure = await resp.json();
             const categories = Object.keys(structure);
             if (!categories.length) throw new Error('No categories');
@@ -406,34 +475,39 @@ class OptimizedNavigation {
 
             this.level1Nav.addEventListener('click', (e) => {
                 const btn = e.target.closest('.level1-btn');
-                if (btn) this.selectLevel1(btn.dataset.level1, true);
+                if (btn) {
+                    const cat = btn.dataset.level1;
+                    this.selectLevel1(cat, true);
+                }
             });
 
             const firstCat = categories[0];
             await this.selectLevel1(firstCat, false);
             this.createSearchBox();
+
+            // 获取总站点数并显示（数字+）
             await this.updateStats();
+
             this.isInitialized = true;
         } catch (error) {
             console.error('导航初始化失败:', error);
-            this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">加载失败，请刷新页面</h3><button onclick="window.location.reload()" style="margin-top:10px;padding:6px 16px;background:var(--primary-color);color:#fff;border:none;border-radius:6px;cursor:pointer;">刷新</button></div>`;
+            this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">加载失败，请刷新页面</h3></div>`;
         }
     }
 
-    // ---------- 刷新 ----------
+    // ---------- 对外刷新接口 ----------
     async refreshCurrentSubcategory() {
         if (!this.currentLevel1 || !this.currentLevel2) return;
-        try {
-            await this.loadCategoryData(this.currentLevel1, true);
-            this.renderLevel3(this.currentLevel2);
-            await this.updateStats();
-        } catch (error) {
-            console.error('刷新子分类失败:', error);
-            window.toast?.show('刷新失败，请重试', 'error');
-        }
+        await this.loadCategoryData(this.currentLevel1, true);
+        this.renderLevel3(this.currentLevel2);
+        // 刷新总数（也许管理员新增了站点）
+        await this.updateStats();
     }
 
-    destroy() { /* 清理事件等 */ }
+    // ---------- 销毁 ----------
+    destroy() {
+        // 清理事件等
+    }
 }
 
 window.OptimizedNavigation = OptimizedNavigation;
