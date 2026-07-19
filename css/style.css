@@ -1,4 +1,4 @@
-/* style.css - 精简版（修复合作伙伴模态框移动端间距，搜索模态框居中已移至 search.css） */
+/* style.css - 精简版（含排行榜模态框样式与笔记一致，移动端间距统一） */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -355,8 +355,67 @@ p { margin-bottom: 1em; }
 #submitModal .feedback-modal-content { max-height: 90vh; max-width: 520px; }
 #submitModal .feedback-modal-header h3 i { color: #4361ee; }
 
-/* ===== 排行榜 ===== */
-#rankModal .feedback-modal-content { max-width: 500px; max-height: 80vh; }
+/* ===== 排行榜（与笔记模态框样式一致） ===== */
+#rankModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: 10002;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 60px;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+#rankModal.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+#rankModal .feedback-modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.95);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.2,0.9,0.4,1.1), opacity 0.3s ease;
+    overflow: hidden;
+    margin: auto 0;
+}
+#rankModal.active .feedback-modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+/* 移动端：左右间距与主页一致 */
+@media (max-width: 768px) {
+    #rankModal {
+        padding-left: var(--container-padding-xs, 16px);
+        padding-right: var(--container-padding-xs, 16px);
+        padding-top: calc(60px + var(--container-padding-xs, 16px));
+        padding-bottom: var(--container-padding-xs, 16px);
+        display: flex;
+        flex-direction: column;
+    }
+    #rankModal .feedback-modal-content {
+        margin: auto 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: calc(100vh - 60px - 2 * var(--container-padding-xs, 16px));
+        overflow-y: auto;
+    }
+}
+
 .rank-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
 .rank-item {
     display: flex; align-items: center; gap: 12px;
