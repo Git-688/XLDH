@@ -1,4 +1,4 @@
-/* submit.js - 完整修改版（符合4点需求） */
+/* submit.js - 完整修改版（符合4点需求 + 修复获取信息时清空字段） */
 class SubmitModule {
     constructor() {
         if (window.Starlink && window.Starlink.submit) return window.Starlink.submit;
@@ -28,7 +28,7 @@ class SubmitModule {
         this.pollingTimer = null;
         this.isVisible = false;
 
-        // 【新增】标志：是否已成功获取过信息（用于避免重复自动获取）
+        // 标志：是否已成功获取过信息（用于避免重复自动获取）
         this.hasFetchedInfo = false;
 
         this.DRAFT_KEY = 'submit_draft';
@@ -96,7 +96,7 @@ class SubmitModule {
             // 单独保存的联系方式也同步
             if (draft.contact) localStorage.setItem(this.CONTACT_KEY, draft.contact);
             this.isRestoringDraft = false;
-            // 【修改】只有在未获取过信息时才自动获取
+            // 只有在未获取过信息时才自动获取
             if (draft.url && this.isVisible && !this.hasFetchedInfo) {
                 setTimeout(() => this.fetchSiteInfo(), 500);
             }
@@ -332,6 +332,7 @@ class SubmitModule {
         this.urlCheckResult.className = 'url-check-result safe';
     }
 
+    // ===== 修改：获取信息时不清空已有字段，只填充空字段 =====
     async fetchSiteInfo() {
         const url = this.urlInput.value.trim();
         if (!url || !Utils.isValidUrl(url)) {
@@ -339,20 +340,15 @@ class SubmitModule {
             return;
         }
 
-        // 【修改】清除旧信息（标题、描述、图标），但保留联系方式
-        this.titleInput.value = '';
-        this.descInput.value = '';
-        this.iconInput.value = '';
-        this.iconPreview.style.display = 'none';
-        // 联系方式不清除，保留
-
+        // 重置安全检测状态，但不清除已有字段
         this.resetSecurityCheck();
-        this.hasFetchedInfo = false; // 重新获取时重置标志
+        this.hasFetchedInfo = false;
         this.fetchInfoBtn.disabled = true;
         this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 获取信息...';
         this.urlCheckResult.style.display = 'block';
         this.urlCheckResult.className = 'url-check-result checking';
         this.urlCheckResult.innerHTML = '正在获取网站信息，安全检测后台进行中...';
+        
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
             const response = await Utils.safeFetch(`${this.apiBase}/fetch-site-info`, {
@@ -361,15 +357,20 @@ class SubmitModule {
                 body: JSON.stringify({ url: safeUrl })
             });
             const data = await response.json();
-            if (data.title) this.titleInput.value = data.title;
-            if (data.icon) {
+            
+            // ===== 修改：只在字段为空时填充 =====
+            if (data.title && !this.titleInput.value.trim()) {
+                this.titleInput.value = data.title;
+            }
+            if (data.icon && !this.iconInput.value.trim()) {
                 this.iconInput.value = data.icon;
                 this.updateIconPreview();
             }
-            if (data.description) {
+            if (data.description && !this.descInput.value.trim()) {
                 this.descInput.value = data.description.slice(0, 200);
                 this.autoResizeDesc();
             }
+            
             if (data.taskId) {
                 this.currentTaskId = data.taskId;
                 this.startPolling();
