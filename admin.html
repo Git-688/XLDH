@@ -9,183 +9,199 @@
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="theme-color" content="#4361ee">
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        html,body { height:100%; overflow:hidden; }
-        body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif; background:#f5f7fb; font-size:12px; color:#1e293b; display:flex; flex-direction:column; padding:16px; }
-        ::-webkit-scrollbar { display:none; }
-        * { -ms-overflow-style:none; scrollbar-width:none; }
-        .container { flex:1; display:flex; flex-direction:column; max-width:1200px; margin:0 auto; width:100%; overflow:hidden; }
-        .login-section { display:flex; justify-content:center; align-items:center; min-height:100%; flex:1; }
-        .login-card { background:#fff; border-radius:8px; box-shadow:0 8px 20px rgba(0,0,0,0.04); padding:28px 24px 32px; width:100%; max-width:320px; border:1px solid #eef2f6; }
-        .login-header { text-align:center; margin-bottom:24px; }
-        .login-logo { width:48px; height:48px; margin:0 auto 12px; border-radius:8px; overflow:hidden; }
-        .login-logo img { width:100%; height:100%; object-fit:contain; }
-        .login-header h2 { font-size:18px; font-weight:600; margin-bottom:4px; color:#0f172a; }
-        .login-header p { font-size:11px; color:#64748b; }
-        .login-form .input-group { margin-bottom:16px; }
-        .login-form label { display:block; font-size:11px; font-weight:500; color:#475569; margin-bottom:6px; }
-        .login-form input { width:100%; padding:8px 12px; font-size:12px; border:1px solid #e2e8f0; border-radius:8px; background:#fff; transition:all .2s; outline:none; }
-        .login-form input:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.1); }
-        .captcha-row { display:flex; gap:8px; align-items:center; }
-        .captcha-row input { flex:1; }
-        .captcha-row img { height:36px; border-radius:8px; cursor:pointer; background:#f1f5f9; }
-        .remember-checkbox { display:flex; align-items:center; gap:6px; margin:12px 0 16px; font-size:11px; color:#475569; }
-        .remember-checkbox input { width:14px; height:14px; margin:0; }
-        .login-btn { width:100%; background:#3b82f6; border:none; border-radius:8px; padding:8px 12px; font-size:12px; font-weight:500; color:#fff; cursor:pointer; transition:background .2s; }
-        .login-btn:hover { background:#2563eb; }
-        .logout-btn { background:#f1f5f9; color:#1e293b; border:1px solid #e2e8f0; }
-        .logout-btn:hover { background:#e2e8f0; }
-        .lock-message { font-size:10px; color:#ef4444; text-align:center; margin-top:12px; display:none; }
-        .stats-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-bottom:16px; }
-        .stat-card-mini { background:#fff; border-radius:8px; padding:12px 16px; border:1px solid #eef2f6; text-align:center; }
-        .stat-card-mini .stat-number { font-size:20px; font-weight:700; color:#0f172a; }
-        .stat-card-mini .stat-label { font-size:10px; color:#64748b; margin-top:2px; }
-        .stat-card-mini .stat-number.blue { color:#3b82f6; }
-        .stat-card-mini .stat-number.green { color:#10b981; }
-        .stat-card-mini .stat-number.orange { color:#f59e0b; }
-        .stat-card-mini .stat-number.red { color:#ef4444; }
-        .main-card { background:#fff; border-radius:8px; padding:16px; box-shadow:0 2px 8px rgba(0,0,0,0.03); border:1px solid #eef2f6; flex:1; display:flex; flex-direction:column; overflow:hidden; }
-        .tabs-row { margin-bottom:12px; flex-shrink:0; overflow-x:auto; white-space:nowrap; scrollbar-width:none; -ms-overflow-style:none; }
-        .tabs-row::-webkit-scrollbar { display:none; }
-        .tabs-row .flex-row { display:inline-flex; gap:8px; }
-        .action-buttons-row { display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; padding-bottom:6px; margin-bottom:12px; scrollbar-width:thin; -webkit-overflow-scrolling:touch; }
-        .action-buttons-row::-webkit-scrollbar { display:none; }
-        .action-buttons-row button { flex-shrink:0; min-width:80px; white-space:nowrap; padding:6px 12px; font-size:12px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; text-align:center; line-height:1.2; }
-        .tab-btn { padding:6px 14px; border-radius:8px; background:#f1f5f9; color:#1e293b; cursor:pointer; font-size:12px; transition:all .2s; display:inline-block; border:none; }
-        .tab-btn.active { background:#3b82f6; color:#fff; }
-        .tab-btn:hover { background:#e2e8f0; }
-        .cat-bar { width:100%; padding:8px 12px; background:#f8fafc; border-radius:8px; margin-bottom:12px; display:flex; gap:6px; align-items:center; overflow-x:auto; flex-wrap:nowrap; flex-shrink:0; }
-        .cat-item { padding:6px 12px; border-radius:8px; background:#fff; cursor:pointer; white-space:nowrap; font-size:12px; font-weight:500; display:flex; align-items:center; gap:8px; box-shadow:0 1px 2px rgba(0,0,0,0.02); border:1px solid transparent; }
-        .cat-item.active { background:#3b82f6; color:#fff; border-color:#3b82f6; }
-        .cat-item .rename-text-btn { background:#e2e8f0; border:none; cursor:pointer; font-size:10px; padding:2px 8px; border-radius:8px; color:#475569; }
-        .cat-item.active .rename-text-btn { background:rgba(255,255,255,0.2); color:#fff; }
-        .tab-panel { flex:1; display:flex; flex-direction:column; overflow:hidden; }
-        #manageTab { flex:1; display:flex; flex-direction:column; overflow:hidden; }
-        .content-layout { display:flex; gap:12px; flex:1; min-height:0; flex-direction:row !important; }
-        .sidebar,.main-content { background:#f8fafc; border-radius:8px; padding:12px; display:flex; flex-direction:column; overflow:hidden; min-width:0; flex:1; width:50%; }
-        .sub-list,.site-list,.feedback-list,.submissions-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-top:8px; }
-        .skeleton-item { background:#f1f5f9; border-radius:8px; height:36px; animation:skeleton-pulse 1.5s ease-in-out infinite; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; background: #f5f7fb; font-size: 12px; color: #1e293b; display: flex; flex-direction: column; padding: 16px; }
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+        .container { flex: 1; display: flex; flex-direction: column; max-width: 1200px; margin: 0 auto; width: 100%; overflow: hidden; }
+        .login-section { display: flex; justify-content: center; align-items: center; min-height: 100%; flex: 1; }
+        .login-card { background: #ffffff; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); padding: 28px 24px 32px; width: 100%; max-width: 320px; border: 1px solid #eef2f6; }
+        .login-header { text-align: center; margin-bottom: 24px; }
+        .login-logo { width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 8px; overflow: hidden; }
+        .login-logo img { width: 100%; height: 100%; object-fit: contain; }
+        .login-header h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; color: #0f172a; }
+        .login-header p { font-size: 11px; color: #64748b; }
+        .login-form .input-group { margin-bottom: 16px; }
+        .login-form label { display: block; font-size: 11px; font-weight: 500; color: #475569; margin-bottom: 6px; }
+        .login-form input { width: 100%; padding: 8px 12px; font-size: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; transition: all 0.2s; outline: none; }
+        .login-form input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .captcha-row { display: flex; gap: 8px; align-items: center; }
+        .captcha-row input { flex: 1; }
+        .captcha-row img { height: 36px; border-radius: 8px; cursor: pointer; background: #f1f5f9; }
+        .remember-checkbox { display: flex; align-items: center; gap: 6px; margin: 12px 0 16px; font-size: 11px; color: #475569; }
+        .remember-checkbox input { width: 14px; height: 14px; margin: 0; }
+        .login-btn { width: 100%; background: #3b82f6; border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 500; color: white; cursor: pointer; transition: background 0.2s; }
+        .login-btn:hover { background: #2563eb; }
+        .logout-btn { background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; }
+        .logout-btn:hover { background: #e2e8f0; }
+        .lock-message { font-size: 10px; color: #ef4444; text-align: center; margin-top: 12px; display: none; }
+        .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .stat-card-mini { background: #fff; border-radius: 8px; padding: 12px 16px; border: 1px solid #eef2f6; text-align: center; }
+        .stat-card-mini .stat-number { font-size: 20px; font-weight: 700; color: #0f172a; }
+        .stat-card-mini .stat-label { font-size: 10px; color: #64748b; margin-top: 2px; }
+        .stat-card-mini .stat-number.blue { color: #3b82f6; }
+        .stat-card-mini .stat-number.green { color: #10b981; }
+        .stat-card-mini .stat-number.orange { color: #f59e0b; }
+        .stat-card-mini .stat-number.red { color: #ef4444; }
+        .main-card { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #eef2f6; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .tabs-row { margin-bottom: 12px; flex-shrink: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none; }
+        .tabs-row::-webkit-scrollbar { display: none; }
+        .tabs-row .flex-row { display: inline-flex; gap: 8px; }
+        .action-buttons-row { display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+        .action-buttons-row::-webkit-scrollbar { display: none; }
+        .action-buttons-row button { flex-shrink: 0; min-width: 80px; white-space: nowrap; padding: 6px 12px; font-size: 12px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; text-align: center; line-height: 1.2; }
+        .tab-btn { padding: 6px 14px; border-radius: 8px; background: #f1f5f9; color: #1e293b; cursor: pointer; font-size: 12px; transition: all 0.2s; display: inline-block; border: none; }
+        .tab-btn.active { background: #3b82f6; color: #fff; }
+        .tab-btn:hover { background: #e2e8f0; }
+        .cat-bar { width: 100%; padding: 8px 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 12px; display: flex; gap: 6px; align-items: center; overflow-x: auto; flex-wrap: nowrap; flex-shrink: 0; }
+        .cat-item { padding: 6px 12px; border-radius: 8px; background: #fff; cursor: pointer; white-space: nowrap; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); border: 1px solid transparent; }
+        .cat-item.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .cat-item .rename-text-btn { background: #e2e8f0; border: none; cursor: pointer; font-size: 10px; padding: 2px 8px; border-radius: 8px; color: #475569; }
+        .cat-item.active .rename-text-btn { background: rgba(255,255,255,0.2); color: #fff; }
+        .tab-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        #manageTab { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .content-layout { display: flex; gap: 12px; flex: 1; min-height: 0; flex-direction: row !important; }
+        .sidebar, .main-content { background: #f8fafc; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; overflow: hidden; min-width: 0; flex: 1; width: 50%; }
+        .sub-list, .site-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+        .feedback-list, .submissions-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+        .skeleton-item { background: #f1f5f9; border-radius: 8px; height: 36px; animation: skeleton-pulse 1.5s ease-in-out infinite; }
         @keyframes skeleton-pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
-        .sub-item { background:#fff; border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
-        .sub-item span { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:500; }
-        .sub-item .rename-text-btn { flex-shrink:0; background:#e2e8f0; border:none; cursor:pointer; font-size:10px; padding:3px 10px; border-radius:8px; color:#475569; }
-        .sub-item.active { background:#e0f2fe; color:#0369a1; }
-        .link-item { background:#fff; border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
-        .link-info { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .link-info strong { font-size:12px; font-weight:500; }
-        .link-actions { flex-shrink:0; }
-        #addSubBtn,#addSiteBtn { width:100%; height:36px; margin-bottom:8px; font-size:12px; border-radius:8px; background:#3b82f6; color:#fff; border:none; cursor:pointer; font-weight:500; }
-        button { border:none; border-radius:8px; padding:5px 10px; font-size:11px; cursor:pointer; transition:all .2s; }
-        button.primary { background:#3b82f6; color:#fff; }
-        button.primary:hover { background:#2563eb; }
-        button.danger { background:#ef4444; color:#fff; }
-        button.danger:hover { background:#dc2626; }
-        button.secondary { background:#64748b; color:#fff; }
-        button.secondary:hover { background:#475569; }
-        button.sm { padding:3px 8px; font-size:10px; }
-        button:disabled { opacity:0.6; cursor:not-allowed; }
-        button.success { background:#10b981; color:#fff; }
-        button.success:hover { background:#059669; }
-        button.warning { background:#f59e0b; color:#fff; }
-        button.warning:hover { background:#d97706; }
-        input,select,textarea,.form-input { width:100%; padding:6px 10px !important; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; background:#fff; outline:none; font-family:inherit; box-sizing:border-box; }
-        input:focus,select:focus,textarea:focus { border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,0.1); }
-        .modal { position:fixed; inset:0; background:rgba(0,0,0,0.2); display:flex; align-items:center; justify-content:center; z-index:99; opacity:0; visibility:hidden; transition:all .2s; padding:16px; }
-        .modal.show { opacity:1; visibility:visible; }
-        .modal-body { background:#fff; border-radius:8px; width:100%; max-width:420px; padding:20px; max-height:80vh; overflow-y:auto; box-shadow:0 20px 35px -10px rgba(0,0,0,0.1); }
-        .toast { position:fixed; bottom:20px; left:50%; transform:translate(-50%,12px); padding:6px 14px; border-radius:30px; font-size:11px; color:#fff; z-index:999; opacity:0; visibility:hidden; transition:all .2s; white-space:nowrap; }
-        .toast.show { opacity:1; visibility:visible; transform:translate(-50%,0); }
-        .toast.success { background:#10b981; }
-        .toast.error { background:#ef4444; }
-        .toast.warn { background:#f59e0b; }
-        .toast.info { background:#3b82f6; }
-        .hidden { display:none !important; }
-        .announcement-form-container { display:flex; flex-direction:column; gap:12px; }
-        .form-row { display:flex; flex-direction:column; gap:4px; }
-        .form-row label { font-size:11px; font-weight:500; color:#475569; }
-        #annContent { resize:vertical; min-height:80px; overflow-y:visible; }
-        .announcement-actions-row { display:flex; justify-content:space-between; align-items:center; margin-top:8px; flex-wrap:wrap; gap:8px; }
-        .announcement-checkbox { display:flex; align-items:center; gap:6px; white-space:nowrap; }
-        .announcement-buttons { display:flex; gap:8px; }
-        .submission-title-truncate { display:inline-block; max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle; }
-        .custom-select-wrapper { position:relative; flex:1; min-width:110px; }
-        .custom-select-trigger { display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; color:#1e293b; cursor:pointer; gap:6px; transition:border-color .2s,box-shadow .2s,background .2s; user-select:none; min-height:32px; }
-        .custom-select-trigger:hover { border-color:#3b82f6; background:#f8fafc; }
-        .custom-select-trigger.open { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.12); background:#fff; }
-        .custom-select-value { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px; }
-        .custom-select-arrow { width:12px; height:12px; flex-shrink:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-size:contain; background-repeat:no-repeat; transition:transform .25s ease; }
-        .custom-select-trigger.open .custom-select-arrow { transform:rotate(180deg); }
-        .custom-select-dropdown { position:fixed; background:#fff; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.1); z-index:1000; max-height:200px; overflow-y:auto; opacity:0; visibility:hidden; transform:translateY(-6px) scale(0.96); transition:opacity .2s ease,transform .2s ease,visibility .2s; scrollbar-width:none; -ms-overflow-style:none; }
-        .custom-select-dropdown::-webkit-scrollbar { display:none; }
-        .custom-select-dropdown.open { opacity:1; visibility:visible; transform:translateY(0) scale(1); }
-        .custom-select-option { padding:8px 12px; font-size:12px; color:#1e293b; cursor:pointer; transition:background .15s,color .15s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .custom-select-option:hover { background:#f1f5f9; }
-        .custom-select-option.selected { background:#e0f2fe; color:#0369a1; font-weight:500; }
-        .batch-toolbar { display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; padding:6px 10px; margin-bottom:12px; background:#f8fafc; border-radius:8px; border:1px solid #eef2f6; align-items:center; flex-shrink:0; scrollbar-width:none; -ms-overflow-style:none; }
-        .batch-toolbar::-webkit-scrollbar { display:none; }
-        .batch-toolbar .batch-label { font-size:12px; font-weight:500; color:#475569; flex-shrink:0; }
-        .batch-toolbar .batch-count { font-size:12px; color:#3b82f6; font-weight:600; flex-shrink:0; }
-        .batch-toolbar button { flex-shrink:0; padding:4px 12px; font-size:11px; border-radius:6px; }
-        .batch-toolbar button:disabled { opacity:0.5; cursor:not-allowed; }
-        .dark-mode .custom-select-trigger { background:#1e293b; border-color:#334155; color:#e2e8f0; }
-        .dark-mode .custom-select-trigger:hover { border-color:#3b82f6; background:#0f172a; }
-        .dark-mode .custom-select-trigger.open { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.2); }
-        .dark-mode .custom-select-dropdown { background:#1e293b; border-color:#334155; box-shadow:0 4px 16px rgba(0,0,0,0.3); }
-        .dark-mode .custom-select-option { color:#e2e8f0; }
-        .dark-mode .custom-select-option:hover { background:#334155; }
-        .dark-mode .custom-select-option.selected { background:#0f172a; color:#38bdf8; }
-        .dark-mode .custom-select-arrow { background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2394a3b8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); }
-        @media (prefers-color-scheme:dark) {
-            body { background:#0f172a; color:#e2e8f0; }
-            .login-card { background:#1e293b; border-color:#334155; }
-            .login-header h2 { color:#f1f5f9; }
-            .login-header p { color:#94a3b8; }
-            .login-form label { color:#94a3b8; }
-            .login-form input { background:#0f172a; border-color:#334155; color:#e2e8f0; }
-            .login-form input:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.2); }
-            .login-btn { background:#3b82f6; }
-            .login-btn:hover { background:#2563eb; }
-            .main-card { background:#1e293b; border-color:#334155; }
-            .tab-btn { background:#334155; color:#94a3b8; }
-            .tab-btn.active { background:#3b82f6; color:#fff; }
-            .tab-btn:hover { background:#475569; }
-            .cat-bar { background:#0f172a; }
-            .cat-item { background:#1e293b; color:#e2e8f0; border-color:#334155; }
-            .cat-item.active { background:#3b82f6; color:#fff; border-color:#3b82f6; }
-            .cat-item .rename-text-btn { background:#334155; color:#94a3b8; }
-            .cat-item.active .rename-text-btn { background:rgba(255,255,255,0.2); color:#fff; }
-            .sidebar,.main-content { background:#0f172a; }
-            .sub-item,.link-item { background:#1e293b; border:1px solid #334155; }
-            .sub-item.active { background:#1e3a5f; color:#60a5fa; }
-            .sub-item .rename-text-btn { background:#334155; color:#94a3b8; }
-            .link-info strong { color:#e2e8f0; }
-            button.secondary { background:#475569; color:#e2e8f0; }
-            button.secondary:hover { background:#334155; }
-            input,select,textarea,.form-input { background:#0f172a; border-color:#334155; color:#e2e8f0; }
-            input:focus,select:focus,textarea:focus { border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,0.2); }
-            .modal-body { background:#1e293b; color:#e2e8f0; }
-            .stat-card-mini { background:#1e293b; border-color:#334155; }
-            .stat-card-mini .stat-number { color:#f1f5f9; }
-            .stat-card-mini .stat-label { color:#94a3b8; }
-            .skeleton-item { background:#334155; }
-            .toast { background:#1e293b; border:1px solid #334155; color:#e2e8f0; }
-            .toast.success { background:#065f46; }
-            .toast.error { background:#7f1d1d; }
-            .toast.warn { background:#78350f; }
-            .toast.info { background:#1e3a5f; }
+        .sub-item { background: #fff; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .sub-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; }
+        .sub-item .rename-text-btn { flex-shrink: 0; background: #e2e8f0; border: none; cursor: pointer; font-size: 10px; padding: 3px 10px; border-radius: 8px; color: #475569; }
+        .sub-item.active { background: #e0f2fe; color: #0369a1; }
+        .link-item { background: #fff; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .link-info { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .link-info strong { font-size: 12px; font-weight: 500; }
+        .link-actions { flex-shrink: 0; }
+        #addSubBtn, #addSiteBtn { width: 100%; height: 36px; margin-bottom: 8px; font-size: 12px; border-radius: 8px; background: #3b82f6; color: #fff; border: none; cursor: pointer; font-weight: 500; }
+        button { border: none; border-radius: 8px; padding: 5px 10px; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+        button.primary { background: #3b82f6; color: #fff; }
+        button.primary:hover { background: #2563eb; }
+        button.danger { background: #ef4444; color: #fff; }
+        button.danger:hover { background: #dc2626; }
+        button.secondary { background: #64748b; color: #fff; }
+        button.secondary:hover { background: #475569; }
+        button.sm { padding: 3px 8px; font-size: 10px; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        button.success { background: #10b981; color: #fff; }
+        button.success:hover { background: #059669; }
+        button.warning { background: #f59e0b; color: #fff; }
+        button.warning:hover { background: #d97706; }
+        input, select, textarea, .form-input { width: 100%; padding: 6px 10px !important; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; background: #fff; outline: none; font-family: inherit; box-sizing: border-box; }
+        input:focus, select:focus, textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; z-index: 99; opacity: 0; visibility: hidden; transition: all 0.2s; padding: 16px; }
+        .modal.show { opacity: 1; visibility: visible; }
+        .modal-body { background: #fff; border-radius: 8px; width: 100%; max-width: 420px; padding: 20px; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1); }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 12px); padding: 6px 14px; border-radius: 30px; font-size: 11px; color: #fff; z-index: 999; opacity: 0; visibility: hidden; transition: all 0.2s; white-space: nowrap; }
+        .toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        .toast.warn { background: #f59e0b; }
+        .toast.info { background: #3b82f6; }
+        .hidden { display: none !important; }
+        .announcement-form-container { display: flex; flex-direction: column; gap: 12px; }
+        .form-row { display: flex; flex-direction: column; gap: 4px; }
+        .form-row label { font-size: 11px; font-weight: 500; color: #475569; }
+        #annContent { resize: vertical; min-height: 80px; overflow-y: visible; }
+        .announcement-actions-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 8px; }
+        .announcement-checkbox { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+        .announcement-buttons { display: flex; gap: 8px; }
+        @media (max-width: 768px) { body { padding: 12px; } .login-card { padding: 24px 20px; max-width: 280px; } .content-layout { flex-direction: row !important; gap: 8px; } .sidebar, .main-content { min-width: 0; padding: 8px; } .action-buttons-row button { font-size: 10px; padding: 5px 8px; min-width: 60px; } .tab-btn { padding: 4px 10px; font-size: 11px; } .stats-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; } .stat-card-mini .stat-number { font-size: 16px; } }
+        @media (max-width: 480px) { body { padding: 8px; } .login-card { padding: 20px 16px; } .stats-cards { grid-template-columns: 1fr 1fr; gap: 6px; } .stat-card-mini { padding: 8px 12px; } .stat-card-mini .stat-number { font-size: 14px; } .action-buttons-row button { font-size: 9px; padding: 4px 6px; min-width: 50px; } .cat-item { font-size: 10px; padding: 4px 8px; } }
+        @media (prefers-color-scheme: dark) { body { background: #0f172a; color: #e2e8f0; } .login-card { background: #1e293b; border-color: #334155; } .login-header h2 { color: #f1f5f9; } .login-header p { color: #94a3b8; } .login-form label { color: #94a3b8; } .login-form input { background: #0f172a; border-color: #334155; color: #e2e8f0; } .login-form input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); } .login-btn { background: #3b82f6; } .login-btn:hover { background: #2563eb; } .main-card { background: #1e293b; border-color: #334155; } .tab-btn { background: #334155; color: #94a3b8; } .tab-btn.active { background: #3b82f6; color: #fff; } .tab-btn:hover { background: #475569; } .cat-bar { background: #0f172a; } .cat-item { background: #1e293b; color: #e2e8f0; border-color: #334155; } .cat-item.active { background: #3b82f6; color: #fff; border-color: #3b82f6; } .cat-item .rename-text-btn { background: #334155; color: #94a3b8; } .cat-item.active .rename-text-btn { background: rgba(255,255,255,0.2); color: #fff; } .sidebar, .main-content { background: #0f172a; } .sub-item, .link-item { background: #1e293b; border: 1px solid #334155; } .sub-item.active { background: #1e3a5f; color: #60a5fa; } .sub-item .rename-text-btn { background: #334155; color: #94a3b8; } .link-info strong { color: #e2e8f0; } button.secondary { background: #475569; color: #e2e8f0; } button.secondary:hover { background: #334155; } input, select, textarea, .form-input { background: #0f172a; border-color: #334155; color: #e2e8f0; } input:focus, select:focus, textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); } .modal-body { background: #1e293b; color: #e2e8f0; } .stat-card-mini { background: #1e293b; border-color: #334155; } .stat-card-mini .stat-number { color: #f1f5f9; } .stat-card-mini .stat-label { color: #94a3b8; } .skeleton-item { background: #334155; } .toast { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; } .toast.success { background: #065f46; } .toast.error { background: #7f1d1d; } .toast.warn { background: #78350f; } .toast.info { background: #1e3a5f; } }
+        .submission-title-truncate { display: inline-block; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+        .custom-select-wrapper { position: relative; flex: 1; min-width: 110px; }
+        .custom-select-trigger {
+            display: flex; align-items: center; justify-content: space-between; padding: 6px 10px;
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+            font-size: 12px; color: #1e293b; cursor: pointer; gap: 6px;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            user-select: none;
+            min-height: 32px;
         }
-        @media (max-width:768px) { body { padding:12px; } .login-card { padding:24px 20px; max-width:280px; } .content-layout { flex-direction:row !important; gap:8px; } .sidebar,.main-content { min-width:0; padding:8px; } .action-buttons-row button { font-size:10px; padding:5px 8px; min-width:60px; } .tab-btn { padding:4px 10px; font-size:11px; } .stats-cards { grid-template-columns:repeat(2,1fr); gap:8px; } .stat-card-mini .stat-number { font-size:16px; } }
-        @media (max-width:480px) { body { padding:8px; } .login-card { padding:20px 16px; } .stats-cards { grid-template-columns:1fr 1fr; gap:6px; } .stat-card-mini { padding:8px 12px; } .stat-card-mini .stat-number { font-size:14px; } .action-buttons-row button { font-size:9px; padding:4px 6px; min-width:50px; } .cat-item { font-size:10px; padding:4px 8px; } }
-        @media (prefers-color-scheme:dark) { body { background:#0f172a; } }
+        .custom-select-trigger:hover { border-color: #3b82f6; background: #f8fafc; }
+        .custom-select-trigger.open { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); background: #fff; }
+        .custom-select-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+        .custom-select-arrow {
+            width: 12px; height: 12px; flex-shrink: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-size: contain; background-repeat: no-repeat;
+            transition: transform 0.25s ease;
+        }
+        .custom-select-trigger.open .custom-select-arrow { transform: rotate(180deg); }
+        .custom-select-dropdown {
+            position: fixed;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-6px) scale(0.96);
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .custom-select-dropdown::-webkit-scrollbar { display: none; }
+        .custom-select-dropdown.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+        .custom-select-option {
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #1e293b;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .custom-select-option:hover { background: #f1f5f9; }
+        .custom-select-option.selected { background: #e0f2fe; color: #0369a1; font-weight: 500; }
+        .dark-mode .custom-select-trigger { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+        .dark-mode .custom-select-trigger:hover { border-color: #3b82f6; background: #0f172a; }
+        .dark-mode .custom-select-trigger.open { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+        .dark-mode .custom-select-dropdown { background: #1e293b; border-color: #334155; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+        .dark-mode .custom-select-option { color: #e2e8f0; }
+        .dark-mode .custom-select-option:hover { background: #334155; }
+        .dark-mode .custom-select-option.selected { background: #0f172a; color: #38bdf8; }
+        .dark-mode .custom-select-arrow { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2394a3b8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); }
+        .batch-toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding: 6px 10px;
+            margin-bottom: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #eef2f6;
+            align-items: center;
+            flex-shrink: 0;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .batch-toolbar::-webkit-scrollbar { display: none; }
+        .batch-toolbar .batch-label { font-size: 12px; font-weight: 500; color: #475569; flex-shrink: 0; }
+        .batch-toolbar .batch-count { font-size: 12px; color: #3b82f6; font-weight: 600; flex-shrink: 0; }
+        .batch-toolbar button { flex-shrink: 0; padding: 4px 12px; font-size: 11px; border-radius: 6px; }
+        .batch-toolbar button:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body>
     <div class="toast" id="toast"></div>
     <div class="modal" id="modal">
         <div class="modal-body">
-            <div class="modal-title" style="font-size:14px;font-weight:600;margin-bottom:16px;"></div>
+            <div class="modal-title" style="font-size:14px; font-weight:600; margin-bottom:16px;"></div>
             <div id="modalForm"></div>
-            <div class="modal-buttons" style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;"></div>
+            <div class="modal-buttons" style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;"></div>
         </div>
     </div>
 
@@ -202,7 +218,7 @@
                         <label>管理Token</label>
                         <input type="password" id="tokenInput" placeholder="请输入管理Token" autocomplete="off">
                     </div>
-                    <div class="input-group" id="captchaGroup" style="display:none;">
+                    <div class="input-group" id="captchaGroup" style="display: none;">
                         <label>验证码</label>
                         <div class="captcha-row">
                             <input type="text" id="captchaInput" placeholder="请输入验证码" autocomplete="off">
@@ -241,9 +257,10 @@
                 <div class="action-buttons-row">
                     <button class="logout-btn" id="logoutBtn">退出</button>
                     <button class="primary" id="addCategoryBtn">+ 一级分类</button>
-                    <button class="primary" id="refreshCacheBtn" style="background:#10b981;color:#fff;">🔄 刷新缓存</button>
+                    <button class="primary" id="refreshCacheBtn" style="background: #10b981; color: #fff;">🔄 刷新缓存</button>
                 </div>
                 <div class="cat-bar" id="catBar"></div>
+
                 <div class="batch-toolbar" id="batchToolbar">
                     <span class="batch-label">批量操作：</span>
                     <span class="batch-count" id="selectedCount">已选 0 个</span>
@@ -252,9 +269,16 @@
                     <button class="secondary sm" id="batchClearSelection">清除选择</button>
                     <button class="secondary sm" id="batchSelectAll">全选</button>
                 </div>
+
                 <div class="content-layout">
-                    <div class="sidebar"><button class="primary" id="addSubBtn">+ 子分类</button><div class="sub-list" id="subList"></div></div>
-                    <div class="main-content"><button class="primary" id="addSiteBtn">+ 添加链接</button><div class="site-list" id="siteList" style="flex:1;overflow-y:auto;"></div></div>
+                    <div class="sidebar">
+                        <button class="primary" id="addSubBtn">+ 子分类</button>
+                        <div class="sub-list" id="subList"></div>
+                    </div>
+                    <div class="main-content">
+                        <button class="primary" id="addSiteBtn">+ 添加链接</button>
+                        <div class="site-list" id="siteList" style="flex:1;overflow-y:auto;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -274,33 +298,53 @@
                     <div class="form-row"><label>详细内容</label><textarea id="annContent" rows="4" placeholder="详细公告内容..."></textarea></div>
                     <div class="form-row"><label>公告日期</label><input type="date" id="annDate" class="date-input"></div>
                     <div class="announcement-actions-row">
-                        <div class="announcement-checkbox"><input type="checkbox" id="annActive"><label for="annActive" style="font-size:12px;">启用公告</label></div>
+                        <div class="announcement-checkbox">
+                            <input type="checkbox" id="annActive">
+                            <label for="annActive" style="font-size:12px;">启用公告</label>
+                        </div>
                         <div class="announcement-buttons"><button class="secondary" id="annClearBtn">清除</button><button class="secondary" id="annCancelBtn">取消</button><button class="primary" id="annPublishBtn">发布</button></div>
                     </div>
                 </div>
             </div>
 
+            <!-- ===== 合作伙伴管理面板 ===== -->
             <div id="partnersTab" class="tab-panel hidden">
                 <div class="partner-admin-container" style="display:flex;flex-direction:column;gap:16px;height:100%;overflow:hidden;padding:4px 0;">
-                    <div class="partner-intro-edit" style="background:var(--bg-secondary,#f8fafc);border-radius:8px;padding:12px;border:1px solid var(--border-color,#e2e8f0);flex-shrink:0;">
+                    <!-- 合作公告区域 -->
+                    <div class="partner-intro-edit" style="background:var(--bg-secondary, #f8fafc);border-radius:8px;padding:12px;border:1px solid var(--border-color, #e2e8f0);flex-shrink:0;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                             <label style="font-size:12px;font-weight:600;color:var(--text-primary);">📢 合作公告</label>
                             <button class="primary sm" id="savePartnerIntroBtn" style="padding:4px 14px;font-size:11px;">保存</button>
                         </div>
                         <textarea id="partnerIntroInput" rows="2" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;resize:vertical;font-family:inherit;box-sizing:border-box;"></textarea>
                     </div>
-                    <div class="partner-add-form" style="background:var(--bg-secondary,#f8fafc);border-radius:8px;padding:12px;border:1px solid var(--border-color,#e2e8f0);flex-shrink:0;">
+
+                    <!-- 合作伙伴表单 -->
+                    <div class="partner-add-form" style="background:var(--bg-secondary, #f8fafc);border-radius:8px;padding:12px;border:1px solid var(--border-color, #e2e8f0);flex-shrink:0;">
                         <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">🤝 合作伙伴</div>
+                        <!-- 第一行：网站链接 + 网站标题 -->
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                            <div style="display:flex;flex-direction:column;gap:4px;"><label style="font-size:10px;color:var(--text-secondary);">网站链接 *</label><input type="text" id="partnerUrlInput" placeholder="https://example.com" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;"></div>
-                            <div style="display:flex;flex-direction:column;gap:4px;"><label style="font-size:10px;color:var(--text-secondary);">网站标题 *</label><input type="text" id="partnerNameInput" placeholder="合作伙伴名称" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;"></div>
+                            <div style="display:flex;flex-direction:column;gap:4px;">
+                                <label style="font-size:10px;color:var(--text-secondary);">网站链接 *</label>
+                                <input type="text" id="partnerUrlInput" placeholder="https://example.com" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;">
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:4px;">
+                                <label style="font-size:10px;color:var(--text-secondary);">网站标题 *</label>
+                                <input type="text" id="partnerNameInput" placeholder="合作伙伴名称" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;">
+                            </div>
                         </div>
+                        <!-- 第二行：完整图标 + 添加按钮 -->
                         <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;">
-                            <div style="display:flex;flex-direction:column;gap:4px;"><label style="font-size:10px;color:var(--text-secondary);">完整图标</label><input type="text" id="partnerIconInput" placeholder="https://example.com/icon.png" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;"></div>
+                            <div style="display:flex;flex-direction:column;gap:4px;">
+                                <label style="font-size:10px;color:var(--text-secondary);">完整图标</label>
+                                <input type="text" id="partnerIconInput" placeholder="https://example.com/icon.png" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;">
+                            </div>
                             <button class="primary sm" id="addPartnerBtn" style="padding:6px 16px;font-size:12px;white-space:nowrap;height:34px;flex-shrink:0;">添加</button>
                         </div>
                     </div>
-                    <div class="partner-list-admin" style="flex:1;min-height:0;background:var(--bg-secondary,#f8fafc);border-radius:8px;padding:8px 12px;border:1px solid var(--border-color,#e2e8f0);overflow:hidden;display:flex;flex-direction:column;">
+
+                    <!-- 合作伙伴列表 -->
+                    <div class="partner-list-admin" style="flex:1;min-height:0;background:var(--bg-secondary, #f8fafc);border-radius:8px;padding:8px 12px;border:1px solid var(--border-color, #e2e8f0);overflow:hidden;display:flex;flex-direction:column;">
                         <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:6px;flex-shrink:0;">📋 合作伙伴列表</div>
                         <div id="partnerAdminList" style="flex:1;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;padding-right:4px;">
                             <div style="text-align:center;padding:30px 20px;color:var(--text-secondary);font-size:14px;">🎉 期待你的加入...</div>
