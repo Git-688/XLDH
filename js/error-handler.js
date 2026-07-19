@@ -1,4 +1,4 @@
-/* error-handler.js - 优化版：节流上报、过滤无关错误、批量上报 */
+/* error-handler.js - 增强上报格式（sessionId + 用户操作 + 网络信息） */
 class ErrorHandler {
     constructor() {
         if (window._errorHandlerInstance) {
@@ -10,14 +10,52 @@ class ErrorHandler {
                          `${window.APP_CONFIG.API_BASE}/log` : null;
         this.retryQueue = [];
         this.isProcessing = false;
-        this.reportedHashes = new Map(); // 存储错误hash和上次上报时间
+        this.reportedHashes = new Map();
         this.batchQueue = [];
         this.batchTimer = null;
-        this.BATCH_INTERVAL = 5000; // 5秒批量上报一次
-        this.BATCH_MAX_SIZE = 10;   // 最大批量上报数量
-        this.HASH_EXPIRE_TIME = 30000; // 30秒内相同错误不再上报
+        this.BATCH_INTERVAL = 5000;
+        this.BATCH_MAX_SIZE = 10;
+        this.HASH_EXPIRE_TIME = 30000;
+
+        // ===== 新增：会话ID和用户操作记录 =====
+        this.sessionId = this._getSessionId();
+        this.userActions = [];
+        this.maxActions = 20;
+
         this.init();
         window._errorHandlerInstance = this;
+    }
+
+    _getSessionId() {
+        let sid = sessionStorage.getItem('error_session_id');
+        if (!sid) {
+            sid = 'sid_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            sessionStorage.setItem('error_session_id', sid);
+        }
+        return sid;
+    }
+
+    /**
+     * 记录用户操作（供外部调用）
+     * @param {string} action - 操作描述
+     */
+    recordUserAction(action) {
+        this.userActions.push({ action, time: Date.now() });
+        if (this.userActions.length > this.maxActions) {
+            this.userActions.shift();
+        }
+    }
+
+    _getNetworkInfo() {
+        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        return {
+            online: navigator.onLine,
+            connection: conn ? {
+                type: conn.effectiveType || 'unknown',
+                downlink: conn.downlink || null,
+                rtt: conn.rtt || null
+            } : null
+        };
     }
 
     _getErrorHash(errorInfo) {
@@ -30,24 +68,16 @@ class ErrorHandler {
         return `err_${hash}`;
     }
 
-    // ===== 优化：更严格的忽略规则 =====
     shouldIgnore(errorInfo) {
-        // 1. 忽略空的资源错误
         if (errorInfo.type === 'resource' && !errorInfo.message && !errorInfo.stack && !errorInfo.src) {
             return true;
         }
-
-        // 2. 忽略图片加载错误（最常见，无意义）
         if (errorInfo.type === 'resource' && errorInfo.tag === 'IMG') {
             return true;
         }
-
-        // 3. 忽略 CSS/字体/图标加载错误
         if (errorInfo.type === 'resource' && (errorInfo.tag === 'LINK' || errorInfo.tag === 'STYLE')) {
             return true;
         }
-
-        // 4. 忽略图标相关域名错误
         if (errorInfo.type === 'resource' && errorInfo.src) {
             const ignoreDomains = [
                 'favicon.yandex.net',
@@ -66,18 +96,12 @@ class ErrorHandler {
                 return true;
             }
         }
-
-        // 5. 忽略 Script error.（跨域脚本错误）
         if (errorInfo.type === 'error' && (errorInfo.message === 'Script error.' || errorInfo.message === 'Script error')) {
             return true;
         }
-
-        // 6. 忽略空错误
         if (!errorInfo.message && !errorInfo.stack) {
             return true;
         }
-
-        // 7. 忽略网络错误（已由用户自行处理）
         if (errorInfo.message && (
             errorInfo.message.includes('NetworkError') ||
             errorInfo.message.includes('Failed to fetch') ||
@@ -86,7 +110,6 @@ class ErrorHandler {
             return true;
         }
 
-        // ===== 节流：相同错误30秒内不再上报 =====
         const hash = this._getErrorHash(errorInfo);
         const now = Date.now();
         if (this.reportedHashes.has(hash)) {
@@ -96,15 +119,12 @@ class ErrorHandler {
             }
         }
         this.reportedHashes.set(hash, now);
-
-        // 限制 Map 大小
         if (this.reportedHashes.size > 200) {
             const keys = this.reportedHashes.keys();
             for (let i = 0; i < 50; i++) {
                 this.reportedHashes.delete(keys.next().value);
             }
         }
-
         return false;
     }
 
@@ -121,7 +141,6 @@ class ErrorHandler {
     init() {
         this._bindGlobalEvents();
         this._setupOfflineQueue();
-        // 启动批量上报定时器
         this._startBatchTimer();
     }
 
@@ -155,7 +174,6 @@ class ErrorHandler {
 
         window.addEventListener('unhandledrejection', (event) => {
             const reason = event.reason;
-            // 忽略空拒绝
             if (!reason) return;
             this.handleError({
                 type: 'unhandledrejection',
@@ -171,7 +189,6 @@ class ErrorHandler {
             if (this.retryQueue.length > 0) {
                 this._processQueue();
             }
-            // 恢复批量上报
             this._startBatchTimer();
         });
         window.addEventListener('offline', () => {
@@ -222,12 +239,10 @@ class ErrorHandler {
 
     handleError(errorInfo) {
         if (this.shouldIgnore(errorInfo)) return;
-
-        // 限制内存中的错误数量
         if (this.errors.length >= this.maxErrors) this.errors.shift();
         this.errors.push(errorInfo);
 
-        // 控制台输出（仅开发环境或调试模式）
+        // 仅在调试模式下输出
         if (window.location.search.includes('debug=1') || localStorage.getItem('debug_mode') === 'true') {
             console.error('[ErrorHandler]', errorInfo);
         }
@@ -236,12 +251,10 @@ class ErrorHandler {
         this.addToBatchQueue(errorInfo);
     }
 
-    // ===== 批量上报队列 =====
     addToBatchQueue(errorInfo) {
         if (!this.reportUrl) return;
         const safeInfo = this._preparePayload(errorInfo);
         this.batchQueue.push(safeInfo);
-        
         if (this.batchQueue.length >= this.BATCH_MAX_SIZE) {
             this._flushBatchQueue();
         }
@@ -251,7 +264,6 @@ class ErrorHandler {
         if (this.batchQueue.length === 0 || !navigator.onLine) return;
         const batch = [...this.batchQueue];
         this.batchQueue = [];
-        
         try {
             const payload = {
                 errors: batch,
@@ -260,28 +272,23 @@ class ErrorHandler {
                 url: window.location.href,
                 userAgent: navigator.userAgent
             };
-            
             if (navigator.sendBeacon) {
                 const sent = navigator.sendBeacon(this.reportUrl, JSON.stringify(payload));
                 if (sent) return;
             }
-            
             const response = await fetch(this.reportUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
                 keepalive: true
             });
-            
             if (!response.ok) {
-                // 如果失败，放回队列
                 this.batchQueue = [...batch, ...this.batchQueue];
                 if (this.batchQueue.length > this.BATCH_MAX_SIZE * 3) {
                     this.batchQueue = this.batchQueue.slice(-this.BATCH_MAX_SIZE * 2);
                 }
             }
         } catch (e) {
-            // 失败时放回队列
             this.batchQueue = [...batch, ...this.batchQueue];
             if (this.batchQueue.length > this.BATCH_MAX_SIZE * 3) {
                 this.batchQueue = this.batchQueue.slice(-this.BATCH_MAX_SIZE * 2);
@@ -290,7 +297,6 @@ class ErrorHandler {
     }
 
     showUserFriendlyMessage(errorInfo) {
-        // 减少用户提示频率
         if (window._lastErrorTime && Date.now() - window._lastErrorTime < 10000) return;
         window._lastErrorTime = Date.now();
 
@@ -298,31 +304,26 @@ class ErrorHandler {
         if (errorInfo.type === 'resource' && errorInfo.tag === 'SCRIPT') {
             userMessage = '加载脚本失败，请检查网络后重试。';
         } else if (errorInfo.type === 'unhandledrejection') {
-            // 不显示用户提示，静默处理
             return;
         } else {
             return;
         }
-
         if (window.toast && typeof window.toast.show === 'function') {
             window.toast.show(userMessage, 'error', 5000);
         }
     }
 
     enqueueReport(errorInfo) {
-        // 已改用批量上报，此方法保留兼容
         this.addToBatchQueue(errorInfo);
     }
 
     async _processQueue() {
-        // 批量上报已替代队列处理，此方法保留兼容
         if (this.batchQueue.length > 0) {
             this._flushBatchQueue();
         }
     }
 
     async _sendReport(payload, retries = 3) {
-        // 已改用批量上报，此方法保留兼容
         try {
             if (navigator.sendBeacon) {
                 const sent = navigator.sendBeacon(this.reportUrl, JSON.stringify(payload));
@@ -344,9 +345,16 @@ class ErrorHandler {
         }
     }
 
+    // ===== 修改：增强上报字段 =====
     _preparePayload(errorInfo) {
+        const network = this._getNetworkInfo();
+        // 获取最近 5 条用户操作
+        const recentActions = this.userActions.slice(-5);
         return {
             ...errorInfo,
+            sessionId: this.sessionId,
+            userActions: recentActions,
+            network: network,
             message: this.maskSensitive(errorInfo.message || ''),
             stack: this.maskSensitive(errorInfo.stack || ''),
             filename: this.maskSensitive(errorInfo.filename || ''),
@@ -358,7 +366,6 @@ class ErrorHandler {
     }
 
     _flushQueue() {
-        // 已改用批量上报，此方法保留兼容
         this._flushBatchQueue();
     }
 
@@ -374,7 +381,6 @@ class ErrorHandler {
         this._stopBatchTimer();
     }
 
-    // ===== 调试方法 =====
     getStats() {
         return {
             totalErrors: this.errors.length,
@@ -385,12 +391,10 @@ class ErrorHandler {
         };
     }
 
-    // ===== 强制刷新上报 =====
     forceReport() {
         this._flushBatchQueue();
     }
 
-    // ===== 设置调试模式 =====
     setDebugMode(enabled) {
         if (enabled) {
             localStorage.setItem('debug_mode', 'true');
@@ -405,7 +409,6 @@ if (!window.errorHandler) {
     window.errorHandler = new ErrorHandler();
 }
 
-// 暴露全局方法
 window.getErrorStats = function() {
     if (window.errorHandler) {
         return window.errorHandler.getStats();
