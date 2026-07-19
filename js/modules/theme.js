@@ -1,4 +1,4 @@
-/* theme.js */
+/* theme.js - 深色模式切换平滑过渡 */
 class ThemeModule {
     constructor() {
         if (window.Starlink && window.Starlink.theme) return window.Starlink.theme;
@@ -19,9 +19,7 @@ class ThemeModule {
     init() {
         if (this.isInitialized) return;
         this.themeToggleBtn = document.getElementById('themeToggleBtn');
-        if (!this.themeToggleBtn) {
-            return;
-        }
+        if (!this.themeToggleBtn) return;
         this.loadThemePreference();
         this.bindEvents();
         this.isInitialized = true;
@@ -39,8 +37,8 @@ class ThemeModule {
 
     applyTheme() {
         const htmlElement = document.documentElement;
-        
-        htmlElement.style.transition = 'background-color 0.3s ease, color 0.2s ease';
+        // ===== 添加过渡效果 =====
+        htmlElement.style.transition = 'background-color 0.3s ease, color 0.3s ease';
         
         let shouldBeDark = false;
         if (this.currentTheme === 'dark') {
@@ -60,6 +58,7 @@ class ThemeModule {
         this.updateButtonIcon(shouldBeDark);
         localStorage.setItem(this.THEME_KEY, this.currentTheme);
         
+        // ===== 过渡完成后移除过渡属性，避免影响其他样式 =====
         setTimeout(() => {
             htmlElement.style.transition = '';
         }, 300);
