@@ -1,10 +1,11 @@
-/* constants.js - 精简版（实际使用的常量） */
+/* constants.js - 集中管理所有硬编码常量（新建文件） */
 const APP_CONSTANTS = {
     // ===== API 相关 =====
     API: {
         BASE_TIMEOUT: 15000,
         RETRY_COUNT: 2,
         RETRY_DELAY: 500,
+        MAX_PAYLOAD_SIZE: 1024 * 1024,
     },
 
     // ===== 导航模块 =====
@@ -186,7 +187,7 @@ const APP_CONSTANTS = {
     },
 };
 
-// 导出
+// 导出到全局
 if (typeof window !== 'undefined') {
     window.APP_CONSTANTS = APP_CONSTANTS;
 }
