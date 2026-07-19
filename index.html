@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <!-- ===== 暗色模式记忆 - 必须在最前面执行，避免闪烁 ===== -->
     <script>
         (function() {
             try {
@@ -11,16 +12,33 @@
             } catch (e) {}
         })();
     </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>星聚导航 - 您的个人导航中心</title>
     <meta name="description" content="星聚导航是一个现代化的个人导航网站，提供便捷的上网导航体验和各种实用工具">
     <meta name="keywords" content="导航,工具,书签,资源,星聚导航">
     <meta name="author" content="星聚导航">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; style-src 'self' 'unsafe-inline' https: data:; img-src * data: blob:; media-src * https:; connect-src *; font-src 'self' https: data:; frame-src 'self' https:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests;">
+   
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:;
+        style-src 'self' 'unsafe-inline' https: data:;
+        img-src * data: blob:;
+        media-src * https:;
+        connect-src *;
+        font-src 'self' https: data:;
+        frame-src 'self' https:;
+        worker-src 'self' blob:;
+        frame-ancestors 'none';
+        base-uri 'none';
+        form-action 'self';
+        upgrade-insecure-requests;
+    ">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
+
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
 
@@ -37,176 +55,572 @@
             } else {
                 apiBase = 'https://api.xjdh688.ccwu.cc';
             }
-            window.APP_CONFIG = { API_BASE: apiBase, WALINE_SERVER: 'https://pl688.ccwu.cc' };
+            window.APP_CONFIG = {
+                API_BASE: apiBase,
+                WALINE_SERVER: 'https://pl688.ccwu.cc'
+            };
+            console.log('[Config] API_BASE:', apiBase);
             window.Starlink = window.Starlink || {};
         })();
     </script>
 
-    <!-- 预连接 -->
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://myhkw.cn">
     <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://oiapi.net">
+
     <link rel="dns-prefetch" href="https://favicon.yandex.net">
     <link rel="dns-prefetch" href="https://icon.horse">
+    <link rel="dns-prefetch" href="https://www.google.com">
     <link rel="dns-prefetch" href="https://api.pearapi.ai">
+    <link rel="dns-prefetch" href="https://api.kuleu.com">
+    <link rel="dns-prefetch" href="https://api.injahow.cn">
 
-    <!-- 预加载字体 -->
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 
-    <!-- 内联关键样式 -->
     <style>
-        .scroll-progress { position:fixed;top:0;left:0;width:0%;height:2px;background:linear-gradient(90deg,#4361ee,#ef4444);z-index:100000;transition:width .1s ease-out;box-shadow:0 0 6px rgba(67,97,238,.5); }
-        .dark-mode .scroll-progress { background:linear-gradient(90deg,#7b9cff,#ff6b6b);box-shadow:0 0 6px rgba(123,156,255,.5); }
-        :root { --primary-color:#4361ee;--secondary-color:#3a0ca3;--accent-color:#7209b7;--success-color:#10b981;--warning-color:#f59e0b;--error-color:#ef4444;--text-primary:#2b2d42;--text-secondary:#6c757d;--bg-primary:#fff;--bg-secondary:#f8f9fa;--bg-card:#fff;--border-color:#e9ecef;--shadow:0 2px 4px rgba(0,0,0,.05);--shadow-lg:0 4px 6px rgba(0,0,0,.07);--shadow-xl:0 8px 16px rgba(0,0,0,.1);--radius:8px;--radius-sm:6px;--radius-lg:12px;--transition:all .2s ease;--transition-fast:all .1s ease;--transition-slow:all .3s ease;--z-navbar:999;--z-floating:100;--z-toast:1100;--z-modal:1000;--z-music-player:10000;--container-padding-xs:16px;--container-padding-sm:20px;--container-padding-md:24px;--container-padding-lg:28px;--container-padding-xl:32px;--section-margin-xs:16px;--section-margin-sm:20px;--section-margin-md:24px;--section-margin-lg:28px;--section-margin-xl:32px;--nav-level1-active:#5dade2;--nav-level2-active:#ff7043;--stat-site-color:#81c784;--stat-invalid-color:#e57373;--card-hover-bg-start:rgba(67,97,238,.02);--card-hover-bg-end:rgba(67,97,238,.05);--acrylic-bg:rgba(255,255,255,.6);--acrylic-blur:blur(24px) saturate(125%);--acrylic-border:1px solid rgba(255,255,255,.5);--acrylic-shadow:0 8px 32px rgba(0,0,0,.08);--acrylic-light-bg:rgba(255,255,255,.8);--acrylic-light-blur:blur(10px) saturate(110%); }
-        .dark-mode { --text-primary:#f8f9fa;--text-secondary:#adb5bd;--bg-primary:#121212;--bg-secondary:#1e1e1e;--bg-card:#2d2d2d;--border-color:#404040;--nav-level1-active:#7bc8ff;--nav-level2-active:#ff8a65;--stat-site-color:#a5d6a7;--stat-invalid-color:#ef9a9a;--card-hover-bg-start:rgba(124,200,255,.05);--card-hover-bg-end:rgba(124,200,255,.1);--acrylic-bg:rgba(30,30,30,.7);--acrylic-border:1px solid rgba(255,255,255,.15);--acrylic-shadow:0 8px 32px rgba(0,0,0,.3);--acrylic-light-bg:rgba(40,40,40,.7); }
-        * { margin:0;padding:0;box-sizing:border-box; }
-        html { scroll-behavior:smooth;font-size:16px;-webkit-overflow-scrolling:touch; }
-        body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif;font-size:13px;line-height:1.6;color:var(--text-primary);background-color:var(--bg-primary);overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility; }
-        h1,h2,h3,h4,h5,h6 { font-weight:600;line-height:1.3;margin-bottom:.5em; }
-        p { margin-bottom:1em; }
-        .stat-number,.view-count,.time-text { font-family:'SF Mono','Roboto Mono',Consolas,'Courier New',monospace;font-weight:600; }
-        .navbar { position:fixed;top:0;left:0;width:100%;height:60px;background:var(--bg-primary);border-bottom:1px solid var(--border-color);z-index:var(--z-navbar);box-shadow:var(--shadow); }
-        .nav-container { display:flex;justify-content:space-between;align-items:center;height:100%;max-width:1200px;margin:0 auto;padding:0 var(--container-padding-xs); }
-        .nav-brand { display:flex;align-items:center;gap:10px; }
-        .logo { width:32px;height:32px;border-radius:8px;background:#fff;border:1px solid var(--border-color);box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:2px;flex-shrink:0;aspect-ratio:1/1; }
-        .logo picture { width:100%;height:100%;display:flex;align-items:center;justify-content:center; }
-        .logo picture img,.logo picture source { width:100%;height:100%;object-fit:contain;display:block;border-radius:6px; }
-        .brand-text { font-size:16px;font-weight:600;color:var(--text-primary); }
-        .nav-actions { display:flex;gap:8px; }
-        .nav-btn { width:36px;height:36px;border:none;border-radius:6px;background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;font-size:14px; }
-        .nav-btn:hover { background:var(--primary-color);color:#fff; }
-        .main-content { margin-top:60px;min-height:calc(100vh - 120px); }
-        .container { max-width:1200px;margin:0 auto;padding:0 var(--container-padding-xs);width:100%; }
-        .container-fluid { width:100%;padding:0 var(--container-padding-xs); }
-        .floating-buttons { position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:12px;z-index:var(--z-floating); }
-        .floating-btn { width:50px;height:50px;border:none;border-radius:50%;background:var(--bg-card);color:var(--text-secondary);cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 8px rgba(0,0,0,.15); }
-        .floating-btn:hover { box-shadow:0 4px 12px rgba(0,0,0,.2); }
-        .back-to-top { color:var(--error-color);opacity:0;transform:translateY(10px);visibility:hidden;transition:all .3s ease; }
-        .back-to-top.visible { opacity:1;transform:translateY(0);visibility:visible; }
-        .back-to-top:hover { color:#ff3333; }
-        .refresh-btn { color:#10b981; }
-        .refresh-btn:hover { color:#059669; }
-        .activity-btn { color:#ff6b35; }
-        .activity-btn:hover { color:#ff5733; }
-        .floating-btn.weather-btn { color:#3764f4 !important; }
-        .floating-btn.weather-btn:hover { color:#2a52d4 !important; }
-        .floating-btn.comment-btn { color:#07C160 !important; }
-        .floating-btn.comment-btn:hover { color:#06ad56 !important; }
-        .floating-btn.rank-btn { color:#FFD700 !important; }
-        .floating-btn.rank-btn:hover { color:#e6c200 !important; }
-        .dark-mode .floating-btn.weather-btn { color:#5a7aff !important; }
-        .dark-mode .floating-btn.weather-btn:hover { color:#7b9cff !important; }
-        .dark-mode .floating-btn.comment-btn { color:#34d399 !important; }
-        .dark-mode .floating-btn.comment-btn:hover { color:#6ee7b7 !important; }
-        .dark-mode .floating-btn.rank-btn { color:#fbbf24 !important; }
-        .dark-mode .floating-btn.rank-btn:hover { color:#fcd34d !important; }
-        @media (max-width:768px) { .floating-buttons { bottom:16px;right:16px;gap:10px; } .floating-btn { width:44px;height:44px;font-size:18px; } }
-        @media (max-width:480px) { .floating-buttons { bottom:12px;right:12px;gap:8px; } .floating-btn { width:40px;height:40px;font-size:16px; } }
-        .feedback-modal { position:fixed;top:0;left:0;width:100%;height:100%;background:transparent;z-index:10002;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s ease;display:flex;align-items:center;justify-content:center;padding:12px;pointer-events:none; }
-        .feedback-modal.active { opacity:1;visibility:visible;pointer-events:auto; }
-        .feedback-modal-content { background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;box-shadow:0 20px 40px rgba(0,0,0,.12);width:100%;max-width:600px;display:flex;flex-direction:column;transform:scale(.95);opacity:0;transition:transform .3s cubic-bezier(.2,.9,.4,1.1),opacity .3s ease;overflow:hidden; }
-        .feedback-modal.active .feedback-modal-content { transform:scale(1);opacity:1; }
-        .feedback-modal-header { display:flex;align-items:center;justify-content:space-between;padding:10px 14px 8px;border-bottom:1px solid rgba(0,0,0,.05);color:var(--text-primary); }
-        .feedback-modal-header h3 { font-size:1.05rem;font-weight:600;display:flex;align-items:center;margin:0; }
-        .feedback-modal-header h3 i { margin-right:8px; }
-        .feedback-modal-close { width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.05);border:none;color:var(--text-secondary);font-size:1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s; }
-        .feedback-modal-close:hover { background:rgba(0,0,0,.1);color:var(--text-primary); }
-        .feedback-modal-body { padding:10px 12px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch; }
-        .feedback-modal-body::-webkit-scrollbar { display:none; }
-        .toast-manager-container { position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;max-width:90vw;width:auto; }
-        .toast-item { background:rgba(20,20,30,.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:24px;box-shadow:0 6px 16px rgba(0,0,0,.1);padding:5px 12px;min-width:80px;max-width:300px;display:flex;align-items:center;justify-content:center;transform:translateY(16px);opacity:0;transition:transform .2s cubic-bezier(.2,.9,.4,1.1),opacity .15s ease;pointer-events:auto;border:1px solid rgba(255,255,255,.15); }
-        .toast-item.show { transform:translateY(0);opacity:1; }
-        .toast-content { font-size:.75rem;line-height:1.3;color:#fff;font-weight:500;text-align:center;white-space:nowrap; }
-        .dark-mode .toast-item { background:rgba(40,40,50,.75);border-color:rgba(255,255,255,.1); }
-        @media (max-width:640px) { .toast-manager-container { bottom:16px;gap:6px; } .toast-item { padding:4px 10px;min-width:70px;max-width:85vw;border-radius:20px; } .toast-content { font-size:.7rem;white-space:normal;word-break:keep-all; } }
-        #submitModal .form-row { margin-bottom:10px; }
-        #submitModal .form-row label { display:block;font-size:12px;color:var(--text-secondary);margin-bottom:3px;font-weight:500; }
-        #submitModal .required-star { color:var(--error-color); }
-        #submitModal .form-row input,#submitModal .form-row textarea { width:100%;padding:8px 10px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:13px;outline:none;transition:border .2s;font-family:inherit; }
-        #submitModal .form-row textarea { min-height:36px;overflow-y:hidden;resize:none; }
-        #submitModal .form-row input:focus,#submitModal .form-row textarea:focus { border-color:var(--primary-color);box-shadow:0 0 0 3px rgba(67,97,238,.08); }
-        .submit-form-buttons { display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border-color); }
-        .submit-cancel-btn { padding:6px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-card);color:var(--text-secondary);cursor:pointer;font-size:13px;transition:all .2s;white-space:nowrap; }
-        .submit-cancel-btn:hover { background:var(--bg-secondary);color:var(--text-primary); }
-        .submit-save-btn { padding:6px 16px;border:none;border-radius:8px;background:var(--primary-color);color:#fff;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s;white-space:nowrap; }
-        .submit-save-btn:hover:not(:disabled) { background:var(--secondary-color);transform:translateY(-1px); }
-        .submit-save-btn:disabled { opacity:.5;cursor:not-allowed; }
-        .fetch-info-btn,.check-url-btn { padding:8px 14px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-card);color:var(--text-secondary);cursor:pointer;font-size:12px;white-space:nowrap;transition:all .2s;display:inline-flex;align-items:center;gap:4px; }
-        .fetch-info-btn:hover { border-color:var(--primary-color);color:var(--primary-color);background:rgba(67,97,238,.05); }
-        .check-url-btn:hover { border-color:var(--success-color);color:var(--success-color);background:rgba(16,185,129,.05); }
-        .url-check-result { margin-top:8px;padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.4; }
-        .url-check-result.safe { background:rgba(16,185,129,.1);color:#059669;border:1px solid rgba(16,185,129,.2); }
-        .url-check-result.unsafe { background:rgba(239,68,68,.1);color:#dc2626;border:1px solid rgba(239,68,68,.2); }
-        .url-check-result.checking { background:rgba(245,158,11,.1);color:#d97706;border:1px solid rgba(245,158,11,.2); }
-        #notebookModal .feedback-modal-content { max-height:75vh;max-width:600px; }
-        #notebookModal .feedback-modal-header h3 i { color:#4361ee; }
-        .notebook-list { padding:0;margin:0;display:flex;flex-direction:column;gap:10px; }
-        .notebook-item { background:rgba(255,255,255,.5);backdrop-filter:blur(5px);border-radius:8px;padding:8px 12px;border:1px solid rgba(0,0,0,.06);transition:all .2s ease; }
-        .notebook-item:hover { border-color:var(--primary-color);box-shadow:0 4px 12px rgba(0,0,0,.08); }
-        .notebook-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:6px; }
-        .notebook-id { font-size:10px;color:var(--text-secondary);background:rgba(255,255,255,.7);padding:2px 8px;border-radius:20px;font-weight:500; }
-        .notebook-time { font-size:10px;color:var(--text-secondary);display:flex;align-items:center;gap:4px; }
-        .notebook-title { font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:6px; }
-        .notebook-content { font-size:12px;color:var(--text-secondary);line-height:1.5;word-break:break-word;white-space:pre-wrap;background:rgba(255,255,255,.4);padding:8px 10px;border-radius:6px;backdrop-filter:blur(4px);border:1px solid rgba(0,0,0,.03); }
-        .dark-mode .notebook-item { background:rgba(40,40,40,.8);border-color:rgba(255,255,255,.1); }
-        .dark-mode .notebook-item:hover { border-color:var(--primary-color);box-shadow:0 4px 12px rgba(0,0,0,.4); }
-        .dark-mode .notebook-id { background:rgba(60,60,60,.9);color:var(--text-secondary); }
-        .dark-mode .notebook-time,.dark-mode .notebook-title { color:var(--text-primary); }
-        .dark-mode .notebook-content { background:rgba(50,50,50,.8);color:#c0c0c0;border-color:rgba(255,255,255,.05); }
-        #commentModal .feedback-modal-content { max-height:75vh;max-width:700px; }
-        #commentModal .feedback-modal-header h3 i { color:#f59e0b; }
-        #submitModal .feedback-modal-content { max-height:90vh;max-width:520px; }
-        #submitModal .feedback-modal-header h3 i { color:#4361ee; }
-        #rankModal .feedback-modal-content { max-width:500px;max-height:80vh; }
-        .rank-list { display:flex;flex-direction:column;gap:8px;padding:4px 0; }
-        .rank-item { display:flex;align-items:center;gap:12px;padding:8px 12px;background:var(--bg-secondary,#f8f9fa);border-radius:8px;transition:background .2s; }
-        .rank-item:hover { background:rgba(67,97,238,.06); }
-        .rank-number { font-size:16px;font-weight:700;min-width:32px;text-align:center;color:var(--text-secondary);flex-shrink:0; }
-        .rank-number:first-child { color:#f59e0b; }
-        .rank-number:nth-child(2) { color:#94a3b8; }
-        .rank-number:nth-child(3) { color:#cd7f32; }
-        .rank-title { flex:1;font-size:13px;font-weight:500;color:var(--text-primary);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-        .rank-title:hover { color:var(--primary-color);text-decoration:underline; }
-        .rank-count { font-size:12px;font-weight:600;color:var(--primary-color);flex-shrink:0;background:rgba(67,97,238,.1);padding:2px 10px;border-radius:20px; }
-        .dark-mode .rank-item { background:var(--bg-secondary,#1e1e1e); }
-        .dark-mode .rank-item:hover { background:rgba(124,200,255,.08); }
-        .dark-mode .rank-count { background:rgba(123,156,255,.15);color:#7b9cff; }
-        #rankListContent .loading,#rankListContent .empty,#rankListContent .error { text-align:center;padding:30px 20px;color:var(--text-secondary);font-size:13px; }
-        #notebookModal .feedback-modal-content::-webkit-scrollbar { width:4px; }
-        #notebookModal .feedback-modal-content::-webkit-scrollbar-track { background:rgba(0,0,0,.05);border-radius:4px; }
-        #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background:rgba(0,0,0,.2);border-radius:4px; }
-        .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-track { background:rgba(255,255,255,.05); }
-        .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background:rgba(255,255,255,.2); }
-        .partner-trigger-btn { background:none;border:none;font-size:11px;color:var(--text-secondary,#6c757d);cursor:pointer;padding:4px 10px;border-radius:20px;background:rgba(67,97,238,.08);transition:all .2s ease;font-weight:400;white-space:nowrap; }
-        .partner-trigger-btn:hover { background:rgba(67,97,238,.18);color:var(--primary-color,#4361ee);transform:translateY(-1px); }
-        .partner-intro { padding:8px 12px;margin-bottom:12px;background:rgba(67,97,238,.06);border-radius:8px;border-left:3px solid var(--primary-color,#4361ee); }
-        .partner-intro p { font-size:13px;line-height:1.6;color:var(--text-secondary,#6c757d);margin:0; }
-        .partner-list { display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;padding-right:4px; }
-        .partner-list::-webkit-scrollbar { width:4px; }
-        .partner-list::-webkit-scrollbar-track { background:rgba(0,0,0,.05);border-radius:4px; }
-        .partner-list::-webkit-scrollbar-thumb { background:rgba(0,0,0,.2);border-radius:4px; }
-        .partner-item { display:flex;align-items:center;gap:12px;padding:8px 12px;background:var(--bg-secondary,#f8f9fa);border-radius:8px;transition:all .2s ease;border:1px solid transparent; }
-        .partner-item:hover { border-color:var(--primary-color,#4361ee);background:rgba(67,97,238,.04); }
-        .partner-icon { width:40px;height:40px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--border-color,#e9ecef);overflow:hidden;font-size:18px;color:var(--primary-color,#4361ee); }
-        .partner-icon img { width:100%;height:100%;object-fit:contain; }
-        .partner-name { flex:1;font-size:13px;font-weight:500;color:var(--text-primary,#2b2d42); }
-        .partner-link-btn { padding:4px 14px;border:none;border-radius:6px;background:var(--primary-color,#4361ee);color:#fff;font-size:12px;cursor:pointer;transition:all .2s ease;text-decoration:none;white-space:nowrap; }
-        .partner-link-btn:hover { background:var(--secondary-color,#3a0ca3);transform:translateY(-1px); }
-        .dark-mode .partner-intro { background:rgba(123,156,255,.1); }
-        .dark-mode .partner-intro p { color:var(--text-secondary,#adb5bd); }
-        .dark-mode .partner-item { background:var(--bg-secondary,#1e1e1e); }
-        .dark-mode .partner-item:hover { background:rgba(123,156,255,.08); }
-        .dark-mode .partner-icon { background:var(--bg-card,#2d2d2d);border-color:var(--border-color,#404040); }
-        .dark-mode .partner-list::-webkit-scrollbar-track { background:rgba(255,255,255,.05); }
-        .dark-mode .partner-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,.2); }
-        .icon-fallback-text { font-size:16px;font-weight:700;color:var(--primary-color,#4361ee);display:none;align-items:center;justify-content:center;width:100%;height:100%;text-transform:uppercase;background:rgba(67,97,238,.08);border-radius:6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;letter-spacing:.5px; }
-        .site-icon-img { width:100%;height:100%;object-fit:contain;object-position:center;transition:opacity .2s ease; }
-        .site-icon-img[data-failed="true"] { display:none !important; }
-        .dark-mode .icon-fallback-text { background:rgba(123,156,255,.15);color:var(--primary-color,#7b9cff); }
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background: linear-gradient(90deg, #4361ee, #ef4444);
+            z-index: 100000;
+            transition: width 0.1s ease-out;
+            box-shadow: 0 0 6px rgba(67, 97, 238, 0.5);
+        }
+        @media (prefers-color-scheme: dark) {
+            .scroll-progress {
+                background: linear-gradient(90deg, #7b9cff, #ff6b6b);
+                box-shadow: 0 0 6px rgba(123, 156, 255, 0.5);
+            }
+        }
+        .dark-mode .scroll-progress {
+            background: linear-gradient(90deg, #7b9cff, #ff6b6b);
+            box-shadow: 0 0 6px rgba(123, 156, 255, 0.5);
+        }
+
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --accent-color: #7209b7;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --text-primary: #2b2d42;
+            --text-secondary: #6c757d;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-card: #ffffff;
+            --border-color: #e9ecef;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+            --radius-sm: 6px;
+            --radius-lg: 12px;
+            --transition: all 0.2s ease;
+            --transition-fast: all 0.1s ease;
+            --transition-slow: all 0.3s ease;
+            --z-navbar: 999;
+            --z-floating: 100;
+            --z-toast: 1100;
+            --z-modal: 1000;
+            --z-music-player: 10000;
+            --container-padding-xs: 16px;
+            --container-padding-sm: 20px;
+            --container-padding-md: 24px;
+            --container-padding-lg: 28px;
+            --container-padding-xl: 32px;
+            --section-margin-xs: 16px;
+            --section-margin-sm: 20px;
+            --section-margin-md: 24px;
+            --section-margin-lg: 28px;
+            --section-margin-xl: 32px;
+            --nav-level1-active: #5dade2;
+            --nav-level2-active: #ff7043;
+            --stat-site-color: #81c784;
+            --stat-invalid-color: #e57373;
+            --card-hover-bg-start: rgba(67, 97, 238, 0.02);
+            --card-hover-bg-end: rgba(67, 97, 238, 0.05);
+            --acrylic-bg: rgba(255, 255, 255, 0.6);
+            --acrylic-blur: blur(24px) saturate(125%);
+            --acrylic-border: 1px solid rgba(255, 255, 255, 0.5);
+            --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            --acrylic-light-bg: rgba(255, 255, 255, 0.8);
+            --acrylic-light-blur: blur(10px) saturate(110%);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text-primary: #f8f9fa;
+                --text-secondary: #adb5bd;
+                --bg-primary: #121212;
+                --bg-secondary: #1e1e1e;
+                --bg-card: #2d2d2d;
+                --border-color: #404040;
+                --nav-level1-active: #7bc8ff;
+                --nav-level2-active: #ff8a65;
+                --stat-site-color: #a5d6a7;
+                --stat-invalid-color: #ef9a9a;
+                --card-hover-bg-start: rgba(124, 200, 255, 0.05);
+                --card-hover-bg-end: rgba(124, 200, 255, 0.1);
+                --acrylic-bg: rgba(30, 30, 30, 0.7);
+                --acrylic-border: 1px solid rgba(255, 255, 255, 0.15);
+                --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                --acrylic-light-bg: rgba(40, 40, 40, 0.7);
+            }
+        }
+        .dark-mode {
+            --text-primary: #f8f9fa;
+            --text-secondary: #adb5bd;
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-card: #2d2d2d;
+            --border-color: #404040;
+            --nav-level1-active: #7bc8ff;
+            --nav-level2-active: #ff8a65;
+            --stat-site-color: #a5d6a7;
+            --stat-invalid-color: #ef9a9a;
+            --card-hover-bg-start: rgba(124, 200, 255, 0.05);
+            --card-hover-bg-end: rgba(124, 200, 255, 0.1);
+            --acrylic-bg: rgba(30, 30, 30, 0.7);
+            --acrylic-border: 1px solid rgba(255, 255, 255, 0.15);
+            --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --acrylic-light-bg: rgba(40, 40, 40, 0.7);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; font-size: 16px; -webkit-overflow-scrolling: touch; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+        h1, h2, h3, h4, h5, h6 { font-weight: 600; line-height: 1.3; margin-top: 0; margin-bottom: 0.5em; }
+        p { margin-bottom: 1em; }
+        .stat-number, .view-count, .time-text {
+            font-family: 'SF Mono', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-weight: 600;
+        }
+
+        .navbar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 60px;
+            background: var(--bg-primary); border-bottom: 1px solid var(--border-color);
+            z-index: var(--z-navbar); box-shadow: var(--shadow);
+        }
+        .nav-container { display: flex; justify-content: space-between; align-items: center; height: 100%; max-width: 1200px; margin: 0 auto; padding: 0 var(--container-padding-xs); }
+        .nav-brand { display: flex; align-items: center; gap: 10px; }
+        .logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: #ffffff; color: var(--text-primary);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden; padding: 2px; box-sizing: border-box;
+            flex-shrink: 0; aspect-ratio: 1 / 1;
+        }
+        .logo picture { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .logo picture img, .logo picture source {
+            width: 100%; height: 100%; object-fit: contain; display: block; border-radius: 6px;
+        }
+        .brand-text { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .nav-actions { display: flex; gap: 8px; }
+        .nav-btn {
+            width: 36px; height: 36px; border: none; border-radius: 6px;
+            background: var(--bg-secondary); color: var(--text-secondary);
+            cursor: pointer; transition: var(--transition);
+            display: flex; align-items: center; justify-content: center; font-size: 14px;
+        }
+        .nav-btn:hover { background: var(--primary-color); color: white; }
+
+        .main-content { margin-top: 60px; min-height: calc(100vh - 120px); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 var(--container-padding-xs); width: 100%; }
+        .container-fluid { width: 100%; padding: 0 var(--container-padding-xs); }
+        @media (min-width: 576px) { .container, .container-fluid { padding: 0 var(--container-padding-sm); } }
+        @media (min-width: 768px) { .container, .container-fluid { padding: 0 var(--container-padding-md); } }
+        @media (min-width: 992px) { .container, .container-fluid { padding: 0 var(--container-padding-lg); } }
+        @media (min-width: 1200px) { .container, .container-fluid { padding: 0 var(--container-padding-xl); } }
+
+        .floating-buttons {
+            position: fixed; bottom: 24px; right: 24px;
+            display: flex; flex-direction: column; gap: 12px;
+            z-index: var(--z-floating);
+        }
+        .floating-btn {
+            width: 50px; height: 50px; border: none; border-radius: 50%;
+            background: var(--bg-card); color: var(--text-secondary);
+            cursor: pointer; transition: var(--transition);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .floating-btn:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .back-to-top { color: var(--error-color); opacity: 0; transform: translateY(10px); visibility: hidden; transition: all 0.3s ease; }
+        .back-to-top.visible { opacity: 1; transform: translateY(0); visibility: visible; }
+        .back-to-top:hover { color: #ff3333; }
+        .refresh-btn { color: #10b981; }
+        .refresh-btn:hover { color: #059669; }
+        .activity-btn { color: #ff6b35; }
+        .activity-btn:hover { color: #ff5733; }
+        .floating-btn.weather-btn { color: #3764f4 !important; }
+        .floating-btn.weather-btn:hover { color: #2a52d4 !important; }
+        .floating-btn.comment-btn { color: #07C160 !important; }
+        .floating-btn.comment-btn:hover { color: #06ad56 !important; }
+        .floating-btn.rank-btn { color: #FFD700 !important; }
+        .floating-btn.rank-btn:hover { color: #e6c200 !important; }
+        .dark-mode .floating-btn.weather-btn { color: #5a7aff !important; }
+        .dark-mode .floating-btn.weather-btn:hover { color: #7b9cff !important; }
+        .dark-mode .floating-btn.comment-btn { color: #34d399 !important; }
+        .dark-mode .floating-btn.comment-btn:hover { color: #6ee7b7 !important; }
+        .dark-mode .floating-btn.rank-btn { color: #fbbf24 !important; }
+        .dark-mode .floating-btn.rank-btn:hover { color: #fcd34d !important; }
+        @media (max-width: 768px) { .floating-buttons { bottom: 16px; right: 16px; gap: 10px; } .floating-btn { width: 44px; height: 44px; font-size: 18px; } }
+        @media (max-width: 480px) { .floating-buttons { bottom: 12px; right: 12px; gap: 8px; } .floating-btn { width: 40px; height: 40px; font-size: 16px; } }
+
+        .feedback-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: transparent; z-index: 10002;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            display: flex; align-items: center; justify-content: center;
+            padding: 12px; pointer-events: none;
+        }
+        .feedback-modal.active { opacity: 1; visibility: visible; pointer-events: auto; }
+        .feedback-modal-content {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 8px; box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+            width: 100%; max-width: 600px; display: flex; flex-direction: column;
+            transform: scale(0.95); opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.2,0.9,0.4,1.1), opacity 0.3s ease;
+            overflow: hidden;
+        }
+        .feedback-modal.active .feedback-modal-content { transform: scale(1); opacity: 1; }
+        .feedback-modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px 8px; border-bottom: 1px solid rgba(0,0,0,0.05);
+            color: var(--text-primary);
+        }
+        .feedback-modal-header h3 { font-size: 1.05rem; font-weight: 600; display: flex; align-items: center; margin: 0; }
+        .feedback-modal-header h3 i { margin-right: 8px; }
+        .feedback-modal-close {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(0,0,0,0.05); border: none;
+            color: var(--text-secondary); font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .feedback-modal-close:hover { background: rgba(0,0,0,0.1); color: var(--text-primary); }
+        .feedback-modal-body { padding: 10px 12px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        .feedback-modal-body::-webkit-scrollbar { display: none; }
+
+        .toast-manager-container {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 9999; display: flex; flex-direction: column;
+            align-items: center; gap: 8px; pointer-events: none;
+            max-width: 90vw; width: auto;
+        }
+        .toast-item {
+            background: rgba(20, 20, 30, 0.7); backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); border-radius: 24px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+            padding: 5px 12px; min-width: 80px; max-width: 300px;
+            display: flex; align-items: center; justify-content: center;
+            transform: translateY(16px); opacity: 0;
+            transition: transform 0.2s cubic-bezier(0.2,0.9,0.4,1.1), opacity 0.15s ease;
+            pointer-events: auto; border: 1px solid rgba(255,255,255,0.15);
+        }
+        .toast-item.show { transform: translateY(0); opacity: 1; }
+        .toast-content { font-size: 0.75rem; line-height: 1.3; color: #ffffff; font-weight: 500; letter-spacing: 0.2px; text-align: center; white-space: nowrap; }
+        .dark-mode .toast-item { background: rgba(40, 40, 50, 0.75); border-color: rgba(255,255,255,0.1); }
+        @media (max-width: 640px) {
+            .toast-manager-container { bottom: 16px; gap: 6px; }
+            .toast-item { padding: 4px 10px; min-width: 70px; max-width: 85vw; border-radius: 20px; }
+            .toast-content { font-size: 0.7rem; white-space: normal; word-break: keep-all; }
+        }
+
+        #submitModal .form-row { margin-bottom: 10px; }
+        #submitModal .form-row label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 3px; font-weight: 500; }
+        #submitModal .required-star { color: var(--error-color); }
+        #submitModal .form-row input, #submitModal .form-row textarea {
+            width: 100%; padding: 8px 10px; border: 1px solid var(--border-color);
+            border-radius: 8px; background: var(--bg-card); color: var(--text-primary);
+            font-size: 13px; outline: none; transition: border 0.2s; font-family: inherit;
+        }
+        #submitModal .form-row textarea { min-height: 36px; overflow-y: hidden; resize: none; }
+        #submitModal .form-row input:focus, #submitModal .form-row textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67,97,238,0.08);
+        }
+        .submit-form-buttons {
+            display: flex; justify-content: flex-end; align-items: center; gap: 8px;
+            margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color);
+        }
+        .submit-cancel-btn {
+            padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 8px;
+            background: var(--bg-card); color: var(--text-secondary); cursor: pointer;
+            font-size: 13px; transition: all 0.2s; white-space: nowrap;
+        }
+        .submit-cancel-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+        .submit-save-btn {
+            padding: 6px 16px; border: none; border-radius: 8px;
+            background: var(--primary-color); color: white; cursor: pointer;
+            font-size: 13px; font-weight: 500; transition: all 0.2s; white-space: nowrap;
+        }
+        .submit-save-btn:hover:not(:disabled) { background: var(--secondary-color); transform: translateY(-1px); }
+        .submit-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .fetch-info-btn, .check-url-btn {
+            padding: 8px 14px; border: 1px solid var(--border-color); border-radius: 8px;
+            background: var(--bg-card); color: var(--text-secondary); cursor: pointer;
+            font-size: 12px; white-space: nowrap; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .fetch-info-btn:hover { border-color: var(--primary-color); color: var(--primary-color); background: rgba(67,97,238,0.05); }
+        .check-url-btn:hover { border-color: var(--success-color); color: var(--success-color); background: rgba(16,185,129,0.05); }
+        .url-check-result {
+            margin-top: 8px; padding: 8px 12px; border-radius: 8px;
+            font-size: 12px; line-height: 1.4;
+        }
+        .url-check-result.safe { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
+        .url-check-result.unsafe { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
+        .url-check-result.checking { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
+
+        #notebookModal .feedback-modal-content { max-height: 75vh; max-width: 600px; }
+        #notebookModal .feedback-modal-header h3 i { color: #4361ee; }
+        .notebook-list { padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+        .notebook-item {
+            background: rgba(255,255,255,0.5); backdrop-filter: blur(5px);
+            border-radius: 8px; padding: 8px 12px;
+            border: 1px solid rgba(0,0,0,0.06); transition: all 0.2s ease;
+        }
+        .notebook-item:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .notebook-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .notebook-id { font-size: 10px; color: var(--text-secondary); background: rgba(255,255,255,0.7); padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+        .notebook-time { font-size: 10px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
+        .notebook-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+        .notebook-content {
+            font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+            word-break: break-word; white-space: pre-wrap;
+            background: rgba(255,255,255,0.4); padding: 8px 10px; border-radius: 6px;
+            backdrop-filter: blur(4px); border: 1px solid rgba(0,0,0,0.03);
+        }
+        .dark-mode .notebook-item { background: rgba(40,40,40,0.8); border-color: rgba(255,255,255,0.1); }
+        .dark-mode .notebook-item:hover { border-color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        .dark-mode .notebook-id { background: rgba(60,60,60,0.9); color: var(--text-secondary); }
+        .dark-mode .notebook-time { color: var(--text-secondary); }
+        .dark-mode .notebook-title { color: var(--text-primary); }
+        .dark-mode .notebook-content { background: rgba(50,50,50,0.8); color: #c0c0c0; border-color: rgba(255,255,255,0.05); }
+
+        #commentModal .feedback-modal-content { max-height: 75vh; max-width: 700px; }
+        #commentModal .feedback-modal-header h3 i { color: #f59e0b; }
+
+        #submitModal .feedback-modal-content { max-height: 90vh; max-width: 520px; }
+        #submitModal .feedback-modal-header h3 i { color: #4361ee; }
+
+        #rankModal .feedback-modal-content { max-width: 500px; max-height: 80vh; }
+        .rank-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
+        .rank-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 8px 12px; background: var(--bg-secondary, #f8f9fa);
+            border-radius: 8px; transition: background 0.2s;
+        }
+        .rank-item:hover { background: rgba(67, 97, 238, 0.06); }
+        .rank-number { font-size: 16px; font-weight: 700; min-width: 32px; text-align: center; color: var(--text-secondary); flex-shrink: 0; }
+        .rank-number:first-child { color: #f59e0b; }
+        .rank-number:nth-child(2) { color: #94a3b8; }
+        .rank-number:nth-child(3) { color: #cd7f32; }
+        .rank-title {
+            flex: 1; font-size: 13px; font-weight: 500; color: var(--text-primary);
+            text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .rank-title:hover { color: var(--primary-color); text-decoration: underline; }
+        .rank-count { font-size: 12px; font-weight: 600; color: var(--primary-color); flex-shrink: 0; background: rgba(67, 97, 238, 0.1); padding: 2px 10px; border-radius: 20px; }
+        #rankListContent .loading, #rankListContent .empty, #rankListContent .error { text-align: center; padding: 30px 20px; color: var(--text-secondary); font-size: 13px; }
+        .dark-mode .rank-item { background: var(--bg-secondary, #1e1e1e); }
+        .dark-mode .rank-item:hover { background: rgba(124, 200, 255, 0.08); }
+        .dark-mode .rank-count { background: rgba(123, 156, 255, 0.15); color: #7b9cff; }
+
+        #notebookModal .feedback-modal-content::-webkit-scrollbar { width: 4px; }
+        #notebookModal .feedback-modal-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
+        #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+        .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+
+        /* ===== 合作伙伴按钮和模态框 ===== */
+        .partner-trigger-btn {
+            background: none;
+            border: none;
+            font-size: 11px;
+            color: var(--text-secondary, #6c757d);
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(67, 97, 238, 0.08);
+            transition: all 0.2s ease;
+            font-weight: 400;
+            white-space: nowrap;
+        }
+        .partner-trigger-btn:hover {
+            background: rgba(67, 97, 238, 0.18);
+            color: var(--primary-color, #4361ee);
+            transform: translateY(-1px);
+        }
+
+        .partner-intro {
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            background: rgba(67, 97, 238, 0.06);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary-color, #4361ee);
+        }
+        .partner-intro p {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-secondary, #6c757d);
+            margin: 0;
+        }
+
+        .partner-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .partner-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .partner-list::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+        }
+        .partner-list::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+        }
+
+        .partner-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: var(--bg-secondary, #f8f9fa);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        .partner-item:hover {
+            border-color: var(--primary-color, #4361ee);
+            background: rgba(67, 97, 238, 0.04);
+        }
+
+        .partner-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            border: 1px solid var(--border-color, #e9ecef);
+            overflow: hidden;
+            font-size: 18px;
+            color: var(--primary-color, #4361ee);
+        }
+        .partner-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .partner-name {
+            flex: 1;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary, #2b2d42);
+        }
+        .partner-link-btn {
+            padding: 4px 14px;
+            border: none;
+            border-radius: 6px;
+            background: var(--primary-color, #4361ee);
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .partner-link-btn:hover {
+            background: var(--secondary-color, #3a0ca3);
+            transform: translateY(-1px);
+        }
+
+        .dark-mode .partner-intro {
+            background: rgba(123, 156, 255, 0.1);
+        }
+        .dark-mode .partner-intro p {
+            color: var(--text-secondary, #adb5bd);
+        }
+        .dark-mode .partner-item {
+            background: var(--bg-secondary, #1e1e1e);
+        }
+        .dark-mode .partner-item:hover {
+            background: rgba(123, 156, 255, 0.08);
+        }
+        .dark-mode .partner-icon {
+            background: var(--bg-card, #2d2d2d);
+            border-color: var(--border-color, #404040);
+        }
+        .dark-mode .partner-list::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        .dark-mode .partner-list::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* ===== 图标降级样式（首字母降级） ===== */
+        .icon-fallback-text {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary-color, #4361ee);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            text-transform: uppercase;
+            background: rgba(67, 97, 238, 0.08);
+            border-radius: 6px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            letter-spacing: 0.5px;
+        }
+
+        .site-icon-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+            transition: opacity 0.2s ease;
+        }
+        .site-icon-img[data-failed="true"] {
+            display: none !important;
+        }
+
+        .dark-mode .icon-fallback-text {
+            background: rgba(123, 156, 255, 0.15);
+            color: var(--primary-color, #7b9cff);
+        }
     </style>
 
-    <!-- 异步加载 CSS -->
     <link rel="preload" href="./css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/modules/navbar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/modules/sidebar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -223,20 +637,17 @@
     <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 
-    <!-- 第三方 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
 
-    <!-- 预加载 JS -->
     <link rel="preload" href="./js/main.js" as="script">
 </head>
 <body>
     <div class="scroll-progress" id="scrollProgress"></div>
 
-    <!-- 导航栏 -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <div class="nav-brand">
@@ -257,7 +668,6 @@
         </div>
     </nav>
 
-    <!-- 侧边栏 -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-wallpaper" id="sidebarWallpaper">
             <div class="sidebar-wallpaper-overlay"></div>
@@ -270,8 +680,13 @@
             </div>
         </div>
         <div class="sidebar-content">
-            <div class="daily-quote-card"><div class="quote-icon"><i class="fas fa-quote-left"></i></div><p id="dailyQuote">加载中...</p></div>
-            <div class="categories-container"><div class="sidebar-categories"></div></div>
+            <div class="daily-quote-card">
+                <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
+                <p id="dailyQuote">加载中...</p>
+            </div>
+            <div class="categories-container">
+                <div class="sidebar-categories"></div>
+            </div>
             <div class="sidebar-footer">
                 <button class="footer-btn" id="sidebarNotebookBtn" aria-label="星聚笔记"><i class="fas fa-pen"></i></button>
                 <button class="footer-btn" id="sidebarSubmitBtn" aria-label="网站投稿"><i class="fas fa-paper-plane"></i></button>
@@ -281,9 +696,7 @@
         </div>
     </aside>
 
-    <!-- 主内容 -->
     <main class="main-content">
-        <!-- 壁纸 -->
         <section class="wallpaper-section">
             <div class="container">
                 <div class="wallpaper-container" id="wallpaperCarousel">
@@ -298,21 +711,25 @@
             </div>
         </section>
 
-        <!-- 问候语 -->
         <section class="greeting-section">
             <div class="greeting-container">
                 <div class="greeting-main-card">
                     <div class="greeting-top-row">
                         <div class="greeting-left-card">
                             <div class="greeting-text"><h1 id="greeting">下午好!</h1></div>
-                            <div class="primary-holiday-container"><div id="primaryHolidayContainer" class="primary-holiday"></div></div>
+                            <div class="primary-holiday-container">
+                                <div id="primaryHolidayContainer" class="primary-holiday"></div>
+                            </div>
                         </div>
                         <div class="datetime" id="datetime">
-                            <div class="datetime-row"><button id="expandHolidayBtn" class="expand-holiday-btn" style="display:none;">展开</button><div id="currentTime">14:30:45</div></div>
+                            <div class="datetime-row">
+                                <button id="expandHolidayBtn" class="expand-holiday-btn" style="display: none;">展开</button>
+                                <div id="currentTime">14:30:45</div>
+                            </div>
                             <div id="currentDate">2024年1月15日 星期一</div>
                         </div>
                     </div>
-                    <div id="secondaryHolidaysList" class="secondary-holidays-list" style="display:none;"></div>
+                    <div id="secondaryHolidaysList" class="secondary-holidays-list" style="display: none;"></div>
                     <div class="fish-section">
                         <button class="fish-btn" data-type="merit" aria-label="功德"><i class="fas fa-hands-praying"></i><span class="fish-count" id="meritCount">0</span></button>
                         <button class="fish-btn" data-type="luck" aria-label="幸运"><i class="fas fa-clover"></i><span class="fish-count" id="luckCount">0</span></button>
@@ -320,15 +737,17 @@
                         <button class="fish-btn" data-type="health" aria-label="健康"><i class="fas fa-heart"></i><span class="fish-count" id="healthCount">0</span></button>
                     </div>
                 </div>
-                <a href="https://xjdh688.ccwu.cc/admin" class="bookmark-btn" aria-label="后台管理" target="_blank"><i class="fas fa-cog"></i><span>后台管理</span></a>
+                <a href="https://xjdh688.ccwu.cc/admin" class="bookmark-btn" aria-label="后台管理" target="_blank">
+                    <i class="fas fa-cog"></i><span>后台管理</span>
+                </a>
             </div>
         </section>
 
-        <!-- 常用标签 -->
         <section class="minimal-tags-section">
             <div class="container">
                 <div class="tags-header">
                     <h2 class="tags-title">常用标签</h2>
+                    <!-- 合作伙伴按钮 -->
                     <button class="partner-trigger-btn" id="partnerTriggerBtn">🤝 合作伙伴</button>
                 </div>
                 <div class="tags-grid" id="tagsGrid">
@@ -337,7 +756,6 @@
             </div>
         </section>
 
-        <!-- 分类导航 -->
         <section class="navigation-section">
             <div class="container">
                 <div class="navigation-header">
@@ -359,7 +777,6 @@
             </div>
         </section>
 
-        <!-- 页脚 -->
         <footer class="footer">
             <div class="footer-compact-container">
                 <div class="footer-disclaimer-card">
@@ -375,7 +792,6 @@
             </div>
         </footer>
 
-        <!-- 浮动按钮 -->
         <div class="floating-buttons">
             <button class="floating-btn back-to-top" id="backToTop" aria-label="返回顶部"><i class="fas fa-chevron-up"></i></button>
             <button class="floating-btn theme-btn" id="themeToggleBtn" aria-label="切换主题"><i class="fas fa-moon"></i></button>
@@ -384,7 +800,6 @@
             <button class="floating-btn weather-btn" id="weatherBtn" aria-label="天气预报"><i class="fas fa-cloud-sun"></i></button>
         </div>
 
-        <!-- 音乐播放器 -->
         <div class="music-player" id="musicPlayer">
             <div class="player-top">
                 <div class="cover-section">
@@ -394,16 +809,16 @@
                 <div class="control-panel">
                     <div class="playback-controls">
                         <button class="control-btn" id="prev-btn" title="上一首"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
-                        <button class="control-btn play-btn" id="play-btn" title="播放"><svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><svg class="pause-icon" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></button>
+                        <button class="control-btn play-btn" id="play-btn" title="播放"><svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><svg class="pause-icon" viewBox="0 0 24 24" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></button>
                         <button class="control-btn" id="next-btn" title="下一首"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
                     </div>
                     <div class="play-mode-controls">
                         <button class="control-btn mode-btn" id="mode-btn" title="播放模式"><svg class="mode-icon" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg></button>
                         <div class="volume-control">
                             <button class="control-btn" id="volume-btn" title="音量"><svg class="volume-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg></button>
-                            <div class="volume-slider" id="volume-slider-container" style="display:none;"><input type="range" id="volume-slider" min="0" max="100" value="50"></div>
+                            <div class="volume-slider" id="volume-slider-container" style="display: none;"><input type="range" id="volume-slider" min="0" max="100" value="50"></div>
                         </div>
-                        <button class="control-btn" id="search-toggle-btn" title="搜索"><svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><svg class="back-icon" viewBox="0 0 24 24" style="display:none;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+                        <button class="control-btn" id="search-toggle-btn" title="搜索"><svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><svg class="back-icon" viewBox="0 0 24 24" style="display: none;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
                         <button class="control-btn" id="download-btn" title="下载当前歌曲"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button>
                     </div>
                 </div>
@@ -419,25 +834,24 @@
             </div>
             <div class="lyrics-section"><div class="lyrics-container" id="lyrics-container"><div class="lyrics-line"></div><div class="lyrics-line active"></div><div class="lyrics-line"></div></div></div>
             <div class="bottom-section">
-                <div class="bottom-tabs">
-                    <button class="tab-btn active" data-tab="netease">网易云音乐</button>
-                    <button class="tab-btn" data-tab="qq">QQ音乐</button>
-                    <button class="tab-btn" data-tab="local">本地音乐</button>
-                </div>
+                <div class="bottom-tabs"><button class="tab-btn active" data-tab="netease">网易云音乐</button><button class="tab-btn" data-tab="qq">QQ音乐</button><button class="tab-btn" data-tab="qishui">汽水音乐</button><button class="tab-btn" data-tab="local">本地音乐</button></div>
                 <div class="tab-content active" id="netease-content">
                     <div class="playlist-header"><div class="playlist-selector"><select id="netease-playlist-select"><option value="3778678">热歌榜</option><option value="3779629">新歌榜</option><option value="2884035">原创榜</option><option value="19723756">飙升榜</option></select></div></div>
-                    <div class="content-container"><div class="playlist-container" id="netease-playlist-container"><div class="loading">加载中...</div></div><div class="search-container" id="netease-search-container" style="display:none;"><div class="search-header"><div class="search-input-group"><input type="text" id="netease-search-input" placeholder="搜索歌曲、歌手..."></div></div><div class="search-results" id="netease-search-results"><div class="loading">输入关键词搜索</div></div></div></div>
+                    <div class="content-container"><div class="playlist-container" id="netease-playlist-container"><div class="loading">加载中...</div></div><div class="search-container" id="netease-search-container" style="display: none;"><div class="search-header"><div class="search-input-group"><input type="text" id="netease-search-input" placeholder="搜索歌曲、歌手..."></div></div><div class="search-results" id="netease-search-results"><div class="loading">输入关键词搜索</div></div></div></div>
                 </div>
                 <div class="tab-content" id="qq-content">
                     <div class="playlist-header"><div class="playlist-selector"><select id="qq-playlist-select"><option value="7512357727">热歌榜</option><option value="7712337727">新歌榜</option><option value="7612347727">原创榜</option></select></div></div>
-                    <div class="content-container"><div class="playlist-container" id="qq-playlist-container"><div class="loading">加载中...</div></div><div class="search-container" id="qq-search-container" style="display:none;"><div class="search-header"><div class="search-input-group"><input type="text" id="qq-search-input" placeholder="搜索歌曲、歌手..."></div></div><div class="search-results" id="qq-search-results"><div class="loading">输入关键词搜索</div></div></div></div>
+                    <div class="content-container"><div class="playlist-container" id="qq-playlist-container"><div class="loading">加载中...</div></div><div class="search-container" id="qq-search-container" style="display: none;"><div class="search-header"><div class="search-input-group"><input type="text" id="qq-search-input" placeholder="搜索歌曲、歌手..."></div></div><div class="search-results" id="qq-search-results"><div class="loading">输入关键词搜索</div></div></div></div>
+                </div>
+                <div class="tab-content" id="qishui-content">
+                    <div class="playlist-header"><div class="playlist-selector"><select id="qishui-playlist-select"><option value="hot">热歌榜</option><option value="new">新歌榜</option><option value="up">飙升榜</option></select></div></div>
+                    <div class="content-container"><div class="playlist-container" id="qishui-playlist-container"><div class="loading">加载汽水音乐热歌榜中...</div></div><div class="search-container" id="qishui-search-container" style="display: none;"><div class="search-header"><div class="search-input-group"><input type="text" id="qishui-search-input" placeholder="搜索歌曲、歌手..."></div></div><div class="search-results" id="qishui-search-results"><div class="loading">输入关键词搜索</div></div></div></div>
                 </div>
                 <div class="tab-content" id="local-content"><div class="content-container"><div class="playlist-container" id="local-playlist-container"><div class="loading">加载本地歌曲中...</div></div></div></div>
             </div>
         </div>
         <audio id="audio-element" preload="metadata" style="display:none;"></audio>
 
-        <!-- 搜索 -->
         <div class="search-modal" id="searchModal">
             <div class="modal-content">
                 <div class="search-bar"><button class="engine-trigger-btn" id="engineTriggerBtn" title="选择搜索引擎"><i id="engineIcon" class="fas fa-search"></i></button><input type="text" class="search-input" id="searchInput" placeholder="输入搜索内容..." autocomplete="off"><button class="search-submit-btn">搜索</button></div>
@@ -448,7 +862,6 @@
         </div>
         <div class="engine-tooltip" id="engineTooltip"></div>
 
-        <!-- 笔记 -->
         <div id="notebookModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header"><h3><i class="fas fa-pen-fancy"></i> 星聚笔记</h3><button class="feedback-modal-close">&times;</button></div>
@@ -456,15 +869,13 @@
             </div>
         </div>
 
-        <!-- 评论 -->
         <div id="commentModal" class="feedback-modal">
             <div class="feedback-modal-content">
-                <div class="feedback-modal-header"><h3><i class="fas fa-comments" style="color:#07C160;"></i> 网友评论</h3><button class="feedback-modal-close">&times;</button></div>
+                <div class="feedback-modal-header"><h3><i class="fas fa-comments" style="color: #07C160;"></i> 网友评论</h3><button class="feedback-modal-close">&times;</button></div>
                 <div class="feedback-modal-body"><div id="waline-comment"></div></div>
             </div>
         </div>
 
-        <!-- 投稿 -->
         <div id="submitModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header"><h3><i class="fas fa-paper-plane"></i> 网站投稿</h3><button class="feedback-modal-close">&times;</button></div>
@@ -475,40 +886,44 @@
                         <div class="form-row"><label>网站图标<span class="required-star">*</span></label><div style="display:flex;align-items:center;gap:10px;"><input type="text" id="submitIcon" placeholder="自动获取或手动输入图标URL" style="flex:1;"><img id="submitIconPreview" src="" style="width:32px;height:32px;border-radius:6px;display:none;" alt="图标预览"></div></div>
                         <div class="form-row"><label>简短描述</label><textarea id="submitDesc" rows="2" placeholder="介绍一下这个网站..."></textarea></div>
                         <div class="form-row"><label>联系方式<span class="required-star">*</span>（仅用于审核结果通知）</label><input type="text" id="submitContact" placeholder="QQ邮箱地址"></div>
-                        <div class="submit-form-buttons" style="display:flex;justify-content:space-between;align-items:center;">
-                            <div class="submit-hint" style="font-size:11px;color:#f59e0b;"><i class="fas fa-circle-exclamation"></i> 检测稍缓，请稍等待！</div>
-                            <div style="display:flex;gap:8px;"><button type="button" class="submit-cancel-btn">取消</button><button type="submit" class="submit-save-btn" id="submitSaveBtn" disabled>提交投稿</button></div>
+                        <div class="submit-form-buttons" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="submit-hint" style="font-size: 11px; color: #f59e0b;"><i class="fas fa-circle-exclamation"></i> 检测稍缓，请稍等待！</div>
+                            <div style="display: flex; gap: 8px;"><button type="button" class="submit-cancel-btn">取消</button><button type="submit" class="submit-save-btn" id="submitSaveBtn" disabled>提交投稿</button></div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- 排行榜 -->
         <div id="rankModal" class="feedback-modal">
             <div class="feedback-modal-content">
-                <div class="feedback-modal-header"><h3><i class="fas fa-trophy" style="color:#FFD700;"></i> 访问排行榜</h3><button class="feedback-modal-close" id="rankModalClose">&times;</button></div>
+                <div class="feedback-modal-header"><h3><i class="fas fa-trophy" style="color: #FFD700;"></i> 访问排行榜</h3><button class="feedback-modal-close" id="rankModalClose">&times;</button></div>
                 <div class="feedback-modal-body"><div id="rankListContent"><div class="loading">加载中...</div></div></div>
             </div>
         </div>
 
-        <!-- 合作伙伴 -->
+        <!-- ===== 合作伙伴模态框 ===== -->
         <div id="partnerModal" class="feedback-modal">
             <div class="feedback-modal-content">
-                <div class="feedback-modal-header"><h3><i class="fas fa-handshake" style="color:#4361ee;"></i> 合作伙伴</h3><button class="feedback-modal-close" id="partnerModalClose">&times;</button></div>
+                <div class="feedback-modal-header">
+                    <h3><i class="fas fa-handshake" style="color: #4361ee;"></i> 合作伙伴</h3>
+                    <button class="feedback-modal-close" id="partnerModalClose">&times;</button>
+                </div>
                 <div class="feedback-modal-body">
-                    <div class="partner-intro"><p>加载中...</p></div>
-                    <div class="partner-list" id="partnerList"></div>
+                    <div class="partner-intro">
+                        <p>加载中...</p>
+                    </div>
+                    <div class="partner-list" id="partnerList">
+                        <!-- 由 JS 动态渲染 -->
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- 第三方库 -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
     <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
-    <!-- 滚动进度 -->
     <script>
         (function() {
             const progressBar = document.getElementById('scrollProgress');
@@ -516,7 +931,8 @@
             function updateScrollProgress() {
                 const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
                 const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-                progressBar.style.width = (winScroll / height) * 100 + '%';
+                const scrolled = (winScroll / height) * 100;
+                progressBar.style.width = scrolled + '%';
             }
             window.addEventListener('scroll', updateScrollProgress);
             window.addEventListener('resize', updateScrollProgress);
@@ -524,11 +940,9 @@
         })();
     </script>
 
-    <!-- KaTeX -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
-    <!-- 主脚本 -->
     <script defer src="./js/constants.js"></script>
     <script defer src="./js/utils.js"></script>
     <script defer src="./js/toast.js"></script>
@@ -554,14 +968,13 @@
     <script defer src="./js/xfyy/music-player.js"></script>
     <script defer src="./js/xfyy/music-main.js"></script>
 
-    <!-- Waline -->
     <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
+
     <script defer src="./js/modules/comment.js"></script>
     <script defer src="./js/modules/submit.js"></script>
     <script defer src="./js/modules/theme.js"></script>
     <script defer src="./js/cursor2.js"></script>
 
-    <!-- Cookie 同意 -->
     <script>
         (function() {
             'use strict';
@@ -599,27 +1012,28 @@
                 banner.setAttribute('role', 'dialog');
                 banner.setAttribute('aria-label', 'Cookie 使用声明');
                 banner.style.cssText = `
-                    position:fixed;bottom:0;left:0;right:0;z-index:99999;
-                    background:var(--bg-card,#fff);border-top:1px solid var(--border-color,#e0e0e0);
-                    box-shadow:0 -4px 20px rgba(0,0,0,.08);
-                    padding:14px 20px;transform:translateY(100%);
-                    transition:transform .4s cubic-bezier(.2,.9,.4,1.1);
-                    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-                    font-size:13px;line-height:1.5;color:var(--text-primary,#1e293b);
+                    position: fixed; bottom: 0; left: 0; right: 0; z-index: 99999;
+                    background: var(--bg-card, #ffffff); border-top: 1px solid var(--border-color, #e0e0e0);
+                    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+                    padding: 14px 20px; transform: translateY(100%);
+                    transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                    font-size: 13px; line-height: 1.5;
+                    color: var(--text-primary, #1e293b);
                 `;
 
                 banner.innerHTML = `
                     <div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:1200px;margin:0 auto;">
                         <div style="display:flex;align-items:flex-start;gap:10px;justify-content:center;text-align:left;width:100%;">
                             <span style="font-size:22px;flex-shrink:0;line-height:1.5;">🍪</span>
-                            <span style="font-size:13px;color:var(--text-secondary,#475569);text-align:left;line-height:1.6;word-break:break-word;flex:1;">
+                            <span style="font-size:13px;color:var(--text-secondary, #475569);text-align:left;line-height:1.6;word-break:break-word;flex:1;">
                                 我们以Cookie为您打造流畅舒心的浏览体验，详情可参考
                                 <a href="/pages/others/privacy-terms.html" style="color:var(--primary-color,#4361ee);text-decoration:none;font-weight:500;" target="_blank">隐私政策与用户协议</a>。
                             </span>
                         </div>
                         <div style="display:flex;justify-content:space-between;width:100%;gap:12px;">
-                            <button class="cookie-reject-btn" style="padding:6px 20px;border:1px solid var(--border-color,#e0e0e0);border-radius:8px;background:transparent;color:var(--text-secondary,#6c757d);cursor:pointer;font-size:13px;transition:all .2s;font-family:inherit;flex-shrink:0;">拒绝</button>
-                            <button class="cookie-accept-btn" style="padding:6px 20px;border:none;border-radius:8px;background:var(--primary-color,#4361ee);color:#fff;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s;font-family:inherit;flex-shrink:0;">接受</button>
+                            <button class="cookie-reject-btn" style="padding:6px 20px;border:1px solid var(--border-color,#e0e0e0);border-radius:8px;background:transparent;color:var(--text-secondary,#6c757d);cursor:pointer;font-size:13px;transition:all 0.2s;font-family:inherit;flex-shrink:0;">拒绝</button>
+                            <button class="cookie-accept-btn" style="padding:6px 20px;border:none;border-radius:8px;background:var(--primary-color,#4361ee);color:#fff;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s;font-family:inherit;flex-shrink:0;">接受</button>
                         </div>
                     </div>
                 `;
@@ -665,10 +1079,10 @@
         })();
     </script>
 
-    <!-- 排行榜独立逻辑 -->
     <script>
         (function() {
             'use strict';
+
             const rankBtn = document.getElementById('rankBtn');
             const rankModal = document.getElementById('rankModal');
             const rankModalClose = document.getElementById('rankModalClose');
@@ -678,7 +1092,7 @@
             if (!rankBtn || !rankModal || !rankModalClose || !rankListContent) return;
 
             async function loadRankData() {
-                rankListContent.innerHTML = '<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin .8s linear infinite;"></div> 加载中...</div>';
+                rankListContent.innerHTML = '<div class="loading"><div class="loading-spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;"></div> 加载中...</div>';
 
                 try {
                     const apiBase = window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
@@ -721,27 +1135,36 @@
             }
 
             function openRankModal() {
-                if (rankModalRef && window.Starlink?.app) {
+                if (rankModalRef && window.Starlink && window.Starlink.app) {
                     window.Starlink.app.unregisterModal(rankModalRef);
                     rankModalRef = null;
                 }
 
-                if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
-                else if (window.sidebar?.isVisible?.()) window.sidebar.hide();
+                if (window.Starlink && window.Starlink.sidebar && window.Starlink.sidebar.isVisible && window.Starlink.sidebar.isVisible()) {
+                    window.Starlink.sidebar.hide();
+                } else if (window.sidebar && window.sidebar.isVisible && window.sidebar.isVisible()) {
+                    window.sidebar.hide();
+                }
 
                 rankModal.classList.add('active');
                 loadRankData();
 
                 rankModalRef = {
-                    hide: function() { rankModal.classList.remove('active'); },
-                    isVisible: function() { return rankModal.classList.contains('active'); }
+                    hide: function() {
+                        rankModal.classList.remove('active');
+                    },
+                    isVisible: function() {
+                        return rankModal.classList.contains('active');
+                    }
                 };
-                if (window.Starlink?.app) window.Starlink.app.registerModal(rankModalRef);
+                if (window.Starlink && window.Starlink.app) {
+                    window.Starlink.app.registerModal(rankModalRef);
+                }
             }
 
             function closeRankModal() {
                 rankModal.classList.remove('active');
-                if (rankModalRef && window.Starlink?.app) {
+                if (rankModalRef && window.Starlink && window.Starlink.app) {
                     window.Starlink.app.unregisterModal(rankModalRef);
                     rankModalRef = null;
                 }
@@ -750,15 +1173,30 @@
             rankBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                if (rankModal.classList.contains('active')) closeRankModal();
-                else openRankModal();
+                if (rankModal.classList.contains('active')) {
+                    closeRankModal();
+                } else {
+                    openRankModal();
+                }
             });
 
-            rankModalClose.addEventListener('click', function(e) { e.stopPropagation(); closeRankModal(); });
-            rankModal.addEventListener('click', function(e) { if (e.target === rankModal) closeRankModal(); });
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && rankModal.classList.contains('active')) closeRankModal();
+            rankModalClose.addEventListener('click', function(e) {
+                e.stopPropagation();
+                closeRankModal();
             });
+
+            rankModal.addEventListener('click', function(e) {
+                if (e.target === rankModal) {
+                    closeRankModal();
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && rankModal.classList.contains('active')) {
+                    closeRankModal();
+                }
+            });
+
         })();
     </script>
 
