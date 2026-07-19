@@ -1,4 +1,4 @@
-/* admin.js - 完整版（实时同步，notifyNavRefresh 增加防抖 + 刷新缓存按钮 + 合作伙伴管理 + 修复自定义下拉内存泄漏 + 批量操作刷新页面） */
+/* admin.js - 完整版（批量操作优化 + 移除调试代码 + 自定义下拉内存泄漏修复） */
 (function() {
     'use strict';
 
@@ -23,7 +23,6 @@
     let selectedSiteIds = new Set();
     let customSelectInstances = [];
 
-    // ===== 合作伙伴管理变量 =====
     let partnersData = [];
     let partnerIntroText = '';
 
@@ -100,7 +99,7 @@
             startSessionRefresh();
             showToast('会话已续期', 'success');
             return true;
-        } catch (e) { console.warn('刷新令牌失败:', e); return false; }
+        } catch (e) { return false; }
     }
 
     function getStoredToken() {
@@ -208,10 +207,9 @@
                 currentCaptchaMd5key = data.md5key;
                 captchaGroup.style.display = 'block';
             } else {
-                console.error('获取验证码失败:', data.error);
                 showToast('获取验证码失败，请刷新重试', 'error');
             }
-        } catch (err) { console.error('加载验证码异常:', err); showToast('验证码服务异常', 'error'); }
+        } catch (err) { showToast('验证码服务异常', 'error'); }
     }
 
     function refreshCaptcha() { loadCaptcha(); }
@@ -304,7 +302,7 @@
                 if (data.data.description) descInput.value = data.data.description;
                 showToast('获取成功', 'success');
             } else { showToast('未获取到信息，请手动填写', 'warn'); }
-        } catch (error) { console.error('获取网站信息失败:', error); showToast('获取失败，请手动填写', 'error'); }
+        } catch (error) { showToast('获取失败，请手动填写', 'error'); }
         finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
     }
 
@@ -371,7 +369,7 @@
             updateStats();
             notifyNavRefresh();
         } catch (e) {
-            console.warn('刷新站点数据失败:', e);
+            // 静默处理
         }
     }
 
@@ -562,6 +560,7 @@
         updateSelectedCount();
     }
 
+    // ===== 批量操作优化：仅更新本地数据，不重新加载全部 =====
     async function batchDeleteSites() {
         if (selectedSiteIds.size === 0) { showToast('请先选择要删除的站点', 'warning'); return; }
         if (!confirm(`确定要删除选中的 ${selectedSiteIds.size} 个站点吗？此操作不可恢复！`)) return;
@@ -575,9 +574,15 @@
                 body: JSON.stringify({ siteIds: ids })
             });
             showToast(result.message || '删除成功', 'success');
+            // 本地更新：从 sites 数组中移除这些 ID
+            const idSet = new Set(ids);
+            sites = sites.filter(s => !idSet.has(s.id));
             selectedSiteIds.clear();
-            await loadAdminSites(true);
-            await loadAllDataButKeepSelection();
+            // 重新渲染当前子分类的站点列表（使用本地数据）
+            const currentSites = sites.filter(s => s.subcategory_id === currentSub);
+            renderSitesWithCheckboxes(currentSites);
+            updateSelectedCount();
+            updateStats();
             notifyNavRefresh();
         } catch (e) {
             showToast('批量删除失败: ' + e.message, 'error');
@@ -624,9 +629,19 @@
                     body: JSON.stringify({ siteIds: ids, targetSubcategoryId: targetId })
                 });
                 showToast(result.message || '移动成功', 'success');
+                // 本地更新：更新这些站点的 subcategory_id
+                const idSet = new Set(ids);
+                for (const site of sites) {
+                    if (idSet.has(site.id)) {
+                        site.subcategory_id = targetId;
+                    }
+                }
                 selectedSiteIds.clear();
-                await loadAdminSites(true);
-                await loadAllDataButKeepSelection();
+                // 重新渲染当前子分类（可能目标子分类不是当前选中的，需要判断）
+                let currentSites = sites.filter(s => s.subcategory_id === currentSub);
+                renderSitesWithCheckboxes(currentSites);
+                updateSelectedCount();
+                updateStats();
                 notifyNavRefresh();
                 closeModal();
             },
@@ -654,6 +669,42 @@
         );
     }
 
+    async function batchToggleSites() {
+        if (selectedSiteIds.size === 0) { showToast('请先选择要修改的站点', 'warning'); return; }
+        if (!confirm(`确定要${isValid ? '启用' : '禁用'}选中的 ${selectedSiteIds.size} 个站点吗？`)) return;
+        const isValid = document.getElementById('batchToggleStatus')?.value === 'true' || false;
+        const ids = Array.from(selectedSiteIds);
+        const btn = document.getElementById('batchToggleBtn');
+        btn.disabled = true;
+        btn.textContent = '操作中...';
+        try {
+            const result = await apiFetch('/admin/sites/batch-toggle', {
+                method: 'POST',
+                body: JSON.stringify({ siteIds: ids, isValid })
+            });
+            showToast(result.message || '操作成功', 'success');
+            // 本地更新
+            const idSet = new Set(ids);
+            const newStatus = isValid ? 1 : 0;
+            for (const site of sites) {
+                if (idSet.has(site.id)) {
+                    site.is_valid = newStatus;
+                }
+            }
+            selectedSiteIds.clear();
+            const currentSites = sites.filter(s => s.subcategory_id === currentSub);
+            renderSitesWithCheckboxes(currentSites);
+            updateSelectedCount();
+            updateStats();
+            notifyNavRefresh();
+        } catch (e) {
+            showToast('操作失败: ' + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🔄 切换状态';
+        }
+    }
+
     async function loadAnnouncement() {
         try {
             const data = await apiFetch('/admin/announcements');
@@ -676,7 +727,6 @@
                 document.getElementById('annActive').checked = true;
             }
         } catch (e) {
-            console.error('加载公告失败:', e);
             showToast('加载公告失败: ' + (e.message || '请检查网络'), 'error');
             currentAnnouncement = null;
             document.getElementById('annTitle').value = '';
@@ -710,7 +760,7 @@
                 window.announcementModule.loadAnnouncement();
             }
             notifyNavRefresh();
-        } catch (err) { console.error('保存公告失败:', err); showToast('保存失败: ' + (err.message || '网络错误'), 'error'); }
+        } catch (err) { showToast('保存失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
     function clearAnnouncementForm() {
@@ -733,7 +783,6 @@
         } catch { return 0; }
     }
 
-    // ===== 修改 openModal 增加 onClose 参数 =====
     function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null, onShow = null, onClose = null) {
         const modal = document.getElementById('modal');
         document.querySelector('#modal .modal-title').textContent = title;
@@ -835,16 +884,27 @@
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
                 showToast('修改成功');
-                await loadAdminSites(true);
-                await loadAllDataButKeepSelection();
+                // 本地更新
+                const updatedSite = sites.find(s => s.id === id);
+                if (updatedSite) {
+                    updatedSite.title = title;
+                    updatedSite.url = url;
+                    updatedSite.description = document.getElementById('mDesc').value;
+                    updatedSite.icon = document.getElementById('mIcon').value;
+                    updatedSite.display_order = +document.getElementById('mSort').value;
+                }
+                loadAdminSites(true);
+                updateStats();
                 notifyNavRefresh();
             }, true,
             async () => {
                 const subId = site.subcategory_id;
                 await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
+                // 本地删除
+                sites = sites.filter(s => s.id !== id);
                 showToast('删除成功');
-                await loadAdminSites(true);
-                await loadAllDataButKeepSelection();
+                loadAdminSites(true);
+                updateStats();
                 notifyNavRefresh();
             }
         );
@@ -918,8 +978,21 @@
                 })});
                 showToast('添加成功', 'success');
                 closeModal();
-                await loadAdminSites(true);
-                await refreshSitesOnly();
+                // 本地添加
+                const newSite = {
+                    id: Date.now(),
+                    subcategory_id: currentSub,
+                    title,
+                    url,
+                    description: document.getElementById('mDesc').value,
+                    icon: document.getElementById('mIcon').value,
+                    display_order: +document.getElementById('mSort').value,
+                    is_valid: 1,
+                    views: 0
+                };
+                sites.push(newSite);
+                loadAdminSites(true);
+                updateStats();
                 notifyNavRefresh();
             }
         );
@@ -999,8 +1072,18 @@
                     body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value })
                 });
                 showToast('链接已更新', 'success');
+                // 本地更新
+                const updatedSite = sites.find(s => s.id === siteId);
+                if (updatedSite) {
+                    updatedSite.url = newUrl;
+                    updatedSite.title = newTitle;
+                    updatedSite.description = document.getElementById('mDesc').value;
+                    updatedSite.icon = document.getElementById('mIcon').value;
+                    updatedSite.is_valid = 1;
+                }
                 await loadFeedback();
-                await loadAllDataButKeepSelection();
+                loadAdminSites(true);
+                updateStats();
                 notifyNavRefresh();
                 closeModal();
             }
@@ -1252,7 +1335,6 @@
         `;
         modal.classList.add('show');
 
-        // 存储 dropdown 引用以便销毁
         let dropdown = null;
 
         document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => {
@@ -1328,10 +1410,6 @@
             }
         });
 
-        // 额外清理：当modal通过其他方式关闭时（如点击外部或ESC），我们已有处理。
-        // 但还需处理当modal class被移除时（例如调用 closeModal？没有，但我们可以监听 transitionend 来清理）
-        // 但此处我们已经通过事件绑定销毁，在取消、关闭按钮、点击外部都已处理。
-        // 为了安全，当modal隐藏时，确保dropdown被销毁。
         const observer = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 if (mutation.attributeName === 'class' && !modal.classList.contains('show')) {
@@ -1643,16 +1721,13 @@
         }
     }
 
-    // ===== 合作伙伴管理函数 =====
-
+    // ===== 合作伙伴管理 =====
     async function loadPartnerSettings() {
         try {
             const data = await apiFetch('/admin/partner-settings');
             partnerIntroText = data.intro || '';
             document.getElementById('partnerIntroInput').value = partnerIntroText;
-        } catch (e) {
-            console.warn('加载合作公告失败:', e);
-        }
+        } catch (e) {}
     }
 
     async function savePartnerIntro() {
@@ -1688,7 +1763,6 @@
             renderPartnerListAdmin();
         } catch (e) {
             list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:12px;">加载失败，请刷新重试</div>';
-            console.error('加载合作伙伴列表失败:', e);
         }
     }
 
@@ -1771,9 +1845,7 @@
         }
     }
 
-    // ============================================================
-    // 核心：设置事件代理（包含刷新缓存按钮 + 合作伙伴管理）
-    // ============================================================
+    // ===== 事件绑定 =====
     function setupEventDelegation() {
         document.getElementById('catBar').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
@@ -1842,7 +1914,6 @@
         document.getElementById('batchDeleteBtn')?.addEventListener('click', batchDeleteSites);
         document.getElementById('batchMoveBtn')?.addEventListener('click', batchMoveSites);
 
-        // ===== 刷新缓存按钮 =====
         document.getElementById('refreshCacheBtn')?.addEventListener('click', async function() {
             const btn = this;
             const originalText = btn.textContent;
@@ -1874,7 +1945,6 @@
             }
         });
 
-        // ===== 合作伙伴管理事件 =====
         document.getElementById('savePartnerIntroBtn')?.addEventListener('click', savePartnerIntro);
         document.getElementById('addPartnerBtn')?.addEventListener('click', addPartner);
 
