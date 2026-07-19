@@ -1,4 +1,4 @@
-/* search.css - 精简版 */
+/* search.css - 精简版（恢复搜索模态框位置至导航栏下方） */
 .search-modal {
     position: fixed;
     top: 0;
@@ -19,6 +19,7 @@
 }
 .search-modal .modal-content {
     position: absolute;
+    top: 60px;                     /* 恢复：位于导航栏下方 */
     right: 24px;
     width: 90%;
     max-width: 460px;
@@ -93,7 +94,7 @@
 
 .engine-dropdown {
     position: absolute;
-    top: calc(12px + 36px + 6px);
+    top: calc(60px + 12px + 36px + 6px);  /* 相应调整下拉位置 */
     left: 14px;
     width: 170px;
     background: var(--bg-card, #ffffff);
@@ -226,10 +227,10 @@
     margin: 0;
 }
 
-/* 响应式 */
+/* 响应式 - 移动端调整 */
 @media (max-width:768px) {
     .search-modal .modal-content {
-        top: 16px;
+        top: 16px;                 /* 移动端上边距适应 */
         right: 4.2%;
         left: 4.2%;
         width: auto;
@@ -237,7 +238,10 @@
         transform: scale(.95);
     }
     .search-modal.active .modal-content { transform: scale(1); }
-    .engine-dropdown { width: 150px; }
+    .engine-dropdown {
+        top: calc(16px + 12px + 36px + 6px);  /* 相应调整 */
+        width: 150px;
+    }
 }
 
 /* 深色模式 */
