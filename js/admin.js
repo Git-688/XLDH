@@ -1,4 +1,4 @@
-/* admin.js - 精简版（合并下拉组件，移除冗余） */
+/* admin.js - 完整版（实时同步，notifyNavRefresh 增加防抖 + 刷新缓存按钮 + 合作伙伴管理） */
 (function() {
     'use strict';
 
@@ -6,33 +6,44 @@
     const TOKEN_EXPIRE_HOURS = 1;
     const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
 
-    let token = '', refreshToken = '', csrfToken = '';
+    let token = '';
+    let refreshToken = '';
+    let csrfToken = '';
     let categories = [], subcategories = [], sites = [];
-    let submissionsData = [], feedbackData = [];
+    let submissionsData = [];
+    let feedbackData = [];
     let currentCat = null, currentSub = null;
     let modalAction = null;
+    let currentSubmissionId = null;
     let refreshTimer = null;
     let currentAnnouncement = null;
     let currentCaptchaMd5key = null;
     let loginLocked = false;
-    let selectedSiteIds = new Set();
-    let batchMoveCustomSelect = null;
 
-    // ===== 工具函数 =====
+    let selectedSiteIds = new Set();
+    let customSelectInstances = [];
+
+    // ===== 合作伙伴管理变量 =====
+    let partnersData = [];
+    let partnerIntroText = '';
+
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     function showToast(msg, type = 'success') { const toast = document.getElementById('toast'); if (!toast) return; toast.textContent = msg; toast.className = `toast ${type} show`; clearTimeout(toast._timeout); toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300); }
     function checkUrl(url) { try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; } }
     function autoResizeTextarea(textarea) { if (!textarea) return; textarea.style.height = 'auto'; textarea.style.height = textarea.scrollHeight + 'px'; }
     function getDeviceId() { let deviceId = localStorage.getItem('device_id'); if (!deviceId) { deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15); localStorage.setItem('device_id', deviceId); } return deviceId; }
-    function normalizeUrl(url) { if (!url) return ''; try { return url.toLowerCase().trim().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, ''); } catch(e) { return url; } }
-    function isUrlExists(url, excludeSiteId = null) { const n = normalizeUrl(url); return sites.some(s => { if (excludeSiteId !== null && s.id === excludeSiteId) return false; return normalizeUrl(s.url) === n; }); }
+    function normalizeUrl(url) { if (!url) return ''; try { let normalized = url.toLowerCase().trim(); normalized = normalized.replace(/^https?:\/\//, ''); normalized = normalized.replace(/^www\./, ''); normalized = normalized.replace(/\/$/, ''); return normalized; } catch(e) { return url; } }
+    function isUrlExists(url, excludeSiteId = null) { const normalizedNew = normalizeUrl(url); return sites.some(site => { if (excludeSiteId !== null && site.id === excludeSiteId) return false; const normalizedExisting = normalizeUrl(site.url); return normalizedExisting === normalizedNew; }); }
 
     const notifyNavRefresh = (function() {
         let timeoutId = null;
         return function() {
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => {
-                try { localStorage.setItem('nav_refresh_required', Date.now()); document.dispatchEvent(new CustomEvent('navRefreshRequested')); } catch (e) {}
+                try {
+                    localStorage.setItem('nav_refresh_required', Date.now());
+                    document.dispatchEvent(new CustomEvent('navRefreshRequested'));
+                } catch (e) {}
             }, 300);
         };
     })();
@@ -43,9 +54,9 @@
         const submissionsEl = document.getElementById('statSubmissions');
         const feedbackEl = document.getElementById('statFeedback');
         if (totalSitesEl) totalSitesEl.textContent = sites.length;
-        if (invalidEl) { invalidEl.textContent = sites.filter(s => s.is_valid === 0).length; }
-        if (submissionsEl) submissionsEl.textContent = submissionsData.length;
-        if (feedbackEl) feedbackEl.textContent = feedbackData.length;
+        if (invalidEl) { const invalidCount = sites.filter(s => s.is_valid === 0).length; invalidEl.textContent = invalidCount; }
+        if (submissionsEl) submissionsEl.textContent = submissionsData ? submissionsData.length : 0;
+        if (feedbackEl) feedbackEl.textContent = feedbackData ? feedbackData.length : 0;
     }
 
     async function apiFetch(endpoint, opt = {}) {
@@ -78,10 +89,13 @@
             });
             if (!res.ok) return false;
             const data = await res.json();
-            token = data.token; refreshToken = data.refreshToken; csrfToken = data.csrfToken || '';
+            token = data.token;
+            refreshToken = data.refreshToken;
+            const csrf = data.csrfToken || '';
+            csrfToken = csrf;
             sessionStorage.setItem('admin_token', token);
             sessionStorage.setItem('admin_refresh_token', refreshToken);
-            sessionStorage.setItem('admin_csrf', csrfToken);
+            sessionStorage.setItem('admin_csrf', csrf);
             sessionStorage.setItem('admin_expires', Date.now() + TOKEN_EXPIRE_HOURS * 3600000 + '');
             startSessionRefresh();
             showToast('会话已续期', 'success');
@@ -145,7 +159,9 @@
             localStorage.removeItem('admin_csrf_saved');
             localStorage.removeItem('admin_saved_time');
         }
-        token = tk; refreshToken = rtk; csrfToken = csrf;
+        token = tk;
+        refreshToken = rtk;
+        csrfToken = csrf;
         startSessionRefresh();
     }
 
@@ -169,13 +185,13 @@
         const now = Date.now();
         const delay = expires - now - SESSION_REFRESH_BEFORE_MS;
         if (delay > 0 && delay < 3600000) {
-            refreshTimer = setTimeout(() => { refreshSessionToken().then(startSessionRefresh); }, delay);
+            refreshTimer = setTimeout(() => { refreshSessionToken().then(() => startSessionRefresh()); }, delay);
         } else if (delay <= 0 && token) {
-            refreshSessionToken().then(startSessionRefresh);
+            refreshSessionToken().then(() => startSessionRefresh());
         }
     }
 
-    function updateLockMessage(locked) { const el = document.getElementById('loginLockMessage'); if (!el) return; el.style.display = locked ? 'block' : 'none'; }
+    function updateLockMessage(locked) { const el = document.getElementById('loginLockMessage'); if (!el) return; if (locked) { el.textContent = '登录失败过多，请10分钟后重试'; el.style.display = 'block'; } else { el.style.display = 'none'; } }
 
     async function loadCaptcha() {
         const captchaGroup = document.getElementById('captchaGroup');
@@ -228,8 +244,10 @@
             const remember = document.getElementById('rememberToken').checked;
             saveToken(sessionToken, rtk, csrf, remember);
             await loadAllData();
-            document.getElementById('loginWrapper').style.display = 'none';
-            document.getElementById('mainContent').classList.remove('hidden');
+            const loginWrapper = document.getElementById('loginWrapper');
+            const mainContent = document.getElementById('mainContent');
+            if (loginWrapper) loginWrapper.style.display = 'none';
+            if (mainContent) mainContent.classList.remove('hidden');
             document.getElementById('tokenInput').value = '';
             document.getElementById('captchaInput').value = '';
             showToast('登录成功' + (remember ? '（已记住密码）' : ''));
@@ -241,15 +259,53 @@
     }
 
     function logout() {
-        clearToken();
-        document.getElementById('loginWrapper').style.display = 'flex';
-        document.getElementById('mainContent').classList.add('hidden');
-        document.getElementById('tokenInput').value = '';
-        document.getElementById('captchaInput').value = '';
-        document.getElementById('captchaGroup').style.display = 'none';
+        token = ''; refreshToken = ''; csrfToken = ''; clearToken();
+        const loginWrapper = document.getElementById('loginWrapper');
+        const mainContent = document.getElementById('mainContent');
+        if (loginWrapper) loginWrapper.style.display = 'flex';
+        if (mainContent) mainContent.classList.add('hidden');
+        const tokenInput = document.getElementById('tokenInput');
+        if (tokenInput) tokenInput.value = '';
+        const captchaInput = document.getElementById('captchaInput');
+        if (captchaInput) captchaInput.value = '';
+        const captchaGroup = document.getElementById('captchaGroup');
+        if (captchaGroup) captchaGroup.style.display = 'none';
         currentCaptchaMd5key = null;
         loadCaptcha();
         showToast('已退出');
+    }
+
+    function fetchSiteInfoHandler() {
+        fetchSiteInfo('mUrl', 'mTitle', 'mIcon', 'mDesc');
+    }
+
+    async function fetchSiteInfo(urlInputId, titleInputId, iconInputId, descInputId) {
+        const urlInput = document.getElementById(urlInputId);
+        const titleInput = document.getElementById(titleInputId);
+        const iconInput = document.getElementById(iconInputId);
+        const descInput = document.getElementById(descInputId);
+        if (!urlInput || !titleInput || !iconInput || !descInput) { showToast('输入框元素未找到', 'error'); return; }
+        let rawUrl = urlInput.value.trim();
+        if (!rawUrl) { showToast('请先输入网址', 'warn'); return; }
+        if (!/^https?:\/\//i.test(rawUrl)) rawUrl = 'https://' + rawUrl;
+        const btn = document.getElementById('fetchInfoBtn');
+        if (btn) { btn.disabled = true; btn.textContent = '获取中...'; }
+        try {
+            const response = await fetch(`https://api.pearapi.ai/api/website/info/?url=${encodeURIComponent(rawUrl)}`);
+            if (!response.ok) throw new Error('请求失败');
+            const buffer = await response.arrayBuffer();
+            let decoder = new TextDecoder('utf-8');
+            let text = decoder.decode(buffer);
+            if (text.includes('�')) { decoder = new TextDecoder('gbk'); text = decoder.decode(buffer); }
+            const data = JSON.parse(text);
+            if (data.code === 200 && data.data) {
+                if (data.data.title) titleInput.value = data.data.title;
+                if (data.data.icon) iconInput.value = data.data.icon;
+                if (data.data.description) descInput.value = data.data.description;
+                showToast('获取成功', 'success');
+            } else { showToast('未获取到信息，请手动填写', 'warn'); }
+        } catch (error) { console.error('获取网站信息失败:', error); showToast('获取失败，请手动填写', 'error'); }
+        finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
     }
 
     async function loadAllData() {
@@ -261,8 +317,11 @@
                 apiFetch('/admin/submissions'),
                 apiFetch('/admin/dead-link-reports')
             ]);
-            categories = catData; subcategories = subData; sites = siteData;
-            submissionsData = subDataList || []; feedbackData = feedbackDataList || [];
+            categories = catData;
+            subcategories = subData;
+            sites = siteData;
+            submissionsData = subDataList || [];
+            feedbackData = feedbackDataList || [];
             renderCatBar();
             if (categories.length > 0) selectCat(categories[0].id);
             updateStats();
@@ -279,15 +338,19 @@
                 apiFetch('/admin/submissions'),
                 apiFetch('/admin/dead-link-reports')
             ]);
-            categories = catData; subcategories = subData; sites = siteData;
-            submissionsData = subDataList || []; feedbackData = feedbackDataList || [];
+            categories = catData;
+            subcategories = subData;
+            sites = siteData;
+            submissionsData = subDataList || [];
+            feedbackData = feedbackDataList || [];
             renderCatBar();
             if (currentCat) {
                 selectCat(currentCat, false);
                 if (currentSub) {
                     const subExists = subcategories.some(s => s.id === currentSub);
-                    if (subExists) selectSub(currentSub);
-                    else {
+                    if (subExists) {
+                        selectSub(currentSub);
+                    } else {
                         const subs = subcategories.filter(s => s.category_id === currentCat);
                         if (subs.length > 0) selectSub(subs[0].id);
                     }
@@ -299,6 +362,17 @@
             updateStats();
             notifyNavRefresh();
         } catch (e) { if (e.message === 'Unauthorized') logout(); else showToast('数据加载失败', 'error'); }
+    }
+
+    async function refreshSitesOnly() {
+        try {
+            const siteData = await apiFetch('/admin/sites');
+            sites = siteData;
+            updateStats();
+            notifyNavRefresh();
+        } catch (e) {
+            console.warn('刷新站点数据失败:', e);
+        }
     }
 
     function selectCat(cid, selectFirst = true) {
@@ -324,9 +398,8 @@
     }
 
     function renderCatBar() {
-        const bar = document.getElementById('catBar');
-        if (!categories.length) { bar.innerHTML = '<div class="empty">暂无分类</div>'; return; }
-        bar.innerHTML = categories.map(c => `
+        if (!categories.length) { document.getElementById('catBar').innerHTML = '<div class="empty">暂无分类</div>'; return; }
+        document.getElementById('catBar').innerHTML = categories.map(c => `
             <div class="cat-item ${c.id===currentCat?'active':''}" data-cid="${c.id}">
                 <span>${escapeHtml(c.name)}</span>
                 <button class="rename-text-btn" data-action="modifyCat" data-id="${c.id}" data-name="${escapeHtml(c.name)}">修改</button>
@@ -335,11 +408,10 @@
     }
 
     function renderSubList() {
-        const container = document.getElementById('subList');
-        if (!currentCat) { container.innerHTML = '<div class="empty">选择分类</div>'; return; }
+        if (!currentCat) { document.getElementById('subList').innerHTML = '<div class="empty">选择分类</div>'; return; }
         const subs = subcategories.filter(s => s.category_id === currentCat);
-        if (!subs.length) { container.innerHTML = '<div class="empty">暂无子分类</div>'; return; }
-        container.innerHTML = subs.map(s => `
+        if (!subs.length) { document.getElementById('subList').innerHTML = '<div class="empty">暂无子分类</div>'; return; }
+        document.getElementById('subList').innerHTML = subs.map(s => `
             <div class="sub-item ${s.id===currentSub?'active':''}" data-sid="${s.id}">
                 <span>${escapeHtml(s.name)}</span>
                 <button class="rename-text-btn" data-action="modifySub" data-id="${s.id}" data-name="${escapeHtml(s.name)}">修改</button>
@@ -356,7 +428,10 @@
             if (subcategoryId) url += `&subcategory_id=${subcategoryId}`;
             const data = await apiFetch(url);
             const sitesData = data.sites || [];
-            if (!sitesData.length) { listEl.innerHTML = '<div class="empty">暂无站点</div>'; return; }
+            if (!sitesData.length) {
+                listEl.innerHTML = '<div class="empty">暂无站点</div>';
+                return;
+            }
             renderSitesWithCheckboxes(sitesData);
             updateSelectedCount();
         } catch (e) { listEl.innerHTML = '<div class="empty">加载失败</div>'; }
@@ -364,17 +439,65 @@
 
     function renderSitesWithCheckboxes(sitesData) {
         const listEl = document.getElementById('siteList');
-        listEl.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;align-items:stretch;';
+        listEl.style.display = 'grid';
+        listEl.style.gridTemplateColumns = 'repeat(auto-fill, minmax(140px, 1fr))';
+        listEl.style.gap = '10px';
+        listEl.style.alignItems = 'stretch';
+
         listEl.innerHTML = sitesData.map(site => {
             const checked = selectedSiteIds.has(site.id) ? 'checked' : '';
             return `
-                <div class="site-card-admin" style="background:#fff;border-radius:8px;padding:10px;border:1px solid #eef2f6;display:flex;flex-direction:column;justify-content:space-between;min-height:80px;transition:border-color .2s,box-shadow .2s;position:relative;">
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                        <input type="checkbox" class="site-checkbox" data-id="${site.id}" ${checked} style="width:16px;height:16px;cursor:pointer;flex-shrink:0;margin-top:2px;accent-color:#3b82f6;">
-                        <button class="primary sm" data-action="editSite" data-id="${site.id}" style="flex-shrink:0;padding:2px 10px;font-size:10px;border-radius:6px;background:#3b82f6;color:#fff;border:none;cursor:pointer;">编辑</button>
+                <div class="site-card-admin" style="
+                    background: #fff;
+                    border-radius: 8px;
+                    padding: 10px 10px 8px;
+                    border: 1px solid #eef2f6;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    min-height: 80px;
+                    transition: border-color 0.2s, box-shadow 0.2s;
+                    position: relative;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <input type="checkbox" class="site-checkbox" data-id="${site.id}" ${checked} style="
+                            width: 16px;
+                            height: 16px;
+                            cursor: pointer;
+                            flex-shrink: 0;
+                            margin-top: 2px;
+                            accent-color: #3b82f6;
+                        ">
+                        <button class="primary sm" data-action="editSite" data-id="${site.id}" style="
+                            flex-shrink: 0;
+                            padding: 2px 10px;
+                            font-size: 10px;
+                            border-radius: 6px;
+                            background: #3b82f6;
+                            color: #fff;
+                            border: none;
+                            cursor: pointer;
+                            transition: background 0.2s;
+                        ">编辑</button>
                     </div>
-                    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:4px 0;">
-                        <span style="font-size:13px;font-weight:500;text-align:center;color:#1e293b;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3;">${escapeHtml(site.title)}</span>
+                    <div style="
+                        flex: 1;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 4px 0 2px;
+                    ">
+                        <span style="
+                            font-size: 13px;
+                            font-weight: 500;
+                            text-align: center;
+                            color: #1e293b;
+                            display: -webkit-box;
+                            -webkit-line-clamp: 2;
+                            -webkit-box-orient: vertical;
+                            overflow: hidden;
+                            line-height: 1.3;
+                        ">${escapeHtml(site.title)}</span>
                     </div>
                 </div>
             `;
@@ -388,17 +511,28 @@
                 updateSelectedCount();
             });
         });
+
         listEl.querySelectorAll('[data-action="editSite"]').forEach(btn => {
-            btn.addEventListener('click', e => { e.stopPropagation(); handleEditSite(parseInt(btn.dataset.id)); });
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                handleEditSite(parseInt(this.dataset.id));
+            });
         });
+
         listEl.querySelectorAll('.site-card-admin').forEach(card => {
             card.addEventListener('click', function(e) {
                 if (e.target.closest('.site-checkbox') || e.target.closest('[data-action="editSite"]')) return;
                 const editBtn = this.querySelector('[data-action="editSite"]');
                 if (editBtn) editBtn.click();
             });
-            card.addEventListener('mouseenter', function() { this.style.borderColor = '#3b82f6'; this.style.boxShadow = '0 2px 8px rgba(59,130,246,0.12)'; });
-            card.addEventListener('mouseleave', function() { this.style.borderColor = '#eef2f6'; this.style.boxShadow = 'none'; });
+            card.addEventListener('mouseenter', function() {
+                this.style.borderColor = '#3b82f6';
+                this.style.boxShadow = '0 2px 8px rgba(59,130,246,0.12)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.borderColor = '#eef2f6';
+                this.style.boxShadow = 'none';
+            });
         });
     }
 
@@ -433,17 +567,27 @@
         if (!confirm(`确定要删除选中的 ${selectedSiteIds.size} 个站点吗？此操作不可恢复！`)) return;
         const ids = Array.from(selectedSiteIds);
         const btn = document.getElementById('batchDeleteBtn');
-        btn.disabled = true; btn.textContent = '删除中...';
+        btn.disabled = true;
+        btn.textContent = '删除中...';
         try {
-            const result = await apiFetch('/admin/sites/batch-delete', { method: 'POST', body: JSON.stringify({ siteIds: ids }) });
+            const result = await apiFetch('/admin/sites/batch-delete', {
+                method: 'POST',
+                body: JSON.stringify({ siteIds: ids })
+            });
             showToast(result.message || '删除成功', 'success');
             selectedSiteIds.clear();
             await loadAdminSites(true);
             await loadAllDataButKeepSelection();
             notifyNavRefresh();
-        } catch (e) { showToast('批量删除失败: ' + e.message, 'error'); }
-        finally { btn.disabled = false; btn.textContent = '🗑️ 删除'; }
+        } catch (e) {
+            showToast('批量删除失败: ' + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🗑️ 删除';
+        }
     }
+
+    let batchMoveCustomSelect = null;
 
     async function batchMoveSites() {
         if (selectedSiteIds.size === 0) { showToast('请先选择要移动的站点', 'warning'); return; }
@@ -452,8 +596,10 @@
         const subOptions = subcategoriesData.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
 
         openModal('批量移动站点',
-            `<div style="margin-bottom:12px;"><label style="display:block;font-size:12px;margin-bottom:6px;color:#475569;">选择目标子分类：</label>
-            <div id="batchMoveTargetWrapper"></div></div>
+            `<div style="margin-bottom:12px;">
+                <label style="display:block;font-size:12px;margin-bottom:6px;color:#475569;">选择目标子分类：</label>
+                <div id="batchMoveTargetWrapper"></div>
+            </div>
             <div style="font-size:11px;color:#64748b;">将移动 ${selectedSiteIds.size} 个站点到选中的子分类</div>`,
             async () => {
                 const wrapper = document.getElementById('batchMoveTargetWrapper');
@@ -473,7 +619,10 @@
                 }
                 if (!targetId) { showToast('请选择目标子分类', 'error'); return; }
                 const ids = Array.from(selectedSiteIds);
-                const result = await apiFetch('/admin/sites/batch-move', { method: 'POST', body: JSON.stringify({ siteIds: ids, targetSubcategoryId: targetId }) });
+                const result = await apiFetch('/admin/sites/batch-move', {
+                    method: 'POST',
+                    body: JSON.stringify({ siteIds: ids, targetSubcategoryId: targetId })
+                });
                 showToast(result.message || '移动成功', 'success');
                 selectedSiteIds.clear();
                 await loadAdminSites(true);
@@ -481,7 +630,8 @@
                 notifyNavRefresh();
                 closeModal();
             },
-            false, null,
+            false,
+            null,
             function() {
                 const wrapper = document.getElementById('batchMoveTargetWrapper');
                 if (!wrapper) return;
@@ -489,11 +639,17 @@
                 select.id = 'batchMoveTarget';
                 select.innerHTML = subOptions;
                 wrapper.appendChild(select);
-                if (batchMoveCustomSelect) { batchMoveCustomSelect.destroy(); batchMoveCustomSelect = null; }
+                if (batchMoveCustomSelect) {
+                    batchMoveCustomSelect.destroy();
+                    batchMoveCustomSelect = null;
+                }
                 batchMoveCustomSelect = new CustomSelect(select);
             },
             function() {
-                if (batchMoveCustomSelect) { batchMoveCustomSelect.destroy(); batchMoveCustomSelect = null; }
+                if (batchMoveCustomSelect) {
+                    batchMoveCustomSelect.destroy();
+                    batchMoveCustomSelect = null;
+                }
             }
         );
     }
@@ -570,14 +726,13 @@
     async function getNextSortValue(type, parentId = null) {
         try {
             let maxOrder = 0;
-            if (type === 'category') { maxOrder = categories.reduce((m, c) => Math.max(m, c.display_order || 0), 0); }
-            else if (type === 'subcategory' && parentId) { const subs = subcategories.filter(s => s.category_id === parentId); maxOrder = subs.reduce((m, s) => Math.max(m, s.display_order || 0), 0); }
-            else if (type === 'site' && parentId) { const siteList = sites.filter(s => s.subcategory_id === parentId); maxOrder = siteList.reduce((m, s) => Math.max(m, s.display_order || 0), 0); }
+            if (type === 'category') { const max = categories.reduce((max, c) => Math.max(max, c.display_order || 0), 0); maxOrder = max; }
+            else if (type === 'subcategory' && parentId) { const subs = subcategories.filter(s => s.category_id === parentId); const max = subs.reduce((max, s) => Math.max(max, s.display_order || 0), 0); maxOrder = max; }
+            else if (type === 'site' && parentId) { const sitesList = sites.filter(s => s.subcategory_id === parentId); const max = sitesList.reduce((max, s) => Math.max(max, s.display_order || 0), 0); maxOrder = max; }
             return maxOrder + 1;
         } catch { return 0; }
     }
 
-    // ===== 通用 Modal 管理（增加 onClose 支持） =====
     function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null, onShow = null, onClose = null) {
         const modal = document.getElementById('modal');
         document.querySelector('#modal .modal-title').textContent = title;
@@ -588,9 +743,10 @@
         if (showDelete && deleteCb) html += `<div class="modal-buttons-left" style="margin-right:auto;"><button class="danger" id="modalDeleteBtn">删除</button></div>`;
         html += `<button class="secondary" id="modalCancelBtn">取消</button><button class="primary" id="modalSubmit">确认</button>`;
         buttonsContainer.innerHTML = html;
-
-        const closeHandler = () => { closeModal(); if (onClose) onClose(); };
-        document.getElementById('modalCancelBtn').addEventListener('click', closeHandler);
+        document.getElementById('modalCancelBtn').addEventListener('click', function() {
+            closeModal();
+            if (onClose) onClose();
+        });
         document.getElementById('modalSubmit').addEventListener('click', handleModalSubmit);
         if (showDelete && deleteCb) {
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
@@ -604,7 +760,8 @@
     async function handleModalSubmit() {
         if (!modalAction) return;
         const btn = document.getElementById('modalSubmit');
-        btn.disabled = true; btn.textContent = '提交中…';
+        btn.disabled = true;
+        btn.textContent = '提交中…';
         try { await modalAction(); closeModal(); }
         catch (e) { showToast('操作失败', 'error'); }
         finally { btn.disabled = false; btn.textContent = '确认'; }
@@ -612,7 +769,6 @@
 
     function closeModal() { document.getElementById('modal').classList.remove('show'); modalAction = null; }
 
-    // ===== 分类/子分类/站点 CRUD =====
     function handleModifyCategory(id, currentName) {
         const cat = categories.find(c => c.id === id);
         const currentOrder = cat?.display_order || 0;
@@ -624,10 +780,12 @@
                 const order = parseInt(document.getElementById('mOrder').value) || 0;
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch(`/admin/categories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
-                showToast('修改成功'); await loadAllDataButKeepSelection(); notifyNavRefresh();
+                showToast('修改成功'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }, true, async () => {
                 await apiFetch(`/admin/categories/${id}`, { method:'DELETE' });
-                showToast('分类已删除'); await loadAllDataButKeepSelection(); notifyNavRefresh();
+                showToast('分类已删除'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
     }
@@ -643,10 +801,12 @@
                 const order = parseInt(document.getElementById('mOrder').value) || 0;
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch(`/admin/subcategories/${id}`, { method:'PUT', body: JSON.stringify({ name, display_order: order }) });
-                showToast('修改成功'); await loadAllDataButKeepSelection(); notifyNavRefresh();
+                showToast('修改成功'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }, true, async () => {
                 await apiFetch(`/admin/subcategories/${id}`, { method:'DELETE' });
-                showToast('子分类已删除'); await loadAllDataButKeepSelection(); notifyNavRefresh();
+                showToast('子分类已删除'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
     }
@@ -676,6 +836,7 @@
                 notifyNavRefresh();
             }, true,
             async () => {
+                const subId = site.subcategory_id;
                 await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
                 showToast('删除成功');
                 await loadAdminSites(true);
@@ -697,39 +858,6 @@
         }, 150);
     }
 
-    function fetchSiteInfoHandler() {
-        fetchSiteInfo('mUrl', 'mTitle', 'mIcon', 'mDesc');
-    }
-
-    async function fetchSiteInfo(urlInputId, titleInputId, iconInputId, descInputId) {
-        const urlInput = document.getElementById(urlInputId);
-        const titleInput = document.getElementById(titleInputId);
-        const iconInput = document.getElementById(iconInputId);
-        const descInput = document.getElementById(descInputId);
-        if (!urlInput || !titleInput || !iconInput || !descInput) { showToast('输入框元素未找到', 'error'); return; }
-        let rawUrl = urlInput.value.trim();
-        if (!rawUrl) { showToast('请先输入网址', 'warn'); return; }
-        if (!/^https?:\/\//i.test(rawUrl)) rawUrl = 'https://' + rawUrl;
-        const btn = document.getElementById('fetchInfoBtn');
-        if (btn) { btn.disabled = true; btn.textContent = '获取中...'; }
-        try {
-            const response = await fetch(`https://api.pearapi.ai/api/website/info/?url=${encodeURIComponent(rawUrl)}`);
-            if (!response.ok) throw new Error('请求失败');
-            const buffer = await response.arrayBuffer();
-            let decoder = new TextDecoder('utf-8');
-            let text = decoder.decode(buffer);
-            if (text.includes('�')) { decoder = new TextDecoder('gbk'); text = decoder.decode(buffer); }
-            const data = JSON.parse(text);
-            if (data.code === 200 && data.data) {
-                if (data.data.title) titleInput.value = data.data.title;
-                if (data.data.icon) iconInput.value = data.data.icon;
-                if (data.data.description) descInput.value = data.data.description;
-                showToast('获取成功', 'success');
-            } else { showToast('未获取到信息，请手动填写', 'warn'); }
-        } catch (error) { console.error('获取网站信息失败:', error); showToast('获取失败，请手动填写', 'error'); }
-        finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
-    }
-
     async function handleAddCategory() {
         const nextOrder = await getNextSortValue('category');
         openModal('新增一级分类',
@@ -739,7 +867,8 @@
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/categories', { method:'POST', body: JSON.stringify({ name, display_order: +document.getElementById('mSort').value }) });
-                showToast('添加成功'); await loadAllDataButKeepSelection(); notifyNavRefresh();
+                showToast('添加成功'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
     }
@@ -754,7 +883,8 @@
                 const name = document.getElementById('mName').value.trim();
                 if (!name) { showToast('名称不能为空', 'error'); return; }
                 await apiFetch('/admin/subcategories', { method:'POST', body: JSON.stringify({ category_id: currentCat, name, display_order: +document.getElementById('mSort').value }) });
-                showToast('添加成功'); await loadAllDataButKeepSelection(); notifyNavRefresh();
+                showToast('添加成功'); await loadAllDataButKeepSelection();
+                notifyNavRefresh();
             }
         );
     }
@@ -776,8 +906,11 @@
                 if (isUrlExists(url)) { showToast('该网址已存在，请勿重复添加', 'error'); return; }
                 await apiFetch('/admin/sites', { method:'POST', body: JSON.stringify({
                     subcategory_id: currentSub,
-                    title, url, description: document.getElementById('mDesc').value,
-                    icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
+                    title,
+                    url,
+                    description: document.getElementById('mDesc').value,
+                    icon: document.getElementById('mIcon').value,
+                    display_order: +document.getElementById('mSort').value
                 })});
                 showToast('添加成功', 'success');
                 closeModal();
@@ -800,16 +933,6 @@
         }, 150);
     }
 
-    async function refreshSitesOnly() {
-        try {
-            const siteData = await apiFetch('/admin/sites');
-            sites = siteData;
-            updateStats();
-            notifyNavRefresh();
-        } catch (e) { console.warn('刷新站点数据失败:', e); }
-    }
-
-    // ===== 反馈与投稿处理 =====
     async function loadFeedback() {
         const list = document.getElementById('feedbackList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -830,7 +953,8 @@
             let html = '';
             const renderItems = (items) => items.map(item => `
                 <div class="link-item">
-                    <div class="link-info"><strong>${escapeHtml(item.title||'无标题')}</strong>
+                    <div class="link-info">
+                        <strong>${escapeHtml(item.title||'无标题')}</strong>
                         <div style="font-size:10px;color:#999">于 ${new Date(item.report_time).toLocaleString()}</div>
                     </div>
                     <div class="link-actions">
@@ -899,6 +1023,154 @@
         } catch (err) { showToast('忽略失败: ' + (err.message || '网络错误'), 'error'); }
     }
 
+    class CustomDropdown {
+        constructor(container, options, selectedValue, onChange) {
+            this.container = container;
+            this.options = options;
+            this.selectedValue = selectedValue || (options.length ? options[0].value : null);
+            this.onChange = onChange;
+            this.isOpen = false;
+            this.dropdownEl = null;
+            this.triggerEl = null;
+            this.optionsEl = null;
+            this._outsideClickHandler = null;
+            this._scrollHandler = null;
+            this.render();
+        }
+
+        render() {
+            this.container.innerHTML = '';
+            const trigger = document.createElement('div');
+            trigger.className = 'custom-dropdown-trigger';
+            trigger.innerHTML = `
+                <span class="custom-dropdown-value">${this.getSelectedLabel()}</span>
+                <span class="custom-dropdown-arrow"></span>
+            `;
+            this.container.appendChild(trigger);
+            this.triggerEl = trigger;
+
+            const dropdown = document.createElement('div');
+            dropdown.className = 'custom-dropdown-list';
+            const listWrapper = document.createElement('div');
+            listWrapper.className = 'custom-dropdown-options-wrapper';
+            this.options.forEach(opt => {
+                const item = document.createElement('div');
+                item.className = 'custom-dropdown-option' + (opt.value === this.selectedValue ? ' selected' : '');
+                item.textContent = opt.label;
+                item.dataset.value = opt.value;
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.selectValue(opt.value);
+                    this.close();
+                });
+                listWrapper.appendChild(item);
+            });
+            dropdown.appendChild(listWrapper);
+            this.container.appendChild(dropdown);
+            this.dropdownEl = dropdown;
+            this.optionsEl = listWrapper;
+
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggle();
+            });
+
+            this.updateTriggerText();
+            this.syncWidth();
+            window.addEventListener('resize', () => this.syncWidth());
+
+            this._scrollHandler = () => this.syncWidth();
+            document.addEventListener('scroll', this._scrollHandler, true);
+
+            this._outsideClickHandler = (e) => {
+                if (!this.container.contains(e.target)) {
+                    this.close();
+                }
+            };
+            document.addEventListener('click', this._outsideClickHandler);
+        }
+
+        syncWidth() {
+            if (this.triggerEl && this.dropdownEl) {
+                this.dropdownEl.style.minWidth = this.triggerEl.offsetWidth + 'px';
+            }
+        }
+
+        getSelectedLabel() {
+            const opt = this.options.find(o => o.value === this.selectedValue);
+            return opt ? opt.label : '';
+        }
+
+        updateTriggerText() {
+            const valueSpan = this.triggerEl.querySelector('.custom-dropdown-value');
+            if (valueSpan) valueSpan.textContent = this.getSelectedLabel();
+        }
+
+        selectValue(value) {
+            if (this.selectedValue === value) return;
+            this.selectedValue = value;
+            this.updateTriggerText();
+            const items = this.optionsEl.querySelectorAll('.custom-dropdown-option');
+            items.forEach(item => {
+                item.classList.toggle('selected', item.dataset.value === value);
+            });
+            if (this.onChange) this.onChange(value);
+        }
+
+        toggle() {
+            this.isOpen ? this.close() : this.open();
+        }
+
+        open() {
+            if (this.isOpen) return;
+            this.isOpen = true;
+            this.dropdownEl.classList.add('open');
+            const rect = this.triggerEl.getBoundingClientRect();
+            const dropdownHeight = this.dropdownEl.scrollHeight;
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+                this.dropdownEl.style.bottom = '100%';
+                this.dropdownEl.style.top = 'auto';
+            } else {
+                this.dropdownEl.style.top = '100%';
+                this.dropdownEl.style.bottom = 'auto';
+            }
+            this.dropdownEl.style.left = '0';
+            this.dropdownEl.style.right = 'auto';
+            this.syncWidth();
+            const selectedItem = this.optionsEl.querySelector('.custom-dropdown-option.selected');
+            if (selectedItem) {
+                selectedItem.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }
+        }
+
+        close() {
+            if (!this.isOpen) return;
+            this.isOpen = false;
+            this.dropdownEl.classList.remove('open');
+        }
+
+        destroy() {
+            if (this._outsideClickHandler) {
+                document.removeEventListener('click', this._outsideClickHandler);
+            }
+            if (this._scrollHandler) {
+                document.removeEventListener('scroll', this._scrollHandler, true);
+            }
+            window.removeEventListener('resize', this.syncWidth);
+            this.container.innerHTML = '';
+        }
+
+        setValue(value) {
+            this.selectValue(value);
+        }
+
+        getValue() {
+            return this.selectedValue;
+        }
+    }
+
     async function loadSubmissions() {
         const list = document.getElementById('submissionsList');
         list.innerHTML = '<div class="empty">加载中...</div>';
@@ -906,7 +1178,10 @@
             const data = await apiFetch('/admin/submissions');
             submissionsData = data || [];
             updateStats();
-            if (!data.length) { list.innerHTML = '<div class="empty">暂无待审核投稿</div>'; return; }
+            if (!data.length) {
+                list.innerHTML = '<div class="empty">暂无待审核投稿</div>';
+                return;
+            }
             data.sort((a,b) => b.submit_time - a.submit_time);
             list.innerHTML = data.map(item => `
                 <div class="link-item" style="display:flex; gap:8px; align-items:center;">
@@ -945,145 +1220,10 @@
         } catch { list.innerHTML = '<div class="empty">加载失败</div>'; }
     }
 
-    // ===== 统一下拉组件（合并 CustomSelect 和 CustomDropdown） =====
-    class CustomSelect {
-        constructor(containerOrSelect, options = null, selectedValue = null, onChange = null) {
-            // 支持两种初始化方式：1) 传入 select 元素；2) 传入容器 + 选项列表
-            if (containerOrSelect.tagName === 'SELECT') {
-                this.select = containerOrSelect;
-                this.onChange = onChange || null;
-                this._initFromSelect();
-            } else {
-                this.container = containerOrSelect;
-                this.options = options || [];
-                this.selectedValue = selectedValue || (this.options.length ? this.options[0].value : null);
-                this.onChange = onChange || null;
-                this._initFromOptions();
-            }
-            this._bindEvents();
-        }
-
-        _initFromSelect() {
-            this.select.style.display = 'none';
-            this.container = document.createElement('div');
-            this.container.className = 'custom-select-wrapper';
-            this.select.parentNode.insertBefore(this.container, this.select.nextSibling);
-            this.options = Array.from(this.select.options).map(opt => ({ value: opt.value, label: opt.textContent }));
-            this.selectedValue = this.select.value;
-            this._render();
-            this.select.addEventListener('change', () => this.setValue(this.select.value));
-        }
-
-        _initFromOptions() {
-            this.container.innerHTML = '';
-            this._render();
-        }
-
-        _render() {
-            this.trigger = document.createElement('div');
-            this.trigger.className = 'custom-select-trigger';
-            this.trigger.innerHTML = `<span class="custom-select-value">${this._getSelectedLabel()}</span><span class="custom-select-arrow"></span>`;
-            this.dropdown = document.createElement('div');
-            this.dropdown.className = 'custom-select-dropdown';
-            this.container.appendChild(this.trigger);
-            this.container.appendChild(this.dropdown);
-            this._populateOptions();
-        }
-
-        _getSelectedLabel() {
-            const opt = this.options.find(o => o.value == this.selectedValue);
-            return opt ? opt.label : '';
-        }
-
-        _populateOptions() {
-            this.dropdown.innerHTML = '';
-            this.options.forEach(opt => {
-                const div = document.createElement('div');
-                div.className = 'custom-select-option' + (opt.value == this.selectedValue ? ' selected' : '');
-                div.textContent = opt.label;
-                div.dataset.value = opt.value;
-                div.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.setValue(opt.value);
-                    this.close();
-                });
-                this.dropdown.appendChild(div);
-            });
-        }
-
-        _bindEvents() {
-            this.trigger.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.toggle();
-            });
-            document.addEventListener('click', (e) => {
-                if (!this.container.contains(e.target)) this.close();
-            });
-            window.addEventListener('resize', () => { if (this.isOpen) this._positionDropdown(); });
-            window.addEventListener('scroll', () => { if (this.isOpen) this._positionDropdown(); }, true);
-        }
-
-        _positionDropdown() {
-            const rect = this.trigger.getBoundingClientRect();
-            const dropdownHeight = this.dropdown.offsetHeight;
-            const viewportHeight = window.innerHeight;
-            let top = rect.bottom + 4;
-            if (top + dropdownHeight > viewportHeight - 10) top = rect.top - dropdownHeight - 4;
-            this.dropdown.style.position = 'fixed';
-            this.dropdown.style.top = `${top}px`;
-            this.dropdown.style.left = `${rect.left}px`;
-            this.dropdown.style.width = `${rect.width}px`;
-        }
-
-        toggle() { this.isOpen ? this.close() : this.open(); }
-        open() {
-            if (this.isOpen) return;
-            this.isOpen = true;
-            this.trigger.classList.add('open');
-            this.dropdown.classList.add('open');
-            this._positionDropdown();
-        }
-        close() {
-            if (!this.isOpen) return;
-            this.isOpen = false;
-            this.trigger.classList.remove('open');
-            this.dropdown.classList.remove('open');
-        }
-
-        setValue(value) {
-            if (this.selectedValue == value) return;
-            this.selectedValue = value;
-            if (this.select) this.select.value = value;
-            const label = this._getSelectedLabel();
-            this.trigger.querySelector('.custom-select-value').textContent = label;
-            this.dropdown.querySelectorAll('.custom-select-option').forEach(el => {
-                el.classList.toggle('selected', el.dataset.value == value);
-            });
-            if (this.onChange) this.onChange(value);
-            if (this.select) {
-                const event = new Event('change', { bubbles: true });
-                this.select.dispatchEvent(event);
-            }
-        }
-
-        getValue() { return this.selectedValue; }
-
-        destroy() {
-            this.close();
-            if (this.container.parentNode) this.container.parentNode.removeChild(this.container);
-            if (this.select) this.select.style.display = '';
-            this.select = null;
-            this.container = null;
-            this.trigger = null;
-            this.dropdown = null;
-            this.options = null;
-        }
-    }
-
-    // ===== 投稿详情 Modal =====
     function showSubmissionDetail(item) {
         const modal = document.getElementById('submissionDetailModal');
         const content = document.getElementById('submissionDetailContent');
+
         const subOptions = subcategories.map(s => ({ value: s.id, label: s.name }));
 
         content.innerHTML = `
@@ -1108,18 +1248,13 @@
         `;
         modal.classList.add('show');
 
-        let dropdown = null;
-        const closeDetail = () => {
-            if (dropdown) { dropdown.destroy(); dropdown = null; }
-            modal.classList.remove('show');
-        };
-        document.getElementById('closeDetailModalBtn')?.addEventListener('click', closeDetail);
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeDetail(); });
-        document.getElementById('editCancelBtn')?.addEventListener('click', closeDetail);
+        document.getElementById('closeDetailModalBtn')?.addEventListener('click', () => modal.classList.remove('show'));
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
+        document.getElementById('editCancelBtn')?.addEventListener('click', () => modal.classList.remove('show'));
 
         const dropdownContainer = document.getElementById('subcategoryDropdownContainer');
         const defaultSubId = subOptions.length ? subOptions[0].value : null;
-        dropdown = new CustomSelect(dropdownContainer, subOptions, defaultSubId, function(value) {
+        let dropdown = new CustomDropdown(dropdownContainer, subOptions, defaultSubId, function(value) {
             updateOrderValue(value);
         });
 
@@ -1128,9 +1263,13 @@
             if (!orderInput) return;
             const subSites = sites.filter(s => s.subcategory_id === subcategoryId);
             let maxOrder = 0;
-            subSites.forEach(s => { if (s.display_order > maxOrder) maxOrder = s.display_order; });
-            orderInput.value = maxOrder + 1;
+            subSites.forEach(s => {
+                if (s.display_order > maxOrder) maxOrder = s.display_order;
+            });
+            const nextOrder = maxOrder + 1;
+            orderInput.value = nextOrder;
         }
+
         if (defaultSubId) updateOrderValue(defaultSubId);
 
         document.getElementById('editSaveBtn')?.addEventListener('click', async function() {
@@ -1152,12 +1291,17 @@
                     body: JSON.stringify({
                         subcategory_id: subcategoryId,
                         display_order: displayOrder,
-                        title, url, description, icon, contact,
+                        title,
+                        url,
+                        description,
+                        icon,
+                        contact,
                         sendEmail: true
                     })
                 });
                 showToast('修改并通过审核成功', 'success');
-                closeDetail();
+                modal.classList.remove('show');
+                dropdown.destroy();
                 await loadSubmissions();
                 await loadAllDataButKeepSelection();
                 notifyNavRefresh();
@@ -1166,17 +1310,33 @@
             }
         });
 
-        // 当modal通过其他方式关闭时，清理dropdown
-        const observer = new MutationObserver((mutations) => {
-            for (const mutation of mutations) {
-                if (mutation.attributeName === 'class' && !modal.classList.contains('show')) {
-                    if (dropdown) { dropdown.destroy(); dropdown = null; }
-                    observer.disconnect();
-                    break;
-                }
+        const closeModalHandler = function() {
+            if (dropdown) {
+                dropdown.destroy();
+                dropdown = null;
             }
-        });
-        observer.observe(modal, { attributes: true });
+            modal.classList.remove('show');
+        };
+        document.getElementById('editCancelBtn')?.addEventListener('click', closeModalHandler);
+        document.getElementById('closeDetailModalBtn')?.addEventListener('click', closeModalHandler);
+        modal._closeHandler = function(e) {
+            if (e.target === modal) {
+                if (dropdown) {
+                    dropdown.destroy();
+                    dropdown = null;
+                }
+                modal.classList.remove('show');
+            }
+        };
+        modal.addEventListener('click', modal._closeHandler);
+        const origRemove = modal.classList.remove.bind(modal.classList);
+        modal.classList.remove = function(className) {
+            if (className === 'show' && dropdown) {
+                dropdown.destroy();
+                dropdown = null;
+            }
+            origRemove(className);
+        };
     }
 
     async function approveSubmission(id) {
@@ -1200,30 +1360,316 @@
         } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
     }
 
-    // ===== 合作伙伴管理 =====
-    let partnersData = [];
-    let partnerIntroText = '';
+    class CustomSelect {
+        constructor(selectElement, onChange) {
+            this.select = selectElement;
+            this.onChange = onChange;
+            this.wrapper = null;
+            this.trigger = null;
+            this.dropdown = null;
+            this.options = [];
+            this.value = this.select.value;
+            this.isOpen = false;
+            this.init();
+            const id = selectElement.id || selectElement.name || Math.random().toString(36);
+            customSelectInstances.set(id, this);
+        }
+
+        init() {
+            this.select.style.display = 'none';
+            this.wrapper = document.createElement('div');
+            this.wrapper.className = 'custom-select-wrapper';
+            this.trigger = document.createElement('div');
+            this.trigger.className = 'custom-select-trigger';
+            this.trigger.innerHTML = `<span class="custom-select-value">${this.getSelectedText()}</span><span class="custom-select-arrow"></span>`;
+            this.dropdown = document.createElement('div');
+            this.dropdown.className = 'custom-select-dropdown';
+            this.wrapper.appendChild(this.trigger);
+            this.wrapper.appendChild(this.dropdown);
+            this.select.parentNode.insertBefore(this.wrapper, this.select.nextSibling);
+            this.populateOptions();
+            this.bindEvents();
+            this.select.addEventListener('change', () => this.setValue(this.select.value));
+        }
+
+        getSelectedText() {
+            const option = this.select.options[this.select.selectedIndex];
+            return option ? option.textContent : '';
+        }
+
+        populateOptions() {
+            this.dropdown.innerHTML = '';
+            this.options = [];
+            for (let i = 0; i < this.select.options.length; i++) {
+                const option = this.select.options[i];
+                const div = document.createElement('div');
+                div.className = 'custom-select-option';
+                if (i === this.select.selectedIndex) div.classList.add('selected');
+                div.textContent = option.textContent;
+                div.dataset.value = option.value;
+                div.dataset.index = i;
+                div.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.selectOption(i);
+                    this.close();
+                });
+                this.dropdown.appendChild(div);
+                this.options.push(div);
+            }
+        }
+
+        selectOption(index) {
+            if (index === this.select.selectedIndex) return;
+            this.select.selectedIndex = index;
+            this.value = this.select.value;
+            const valueSpan = this.trigger.querySelector('.custom-select-value');
+            if (valueSpan) valueSpan.textContent = this.select.options[index].textContent;
+            this.options.forEach((opt, i) => opt.classList.toggle('selected', i === index));
+            if (this.onChange) this.onChange(this.value);
+            const changeEvent = new Event('change', { bubbles: true });
+            this.select.dispatchEvent(changeEvent);
+        }
+
+        setValue(value) {
+            for (let i = 0; i < this.select.options.length; i++) {
+                if (this.select.options[i].value == value) {
+                    this.selectOption(i);
+                    break;
+                }
+            }
+        }
+
+        open() {
+            if (this.isOpen) return;
+            this.isOpen = true;
+            this.trigger.classList.add('open');
+            this.dropdown.classList.add('open');
+            this.positionDropdown();
+            this.handleOutsideClick = (e) => {
+                if (!this.wrapper.contains(e.target) && !this.dropdown.contains(e.target)) this.close();
+            };
+            setTimeout(() => document.addEventListener('click', this.handleOutsideClick), 0);
+        }
+
+        close() {
+            if (!this.isOpen) return;
+            this.isOpen = false;
+            this.trigger.classList.remove('open');
+            this.dropdown.classList.remove('open');
+            if (this.handleOutsideClick) document.removeEventListener('click', this.handleOutsideClick);
+        }
+
+        positionDropdown() {
+            const rect = this.trigger.getBoundingClientRect();
+            const dropdownHeight = this.dropdown.offsetHeight;
+            const viewportHeight = window.innerHeight;
+            let top = rect.bottom + 4;
+            if (top + dropdownHeight > viewportHeight - 10) top = rect.top - dropdownHeight - 4;
+            this.dropdown.style.position = 'fixed';
+            this.dropdown.style.top = `${top}px`;
+            this.dropdown.style.left = `${rect.left}px`;
+            this.dropdown.style.width = `${rect.width}px`;
+        }
+
+        bindEvents() {
+            this.trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.isOpen ? this.close() : this.open();
+            });
+            window.addEventListener('resize', () => { if (this.isOpen) this.positionDropdown(); });
+            window.addEventListener('scroll', () => { if (this.isOpen) this.positionDropdown(); }, true);
+        }
+
+        refresh() {
+            this.populateOptions();
+            const valueSpan = this.trigger.querySelector('.custom-select-value');
+            if (valueSpan) valueSpan.textContent = this.getSelectedText();
+        }
+
+        destroy() {
+            this.close();
+            if (this.wrapper && this.wrapper.parentNode) {
+                this.wrapper.parentNode.removeChild(this.wrapper);
+            }
+            this.select.style.display = '';
+            this.select = null;
+            this.wrapper = null;
+            this.trigger = null;
+            this.dropdown = null;
+            this.options = null;
+        }
+    }
+
+    function injectGlobalStyles() {
+        if (!document.getElementById('admin-global-styles')) {
+            const style = document.createElement('style');
+            style.id = 'admin-global-styles';
+            style.textContent = `
+                .custom-dropdown-container {
+                    position: relative;
+                    width: 100%;
+                }
+                .custom-dropdown-trigger {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 8px 12px;
+                    background: #fff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    color: #1e293b;
+                    transition: border-color 0.2s, box-shadow 0.2s;
+                    user-select: none;
+                    min-height: 36px;
+                }
+                .custom-dropdown-trigger:hover {
+                    border-color: #3b82f6;
+                }
+                .custom-dropdown-trigger.open {
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+                }
+                .custom-dropdown-value {
+                    flex: 1;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .custom-dropdown-arrow {
+                    width: 12px;
+                    height: 12px;
+                    flex-shrink: 0;
+                    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+                    background-size: contain; background-repeat: no-repeat;
+                    transition: transform 0.25s ease;
+                }
+                .custom-dropdown-trigger.open .custom-dropdown-arrow {
+                    transform: rotate(180deg);
+                }
+                .custom-dropdown-list {
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    right: 0;
+                    background: #fff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+                    z-index: 1000;
+                    max-height: 200px;
+                    overflow: hidden;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: scaleY(0.95);
+                    transform-origin: top center;
+                    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+                    margin-top: 4px;
+                    min-width: 100%;
+                }
+                .custom-dropdown-list.open {
+                    opacity: 1;
+                    visibility: visible;
+                    transform: scaleY(1);
+                }
+                .custom-dropdown-options-wrapper {
+                    max-height: 200px;
+                    overflow-y: auto;
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+                .custom-dropdown-options-wrapper::-webkit-scrollbar {
+                    display: none;
+                }
+                .custom-dropdown-option {
+                    padding: 8px 12px;
+                    font-size: 12px;
+                    color: #1e293b;
+                    cursor: pointer;
+                    transition: background 0.15s, color 0.15s;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .custom-dropdown-option:hover {
+                    background: #f1f5f9;
+                }
+                .custom-dropdown-option.selected {
+                    background: #e0f2fe;
+                    color: #0369a1;
+                    font-weight: 500;
+                }
+                .dark-mode .custom-dropdown-trigger {
+                    background: #1e293b;
+                    border-color: #334155;
+                    color: #e2e8f0;
+                }
+                .dark-mode .custom-dropdown-trigger:hover {
+                    border-color: #3b82f6;
+                }
+                .dark-mode .custom-dropdown-trigger.open {
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+                }
+                .dark-mode .custom-dropdown-list {
+                    background: #1e293b;
+                    border-color: #334155;
+                    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+                }
+                .dark-mode .custom-dropdown-option {
+                    color: #e2e8f0;
+                }
+                .dark-mode .custom-dropdown-option:hover {
+                    background: #334155;
+                }
+                .dark-mode .custom-dropdown-option.selected {
+                    background: #0f172a;
+                    color: #38bdf8;
+                }
+                .dark-mode .custom-dropdown-arrow {
+                    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2394a3b8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+
+    // ===== 合作伙伴管理函数 =====
 
     async function loadPartnerSettings() {
         try {
             const data = await apiFetch('/admin/partner-settings');
             partnerIntroText = data.intro || '';
             document.getElementById('partnerIntroInput').value = partnerIntroText;
-        } catch (e) { console.warn('加载合作公告失败:', e); }
+        } catch (e) {
+            console.warn('加载合作公告失败:', e);
+        }
     }
 
     async function savePartnerIntro() {
         const intro = document.getElementById('partnerIntroInput').value.trim();
         const btn = document.getElementById('savePartnerIntroBtn');
         const originalText = btn.textContent;
-        btn.disabled = true; btn.textContent = '保存中...';
+        btn.disabled = true;
+        btn.textContent = '保存中...';
         try {
-            await apiFetch('/admin/partner-settings', { method: 'PUT', body: JSON.stringify({ intro }) });
+            await apiFetch('/admin/partner-settings', {
+                method: 'PUT',
+                body: JSON.stringify({ intro })
+            });
             partnerIntroText = intro;
+            // ===== 修改 Toast 文字 =====
             showToast('合作公告已保存', 'success');
-            if (window.partnerModule && typeof window.partnerModule.refresh === 'function') window.partnerModule.refresh();
-        } catch (e) { showToast('保存失败: ' + e.message, 'error'); }
-        finally { btn.disabled = false; btn.textContent = originalText; }
+            if (window.partnerModule && typeof window.partnerModule.refresh === 'function') {
+                window.partnerModule.refresh();
+            }
+        } catch (e) {
+            showToast('保存失败: ' + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
     }
 
     async function loadPartnersAdmin() {
@@ -1246,7 +1692,7 @@
             return;
         }
         list.style.cssText = 'flex:1;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;padding-right:4px;';
-        list.innerHTML = partnersData.map(p => `
+        const html = partnersData.map(p => `
             <div class="partner-admin-item" style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--bg-card);border-radius:6px;margin-bottom:4px;border:1px solid var(--border-color);transition:all 0.2s;">
                 <div class="partner-admin-icon" style="width:28px;height:28px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--border-color);overflow:hidden;font-size:12px;color:var(--primary-color);">
                     ${p.icon ? `<img src="${escapeHtml(p.icon)}" alt="" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fas fa-link\\'></i>';">` : '<i class="fas fa-link"></i>'}
@@ -1255,6 +1701,8 @@
                 <button class="danger sm partner-delete-btn" data-id="${p.id}" data-name="${escapeHtml(p.name)}" style="padding:2px 10px;font-size:10px;flex-shrink:0;">删除</button>
             </div>
         `).join('');
+        list.innerHTML = html;
+
         list.querySelectorAll('.partner-delete-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const id = parseInt(this.dataset.id);
@@ -1270,34 +1718,54 @@
             await apiFetch(`/admin/partners/${id}`, { method: 'DELETE' });
             showToast(`已删除「${name}」`, 'success');
             await loadPartnersAdmin();
-            if (window.partnerModule && typeof window.partnerModule.refresh === 'function') window.partnerModule.refresh();
-        } catch (e) { showToast('删除失败: ' + e.message, 'error'); }
+            if (window.partnerModule && typeof window.partnerModule.refresh === 'function') {
+                window.partnerModule.refresh();
+            }
+        } catch (e) {
+            showToast('删除失败: ' + e.message, 'error');
+        }
     }
 
     async function addPartner() {
         const url = document.getElementById('partnerUrlInput').value.trim();
         const name = document.getElementById('partnerNameInput').value.trim();
         const icon = document.getElementById('partnerIconInput').value.trim();
+
         if (!url) { showToast('请输入网站链接', 'error'); return; }
         if (!name) { showToast('请输入网站标题', 'error'); return; }
-        if (!url.startsWith('http://') && !url.startsWith('https://')) { showToast('链接格式不正确，请以 http:// 或 https:// 开头', 'error'); return; }
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            showToast('链接格式不正确，请以 http:// 或 https:// 开头', 'error');
+            return;
+        }
+
         const btn = document.getElementById('addPartnerBtn');
         const originalText = btn.textContent;
-        btn.disabled = true; btn.textContent = '添加中...';
+        btn.disabled = true;
+        btn.textContent = '添加中...';
+
         try {
-            await apiFetch('/admin/partners', { method: 'POST', body: JSON.stringify({ name, url, icon }) });
+            await apiFetch('/admin/partners', {
+                method: 'POST',
+                body: JSON.stringify({ name, url, icon })
+            });
             showToast('添加成功', 'success');
             document.getElementById('partnerUrlInput').value = '';
             document.getElementById('partnerNameInput').value = '';
             document.getElementById('partnerIconInput').value = '';
             await loadPartnersAdmin();
-            if (window.partnerModule && typeof window.partnerModule.refresh === 'function') window.partnerModule.refresh();
-        } catch (e) { showToast('添加失败: ' + e.message, 'error'); }
-        finally { btn.disabled = false; btn.textContent = originalText; }
+            if (window.partnerModule && typeof window.partnerModule.refresh === 'function') {
+                window.partnerModule.refresh();
+            }
+        } catch (e) {
+            showToast('添加失败: ' + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
     }
 
     // ============================================================
-    // 事件绑定（已精简）
+    // 核心：设置事件代理（包含刷新缓存按钮 + 合作伙伴管理）
     // ============================================================
     function setupEventDelegation() {
         document.getElementById('catBar').addEventListener('click', e => {
@@ -1320,7 +1788,8 @@
         });
         document.getElementById('siteList').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
-            if (btn && btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
+            if (!btn) return;
+            if (btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
         });
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1336,7 +1805,10 @@
                 if (tabId === 'submissions') loadSubmissions();
                 if (tabId === 'announcement') loadAnnouncement();
                 if (tabId === 'manage') loadAdminSites(true);
-                if (tabId === 'partners') { loadPartnerSettings(); loadPartnersAdmin(); }
+                if (tabId === 'partners') {
+                    loadPartnerSettings();
+                    loadPartnersAdmin();
+                }
             });
         });
 
@@ -1363,64 +1835,54 @@
         document.getElementById('batchDeleteBtn')?.addEventListener('click', batchDeleteSites);
         document.getElementById('batchMoveBtn')?.addEventListener('click', batchMoveSites);
 
-        // 刷新缓存
+        // ===== 刷新缓存按钮 =====
         document.getElementById('refreshCacheBtn')?.addEventListener('click', async function() {
             const btn = this;
             const originalText = btn.textContent;
-            btn.disabled = true; btn.textContent = '刷新中...';
+            btn.disabled = true;
+            btn.textContent = '刷新中...';
+
             try {
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
                 const keysToRemove = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
-                    if (key && key.startsWith('nav_data_')) keysToRemove.push(key);
+                    if (key && key.startsWith('nav_data_')) {
+                        keysToRemove.push(key);
+                    }
                 }
                 keysToRemove.forEach(key => localStorage.removeItem(key));
                 localStorage.removeItem('nav_cache_version');
-                try { localStorage.setItem('nav_refresh_required', Date.now()); document.dispatchEvent(new CustomEvent('navRefreshRequested')); } catch (e) {}
+                try {
+                    localStorage.setItem('nav_refresh_required', Date.now());
+                    document.dispatchEvent(new CustomEvent('navRefreshRequested'));
+                } catch (e) {}
                 await loadAllDataButKeepSelection();
                 showToast('所有缓存已刷新，数据已更新', 'success');
-            } catch (e) { showToast('刷新失败：' + (e.message || '网络错误'), 'error'); }
-            finally { btn.disabled = false; btn.textContent = originalText; }
+            } catch (e) {
+                showToast('刷新失败：' + (e.message || '网络错误'), 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
         });
 
-        // 合作伙伴
+        // ===== 合作伙伴管理事件 =====
         document.getElementById('savePartnerIntroBtn')?.addEventListener('click', savePartnerIntro);
         document.getElementById('addPartnerBtn')?.addEventListener('click', addPartner);
-        document.getElementById('partnerNameInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addPartnerBtn')?.click(); } });
-        document.getElementById('partnerUrlInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addPartnerBtn')?.click(); } });
-    }
 
-    // ===== 初始化 =====
-    function injectGlobalStyles() {
-        if (!document.getElementById('admin-global-styles')) {
-            const style = document.createElement('style');
-            style.id = 'admin-global-styles';
-            style.textContent = `
-                .custom-select-wrapper { position: relative; flex:1; min-width:110px; }
-                .custom-select-trigger { display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; color:#1e293b; cursor:pointer; gap:6px; transition:border-color .2s,box-shadow .2s,background .2s; user-select:none; min-height:32px; }
-                .custom-select-trigger:hover { border-color:#3b82f6; background:#f8fafc; }
-                .custom-select-trigger.open { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.12); background:#fff; }
-                .custom-select-value { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px; }
-                .custom-select-arrow { width:12px; height:12px; flex-shrink:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2364748b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-size:contain; background-repeat:no-repeat; transition:transform .25s ease; }
-                .custom-select-trigger.open .custom-select-arrow { transform:rotate(180deg); }
-                .custom-select-dropdown { position:fixed; background:#fff; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.1); z-index:1000; max-height:200px; overflow-y:auto; opacity:0; visibility:hidden; transform:translateY(-6px) scale(0.96); transition:opacity .2s ease,transform .2s ease,visibility .2s; scrollbar-width:none; -ms-overflow-style:none; }
-                .custom-select-dropdown::-webkit-scrollbar { display:none; }
-                .custom-select-dropdown.open { opacity:1; visibility:visible; transform:translateY(0) scale(1); }
-                .custom-select-option { padding:8px 12px; font-size:12px; color:#1e293b; cursor:pointer; transition:background .15s,color .15s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-                .custom-select-option:hover { background:#f1f5f9; }
-                .custom-select-option.selected { background:#e0f2fe; color:#0369a1; font-weight:500; }
-                .dark-mode .custom-select-trigger { background:#1e293b; border-color:#334155; color:#e2e8f0; }
-                .dark-mode .custom-select-trigger:hover { border-color:#3b82f6; background:#0f172a; }
-                .dark-mode .custom-select-trigger.open { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.2); }
-                .dark-mode .custom-select-dropdown { background:#1e293b; border-color:#334155; box-shadow:0 4px 16px rgba(0,0,0,0.3); }
-                .dark-mode .custom-select-option { color:#e2e8f0; }
-                .dark-mode .custom-select-option:hover { background:#334155; }
-                .dark-mode .custom-select-option.selected { background:#0f172a; color:#38bdf8; }
-                .dark-mode .custom-select-arrow { background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%2394a3b8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); }
-            `;
-            document.head.appendChild(style);
-        }
+        document.getElementById('partnerNameInput')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('addPartnerBtn')?.click();
+            }
+        });
+        document.getElementById('partnerUrlInput')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('addPartnerBtn')?.click();
+            }
+        });
     }
 
     injectGlobalStyles();
@@ -1434,19 +1896,25 @@
         (async () => {
             try {
                 await apiFetch('/admin/categories');
-                document.getElementById('loginWrapper').style.display = 'none';
-                document.getElementById('mainContent').classList.remove('hidden');
+                const loginWrapper = document.getElementById('loginWrapper');
+                const mainContent = document.getElementById('mainContent');
+                if (loginWrapper) loginWrapper.style.display = 'none';
+                if (mainContent) mainContent.classList.remove('hidden');
                 await loadAllData();
                 await loadAnnouncement();
                 startSessionRefresh();
             } catch (e) { logout(); }
         })();
     } else {
-        document.getElementById('loginWrapper').style.display = 'flex';
-        document.getElementById('mainContent').classList.add('hidden');
+        const loginWrapper = document.getElementById('loginWrapper');
+        const mainContent = document.getElementById('mainContent');
+        if (loginWrapper) loginWrapper.style.display = 'flex';
+        if (mainContent) mainContent.classList.add('hidden');
         loadCaptcha();
         setInterval(() => {
-            if (document.getElementById('captchaGroup')?.style.display !== 'none' && !token) loadCaptcha();
+            if (document.getElementById('captchaGroup')?.style.display !== 'none' && !token) {
+                loadCaptcha();
+            }
         }, 4 * 60 * 1000);
     }
 
@@ -1456,4 +1924,6 @@
     }, 30000);
 
     setupEventDelegation();
+
+    window.addEventListener('beforeunload', () => {});
 })();
