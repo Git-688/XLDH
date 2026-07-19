@@ -52,15 +52,20 @@
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
 
-    <!-- ===== 前端资源预加载优化 ===== -->
-    <link rel="preload" href="./js/main.js" as="script">
-    <link rel="preload" href="./css/style.css" as="style">
-    <link rel="preload" href="./js/modules/navigation.js" as="script">
-    <link rel="preload" href="./js/components/sidebar.js" as="script">
-    <link rel="preload" href="./js/modules/wallpaper.js" as="script">
-    <link rel="preload" href="./js/modules/greeting.js" as="script">
-    <link rel="preload" href="./css/modules/navigation.css" as="style">
-    <link rel="preload" href="./css/modules/sidebar.css" as="style">
+    <!-- ===== 版本号定义 ===== -->
+    <script>
+        window.ASSET_VERSION = '20260120';
+    </script>
+
+    <!-- ===== 前端资源预加载优化（带版本号） ===== -->
+    <link rel="preload" href="./js/main.js?v=20260120" as="script">
+    <link rel="preload" href="./css/style.css?v=20260120" as="style">
+    <link rel="preload" href="./js/modules/navigation.js?v=20260120" as="script">
+    <link rel="preload" href="./js/components/sidebar.js?v=20260120" as="script">
+    <link rel="preload" href="./js/modules/wallpaper.js?v=20260120" as="script">
+    <link rel="preload" href="./js/modules/greeting.js?v=20260120" as="script">
+    <link rel="preload" href="./css/modules/navigation.css?v=20260120" as="style">
+    <link rel="preload" href="./css/modules/sidebar.css?v=20260120" as="style">
     <link rel="preload" href="./assets/logo.webp" as="image" type="image/webp">
 
     <script>
@@ -97,10 +102,36 @@
     <link rel="dns-prefetch" href="https://api.kuleu.com">
     <link rel="dns-prefetch" href="https://api.injahow.cn">
 
+    <!-- 外部字体预加载（不带版本号） -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 
+    <!-- ===== 本地样式（带版本号） ===== -->
+    <link rel="stylesheet" href="./css/style.css?v=20260120">
+    <link rel="stylesheet" href="./css/modules/navbar.css?v=20260120">
+    <link rel="stylesheet" href="./css/modules/sidebar.css?v=20260120">
+    <link rel="stylesheet" href="./css/modules/announcement.css?v=20260120">
+    <link rel="stylesheet" href="./css/modules/search.css?v=20260120">
+    <link rel="stylesheet" href="./css/modules/weather.css?v=20260120">
+    <link rel="stylesheet" href="./css/modules/about.css?v=20260120">
+    <link rel="stylesheet" href="./css/modules/navigation.css?v=20260120">
+    <link rel="stylesheet" href="./css/modules/wallpaper.css?v=20260120">
+    <link rel="stylesheet" href="./css/modules/greeting.css?v=20260120">
+    <link rel="stylesheet" href="./css/modules/stats.css?v=20260120">
+    <link rel="stylesheet" href="./css/modules/compact-tags.css?v=20260120">
+    <link rel="stylesheet" href="./css/responsive.css?v=20260120">
+    <link rel="stylesheet" href="./css/xfyy1/music-player.css?v=20260120">
+    <link rel="stylesheet" href="./css/modules/comment.css?v=20260120">
+
+    <!-- ===== 外部 CDN 样式（无版本号或由 CDN 管理） ===== -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
+
     <style>
+        /* 内联样式保持不变（略） */
         .scroll-progress {
             position: fixed;
             top: 0;
@@ -641,29 +672,40 @@
         }
     </style>
 
-    <link rel="preload" href="./css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/navbar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/sidebar.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/announcement.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/search.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/weather.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/about.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/navigation.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/wallpaper.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/greeting.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/stats.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/compact-tags.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/responsive.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/xfyy1/music-player.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="./css/modules/comment.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <!-- ===== 本地脚本（带版本号） ===== -->
+    <script defer src="./js/constants.js?v=20260120"></script>
+    <script defer src="./js/utils.js?v=20260120"></script>
+    <script defer src="./js/toast.js?v=20260120"></script>
+    <script defer src="./js/error-handler.js?v=20260120"></script>
+    <script defer src="./js/storage.js?v=20260120"></script>
+    <script defer src="./js/components/navbar.js?v=20260120"></script>
+    <script defer src="./js/components/sidebar.js?v=20260120"></script>
+    <script defer src="./js/modules/announcement.js?v=20260120"></script>
+    <script defer src="./js/modules/search.js?v=20260120"></script>
+    <script defer src="./js/modules/weather.js?v=20260120"></script>
+    <script defer src="./js/modules/about.js?v=20260120"></script>
+    <script defer src="./js/modules/navigation.js?v=20260120"></script>
+    <script defer src="./js/modules/wallpaper.js?v=20260120"></script>
+    <script defer src="./js/modules/greeting.js?v=20260120"></script>
+    <script defer src="./js/modules/stats.js?v=20260120"></script>
+    <script defer src="./js/modules/compact-tags.js?v=20260120"></script>
+    <script defer src="./js/main.js?v=20260120"></script>
+    <script defer src="./js/partner.js?v=20260120"></script>
+    <script defer src="./js/xfyy/cache-manager.js?v=20260120"></script>
+    <script defer src="./js/xfyy/lyric-parser.js?v=20260120"></script>
+    <script defer src="./data/local-music-data.js?v=20260120"></script>
+    <script defer src="./js/xfyy/plugin-manager.js?v=20260120"></script>
+    <script defer src="./js/xfyy/music-player.js?v=20260120"></script>
+    <script defer src="./js/xfyy/music-main.js?v=20260120"></script>
+    <script defer src="./js/modules/comment.js?v=20260120"></script>
+    <script defer src="./js/modules/submit.js?v=20260120"></script>
+    <script defer src="./js/modules/theme.js?v=20260120"></script>
+    <script defer src="./js/cursor2.js?v=20260120"></script>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
+    <!-- ===== 外部 CDN 脚本（无版本号或由 CDN 管理） ===== -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
 
-    <link rel="preload" href="./js/main.js" as="script">
+    <!-- 其余 body 内容与之前完全相同 -->
 </head>
 <body>
     <div class="scroll-progress" id="scrollProgress"></div>
@@ -767,7 +809,6 @@
             <div class="container">
                 <div class="tags-header">
                     <h2 class="tags-title">常用标签</h2>
-                    <!-- 合作伙伴按钮 -->
                     <button class="partner-trigger-btn" id="partnerTriggerBtn">🤝 合作伙伴</button>
                 </div>
                 <div class="tags-grid" id="tagsGrid">
@@ -941,9 +982,11 @@
         </div>
     </main>
 
+    <!-- 外部 jQuery -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
     <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
+    <!-- 滚动进度 -->
     <script>
         (function() {
             const progressBar = document.getElementById('scrollProgress');
@@ -960,41 +1003,11 @@
         })();
     </script>
 
+    <!-- 外部 KaTeX -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
-    <script defer src="./js/constants.js"></script>
-    <script defer src="./js/utils.js"></script>
-    <script defer src="./js/toast.js"></script>
-    <script defer src="./js/error-handler.js"></script>
-    <script defer src="./js/storage.js"></script>
-    <script defer src="./js/components/navbar.js"></script>
-    <script defer src="./js/components/sidebar.js"></script>
-    <script defer src="./js/modules/announcement.js"></script>
-    <script defer src="./js/modules/search.js"></script>
-    <script defer src="./js/modules/weather.js"></script>
-    <script defer src="./js/modules/about.js"></script>
-    <script defer src="./js/modules/navigation.js"></script>
-    <script defer src="./js/modules/wallpaper.js"></script>
-    <script defer src="./js/modules/greeting.js"></script>
-    <script defer src="./js/modules/stats.js"></script>
-    <script defer src="./js/modules/compact-tags.js"></script>
-    <script defer src="./js/main.js"></script>
-    <script defer src="./js/partner.js"></script>
-    <script defer src="./js/xfyy/cache-manager.js"></script>
-    <script defer src="./js/xfyy/lyric-parser.js"></script>
-    <script defer src="./data/local-music-data.js"></script>
-    <script defer src="./js/xfyy/plugin-manager.js"></script>
-    <script defer src="./js/xfyy/music-player.js"></script>
-    <script defer src="./js/xfyy/music-main.js"></script>
-
-    <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
-
-    <script defer src="./js/modules/comment.js"></script>
-    <script defer src="./js/modules/submit.js"></script>
-    <script defer src="./js/modules/theme.js"></script>
-    <script defer src="./js/cursor2.js"></script>
-
+    <!-- ===== Cookie 同意横幅 ===== -->
     <script>
         (function() {
             'use strict';
@@ -1099,6 +1112,7 @@
         })();
     </script>
 
+    <!-- ===== 排行榜 Modal 控制 ===== -->
     <script>
         (function() {
             'use strict';
