@@ -1,10 +1,7 @@
-/* utils.js - 精简版（移除重复和未使用的方法） */
+/* utils.js - 移除重试机制，使用简单 fetch */
 (function(window) {
-    'use strict';
-
     const Utils = {};
 
-    // ---------- 字符串工具 ----------
     Utils.escapeHtml = function(str) {
         if (!str) return '';
         return String(str)
@@ -15,21 +12,19 @@
             .replace(/'/g, '&#39;');
     };
 
-    // ---------- 格式化工具 ----------
     Utils.formatViews = function(views) {
         if (views >= 1000000) return (views / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
         if (views >= 1000) return (views / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-        return String(views || 0);
+        return views.toString();
     };
 
     Utils.formatTime = function(seconds) {
-        if (isNaN(seconds) || seconds < 0) return '00:00';
+        if (isNaN(seconds)) return '00:00';
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
-        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+        return mins.toString().padStart(2, '0') + ':' + secs.toString().padStart(2, '0');
     };
 
-    // ---------- 防抖/节流 ----------
     Utils.debounce = function(func, wait, immediate = false) {
         let timeout;
         return function() {
@@ -53,12 +48,11 @@
             if (!inThrottle) {
                 func.apply(context, args);
                 inThrottle = true;
-                setTimeout(() => { inThrottle = false; }, limit);
+                setTimeout(() => inThrottle = false, limit);
             }
         };
     };
 
-    // ---------- 验证工具 ----------
     Utils.isValidUrl = function(url) {
         try {
             const testUrl = url.startsWith('http') ? url : 'https://' + url;
@@ -68,16 +62,14 @@
         }
     };
 
-    Utils.isMobile = function() {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    };
-
-    // ---------- ID 生成 ----------
     Utils.generateId = function() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
     };
 
-    // ---------- 设备标识 ----------
+    Utils.isMobile = function() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    };
+
     Utils.getDeviceId = function() {
         let deviceId = localStorage.getItem('device_id');
         if (!deviceId) {
@@ -87,12 +79,10 @@
         return deviceId;
     };
 
-    // ---------- 深拷贝 ----------
     Utils.deepClone = function(obj) {
         return JSON.parse(JSON.stringify(obj));
     };
 
-    // ---------- Cookie 操作 ----------
     Utils.setCookie = function(name, value, days) {
         let expires = '';
         if (days) {
@@ -108,13 +98,12 @@
         const ca = document.cookie.split(';');
         for (let i = 0; i < ca.length; i++) {
             let c = ca[i];
-            while (c.charAt(0) === ' ') c = c.substring(1);
-            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length);
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
         }
         return null;
     };
 
-    // ---------- WebP 检测（同步/异步） ----------
     let _webpSupported = null;
     let _webpPromise = null;
 
@@ -122,11 +111,21 @@
         if (_webpSupported !== null) return Promise.resolve(_webpSupported);
         if (_webpPromise) return _webpPromise;
         _webpPromise = new Promise((resolve) => {
-            if (!window.createImageBitmap) { _webpSupported = false; resolve(false); return; }
+            if (!window.createImageBitmap) {
+                _webpSupported = false;
+                resolve(false);
+                return;
+            }
             const webpData = 'data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA=';
-            fetch(webpData).then(r => r.blob()).then(blob => createImageBitmap(blob))
-                .then(() => { _webpSupported = true; resolve(true); })
-                .catch(() => { _webpSupported = false; resolve(false); });
+            fetch(webpData).then(response => response.blob()).then(blob => {
+                return createImageBitmap(blob);
+            }).then(() => {
+                _webpSupported = true;
+                resolve(true);
+            }).catch(() => {
+                _webpSupported = false;
+                resolve(false);
+            });
         });
         return _webpPromise;
     };
@@ -163,8 +162,12 @@
 
     Utils.toWebPUrl = function(originalUrl, quality = 80, width = null, height = null) {
         if (!originalUrl) return originalUrl;
-        if (originalUrl.match(/\.webp$/i) || originalUrl.match(/\.svg$/i)) return originalUrl;
-        if (originalUrl.startsWith('data:')) return originalUrl;
+        if (originalUrl.match(/\.webp$/i) || originalUrl.match(/\.svg$/i)) {
+            return originalUrl;
+        }
+        if (originalUrl.startsWith('data:')) {
+            return originalUrl;
+        }
         const apiBase = Utils.getApiBase();
         let params = `url=${encodeURIComponent(originalUrl)}&quality=${quality}`;
         if (width) params += `&width=${width}`;
@@ -172,13 +175,14 @@
         return `${apiBase}/image-proxy?${params}`;
     };
 
-    // ---------- API 错误处理 ----------
-    const C = window.APP_CONSTANTS || { API: { BASE_TIMEOUT: 15000 } };
+    const C = window.APP_CONSTANTS || {
+        API: { BASE_TIMEOUT: 15000 }
+    };
 
     Utils.handleApiError = function(error, defaultMessage = '操作失败，请稍后重试', showToast = true) {
         console.error('[API Error]', error);
         let message = defaultMessage;
-        if (error?.message) {
+        if (error && error.message) {
             if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch')) {
                 message = '网络连接异常，请检查网络后重试';
             } else if (error.message.includes('timeout') || error.message.includes('Timeout')) {
@@ -193,10 +197,9 @@
                 message = error.message;
             }
         }
-        if (showToast && window.toast?.show) {
+        if (showToast && window.toast && typeof window.toast.show === 'function') {
             window.toast.show(message, 'error');
         }
-        // 静默上报
         const apiBase = Utils.getApiBase();
         if (apiBase) {
             try {
@@ -217,9 +220,8 @@
         return message;
     };
 
-    // ---------- 安全 Fetch ----------
     Utils.safeFetch = async function(url, options = {}) {
-        const timeout = options.timeout || C.API?.BASE_TIMEOUT || 15000;
+        const timeout = options.timeout || C.API.BASE_TIMEOUT || 15000;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
         try {
@@ -237,34 +239,35 @@
     };
 
     Utils.safeFetchSilent = async function(url, options = {}) {
-        try { return await Utils.safeFetch(url, options); }
-        catch { return null; }
+        try {
+            return await Utils.safeFetch(url, options);
+        } catch (error) {
+            return null;
+        }
     };
 
-    // ---------- 包装异步函数 ----------
     Utils.wrapAsync = function(fn, fallback = null, errorMessage = '操作失败') {
         return async function(...args) {
             try {
                 return await fn.apply(this, args);
             } catch (error) {
                 Utils.handleApiError(error, errorMessage, true);
-                return typeof fallback === 'function' ? fallback() : fallback;
+                return fallback !== null ? (typeof fallback === 'function' ? fallback() : fallback) : null;
             }
         };
     };
 
-    // ---------- 全局错误处理 ----------
     Utils.setupGlobalErrorHandler = function() {
         if (window._errorHandlerSetup) return;
         window._errorHandlerSetup = true;
 
-        const shouldIgnore = (m) => {
-            const msg = String(m || '');
-            return msg === 'Script error.' || msg === 'null' || msg === 'undefined' || msg.trim() === '';
+        const shouldIgnore = (message) => {
+            const m = String(message || '');
+            return m === 'Script error.' || m === 'null' || m === 'undefined' || m.trim() === '';
         };
 
         const handleError = (event) => {
-            const msg = event.message || event.error?.message || '';
+            const msg = event.message || (event.error && event.error.message) || '';
             if (shouldIgnore(msg)) return;
             const error = event.error || event.reason;
             const errorMessage = error?.message || msg || '未知错误';
@@ -272,7 +275,9 @@
             console.error('[Global Error]', errorMessage);
             if (!window._lastErrorTime || Date.now() - window._lastErrorTime > 5000) {
                 window._lastErrorTime = Date.now();
-                window.toast?.show('页面遇到问题，建议刷新页面', 'error');
+                if (window.toast && typeof window.toast.show === 'function') {
+                    window.toast.show('页面遇到问题，建议刷新页面', 'error');
+                }
             }
             const apiBase = Utils.getApiBase();
             if (apiBase) {
@@ -301,15 +306,13 @@
         };
     };
 
-    // ---------- 配置获取 ----------
     Utils.getApiBase = function() {
-        return window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc';
+        return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     };
 
     Utils.getWalineServer = function() {
-        return window.APP_CONFIG?.WALINE_SERVER || 'https://yy688.ccwu.cc';
+        return (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc';
     };
 
-    // ---------- 暴露全局 ----------
     window.Utils = Utils;
 })(window);
