@@ -1,4 +1,4 @@
-/* sidebar.js - 侧边栏底部福利替换为投稿 */
+/* sidebar.js - 侧边栏底部福利替换为投稿 + 修复投稿按钮依赖 + QQ号持久化 */
 (function() {
     const CATEGORIES_DATA = [
         { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
@@ -249,17 +249,19 @@
             }
         }
 
+        // ===== 修改：通过全局App获取submit模块，增加降级 =====
         handleFooterAction(action) {
             switch (action) {
                 case 'notebook':
                     if (window.showNotebookModal) window.showNotebookModal();
                     break;
-                case 'submit':
-                    if (window.submitModule && typeof window.submitModule.show === 'function') {
-                        window.submitModule.show();
-                    } else if (window.Starlink && window.Starlink.submit && typeof window.Starlink.submit.show === 'function') {
-                        window.Starlink.submit.show();
+                case 'submit': {
+                    // 优先从全局App实例获取submit模块
+                    const submitModule = window.Starlink?.app?.modules?.submit || window.submitModule;
+                    if (submitModule && typeof submitModule.show === 'function') {
+                        submitModule.show();
                     } else {
+                        // 降级：直接操作DOM
                         const submitModal = document.getElementById('submitModal');
                         if (submitModal) {
                             submitModal.classList.add('active');
@@ -276,6 +278,7 @@
                         }
                     }
                     break;
+                }
                 case 'about':
                     if (window.aboutModule && window.aboutModule.show) window.aboutModule.show();
                     break;
@@ -339,8 +342,10 @@
             }
         }
 
+        // ===== 修改：增加QQ号持久化（读取和保存） =====
         openProfileModal() {
             const currentAvatar = (this.userConfig && this.userConfig.avatar) ? this.userConfig.avatar : './assets/logo.png';
+            const currentQQ = (this.userConfig && this.userConfig.qq) ? this.userConfig.qq : '';
             const containerPadding = getComputedStyle(document.documentElement).getPropertyValue('--container-padding-xs').trim() || '16px';
             const modalHtml = `
                 <div id="profileModal" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:10002;display:flex;align-items:center;justify-content:center;">
@@ -369,7 +374,7 @@
                         <div style="padding:16px 20px;">
                             <div style="margin-bottom:16px;">
                                 <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary, #64748b);">QQ号码（自动获取头像）</label>
-                                <input type="text" id="profileQQ" placeholder="输入QQ号" value="" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e0e0e0;background:#ffffff;font-size:13px;">
+                                <input type="text" id="profileQQ" placeholder="输入QQ号" value="${this.escapeHtml(currentQQ)}" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e0e0e0;background:#ffffff;font-size:13px;">
                                 <div id="qqAvatarStatus" style="font-size:11px;margin-top:6px;color:#666;"></div>
                             </div>
                             <div style="margin-bottom:16px;">
@@ -445,9 +450,11 @@
             saveBtn?.addEventListener('click', () => {
                 const newName = document.getElementById('profileNickname')?.value.trim() || '访客用户';
                 const newSig = document.getElementById('profileSignature')?.value.trim() || '探索无限可能';
+                const newQQ = document.getElementById('profileQQ')?.value.trim() || '';
                 const userConfig = Storage.get('userConfig') || {};
                 userConfig.nickname = newName;
                 userConfig.signature = newSig;
+                userConfig.qq = newQQ;  // 保存QQ号
                 if (this.userConfig.avatar) userConfig.avatar = this.userConfig.avatar;
                 Storage.set('userConfig', userConfig);
                 this.loadUserData();
