@@ -1,8 +1,7 @@
-/* announcement.js - 精简版（公告展示 + 未读标记 + 模态控制） */
+/* announcement.js */
 class AnnouncementModule {
     constructor() {
-        if (window.Starlink?.announcement) return window.Starlink.announcement;
-        
+        if (window.Starlink && window.Starlink.announcement) return window.Starlink.announcement;
         this.modalElement = null;
         this.isVisible = false;
         this.currentAnnouncement = null;
@@ -10,7 +9,6 @@ class AnnouncementModule {
         this.apiBase = Utils.getApiBase();
         this.loadAnnouncement();
         this.setupGlobalEvents();
-        
         if (window.Starlink) window.Starlink.announcement = this;
         window.announcementModule = this;
     }
@@ -26,9 +24,13 @@ class AnnouncementModule {
         try {
             const response = await fetch(`${this.apiBase}/announcement/active`);
             const data = await response.json();
-            if (data?.id && data.title && data.content) {
+            if (data && data.id && data.title && data.content) {
                 const lastSeenId = localStorage.getItem('announcement_last_seen_id');
-                this.setUnreadFlag(!lastSeenId || data.id !== parseInt(lastSeenId));
+                if (!lastSeenId || data.id !== parseInt(lastSeenId)) {
+                    this.setUnreadFlag(true);
+                } else {
+                    this.setUnreadFlag(false);
+                }
                 return {
                     id: data.id,
                     title: data.title,
@@ -36,9 +38,10 @@ class AnnouncementModule {
                     content: data.content,
                     date: data.date || new Date(data.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
                 };
+            } else {
+                this.setUnreadFlag(false);
+                return null;
             }
-            this.setUnreadFlag(false);
-            return null;
         } catch (error) {
             console.error('获取公告失败:', error);
             return null;
@@ -66,7 +69,7 @@ class AnnouncementModule {
     }
 
     markAsRead() {
-        if (this.currentAnnouncement?.id) {
+        if (this.currentAnnouncement && this.currentAnnouncement.id) {
             localStorage.setItem('announcement_last_seen_id', this.currentAnnouncement.id);
             localStorage.setItem('announcement_last_seen_time', Date.now());
             this.setUnreadFlag(false);
@@ -74,25 +77,36 @@ class AnnouncementModule {
     }
 
     async loadAnnouncement() {
-        this.currentAnnouncement = await this.fetchActiveAnnouncement();
+        const ann = await this.fetchActiveAnnouncement();
+        this.currentAnnouncement = ann;
         this.createModal();
     }
 
     createModal() {
-        if (this.modalElement) { this.modalElement.remove(); this.modalElement = null; }
+        if (this.modalElement) {
+            this.modalElement.remove();
+            this.modalElement = null;
+        }
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'announcement-modal-simple';
         this.modalElement.id = 'announcementModal';
-
-        if (!this.currentAnnouncement?.title) {
+        
+        if (!this.currentAnnouncement || !this.currentAnnouncement.title) {
             this.modalElement.innerHTML = `
                 <div class="announcement-modal-container">
                     <div class="announcement-header">
-                        <div class="announcement-title"><i class="fas fa-bell" style="color:#4361ee;font-size:1.2rem;"></i><span>暂无公告</span></div>
-                        <button class="announcement-close" id="announcementClose"><i class="fas fa-times"></i></button>
+                        <div class="announcement-title">
+                            <i class="fas fa-bell" style="color: #4361ee; font-size: 1.2rem;"></i>
+                            <span>暂无公告</span>
+                        </div>
+                        <button class="announcement-close" id="announcementClose" aria-label="关闭">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                     <div class="announcement-body">
-                        <div class="focus-section"><div class="focus-content">当前没有系统公告，敬请期待。</div></div>
+                        <div class="focus-section">
+                            <div class="focus-content">当前没有系统公告，敬请期待。</div>
+                        </div>
                     </div>
                     <div class="announcement-footer">
                         <button class="announcement-ack-btn" id="announcementAckBtn">知道了</button>
@@ -104,22 +118,37 @@ class AnnouncementModule {
             return;
         }
 
-        const { title, important, content, date } = this.currentAnnouncement;
+        const title = this.escapeHtml(this.currentAnnouncement.title);
+        const important = this.escapeHtml(this.currentAnnouncement.important || '');
+        const content = this.escapeHtml(this.currentAnnouncement.content).replace(/\n/g, '<br>');
+        const date = this.escapeHtml(this.currentAnnouncement.date);
+
         this.modalElement.innerHTML = `
             <div class="announcement-modal-container">
                 <div class="announcement-header">
-                    <div class="announcement-title"><i class="fas fa-bell" style="color:#4361ee;font-size:1.2rem;"></i><span>${this.escapeHtml(title)}</span></div>
-                    <button class="announcement-close" id="announcementClose"><i class="fas fa-times"></i></button>
+                    <div class="announcement-title">
+                        <i class="fas fa-bell" style="color: #4361ee; font-size: 1.2rem;"></i>
+                        <span>${title}</span>
+                    </div>
+                    <button class="announcement-close" id="announcementClose" aria-label="关闭">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
                 <div class="announcement-body">
-                    <div class="focus-section"><div class="focus-content">${important ? this.escapeHtml(important) : '暂无重要提示'}</div></div>
+                    <div class="focus-section">
+                        <div class="focus-content">${important ? `${important}` : '暂无重要提示'}</div>
+                    </div>
                     <div class="updates-section">
-                        <div class="updates-title"><i class="fas fa-sync-alt" style="color:#10b981;"></i> 更新内容：</div>
-                        <ul class="updates-list"><li>${this.escapeHtml(content).replace(/\n/g, '<br>')}</li></ul>
+                        <div class="updates-title">
+                            <i class="fas fa-sync-alt" style="color: #10b981;"></i> 更新内容：
+                        </div>
+                        <ul class="updates-list">
+                            <li>${content}</li>
+                        </ul>
                     </div>
                 </div>
                 <div class="announcement-footer">
-                    <span class="announcement-date"><i class="far fa-calendar-alt"></i> ${this.escapeHtml(date)}</span>
+                    <span class="announcement-date"><i class="far fa-calendar-alt"></i> ${date}</span>
                     <button class="announcement-ack-btn" id="announcementAckBtn">知道了</button>
                 </div>
             </div>
@@ -130,21 +159,37 @@ class AnnouncementModule {
 
     bindModalEvents() {
         if (!this.modalElement) return;
-        const closeHandler = () => this.hide();
-        this.modalElement.querySelector('#announcementClose')?.addEventListener('click', closeHandler);
-        this.modalElement.querySelector('#announcementAckBtn')?.addEventListener('click', closeHandler);
-        this.modalElement.addEventListener('click', (e) => { if (e.target === this.modalElement) this.hide(); });
+        const closeBtn = this.modalElement.querySelector('#announcementClose');
+        const ackBtn = this.modalElement.querySelector('#announcementAckBtn');
+        const closeHandler = () => {
+            this.hide();
+        };
+        if (closeBtn) closeBtn.addEventListener('click', closeHandler);
+        if (ackBtn) ackBtn.addEventListener('click', closeHandler);
+        this.modalElement.addEventListener('click', (e) => {
+            if (e.target === this.modalElement) {
+                this.hide();
+            }
+        });
     }
 
     setupGlobalEvents() {
-        this.escapeHandler = (e) => { if (e.key === 'Escape' && this.isVisible) this.hide(); };
+        this.escapeHandler = (e) => {
+            if (e.key === 'Escape' && this.isVisible) {
+                this.hide();
+            }
+        };
         document.addEventListener('keydown', this.escapeHandler);
-
-        const btn = document.getElementById('announcementBtn');
-        if (btn) {
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
-            newBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); this.toggleModal(); });
+        
+        const announcementBtn = document.getElementById('announcementBtn');
+        if (announcementBtn) {
+            const newBtn = announcementBtn.cloneNode(true);
+            announcementBtn.parentNode.replaceChild(newBtn, announcementBtn);
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleModal();
+            });
         }
     }
 
@@ -155,7 +200,8 @@ class AnnouncementModule {
         this.modalElement.classList.add('active');
         this.isVisible = true;
         this.markAsRead();
-        window.Starlink?.app?.registerModal(this);
+        if (window.Starlink?.app) window.Starlink.app.registerModal(this);
+        else if (window.app) window.app.registerModal(this);
         this.updateButtonState(true);
     }
 
@@ -165,33 +211,34 @@ class AnnouncementModule {
         this.updateButtonState(false);
         const onTransitionEnd = () => {
             this.isVisible = false;
-            window.Starlink?.app?.unregisterModal(this);
+            if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
+            else if (window.app) window.app.unregisterModal(this);
             this.modalElement.removeEventListener('transitionend', onTransitionEnd);
         };
         this.modalElement.addEventListener('transitionend', onTransitionEnd, { once: true });
         setTimeout(() => {
             if (this.isVisible) {
                 this.isVisible = false;
-                window.Starlink?.app?.unregisterModal(this);
+                if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
+                else if (window.app) window.app.unregisterModal(this);
             }
         }, 400);
     }
 
-    toggleModal() { this.isVisible ? this.hide() : this.showModal(); }
+    toggleModal() {
+        this.isVisible ? this.hide() : this.showModal();
+    }
 
     closeOtherModals() {
-        window.Starlink?.sidebar?.hide?.();
-        window.sidebar?.hide?.();
-        window.Starlink?.search?.hide?.();
-        window.newSearchModule?.hide?.();
-        window.Starlink?.navbar?.hideMusicPlayer?.();
-        window.app?.components?.navbar?.hideMusicPlayer?.();
-        window.Starlink?.weather?.hide?.();
-        window.app?.modules?.weather?.hide?.();
-        window.Starlink?.about?.hide?.();
-        window.aboutModule?.hide?.();
-        window.Starlink?.app?.hideNotebookModal?.();
-        window.hideNotebookModal?.();
+        if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
+        if (window.Starlink?.search?.isModalOpen?.()) window.Starlink.search.hide();
+        const musicPlayer = document.getElementById('musicPlayer');
+        if (musicPlayer?.classList.contains('show')) {
+            if (window.Starlink?.navbar?.hideMusicPlayer) window.Starlink.navbar.hideMusicPlayer();
+        }
+        if (window.Starlink?.weather?.isShowing) window.Starlink.weather.hide();
+        if (window.Starlink?.about?.isVisible) window.Starlink.about.hide();
+        if (window.Starlink?.app?.hideNotebookModal) window.Starlink.app.hideNotebookModal();
         const submitModal = document.getElementById('submitModal');
         if (submitModal?.classList.contains('active')) submitModal.classList.remove('active');
     }
@@ -208,21 +255,28 @@ class AnnouncementModule {
 
     destroy() {
         this.hide();
-        if (this.escapeHandler) document.removeEventListener('keydown', this.escapeHandler);
-        this.modalElement?.remove();
+        if (this.escapeHandler) {
+            document.removeEventListener('keydown', this.escapeHandler);
+        }
+        if (this.modalElement?.parentNode) {
+            this.modalElement.parentNode.removeChild(this.modalElement);
+        }
         this.modalElement = null;
     }
 }
 
-// 自动初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         if (!window.Starlink) window.Starlink = {};
-        if (!window.Starlink.announcement) window.Starlink.announcement = new AnnouncementModule();
+        if (!window.Starlink.announcement) {
+            window.Starlink.announcement = new AnnouncementModule();
+        }
         window.announcementModule = window.Starlink.announcement;
     });
 } else {
     if (!window.Starlink) window.Starlink = {};
-    if (!window.Starlink.announcement) window.Starlink.announcement = new AnnouncementModule();
+    if (!window.Starlink.announcement) {
+        window.Starlink.announcement = new AnnouncementModule();
+    }
     window.announcementModule = window.Starlink.announcement;
 }
