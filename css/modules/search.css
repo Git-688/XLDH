@@ -1,4 +1,4 @@
-/* search.css */
+/* search.css - 精简版 */
 .search-modal {
     position: fixed;
     top: 0;
@@ -10,7 +10,7 @@
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: opacity .3s ease, visibility .3s ease;
 }
 .search-modal.active {
     visibility: visible;
@@ -26,10 +26,10 @@
     border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 8px;
     padding: 12px 14px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    transform: scale(0.95);
+    box-shadow: 0 8px 32px rgba(0,0,0,.12);
+    transform: scale(.95);
     opacity: 0;
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    transition: transform .3s ease, opacity .3s ease;
 }
 .search-modal.active .modal-content {
     transform: scale(1);
@@ -53,7 +53,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: 0.2s;
+    transition: .2s;
     flex-shrink: 0;
 }
 .engine-trigger-btn:hover {
@@ -67,26 +67,26 @@
     border: 1px solid var(--border-color, #e9ecef);
     border-radius: 8px;
     padding: 8px 10px;
-    font-size: 0.9rem;
+    font-size: .9rem;
     background: var(--bg-primary, #ffffff);
     color: var(--text-primary, #2b2d42);
     outline: none;
-    transition: border 0.2s;
+    transition: border .2s;
 }
 .search-input:focus {
     border-color: var(--primary-color, #4361ee);
-    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.12);
+    box-shadow: 0 0 0 3px rgba(67,97,238,.12);
 }
 .search-submit-btn {
     padding: 8px 14px;
     background: var(--primary-color, #4361ee);
-    color: white;
+    color: #fff;
     border: none;
     border-radius: 8px;
-    font-size: 0.85rem;
+    font-size: .85rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background .2s;
     white-space: nowrap;
 }
 .search-submit-btn:hover { background: var(--secondary-color, #3a0ca3); }
@@ -99,14 +99,14 @@
     background: var(--bg-card, #ffffff);
     border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 8px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 16px rgba(0,0,0,.1);
     z-index: 10001;
     max-height: 220px;
     overflow-y: auto;
     visibility: hidden;
     opacity: 0;
-    transform: translateY(-6px) scale(0.95);
-    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    transform: translateY(-6px) scale(.95);
+    transition: opacity .2s ease, transform .2s ease, visibility .2s;
     pointer-events: none;
     scrollbar-width: none;
 }
@@ -122,22 +122,22 @@
     align-items: center;
     gap: 10px;
     padding: 9px 12px;
-    font-size: 0.85rem;
+    font-size: .85rem;
     color: var(--text-primary, #2b2d42);
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background .15s;
     border-radius: 6px;
 }
 .engine-dropdown-item:hover { background: var(--bg-secondary, #f8f9fa); }
 .engine-dropdown-item.active {
-    background: rgba(67, 97, 238, 0.08);
+    background: rgba(67,97,238,.08);
     color: var(--primary-color, #4361ee);
     font-weight: 500;
 }
 .engine-dropdown-item i {
     width: 20px;
     text-align: center;
-    font-size: 0.95rem;
+    font-size: .95rem;
     color: var(--text-secondary, #6c757d);
 }
 
@@ -149,7 +149,7 @@
     margin: 6px 0;
     visibility: hidden;
     opacity: 0;
-    transition: opacity 0.15s, visibility 0.15s;
+    transition: opacity .15s, visibility .15s;
     background: var(--bg-card, #ffffff);
     scrollbar-width: none;
 }
@@ -160,11 +160,11 @@
 }
 .suggestion-item {
     padding: 9px 12px;
-    font-size: 0.85rem;
+    font-size: .85rem;
     color: var(--text-primary, #2b2d42);
     cursor: pointer;
     border-bottom: 1px solid var(--border-color, #e9ecef);
-    transition: background 0.15s;
+    transition: background .15s;
 }
 .suggestion-item:last-child { border-bottom: none; }
 .suggestion-item:hover { background: var(--bg-secondary, #f8f9fa); }
@@ -183,7 +183,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.8rem;
+    font-size: .8rem;
     font-weight: 600;
     color: var(--text-secondary, #6c757d);
     margin-bottom: 6px;
@@ -191,10 +191,10 @@
 .clear-history-btn {
     cursor: pointer;
     color: var(--primary-color, #4361ee);
-    font-size: 0.75rem;
-    transition: opacity 0.2s;
+    font-size: .75rem;
+    transition: opacity .2s;
 }
-.clear-history-btn:hover { opacity: 0.8; }
+.clear-history-btn:hover { opacity: .8; }
 .history-item {
     display: flex;
     justify-content: space-between;
@@ -202,47 +202,49 @@
     padding: 6px 8px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: .85rem;
     color: var(--text-primary, #2b2d42);
-    transition: background 0.1s;
+    transition: background .1s;
 }
-.history-item:hover { background: rgba(0, 0, 0, 0.04); }
+.history-item:hover { background: rgba(0,0,0,.04); }
 .history-text { flex: 1; overflow: hidden; text-overflow: ellipsis; }
 .delete-history {
     color: var(--text-secondary, #6c757d);
     padding: 4px;
     border-radius: 4px;
-    transition: color 0.15s, background 0.15s;
+    transition: color .15s, background .15s;
 }
 .delete-history:hover {
     color: var(--error-color, #ef4444);
-    background: rgba(239, 68, 68, 0.1);
+    background: rgba(239,68,68,.1);
 }
 .history-empty {
     text-align: center;
     color: var(--text-secondary, #6c757d);
-    font-size: 0.8rem;
+    font-size: .8rem;
     padding: 10px 0;
     margin: 0;
 }
 
-@media (max-width: 768px) {
+/* 响应式 */
+@media (max-width:768px) {
     .search-modal .modal-content {
         top: 16px;
         right: 4.2%;
         left: 4.2%;
         width: auto;
         max-width: none;
-        transform: scale(0.95);
+        transform: scale(.95);
     }
     .search-modal.active .modal-content { transform: scale(1); }
     .engine-dropdown { width: 150px; }
 }
 
+/* 深色模式 */
 .dark-mode .search-modal .modal-content {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
 }
 .dark-mode .search-input {
     background: var(--bg-secondary);
@@ -251,7 +253,7 @@
 }
 .dark-mode .search-input:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    box-shadow: 0 0 0 3px rgba(67,97,238,.2);
 }
 .dark-mode .engine-trigger-btn {
     background: var(--bg-card);
@@ -267,12 +269,12 @@
 .dark-mode .engine-dropdown {
     background: var(--bg-card);
     border-color: var(--border-color);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 16px rgba(0,0,0,.4);
 }
 .dark-mode .engine-dropdown-item { color: var(--text-primary); }
 .dark-mode .engine-dropdown-item:hover { background: var(--bg-secondary); }
 .dark-mode .engine-dropdown-item.active {
-    background: rgba(67, 97, 238, 0.2);
+    background: rgba(67,97,238,.2);
     color: var(--primary-color);
 }
 .dark-mode .engine-dropdown-item i { color: var(--text-secondary); }
@@ -289,10 +291,10 @@
 .dark-mode .history-title { color: var(--text-secondary); }
 .dark-mode .clear-history-btn { color: var(--primary-color); }
 .dark-mode .history-item { color: var(--text-primary); }
-.dark-mode .history-item:hover { background: rgba(255, 255, 255, 0.08); }
+.dark-mode .history-item:hover { background: rgba(255,255,255,.08); }
 .dark-mode .delete-history { color: var(--text-secondary); }
 .dark-mode .delete-history:hover {
     color: #f87171;
-    background: rgba(239, 68, 68, 0.2);
+    background: rgba(239,68,68,.2);
 }
 .dark-mode .history-empty { color: var(--text-secondary); }
