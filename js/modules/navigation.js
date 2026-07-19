@@ -1,4 +1,4 @@
-/* navigation.js - 按一级分类加载全部数据，缓存到 localStorage，图标优化高清加载+首字母降级，点击访问量同步校正，总站点数从后端获取并显示为 数字+ */
+/* navigation.js - 异步分页加载版本（一级分类仅加载子分类列表，站点按子分类分页懒加载） */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -9,15 +9,31 @@ class OptimizedNavigation {
         this.currentLevel2 = null;
         this.currentSites = [];
         this.isInitialized = false;
-        this.totalSites = 0;          // 从后端获取的总站点数
+        this.totalSites = 0;
         this.searchQuery = '';
         this.isSearching = false;
 
+        // 分页配置
+        this.pageSize = 20;
+        this.currentPage = 1;
+        this.hasMoreData = true;
+        this.isLoadingMore = false;
+
+        // 站点数据缓存：key = `${subId}_${page}`, value = { sites, total, page, limit }
+        this.siteCache = new Map();
+        // 用于存储每个子分类的总数（用于显示角标）
+        this.subCounts = {};
+
+        // DOM 元素
         this.level1Nav = document.getElementById('level1Nav');
         this.level2Nav = document.getElementById('level2Nav');
         this.level3Content = document.getElementById('level3Content');
         this.siteCountEl = document.getElementById('siteCount');
         this.invalidCountEl = document.getElementById('invalidCount');
+
+        // 滚动监听
+        this.intersectionObserver = null;
+        this.loadMoreTrigger = null;
 
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
@@ -171,7 +187,7 @@ class OptimizedNavigation {
             titleSpan.textContent = site.title;
             cardTop.appendChild(titleSpan);
 
-            // ===== 点击事件：乐观更新 + 同步校正 =====
+            // 点击事件：乐观更新 + 同步校正
             card.addEventListener('click', async (e) => {
                 if (e.target.closest('.report-dead-link-btn')) return;
 
@@ -200,13 +216,14 @@ class OptimizedNavigation {
                             viewEl.dataset.views = correctedViews;
                             viewEl.textContent = this._formatViews(correctedViews);
 
-                            const currentSubId = this.selectedLevel2;
-                            if (currentSubId && this.siteCache.has(currentSubId)) {
-                                const cachedSites = this.siteCache.get(currentSubId);
-                                const targetSite = cachedSites.find(s => s.id === site.id);
+                            // 更新缓存中的站点视图数
+                            const cacheKey = `${this.currentLevel2}_${this.currentPage}`;
+                            if (this.siteCache.has(cacheKey)) {
+                                const cached = this.siteCache.get(cacheKey);
+                                const targetSite = cached.sites.find(s => s.id === site.id);
                                 if (targetSite) {
                                     targetSite.views = correctedViews;
-                                    this.siteCache.set(currentSubId, cachedSites);
+                                    this.siteCache.set(cacheKey, cached);
                                 }
                             }
                         }
@@ -257,6 +274,349 @@ class OptimizedNavigation {
 
         container.innerHTML = '';
         container.appendChild(fragment);
+
+        // 检查是否需要显示“加载更多”触发器
+        this.updateLoadMoreTrigger();
+    }
+
+    // ---------- 追加站点卡片（用于滚动加载更多） ----------
+    _appendSites(sites) {
+        const container = this.level3Content;
+        if (!container) return;
+        if (!sites || !sites.length) return;
+
+        // 移除可能存在的“加载更多”触发器和空状态
+        const existingTrigger = container.querySelector('.load-more-trigger');
+        if (existingTrigger) existingTrigger.remove();
+        const emptyState = container.querySelector('.empty-state');
+        if (emptyState) emptyState.remove();
+
+        const fragment = document.createDocumentFragment();
+        sites.forEach((site) => {
+            const card = document.createElement('a');
+            card.className = 'site-card';
+            card.href = site.url;
+            card.target = '_blank';
+            card.rel = 'noopener noreferrer';
+            card.title = `${site.title}\n${site.description || ''}`;
+
+            const iconEl = this._createIconElement(site);
+            const views = site.views || 0;
+            const formattedViews = this._formatViews(views);
+
+            card.innerHTML = `
+                <div class="card-top"></div>
+                <div class="site-description">${this._escapeHtml(site.description || '暂无描述')}</div>
+                <div class="divider-line"></div>
+                <div class="card-bottom">
+                    <span class="view-count" data-views="${views}">${formattedViews}</span>
+                    <button class="report-dead-link-btn" data-url="${this._escapeHtml(site.url)}" data-title="${this._escapeHtml(site.title)}" title="报告死链">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </button>
+                </div>
+            `;
+
+            const cardTop = card.querySelector('.card-top');
+            cardTop.appendChild(iconEl);
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'site-title';
+            titleSpan.textContent = site.title;
+            cardTop.appendChild(titleSpan);
+
+            // 点击事件（同上）
+            card.addEventListener('click', async (e) => {
+                if (e.target.closest('.report-dead-link-btn')) return;
+
+                const viewEl = card.querySelector('.view-count');
+                if (!viewEl) return;
+
+                const oldViews = parseInt(viewEl.dataset.views) || 0;
+                const optimisticViews = oldViews + 1;
+                viewEl.dataset.views = optimisticViews;
+                viewEl.textContent = this._formatViews(optimisticViews);
+                viewEl.classList.add('increasing');
+                setTimeout(() => viewEl.classList.remove('increasing'), 300);
+
+                try {
+                    const response = await Utils.safeFetch(`${this.apiBase}/click`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: site.id, url: site.url }),
+                        keepalive: true
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.views !== undefined) {
+                            const correctedViews = data.views;
+                            viewEl.dataset.views = correctedViews;
+                            viewEl.textContent = this._formatViews(correctedViews);
+
+                            const cacheKey = `${this.currentLevel2}_${this.currentPage}`;
+                            if (this.siteCache.has(cacheKey)) {
+                                const cached = this.siteCache.get(cacheKey);
+                                const targetSite = cached.sites.find(s => s.id === site.id);
+                                if (targetSite) {
+                                    targetSite.views = correctedViews;
+                                    this.siteCache.set(cacheKey, cached);
+                                }
+                            }
+                        }
+                    }
+                } catch (err) {
+                    if (window.errorHandler) {
+                        window.errorHandler.report(err, 'navigation.clickUpdate');
+                    }
+                }
+            });
+
+            const reportBtn = card.querySelector('.report-dead-link-btn');
+            if (reportBtn) {
+                reportBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (reportBtn.disabled) return;
+                    reportBtn.disabled = true;
+                    reportBtn.style.opacity = '0.5';
+                    try {
+                        const res = await Utils.safeFetch(`${this.apiBase}/report-dead-link`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: reportBtn.dataset.url, title: reportBtn.dataset.title })
+                        });
+                        if (res.ok) {
+                            window.toast.show('已反馈，管理员将处理', 'success');
+                            reportBtn.style.display = 'none';
+                            card.classList.add('invalid');
+                        } else {
+                            const err = await res.json().catch(() => ({}));
+                            window.toast.show(err.error || '反馈失败', 'error');
+                            reportBtn.disabled = false;
+                            reportBtn.style.opacity = '';
+                        }
+                    } catch (err) {
+                        window.toast.show('网络错误', 'error');
+                        reportBtn.disabled = false;
+                        reportBtn.style.opacity = '';
+                    }
+                });
+            }
+
+            fragment.appendChild(card);
+        });
+
+        container.appendChild(fragment);
+
+        // 更新加载更多触发器
+        this.updateLoadMoreTrigger();
+    }
+
+    // ---------- 显示骨架屏 ----------
+    _showSkeleton() {
+        const container = this.level3Content;
+        if (!container) return;
+        let html = '';
+        for (let i = 0; i < 8; i++) {
+            html += `
+                <div class="skeleton-card">
+                    <div class="skeleton-icon"></div>
+                    <div class="skeleton-title"></div>
+                    <div class="skeleton-description"></div>
+                    <div class="skeleton-views"></div>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    }
+
+    // ---------- 显示错误状态 ----------
+    _showError(message = '加载失败，请点击重试') {
+        const container = this.level3Content;
+        if (!container) return;
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <h3 class="empty-title">${this._escapeHtml(message)}</h3>
+                <button class="retry-btn" id="navRetryBtn">重试</button>
+            </div>
+        `;
+        const retryBtn = container.querySelector('#navRetryBtn');
+        if (retryBtn) {
+            retryBtn.addEventListener('click', () => {
+                if (this.currentLevel2) {
+                    this.selectLevel2(this.currentLevel2, true);
+                }
+            });
+        }
+    }
+
+    // ---------- 更新加载更多触发器 ----------
+    updateLoadMoreTrigger() {
+        const container = this.level3Content;
+        if (!container) return;
+
+        // 移除旧的触发器
+        const oldTrigger = container.querySelector('.load-more-trigger');
+        if (oldTrigger) oldTrigger.remove();
+
+        // 如果当前是搜索状态，不显示加载更多
+        if (this.isSearching) return;
+
+        if (!this.hasMoreData || this.currentLevel2 === null) {
+            // 没有更多数据，显示“已加载全部”
+            const footer = document.createElement('div');
+            footer.className = 'load-more-trigger';
+            footer.style.textAlign = 'center';
+            footer.style.padding = '20px';
+            footer.style.color = 'var(--text-secondary)';
+            footer.style.fontSize = '12px';
+            footer.textContent = '— 已加载全部 —';
+            container.appendChild(footer);
+            return;
+        }
+
+        // 创建触发器（不可见，用于 IntersectionObserver）
+        const trigger = document.createElement('div');
+        trigger.className = 'load-more-trigger';
+        trigger.style.height = '1px';
+        trigger.style.width = '100%';
+        trigger.style.visibility = 'hidden';
+        container.appendChild(trigger);
+
+        // 设置 observer
+        this.setupIntersectionObserver(trigger);
+    }
+
+    // ---------- 设置 IntersectionObserver ----------
+    setupIntersectionObserver(trigger) {
+        if (this.intersectionObserver) {
+            this.intersectionObserver.disconnect();
+        }
+
+        this.intersectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !this.isLoadingMore && this.hasMoreData && !this.isSearching) {
+                    this.loadMoreSites();
+                }
+            });
+        }, {
+            rootMargin: '0px 0px 100px 0px', // 提前触发
+            threshold: 0.1
+        });
+
+        if (trigger) {
+            this.intersectionObserver.observe(trigger);
+            this.loadMoreTrigger = trigger;
+        }
+    }
+
+    // ---------- 加载更多站点 ----------
+    async loadMoreSites() {
+        if (this.isLoadingMore || !this.hasMoreData || !this.currentLevel2 || this.isSearching) return;
+        this.isLoadingMore = true;
+
+        const nextPage = this.currentPage + 1;
+        const cacheKey = `${this.currentLevel2}_${nextPage}`;
+
+        // 检查缓存
+        if (this.siteCache.has(cacheKey)) {
+            const data = this.siteCache.get(cacheKey);
+            this._appendSites(data.sites);
+            this.currentPage = nextPage;
+            this.hasMoreData = data.sites.length >= this.pageSize;
+            this.isLoadingMore = false;
+            this.updateLoadMoreTrigger();
+            return;
+        }
+
+        try {
+            const data = await this.loadSubcategorySites(this.currentLevel2, nextPage);
+            this.siteCache.set(cacheKey, data);
+            this._appendSites(data.sites);
+            this.currentPage = nextPage;
+            this.hasMoreData = data.sites.length >= this.pageSize;
+        } catch (error) {
+            console.error('[导航] 加载更多失败:', error);
+            window.toast.show('加载更多失败，请重试', 'error');
+            // 显示一个重试按钮在底部
+            const container = this.level3Content;
+            const trigger = container.querySelector('.load-more-trigger');
+            if (trigger) {
+                trigger.style.visibility = 'visible';
+                trigger.style.height = 'auto';
+                trigger.style.padding = '20px';
+                trigger.innerHTML = `<button class="retry-btn" id="navLoadMoreRetry">重试加载更多</button>`;
+                const retryBtn = trigger.querySelector('#navLoadMoreRetry');
+                retryBtn.addEventListener('click', () => {
+                    trigger.remove();
+                    this.loadMoreSites();
+                });
+            }
+        } finally {
+            this.isLoadingMore = false;
+        }
+    }
+
+    // ---------- 加载子分类站点（调用 API） ----------
+    async loadSubcategorySites(subId, page) {
+        const url = `${this.apiBase}/navigation/sites?subcategory_id=${subId}&page=${page}&limit=${this.pageSize}`;
+        const response = await Utils.safeFetch(url, { timeout: 10000 });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        // 数据格式: { sites: [], total: 0, page, limit }
+        return data;
+    }
+
+    // ---------- 刷新当前子分类（用于后台更新后） ----------
+    async refreshCurrentSubcategory() {
+        if (!this.currentLevel2) return;
+        // 清空该子分类的所有分页缓存
+        const keysToDelete = [];
+        for (const key of this.siteCache.keys()) {
+            if (key.startsWith(`${this.currentLevel2}_`)) {
+                keysToDelete.push(key);
+            }
+        }
+        keysToDelete.forEach(key => this.siteCache.delete(key));
+
+        // 重新加载第一页
+        this.currentPage = 1;
+        this.hasMoreData = true;
+        await this.selectLevel2(this.currentLevel2, true);
+        // 刷新总数
+        await this.updateStats();
+    }
+
+    // ---------- 选择一级分类（仅渲染二级菜单） ----------
+    async selectLevel1(categoryName, isUserClick = false) {
+        if (this.currentLevel1 === categoryName && !isUserClick) return;
+        this.currentLevel1 = categoryName;
+        this.currentLevel2 = null;
+        this.currentPage = 1;
+        this.hasMoreData = true;
+
+        // 更新一级导航高亮
+        document.querySelectorAll('.level1-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.level1 === categoryName);
+        });
+
+        // 加载或获取缓存的结构数据
+        const data = await this.loadCategoryData(categoryName);
+        this.categoryCache[categoryName] = data.subcategories || [];
+
+        // 渲染二级导航
+        this.renderLevel2(categoryName);
+
+        // 默认选中第一个子分类（如果有）
+        const subs = this.categoryCache[categoryName];
+        if (subs && subs.length) {
+            const firstSub = subs[0];
+            await this.selectLevel2(firstSub.id, true);
+        } else {
+            this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3 class="empty-title">该分类下暂无子分类</h3></div>`;
+        }
+
+        // 更新总站点数（总数不变）
+        await this.updateStats();
     }
 
     // ---------- 加载一级分类数据（含缓存） ----------
@@ -277,39 +637,11 @@ class OptimizedNavigation {
         const json = await response.json();
         if (!json.subcategories) throw new Error('Invalid response');
 
+        // 注意：这里返回的 subcategories 中可能包含 sites 字段（为了兼容原有逻辑，但新版本我们不会使用）
+        // 我们只提取子分类列表，不关心其中的 sites
         const cacheData = { data: json, timestamp: now };
         localStorage.setItem(cacheKey, JSON.stringify(cacheData));
         return json;
-    }
-
-    // ---------- 切换一级分类 ----------
-    async selectLevel1(categoryName, isUserClick = false) {
-        if (this.currentLevel1 === categoryName && !isUserClick) return;
-        this.currentLevel1 = categoryName;
-
-        document.querySelectorAll('.level1-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.level1 === categoryName);
-        });
-
-        const data = await this.loadCategoryData(categoryName);
-        this.categoryCache[categoryName] = data.subcategories || [];
-
-        this.renderLevel2(categoryName);
-
-        const subs = this.categoryCache[categoryName];
-        if (subs && subs.length) {
-            const firstSub = subs[0];
-            this.currentLevel2 = firstSub.id;
-            this.renderLevel3(firstSub.id);
-            document.querySelectorAll('.level2-btn').forEach(b => {
-                b.classList.toggle('active', parseInt(b.dataset.level2) === firstSub.id);
-            });
-        } else {
-            this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3 class="empty-title">该分类下暂无子分类</h3></div>`;
-        }
-
-        // 刷新总站点数（虽然总数不变，但保持一致性）
-        this.updateStats();
     }
 
     // ---------- 渲染二级导航 ----------
@@ -319,66 +651,96 @@ class OptimizedNavigation {
             this.level2Nav.innerHTML = '<div style="padding:16px;color:var(--text-secondary);font-size:11px;text-align:center;">暂无子分类</div>';
             return;
         }
-        this.level2Nav.innerHTML = subs.map((sub, idx) =>
-            `<button class="level2-btn ${idx === 0 ? 'active' : ''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}">
-                <span class="level2-btn-text">${this._escapeHtml(sub.name)}</span>
-            </button>`
-        ).join('');
 
-        this.level2Nav.querySelectorAll('.level2-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = parseInt(btn.dataset.level2);
-                this.currentLevel2 = id;
-                document.querySelectorAll('.level2-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.renderLevel3(id);
+        // 获取每个子分类的站点总数（用于显示角标）
+        const subIds = subs.map(s => s.id);
+        this.fetchSubcategoryCounts(subIds).then(counts => {
+            this.subCounts = counts;
+            // 重新渲染二级导航（带角标）
+            this.level2Nav.innerHTML = subs.map((sub, idx) => {
+                const count = counts[sub.id] || 0;
+                const isActive = (this.currentLevel2 === sub.id);
+                return `<button class="level2-btn ${isActive ? 'active' : ''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}">
+                    <span class="level2-btn-text">${this._escapeHtml(sub.name)}</span>
+                    ${count > 0 ? `<span class="level2-btn-count">${count}</span>` : ''}
+                </button>`;
+            }).join('');
+
+            this.level2Nav.querySelectorAll('.level2-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = parseInt(btn.dataset.level2);
+                    this.selectLevel2(id, true);
+                });
+            });
+        }).catch(err => {
+            // 如果获取数量失败，仍然渲染无角标
+            this.level2Nav.innerHTML = subs.map((sub, idx) => {
+                const isActive = (this.currentLevel2 === sub.id);
+                return `<button class="level2-btn ${isActive ? 'active' : ''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}">
+                    <span class="level2-btn-text">${this._escapeHtml(sub.name)}</span>
+                </button>`;
+            }).join('');
+
+            this.level2Nav.querySelectorAll('.level2-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = parseInt(btn.dataset.level2);
+                    this.selectLevel2(id, true);
+                });
             });
         });
     }
 
-    // ---------- 渲染三级内容（根据子分类ID） ----------
-    renderLevel3(subcategoryId) {
-        let sites = null;
-        for (const catName in this.categoryCache) {
-            const subs = this.categoryCache[catName];
-            const found = subs.find(sub => sub.id === subcategoryId);
-            if (found) {
-                sites = found.sites || [];
-                break;
-            }
+    // ---------- 获取子分类计数 ----------
+    async fetchSubcategoryCounts(subIds) {
+        if (!subIds || !subIds.length) return {};
+        const url = `${this.apiBase}/subcategory/counts?ids=${subIds.join(',')}`;
+        try {
+            const response = await Utils.safeFetch(url, { timeout: 5000 });
+            const counts = await response.json();
+            return counts;
+        } catch (e) {
+            console.warn('获取子分类计数失败:', e);
+            return {};
         }
-        if (!sites) {
-            this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">数据未加载</h3></div>`;
+    }
+
+    // ---------- 选择二级分类（加载站点第一页） ----------
+    async selectLevel2(subId, forceRefresh = false) {
+        if (this.currentLevel2 === subId && !forceRefresh) return;
+
+        this.currentLevel2 = subId;
+        this.currentPage = 1;
+        this.hasMoreData = true;
+        this.isSearching = false;
+
+        // 更新二级导航高亮
+        document.querySelectorAll('.level2-btn').forEach(b => {
+            b.classList.toggle('active', parseInt(b.dataset.level2) === subId);
+        });
+
+        // 检查缓存（第一页）
+        const cacheKey = `${subId}_1`;
+        if (!forceRefresh && this.siteCache.has(cacheKey)) {
+            const data = this.siteCache.get(cacheKey);
+            this._renderSites(data.sites);
+            this.hasMoreData = data.sites.length >= this.pageSize;
+            this.updateLoadMoreTrigger();
             return;
         }
-        this.currentSites = sites;
-        this._renderSites(sites);
-    }
 
-    // ---------- 从后端获取总站点数并更新显示（显示为 数字+） ----------
-    async fetchTotalSitesCount() {
+        // 显示骨架屏
+        this._showSkeleton();
+
         try {
-            const response = await Utils.safeFetch(`${this.apiBase}/total-sites-count`, { timeout: 5000 });
-            const data = await response.json();
-            if (data.total !== undefined) {
-                this.totalSites = data.total;
-                if (this.siteCountEl) {
-                    // 显示为 数字+ （例如 "123+"）
-                    this.siteCountEl.textContent = this.totalSites + '+';
-                }
-            }
+            const data = await this.loadSubcategorySites(subId, 1);
+            this.siteCache.set(cacheKey, data);
+            this._renderSites(data.sites);
+            this.hasMoreData = data.sites.length >= this.pageSize;
+            this.updateLoadMoreTrigger();
         } catch (error) {
-            console.warn('获取总站点数失败:', error);
-            if (this.siteCountEl && !this.siteCountEl.textContent) {
-                this.siteCountEl.textContent = '?+';
-            }
+            console.error('[导航] 加载子分类站点失败:', error);
+            this._showError('加载失败，请点击重试');
         }
-    }
-
-    // ---------- 更新统计：从后端获取总数并显示 ----------
-    async updateStats() {
-        await this.fetchTotalSitesCount();
-        // 无效链接数暂不更新（无接口）
     }
 
     // ---------- 搜索功能 ----------
@@ -428,7 +790,8 @@ class OptimizedNavigation {
         if (!query.trim()) return;
         this.isSearching = true;
         this.searchQuery = query;
-        this.level3Content.innerHTML = '';
+        // 显示骨架
+        this._showSkeleton();
         try {
             const response = await Utils.safeFetch(`${this.apiBase}/search?q=${encodeURIComponent(query)}`);
             const results = await response.json();
@@ -439,6 +802,9 @@ class OptimizedNavigation {
             }
             document.getElementById('navSearchHint').style.display = 'block';
             document.getElementById('navSearchHint').textContent = `找到 ${results.length} 个结果`;
+            // 搜索时隐藏加载更多触发器
+            const trigger = this.level3Content.querySelector('.load-more-trigger');
+            if (trigger) trigger.style.display = 'none';
         } catch (e) {
             this.level3Content.innerHTML = '<div class="empty-state">搜索失败，请重试</div>';
         } finally {
@@ -451,11 +817,35 @@ class OptimizedNavigation {
         this.isSearching = false;
         this.searchQuery = '';
         document.getElementById('navSearchHint').style.display = 'none';
+        // 重新加载当前子分类
         if (this.currentLevel2) {
-            this.renderLevel3(this.currentLevel2);
+            this.selectLevel2(this.currentLevel2, true);
         } else if (this.currentLevel1 && this.categoryCache[this.currentLevel1]) {
             const subs = this.categoryCache[this.currentLevel1];
-            if (subs.length) this.renderLevel3(subs[0].id);
+            if (subs.length) this.selectLevel2(subs[0].id, true);
+        }
+    }
+
+    // ---------- 更新统计（总站点数） ----------
+    async updateStats() {
+        await this.fetchTotalSitesCount();
+    }
+
+    async fetchTotalSitesCount() {
+        try {
+            const response = await Utils.safeFetch(`${this.apiBase}/total-sites-count`, { timeout: 5000 });
+            const data = await response.json();
+            if (data.total !== undefined) {
+                this.totalSites = data.total;
+                if (this.siteCountEl) {
+                    this.siteCountEl.textContent = this.totalSites + '+';
+                }
+            }
+        } catch (error) {
+            console.warn('获取总站点数失败:', error);
+            if (this.siteCountEl && !this.siteCountEl.textContent) {
+                this.siteCountEl.textContent = '?+';
+            }
         }
     }
 
@@ -485,7 +875,6 @@ class OptimizedNavigation {
             await this.selectLevel1(firstCat, false);
             this.createSearchBox();
 
-            // 获取总站点数并显示（数字+）
             await this.updateStats();
 
             this.isInitialized = true;
@@ -495,18 +884,12 @@ class OptimizedNavigation {
         }
     }
 
-    // ---------- 对外刷新接口 ----------
-    async refreshCurrentSubcategory() {
-        if (!this.currentLevel1 || !this.currentLevel2) return;
-        await this.loadCategoryData(this.currentLevel1, true);
-        this.renderLevel3(this.currentLevel2);
-        // 刷新总数（也许管理员新增了站点）
-        await this.updateStats();
-    }
-
     // ---------- 销毁 ----------
     destroy() {
-        // 清理事件等
+        if (this.intersectionObserver) {
+            this.intersectionObserver.disconnect();
+            this.intersectionObserver = null;
+        }
     }
 }
 
