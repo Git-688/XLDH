@@ -1,4 +1,4 @@
-/* main.js - 精简版（修复模块初始化错误） */
+/* main.js - 精简版（修复模块初始化错误，移除未定义的 FooterModule） */
 class App {
     constructor() {
         if (window.Starlink?.app) return window.Starlink.app;
@@ -284,7 +284,6 @@ class App {
                 wallpaper: { cls: WallpaperModule, get: () => this.modules.wallpaper },
                 greeting: { cls: GreetingModule, get: () => this.modules.greeting },
                 navigation: { cls: OptimizedNavigation, get: () => this.modules.navigation, set: (m) => { window.optimizedNavigation = m; } },
-                // footer 模块不存在，已移除
                 weather: { cls: WeatherModule, get: () => this.modules.weather },
                 announcement: { cls: AnnouncementModule, get: () => window.announcementModule },
                 about: { cls: AboutModule, get: () => window.aboutModule }
