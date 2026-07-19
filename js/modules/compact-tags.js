@@ -1,7 +1,7 @@
-/* compact-tags.js */
+/* compact-tags.js - 精简版（常用标签展示） */
 class CompactTagsModule {
     constructor() {
-        if (window.Starlink && window.Starlink.compactTags) return window.Starlink.compactTags;
+        if (window.Starlink?.compactTags) return window.Starlink.compactTags;
         
         this.tags = [
             { name: '新闻热点', icon: 'fas fa-newspaper', link: 'https://newsnow-theta-two.vercel.app/' },
@@ -44,7 +44,6 @@ class CompactTagsModule {
         ].sort((a, b) => a.name.localeCompare(b.name, 'zh'));
 
         this.init();
-        
         if (window.Starlink) window.Starlink.compactTags = this;
         window.compactTagsModule = this;
     }
@@ -57,13 +56,13 @@ class CompactTagsModule {
     renderTags() {
         const grid = document.getElementById('tagsGrid');
         if (!grid) return;
+        
         grid.innerHTML = this.tags.map((tag, index) => {
             const colorNum = (index % 7) + 1;
-            const colorClass = `tag-color-${colorNum}`;
             const safeName = Utils.escapeHtml(tag.name);
             return `
                 <a href="${tag.link}" 
-                   class="minimal-tag ${colorClass}" 
+                   class="minimal-tag tag-color-${colorNum}" 
                    target="_blank" 
                    rel="noopener noreferrer"
                    data-index="${index}"
@@ -79,17 +78,16 @@ class CompactTagsModule {
     bindEvents() {
         const grid = document.getElementById('tagsGrid');
         if (!grid) return;
+        
         grid.addEventListener('click', (e) => {
             const tag = e.target.closest('.minimal-tag');
             if (tag) this.handleTagClick(tag);
         });
+        
         grid.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 const tag = e.target.closest('.minimal-tag');
-                if (tag) {
-                    e.preventDefault();
-                    tag.click();
-                }
+                if (tag) { e.preventDefault(); tag.click(); }
             }
         });
     }
@@ -102,11 +100,11 @@ class CompactTagsModule {
     }
 }
 
+// 自动初始化
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.Starlink) window.Starlink = {};
-    if (!window.Starlink.compactTags) {
-        window.Starlink.compactTags = new CompactTagsModule();
-    }
+    if (!window.Starlink.compactTags) window.Starlink.compactTags = new CompactTagsModule();
     window.compactTagsModule = window.Starlink.compactTags;
 });
+
 window.CompactTagsModule = CompactTagsModule;
