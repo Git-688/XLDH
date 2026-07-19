@@ -1,4 +1,4 @@
-/* local-music-data.js - 精简版（本地音乐列表） */
+/* local-music-data.js */
 window.localMusicData = [
     {
         id: 'local_001',
@@ -7,6 +7,7 @@ window.localMusicData = [
         src: 'https://ak688.eu.cc/file/音乐目录/1776479332023_All_Rise.mp3',
         cover: 'https://p1.music.126.net/diGAyEmpymX8G7JcnElncQ==/109951163699673355.jpg',
         lrc: 'https://ak688.eu.cc/file/音乐目录/1776479334143_All_Rise.lrc',
+        isOnline: true,
         source: 'local'
     },
     {
@@ -16,6 +17,7 @@ window.localMusicData = [
         src: 'https://music.163.com/song/media/outer/url?id=1811924206.mp3',
         cover: 'https://p1.music.126.net/6O0ZcO2KD3U-y7_6RfUO3Q==/109951165588832637.jpg',
         lrc: '',
+        isOnline: true,
         source: 'local'
     },
     {
@@ -25,6 +27,7 @@ window.localMusicData = [
         src: 'https://music.163.com/song/media/outer/url?id=1413863166.mp3',
         cover: 'https://p1.music.126.net/te0n9_1Vt9E6R3kQzGJQrg==/109951164757132387.jpg',
         lrc: '',
+        isOnline: true,
         source: 'local'
     },
     {
@@ -34,6 +37,7 @@ window.localMusicData = [
         src: 'https://music.163.com/song/media/outer/url?id=449818741.mp3',
         cover: 'https://p1.music.126.net/fkqFqMaEt0CzxYS-0NpCog==/18587244069235039.jpg',
         lrc: '',
+        isOnline: true,
         source: 'local'
     },
     {
@@ -43,6 +47,7 @@ window.localMusicData = [
         src: 'https://music.163.com/song/media/outer/url?id=185809.mp3',
         cover: 'https://p1.music.126.net/ipY_jJJZVeDWVf5N5nSCQA==/109951166115108542.jpg',
         lrc: '',
+        isOnline: true,
         source: 'local'
     }
 ];
