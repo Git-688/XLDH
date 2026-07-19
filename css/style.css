@@ -1,4 +1,4 @@
-/* style.css - 精简版（修复合作伙伴模态框移动端间距） */
+/* style.css - 精简版（修复合作伙伴模态框移动端间距，搜索模态框居中已移至 search.css） */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
