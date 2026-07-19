@@ -1,340 +1,122 @@
-/* responsive.css - 星聚导航响应式样式 */
+/* responsive.css - 精简版（合并重复媒体查询） */
 @media (min-width: 1600px) {
-    .container,
-    .nav-container,
-    .greeting-container,
-    .footer-compact-container {
-        max-width: 1400px;
-    }
-    .tags-grid {
-        grid-template-columns: repeat(10, 1fr);
-        gap: 12px;
-    }
-    .minimal-tag {
-        padding: 12px 16px;
-        min-height: 52px;
-    }
-    .tag-label {
-        font-size: 14px;
-    }
-    .navigation-left {
-        width: 160px;
-    }
-    .navigation-middle {
-        width: 180px;
-    }
-    .level3-content {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 12px;
-    }
+    .container, .nav-container, .greeting-container, .footer-compact-container { max-width: 1400px; }
+    .tags-grid { grid-template-columns: repeat(10, 1fr); gap: 12px; }
+    .minimal-tag { padding: 12px 16px; min-height: 52px; }
+    .tag-label { font-size: 14px; }
+    .navigation-left { width: 160px; }
+    .navigation-middle { width: 180px; }
+    .level3-content { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
 }
 
 @media (min-width: 1200px) and (max-width: 1599px) {
-    .tags-grid {
-        grid-template-columns: repeat(8, 1fr);
-        gap: 12px;
-    }
-    .minimal-tag {
-        padding: 12px 16px;
-        min-height: 50px;
-    }
+    .tags-grid { grid-template-columns: repeat(8, 1fr); gap: 12px; }
+    .minimal-tag { padding: 12px 16px; min-height: 50px; }
 }
 
 @media (min-width: 992px) and (max-width: 1199px) {
-    .tags-grid {
-        grid-template-columns: repeat(7, 1fr);
-        gap: 10px;
-    }
-    .minimal-tag {
-        padding: 10px 14px;
-        min-height: 46px;
-    }
-    .navigation-left,
-    .navigation-middle {
-        width: 130px;
-    }
+    .tags-grid { grid-template-columns: repeat(7, 1fr); gap: 10px; }
+    .minimal-tag { padding: 10px 14px; min-height: 46px; }
+    .navigation-left, .navigation-middle { width: 130px; }
 }
 
 @media (min-width: 768px) and (max-width: 991px) {
-    .navigation-body {
-        flex-direction: column;
+    .navigation-body { flex-direction: column; }
+    .navigation-left, .navigation-middle {
+        width: 100%; border-right: none; border-bottom: 1px solid var(--border-color);
     }
-    .navigation-left,
-    .navigation-middle {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
+    .level1-nav, .level2-nav {
+        flex-direction: row; overflow-x: auto; white-space: nowrap; padding: 0; display: flex;
     }
-    .level1-nav,
-    .level2-nav {
-        flex-direction: row;
-        overflow-x: auto;
-        white-space: nowrap;
-        padding: 0;
-        display: flex;
+    .level1-btn, .level2-btn {
+        flex: 0 0 auto; padding: 0 16px; border-right: 1px solid var(--border-color); border-bottom: none;
     }
-    .level1-btn,
-    .level2-btn {
-        flex: 0 0 auto;
-        padding: 0 16px;
-        border-right: 1px solid var(--border-color);
-        border-bottom: none;
-    }
-    .level3-content {
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-        gap: 10px;
-    }
-    .tags-grid {
-        grid-template-columns: repeat(6, 1fr);
-        gap: 10px;
-    }
-    .minimal-tag {
-        padding: 8px 12px;
-        min-height: 42px;
-    }
-    .tag-label {
-        font-size: 12px;
-    }
-    .footer-stats-cards {
-        grid-template-columns: repeat(4, 1fr);
-    }
+    .level3-content { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+    .tags-grid { grid-template-columns: repeat(6, 1fr); gap: 10px; }
+    .minimal-tag { padding: 8px 12px; min-height: 42px; }
+    .tag-label { font-size: 12px; }
+    .footer-stats-cards { grid-template-columns: repeat(4, 1fr); }
 }
 
 @media (min-width: 576px) and (max-width: 767px) {
-    .navigation-body {
-        flex-direction: column;
+    .navigation-body { flex-direction: column; }
+    .navigation-left, .navigation-middle {
+        width: 100%; border-right: none; border-bottom: 1px solid var(--border-color);
     }
-    .navigation-left,
-    .navigation-middle {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
+    .level1-nav, .level2-nav {
+        flex-direction: row; overflow-x: auto; white-space: nowrap; padding: 0;
     }
-    .level1-nav,
-    .level2-nav {
-        flex-direction: row;
-        overflow-x: auto;
-        white-space: nowrap;
-        padding: 0;
+    .level1-btn, .level2-btn {
+        flex: 0 0 auto; padding: 0 14px; border-right: 1px solid var(--border-color);
+        border-bottom: none; font-size: 12px;
     }
-    .level1-btn,
-    .level2-btn {
-        flex: 0 0 auto;
-        padding: 0 14px;
-        border-right: 1px solid var(--border-color);
-        border-bottom: none;
-        font-size: 12px;
-    }
-    .level3-content {
-        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-        gap: 8px;
-    }
-    .site-card {
-        min-height: 100px;
-        padding: 8px;
-    }
-    .icon-container {
-        width: 32px;
-        height: 32px;
-    }
-    .views-icon {
-        font-size: 12px;
-    }
-    .view-count {
-        font-size: 12px;
-    }
-    .site-title {
-        font-size: 12px;
-    }
-    .site-description {
-        font-size: 10px;
-    }
-    .tags-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
-    }
-    .minimal-tag {
-        padding: 8px 12px;
-        min-height: 40px;
-    }
-    .tag-label {
-        font-size: 11px;
-    }
-    .greeting-container {
-        flex-direction: column;
-    }
-    .greeting-main-card {
-        width: 100%;
-    }
-    .bookmark-btn {
-        width: 100%;
-        flex-direction: row;
-        justify-content: center;
-        gap: 8px;
-        padding: 12px;
-    }
-    .bookmark-btn span {
-        writing-mode: horizontal-tb;
-    }
-    .footer-stats-cards {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .sidebar {
-        width: 70vw;
-        max-width: 280px;
-    }
+    .level3-content { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+    .site-card { min-height: 100px; padding: 8px; }
+    .icon-container { width: 32px; height: 32px; }
+    .views-icon { font-size: 12px; }
+    .view-count, .site-title { font-size: 12px; }
+    .site-description { font-size: 10px; }
+    .tags-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .minimal-tag { padding: 8px 12px; min-height: 40px; }
+    .tag-label { font-size: 11px; }
+    .greeting-container { flex-direction: column; }
+    .greeting-main-card { width: 100%; }
+    .bookmark-btn { width: 100%; flex-direction: row; justify-content: center; gap: 8px; padding: 12px; }
+    .bookmark-btn span { writing-mode: horizontal-tb; }
+    .footer-stats-cards { grid-template-columns: repeat(2, 1fr); }
+    .sidebar { width: 70vw; max-width: 280px; }
 }
 
 @media (max-width: 575px) {
-    .navigation-body {
-        flex-direction: column;
+    .navigation-body { flex-direction: column; }
+    .navigation-left, .navigation-middle {
+        width: 100%; border-right: none; border-bottom: 1px solid var(--border-color);
     }
-    .navigation-left,
-    .navigation-middle {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
+    .level1-nav, .level2-nav {
+        flex-direction: row; overflow-x: auto; white-space: nowrap; padding: 0;
     }
-    .level1-nav,
-    .level2-nav {
-        flex-direction: row;
-        overflow-x: auto;
-        white-space: nowrap;
-        padding: 0;
-    }
-    .level1-btn,
-    .level2-btn {
-        flex: 0 0 auto;
-        padding: 0 12px;
-        border-right: 1px solid var(--border-color);
-        border-bottom: none;
-        font-size: 11px;
-        height: 36px;
-        min-height: 36px;
+    .level1-btn, .level2-btn {
+        flex: 0 0 auto; padding: 0 12px; border-right: 1px solid var(--border-color);
+        border-bottom: none; font-size: 11px; height: 36px; min-height: 36px;
     }
     .level3-content {
         grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-        gap: 6px;
-        padding: 8px;
+        gap: 6px; padding: 8px;
     }
-    .site-card {
-        min-height: 90px;
-        padding: 6px;
-    }
-    .icon-container {
-        width: 28px;
-        height: 28px;
-    }
-    .views-icon {
-        font-size: 11px;
-    }
-    .view-count {
-        font-size: 11px;
-    }
-    .site-title {
-        font-size: 11px;
-    }
-    .site-description {
-        font-size: 9px;
-    }
-    .tags-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-    }
-    .minimal-tag {
-        padding: 6px 10px;
-        min-height: 36px;
-    }
-    .tag-label {
-        font-size: 10px;
-    }
-    .tag-icon {
-        font-size: 12px;
-    }
-    .greeting-container {
-        flex-direction: column;
-    }
-    .greeting-main-card {
-        width: 100%;
-        padding: 12px;
-    }
-    .greeting-text h1 {
-        font-size: 1.1rem;
-    }
-    .datetime {
-        padding: 6px 10px;
-        min-width: 100px;
-    }
-    #currentTime {
-        font-size: 0.9rem;
-    }
-    #currentDate {
-        font-size: 0.7rem;
-    }
-    .fish-section {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
-    }
-    .fish-btn {
-        padding: 6px 8px;
-        min-height: 40px;
-    }
-    .fish-btn i {
-        font-size: 14px;
-    }
-    .fish-count {
-        font-size: 0.8rem;
-    }
-    .bookmark-btn {
-        width: 100%;
-        flex-direction: row;
-        justify-content: center;
-        gap: 8px;
-        padding: 10px;
-    }
-    .bookmark-btn span {
-        writing-mode: horizontal-tb;
-    }
-    .footer-stats-cards {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-    }
-    .stat-card {
-        padding: 8px;
-    }
-    .stat-number {
-        font-size: 13px;
-    }
-    .stat-name {
-        font-size: 9px;
-    }
-    .sidebar {
-        width: 70vw;
-        max-width: 280px;
-    }
-    .sidebar-wallpaper-avatar {
-        width: 42px;
-        height: 42px;
-    }
-    .sidebar-wallpaper-nickname {
-        font-size: 14px;
-    }
-    .sidebar-wallpaper-signature {
-        font-size: 10px;
-    }
-    .daily-quote-card p {
-        font-size: 11px;
-    }
-    .music-player {
-        left: 12px;
-        right: 12px;
-        width: auto;
-        max-width: none;
-        bottom: 12px;
-    }
+    .site-card { min-height: 90px; padding: 6px; }
+    .icon-container { width: 28px; height: 28px; }
+    .views-icon { font-size: 11px; }
+    .view-count, .site-title { font-size: 11px; }
+    .site-description { font-size: 9px; }
+    .tags-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .minimal-tag { padding: 6px 10px; min-height: 36px; }
+    .tag-label { font-size: 10px; }
+    .tag-icon { font-size: 12px; }
+    .greeting-container { flex-direction: column; }
+    .greeting-main-card { width: 100%; padding: 12px; }
+    .greeting-text h1 { font-size: 1.1rem; }
+    .datetime { padding: 6px 10px; min-width: 100px; }
+    #currentTime { font-size: 0.9rem; }
+    #currentDate { font-size: 0.7rem; }
+    .fish-section { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .fish-btn { padding: 6px 8px; min-height: 40px; }
+    .fish-btn i { font-size: 14px; }
+    .fish-count { font-size: 0.8rem; }
+    .bookmark-btn { width: 100%; flex-direction: row; justify-content: center; gap: 8px; padding: 10px; }
+    .bookmark-btn span { writing-mode: horizontal-tb; }
+    .footer-stats-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-card { padding: 8px; }
+    .stat-number { font-size: 13px; }
+    .stat-name { font-size: 9px; }
+    .sidebar { width: 70vw; max-width: 280px; }
+    .sidebar-wallpaper-avatar { width: 42px; height: 42px; }
+    .sidebar-wallpaper-nickname { font-size: 14px; }
+    .sidebar-wallpaper-signature { font-size: 10px; }
+    .daily-quote-card p { font-size: 11px; }
+    .music-player { left: 12px; right: 12px; width: auto; max-width: none; bottom: 12px; }
 }
 
-/* 移动端模态框间距统一（仅 comment 和 submit 使用通用，rank 和 notebook 已独立） */
+/* ===== 移动端模态框间距 ===== */
 @media (max-width: 768px) {
     #commentModal.feedback-modal,
     #submitModal.feedback-modal {
@@ -347,177 +129,70 @@
         margin: 0 !important;
         border-radius: 8px !important;
     }
-    /* #rankModal 和 #notebookModal 由各自独立样式控制，不受干扰 */
 }
 
+/* ===== 超小屏 ===== */
 @media (max-width: 374px) {
-    .tags-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 6px;
-    }
-    .minimal-tag {
-        padding: 5px 8px;
-    }
-    .tag-label {
-        font-size: 9px;
-    }
-    .level3-content {
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    }
-    .site-title {
-        font-size: 10px;
-    }
-    .site-description {
-        display: none;
-    }
-    .greeting-text h1 {
-        font-size: 1rem;
-    }
-    .countdown-holiday {
-        font-size: 0.7rem;
-    }
-    #holidayCountdown {
-        font-size: 0.7rem;
-        padding: 2px 6px;
-    }
-    .fish-section {
-        gap: 4px;
-    }
-    .fish-btn {
-        padding: 4px 6px;
-        min-height: 36px;
-    }
-    .fish-btn i {
-        font-size: 12px;
-    }
-    .fish-count {
-        font-size: 0.7rem;
-    }
-    .footer-stats-cards {
-        gap: 6px;
-    }
-    .stat-card {
-        padding: 6px;
-    }
-    .stat-number {
-        font-size: 12px;
-    }
+    .tags-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .minimal-tag { padding: 5px 8px; }
+    .tag-label { font-size: 9px; }
+    .level3-content { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+    .site-title { font-size: 10px; }
+    .site-description { display: none; }
+    .greeting-text h1 { font-size: 1rem; }
+    .countdown-holiday { font-size: 0.7rem; }
+    #holidayCountdown { font-size: 0.7rem; padding: 2px 6px; }
+    .fish-section { gap: 4px; }
+    .fish-btn { padding: 4px 6px; min-height: 36px; }
+    .fish-btn i { font-size: 12px; }
+    .fish-count { font-size: 0.7rem; }
+    .footer-stats-cards { gap: 6px; }
+    .stat-card { padding: 6px; }
+    .stat-number { font-size: 12px; }
 }
 
+/* ===== 横屏手机 ===== */
 @media (max-height: 600px) and (orientation: landscape) {
-    .sidebar {
-        top: 60px !important;
-        bottom: 10px;
-        max-height: calc(100vh - 70px);
-    }
-    .sidebar-wallpaper {
-        aspect-ratio: 21/9;
-    }
-    .daily-quote-card {
-        display: none;
-    }
-    .sidebar-categories {
-        max-height: calc(100vh - 200px);
-    }
-    .wallpaper-container {
-        height: 30vh;
-        min-height: 120px;
-    }
-    .level1-nav,
-    .level2-nav {
-        max-height: 40px;
-    }
-    .level1-btn,
-    .level2-btn {
-        height: 36px;
-        line-height: 36px;
-    }
-    .music-player {
-        max-height: 85vh;
-        overflow-y: auto;
-    }
-    .bottom-section {
-        max-height: 300px;
-    }
+    .sidebar { top: 60px !important; bottom: 10px; max-height: calc(100vh - 70px); }
+    .sidebar-wallpaper { aspect-ratio: 21/9; }
+    .daily-quote-card { display: none; }
+    .sidebar-categories { max-height: calc(100vh - 200px); }
+    .wallpaper-container { height: 30vh; min-height: 120px; }
+    .level1-nav, .level2-nav { max-height: 40px; }
+    .level1-btn, .level2-btn { height: 36px; line-height: 36px; }
+    .music-player { max-height: 85vh; overflow-y: auto; }
+    .bottom-section { max-height: 300px; }
 }
 
+/* ===== 触屏设备 ===== */
 @media (hover: none) and (pointer: coarse) {
-    .nav-btn,
-    .floating-btn,
-    .footer-btn,
-    .level1-btn,
-    .level2-btn,
-    .site-card,
-    .minimal-tag,
-    .category-item,
-    .song-item,
-    .search-download-btn {
+    .nav-btn, .floating-btn, .footer-btn, .level1-btn, .level2-btn,
+    .site-card, .minimal-tag, .category-item, .song-item, .search-download-btn {
         cursor: default;
         -webkit-tap-highlight-color: transparent;
     }
-    .site-card:active {
-        transform: scale(0.98);
-    }
-    .minimal-tag:active {
-        transform: scale(0.97);
-    }
+    .site-card:active { transform: scale(0.98); }
+    .minimal-tag:active { transform: scale(0.97); }
 }
 
+/* ===== 减少动画 ===== */
 @media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-    }
-    .carousel-track,
-    .progress,
-    .progress-handle,
-    .toast-item {
-        transition: none !important;
-    }
-    .album-cover.playing img {
-        animation: none !important;
-    }
-    .fish-effect {
-        animation: none !important;
-    }
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+    .carousel-track, .progress, .progress-handle, .toast-item { transition: none !important; }
+    .album-cover.playing img { animation: none !important; }
+    .fish-effect { animation: none !important; }
 }
 
+/* ===== 打印 ===== */
 @media print {
-    .navbar,
-    .sidebar,
-    .floating-buttons,
-    .music-player,
-    .feedback-modal,
-    .search-modal,
-    .engine-tooltip,
-    .footer {
+    .navbar, .sidebar, .floating-buttons, .music-player,
+    .feedback-modal, .search-modal, .engine-tooltip, .footer {
         display: none !important;
     }
-    body {
-        background: white;
-        color: black;
-        font-size: 12pt;
-    }
-    .main-content {
-        margin: 0;
-        padding: 0;
-    }
-    .container {
-        width: 100%;
-        max-width: none;
-        padding: 0;
-    }
-    .site-card {
-        break-inside: avoid;
-        page-break-inside: avoid;
-    }
-    a {
-        text-decoration: none;
-        color: black;
-    }
-    a[href]:after {
-        content: " (" attr(href) ")";
-        font-size: 10pt;
-    }
+    body { background: white; color: black; font-size: 12pt; }
+    .main-content { margin: 0; padding: 0; }
+    .container { width: 100%; max-width: none; padding: 0; }
+    .site-card { break-inside: avoid; page-break-inside: avoid; }
+    a { text-decoration: none; color: black; }
+    a[href]:after { content: " (" attr(href) ")"; font-size: 10pt; }
 }
