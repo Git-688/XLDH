@@ -1,6 +1,6 @@
-/* wallpaper.css - 壁纸轮播样式 */
+/* wallpaper.css - 精简版 */
 .wallpaper-section {
-    padding: 0 !important;              /* 顶部边距归零，紧贴导航栏 */
+    padding: 0 !important;
     position: relative;
     margin: 0 !important;
 }
@@ -12,7 +12,6 @@
     min-height: 130px;
     border-radius: 12px !important;
     overflow: hidden;
-    /* box-shadow 已移除，实现无阴影效果 */
     margin: 0 !important;
     background: var(--bg-secondary, #f8f9fa);
     user-select: none;
@@ -22,10 +21,9 @@
     display: flex;
     width: 100%;
     height: 100%;
-    transition: transform 0.5s ease;
+    transition: transform .5s ease;
     will-change: transform;
 }
-
 .carousel-slide {
     flex: 0 0 100%;
     height: 100%;
@@ -40,10 +38,10 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(255,255,255,.25);
     backdrop-filter: blur(10px);
     border: none;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255,255,255,.9);
     font-size: 1.2rem;
     width: 36px;
     height: 36px;
@@ -52,12 +50,12 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 0.3s ease, color 0.3s ease;
+    transition: background .3s ease, color .3s ease;
     z-index: 10;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
 }
 .carousel-arrow:hover {
-    background: rgba(255, 255, 255, 0.45);
+    background: rgba(255,255,255,.45);
     color: #fff;
 }
 .carousel-arrow-left { left: 10px; }
@@ -75,19 +73,17 @@
     padding: 0;
     max-width: none;
 }
-
 .wallpaper-title {
     font-weight: 600;
     font-size: 14px;
-    color: white;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7), 0 0 8px rgba(0, 0, 0, 0.5);
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,.7), 0 0 8px rgba(0,0,0,.5);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: calc(100% - 80px);
     line-height: 1.3;
 }
-
 .carousel-dots {
     display: flex;
     gap: 8px;
@@ -97,51 +93,36 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255,255,255,.5);
     cursor: pointer;
-    transition: transform 0.3s ease, background 0.3s ease;
+    transition: transform .3s ease, background .3s ease;
 }
 .carousel-dot.active {
     background: #fff;
     transform: scale(1.3);
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 4px rgba(0,0,0,.3);
 }
 
 /* 响应式 */
-@media (max-width: 768px) {
+@media (max-width:768px) {
     .wallpaper-section { padding: 0 !important; }
     .wallpaper-container {
         height: 26vh;
         min-height: 130px;
         border-radius: 10px !important;
     }
-    .carousel-arrow {
-        width: 30px;
-        height: 30px;
-        font-size: 1rem;
-    }
-    .wallpaper-info {
-        bottom: 8px;
-        left: 12px;
-        right: 12px;
-    }
-    .wallpaper-title {
-        font-size: 13px;
-        max-width: calc(100% - 60px);
-    }
+    .carousel-arrow { width: 30px; height: 30px; font-size: 1rem; }
+    .wallpaper-info { bottom: 8px; left: 12px; right: 12px; }
+    .wallpaper-title { font-size: 13px; max-width: calc(100% - 60px); }
 }
-@media (max-width: 480px) {
+@media (max-width:480px) {
     .wallpaper-section { padding: 0 !important; }
     .wallpaper-container {
         height: 26vh;
         min-height: 130px;
         border-radius: 8px !important;
     }
-    .wallpaper-info {
-        bottom: 6px;
-        left: 10px;
-        right: 10px;
-    }
+    .wallpaper-info { bottom: 6px; left: 10px; right: 10px; }
     .wallpaper-title { font-size: 12px; }
 }
 
@@ -150,8 +131,8 @@
     background: var(--bg-secondary, #1e1e1e);
 }
 .dark-mode .carousel-arrow {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0,0,0,.3);
 }
 .dark-mode .carousel-arrow:hover {
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0,0,0,.5);
 }
