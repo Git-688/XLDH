@@ -1,16 +1,16 @@
-/* stats.js */
+/* stats.js - 使用会话ID避免重复计数 */
 const WORKER_URL = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
 
-function getDeviceId() {
-    let deviceId = localStorage.getItem('device_id');
-    if (!deviceId) {
-        deviceId = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
-        localStorage.setItem('device_id', deviceId);
-    }
-    return deviceId;
-}
+const SESSION_KEY = 'visitor_session_id';
 
-let heartbeatInterval = null;
+function getVisitorSession() {
+    let sid = sessionStorage.getItem(SESSION_KEY);
+    if (!sid) {
+        sid = 'vs_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        sessionStorage.setItem(SESSION_KEY, sid);
+    }
+    return sid;
+}
 
 function formatUptime(ms) {
     if (ms < 0) return "刚刚上线";
@@ -35,36 +35,34 @@ async function fetchUptimeStart() {
         updateUptimeDisplay(data.startTime);
         setInterval(() => updateUptimeDisplay(data.startTime), 1000);
     } catch (e) {
-        console.error('获取运行时间失败:', e);
         const uptimeEl = document.getElementById('uptime');
         if (uptimeEl) uptimeEl.textContent = '获取失败';
     }
 }
 
 async function postToWorker(endpoint, extraData = {}) {
+    const visitorId = getVisitorSession();
     try {
         await fetch(`${WORKER_URL}${endpoint}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Device-Id': getDeviceId()
+                'X-Device-Id': visitorId
             },
-            body: JSON.stringify(extraData)
+            body: JSON.stringify({ visitorId, ...extraData })
         });
-    } catch (e) {
-        console.error('请求失败:', e);
-    }
+    } catch (e) {}
 }
 
 function sendOfflineSignal() {
-    const deviceId = getDeviceId();
+    const visitorId = getVisitorSession();
     if (navigator.sendBeacon) {
-        navigator.sendBeacon(`${WORKER_URL}/offline`, JSON.stringify({ deviceId }));
+        navigator.sendBeacon(`${WORKER_URL}/offline`, JSON.stringify({ visitorId }));
     } else {
         fetch(`${WORKER_URL}/offline`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ deviceId }),
+            body: JSON.stringify({ visitorId }),
             keepalive: true
         }).catch(() => {});
     }
@@ -85,10 +83,10 @@ async function refreshStats() {
         if (siteCountEl && data.total_sites !== undefined) {
             siteCountEl.textContent = data.total_sites;
         }
-    } catch (e) {
-        console.error('获取统计失败:', e);
-    }
+    } catch (e) {}
 }
+
+let heartbeatInterval = null;
 
 function handleVisibilityChange() {
     if (document.hidden) {
