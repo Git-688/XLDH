@@ -1,7 +1,8 @@
-/* stats.js - 使用会话ID避免重复计数 */
+/* stats.js - 访客实时在线统计增强（页面离开信号 + 停留时长） */
 const WORKER_URL = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
 
 const SESSION_KEY = 'visitor_session_id';
+let pageEnterTime = Date.now();
 
 function getVisitorSession() {
     let sid = sessionStorage.getItem(SESSION_KEY);
@@ -54,15 +55,18 @@ async function postToWorker(endpoint, extraData = {}) {
     } catch (e) {}
 }
 
+// ===== 增强：发送离线信号（含停留时长） =====
 function sendOfflineSignal() {
     const visitorId = getVisitorSession();
+    const duration = Math.floor((Date.now() - pageEnterTime) / 1000); // 秒
+    const data = { visitorId, duration };
     if (navigator.sendBeacon) {
-        navigator.sendBeacon(`${WORKER_URL}/offline`, JSON.stringify({ visitorId }));
+        navigator.sendBeacon(`${WORKER_URL}/offline`, JSON.stringify(data));
     } else {
         fetch(`${WORKER_URL}/offline`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ visitorId }),
+            body: JSON.stringify(data),
             keepalive: true
         }).catch(() => {});
     }
@@ -90,11 +94,15 @@ let heartbeatInterval = null;
 
 function handleVisibilityChange() {
     if (document.hidden) {
+        // 页面隐藏（切换标签或最小化）时，发送离线信号
+        sendOfflineSignal();
         if (heartbeatInterval) {
             clearInterval(heartbeatInterval);
             heartbeatInterval = null;
         }
     } else {
+        // 页面重新可见时，重置进入时间并重新开始心跳
+        pageEnterTime = Date.now();
         if (!heartbeatInterval) {
             postToWorker('/heartbeat');
             heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 30000);
@@ -103,11 +111,19 @@ function handleVisibilityChange() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    pageEnterTime = Date.now();
     postToWorker('/visit');
     postToWorker('/heartbeat');
     heartbeatInterval = setInterval(() => postToWorker('/heartbeat'), 30000);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    // ===== 增加 pagehide 事件（页面关闭时发送离线信号） =====
+    window.addEventListener('pagehide', function() {
+        sendOfflineSignal();
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+    });
+
+    // 兼容 beforeunload（备用）
     window.addEventListener('beforeunload', function() {
         sendOfflineSignal();
         if (heartbeatInterval) clearInterval(heartbeatInterval);
