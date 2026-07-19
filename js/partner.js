@@ -1,11 +1,10 @@
-/* partner.js - 精简版（合作伙伴模块） */
+/* partner.js - 合作伙伴模块（从接口获取数据，空状态显示🎉期待你的加入...） */
 (function() {
     'use strict';
 
     class PartnerModule {
         constructor() {
-            if (window.Starlink?.partner) return window.Starlink.partner;
-            
+            if (window.Starlink && window.Starlink.partner) return window.Starlink.partner;
             this.modal = document.getElementById('partnerModal');
             this.triggerBtn = document.getElementById('partnerTriggerBtn');
             this.closeBtn = document.getElementById('partnerModalClose');
@@ -15,7 +14,6 @@
             this.partners = [];
             this.apiBase = Utils.getApiBase();
             this.init();
-            
             if (window.Starlink) window.Starlink.partner = this;
             window.partnerModule = this;
         }
@@ -36,17 +34,22 @@
                     Utils.safeFetch(`${this.apiBase}/partner-settings`, { timeout: 8000 })
                 ]);
 
-                if (partnersRes?.ok) this.partners = await partnersRes.json();
-                else this.partners = [];
+                if (partnersRes.ok) {
+                    this.partners = await partnersRes.json();
+                } else {
+                    this.partners = [];
+                }
 
-                if (settingsRes?.ok) {
+                if (settingsRes.ok) {
                     const settings = await settingsRes.json();
                     if (settings.intro && this.introContainer) {
                         this.introContainer.textContent = settings.intro;
                     }
                 }
 
-                if (this.isVisible) this.renderList();
+                if (this.isVisible) {
+                    this.renderList();
+                }
             } catch (error) {
                 console.warn('加载合作伙伴数据失败:', error);
                 if (this.isVisible) {
@@ -57,13 +60,12 @@
 
         renderList() {
             if (!this.listContainer) return;
-            
-            if (!this.partners?.length) {
+            if (!this.partners || !this.partners.length) {
+                // ===== 修改：空状态显示 🎉期待你的加入... =====
                 this.listContainer.innerHTML = '<div style="text-align:center;padding:30px 20px;color:var(--text-secondary);font-size:14px;">🎉 期待你的加入...</div>';
                 return;
             }
-
-            this.listContainer.innerHTML = this.partners.map(p => {
+            const html = this.partners.map(p => {
                 const iconHtml = p.icon ?
                     `<img src="${Utils.escapeHtml(p.icon)}" alt="${Utils.escapeHtml(p.name)}" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fas fa-link\\'></i>';">` :
                     '<i class="fas fa-link"></i>';
@@ -75,6 +77,7 @@
                     </div>
                 `;
             }).join('');
+            this.listContainer.innerHTML = html;
         }
 
         open() {
@@ -84,7 +87,8 @@
             this.modal.classList.add('active');
             this.isVisible = true;
             document.body.style.overflow = 'hidden';
-            window.Starlink?.app?.registerModal(this);
+            if (window.Starlink?.app) window.Starlink.app.registerModal(this);
+            else if (window.app) window.app.registerModal(this);
         }
 
         close() {
@@ -93,7 +97,8 @@
             const onTransitionEnd = () => {
                 document.body.style.overflow = '';
                 this.isVisible = false;
-                window.Starlink?.app?.unregisterModal(this);
+                if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
+                else if (window.app) window.app.unregisterModal(this);
                 this.modal.removeEventListener('transitionend', onTransitionEnd);
             };
             this.modal.addEventListener('transitionend', onTransitionEnd, { once: true });
@@ -101,15 +106,14 @@
         }
 
         closeOtherModals() {
-            window.Starlink?.sidebar?.hide?.();
-            window.Starlink?.search?.hide?.();
-            window.Starlink?.navbar?.hideMusicPlayer?.();
-            window.Starlink?.weather?.hide?.();
-            window.Starlink?.about?.hide?.();
-            window.Starlink?.app?.hideNotebookModal?.();
-            window.Starlink?.comment?.close?.();
-            window.Starlink?.submit?.hide?.();
-            
+            if (window.Starlink?.sidebar?.isVisible?.()) window.Starlink.sidebar.hide();
+            if (window.Starlink?.search?.isModalOpen?.()) window.Starlink.search.hide();
+            if (window.Starlink?.navbar?.hideMusicPlayer) window.Starlink.navbar.hideMusicPlayer();
+            if (window.Starlink?.weather?.isShowing) window.Starlink.weather.hide();
+            if (window.Starlink?.about?.isVisible) window.Starlink.about.hide();
+            if (window.Starlink?.app?.hideNotebookModal) window.Starlink.app.hideNotebookModal();
+            if (window.Starlink?.comment?.isVisible) window.Starlink.comment.close();
+            if (window.Starlink?.submit?.isVisible) window.Starlink.submit.hide();
             const submitModal = document.getElementById('submitModal');
             if (submitModal?.classList.contains('active')) submitModal.classList.remove('active');
             const commentModal = document.getElementById('commentModal');
@@ -141,10 +145,11 @@
         }
     }
 
-    // 自动初始化
     document.addEventListener('DOMContentLoaded', () => {
         if (!window.Starlink) window.Starlink = {};
-        if (!window.Starlink.partner) window.Starlink.partner = new PartnerModule();
+        if (!window.Starlink.partner) {
+            window.Starlink.partner = new PartnerModule();
+        }
         window.partnerModule = window.Starlink.partner;
     });
 })();
