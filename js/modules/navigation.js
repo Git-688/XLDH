@@ -1,4 +1,4 @@
-/* navigation.js - 增强版（更多错误日志和容错） */
+/* navigation.js - 精简版（修复分类导航空白问题，增强错误处理） */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink?.navigation) return window.Starlink.navigation;
@@ -89,7 +89,7 @@ class OptimizedNavigation {
         const container = this.level3Content;
         if (!container) return;
         if (!sites?.length) {
-            container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3 class="empty-title">暂无站点</h3><p style="font-size:12px;color:var(--text-secondary);margin-top:8px;">请通过后台管理添加站点数据</p></div>`;
+            container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3 class="empty-title">暂无站点</h3></div>`;
             return;
         }
 
@@ -201,7 +201,7 @@ class OptimizedNavigation {
         container.appendChild(fragment);
     }
 
-    // ---------- 加载分类数据（增强日志和缓存降级） ----------
+    // ---------- 加载分类数据 ----------
     async loadCategoryData(categoryName, forceRefresh = false) {
         const cacheKey = `nav_data_${categoryName}`;
         const cached = localStorage.getItem(cacheKey);
@@ -209,31 +209,21 @@ class OptimizedNavigation {
         if (!forceRefresh && cached) {
             try {
                 const data = JSON.parse(cached);
-                if (now - data.timestamp < 30 * 60 * 1000) {
-                    console.log(`[Navigation] 使用缓存数据: ${categoryName}`);
-                    return data.data;
-                }
-            } catch (e) { console.warn('[Navigation] 缓存解析失败', e); }
+                if (now - data.timestamp < 30 * 60 * 1000) return data.data;
+            } catch (e) {}
         }
         try {
-            console.log(`[Navigation] 请求分类数据: ${categoryName}`);
             const response = await Utils.safeFetch(`${this.apiBase}/navigation/category-sites?category=${encodeURIComponent(categoryName)}`);
             if (!response) throw new Error('No response');
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const json = await response.json();
-            if (!json.subcategories) throw new Error('Invalid response: missing subcategories');
+            if (!json.subcategories) throw new Error('Invalid response');
             localStorage.setItem(cacheKey, JSON.stringify({ data: json, timestamp: now }));
-            console.log(`[Navigation] 分类数据加载成功: ${categoryName}`, json);
             return json;
         } catch (error) {
-            console.error(`[Navigation] 加载分类数据失败: ${categoryName}`, error);
-            // 如果缓存存在，即使过期也返回缓存（降级）
+            console.error('加载分类数据失败:', error);
+            // 返回空数据，但保留缓存（如果有）
             if (cached) {
-                try {
-                    const data = JSON.parse(cached);
-                    console.warn(`[Navigation] 使用过期缓存: ${categoryName}`);
-                    return data.data;
-                } catch(e) {}
+                try { return JSON.parse(cached).data; } catch(e) {}
             }
             throw error;
         }
@@ -261,8 +251,8 @@ class OptimizedNavigation {
             }
             this.updateStats();
         } catch (error) {
-            console.error('[Navigation] 切换分类失败:', error);
-            this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">加载失败，请重试</h3><p style="font-size:12px;color:var(--text-secondary);margin-top:8px;">${Utils.escapeHtml(error.message)}</p><button onclick="window.optimizedNavigation?.refreshCurrentSubcategory()" style="margin-top:10px;padding:6px 16px;background:var(--primary-color);color:#fff;border:none;border-radius:6px;cursor:pointer;">重试</button></div>`;
+            console.error('切换分类失败:', error);
+            this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">加载失败，请重试</h3><button onclick="window.optimizedNavigation?.refreshCurrentSubcategory()" style="margin-top:10px;padding:6px 16px;background:var(--primary-color);color:#fff;border:none;border-radius:6px;cursor:pointer;">重试</button></div>`;
         }
     }
 
@@ -404,13 +394,11 @@ class OptimizedNavigation {
     async init() {
         if (this.isInitialized) return;
         try {
-            console.log('[Navigation] 开始初始化...');
             const resp = await Utils.safeFetch(`${this.apiBase}/navigation/structure`);
             if (!resp) throw new Error('No response from structure API');
             const structure = await resp.json();
             const categories = Object.keys(structure);
             if (!categories.length) throw new Error('No categories');
-            console.log('[Navigation] 获取到分类结构:', categories);
 
             this.level1Nav.innerHTML = categories.map((cat, idx) =>
                 `<button class="level1-btn ${idx === 0 ? 'active' : ''}" data-level1="${cat}">${this._escapeHtml(cat)}</button>`
@@ -426,10 +414,9 @@ class OptimizedNavigation {
             this.createSearchBox();
             await this.updateStats();
             this.isInitialized = true;
-            console.log('[Navigation] 初始化完成');
         } catch (error) {
-            console.error('[Navigation] 初始化失败:', error);
-            this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">加载失败，请刷新页面</h3><p style="font-size:12px;color:var(--text-secondary);margin-top:8px;">${Utils.escapeHtml(error.message)}</p><button onclick="window.location.reload()" style="margin-top:10px;padding:6px 16px;background:var(--primary-color);color:#fff;border:none;border-radius:6px;cursor:pointer;">刷新</button></div>`;
+            console.error('导航初始化失败:', error);
+            this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">加载失败，请刷新页面</h3><button onclick="window.location.reload()" style="margin-top:10px;padding:6px 16px;background:var(--primary-color);color:#fff;border:none;border-radius:6px;cursor:pointer;">刷新</button></div>`;
         }
     }
 
@@ -437,13 +424,11 @@ class OptimizedNavigation {
     async refreshCurrentSubcategory() {
         if (!this.currentLevel1 || !this.currentLevel2) return;
         try {
-            console.log('[Navigation] 手动刷新子分类:', this.currentLevel1, this.currentLevel2);
             await this.loadCategoryData(this.currentLevel1, true);
             this.renderLevel3(this.currentLevel2);
             await this.updateStats();
-            window.toast?.show('刷新成功', 'success');
         } catch (error) {
-            console.error('[Navigation] 刷新子分类失败:', error);
+            console.error('刷新子分类失败:', error);
             window.toast?.show('刷新失败，请重试', 'error');
         }
     }
