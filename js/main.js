@@ -1,4 +1,4 @@
-/* main.js - 精简版（修复模块初始化错误，移除未定义的 FooterModule） */
+/* main.js - 精简版（修复模块类名错误：WallpaperModule -> CarouselModule，CompactSidebar -> ModernSidebar） */
 class App {
     constructor() {
         if (window.Starlink?.app) return window.Starlink.app;
@@ -259,10 +259,19 @@ class App {
 
     initCoreComponents() {
         try {
-            if (typeof CompactSidebar !== 'undefined') {
+            // 侧边栏组件实际类名为 ModernSidebar（在 sidebar.js 中定义）
+            if (typeof ModernSidebar !== 'undefined') {
+                if (!window.sidebar?.isInitialized) {
+                    this.components.sidebar = new ModernSidebar();
+                    // ModernSidebar 的 init 在构造函数中自动调用，无需额外 init
+                } else {
+                    this.components.sidebar = window.sidebar;
+                }
+            } else if (typeof CompactSidebar !== 'undefined') {
+                // 兼容旧名称（如果存在）
                 if (!window.sidebar?.isInitialized) {
                     this.components.sidebar = new CompactSidebar();
-                    this.components.sidebar.init().catch(error => {
+                    this.components.sidebar.init?.().catch(error => {
                         console.error('侧边栏初始化失败:', error);
                         this.showToast('侧边栏初始化失败，部分功能可能不可用', 'warning');
                     });
@@ -281,7 +290,7 @@ class App {
             const initPromises = [];
             const moduleMap = {
                 search: { cls: NewSearchModule, get: () => window.newSearchModule },
-                wallpaper: { cls: WallpaperModule, get: () => this.modules.wallpaper },
+                wallpaper: { cls: CarouselModule, get: () => this.modules.wallpaper },  // 修复：WallpaperModule -> CarouselModule
                 greeting: { cls: GreetingModule, get: () => this.modules.greeting },
                 navigation: { cls: OptimizedNavigation, get: () => this.modules.navigation, set: (m) => { window.optimizedNavigation = m; } },
                 weather: { cls: WeatherModule, get: () => this.modules.weather },
