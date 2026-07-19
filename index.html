@@ -52,6 +52,17 @@
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
 
+    <!-- ===== 前端资源预加载优化 ===== -->
+    <link rel="preload" href="./js/main.js" as="script">
+    <link rel="preload" href="./css/style.css" as="style">
+    <link rel="preload" href="./js/modules/navigation.js" as="script">
+    <link rel="preload" href="./js/components/sidebar.js" as="script">
+    <link rel="preload" href="./js/modules/wallpaper.js" as="script">
+    <link rel="preload" href="./js/modules/greeting.js" as="script">
+    <link rel="preload" href="./css/modules/navigation.css" as="style">
+    <link rel="preload" href="./css/modules/sidebar.css" as="style">
+    <link rel="preload" href="./assets/logo.webp" as="image" type="image/webp">
+
     <script>
         (function() {
             let apiBase = '';
@@ -69,7 +80,6 @@
                 API_BASE: apiBase,
                 WALINE_SERVER: 'https://pl688.ccwu.cc'
             };
-            console.log('[Config] API_BASE:', apiBase);
             window.Starlink = window.Starlink || {};
         })();
     </script>
